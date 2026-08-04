@@ -453,7 +453,9 @@ export default function OpeningBalancePage() {
                           variant='body2'
                           color='text.secondary'
                         >
-                          {account.haschildren ? t('finance.opening_balance_page.text_7586c1') : t('finance.opening_balance_page.text_f82e51')}
+                          {account.haschildren
+                            ? t('finance.opening_balance_page.text_7586c1')
+                            : t('finance.opening_balance_page.text_f82e51')}
                         </Typography>
                       </TableCell>
                       <TableCell align='right'>

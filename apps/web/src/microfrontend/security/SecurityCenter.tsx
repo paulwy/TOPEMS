@@ -86,21 +86,21 @@ const severityLabels: Record<SecurityIssueSeverity, string> = {
 };
 
 const categoryIcons: Record<SecurityCategory, React.ReactNode> = {
-  [SecurityCategory.Dependency]: <PackageIcon size={16} />,
-  [SecurityCategory.Permission]: <LockIcon size={16} />,
-  [SecurityCategory.Sandbox]: <LayersIcon size={16} />,
-  [SecurityCategory.Network]: <GlobeIcon size={16} />,
-  [SecurityCategory.Data]: <DatabaseIcon size={16} />,
-  [SecurityCategory.Code]: <CodeIcon size={16} />,
+  [SecurityCategory.DEPENDENCY]: <PackageIcon size={16} />,
+  [SecurityCategory.PERMISSION]: <LockIcon size={16} />,
+  [SecurityCategory.SANDBOX]: <LayersIcon size={16} />,
+  [SecurityCategory.NETWORK]: <GlobeIcon size={16} />,
+  [SecurityCategory.DATA]: <DatabaseIcon size={16} />,
+  [SecurityCategory.CODE]: <CodeIcon size={16} />,
 };
 
 const categoryLabels: Record<SecurityCategory, string> = {
-  [SecurityCategory.Dependency]: '依赖',
-  [SecurityCategory.Permission]: '权限',
-  [SecurityCategory.Sandbox]: '沙箱',
-  [SecurityCategory.Network]: '网络',
-  [SecurityCategory.Data]: '数据',
-  [SecurityCategory.Code]: '代码',
+  [SecurityCategory.DEPENDENCY]: '依赖',
+  [SecurityCategory.PERMISSION]: '权限',
+  [SecurityCategory.SANDBOX]: '沙箱',
+  [SecurityCategory.NETWORK]: '网络',
+  [SecurityCategory.DATA]: '数据',
+  [SecurityCategory.CODE]: '代码',
 };
 
 const StatCard: React.FC<{
@@ -187,7 +187,7 @@ const SecurityScoreGauge: React.FC<{ score: number }> = ({ score }) => {
           x='100'
           y='120'
           textAnchor='middle'
-          style={{ fontSize: 14, fill: '#6b7280' }}
+          style={{ fontSize: 14, fill: 'grey.500' }}
         >
           安全评分
         </text>
@@ -434,21 +434,21 @@ const ScanHistoryList: React.FC<{ history: ScanHistoryEntry[] }> = ({ history })
               <Chip
                 label={`严重 ${entry.critical_count}`}
                 size='small'
-                sx={{ bgcolor: '#dc262615', color: '#dc2626' }}
+                sx={{ bgcolor: 'error.600', color: 'error.600' }}
               />
             )}
             {entry.high_count > 0 && (
               <Chip
                 label={`高危 ${entry.high_count}`}
                 size='small'
-                sx={{ bgcolor: '#ef444415', color: '#ef4444' }}
+                sx={{ bgcolor: 'error.500', color: 'error.500' }}
               />
             )}
             {entry.medium_count > 0 && (
               <Chip
                 label={`中危 ${entry.medium_count}`}
                 size='small'
-                sx={{ bgcolor: '#f59e0b15', color: '#f59e0b' }}
+                sx={{ bgcolor: 'warning.500', color: 'warning.500' }}
               />
             )}
           </Box>
@@ -723,7 +723,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
               <Paper sx={{ p: 4, textAlign: 'center' }}>
                 <CheckCircleIcon
                   size={48}
-                  style={{ color: '#10b981', marginBottom: 16 }}
+                  style={{ color: 'teal.500', marginBottom: 16 }}
                 />
                 <Typography
                   variant='h6'

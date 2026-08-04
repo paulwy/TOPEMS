@@ -10,12 +10,7 @@
 
 import React, { useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  GitMerge,
-  Play,
-  ArrowRight,
-  Copy,
-} from 'lucide-react';
+import { GitMerge, Play, ArrowRight, Copy } from 'lucide-react';
 import { Box, Typography, Paper, Stack } from '@mui/material';
 
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -199,17 +194,13 @@ export const IntegrationMappingsPage: React.FC = () => {
       try {
         // 切换映射状态（原页面直接修改 queryClient 缓存）
         const next: MappingStatus = mapping.status === 'active' ? 'inactive' : 'active';
-        queryClient.setQueryData<{ data: Mapping[] } | undefined>(
-          CRUD_QUERY_KEY,
-          (old) =>
-            old
-              ? {
-                  ...old,
-                  data: old.data.map((m) =>
-                    m.id === mapping.id ? { ...m, status: next } : m
-                  ),
-                }
-              : old
+        queryClient.setQueryData<{ data: Mapping[] } | undefined>(CRUD_QUERY_KEY, (old) =>
+          old
+            ? {
+                ...old,
+                data: old.data.map((m) => (m.id === mapping.id ? { ...m, status: next } : m)),
+              }
+            : old
         );
         addNotification({
           title: '状态更新',

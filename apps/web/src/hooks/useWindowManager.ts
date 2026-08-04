@@ -103,7 +103,7 @@ export function useWindowManager(initialWindows: WindowConfig[] = []) {
 
   const maximizeWindow = useCallback((id: string) => {
     setState((prev) => {
-      const window = prev.windows.find((w) => w.id === id);
+      const window = prev.windows.some((w) => w.id === id);
       if (!window) return prev;
 
       return {

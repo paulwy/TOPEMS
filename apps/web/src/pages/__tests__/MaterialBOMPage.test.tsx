@@ -110,22 +110,21 @@ vi.mock('@/store', () => ({
 }));
 
 describe('MaterialBOMPage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <MaterialBOMPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have BOM API methods defined', () => {
+  it('should have BOM API methods defined', () => {
     render(
       <BrowserRouter>
         <MaterialBOMPage />
       </BrowserRouter>
     );
     expect(mesApi.boms.list).toBeDefined();
-});
-;
+  });
 });

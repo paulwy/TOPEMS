@@ -1,16 +1,11 @@
 import React from 'react';
 import { Typography, Box } from '@mui/material';
 import { Plus, X } from 'lucide-react';
-import {
-  ActionButton,
-  FormField,
-  FormSelect,
-  Dialog,
-  CurrencyField,
-} from '@/components/common';
+import { ActionButton, FormField, FormSelect, Dialog, CurrencyField } from '@/components/common';
 import type { VoucherItemRequest, AccountingSubject } from '@/api/erp';
 
 import { useTranslation } from 'react-i18next';
+
 interface NewVoucherState {
   voucher_number: string;
   voucher_date: string;
@@ -85,7 +80,9 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 voucher_number: e.target.value,
               }))
             }
-            placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.please_input')}
+            placeholder={t(
+              'finance.finance_voucher_page_components__voucher_form_modal.please_input'
+            )}
           />
           <FormField
             name='voucher_date'
@@ -109,7 +106,9 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 period: e.target.value,
               }))
             }
-            placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.text_4c1005')}
+            placeholder={t(
+              'finance.finance_voucher_page_components__voucher_form_modal.text_4c1005'
+            )}
           />
         </Box>
         <Box
@@ -141,7 +140,9 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 maker_name: e.target.value,
               }))
             }
-            placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.document_maker_1')}
+            placeholder={t(
+              'finance.finance_voucher_page_components__voucher_form_modal.document_maker_1'
+            )}
           />
         </Box>
         <FormField
@@ -215,7 +216,9 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 </Typography>
                 <FormSelect
                   name={`subject_code_${index}`}
-                  label={t('finance.finance_voucher_page_components__voucher_form_modal.text_3a5553')}
+                  label={t(
+                    'finance.finance_voucher_page_components__voucher_form_modal.text_3a5553'
+                  )}
                   value={item.subject_code}
                   onChange={(value: string | number | string[]) =>
                     updateVoucherItem(index, 'subject_code', value as string | number)
@@ -231,7 +234,9 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                   sx={{ width: 100 }}
                   value={item.subject_name}
                   slotProps={{ input: { readOnly: true } }}
-                  placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.name')}
+                  placeholder={t(
+                    'finance.finance_voucher_page_components__voucher_form_modal.name'
+                  )}
                 />
                 <CurrencyField
                   name={`debit_amount_${index}`}
@@ -239,7 +244,9 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                   sx={{ width: 150 }}
                   value={item.debit_amount || 0}
                   onChange={(val: number) => updateVoucherItem(index, 'debit_amount', val)}
-                  placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.text_63e2bc')}
+                  placeholder={t(
+                    'finance.finance_voucher_page_components__voucher_form_modal.text_63e2bc'
+                  )}
                 />
                 <CurrencyField
                   name={`credit_amount_${index}`}
@@ -247,7 +254,9 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                   sx={{ width: 150 }}
                   value={item.credit_amount || 0}
                   onChange={(val: number) => updateVoucherItem(index, 'credit_amount', val)}
-                  placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.text_9ff9a6')}
+                  placeholder={t(
+                    'finance.finance_voucher_page_components__voucher_form_modal.text_9ff9a6'
+                  )}
                 />
                 <ActionButton
                   label={t('finance.finance_voucher_page_components__voucher_form_modal.delete')}
@@ -275,9 +284,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 借方合计
               </Typography>
               <Typography sx={{ fontWeight: 'bold', color: 'error.main' }}>
-                {formatCurrency(
-                  newVoucher.items.reduce((sum, item) => sum + item.debit_amount, 0)
-                )}
+                {formatCurrency(newVoucher.items.reduce((sum, item) => sum + item.debit_amount, 0))}
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'right' }}>

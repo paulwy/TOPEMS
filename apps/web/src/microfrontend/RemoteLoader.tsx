@@ -203,7 +203,7 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
         js: opts.js ? { interceptWindow: true } : undefined,
         style:
           opts.style && opts.style !== 'none'
-            ? { mode: opts.style, scopePrefix: `mf-${moduleName}__` }
+            ? { mode: opts.style, scopePrefix: `mf-${moduleName}` }
             : undefined,
         events: opts.events ?? true,
       });

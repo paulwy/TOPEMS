@@ -70,7 +70,9 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
     if (stream) {
       const track = stream.getVideoTracks()[0];
       if (track && 'getCapabilities' in track) {
-        const capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
+        const capabilities = track.getCapabilities() as MediaTrackCapabilities & {
+          torch?: boolean;
+        };
         if (capabilities.torch) {
           track.applyConstraints({
             advanced: [{ torch: !flashOn } as MediaTrackConstraintSet & { torch?: boolean }],
@@ -132,7 +134,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        bgcolor: 'black',
+        bgcolor: 'common.black',
       }}
     >
       {/* Video Preview */}
@@ -160,10 +162,10 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              bgcolor: 'rgba(0,0,0,0.8)',
+              bgcolor: 'action.active',
             }}
           >
-            <Box sx={{ textAlign: 'center', color: 'white', p: 16 }}>
+            <Box sx={{ textAlign: 'center', color: 'common.white', p: 16 }}>
               <Typography sx={{ color: 'error.light', mb: 8 }}>{error}</Typography>
               <Button
                 onClick={onCancel}
@@ -172,7 +174,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                   py: 8,
                   bgcolor: 'grey.700',
                   borderRadius: 8,
-                  color: 'white',
+                  color: 'common.white',
                   '&:hover': { bgcolor: 'text.secondary' },
                 }}
               >
@@ -197,9 +199,9 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
             onClick={onCancel}
             sx={{
               borderRadius: '9999px',
-              bgcolor: 'rgba(0,0,0,0.5)',
-              color: 'white',
-              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+              bgcolor: 'action.active',
+              color: 'common.white',
+              '&:hover': { bgcolor: 'action.active' },
             }}
           >
             <X size={24} />
@@ -210,7 +212,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
               sx={{
                 borderRadius: '9999px',
                 bgcolor: flashOn ? 'warning.main' : 'rgba(0,0,0,0.5)',
-                color: 'white',
+                color: 'common.white',
                 '&:hover': { bgcolor: flashOn ? 'warning.main' : 'rgba(0,0,0,0.7)' },
               }}
             >
@@ -220,9 +222,9 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
               onClick={switchCamera}
               sx={{
                 borderRadius: '9999px',
-                bgcolor: 'rgba(0,0,0,0.5)',
-                color: 'white',
-                '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                bgcolor: 'action.active',
+                color: 'common.white',
+                '&:hover': { bgcolor: 'action.active' },
               }}
             >
               <SwitchCamera size={24} />
@@ -235,7 +237,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
       <Box
         sx={{
           p: 24,
-          bgcolor: 'black',
+          bgcolor: 'common.black',
           display: 'flex',
           justifyContent: 'center',
         }}

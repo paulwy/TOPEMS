@@ -94,7 +94,9 @@ class ErrorHistoryManager {
 
 // Sentry 集成检查
 const hasSentry = (): boolean => {
-  return process.env.NODE_ENV === 'production' && !!(window as unknown as Record<string, unknown>).Sentry;
+  return (
+    process.env.NODE_ENV === 'production' && !!(window as unknown as Record<string, unknown>).Sentry
+  );
 };
 
 // 收集错误信息
@@ -117,7 +119,9 @@ const collectErrorInfo = (
 
 // 上报错误到服务器
 const reportToServer = async (report: ErrorReport, serverUrl?: string): Promise<boolean> => {
-  const url = serverUrl || ((window as unknown as Record<string, unknown>).__ERROR_REPORT_URL__ as string | undefined);
+  const url =
+    serverUrl ||
+    ((window as unknown as Record<string, unknown>).__ERROR_REPORT_URL__ as string | undefined);
   if (!url) return false;
 
   try {
@@ -242,7 +246,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
     // Sentry 集成
     if (hasSentry()) {
-      (window as unknown as { Sentry: { captureException: (error: Error, options?: Record<string, unknown>) => void } }).Sentry.captureException(error, {
+      (
+        window as unknown as {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          Sentry: { captureException: (error: Error, options?: Record<string, unknown>) => void };
+        }
+      ).Sentry.captureException(error, {
         extra: { ...errorInfo, level },
       });
     }
@@ -369,7 +378,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         >
           <div
             style={{
-              backgroundColor: 'white',
+              backgroundColor: 'common.white',
               borderRadius: '12px',
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
               padding: '32px',
@@ -615,7 +624,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     alignItems: 'center',
                     padding: '12px 20px',
                     backgroundColor: 'primary.dark',
-                    color: 'white',
+                    color: 'common.white',
                     borderRadius: '8px',
                     border: 'none',
                     cursor: 'pointer',
@@ -702,7 +711,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     alignItems: 'center',
                     padding: '12px 20px',
                     backgroundColor: this.state.isReporting ? 'grey.400' : 'warning.main',
-                    color: 'white',
+                    color: 'common.white',
                     borderRadius: '8px',
                     border: 'none',
                     cursor: this.state.isReporting ? 'not-allowed' : 'pointer',

@@ -223,11 +223,27 @@ export const supplierSchema: EntitySchema = {
   formSections: [
     {
       title: '基本信息',
-      fields: ['supplier_code', 'supplier_name', 'short_name', 'category', 'status', 'credit_rating'],
+      fields: [
+        'supplier_code',
+        'supplier_name',
+        'short_name',
+        'category',
+        'status',
+        'credit_rating',
+      ],
     },
     {
       title: '联系信息',
-      fields: ['contact_person', 'contact_phone', 'contact_email', 'address', 'country', 'province', 'city', 'zip_code'],
+      fields: [
+        'contact_person',
+        'contact_phone',
+        'contact_email',
+        'address',
+        'country',
+        'province',
+        'city',
+        'zip_code',
+      ],
     },
     {
       title: '财务信息',

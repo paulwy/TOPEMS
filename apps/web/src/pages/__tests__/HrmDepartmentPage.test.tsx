@@ -126,16 +126,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('HrmDepartmentPage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <HrmDepartmentPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have department API methods defined', async () => {
+  it('should have department API methods defined', async () => {
     render(
       <BrowserRouter>
         <HrmDepartmentPage />
@@ -147,15 +147,14 @@ it('should have department API methods defined', async () => {
     expect(departmentApi.update).toBeDefined();
     expect(departmentApi.delete).toBeDefined();
     expect(departmentApi.move).toBeDefined();
-});
+  });
 
-it('should call department list API on mount', async () => {
+  it('should call department list API on mount', async () => {
     render(
       <BrowserRouter>
         <HrmDepartmentPage />
       </BrowserRouter>
     );
     expect(departmentApi.list).toHaveBeenCalled();
-});
-;
+  });
 });

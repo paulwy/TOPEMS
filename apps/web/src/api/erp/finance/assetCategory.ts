@@ -10,7 +10,7 @@ export interface AssetCategory {
   id: string;
   name: string;
   code: string;
-  parent_id?: string;
+  parentId?: string;
   description?: string;
   status: string;
   created_at: string;
@@ -20,7 +20,7 @@ export interface AssetCategory {
 export interface CreateAssetCategoryRequest {
   name: string;
   code: string;
-  parent_id?: string;
+  parentId?: string;
   description?: string;
   status?: string;
 }
@@ -28,7 +28,7 @@ export interface CreateAssetCategoryRequest {
 export interface UpdateAssetCategoryRequest {
   name?: string;
   code?: string;
-  parent_id?: string;
+  parentId?: string;
   description?: string;
   status?: string;
 }

@@ -15,7 +15,10 @@ const TYPE_LABELS: Record<string, string> = {
   error: '错误通知',
 };
 
-const TYPE_COLORS: Record<string, 'primary' | 'success' | 'warning' | 'info' | 'error' | 'default'> = {
+const TYPE_COLORS: Record<
+  string,
+  'primary' | 'success' | 'warning' | 'info' | 'error' | 'default'
+> = {
   system: 'primary',
   workflow: 'warning',
   reminder: 'warning',
@@ -110,7 +113,10 @@ export const archiveNotificationSchema: EntitySchema = {
       listWidth: 160,
       hideInForm: true,
       renderCell: (row: Record<string, unknown>) => (
-        <Typography variant='body2' color='text.secondary'>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
           {new Date((row as any).created_at).toLocaleString('zh-CN')}
         </Typography>
       ),
@@ -122,7 +128,10 @@ export const archiveNotificationSchema: EntitySchema = {
       listWidth: 160,
       hideInForm: true,
       renderCell: (row: Record<string, unknown>) => (
-        <Typography variant='body2' color='text.secondary'>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
           {new Date((row as any).archived_at).toLocaleString('zh-CN')}
         </Typography>
       ),

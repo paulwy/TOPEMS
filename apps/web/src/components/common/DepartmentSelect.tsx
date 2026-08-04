@@ -197,52 +197,50 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
             <ListItemText primary='暂无部门' />
           </MenuItem>
         ) : (
-          flattenedDepartments
-            .filter(isVisible)
-            .map((dept) => {
-              const isSelected = selectedIds.includes(dept.id);
-              const hasChildren = dept.children && dept.children.length > 0;
-              const isExpanded = expandedIds.has(dept.id);
-              const depth = (dept as any).depth || 0;
+          flattenedDepartments.filter(isVisible).map((dept) => {
+            const isSelected = selectedIds.includes(dept.id);
+            const hasChildren = dept.children && dept.children.length > 0;
+            const isExpanded = expandedIds.has(dept.id);
+            const depth = (dept as any).depth || 0;
 
-              return (
-                <MenuItem
-                  key={dept.id}
-                  onClick={() => {
-                    if (hasChildren) {
-                      handleToggleExpand(dept.id);
-                    }
-                    handleSelect(dept);
-                  }}
-                  selected={isSelected}
-                  sx={{ pl: depth * 2 + 1, minHeight: 'auto', py: 1 }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-                    {hasChildren && (
-                      <Box
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleExpand(dept.id);
-                        }}
-                        sx={{ cursor: 'pointer' }}
-                      >
-                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                      </Box>
-                    )}
-                    {!hasChildren && <Box sx={{ width: 16 }} />}
-                    <Building2
-                      size={16}
-                      sx={{ color: 'text.secondary' }}
-                    />
-                    <ListItemText
-                      primary={dept.name}
-                      sx={{ flex: 1 }}
-                    />
-                    {isSelected && <Check size={16} />}
-                  </Box>
-                </MenuItem>
-              );
-            })
+            return (
+              <MenuItem
+                key={dept.id}
+                onClick={() => {
+                  if (hasChildren) {
+                    handleToggleExpand(dept.id);
+                  }
+                  handleSelect(dept);
+                }}
+                selected={isSelected}
+                sx={{ pl: depth * 2 + 1, minHeight: 'auto', py: 1 }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                  {hasChildren && (
+                    <Box
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleExpand(dept.id);
+                      }}
+                      sx={{ cursor: 'pointer' }}
+                    >
+                      {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    </Box>
+                  )}
+                  {!hasChildren && <Box sx={{ width: 16 }} />}
+                  <Building2
+                    size={16}
+                    sx={{ color: 'text.secondary' }}
+                  />
+                  <ListItemText
+                    primary={dept.name}
+                    sx={{ flex: 1 }}
+                  />
+                  {isSelected && <Check size={16} />}
+                </Box>
+              </MenuItem>
+            );
+          })
         )}
       </Menu>
     </Box>

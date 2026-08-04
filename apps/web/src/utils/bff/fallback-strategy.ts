@@ -28,10 +28,10 @@ const fallbackLogger = logger.child({ prefix: 'BFF-Fallback' });
  * - Offline：离线模式（本地兜底）
  */
 export enum FallbackLevel {
-  Primary = 'primary',
-  Secondary = 'secondary',
-  Tertiary = 'tertiary',
-  Offline = 'offline',
+  PRIMARY = 'primary',
+  SECONDARY = 'secondary',
+  TERTIARY = 'tertiary',
+  OFFLINE = 'offline',
 }
 
 // ==================== 降级上下文 ====================
@@ -133,7 +133,7 @@ export interface FallbackStats {
  */
 export class GraphqlToRestFallback<T = unknown> implements FallbackStrategy<T> {
   name = 'GraphqlToRestFallback';
-  level = FallbackLevel.Secondary;
+  level = FallbackLevel.SECONDARY;
   priority = 100;
   terminal = false;
 
@@ -168,7 +168,7 @@ export class GraphqlToRestFallback<T = unknown> implements FallbackStrategy<T> {
  */
 export class CacheFallback<T = unknown> implements FallbackStrategy<T> {
   name = 'CacheFallback';
-  level = FallbackLevel.Tertiary;
+  level = FallbackLevel.TERTIARY;
   priority = 80;
   terminal = false;
 
@@ -199,7 +199,7 @@ export class CacheFallback<T = unknown> implements FallbackStrategy<T> {
  */
 export class UIFallback<T = unknown> implements FallbackStrategy<T> {
   name = 'UIFallback';
-  level = FallbackLevel.Tertiary;
+  level = FallbackLevel.TERTIARY;
   priority = 10;
   terminal = true;
 
@@ -226,7 +226,7 @@ export class UIFallback<T = unknown> implements FallbackStrategy<T> {
  */
 export class OfflineFallback<T = unknown> implements FallbackStrategy<T> {
   name = 'OfflineFallback';
-  level = FallbackLevel.Offline;
+  level = FallbackLevel.OFFLINE;
   priority = 90;
   terminal = true;
 
@@ -283,10 +283,10 @@ export class FallbackManager {
   /** 获取所有已注册策略（按级别 + 优先级排序） */
   getStrategies(): FallbackStrategy[] {
     const levelOrder: Record<FallbackLevel, number> = {
-      [FallbackLevel.Primary]: 0,
-      [FallbackLevel.Secondary]: 1,
-      [FallbackLevel.Tertiary]: 2,
-      [FallbackLevel.Offline]: 3,
+      [FallbackLevel.PRIMARY]: 0,
+      [FallbackLevel.SECONDARY]: 1,
+      [FallbackLevel.TERTIARY]: 2,
+      [FallbackLevel.OFFLINE]: 3,
     };
     return Array.from(this.strategies.values()).sort((a, b) => {
       const levelDiff = levelOrder[a.level] - levelOrder[b.level];
@@ -315,7 +315,7 @@ export class FallbackManager {
       if (
         typeof navigator !== 'undefined' &&
         navigator.onLine === false &&
-        strategy.level !== FallbackLevel.Offline
+        strategy.level !== FallbackLevel.OFFLINE
       ) {
         continue;
       }
@@ -380,7 +380,7 @@ export class FallbackManager {
     const totalMs = Date.now() - startTime;
     return {
       success: false,
-      level: FallbackLevel.Offline,
+      level: FallbackLevel.OFFLINE,
       strategyName: 'none',
       durationMs: totalMs,
       reason: context.error instanceof Error ? context.error.message : '所有降级策略均失败',
@@ -394,17 +394,17 @@ export class FallbackManager {
    */
   getFallbackLevel(error: unknown): FallbackLevel {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-      return FallbackLevel.Offline;
+      return FallbackLevel.OFFLINE;
     }
-    if (!error) return FallbackLevel.Primary;
+    if (!error) return FallbackLevel.PRIMARY;
     const msg = error instanceof Error ? error.message : String(error);
     if (msg.includes('GraphQL') || msg.includes('graphql')) {
-      return FallbackLevel.Secondary;
+      return FallbackLevel.SECONDARY;
     }
     if (msg.includes('Network') || msg.includes('Failed to fetch') || msg.includes('Timeout')) {
-      return FallbackLevel.Tertiary;
+      return FallbackLevel.TERTIARY;
     }
-    return FallbackLevel.Tertiary;
+    return FallbackLevel.TERTIARY;
   }
 
   // ---- 记录与统计 ----
@@ -430,10 +430,10 @@ export class FallbackManager {
     const successful = this.records.filter((r) => r.success).length;
     const failed = total - successful;
     const byLevel: Record<FallbackLevel, number> = {
-      [FallbackLevel.Primary]: 0,
-      [FallbackLevel.Secondary]: 0,
-      [FallbackLevel.Tertiary]: 0,
-      [FallbackLevel.Offline]: 0,
+      [FallbackLevel.PRIMARY]: 0,
+      [FallbackLevel.SECONDARY]: 0,
+      [FallbackLevel.TERTIARY]: 0,
+      [FallbackLevel.OFFLINE]: 0,
     };
     const byStrategy: Record<string, number> = {};
     let lastFallbackAt: string | null = null;

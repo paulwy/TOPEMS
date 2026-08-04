@@ -24,10 +24,10 @@
 
 /** 模块加载状态 */
 export enum ModuleLoadStatus {
-  Unloaded = 'unloaded',
-  Loading = 'loading',
-  Loaded = 'loaded',
-  Failed = 'failed',
+  UNLOADED = 'unloaded',
+  LOADING = 'loading',
+  LOADED = 'loaded',
+  FAILED = 'failed',
 }
 
 /** 动态加载器配置 */
@@ -53,7 +53,7 @@ export interface RuntimeModule {
   /** 模块远程 URL（可选，用于动态 import） */
   url?: string;
   /** 加载函数（动态 import 或自定义 loader） */
-  loader_fn: () => Promise<any>;
+  loaderFn: () => Promise<any>;
   /** 已加载的模块实例 */
   instance?: any;
   /** 当前加载状态 */
@@ -125,8 +125,8 @@ export class DynamicModuleLoader {
       id,
       name: name || id,
       url,
-      loader_fn: loader,
-      status: ModuleLoadStatus.Unloaded,
+      loaderFn: loader,
+      status: ModuleLoadStatus.UNLOADED,
       retry_count: 0,
     };
     this.modules.set(id, mod);
@@ -140,7 +140,7 @@ export class DynamicModuleLoader {
   unregisterModule(id: string): boolean {
     const mod = this.modules.get(id);
     if (!mod) return false;
-    if (mod.status === ModuleLoadStatus.Loaded) {
+    if (mod.status === ModuleLoadStatus.LOADED) {
       this.unloadModule(id);
     }
     this.loadingPromises.delete(id);
@@ -160,7 +160,7 @@ export class DynamicModuleLoader {
     }
 
     // 缓存命中：已加载则直接返回
-    if (this.config.cache_enabled && mod.status === ModuleLoadStatus.Loaded && mod.instance) {
+    if (this.config.cache_enabled && mod.status === ModuleLoadStatus.LOADED && mod.instance) {
       return mod.instance;
     }
 
@@ -212,7 +212,7 @@ export class DynamicModuleLoader {
     if (!mod) return false;
 
     mod.instance = undefined;
-    mod.status = ModuleLoadStatus.Unloaded;
+    mod.status = ModuleLoadStatus.UNLOADED;
     mod.loaded_at = undefined;
     mod.load_duration = undefined;
     mod.error = undefined;
@@ -241,7 +241,7 @@ export class DynamicModuleLoader {
 
   /** 获取所有已加载的模块 */
   getLoadedModules(): RuntimeModule[] {
-    return Array.from(this.modules.values()).filter((m) => m.status === ModuleLoadStatus.Loaded);
+    return Array.from(this.modules.values()).filter((m) => m.status === ModuleLoadStatus.LOADED);
   }
 
   /** 获取所有已注册的模块 */
@@ -330,7 +330,7 @@ export class DynamicModuleLoader {
   /** 带重试的加载流程 */
   private async doLoadWithRetry(id: string): Promise<any> {
     const mod = this.modules.get(id)!;
-    mod.status = ModuleLoadStatus.Loading;
+    mod.status = ModuleLoadStatus.LOADING;
     mod.error = undefined;
     mod.retry_count = 0;
     this.notifyListeners(mod);
@@ -342,7 +342,7 @@ export class DynamicModuleLoader {
       try {
         const instance = await this.doLoadWithTimeout(id);
         mod.instance = instance;
-        mod.status = ModuleLoadStatus.Loaded;
+        mod.status = ModuleLoadStatus.LOADED;
         mod.loaded_at = Date.now();
         mod.load_duration = mod.loaded_at - startTime;
         mod.retry_count = attempt;
@@ -361,7 +361,7 @@ export class DynamicModuleLoader {
       }
     }
 
-    mod.status = ModuleLoadStatus.Failed;
+    mod.status = ModuleLoadStatus.FAILED;
     mod.error = lastError ?? new Error('未知加载错误');
     mod.load_duration = Date.now() - startTime;
     this.notifyListeners(mod);
@@ -379,7 +379,7 @@ export class DynamicModuleLoader {
       }, timeoutMs);
 
       mod
-        .loader_fn()
+        .loaderFn()
         .then((instance) => {
           clearTimeout(timer);
           resolve(instance);

@@ -688,7 +688,7 @@ export interface TransferOrderItem {
   specification?: string;
   batch_number?: string;
   unit: string;
-  planned_quantity: number;
+  plannedQuantity: number;
   shipped_quantity: number;
   received_quantity: number;
   unit_price?: number;
@@ -720,7 +720,7 @@ export interface CreateTransferOrderItemRequest {
   specification?: string;
   batch_number?: string;
   unit: string;
-  planned_quantity: number;
+  plannedQuantity: number;
   unit_price?: number;
   from_location_id?: string;
   to_location_id?: string;

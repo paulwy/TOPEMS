@@ -97,7 +97,7 @@ export class AISecurityAuditor {
     return AISecurityAuditor.instance;
   }
 
-  run_audit(
+  runAudit(
     modelId: string,
     options?: {
       types?: AuditType[];
@@ -158,16 +158,16 @@ export class AISecurityAuditor {
     return result;
   }
 
-  get_audit_result(auditId: string): AuditResult | null {
+  getAuditResult(auditId: string): AuditResult | null {
     return this.audits.get(auditId) ?? null;
   }
 
-  list_audits(limit?: number): AuditResult[] {
+  listAudits(limit?: number): AuditResult[] {
     const results = Array.from(this.audits.values()).sort((a, b) => b.timestamp - a.timestamp);
     return limit ? results.slice(0, limit) : results;
   }
 
-  get_model_audits(modelId: string): AuditResult[] {
+  getModelAudits(modelId: string): AuditResult[] {
     const auditIds = this.modelAudits.get(modelId) ?? [];
     return auditIds
       .map((id) => this.audits.get(id))
@@ -175,7 +175,7 @@ export class AISecurityAuditor {
       .sort((a, b) => b.timestamp - a.timestamp);
   }
 
-  create_audit_rule(rule: Omit<AuditRule, 'id'>): AuditRule {
+  createAuditRule(rule: Omit<AuditRule, 'id'>): AuditRule {
     const newRule: AuditRule = {
       ...rule,
       id: `rule-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -184,18 +184,18 @@ export class AISecurityAuditor {
     return newRule;
   }
 
-  delete_audit_rule(ruleId: string): boolean {
+  deleteAuditRule(ruleId: string): boolean {
     return this.rules.delete(ruleId);
   }
 
-  get_audit_summary(): {
+  getAuditSummary(): {
     total_audits: number;
     passed_audits: number;
     failed_audits: number;
     avg_score: number;
-    by_type: Record<AuditType, number>;
-    by_severity: Record<AuditSeverity, number>;
-    top_findings: Array<{ type: AuditType; count: number }>;
+    byType: Record<AuditType, number>;
+    bySeverity: Record<AuditSeverity, number>;
+    topFindings: Array<{ type: AuditType; count: number }>;
   } {
     const audits = Array.from(this.audits.values());
     const total = audits.length;
@@ -203,13 +203,13 @@ export class AISecurityAuditor {
     const failed = total - passed;
     const avgScore = total > 0 ? audits.reduce((sum, a) => sum + a.score, 0) / total : 0;
 
-    const by_type: Record<AuditType, number> = {
+    const byType: Record<AuditType, number> = {
       InputValidation: 0,
       OutputFilter: 0,
       PromptInjection: 0,
       DataLeakage: 0,
     };
-    const by_severity: Record<AuditSeverity, number> = {
+    const bySeverity: Record<AuditSeverity, number> = {
       critical: 0,
       high: 0,
       medium: 0,
@@ -219,8 +219,8 @@ export class AISecurityAuditor {
 
     for (const audit of audits) {
       for (const finding of audit.findings) {
-        by_type[finding.type]++;
-        by_severity[finding.severity]++;
+        byType[finding.type]++;
+        bySeverity[finding.severity]++;
       }
     }
 
@@ -230,7 +230,7 @@ export class AISecurityAuditor {
         typeCounts.set(finding.type, (typeCounts.get(finding.type) ?? 0) + 1);
       }
     }
-    const top_findings = Array.from(typeCounts.entries())
+    const topFindings = Array.from(typeCounts.entries())
       .map(([type, count]) => ({ type, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
@@ -240,13 +240,13 @@ export class AISecurityAuditor {
       passed_audits: passed,
       failed_audits: failed,
       avg_score: Math.round(avgScore * 100) / 100,
-      by_type,
-      by_severity,
-      top_findings,
+      byType,
+      bySeverity,
+      topFindings,
     };
   }
 
-  list_rules(): AuditRule[] {
+  listRules(): AuditRule[] {
     return Array.from(this.rules.values());
   }
 

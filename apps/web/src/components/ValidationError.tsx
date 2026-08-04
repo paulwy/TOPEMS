@@ -59,7 +59,7 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
             style={{
               fontSize: '14px',
               fontWeight: 500,
-              color: '#991b1b',
+              color: 'error.800',
               marginBottom: '4px',
             }}
           >
@@ -267,7 +267,7 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose
             />
           </svg>
         </div>
-        <span style={{ color: '#166534', fontWeight: 500 }}>{message}</span>
+        <span style={{ color: 'success.800', fontWeight: 500 }}>{message}</span>
       </div>
       {onClose && (
         <button

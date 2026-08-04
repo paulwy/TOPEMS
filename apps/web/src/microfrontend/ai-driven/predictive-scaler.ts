@@ -13,18 +13,18 @@
 // ==================== 枚举 ====================
 
 export enum ScalingAction {
-  ScaleUp = 'scale-up',
-  ScaleDown = 'scale-down',
-  NoAction = 'no-action',
-  EmergencyScaleUp = 'emergency-scale-up',
+  SCALEUP = 'scale-up',
+  SCALEDOWN = 'scale-down',
+  NOACTION = 'no-action',
+  EMERGENCYSCALEUP = 'emergency-scale-up',
 }
 
 export enum ModelAlgorithm {
-  LinearRegression = 'linear-regression',
-  ExponentialSmoothing = 'exponential-smoothing',
-  MovingAverage = 'moving-average',
-  SeasonalARIMA = 'seasonal-arima',
-  Custom = 'custom',
+  LINEARREGRESSION = 'linear-regression',
+  EXPONENTIALSMOOTHING = 'exponential-smoothing',
+  MOVINGAVERAGE = 'moving-average',
+  SEASONALARIMA = 'seasonal-arima',
+  CUSTOM = 'custom',
 }
 
 // ==================== 接口 ====================
@@ -110,7 +110,7 @@ const DEFAULT_CONFIG: PredictiveScalerConfig = {
   minTrainingPoints: 10,
   confidenceThreshold: 0.7,
   emergencyThreshold: 0.9,
-  defaultAlgorithm: ModelAlgorithm.LinearRegression,
+  defaultAlgorithm: ModelAlgorithm.LINEARREGRESSION,
 };
 
 // ==================== 扩展历史记录 ====================
@@ -248,16 +248,20 @@ export class PredictiveScaler {
   ): { action: ScalingAction; targetInstances: number; prediction: ScalingPrediction | null } {
     const policy = this.policies.get(policyId);
     if (!policy || !policy.enabled) {
-      return { action: ScalingAction.NoAction, targetInstances: 0, prediction: null };
+      return { action: ScalingAction.NOACTION, targetInstances: 0, prediction: null };
     }
 
     const now = Date.now();
     const lastScale = this.lastScalingTime.get(policyId) || 0;
     if (now - lastScale < policy.cooldown_seconds * 1000) {
-      return { action: ScalingAction.NoAction, targetInstances: 0, prediction: null };
+      return { action: ScalingAction.NOACTION, targetInstances: 0, prediction: null };
     }
 
-    const prediction = this.predict(policy.target_metric, { module: policy.name }, policy.prediction_window_minutes);
+    const prediction = this.predict(
+      policy.target_metric,
+      { module: policy.name },
+      policy.prediction_window_minutes
+    );
     const effectiveLoad = prediction?.predicted_load ?? currentLoad;
     const moduleKey = policy.name;
     const currentInstances = this.currentInstances.get(moduleKey) ?? policy.min_instances;
@@ -266,23 +270,30 @@ export class PredictiveScaler {
     let targetInstances = currentInstances;
 
     if (effectiveLoad >= policy.scale_up_threshold * this.config.emergencyThreshold) {
-      action = ScalingAction.EmergencyScaleUp;
+      action = ScalingAction.EMERGENCYSCALEUP;
       targetInstances = Math.min(
         policy.max_instances,
         Math.ceil(currentInstances * (1 + this.calcScalingFactor(effectiveLoad, action, moduleKey)))
       );
     } else if (effectiveLoad >= policy.scale_up_threshold) {
-      action = ScalingAction.ScaleUp;
+      action = ScalingAction.SCALEUP;
       targetInstances = Math.min(policy.max_instances, currentInstances + 1);
     } else if (effectiveLoad <= policy.scale_down_threshold) {
-      action = ScalingAction.ScaleDown;
+      action = ScalingAction.SCALEDOWN;
       targetInstances = Math.max(policy.min_instances, currentInstances - 1);
     } else {
-      action = ScalingAction.NoAction;
+      action = ScalingAction.NOACTION;
     }
 
-    if (action !== ScalingAction.NoAction) {
-      this.recordScalingAction(policyId, action, currentInstances, targetInstances, effectiveLoad, prediction?.confidence ?? 0);
+    if (action !== ScalingAction.NOACTION) {
+      this.recordScalingAction(
+        policyId,
+        action,
+        currentInstances,
+        targetInstances,
+        effectiveLoad,
+        prediction?.confidence ?? 0
+      );
       this.currentInstances.set(moduleKey, targetInstances);
       this.lastScalingTime.set(policyId, now);
     }
@@ -292,22 +303,27 @@ export class PredictiveScaler {
 
   // ------------------- 生成容量规划 -------------------
 
-  generateCapacityPlan(
-    policyId: string,
-    planHorizonMinutes: number = 60
-  ): CapacityPlan | null {
+  generateCapacityPlan(policyId: string, planHorizonMinutes: number = 60): CapacityPlan | null {
     const policy = this.policies.get(policyId);
     if (!policy) return null;
 
-    const prediction = this.predict(policy.target_metric, { module: policy.name }, planHorizonMinutes);
+    const prediction = this.predict(
+      policy.target_metric,
+      { module: policy.name },
+      planHorizonMinutes
+    );
     if (!prediction) return null;
 
     const currentInstances = this.currentInstances.get(policy.name) ?? policy.min_instances;
     const currentCapacity = currentInstances * policy.scale_up_threshold;
     const gap = prediction.predicted_load - currentCapacity;
-    const recommendedInstances = gap > 0
-      ? Math.min(policy.max_instances, Math.ceil(prediction.predicted_load / policy.scale_up_threshold))
-      : Math.max(policy.min_instances, currentInstances);
+    const recommendedInstances =
+      gap > 0
+        ? Math.min(
+            policy.max_instances,
+            Math.ceil(prediction.predicted_load / policy.scale_up_threshold)
+          )
+        : Math.max(policy.min_instances, currentInstances);
 
     return {
       time_range: {
@@ -383,7 +399,9 @@ export class PredictiveScaler {
   createPolicy(
     name: string,
     targetMetric: string,
-    options: Partial<Omit<ScalingPolicy, 'policy_id' | 'name' | 'target_metric' | 'created_at' | 'last_modified'>> = {}
+    options: Partial<
+      Omit<ScalingPolicy, 'policy_id' | 'name' | 'target_metric' | 'created_at' | 'last_modified'>
+    > = {}
   ): ScalingPolicy {
     const policyId = `policy-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     const now = Date.now();
@@ -396,7 +414,8 @@ export class PredictiveScaler {
       scale_up_threshold: options.scale_up_threshold ?? 80,
       scale_down_threshold: options.scale_down_threshold ?? 30,
       cooldown_seconds: options.cooldown_seconds ?? this.config.defaultCooldownSeconds,
-      prediction_window_minutes: options.prediction_window_minutes ?? this.config.defaultPredictionWindowMinutes,
+      prediction_window_minutes:
+        options.prediction_window_minutes ?? this.config.defaultPredictionWindowMinutes,
       enabled: options.enabled ?? true,
       created_at: now,
       last_modified: now,
@@ -430,17 +449,21 @@ export class PredictiveScaler {
 
   getStats(): PredictiveScalerStats {
     const allAccuracy = Array.from(this.accuracyRecords.values()).flat();
-    const avgAccuracy = allAccuracy.length > 0
-      ? allAccuracy.reduce((sum, r) => {
-          const denom = Math.abs(r.actual) || 1;
-          return sum + (1 - Math.abs(r.predicted - r.actual) / denom);
-        }, 0) / allAccuracy.length
-      : 0;
+    const avgAccuracy =
+      allAccuracy.length > 0
+        ? allAccuracy.reduce((sum, r) => {
+            const denom = Math.abs(r.actual) || 1;
+            return sum + (1 - Math.abs(r.predicted - r.actual) / denom);
+          }, 0) / allAccuracy.length
+        : 0;
 
     const lastEntry = this.scalingHistory[0];
 
     return {
-      total_metrics_recorded: Array.from(this.metricHistory.values()).reduce((s, h) => s + h.length, 0),
+      total_metrics_recorded: Array.from(this.metricHistory.values()).reduce(
+        (s, h) => s + h.length,
+        0
+      ),
       total_predictions_made: allAccuracy.length,
       active_models: this.models.size,
       active_policies: Array.from(this.policies.values()).filter((p) => p.enabled).length,
@@ -483,10 +506,13 @@ export class PredictiveScaler {
     return tagStr ? `${metricName}|${tagStr}` : metricName;
   }
 
-  private extractParameters(data: TimeSeriesPoint[], algorithm: ModelAlgorithm): Record<string, number> {
+  private extractParameters(
+    data: TimeSeriesPoint[],
+    algorithm: ModelAlgorithm
+  ): Record<string, number> {
     const values = data.map((d) => d.value);
     switch (algorithm) {
-      case ModelAlgorithm.LinearRegression: {
+      case ModelAlgorithm.LINEARREGRESSION: {
         const n = values.length;
         const xs = data.map((_, i) => i);
         const sumX = xs.reduce((a, b) => a + b, 0);
@@ -497,21 +523,21 @@ export class PredictiveScaler {
         const intercept = (sumY - slope * sumX) / n;
         return { slope, intercept, n };
       }
-      case ModelAlgorithm.ExponentialSmoothing: {
+      case ModelAlgorithm.EXPONENTIALSMOOTHING: {
         const alpha = 0.3;
         let smoothed = values[0];
         for (let i = 1; i < values.length; i++) {
           smoothed = alpha * values[i] + (1 - alpha) * smoothed;
         }
-        return { alpha, last_smoothed: smoothed };
+        return { alpha, lastSmoothed: smoothed };
       }
-      case ModelAlgorithm.MovingAverage: {
+      case ModelAlgorithm.MOVINGAVERAGE: {
         const window = Math.min(10, Math.floor(values.length / 2));
         const recent = values.slice(-window);
         const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
         return { window, average: avg };
       }
-      case ModelAlgorithm.SeasonalARIMA: {
+      case ModelAlgorithm.SEASONALARIMA: {
         const period = Math.min(24, Math.floor(values.length / 4));
         const seasonal: number[] = [];
         for (let i = 0; i < period; i++) {
@@ -520,14 +546,13 @@ export class PredictiveScaler {
             seasonal.push(seasonValues.reduce((a, b) => a + b, 0) / seasonValues.length);
           }
         }
-        const seasonalMean = seasonal.length > 0
-          ? seasonal.reduce((a, b) => a + b, 0) / seasonal.length
-          : 0;
-        return { period, seasonal_mean: seasonalMean };
+        const seasonalMean =
+          seasonal.length > 0 ? seasonal.reduce((a, b) => a + b, 0) / seasonal.length : 0;
+        return { period, seasonalMean };
       }
-      case ModelAlgorithm.Custom:
+      case ModelAlgorithm.CUSTOM:
       default:
-        return { last_value: values[values.length - 1] };
+        return { lastValue: values[values.length - 1] };
     }
   }
 
@@ -540,28 +565,28 @@ export class PredictiveScaler {
     const steps = Math.ceil(windowMinutes / 5);
 
     switch (model.algorithm) {
-      case ModelAlgorithm.LinearRegression: {
+      case ModelAlgorithm.LINEARREGRESSION: {
         const { slope, intercept } = model.parameters;
         const lastIndex = values.length - 1;
         return Math.max(0, intercept + slope * (lastIndex + steps));
       }
-      case ModelAlgorithm.ExponentialSmoothing: {
-        const { last_smoothed } = model.parameters;
-        return Math.max(0, last_smoothed);
+      case ModelAlgorithm.EXPONENTIALSMOOTHING: {
+        const { lastSmoothed } = model.parameters;
+        return Math.max(0, lastSmoothed);
       }
-      case ModelAlgorithm.MovingAverage: {
+      case ModelAlgorithm.MOVINGAVERAGE: {
         const { average } = model.parameters;
         return Math.max(0, average);
       }
-      case ModelAlgorithm.SeasonalARIMA: {
-        const { seasonal_mean } = model.parameters;
+      case ModelAlgorithm.SEASONALARIMA: {
+        const { seasonalMean } = model.parameters;
         const lastValue = values[values.length - 1];
-        return Math.max(0, (lastValue + seasonal_mean) / 2);
+        return Math.max(0, (lastValue + seasonalMean) / 2);
       }
-      case ModelAlgorithm.Custom:
+      case ModelAlgorithm.CUSTOM:
       default: {
-        const { last_value } = model.parameters;
-        return Math.max(0, last_value);
+        const { lastValue } = model.parameters;
+        return Math.max(0, lastValue);
       }
     }
   }
@@ -614,37 +639,33 @@ export class PredictiveScaler {
       ? Array.from(this.policies.values()).find((p) => p.name === module)
       : undefined;
 
-    if (!policy) return ScalingAction.NoAction;
+    if (!policy) return ScalingAction.NOACTION;
 
     if (predictedLoad >= policy.scale_up_threshold * this.config.emergencyThreshold) {
-      return ScalingAction.EmergencyScaleUp;
+      return ScalingAction.EMERGENCYSCALEUP;
     }
     if (predictedLoad >= policy.scale_up_threshold) {
-      return ScalingAction.ScaleUp;
+      return ScalingAction.SCALEUP;
     }
     if (predictedLoad <= policy.scale_down_threshold) {
-      return ScalingAction.ScaleDown;
+      return ScalingAction.SCALEDOWN;
     }
-    return ScalingAction.NoAction;
+    return ScalingAction.NOACTION;
   }
 
-  private calcScalingFactor(
-    predictedLoad: number,
-    action: ScalingAction,
-    module?: string
-  ): number {
+  private calcScalingFactor(predictedLoad: number, action: ScalingAction, module?: string): number {
     const policy = module
       ? Array.from(this.policies.values()).find((p) => p.name === module)
       : undefined;
     if (!policy) return 0;
 
-    if (action === ScalingAction.EmergencyScaleUp) {
+    if (action === ScalingAction.EMERGENCYSCALEUP) {
       return Math.ceil(predictedLoad / policy.scale_up_threshold) - 1;
     }
-    if (action === ScalingAction.ScaleUp) {
+    if (action === ScalingAction.SCALEUP) {
       return 1;
     }
-    if (action === ScalingAction.ScaleDown) {
+    if (action === ScalingAction.SCALEDOWN) {
       return -1;
     }
     return 0;
@@ -679,7 +700,9 @@ export class PredictiveScaler {
 
   private evaluateAccuracy(metricKey: string, actualValue: number, timestamp: number): void {
     const records = this.accuracyRecords.get(metricKey) || [];
-    const recentPredictions = records.filter((r) => Math.abs(r.timestamp - timestamp) <= 5 * 60 * 1000);
+    const recentPredictions = records.filter(
+      (r) => Math.abs(r.timestamp - timestamp) <= 5 * 60 * 1000
+    );
 
     for (const record of recentPredictions) {
       record.actual = actualValue;

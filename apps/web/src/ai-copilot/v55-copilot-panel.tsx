@@ -230,7 +230,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       ...prev,
     ]);
 
-    knowledgeQA.add_document({
+    knowledgeQA.addDocument({
       title: 'React Hooks 使用指南',
       content:
         'React Hooks 是 React 16.8 引入的新特性。useState 用于管理组件状态，useEffect 用于处理副作用，useContext 用于访问 Context，useReducer 用于复杂状态管理。自定义 Hooks 可以将组件逻辑提取为可复用函数。使用规则：只能在函数组件顶层调用，不能在条件或循环内调用。',
@@ -238,7 +238,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       tags: ['react', 'hooks', 'frontend'],
     });
 
-    knowledgeQA.add_document({
+    knowledgeQA.addDocument({
       title: 'TypeScript 高级类型',
       content:
         'TypeScript 高级类型包括：条件类型（T extends U ? X : Y）、映射类型（{ [K in keyof T]: ... }）、模板字面量类型、推断类型（infer）。实用类型（Utility Types）包括 Partial、Required、Pick、Omit、Record、ReturnType 等。掌握这些类型工具可以编写类型安全的代码。',
@@ -246,7 +246,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       tags: ['typescript', 'types', 'programming'],
     });
 
-    knowledgeQA.add_document({
+    knowledgeQA.addDocument({
       title: 'MUI Material Design 组件库',
       content:
         'MUI（原 Material-UI）是基于 Material Design 规范的 React 组件库。核心组件包括：Layout（Box, Container, Grid, Stack）、Data Display（Typography, Avatar, Badge, Table）、Feedback（Dialog, Snackbar, Alert）、Input（TextField, Select, Checkbox）、Navigation（Tabs, Menu, Pagination）。使用 ThemeProvider 进行主题定制。',
@@ -255,7 +255,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     });
 
     const unsub = knowledgeQA.on((entry) => {
-      setQaStats(knowledgeQA.get_stats());
+      setQaStats(knowledgeQA.getStats());
       setRecentActivity((prev) => [
         {
           type: 'qa',
@@ -273,18 +273,18 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
-    const results = codeNavigator.search_code(searchQuery, 20);
+    const results = codeNavigator.searchCode(searchQuery, 20);
     setSearchResults(results);
 
-    const sym = codeNavigator.find_symbol(searchQuery);
+    const sym = codeNavigator.findSymbol(searchQuery);
     setSymbolLookup(sym);
 
     if (sym) {
-      setRefs(codeNavigator.get_references(searchQuery));
-      const structure = codeNavigator.get_file_structure(sym.file);
+      setRefs(codeNavigator.getReferences(searchQuery));
+      const structure = codeNavigator.getFileStructure(sym.file);
       if (structure) {
         setSelectedFile(structure);
-        setGraphData(codeNavigator.get_import_graph(sym.file));
+        setGraphData(codeNavigator.getImportGraph(sym.file));
       }
     }
 
@@ -300,19 +300,19 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleFindDefinition = () => {
     if (!searchQuery.trim()) return;
-    const def = codeNavigator.get_definition(searchQuery);
+    const def = codeNavigator.getDefinition(searchQuery);
     if (def) {
-      const structure = codeNavigator.get_file_structure(def.file);
+      const structure = codeNavigator.getFileStructure(def.file);
       if (structure) {
         setSelectedFile(structure);
-        setGraphData(codeNavigator.get_import_graph(def.file));
+        setGraphData(codeNavigator.getImportGraph(def.file));
       }
     }
   };
 
   const handleGenerateDoc = () => {
     if (!genName.trim()) return;
-    const result = docGenerator.generate_doc(genKind, genName, {
+    const result = docGenerator.generateDoc(genKind, genName, {
       description: genDesc || `${genName} 的文档说明`,
       params:
         genKind === 'function' || genKind === 'method'
@@ -331,7 +331,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   };
 
   const handleGenerateChangelog = () => {
-    const result = docGenerator.generate_changelog(changelogVersion, changelogEntries);
+    const result = docGenerator.generateChangelog(changelogVersion, changelogEntries);
     setReadmeResult(result);
 
     setRecentActivity((prev) => [
@@ -345,7 +345,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   };
 
   const handleGenerateReadme = () => {
-    const result = docGenerator.generate_readme('ai-copilot', {
+    const result = docGenerator.generateReadme('ai-copilot', {
       description: 'AI Copilot 是 V55.0 前端智能助手，提供代码导航、文档生成和知识问答功能。',
       features: [
         '智能代码索引和搜索',
@@ -358,19 +358,19 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       usage: `import { codeNavigator, docGenerator, knowledgeQA } from './ai-copilot';`,
       api: [
         {
-          name: 'search_code',
+          name: 'searchCode',
           description: '搜索代码库',
-          signature: 'search_code(query: string): SearchResult[]',
+          signature: 'searchCode(query: string): SearchResult[]',
         },
         {
-          name: 'find_symbol',
+          name: 'findSymbol',
           description: '查找符号定义',
-          signature: 'find_symbol(name: string): SymbolInfo | null',
+          signature: 'findSymbol(name: string): SymbolInfo | null',
         },
         {
-          name: 'generate_doc',
+          name: 'generateDoc',
           description: '生成文档注释',
-          signature: 'generate_doc(kind, name, options): string',
+          signature: 'generateDoc(kind, name, options): string',
         },
         { name: 'ask', description: '知识问答', signature: 'ask(question: string): QAResult' },
       ],
@@ -400,8 +400,8 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     await new Promise((resolve) => setTimeout(resolve, 400));
 
     const result: QAResult = knowledgeQA.ask(input);
-    setQaHistory(knowledgeQA.get_history());
-    setQaStats(knowledgeQA.get_stats());
+    setQaHistory(knowledgeQA.getHistory());
+    setQaStats(knowledgeQA.getStats());
 
     const assistantMsg: ChatMessage = {
       id: `assistant-${Date.now()}`,
@@ -421,7 +421,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
-    knowledgeQA.add_document({
+    knowledgeQA.addDocument({
       title: newDocTitle,
       content: newDocContent,
       source: '用户上传',
@@ -432,7 +432,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setNewDocTitle('');
     setNewDocContent('');
     setNewDocTags('');
-    setQaStats(knowledgeQA.get_stats());
+    setQaStats(knowledgeQA.getStats());
 
     setRecentActivity((prev) => [
       { type: 'doc', description: `添加文档: ${newDocTitle}`, timestamp: Date.now() },
@@ -472,10 +472,10 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   };
 
   const clearHistory = () => {
-    knowledgeQA.clear_history();
+    knowledgeQA.clearHistory();
     setQaHistory([]);
     setMessages([]);
-    setQaStats(knowledgeQA.get_stats());
+    setQaStats(knowledgeQA.getStats());
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -497,7 +497,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.6)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -573,10 +573,10 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               selectedFile={selectedFile}
               graphData={graphData}
               indexed={indexed}
-              stats={codeNavigator.get_stats()}
+              stats={codeNavigator.getStats()}
               onSelectFile={(f) => {
                 setSelectedFile(f);
-                setGraphData(codeNavigator.get_import_graph(f.path));
+                setGraphData(codeNavigator.getImportGraph(f.path));
               }}
             />
           )}
@@ -622,7 +622,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               newDocTags={newDocTags}
               onNewDocTagsChange={setNewDocTags}
               onAddDocument={handleAddDocument}
-              documents={knowledgeQA.get_documents()}
+              documents={knowledgeQA.getDocuments()}
             />
           )}
 
@@ -644,7 +644,7 @@ const V55PanelHeader: React.FC<{ onClose: () => void; indexed: boolean }> = ({
       alignItems: 'center',
       justifyContent: 'space-between',
       background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%)',
-      color: 'white',
+      color: 'common.white',
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -653,7 +653,7 @@ const V55PanelHeader: React.FC<{ onClose: () => void; indexed: boolean }> = ({
           width: 40,
           height: 40,
           borderRadius: 2,
-          bgcolor: 'rgba(255,255,255,0.2)',
+          bgcolor: 'action.disabledBackground',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -683,7 +683,7 @@ const V55PanelHeader: React.FC<{ onClose: () => void; indexed: boolean }> = ({
         sx={{
           '& .MuiBadge-badge': {
             bgcolor: indexed ? '#10b981' : '#f59e0b',
-            color: '#1e293b',
+            color: 'text.primary',
             fontWeight: 700,
             fontSize: 10,
           },
@@ -694,7 +694,7 @@ const V55PanelHeader: React.FC<{ onClose: () => void; indexed: boolean }> = ({
       <IconButton
         size='small'
         onClick={onClose}
-        sx={{ color: 'white' }}
+        sx={{ color: 'common.white' }}
       >
         <XIcon size={20} />
       </IconButton>
@@ -779,7 +779,7 @@ const NavigatorTab: React.FC<{
         sx={{
           '& .MuiOutlinedInput-root': {
             borderRadius: 2,
-            '&:focus-within': { borderColor: '#8b5cf6' },
+            '&:focus-within': { borderColor: 'secondary.500' },
           },
         }}
         onKeyDown={(e) => {
@@ -790,7 +790,7 @@ const NavigatorTab: React.FC<{
         variant='contained'
         startIcon={<Search size={14} />}
         onClick={onSearch}
-        sx={{ bgcolor: '#8b5cf6', '&:hover': { bgcolor: '#7c3aed' } }}
+        sx={{ bgcolor: 'secondary.500', '&:hover': { bgcolor: 'secondary.600' } }}
         size='small'
       >
         搜索
@@ -833,10 +833,10 @@ const NavigatorTab: React.FC<{
                   borderColor: 'divider',
                   borderRadius: 1,
                   cursor: 'pointer',
-                  '&:hover': { bgcolor: '#f3e8ff' },
+                  '&:hover': { bgcolor: 'purple.100' },
                 }}
                 onClick={() => {
-                  const structure = codeNavigator.get_file_structure(result.file);
+                  const structure = codeNavigator.getFileStructure(result.file);
                   if (structure) onSelectFile(structure);
                 }}
               >
@@ -850,7 +850,7 @@ const NavigatorTab: React.FC<{
                   <Chip
                     label={`score: ${result.score.toFixed(1)}`}
                     size='small'
-                    sx={{ fontSize: 10, height: 18, bgcolor: '#ede9fe', color: '#6b21a8' }}
+                    sx={{ fontSize: 10, height: 18, bgcolor: 'secondary.100', color: 'purple.800' }}
                   />
                 </Box>
                 <Typography
@@ -886,11 +886,11 @@ const NavigatorTab: React.FC<{
           <Box>
             <Paper
               elevation={0}
-              sx={{ p: 2, bgcolor: '#f3e8ff', borderRadius: 1, mb: 2 }}
+              sx={{ p: 2, bgcolor: 'purple.100', borderRadius: 1, mb: 2 }}
             >
               <Typography
                 variant='subtitle2'
-                sx={{ fontWeight: 700, color: '#6b21a8' }}
+                sx={{ fontWeight: 700, color: 'purple.800' }}
               >
                 {symbolLookup.name}
               </Typography>
@@ -904,7 +904,7 @@ const NavigatorTab: React.FC<{
                   <Chip
                     label='exported'
                     size='small'
-                    sx={{ fontSize: 10, bgcolor: '#d1fae5', color: '#065f46' }}
+                    sx={{ fontSize: 10, bgcolor: 'success.100', color: 'teal.900' }}
                   />
                 )}
               </Box>
@@ -916,7 +916,7 @@ const NavigatorTab: React.FC<{
                     display: 'block',
                     fontFamily: 'monospace',
                     fontSize: 11,
-                    bgcolor: 'white',
+                    bgcolor: 'common.white',
                     p: 1,
                     borderRadius: 1,
                   }}
@@ -927,7 +927,7 @@ const NavigatorTab: React.FC<{
               {symbolLookup.documentation && (
                 <Typography
                   variant='caption'
-                  sx={{ mt: 1, display: 'block', color: '#6b21a8' }}
+                  sx={{ mt: 1, display: 'block', color: 'purple.800' }}
                 >
                   {symbolLookup.documentation}
                 </Typography>
@@ -966,7 +966,7 @@ const NavigatorTab: React.FC<{
                       fontSize: 11,
                       p: 0.5,
                       borderRadius: 0.5,
-                      '&:hover': { bgcolor: '#f3f4f6' },
+                      '&:hover': { bgcolor: 'grey.100' },
                     }}
                   >
                     <LinkIcon
@@ -1096,7 +1096,7 @@ const NavigatorTab: React.FC<{
                       <Chip
                         label='✓'
                         size='small'
-                        sx={{ fontSize: 10, height: 18, bgcolor: '#d1fae5', color: '#065f46' }}
+                        sx={{ fontSize: 10, height: 18, bgcolor: 'success.100', color: 'teal.900' }}
                       />
                     ) : (
                       <Typography
@@ -1261,7 +1261,7 @@ const GeneratorTab: React.FC<{
                 startIcon={<Sparkles size={14} />}
                 onClick={onGenerate}
                 disabled={!genName.trim()}
-                sx={{ bgcolor: '#8b5cf6', '&:hover': { bgcolor: '#7c3aed' } }}
+                sx={{ bgcolor: 'secondary.500', '&:hover': { bgcolor: 'secondary.600' } }}
                 size='small'
               >
                 生成文档
@@ -1282,7 +1282,7 @@ const GeneratorTab: React.FC<{
                 elevation={0}
                 sx={{
                   p: 2,
-                  bgcolor: '#1e293b',
+                  bgcolor: 'text.primary',
                   borderRadius: 1,
                   maxHeight: 400,
                   overflow: 'auto',
@@ -1291,7 +1291,7 @@ const GeneratorTab: React.FC<{
                     whiteSpace: 'pre-wrap',
                     fontFamily: 'monospace',
                     fontSize: 12,
-                    color: '#e2e8f0',
+                    color: 'divider',
                   },
                 }}
               >
@@ -1397,7 +1397,7 @@ const GeneratorTab: React.FC<{
                 variant='contained'
                 startIcon={<ClipboardList size={14} />}
                 onClick={onGenerateChangelog}
-                sx={{ bgcolor: '#059669', '&:hover': { bgcolor: '#047857' } }}
+                sx={{ bgcolor: 'teal.600', '&:hover': { bgcolor: 'teal.700' } }}
                 size='small'
               >
                 生成 Changelog
@@ -1417,7 +1417,7 @@ const GeneratorTab: React.FC<{
                 elevation={0}
                 sx={{
                   p: 2,
-                  bgcolor: '#f8fafc',
+                  bgcolor: 'background.default',
                   borderRadius: 1,
                   maxHeight: 400,
                   overflow: 'auto',
@@ -1455,7 +1455,7 @@ const GeneratorTab: React.FC<{
               variant='contained'
               startIcon={<BookOpen size={14} />}
               onClick={onGenerateReadme}
-              sx={{ bgcolor: '#8b5cf6', '&:hover': { bgcolor: '#7c3aed' } }}
+              sx={{ bgcolor: 'secondary.500', '&:hover': { bgcolor: 'secondary.600' } }}
               size='small'
             >
               生成 README 模板
@@ -1466,14 +1466,14 @@ const GeneratorTab: React.FC<{
               elevation={0}
               sx={{
                 p: 3,
-                bgcolor: 'white',
+                bgcolor: 'common.white',
                 borderRadius: 1,
                 border: '1px solid',
                 borderColor: 'divider',
                 maxHeight: 500,
                 overflow: 'auto',
                 '& h1, & h2, & h3': { fontWeight: 700 },
-                '& pre': { bgcolor: '#f1f5f9', p: 1, borderRadius: 1, overflow: 'auto' },
+                '& pre': { bgcolor: 'grey.100', p: 1, borderRadius: 1, overflow: 'auto' },
               }}
               dangerouslySetInnerHTML={{
                 __html: readmeResult
@@ -1552,7 +1552,7 @@ const QATab: React.FC<{
       <Stack
         direction='row'
         spacing={2}
-        sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'white' }}
+        sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'common.white' }}
       >
         <Typography
           variant='subtitle2'
@@ -1569,12 +1569,12 @@ const QATab: React.FC<{
         <Chip
           label={`${qaStats.totalDocs} 文档`}
           size='small'
-          sx={{ fontSize: 10, bgcolor: '#d1fae5', color: '#065f46' }}
+          sx={{ fontSize: 10, bgcolor: 'success.100', color: 'teal.900' }}
         />
         <Chip
           label={`${qaStats.totalTags} 标签`}
           size='small'
-          sx={{ fontSize: 10, bgcolor: '#fef3c7', color: '#92400e' }}
+          sx={{ fontSize: 10, bgcolor: 'warning.100', color: 'warning.800' }}
         />
         <Box sx={{ flex: 1 }} />
         <Button
@@ -1597,7 +1597,7 @@ const QATab: React.FC<{
       {showAddDoc && (
         <Paper
           elevation={0}
-          sx={{ p: 2, bgcolor: '#f0f9ff', borderBottom: '1px solid', borderColor: 'divider' }}
+          sx={{ p: 2, bgcolor: 'info.50', borderBottom: '1px solid', borderColor: 'divider' }}
         >
           <Typography
             variant='subtitle2'
@@ -1643,7 +1643,7 @@ const QATab: React.FC<{
                 startIcon={<Plus size={12} />}
                 onClick={onAddDocument}
                 disabled={!newDocTitle.trim() || !newDocContent.trim()}
-                sx={{ bgcolor: '#059669', '&:hover': { bgcolor: '#047857' } }}
+                sx={{ bgcolor: 'teal.600', '&:hover': { bgcolor: 'teal.700' } }}
               >
                 添加
               </Button>
@@ -1666,14 +1666,14 @@ const QATab: React.FC<{
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
-          bgcolor: '#f8fafc',
+          bgcolor: 'background.default',
         }}
       >
         {messages.length === 0 && (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Lightbulb
               size={40}
-              style={{ color: '#8b5cf6', marginBottom: 8 }}
+              style={{ color: 'secondary.500', marginBottom: 8 }}
             />
             <Typography
               variant='body2'
@@ -1694,10 +1694,10 @@ const QATab: React.FC<{
                   onClick={() => onInputChange(q)}
                   sx={{
                     cursor: 'pointer',
-                    bgcolor: '#ede9fe',
-                    color: '#6b21a8',
+                    bgcolor: 'secondary.100',
+                    color: 'purple.800',
                     fontSize: 11,
-                    '&:hover': { bgcolor: '#ddd6fe' },
+                    '&:hover': { bgcolor: 'secondary.200' },
                   }}
                 />
               ))}
@@ -1738,7 +1738,7 @@ const QATab: React.FC<{
           <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
             <Paper
               elevation={1}
-              sx={{ p: 2, borderRadius: 2, bgcolor: 'white', border: '1px solid #e2e8f0' }}
+              sx={{ p: 2, borderRadius: 2, bgcolor: 'common.white', border: '1px solid #e2e8f0' }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CircularProgress size={14} />
@@ -1756,7 +1756,7 @@ const QATab: React.FC<{
         <div ref={messagesEndRef} />
       </Box>
 
-      <Box sx={{ borderTop: 1, borderColor: 'divider', p: 2, bgcolor: 'white' }}>
+      <Box sx={{ borderTop: 1, borderColor: 'divider', p: 2, bgcolor: 'common.white' }}>
         <Stack
           direction='row'
           spacing={1}
@@ -1774,7 +1774,7 @@ const QATab: React.FC<{
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
-                '&:focus-within': { borderColor: '#8b5cf6' },
+                '&:focus-within': { borderColor: 'secondary.500' },
               },
             }}
           />
@@ -1783,11 +1783,11 @@ const QATab: React.FC<{
             onClick={onSend}
             disabled={!input.trim() || isProcessing}
             sx={{
-              bgcolor: '#8b5cf6',
+              bgcolor: 'secondary.500',
               minWidth: 50,
               height: 40,
-              '&:hover': { bgcolor: '#7c3aed' },
-              '&.Mui-disabled': { bgcolor: '#e2e8f0', color: '#94a3b8' },
+              '&:hover': { bgcolor: 'secondary.600' },
+              '&.Mui-disabled': { bgcolor: 'divider', color: 'text.muted' },
             }}
           >
             <Send size={18} />
@@ -1947,7 +1947,7 @@ const ActivityTab: React.FC<{
             </Typography>
             <Typography
               variant='h5'
-              sx={{ fontWeight: 700, color: '#8b5cf6' }}
+              sx={{ fontWeight: 700, color: 'secondary.500' }}
             >
               {activity.filter((a) => a.type === 'search').length}
             </Typography>
@@ -1963,7 +1963,7 @@ const ActivityTab: React.FC<{
             </Typography>
             <Typography
               variant='h5'
-              sx={{ fontWeight: 700, color: '#059669' }}
+              sx={{ fontWeight: 700, color: 'teal.600' }}
             >
               {activity.filter((a) => a.type === 'doc').length}
             </Typography>
@@ -1979,7 +1979,7 @@ const ActivityTab: React.FC<{
             </Typography>
             <Typography
               variant='h5'
-              sx={{ fontWeight: 700, color: '#3b82f6' }}
+              sx={{ fontWeight: 700, color: 'primary.500' }}
             >
               {activity.filter((a) => a.type === 'qa').length}
             </Typography>
@@ -1995,7 +1995,7 @@ const ActivityTab: React.FC<{
             </Typography>
             <Typography
               variant='h5'
-              sx={{ fontWeight: 700, color: '#f59e0b' }}
+              sx={{ fontWeight: 700, color: 'warning.500' }}
             >
               {activity.filter((a) => a.type === 'index').length}
             </Typography>

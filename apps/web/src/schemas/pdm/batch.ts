@@ -29,7 +29,7 @@ export const batchSchema: EntitySchema = {
       listWidth: 160,
     },
     {
-      name: 'planned_quantity',
+      name: 'plannedQuantity',
       label: '计划数量',
       type: 'number',
       listWidth: 120,
@@ -128,7 +128,7 @@ export const batchSchema: EntitySchema = {
   ],
 
   list: {
-    columns: ['batch_no', 'product_name', 'planned_quantity', 'unit', 'status', 'created_at'],
+    columns: ['batch_no', 'product_name', 'plannedQuantity', 'unit', 'status', 'created_at'],
     searchFields: ['batch_no', 'product_name'],
     pageSize: 10,
     statusBadge: {
@@ -167,7 +167,7 @@ export const batchSchema: EntitySchema = {
   formSections: [
     {
       title: '基本信息',
-      fields: ['batch_no', 'product_name', 'planned_quantity', 'unit'],
+      fields: ['batch_no', 'product_name', 'plannedQuantity', 'unit'],
     },
     {
       title: '关联信息',

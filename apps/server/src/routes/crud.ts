@@ -12,7 +12,7 @@ function createCrudRoutes<T extends { id: string }>(
   initialData: T[],
   idPrefix: string,
 ) {
-  let store: T[] = [...initialData];
+  const store: T[] = [...initialData];
   let counter = store.length + 1;
 
   const generateId = () => `${idPrefix}-${String(counter++).padStart(4, '0')}`;
@@ -82,7 +82,7 @@ interface ExpenseApproval {
 
 interface PurchaseContract {
   id: string;
-  contract_no: string;
+  contractNo: string;
   supplier_name: string;
   contract_type: string;
   total_amount: number;
@@ -152,7 +152,7 @@ createCrudRoutes<ExpenseApproval>('/finance/expense-approvals', [
 createCrudRoutes<PurchaseContract>('/scm/purchase-contracts', [
   {
     id: 'PUR-0001',
-    contract_no: 'PUR-2026-0001',
+    contractNo: 'PUR-2026-0001',
     supplier_name: '南京化工有限公司',
     contract_type: '采购合同',
     total_amount: 258000,
@@ -162,7 +162,7 @@ createCrudRoutes<PurchaseContract>('/scm/purchase-contracts', [
   },
   {
     id: 'PUR-0002',
-    contract_no: 'PUR-2026-0002',
+    contractNo: 'PUR-2026-0002',
     supplier_name: '苏州材料科技',
     contract_type: '服务合同',
     total_amount: 86000,

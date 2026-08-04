@@ -67,7 +67,7 @@ export const userSchema: EntitySchema = {
                 height: 32,
                 borderRadius: '50%',
                 backgroundColor: 'var(--color-primary-main, #1976d2)',
-                color: '#fff',
+                color: 'common.white',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -195,9 +195,7 @@ export const userSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) =>
-        row.created_at
-          ? new Date(row.created_at as string).toLocaleDateString('zh-CN')
-          : '-',
+        row.created_at ? new Date(row.created_at as string).toLocaleDateString('zh-CN') : '-',
     },
   ],
 

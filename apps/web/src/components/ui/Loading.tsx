@@ -147,7 +147,7 @@ export const LoadingOverlay: React.FC<{
         sx={{
           position: 'absolute',
           inset: 0,
-          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          backgroundColor: 'common.white',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',

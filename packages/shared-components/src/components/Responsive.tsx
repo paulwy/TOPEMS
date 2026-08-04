@@ -22,21 +22,23 @@ const breakpointValues: Record<Breakpoint, number> = {
   xxl: 1920,
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useBreakpoint = (): Breakpoint => {
   const theme = useTheme();
   const isXxl = useMediaQuery(theme.breakpoints.up(1920));
-  if (isXxl) return 'xxl';
   const isXl = useMediaQuery(theme.breakpoints.up('xl'));
-  if (isXl) return 'xl';
   const isLg = useMediaQuery(theme.breakpoints.up('lg'));
-  if (isLg) return 'lg';
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
-  if (isMd) return 'md';
   const isSm = useMediaQuery(theme.breakpoints.up('sm'));
+  if (isXxl) return 'xxl';
+  if (isXl) return 'xl';
+  if (isLg) return 'lg';
+  if (isMd) return 'md';
   if (isSm) return 'sm';
   return 'xs';
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useResponsiveValue<T>(props: ResponsiveProps<T>): T {
   const breakpoint = useBreakpoint();
   const value = props[breakpoint];
@@ -87,17 +89,18 @@ export const Hidden: React.FC<{
 }> = ({ children, ...props }) => {
   const theme = useTheme();
   const breakpoint = useBreakpoint();
+  const bpValue = breakpoint === 'xxl' ? 1920 : breakpoint;
+  const isVisible = useMediaQuery(theme.breakpoints.up(bpValue));
   const shouldHide = props[breakpoint];
   if (shouldHide) return null;
   if (!props.xs && !props.sm && !props.md && !props.lg && !props.xl && !props.xxl) {
     return <>{children}</>;
   }
-  const bpValue = breakpoint === 'xxl' ? 1920 : breakpoint;
-  const isVisible = useMediaQuery(theme.breakpoints.up(bpValue));
   if (!isVisible) return null;
   return <>{children}</>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function visibleByBreakpoint(
   breakpoint: Breakpoint,
   props: Partial<Record<Breakpoint, boolean>>
@@ -116,45 +119,54 @@ export function visibleByBreakpoint(
   return true;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function getBreakpointWidth(breakpoint: Breakpoint): number {
   return breakpointValues[breakpoint];
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useIsMobile(): boolean {
   const theme = useTheme();
   return useMediaQuery(theme.breakpoints.down('sm'));
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useIsTablet(): boolean {
   const theme = useTheme();
   return useMediaQuery(theme.breakpoints.between('sm', 'md'));
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useIsDesktop(): boolean {
   const theme = useTheme();
   return useMediaQuery(theme.breakpoints.up('lg'));
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useIsLargeScreen(): boolean {
   const theme = useTheme();
   return useMediaQuery(theme.breakpoints.up('xl'));
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function isMobile(): boolean {
   if (typeof window === 'undefined') return false;
   return window.innerWidth < 600;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function isTablet(): boolean {
   if (typeof window === 'undefined') return false;
   return window.innerWidth >= 600 && window.innerWidth < 900;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function isDesktop(): boolean {
   if (typeof window === 'undefined') return true;
   return window.innerWidth >= 900;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function isLargeScreen(): boolean {
   if (typeof window === 'undefined') return false;
   return window.innerWidth >= 1536;
@@ -176,8 +188,8 @@ export const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
   className,
 }) => {
   const theme = useTheme();
-  const spacingValue = spacing ? useResponsiveValue(spacing) : 2;
-  const cols = columns ? useResponsiveValue(columns) : 12;
+  const spacingValue = useResponsiveValue(spacing ?? { defaultValue: 2 });
+  const cols = useResponsiveValue(columns ?? { defaultValue: 12 });
   const getGridStyle = () => {
     const styles: React.CSSProperties = {
       display: 'grid',
@@ -263,22 +275,26 @@ export const ResponsiveStack: React.FC<ResponsiveStackProps> = ({
   className,
 }) => {
   const theme = useTheme();
+  const directionValue = useResponsiveValue(direction ?? { defaultValue: 'row' as 'row' | 'column' | 'row-reverse' | 'column-reverse' });
+  const spacingValue = useResponsiveValue(spacing ?? { defaultValue: 0 });
+  const alignItemsValue = useResponsiveValue(alignItems ?? { defaultValue: 'stretch' as 'stretch' | 'flex-start' | 'flex-end' | 'center' | 'baseline' });
+  const justifyContentValue = useResponsiveValue(justifyContent ?? { defaultValue: 'flex-start' as 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly' });
   const getStyle = (): React.CSSProperties => {
     const baseStyle: React.CSSProperties = {
       display: 'flex',
       flexWrap: wrap ? 'wrap' : 'nowrap',
     };
     if (direction) {
-      baseStyle.flexDirection = useResponsiveValue(direction);
+      baseStyle.flexDirection = directionValue;
     }
     if (spacing) {
-      baseStyle.gap = theme.spacing(useResponsiveValue(spacing));
+      baseStyle.gap = theme.spacing(spacingValue);
     }
     if (alignItems) {
-      baseStyle.alignItems = useResponsiveValue(alignItems);
+      baseStyle.alignItems = alignItemsValue;
     }
     if (justifyContent) {
-      baseStyle.justifyContent = useResponsiveValue(justifyContent);
+      baseStyle.justifyContent = justifyContentValue;
     }
     return baseStyle;
   };
@@ -302,7 +318,7 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   fluid = false,
   className,
 }) => {
-  const maxWidthValue = maxWidth ? useResponsiveValue(maxWidth) : '1200px';
+  const maxWidthValue = useResponsiveValue(maxWidth ?? { defaultValue: '1200px' });
   return (
     <div
       style={{
@@ -360,6 +376,7 @@ export const ResponsiveText: React.FC<ResponsiveTextProps> = ({
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useMediaQueryValue<T>(
   query: string,
   trueValue: T,
@@ -369,6 +386,7 @@ export function useMediaQueryValue<T>(
   return matches ? trueValue : falseValue;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useResponsiveColumns(
   options: {
     xs?: number;
@@ -383,6 +401,7 @@ export function useResponsiveColumns(
   return useResponsiveValue({ xs, sm, md, lg, xl, xxl });
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useResponsivePadding(
   options: {
     xs?: string;
@@ -404,6 +423,7 @@ export function useResponsivePadding(
   return useResponsiveValue({ xs, sm, md, lg, xl, xxl });
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useResponsiveGap(
   options: {
     xs?: string;

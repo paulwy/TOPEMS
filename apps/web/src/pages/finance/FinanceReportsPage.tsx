@@ -47,6 +47,7 @@ import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const FinanceReportsPage: React.FC = () => {
@@ -151,14 +152,53 @@ const FinanceReportsPage: React.FC = () => {
 
     if (activeTab === 'projects') {
       const columns: TableColumn[] = [
-        { id: 'project_name', label: t('finance.finance_reports_page.name'), field: 'project_name' },
-        { id: 'contract_amount', label: t('finance.finance_reports_page.amount'), field: 'contract_amount', align: 'right' },
-        { id: 'received_amount', label: t('finance.finance_reports_page.text_2365c3'), field: 'received_amount', align: 'right' },
-        { id: 'payable_amount', label: t('finance.finance_reports_page.amount_1'), field: 'payable_amount', align: 'right' },
-        { id: 'paid_amount', label: t('finance.finance_reports_page.text_22956d'), field: 'paid_amount', align: 'right' },
-        { id: 'profit', label: t('finance.finance_reports_page.text_53826b'), field: 'profit', align: 'right' },
-        { id: 'margin', label: t('finance.finance_reports_page.text_2b63f6'), field: 'margin', align: 'center' },
-        { id: 'status', label: t('finance.finance_reports_page.status'), field: 'status', align: 'center' },
+        {
+          id: 'project_name',
+          label: t('finance.finance_reports_page.name'),
+          field: 'project_name',
+        },
+        {
+          id: 'contract_amount',
+          label: t('finance.finance_reports_page.amount'),
+          field: 'contract_amount',
+          align: 'right',
+        },
+        {
+          id: 'received_amount',
+          label: t('finance.finance_reports_page.text_2365c3'),
+          field: 'received_amount',
+          align: 'right',
+        },
+        {
+          id: 'payable_amount',
+          label: t('finance.finance_reports_page.amount_1'),
+          field: 'payable_amount',
+          align: 'right',
+        },
+        {
+          id: 'paid_amount',
+          label: t('finance.finance_reports_page.text_22956d'),
+          field: 'paid_amount',
+          align: 'right',
+        },
+        {
+          id: 'profit',
+          label: t('finance.finance_reports_page.text_53826b'),
+          field: 'profit',
+          align: 'right',
+        },
+        {
+          id: 'margin',
+          label: t('finance.finance_reports_page.text_2b63f6'),
+          field: 'margin',
+          align: 'center',
+        },
+        {
+          id: 'status',
+          label: t('finance.finance_reports_page.status'),
+          field: 'status',
+          align: 'center',
+        },
       ];
 
       return [
@@ -183,11 +223,35 @@ const FinanceReportsPage: React.FC = () => {
 
     if (activeTab === 'departments') {
       const columns: TableColumn[] = [
-        { id: 'department_name', label: t('finance.finance_reports_page.name_1'), field: 'department_name' },
-        { id: 'total_expenses', label: t('finance.finance_reports_page.text_136f63'), field: 'total_expenses', align: 'right' },
-        { id: 'budget_amount', label: t('finance.finance_reports_page.amount_2'), field: 'budget_amount', align: 'right' },
-        { id: 'expense_count', label: t('finance.finance_reports_page.text_cf03b2'), field: 'expense_count', align: 'center' },
-        { id: 'budget_usage', label: t('finance.finance_reports_page.text_439d93'), field: 'budget_usage', align: 'center' },
+        {
+          id: 'department_name',
+          label: t('finance.finance_reports_page.name_1'),
+          field: 'department_name',
+        },
+        {
+          id: 'total_expenses',
+          label: t('finance.finance_reports_page.text_136f63'),
+          field: 'total_expenses',
+          align: 'right',
+        },
+        {
+          id: 'budget_amount',
+          label: t('finance.finance_reports_page.amount_2'),
+          field: 'budget_amount',
+          align: 'right',
+        },
+        {
+          id: 'expense_count',
+          label: t('finance.finance_reports_page.text_cf03b2'),
+          field: 'expense_count',
+          align: 'center',
+        },
+        {
+          id: 'budget_usage',
+          label: t('finance.finance_reports_page.text_439d93'),
+          field: 'budget_usage',
+          align: 'center',
+        },
       ];
 
       return [
@@ -211,14 +275,46 @@ const FinanceReportsPage: React.FC = () => {
   }, [activeTab, projectSummaries, departmentSummaries, loading]);
 
   const tabs = [
-    { label: t('finance.finance_reports_page.text_7637e9'), value: 'overview', icon: <PieChart sx={{ width: 16, height: 16 }} /> },
-    { label: t('finance.finance_reports_page.text_97191a'), value: 'projects', icon: <PieChart sx={{ width: 16, height: 16 }} /> },
-    { label: t('finance.finance_reports_page.text_578051'), value: 'departments', icon: <Building2 sx={{ width: 16, height: 16 }} /> },
-    { label: t('finance.finance_reports_page.text_4f4da0'), value: 'aging', icon: <Clock sx={{ width: 16, height: 16 }} /> },
-    { label: t('finance.finance_reports_page.text_54251d'), value: 'voucher', icon: <FileText sx={{ width: 16, height: 16 }} /> },
-    { label: t('finance.finance_reports_page.text_ec205a'), value: 'cashflow', icon: <Activity sx={{ width: 16, height: 16 }} /> },
-    { label: t('finance.finance_reports_page.text_146922'), value: 'expense', icon: <Wallet sx={{ width: 16, height: 16 }} /> },
-    { label: t('finance.finance_reports_page.text_46756e'), value: 'profit', icon: <TrendingUp sx={{ width: 16, height: 16 }} /> },
+    {
+      label: t('finance.finance_reports_page.text_7637e9'),
+      value: 'overview',
+      icon: <PieChart sx={{ width: 16, height: 16 }} />,
+    },
+    {
+      label: t('finance.finance_reports_page.text_97191a'),
+      value: 'projects',
+      icon: <PieChart sx={{ width: 16, height: 16 }} />,
+    },
+    {
+      label: t('finance.finance_reports_page.text_578051'),
+      value: 'departments',
+      icon: <Building2 sx={{ width: 16, height: 16 }} />,
+    },
+    {
+      label: t('finance.finance_reports_page.text_4f4da0'),
+      value: 'aging',
+      icon: <Clock sx={{ width: 16, height: 16 }} />,
+    },
+    {
+      label: t('finance.finance_reports_page.text_54251d'),
+      value: 'voucher',
+      icon: <FileText sx={{ width: 16, height: 16 }} />,
+    },
+    {
+      label: t('finance.finance_reports_page.text_ec205a'),
+      value: 'cashflow',
+      icon: <Activity sx={{ width: 16, height: 16 }} />,
+    },
+    {
+      label: t('finance.finance_reports_page.text_146922'),
+      value: 'expense',
+      icon: <Wallet sx={{ width: 16, height: 16 }} />,
+    },
+    {
+      label: t('finance.finance_reports_page.text_46756e'),
+      value: 'profit',
+      icon: <TrendingUp sx={{ width: 16, height: 16 }} />,
+    },
   ];
 
   const customToolbar = (

@@ -55,7 +55,7 @@ const FileCard: React.FC<FileCardProps> = ({
               cursor: 'pointer',
             }}
           >
-            {isSelected && <CheckCircle sx={{ width: 12, height: 12, color: 'white' }} />}
+            {isSelected && <CheckCircle sx={{ width: 12, height: 12, color: 'common.white' }} />}
           </Box>
         </Box>
       )}

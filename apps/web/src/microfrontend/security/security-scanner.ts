@@ -1,32 +1,32 @@
 import { moduleMarket, type MarketplaceModule } from '../marketplace/module-market';
 
 export enum SecurityIssueType {
-  Vulnerability = 'vulnerability',
-  InsecureDependency = 'insecure_dependency',
-  PermissionRisk = 'permission_risk',
-  SandboxEscape = 'sandbox_escape',
-  CodeInjection = 'code_injection',
-  DataLeak = 'data_leak',
-  MaliciousCode = 'malicious_code',
-  OutdatedDependency = 'outdated_dependency',
-  Network = 'network',
+  VULNERABILITY = 'vulnerability',
+  INSECUREDEPENDENCY = 'insecure_dependency',
+  PERMISSIONRISK = 'permission_risk',
+  SANDBOXESCAPE = 'sandbox_escape',
+  CODEINJECTION = 'code_injection',
+  DATALEAK = 'data_leak',
+  MALICIOUSCODE = 'malicious_code',
+  OUTDATEDDEPENDENCY = 'outdated_dependency',
+  NETWORK = 'network',
 }
 
 export enum SecurityIssueSeverity {
-  Info = 'info',
-  Low = 'low',
-  Medium = 'medium',
-  High = 'high',
-  Critical = 'critical',
+  INFO = 'info',
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical',
 }
 
 export enum SecurityCategory {
-  Dependency = 'dependency',
-  Permission = 'permission',
-  Sandbox = 'sandbox',
-  Network = 'network',
-  Data = 'data',
-  Code = 'code',
+  DEPENDENCY = 'dependency',
+  PERMISSION = 'permission',
+  SANDBOX = 'sandbox',
+  NETWORK = 'network',
+  DATA = 'data',
+  CODE = 'code',
 }
 
 export interface SecurityIssue {
@@ -89,9 +89,9 @@ interface SecurityRule {
 const SECURITY_RULES: SecurityRule[] = [
   {
     id: 'R001',
-    type: SecurityIssueType.OutdatedDependency,
-    severity: SecurityIssueSeverity.Medium,
-    category: SecurityCategory.Dependency,
+    type: SecurityIssueType.OUTDATEDDEPENDENCY,
+    severity: SecurityIssueSeverity.MEDIUM,
+    category: SecurityCategory.DEPENDENCY,
     title: '依赖版本过旧',
     description: '模块使用了超过6个月未更新的依赖版本，可能存在已知安全漏洞。',
     recommendation: '升级到最新稳定版本以获取安全修复。',
@@ -103,9 +103,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R002',
-    type: SecurityIssueType.InsecureDependency,
-    severity: SecurityIssueSeverity.High,
-    category: SecurityCategory.Dependency,
+    type: SecurityIssueType.INSECUREDEPENDENCY,
+    severity: SecurityIssueSeverity.HIGH,
+    category: SecurityCategory.DEPENDENCY,
     title: '存在不安全的传递依赖',
     description: '模块的依赖链中存在已知的不安全依赖包。',
     recommendation: '升级依赖到安全版本，或使用替代方案。',
@@ -114,9 +114,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R003',
-    type: SecurityIssueType.Vulnerability,
-    severity: SecurityIssueSeverity.Critical,
-    category: SecurityCategory.Dependency,
+    type: SecurityIssueType.VULNERABILITY,
+    severity: SecurityIssueSeverity.CRITICAL,
+    category: SecurityCategory.DEPENDENCY,
     title: '关键依赖存在高危漏洞',
     description: '模块依赖的关键组件存在CVE编号的高危漏洞。',
     recommendation: '立即升级到已修复漏洞的版本。',
@@ -125,9 +125,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R004',
-    type: SecurityIssueType.PermissionRisk,
-    severity: SecurityIssueSeverity.High,
-    category: SecurityCategory.Permission,
+    type: SecurityIssueType.PERMISSIONRISK,
+    severity: SecurityIssueSeverity.HIGH,
+    category: SecurityCategory.PERMISSION,
     title: '过度的网络访问权限',
     description: '模块请求了不必要的全域名网络访问权限，存在数据泄露风险。',
     recommendation: '限制网络访问权限到必要的域名范围。',
@@ -136,9 +136,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R005',
-    type: SecurityIssueType.PermissionRisk,
-    severity: SecurityIssueSeverity.Medium,
-    category: SecurityCategory.Permission,
+    type: SecurityIssueType.PERMISSIONRISK,
+    severity: SecurityIssueSeverity.MEDIUM,
+    category: SecurityCategory.PERMISSION,
     title: '本地存储访问权限',
     description: '模块具有本地存储读写权限，可能存储敏感数据。',
     recommendation: '敏感数据应加密存储，定期清理不必要的存储数据。',
@@ -147,9 +147,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R006',
-    type: SecurityIssueType.SandboxEscape,
-    severity: SecurityIssueSeverity.Critical,
-    category: SecurityCategory.Sandbox,
+    type: SecurityIssueType.SANDBOXESCAPE,
+    severity: SecurityIssueSeverity.CRITICAL,
+    category: SecurityCategory.SANDBOX,
     title: '潜在的沙箱逃逸风险',
     description: '模块代码中检测到可能绕过沙箱隔离的模式。',
     recommendation: '审查模块代码，确保在沙箱环境中安全运行。',
@@ -158,9 +158,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R007',
-    type: SecurityIssueType.SandboxEscape,
-    severity: SecurityIssueSeverity.High,
-    category: SecurityCategory.Sandbox,
+    type: SecurityIssueType.SANDBOXESCAPE,
+    severity: SecurityIssueSeverity.HIGH,
+    category: SecurityCategory.SANDBOX,
     title: '全局变量污染风险',
     description: '模块可能修改全局window对象，影响其他模块运行。',
     recommendation: '使用命名空间或模块化方式避免全局污染。',
@@ -169,9 +169,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R008',
-    type: SecurityIssueType.CodeInjection,
-    severity: SecurityIssueSeverity.Critical,
-    category: SecurityCategory.Code,
+    type: SecurityIssueType.CODEINJECTION,
+    severity: SecurityIssueSeverity.CRITICAL,
+    category: SecurityCategory.CODE,
     title: '代码注入风险',
     description: '模块中存在使用eval或Function构造函数的动态代码执行。',
     recommendation: '避免使用eval，改用安全的替代方案。',
@@ -180,9 +180,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R009',
-    type: SecurityIssueType.CodeInjection,
-    severity: SecurityIssueSeverity.High,
-    category: SecurityCategory.Code,
+    type: SecurityIssueType.CODEINJECTION,
+    severity: SecurityIssueSeverity.HIGH,
+    category: SecurityCategory.CODE,
     title: 'XSS 跨站脚本风险',
     description: '模块中存在未转义的HTML渲染，可能导致XSS攻击。',
     recommendation: '对用户输入进行严格的HTML转义或使用安全的模板引擎。',
@@ -191,9 +191,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R010',
-    type: SecurityIssueType.DataLeak,
-    severity: SecurityIssueSeverity.High,
-    category: SecurityCategory.Data,
+    type: SecurityIssueType.DATALEAK,
+    severity: SecurityIssueSeverity.HIGH,
+    category: SecurityCategory.DATA,
     title: '敏感数据明文传输',
     description: '模块可能通过HTTP传输敏感数据，存在数据泄露风险。',
     recommendation: '确保所有数据传输使用HTTPS加密。',
@@ -202,9 +202,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R011',
-    type: SecurityIssueType.DataLeak,
-    severity: SecurityIssueSeverity.Medium,
-    category: SecurityCategory.Data,
+    type: SecurityIssueType.DATALEAK,
+    severity: SecurityIssueSeverity.MEDIUM,
+    category: SecurityCategory.DATA,
     title: '日志中可能包含敏感信息',
     description: '模块的日志输出可能包含用户敏感信息。',
     recommendation: '对日志中的敏感信息进行脱敏处理。',
@@ -213,9 +213,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R012',
-    type: SecurityIssueType.MaliciousCode,
-    severity: SecurityIssueSeverity.Critical,
-    category: SecurityCategory.Code,
+    type: SecurityIssueType.MALICIOUSCODE,
+    severity: SecurityIssueSeverity.CRITICAL,
+    category: SecurityCategory.CODE,
     title: '可疑的代码行为',
     description: '模块中检测到可疑的代码模式，可能存在恶意行为。',
     recommendation: '仔细审查模块源代码，确认安全性。',
@@ -224,9 +224,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R013',
-    type: SecurityIssueType.Vulnerability,
-    severity: SecurityIssueSeverity.Medium,
-    category: SecurityCategory.Dependency,
+    type: SecurityIssueType.VULNERABILITY,
+    severity: SecurityIssueSeverity.MEDIUM,
+    category: SecurityCategory.DEPENDENCY,
     title: '原型污染漏洞风险',
     description: '依赖库可能存在原型污染漏洞。',
     recommendation: '升级依赖到已修复版本。',
@@ -235,9 +235,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R014',
-    type: SecurityIssueType.PermissionRisk,
-    severity: SecurityIssueSeverity.Low,
-    category: SecurityCategory.Permission,
+    type: SecurityIssueType.PERMISSIONRISK,
+    severity: SecurityIssueSeverity.LOW,
+    category: SecurityCategory.PERMISSION,
     title: '摄像头/麦克风权限请求',
     description: '模块请求了媒体设备访问权限。',
     recommendation: '仅在必要时请求权限，并明确告知用户用途。',
@@ -246,9 +246,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R015',
-    type: SecurityIssueType.Network,
-    severity: SecurityIssueSeverity.Medium,
-    category: SecurityCategory.Network,
+    type: SecurityIssueType.NETWORK,
+    severity: SecurityIssueSeverity.MEDIUM,
+    category: SecurityCategory.NETWORK,
     title: '第三方API调用安全',
     description: '模块调用多个第三方API，存在供应链攻击风险。',
     recommendation: '验证第三方服务的安全性，使用API网关进行管控。',
@@ -257,9 +257,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R016',
-    type: SecurityIssueType.OutdatedDependency,
-    severity: SecurityIssueSeverity.Low,
-    category: SecurityCategory.Dependency,
+    type: SecurityIssueType.OUTDATEDDEPENDENCY,
+    severity: SecurityIssueSeverity.LOW,
+    category: SecurityCategory.DEPENDENCY,
     title: '小版本滞后',
     description: '依赖版本比最新版本小一个补丁版本。',
     recommendation: '考虑升级到最新补丁版本。',
@@ -268,9 +268,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R017',
-    type: SecurityIssueType.SandboxEscape,
-    severity: SecurityIssueSeverity.Medium,
-    category: SecurityCategory.Sandbox,
+    type: SecurityIssueType.SANDBOXESCAPE,
+    severity: SecurityIssueSeverity.MEDIUM,
+    category: SecurityCategory.SANDBOX,
     title: '事件冒泡穿透',
     description: '模块可能通过事件冒泡影响宿主应用。',
     recommendation: '启用事件隔离，阻止不必要的事件冒泡。',
@@ -279,9 +279,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R018',
-    type: SecurityIssueType.DataLeak,
-    severity: SecurityIssueSeverity.Low,
-    category: SecurityCategory.Data,
+    type: SecurityIssueType.DATALEAK,
+    severity: SecurityIssueSeverity.LOW,
+    category: SecurityCategory.DATA,
     title: '第三方统计追踪',
     description: '模块集成了第三方统计分析工具。',
     recommendation: '确保符合隐私法规，提供用户隐私选项。',
@@ -290,9 +290,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R019',
-    type: SecurityIssueType.Vulnerability,
-    severity: SecurityIssueSeverity.High,
-    category: SecurityCategory.Code,
+    type: SecurityIssueType.VULNERABILITY,
+    severity: SecurityIssueSeverity.HIGH,
+    category: SecurityCategory.CODE,
     title: '正则表达式DoS风险',
     description: '模块中存在可能导致ReDoS的复杂正则表达式。',
     recommendation: '优化正则表达式，使用安全的正则模式。',
@@ -301,9 +301,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R020',
-    type: SecurityIssueType.InsecureDependency,
-    severity: SecurityIssueSeverity.Info,
-    category: SecurityCategory.Dependency,
+    type: SecurityIssueType.INSECUREDEPENDENCY,
+    severity: SecurityIssueSeverity.INFO,
+    category: SecurityCategory.DEPENDENCY,
     title: '未使用的依赖',
     description: '模块声明了但未实际使用的依赖，增加了攻击面。',
     recommendation: '移除未使用的依赖以减少攻击面。',
@@ -312,9 +312,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R021',
-    type: SecurityIssueType.PermissionRisk,
-    severity: SecurityIssueSeverity.Info,
-    category: SecurityCategory.Permission,
+    type: SecurityIssueType.PERMISSIONRISK,
+    severity: SecurityIssueSeverity.INFO,
+    category: SecurityCategory.PERMISSION,
     title: '通知权限',
     description: '模块请求了浏览器通知权限。',
     recommendation: '仅在用户明确同意后发送通知。',
@@ -323,9 +323,9 @@ const SECURITY_RULES: SecurityRule[] = [
   },
   {
     id: 'R022',
-    type: SecurityIssueType.CodeInjection,
-    severity: SecurityIssueSeverity.Medium,
-    category: SecurityCategory.Code,
+    type: SecurityIssueType.CODEINJECTION,
+    severity: SecurityIssueSeverity.MEDIUM,
+    category: SecurityCategory.CODE,
     title: '不安全的反序列化',
     description: '模块可能存在不安全的JSON反序列化操作。',
     recommendation: '使用安全的JSON解析方式，对输入进行验证。',
@@ -336,30 +336,114 @@ const SECURITY_RULES: SecurityRule[] = [
 
 const MODULE_PERMISSIONS: Record<string, PermissionAudit[]> = {
   'crm-module': [
-    { permission: 'localStorage', required: true, justification: '存储用户偏好设置', risky: false, alternative: '使用IndexedDB加密存储' },
-    { permission: 'network:api', required: true, justification: 'CRM数据API调用', risky: false, alternative: '通过API网关访问' },
-    { permission: 'notification', required: false, justification: '客户跟进提醒', risky: false, alternative: '站内消息通知' },
+    {
+      permission: 'localStorage',
+      required: true,
+      justification: '存储用户偏好设置',
+      risky: false,
+      alternative: '使用IndexedDB加密存储',
+    },
+    {
+      permission: 'network:api',
+      required: true,
+      justification: 'CRM数据API调用',
+      risky: false,
+      alternative: '通过API网关访问',
+    },
+    {
+      permission: 'notification',
+      required: false,
+      justification: '客户跟进提醒',
+      risky: false,
+      alternative: '站内消息通知',
+    },
   ],
   'bi-advanced': [
-    { permission: 'localStorage', required: true, justification: '缓存报表配置', risky: false, alternative: '服务端存储' },
-    { permission: 'network:api', required: true, justification: '数据源连接', risky: true, alternative: '只读数据源账号' },
-    { permission: 'file:download', required: true, justification: '报表导出下载', risky: false, alternative: '服务端生成下载链接' },
+    {
+      permission: 'localStorage',
+      required: true,
+      justification: '缓存报表配置',
+      risky: false,
+      alternative: '服务端存储',
+    },
+    {
+      permission: 'network:api',
+      required: true,
+      justification: '数据源连接',
+      risky: true,
+      alternative: '只读数据源账号',
+    },
+    {
+      permission: 'file:download',
+      required: true,
+      justification: '报表导出下载',
+      risky: false,
+      alternative: '服务端生成下载链接',
+    },
   ],
   'erp-integration': [
-    { permission: 'network:api', required: true, justification: 'ERP系统API调用', risky: true, alternative: '使用中间件代理' },
-    { permission: 'localStorage', required: false, justification: '缓存同步状态', risky: false, alternative: '服务端状态存储' },
+    {
+      permission: 'network:api',
+      required: true,
+      justification: 'ERP系统API调用',
+      risky: true,
+      alternative: '使用中间件代理',
+    },
+    {
+      permission: 'localStorage',
+      required: false,
+      justification: '缓存同步状态',
+      risky: false,
+      alternative: '服务端状态存储',
+    },
   ],
   'oauth-integration': [
-    { permission: 'network:api', required: true, justification: '身份认证接口', risky: true, alternative: '后端统一认证' },
-    { permission: 'cookie', required: true, justification: '会话管理', risky: false, alternative: 'HttpOnly Cookie' },
+    {
+      permission: 'network:api',
+      required: true,
+      justification: '身份认证接口',
+      risky: true,
+      alternative: '后端统一认证',
+    },
+    {
+      permission: 'cookie',
+      required: true,
+      justification: '会话管理',
+      risky: false,
+      alternative: 'HttpOnly Cookie',
+    },
   ],
   'form-builder': [
-    { permission: 'localStorage', required: true, justification: '表单草稿保存', risky: false, alternative: '服务端草稿' },
-    { permission: 'dom:modify', required: true, justification: '动态渲染表单', risky: true, alternative: '使用安全的渲染方式' },
+    {
+      permission: 'localStorage',
+      required: true,
+      justification: '表单草稿保存',
+      risky: false,
+      alternative: '服务端草稿',
+    },
+    {
+      permission: 'dom:modify',
+      required: true,
+      justification: '动态渲染表单',
+      risky: true,
+      alternative: '使用安全的渲染方式',
+    },
   ],
   'notification-center': [
-    { permission: 'notification', required: false, justification: '桌面通知推送', risky: false, alternative: '仅站内通知' },
-    { permission: 'network:api', required: true, justification: '消息发送接口', risky: false, alternative: '消息队列' },
+    {
+      permission: 'notification',
+      required: false,
+      justification: '桌面通知推送',
+      risky: false,
+      alternative: '仅站内通知',
+    },
+    {
+      permission: 'network:api',
+      required: true,
+      justification: '消息发送接口',
+      risky: false,
+      alternative: '消息队列',
+    },
   ],
 };
 
@@ -405,7 +489,7 @@ export class SecurityScanner {
           line_number: (index % 50) + 1,
           recommendation: rule.recommendation,
           cvss_score: rule.cvss_score,
-          fixed_version: rule.severity === SecurityIssueSeverity.Critical ? 'latest' : undefined,
+          fixed_version: rule.severity === SecurityIssueSeverity.CRITICAL ? 'latest' : undefined,
           fixed: false,
         });
       } else {
@@ -447,16 +531,16 @@ export class SecurityScanner {
 
       result.issues.forEach((issue) => {
         switch (issue.severity) {
-          case SecurityIssueSeverity.Critical:
+          case SecurityIssueSeverity.CRITICAL:
             criticalCount++;
             break;
-          case SecurityIssueSeverity.High:
+          case SecurityIssueSeverity.HIGH:
             highCount++;
             break;
-          case SecurityIssueSeverity.Medium:
+          case SecurityIssueSeverity.MEDIUM:
             mediumCount++;
             break;
-          case SecurityIssueSeverity.Low:
+          case SecurityIssueSeverity.LOW:
             lowCount++;
             break;
         }
@@ -543,14 +627,16 @@ export class SecurityScanner {
     return MODULE_PERMISSIONS[moduleId] || [];
   }
 
-  getVulnerableModules(minSeverity: SecurityIssueSeverity = SecurityIssueSeverity.High): SecurityScanResult[] {
+  getVulnerableModules(
+    minSeverity: SecurityIssueSeverity = SecurityIssueSeverity.HIGH
+  ): SecurityScanResult[] {
     const results: SecurityScanResult[] = [];
     const severityOrder = {
-      [SecurityIssueSeverity.Info]: 0,
-      [SecurityIssueSeverity.Low]: 1,
-      [SecurityIssueSeverity.Medium]: 2,
-      [SecurityIssueSeverity.High]: 3,
-      [SecurityIssueSeverity.Critical]: 4,
+      [SecurityIssueSeverity.INFO]: 0,
+      [SecurityIssueSeverity.LOW]: 1,
+      [SecurityIssueSeverity.MEDIUM]: 2,
+      [SecurityIssueSeverity.HIGH]: 3,
+      [SecurityIssueSeverity.CRITICAL]: 4,
     };
 
     this.latestResults.forEach((result) => {
@@ -587,7 +673,7 @@ export class SecurityScanner {
     if (!result) return { fixed: 0, total: 0 };
 
     let fixedCount = 0;
-    const fixableSeverities = [SecurityIssueSeverity.Low, SecurityIssueSeverity.Info];
+    const fixableSeverities = [SecurityIssueSeverity.LOW, SecurityIssueSeverity.INFO];
 
     result.issues.forEach((issue) => {
       if (!issue.fixed && fixableSeverities.includes(issue.severity)) {
@@ -607,11 +693,11 @@ export class SecurityScanner {
     let score = 100;
 
     const severityDeductions = {
-      [SecurityIssueSeverity.Critical]: 20,
-      [SecurityIssueSeverity.High]: 10,
-      [SecurityIssueSeverity.Medium]: 5,
-      [SecurityIssueSeverity.Low]: 2,
-      [SecurityIssueSeverity.Info]: 0.5,
+      [SecurityIssueSeverity.CRITICAL]: 20,
+      [SecurityIssueSeverity.HIGH]: 10,
+      [SecurityIssueSeverity.MEDIUM]: 5,
+      [SecurityIssueSeverity.LOW]: 2,
+      [SecurityIssueSeverity.INFO]: 0.5,
     };
 
     issues.forEach((issue) => {

@@ -285,7 +285,7 @@ export function useActiveExperiments(): UseActiveExperimentsResult {
   const [allExperiments, setAllExperiments] = useState<Experiment[]>([]);
 
   const refresh = useCallback(() => {
-    setExperiments(abTestEngine.listExperiments(ExperimentStatus.Running));
+    setExperiments(abTestEngine.listExperiments(ExperimentStatus.RUNNING));
     setAllExperiments(abTestEngine.listExperiments());
   }, []);
 

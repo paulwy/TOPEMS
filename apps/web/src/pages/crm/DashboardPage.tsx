@@ -233,7 +233,9 @@ export const DashboardPage: React.FC = () => {
           justifyContent: 'center',
         }}
       >
-        <Typography sx={{ fontSize: '1.125rem', color: 'grey.600' }}>{t('crm.common.loading')}</Typography>
+        <Typography sx={{ fontSize: '1.125rem', color: 'grey.600' }}>
+          {t('crm.common.loading')}
+        </Typography>
       </Box>
     );
   }
@@ -321,7 +323,7 @@ export const DashboardPage: React.FC = () => {
                             display: 'flex',
                             alignItems: 'center',
                             paddingLeft: 8,
-                            color: 'white',
+                            color: 'common.white',
                             fontSize: '0.75rem',
                             fontWeight: 500,
                           }}
@@ -350,7 +352,10 @@ export const DashboardPage: React.FC = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: t('crm.common.home'), href: '/dashboard' }, { label: t('crm.common.customer_relationship') }]}
+        breadcrumbs={[
+          { label: t('crm.common.home'), href: '/dashboard' },
+          { label: t('crm.common.customer_relationship') },
+        ]}
         stats={statsCards}
         charts={charts}
         quickActions={quickActions}

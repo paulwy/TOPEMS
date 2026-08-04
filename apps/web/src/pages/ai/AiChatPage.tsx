@@ -229,7 +229,11 @@ export const AiChatPage: React.FC = () => {
       };
       setMessages((prev) => [...prev, assistantMessage]);
       setIsTyping(false);
-      addNotification({ title: t('ai.chat.message.sent_title'), message: t('ai.chat.message.ai_replied'), type: 'success' });
+      addNotification({
+        title: t('ai.chat.message.sent_title'),
+        message: t('ai.chat.message.ai_replied'),
+        type: 'success',
+      });
     }, 1500);
   }, [inputValue, activeTab, addNotification, t]);
 
@@ -244,7 +248,11 @@ export const AiChatPage: React.FC = () => {
     navigator.clipboard.writeText(content);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
-    addNotification({ title: t('ai.chat.message.copy_success_title'), message: t('ai.chat.message.copy_success_body'), type: 'success' });
+    addNotification({
+      title: t('ai.chat.message.copy_success_title'),
+      message: t('ai.chat.message.copy_success_body'),
+      type: 'success',
+    });
   };
 
   const handleNewChat = () => {
@@ -258,7 +266,11 @@ export const AiChatPage: React.FC = () => {
     setSessions((prev) => [newSession, ...prev]);
     setSelectedSessionId(newSession.id);
     setMessages([]);
-    addNotification({ title: t('ai.chat.message.new_session_title'), message: t('ai.chat.message.session_created'), type: 'info' });
+    addNotification({
+      title: t('ai.chat.message.new_session_title'),
+      message: t('ai.chat.message.session_created'),
+      type: 'info',
+    });
   };
 
   const handleSelectSession = (sessionId: string) => {
@@ -280,11 +292,15 @@ export const AiChatPage: React.FC = () => {
         setMessages([]);
       }
     }
-    addNotification({ title: t('ai.chat.message.delete_session_title'), message: t('ai.chat.message.session_deleted'), type: 'info' });
+    addNotification({
+      title: t('ai.chat.message.delete_session_title'),
+      message: t('ai.chat.message.session_deleted'),
+      type: 'info',
+    });
   };
 
   const handleQuickPrompt = (prompt: (typeof quickPrompts)[0]) => {
-    setInputValue(t('ai.chat.' + prompt.label));
+    setInputValue(t(`ai.chat.${prompt.label}`));
     setActiveTab(prompt.category as typeof activeTab);
   };
 
@@ -372,7 +388,11 @@ export const AiChatPage: React.FC = () => {
                   { id: 'qa', label: t('ai.chat.mode.qa'), icon: <Lightbulb size={14} /> },
                   { id: 'summary', label: t('ai.chat.mode.summary'), icon: <FileText size={14} /> },
                   { id: 'code', label: t('ai.chat.mode.code'), icon: <Code size={14} /> },
-                  { id: 'general', label: t('ai.chat.mode.general'), icon: <MessageSquare size={14} /> },
+                  {
+                    id: 'general',
+                    label: t('ai.chat.mode.general'),
+                    icon: <MessageSquare size={14} />,
+                  },
                 ].map((tab) => (
                   <Chip
                     key={tab.id}
@@ -444,7 +464,7 @@ export const AiChatPage: React.FC = () => {
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Chip
-                      label={t('ai.chat.type.' + getTypeLabel(session.type))}
+                      label={t(`ai.chat.type.${getTypeLabel(session.type)}`)}
                       size='small'
                       sx={{ fontSize: 10 }}
                     />
@@ -472,7 +492,7 @@ export const AiChatPage: React.FC = () => {
                   <Chip
                     key={prompt.id}
                     icon={prompt.icon}
-                    label={t('ai.chat.' + prompt.label)}
+                    label={t(`ai.chat.${prompt.label}`)}
                     size='small'
                     variant='outlined'
                     onClick={() => handleQuickPrompt(prompt)}
@@ -509,10 +529,12 @@ export const AiChatPage: React.FC = () => {
                 size={20}
                 color='primary.main'
               />
-              <Typography variant='h6'>{selectedSession?.title || t('ai.chat.title.default')}</Typography>
+              <Typography variant='h6'>
+                {selectedSession?.title || t('ai.chat.title.default')}
+              </Typography>
               {selectedSession && (
                 <Chip
-                  label={t('ai.chat.type.' + getTypeLabel(selectedSession.type))}
+                  label={t(`ai.chat.type.${getTypeLabel(selectedSession.type)}`)}
                   size='small'
                   color='primary'
                 />
@@ -603,7 +625,7 @@ export const AiChatPage: React.FC = () => {
                     </Typography>
                     {msg.type && (
                       <Chip
-                        label={t('ai.chat.type.' + getTypeLabel(msg.type))}
+                        label={t(`ai.chat.type.${getTypeLabel(msg.type)}`)}
                         size='small'
                         variant='outlined'
                         sx={{ fontSize: 10 }}
@@ -638,7 +660,7 @@ export const AiChatPage: React.FC = () => {
                               key={i}
                               sx={{
                                 bg: 'grey.900',
-                                color: 'white',
+                                color: 'common.white',
                                 p: 2,
                                 borderRadius: 1,
                                 fontFamily: 'monospace',
@@ -816,7 +838,9 @@ export const AiChatPage: React.FC = () => {
             >
               <FileText size={24} />
               <Typography sx={{ ml: 2 }}>
-                {docFile ? t('ai.chat.dialog.file_selected', { name: docFile.name }) : t('ai.chat.dialog.click_to_select')}
+                {docFile
+                  ? t('ai.chat.dialog.file_selected', { name: docFile.name })
+                  : t('ai.chat.dialog.click_to_select')}
               </Typography>
             </Button>
             <Typography

@@ -998,7 +998,7 @@ const OperationAuditLogPage: React.FC = () => {
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-all',
                         fontSize: '0.875rem',
-                        color: '#374151',
+                        color: 'grey.700',
                         margin: 0,
                         maxHeight: 320,
                         overflow: 'auto',

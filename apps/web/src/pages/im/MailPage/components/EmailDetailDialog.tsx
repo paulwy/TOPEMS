@@ -111,9 +111,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
               >
                 创建时间
               </Typography>
-              <Typography>
-                {new Date(selectedEmail.created_at).toLocaleString('zh-CN')}
-              </Typography>
+              <Typography>{new Date(selectedEmail.created_at).toLocaleString('zh-CN')}</Typography>
             </Box>
             {selectedEmail.sent_at && (
               <Box>
@@ -123,9 +121,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                 >
                   发送时间
                 </Typography>
-                <Typography>
-                  {new Date(selectedEmail.sent_at).toLocaleString('zh-CN')}
-                </Typography>
+                <Typography>{new Date(selectedEmail.sent_at).toLocaleString('zh-CN')}</Typography>
               </Box>
             )}
             {selectedEmail.error_message && (

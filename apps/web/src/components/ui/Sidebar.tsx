@@ -213,8 +213,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 py: 0.25,
                 fontSize: '0.75rem',
                 fontWeight: 500,
-                bgcolor: 'rgb(239, 68, 68)',
-                color: 'white',
+                bgcolor: 'common.white',
+                color: 'common.white',
                 borderRadius: '9999px',
                 height: 'auto',
               }}
@@ -279,10 +279,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             py: 1.5,
-            color: 'rgb(156, 163, 175)',
+            color: 'common.white',
             '&:hover': {
-              color: 'rgb(229, 231, 235)',
-              bgcolor: 'rgba(255, 255, 255, 0.05)',
+              color: 'common.white',
+              bgcolor: 'action.disabledBackground',
             },
             transition: 'color 0.2s',
           }}

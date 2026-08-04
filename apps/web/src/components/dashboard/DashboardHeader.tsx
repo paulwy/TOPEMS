@@ -26,7 +26,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
     <Box
       component='header'
       sx={{
-        backgroundColor: 'rgba(30, 41, 59, 0.8)',
+        backgroundColor: 'common.white',
         backdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
         position: 'sticky',
@@ -63,7 +63,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                   boxShadow: 3,
                 }}
               >
-                <Zap style={{ width: 20, height: 20, color: 'white' }} />
+                <Zap style={{ width: 20, height: 20, color: 'common.white' }} />
               </Box>
               <Box>
                 <Typography
@@ -134,7 +134,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'white',
+                  color: 'common.white',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   boxShadow: 3,
@@ -143,7 +143,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                 {user?.username?.charAt(0).toUpperCase() || 'U'}
               </Box>
               <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'white' }}>
+                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'common.white' }}>
                   {user?.full_name || user?.username}
                 </Typography>
                 <Typography sx={{ fontSize: '0.75rem', color: 'grey.400' }}>
@@ -160,7 +160,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                 color: 'grey.400',
                 transition: 'all',
                 '&:hover': {
-                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  backgroundColor: 'common.white',
                   color: 'error.light',
                 },
               }}

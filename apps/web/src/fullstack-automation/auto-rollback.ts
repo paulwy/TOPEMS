@@ -75,21 +75,21 @@ export class AutoRollback {
     return AutoRollback.instance;
   }
 
-  enable_auto_rollback(): void {
+  enableAutoRollback(): void {
     autoRollbackEnabled = true;
     logger.info('[AutoRollback] Automatic rollback enabled');
   }
 
-  disable_auto_rollback(): void {
+  disableAutoRollback(): void {
     autoRollbackEnabled = false;
     logger.info('[AutoRollback] Automatic rollback disabled');
   }
 
-  is_enabled(): boolean {
+  isEnabled(): boolean {
     return autoRollbackEnabled;
   }
 
-  configure_conditions(conditions: RollbackCondition[]): void {
+  configureConditions(conditions: RollbackCondition[]): void {
     CONDITION_STORE.clear();
     const grouped = new Map<string, RollbackCondition[]>();
     for (const cond of conditions) {
@@ -104,13 +104,13 @@ export class AutoRollback {
     logger.info('[AutoRollback] Conditions configured:', conditions.length);
   }
 
-  get_conditions(): RollbackCondition[] {
+  getConditions(): RollbackCondition[] {
     const all: RollbackCondition[] = [];
     CONDITION_STORE.forEach((list) => all.push(...list));
     return all;
   }
 
-  record_metric(sample: MetricSample): void {
+  recordMetric(sample: MetricSample): void {
     const key = sample.metric;
     const samples = METRIC_STORE.get(key) || [];
     samples.push(sample);
@@ -121,7 +121,7 @@ export class AutoRollback {
     }
   }
 
-  async check_health(deploymentId?: string): Promise<{
+  async checkHealth(deploymentId?: string): Promise<{
     healthy: boolean;
     triggered_conditions: RollbackCondition[];
     current_metrics: MetricSample[];
@@ -191,7 +191,7 @@ export class AutoRollback {
     return { healthy, triggered_conditions: triggered, current_metrics: currentMetrics };
   }
 
-  async trigger_rollback(params: {
+  async triggerRollback(params: {
     deployment_id: string;
     reason?: string;
     condition?: RollbackCondition;
@@ -231,7 +231,7 @@ export class AutoRollback {
     return event;
   }
 
-  get_rollback_history(deploymentId?: string, limit: number = 20): RollbackEvent[] {
+  getRollbackHistory(deploymentId?: string, limit: number = 20): RollbackEvent[] {
     const all = Array.from(ROLLBACK_EVENT_STORE.values()).sort((a, b) =>
       b.initiated_at.localeCompare(a.initiated_at)
     );
@@ -241,11 +241,11 @@ export class AutoRollback {
     return all.slice(0, limit);
   }
 
-  get_rollback_event(eventId: string): RollbackEvent | undefined {
+  getRollbackEvent(eventId: string): RollbackEvent | undefined {
     return ROLLBACK_EVENT_STORE.get(eventId);
   }
 
-  get_health_status(deploymentId: string): {
+  getHealthStatus(deploymentId: string): {
     status: 'healthy' | 'unhealthy' | 'degraded';
     last_check: string;
     consecutive_failures: number;
@@ -259,7 +259,7 @@ export class AutoRollback {
     );
   }
 
-  start_health_monitoring(deploymentId: string, intervalMs: number = 10000): () => void {
+  startHealthMonitoring(deploymentId: string, intervalMs: number = 10000): () => void {
     if (healthCheckTimer) {
       clearInterval(healthCheckTimer);
     }
@@ -267,11 +267,11 @@ export class AutoRollback {
     healthCheckTimer = setInterval(async () => {
       if (!autoRollbackEnabled) return;
 
-      const result = await this.check_health(deploymentId);
+      const result = await this.checkHealth(deploymentId);
       if (!result.healthy && result.triggered_conditions.length > 0) {
         const state = HEALTH_STATE.get(deploymentId);
         if (state && state.consecutive_failures >= 3) {
-          await this.trigger_rollback({
+          await this.triggerRollback({
             deployment_id: deploymentId,
             reason: `Auto-rollback triggered: ${result.triggered_conditions.length} condition(s) breached`,
             condition: result.triggered_conditions[0],
@@ -288,15 +288,15 @@ export class AutoRollback {
     };
   }
 
-  stop_health_monitoring(): void {
+  stopHealthMonitoring(): void {
     if (healthCheckTimer) {
       clearInterval(healthCheckTimer);
       healthCheckTimer = null;
     }
   }
 
-  set_metric_value(metric: RollbackMetric, value: number, labels?: Record<string, string>): void {
-    this.record_metric({
+  setMetricValue(metric: RollbackMetric, value: number, labels?: Record<string, string>): void {
+    this.recordMetric({
       metric,
       value,
       timestamp: now(),
@@ -304,7 +304,7 @@ export class AutoRollback {
     });
   }
 
-  clear_all(): void {
+  clearAll(): void {
     ROLLBACK_EVENT_STORE.clear();
     CONDITION_STORE.clear();
     METRIC_STORE.clear();

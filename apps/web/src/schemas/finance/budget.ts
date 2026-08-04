@@ -193,7 +193,8 @@ export const budgetSchema: EntitySchema = {
       type: 'text',
       defaultValue: new Date().getFullYear().toString(),
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => React.createElement('span', null, `${row.fiscal_year ?? ''}年`),
+      renderCell: (row: Record<string, unknown>) =>
+        React.createElement('span', null, `${row.fiscal_year ?? ''}年`),
     },
     {
       name: 'total_budget',

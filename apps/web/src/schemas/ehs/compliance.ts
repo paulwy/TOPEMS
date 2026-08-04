@@ -72,7 +72,8 @@ export const regulationSchema: EntitySchema = {
       label: '发布机关',
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => (row.issuing_authority ? String(row.issuing_authority) : '-'),
+      renderCell: (row: Record<string, unknown>) =>
+        row.issuing_authority ? String(row.issuing_authority) : '-',
     },
     {
       name: 'issue_date',
@@ -242,7 +243,8 @@ export const assessmentSchema: EntitySchema = {
       label: '评估日期',
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => (row.assessment_date ? String(row.assessment_date) : '-'),
+      renderCell: (row: Record<string, unknown>) =>
+        row.assessment_date ? String(row.assessment_date) : '-',
     },
     {
       name: 'result',
@@ -407,7 +409,8 @@ export const permitSchema: EntitySchema = {
       label: '有效期至',
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => (row.expiry_date ? String(row.expiry_date) : '-'),
+      renderCell: (row: Record<string, unknown>) =>
+        row.expiry_date ? String(row.expiry_date) : '-',
     },
     {
       name: 'status',

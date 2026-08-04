@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import type React from 'react';
+import { useEffect } from 'react';
 import { useMap, useMapEvents } from 'react-leaflet';
 import type { ToolMode, DrawFeature } from '../types';
 

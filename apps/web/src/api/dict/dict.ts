@@ -72,10 +72,7 @@ export const dictApi = {
     itemCode: string,
     data: { name?: string; value?: string; sort_order?: number; is_default?: boolean }
   ): Promise<ApiResponse<DictItem>> => {
-    return apiClient.core.put<DictItem>(
-      `/dict/types/${typeCode}/items/${itemCode}`,
-      data
-    );
+    return apiClient.core.put<DictItem>(`/dict/types/${typeCode}/items/${itemCode}`, data);
   },
 
   deleteItem: async (typeCode: string, itemCode: string): Promise<ApiResponse<boolean>> => {

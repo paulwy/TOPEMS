@@ -136,7 +136,7 @@ export const cyberpunkTokens = {
       active: 'rgba(0, 255, 255, 0.12)',
       selected: 'rgba(0, 255, 255, 0.10)',
       disabled: 'rgba(255, 255, 255, 0.03)',
-      disabledBackground: 'rgba(255, 255, 255, 0.02)',
+      disabledBackground: 'action.disabledBackground',
       focus: 'rgba(0, 255, 255, 0.15)',
     },
     // 点缀色 — 金黄
@@ -180,7 +180,8 @@ export const cyberpunkTokens = {
     // 侧边栏选中渐变
     sidebarActive: 'linear-gradient(90deg, rgba(0, 255, 255, 0.20) 0%, transparent 100%)',
     // 扫光效果
-    scanline: 'linear-gradient(90deg, transparent 0%, rgba(0, 255, 255, 0.15) 50%, transparent 100%)',
+    scanline:
+      'linear-gradient(90deg, transparent 0%, rgba(0, 255, 255, 0.15) 50%, transparent 100%)',
     // 边框渐变
     borderGradient: 'linear-gradient(135deg, #00FFFF 0%, #FF00FF 100%)',
   },
@@ -195,7 +196,7 @@ export type CyberpunkTokens = typeof cyberpunkTokens;
 export const cyberpunkSemanticTokens = {
   // 玻璃拟态卡片
   glassCard: {
-    background: 'rgba(255, 255, 255, 0.04)',
+    background: 'action.disabledBackground',
     backdropFilter: 'blur(10px)',
     WebkitBackdropFilter: 'blur(10px)',
     border: '1px solid rgba(0, 255, 255, 0.20)',
@@ -203,13 +204,13 @@ export const cyberpunkSemanticTokens = {
     boxShadow: '0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
   },
   glassCardHover: {
-    background: 'rgba(255, 255, 255, 0.07)',
+    background: 'action.disabledBackground',
     border: '1px solid rgba(0, 255, 255, 0.50)',
     boxShadow: '0 8px 32px rgba(0, 255, 255, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
     transform: 'translateY(-2px)',
   },
   glassCardElevated: {
-    background: 'rgba(255, 255, 255, 0.06)',
+    background: 'action.disabledBackground',
     backdropFilter: 'blur(12px)',
     WebkitBackdropFilter: 'blur(12px)',
     border: '1px solid rgba(0, 255, 255, 0.30)',

@@ -22,7 +22,7 @@ export interface Department {
   id: string;
   name: string;
   code?: string;
-  parent_id?: string;
+  parentId?: string;
   company_id?: string;
   description?: string;
   status: string;
@@ -245,7 +245,7 @@ export interface Contract {
   employee_id: string;
   employee_name?: string;
   employee_no?: string;
-  contract_no?: string;
+  contractNo?: string;
   contract_type: string;
   contract_name?: string;
   department?: string;

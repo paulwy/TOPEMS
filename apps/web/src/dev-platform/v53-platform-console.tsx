@@ -195,7 +195,7 @@ const V53PlatformConsole: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.6)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -305,7 +305,7 @@ const V53ConsoleHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       alignItems: 'center',
       justifyContent: 'space-between',
       bgcolor: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
-      color: 'white',
+      color: 'common.white',
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -314,7 +314,7 @@ const V53ConsoleHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           width: 44,
           height: 44,
           borderRadius: 2,
-          bgcolor: 'rgba(255,255,255,0.2)',
+          bgcolor: 'action.disabledBackground',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -340,7 +340,7 @@ const V53ConsoleHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
     <IconButton
       size='small'
       onClick={onClose}
-      sx={{ color: 'white' }}
+      sx={{ color: 'common.white' }}
     >
       <XIcon size={20} />
     </IconButton>
@@ -459,7 +459,7 @@ const DashboardTab: React.FC<{
                           <Chip
                             label={project.status}
                             size='small'
-                            sx={{ bgcolor: STATUS_COLORS[project.status], color: 'white' }}
+                            sx={{ bgcolor: STATUS_COLORS[project.status], color: 'common.white' }}
                           />
                         </TableCell>
                         <TableCell align='right'>
@@ -869,7 +869,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                       size='small'
                       sx={{
                         bgcolor: STATUS_COLORS[project.status] || '#9e9e9e',
-                        color: 'white',
+                        color: 'common.white',
                         height: 22,
                       }}
                     />
@@ -987,7 +987,7 @@ const ProjectDetailDialog: React.FC<{ project: DevProject; onClose: () => void }
       left: 0,
       right: 0,
       bottom: 0,
-      bgcolor: 'rgba(0,0,0,0.5)',
+      bgcolor: 'action.active',
       zIndex: 10001,
       display: 'flex',
       alignItems: 'center',
@@ -1653,7 +1653,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: 'rgba(0,0,0,0.5)',
+            bgcolor: 'action.active',
             zIndex: 10001,
             display: 'flex',
             alignItems: 'center',
@@ -1831,7 +1831,7 @@ const PipelinesTab: React.FC<{
                             size='small'
                             sx={{
                               bgcolor: STATUS_COLORS[run.status],
-                              color: 'white',
+                              color: 'common.white',
                               height: 22,
                             }}
                           />
@@ -1953,7 +1953,7 @@ const PipelineDetailDialog: React.FC<{ run: PipelineRun; onClose: () => void }> 
       left: 0,
       right: 0,
       bottom: 0,
-      bgcolor: 'rgba(0,0,0,0.5)',
+      bgcolor: 'action.active',
       zIndex: 10001,
       display: 'flex',
       alignItems: 'center',
@@ -1984,7 +1984,7 @@ const PipelineDetailDialog: React.FC<{ run: PipelineRun; onClose: () => void }> 
           <Chip
             label={run.status}
             size='small'
-            sx={{ bgcolor: STATUS_COLORS[run.status], color: 'white' }}
+            sx={{ bgcolor: STATUS_COLORS[run.status], color: 'common.white' }}
           />
           {run.totalDurationMs && (
             <Typography
@@ -2034,7 +2034,7 @@ const StageTimeline: React.FC<{ stage: PipelineStage; index: number }> = ({ stag
           height: 20,
           borderRadius: '50%',
           bgcolor: STATUS_COLORS[stage.status] || '#9e9e9e',
-          color: 'white',
+          color: 'common.white',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -2127,7 +2127,7 @@ const ActivityTab: React.FC<{
       time: new Date(p.updated_at).toLocaleString(),
       type: 'project',
       message: `项目 "${p.name}" 状态更新为 ${p.status}`,
-      color: '#6366f1',
+      color: 'secondary.500',
     });
   });
 

@@ -45,7 +45,6 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   error,
   placeholder,
   compact = true,
-  allowClear = false,
   sx,
 }) => {
   const theme = useTheme();

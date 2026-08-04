@@ -36,15 +36,18 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
   // 合并 WebSocket 实时通知到本地状态
   useEffect(() => {
     if (wsNotifications.length > 0) {
-      const mapped = wsNotifications.map((ws) => ({
-        id: ws.id,
-        title: ws.title || '新通知',
-        content: ws.message,
-        notification_type: ws.type,
-        is_read: false,
-        created_at: new Date(ws.timestamp).toISOString(),
-        data: ws.data,
-      } as unknown as Notification));
+      const mapped = wsNotifications.map(
+        (ws) =>
+          ({
+            id: ws.id,
+            title: ws.title || '新通知',
+            content: ws.message,
+            notification_type: ws.type,
+            is_read: false,
+            created_at: new Date(ws.timestamp).toISOString(),
+            data: ws.data,
+          }) as unknown as Notification
+      );
 
       setNotifications((prev) => {
         const existingIds = new Set(prev.map((n) => n.id));
@@ -132,7 +135,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         top: '100%',
         marginTop: 8,
         width: 384,
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderRadius: 8,
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         border: '1px solid grey.200',
@@ -274,7 +277,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               style={{
                 marginLeft: 6,
                 backgroundColor: theme.palette.error.main,
-                color: 'white',
+                color: 'common.white',
                 fontSize: 12,
                 borderRadius: 9999,
                 padding: '2px 6px',

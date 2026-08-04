@@ -27,7 +27,10 @@ export const getFormatIcon = (format: string) => {
   }
 };
 
-export const getModuleFromReportType = (reportType: string, reportTypes: ReportTypeInfo[]): string => {
+export const getModuleFromReportType = (
+  reportType: string,
+  reportTypes: ReportTypeInfo[]
+): string => {
   const type = reportTypes.find((t) => t.type === reportType);
   return type?.module || 'RS';
 };

@@ -24,19 +24,19 @@ export interface EmotionState {
   valence: Valence;
   arousal: Arousal;
   confidence: number;
-  primary_emotion: EmotionType;
+  primaryEmotion: EmotionType;
   secondary_emotion?: EmotionType;
-  emotion_intensity: number;
+  emotionIntensity: number;
   detected_at: number;
   triggers: string[];
 }
 
 export interface DesignResponse {
   emotion: EmotionState;
-  animation_type: AnimationType;
-  feedback_style: FeedbackStyle;
-  visual_tone: VisualTone;
-  color_adjustments: {
+  animationType: AnimationType;
+  feedbackStyle: FeedbackStyle;
+  visualTone: VisualTone;
+  colorAdjustments: {
     saturation: number;
     brightness: number;
     contrast: number;
@@ -47,9 +47,9 @@ export interface DesignResponse {
     style: 'formal' | 'casual' | 'playful' | 'direct' | 'professional';
     suggestions: string[];
   };
-  sound_design: {
+  soundDesign: {
     enable_sound: boolean;
-    sound_type: 'pleasant' | 'neutral' | 'attention' | 'warning' | 'none';
+    soundType: 'pleasant' | 'neutral' | 'attention' | 'warning' | 'none';
     volume: number;
   };
 }
@@ -111,37 +111,37 @@ export class EmotionalDesignEngine {
   private emotionHistory: EmotionEvent[] = [];
   private currentStates: Map<string, EmotionState> = new Map();
 
-  detect_emotion(
+  detectEmotion(
     signals: Record<string, number>,
     context: Record<string, unknown> = {}
   ): EmotionState {
-    const score = this.compute_emotion_scores(signals);
-    const primaryEmotion = this.determine_primary_emotion(score);
-    const secondaryEmotion = this.determine_secondary_emotion(score, primaryEmotion);
+    const score = this.computeEmotionScores(signals);
+    const primaryEmotion = this.determinePrimaryEmotion(score);
+    const secondaryEmotion = this.determineSecondaryEmotion(score, primaryEmotion);
 
     const state: EmotionState = {
       valence: EMOTION_VALENCE_MAP[primaryEmotion],
       arousal: EMOTION_AROUSAL_MAP[primaryEmotion],
-      confidence: this.compute_confidence(score),
-      primary_emotion: primaryEmotion,
+      confidence: this.computeConfidence(score),
+      primaryEmotion,
       secondary_emotion: secondaryEmotion,
-      emotion_intensity: this.compute_intensity(score, primaryEmotion),
+      emotionIntensity: this.computeIntensity(score, primaryEmotion),
       detected_at: Date.now(),
-      triggers: this.extract_triggers(signals, context),
+      triggers: this.extractTriggers(signals, context),
     };
 
     return state;
   }
 
-  respond_to_emotion(emotion: EmotionState, userId?: string): DesignResponse {
-    const response = this.compute_design_response(emotion);
+  respondToEmotion(emotion: EmotionState, userId?: string): DesignResponse {
+    const response = this.computeDesignResponse(emotion);
 
     if (userId) {
       const currentState = this.currentStates.get(userId);
       if (currentState) {
-        this.update_emotion_profile(userId, emotion);
+        this.updateEmotionProfile(userId, emotion);
       } else {
-        this.initialize_emotion_profile(userId, emotion);
+        this.initializeEmotionProfile(userId, emotion);
       }
       this.currentStates.set(userId, emotion);
 
@@ -161,17 +161,17 @@ export class EmotionalDesignEngine {
     return response;
   }
 
-  get_emotional_state(userId: string): EmotionState | null {
+  getEmotionalState(userId: string): EmotionState | null {
     return this.currentStates.get(userId) || null;
   }
 
-  get_design_response(emotion: EmotionState): DesignResponse {
-    return this.compute_design_response(emotion);
+  getDesignResponse(emotion: EmotionState): DesignResponse {
+    return this.computeDesignResponse(emotion);
   }
 
-  update_emotion_profile(userId: string, emotion: EmotionState): EmotionProfile {
+  updateEmotionProfile(userId: string, emotion: EmotionState): EmotionProfile {
     const profile =
-      this.emotionProfiles.get(userId) || this.initialize_emotion_profile(userId, emotion);
+      this.emotionProfiles.get(userId) || this.initializeEmotionProfile(userId, emotion);
 
     profile.emotionHistory.push(emotion);
     if (profile.emotionHistory.length > 200) {
@@ -187,14 +187,14 @@ export class EmotionalDesignEngine {
 
     profile.avgValence = valences.reduce<number>((a, b) => a + b, 0) / Math.max(valences.length, 1);
     profile.avgArousal = arousals.reduce<number>((a, b) => a + b, 0) / Math.max(arousals.length, 1);
-    profile.dominantEmotion = this.find_dominant_emotion(profile.emotionHistory);
+    profile.dominantEmotion = this.findDominantEmotion(profile.emotionHistory);
     profile.lastDetected = Date.now();
 
     this.emotionProfiles.set(userId, profile);
     return profile;
   }
 
-  get_emotion_history(userId?: string, limit: number = 50): EmotionEvent[] {
+  getEmotionHistory(userId?: string, limit: number = 50): EmotionEvent[] {
     if (!userId) {
       return [...this.emotionHistory].sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
     }
@@ -204,7 +204,7 @@ export class EmotionalDesignEngine {
       .slice(0, limit);
   }
 
-  clear_emotion_history(userId: string): void {
+  clearEmotionHistory(userId: string): void {
     const profile = this.emotionProfiles.get(userId);
     if (profile) {
       profile.emotionHistory = [];
@@ -215,7 +215,7 @@ export class EmotionalDesignEngine {
     this.emotionHistory = this.emotionHistory.filter((e) => !e.id.startsWith(userId));
   }
 
-  private compute_emotion_scores(signals: Record<string, number>): Record<EmotionType, number> {
+  private computeEmotionScores(signals: Record<string, number>): Record<EmotionType, number> {
     const scores: Record<EmotionType, number> = {
       joy: 0,
       trust: 0,
@@ -316,7 +316,7 @@ export class EmotionalDesignEngine {
     return scores;
   }
 
-  private determine_primary_emotion(scores: Record<EmotionType, number>): EmotionType {
+  private determinePrimaryEmotion(scores: Record<EmotionType, number>): EmotionType {
     let maxScore = -Infinity;
     let dominant: EmotionType = 'calm';
 
@@ -330,7 +330,7 @@ export class EmotionalDesignEngine {
     return maxScore <= 0 ? 'calm' : dominant;
   }
 
-  private determine_secondary_emotion(
+  private determineSecondaryEmotion(
     scores: Record<EmotionType, number>,
     primary: EmotionType
   ): EmotionType | undefined {
@@ -348,7 +348,7 @@ export class EmotionalDesignEngine {
     return secondary;
   }
 
-  private compute_confidence(scores: Record<EmotionType, number>): number {
+  private computeConfidence(scores: Record<EmotionType, number>): number {
     const values = Object.values(scores);
     const max = Math.max(...values);
     if (max <= 0) return 0.5;
@@ -358,13 +358,13 @@ export class EmotionalDesignEngine {
     return Math.min(0.98, 0.5 + dominance * 0.48);
   }
 
-  private compute_intensity(scores: Record<EmotionType, number>, primary: EmotionType): number {
+  private computeIntensity(scores: Record<EmotionType, number>, primary: EmotionType): number {
     const rawScore = scores[primary];
     if (rawScore <= 0) return 0.3;
     return Math.min(1, 0.3 + rawScore * 0.7);
   }
 
-  private extract_triggers(
+  private extractTriggers(
     signals: Record<string, number>,
     context: Record<string, unknown>
   ): string[] {
@@ -380,28 +380,28 @@ export class EmotionalDesignEngine {
     return triggers;
   }
 
-  private compute_design_response(emotion: EmotionState): DesignResponse {
-    const { primary_emotion, valence, arousal, emotion_intensity } = emotion;
+  private computeDesignResponse(emotion: EmotionState): DesignResponse {
+    const { primaryEmotion, valence, arousal, emotionIntensity } = emotion;
 
-    const animation_type = this.select_animation(primary_emotion, arousal);
-    const feedback_style = this.select_feedback_style(valence, emotion_intensity);
-    const visual_tone = this.select_visual_tone(valence, arousal, primary_emotion);
-    const color_adjustments = this.compute_color_adjustments(valence, emotion_intensity);
-    const messaging = this.compute_messaging(valence, primary_emotion);
-    const sound_design = this.compute_sound_design(valence, arousal, emotion_intensity);
+    const animationType = this.selectAnimation(primaryEmotion, arousal);
+    const feedbackStyle = this.selectFeedbackStyle(valence, emotionIntensity);
+    const visualTone = this.selectVisualTone(valence, arousal, primaryEmotion);
+    const colorAdjustments = this.computeColorAdjustments(valence, emotionIntensity);
+    const messaging = this.computeMessaging(valence, primaryEmotion);
+    const soundDesign = this.computeSoundDesign(valence, arousal, emotionIntensity);
 
     return {
       emotion,
-      animation_type,
-      feedback_style,
-      visual_tone,
-      color_adjustments,
+      animationType,
+      feedbackStyle,
+      visualTone,
+      colorAdjustments,
       messaging,
-      sound_design,
+      soundDesign,
     };
   }
 
-  private select_animation(emotion: EmotionType, arousal: Arousal): AnimationType {
+  private selectAnimation(emotion: EmotionType, arousal: Arousal): AnimationType {
     if (arousal === 'low') return 'fade';
     if (arousal === 'high') {
       switch (emotion) {
@@ -434,14 +434,14 @@ export class EmotionalDesignEngine {
     }
   }
 
-  private select_feedback_style(valence: Valence, intensity: number): FeedbackStyle {
+  private selectFeedbackStyle(valence: Valence, intensity: number): FeedbackStyle {
     if (valence === 'negative' && intensity > 0.7) return 'dialog';
     if (valence === 'positive' && intensity > 0.6) return 'toast';
     if (intensity > 0.5) return 'inline';
     return 'silent';
   }
 
-  private select_visual_tone(valence: Valence, arousal: Arousal, emotion: EmotionType): VisualTone {
+  private selectVisualTone(valence: Valence, arousal: Arousal, emotion: EmotionType): VisualTone {
     if (valence === 'positive' && arousal === 'high') return 'vibrant';
     if (valence === 'negative' && arousal === 'high') return 'dramatic';
     if (valence === 'positive') return 'warm';
@@ -450,10 +450,10 @@ export class EmotionalDesignEngine {
     return 'neutral';
   }
 
-  private compute_color_adjustments(
+  private computeColorAdjustments(
     valence: Valence,
     intensity: number
-  ): DesignResponse['color_adjustments'] {
+  ): DesignResponse['colorAdjustments'] {
     if (valence === 'positive') {
       return {
         saturation: Math.min(1.2, 1 + intensity * 0.2),
@@ -478,7 +478,7 @@ export class EmotionalDesignEngine {
     };
   }
 
-  private compute_messaging(valence: Valence, emotion: EmotionType): DesignResponse['messaging'] {
+  private computeMessaging(valence: Valence, emotion: EmotionType): DesignResponse['messaging'] {
     let tone: DesignResponse['messaging']['tone'] = 'neutral';
     let style: DesignResponse['messaging']['style'] = 'professional';
     const suggestions: string[] = [];
@@ -506,30 +506,30 @@ export class EmotionalDesignEngine {
     return { tone, style, suggestions };
   }
 
-  private compute_sound_design(
+  private computeSoundDesign(
     valence: Valence,
     arousal: Arousal,
     intensity: number
-  ): DesignResponse['sound_design'] {
+  ): DesignResponse['soundDesign'] {
     const enable = intensity > 0.5;
-    let sound_type: DesignResponse['sound_design']['sound_type'] = 'neutral';
+    let soundType: DesignResponse['soundDesign']['soundType'] = 'neutral';
 
-    if (valence === 'positive') sound_type = 'pleasant';
-    else if (valence === 'negative' && arousal === 'high') sound_type = 'warning';
-    else if (arousal === 'high') sound_type = 'attention';
+    if (valence === 'positive') soundType = 'pleasant';
+    else if (valence === 'negative' && arousal === 'high') soundType = 'warning';
+    else if (arousal === 'high') soundType = 'attention';
 
     return {
       enable_sound: enable,
-      sound_type,
+      soundType,
       volume: intensity * 0.3,
     };
   }
 
-  private initialize_emotion_profile(userId: string, emotion: EmotionState): EmotionProfile {
+  private initializeEmotionProfile(userId: string, emotion: EmotionState): EmotionProfile {
     const profile: EmotionProfile = {
       userId,
       emotionHistory: [emotion],
-      dominantEmotion: emotion.primary_emotion,
+      dominantEmotion: emotion.primaryEmotion,
       avgValence: emotion.valence === 'positive' ? 1 : emotion.valence === 'neutral' ? 0 : -1,
       avgArousal: emotion.arousal === 'high' ? 1 : emotion.arousal === 'medium' ? 0.5 : 0,
       lastDetected: Date.now(),
@@ -538,10 +538,10 @@ export class EmotionalDesignEngine {
     return profile;
   }
 
-  private find_dominant_emotion(history: EmotionState[]): EmotionType {
+  private findDominantEmotion(history: EmotionState[]): EmotionType {
     const counts: Record<string, number> = {};
     for (const e of history) {
-      counts[e.primary_emotion] = (counts[e.primary_emotion] || 0) + 1;
+      counts[e.primaryEmotion] = (counts[e.primaryEmotion] || 0) + 1;
     }
 
     let maxCount = 0;

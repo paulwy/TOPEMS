@@ -10,12 +10,7 @@
 
 import React, { useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  Plug,
-  Cloud,
-  Database,
-  TestTube,
-} from 'lucide-react';
+import { Plug, Cloud, Database, TestTube } from 'lucide-react';
 import { Box, Typography, Paper, Stack } from '@mui/material';
 
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';

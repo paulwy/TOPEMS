@@ -100,7 +100,7 @@ export const PerformanceMonitor: React.FC = () => {
         sx={{
           p: 2,
           minWidth: 280,
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backgroundColor: 'common.white',
           backdropFilter: 'blur(10px)',
         }}
       >

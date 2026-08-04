@@ -16,7 +16,7 @@ export interface ApsScheduleRequest {
 
 export interface ApsScheduleItem {
   order_id: string;
-  order_no: string;
+  orderNo: string;
   product_name: string;
   product_code: string;
   quantity: number;
@@ -86,7 +86,7 @@ export interface PersonnelConstraint {
 
 export interface ConstraintCheckResult {
   order_id: string;
-  order_no: string;
+  orderNo: string;
   overall_passed: boolean;
   material_constraints: MaterialConstraint[];
   equipment_constraints: EquipmentConstraint[];
@@ -170,7 +170,9 @@ export const apsApi = {
     return apiClient.mes.post('/aps/schedule/simulate', data);
   },
 
-  async checkConstraints(data: ConstraintCheckRequest): Promise<ApiResponse<ConstraintCheckResult[]>> {
+  async checkConstraints(
+    data: ConstraintCheckRequest
+  ): Promise<ApiResponse<ConstraintCheckResult[]>> {
     return apiClient.mes.post('/aps/schedule/check-constraints', data);
   },
 

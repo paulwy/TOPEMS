@@ -11,7 +11,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import React from 'react';
-import { IntegrationSettings as IntegrationSettingsType } from '../types';
+import type { IntegrationSettings as IntegrationSettingsType } from '../types';
 
 interface IntegrationSettingsProps {
   settings: IntegrationSettingsType;

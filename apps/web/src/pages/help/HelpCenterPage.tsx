@@ -188,7 +188,15 @@ export const HelpCenterPage: React.FC = () => {
     >
       <Box sx={{ mb: 6 }}>
         <Box sx={{ maxWidth: 600, mx: 'auto', position: 'relative' }}>
-          <Search sx={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: theme.palette.text.disabled }} />
+          <Search
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: theme.palette.text.disabled,
+            }}
+          />
           <TextField
             fullWidth
             placeholder={t('help_center.search_placeholder')}
@@ -200,15 +208,24 @@ export const HelpCenterPage: React.FC = () => {
       </Box>
 
       <Box sx={{ mb: 8 }}>
-        <Typography variant='h5' sx={{ fontWeight: 600, mb: 4 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 600, mb: 4 }}
+        >
           {t('help_center.categories')}
         </Typography>
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           {HELP_CATEGORIES.map((category) => {
             const colors = getCategoryColor(category.color);
             const Icon = category.icon;
             return (
-              <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={category.id}>
+              <Grid
+                size={{ xs: 12, sm: 6, lg: 4 }}
+                key={category.id}
+              >
                 <Card
                   sx={{
                     height: '100%',
@@ -233,10 +250,16 @@ export const HelpCenterPage: React.FC = () => {
                         <Icon sx={{ width: 24, height: 24, color: colors.icon }} />
                       </Box>
                       <Box>
-                        <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant='h6'
+                          sx={{ fontWeight: 600 }}
+                        >
                           {category.title}
                         </Typography>
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
                           {category.description}
                         </Typography>
                       </Box>
@@ -246,7 +269,12 @@ export const HelpCenterPage: React.FC = () => {
                         <Typography
                           key={index}
                           variant='body2'
-                          sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}
+                          sx={{
+                            color: 'text.secondary',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
                         >
                           <ChevronRight size={14} />
                           {item}
@@ -267,7 +295,10 @@ export const HelpCenterPage: React.FC = () => {
                     </Stack>
                   </CardContent>
                   <CardActions sx={{ p: 2, pt: 0 }}>
-                    <Button size='small' sx={{ textTransform: 'none' }}>
+                    <Button
+                      size='small'
+                      sx={{ textTransform: 'none' }}
+                    >
                       浏览 {category.title}
                       <ChevronRight size={16} />
                     </Button>
@@ -279,9 +310,15 @@ export const HelpCenterPage: React.FC = () => {
         </Grid>
       </Box>
 
-      <Grid container spacing={6}>
+      <Grid
+        container
+        spacing={6}
+      >
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Typography variant='h5' sx={{ fontWeight: 600, mb: 4 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 600, mb: 4 }}
+          >
             {t('help_center.faq')}
           </Typography>
           {loading ? (
@@ -301,20 +338,36 @@ export const HelpCenterPage: React.FC = () => {
                       '&:hover': { boxShadow: theme.shadows[2] },
                     }}
                   >
-                    <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <CardContent
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
                       <Typography variant='body1'>{faq.question}</Typography>
                       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
                           查看 {faq.views.toLocaleString()}
                         </Typography>
-                        <ChevronRight size={16} sx={{ color: theme.palette.text.disabled }} />
+                        <ChevronRight
+                          size={16}
+                          sx={{ color: theme.palette.text.disabled }}
+                        />
                       </Box>
                     </CardContent>
                   </Card>
                 ))}
               </Stack>
               <Box sx={{ mt: 4, textAlign: 'right' }}>
-                <Button size='small' sx={{ textTransform: 'none' }} onClick={() => navigate(DASHBOARD_PATHS.helpFaq)}>
+                <Button
+                  size='small'
+                  sx={{ textTransform: 'none' }}
+                  onClick={() => navigate(DASHBOARD_PATHS.helpFaq)}
+                >
                   查看全部FAQ
                   <ChevronRight size={16} />
                 </Button>
@@ -324,7 +377,10 @@ export const HelpCenterPage: React.FC = () => {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
-          <Typography variant='h5' sx={{ fontWeight: 600, mb: 4 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 600, mb: 4 }}
+          >
             {t('help_center.latest_updates')}
           </Typography>
           <Stack spacing={3}>
@@ -334,14 +390,22 @@ export const HelpCenterPage: React.FC = () => {
                   <Chip
                     size='small'
                     label={getTypeChip(update.type).label}
-                    color={getTypeChip(update.type).color as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                    color={
+                      getTypeChip(update.type).color as React.ComponentProps<typeof Chip>['color']
+                    }
                     sx={{ fontWeight: 500 }}
                   />
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     {update.date}
                   </Typography>
                 </Box>
-                <Typography variant='body1' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body1'
+                  sx={{ fontWeight: 500 }}
+                >
                   {update.title}
                 </Typography>
               </Box>
@@ -365,16 +429,32 @@ export const HelpCenterPage: React.FC = () => {
                   <MessageCircle sx={{ width: 24, height: 24, color: 'primary.main' }} />
                 </Box>
                 <Box>
-                  <Typography variant='h6' sx={{ fontWeight: 600 }}>在线客服</Typography>
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 600 }}
+                  >
+                    在线客服
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     遇到问题？联系我们的技术支持团队
                   </Typography>
                 </Box>
               </Box>
-              <Button fullWidth variant='contained' sx={{ textTransform: 'none', borderRadius: 1 }}>
+              <Button
+                fullWidth
+                variant='contained'
+                sx={{ textTransform: 'none', borderRadius: 1 }}
+              >
                 联系客服
               </Button>
-              <Typography variant='body2' color='text.secondary' sx={{ mt: 2, textAlign: 'center' }}>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ mt: 2, textAlign: 'center' }}
+              >
                 工作时间：周一至周五 9:00-18:00
               </Typography>
             </CardContent>
@@ -385,26 +465,72 @@ export const HelpCenterPage: React.FC = () => {
       <Box sx={{ mt: 8 }}>
         <Card sx={{ borderRadius: 2 }}>
           <CardContent>
-            <Grid container spacing={4}>
-              <Grid size={{ xs: 12, sm: 4 }} onClick={() => navigate(DASHBOARD_PATHS.helpGuide)} sx={{ cursor: 'pointer' }}>
+            <Grid
+              container
+              spacing={4}
+            >
+              <Grid
+                size={{ xs: 12, sm: 4 }}
+                onClick={() => navigate(DASHBOARD_PATHS.helpGuide)}
+                sx={{ cursor: 'pointer' }}
+              >
                 <Box sx={{ textAlign: 'center' }}>
-                  <BookOpen size={32} sx={{ color: theme.palette.primary.main, mb: 2 }} />
-                  <Typography variant='body1' sx={{ fontWeight: 600, mb: 1 }}>操作指南</Typography>
-                  <Typography variant='body2' color='text.secondary'>完整的用户手册和操作教程</Typography>
+                  <BookOpen
+                    size={32}
+                    sx={{ color: theme.palette.primary.main, mb: 2 }}
+                  />
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 600, mb: 1 }}
+                  >
+                    操作指南
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    完整的用户手册和操作教程
+                  </Typography>
                 </Box>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
-                  <Video size={32} sx={{ color: theme.palette.success.main, mb: 2 }} />
-                  <Typography variant='body1' sx={{ fontWeight: 600, mb: 1 }}>视频教程</Typography>
-                  <Typography variant='body2' color='text.secondary'>直观的操作演示视频</Typography>
+                  <Video
+                    size={32}
+                    sx={{ color: theme.palette.success.main, mb: 2 }}
+                  />
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 600, mb: 1 }}
+                  >
+                    视频教程
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    直观的操作演示视频
+                  </Typography>
                 </Box>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
-                  <MessageCircle size={32} sx={{ color: theme.palette.info.main, mb: 2 }} />
-                  <Typography variant='body1' sx={{ fontWeight: 600, mb: 1 }}>社区论坛</Typography>
-                  <Typography variant='body2' color='text.secondary'>与其他用户交流经验</Typography>
+                  <MessageCircle
+                    size={32}
+                    sx={{ color: theme.palette.info.main, mb: 2 }}
+                  />
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 600, mb: 1 }}
+                  >
+                    社区论坛
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    与其他用户交流经验
+                  </Typography>
                 </Box>
               </Grid>
             </Grid>

@@ -25,7 +25,10 @@ const formatAction = (action: string): string => {
 const getStatusChip = (status: string | null | undefined): React.ReactNode => {
   const configs: Record<
     string,
-    { color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'; label: string }
+    {
+      color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+      label: string;
+    }
   > = {
     success: { color: 'success', label: '成功' },
     partial: { color: 'warning', label: '部分成功' },
@@ -35,7 +38,13 @@ const getStatusChip = (status: string | null | undefined): React.ReactNode => {
     color: 'default' as const,
     label: status || '-',
   };
-  return <Chip size="small" color={config.color} label={config.label} />;
+  return (
+    <Chip
+      size='small'
+      color={config.color}
+      label={config.label}
+    />
+  );
 };
 
 const auditLogFields: SchemaField[] = [
@@ -46,7 +55,10 @@ const auditLogFields: SchemaField[] = [
     sortable: true,
     listWidth: 180,
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {new Date(row.created_at as string).toLocaleString('zh-CN')}
       </Typography>
     ),
@@ -71,9 +83,15 @@ const auditLogFields: SchemaField[] = [
               justifyContent: 'center',
             }}
           >
-            <User size={16} color={ct.primary.dark} />
+            <User
+              size={16}
+              color={ct.primary.dark}
+            />
           </Box>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
             {name}
           </Typography>
         </Box>
@@ -86,9 +104,7 @@ const auditLogFields: SchemaField[] = [
     type: 'text',
     listWidth: 110,
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant="body2">
-        {formatAction(row.action as string)}
-      </Typography>
+      <Typography variant='body2'>{formatAction(row.action as string)}</Typography>
     ),
   },
   {
@@ -97,7 +113,10 @@ const auditLogFields: SchemaField[] = [
     type: 'text',
     listWidth: 120,
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {String(row.entity_type || row.resource || '-')}
       </Typography>
     ),
@@ -108,7 +127,10 @@ const auditLogFields: SchemaField[] = [
     type: 'text',
     listWidth: 130,
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {String(row.ip_address || '-')}
       </Typography>
     ),
@@ -119,7 +141,9 @@ const auditLogFields: SchemaField[] = [
     type: 'text',
     listWidth: 100,
     renderCell: (row: Record<string, unknown>) => {
-      const status = (row.status as string) || (row.success === true ? 'success' : row.success === false ? 'error' : '');
+      const status =
+        (row.status as string) ||
+        (row.success === true ? 'success' : row.success === false ? 'error' : '');
       return getStatusChip(status);
     },
   },

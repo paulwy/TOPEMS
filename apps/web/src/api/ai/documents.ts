@@ -46,20 +46,14 @@ export const documentApi = {
     id: string,
     data?: SummarizeDocumentRequest
   ): Promise<ApiResponse<SummarizeDocumentResponse>> => {
-    return apiClient.ai.post<SummarizeDocumentResponse>(
-      `/documents/${id}/summarize`,
-      data || {}
-    );
+    return apiClient.ai.post<SummarizeDocumentResponse>(`/documents/${id}/summarize`, data || {});
   },
 
   extractKeyPoints: async (
     id: string,
     data?: ExtractKeyPointsRequest
   ): Promise<ApiResponse<ExtractKeyPointsResponse>> => {
-    return apiClient.ai.post<ExtractKeyPointsResponse>(
-      `/documents/${id}/key-points`,
-      data || {}
-    );
+    return apiClient.ai.post<ExtractKeyPointsResponse>(`/documents/${id}/key-points`, data || {});
   },
 
   extractDocument: async (

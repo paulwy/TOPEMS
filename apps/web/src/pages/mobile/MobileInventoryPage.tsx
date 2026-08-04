@@ -196,7 +196,7 @@ const MobileInventoryPage: React.FC = () => {
       const mockInboundOrders: InboundOrder[] = [
         {
           id: '1',
-          order_no: 'IN-2024-06-0891',
+          orderNo: 'IN-2024-06-0891',
           supplier: '深圳电子科技有限公司',
           type: 'purchase',
           status: 'in_progress',
@@ -207,7 +207,7 @@ const MobileInventoryPage: React.FC = () => {
         },
         {
           id: '2',
-          order_no: 'IN-2024-06-0892',
+          orderNo: 'IN-2024-06-0892',
           supplier: '东莞五金制品厂',
           type: 'purchase',
           status: 'pending',
@@ -218,7 +218,7 @@ const MobileInventoryPage: React.FC = () => {
         },
         {
           id: '3',
-          order_no: 'IN-2024-06-0890',
+          orderNo: 'IN-2024-06-0890',
           supplier: '广州包装材料厂',
           type: 'purchase',
           status: 'completed',
@@ -240,7 +240,7 @@ const MobileInventoryPage: React.FC = () => {
       const mockOutboundOrders: OutboundOrder[] = [
         {
           id: '1',
-          order_no: 'OUT-2024-06-0567',
+          orderNo: 'OUT-2024-06-0567',
           customer: '北京智能科技有限公司',
           type: 'sales',
           status: 'in_progress',
@@ -251,7 +251,7 @@ const MobileInventoryPage: React.FC = () => {
         },
         {
           id: '2',
-          order_no: 'OUT-2024-06-0566',
+          orderNo: 'OUT-2024-06-0566',
           customer: '上海自动化设备厂',
           type: 'sales',
           status: 'pending',
@@ -262,7 +262,7 @@ const MobileInventoryPage: React.FC = () => {
         },
         {
           id: '3',
-          order_no: 'OUT-2024-06-0565',
+          orderNo: 'OUT-2024-06-0565',
           customer: '深圳电子科技有限公司',
           type: 'sales',
           status: 'completed',
@@ -502,7 +502,11 @@ const MobileInventoryPage: React.FC = () => {
                               <Chip
                                 label={getStatusLabel(item.status)}
                                 size='small'
-                                color={getStatusColor(item.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                                color={
+                                  getStatusColor(item.status) as React.ComponentProps<
+                                    typeof Chip
+                                  >['color']
+                                }
                                 sx={{ height: 18, fontSize: '0.65rem' }}
                               />
                               <Typography
@@ -588,7 +592,11 @@ const MobileInventoryPage: React.FC = () => {
                           <Chip
                             label={getStatusLabel(task.status)}
                             size='small'
-                            color={getStatusColor(task.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                            color={
+                              getStatusColor(task.status) as React.ComponentProps<
+                                typeof Chip
+                              >['color']
+                            }
                             sx={{ height: 20, fontSize: '0.7rem' }}
                           />
                         </Box>
@@ -705,7 +713,7 @@ const MobileInventoryPage: React.FC = () => {
                             <Warehouse style={{ width: 20, height: 20 }} />
                           </Avatar>
                         }
-                        title={order.order_no}
+                        title={order.orderNo}
                         subtitle={
                           <Box sx={{ mt: 0.5 }}>
                             <Typography
@@ -724,7 +732,11 @@ const MobileInventoryPage: React.FC = () => {
                               <Chip
                                 label={getStatusLabel(order.status)}
                                 size='small'
-                                color={getStatusColor(order.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                                color={
+                                  getStatusColor(order.status) as React.ComponentProps<
+                                    typeof Chip
+                                  >['color']
+                                }
                                 sx={{ height: 18, fontSize: '0.65rem' }}
                               />
                             </Box>
@@ -749,7 +761,7 @@ const MobileInventoryPage: React.FC = () => {
                         onClick={() =>
                           addNotification({
                             title: '入库单详情',
-                            message: `查看 ${order.order_no}`,
+                            message: `查看 ${order.orderNo}`,
                             type: 'info',
                           })
                         }
@@ -776,7 +788,7 @@ const MobileInventoryPage: React.FC = () => {
                             <Truck style={{ width: 20, height: 20 }} />
                           </Avatar>
                         }
-                        title={order.order_no}
+                        title={order.orderNo}
                         subtitle={
                           <Box sx={{ mt: 0.5 }}>
                             <Typography
@@ -795,7 +807,11 @@ const MobileInventoryPage: React.FC = () => {
                               <Chip
                                 label={getStatusLabel(order.status)}
                                 size='small'
-                                color={getStatusColor(order.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                                color={
+                                  getStatusColor(order.status) as React.ComponentProps<
+                                    typeof Chip
+                                  >['color']
+                                }
                                 sx={{ height: 18, fontSize: '0.65rem' }}
                               />
                             </Box>
@@ -820,7 +836,7 @@ const MobileInventoryPage: React.FC = () => {
                         onClick={() =>
                           addNotification({
                             title: '出库单详情',
-                            message: `查看 ${order.order_no}`,
+                            message: `查看 ${order.orderNo}`,
                             type: 'info',
                           })
                         }

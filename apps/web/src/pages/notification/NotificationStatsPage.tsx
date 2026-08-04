@@ -233,7 +233,7 @@ const NotificationStatsPage: React.FC = () => {
           serviceStatus && (
             <div
               style={{
-                backgroundColor: 'white',
+                backgroundColor: 'common.white',
                 borderRadius: 8,
                 padding: 16,
                 display: 'flex',

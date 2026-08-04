@@ -85,7 +85,7 @@ const purchaseContractWizard: WizardConfig = {
       title: '合同基本信息',
       description: '填写合同编号、供应商、金额等基本信息',
       fields: [
-        'contract_no',
+        'contractNo',
         'supplier_id',
         'supplier_name',
         'contract_type',
@@ -96,7 +96,7 @@ const purchaseContractWizard: WizardConfig = {
       ],
       groupTitle: '合同基本信息',
       validate: (values) => {
-        if (!values.contract_no) return '请填写合同编号';
+        if (!values.contractNo) return '请填写合同编号';
         if (!values.supplier_id) return '请填写供应商ID';
         return null;
       },
@@ -152,7 +152,7 @@ export const purchaseContractWizardSchema: EntitySchema & {
 
   fields: [
     {
-      name: 'contract_no',
+      name: 'contractNo',
       label: '合同编号',
       type: 'text',
       required: true,
@@ -270,7 +270,7 @@ export const purchaseContractWizardSchema: EntitySchema & {
 
   list: {
     columns: [
-      'contract_no',
+      'contractNo',
       'supplier_name',
       'contract_type',
       'total_amount',
@@ -278,7 +278,7 @@ export const purchaseContractWizardSchema: EntitySchema & {
       'end_date',
       'status',
     ],
-    searchFields: ['contract_no', 'supplier_name'],
+    searchFields: ['contractNo', 'supplier_name'],
     pageSize: 10,
     statusBadge: {
       field: 'status',
@@ -333,7 +333,7 @@ export const purchaseContractWizardSchema: EntitySchema & {
   formSections: [
     {
       title: '合同基本信息',
-      fields: ['contract_no', 'supplier_id', 'supplier_name', 'contract_type', 'status'],
+      fields: ['contractNo', 'supplier_id', 'supplier_name', 'contract_type', 'status'],
     },
     {
       title: '金额与日期',

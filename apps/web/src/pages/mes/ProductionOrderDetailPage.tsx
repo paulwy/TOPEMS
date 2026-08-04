@@ -20,6 +20,7 @@ import { designTokens } from '@/theme/tokens';
 import { MES_PATHS } from '@/modules/mes/config';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const ProductionOrderDetailPage: React.FC = () => {
@@ -72,7 +73,9 @@ const ProductionOrderDetailPage: React.FC = () => {
   const records = recordsData || [];
   const qualityRecords = qualityRecordsData || [];
   const loading = orderLoading;
-  const errorMessage = orderError ? (orderError as Error).message || t('mes.production_order_detail_page.detail') : undefined;
+  const errorMessage = orderError
+    ? (orderError as Error).message || t('mes.production_order_detail_page.detail')
+    : undefined;
 
   const getStatusColor = (status: string): ChipProps['color'] => {
     switch (status) {
@@ -180,11 +183,11 @@ const ProductionOrderDetailPage: React.FC = () => {
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>实际开始时间</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{formatDate(order.actual_start_date)}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(order.actualStartDate)}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>实际结束时间</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{formatDate(order.actual_end_date)}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(order.actualEndDate)}</Typography>
         </Box>
       </Box>
     );
@@ -228,7 +231,11 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Chip
-                  label={record.status === 'completed' ? t('mes.production_order_detail_page.completed') : t('mes.production_order_detail_page.in_progress')}
+                  label={
+                    record.status === 'completed'
+                      ? t('mes.production_order_detail_page.completed')
+                      : t('mes.production_order_detail_page.in_progress')
+                  }
                   color={record.status === 'completed' ? 'success' : 'primary'}
                   size='small'
                 />
@@ -320,7 +327,11 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Chip
-                  label={record.status === 'qualified' ? t('mes.production_order_detail_page.qualified') : t('mes.production_order_detail_page.unqualified')}
+                  label={
+                    record.status === 'qualified'
+                      ? t('mes.production_order_detail_page.qualified')
+                      : t('mes.production_order_detail_page.unqualified')
+                  }
                   color={record.status === 'qualified' ? 'success' : 'error'}
                   size='small'
                 />
@@ -483,11 +494,31 @@ const ProductionOrderDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: t('mes.production_order_detail_page.tab_basic'), content: basicInfoContent || <></> },
-      { id: 'schedule', label: t('mes.production_order_detail_page.info'), content: scheduleInfoContent || <></> },
-      { id: 'statistics', label: t('mes.production_order_detail_page.text_93466b'), content: statisticsContent || <></> },
-      { id: 'records', label: t('mes.production_order_detail_page.work_report'), content: recordsContent || <></> },
-      { id: 'quality', label: t('mes.production_order_detail_page.inspection'), content: qualityContent || <></> },
+      {
+        id: 'basic',
+        label: t('mes.production_order_detail_page.tab_basic'),
+        content: basicInfoContent || <></>,
+      },
+      {
+        id: 'schedule',
+        label: t('mes.production_order_detail_page.info'),
+        content: scheduleInfoContent || <></>,
+      },
+      {
+        id: 'statistics',
+        label: t('mes.production_order_detail_page.text_93466b'),
+        content: statisticsContent || <></>,
+      },
+      {
+        id: 'records',
+        label: t('mes.production_order_detail_page.work_report'),
+        content: recordsContent || <></>,
+      },
+      {
+        id: 'quality',
+        label: t('mes.production_order_detail_page.inspection'),
+        content: qualityContent || <></>,
+      },
     ],
     [basicInfoContent, scheduleInfoContent, statisticsContent, recordsContent, qualityContent]
   );
@@ -504,8 +535,14 @@ const ProductionOrderDetailPage: React.FC = () => {
       subtitle: order?.order_number || undefined,
       tags: [getStatusLabel(order?.status || '')],
       stats: [
-        { label: t('mes.production_order_detail_page.field_planned_quantity'), value: `${order?.quantity || 0} ${order?.unit || '件'}` },
-        { label: t('mes.production_order_detail_page.field_status'), value: getStatusLabel(order?.status || '') },
+        {
+          label: t('mes.production_order_detail_page.field_planned_quantity'),
+          value: `${order?.quantity || 0} ${order?.unit || '件'}`,
+        },
+        {
+          label: t('mes.production_order_detail_page.field_status'),
+          value: getStatusLabel(order?.status || ''),
+        },
       ],
     }),
     [order]

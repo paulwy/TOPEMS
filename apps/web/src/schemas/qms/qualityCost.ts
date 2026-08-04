@@ -52,7 +52,7 @@ export const qualityCostSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { fontWeight: 600, color: '#1976d2' } },
+          { style: { fontWeight: 600, color: 'info.600' } },
           String(row.costNo ?? '')
         ),
     },

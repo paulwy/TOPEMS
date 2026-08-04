@@ -11,19 +11,19 @@
 // ============ 枚举与类型定义 ============
 
 export enum CompletionType {
-  Snippet = 'snippet',
-  Function = 'function',
-  Variable = 'variable',
-  Import = 'import',
-  Template = 'template',
-  NaturalLanguage = 'natural_language',
+  SNIPPET = 'snippet',
+  FUNCTION = 'function',
+  VARIABLE = 'variable',
+  IMPORT = 'import',
+  TEMPLATE = 'template',
+  NATURALLANGUAGE = 'natural_language',
 }
 
 export enum CompletionMode {
-  ContextAware = 'context_aware',
-  TypeInference = 'type_inference',
-  PatternMatching = 'pattern_matching',
-  NaturalLanguageToCode = 'nl_to_code',
+  CONTEXTAWARE = 'context_aware',
+  TYPEINFERENCE = 'type_inference',
+  PATTERNMATCHING = 'pattern_matching',
+  NATURALLANGUAGETOCODE = 'nl_to_code',
 }
 
 // ============ 接口定义 ============
@@ -325,7 +325,7 @@ const PATTERN_RULES: PatternRule[] = [
     suggestion: {
       text: 'log(',
       insert_text: 'log($0)',
-      type: CompletionType.Snippet,
+      type: CompletionType.SNIPPET,
       description: 'console.log 调试输出',
     },
     description: '匹配 console. 并建议 log',
@@ -337,7 +337,7 @@ const PATTERN_RULES: PatternRule[] = [
     suggestion: {
       text: 'useState(',
       insert_text: 'useState($0)',
-      type: CompletionType.Snippet,
+      type: CompletionType.SNIPPET,
       description: 'React useState 钩子',
     },
     description: '匹配 const xxx = 并建议 useState',
@@ -349,7 +349,7 @@ const PATTERN_RULES: PatternRule[] = [
     suggestion: {
       text: '{ ',
       insert_text: '{\n  $0\n}',
-      type: CompletionType.Snippet,
+      type: CompletionType.SNIPPET,
       description: '箭头函数体',
     },
     description: '匹配 => 并建议函数体块',
@@ -361,7 +361,7 @@ const PATTERN_RULES: PatternRule[] = [
     suggestion: {
       text: '(condition) {',
       insert_text: '($1) {\n  $0\n}',
-      type: CompletionType.Snippet,
+      type: CompletionType.SNIPPET,
       description: 'if 条件语句',
     },
     description: '匹配 if 并建议条件语句结构',
@@ -373,7 +373,7 @@ const PATTERN_RULES: PatternRule[] = [
     suggestion: {
       text: ' {',
       insert_text: ' {\n  $0\n} catch (error) {\n  console.error(error);\n}',
-      type: CompletionType.Template,
+      type: CompletionType.TEMPLATE,
       description: 'try-catch 错误处理',
     },
     description: '匹配 try 并建议 try-catch 结构',
@@ -399,20 +399,20 @@ export class CodeCompletionEngine {
    * 获取补全建议列表
    */
   async getCompletions(context: CompletionContext): Promise<CompletionSuggestion[]> {
-    const mode = context.mode ?? CompletionMode.ContextAware;
+    const mode = context.mode ?? CompletionMode.CONTEXTAWARE;
     const suggestions: CompletionSuggestion[] = [];
 
     switch (mode) {
-      case CompletionMode.ContextAware:
+      case CompletionMode.CONTEXTAWARE:
         suggestions.push(...this.getContextAwareCompletions(context));
         break;
-      case CompletionMode.TypeInference:
+      case CompletionMode.TYPEINFERENCE:
         suggestions.push(...this.getTypeInferenceCompletions(context));
         break;
-      case CompletionMode.PatternMatching:
+      case CompletionMode.PATTERNMATCHING:
         suggestions.push(...this.getPatternMatchCompletions(context));
         break;
-      case CompletionMode.NaturalLanguageToCode:
+      case CompletionMode.NATURALLANGUAGETOCODE:
         suggestions.push(...this.getNaturalLanguageCompletions(context));
         break;
       default:
@@ -550,7 +550,7 @@ export class CodeCompletionEngine {
       if (!currentWord || variable.name.startsWith(currentWord)) {
         suggestions.push({
           text: variable.name,
-          type: CompletionType.Variable,
+          type: CompletionType.VARIABLE,
           confidence: this.calculateVariableConfidence(variable, context),
           description: `变量: ${variable.name} (${variable.type})`,
           insert_text: variable.name,
@@ -566,7 +566,7 @@ export class CodeCompletionEngine {
         if (!currentWord || item.startsWith(currentWord)) {
           suggestions.push({
             text: item,
-            type: CompletionType.Import,
+            type: CompletionType.IMPORT,
             confidence: 0.7,
             description: `导入: ${item} (from ${imp.path})`,
             insert_text: item,
@@ -583,7 +583,7 @@ export class CodeCompletionEngine {
       if (!currentWord || snippet.prefix.startsWith(currentWord)) {
         suggestions.push({
           text: snippet.prefix,
-          type: CompletionType.Snippet,
+          type: CompletionType.SNIPPET,
           confidence: currentWord === snippet.prefix ? 0.9 : 0.6,
           description: snippet.description,
           insert_text: snippet.body,
@@ -623,7 +623,7 @@ export class CodeCompletionEngine {
       const varName = assignMatch[1];
       suggestions.push({
         text: `${varName}Value`,
-        type: CompletionType.Variable,
+        type: CompletionType.VARIABLE,
         confidence: 0.5,
         description: `推断变量: ${varName}`,
         insert_text: `${varName}Value`,
@@ -642,7 +642,7 @@ export class CodeCompletionEngine {
       if (rule.pattern.test(code)) {
         suggestions.push({
           text: rule.suggestion.text ?? '',
-          type: rule.suggestion.type ?? CompletionType.Snippet,
+          type: rule.suggestion.type ?? CompletionType.SNIPPET,
           confidence: 0.75,
           description: rule.description,
           insert_text: rule.suggestion.insert_text ?? rule.suggestion.text ?? '',
@@ -669,7 +669,7 @@ export class CodeCompletionEngine {
       if (nlMapping) {
         suggestions.push({
           text: nlMapping.name,
-          type: CompletionType.NaturalLanguage,
+          type: CompletionType.NATURALLANGUAGE,
           confidence: 0.8,
           description: `从描述生成: ${description}`,
           insert_text: nlMapping.body,
@@ -729,7 +729,7 @@ export class CodeCompletionEngine {
 
     return typeMap[matchedKey].map((method) => ({
       text: method,
-      type: CompletionType.Function,
+      type: CompletionType.FUNCTION,
       confidence: 0.85,
       description: `${type}.${method}()`,
       insert_text: `${method}($0)`,

@@ -360,11 +360,7 @@ export const createAxiosClient = ({
 
         // 关键：如果请求本身是登录/注册/刷新/找回密码等认证公开API，
         // 返回 401 是正常业务失败（如密码错误），不应清除 token 或触发登出事件
-        if (
-          !requestIsAuthPublicApi &&
-          currentPath !== '/login' &&
-          currentPath !== '/register'
-        ) {
+        if (!requestIsAuthPublicApi && currentPath !== '/login' && currentPath !== '/register') {
           handleAuthError();
         }
         return Promise.reject(error);

@@ -133,6 +133,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       ref={containerRef}
       style={windowStyle}
@@ -193,7 +194,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
               sx={{
                 width: 24,
                 height: 24,
-                '&:hover': { backgroundColor: theme.palette.error.light, color: 'white' },
+                '&:hover': { backgroundColor: theme.palette.error.light, color: 'common.white' },
               }}
             >
               <X size={14} />
@@ -214,6 +215,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
 
       {windowState.isResizable && !windowState.isMaximized && (
         <>
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             className='resize-handle-bottom'
             style={{
@@ -226,6 +228,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
             }}
             onMouseDown={(e) => handleResizeStart(e, 'bottom')}
           />
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             className='resize-handle-right'
             style={{
@@ -238,6 +241,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
             }}
             onMouseDown={(e) => handleResizeStart(e, 'right')}
           />
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             className='resize-handle-bottom-right'
             style={{

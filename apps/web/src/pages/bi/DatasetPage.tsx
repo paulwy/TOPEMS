@@ -57,6 +57,7 @@ import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'editor';
@@ -715,7 +716,11 @@ const DatasetPage = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: t('bi.dataset_page.home'), href: '/dashboard' }, { label: 'BI' }, { label: t('bi.dataset_page.text_e20804') }]}
+        breadcrumbs={[
+          { label: t('bi.dataset_page.home'), href: '/dashboard' },
+          { label: 'BI' },
+          { label: t('bi.dataset_page.text_e20804') },
+        ]}
       >
         {viewMode === 'list' ? renderListView() : renderEditorView()}
       </DashboardTemplate>

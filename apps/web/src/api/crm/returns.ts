@@ -11,7 +11,9 @@ import type {
 } from './types';
 
 export const returnsApi = {
-  list: async (params?: ReturnQueryParams): Promise<ApiResponse<PaginatedResponse<ReturnRecord>>> => {
+  list: async (
+    params?: ReturnQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<ReturnRecord>>> => {
     return apiClient.crm.get('/returns', { params });
   },
 
@@ -55,7 +57,10 @@ export const returnsApi = {
     return apiClient.crm.get(`/returns/${id}/items`);
   },
 
-  addItem: async (id: string, item: Omit<ReturnItem, 'id' | 'return_id'>): Promise<ApiResponse<ReturnItem>> => {
+  addItem: async (
+    id: string,
+    item: Omit<ReturnItem, 'id' | 'return_id'>
+  ): Promise<ApiResponse<ReturnItem>> => {
     return apiClient.crm.post(`/returns/${id}/items`, item);
   },
 

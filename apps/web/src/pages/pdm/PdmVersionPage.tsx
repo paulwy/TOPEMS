@@ -8,8 +8,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const versionApiAdapter: CrudApiAdapter<DocumentVersion> = {
   list: async (params) => {
-    const documentId =
-      (params?.document as string) || (params?.document_id as string) || '';
+    const documentId = (params?.document as string) || (params?.document_id as string) || '';
     if (!documentId || documentId === 'all') {
       return { data: [], total: 0 };
     }
@@ -18,9 +17,7 @@ const versionApiAdapter: CrudApiAdapter<DocumentVersion> = {
       return { data: [], total: 0 };
     }
     const raw = response.data as unknown as Record<string, unknown>;
-    const items = (
-      Array.isArray(raw) ? raw : (raw as any)?.versions || []
-    ) as DocumentVersion[];
+    const items = (Array.isArray(raw) ? raw : (raw as any)?.versions || []) as DocumentVersion[];
     const transformed = items.map((v) => ({
       ...v,
       id: `${v.document_id}:${v.id}`,

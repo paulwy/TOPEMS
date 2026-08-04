@@ -1,13 +1,7 @@
 import type { EntitySchema } from '@/schema';
 import React from 'react';
 import { Box, Typography, Chip, Stack } from '@mui/material';
-import {
-  FileText,
-  FileSpreadsheet,
-  File,
-  Image,
-  FolderOpen,
-} from 'lucide-react';
+import { FileText, FileSpreadsheet, File, Image, FolderOpen } from 'lucide-react';
 
 const TYPE_LABELS: Record<string, string> = {
   pdf: 'PDF',
@@ -29,17 +23,47 @@ const getFileIcon = (type: string) => {
   const color = TYPE_COLORS[type] || '#9ca3af';
   switch (type) {
     case 'pdf':
-      return <FileText size={20} style={{ color }} />;
+      return (
+        <FileText
+          size={20}
+          style={{ color }}
+        />
+      );
     case 'word':
-      return <File size={20} style={{ color }} />;
+      return (
+        <File
+          size={20}
+          style={{ color }}
+        />
+      );
     case 'excel':
-      return <FileSpreadsheet size={20} style={{ color }} />;
+      return (
+        <FileSpreadsheet
+          size={20}
+          style={{ color }}
+        />
+      );
     case 'ppt':
-      return <File size={20} style={{ color }} />;
+      return (
+        <File
+          size={20}
+          style={{ color }}
+        />
+      );
     case 'image':
-      return <Image size={20} style={{ color }} />;
+      return (
+        <Image
+          size={20}
+          style={{ color }}
+        />
+      );
     default:
-      return <File size={20} style={{ color }} />;
+      return (
+        <File
+          size={20}
+          style={{ color }}
+        />
+      );
   }
 };
 
@@ -95,10 +119,16 @@ export const documentSchema: EntitySchema = {
               {getFileIcon(type)}
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 {doc.name}
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {doc.category || 'work'}
               </Typography>
             </Box>
@@ -133,7 +163,7 @@ export const documentSchema: EntitySchema = {
             label={label}
             sx={{
               bgcolor: `${color}15`,
-              color: color,
+              color,
               fontWeight: 500,
             }}
           />
@@ -146,7 +176,10 @@ export const documentSchema: EntitySchema = {
       type: 'text',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => (
-        <Typography variant='body2' color='text.secondary'>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
           {formatFileSize((row as any).size || 0)}
         </Typography>
       ),
@@ -157,9 +190,19 @@ export const documentSchema: EntitySchema = {
       type: 'text',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => (
-        <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
-          <FolderOpen size={14} style={{ color: '#6b7280' }} />
-          <Typography variant='body2' color='text.secondary'>
+        <Stack
+          direction='row'
+          spacing={0.5}
+          sx={{ alignItems: 'center' }}
+        >
+          <FolderOpen
+            size={14}
+            style={{ color: 'grey.500' }}
+          />
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {(row as any).folder_id || '根目录'}
           </Typography>
         </Stack>
@@ -172,7 +215,10 @@ export const documentSchema: EntitySchema = {
       listWidth: 160,
       hideInForm: true,
       renderCell: (row: Record<string, unknown>) => (
-        <Typography variant='body2' color='text.secondary'>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
           {new Date((row as any).updated_at).toLocaleString('zh-CN')}
         </Typography>
       ),

@@ -27,17 +27,23 @@ export type RootCauseRenderer = (props: WizardStepRenderProps) => React.ReactNod
 
 const teamMembersFields: NestedTableConfig['fields'] = [
   { name: 'name', label: '姓名', type: 'text', required: true, listWidth: 120 },
-  { name: 'role', label: '角色', type: 'select', listWidth: 120, options: {
-    type: 'static',
-    options: [
-      { label: '团队负责人', value: 'leader' },
-      { label: '质量代表', value: 'quality' },
-      { label: '工程', value: 'engineering' },
-      { label: '生产', value: 'production' },
-      { label: '采购', value: 'procurement' },
-      { label: '其他', value: 'other' },
-    ],
-  }},
+  {
+    name: 'role',
+    label: '角色',
+    type: 'select',
+    listWidth: 120,
+    options: {
+      type: 'static',
+      options: [
+        { label: '团队负责人', value: 'leader' },
+        { label: '质量代表', value: 'quality' },
+        { label: '工程', value: 'engineering' },
+        { label: '生产', value: 'production' },
+        { label: '采购', value: 'procurement' },
+        { label: '其他', value: 'other' },
+      ],
+    },
+  },
   { name: 'department', label: '部门', type: 'text', listWidth: 120 },
   { name: 'contact', label: '联系方式', type: 'text', listWidth: 140 },
 ];
@@ -61,14 +67,20 @@ const containmentActionsFields: NestedTableConfig['fields'] = [
   { name: 'description', label: '措施描述', type: 'text', required: true, listWidth: 250 },
   { name: 'implement_date', label: '实施日期', type: 'date', listWidth: 130 },
   { name: 'owner', label: '负责人', type: 'text', listWidth: 100 },
-  { name: 'effectiveness', label: '有效性', type: 'select', listWidth: 100, options: {
-    type: 'static',
-    options: [
-      { label: '有效', value: 'effective' },
-      { label: '部分有效', value: 'partial' },
-      { label: '无效', value: 'ineffective' },
-    ],
-  }},
+  {
+    name: 'effectiveness',
+    label: '有效性',
+    type: 'select',
+    listWidth: 100,
+    options: {
+      type: 'static',
+      options: [
+        { label: '有效', value: 'effective' },
+        { label: '部分有效', value: 'partial' },
+        { label: '无效', value: 'ineffective' },
+      ],
+    },
+  },
 ];
 
 const containmentActionsTable: NestedTableConfig = {
@@ -92,37 +104,55 @@ const containmentActionsTable: NestedTableConfig = {
 
 const rootCausesFields: NestedTableConfig['fields'] = [
   { name: 'cause', label: '原因描述', type: 'text', required: true, listWidth: 200 },
-  { name: 'category', label: '类别', type: 'select', listWidth: 100, options: {
-    type: 'static',
-    options: [
-      { label: '人 (Man)', value: 'man' },
-      { label: '机 (Machine)', value: 'machine' },
-      { label: '料 (Material)', value: 'material' },
-      { label: '法 (Method)', value: 'method' },
-      { label: '环 (Environment)', value: 'environment' },
-      { label: '测 (Measurement)', value: 'measurement' },
-    ],
-  }},
-  { name: 'level', label: '层级', type: 'select', listWidth: 80, options: {
-    type: 'static',
-    options: [
-      { label: '1', value: '1' },
-      { label: '2', value: '2' },
-      { label: '3', value: '3' },
-      { label: '4', value: '4' },
-      { label: '5 (根因)', value: '5' },
-    ],
-  }},
+  {
+    name: 'category',
+    label: '类别',
+    type: 'select',
+    listWidth: 100,
+    options: {
+      type: 'static',
+      options: [
+        { label: '人 (Man)', value: 'man' },
+        { label: '机 (Machine)', value: 'machine' },
+        { label: '料 (Material)', value: 'material' },
+        { label: '法 (Method)', value: 'method' },
+        { label: '环 (Environment)', value: 'environment' },
+        { label: '测 (Measurement)', value: 'measurement' },
+      ],
+    },
+  },
+  {
+    name: 'level',
+    label: '层级',
+    type: 'select',
+    listWidth: 80,
+    options: {
+      type: 'static',
+      options: [
+        { label: '1', value: '1' },
+        { label: '2', value: '2' },
+        { label: '3', value: '3' },
+        { label: '4', value: '4' },
+        { label: '5 (根因)', value: '5' },
+      ],
+    },
+  },
   { name: 'is_root', label: '是否根因', type: 'switch', listWidth: 80 },
-  { name: 'analysis_method', label: '分析方法', type: 'select', listWidth: 120, options: {
-    type: 'static',
-    options: [
-      { label: '5Why', value: '5why' },
-      { label: '鱼骨图', value: 'fishbone' },
-      { label: 'FMEA', value: 'fmea' },
-      { label: 'Pareto', value: 'pareto' },
-    ],
-  }},
+  {
+    name: 'analysis_method',
+    label: '分析方法',
+    type: 'select',
+    listWidth: 120,
+    options: {
+      type: 'static',
+      options: [
+        { label: '5Why', value: '5why' },
+        { label: '鱼骨图', value: 'fishbone' },
+        { label: 'FMEA', value: 'fmea' },
+        { label: 'Pareto', value: 'pareto' },
+      ],
+    },
+  },
 ];
 
 const rootCausesTable: NestedTableConfig = {
@@ -145,14 +175,20 @@ const permanentActionsFields: NestedTableConfig['fields'] = [
   { name: 'target_date', label: '目标完成日期', type: 'date', listWidth: 130 },
   { name: 'owner', label: '负责人', type: 'text', listWidth: 100 },
   { name: 'verification_standard', label: '验证标准', type: 'text', listWidth: 180 },
-  { name: 'status', label: '状态', type: 'select', listWidth: 100, options: {
-    type: 'static',
-    options: [
-      { label: '待实施', value: 'pending' },
-      { label: '实施中', value: 'in_progress' },
-      { label: '已完成', value: 'completed' },
-    ],
-  }},
+  {
+    name: 'status',
+    label: '状态',
+    type: 'select',
+    listWidth: 100,
+    options: {
+      type: 'static',
+      options: [
+        { label: '待实施', value: 'pending' },
+        { label: '实施中', value: 'in_progress' },
+        { label: '已完成', value: 'completed' },
+      ],
+    },
+  },
 ];
 
 const permanentActionsTable: NestedTableConfig = {
@@ -560,7 +596,16 @@ export const eightDSchema: EntitySchema & {
   formSections: [
     {
       title: '基础信息',
-      fields: ['report_no', 'title', 'severity', 'status', 'source', 'product_name', 'customer', 'due_date'],
+      fields: [
+        'report_no',
+        'title',
+        'severity',
+        'status',
+        'source',
+        'product_name',
+        'customer',
+        'due_date',
+      ],
     },
     {
       title: '团队',
@@ -580,12 +625,7 @@ export const eightDSchema: EntitySchema & {
   actions: ['create', 'edit', 'detail', 'delete'],
 
   // Phase 3 扩展：嵌套子表
-  nestedTables: [
-    teamMembersTable,
-    containmentActionsTable,
-    rootCausesTable,
-    permanentActionsTable,
-  ],
+  nestedTables: [teamMembersTable, containmentActionsTable, rootCausesTable, permanentActionsTable],
 
   // Phase 3 扩展：向导表单
   wizard: eightDWizard,
@@ -593,7 +633,7 @@ export const eightDSchema: EntitySchema & {
   // Phase 3 扩展：树形结构（根因分析）
   tree: {
     keyField: 'id',
-    parentField: 'parent_id',
+    parentField: 'parentId',
     labelField: 'label',
     childrenField: 'children',
     expandable: true,

@@ -157,7 +157,9 @@ const RsReleasePage: React.FC = () => {
             发布说明
           </Typography>
           <Paper sx={{ p: 2, mt: 1, bgcolor: 'grey.100' }}>
-            <Typography variant='body2'>{String(row.release_note || row.app_name || '-')}</Typography>
+            <Typography variant='body2'>
+              {String(row.release_note || row.app_name || '-')}
+            </Typography>
           </Paper>
         </Box>
         <Stack

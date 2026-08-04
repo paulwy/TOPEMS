@@ -94,40 +94,58 @@ const CustomerDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_name')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.customerDetail.field_name')}
+          </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{customer.name}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_code')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.customerDetail.field_code')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.code || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_industry')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.customerDetail.field_industry')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.industry || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_website')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.customerDetail.field_website')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.website || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_email')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.customerDetail.field_email')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.email || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_phone')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.customerDetail.field_phone')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.phone || '-'}</Typography>
         </Box>
         <Box sx={{ gridColumn: 'span 2' }}>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_address')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.customerDetail.field_address')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.address || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_status')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.customerDetail.field_status')}
+          </InputLabel>
           <Box sx={{ mt: 0.5 }}>{getStatusBadge(customer.status)}</Box>
         </Box>
         {customer.notes && (
           <Box sx={{ gridColumn: 'span 3', mt: 2 }}>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_notes')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('crm.customerDetail.field_notes')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5, color: 'text.secondary' }}>{customer.notes}</Typography>
           </Box>
         )}
@@ -161,7 +179,9 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_credit_limit')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_credit_limit')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium' }}>
               {formatCurrency(finInfo?.credit_limit)}
             </Typography>
@@ -175,7 +195,9 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_credit_term_days')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_credit_term_days')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.credit_term_days || 0}</Typography>
           </Box>
           <Box
@@ -187,15 +209,23 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_payment_terms')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_payment_terms')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.payment_terms || '-'}</Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_customer_status')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_customer_status')}
+            </Typography>
             <Chip
               size='small'
               color={finInfo?.status === 'normal' ? 'success' : 'default'}
-              label={finInfo?.status === 'normal' ? t('crm.customerDetail.status_normal') : finInfo?.status || '-'}
+              label={
+                finInfo?.status === 'normal'
+                  ? t('crm.customerDetail.status_normal')
+                  : finInfo?.status || '-'
+              }
             />
           </Box>
         </Box>
@@ -216,7 +246,9 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_accounts_receivable')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_accounts_receivable')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium', color: 'warning.main' }}>
               {formatCurrency(finInfo?.accounts_receivable)}
             </Typography>
@@ -230,7 +262,9 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_overdue_receivable')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_overdue_receivable')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium', color: 'error.main' }}>
               {formatCurrency(finInfo?.overdue_receivable)}
             </Typography>
@@ -244,13 +278,18 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_avg_collection_days')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_avg_collection_days')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium' }}>
-              {finInfo?.avg_collection_days || 0} {t('crm.customerDetail.field_avg_collection_days_unit')}
+              {finInfo?.avg_collection_days || 0}{' '}
+              {t('crm.customerDetail.field_avg_collection_days_unit')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_last_transaction_date')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_last_transaction_date')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium' }}>
               {formatDate(finInfo?.last_transaction_date)}
             </Typography>
@@ -273,7 +312,9 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_total_sales')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_total_sales')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium', color: 'success.main' }}>
               {formatCurrency(finInfo?.total_sales)}
             </Typography>
@@ -287,13 +328,17 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_total_received')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_total_received')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium', color: 'primary.main' }}>
               {formatCurrency(finInfo?.total_received)}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_receivable_balance')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_receivable_balance')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium', color: 'warning.main' }}>
               {formatCurrency((finInfo?.accounts_receivable || 0) - (finInfo?.total_received || 0))}
             </Typography>
@@ -316,7 +361,9 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_bank_name')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_bank_name')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.bank_name || '-'}</Typography>
           </Box>
           <Box
@@ -328,7 +375,9 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_bank_account')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_bank_account')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.bank_account || '-'}</Typography>
           </Box>
           <Box
@@ -340,11 +389,15 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_account_name')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_account_name')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.account_name || '-'}</Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-            <Typography color='text.secondary'>{t('crm.customerDetail.field_tax_number')}</Typography>
+            <Typography color='text.secondary'>
+              {t('crm.customerDetail.field_tax_number')}
+            </Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.tax_number || '-'}</Typography>
           </Box>
         </Box>
@@ -588,7 +641,11 @@ const CustomerDetailPage: React.FC = () => {
         content: financeInfoContent || <></>,
       },
       { id: 'invoices', label: t('crm.customerDetail.tab_invoices'), content: invoicesContent },
-      { id: 'collections', label: t('crm.customerDetail.tab_collections'), content: collectionsContent },
+      {
+        id: 'collections',
+        label: t('crm.customerDetail.tab_collections'),
+        content: collectionsContent,
+      },
     ],
     [basicInfoContent, financeInfoContent, invoicesContent, collectionsContent, t]
   );
@@ -605,7 +662,10 @@ const CustomerDetailPage: React.FC = () => {
       subtitle: customer?.code || undefined,
       tags: customer?.industry ? [customer.industry] : [],
       stats: [
-        { label: t('crm.customerDetail.field_credit_limit'), value: formatCurrency(finInfo?.credit_limit) },
+        {
+          label: t('crm.customerDetail.field_credit_limit'),
+          value: formatCurrency(finInfo?.credit_limit),
+        },
         {
           label: t('crm.customerDetail.field_accounts_receivable'),
           value: formatCurrency(finInfo?.accounts_receivable),
@@ -614,7 +674,10 @@ const CustomerDetailPage: React.FC = () => {
           label: t('crm.customerDetail.field_overdue_receivable'),
           value: formatCurrency(finInfo?.overdue_receivable),
         },
-        { label: t('crm.customerDetail.field_total_sales'), value: formatCurrency(finInfo?.total_sales) },
+        {
+          label: t('crm.customerDetail.field_total_sales'),
+          value: formatCurrency(finInfo?.total_sales),
+        },
       ],
     }),
     [customer, finInfo, t]

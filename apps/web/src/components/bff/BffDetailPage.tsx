@@ -402,7 +402,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
       setRelatedLoading((prev) => ({ ...prev, [key]: true }));
       try {
         const { bffGraphQL } = await import('@/api/bff');
-        const queryConfig = relatedQueries.find((q) => q.key === key);
+        const queryConfig = relatedQueries.some((q) => q.key === key);
         if (queryConfig) {
           const result = await bffGraphQL(
             `

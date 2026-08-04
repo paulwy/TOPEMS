@@ -14,7 +14,7 @@
  * const wf = workflowEditor.createWorkflow('wf-1', '告警处置');
  * workflowEditor.addNode(wf.workflow_id, {
  *   node_id: 'n-1',
- *   type: NodeType.Start,
+ *   type: NodeType.START,
  *   name: '开始',
  *   position: { x: 0, y: 0 },
  *   config: {},
@@ -27,38 +27,38 @@
 // ==================== 枚举 ====================
 
 export enum NodeType {
-  Start = 'start',
-  End = 'end',
-  Task = 'task',
-  Decision = 'decision',
-  Parallel = 'parallel',
-  Delay = 'delay',
-  Loop = 'loop',
-  SubWorkflow = 'sub-workflow',
-  HTTPRequest = 'http-request',
-  GraphQLQuery = 'graphql-query',
-  DatabaseQuery = 'database-query',
-  Transform = 'transform',
-  Filter = 'filter',
-  Aggregate = 'aggregate',
-  Notify = 'notify',
+  START = 'start',
+  END = 'end',
+  TASK = 'task',
+  DECISION = 'decision',
+  PARALLEL = 'parallel',
+  DELAY = 'delay',
+  LOOP = 'loop',
+  SUBWORKFLOW = 'sub-workflow',
+  HTTPREQUEST = 'http-request',
+  GRAPHQLQUERY = 'graphql-query',
+  DATABASEQUERY = 'database-query',
+  TRANSFORM = 'transform',
+  FILTER = 'filter',
+  AGGREGATE = 'aggregate',
+  NOTIFY = 'notify',
   AI = 'ai',
 }
 
 export enum WorkflowStatus {
-  Draft = 'draft',
-  Published = 'published',
-  Active = 'active',
-  Paused = 'paused',
-  Archived = 'archived',
+  DRAFT = 'draft',
+  PUBLISHED = 'published',
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+  ARCHIVED = 'archived',
 }
 
 export enum NodeStatus {
-  Idle = 'idle',
-  Running = 'running',
-  Success = 'success',
-  Failed = 'failed',
-  Skipped = 'skipped',
+  IDLE = 'idle',
+  RUNNING = 'running',
+  SUCCESS = 'success',
+  FAILED = 'failed',
+  SKIPPED = 'skipped',
 }
 
 // ==================== 接口 ====================
@@ -201,7 +201,7 @@ export class WorkflowEditor {
       triggers: [],
       variables: [],
       version: '1.0.0',
-      status: WorkflowStatus.Draft,
+      status: WorkflowStatus.DRAFT,
       created_at: now,
       updated_at: now,
     };
@@ -366,8 +366,8 @@ export class WorkflowEditor {
     }
 
     // 起止节点
-    const startNodes = workflow.nodes.filter((n) => n.type === NodeType.Start);
-    const endNodes = workflow.nodes.filter((n) => n.type === NodeType.End);
+    const startNodes = workflow.nodes.filter((n) => n.type === NodeType.START);
+    const endNodes = workflow.nodes.filter((n) => n.type === NodeType.END);
     if (startNodes.length === 0) {
       errors.push({ code: 'NO_START', message: '工作流必须包含一个开始节点' });
     }
@@ -394,7 +394,7 @@ export class WorkflowEditor {
         });
       }
       // 非起止节点应有输入
-      if (node.type !== NodeType.Start && node.type !== NodeType.End && node.inputs.length === 0) {
+      if (node.type !== NodeType.START && node.type !== NodeType.END && node.inputs.length === 0) {
         warnings.push({
           node_id: node.node_id,
           code: 'NO_INPUTS',
@@ -617,7 +617,7 @@ export class WorkflowEditor {
       const hasEdge = workflow.edges.some(
         (e) => e.source_node_id === node.node_id || e.target_node_id === node.node_id
       );
-      if (!hasEdge && node.type !== NodeType.Start) {
+      if (!hasEdge && node.type !== NodeType.START) {
         suggestions.push({
           node_id: node.node_id,
           position: { x: node.position.x + 200, y: node.position.y },

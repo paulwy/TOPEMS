@@ -30,7 +30,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-export interface UseListPageStateOptions<TFilters extends Record<string, unknown> = Record<string, unknown>> {
+export interface UseListPageStateOptions<
+  TFilters extends Record<string, unknown> = Record<string, unknown>,
+> {
   /** 初始搜索关键词，默认 '' */
   defaultSearch?: string;
   /**
@@ -64,7 +66,9 @@ export interface UseListPageStateOptions<TFilters extends Record<string, unknown
   resetPageOnSortChange?: boolean;
 }
 
-export interface UseListPageStateResult<TFilters extends Record<string, unknown> = Record<string, unknown>> {
+export interface UseListPageStateResult<
+  TFilters extends Record<string, unknown> = Record<string, unknown>,
+> {
   // 搜索
   searchQuery: string;
   setSearchQuery: (value: string) => void;
@@ -113,9 +117,9 @@ export interface UseListPageStateResult<TFilters extends Record<string, unknown>
  *
  * 通过 `baseIndex` 选项可切换 0-based / 1-based 分页。
  */
-export function useListPageState<TFilters extends Record<string, unknown> = Record<string, unknown>>(
-  options: UseListPageStateOptions<TFilters> = {}
-): UseListPageStateResult<TFilters> {
+export function useListPageState<
+  TFilters extends Record<string, unknown> = Record<string, unknown>,
+>(options: UseListPageStateOptions<TFilters> = {}): UseListPageStateResult<TFilters> {
   const {
     defaultSearch = '',
     baseIndex = 1,
@@ -150,14 +154,20 @@ export function useListPageState<TFilters extends Record<string, unknown> = Reco
     return () => clearTimeout(timer);
   }, [searchQuery, debounceMs, firstPage]);
 
-  const setCurrentPage = useCallback((page: number) => {
-    setCurrentPageState(Math.max(firstPage, page));
-  }, [firstPage]);
+  const setCurrentPage = useCallback(
+    (page: number) => {
+      setCurrentPageState(Math.max(firstPage, page));
+    },
+    [firstPage]
+  );
 
-  const setPageSize = useCallback((size: number) => {
-    setPageSizeState(size);
-    setCurrentPageState(firstPage);
-  }, [firstPage]);
+  const setPageSize = useCallback(
+    (size: number) => {
+      setPageSizeState(size);
+      setCurrentPageState(firstPage);
+    },
+    [firstPage]
+  );
 
   const resetPage = useCallback(() => {
     setCurrentPageState(firstPage);

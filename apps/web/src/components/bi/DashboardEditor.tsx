@@ -338,7 +338,7 @@ export const DashboardEditor: React.FC<{
   const renderResizeHandle = (position: string) => (
     <div
       className='resize-handle'
-      role="separator"
+      role='button'
       tabIndex={0}
       style={{
         position: 'absolute',
@@ -350,7 +350,9 @@ export const DashboardEditor: React.FC<{
         zIndex: 10,
         [position]: -6,
       }}
-      onMouseDown={(e) => handleResizeStart(e, selectedWidgetId!, position as 'se' | 'sw' | 'ne' | 'nw')}
+      onMouseDown={(e) =>
+        handleResizeStart(e, selectedWidgetId!, position as 'se' | 'sw' | 'ne' | 'nw')
+      }
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -434,7 +436,7 @@ export const DashboardEditor: React.FC<{
           sx={{
             position: 'relative',
             minHeight: GRID_ROWS * CELL_HEIGHT,
-            backgroundColor: 'white',
+            backgroundColor: 'common.white',
             borderRadius: 3,
             boxShadow: 1,
             overflow: 'hidden',
@@ -482,7 +484,7 @@ export const DashboardEditor: React.FC<{
                 width: widget.w * CELL_WIDTH - 8,
                 height: widget.h * CELL_HEIGHT - 8,
                 margin: 4,
-                backgroundColor: 'white',
+                backgroundColor: 'common.white',
                 borderRadius: 1.5,
                 boxShadow:
                   selectedWidgetId === widget.id

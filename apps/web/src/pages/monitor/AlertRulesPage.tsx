@@ -275,7 +275,10 @@ export const AlertRulesPage: React.FC = () => {
         addNotification({
           type: 'error',
           title: t('monitor.alert_rules.message.toggle_fail_title', { action }),
-          message: err instanceof Error ? err.message : t('monitor.alert_rules.message.toggle_fail_body', { action }),
+          message:
+            err instanceof Error
+              ? err.message
+              : t('monitor.alert_rules.message.toggle_fail_body', { action }),
         });
       }
     },
@@ -497,7 +500,10 @@ export const AlertRulesPage: React.FC = () => {
         customColumns={customColumns}
         customRowActions={customRowActions}
         headerContent={(rows: Record<string, unknown>[]) => renderStatsCards(rows, t)}
-        breadcrumbs={[{ label: t('monitor.alert_rules.breadcrumb_monitor') }, { label: t('monitor.alert_rules.breadcrumb_alert_rules') }]}
+        breadcrumbs={[
+          { label: t('monitor.alert_rules.breadcrumb_monitor') },
+          { label: t('monitor.alert_rules.breadcrumb_alert_rules') },
+        ]}
       />
     </PageContainer>
   );

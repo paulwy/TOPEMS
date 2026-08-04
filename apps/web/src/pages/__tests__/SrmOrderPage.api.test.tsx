@@ -108,12 +108,12 @@ vi.mock('@/store', () => ({
 }));
 
 describe('SrmOrderPage.api', () => {
-it('should call listPurchaseOrders API on mount', async () => {
+  it('should call listPurchaseOrders API on mount', async () => {
     renderWithProviders(<SrmOrderPage />);
     expect(srmApi.listPurchaseOrders).toHaveBeenCalled();
-});
+  });
 
-it('should render order data from API', async () => {
+  it('should render order data from API', async () => {
     const mockOrders = [
       {
         id: 'po-001',
@@ -130,53 +130,53 @@ it('should render order data from API', async () => {
       code: 200,
       message: 'OK',
       data: mockOrders,
-  });
+    });
 
     renderWithProviders(<SrmOrderPage />);
 
     await waitFor(() => {
       expect(screen.getByText('PO-2024-001')).toBeInTheDocument();
       expect(screen.getByText('供应商A')).toBeInTheDocument();
+    });
   });
-});
 
-it('should handle API error gracefully', async () => {
+  it('should handle API error gracefully', async () => {
     srmApi.listPurchaseOrders.mockRejectedValue(new Error('Network error'));
 
     renderWithProviders(<SrmOrderPage />);
 
     await waitFor(() => {
       expect(screen.queryByText('PO-2024-001')).not.toBeInTheDocument();
+    });
   });
-});
 
-it('should open create modal and submit form', async () => {
+  it('should open create modal and submit form', async () => {
     srmApi.listPurchaseOrders.mockResolvedValue({
       success: true,
       code: 200,
       message: 'OK',
       data: [],
-  });
+    });
 
     srmApi.createPurchaseOrder.mockResolvedValue({
       success: true,
       code: 200,
       message: '创建成功',
       data: { id: 'po-new', po_no: 'PO-2024-NEW' },
-  });
+    });
 
     renderWithProviders(<SrmOrderPage />);
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /新增订单/i })).toBeInTheDocument();
-  });
+    });
 
     const createButton = screen.getByRole('button', { name: /新增订单/i });
     await userEvent.click(createButton);
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-  });
+    });
 
     const poNoInput = screen.getByLabelText('订单编号 *');
     await userEvent.type(poNoInput, 'PO-2024-NEW');
@@ -192,10 +192,10 @@ it('should open create modal and submit form', async () => {
 
     await waitFor(() => {
       expect(srmApi.createPurchaseOrder).toHaveBeenCalled();
+    });
   });
-});
 
-it('should filter orders by search term', async () => {
+  it('should filter orders by search term', async () => {
     const mockOrders = [
       {
         id: 'po-001',
@@ -220,14 +220,14 @@ it('should filter orders by search term', async () => {
       code: 200,
       message: 'OK',
       data: mockOrders,
-  });
+    });
 
     renderWithProviders(<SrmOrderPage />);
 
     await waitFor(() => {
       expect(screen.getByText('PO-2024-001')).toBeInTheDocument();
       expect(screen.getByText('PO-2024-002')).toBeInTheDocument();
-  });
+    });
 
     const searchInput = screen.getByPlaceholderText('搜索订单编号或供应商...');
     await userEvent.type(searchInput, '供应商A');
@@ -235,7 +235,6 @@ it('should filter orders by search term', async () => {
     await waitFor(() => {
       expect(screen.getByText('PO-2024-001')).toBeInTheDocument();
       expect(screen.queryByText('PO-2024-002')).not.toBeInTheDocument();
+    });
   });
-});
-;
 });

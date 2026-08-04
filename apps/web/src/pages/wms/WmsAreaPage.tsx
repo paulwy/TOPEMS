@@ -14,7 +14,7 @@ const treeDataAdapter = {
     return res.data as unknown as Record<string, unknown>[];
   },
   onAddChild: async (parentId: string | number | null, data: Record<string, unknown>) => {
-    const payload = { ...data, parent_id: parentId };
+    const payload = { ...data, parentId };
     await apiAdapter.create(payload as unknown as Partial<Location>);
   },
   onUpdate: async (id: string | number, data: Record<string, unknown>) => {

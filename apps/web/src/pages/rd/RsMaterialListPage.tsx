@@ -81,8 +81,7 @@ const RsMaterialListPage: React.FC = () => {
       addNotification({
         type: 'error',
         title: t('rd.material_list_page.notification.import_failed_title'),
-        message:
-          error.message || t('rd.material_list_page.notification.import_failed_message'),
+        message: error.message || t('rd.material_list_page.notification.import_failed_message'),
       });
     },
   });
@@ -182,14 +181,23 @@ const RsMaterialListPage: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography color='text.secondary' variant='body2'>
+                <Typography
+                  color='text.secondary'
+                  variant='body2'
+                >
                   {t('rd.material_list_page.stat_card.total')}
                 </Typography>
-                <Typography variant='h4' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {stats.total}
                 </Typography>
               </div>
-              <Package color='primary' size={32} />
+              <Package
+                color='primary'
+                size={32}
+              />
             </Box>
           </CardContent>
         </Card>
@@ -197,14 +205,23 @@ const RsMaterialListPage: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography color='text.secondary' variant='body2'>
+                <Typography
+                  color='text.secondary'
+                  variant='body2'
+                >
                   {t('rd.material_list_page.stat_card.sufficient')}
                 </Typography>
-                <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold', color: 'success.main' }}
+                >
                   {stats.sufficient}
                 </Typography>
               </div>
-              <Package color='success' size={32} />
+              <Package
+                color='success'
+                size={32}
+              />
             </Box>
           </CardContent>
         </Card>
@@ -212,14 +229,23 @@ const RsMaterialListPage: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography color='text.secondary' variant='body2'>
+                <Typography
+                  color='text.secondary'
+                  variant='body2'
+                >
                   {t('rd.material_list_page.stat_card.insufficient')}
                 </Typography>
-                <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'error.main' }}>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold', color: 'error.main' }}
+                >
                   {stats.low}
                 </Typography>
               </div>
-              <Package color='error' size={32} />
+              <Package
+                color='error'
+                size={32}
+              />
             </Box>
           </CardContent>
         </Card>

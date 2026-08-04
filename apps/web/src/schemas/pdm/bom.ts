@@ -96,7 +96,15 @@ export const bomSchema: EntitySchema = {
   ],
 
   list: {
-    columns: ['bom_no', 'name', 'product_name', 'version', 'status', 'effective_date', 'created_at'],
+    columns: [
+      'bom_no',
+      'name',
+      'product_name',
+      'version',
+      'status',
+      'effective_date',
+      'created_at',
+    ],
     searchFields: ['bom_no', 'name', 'product_name'],
     pageSize: 10,
     statusBadge: {

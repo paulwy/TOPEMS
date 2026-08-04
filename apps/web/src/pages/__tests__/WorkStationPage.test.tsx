@@ -129,12 +129,14 @@ function renderWithProviders(children: React.ReactNode) {
 describe('WorkStationPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useNotificationStore as unknown as Record<string, unknown>).getState = vi.fn().mockReturnValue({
-      addNotification: mockAddNotification,
-      notifications: [],
-      removeNotification: vi.fn(),
-      clearNotifications: vi.fn(),
-    });
+    (useNotificationStore as unknown as Record<string, unknown>).getState = vi
+      .fn()
+      .mockReturnValue({
+        addNotification: mockAddNotification,
+        notifications: [],
+        removeNotification: vi.fn(),
+        clearNotifications: vi.fn(),
+      });
     (mesApi.workstations.list as vi.Mock).mockResolvedValue({
       success: true,
       data: {

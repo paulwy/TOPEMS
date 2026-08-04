@@ -33,7 +33,7 @@ export interface BomItem {
   id: string;
   bom_version_id: string;
   product_id?: string;
-  parent_id?: string;
+  parentId?: string;
   level: number;
   item_no: string;
   part_number: string;
@@ -50,7 +50,7 @@ export interface BomItem {
 
 export interface CreateBomItemRequest {
   bom_version_id: string;
-  parent_id?: string;
+  parentId?: string;
   level: number;
   item_no: string;
   part_number: string;

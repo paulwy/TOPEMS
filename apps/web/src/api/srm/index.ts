@@ -94,7 +94,7 @@ export interface CreatePurchaseOrderRequest {
 // Supplier Contract types
 export interface SupplierContract {
   id: string;
-  contract_no: string;
+  contractNo: string;
   supplier_id: string;
   supplier_name?: string;
   title: string;
@@ -111,7 +111,7 @@ export interface SupplierContract {
 }
 
 export interface CreateSupplierContractRequest {
-  contract_no: string;
+  contractNo: string;
   supplier_id: string;
   supplier_name?: string;
   title: string;

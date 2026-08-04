@@ -42,16 +42,41 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const sampleDocuments = [
-  { id: 'doc-001', title: 'ERP 系统操作手册', type: 'manual', size: '2.3 MB', updatedAt: '2024-01-10' },
-  { id: 'doc-002', title: '财务报表生成指南', type: 'guide', size: '1.1 MB', updatedAt: '2024-01-08' },
-  { id: 'doc-003', title: 'HRM 员工入职流程', type: 'process', size: '512 KB', updatedAt: '2024-01-05' },
-  { id: 'doc-004', title: 'MES 生产工单管理', type: 'manual', size: '3.5 MB', updatedAt: '2024-01-03' },
+  {
+    id: 'doc-001',
+    title: 'ERP 系统操作手册',
+    type: 'manual',
+    size: '2.3 MB',
+    updatedAt: '2024-01-10',
+  },
+  {
+    id: 'doc-002',
+    title: '财务报表生成指南',
+    type: 'guide',
+    size: '1.1 MB',
+    updatedAt: '2024-01-08',
+  },
+  {
+    id: 'doc-003',
+    title: 'HRM 员工入职流程',
+    type: 'process',
+    size: '512 KB',
+    updatedAt: '2024-01-05',
+  },
+  {
+    id: 'doc-004',
+    title: 'MES 生产工单管理',
+    type: 'manual',
+    size: '3.5 MB',
+    updatedAt: '2024-01-03',
+  },
 ];
 
 const sampleAnswers = [
   {
     question: '如何创建财务凭证？',
-    answer: '创建财务凭证的步骤如下：\n\n1. 登录 ERP 系统，进入财务模块\n2. 点击「凭证管理」->「新建凭证」\n3. 选择凭证类型（记账凭证、收款凭证、付款凭证等）\n4. 填写凭证日期和凭证号\n5. 添加会计分录，包括科目、借方金额、贷方金额\n6. 录入凭证摘要\n7. 保存并审核凭证\n8. 审核通过后进行记账操作\n\n注意：凭证借贷必须平衡，且需要有对应的原始单据。',
+    answer:
+      '创建财务凭证的步骤如下：\n\n1. 登录 ERP 系统，进入财务模块\n2. 点击「凭证管理」->「新建凭证」\n3. 选择凭证类型（记账凭证、收款凭证、付款凭证等）\n4. 填写凭证日期和凭证号\n5. 添加会计分录，包括科目、借方金额、贷方金额\n6. 录入凭证摘要\n7. 保存并审核凭证\n8. 审核通过后进行记账操作\n\n注意：凭证借贷必须平衡，且需要有对应的原始单据。',
     sources: [
       { title: 'ERP 系统操作手册', similarity: 0.92 },
       { title: '财务报表生成指南', similarity: 0.85 },
@@ -60,11 +85,7 @@ const sampleAnswers = [
   },
 ];
 
-const sampleFollowUp = [
-  '如何查询已记账的凭证？',
-  '凭证审核流程是什么？',
-  '如何修改已审核的凭证？',
-];
+const sampleFollowUp = ['如何查询已记账的凭证？', '凭证审核流程是什么？', '如何修改已审核的凭证？'];
 
 type ChatMessage = {
   id: string;
@@ -137,13 +158,33 @@ export const AiKnowledgeBasePage: React.FC = () => {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'manual':
-        return <BookOpen size={16} style={{ color: ct.primary.main }} />;
+        return (
+          <BookOpen
+            size={16}
+            style={{ color: ct.primary.main }}
+          />
+        );
       case 'guide':
-        return <FileText size={16} style={{ color: ct.info.main }} />;
+        return (
+          <FileText
+            size={16}
+            style={{ color: ct.info.main }}
+          />
+        );
       case 'process':
-        return <FolderOpen size={16} style={{ color: ct.success.main }} />;
+        return (
+          <FolderOpen
+            size={16}
+            style={{ color: ct.success.main }}
+          />
+        );
       default:
-        return <FileText size={16} style={{ color: ct.text.secondary }} />;
+        return (
+          <FileText
+            size={16}
+            style={{ color: ct.text.secondary }}
+          />
+        );
     }
   };
 
@@ -172,10 +213,20 @@ export const AiKnowledgeBasePage: React.FC = () => {
       }}
     >
       <Box sx={{ p: 3 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} lg={3}>
+        <Grid
+          container
+          spacing={3}
+        >
+          <Grid
+            item
+            xs={12}
+            lg={3}
+          >
             <Paper sx={{ borderRadius: 3, p: 3, height: '100%' }}>
-              <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 {t('ai.knowledge_base.label.document_library')}
               </Typography>
 
@@ -234,7 +285,11 @@ export const AiKnowledgeBasePage: React.FC = () => {
 
               {selectedDocs.length > 0 && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 1 }}
+                  >
                     {t('ai.knowledge_base.label.selected_docs', { count: selectedDocs.length })}
                   </Typography>
                   <Button
@@ -250,7 +305,11 @@ export const AiKnowledgeBasePage: React.FC = () => {
             </Paper>
           </Grid>
 
-          <Grid item xs={12} lg={9}>
+          <Grid
+            item
+            xs={12}
+            lg={9}
+          >
             <Paper sx={{ borderRadius: 3, p: 3, height: '100%', minHeight: 600 }}>
               <Box
                 sx={{
@@ -260,9 +319,15 @@ export const AiKnowledgeBasePage: React.FC = () => {
                   mb: 3,
                 }}
               >
-                <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600 }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Sparkles size={18} style={{ color: ct.yellow[500] }} />
+                    <Sparkles
+                      size={18}
+                      style={{ color: ct.yellow[500] }}
+                    />
                     {t('ai.knowledge_base.label.smart_qa')}
                   </Box>
                 </Typography>
@@ -299,10 +364,16 @@ export const AiKnowledgeBasePage: React.FC = () => {
                       size={48}
                       style={{ color: ct.text.disabled, marginBottom: 12 }}
                     />
-                    <Typography variant='body1' color='text.secondary'>
+                    <Typography
+                      variant='body1'
+                      color='text.secondary'
+                    >
                       {t('ai.knowledge_base.message.welcome')}
                     </Typography>
-                    <Typography variant='body2' color='text.secondary'>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       {t('ai.knowledge_base.message.welcome_desc')}
                     </Typography>
                     <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
@@ -310,24 +381,25 @@ export const AiKnowledgeBasePage: React.FC = () => {
                         t('ai.knowledge_base.mock.q_1'),
                         t('ai.knowledge_base.example.q_2'),
                         t('ai.knowledge_base.example.q_3'),
-                      ].map(
-                        (example) => (
-                          <Chip
-                            key={example}
-                            label={example}
-                            size='small'
-                            variant='outlined'
-                            onClick={() => setQuery(example)}
-                            sx={{ cursor: 'pointer' }}
-                          />
-                        )
-                      )}
+                      ].map((example) => (
+                        <Chip
+                          key={example}
+                          label={example}
+                          size='small'
+                          variant='outlined'
+                          onClick={() => setQuery(example)}
+                          sx={{ cursor: 'pointer' }}
+                        />
+                      ))}
                     </Box>
                   </Box>
                 ) : (
                   <List>
                     {chatHistory.map((msg) => (
-                      <ListItem key={msg.id} sx={{ mb: 2 }}>
+                      <ListItem
+                        key={msg.id}
+                        sx={{ mb: 2 }}
+                      >
                         <Avatar
                           sx={{
                             mr: 2,
@@ -357,7 +429,10 @@ export const AiKnowledgeBasePage: React.FC = () => {
                           </Typography>
                           {msg.sources && msg.sources.length > 0 && (
                             <Box sx={{ mt: 2 }}>
-                              <Typography variant='body2' color='text.secondary'>
+                              <Typography
+                                variant='body2'
+                                color='text.secondary'
+                              >
                                 {t('ai.knowledge_base.label.reference_source')}：
                               </Typography>
                               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
@@ -411,16 +486,29 @@ export const AiKnowledgeBasePage: React.FC = () => {
                   onClick={handleSendQuery}
                   disabled={searching || !query.trim()}
                   startIcon={
-                    searching ? <RefreshCw size={18} className='animate-spin' /> : <Search size={18} />
+                    searching ? (
+                      <RefreshCw
+                        size={18}
+                        className='animate-spin'
+                      />
+                    ) : (
+                      <Search size={18} />
+                    )
                   }
                 >
-                  {searching ? t('ai.knowledge_base.button.searching') : t('ai.knowledge_base.button.ask')}
+                  {searching
+                    ? t('ai.knowledge_base.button.searching')
+                    : t('ai.knowledge_base.button.ask')}
                 </Button>
               </Box>
 
               {chatHistory.length > 0 && !searching && (
                 <Box sx={{ mt: 3 }}>
-                  <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 1 }}
+                  >
                     {t('ai.knowledge_base.label.related_questions')}：
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>

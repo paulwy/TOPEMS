@@ -51,8 +51,20 @@ export interface Category {
 export type ModuleSortType = 'popular' | 'newest' | 'rating' | 'downloads';
 
 const PRESET_CATEGORIES: Category[] = [
-  { id: 'business', name: '业务组件', description: '常用业务场景组件', icon: 'briefcase', module_count: 0 },
-  { id: 'dashboard', name: '仪表盘', description: '数据可视化仪表盘', icon: 'gauge', module_count: 0 },
+  {
+    id: 'business',
+    name: '业务组件',
+    description: '常用业务场景组件',
+    icon: 'briefcase',
+    module_count: 0,
+  },
+  {
+    id: 'dashboard',
+    name: '仪表盘',
+    description: '数据可视化仪表盘',
+    icon: 'gauge',
+    module_count: 0,
+  },
   { id: 'tools', name: '工具集', description: '开发效率工具', icon: 'wrench', module_count: 0 },
   { id: 'integration', name: '集成', description: '第三方系统集成', icon: 'plug', module_count: 0 },
   { id: 'theme', name: '主题', description: 'UI 主题与样式', icon: 'palette', module_count: 0 },
@@ -74,9 +86,7 @@ const PRESET_MODULES: MarketplaceModule[] = [
     installed: false,
     screenshots: [],
     features: ['客户档案管理', '跟进记录', '商机漏斗', '合同管理', '数据报表'],
-    dependencies: [
-      { module_id: 'bi-advanced', required_version: '>=1.5.0', is_optional: true },
-    ],
+    dependencies: [{ module_id: 'bi-advanced', required_version: '>=1.5.0', is_optional: true }],
     size_kb: 856,
     published_at: Date.now() - 86400000 * 180,
     updated_at: Date.now() - 86400000 * 7,
@@ -170,9 +180,7 @@ const PRESET_MODULES: MarketplaceModule[] = [
     installed: false,
     screenshots: [],
     features: ['BPMN 流程设计', '任务分配', '流程监控', '审批流转', '流程版本管理'],
-    dependencies: [
-      { module_id: 'form-builder', required_version: '>=2.0.0', is_optional: false },
-    ],
+    dependencies: [{ module_id: 'form-builder', required_version: '>=2.0.0', is_optional: false }],
     size_kb: 920,
     published_at: Date.now() - 86400000 * 150,
     updated_at: Date.now() - 86400000 * 10,
@@ -289,9 +297,7 @@ const PRESET_MODULES: MarketplaceModule[] = [
     installed: false,
     screenshots: [],
     features: ['检验计划', '质量追溯', '不合格品管理', 'SPC 控制图', '质量报表'],
-    dependencies: [
-      { module_id: 'bi-advanced', required_version: '>=3.0.0', is_optional: true },
-    ],
+    dependencies: [{ module_id: 'bi-advanced', required_version: '>=3.0.0', is_optional: true }],
     size_kb: 720,
     published_at: Date.now() - 86400000 * 130,
     updated_at: Date.now() - 86400000 * 12,
@@ -351,13 +357,76 @@ const PRESET_MODULES: MarketplaceModule[] = [
 ];
 
 const PRESET_REVIEWS: ModuleReview[] = [
-  { id: 'r1', module_id: 'crm-module', user_id: 'u1', user_name: '张经理', rating: 5, comment: '功能非常全面，客户管理流程很顺畅，强烈推荐！', created_at: Date.now() - 86400000 * 30, helpful_count: 23 },
-  { id: 'r2', module_id: 'crm-module', user_id: 'u2', user_name: '李销售', rating: 4, comment: '整体不错，希望能增加更多自定义字段的功能。', created_at: Date.now() - 86400000 * 20, helpful_count: 8 },
-  { id: 'r3', module_id: 'bi-advanced', user_id: 'u3', user_name: '王数据', rating: 5, comment: '数据分析功能强大，报表设计灵活，满足各种业务需求。', created_at: Date.now() - 86400000 * 15, helpful_count: 45 },
-  { id: 'r4', module_id: 'mes-dashboard', user_id: 'u4', user_name: '赵工', rating: 4, comment: '实时数据展示很直观，生产现场使用效果很好。', created_at: Date.now() - 86400000 * 10, helpful_count: 12 },
-  { id: 'r5', module_id: 'form-builder', user_id: 'u5', user_name: '孙开发', rating: 5, comment: '拖拽设计太方便了，大大提高了表单开发效率。', created_at: Date.now() - 86400000 * 5, helpful_count: 34 },
-  { id: 'r6', module_id: 'dark-theme', user_id: 'u6', user_name: '周设计', rating: 5, comment: '暗黑模式配色很舒服，长时间使用眼睛不累。', created_at: Date.now() - 86400000 * 3, helpful_count: 56 },
-  { id: 'r7', module_id: 'workflow-engine', user_id: 'u7', user_name: '吴产品', rating: 4, comment: '流程设计功能强大，学习成本略高但值得投入。', created_at: Date.now() - 86400000 * 8, helpful_count: 19 },
+  {
+    id: 'r1',
+    module_id: 'crm-module',
+    user_id: 'u1',
+    user_name: '张经理',
+    rating: 5,
+    comment: '功能非常全面，客户管理流程很顺畅，强烈推荐！',
+    created_at: Date.now() - 86400000 * 30,
+    helpful_count: 23,
+  },
+  {
+    id: 'r2',
+    module_id: 'crm-module',
+    user_id: 'u2',
+    user_name: '李销售',
+    rating: 4,
+    comment: '整体不错，希望能增加更多自定义字段的功能。',
+    created_at: Date.now() - 86400000 * 20,
+    helpful_count: 8,
+  },
+  {
+    id: 'r3',
+    module_id: 'bi-advanced',
+    user_id: 'u3',
+    user_name: '王数据',
+    rating: 5,
+    comment: '数据分析功能强大，报表设计灵活，满足各种业务需求。',
+    created_at: Date.now() - 86400000 * 15,
+    helpful_count: 45,
+  },
+  {
+    id: 'r4',
+    module_id: 'mes-dashboard',
+    user_id: 'u4',
+    user_name: '赵工',
+    rating: 4,
+    comment: '实时数据展示很直观，生产现场使用效果很好。',
+    created_at: Date.now() - 86400000 * 10,
+    helpful_count: 12,
+  },
+  {
+    id: 'r5',
+    module_id: 'form-builder',
+    user_id: 'u5',
+    user_name: '孙开发',
+    rating: 5,
+    comment: '拖拽设计太方便了，大大提高了表单开发效率。',
+    created_at: Date.now() - 86400000 * 5,
+    helpful_count: 34,
+  },
+  {
+    id: 'r6',
+    module_id: 'dark-theme',
+    user_id: 'u6',
+    user_name: '周设计',
+    rating: 5,
+    comment: '暗黑模式配色很舒服，长时间使用眼睛不累。',
+    created_at: Date.now() - 86400000 * 3,
+    helpful_count: 56,
+  },
+  {
+    id: 'r7',
+    module_id: 'workflow-engine',
+    user_id: 'u7',
+    user_name: '吴产品',
+    rating: 4,
+    comment: '流程设计功能强大，学习成本略高但值得投入。',
+    created_at: Date.now() - 86400000 * 8,
+    helpful_count: 19,
+  },
 ];
 
 type ModuleMarketChangeListener = (modules: MarketplaceModule[]) => void;
@@ -491,7 +560,10 @@ export class ModuleMarket {
     return true;
   }
 
-  addReview(moduleId: string, review: Omit<ModuleReview, 'id' | 'module_id' | 'created_at' | 'helpful_count'>): ModuleReview | null {
+  addReview(
+    moduleId: string,
+    review: Omit<ModuleReview, 'id' | 'module_id' | 'created_at' | 'helpful_count'>
+  ): ModuleReview | null {
     const mod = this.modules.get(moduleId);
     if (!mod) return null;
 

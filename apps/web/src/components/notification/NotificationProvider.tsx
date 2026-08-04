@@ -34,14 +34,18 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
   const getIcon = () => {
     switch (type) {
       case 'success':
-        return <CheckCircle2 style={{ height: 20, width: 20, color: '#16a34a', flexShrink: 0 }} />;
+        return (
+          <CheckCircle2 style={{ height: 20, width: 20, color: 'success.600', flexShrink: 0 }} />
+        );
       case 'error':
-        return <AlertCircle style={{ height: 20, width: 20, color: '#dc2626', flexShrink: 0 }} />;
+        return <AlertCircle style={{ height: 20, width: 20, color: 'error.600', flexShrink: 0 }} />;
       case 'warning':
-        return <AlertTriangle style={{ height: 20, width: 20, color: '#ca8a04', flexShrink: 0 }} />;
+        return (
+          <AlertTriangle style={{ height: 20, width: 20, color: 'yellow.600', flexShrink: 0 }} />
+        );
       case 'info':
       default:
-        return <Info style={{ height: 20, width: 20, color: '#2563eb', flexShrink: 0 }} />;
+        return <Info style={{ height: 20, width: 20, color: 'primary.600', flexShrink: 0 }} />;
     }
   };
 
@@ -51,28 +55,28 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
         return {
           backgroundColor: 'success.light',
           borderColor: 'success.light',
-          titleColor: '#166534',
+          titleColor: 'success.800',
           messageColor: 'success.700',
         };
       case 'error':
         return {
           backgroundColor: 'error.light',
           borderColor: 'error.light',
-          titleColor: '#991b1b',
-          messageColor: '#b91c1c',
+          titleColor: 'error.800',
+          messageColor: 'error.700',
         };
       case 'warning':
         return {
-          backgroundColor: '#fefce8',
+          backgroundColor: 'yellow.50',
           borderColor: 'warning.light',
-          titleColor: '#854d0e',
+          titleColor: 'yellow.800',
           messageColor: 'warning.700',
         };
       case 'info':
       default:
         return {
           backgroundColor: 'primary.50',
-          borderColor: '#bfdbfe',
+          borderColor: 'primary.200',
           titleColor: 'primary.800',
           messageColor: 'primary.700',
         };
@@ -95,7 +99,7 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
       sx={{
         display: 'flex',
         alignItems: 'flex-start',
-        gap: '12px',
+        gap: 1.5,
         padding: '12px 16px',
         borderRadius: '8px',
         border: '1px solid',
@@ -134,7 +138,7 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
           background: 'transparent',
           cursor: 'pointer',
           transition: 'color 0.2s',
-          padding: '4px',
+          padding: 0.5,
           flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
@@ -166,7 +170,7 @@ export function Toaster() {
         zIndex: 9999,
         display: 'flex',
         flexDirection: 'column',
-        gap: '8px',
+        gap: 1,
         maxWidth: '384px',
         width: 'calc(100% - 32px)',
         pointerEvents: 'auto',

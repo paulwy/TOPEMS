@@ -87,7 +87,7 @@ export interface EnergyAlert {
   severity: 'critical' | 'warning' | 'info';
   message: string;
   threshold_value: number;
-  actual_value: number;
+  actualValue: number;
   timestamp: string;
   status: 'active' | 'resolved';
 }
@@ -100,8 +100,7 @@ export interface EnergyAlertsResponse {
 }
 
 export const energyManagementApi = {
-  getRealTimeConsumption: () =>
-    apiClient.get<RealTimeConsumption[]>('/mes/v1/energy/realtime'),
+  getRealTimeConsumption: () => apiClient.get<RealTimeConsumption[]>('/mes/v1/energy/realtime'),
 
   getConsumptionHistory: (params?: {
     start_date?: string;
@@ -110,30 +109,24 @@ export const energyManagementApi = {
     workshop_id?: string;
   }) => apiClient.get<EnergyConsumptionRecord[]>('/mes/v1/energy/history', { params }),
 
-  getEnergyReport: (params?: {
-    period_type?: string;
-    start_date?: string;
-    end_date?: string;
-  }) => apiClient.get<EnergyReportResponse>('/mes/v1/energy/report', { params }),
+  getEnergyReport: (params?: { period_type?: string; start_date?: string; end_date?: string }) =>
+    apiClient.get<EnergyReportResponse>('/mes/v1/energy/report', { params }),
 
-  getEnergyForecast: (params?: {
-    months?: number;
-    equipment_id?: string;
-  }) => apiClient.get<EnergyForecastResponse>('/mes/v1/energy/forecast', { params }),
+  getEnergyForecast: (params?: { months?: number; equipment_id?: string }) =>
+    apiClient.get<EnergyForecastResponse>('/mes/v1/energy/forecast', { params }),
 
-  getEnergyAlerts: (params?: {
-    start_date?: string;
-    end_date?: string;
-  }) => apiClient.get<EnergyAlertsResponse>('/mes/v1/energy/alerts', { params }),
+  getEnergyAlerts: (params?: { start_date?: string; end_date?: string }) =>
+    apiClient.get<EnergyAlertsResponse>('/mes/v1/energy/alerts', { params }),
 
-  getEquipmentConsumption: (equipmentId: string, params?: {
-    start_date?: string;
-    end_date?: string;
-  }) => apiClient.get<EnergyConsumptionRecord[]>(`/mes/v1/energy/equipment/${equipmentId}`, { params }),
+  getEquipmentConsumption: (
+    equipmentId: string,
+    params?: {
+      start_date?: string;
+      end_date?: string;
+    }
+  ) =>
+    apiClient.get<EnergyConsumptionRecord[]>(`/mes/v1/energy/equipment/${equipmentId}`, { params }),
 
-  exportEnergyReport: (params?: {
-    period_type?: string;
-    start_date?: string;
-    end_date?: string;
-  }) => apiClient.get('/mes/v1/energy/export', { params }),
+  exportEnergyReport: (params?: { period_type?: string; start_date?: string; end_date?: string }) =>
+    apiClient.get('/mes/v1/energy/export', { params }),
 };

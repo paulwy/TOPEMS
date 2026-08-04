@@ -49,7 +49,8 @@ export const costSchema: EntitySchema = {
       type: 'number',
       listWidth: 140,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => formatMoney(row.debit_balance as number | undefined),
+      renderCell: (row: Record<string, unknown>) =>
+        formatMoney(row.debit_balance as number | undefined),
     },
     {
       name: 'period_debit',

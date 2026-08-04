@@ -6,7 +6,7 @@ interface ProductionOrder {
   id: string;
   code: string;
   product_name?: string;
-  planned_quantity: number;
+  plannedQuantity: number;
   status: 'draft' | 'released' | 'in_progress' | 'completed' | 'cancelled';
   start_date?: string;
   end_date?: string;
@@ -80,7 +80,7 @@ test.describe('Production Order - API', () => {
     const created = await apiPost<ProductionOrder>(ctx, API_PATHS.mes.productionOrder, {
       code,
       product_name: 'E2E Test Product',
-      planned_quantity: 100,
+      plannedQuantity: 100,
       start_date: new Date().toISOString().slice(0, 10),
       status: 'draft',
     });
@@ -94,7 +94,7 @@ test.describe('Production Order - API', () => {
       `${API_PATHS.mes.productionOrder}/${created.id}`
     );
     expect(fetched.id).toBe(created.id);
-    expect(fetched.planned_quantity).toBe(100);
+    expect(fetched.plannedQuantity).toBe(100);
 
     // UPDATE
     const updated = await apiPost<ProductionOrder>(
@@ -120,7 +120,7 @@ test.describe('Production Order - API', () => {
         data: {
           code: `PO-BAD-${Date.now()}`,
           product_name: 'Bad Product',
-          planned_quantity: -1,
+          plannedQuantity: -1,
         },
       }
     );

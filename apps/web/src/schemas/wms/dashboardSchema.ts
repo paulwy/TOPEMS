@@ -3,6 +3,7 @@ import type { WmsDashboardStats } from '@/api/wms/dashboard';
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     __wmsStats?: WmsDashboardStats;
   }
 }

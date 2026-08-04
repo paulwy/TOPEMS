@@ -514,7 +514,8 @@ export class PluginManager {
    * @param force 是否强制刷新，忽略缓存
    */
   async fetchNavigationConfig(force = false): Promise<void> {
-    if (!force &&
+    if (
+      !force &&
       Date.now() - this.navConfigLastFetch < this.NAV_CONFIG_TTL &&
       this.navigationConfigCache.size > 0
     ) {

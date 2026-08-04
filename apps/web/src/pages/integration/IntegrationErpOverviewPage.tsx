@@ -384,7 +384,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
           <Chip
             size='small'
             label={getStatusLabel(task.status)}
-            color={getStatusColor(task.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+            color={getStatusColor(task.status) as React.ComponentProps<typeof Chip>['color']}
             variant={task.status === 'syncing' ? 'outlined' : 'filled'}
           />
         </ListItem>

@@ -94,7 +94,7 @@ export class PrivacyEnhancer {
     return PrivacyEnhancer.instance;
   }
 
-  assess_privacy(modelId: string, configId?: string): PrivacyReport {
+  assessPrivacy(modelId: string, configId?: string): PrivacyReport {
     let config: PrivacyConfig | undefined;
     if (configId) {
       config = this.configs.get(configId);
@@ -136,11 +136,11 @@ export class PrivacyEnhancer {
     return report;
   }
 
-  get_privacy_config(configId: string): PrivacyConfig | null {
+  getPrivacyConfig(configId: string): PrivacyConfig | null {
     return this.configs.get(configId) ?? null;
   }
 
-  update_config(configId: string, updates: Partial<PrivacyConfig>): PrivacyConfig {
+  updateConfig(configId: string, updates: Partial<PrivacyConfig>): PrivacyConfig {
     const existing = this.configs.get(configId);
     if (!existing) {
       throw new Error(`Privacy config not found: ${configId}`);
@@ -155,11 +155,11 @@ export class PrivacyEnhancer {
     return updated;
   }
 
-  get_privacy_report(configId: string): PrivacyReport | null {
+  getPrivacyReport(configId: string): PrivacyReport | null {
     return this.reports.get(configId) ?? null;
   }
 
-  run_privacy_test(
+  runPrivacyTest(
     configId: string,
     testType: 'membership_inference' | 'attribute_inference' | 'data_extraction'
   ): PrivacyTestResult {
@@ -205,7 +205,7 @@ export class PrivacyEnhancer {
     return result;
   }
 
-  get_data_leakage_risk(configId: string): {
+  getDataLeakageRisk(configId: string): {
     risk_level: 'low' | 'medium' | 'high' | 'critical';
     risk_score: number;
     factors: Array<{ factor: string; contribution: number }>;
@@ -265,7 +265,7 @@ export class PrivacyEnhancer {
     };
   }
 
-  get_recommendations(configId: string): string[] {
+  getRecommendations(configId: string): string[] {
     const config = this.configs.get(configId);
     if (!config) return ['配置未找到，无法生成建议'];
 
@@ -290,7 +290,7 @@ export class PrivacyEnhancer {
     return recs;
   }
 
-  create_config(config: Omit<PrivacyConfig, 'id' | 'created_at' | 'updated_at'>): PrivacyConfig {
+  createConfig(config: Omit<PrivacyConfig, 'id' | 'created_at' | 'updated_at'>): PrivacyConfig {
     const newConfig: PrivacyConfig = {
       ...config,
       id: `config-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -302,20 +302,20 @@ export class PrivacyEnhancer {
     return newConfig;
   }
 
-  create_from_template(modelId: string, template: keyof typeof PRIVACY_TEMPLATES): PrivacyConfig {
+  createFromTemplate(modelId: string, template: keyof typeof PRIVACY_TEMPLATES): PrivacyConfig {
     const templateConfig = PRIVACY_TEMPLATES[template];
-    return this.create_config({
+    return this.createConfig({
       ...DEFAULT_CONFIG,
       ...templateConfig,
       modelId,
     });
   }
 
-  list_configs(): PrivacyConfig[] {
+  listConfigs(): PrivacyConfig[] {
     return Array.from(this.configs.values());
   }
 
-  list_test_results(configId: string): PrivacyTestResult[] {
+  listTestResults(configId: string): PrivacyTestResult[] {
     return this.testResults.get(configId) ?? [];
   }
 

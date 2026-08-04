@@ -50,7 +50,8 @@ const loadTranslations = async () => {
           devtools: enDevtools.devtools,
           ...enAi,
           ...enMonitor,
-          ...((enAdmin as Record<string, unknown>).admin as Record<string, string> | undefined || {}),
+          ...(((enAdmin as Record<string, unknown>).admin as Record<string, string> | undefined) ||
+            {}),
           ...enCrm,
         },
         erp: enErp,
@@ -62,7 +63,8 @@ const loadTranslations = async () => {
           devtools: zhDevtools.devtools,
           ...zhAi,
           ...zhMonitor,
-          ...((zhAdmin as Record<string, unknown>).admin as Record<string, string> | undefined || {}),
+          ...(((zhAdmin as Record<string, unknown>).admin as Record<string, string> | undefined) ||
+            {}),
           ...zhCrm,
         },
         erp: zhErp,

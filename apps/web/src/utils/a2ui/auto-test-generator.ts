@@ -10,30 +10,30 @@
 // ============ 枚举与类型定义 ============
 
 export enum TestGenerationStrategy {
-  Unit = 'unit',
-  Integration = 'integration',
+  UNIT = 'unit',
+  INTEGRATION = 'integration',
   E2E = 'e2e',
 }
 
 export enum TestPriority {
-  Critical = 'critical',
-  High = 'high',
-  Medium = 'medium',
-  Low = 'low',
+  CRITICAL = 'critical',
+  HIGH = 'high',
+  MEDIUM = 'medium',
+  LOW = 'low',
 }
 
 export enum MockType {
-  Function = 'function',
-  Module = 'module',
-  Data = 'data',
+  FUNCTION = 'function',
+  MODULE = 'module',
+  DATA = 'data',
 }
 
 export enum TestStatus {
-  Pending = 'pending',
-  Running = 'running',
-  Passed = 'passed',
-  Failed = 'failed',
-  Skipped = 'skipped',
+  PENDING = 'pending',
+  RUNNING = 'running',
+  PASSED = 'passed',
+  FAILED = 'failed',
+  SKIPPED = 'skipped',
 }
 
 /**
@@ -151,7 +151,7 @@ interface RawTestSuitePayload {
  */
 export class AutoTestGenerator {
   async generate(request: TestGenerationOptions): Promise<GeneratedTestSuite> {
-    const strategy = request.strategy ?? TestGenerationStrategy.Unit;
+    const strategy = request.strategy ?? TestGenerationStrategy.UNIT;
     const fallback = this.buildFallback(request, strategy);
     try {
       const prompt = this.buildPrompt(request, strategy);
@@ -185,12 +185,9 @@ export class AutoTestGenerator {
     };
   }
 
-  private buildPrompt(
-    request: TestGenerationOptions,
-    strategy: TestGenerationStrategy
-  ): string {
+  private buildPrompt(request: TestGenerationOptions, strategy: TestGenerationStrategy): string {
     const framework = request.framework ?? 'vitest';
-    const priority = request.priority ?? TestPriority.Medium;
+    const priority = request.priority ?? TestPriority.MEDIUM;
     const source = request.source_code ?? '(no source provided)';
     return [
       'You are a senior test engineer. Generate a test suite suggestion as STRICT JSON (no markdown).',
@@ -234,9 +231,7 @@ export class AutoTestGenerator {
 
   private coerceTests(v: unknown): TestCaseInfo[] {
     if (!Array.isArray(v)) return [];
-    return v
-      .map((item) => this.coerceTest(item))
-      .filter((t): t is TestCaseInfo => t !== null);
+    return v.map((item) => this.coerceTest(item)).filter((t): t is TestCaseInfo => t !== null);
   }
 
   private coerceTest(v: unknown): TestCaseInfo | null {
@@ -253,9 +248,7 @@ export class AutoTestGenerator {
 
   private coerceMocks(v: unknown): MockDefinition[] {
     if (!Array.isArray(v)) return [];
-    return v
-      .map((item) => this.coerceMock(item))
-      .filter((m): m is MockDefinition => m !== null);
+    return v.map((item) => this.coerceMock(item)).filter((m): m is MockDefinition => m !== null);
   }
 
   private coerceMock(v: unknown): MockDefinition | null {
@@ -274,8 +267,7 @@ export class AutoTestGenerator {
       return { lines: 0, branches: 0, functions: 0, statements: 0 };
     }
     const raw = v as Record<string, unknown>;
-    const num = (val: unknown): number =>
-      typeof val === 'number' && val >= 0 ? val : 0;
+    const num = (val: unknown): number => (typeof val === 'number' && val >= 0 ? val : 0);
     return {
       lines: num(raw.lines),
       branches: num(raw.branches),
@@ -284,10 +276,7 @@ export class AutoTestGenerator {
     };
   }
 
-  private coerceGeneratedTest(
-    v: unknown,
-    strategy: TestGenerationStrategy
-  ): GeneratedTest {
+  private coerceGeneratedTest(v: unknown, strategy: TestGenerationStrategy): GeneratedTest {
     if (!v || typeof v !== 'object') {
       return { name: `PlaceholderSuite_${strategy}`, cases: [], fixtures: [] };
     }
@@ -302,42 +291,42 @@ export class AutoTestGenerator {
   private coerceStatus(v: unknown): TestStatus {
     switch (v) {
       case 'running':
-        return TestStatus.Running;
+        return TestStatus.RUNNING;
       case 'passed':
-        return TestStatus.Passed;
+        return TestStatus.PASSED;
       case 'failed':
-        return TestStatus.Failed;
+        return TestStatus.FAILED;
       case 'skipped':
-        return TestStatus.Skipped;
+        return TestStatus.SKIPPED;
       case 'pending':
       default:
-        return TestStatus.Pending;
+        return TestStatus.PENDING;
     }
   }
 
   private coercePriority(v: unknown): TestPriority {
     switch (v) {
       case 'critical':
-        return TestPriority.Critical;
+        return TestPriority.CRITICAL;
       case 'high':
-        return TestPriority.High;
+        return TestPriority.HIGH;
       case 'low':
-        return TestPriority.Low;
+        return TestPriority.LOW;
       case 'medium':
       default:
-        return TestPriority.Medium;
+        return TestPriority.MEDIUM;
     }
   }
 
   private coerceMockType(v: unknown): MockType {
     switch (v) {
       case 'module':
-        return MockType.Module;
+        return MockType.MODULE;
       case 'data':
-        return MockType.Data;
+        return MockType.DATA;
       case 'function':
       default:
-        return MockType.Function;
+        return MockType.FUNCTION;
     }
   }
 }

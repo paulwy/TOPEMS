@@ -614,7 +614,7 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
                   : '0 4px 15px rgba(0, 0, 0, 0.1)',
                 transition: 'all 0.3s',
                 transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-                color: 'white',
+                color: 'common.white',
               }}
             >
               {icon}

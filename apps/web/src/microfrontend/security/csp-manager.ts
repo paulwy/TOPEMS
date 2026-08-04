@@ -13,9 +13,9 @@ export type CSPDirective =
   | 'prefetchSrc';
 
 export enum CSPStrategy {
-  Strict = 'strict',
-  Balanced = 'balanced',
-  Permissive = 'permissive',
+  STRICT = 'strict',
+  BALANCED = 'balanced',
+  PERMISSIVE = 'permissive',
 }
 
 export interface CSPPolicy {
@@ -49,7 +49,7 @@ const DIRECTIVE_MAP: Record<CSPDirective, string> = {
 };
 
 const STRATEGY_DEFAULTS: Record<CSPStrategy, Partial<Record<CSPDirective, string[]>>> = {
-  [CSPStrategy.Strict]: {
+  [CSPStrategy.STRICT]: {
     defaultSrc: ["'self'"],
     scriptSrc: ["'self'"],
     styleSrc: ["'self'"],
@@ -63,7 +63,7 @@ const STRATEGY_DEFAULTS: Record<CSPStrategy, Partial<Record<CSPDirective, string
     manifestSrc: ["'self'"],
     prefetchSrc: ["'self'"],
   },
-  [CSPStrategy.Balanced]: {
+  [CSPStrategy.BALANCED]: {
     defaultSrc: ["'self'"],
     scriptSrc: ["'self'", "'unsafe-inline'"],
     styleSrc: ["'self'", "'unsafe-inline'"],
@@ -77,7 +77,7 @@ const STRATEGY_DEFAULTS: Record<CSPStrategy, Partial<Record<CSPDirective, string
     manifestSrc: ["'self'"],
     prefetchSrc: ["'self'"],
   },
-  [CSPStrategy.Permissive]: {
+  [CSPStrategy.PERMISSIVE]: {
     defaultSrc: ["'self'", '*'],
     scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", '*'],
     styleSrc: ["'self'", "'unsafe-inline'", '*'],
@@ -101,7 +101,7 @@ export class CSPManager {
   private nonce: string;
   private maxViolations = 100;
 
-  constructor(strategy: CSPStrategy = CSPStrategy.Balanced) {
+  constructor(strategy: CSPStrategy = CSPStrategy.BALANCED) {
     this.nonce = this.generateNonce();
     this.currentPolicy = {
       directives: { ...STRATEGY_DEFAULTS[strategy] },
@@ -161,9 +161,10 @@ export class CSPManager {
     Object.entries(mergedDirectives).forEach(([key, values]) => {
       const directiveName = DIRECTIVE_MAP[key as CSPDirective];
       if (directiveName && values && values.length > 0) {
-        const valuesWithNonce = this.currentPolicy.nonce && key === 'scriptSrc'
-          ? [...values, `'nonce-${this.currentPolicy.nonce}'`]
-          : values;
+        const valuesWithNonce =
+          this.currentPolicy.nonce && key === 'scriptSrc'
+            ? [...values, `'nonce-${this.currentPolicy.nonce}'`]
+            : values;
         parts.push(`${directiveName} ${valuesWithNonce.join(' ')}`);
       }
     });
@@ -238,7 +239,10 @@ export class CSPManager {
     return this.nonce;
   }
 
-  async hashContent(content: string, algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'): Promise<string> {
+  async hashContent(
+    content: string,
+    algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'
+  ): Promise<string> {
     if (typeof crypto !== 'undefined' && crypto.subtle) {
       const encoder = new TextEncoder();
       const data = encoder.encode(content);

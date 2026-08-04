@@ -666,7 +666,7 @@ export interface Concept {
   name: string;
   concept_type: string;
   description: string;
-  parent_id?: string;
+  parentId?: string;
   properties: Record<string, unknown>;
   synonyms: string[];
 }
@@ -692,7 +692,7 @@ export interface InferenceRule {
 
 export interface ConceptQueryParams {
   concept_type?: string;
-  parent_id?: string;
+  parentId?: string;
   keyword?: string;
   page?: number;
   page_size?: number;
@@ -973,7 +973,9 @@ export const mdmGraphqlApi = {
     );
   },
 
-  async getMasterDataById(id: string): Promise<ApiResponse<GraphqlResponse<{ masterDataById: MasterDataEntity }>>> {
+  async getMasterDataById(
+    id: string
+  ): Promise<ApiResponse<GraphqlResponse<{ masterDataById: MasterDataEntity }>>> {
     return apiClient.erp.post<GraphqlResponse<{ masterDataById: MasterDataEntity }>>(
       '/master-data/graphql',
       {
@@ -984,12 +986,9 @@ export const mdmGraphqlApi = {
   },
 
   async getMdmStats(): Promise<ApiResponse<GraphqlResponse<{ mdmStats: MdmStats }>>> {
-    return apiClient.erp.post<GraphqlResponse<{ mdmStats: MdmStats }>>(
-      '/master-data/graphql',
-      {
-        query: `{ mdmStats { total_entities by_domain avg_quality_score active_services sync_jobs_today data_quality_trend } }`,
-      }
-    );
+    return apiClient.erp.post<GraphqlResponse<{ mdmStats: MdmStats }>>('/master-data/graphql', {
+      query: `{ mdmStats { total_entities by_domain avg_quality_score active_services sync_jobs_today data_quality_trend } }`,
+    });
   },
 };
 
@@ -1103,7 +1102,9 @@ export const syncEngineV2Api = {
     return apiClient.erp.post<SyncJobV2>(`/master-data/sync/v2/dead-letters/${id}/retry`);
   },
 
-  async batchRetryDeadLetters(data: BatchRetryDeadLettersRequest): Promise<ApiResponse<{ retried_count: number; requested_count: number; category?: string }>> {
+  async batchRetryDeadLetters(
+    data: BatchRetryDeadLettersRequest
+  ): Promise<ApiResponse<{ retried_count: number; requested_count: number; category?: string }>> {
     return apiClient.erp.post('/master-data/sync/v2/dead-letters/batch-retry', data);
   },
 
@@ -1144,7 +1145,9 @@ export const mdmServiceApi = {
     return apiClient.erp.post<MdmServiceInfo>('/master-data/services/register', data);
   },
 
-  async deregister(serviceId: string): Promise<ApiResponse<{ service_id: string; deregistered: boolean }>> {
+  async deregister(
+    serviceId: string
+  ): Promise<ApiResponse<{ service_id: string; deregistered: boolean }>> {
     return apiClient.erp.post(`/master-data/services/${serviceId}/deregister`);
   },
 
@@ -1300,7 +1303,7 @@ export interface QualityAiStats {
   by_risk_level: Record<string, number>;
   anomaly_count: number;
   by_anomaly_type: Record<string, number>;
-  by_severity: Record<string, number>;
+  bySeverity: Record<string, number>;
 }
 
 // ==================== V45.0 AC-17: 质量 AI API 方法 ====================
@@ -1327,7 +1330,11 @@ export const qualityAiApi = {
     id: string,
     params?: PredictQualityParams
   ): Promise<ApiResponse<QualityPrediction>> {
-    return apiClient.erp.post<QualityPrediction>(`/master-data/quality-ai/predict/${id}`, {}, { params });
+    return apiClient.erp.post<QualityPrediction>(
+      `/master-data/quality-ai/predict/${id}`,
+      {},
+      { params }
+    );
   },
 
   async getStats(params?: QualityAiStatsParams): Promise<ApiResponse<QualityAiStats>> {
@@ -1403,20 +1410,16 @@ export interface MergeSuggestion {
 // ==================== V45.0 AC-17: 智能匹配 API 方法 ====================
 
 export const smartMatcherApi = {
-  async findMatches(
-    id: string,
-    data: FindMatchesRequest
-  ): Promise<ApiResponse<MatchResult[]>> {
+  async findMatches(id: string, data: FindMatchesRequest): Promise<ApiResponse<MatchResult[]>> {
     return apiClient.erp.post<MatchResult[]>(`/master-data/matching/find-matches/${id}`, data);
   },
 
   async findDuplicates(
     params?: FindDuplicatesParams
   ): Promise<ApiResponse<PaginatedResponse<MatchResult>>> {
-    return apiClient.erp.get<PaginatedResponse<MatchResult>>(
-      '/master-data/matching/duplicates',
-      { params }
-    );
+    return apiClient.erp.get<PaginatedResponse<MatchResult>>('/master-data/matching/duplicates', {
+      params,
+    });
   },
 
   async getDuplicateGroups(params?: DuplicateGroupsParams): Promise<ApiResponse<DuplicateGroup[]>> {
@@ -1446,7 +1449,7 @@ export interface ClassificationResult {
 export interface Category {
   id: string;
   name: string;
-  parent_id?: string;
+  parentId?: string;
   domain: string;
   description: string;
   keywords: string[];
@@ -1481,7 +1484,7 @@ export interface BatchClassifyRequest {
 
 export interface ListCategoriesParams {
   domain?: string;
-  parent_id?: string;
+  parentId?: string;
 }
 
 export interface LearnRuleRequest {
@@ -1517,9 +1520,7 @@ export interface SuggestTagsResult {
 
 export const autoClassifierApi = {
   async classifyEntity(id: string): Promise<ApiResponse<ClassificationResult>> {
-    return apiClient.erp.post<ClassificationResult>(
-      `/master-data/classification/classify/${id}`
-    );
+    return apiClient.erp.post<ClassificationResult>(`/master-data/classification/classify/${id}`);
   },
 
   async batchClassify(data: BatchClassifyRequest): Promise<ApiResponse<ClassificationResult[]>> {
@@ -1530,9 +1531,7 @@ export const autoClassifierApi = {
   },
 
   async suggestTags(id: string): Promise<ApiResponse<SuggestTagsResult>> {
-    return apiClient.erp.get<SuggestTagsResult>(
-      `/master-data/classification/suggest-tags/${id}`
-    );
+    return apiClient.erp.get<SuggestTagsResult>(`/master-data/classification/suggest-tags/${id}`);
   },
 
   async listCategories(params?: ListCategoriesParams): Promise<ApiResponse<Category[]>> {
@@ -1540,10 +1539,7 @@ export const autoClassifierApi = {
   },
 
   async learnRule(data: LearnRuleRequest): Promise<ApiResponse<ClassificationRule>> {
-    return apiClient.erp.post<ClassificationRule>(
-      '/master-data/classification/learn-rule',
-      data
-    );
+    return apiClient.erp.post<ClassificationRule>('/master-data/classification/learn-rule', data);
   },
 
   async getStats(params?: ClassificationStatsParams): Promise<ApiResponse<ClassificationStats>> {

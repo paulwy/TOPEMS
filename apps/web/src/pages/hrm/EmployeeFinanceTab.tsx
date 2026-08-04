@@ -27,6 +27,7 @@ import { Banknote, DollarSign, Shield, Save, Edit2, X } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+
 interface EmployeeFinanceTabProps {
   employeeId: string;
   employeeName: string;
@@ -144,7 +145,11 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           <Typography variant='h6'>财务信息</Typography>
           {hasFinanceInfo && (
             <Chip
-              label={financeInfo.status === 'active' ? t('hrm.employee_finance_tab.normal') : t('hrm.employee_finance_tab.text_d70e9b')}
+              label={
+                financeInfo.status === 'active'
+                  ? t('hrm.employee_finance_tab.normal')
+                  : t('hrm.employee_finance_tab.text_d70e9b')
+              }
               color={financeInfo.status === 'active' ? 'primary' : 'default'}
               size='small'
             />
@@ -177,7 +182,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
             onClick={handleEdit}
           >
             <Edit2 style={{ width: 16, height: 16, marginRight: 4 }} />
-            {hasFinanceInfo ? t('hrm.employee_finance_tab.edit') : t('hrm.employee_finance_tab.text_2cb472')}
+            {hasFinanceInfo
+              ? t('hrm.employee_finance_tab.edit')
+              : t('hrm.employee_finance_tab.text_2cb472')}
           </Button>
         )}
       </Box>
@@ -703,7 +710,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                 </FormControl>
               ) : (
                 <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
-                  {financeInfo?.taxlevel ? `${financeInfo.taxlevel}孩扣除` : t('hrm.employee_finance_tab.text_cd9b27')}
+                  {financeInfo?.taxlevel
+                    ? `${financeInfo.taxlevel}孩扣除`
+                    : t('hrm.employee_finance_tab.text_cd9b27')}
                 </Typography>
               )}
             </Box>

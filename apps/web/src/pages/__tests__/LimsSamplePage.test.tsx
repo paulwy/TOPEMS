@@ -109,86 +109,86 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
-    useNotificationStore.getState.mockReturnValue({
-      addNotification: mockAddNotification,
-      notifications: [],
-      removeNotification: vi.fn(),
-      clearNotifications: vi.fn(),
-    });
-    (limsApi.listSamples as vi.Mock).mockResolvedValue({
-      success: true,
-      data: mockSamples,
-    });
-  });
+useNotificationStore.getState.mockReturnValue({
+  addNotification: mockAddNotification,
+  notifications: [],
+  removeNotification: vi.fn(),
+  clearNotifications: vi.fn(),
+});
+(limsApi.listSamples as vi.Mock).mockResolvedValue({
+  success: true,
+  data: mockSamples,
+});
 
 describe('LimsSamplePage', () => {
-it('should render page title', async () => {
+  it('should render page title', async () => {
     renderWithProviders(<LimsSamplePage />);
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: '样品管理' })).toBeInTheDocument();
+    });
   });
-});
 
-it('should render sample table', async () => {
+  it('should render sample table', async () => {
     renderWithProviders(<LimsSamplePage />);
     await waitFor(() => {
       expect(screen.getByText('SMP-2024-001')).toBeInTheDocument();
       expect(screen.getByText('土壤样本A')).toBeInTheDocument();
+    });
   });
-});
 
-it('should handle search', async () => {
+  it('should handle search', async () => {
     renderWithProviders(<LimsSamplePage />);
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/搜索/)).toBeInTheDocument();
+    });
   });
-});
 
-it('should render statistics cards', async () => {
+  it('should render statistics cards', async () => {
     renderWithProviders(<LimsSamplePage />);
     await waitFor(() => {
       expect(screen.getByText('样品总数')).toBeInTheDocument();
+    });
   });
-});
 
-it('should handle create sample', async () => {
+  it('should handle create sample', async () => {
     (limsApi.createSample as vi.Mock).mockResolvedValue({
       success: true,
       data: {},
-  });
+    });
 
     renderWithProviders(<LimsSamplePage />);
 
     await waitFor(() => {
       const addButton = screen.getByRole('button', { name: /样品登记/ });
       fireEvent.click(addButton);
-  });
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: '样品登记' })).toBeInTheDocument();
-  });
+    });
 
     await act(async () => {
       const nameInput = screen.getByLabelText(/样品名称/);
       fireEvent.change(nameInput, { target: { value: '测试样品' } });
-  });
+    });
 
     await act(async () => {
       const saveButton = screen.getByRole('button', { name: '保存' });
       fireEvent.click(saveButton);
-  });
+    });
 
     await waitFor(() => {
       expect(limsApi.createSample).toHaveBeenCalled();
-  });
+    });
     expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+  });
 
-it('should handle API error', async () => {
+  it('should handle API error', async () => {
     (limsApi.listSamples as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<LimsSamplePage />);
 
     await waitFor(() => {
       expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
-});
-;
+    });
+  });
 });

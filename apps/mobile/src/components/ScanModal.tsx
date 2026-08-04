@@ -144,7 +144,9 @@ const ScanModal: React.FC<ScanModalProps> = ({
       const newHistory = [item, ...scanHistory].slice(0, 20);
       setScanHistory(newHistory);
       await storage.setScanHistory(newHistory);
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleAutoRecognition = async (data: string): Promise<RecognizedResult> => {
@@ -189,7 +191,9 @@ const ScanModal: React.FC<ScanModalProps> = ({
             };
           }
         }
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
     return { type: 'unknown' };
   };
@@ -350,6 +354,7 @@ const ScanModal: React.FC<ScanModalProps> = ({
                 ref={scannerRef}
                 style={styles.scanner}
                 onBarCodeScanned={scanning ? handleBarCodeScanned : undefined}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 {...({ torchMode: torchOn ? 'on' : 'off' } as any)}
               />
 

@@ -391,9 +391,7 @@ const EmailList: React.FC<EmailListProps> = ({
                             if (e.target.checked) {
                               setSelectedEmails((prev) => [...prev, email.id]);
                             } else {
-                              setSelectedEmails((prev) =>
-                                prev.filter((id) => id !== email.id)
-                              );
+                              setSelectedEmails((prev) => prev.filter((id) => id !== email.id));
                             }
                           }}
                           style={{

@@ -185,9 +185,9 @@ export const getMockMesDashboard = () => ({
   pass_rate: 97.2,
   oee: 85.6,
   order_progress: [
-    { order_id: '1', order_number: 'WO-2026-0612', product_name: '产品A', planned_quantity: 500, completed_quantity: 380, progress: 76, status: '进行中' },
-    { order_id: '2', order_number: 'WO-2026-0613', product_name: '产品B', planned_quantity: 200, completed_quantity: 200, progress: 100, status: '已完成' },
-    { order_id: '3', order_number: 'WO-2026-0614', product_name: '产品C', planned_quantity: 1000, completed_quantity: 520, progress: 52, status: '进行中' },
+    { order_id: '1', order_number: 'WO-2026-0612', product_name: '产品A', plannedQuantity: 500, completed_quantity: 380, progress: 76, status: '进行中' },
+    { order_id: '2', order_number: 'WO-2026-0613', product_name: '产品B', plannedQuantity: 200, completed_quantity: 200, progress: 100, status: '已完成' },
+    { order_id: '3', order_number: 'WO-2026-0614', product_name: '产品C', plannedQuantity: 1000, completed_quantity: 520, progress: 52, status: '进行中' },
   ],
   workstation_status: [
     { work_station_id: '1', work_station_name: '工位A', status: '运行', current_order: 'WO-2026-0612', current_product: '产品A', output_today: 380, operator: '张工' },

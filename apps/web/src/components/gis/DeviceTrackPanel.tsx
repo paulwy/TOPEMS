@@ -179,7 +179,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             px: 4,
             py: 3,
             background: 'linear-gradient(to right, #9333ea, primary.dark)',
-            color: 'white',
+            color: 'common.white',
           }}
         >
           <Typography
@@ -198,8 +198,8 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             onClick={onClose}
             sx={{
               p: 1,
-              color: 'white',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+              color: 'common.white',
+              '&:hover': { bgcolor: 'action.disabledBackground' },
             }}
           >
             <X size={20} />
@@ -293,7 +293,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
               startIcon={isPlaying ? <Pause size={16} /> : <Play size={16} />}
               sx={{
                 bgcolor: isPlaying ? 'warning.main' : 'success.dark',
-                color: 'white',
+                color: 'common.white',
                 '&:hover': { bgcolor: isPlaying ? 'warning.dark' : 'success.dark' },
                 '&:disabled': { opacity: 0.5 },
                 textTransform: 'none',
@@ -713,7 +713,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
           px: 4,
           py: 3,
           background: 'linear-gradient(to right, #9333ea, primary.dark)',
-          color: 'white',
+          color: 'common.white',
         }}
       >
         <Typography
@@ -732,8 +732,8 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
           onClick={onClose}
           sx={{
             p: 1,
-            color: 'white',
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+            color: 'common.white',
+            '&:hover': { bgcolor: 'action.disabledBackground' },
           }}
         >
           <X size={20} />

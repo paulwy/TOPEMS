@@ -13,27 +13,27 @@
 // ============ 枚举与类型定义 ============
 
 export enum ComponentCategory {
-  Layout = 'layout',
-  Navigation = 'navigation',
-  Input = 'input',
-  Feedback = 'feedback',
-  DataDisplay = 'data_display',
-  DataEntry = 'data_entry',
-  Overlay = 'overlay',
-  Utility = 'utility',
+  LAYOUT = 'layout',
+  NAVIGATION = 'navigation',
+  INPUT = 'input',
+  FEEDBACK = 'feedback',
+  DATADISPLAY = 'data_display',
+  DATAENTRY = 'data_entry',
+  OVERLAY = 'overlay',
+  UTILITY = 'utility',
 }
 
 export enum UILibrary {
   MUI = 'mui',
-  AntDesign = 'ant_design',
-  ChakraUI = 'chakra_ui',
+  ANTDESIGN = 'ant_design',
+  CHAKRAUI = 'chakra_ui',
 }
 
 export enum ResponsiveStrategy {
-  MobileFirst = 'mobile_first',
-  DesktopFirst = 'desktop_first',
-  Adaptive = 'adaptive',
-  FixedWidth = 'fixed_width',
+  MOBILEFIRST = 'mobile_first',
+  DESKTOPFIRST = 'desktop_first',
+  ADAPTIVE = 'adaptive',
+  FIXEDWIDTH = 'fixed_width',
 }
 
 // ============ 接口定义 ============
@@ -117,7 +117,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Box',
     library: UILibrary.MUI,
-    category: ComponentCategory.Layout,
+    category: ComponentCategory.LAYOUT,
     description: '通用布局容器，支持 sx 属性和灵活样式',
     keywords: ['container', 'layout', 'wrapper', 'div', 'box', '布局', '容器'],
     props: ['sx', 'component', 'display', 'flexDirection', 'gap', 'padding', 'margin'],
@@ -129,7 +129,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Grid',
     library: UILibrary.MUI,
-    category: ComponentCategory.Layout,
+    category: ComponentCategory.LAYOUT,
     description: '响应式网格布局系统',
     keywords: ['grid', 'layout', 'responsive', 'columns', '网格', '响应式', '布局'],
     props: ['container', 'item', 'xs', 'sm', 'md', 'lg', 'xl', 'spacing', 'columns'],
@@ -141,7 +141,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Stack',
     library: UILibrary.MUI,
-    category: ComponentCategory.Layout,
+    category: ComponentCategory.LAYOUT,
     description: '一维弹性布局容器',
     keywords: ['stack', 'flex', 'column', 'row', '布局', '弹性', '堆叠'],
     props: ['direction', 'spacing', 'divider', 'alignItems', 'justifyContent'],
@@ -153,7 +153,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'AppBar',
     library: UILibrary.MUI,
-    category: ComponentCategory.Navigation,
+    category: ComponentCategory.NAVIGATION,
     description: '应用栏导航组件',
     keywords: ['appbar', 'header', 'navigation', 'top', '导航', '顶栏'],
     props: ['position', 'color', 'elevation', 'variant'],
@@ -166,7 +166,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Drawer',
     library: UILibrary.MUI,
-    category: ComponentCategory.Navigation,
+    category: ComponentCategory.NAVIGATION,
     description: '侧边栏抽屉导航',
     keywords: ['drawer', 'sidebar', 'navigation', 'side', '侧边栏', '抽屉'],
     props: ['open', 'anchor', 'variant', 'onClose', 'ModalProps'],
@@ -179,7 +179,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'TextField',
     library: UILibrary.MUI,
-    category: ComponentCategory.Input,
+    category: ComponentCategory.INPUT,
     description: '文本输入框，支持多种变体',
     keywords: ['input', 'text', 'field', 'form', '输入', '表单'],
     props: ['label', 'value', 'onChange', 'variant', 'error', 'helperText', 'disabled', 'required'],
@@ -192,7 +192,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Select',
     library: UILibrary.MUI,
-    category: ComponentCategory.Input,
+    category: ComponentCategory.INPUT,
     description: '下拉选择器',
     keywords: ['select', 'dropdown', 'choice', 'option', '下拉', '选择'],
     props: ['value', 'onChange', 'label', 'options', 'multiple', 'disabled'],
@@ -206,7 +206,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Button',
     library: UILibrary.MUI,
-    category: ComponentCategory.Input,
+    category: ComponentCategory.INPUT,
     description: '按钮组件，支持多种变体',
     keywords: ['button', 'action', 'click', 'submit', '按钮', '操作'],
     props: ['variant', 'color', 'size', 'onClick', 'disabled', 'startIcon', 'endIcon'],
@@ -220,7 +220,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Dialog',
     library: UILibrary.MUI,
-    category: ComponentCategory.Overlay,
+    category: ComponentCategory.OVERLAY,
     description: '模态对话框',
     keywords: ['dialog', 'modal', 'popup', 'overlay', '对话框', '弹窗', '模态'],
     props: ['open', 'onClose', 'maxWidth', 'fullScreen', 'scroll'],
@@ -233,7 +233,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Snackbar',
     library: UILibrary.MUI,
-    category: ComponentCategory.Feedback,
+    category: ComponentCategory.FEEDBACK,
     description: '消息提示条',
     keywords: ['snackbar', 'toast', 'notification', 'message', '提示', '通知'],
     props: ['open', 'message', 'autoHideDuration', 'severity', 'onClose'],
@@ -246,7 +246,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Alert',
     library: UILibrary.MUI,
-    category: ComponentCategory.Feedback,
+    category: ComponentCategory.FEEDBACK,
     description: '警告提示组件',
     keywords: ['alert', 'warning', 'error', 'info', 'success', '警告', '提示'],
     props: ['severity', 'variant', 'onClose', 'action', 'icon'],
@@ -259,7 +259,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Table',
     library: UILibrary.MUI,
-    category: ComponentCategory.DataDisplay,
+    category: ComponentCategory.DATADISPLAY,
     description: '数据表格组件',
     keywords: ['table', 'data', 'grid', 'row', 'column', '表格', '数据'],
     props: ['rows', 'columns', 'page', 'pageSize', 'sorting', 'filtering'],
@@ -273,7 +273,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'DataGrid',
     library: UILibrary.MUI,
-    category: ComponentCategory.DataDisplay,
+    category: ComponentCategory.DATADISPLAY,
     description: '高级数据网格，支持排序、筛选、分页',
     keywords: ['datagrid', 'table', 'grid', 'data', 'sort', 'filter', 'paginate', '数据网格'],
     props: [
@@ -293,7 +293,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Card',
     library: UILibrary.MUI,
-    category: ComponentCategory.DataDisplay,
+    category: ComponentCategory.DATADISPLAY,
     description: '卡片容器，用于内容分组',
     keywords: ['card', 'container', 'content', '卡片', '内容'],
     props: ['variant', 'raised', 'sx'],
@@ -305,7 +305,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Tabs',
     library: UILibrary.MUI,
-    category: ComponentCategory.Navigation,
+    category: ComponentCategory.NAVIGATION,
     description: '标签页导航组件',
     keywords: ['tabs', 'tab', 'navigation', 'switch', '标签页', '切换'],
     props: ['value', 'onChange', 'orientation', 'variant', 'scrollButtons'],
@@ -318,7 +318,7 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Accordion',
     library: UILibrary.MUI,
-    category: ComponentCategory.Utility,
+    category: ComponentCategory.UTILITY,
     description: '可折叠面板',
     keywords: ['accordion', 'collapse', 'expand', 'fold', '折叠', '展开'],
     props: ['expanded', 'onChange', 'disabled', 'square'],
@@ -334,8 +334,8 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
 const ANT_DESIGN_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Layout',
-    library: UILibrary.AntDesign,
-    category: ComponentCategory.Layout,
+    library: UILibrary.ANTDESIGN,
+    category: ComponentCategory.LAYOUT,
     description: '布局容器，包含 Header/Sider/Content/Footer',
     keywords: ['layout', 'header', 'sider', 'content', '布局', '结构'],
     props: ['className', 'style', 'hasSider'],
@@ -347,8 +347,8 @@ const ANT_DESIGN_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'Form',
-    library: UILibrary.AntDesign,
-    category: ComponentCategory.DataEntry,
+    library: UILibrary.ANTDESIGN,
+    category: ComponentCategory.DATAENTRY,
     description: '高级表单组件，支持校验和布局',
     keywords: ['form', 'input', 'validation', 'submit', '表单', '校验'],
     props: ['form', 'layout', 'onFinish', 'onFinishFailed', 'initialValues'],
@@ -361,8 +361,8 @@ const ANT_DESIGN_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'Table',
-    library: UILibrary.AntDesign,
-    category: ComponentCategory.DataDisplay,
+    library: UILibrary.ANTDESIGN,
+    category: ComponentCategory.DATADISPLAY,
     description: '功能丰富的数据表格',
     keywords: ['table', 'data', 'grid', 'row', 'column', '表格', '数据'],
     props: ['dataSource', 'columns', 'pagination', 'rowSelection', 'scroll', 'onChange'],
@@ -374,8 +374,8 @@ const ANT_DESIGN_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'Modal',
-    library: UILibrary.AntDesign,
-    category: ComponentCategory.Overlay,
+    library: UILibrary.ANTDESIGN,
+    category: ComponentCategory.OVERLAY,
     description: '模态对话框',
     keywords: ['modal', 'dialog', 'popup', '对话框', '弹窗'],
     props: ['open', 'onCancel', 'onOk', 'title', 'width', 'footer', 'centered'],
@@ -387,8 +387,8 @@ const ANT_DESIGN_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'Menu',
-    library: UILibrary.AntDesign,
-    category: ComponentCategory.Navigation,
+    library: UILibrary.ANTDESIGN,
+    category: ComponentCategory.NAVIGATION,
     description: '导航菜单',
     keywords: ['menu', 'navigation', 'dropdown', '菜单', '导航'],
     props: ['mode', 'items', 'selectedKeys', 'onClick', 'theme'],
@@ -400,8 +400,8 @@ const ANT_DESIGN_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'message',
-    library: UILibrary.AntDesign,
-    category: ComponentCategory.Feedback,
+    library: UILibrary.ANTDESIGN,
+    category: ComponentCategory.FEEDBACK,
     description: '全局消息提示',
     keywords: ['message', 'toast', 'notification', '提示', '消息'],
     props: ['content', 'duration', 'type', 'onClose'],
@@ -413,8 +413,8 @@ const ANT_DESIGN_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'DatePicker',
-    library: UILibrary.AntDesign,
-    category: ComponentCategory.Input,
+    library: UILibrary.ANTDESIGN,
+    category: ComponentCategory.INPUT,
     description: '日期选择器',
     keywords: ['date', 'picker', 'calendar', '日期', '选择器'],
     props: ['value', 'onChange', 'format', 'showTime', 'disabledDate', 'picker'],
@@ -429,8 +429,8 @@ const ANT_DESIGN_COMPONENTS: ComponentKnowledge[] = [
 const CHAKRA_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Box',
-    library: UILibrary.ChakraUI,
-    category: ComponentCategory.Layout,
+    library: UILibrary.CHAKRAUI,
+    category: ComponentCategory.LAYOUT,
     description: '基础布局盒子',
     keywords: ['box', 'container', 'div', 'layout', '盒子', '布局'],
     props: ['as', 'bg', 'color', 'p', 'm', 'w', 'h', 'display', 'flexDirection'],
@@ -441,8 +441,8 @@ const CHAKRA_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'Stack',
-    library: UILibrary.ChakraUI,
-    category: ComponentCategory.Layout,
+    library: UILibrary.CHAKRAUI,
+    category: ComponentCategory.LAYOUT,
     description: '弹性堆叠布局',
     keywords: ['stack', 'flex', 'layout', '堆叠', '弹性'],
     props: ['direction', 'spacing', 'align', 'justify'],
@@ -453,8 +453,8 @@ const CHAKRA_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'Input',
-    library: UILibrary.ChakraUI,
-    category: ComponentCategory.Input,
+    library: UILibrary.CHAKRAUI,
+    category: ComponentCategory.INPUT,
     description: '文本输入框',
     keywords: ['input', 'text', 'form', '输入', '表单'],
     props: ['value', 'onChange', 'placeholder', 'size', 'variant', 'isInvalid', 'isDisabled'],
@@ -466,8 +466,8 @@ const CHAKRA_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'Button',
-    library: UILibrary.ChakraUI,
-    category: ComponentCategory.Input,
+    library: UILibrary.CHAKRAUI,
+    category: ComponentCategory.INPUT,
     description: '按钮组件',
     keywords: ['button', 'action', 'click', '按钮'],
     props: ['variant', 'colorScheme', 'size', 'onClick', 'isLoading', 'isDisabled', 'leftIcon'],
@@ -479,8 +479,8 @@ const CHAKRA_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'Modal',
-    library: UILibrary.ChakraUI,
-    category: ComponentCategory.Overlay,
+    library: UILibrary.CHAKRAUI,
+    category: ComponentCategory.OVERLAY,
     description: '模态对话框',
     keywords: ['modal', 'dialog', 'popup', '对话框', '弹窗'],
     props: ['isOpen', 'onClose', 'size', 'isCentered', 'scrollBehavior'],
@@ -493,8 +493,8 @@ const CHAKRA_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'Table',
-    library: UILibrary.ChakraUI,
-    category: ComponentCategory.DataDisplay,
+    library: UILibrary.CHAKRAUI,
+    category: ComponentCategory.DATADISPLAY,
     description: '表格组件',
     keywords: ['table', 'data', '表格', '数据'],
     props: ['variant', 'colorScheme', 'size'],
@@ -507,8 +507,8 @@ const CHAKRA_COMPONENTS: ComponentKnowledge[] = [
   },
   {
     name: 'Toast',
-    library: UILibrary.ChakraUI,
-    category: ComponentCategory.Feedback,
+    library: UILibrary.CHAKRAUI,
+    category: ComponentCategory.FEEDBACK,
     description: '消息提示',
     keywords: ['toast', 'notification', 'message', '提示', '通知'],
     props: ['title', 'description', 'status', 'duration', 'position', 'isClosable'],
@@ -679,8 +679,8 @@ export class UIRecommender {
 
     // 交互组件需要焦点管理
     if (
-      component.category === ComponentCategory.Overlay ||
-      component.category === ComponentCategory.Navigation
+      component.category === ComponentCategory.OVERLAY ||
+      component.category === ComponentCategory.NAVIGATION
     ) {
       suggestions.push({
         issue: '交互组件需要焦点管理',
@@ -693,7 +693,7 @@ export class UIRecommender {
 
     // 数据展示组件需要屏幕阅读器支持
     if (
-      component.category === ComponentCategory.DataDisplay ||
+      component.category === ComponentCategory.DATADISPLAY ||
       component.name === 'Table' ||
       component.name === 'DataGrid'
     ) {
@@ -971,9 +971,9 @@ export class UIRecommender {
     switch (component.library) {
       case UILibrary.MUI:
         return `import ${component.name} from '${component.import_path}';`;
-      case UILibrary.AntDesign:
+      case UILibrary.ANTDESIGN:
         return `import { ${component.name} } from '${component.import_path.split('/')[0]}';`;
-      case UILibrary.ChakraUI:
+      case UILibrary.CHAKRAUI:
         return `import { ${component.name} } from '${component.import_path}';`;
       default:
         return `import { ${component.name} } from 'unknown';`;
@@ -1047,11 +1047,11 @@ export class UIRecommender {
   private inferResponsiveStrategy(designInfo: Record<string, unknown>): ResponsiveStrategy {
     if (typeof designInfo.responsive === 'string') {
       const strategy = designInfo.responsive.toLowerCase();
-      if (strategy.includes('mobile')) return ResponsiveStrategy.MobileFirst;
-      if (strategy.includes('desktop')) return ResponsiveStrategy.DesktopFirst;
-      if (strategy.includes('fixed')) return ResponsiveStrategy.FixedWidth;
+      if (strategy.includes('mobile')) return ResponsiveStrategy.MOBILEFIRST;
+      if (strategy.includes('desktop')) return ResponsiveStrategy.DESKTOPFIRST;
+      if (strategy.includes('fixed')) return ResponsiveStrategy.FIXEDWIDTH;
     }
-    return ResponsiveStrategy.Adaptive;
+    return ResponsiveStrategy.ADAPTIVE;
   }
 
   private detectAccessibilityIssues(designInfo: Record<string, unknown>): string[] {
@@ -1085,7 +1085,7 @@ export class UIRecommender {
     const suggestions: AccessibilitySuggestion[] = [];
 
     switch (category) {
-      case ComponentCategory.Input:
+      case ComponentCategory.INPUT:
         suggestions.push(
           {
             issue: '输入框缺少关联标签',
@@ -1102,7 +1102,7 @@ export class UIRecommender {
         );
         break;
 
-      case ComponentCategory.Navigation:
+      case ComponentCategory.NAVIGATION:
         suggestions.push(
           {
             issue: '导航缺少 landmark role',
@@ -1119,7 +1119,7 @@ export class UIRecommender {
         );
         break;
 
-      case ComponentCategory.Feedback:
+      case ComponentCategory.FEEDBACK:
         suggestions.push({
           issue: '反馈消息可能被屏幕阅读器忽略',
           severity: 'warning',
@@ -1128,7 +1128,7 @@ export class UIRecommender {
         });
         break;
 
-      case ComponentCategory.Overlay:
+      case ComponentCategory.OVERLAY:
         suggestions.push(
           {
             issue: '模态框缺少焦点陷阱',
@@ -1145,7 +1145,7 @@ export class UIRecommender {
         );
         break;
 
-      case ComponentCategory.DataDisplay:
+      case ComponentCategory.DATADISPLAY:
         suggestions.push({
           issue: '数据表格缺少表头关联',
           severity: 'warning',
@@ -1171,7 +1171,7 @@ export class UIRecommender {
     const lines: string[] = [];
     lines.push(`// 表单组合示例`);
 
-    if (primary.library === UILibrary.AntDesign) {
+    if (primary.library === UILibrary.ANTDESIGN) {
       lines.push(`import { Form, Input, Button${hasSelect ? ', Select' : ''} } from 'antd';`);
       lines.push('');
       lines.push('<Form form={form} layout="vertical" onFinish={onFinish}>');
@@ -1257,8 +1257,8 @@ export class UIRecommender {
   private getLibraryName(library: UILibrary): string {
     const names: Record<UILibrary, string> = {
       [UILibrary.MUI]: 'MUI',
-      [UILibrary.AntDesign]: 'Ant Design',
-      [UILibrary.ChakraUI]: 'Chakra UI',
+      [UILibrary.ANTDESIGN]: 'Ant Design',
+      [UILibrary.CHAKRAUI]: 'Chakra UI',
     };
     return names[library] ?? 'Unknown';
   }

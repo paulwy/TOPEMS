@@ -15,13 +15,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import {
-  Table,
-  LayoutGrid,
-  Eye,
-  Save,
-  Download,
-} from 'lucide-react';
+import { Table, LayoutGrid, Eye, Save, Download } from 'lucide-react';
 import {
   DataSourcePanel,
   FieldSelector,
@@ -31,7 +25,6 @@ import {
   PreviewContent,
 } from './components';
 import { MOCK_FIELDS, MOCK_DATA } from './mockData';
-export * from './types';
 
 import type {
   DataSourceType,
@@ -43,6 +36,8 @@ import type {
   ReportDesignerTemplateProps,
   ReportDesignerState,
 } from './types';
+
+export * from './types';
 
 export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   title = '报表设计器',

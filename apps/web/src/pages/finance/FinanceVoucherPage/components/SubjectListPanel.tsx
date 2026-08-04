@@ -4,15 +4,13 @@ import { StatusBadge, StatCardGroup } from '@/components';
 import type { AccountingSubject } from '@/api/erp';
 
 import { useTranslation } from 'react-i18next';
+
 interface SubjectListPanelProps {
   subjects: AccountingSubject[];
   subjectStatCards: any[];
 }
 
-const SubjectListPanel: React.FC<SubjectListPanelProps> = ({
-  subjects,
-  subjectStatCards,
-}) => {
+const SubjectListPanel: React.FC<SubjectListPanelProps> = ({ subjects, subjectStatCards }) => {
   const { t } = useTranslation();
   return (
     <Box sx={{ display: 'block' }}>
@@ -63,14 +61,20 @@ const SubjectListPanel: React.FC<SubjectListPanelProps> = ({
                 {subject.is_cash_flow && (
                   <StatusBadge
                     status='cash_flow'
-                    label={t('finance.finance_voucher_page_components__subject_list_panel.text_16b663')}
+                    label={t(
+                      'finance.finance_voucher_page_components__subject_list_panel.text_16b663'
+                    )}
                     color='secondary'
                   />
                 )}
               </Box>
               <StatusBadge
                 status={subject.status}
-                label={subject.status === 'active' ? t('finance.finance_voucher_page_components__subject_list_panel.active') : t('finance.finance_voucher_page_components__subject_list_panel.text_710ad0')}
+                label={
+                  subject.status === 'active'
+                    ? t('finance.finance_voucher_page_components__subject_list_panel.active')
+                    : t('finance.finance_voucher_page_components__subject_list_panel.text_710ad0')
+                }
                 color={subject.status === 'active' ? 'success' : 'default'}
               />
             </Box>
@@ -98,7 +102,10 @@ const SubjectListPanel: React.FC<SubjectListPanelProps> = ({
                   bgcolor: 'grey.300',
                 }}
               />
-              <Typography variant='body2'>{subject.category || t('finance.finance_voucher_page_components__subject_list_panel.text_ecf7eb')}</Typography>
+              <Typography variant='body2'>
+                {subject.category ||
+                  t('finance.finance_voucher_page_components__subject_list_panel.text_ecf7eb')}
+              </Typography>
             </Box>
             {subject.parent_code && (
               <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'grey.100' }}>

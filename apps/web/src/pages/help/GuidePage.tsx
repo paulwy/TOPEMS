@@ -106,10 +106,11 @@ export const GuidePage: React.FC = () => {
       ? guides
       : guides.filter((guide: Guide) => guide.category === selectedCategory);
 
-  const completedCount = guides.filter((g: Guide) => g.is_active).length;
-  const totalProgress = guides.length > 0
-    ? Math.round(guides.reduce((acc, g) => acc + (g.is_active ? 100 : 0), 0) / guides.length)
-    : 0;
+  const completedCount = guides.filter((g: Guide) => g.isActive).length;
+  const totalProgress =
+    guides.length > 0
+      ? Math.round(guides.reduce((acc, g) => acc + (g.isActive ? 100 : 0), 0) / guides.length)
+      : 0;
 
   const getCategoryInfo = (categoryId: string) => {
     const category = GUIDE_CATEGORIES.find((c) => c.id === categoryId);
@@ -136,7 +137,10 @@ export const GuidePage: React.FC = () => {
           sx={{ textTransform: 'none' }}
           onClick={() => navigate(DASHBOARD_PATHS.helpCenter)}
         >
-          <ArrowLeft size={16} sx={{ mr: 1 }} />
+          <ArrowLeft
+            size={16}
+            sx={{ mr: 1 }}
+          />
           返回帮助中心
         </Button>
       </Box>
@@ -158,20 +162,32 @@ export const GuidePage: React.FC = () => {
               <Award sx={{ width: 32, height: 32, color: 'primary.main' }} />
             </Box>
             <Box>
-              <Typography variant='h6' sx={{ fontWeight: 600 }}>
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 600 }}
+              >
                 学习进度
               </Typography>
-              <Typography variant='body2' color='text.secondary'>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 已完成 {completedCount}/{guides.length} 个课程
               </Typography>
             </Box>
           </Box>
           <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant='body2' color='text.secondary'>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 总体进度
               </Typography>
-              <Typography variant='body2' sx={{ fontWeight: 600 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 600 }}
+              >
                 {totalProgress}%
               </Typography>
             </Box>
@@ -185,10 +201,18 @@ export const GuidePage: React.FC = () => {
       </Card>
 
       <Box sx={{ mb: 6 }}>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 2 }}
+        >
           {t('help_center.filter_category')}
         </Typography>
-        <Stack direction='row' spacing={2} sx={{ flexWrap: 'wrap' }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ flexWrap: 'wrap' }}
+        >
           <Chip
             label='📋 全部'
             onClick={() => setSelectedCategory('all')}
@@ -215,11 +239,17 @@ export const GuidePage: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : (
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           {filteredGuides.map((guide) => {
             const categoryInfo = getCategoryInfo(guide.category);
             return (
-              <Grid size={{ xs: 12, md: 6 }} key={guide.id}>
+              <Grid
+                size={{ xs: 12, md: 6 }}
+                key={guide.id}
+              >
                 <Card
                   sx={{
                     height: '100%',
@@ -235,14 +265,14 @@ export const GuidePage: React.FC = () => {
                           width: 48,
                           height: 48,
                           borderRadius: 1,
-                          bgcolor: guide.is_active ? 'success.50' : 'primary.50',
+                          bgcolor: guide.isActive ? 'success.50' : 'primary.50',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
                         }}
                       >
-                        {guide.is_active ? (
+                        {guide.isActive ? (
                           <CheckCircle sx={{ width: 24, height: 24, color: 'success.main' }} />
                         ) : (
                           <PlayCircle sx={{ width: 24, height: 24, color: 'primary.main' }} />
@@ -250,10 +280,13 @@ export const GuidePage: React.FC = () => {
                       </Box>
                       <Box sx={{ flex: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                          <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                          <Typography
+                            variant='h6'
+                            sx={{ fontWeight: 600 }}
+                          >
                             {guide.title}
                           </Typography>
-                          {guide.is_active && (
+                          {guide.isActive && (
                             <Chip
                               size='small'
                               label='已完成'
@@ -262,7 +295,10 @@ export const GuidePage: React.FC = () => {
                             />
                           )}
                         </Box>
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
                           {guide.description}
                         </Typography>
                       </Box>
@@ -270,14 +306,26 @@ export const GuidePage: React.FC = () => {
 
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 3 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Clock size={14} sx={{ color: theme.palette.text.disabled }} />
-                        <Typography variant='body2' color='text.secondary'>
+                        <Clock
+                          size={14}
+                          sx={{ color: theme.palette.text.disabled }}
+                        />
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
                           {guide.duration}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <BookOpen size={14} sx={{ color: theme.palette.text.disabled }} />
-                        <Typography variant='body2' color='text.secondary'>
+                        <BookOpen
+                          size={14}
+                          sx={{ color: theme.palette.text.disabled }}
+                        />
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
                           {guide.lessons_count} 节课
                         </Typography>
                       </Box>
@@ -288,13 +336,19 @@ export const GuidePage: React.FC = () => {
                       />
                     </Box>
 
-                    {!guide.is_active && (
+                    {!guide.isActive && (
                       <Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant='body2' color='text.secondary'>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             学习进度
                           </Typography>
-                          <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                          <Typography
+                            variant='body2'
+                            sx={{ fontWeight: 600 }}
+                          >
                             0%
                           </Typography>
                         </Box>
@@ -309,10 +363,10 @@ export const GuidePage: React.FC = () => {
                     <Box sx={{ mt: 3 }}>
                       <Button
                         fullWidth
-                        variant={guide.is_active ? 'outlined' : 'contained'}
+                        variant={guide.isActive ? 'outlined' : 'contained'}
                         sx={{ textTransform: 'none', borderRadius: 1 }}
                       >
-                        {guide.is_active ? '复习课程' : '开始学习'}
+                        {guide.isActive ? '复习课程' : '开始学习'}
                         <ChevronRight size={16} />
                       </Button>
                     </Box>
@@ -326,11 +380,20 @@ export const GuidePage: React.FC = () => {
 
       {!loading && filteredGuides.length === 0 && (
         <Box sx={{ textAlign: 'center', py: 12 }}>
-          <BookOpen size={48} sx={{ color: theme.palette.text.disabled, mx: 'auto', mb: 3 }} />
-          <Typography variant='h6' sx={{ mb: 2 }}>
+          <BookOpen
+            size={48}
+            sx={{ color: theme.palette.text.disabled, mx: 'auto', mb: 3 }}
+          />
+          <Typography
+            variant='h6'
+            sx={{ mb: 2 }}
+          >
             {t('help_center.no_results')}
           </Typography>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {t('help_center.try_different')}
           </Typography>
         </Box>
@@ -340,24 +403,42 @@ export const GuidePage: React.FC = () => {
         <Card sx={{ borderRadius: 2 }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-              <Lightbulb size={20} sx={{ color: theme.palette.warning.main }} />
-              <Typography variant='h6' sx={{ fontWeight: 600 }}>
+              <Lightbulb
+                size={20}
+                sx={{ color: theme.palette.warning.main }}
+              />
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 600 }}
+              >
                 学习小贴士
               </Typography>
             </Box>
-            <Grid container spacing={4}>
+            <Grid
+              container
+              spacing={4}
+            >
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   📖 <strong>循序渐进</strong>：建议按照入门→进阶→高级的顺序学习
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   👀 <strong>边学边练</strong>：跟随指南操作，加深理解和记忆
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   💬 <strong>遇到问题</strong>：参考FAQ或联系在线客服获取帮助
                 </Typography>
               </Grid>

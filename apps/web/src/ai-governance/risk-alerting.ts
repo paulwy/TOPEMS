@@ -37,7 +37,7 @@ export interface RiskAlert {
 export interface RiskScore {
   overall: number;
   by_category: Record<RiskCategory, number>;
-  by_severity: Record<RiskLevel, number>;
+  bySeverity: Record<RiskLevel, number>;
   trend: 'improving' | 'stable' | 'deteriorating';
   components: Array<{
     indicator_id: string;
@@ -173,15 +173,15 @@ export class RiskAlerter {
     this.subscribers = [];
   }
 
-  evaluate_risks(indicators?: RiskIndicator[]): RiskAlert[] {
+  evaluateRisks(indicators?: RiskIndicator[]): RiskAlert[] {
     const targets = indicators ?? this.indicators;
     const newAlerts: RiskAlert[] = [];
 
     for (const indicator of targets) {
-      const breached = this.is_threshold_breached(indicator);
+      const breached = this.isThresholdBreached(indicator);
 
       if (breached) {
-        const existing = this.alerts.find((a) => a.indicator_id === indicator.id && !a.resolved);
+        const existing = this.alerts.some((a) => a.indicator_id === indicator.id && !a.resolved);
 
         if (!existing) {
           const alert: RiskAlert = {
@@ -190,17 +190,17 @@ export class RiskAlerter {
             indicator_name: indicator.name,
             category: indicator.category,
             severity: indicator.severity,
-            message: this.generate_alert_message(indicator),
+            message: this.generateAlertMessage(indicator),
             created_at: Date.now(),
             acknowledged: false,
             resolved: false,
-            evidence: this.generate_evidence(indicator),
-            channel: this.determine_channel(indicator.severity),
+            evidence: this.generateEvidence(indicator),
+            channel: this.determineChannel(indicator.severity),
             tags: [indicator.category, indicator.severity],
           };
           newAlerts.push(alert);
           this.alerts.push(alert);
-          this.notify_subscribers(alert);
+          this.notifySubscribers(alert);
         }
       } else {
         const activeAlerts = this.alerts.filter(
@@ -217,7 +217,7 @@ export class RiskAlerter {
     return newAlerts;
   }
 
-  get_alerts(filter?: {
+  getAlerts(filter?: {
     status?: 'active' | 'acknowledged' | 'resolved' | 'all';
     category?: RiskCategory;
     severity?: RiskLevel;
@@ -255,7 +255,7 @@ export class RiskAlerter {
     return result;
   }
 
-  acknowledge_alert(alert_id: string, by: string): boolean {
+  acknowledgeAlert(alert_id: string, by: string): boolean {
     const alert = this.alerts.find((a) => a.id === alert_id);
     if (!alert || alert.acknowledged) return false;
 
@@ -265,7 +265,7 @@ export class RiskAlerter {
     return true;
   }
 
-  resolve_alert(alert_id: string, by: string): boolean {
+  resolveAlert(alert_id: string, by: string): boolean {
     const alert = this.alerts.find((a) => a.id === alert_id);
     if (!alert || alert.resolved) return false;
 
@@ -275,7 +275,7 @@ export class RiskAlerter {
     return true;
   }
 
-  configure_threshold(indicator_id: string, threshold: number): boolean {
+  configureThreshold(indicator_id: string, threshold: number): boolean {
     const indicator = this.indicators.find((i) => i.id === indicator_id);
     if (!indicator) return false;
 
@@ -283,22 +283,22 @@ export class RiskAlerter {
     return true;
   }
 
-  get_risk_score(): RiskScore {
+  getRiskScore(): RiskScore {
     const activeAlerts = this.alerts.filter((a) => !a.resolved);
-    const scores_by_category: Record<RiskCategory, number> = {
+    const scoresByCategory: Record<RiskCategory, number> = {
       Security: 0,
       Compliance: 0,
       Performance: 0,
       Financial: 0,
     };
-    const scores_by_severity: Record<RiskLevel, number> = {
+    const scoresBySeverity: Record<RiskLevel, number> = {
       critical: 0,
       high: 0,
       medium: 0,
       low: 0,
     };
 
-    const severity_weights: Record<RiskLevel, number> = {
+    const severityWeights: Record<RiskLevel, number> = {
       critical: 40,
       high: 25,
       medium: 12,
@@ -306,20 +306,20 @@ export class RiskAlerter {
     };
 
     for (const alert of activeAlerts) {
-      const weight = severity_weights[alert.severity];
-      scores_by_category[alert.category] += weight;
-      scores_by_severity[alert.severity] += weight;
+      const weight = severityWeights[alert.severity];
+      scoresByCategory[alert.category] += weight;
+      scoresBySeverity[alert.severity] += weight;
     }
 
-    const max_possible_score = this.indicators.length * severity_weights.critical;
-    const raw_score = Object.values(scores_by_severity).reduce((sum, v) => sum + v, 0);
-    const overall = Math.min(100, Math.round((raw_score / max_possible_score) * 100));
+    const maxPossibleScore = this.indicators.length * severityWeights.critical;
+    const rawScore = Object.values(scoresBySeverity).reduce((sum, v) => sum + v, 0);
+    const overall = Math.min(100, Math.round((rawScore / maxPossibleScore) * 100));
 
     const components = this.indicators.map((indicator) => {
-      const breached = this.is_threshold_breached(indicator);
-      const sev_weight = severity_weights[indicator.severity];
-      const score = breached ? sev_weight : 0;
-      const weight = sev_weight / max_possible_score;
+      const breached = this.isThresholdBreached(indicator);
+      const sevWeight = severityWeights[indicator.severity];
+      const score = breached ? sevWeight : 0;
+      const weight = sevWeight / maxPossibleScore;
       return {
         indicator_id: indicator.id,
         score,
@@ -329,69 +329,69 @@ export class RiskAlerter {
     });
 
     let trend: RiskScore['trend'] = 'stable';
-    const recent_alerts = this.alerts.slice(-5);
-    if (recent_alerts.length >= 2) {
-      const first_half = recent_alerts.slice(0, Math.floor(recent_alerts.length / 2));
-      const second_half = recent_alerts.slice(Math.floor(recent_alerts.length / 2));
-      const first_score = this.calculate_alert_score(first_half);
-      const second_score = this.calculate_alert_score(second_half);
-      if (second_score > first_score * 1.2) trend = 'deteriorating';
-      else if (second_score < first_score * 0.8) trend = 'improving';
+    const recentAlerts = this.alerts.slice(-5);
+    if (recentAlerts.length >= 2) {
+      const firstHalf = recentAlerts.slice(0, Math.floor(recentAlerts.length / 2));
+      const secondHalf = recentAlerts.slice(Math.floor(recentAlerts.length / 2));
+      const firstScore = this.calculateAlertScore(firstHalf);
+      const secondScore = this.calculateAlertScore(secondHalf);
+      if (secondScore > firstScore * 1.2) trend = 'deteriorating';
+      else if (secondScore < firstScore * 0.8) trend = 'improving';
     }
 
     return {
       overall,
-      by_category: scores_by_category,
-      by_severity: scores_by_severity,
+      by_category: scoresByCategory,
+      bySeverity: scoresBySeverity,
       trend,
       components,
     };
   }
 
-  subscribe_alerts(callback: AlertSubscriber): () => void {
+  subscribeAlerts(callback: AlertSubscriber): () => void {
     this.subscribers.push(callback);
     return () => {
       this.subscribers = this.subscribers.filter((cb) => cb !== callback);
     };
   }
 
-  get_indicators(): RiskIndicator[] {
+  getIndicators(): RiskIndicator[] {
     return [...this.indicators];
   }
 
-  update_indicator(id: string, updates: Partial<RiskIndicator>): boolean {
+  updateIndicator(id: string, updates: Partial<RiskIndicator>): boolean {
     const idx = this.indicators.findIndex((i) => i.id === id);
     if (idx === -1) return false;
     this.indicators[idx] = { ...this.indicators[idx], ...updates };
     return true;
   }
 
-  add_indicator(indicator: Omit<RiskIndicator, 'id'>): RiskIndicator {
-    const new_indicator: RiskIndicator = {
+  addIndicator(indicator: Omit<RiskIndicator, 'id'>): RiskIndicator {
+    const newIndicator: RiskIndicator = {
       ...indicator,
       id: `ind-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     };
-    this.indicators.push(new_indicator);
-    return new_indicator;
+    this.indicators.push(newIndicator);
+    return newIndicator;
   }
 
-  private is_threshold_breached(indicator: RiskIndicator): boolean {
+  private isThresholdBreached(indicator: RiskIndicator): boolean {
     if (indicator.direction === 'above') {
       return indicator.current_value >= indicator.threshold;
     }
     return indicator.current_value <= indicator.threshold;
   }
 
-  private generate_alert_message(indicator: RiskIndicator): string {
+  private generateAlertMessage(indicator: RiskIndicator): string {
     const direction = indicator.direction === 'above' ? '超过' : '低于';
     return `[${indicator.severity.toUpperCase()}] ${indicator.name} ${direction}阈值: 当前 ${indicator.current_value}${indicator.unit}，阈值 ${indicator.threshold}${indicator.unit}`;
   }
 
-  private generate_evidence(indicator: RiskIndicator): string {
+  private generateEvidence(indicator: RiskIndicator): string {
     return `指标 ${indicator.name}(ID: ${indicator.id}) 当前值 ${indicator.current_value}${indicator.unit} ${indicator.direction === 'above' ? '≥' : '≤'} 阈值 ${indicator.threshold}${indicator.unit}。分类: ${indicator.category}。`;
   }
 
-  private determine_channel(severity: RiskLevel): RiskAlert['channel'] {
+  private determineChannel(severity: RiskLevel): RiskAlert['channel'] {
     switch (severity) {
       case 'critical':
         return 'sms';
@@ -404,7 +404,7 @@ export class RiskAlerter {
     }
   }
 
-  private calculate_alert_score(alerts: RiskAlert[]): number {
+  private calculateAlertScore(alerts: RiskAlert[]): number {
     const weights: Record<RiskLevel, number> = {
       critical: 40,
       high: 25,
@@ -414,7 +414,7 @@ export class RiskAlerter {
     return alerts.reduce((sum, a) => sum + (weights[a.severity] || 0), 0);
   }
 
-  private notify_subscribers(alert: RiskAlert): void {
+  private notifySubscribers(alert: RiskAlert): void {
     for (const subscriber of this.subscribers) {
       try {
         subscriber(alert);

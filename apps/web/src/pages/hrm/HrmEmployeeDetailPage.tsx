@@ -36,6 +36,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const HrmEmployeeDetailPage: React.FC = () => {
@@ -85,7 +86,11 @@ const HrmEmployeeDetailPage: React.FC = () => {
   };
 
   const getGenderLabel = (gender: string) => {
-    return gender === 'male' ? t('hrm.hrm_employee_detail_page.text_36a490') : gender === 'female' ? t('hrm.hrm_employee_detail_page.text_87c835') : '-';
+    return gender === 'male'
+      ? t('hrm.hrm_employee_detail_page.text_36a490')
+      : gender === 'female'
+        ? t('hrm.hrm_employee_detail_page.text_87c835')
+        : '-';
   };
 
   const getEducationLabel = (education: string) => {
@@ -248,7 +253,9 @@ const HrmEmployeeDetailPage: React.FC = () => {
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>员工类型</InputLabel>
           <Typography sx={{ mt: 0.5 }}>
-            {employee.employee_type === 'full_time' ? t('hrm.hrm_employee_detail_page.text_63f85b') : t('hrm.hrm_employee_detail_page.text_7c4f46')}
+            {employee.employee_type === 'full_time'
+              ? t('hrm.hrm_employee_detail_page.text_63f85b')
+              : t('hrm.hrm_employee_detail_page.text_7c4f46')}
           </Typography>
         </Box>
       </Box>
@@ -295,9 +302,21 @@ const HrmEmployeeDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: t('hrm.hrm_employee_detail_page.info'), content: basicInfoContent || <></> },
-      { id: 'work', label: t('hrm.hrm_employee_detail_page.info_1'), content: workInfoContent || <></> },
-      { id: 'emergency', label: t('hrm.hrm_employee_detail_page.contact'), content: emergencyInfoContent || <></> },
+      {
+        id: 'basic',
+        label: t('hrm.hrm_employee_detail_page.info'),
+        content: basicInfoContent || <></>,
+      },
+      {
+        id: 'work',
+        label: t('hrm.hrm_employee_detail_page.info_1'),
+        content: workInfoContent || <></>,
+      },
+      {
+        id: 'emergency',
+        label: t('hrm.hrm_employee_detail_page.contact'),
+        content: emergencyInfoContent || <></>,
+      },
     ],
     [basicInfoContent, workInfoContent, emergencyInfoContent]
   );
@@ -315,7 +334,10 @@ const HrmEmployeeDetailPage: React.FC = () => {
       tags: [employee?.department_name || ''],
       stats: [
         { label: t('hrm.hrm_employee_detail_page.text_b652de'), value: employee?.position || '-' },
-        { label: t('hrm.hrm_employee_detail_page.status'), value: getStatusConfig(employee?.status || '').label },
+        {
+          label: t('hrm.hrm_employee_detail_page.status'),
+          value: getStatusConfig(employee?.status || '').label,
+        },
       ],
     }),
     [employee]
@@ -351,7 +373,10 @@ const HrmEmployeeDetailPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
         cancelButton={{ label: t('hrm.hrm_employee_detail_page.cancel') }}
-        confirmButton={{ label: t('hrm.hrm_employee_detail_page.confirm'), onClick: handleTransfer }}
+        confirmButton={{
+          label: t('hrm.hrm_employee_detail_page.confirm'),
+          onClick: handleTransfer,
+        }}
       >
         <Typography variant='body1'>
           确定要为 <strong>{employee?.name}</strong> 办理调岗手续吗？

@@ -51,6 +51,7 @@ import { logger } from '@/utils/logger';
 import { BI_PATHS } from '@/modules/bi/config';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 interface ComparisonRow {
@@ -347,7 +348,13 @@ const BIComparisonPage = () => {
               </Button>
               <ExportButton
                 data={exportData}
-                columns={[t('bi.bi_comparison_page.text_97d1f3'), t('bi.bi_comparison_page.text_f776bc'), t('bi.bi_comparison_page.text_841866'), t('bi.bi_comparison_page.difference'), t('bi.bi_comparison_page.text_afb4b6')]}
+                columns={[
+                  t('bi.bi_comparison_page.text_97d1f3'),
+                  t('bi.bi_comparison_page.text_f776bc'),
+                  t('bi.bi_comparison_page.text_841866'),
+                  t('bi.bi_comparison_page.difference'),
+                  t('bi.bi_comparison_page.text_afb4b6'),
+                ]}
                 filename='bi-comparison-data'
               />
             </Box>

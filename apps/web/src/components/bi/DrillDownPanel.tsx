@@ -84,11 +84,12 @@ export function DrillDownPanel({
         justifyContent: 'flex-end',
       }}
     >
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.3)',
+          backgroundColor: 'action.selected',
           backdropFilter: 'blur(4px)',
         }}
         onClick={onClose}
@@ -200,7 +201,7 @@ export function DrillDownPanel({
                         textAlign: 'left',
                         fontWeight: 600,
                         cursor: 'pointer',
-                        color: '#64748B',
+                        color: 'text.secondary',
                       }}
                     >
                       <div
@@ -238,7 +239,7 @@ export function DrillDownPanel({
                     {columns.map((column) => (
                       <td
                         key={column.key}
-                        style={{ padding: '12px 16px', color: '#334155' }}
+                        style={{ padding: '12px 16px', color: 'grey.700' }}
                       >
                         {column.format ? column.format(row[column.key]) : row[column.key]}
                       </td>

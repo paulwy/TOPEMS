@@ -13,34 +13,34 @@
 // ==================== 枚举 ====================
 
 export enum OpsActionType {
-  Deploy = 'deploy',
-  Rollback = 'rollback',
-  Scale = 'scale',
-  Restart = 'restart',
-  CacheClear = 'cache-clear',
-  ConfigUpdate = 'config-update',
-  HealthCheck = 'health-check',
-  LogRotate = 'log-rotate',
-  CertificateRenew = 'certificate-renew',
-  DependencyUpdate = 'dependency-update',
+  DEPLOY = 'deploy',
+  ROLLBACK = 'rollback',
+  SCALE = 'scale',
+  RESTART = 'restart',
+  CACHECLEAR = 'cache-clear',
+  CONFIGUPDATE = 'config-update',
+  HEALTHCHECK = 'health-check',
+  LOGROTATE = 'log-rotate',
+  CERTIFICATERENEW = 'certificate-renew',
+  DEPENDENCYUPDATE = 'dependency-update',
 }
 
 export enum TriggerType {
-  Manual = 'manual',
-  Schedule = 'schedule',
-  Alert = 'alert',
-  Anomaly = 'anomaly',
-  HealthCheck = 'health-check',
-  Dependency = 'dependency',
+  MANUAL = 'manual',
+  SCHEDULE = 'schedule',
+  ALERT = 'alert',
+  ANOMALY = 'anomaly',
+  HEALTHCHECK = 'health-check',
+  DEPENDENCY = 'dependency',
 }
 
 export enum OpsStatus {
-  Idle = 'idle',
-  Running = 'running',
-  Success = 'success',
-  Failed = 'failed',
-  Skipped = 'skipped',
-  Cancelled = 'cancelled',
+  IDLE = 'idle',
+  RUNNING = 'running',
+  SUCCESS = 'success',
+  FAILED = 'failed',
+  SKIPPED = 'skipped',
+  CANCELLED = 'cancelled',
 }
 
 // ==================== 接口 ====================
@@ -150,7 +150,8 @@ export class AutoOps {
   private moduleHealth: Map<string, ModuleHealthState> = new Map();
   private maintenanceWindows: Map<string, MaintenanceWindow> = new Map();
   private lastTriggerTime: Map<string, number> = new Map();
-  private actionHandlers: Map<OpsActionType, (action: OpsAction) => Promise<OpsExecutionResult>> = new Map();
+  private actionHandlers: Map<OpsActionType, (action: OpsAction) => Promise<OpsExecutionResult>> =
+    new Map();
   private listeners: Set<(action: OpsAction) => void> = new Set();
 
   constructor(config: Partial<AutoOpsConfig> = {}) {
@@ -160,11 +161,7 @@ export class AutoOps {
 
   // ------------------- 创建运维规则 -------------------
 
-  createRule(
-    name: string,
-    trigger: OpsTrigger,
-    action: OpsRule['action']
-  ): OpsRule {
+  createRule(name: string, trigger: OpsTrigger, action: OpsRule['action']): OpsRule {
     const ruleId = `rule-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     const now = Date.now();
     const rule: OpsRule = {
@@ -186,7 +183,10 @@ export class AutoOps {
 
   // ------------------- 更新规则 -------------------
 
-  updateRule(ruleId: string, updates: Partial<Pick<OpsRule, 'name' | 'trigger' | 'action'>>): boolean {
+  updateRule(
+    ruleId: string,
+    updates: Partial<Pick<OpsRule, 'name' | 'trigger' | 'action'>>
+  ): boolean {
     const rule = this.rules.get(ruleId);
     if (!rule) return false;
 
@@ -227,7 +227,7 @@ export class AutoOps {
       target_module: targetModule,
       trigger,
       config,
-      status: OpsStatus.Running,
+      status: OpsStatus.RUNNING,
       executed_at: Date.now(),
     };
 
@@ -235,7 +235,7 @@ export class AutoOps {
 
     const handler = this.actionHandlers.get(type);
     if (!handler) {
-      action.status = OpsStatus.Failed;
+      action.status = OpsStatus.FAILED;
       action.result = {
         success: false,
         duration_ms: 0,
@@ -251,9 +251,9 @@ export class AutoOps {
     try {
       const result = await handler(action);
       action.result = result;
-      action.status = result.success ? OpsStatus.Success : OpsStatus.Failed;
+      action.status = result.success ? OpsStatus.SUCCESS : OpsStatus.FAILED;
     } catch (err) {
-      action.status = OpsStatus.Failed;
+      action.status = OpsStatus.FAILED;
       action.result = {
         success: false,
         duration_ms: Date.now() - startTime,
@@ -293,7 +293,7 @@ export class AutoOps {
         );
         triggered.push(action);
         this.lastTriggerTime.set(rule.rule_id, now);
-        this.updateRuleStats(rule.rule_id, action.status === OpsStatus.Success);
+        this.updateRuleStats(rule.rule_id, action.status === OpsStatus.SUCCESS);
       }
     }
 
@@ -326,7 +326,7 @@ export class AutoOps {
     }
 
     const pendingActions = Array.from(this.runningActions.values()).filter(
-      (a) => a.status === OpsStatus.Running
+      (a) => a.status === OpsStatus.RUNNING
     );
 
     return {
@@ -397,7 +397,8 @@ export class AutoOps {
       module,
       status,
       last_check: Date.now(),
-      error_count: status === 'unhealthy' ? (existing?.error_count || 0) + 1 : existing?.error_count || 0,
+      error_count:
+        status === 'unhealthy' ? (existing?.error_count || 0) + 1 : existing?.error_count || 0,
     });
   }
 
@@ -442,7 +443,7 @@ export class AutoOps {
   // ==================== 私有方法 ====================
 
   private registerDefaultHandlers(): void {
-    this.registerHandler(OpsActionType.HealthCheck, async (action) => {
+    this.registerHandler(OpsActionType.HEALTHCHECK, async (action) => {
       const state = this.moduleHealth.get(action.target_module);
       return {
         success: true,
@@ -453,7 +454,7 @@ export class AutoOps {
       };
     });
 
-    this.registerHandler(OpsActionType.Restart, async (action) => {
+    this.registerHandler(OpsActionType.RESTART, async (action) => {
       return {
         success: true,
         duration_ms: 500,
@@ -463,7 +464,7 @@ export class AutoOps {
       };
     });
 
-    this.registerHandler(OpsActionType.CacheClear, async (action) => {
+    this.registerHandler(OpsActionType.CACHECLEAR, async (action) => {
       return {
         success: true,
         duration_ms: 100,
@@ -473,7 +474,7 @@ export class AutoOps {
       };
     });
 
-    this.registerHandler(OpsActionType.LogRotate, async (action) => {
+    this.registerHandler(OpsActionType.LOGROTATE, async (action) => {
       return {
         success: true,
         duration_ms: 80,
@@ -496,22 +497,22 @@ export class AutoOps {
 
     const trigger = rule.trigger;
     switch (trigger.trigger_type) {
-      case TriggerType.Alert: {
+      case TriggerType.ALERT: {
         const metricValue = context.metrics?.[trigger.condition] ?? 0;
         return metricValue >= trigger.threshold;
       }
-      case TriggerType.Anomaly: {
+      case TriggerType.ANOMALY: {
         return Boolean(context.anomalies?.includes(rule.action.target_module));
       }
-      case TriggerType.HealthCheck: {
+      case TriggerType.HEALTHCHECK: {
         const status = context.healthStatus?.[rule.action.target_module];
         return status === 'unhealthy' || status === 'degraded';
       }
-      case TriggerType.Dependency: {
+      case TriggerType.DEPENDENCY: {
         return Boolean(context.metrics?.[`dep:${trigger.condition}`]);
       }
-      case TriggerType.Schedule:
-      case TriggerType.Manual:
+      case TriggerType.SCHEDULE:
+      case TriggerType.MANUAL:
       default:
         return false;
     }
@@ -536,9 +537,7 @@ export class AutoOps {
     } else {
       rule.failure_count += 1;
     }
-    rule.success_rate = rule.execution_count > 0
-      ? rule.success_count / rule.execution_count
-      : 0;
+    rule.success_rate = rule.execution_count > 0 ? rule.success_count / rule.execution_count : 0;
   }
 }
 

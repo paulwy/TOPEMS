@@ -24,7 +24,7 @@ export interface DictItem {
   name: string;
   value?: string;
   sort_order: number;
-  parent_id?: string;
+  parentId?: string;
   extra_data?: Record<string, unknown>;
   status: string;
   created_at: string;

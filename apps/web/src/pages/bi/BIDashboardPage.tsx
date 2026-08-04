@@ -62,6 +62,7 @@ import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'editor';
@@ -580,7 +581,13 @@ const BIDashboardPage = () => {
                             <Copy sx={{ width: 18, height: 18 }} />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title={dashboard.is_public ? t('bi.bi_dashboard_page.text_a81fcd') : t('bi.bi_dashboard_page.text_8b4b56')}>
+                        <Tooltip
+                          title={
+                            dashboard.is_public
+                              ? t('bi.bi_dashboard_page.text_a81fcd')
+                              : t('bi.bi_dashboard_page.text_8b4b56')
+                          }
+                        >
                           <IconButton
                             size='small'
                             onClick={(e) => {
@@ -780,7 +787,9 @@ const BIDashboardPage = () => {
                       ) : (
                         <Eye sx={{ mr: 2 }} />
                       )}
-                      {contextDashboard.is_public ? t('bi.bi_dashboard_page.text_a81fcd') : t('bi.bi_dashboard_page.text_8b4b56')}
+                      {contextDashboard.is_public
+                        ? t('bi.bi_dashboard_page.text_a81fcd')
+                        : t('bi.bi_dashboard_page.text_8b4b56')}
                     </MenuItem>
                     <Divider />
                     <MenuItem

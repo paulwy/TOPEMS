@@ -1,13 +1,6 @@
 import { Box, Button, Tabs, Tab, Typography } from '@mui/material';
 import React from 'react';
-import {
-  Mail,
-  Send,
-  Plus,
-  ChevronLeft,
-  MessageSquare,
-  FileText,
-} from 'lucide-react';
+import { Mail, Send, Plus, ChevronLeft, MessageSquare, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
@@ -143,7 +136,10 @@ const MailPage: React.FC = () => {
 
           {m.activeTab === 'emails' && (
             <Box sx={{ mt: 0 }}>
-              <EmailStatsCards stats={m.stats} statsLoading={m.statsLoading} />
+              <EmailStatsCards
+                stats={m.stats}
+                statsLoading={m.statsLoading}
+              />
               <EmailList
                 searchQuery={m.searchQuery}
                 setSearchQuery={m.setSearchQuery}

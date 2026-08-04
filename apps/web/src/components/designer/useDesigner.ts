@@ -220,7 +220,9 @@ export function useDesigner(options: UseDesignerOptions = {}): UseDesignerResult
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
         if (targetIndex < 0 || targetIndex >= nodes.length) return prev;
 
-        [nodes[index], nodes[targetIndex]] = [nodes[targetIndex], nodes[index]];
+        const temp = nodes[index];
+        nodes[index] = nodes[targetIndex];
+        nodes[targetIndex] = temp;
         pushHistory(nodes);
         return { ...prev, nodes };
       });

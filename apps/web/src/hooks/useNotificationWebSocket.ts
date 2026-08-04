@@ -37,12 +37,12 @@ export function useNotificationWebSocket(
   clearNotifications: () => void;
   reconnect: () => void;
 } {
-  const options: UseNotificationWebSocketOptions = typeof userIdOrOptions === 'string'
-    ? { userId: userIdOrOptions }
-    : userIdOrOptions;
+  const options: UseNotificationWebSocketOptions =
+    typeof userIdOrOptions === 'string' ? { userId: userIdOrOptions } : userIdOrOptions;
 
   const { userId, onNotification, onUnreadCountChange } = options;
-  const enabled = typeof userIdOrOptions === 'string' ? enabledOrLegacy : (options.autoConnect ?? true);
+  const enabled =
+    typeof userIdOrOptions === 'string' ? enabledOrLegacy : (options.autoConnect ?? true);
   const [isConnected, setIsConnected] = useState(false);
   const [notifications, setNotifications] = useState<NotificationWsPayload[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);

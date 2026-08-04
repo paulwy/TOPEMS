@@ -151,12 +151,12 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: action.color,
-                color: 'white',
+                color: 'common.white',
               }}
               onClick={() => handleActionClick(action)}
             >
               <IconButton
-                sx={{ color: 'white' }}
+                sx={{ color: 'common.white' }}
                 size='small'
               >
                 {action.icon}
@@ -164,7 +164,7 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
               {action.label && (
                 <Typography
                   variant='caption'
-                  sx={{ color: 'white', mt: 0.5 }}
+                  sx={{ color: 'common.white', mt: 0.5 }}
                 >
                   {action.label}
                 </Typography>
@@ -195,12 +195,12 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: action.color,
-                color: 'white',
+                color: 'common.white',
               }}
               onClick={() => handleActionClick(action)}
             >
               <IconButton
-                sx={{ color: 'white' }}
+                sx={{ color: 'common.white' }}
                 size='small'
               >
                 {action.icon}
@@ -208,7 +208,7 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
               {action.label && (
                 <Typography
                   variant='caption'
-                  sx={{ color: 'white', mt: 0.5 }}
+                  sx={{ color: 'common.white', mt: 0.5 }}
                 >
                   {action.label}
                 </Typography>

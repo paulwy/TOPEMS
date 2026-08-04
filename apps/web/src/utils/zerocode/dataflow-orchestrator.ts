@@ -25,36 +25,36 @@
 // ==================== 枚举 ====================
 
 export enum FlowNodeType {
-  Source = 'source',
-  Transform = 'transform',
-  Filter = 'filter',
-  Merge = 'merge',
-  Split = 'split',
-  Aggregate = 'aggregate',
-  Sink = 'sink',
+  SOURCE = 'source',
+  TRANSFORM = 'transform',
+  FILTER = 'filter',
+  MERGE = 'merge',
+  SPLIT = 'split',
+  AGGREGATE = 'aggregate',
+  SINK = 'sink',
 }
 
 export enum NodeStatus {
-  Pending = 'pending',
-  Running = 'running',
-  Success = 'success',
-  Failed = 'failed',
-  Skipped = 'skipped',
+  PENDING = 'pending',
+  RUNNING = 'running',
+  SUCCESS = 'success',
+  FAILED = 'failed',
+  SKIPPED = 'skipped',
 }
 
 export enum ExecutionMode {
-  Sequential = 'sequential',
-  Parallel = 'parallel',
-  Hybrid = 'hybrid',
+  SEQUENTIAL = 'sequential',
+  PARALLEL = 'parallel',
+  HYBRID = 'hybrid',
 }
 
 export enum DataFormat {
   JSON = 'json',
   XML = 'xml',
   CSV = 'csv',
-  String = 'string',
-  Number = 'number',
-  Boolean = 'boolean',
+  STRING = 'string',
+  NUMBER = 'number',
+  BOOLEAN = 'boolean',
 }
 
 // ==================== 接口 ====================
@@ -135,7 +135,7 @@ export class DataflowOrchestrator {
 
   // ==================== 流程管理 ====================
 
-  createFlow(flowId: string, mode: ExecutionMode = ExecutionMode.Sequential): boolean {
+  createFlow(flowId: string, mode: ExecutionMode = ExecutionMode.SEQUENTIAL): boolean {
     if (this.flows.has(flowId)) return false;
     this.flows.set(flowId, {
       nodes: new Map(),
@@ -182,7 +182,7 @@ export class DataflowOrchestrator {
     if (!flow) return null;
     const fullNode: FlowNode = {
       ...node,
-      status: node.status ?? NodeStatus.Pending,
+      status: node.status ?? NodeStatus.PENDING,
     };
     flow.nodes.set(fullNode.id, fullNode);
     return { ...fullNode };
@@ -326,7 +326,7 @@ export class DataflowOrchestrator {
     const executionId = `exec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const nodeStatuses = new Map<string, NodeStatus>();
     for (const node of nodes) {
-      nodeStatuses.set(node.id, NodeStatus.Pending);
+      nodeStatuses.set(node.id, NodeStatus.PENDING);
     }
 
     const execution: FlowExecution = {
@@ -342,9 +342,9 @@ export class DataflowOrchestrator {
     try {
       const topologicalOrder = this.computeTopologicalOrder(flowId);
 
-      if (flow.executionMode === ExecutionMode.Parallel) {
+      if (flow.executionMode === ExecutionMode.PARALLEL) {
         await this.executeInParallel(flow, topologicalOrder, context, nodeStatuses);
-      } else if (flow.executionMode === ExecutionMode.Hybrid) {
+      } else if (flow.executionMode === ExecutionMode.HYBRID) {
         await this.executeInHybrid(flow, topologicalOrder, context, nodeStatuses);
       } else {
         await this.executeInSequence(flow, topologicalOrder, context, nodeStatuses);
@@ -355,8 +355,8 @@ export class DataflowOrchestrator {
       execution.status = 'failed';
       execution.error = err instanceof Error ? err.message : String(err);
       for (const node of nodes) {
-        if (nodeStatuses.get(node.id) === NodeStatus.Running) {
-          nodeStatuses.set(node.id, NodeStatus.Failed);
+        if (nodeStatuses.get(node.id) === NodeStatus.RUNNING) {
+          nodeStatuses.set(node.id, NodeStatus.FAILED);
         }
       }
     }
@@ -367,7 +367,7 @@ export class DataflowOrchestrator {
     for (const node of nodes) {
       const n = flow.nodes.get(node.id);
       if (n) {
-        n.status = nodeStatuses.get(node.id) ?? NodeStatus.Pending;
+        n.status = nodeStatuses.get(node.id) ?? NodeStatus.PENDING;
       }
     }
 
@@ -409,11 +409,11 @@ export class DataflowOrchestrator {
     if (nodes.length === 0) {
       errors.push('Flow has no nodes');
     }
-    const sourceNodes = nodes.filter((n) => n.type === FlowNodeType.Source);
+    const sourceNodes = nodes.filter((n) => n.type === FlowNodeType.SOURCE);
     if (sourceNodes.length === 0 && nodes.length > 0) {
       warnings.push('No source node found');
     }
-    const sinkNodes = nodes.filter((n) => n.type === FlowNodeType.Sink);
+    const sinkNodes = nodes.filter((n) => n.type === FlowNodeType.SINK);
     if (sinkNodes.length === 0 && nodes.length > 0) {
       warnings.push('No sink node found');
     }
@@ -517,7 +517,7 @@ export class DataflowOrchestrator {
   ): Promise<void> {
     const groups: string[][] = [];
     let currentGroup: string[] = [];
-    const parallelTypes = new Set([FlowNodeType.Filter, FlowNodeType.Transform]);
+    const parallelTypes = new Set([FlowNodeType.FILTER, FlowNodeType.TRANSFORM]);
     for (const nodeId of order) {
       const node = flow.nodes.get(nodeId);
       if (node && parallelTypes.has(node.type)) {
@@ -548,48 +548,48 @@ export class DataflowOrchestrator {
   ): Promise<void> {
     const node = flow.nodes.get(nodeId);
     if (!node) return;
-    statuses.set(nodeId, NodeStatus.Running);
+    statuses.set(nodeId, NodeStatus.RUNNING);
     const start = performance.now();
     try {
       const inputs = this.collectInputs(flow, nodeId, context);
       let output: unknown = inputs;
       switch (node.type) {
-        case FlowNodeType.Transform:
+        case FlowNodeType.TRANSFORM:
           output = this.applyTransform(node.config, inputs, context.variables);
           break;
-        case FlowNodeType.Filter:
+        case FlowNodeType.FILTER:
           output = this.applyFilter(node.config, inputs, context.variables);
           break;
-        case FlowNodeType.Aggregate:
+        case FlowNodeType.AGGREGATE:
           output = this.applyAggregate(node.config, inputs);
           break;
-        case FlowNodeType.Merge:
+        case FlowNodeType.MERGE:
           output = this.applyMerge(inputs);
           break;
-        case FlowNodeType.Split:
+        case FlowNodeType.SPLIT:
           output = this.applySplit(node.config, inputs);
           break;
-        case FlowNodeType.Source:
+        case FlowNodeType.SOURCE:
           output = context.inputs.get(nodeId) ?? node.config.data ?? {};
           break;
-        case FlowNodeType.Sink:
+        case FlowNodeType.SINK:
           context.outputs.set(nodeId, inputs);
           output = inputs;
           break;
       }
       context.outputs.set(nodeId, output);
       const end = performance.now();
-      node.status = NodeStatus.Success;
+      node.status = NodeStatus.SUCCESS;
       node.executedAt = Date.now();
       node.duration = Math.round(end - start);
-      statuses.set(nodeId, NodeStatus.Success);
+      statuses.set(nodeId, NodeStatus.SUCCESS);
     } catch (err) {
       const end = performance.now();
-      node.status = NodeStatus.Failed;
+      node.status = NodeStatus.FAILED;
       node.executedAt = Date.now();
       node.duration = Math.round(end - start);
       node.error = err instanceof Error ? err.message : String(err);
-      statuses.set(nodeId, NodeStatus.Failed);
+      statuses.set(nodeId, NodeStatus.FAILED);
       throw err;
     }
   }

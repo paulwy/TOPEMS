@@ -257,6 +257,7 @@ export default function ConfirmDialog({
 
   React.useEffect(() => {
     if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPosition({ x: 0, y: 0 });
       setStatus('idle');
       setErrorMsg('');
@@ -280,6 +281,7 @@ export default function ConfirmDialog({
       onClose={closable && !isLoading ? onClose : undefined}
       maxWidth={MAX_WIDTH_MAP[size]}
       PaperComponent={({ children: dialogChildren, ref: _paperComponentRef, ...paperProps }: any) => (
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions
         <div
           ref={paperRef as React.RefObject<HTMLDivElement>}
           onMouseDown={handleMouseDown}

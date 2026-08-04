@@ -10,7 +10,7 @@ const MeasureTooltip: React.FC<{
       sx={{
         position: 'absolute',
         backgroundColor: 'text.primary',
-        color: 'white',
+        color: 'common.white',
         fontSize: '0.75rem',
         padding: '4px 8px',
         borderRadius: 1,

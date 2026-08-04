@@ -97,93 +97,93 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
-    (useNotificationStore.getState as vi.Mock).mockReturnValue({
-      addNotification: mockAddNotification,
-      notifications: [],
-      removeNotification: vi.fn(),
-      clearNotifications: vi.fn(),
-    });
-    (ehsApi.listAccidents as vi.Mock).mockResolvedValue({
-      success: true,
-      data: mockAccidents,
-    });
-  });
+(useNotificationStore.getState as vi.Mock).mockReturnValue({
+  addNotification: mockAddNotification,
+  notifications: [],
+  removeNotification: vi.fn(),
+  clearNotifications: vi.fn(),
+});
+(ehsApi.listAccidents as vi.Mock).mockResolvedValue({
+  success: true,
+  data: mockAccidents,
+});
 
 describe('EhsAccidentPage', () => {
-it('should render loading state initially', async () => {
+  it('should render loading state initially', async () => {
     const { container } = await act(async () => {
       return renderWithProviders(<EhsAccidentPage />);
-  });
+    });
     expect(container.querySelector('.css-1plowji-MuiPaper-root')).toBeInTheDocument();
-});
+  });
 
-it('should render page title', async () => {
+  it('should render page title', async () => {
     await act(async () => {
       renderWithProviders(<EhsAccidentPage />);
-  });
+    });
     await waitFor(() => {
       expect(screen.getByText('事故记录')).toBeInTheDocument();
+    });
   });
-});
 
-it('should render accident table', async () => {
+  it('should render accident table', async () => {
     await act(async () => {
       renderWithProviders(<EhsAccidentPage />);
-  });
+    });
     await waitFor(() => {
       expect(screen.getByText('AC-2024-001')).toBeInTheDocument();
       expect(screen.getByText('车间设备故障事故')).toBeInTheDocument();
+    });
   });
-});
 
-it('should handle search', async () => {
+  it('should handle search', async () => {
     await act(async () => {
       renderWithProviders(<EhsAccidentPage />);
-  });
+    });
     await waitFor(() => {
       const searchInput = screen.getByPlaceholderText(/搜索事故编号、标题或地点/);
       fireEvent.change(searchInput, { target: { value: 'B区' } });
+    });
   });
-});
 
-it('should handle create accident', async () => {
+  it('should handle create accident', async () => {
     (ehsApi.createAccident as vi.Mock).mockResolvedValue({
       success: true,
       data: {},
-  });
+    });
 
     await act(async () => {
       renderWithProviders(<EhsAccidentPage />);
-  });
+    });
 
     await waitFor(() => {
       const addButton = screen.getByRole('button', { name: /事故上报/ });
       fireEvent.click(addButton);
-  });
+    });
 
     await act(async () => {
       const titleInput = screen.getByLabelText(/事故标题/);
       fireEvent.change(titleInput, { target: { value: '测试事故' } });
-  });
+    });
 
     await act(async () => {
       const saveButton = screen.getByRole('button', { name: /上报/i });
       fireEvent.click(saveButton);
-  });
+    });
 
     await waitFor(() => {
       expect(ehsApi.createAccident).toHaveBeenCalled();
-  });
+    });
     expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+  });
 
-it('should handle API error', async () => {
+  it('should handle API error', async () => {
     (ehsApi.listAccidents as vi.Mock).mockRejectedValue(new Error('Network error'));
     await act(async () => {
       renderWithProviders(<EhsAccidentPage />);
-  });
+    });
 
     await waitFor(() => {
       expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
-});
-;
+    });
+  });
 });

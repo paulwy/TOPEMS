@@ -195,7 +195,7 @@ const ModuleCard: React.FC<{
             width: 56,
             height: 56,
             bgcolor: 'primary.main',
-            color: 'white',
+            color: 'common.white',
           }}
         >
           {getModuleIcon(mod.icon)}
@@ -257,7 +257,7 @@ const ModuleCard: React.FC<{
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <StarIcon
             size={16}
-            style={{ color: '#f59e0b', fill: '#f59e0b' }}
+            style={{ color: 'warning.500', fill: 'warning.500' }}
           />
           <Typography
             variant='body2'
@@ -349,7 +349,7 @@ const ModuleDetailDialog: React.FC<{
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
               <StarIcon
                 size={16}
-                style={{ color: '#f59e0b', fill: '#f59e0b' }}
+                style={{ color: 'warning.500', fill: 'warning.500' }}
               />
               <Typography
                 variant='body2'
@@ -421,7 +421,7 @@ const ModuleDetailDialog: React.FC<{
                 >
                   <CheckIcon
                     size={16}
-                    style={{ color: '#10b981', marginRight: 8 }}
+                    style={{ color: 'teal.500', marginRight: 8 }}
                   />
                   <ListItemText primary={feature} />
                 </ListItem>
@@ -941,7 +941,10 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
                 spacing={2}
               >
                 {modules.map((mod) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={mod.id}>
+                  <Grid
+                    size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+                    key={mod.id}
+                  >
                     <ModuleCard
                       module={mod}
                       onClick={() => openDetail(mod)}

@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Database, FileText, RefreshCw } from 'lucide-react';
-import {
-  Box,
-  Tabs,
-  Tab,
-  CircularProgress,
-} from '@mui/material';
+import { Box, Tabs, Tab, CircularProgress } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';

@@ -37,7 +37,10 @@ export function FormCascader<T extends FieldValues>({
         required: required ? '此项为必填项' : false,
       }}
       render={({ field: { value, onChange }, fieldState: { error } }) => (
-        <FormControl fullWidth={fullWidth} error={!!error}>
+        <FormControl
+          fullWidth={fullWidth}
+          error={!!error}
+        >
           <Cascader
             value={value || []}
             onChange={onChange}

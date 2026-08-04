@@ -14,27 +14,27 @@ export interface CyberStatusIndicatorProps {
 
 const statusConfig: Record<CyberStatusType, { color: string; glow: string; label: string }> = {
   online: {
-    color: '#00FF88',
+    color: 'success.500',
     glow: 'rgba(0, 255, 136, 0.60)',
     label: '在线',
   },
   offline: {
-    color: '#FF4444',
+    color: 'error.500',
     glow: 'rgba(255, 68, 68, 0.60)',
     label: '离线',
   },
   warning: {
-    color: '#FFD700',
+    color: 'yellow.400',
     glow: 'rgba(255, 215, 0, 0.60)',
     label: '警告',
   },
   error: {
-    color: '#FF00FF',
+    color: 'purple.600',
     glow: 'rgba(255, 0, 255, 0.60)',
     label: '错误',
   },
   idle: {
-    color: '#8892B0',
+    color: 'text.muted',
     glow: 'rgba(136, 146, 176, 0.40)',
     label: '空闲',
   },

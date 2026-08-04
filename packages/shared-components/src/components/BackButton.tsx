@@ -6,7 +6,7 @@
  * - Falls back to `window.history.back()` / `window.location.href`
  * - Does NOT depend on any app-specific hooks or stores
  */
-import React, { useCallback, Component, type ReactNode, useEffect, useState } from 'react';
+import React, { Component, type ReactNode, useEffect, useState } from 'react';
 import { Button, IconButton, Tooltip } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
 
@@ -106,46 +106,49 @@ interface _RouterButtonProps extends BackButtonProps {
   useNavigateFn: () => (to: string | number) => void;
 }
 
-function _BackButtonRouter({ useNavigateFn, ...props }: _RouterButtonProps) {
+function BackButtonRouter({ useNavigateFn, ...props }: _RouterButtonProps) {
   const navigate = useNavigateFn();
+  const { onClick, onBack, href } = props;
 
-  const handleClick = useCallback(() => {
-    if (props.onClick) {
-      props.onClick();
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
       return;
     }
-    if (props.onBack) {
-      props.onBack();
+    if (onBack) {
+      onBack();
       return;
     }
-    if (props.href) {
-      navigate(props.href);
+    if (href) {
+      navigate(href);
       return;
     }
     navigate(-1);
-  }, [props.onClick, props.onBack, props.href, navigate]);
+  };
 
   return renderButton(handleClick, props);
 }
 
 // ============ Inner: fallback (no router) ============
 
-function _BackButtonFallback(props: BackButtonProps) {
-  const handleClick = useCallback(() => {
-    if (props.onClick) {
-      props.onClick();
+function BackButtonFallback(props: BackButtonProps) {
+  const { onClick, onBack, href } = props;
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
       return;
     }
-    if (props.onBack) {
-      props.onBack();
+    if (onBack) {
+      onBack();
       return;
     }
-    if (props.href) {
-      window.location.href = props.href;
+    if (href) {
+      window.location.href = href;
       return;
     }
     window.history.back();
-  }, [props.onClick, props.onBack, props.href]);
+  };
 
   return renderButton(handleClick, props);
 }
@@ -182,7 +185,7 @@ export const BackButton: React.FC<BackButtonProps> = (props) => {
   const useNavigateFn = useRouterDetector();
 
   if (props.onBack) {
-    return <_BackButtonFallback {...props} />;
+    return <BackButtonFallback {...props} />;
   }
 
   if (useNavigateFn) {
@@ -190,12 +193,12 @@ export const BackButton: React.FC<BackButtonProps> = (props) => {
       <_RouterBoundary
         fallback={renderButton(() => window.history.back(), props)}
       >
-        <_BackButtonRouter {...props} useNavigateFn={useNavigateFn} />
+        <BackButtonRouter {...props} useNavigateFn={useNavigateFn} />
       </_RouterBoundary>
     );
   }
 
-  return <_BackButtonFallback {...props} />;
+  return <BackButtonFallback {...props} />;
 };
 
 export default BackButton;

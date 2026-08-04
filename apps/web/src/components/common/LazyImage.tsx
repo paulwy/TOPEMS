@@ -21,7 +21,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       style={{
         width: '100%',
         height: '100%',
-        backgroundColor: '#f1f5f9',
+        backgroundColor: 'grey.100',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

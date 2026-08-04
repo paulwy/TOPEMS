@@ -124,7 +124,9 @@ export class AutoRemediation {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 
-  createWorkflow(workflow: Omit<RemediationWorkflow, 'id' | 'executionHistory'>): RemediationWorkflow {
+  createWorkflow(
+    workflow: Omit<RemediationWorkflow, 'id' | 'executionHistory'>
+  ): RemediationWorkflow {
     const id = `workflow-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     const fullWorkflow: RemediationWorkflow = {
       ...workflow,
@@ -296,11 +298,14 @@ export class AutoRemediation {
       workflowCounts.set(e.workflowId, (workflowCounts.get(e.workflowId) || 0) + 1);
     });
 
-    const mostTriggeredWorkflow = Array.from(workflowCounts.entries()).sort((a, b) => b[1] - a[1])[0];
+    const mostTriggeredWorkflow = Array.from(workflowCounts.entries()).sort(
+      (a, b) => b[1] - a[1]
+    )[0];
 
     const totalExecutionsWithManual = periodExecutions.length;
     const automaticExecutions = periodExecutions.filter((e) => e.trigger.type !== 'manual').length;
-    const automationRate = totalExecutionsWithManual > 0 ? automaticExecutions / totalExecutionsWithManual : 0;
+    const automationRate =
+      totalExecutionsWithManual > 0 ? automaticExecutions / totalExecutionsWithManual : 0;
 
     const avgExecutionTime =
       periodExecutions.length > 0
@@ -425,7 +430,8 @@ export class AutoRemediation {
                 break;
               } catch (retryError) {
                 retries++;
-                action.error = retryError instanceof Error ? retryError.message : String(retryError);
+                action.error =
+                  retryError instanceof Error ? retryError.message : String(retryError);
               }
             }
           }
@@ -479,42 +485,45 @@ export class AutoRemediation {
       }, timeout);
 
       // 模拟不同类型的动作
-      setTimeout(() => {
-        clearTimeout(timer);
+      setTimeout(
+        () => {
+          clearTimeout(timer);
 
-        switch (action.type) {
-          case 'restart':
-            action.result = `成功重启 ${action.parameters.target || '服务'}`;
-            resolve();
-            break;
-          case 'scale':
-            action.result = `成功扩展到 ${action.parameters.replicas || 2} 个实例`;
-            resolve();
-            break;
-          case 'rollback':
-            action.result = `成功回滚到版本 ${action.parameters.version || '上一个版本'}`;
-            resolve();
-            break;
-          case 'config':
-            action.result = `成功更新配置: ${action.parameters.key || '未知配置'}`;
-            resolve();
-            break;
-          case 'script':
-            action.result = `脚本执行完成: ${action.parameters.script || '默认脚本'}`;
-            resolve();
-            break;
-          case 'notification':
-            action.result = `通知已发送给 ${action.parameters.recipients || '相关人员'}`;
-            resolve();
-            break;
-          case 'custom':
-            action.result = `自定义动作执行完成`;
-            resolve();
-            break;
-          default:
-            reject(new Error(`未知的动作类型: ${action.type}`));
-        }
-      }, Math.random() * 1000 + 500); // 模拟 0.5-1.5 秒的执行时间
+          switch (action.type) {
+            case 'restart':
+              action.result = `成功重启 ${action.parameters.target || '服务'}`;
+              resolve();
+              break;
+            case 'scale':
+              action.result = `成功扩展到 ${action.parameters.replicas || 2} 个实例`;
+              resolve();
+              break;
+            case 'rollback':
+              action.result = `成功回滚到版本 ${action.parameters.version || '上一个版本'}`;
+              resolve();
+              break;
+            case 'config':
+              action.result = `成功更新配置: ${action.parameters.key || '未知配置'}`;
+              resolve();
+              break;
+            case 'script':
+              action.result = `脚本执行完成: ${action.parameters.script || '默认脚本'}`;
+              resolve();
+              break;
+            case 'notification':
+              action.result = `通知已发送给 ${action.parameters.recipients || '相关人员'}`;
+              resolve();
+              break;
+            case 'custom':
+              action.result = `自定义动作执行完成`;
+              resolve();
+              break;
+            default:
+              reject(new Error(`未知的动作类型: ${action.type}`));
+          }
+        },
+        Math.random() * 1000 + 500
+      ); // 模拟 0.5-1.5 秒的执行时间
     });
   }
 
@@ -550,7 +559,7 @@ export class AutoRemediation {
       }, this.config.approvalTimeout);
 
       // 在实际应用中，这里应该发送审批请求到审批系统
-      console.log(`[AutoRemediation] 需要审批工作流: ${workflow.name} (${executionId})`);
+      console.info(`[AutoRemediation] 需要审批工作流: ${workflow.name} (${executionId})`);
     });
   }
 
@@ -561,10 +570,7 @@ export class AutoRemediation {
       case 'linear':
         return retryPolicy.initialDelay * (attempt + 1);
       case 'exponential':
-        return Math.min(
-          retryPolicy.initialDelay * Math.pow(2, attempt),
-          retryPolicy.maxDelay
-        );
+        return Math.min(retryPolicy.initialDelay * Math.pow(2, attempt), retryPolicy.maxDelay);
       default:
         return retryPolicy.initialDelay;
     }

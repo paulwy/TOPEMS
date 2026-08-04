@@ -10,7 +10,7 @@ import { apiClient } from '../client';
 export const accountApi = {
   list: (params?: {
     category?: string;
-    parent_id?: string;
+    parentId?: string;
     level?: number;
     status?: string;
     keyword?: string;

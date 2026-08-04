@@ -46,7 +46,7 @@ export const areaSchema: EntitySchema & SchemaExtensions = {
       listWidth: 100,
     },
     {
-      name: 'parent_id',
+      name: 'parentId',
       label: '上级区域',
       type: 'text',
       showInList: false,
@@ -96,7 +96,7 @@ export const areaSchema: EntitySchema & SchemaExtensions = {
 
   tree: {
     keyField: 'id',
-    parentField: 'parent_id',
+    parentField: 'parentId',
     labelField: 'name',
   },
 
@@ -109,7 +109,7 @@ export const areaSchema: EntitySchema & SchemaExtensions = {
     },
     {
       title: '层级关系',
-      fields: ['parent_id'],
+      fields: ['parentId'],
     },
     {
       title: '容量与状态',

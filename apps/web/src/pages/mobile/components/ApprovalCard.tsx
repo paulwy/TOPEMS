@@ -118,7 +118,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
                   size='small'
                   color={
                     getPriorityColor(approval.priority) as React.ComponentProps<
-                      typeof import('@mui/material/Chip').default
+                      typeof Chip
                     >['color']
                   }
                   sx={{ height: 20, fontSize: '0.7rem' }}

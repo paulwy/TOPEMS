@@ -220,7 +220,10 @@ describe('RS Module API Tests', () => {
     it('createExperimentRecord should call POST /experiments/:experimentId/records with data', async () => {
       const { experimentApi } = await import('../experiment');
       const data = { record_data: 'test data' };
-      await experimentApi.createExperimentRecord('exp-001', data as unknown as CreateExperimentRecordRequest);
+      await experimentApi.createExperimentRecord(
+        'exp-001',
+        data as unknown as CreateExperimentRecordRequest
+      );
       const { apiClient } = await import('../../client');
       expect(apiClient.rd.post).toHaveBeenCalledWith('/experiments/exp-001/records', data);
     });

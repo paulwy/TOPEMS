@@ -64,7 +64,8 @@ export const subscriptionSchema: EntitySchema = {
         options: FREQUENCY_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => getFrequencyLabel(row.frequency as SubscriptionFrequency),
+      renderCell: (row: Record<string, unknown>) =>
+        getFrequencyLabel(row.frequency as SubscriptionFrequency),
     },
     {
       name: 'enabled',

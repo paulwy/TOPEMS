@@ -88,7 +88,7 @@ export class StyleIsolation {
     this.moduleId = moduleId;
     this.options = {
       mode: options.mode ?? 'scoped',
-      scopePrefix: options.scopePrefix ?? `mf-${moduleId}__`,
+      scopePrefix: options.scopePrefix ?? `mf-${moduleId}`,
       adoptedStyleSheets: options.adoptedStyleSheets ?? false,
     };
   }

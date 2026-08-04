@@ -52,7 +52,10 @@ const limsQmsFields: SchemaField[] = [
     listWidth: 140,
     placeholder: '输入检验结果（可选）',
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant='body2' color='text.secondary'>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {String(row.inspection_result ?? '-')}
       </Typography>
     ),
@@ -78,7 +81,8 @@ const limsQmsFields: SchemaField[] = [
       })),
     },
     renderCell: (row: Record<string, unknown>) => {
-      const cfg = LIMS_QMS_STATUS_CONFIG[row.sync_status as string] || LIMS_QMS_STATUS_CONFIG.pending;
+      const cfg =
+        LIMS_QMS_STATUS_CONFIG[row.sync_status as string] || LIMS_QMS_STATUS_CONFIG.pending;
       return (
         <Chip
           size='small'
@@ -95,7 +99,10 @@ const limsQmsFields: SchemaField[] = [
     sortable: true,
     listWidth: 160,
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant='body2' color='text.secondary'>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {row.last_synced_at
           ? new Date(String(row.last_synced_at)).toLocaleString('zh-CN')
           : '从未同步'}
@@ -110,7 +117,10 @@ const limsQmsFields: SchemaField[] = [
     listWidth: 160,
     hideInForm: true,
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant='body2' color='text.secondary'>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {new Date(String(row.created_at)).toLocaleString('zh-CN')}
       </Typography>
     ),

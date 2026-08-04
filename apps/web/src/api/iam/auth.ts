@@ -19,7 +19,10 @@ export const authModuleApi = {
     return apiClient.iam.post<AuthTokens>('/auth/register', data);
   },
 
-  login: async (data: { username: string; password: string }): Promise<ApiResponse<LoginResponseData>> => {
+  login: async (data: {
+    username: string;
+    password: string;
+  }): Promise<ApiResponse<LoginResponseData>> => {
     const response = await apiClient.iam.post<LoginResponseData>('/auth/login', data);
 
     if (response.success && response.data) {

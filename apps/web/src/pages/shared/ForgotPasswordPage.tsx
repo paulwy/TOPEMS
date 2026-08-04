@@ -172,7 +172,7 @@ const ForgotPasswordPage: React.FC = () => {
           right: -100,
           width: 300,
           height: 300,
-          background: 'rgba(255, 255, 255, 0.1)',
+          background: 'action.disabledBackground',
           borderRadius: '50%',
           filter: 'blur(60px)',
         }}
@@ -184,7 +184,7 @@ const ForgotPasswordPage: React.FC = () => {
           left: -100,
           width: 300,
           height: 300,
-          background: 'rgba(255, 255, 255, 0.15)',
+          background: 'action.disabledBackground',
           borderRadius: '50%',
           filter: 'blur(60px)',
         }}
@@ -207,7 +207,7 @@ const ForgotPasswordPage: React.FC = () => {
             sx={{
               width: 40,
               height: 40,
-              background: 'rgba(255, 255, 255, 0.2)',
+              background: 'action.disabledBackground',
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -215,11 +215,11 @@ const ForgotPasswordPage: React.FC = () => {
               backdropFilter: 'blur(10px)',
             }}
           >
-            <Lock sx={{ width: 20, height: 20, color: 'white' }} />
+            <Lock sx={{ width: 20, height: 20, color: 'common.white' }} />
           </Box>
           <Typography
             variant='h6'
-            sx={{ color: 'white', fontWeight: 600 }}
+            sx={{ color: 'common.white', fontWeight: 600 }}
           >
             TOPEMS
           </Typography>
@@ -232,7 +232,7 @@ const ForgotPasswordPage: React.FC = () => {
           width: '100%',
           maxWidth: 400,
           mx: 2,
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'common.white',
           backdropFilter: 'blur(20px)',
           borderRadius: 3,
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -251,7 +251,7 @@ const ForgotPasswordPage: React.FC = () => {
             sx={{
               width: 72,
               height: 72,
-              background: 'rgba(255, 255, 255, 0.2)',
+              background: 'action.disabledBackground',
               borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
@@ -260,20 +260,20 @@ const ForgotPasswordPage: React.FC = () => {
             }}
           >
             {emailSent || resetSuccess ? (
-              <CheckCircle sx={{ width: 36, height: 36, color: 'white' }} />
+              <CheckCircle sx={{ width: 36, height: 36, color: 'common.white' }} />
             ) : (
-              <Mail sx={{ width: 36, height: 36, color: 'white' }} />
+              <Mail sx={{ width: 36, height: 36, color: 'common.white' }} />
             )}
           </Box>
           <Typography
             variant='h4'
-            sx={{ fontWeight: 700, color: 'white' }}
+            sx={{ fontWeight: 700, color: 'common.white' }}
           >
             {isResetMode ? '重置密码' : '忘记密码'}
           </Typography>
           <Typography
             variant='body2'
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', mt: 1 }}
+            sx={{ color: 'common.white', mt: 1 }}
           >
             {emailSent
               ? '重置邮件已发送'

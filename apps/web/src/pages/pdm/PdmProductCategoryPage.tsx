@@ -13,7 +13,7 @@ const treeDataAdapter = {
     return res.data;
   },
   onAddChild: async (parentId: string | number | null, data: Record<string, unknown>) => {
-    await apiAdapter.create({ ...data, parent_id: parentId });
+    await apiAdapter.create({ ...data, parentId });
   },
   onUpdate: async (id: string | number, data: Record<string, unknown>) => {
     await apiAdapter.update(String(id), data);

@@ -249,7 +249,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     if (React.isValidElement(icon)) {
       return React.cloneElement(icon as React.ReactElement<{ size?: number; color?: string }>, {
         size: 24,
-        color: 'white',
+        color: 'common.white',
       });
     }
     const IconComponent = icon as LucideIcon;
@@ -357,7 +357,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             <Typography
               variant='body2'
               sx={{
-                color: '#64748B',
+                color: 'text.secondary',
                 fontWeight: 500,
                 marginBottom: 0.5,
                 letterSpacing: '0.05em',
@@ -372,7 +372,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 variant='h3'
                 sx={{
                   fontWeight: 800,
-                  color: '#1E293B',
+                  color: 'text.primary',
                   fontSize: '2rem',
                   lineHeight: 1.2,
                 }}
@@ -382,7 +382,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               {unit && (
                 <Typography
                   variant='body1'
-                  sx={{ color: '#64748B', fontWeight: 600, fontSize: '1rem' }}
+                  sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '1rem' }}
                 >
                   {unit}
                 </Typography>

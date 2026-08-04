@@ -169,9 +169,21 @@ const modelUsageData = [
 
 const getStatusConfig = (status: AIModel['status'], t: (key: string) => string) => {
   const configs = {
-    active: { label: t('ai.model_settings.status.active'), color: 'success' as const, icon: <CheckCircle2 size={14} /> },
-    inactive: { label: t('ai.model_settings.status.inactive'), color: 'default' as const, icon: <Clock size={14} /> },
-    maintenance: { label: t('ai.model_settings.status.maintenance'), color: 'warning' as const, icon: <AlertCircle size={14} /> },
+    active: {
+      label: t('ai.model_settings.status.active'),
+      color: 'success' as const,
+      icon: <CheckCircle2 size={14} />,
+    },
+    inactive: {
+      label: t('ai.model_settings.status.inactive'),
+      color: 'default' as const,
+      icon: <Clock size={14} />,
+    },
+    maintenance: {
+      label: t('ai.model_settings.status.maintenance'),
+      color: 'warning' as const,
+      icon: <AlertCircle size={14} />,
+    },
   };
   return configs[status];
 };
@@ -208,10 +220,26 @@ export const AiModelSettingsPage: React.FC = () => {
   };
 
   const tabConfig = [
-    { id: 'models' as SettingsTab, label: t('ai.model_settings.tab.models'), icon: <Cpu size={18} /> },
-    { id: 'config' as SettingsTab, label: t('ai.model_settings.tab.config'), icon: <Settings size={18} /> },
-    { id: 'usage' as SettingsTab, label: t('ai.model_settings.tab.usage'), icon: <BarChart3 size={18} /> },
-    { id: 'api' as SettingsTab, label: t('ai.model_settings.tab.api'), icon: <Database size={18} /> },
+    {
+      id: 'models' as SettingsTab,
+      label: t('ai.model_settings.tab.models'),
+      icon: <Cpu size={18} />,
+    },
+    {
+      id: 'config' as SettingsTab,
+      label: t('ai.model_settings.tab.config'),
+      icon: <Settings size={18} />,
+    },
+    {
+      id: 'usage' as SettingsTab,
+      label: t('ai.model_settings.tab.usage'),
+      icon: <BarChart3 size={18} />,
+    },
+    {
+      id: 'api' as SettingsTab,
+      label: t('ai.model_settings.tab.api'),
+      icon: <Database size={18} />,
+    },
   ];
 
   return (
@@ -424,7 +452,8 @@ export const AiModelSettingsPage: React.FC = () => {
                       variant='h6'
                       sx={{ fontWeight: 600, mb: 2 }}
                     >
-                      {t('ai.model_settings.label.current_model')}{selectedModel.name}
+                      {t('ai.model_settings.label.current_model')}
+                      {selectedModel.name}
                     </Typography>
                     <Divider sx={{ mb: 3 }} />
 
@@ -563,7 +592,9 @@ export const AiModelSettingsPage: React.FC = () => {
                         onClick={handleSaveConfig}
                         disabled={saving}
                       >
-                        {saving ? t('ai.model_settings.status.saving') : t('ai.model_settings.action.save_config')}
+                        {saving
+                          ? t('ai.model_settings.status.saving')
+                          : t('ai.model_settings.action.save_config')}
                       </Button>
                     </Box>
                   </Paper>
@@ -783,8 +814,12 @@ export const AiModelSettingsPage: React.FC = () => {
                         <TableHead>
                           <TableRow>
                             <TableCell>{t('ai.model_settings.table.date')}</TableCell>
-                            <TableCell align='right'>{t('ai.model_settings.table.requests')}</TableCell>
-                            <TableCell align='right'>{t('ai.model_settings.table.tokens')}</TableCell>
+                            <TableCell align='right'>
+                              {t('ai.model_settings.table.requests')}
+                            </TableCell>
+                            <TableCell align='right'>
+                              {t('ai.model_settings.table.tokens')}
+                            </TableCell>
                             <TableCell align='right'>{t('ai.model_settings.table.cost')}</TableCell>
                           </TableRow>
                         </TableHead>
@@ -845,12 +880,16 @@ export const AiModelSettingsPage: React.FC = () => {
                           <TableCell>{t('ai.model_settings.api.table.provider')}</TableCell>
                           <TableCell>{t('ai.model_settings.api.table.status')}</TableCell>
                           <TableCell>{t('ai.model_settings.api.table.created')}</TableCell>
-                          <TableCell align='right'>{t('ai.model_settings.api.table.actions')}</TableCell>
+                          <TableCell align='right'>
+                            {t('ai.model_settings.api.table.actions')}
+                          </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 500 }}>{t('ai.model_settings.api.key_production')}</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>
+                            {t('ai.model_settings.api.key_production')}
+                          </TableCell>
                           <TableCell>
                             <code>sk-****************************</code>
                           </TableCell>
@@ -874,7 +913,9 @@ export const AiModelSettingsPage: React.FC = () => {
                           </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 500 }}>{t('ai.model_settings.api.key_backup')}</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>
+                            {t('ai.model_settings.api.key_backup')}
+                          </TableCell>
                           <TableCell>
                             <code>sk-****************************</code>
                           </TableCell>
@@ -898,7 +939,9 @@ export const AiModelSettingsPage: React.FC = () => {
                           </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 500 }}>{t('ai.model_settings.api.key_ernie')}</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>
+                            {t('ai.model_settings.api.key_ernie')}
+                          </TableCell>
                           <TableCell>
                             <code>xx-****************************</code>
                           </TableCell>
@@ -946,7 +989,9 @@ export const AiModelSettingsPage: React.FC = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary={
-                          <Typography variant='body2'>{t('ai.model_settings.api.tip_keep_safe')}</Typography>
+                          <Typography variant='body2'>
+                            {t('ai.model_settings.api.tip_keep_safe')}
+                          </Typography>
                         }
                       />
                     </ListItem>
@@ -959,7 +1004,9 @@ export const AiModelSettingsPage: React.FC = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary={
-                          <Typography variant='body2'>{t('ai.model_settings.api.tip_rotate_keys')}</Typography>
+                          <Typography variant='body2'>
+                            {t('ai.model_settings.api.tip_rotate_keys')}
+                          </Typography>
                         }
                       />
                     </ListItem>

@@ -2,6 +2,7 @@ import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     __mesStats?: Record<string, unknown>;
   }
 }

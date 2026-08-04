@@ -316,7 +316,7 @@ const FullscreenLoader: React.FC<{
       sx={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'action.active',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -394,7 +394,7 @@ const OverlayLoader: React.FC<{
       sx={{
         position: 'absolute',
         inset: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: 'common.white',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

@@ -302,7 +302,7 @@ export function AIAnalyzer({
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                     <Box sx={{ p: 1.5, bgcolor: 'secondary.100', borderRadius: 1.5 }}>
-                      <TrendingUp style={{ width: 20, height: 20, color: '#9333ea' }} />
+                      <TrendingUp style={{ width: 20, height: 20, color: 'purple.600' }} />
                     </Box>
                     <Box>
                       <Typography
@@ -442,7 +442,7 @@ export function AIAnalyzer({
                           <Box
                             sx={{
                               height: '100%',
-                              bgcolor: '#a855f7',
+                              bgcolor: 'purple.500',
                               borderRadius: 4,
                               width: `${sentimentResult.details.emotional_intensity * 100}%`,
                             }}
@@ -692,8 +692,8 @@ export function AIAnalyzer({
                   onClick={() => toggleSection('keywords')}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <Box sx={{ p: 1.5, bgcolor: '#ffedd5', borderRadius: 1.5 }}>
-                      <Tag style={{ width: 20, height: 20, color: '#ea580c' }} />
+                    <Box sx={{ p: 1.5, bgcolor: 'orange.100', borderRadius: 1.5 }}>
+                      <Tag style={{ width: 20, height: 20, color: 'orange.600' }} />
                     </Box>
                     <Box>
                       <Typography
@@ -740,7 +740,7 @@ export function AIAnalyzer({
                               </Typography>
                             </Typography>
                           }
-                          sx={{ bgcolor: '#ffedd5', color: '#c2410c', px: 1.5 }}
+                          sx={{ bgcolor: 'orange.100', color: 'orange.700', px: 1.5 }}
                         />
                       ))}
                     </Box>

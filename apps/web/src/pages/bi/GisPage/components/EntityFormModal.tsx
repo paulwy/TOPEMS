@@ -15,6 +15,7 @@ import type { TabType, ModalType, FormErrors, GisEntity } from '../types';
 import { InputField, TextAreaField } from './TableUtils';
 
 import { useTranslation } from 'react-i18next';
+
 interface EntityFormModalProps {
   open: boolean;
   modalType: ModalType;
@@ -58,7 +59,10 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               error={formErrors.device_type}
               required
             />
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={6}>
                 <InputField
                   label={t('bi.gis_page_components__entity_form_modal.text_6acaee')}
@@ -108,7 +112,10 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               error={formErrors.pipeline_type}
               required
             />
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={6}>
                 <InputField
                   label={t('bi.gis_page_components__entity_form_modal.text_981a2b')}
@@ -132,7 +139,10 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
                 />
               </Grid>
             </Grid>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={6}>
                 <InputField
                   label={t('bi.gis_page_components__entity_form_modal.text_60619a')}
@@ -177,7 +187,10 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               error={formErrors.location_type}
               required
             />
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={6}>
                 <InputField
                   label={t('bi.gis_page_components__entity_form_modal.text_6acaee')}
@@ -201,7 +214,10 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
                 />
               </Grid>
             </Grid>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={6}>
                 <InputField
                   label={t('bi.gis_page_components__entity_form_modal.text_fe7d74')}
@@ -242,7 +258,10 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               error={formErrors.evidence_type}
               required
             />
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={6}>
                 <InputField
                   label={t('bi.gis_page_components__entity_form_modal.text_6acaee')}
@@ -330,7 +349,10 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               error={formErrors.business_type}
               required
             />
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={6}>
                 <InputField
                   label={t('bi.gis_page_components__entity_form_modal.text_6acaee')}
@@ -360,7 +382,10 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
               value={formData.address}
               onChange={(v) => onFormChange('address', v)}
             />
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={6}>
                 <InputField
                   label={t('bi.gis_page_components__entity_form_modal.contact')}
@@ -394,22 +419,40 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
       slotProps={{ paper: { sx: { borderRadius: 2 } } }}
     >
       <DialogTitle>
-        <Stack direction='row' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant='h6' sx={{ fontWeight: 600 }}>
-            {modalType === 'create' ? t('bi.gis_page_components__entity_form_modal.text_26bb84') : t('bi.gis_page_components__entity_form_modal.edit')}
+        <Stack
+          direction='row'
+          sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600 }}
+          >
+            {modalType === 'create'
+              ? t('bi.gis_page_components__entity_form_modal.text_26bb84')
+              : t('bi.gis_page_components__entity_form_modal.edit')}
           </Typography>
-          <IconButton onClick={onClose} size='small' aria-label={t('bi.gis_page_components__entity_form_modal.close')}>
+          <IconButton
+            onClick={onClose}
+            size='small'
+            aria-label={t('bi.gis_page_components__entity_form_modal.close')}
+          >
             <X size={20} />
           </IconButton>
         </Stack>
       </DialogTitle>
       <DialogContent dividers>
-        <Stack spacing={3} sx={{ pt: 1 }}>
+        <Stack
+          spacing={3}
+          sx={{ pt: 1 }}
+        >
           {renderFormFields()}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} variant='outlined'>
+        <Button
+          onClick={onClose}
+          variant='outlined'
+        >
           取消
         </Button>
         <Button
@@ -420,7 +463,9 @@ export const EntityFormModal: React.FC<EntityFormModalProps> = ({
             '&:hover': { bgcolor: 'cyan.dark' },
           }}
         >
-          {modalType === 'create' ? t('bi.gis_page_components__entity_form_modal.create') : t('bi.gis_page_components__entity_form_modal.save')}
+          {modalType === 'create'
+            ? t('bi.gis_page_components__entity_form_modal.create')
+            : t('bi.gis_page_components__entity_form_modal.save')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -322,7 +322,7 @@ export const NotificationListPage: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'white',
+                  color: 'common.white',
                 }}
               >
                 {stat.icon}

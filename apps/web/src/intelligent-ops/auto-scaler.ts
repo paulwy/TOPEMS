@@ -39,11 +39,11 @@ class AutoScalerImpl {
   private demandPatterns: DemandPattern[] = [];
 
   constructor() {
-    this.init_default_policies();
-    this.init_demand_patterns();
+    this.initDefaultPolicies();
+    this.initDemandPatterns();
   }
 
-  private init_default_policies(): void {
+  private initDefaultPolicies(): void {
     const defaults: ScalingPolicy[] = [
       {
         id: 'cpu-scale',
@@ -81,7 +81,7 @@ class AutoScalerImpl {
     defaults.forEach((p) => this.policies.set(p.id, p));
   }
 
-  private init_demand_patterns(): void {
+  private initDemandPatterns(): void {
     for (let h = 0; h < 24; h++) {
       let avg = 200;
       let peak = 1.0;
@@ -102,7 +102,7 @@ class AutoScalerImpl {
     }
   }
 
-  get_metric_value(metric: ScalingMetric): number {
+  getMetricValue(metric: ScalingMetric): number {
     const baseValues: Record<ScalingMetric, number> = {
       CPU: 45 + Math.random() * 30,
       Memory: 60 + Math.random() * 20,
@@ -112,7 +112,7 @@ class AutoScalerImpl {
     return Math.round(baseValues[metric] * 100) / 100;
   }
 
-  evaluate_scaling(policyId: string): ScalingAction | null {
+  evaluateScaling(policyId: string): ScalingAction | null {
     const policy = this.policies.get(policyId);
     if (!policy) return null;
 
@@ -120,7 +120,7 @@ class AutoScalerImpl {
     const lastAction = this.cooldowns.get(policyId) || 0;
     if (now - lastAction < policy.cooldown_ms) return null;
 
-    const currentValue = this.get_metric_value(policy.metric);
+    const currentValue = this.getMetricValue(policy.metric);
     const currentInstances = this.currentInstances.get(policyId) ?? policy.min_instances;
 
     let direction: ScalingDirection | null = null;
@@ -167,7 +167,7 @@ class AutoScalerImpl {
   }
 
   scale(policyId: string): ScalingAction | null {
-    const action = this.evaluate_scaling(policyId);
+    const action = this.evaluateScaling(policyId);
     if (!action) return null;
 
     this.currentInstances.set(policyId, action.instances);
@@ -178,16 +178,16 @@ class AutoScalerImpl {
       this.actions = this.actions.slice(0, 200);
     }
 
-    this.record_metric(policyId, action);
+    this.recordMetric(policyId, action);
     return action;
   }
 
-  get_scaling_history(policyId?: string): ScalingAction[] {
+  getScalingHistory(policyId?: string): ScalingAction[] {
     if (!policyId) return [...this.actions];
     return this.actions.filter((a) => a.policy_id === policyId);
   }
 
-  update_policy(
+  updatePolicy(
     policyId: string,
     updates: Partial<Omit<ScalingPolicy, 'id'>>
   ): ScalingPolicy | null {
@@ -198,11 +198,11 @@ class AutoScalerImpl {
     return updated;
   }
 
-  list_policies(): ScalingPolicy[] {
+  listPolicies(): ScalingPolicy[] {
     return Array.from(this.policies.values());
   }
 
-  get_current_capacity(policyId?: string): Map<string, number> {
+  getCurrentCapacity(policyId?: string): Map<string, number> {
     if (policyId) {
       const m = new Map<string, number>();
       m.set(policyId, this.currentInstances.get(policyId) ?? 0);
@@ -211,7 +211,7 @@ class AutoScalerImpl {
     return new Map(this.currentInstances);
   }
 
-  predict_demand(
+  predictDemand(
     hoursAhead: number = 24
   ): { hour: number; predicted_requests: number; confidence: number }[] {
     const now = new Date();
@@ -235,14 +235,14 @@ class AutoScalerImpl {
     return predictions;
   }
 
-  private record_metric(policyId: string, action: ScalingAction): void {
+  private recordMetric(policyId: string, action: ScalingAction): void {
     const samples = this.metricHistory.get(policyId) || [];
     samples.push({ timestamp: action.executed_at, value: action.instances });
     if (samples.length > 500) samples.shift();
     this.metricHistory.set(policyId, samples);
   }
 
-  get_metric_history(policyId: string): MetricSample[] {
+  getMetricHistory(policyId: string): MetricSample[] {
     return this.metricHistory.get(policyId) || [];
   }
 }

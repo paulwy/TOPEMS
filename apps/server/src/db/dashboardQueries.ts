@@ -75,7 +75,7 @@ export async function getFinanceDashboard(tenantId?: string) {
     if (result.rows.length > 0) {
       return result.rows[0];
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   return getMockFinanceDashboard();
 }
@@ -122,7 +122,7 @@ export async function getEhsDashboard(tenantId?: string) {
         training_trend: trainingResult.rows,
       };
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   return getMockEhsDashboard();
 }
@@ -165,7 +165,7 @@ export async function getLimsDashboard(tenantId?: string) {
         instrument_status: instResult.rows,
       };
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   return getMockLimsDashboard();
 }
@@ -207,7 +207,7 @@ export async function getCrmDashboard(tenantId?: string) {
         industries: [],
       };
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   return getMockCrmDashboard();
 }
@@ -248,7 +248,7 @@ export async function getWmsDashboard(tenantId?: string) {
         outbound_trend: [],
       };
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   return getMockWmsDashboard();
 }
@@ -291,7 +291,7 @@ export async function getHrmDashboard(tenantId?: string) {
         education_distribution: [],
       };
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   return getMockHrmDashboard();
 }
@@ -333,7 +333,7 @@ export async function getPdmDashboard(tenantId?: string) {
         change_trend: [],
       };
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   return getMockPdmDashboard();
 }
@@ -391,7 +391,7 @@ export async function getQmsDashboard(tenantId?: string) {
         department_performance: [],
       };
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   return getMockQmsDashboard();
 }
@@ -440,7 +440,7 @@ export async function getMesDashboard(tenantId?: string) {
         equipment_status: [],
       };
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   return getMockMesDashboard();
 }
@@ -509,7 +509,7 @@ export async function getPmDashboard(tenantId?: string) {
         low_risk_projects: 0,
       };
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   return getMockPmDashboard();
 }

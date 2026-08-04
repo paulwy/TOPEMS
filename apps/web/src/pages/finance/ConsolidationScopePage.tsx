@@ -61,6 +61,7 @@ import type {
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 // Helper to convert tailwind color class to sx
@@ -670,7 +671,8 @@ export default function ConsolidationScopePage() {
                   variant='body2'
                   sx={{ color: 'text.secondary', mt: 1 }}
                 >
-                  {selectedScope.code} | {selectedScope.description || t('finance.consolidation_scope_page.description_1')}
+                  {selectedScope.code} |{' '}
+                  {selectedScope.description || t('finance.consolidation_scope_page.description_1')}
                 </Typography>
               </CardHeader>
               <CardContent>
@@ -814,7 +816,11 @@ export default function ConsolidationScopePage() {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{showEditScopeModal ? t('finance.consolidation_scope_page.edit') : t('finance.consolidation_scope_page.text_425d69')}</DialogTitle>
+        <DialogTitle>
+          {showEditScopeModal
+            ? t('finance.consolidation_scope_page.edit')
+            : t('finance.consolidation_scope_page.text_425d69')}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
@@ -884,7 +890,9 @@ export default function ConsolidationScopePage() {
             onClick={handleSaveScope}
             disabled={createScope.isPending || updateScope.isPending}
           >
-            {createScope.isPending || updateScope.isPending ? t('finance.consolidation_scope_page.save') : t('finance.consolidation_scope_page.save_1')}
+            {createScope.isPending || updateScope.isPending
+              ? t('finance.consolidation_scope_page.save')
+              : t('finance.consolidation_scope_page.save_1')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -972,7 +980,9 @@ export default function ConsolidationScopePage() {
             onClick={handleAddCompany}
             disabled={addCompany.isPending}
           >
-            {addCompany.isPending ? t('finance.consolidation_scope_page.text_745316') : t('finance.consolidation_scope_page.text_b58c75')}
+            {addCompany.isPending
+              ? t('finance.consolidation_scope_page.text_745316')
+              : t('finance.consolidation_scope_page.text_b58c75')}
           </Button>
         </DialogActions>
       </Dialog>

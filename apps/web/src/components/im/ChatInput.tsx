@@ -77,7 +77,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     <div
       style={{
         borderTop: '1px solid grey.200',
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         padding: 16,
       }}
     >
@@ -101,7 +101,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 left: 0,
                 marginBottom: 8,
                 width: 192,
-                backgroundColor: 'white',
+                backgroundColor: 'common.white',
                 borderRadius: 8,
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                 border: '1px solid grey.200',

@@ -469,7 +469,8 @@ const ReportPage: React.FC = () => {
       r.config.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.config.report_type.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesModule =
-      filterModule === 'all' || getModuleFromReportType(r.config.report_type, reportTypes) === filterModule;
+      filterModule === 'all' ||
+      getModuleFromReportType(r.config.report_type, reportTypes) === filterModule;
     return matchesSearch && matchesModule;
   });
 
@@ -518,7 +519,10 @@ const ReportPage: React.FC = () => {
       <ReportHeader onShowBuilder={() => setShowBuilder(true)} />
 
       {notification && (
-        <NotificationToast type={notification.type} message={notification.message} />
+        <NotificationToast
+          type={notification.type}
+          message={notification.message}
+        />
       )}
 
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 4 }}>
@@ -539,7 +543,10 @@ const ReportPage: React.FC = () => {
 
         {activeTab === 'reports' ? (
           <>
-            <ReportStats reports={reports} reportTypes={reportTypes} />
+            <ReportStats
+              reports={reports}
+              reportTypes={reportTypes}
+            />
             <ReportList
               reports={filteredReports}
               reportTypes={reportTypes}

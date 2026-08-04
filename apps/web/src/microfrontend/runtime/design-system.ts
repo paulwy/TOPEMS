@@ -9,7 +9,7 @@
  * - 主题变更实时广播到所有微前端模块
  *
  * @example
- * designSystemManager.registerToken({ name: 'primary', value: '#7c3aed', type: TokenType.Color, category: 'color' });
+ * designSystemManager.registerToken({ name: 'primary', value: '#7c3aed', type: TokenType.COLOR, category: 'color' });
  * designSystemManager.setTheme({ mode: 'dark', primary_color: '#5b21b6' });
  * designSystemManager.syncToCssVariables();
  */
@@ -18,14 +18,14 @@
 
 /** 设计令牌类型 */
 export enum TokenType {
-  Color = 'color',
-  Typography = 'typography',
-  Spacing = 'spacing',
-  Border = 'border',
-  Shadow = 'shadow',
-  Animation = 'animation',
-  ZIndex = 'z-index',
-  Breakpoint = 'breakpoint',
+  COLOR = 'color',
+  TYPOGRAPHY = 'typography',
+  SPACING = 'spacing',
+  BORDER = 'border',
+  SHADOW = 'shadow',
+  ANIMATION = 'animation',
+  ZINDEX = 'z-index',
+  BREAKPOINT = 'breakpoint',
 }
 
 /** 设计令牌 */
@@ -87,95 +87,509 @@ export const DESIGN_SYSTEM_EVENTS = {
 /** 预置设计令牌（50+ 个） */
 export const PRESET_TOKENS: DesignToken[] = [
   // ---- 颜色（主色） ----
-  { name: 'primary', value: '#7c3aed', type: TokenType.Color, category: 'color', description: '品牌主色' },
-  { name: 'primary-light', value: '#a78bfa', type: TokenType.Color, category: 'color', description: '主色浅色' },
-  { name: 'primary-dark', value: '#5b21b6', type: TokenType.Color, category: 'color', description: '主色深色' },
-  { name: 'secondary', value: '#06b6d4', type: TokenType.Color, category: 'color', description: '品牌辅色' },
-  { name: 'secondary-light', value: '#67e8f9', type: TokenType.Color, category: 'color', description: '辅色浅色' },
-  { name: 'secondary-dark', value: '#0e7490', type: TokenType.Color, category: 'color', description: '辅色深色' },
+  {
+    name: 'primary',
+    value: '#7c3aed',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '品牌主色',
+  },
+  {
+    name: 'primary-light',
+    value: '#a78bfa',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '主色浅色',
+  },
+  {
+    name: 'primary-dark',
+    value: '#5b21b6',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '主色深色',
+  },
+  {
+    name: 'secondary',
+    value: '#06b6d4',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '品牌辅色',
+  },
+  {
+    name: 'secondary-light',
+    value: '#67e8f9',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '辅色浅色',
+  },
+  {
+    name: 'secondary-dark',
+    value: '#0e7490',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '辅色深色',
+  },
 
   // ---- 颜色（语义） ----
-  { name: 'success', value: '#10b981', type: TokenType.Color, category: 'color', description: '成功色' },
-  { name: 'warning', value: '#f59e0b', type: TokenType.Color, category: 'color', description: '警告色' },
-  { name: 'error', value: '#ef4444', type: TokenType.Color, category: 'color', description: '错误色' },
-  { name: 'info', value: '#3b82f6', type: TokenType.Color, category: 'color', description: '信息色' },
+  {
+    name: 'success',
+    value: '#10b981',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '成功色',
+  },
+  {
+    name: 'warning',
+    value: '#f59e0b',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '警告色',
+  },
+  {
+    name: 'error',
+    value: '#ef4444',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '错误色',
+  },
+  {
+    name: 'info',
+    value: '#3b82f6',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '信息色',
+  },
 
   // ---- 颜色（灰阶） ----
-  { name: 'gray-50', value: '#f9fafb', type: TokenType.Color, category: 'color', description: '灰阶 50' },
-  { name: 'gray-100', value: '#f3f4f6', type: TokenType.Color, category: 'color', description: '灰阶 100' },
-  { name: 'gray-200', value: '#e5e7eb', type: TokenType.Color, category: 'color', description: '灰阶 200' },
-  { name: 'gray-300', value: '#d1d5db', type: TokenType.Color, category: 'color', description: '灰阶 300' },
-  { name: 'gray-400', value: '#9ca3af', type: TokenType.Color, category: 'color', description: '灰阶 400' },
-  { name: 'gray-500', value: '#6b7280', type: TokenType.Color, category: 'color', description: '灰阶 500' },
-  { name: 'gray-600', value: '#4b5563', type: TokenType.Color, category: 'color', description: '灰阶 600' },
-  { name: 'gray-700', value: '#374151', type: TokenType.Color, category: 'color', description: '灰阶 700' },
-  { name: 'gray-800', value: '#1f2937', type: TokenType.Color, category: 'color', description: '灰阶 800' },
-  { name: 'gray-900', value: '#111827', type: TokenType.Color, category: 'color', description: '灰阶 900' },
+  {
+    name: 'gray-50',
+    value: '#f9fafb',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '灰阶 50',
+  },
+  {
+    name: 'gray-100',
+    value: '#f3f4f6',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '灰阶 100',
+  },
+  {
+    name: 'gray-200',
+    value: '#e5e7eb',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '灰阶 200',
+  },
+  {
+    name: 'gray-300',
+    value: '#d1d5db',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '灰阶 300',
+  },
+  {
+    name: 'gray-400',
+    value: '#9ca3af',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '灰阶 400',
+  },
+  {
+    name: 'gray-500',
+    value: '#6b7280',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '灰阶 500',
+  },
+  {
+    name: 'gray-600',
+    value: '#4b5563',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '灰阶 600',
+  },
+  {
+    name: 'gray-700',
+    value: '#374151',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '灰阶 700',
+  },
+  {
+    name: 'gray-800',
+    value: '#1f2937',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '灰阶 800',
+  },
+  {
+    name: 'gray-900',
+    value: '#111827',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '灰阶 900',
+  },
 
   // ---- 颜色（背景/文字） ----
-  { name: 'bg-primary', value: '#ffffff', type: TokenType.Color, category: 'color', description: '主背景色' },
-  { name: 'bg-secondary', value: '#f9fafb', type: TokenType.Color, category: 'color', description: '次背景色' },
-  { name: 'bg-dark', value: '#111827', type: TokenType.Color, category: 'color', description: '深色背景' },
-  { name: 'text-primary', value: '#111827', type: TokenType.Color, category: 'color', description: '主文字色' },
-  { name: 'text-secondary', value: '#6b7280', type: TokenType.Color, category: 'color', description: '次文字色' },
-  { name: 'text-disabled', value: '#9ca3af', type: TokenType.Color, category: 'color', description: '禁用文字色' },
-  { name: 'text-inverse', value: '#ffffff', type: TokenType.Color, category: 'color', description: '反色文字' },
+  {
+    name: 'bg-primary',
+    value: '#ffffff',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '主背景色',
+  },
+  {
+    name: 'bg-secondary',
+    value: '#f9fafb',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '次背景色',
+  },
+  {
+    name: 'bg-dark',
+    value: '#111827',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '深色背景',
+  },
+  {
+    name: 'text-primary',
+    value: '#111827',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '主文字色',
+  },
+  {
+    name: 'text-secondary',
+    value: '#6b7280',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '次文字色',
+  },
+  {
+    name: 'text-disabled',
+    value: '#9ca3af',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '禁用文字色',
+  },
+  {
+    name: 'text-inverse',
+    value: '#ffffff',
+    type: TokenType.COLOR,
+    category: 'color',
+    description: '反色文字',
+  },
 
   // ---- 排版 ----
-  { name: 'font-family', value: "'Inter', system-ui, -apple-system, sans-serif", type: TokenType.Typography, category: 'typography', description: '字体族' },
-  { name: 'font-size-xs', value: '0.75rem', type: TokenType.Typography, category: 'typography', description: '字号 XS' },
-  { name: 'font-size-sm', value: '0.875rem', type: TokenType.Typography, category: 'typography', description: '字号 SM' },
-  { name: 'font-size-base', value: '1rem', type: TokenType.Typography, category: 'typography', description: '字号 Base' },
-  { name: 'font-size-lg', value: '1.125rem', type: TokenType.Typography, category: 'typography', description: '字号 LG' },
-  { name: 'font-size-xl', value: '1.25rem', type: TokenType.Typography, category: 'typography', description: '字号 XL' },
-  { name: 'font-size-2xl', value: '1.5rem', type: TokenType.Typography, category: 'typography', description: '字号 2XL' },
-  { name: 'font-weight-normal', value: '400', type: TokenType.Typography, category: 'typography', description: '字重正常' },
-  { name: 'font-weight-medium', value: '500', type: TokenType.Typography, category: 'typography', description: '字重中等' },
-  { name: 'font-weight-semibold', value: '600', type: TokenType.Typography, category: 'typography', description: '字重半粗' },
-  { name: 'font-weight-bold', value: '700', type: TokenType.Typography, category: 'typography', description: '字重粗体' },
-  { name: 'line-height-tight', value: '1.25', type: TokenType.Typography, category: 'typography', description: '行高紧凑' },
-  { name: 'line-height-normal', value: '1.5', type: TokenType.Typography, category: 'typography', description: '行高正常' },
-  { name: 'line-height-relaxed', value: '1.75', type: TokenType.Typography, category: 'typography', description: '行高宽松' },
+  {
+    name: 'font-family',
+    value: "'Inter', system-ui, -apple-system, sans-serif",
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '字体族',
+  },
+  {
+    name: 'font-size-xs',
+    value: '0.75rem',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '字号 XS',
+  },
+  {
+    name: 'font-size-sm',
+    value: '0.875rem',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '字号 SM',
+  },
+  {
+    name: 'font-size-base',
+    value: '1rem',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '字号 Base',
+  },
+  {
+    name: 'font-size-lg',
+    value: '1.125rem',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '字号 LG',
+  },
+  {
+    name: 'font-size-xl',
+    value: '1.25rem',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '字号 XL',
+  },
+  {
+    name: 'font-size-2xl',
+    value: '1.5rem',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '字号 2XL',
+  },
+  {
+    name: 'font-weight-normal',
+    value: '400',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '字重正常',
+  },
+  {
+    name: 'font-weight-medium',
+    value: '500',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '字重中等',
+  },
+  {
+    name: 'font-weight-semibold',
+    value: '600',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '字重半粗',
+  },
+  {
+    name: 'font-weight-bold',
+    value: '700',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '字重粗体',
+  },
+  {
+    name: 'line-height-tight',
+    value: '1.25',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '行高紧凑',
+  },
+  {
+    name: 'line-height-normal',
+    value: '1.5',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '行高正常',
+  },
+  {
+    name: 'line-height-relaxed',
+    value: '1.75',
+    type: TokenType.TYPOGRAPHY,
+    category: 'typography',
+    description: '行高宽松',
+  },
 
   // ---- 间距 ----
-  { name: 'spacing-xs', value: '4px', type: TokenType.Spacing, category: 'spacing', description: '间距 XS' },
-  { name: 'spacing-sm', value: '8px', type: TokenType.Spacing, category: 'spacing', description: '间距 SM' },
-  { name: 'spacing-md', value: '16px', type: TokenType.Spacing, category: 'spacing', description: '间距 MD' },
-  { name: 'spacing-lg', value: '24px', type: TokenType.Spacing, category: 'spacing', description: '间距 LG' },
-  { name: 'spacing-xl', value: '32px', type: TokenType.Spacing, category: 'spacing', description: '间距 XL' },
-  { name: 'spacing-2xl', value: '48px', type: TokenType.Spacing, category: 'spacing', description: '间距 2XL' },
+  {
+    name: 'spacing-xs',
+    value: '4px',
+    type: TokenType.SPACING,
+    category: 'spacing',
+    description: '间距 XS',
+  },
+  {
+    name: 'spacing-sm',
+    value: '8px',
+    type: TokenType.SPACING,
+    category: 'spacing',
+    description: '间距 SM',
+  },
+  {
+    name: 'spacing-md',
+    value: '16px',
+    type: TokenType.SPACING,
+    category: 'spacing',
+    description: '间距 MD',
+  },
+  {
+    name: 'spacing-lg',
+    value: '24px',
+    type: TokenType.SPACING,
+    category: 'spacing',
+    description: '间距 LG',
+  },
+  {
+    name: 'spacing-xl',
+    value: '32px',
+    type: TokenType.SPACING,
+    category: 'spacing',
+    description: '间距 XL',
+  },
+  {
+    name: 'spacing-2xl',
+    value: '48px',
+    type: TokenType.SPACING,
+    category: 'spacing',
+    description: '间距 2XL',
+  },
 
   // ---- 圆角 ----
-  { name: 'radius-sm', value: '4px', type: TokenType.Border, category: 'radius', description: '圆角 SM' },
-  { name: 'radius-md', value: '8px', type: TokenType.Border, category: 'radius', description: '圆角 MD' },
-  { name: 'radius-lg', value: '12px', type: TokenType.Border, category: 'radius', description: '圆角 LG' },
-  { name: 'radius-xl', value: '16px', type: TokenType.Border, category: 'radius', description: '圆角 XL' },
-  { name: 'radius-full', value: '9999px', type: TokenType.Border, category: 'radius', description: '全圆角' },
+  {
+    name: 'radius-sm',
+    value: '4px',
+    type: TokenType.BORDER,
+    category: 'radius',
+    description: '圆角 SM',
+  },
+  {
+    name: 'radius-md',
+    value: '8px',
+    type: TokenType.BORDER,
+    category: 'radius',
+    description: '圆角 MD',
+  },
+  {
+    name: 'radius-lg',
+    value: '12px',
+    type: TokenType.BORDER,
+    category: 'radius',
+    description: '圆角 LG',
+  },
+  {
+    name: 'radius-xl',
+    value: '16px',
+    type: TokenType.BORDER,
+    category: 'radius',
+    description: '圆角 XL',
+  },
+  {
+    name: 'radius-full',
+    value: '9999px',
+    type: TokenType.BORDER,
+    category: 'radius',
+    description: '全圆角',
+  },
 
   // ---- 阴影 ----
-  { name: 'shadow-sm', value: '0 1px 2px rgba(0,0,0,0.05)', type: TokenType.Shadow, category: 'shadow', description: '阴影 SM' },
-  { name: 'shadow-md', value: '0 4px 6px rgba(0,0,0,0.1)', type: TokenType.Shadow, category: 'shadow', description: '阴影 MD' },
-  { name: 'shadow-lg', value: '0 10px 15px rgba(0,0,0,0.1)', type: TokenType.Shadow, category: 'shadow', description: '阴影 LG' },
-  { name: 'shadow-xl', value: '0 20px 25px rgba(0,0,0,0.15)', type: TokenType.Shadow, category: 'shadow', description: '阴影 XL' },
+  {
+    name: 'shadow-sm',
+    value: '0 1px 2px rgba(0,0,0,0.05)',
+    type: TokenType.SHADOW,
+    category: 'shadow',
+    description: '阴影 SM',
+  },
+  {
+    name: 'shadow-md',
+    value: '0 4px 6px rgba(0,0,0,0.1)',
+    type: TokenType.SHADOW,
+    category: 'shadow',
+    description: '阴影 MD',
+  },
+  {
+    name: 'shadow-lg',
+    value: '0 10px 15px rgba(0,0,0,0.1)',
+    type: TokenType.SHADOW,
+    category: 'shadow',
+    description: '阴影 LG',
+  },
+  {
+    name: 'shadow-xl',
+    value: '0 20px 25px rgba(0,0,0,0.15)',
+    type: TokenType.SHADOW,
+    category: 'shadow',
+    description: '阴影 XL',
+  },
 
   // ---- 动画 ----
-  { name: 'duration-fast', value: '150ms', type: TokenType.Animation, category: 'animation', description: '动画时长快' },
-  { name: 'duration-normal', value: '300ms', type: TokenType.Animation, category: 'animation', description: '动画时长正常' },
-  { name: 'duration-slow', value: '500ms', type: TokenType.Animation, category: 'animation', description: '动画时长慢' },
-  { name: 'ease-in-out', value: 'cubic-bezier(0.4, 0, 0.2, 1)', type: TokenType.Animation, category: 'animation', description: '缓动函数' },
-  { name: 'ease-bounce', value: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)', type: TokenType.Animation, category: 'animation', description: '弹跳缓动' },
+  {
+    name: 'duration-fast',
+    value: '150ms',
+    type: TokenType.ANIMATION,
+    category: 'animation',
+    description: '动画时长快',
+  },
+  {
+    name: 'duration-normal',
+    value: '300ms',
+    type: TokenType.ANIMATION,
+    category: 'animation',
+    description: '动画时长正常',
+  },
+  {
+    name: 'duration-slow',
+    value: '500ms',
+    type: TokenType.ANIMATION,
+    category: 'animation',
+    description: '动画时长慢',
+  },
+  {
+    name: 'ease-in-out',
+    value: 'cubic-bezier(0.4, 0, 0.2, 1)',
+    type: TokenType.ANIMATION,
+    category: 'animation',
+    description: '缓动函数',
+  },
+  {
+    name: 'ease-bounce',
+    value: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+    type: TokenType.ANIMATION,
+    category: 'animation',
+    description: '弹跳缓动',
+  },
 
   // ---- Z-Index ----
-  { name: 'z-dropdown', value: '1000', type: TokenType.ZIndex, category: 'z-index', description: '下拉菜单层级' },
-  { name: 'z-sticky', value: '1100', type: TokenType.ZIndex, category: 'z-index', description: '吸顶层级' },
-  { name: 'z-modal', value: '1300', type: TokenType.ZIndex, category: 'z-index', description: '弹窗层级' },
-  { name: 'z-toast', value: '1400', type: TokenType.ZIndex, category: 'z-index', description: '提示层级' },
+  {
+    name: 'z-dropdown',
+    value: '1000',
+    type: TokenType.ZINDEX,
+    category: 'z-index',
+    description: '下拉菜单层级',
+  },
+  {
+    name: 'z-sticky',
+    value: '1100',
+    type: TokenType.ZINDEX,
+    category: 'z-index',
+    description: '吸顶层级',
+  },
+  {
+    name: 'z-modal',
+    value: '1300',
+    type: TokenType.ZINDEX,
+    category: 'z-index',
+    description: '弹窗层级',
+  },
+  {
+    name: 'z-toast',
+    value: '1400',
+    type: TokenType.ZINDEX,
+    category: 'z-index',
+    description: '提示层级',
+  },
 
   // ---- 断点 ----
-  { name: 'breakpoint-sm', value: '640px', type: TokenType.Breakpoint, category: 'breakpoint', description: '断点 SM' },
-  { name: 'breakpoint-md', value: '768px', type: TokenType.Breakpoint, category: 'breakpoint', description: '断点 MD' },
-  { name: 'breakpoint-lg', value: '1024px', type: TokenType.Breakpoint, category: 'breakpoint', description: '断点 LG' },
-  { name: 'breakpoint-xl', value: '1280px', type: TokenType.Breakpoint, category: 'breakpoint', description: '断点 XL' },
+  {
+    name: 'breakpoint-sm',
+    value: '640px',
+    type: TokenType.BREAKPOINT,
+    category: 'breakpoint',
+    description: '断点 SM',
+  },
+  {
+    name: 'breakpoint-md',
+    value: '768px',
+    type: TokenType.BREAKPOINT,
+    category: 'breakpoint',
+    description: '断点 MD',
+  },
+  {
+    name: 'breakpoint-lg',
+    value: '1024px',
+    type: TokenType.BREAKPOINT,
+    category: 'breakpoint',
+    description: '断点 LG',
+  },
+  {
+    name: 'breakpoint-xl',
+    value: '1280px',
+    type: TokenType.BREAKPOINT,
+    category: 'breakpoint',
+    description: '断点 XL',
+  },
 ];
 
 // ==================== 预置主题 ====================
@@ -183,9 +597,9 @@ export const PRESET_TOKENS: DesignToken[] = [
 /** 亮色主题 */
 export const LIGHT_THEME: ThemeConfig = {
   mode: 'light',
-  primary_color: '#7c3aed',
-  secondary_color: '#06b6d4',
-  background: '#ffffff',
+  primary_color: 'secondary.600',
+  secondary_color: 'cyan.500',
+  background: 'primary.contrastText',
   text_colors: {
     primary: '#111827',
     secondary: '#6b7280',
@@ -197,9 +611,9 @@ export const LIGHT_THEME: ThemeConfig = {
 /** 暗色主题 */
 export const DARK_THEME: ThemeConfig = {
   mode: 'dark',
-  primary_color: '#a78bfa',
-  secondary_color: '#67e8f9',
-  background: '#111827',
+  primary_color: 'secondary.400',
+  secondary_color: 'cyan.300',
+  background: 'grey.900',
   text_colors: {
     primary: '#f9fafb',
     secondary: '#9ca3af',
@@ -481,10 +895,7 @@ export class DesignSystemManager {
   }
 
   /** 监听全局设计系统事件（CustomEvent） */
-  watchEvent(
-    eventType: string,
-    handler: (detail: any) => void
-  ): () => void {
+  watchEvent(eventType: string, handler: (detail: any) => void): () => void {
     if (typeof window === 'undefined') return () => {};
     const listener = (e: Event) => {
       const customEvent = e as CustomEvent;

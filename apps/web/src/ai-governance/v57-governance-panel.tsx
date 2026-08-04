@@ -134,14 +134,14 @@ const LEVEL_LABELS: Record<RiskLevel, string> = {
 
 export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [activeTab, setActiveTab] = React.useState<TabId>('compliance');
-  const [compliance_checks, setComplianceChecks] = React.useState<ComplianceCheck[]>([]);
-  const [compliance_status, setComplianceStatus] = React.useState<ReturnType<
-    typeof complianceAutomator.get_compliance_status
+  const [complianceChecks, setComplianceChecks] = React.useState<ComplianceCheck[]>([]);
+  const [complianceStatus, setComplianceStatus] = React.useState<ReturnType<
+    typeof complianceAutomator.getComplianceStatus
   > | null>(null);
-  const [compliance_report, setComplianceReport] = React.useState<ComplianceReport | null>(null);
+  const [complianceReport, setComplianceReport] = React.useState<ComplianceReport | null>(null);
 
   const [alerts, setAlerts] = React.useState<RiskAlert[]>([]);
-  const [risk_score, setRiskScore] = React.useState<RiskScore | null>(null);
+  const [riskScore, setRiskScore] = React.useState<RiskScore | null>(null);
   const [indicators, setIndicators] = React.useState<RiskIndicator[]>([]);
 
   const [policies, setPolicies] = React.useState<Policy[]>([]);
@@ -158,51 +158,51 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
     rules: [],
   });
 
-  const [audit_log, setAuditLog] = React.useState<PolicyDecision[]>([]);
-  const [audit_filter, setAuditFilter] = React.useState<string>('all');
+  const [auditLog, setAuditLog] = React.useState<PolicyDecision[]>([]);
+  const [auditFilter, setAuditFilter] = React.useState<string>('all');
 
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const run_full_assessment = () => {
+  const runFullAssessment = () => {
     setIsLoading(true);
 
     setTimeout(() => {
-      const checks = complianceAutomator.run_compliance_checks();
+      const checks = complianceAutomator.runComplianceChecks();
       setComplianceChecks(checks);
-      setComplianceStatus(complianceAutomator.get_compliance_status());
-      setComplianceReport(complianceAutomator.generate_report());
+      setComplianceStatus(complianceAutomator.getComplianceStatus());
+      setComplianceReport(complianceAutomator.generateReport());
 
-      const newAlerts = riskAlerter.evaluate_risks();
-      setAlerts(riskAlerter.get_alerts({ status: 'all' }));
-      setRiskScore(riskAlerter.get_risk_score());
-      setIndicators(riskAlerter.get_indicators());
+      const newAlerts = riskAlerter.evaluateRisks();
+      setAlerts(riskAlerter.getAlerts({ status: 'all' }));
+      setRiskScore(riskAlerter.getRiskScore());
+      setIndicators(riskAlerter.getIndicators());
 
-      const active_policies = policyEnforcer.get_policies({ status: 'active' });
-      setPolicies(active_policies);
-      setAuditLog(policyEnforcer.get_audit_log({ limit: 50 }));
+      const activePolicies = policyEnforcer.getPolicies({ status: 'active' });
+      setPolicies(activePolicies);
+      setAuditLog(policyEnforcer.getAuditLog({ limit: 50 }));
 
       setIsLoading(false);
     }, 300);
   };
 
   React.useEffect(() => {
-    run_full_assessment();
+    runFullAssessment();
   }, []);
 
-  const handle_acknowledge = (alertId: string) => {
-    riskAlerter.acknowledge_alert(alertId, 'admin');
-    setAlerts(riskAlerter.get_alerts({ status: 'all' }));
-    setRiskScore(riskAlerter.get_risk_score());
+  const handleAcknowledge = (alertId: string) => {
+    riskAlerter.acknowledgeAlert(alertId, 'admin');
+    setAlerts(riskAlerter.getAlerts({ status: 'all' }));
+    setRiskScore(riskAlerter.getRiskScore());
   };
 
-  const handle_resolve = (alertId: string) => {
-    riskAlerter.resolve_alert(alertId, 'admin');
-    setAlerts(riskAlerter.get_alerts({ status: 'all' }));
-    setRiskScore(riskAlerter.get_risk_score());
+  const handleResolve = (alertId: string) => {
+    riskAlerter.resolveAlert(alertId, 'admin');
+    setAlerts(riskAlerter.getAlerts({ status: 'all' }));
+    setRiskScore(riskAlerter.getRiskScore());
   };
 
-  const handle_evaluate_policy = () => {
-    const mock_context = {
+  const handleEvaluatePolicy = () => {
+    const mockContext = {
       user: { role: 'manager', clearance: 3, has_consent: true, id: 'user-001' },
       data: { classification: 'confidential', type: 'personal' },
       action: { type: 'read' },
@@ -211,14 +211,14 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
       output: { harm_score: 0.15, bias_score: 0.2, contains_pii: false },
     };
 
-    const result = policyEnforcer.enforce_policy(mock_context);
+    const result = policyEnforcer.enforcePolicy(mockContext);
     setDecisions(result.decisions);
-    setAuditLog(policyEnforcer.get_audit_log({ limit: 50 }));
+    setAuditLog(policyEnforcer.getAuditLog({ limit: 50 }));
   };
 
-  const handle_create_policy = () => {
+  const handleCreatePolicy = () => {
     if (!newPolicy.name) return;
-    const policy = policyEnforcer.create_policy({
+    const policy = policyEnforcer.createPolicy({
       name: newPolicy.name,
       scope: newPolicy.scope || 'global',
       scope_target: 'custom',
@@ -228,7 +228,7 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
       description: newPolicy.description || '',
       tags: newPolicy.tags || [],
     });
-    setPolicies(policyEnforcer.get_policies());
+    setPolicies(policyEnforcer.getPolicies());
     setPolicyDialogOpen(false);
     setNewPolicy({
       name: '',
@@ -249,7 +249,7 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.6)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -303,7 +303,7 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
             <Tab
               icon={<FileText size={16} />}
               iconPosition='start'
-              label={`审计追踪${audit_log.length > 0 ? ` (${audit_log.length})` : ''}`}
+              label={`审计追踪${auditLog.length > 0 ? ` (${auditLog.length})` : ''}`}
               value='audit'
             />
           </Tabs>
@@ -328,10 +328,10 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
 
           {!isLoading && activeTab === 'compliance' && (
             <ComplianceTab
-              checks={compliance_checks}
-              status={compliance_status}
-              report={compliance_report}
-              onReRun={run_full_assessment}
+              checks={complianceChecks}
+              status={complianceStatus}
+              report={complianceReport}
+              onReRun={runFullAssessment}
             />
           )}
 
@@ -339,10 +339,10 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
             <RiskTab
               alerts={alerts}
               indicators={indicators}
-              score={risk_score}
-              onAcknowledge={handle_acknowledge}
-              onResolve={handle_resolve}
-              onReRun={run_full_assessment}
+              score={riskScore}
+              onAcknowledge={handleAcknowledge}
+              onResolve={handleResolve}
+              onReRun={runFullAssessment}
             />
           )}
 
@@ -352,19 +352,19 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
               decisions={decisions}
               selectedPolicyId={selectedPolicyId}
               onSelectPolicy={setSelectedPolicyId}
-              onEvaluate={handle_evaluate_policy}
+              onEvaluate={handleEvaluatePolicy}
               onCreatePolicy={() => setPolicyDialogOpen(true)}
               onUpdatePolicy={(id, updates) => {
-                policyEnforcer.update_policy(id, updates);
-                setPolicies(policyEnforcer.get_policies());
+                policyEnforcer.updatePolicy(id, updates);
+                setPolicies(policyEnforcer.getPolicies());
               }}
             />
           )}
 
           {!isLoading && activeTab === 'audit' && (
             <AuditTab
-              logs={audit_log}
-              filter={audit_filter}
+              logs={auditLog}
+              filter={auditFilter}
               onFilterChange={setAuditFilter}
             />
           )}
@@ -438,7 +438,7 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
             <Button onClick={() => setPolicyDialogOpen(false)}>取消</Button>
             <Button
               variant='contained'
-              onClick={handle_create_policy}
+              onClick={handleCreatePolicy}
               disabled={!newPolicy.name}
             >
               创建
@@ -458,7 +458,7 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       alignItems: 'center',
       justifyContent: 'space-between',
       background: 'linear-gradient(135deg, #10b981 0%, #0d9488 50%, #0891b2 100%)',
-      color: 'white',
+      color: 'common.white',
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -467,7 +467,7 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           width: 40,
           height: 40,
           borderRadius: 2,
-          bgcolor: 'rgba(255,255,255,0.2)',
+          bgcolor: 'action.disabledBackground',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -496,8 +496,8 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         color='secondary'
         sx={{
           '& .MuiBadge-badge': {
-            bgcolor: '#fbbf24',
-            color: '#1e293b',
+            bgcolor: 'warning.400',
+            color: 'text.primary',
             fontWeight: 700,
             fontSize: 10,
           },
@@ -508,7 +508,7 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       <IconButton
         size='small'
         onClick={onClose}
-        sx={{ color: 'white' }}
+        sx={{ color: 'common.white' }}
       >
         <XIcon size={20} />
       </IconButton>
@@ -518,7 +518,7 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
 
 const ComplianceTab: React.FC<{
   checks: ComplianceCheck[];
-  status: ReturnType<typeof complianceAutomator.get_compliance_status> | null;
+  status: ReturnType<typeof complianceAutomator.getComplianceStatus> | null;
   report: ComplianceReport | null;
   onReRun: () => void;
 }> = ({ checks, status, report, onReRun }) => {
@@ -653,7 +653,7 @@ const ComplianceTab: React.FC<{
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Sparkles
                           size={14}
-                          style={{ color: '#10b981' }}
+                          style={{ color: 'teal.500' }}
                         />
                         <Typography
                           variant='body2'
@@ -996,7 +996,7 @@ const RiskTab: React.FC<{
                       variant='h5'
                       sx={{ fontWeight: 700, color: RISK_LEVEL_COLORS[lvl] }}
                     >
-                      {score.by_severity[lvl]}
+                      {score.bySeverity[lvl]}
                     </Typography>
                     <Typography
                       variant='caption'
@@ -1116,8 +1116,8 @@ const RiskTab: React.FC<{
                           sx={{
                             fontSize: 10,
                             height: 20,
-                            bgcolor: '#d1fae5',
-                            color: '#065f46',
+                            bgcolor: 'success.100',
+                            color: 'teal.900',
                             fontWeight: 600,
                           }}
                         />
@@ -1128,8 +1128,8 @@ const RiskTab: React.FC<{
                           sx={{
                             fontSize: 10,
                             height: 20,
-                            bgcolor: '#fef3c7',
-                            color: '#92400e',
+                            bgcolor: 'warning.100',
+                            color: 'warning.800',
                             fontWeight: 600,
                           }}
                         />
@@ -1140,8 +1140,8 @@ const RiskTab: React.FC<{
                           sx={{
                             fontSize: 10,
                             height: 20,
-                            bgcolor: '#fef2f2',
-                            color: '#991b1b',
+                            bgcolor: 'error.50',
+                            color: 'error.800',
                             fontWeight: 600,
                           }}
                         />
@@ -1450,8 +1450,8 @@ const PolicyTab: React.FC<{
                                   sx={{
                                     fontSize: 10,
                                     height: 18,
-                                    bgcolor: '#d1fae5',
-                                    color: '#065f46',
+                                    bgcolor: 'success.100',
+                                    color: 'teal.900',
                                     fontWeight: 600,
                                   }}
                                 />
@@ -1462,8 +1462,8 @@ const PolicyTab: React.FC<{
                                   sx={{
                                     fontSize: 10,
                                     height: 18,
-                                    bgcolor: '#fef2f2',
-                                    color: '#991b1b',
+                                    bgcolor: 'error.50',
+                                    color: 'error.800',
                                     fontWeight: 600,
                                   }}
                                 />
@@ -1663,8 +1663,8 @@ const AuditRow: React.FC<{ decision: PolicyDecision }> = ({ decision }) => {
               sx={{
                 fontSize: 10,
                 height: 18,
-                bgcolor: '#d1fae5',
-                color: '#065f46',
+                bgcolor: 'success.100',
+                color: 'teal.900',
                 fontWeight: 600,
               }}
             />
@@ -1675,8 +1675,8 @@ const AuditRow: React.FC<{ decision: PolicyDecision }> = ({ decision }) => {
               sx={{
                 fontSize: 10,
                 height: 18,
-                bgcolor: '#fef2f2',
-                color: '#991b1b',
+                bgcolor: 'error.50',
+                color: 'error.800',
                 fontWeight: 600,
               }}
             />
@@ -1691,8 +1691,8 @@ const AuditRow: React.FC<{ decision: PolicyDecision }> = ({ decision }) => {
               sx={{
                 fontSize: 9,
                 height: 16,
-                bgcolor: '#fef3c7',
-                color: '#92400e',
+                bgcolor: 'warning.100',
+                color: 'warning.800',
                 fontWeight: 600,
               }}
             />

@@ -49,10 +49,30 @@ const ct = designTokens.colors;
 type CodeTab = 'generate' | 'explain' | 'fix' | 'optimize' | 'review';
 
 const codeTemplateKeys = [
-  { id: '1', nameKey: 'ai.code_assistant.template.react_component', language: 'tsx', descKey: 'ai.code_assistant.template.react_component_desc' },
-  { id: '2', nameKey: 'ai.code_assistant.template.api', language: 'typescript', descKey: 'ai.code_assistant.template.api_desc' },
-  { id: '3', nameKey: 'ai.code_assistant.template.database_query', language: 'sql', descKey: 'ai.code_assistant.template.database_query_desc' },
-  { id: '4', nameKey: 'ai.code_assistant.template.util_function', language: 'typescript', descKey: 'ai.code_assistant.template.util_function_desc' },
+  {
+    id: '1',
+    nameKey: 'ai.code_assistant.template.react_component',
+    language: 'tsx',
+    descKey: 'ai.code_assistant.template.react_component_desc',
+  },
+  {
+    id: '2',
+    nameKey: 'ai.code_assistant.template.api',
+    language: 'typescript',
+    descKey: 'ai.code_assistant.template.api_desc',
+  },
+  {
+    id: '3',
+    nameKey: 'ai.code_assistant.template.database_query',
+    language: 'sql',
+    descKey: 'ai.code_assistant.template.database_query_desc',
+  },
+  {
+    id: '4',
+    nameKey: 'ai.code_assistant.template.util_function',
+    language: 'typescript',
+    descKey: 'ai.code_assistant.template.util_function_desc',
+  },
 ];
 
 const sampleCode = `function calculateTotal(items) {
@@ -183,11 +203,27 @@ export const AiCodeAssistantPage: React.FC = () => {
   const [reviewScore, setReviewScore] = useState(0);
 
   const tabConfig = [
-    { id: 'generate' as CodeTab, label: t('ai.code_assistant.tab.generate'), icon: <Code2 size={18} /> },
-    { id: 'explain' as CodeTab, label: t('ai.code_assistant.tab.explain'), icon: <Lightbulb size={18} /> },
+    {
+      id: 'generate' as CodeTab,
+      label: t('ai.code_assistant.tab.generate'),
+      icon: <Code2 size={18} />,
+    },
+    {
+      id: 'explain' as CodeTab,
+      label: t('ai.code_assistant.tab.explain'),
+      icon: <Lightbulb size={18} />,
+    },
     { id: 'fix' as CodeTab, label: t('ai.code_assistant.tab.fix'), icon: <Bug size={18} /> },
-    { id: 'optimize' as CodeTab, label: t('ai.code_assistant.tab.optimize'), icon: <Zap size={18} /> },
-    { id: 'review' as CodeTab, label: t('ai.code_assistant.tab.review'), icon: <FileCode size={18} /> },
+    {
+      id: 'optimize' as CodeTab,
+      label: t('ai.code_assistant.tab.optimize'),
+      icon: <Zap size={18} />,
+    },
+    {
+      id: 'review' as CodeTab,
+      label: t('ai.code_assistant.tab.review'),
+      icon: <FileCode size={18} />,
+    },
   ];
 
   const handleGenerate = useCallback(() => {
@@ -427,7 +463,9 @@ export const AiCodeAssistantPage: React.FC = () => {
                           <MenuItem value='vue'>Vue</MenuItem>
                           <MenuItem value='nodejs'>Node.js</MenuItem>
                           <MenuItem value='spring'>Spring Boot</MenuItem>
-                          <MenuItem value='none'>{t('ai.code_assistant.option.no_framework')}</MenuItem>
+                          <MenuItem value='none'>
+                            {t('ai.code_assistant.option.no_framework')}
+                          </MenuItem>
                         </Select>
                       </FormControl>
                     </Box>
@@ -478,7 +516,9 @@ export const AiCodeAssistantPage: React.FC = () => {
                       onClick={handleGenerate}
                       disabled={generating || !prompt.trim()}
                     >
-                      {generating ? t('ai.code_assistant.status.generating') : t('ai.code_assistant.action.generate_code')}
+                      {generating
+                        ? t('ai.code_assistant.status.generating')
+                        : t('ai.code_assistant.action.generate_code')}
                     </Button>
                   </Box>
                 )}
@@ -562,7 +602,9 @@ export const AiCodeAssistantPage: React.FC = () => {
                     variant='subtitle1'
                     sx={{ fontWeight: 600 }}
                   >
-                    {activeTab === 'review' ? t('ai.code_assistant.label.review_result') : t('ai.code_assistant.label.generate_result')}
+                    {activeTab === 'review'
+                      ? t('ai.code_assistant.label.review_result')
+                      : t('ai.code_assistant.label.generate_result')}
                   </Typography>
                   {result && (
                     <Box sx={{ display: 'flex', gap: 1 }}>
@@ -616,7 +658,9 @@ export const AiCodeAssistantPage: React.FC = () => {
                       variant='subtitle2'
                       sx={{ fontWeight: 600, mb: 1 }}
                     >
-                      {t('ai.code_assistant.review.issues_found', { count: reviewIssueKeys.length })}
+                      {t('ai.code_assistant.review.issues_found', {
+                        count: reviewIssueKeys.length,
+                      })}
                     </Typography>
                     <List disablePadding>
                       {reviewIssueKeys.map((issue, index) => (
@@ -631,7 +675,8 @@ export const AiCodeAssistantPage: React.FC = () => {
                                 variant='body2'
                                 sx={{ fontWeight: 500 }}
                               >
-                                {t('ai.code_assistant.review.line_issue', { line: issue.line })}：{t(issue.descKey)}
+                                {t('ai.code_assistant.review.line_issue', { line: issue.line })}：
+                                {t(issue.descKey)}
                               </Typography>
                             </Box>
                           </AccordionSummary>
@@ -640,7 +685,8 @@ export const AiCodeAssistantPage: React.FC = () => {
                               variant='body2'
                               color='text.secondary'
                             >
-                              {t('ai.code_assistant.review.suggestion_label')}：{t(issue.suggestionKey)}
+                              {t('ai.code_assistant.review.suggestion_label')}：
+                              {t(issue.suggestionKey)}
                             </Typography>
                           </AccordionDetails>
                         </Accordion>
@@ -722,7 +768,9 @@ export const AiCodeAssistantPage: React.FC = () => {
                       className='animate-spin'
                       style={{ color: ct.secondary[400], marginBottom: 12 }}
                     />
-                    <Typography variant='body1'>{t('ai.code_assistant.status.ai_processing')}</Typography>
+                    <Typography variant='body1'>
+                      {t('ai.code_assistant.status.ai_processing')}
+                    </Typography>
                     <Typography
                       variant='body2'
                       color='text.secondary'

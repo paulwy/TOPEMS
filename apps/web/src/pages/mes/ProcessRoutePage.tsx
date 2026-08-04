@@ -181,7 +181,7 @@ const ProcessRoutePage: React.FC = () => {
                     height: 24,
                     borderRadius: '50%',
                     bgcolor: 'primary.main',
-                    color: 'white',
+                    color: 'common.white',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

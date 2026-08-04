@@ -172,7 +172,9 @@ const MobileApprovalPage: React.FC = () => {
       const response = await approvalTaskApi.listApprovalTasks(params);
       if (response.success && response.data) {
         const data = response.data as unknown as Record<string, unknown>;
-        const apiApprovals = (Array.isArray(data) ? data : (data.items as ApiApproval[]) || []) as ApiApproval[];
+        const apiApprovals = (
+          Array.isArray(data) ? data : (data.items as ApiApproval[]) || []
+        ) as ApiApproval[];
         return apiApprovals.map(mapApiApprovalToApprovalItem);
       }
       return [];
@@ -425,7 +427,11 @@ const MobileApprovalPage: React.FC = () => {
                     <Chip
                       label={getPriorityLabel(selectedApproval.priority)}
                       size='small'
-                      color={getPriorityColor(selectedApproval.priority) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                      color={
+                        getPriorityColor(selectedApproval.priority) as React.ComponentProps<
+                          typeof Chip
+                        >['color']
+                      }
                       sx={{ height: 20, fontSize: '0.7rem' }}
                     />
                   </Box>
@@ -572,7 +578,7 @@ const MobileApprovalPage: React.FC = () => {
                               : step.status === 'current'
                                 ? 'primary.main'
                                 : 'grey.300',
-                          color: 'white',
+                          color: 'common.white',
                           flexShrink: 0,
                           zIndex: 1,
                         }}
@@ -899,7 +905,11 @@ const MobileApprovalPage: React.FC = () => {
                                 <Chip
                                   label={getPriorityLabel(approval.priority)}
                                   size='small'
-                                  color={getPriorityColor(approval.priority) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                                  color={
+                                    getPriorityColor(approval.priority) as React.ComponentProps<
+                                      typeof Chip
+                                    >['color']
+                                  }
                                   sx={{ height: 20, fontSize: '0.7rem' }}
                                 />
                                 {approval.amount && (

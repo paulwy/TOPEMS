@@ -93,23 +93,23 @@ export const FormDrawer = React.memo(function FormDrawer({
       }}
     >
       <button
-        type="button"
+        type='button'
         onClick={onClose}
         disabled={loading}
         style={{
           padding: '8px 16px',
           borderRadius: 4,
           border: '1px solid #d0d0d0',
-          backgroundColor: '#fff',
+          backgroundColor: 'common.white',
           cursor: loading ? 'not-allowed' : 'pointer',
           fontSize: 14,
-          color: '#333',
+          color: 'grey.800',
         }}
       >
         {cancelText}
       </button>
       <button
-        type="button"
+        type='button'
         onClick={onSubmit}
         disabled={loading || disableSubmit}
         style={{
@@ -119,7 +119,7 @@ export const FormDrawer = React.memo(function FormDrawer({
           backgroundColor: loading || disableSubmit ? '#a0c4e8' : '#1976d2',
           cursor: loading || disableSubmit ? 'not-allowed' : 'pointer',
           fontSize: 14,
-          color: '#fff',
+          color: 'common.white',
           fontWeight: 500,
           display: 'flex',
           alignItems: 'center',
@@ -132,7 +132,7 @@ export const FormDrawer = React.memo(function FormDrawer({
               width: 14,
               height: 14,
               border: '2px solid rgba(255,255,255,0.3)',
-              borderTopColor: '#fff',
+              borderTopColor: 'common.white',
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite',
               display: 'inline-block',
@@ -155,6 +155,7 @@ export const FormDrawer = React.memo(function FormDrawer({
       footerContent={footerContent}
       contentSx={contentSx}
     >
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <form
         onKeyDown={handleKeyDown}
         onSubmit={(e) => {
@@ -165,7 +166,7 @@ export const FormDrawer = React.memo(function FormDrawer({
       >
         {children}
         <input
-          type="submit"
+          type='submit'
           style={{ display: 'none' }}
           disabled={loading || disableSubmit}
         />

@@ -11,7 +11,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import React from 'react';
-import { ApprovalSettings as ApprovalSettingsType } from '../types';
+import type { ApprovalSettings as ApprovalSettingsType } from '../types';
 
 interface ApprovalSettingsProps {
   settings: ApprovalSettingsType;

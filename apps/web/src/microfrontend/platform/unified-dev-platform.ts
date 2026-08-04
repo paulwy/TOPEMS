@@ -19,12 +19,12 @@
  */
 
 export enum ProjectCategory {
-  WebApp = 'web-app',
-  MicroFrontend = 'micro-frontend',
-  MobileApp = 'mobile-app',
-  DesktopApp = 'desktop-app',
-  APIService = 'api-service',
-  Library = 'library',
+  WEBAPP = 'web-app',
+  MICROFRONTEND = 'micro-frontend',
+  MOBILEAPP = 'mobile-app',
+  DESKTOPAPP = 'desktop-app',
+  APISERVICE = 'api-service',
+  LIBRARY = 'library',
 }
 
 export type DevServerStatus = 'idle' | 'starting' | 'running' | 'stopped' | 'crashed';
@@ -157,7 +157,7 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
     name: 'React + TypeScript',
     description:
       '基于 React 18 + TypeScript + Vite 的现代化 Web 应用模板，内置路由、状态管理与组件库。',
-    category: ProjectCategory.WebApp,
+    category: ProjectCategory.WEBAPP,
     dependencies: ['react@18', 'react-dom@18', 'react-router-dom@6'],
     file_structure: {
       'src/': '源码目录',
@@ -189,7 +189,7 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
     name: 'Vue 3 + TypeScript',
     description:
       '基于 Vue 3 + TypeScript + Vite 的渐进式 Web 应用模板，组合式 API + Pinia 状态管理。',
-    category: ProjectCategory.WebApp,
+    category: ProjectCategory.WEBAPP,
     dependencies: ['vue@3', 'vue-router@4', 'pinia@2'],
     file_structure: {
       'src/': '源码目录',
@@ -220,7 +220,7 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
     template_id: 'micro-frontend-react',
     name: '微前端子应用（React）',
     description: '微前端架构 React 子应用模板，内置 qiankun/wujie 适配、沙箱隔离与跨应用通信。',
-    category: ProjectCategory.MicroFrontend,
+    category: ProjectCategory.MICROFRONTEND,
     dependencies: ['react@18', 'react-dom@18', 'qiankun@2'],
     file_structure: {
       'src/': '源码目录',
@@ -248,7 +248,7 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
     template_id: 'micro-frontend-vue',
     name: '微前端子应用（Vue）',
     description: '微前端架构 Vue 子应用模板，支持 wujie/qiankun 双模式，独立部署 + 统一登录。',
-    category: ProjectCategory.MicroFrontend,
+    category: ProjectCategory.MICROFRONTEND,
     dependencies: ['vue@3', 'vue-router@4', 'wujie-core@1'],
     file_structure: {
       'src/': '源码目录',
@@ -275,7 +275,7 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
     template_id: 'mobile-rn',
     name: 'React Native 跨端应用',
     description: '基于 React Native + Expo 的跨端移动应用模板，iOS/Android 双端一致体验。',
-    category: ProjectCategory.MobileApp,
+    category: ProjectCategory.MOBILEAPP,
     dependencies: ['react-native@0.72', 'expo@49', 'react-navigation@6'],
     file_structure: {
       'src/': '源码目录',
@@ -302,7 +302,7 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
     template_id: 'desktop-electron',
     name: 'Electron 桌面应用',
     description: '基于 Electron + React + TypeScript 的跨平台桌面应用模板，主进程/渲染进程分离。',
-    category: ProjectCategory.DesktopApp,
+    category: ProjectCategory.DESKTOPAPP,
     dependencies: ['electron@26', 'react@18', 'electron-builder@24'],
     file_structure: {
       'src/main/': '主进程源码',
@@ -327,7 +327,7 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
     name: 'NestJS API 服务',
     description:
       '基于 NestJS + TypeScript 的企业级 API 服务模板，模块化架构 + Swagger 文档 + JWT 鉴权。',
-    category: ProjectCategory.APIService,
+    category: ProjectCategory.APISERVICE,
     dependencies: ['nestjs@10', '@nestjs/swagger', '@nestjs/jwt'],
     file_structure: {
       'src/': '源码目录',
@@ -354,7 +354,7 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
     template_id: 'library-ts',
     name: 'TypeScript 组件库',
     description: 'TypeScript 组件库模板，内置 Rollup 打包、单元测试、文档站点与发布流程。',
-    category: ProjectCategory.Library,
+    category: ProjectCategory.LIBRARY,
     dependencies: ['typescript@5', 'rollup@3', 'vitest@0.34'],
     file_structure: {
       'src/': '源码目录',

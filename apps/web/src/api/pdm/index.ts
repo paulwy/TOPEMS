@@ -12,7 +12,7 @@ export * from './document';
 
 export { pdmDashboardApi } from './dashboard';
 
-export type Document = import('./document').PdmDocument;
+export type Document = PdmDocument;
 
 export interface ProductionProcess {
   id: string;
@@ -93,7 +93,7 @@ export interface ProductionBatch {
   product_name: string;
   formula_id?: string;
   process_id?: string;
-  planned_quantity?: number;
+  plannedQuantity?: number;
   actual_quantity?: number;
   unit?: string;
   start_date?: string;
@@ -110,7 +110,7 @@ export interface CreateProductionBatchRequest {
   product_name: string;
   formula_id?: string;
   process_id?: string;
-  planned_quantity?: number;
+  plannedQuantity?: number;
   unit?: string;
   status: string;
   operator?: string;

@@ -317,9 +317,12 @@ const MonitorLogsPage: React.FC = () => {
                           justifyContent: 'center',
                         }}
                       >
-                        {React.cloneElement(stat.icon as React.ReactElement, {
-                          style: { color: 'currentColor' },
-                        } as Record<string, unknown>)}
+                        {React.cloneElement(
+                          stat.icon as React.ReactElement,
+                          {
+                            style: { color: 'currentColor' },
+                          } as Record<string, unknown>
+                        )}
                       </Box>
                       <Box>
                         <Typography

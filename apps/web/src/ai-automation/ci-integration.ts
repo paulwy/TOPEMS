@@ -191,11 +191,11 @@ class CIIntegratorImpl {
     }
   }
 
-  list_configs(): CIConfig[] {
+  listConfigs(): CIConfig[] {
     return Array.from(this.configs.values());
   }
 
-  trigger_pipeline(pipelineName: string, trigger: TriggerType = 'manual'): CIResult {
+  triggerPipeline(pipelineName: string, trigger: TriggerType = 'manual'): CIResult {
     const config = this.configs.get(pipelineName);
     if (!config) {
       throw new Error(`Pipeline "${pipelineName}" not found`);
@@ -319,7 +319,7 @@ class CIIntegratorImpl {
     return new Date().toISOString();
   }
 
-  get_pipeline_status(runId: string): CIResult | null {
+  getPipelineStatus(runId: string): CIResult | null {
     for (const runs of this.runs.values()) {
       const found = runs.find((r) => r.run_id === runId);
       if (found) return found;
@@ -327,7 +327,7 @@ class CIIntegratorImpl {
     return null;
   }
 
-  cancel_pipeline(runId: string): boolean {
+  cancelPipeline(runId: string): boolean {
     for (const runs of this.runs.values()) {
       const run = runs.find((r) => r.run_id === runId);
       if (run && run.status === 'running') {
@@ -341,7 +341,7 @@ class CIIntegratorImpl {
     return false;
   }
 
-  get_run_history(pipelineName?: string, limit: number = 20): CIResult[] {
+  getRunHistory(pipelineName?: string, limit: number = 20): CIResult[] {
     if (pipelineName) {
       return (this.runs.get(pipelineName) || []).slice(0, limit);
     }
@@ -352,7 +352,7 @@ class CIIntegratorImpl {
     return all.sort((a, b) => b.started_at.localeCompare(a.started_at)).slice(0, limit);
   }
 
-  configure_pipeline(config: CIConfig): void {
+  configurePipeline(config: CIConfig): void {
     const existing = this.configs.get(config.pipeline);
     if (existing) {
       Object.assign(existing, config);
@@ -374,38 +374,38 @@ class CIIntegratorImpl {
     this.emit({ type: 'pipeline_configured', pipeline: config.pipeline });
   }
 
-  get_build_logs(runId: string): string[] {
-    const run = this.get_pipeline_status(runId);
+  getBuildLogs(runId: string): string[] {
+    const run = this.getPipelineStatus(runId);
     return run?.logs || [];
   }
 
-  get_stats(): {
+  getStats(): {
     total_runs: number;
     success_rate: number;
     avg_duration_ms: number;
-    by_provider: Record<CIProvider, number>;
+    byProvider: Record<CIProvider, number>;
   } {
-    const all = this.get_run_history(undefined, 100);
+    const all = this.getRunHistory(undefined, 100);
     if (all.length === 0) {
       return {
         total_runs: 0,
         success_rate: 0,
         avg_duration_ms: 0,
-        by_provider: { github: 0, gitlab: 0, jenkins: 0 },
+        byProvider: { github: 0, gitlab: 0, jenkins: 0 },
       };
     }
     const successful = all.filter((r) => r.status === 'success').length;
     const totalDuration = all.reduce((sum, r) => sum + r.duration_ms, 0);
-    const by_provider: Record<CIProvider, number> = { github: 0, gitlab: 0, jenkins: 0 };
+    const byProvider: Record<CIProvider, number> = { github: 0, gitlab: 0, jenkins: 0 };
     for (const config of this.configs.values()) {
       const runs = this.runs.get(config.pipeline) || [];
-      by_provider[config.provider] += runs.length;
+      byProvider[config.provider] += runs.length;
     }
     return {
       total_runs: all.length,
       success_rate: (successful / all.length) * 100,
       avg_duration_ms: totalDuration / all.length,
-      by_provider,
+      byProvider,
     };
   }
 }

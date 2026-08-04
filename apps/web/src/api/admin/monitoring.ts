@@ -62,8 +62,8 @@ export interface AlertStats {
   high_alerts: number;
   medium_alerts: number;
   low_alerts: number;
-  by_type: Array<{ type: AlertType; count: number }>;
-  by_severity: Array<{ severity: AlertSeverity; count: number }>;
+  byType: Array<{ type: AlertType; count: number }>;
+  bySeverity: Array<{ severity: AlertSeverity; count: number }>;
   by_source: Array<{ source: string; count: number }>;
   trend: Array<{ date: string; count: number }>;
   mttr: number;

@@ -56,9 +56,7 @@ export interface OperationLogStats {
 }
 
 export const operationAuditApi = {
-  list: async (
-    params?: OperationLogQueryParams
-  ): Promise<ApiResponse<PaginatedOperationLogs>> => {
+  list: async (params?: OperationLogQueryParams): Promise<ApiResponse<PaginatedOperationLogs>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());

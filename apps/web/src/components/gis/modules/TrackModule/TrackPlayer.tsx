@@ -162,7 +162,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
             sx={{
               p: 3,
               bgcolor: 'primary.dark',
-              color: 'white',
+              color: 'common.white',
               '&:hover': { bgcolor: 'primary.dark' },
             }}
             title={isPlaying ? '暂停' : '播放'}

@@ -5,6 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
+import globals from 'globals';
 
 export default ts.config(
   {
@@ -14,6 +15,10 @@ export default ts.config(
       '.trae-cn/**',
       '.uploads/**',
       '**/*.cjs',
+      '**/*.js',
+      '**/generated/**',
+      '**/setupTests.ts',
+      '**/playwright.config.*.ts',
     ],
   },
   js.configs.recommended,
@@ -22,6 +27,15 @@ export default ts.config(
     languageOptions: {
       parserOptions: {
         project: null,
+      },
+    },
+  },
+  {
+    files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.vitest,
+        ...globals.jest,
       },
     },
   },

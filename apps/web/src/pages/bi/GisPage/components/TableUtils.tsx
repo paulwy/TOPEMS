@@ -13,6 +13,7 @@ import type {
 import type { GisEntity } from '../types';
 
 import i18n from '@/i18n';
+
 export const getStatusStyle = (status: string) => {
   if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
   const s = status.toLowerCase();
@@ -20,7 +21,10 @@ export const getStatusStyle = (status: string) => {
     return { bgcolor: 'success.lighter', color: 'success.700' };
   if (s.includes('pending') || s.includes(i18n.t('bi.gis_page_components__table_utils.pending')))
     return { bgcolor: 'warning.light', color: 'warning.700' };
-  if (s.includes('inactive') || s.includes(i18n.t('bi.gis_page_components__table_utils.text_710ad0')))
+  if (
+    s.includes('inactive') ||
+    s.includes(i18n.t('bi.gis_page_components__table_utils.text_710ad0'))
+  )
     return { bgcolor: 'error.lighter', color: 'error.darker' };
   return { bgcolor: 'grey.100', color: 'grey.600' };
 };
@@ -43,8 +47,15 @@ export interface ActionButtonsProps {
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({ item, onEdit, onDelete }) => (
-  <Stack direction='row' spacing={1}>
-    <IconButton size='small' sx={{ color: 'info.main' }} onClick={() => onEdit(item)}>
+  <Stack
+    direction='row'
+    spacing={1}
+  >
+    <IconButton
+      size='small'
+      sx={{ color: 'info.main' }}
+      onClick={() => onEdit(item)}
+    >
       <Edit size={16} />
     </IconButton>
     <IconButton
@@ -77,7 +88,13 @@ export const getDevicePointColumns = (
   {
     id: 'actions',
     header: i18n.t('bi.gis_page_components__table_utils.action'),
-    cell: ({ row }) => <ActionButtons item={row.original} onEdit={onEdit} onDelete={onDelete} />,
+    cell: ({ row }) => (
+      <ActionButtons
+        item={row.original}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+    ),
   },
 ];
 
@@ -111,7 +128,13 @@ export const getPipelineColumns = (
   {
     id: 'actions',
     header: i18n.t('bi.gis_page_components__table_utils.action'),
-    cell: ({ row }) => <ActionButtons item={row.original} onEdit={onEdit} onDelete={onDelete} />,
+    cell: ({ row }) => (
+      <ActionButtons
+        item={row.original}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+    ),
   },
 ];
 
@@ -122,7 +145,10 @@ export const getStorageLocationColumns = (
   { accessorKey: 'name', header: i18n.t('bi.gis_page_components__table_utils.location_name') },
   { accessorKey: 'location_type', header: i18n.t('bi.gis_page_components__table_utils.type') },
   { accessorKey: 'capacity', header: i18n.t('bi.gis_page_components__table_utils.text_fe7d74') },
-  { accessorKey: 'current_usage', header: i18n.t('bi.gis_page_components__table_utils.text_de3b57') },
+  {
+    accessorKey: 'current_usage',
+    header: i18n.t('bi.gis_page_components__table_utils.text_de3b57'),
+  },
   {
     accessorKey: 'latitude',
     header: i18n.t('bi.gis_page_components__table_utils.text_d5490c'),
@@ -133,7 +159,13 @@ export const getStorageLocationColumns = (
   {
     id: 'actions',
     header: i18n.t('bi.gis_page_components__table_utils.action'),
-    cell: ({ row }) => <ActionButtons item={row.original} onEdit={onEdit} onDelete={onDelete} />,
+    cell: ({ row }) => (
+      <ActionButtons
+        item={row.original}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+    ),
   },
 ];
 
@@ -156,7 +188,13 @@ export const getEvidenceRecordColumns = (
   {
     id: 'actions',
     header: i18n.t('bi.gis_page_components__table_utils.action'),
-    cell: ({ row }) => <ActionButtons item={row.original} onEdit={onEdit} onDelete={onDelete} />,
+    cell: ({ row }) => (
+      <ActionButtons
+        item={row.original}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+    ),
   },
 ];
 
@@ -179,7 +217,13 @@ export const getFactoryMapColumns = (
   {
     id: 'actions',
     header: i18n.t('bi.gis_page_components__table_utils.action'),
-    cell: ({ row }) => <ActionButtons item={row.original} onEdit={onEdit} onDelete={onDelete} />,
+    cell: ({ row }) => (
+      <ActionButtons
+        item={row.original}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+    ),
   },
 ];
 
@@ -199,7 +243,13 @@ export const getBusinessLocationColumns = (
   {
     id: 'actions',
     header: i18n.t('bi.gis_page_components__table_utils.action'),
-    cell: ({ row }) => <ActionButtons item={row.original} onEdit={onEdit} onDelete={onDelete} />,
+    cell: ({ row }) => (
+      <ActionButtons
+        item={row.original}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+    ),
   },
 ];
 
@@ -216,7 +266,10 @@ export const InputField: React.FC<{
   const theme = useTheme();
   return (
     <Box>
-      <Typography variant='body2' sx={{ fontWeight: 500, mb: 0.5 }}>
+      <Typography
+        variant='body2'
+        sx={{ fontWeight: 500, mb: 0.5 }}
+      >
         {label} {required && <span style={{ color: theme.palette.error.main }}>*</span>}
       </Typography>
       <TextField
@@ -239,7 +292,10 @@ export const TextAreaField: React.FC<{
   rows?: number;
 }> = ({ label, value, onChange, rows = 3 }) => (
   <Box>
-    <Typography variant='body2' sx={{ fontWeight: 500, mb: 0.5 }}>
+    <Typography
+      variant='body2'
+      sx={{ fontWeight: 500, mb: 0.5 }}
+    >
       {label}
     </Typography>
     <TextField

@@ -80,8 +80,8 @@ const loadRemoteModule = async (
   try {
     await loadRemoteEntry(remoteName);
 
-    if (typeof window.__webpack_init_sharing__ === 'function') {
-      await window.__webpack_init_sharing__('default');
+    if (typeof window.WebpackInitSharing === 'function') {
+      await window.WebpackInitSharing('default');
     }
 
     const container = (window as Record<string, WebpackContainer | undefined>)[remoteName];
@@ -89,16 +89,18 @@ const loadRemoteModule = async (
       throw new Error(`Remote module "${remoteName}" not found`);
     }
 
-    if (typeof container.init === 'function' && window.__webpack_share_scopes__) {
-      await container.init(window.__webpack_share_scopes__.default);
+    if (typeof container.init === 'function' && window.WebpackShareScopes) {
+      await container.init(window.WebpackShareScopes.default);
     }
 
     const factory = await container.get(modulePath);
     const remoteModule = (await factory()) as unknown as Record<string, unknown>;
 
     const defaultExport = remoteModule.default as unknown as Record<string, unknown> | undefined;
-    const mountFn = (remoteModule.mount || defaultExport?.mount) as MountFunction['mount'] | undefined;
-    const unmountFn = (remoteModule.unmount || defaultExport?.unmount) as MountFunction['unmount'] | undefined;
+    const mountFn = (remoteModule.mount || defaultExport?.mount) as
+      MountFunction['mount'] | undefined;
+    const unmountFn = (remoteModule.unmount || defaultExport?.unmount) as
+      MountFunction['unmount'] | undefined;
 
     if (!mountFn) {
       throw new Error(`Module ${remoteName}:${modulePath} does not export a mount function`);

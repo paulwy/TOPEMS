@@ -1,7 +1,7 @@
-import React from "react";
+import React from 'react';
 
 const ConfirmDialog: React.FC = () => {
-  return React.createElement("div", null, "ConfirmDialog");
+  return React.createElement('div', null, 'ConfirmDialog');
 };
 
 export default ConfirmDialog;

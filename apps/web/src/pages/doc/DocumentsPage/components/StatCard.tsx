@@ -48,7 +48,7 @@ const StatCard: React.FC<StatCardProps> = ({ icon: Icon, title, value, color }) 
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white',
+              color: 'common.white',
               bgcolor: colors[color as keyof typeof colors],
             }}
           >

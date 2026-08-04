@@ -408,8 +408,8 @@ export function AITextOptimizer({
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': { borderColor: 'secondary.100' },
-                  '&:hover fieldset': { borderColor: '#c4b5fd' },
-                  '&.Mui-focused fieldset': { borderColor: '#c4b5fd' },
+                  '&:hover fieldset': { borderColor: 'secondary.300' },
+                  '&.Mui-focused fieldset': { borderColor: 'secondary.300' },
                 },
                 '& .MuiInputBase-input': { resize: 'none' },
               }}

@@ -1,13 +1,7 @@
 export type MemoryEntryType = 'user_query' | 'action_result' | 'system_event';
 export type Sentiment = 'positive' | 'negative' | 'neutral';
 export type Intent =
-  | 'query'
-  | 'command'
-  | 'exploration'
-  | 'confirmation'
-  | 'correction'
-  | 'social'
-  | 'unclear';
+  'query' | 'command' | 'exploration' | 'confirmation' | 'correction' | 'social' | 'unclear';
 
 export interface ConversationMessage {
   id: string;
@@ -48,7 +42,14 @@ export interface ContextWindow {
 }
 
 export interface ContextEvent {
-  type: 'input_processed' | 'context_updated' | 'memory_stored' | 'memory_retrieved' | 'context_summarized' | 'entity_extracted' | 'intent_detected';
+  type:
+    | 'input_processed'
+    | 'context_updated'
+    | 'memory_stored'
+    | 'memory_retrieved'
+    | 'context_summarized'
+    | 'entity_extracted'
+    | 'intent_detected';
   message: string;
   timestamp: number;
   details?: Record<string, unknown>;
@@ -97,11 +98,11 @@ export class ContextEngine {
     this.listeners.forEach((l) => l(event));
   }
 
-  set_window(window: Partial<ContextWindow>): void {
+  setWindow(window: Partial<ContextWindow>): void {
     this.window = { ...this.window, ...window };
   }
 
-  process_input(
+  processInput(
     sessionId: string,
     input: string,
     role: 'user' | 'assistant' | 'system' = 'user'
@@ -122,20 +123,23 @@ export class ContextEngine {
 
     context.messages.push(message);
 
-    const entities = this.extract_entities(input);
-    context.entities = [...context.entities.filter((e) => !entities.some((ne) => ne.name === e.name)), ...entities];
+    const entities = this.extractEntities(input);
+    context.entities = [
+      ...context.entities.filter((e) => !entities.some((ne) => ne.name === e.name)),
+      ...entities,
+    ];
 
-    const intent = this.detect_intent(input);
+    const intent = this.detectIntent(input);
     context.intent = intent;
 
-    const sentiment = this.analyze_sentiment(input);
+    const sentiment = this.analyzeSentiment(input);
     context.sentiment = sentiment;
 
-    const topics = this.extract_topics(input);
+    const topics = this.extractTopics(input);
     context.topics = this.mergeTopics(context.topics, topics);
 
     if (context.messages.length > this.window.summaryThreshold) {
-      this.summarize_context(sessionId);
+      this.summarizeContext(sessionId);
     }
 
     if (context.messages.length > this.window.maxMessages) {
@@ -152,11 +156,11 @@ export class ContextEngine {
     return { ...context };
   }
 
-  get_context(sessionId: string): ConversationContext | undefined {
+  getContext(sessionId: string): ConversationContext | undefined {
     return this.conversations.get(sessionId);
   }
 
-  summarize_context(sessionId: string): string {
+  summarizeContext(sessionId: string): string {
     const context = this.conversations.get(sessionId);
     if (!context) return '';
 
@@ -174,7 +178,12 @@ export class ContextEngine {
       );
 
       if (context.entities.length > 0) {
-        summaryParts.push(`涉及实体: ${context.entities.map((e) => e.value).slice(0, 5).join(', ')}`);
+        summaryParts.push(
+          `涉及实体: ${context.entities
+            .map((e) => e.value)
+            .slice(0, 5)
+            .join(', ')}`
+        );
       }
 
       if (context.topics.length > 0) {
@@ -195,7 +204,7 @@ export class ContextEngine {
     return summary;
   }
 
-  extract_entities(input: string): Entity[] {
+  extractEntities(input: string): Entity[] {
     const entities: Entity[] = [];
     const words = input.split(/[\s,，。.!？；;：:、\(\)（）\[\]【】"'""''`~]/);
 
@@ -232,11 +241,41 @@ export class ContextEngine {
     }
 
     const actionWords = [
-      '创建', '删除', '更新', '查询', '生成', '发送', '获取',
-      '执行', '运行', '启动', '停止', '导入', '导出', '下载',
-      '创建', '提交', '审批', '批准', '拒绝', '分配', '指派',
-      'create', 'delete', 'update', 'query', 'generate', 'send', 'get',
-      'execute', 'run', 'start', 'stop', 'import', 'export', 'download',
+      '创建',
+      '删除',
+      '更新',
+      '查询',
+      '生成',
+      '发送',
+      '获取',
+      '执行',
+      '运行',
+      '启动',
+      '停止',
+      '导入',
+      '导出',
+      '下载',
+      '创建',
+      '提交',
+      '审批',
+      '批准',
+      '拒绝',
+      '分配',
+      '指派',
+      'create',
+      'delete',
+      'update',
+      'query',
+      'generate',
+      'send',
+      'get',
+      'execute',
+      'run',
+      'start',
+      'stop',
+      'import',
+      'export',
+      'download',
     ];
 
     for (const word of actionWords) {
@@ -262,7 +301,7 @@ export class ContextEngine {
     }
 
     for (const word of words) {
-      if (word.length >= 2 && /^[\u4e00-\u9fff]+$/.test(word)) {
+      if (word.length >= 2 && /^[\u4E00-\u9FFF]+$/.test(word)) {
         const isAlreadyAdded = entities.some((e) => e.value === word);
         if (!isAlreadyAdded) {
           entities.push({
@@ -278,7 +317,7 @@ export class ContextEngine {
     return entities;
   }
 
-  detect_intent(input: string): Intent {
+  detectIntent(input: string): Intent {
     const lower = input.toLowerCase();
 
     if (/^(请|帮我|我想|我要|需要|请帮|please|help|can you|i want|i need)/i.test(input)) {
@@ -288,7 +327,9 @@ export class ContextEngine {
       return 'command';
     }
 
-    if (/^[?？]|(什么是|是什么|如何|怎么|为什么|哪个|哪里|what|how|why|when|where|which)/i.test(input)) {
+    if (
+      /^[?？]|(什么是|是什么|如何|怎么|为什么|哪个|哪里|what|how|why|when|where|which)/i.test(input)
+    ) {
       return 'query';
     }
 
@@ -311,15 +352,45 @@ export class ContextEngine {
     return 'unclear';
   }
 
-  analyze_sentiment(input: string): Sentiment {
+  analyzeSentiment(input: string): Sentiment {
     const positiveWords = [
-      '好', '棒', '优秀', '喜欢', '满意', '赞', '完美', '谢谢', '感谢',
-      'good', 'great', 'excellent', 'like', 'love', 'happy', 'perfect', 'thanks',
+      '好',
+      '棒',
+      '优秀',
+      '喜欢',
+      '满意',
+      '赞',
+      '完美',
+      '谢谢',
+      '感谢',
+      'good',
+      'great',
+      'excellent',
+      'like',
+      'love',
+      'happy',
+      'perfect',
+      'thanks',
     ];
 
     const negativeWords = [
-      '差', '不好', '糟糕', '讨厌', '失望', '失败', '错误', '问题', 'bug',
-      'bad', 'terrible', 'hate', 'disappointed', 'fail', 'wrong', 'problem', 'issue',
+      '差',
+      '不好',
+      '糟糕',
+      '讨厌',
+      '失望',
+      '失败',
+      '错误',
+      '问题',
+      'bug',
+      'bad',
+      'terrible',
+      'hate',
+      'disappointed',
+      'fail',
+      'wrong',
+      'problem',
+      'issue',
     ];
 
     let positiveScore = 0;
@@ -340,15 +411,13 @@ export class ContextEngine {
     return 'neutral';
   }
 
-  get_memory(query?: string, limit: number = 20): MemoryEntry[] {
+  getMemory(query?: string, limit: number = 20): MemoryEntry[] {
     let entries = Array.from(this.memories.values());
 
     if (query) {
       const lower = query.toLowerCase();
       entries = entries.filter(
-        (e) =>
-          e.content.toLowerCase().includes(lower) ||
-          e.type.toLowerCase().includes(lower)
+        (e) => e.content.toLowerCase().includes(lower) || e.type.toLowerCase().includes(lower)
       );
     }
 
@@ -357,7 +426,7 @@ export class ContextEngine {
       .slice(0, limit);
   }
 
-  store_memory(
+  storeMemory(
     type: MemoryEntryType,
     content: string,
     importance?: number,
@@ -384,19 +453,19 @@ export class ContextEngine {
     return entry;
   }
 
-  list_sessions(): string[] {
+  listSessions(): string[] {
     return Array.from(this.conversations.keys());
   }
 
-  delete_session(sessionId: string): boolean {
+  deleteSession(sessionId: string): boolean {
     return this.conversations.delete(sessionId);
   }
 
-  clear_memories(): void {
+  clearMemories(): void {
     this.memories.clear();
   }
 
-  get_memory_stats(): {
+  getMemoryStats(): {
     total: number;
     byType: Record<MemoryEntryType, number>;
     avgImportance: number;
@@ -413,9 +482,7 @@ export class ContextEngine {
     }
 
     const avgImportance =
-      entries.length > 0
-        ? entries.reduce((sum, e) => sum + e.importance, 0) / entries.length
-        : 0;
+      entries.length > 0 ? entries.reduce((sum, e) => sum + e.importance, 0) / entries.length : 0;
 
     return { total: entries.length, byType, avgImportance };
   }
@@ -435,15 +502,11 @@ export class ContextEngine {
     const removed = context.messages.splice(0, excess);
 
     for (const msg of removed) {
-      this.store_memory(
-        msg.role === 'user' ? 'user_query' : 'action_result',
-        msg.content,
-        0.3
-      );
+      this.storeMemory(msg.role === 'user' ? 'user_query' : 'action_result', msg.content, 0.3);
     }
   }
 
-  private extract_topics(input: string): string[] {
+  private extractTopics(input: string): string[] {
     const topics = new Set<string>();
 
     const topicKeywords: Record<string, string[]> = {

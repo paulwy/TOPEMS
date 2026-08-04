@@ -8,9 +8,30 @@ import NetInfo from '@react-native-community/netinfo';
  * Group2 = 独立进程服务（/api/{svc}，不带 /core）
  */
 const GROUP2_INDEPENDENT_SERVICES = new Set([
-  'erp', 'finance', 'doc', 'ai', 'hrm', 'pm', 'crm', 'mes', 'pdm',
-  'scm', 'wms', 'srm', 'qms', 'lims', 'ehs', 'rd', 'rs', 'bi',
-  'analytics', 'report', 'monitor', 'portal', 'mobile', 'gis',
+  'erp',
+  'finance',
+  'doc',
+  'ai',
+  'hrm',
+  'pm',
+  'crm',
+  'mes',
+  'pdm',
+  'scm',
+  'wms',
+  'srm',
+  'qms',
+  'lims',
+  'ehs',
+  'rd',
+  'rs',
+  'bi',
+  'analytics',
+  'report',
+  'monitor',
+  'portal',
+  'mobile',
+  'gis',
   'integration',
 ]);
 
@@ -199,7 +220,7 @@ export class SyncService {
   static async handleOfflineAction(
     module: string,
     action: string,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
   ): Promise<{ offlineId: string; isOffline: boolean }> {
     const state = await NetInfo.fetch();
     const isOffline = !state.isConnected || !state.isInternetReachable;

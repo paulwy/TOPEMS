@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     __financeStats?: FinanceDashboardStats;
   }
 }
@@ -107,7 +108,10 @@ export function useFinanceDashboardSchema(): DashboardSchema {
         if (!stats) return [];
         return [
           { name: t('finance.finance_dashboard_page.text_fccab9'), value: stats.total_receivables },
-          { name: t('finance.finance_dashboard_page.text_19a5b0'), value: stats.overdue_receivables },
+          {
+            name: t('finance.finance_dashboard_page.text_19a5b0'),
+            value: stats.overdue_receivables,
+          },
           { name: t('finance.finance_dashboard_page.text_855bfd'), value: stats.total_payables },
           { name: t('finance.finance_dashboard_page.text_4f9d0d'), value: stats.overdue_payables },
         ];

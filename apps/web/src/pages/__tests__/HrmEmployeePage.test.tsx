@@ -144,7 +144,7 @@ vi.mock('@/store', () => ({
 }));
 
 describe('HrmEmployeePage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
@@ -153,9 +153,9 @@ it('should render without crashing', () => {
       </QueryClientProvider>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have employee API methods defined', async () => {
+  it('should have employee API methods defined', async () => {
     render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
@@ -170,9 +170,9 @@ it('should have employee API methods defined', async () => {
     expect(employeeApi.delete).toBeDefined();
     expect(employeeApi.enable).toBeDefined();
     expect(employeeApi.disable).toBeDefined();
-});
+  });
 
-it('should have correct query key for employees', async () => {
+  it('should have correct query key for employees', async () => {
     render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
@@ -185,6 +185,5 @@ it('should have correct query key for employees', async () => {
       .getAll()
       .map((q) => q.queryKey);
     expect(queryKeys.some((key) => key[0] === 'hrm-employees')).toBe(true);
-});
-;
+  });
 });

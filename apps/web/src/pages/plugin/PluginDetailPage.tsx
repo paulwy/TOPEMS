@@ -190,7 +190,9 @@ const PluginDetailPage: React.FC = () => {
       if (success) {
         addNotification({
           title: t('plugin.message.install_success'),
-          message: t('plugin.detail_page.install_success_message', { name: plugin?.name || t('plugin.title') }),
+          message: t('plugin.detail_page.install_success_message', {
+            name: plugin?.name || t('plugin.title'),
+          }),
           type: 'success',
         });
       } else {
@@ -242,7 +244,9 @@ const PluginDetailPage: React.FC = () => {
   if (error || !plugin) {
     return (
       <PageContainer>
-        <Alert severity='error'>{error ? (error as Error).message : t('plugin.message.plugin_not_exist')}</Alert>
+        <Alert severity='error'>
+          {error ? (error as Error).message : t('plugin.message.plugin_not_exist')}
+        </Alert>
       </PageContainer>
     );
   }
@@ -287,7 +291,7 @@ const PluginDetailPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Package sx={{ width: 36, height: 36, color: 'white' }} />
+                <Package sx={{ width: 36, height: 36, color: 'common.white' }} />
               </Box>
               <Box sx={{ flexGrow: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
@@ -312,7 +316,11 @@ const PluginDetailPage: React.FC = () => {
                   )}
                   {healthStatusValue && (
                     <Chip
-                      label={healthStatusValue.healthy ? t('plugin.status.running') : t('plugin.status.unhealthy')}
+                      label={
+                        healthStatusValue.healthy
+                          ? t('plugin.status.running')
+                          : t('plugin.status.unhealthy')
+                      }
                       size='small'
                       color={healthStatusValue.healthy ? 'success' : 'error'}
                     />
@@ -334,12 +342,16 @@ const PluginDetailPage: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Download sx={{ width: 18, height: 18, color: 'grey.500' }} />
                     <Typography variant='body2'>
-                      {t('plugin.detail_page.install_count', { count: plugin.install_count?.toLocaleString() || 0 })}
+                      {t('plugin.detail_page.install_count', {
+                        count: plugin.install_count?.toLocaleString() || 0,
+                      })}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Shield sx={{ width: 18, height: 18, color: 'grey.500' }} />
-                    <Typography variant='body2'>{plugin.author_name || t('plugin.common.unknown_author')}</Typography>
+                    <Typography variant='body2'>
+                      {plugin.author_name || t('plugin.common.unknown_author')}
+                    </Typography>
                   </Box>
                 </Box>
               </Box>
@@ -351,7 +363,9 @@ const PluginDetailPage: React.FC = () => {
               sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
             >
               <Tab label={t('plugin.detail_page.tabs.intro')} />
-              <Tab label={t('plugin.detail_page.tabs.version_history', { count: versions.length })} />
+              <Tab
+                label={t('plugin.detail_page.tabs.version_history', { count: versions.length })}
+              />
               <Tab label={t('plugin.detail_page.tabs.reviews', { count: reviews.length })} />
             </Tabs>
 
@@ -481,7 +495,9 @@ const PluginDetailPage: React.FC = () => {
                               variant='body2'
                               color='textSecondary'
                             >
-                              {t('plugin.detail_page.version.size_label', { size: formatFileSize(version.filesize) })}
+                              {t('plugin.detail_page.version.size_label', {
+                                size: formatFileSize(version.filesize),
+                              })}
                             </Typography>
                           </Box>
                           {version.min_app_version && (
@@ -491,7 +507,9 @@ const PluginDetailPage: React.FC = () => {
                                 variant='body2'
                                 color='textSecondary'
                               >
-                                {t('plugin.detail_page.version.min_version_label', { version: version.min_app_version })}
+                                {t('plugin.detail_page.version.min_version_label', {
+                                  version: version.min_app_version,
+                                })}
                               </Typography>
                             </Box>
                           )}
@@ -558,7 +576,9 @@ const PluginDetailPage: React.FC = () => {
                         }
                         sx={{ alignSelf: 'flex-end' }}
                       >
-                        {submitReviewMutation.isPending ? t('plugin.common.submitting') : t('plugin.common.submit_review')}
+                        {submitReviewMutation.isPending
+                          ? t('plugin.common.submitting')
+                          : t('plugin.common.submit_review')}
                       </Button>
                     </Box>
                   </CardContent>
@@ -668,7 +688,9 @@ const PluginDetailPage: React.FC = () => {
                       variant='h5'
                       sx={{ fontWeight: 'bold', mb: 1 }}
                     >
-                      {plugin.is_free ? t('plugin.common.free') : `¥${((plugin.price_cents || 0) / 100).toFixed(2)}`}
+                      {plugin.is_free
+                        ? t('plugin.common.free')
+                        : `¥${((plugin.price_cents || 0) / 100).toFixed(2)}`}
                     </Typography>
                     {!plugin.is_free && (
                       <Typography
@@ -717,17 +739,25 @@ const PluginDetailPage: React.FC = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography color='textSecondary'>{t('plugin.field.type')}</Typography>
                       <Chip
-                        label={plugin.plugin_type === 'core' ? t('plugin.plugin_type.core') : t('plugin.plugin_type.business')}
+                        label={
+                          plugin.plugin_type === 'core'
+                            ? t('plugin.plugin_type.core')
+                            : t('plugin.plugin_type.business')
+                        }
                         size='small'
                         variant='outlined'
                       />
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography color='textSecondary'>{t('plugin.field.latest_version')}</Typography>
+                      <Typography color='textSecondary'>
+                        {t('plugin.field.latest_version')}
+                      </Typography>
                       <Typography sx={{ fontWeight: 'medium' }}>v{plugin.version}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography color='textSecondary'>{t('plugin.field.publish_time')}</Typography>
+                      <Typography color='textSecondary'>
+                        {t('plugin.field.publish_time')}
+                      </Typography>
                       <Typography sx={{ fontWeight: 'medium' }}>
                         {plugin.created_at ? new Date(plugin.created_at).toLocaleDateString() : '-'}
                       </Typography>

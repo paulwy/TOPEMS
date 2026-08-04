@@ -93,7 +93,7 @@ export function flattenRoutes(routes: RouteConfigV2[]): RouteConfigV2[] {
  * - `basic` modules are always visible (default).
  * - `advanced` modules are only visible when their `code` appears in the
  *   `activeAdvancedModuleCodes` set — typically populated from the
- *   `core_tenant_modules` table where `tier = 'advanced' AND is_active = true`.
+ *   `core_tenant_modules` table where `tier = 'advanced' AND isActive = true`.
  * - Modules without a `tier` field default to `basic` and are always shown.
  *
  * NOTE: The actual core_tenant_modules fetch is not wired up yet; callers

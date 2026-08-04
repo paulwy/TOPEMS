@@ -56,7 +56,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({ onShowBuilder }) => {
                   background: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
                 }}
               >
-                <FileText sx={{ width: 24, height: 24, color: 'white' }} />
+                <FileText sx={{ width: 24, height: 24, color: 'common.white' }} />
               </Box>
               <Box>
                 <Typography

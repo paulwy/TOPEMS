@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Chip,
-  CircularProgress,
-  Divider,
-  Paper,
-  Typography,
-  Stack,
-} from '@mui/material';
+import { Box, Chip, CircularProgress, Divider, Paper, Typography, Stack } from '@mui/material';
 import { Cpu, PlayCircle, Wrench, XCircle } from 'lucide-react';
 import { PieChart } from '@/components/charts';
 import type { EquipmentStatusBucket } from '../types';

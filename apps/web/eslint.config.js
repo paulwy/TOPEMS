@@ -20,6 +20,13 @@ const topemsDesignPlugin = require('./scripts/eslint-plugin-topems-design.cjs');
 
 export default [
   {
+    ignores: [
+      'setupTests.ts',
+      'playwright.config.*.ts',
+      'src/schemas/admin/tenantInvoice.tsx',
+    ],
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       globals: {
@@ -264,11 +271,6 @@ export default [
         },
         {
           ignoreMiddleExtensions: true,
-          ignorePatterns: [
-            '**/index.{ts,tsx,js,jsx}',
-            '**/index',
-            '**/NavigationRegistryV2.{ts,tsx}',
-          ],
         },
       ],
       'check-file/folder-naming-convention': 'off',
@@ -298,6 +300,12 @@ export default [
   },
   {
     files: ['src/lib/navigation/NavigationRegistryV2.ts', 'src/pages/gis/index.tsx'],
+    rules: {
+      'check-file/filename-naming-convention': 'off',
+    },
+  },
+  {
+    files: ['**/index.{ts,tsx,js,jsx}'],
     rules: {
       'check-file/filename-naming-convention': 'off',
     },

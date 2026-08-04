@@ -93,7 +93,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
               >
                 <Paper
                   sx={{
-                    backgroundColor: 'white',
+                    backgroundColor: 'common.white',
                     padding: '8px 12px',
                     borderRadius: 2,
                     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
@@ -370,10 +370,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
             <Polyline
               positions={[
                 ...currentDrawing.points.map((p) => [p.lat, p.lng] as [number, number]),
-                [currentDrawing.points[0].lat, currentDrawing.points[0].lng] as [
-                  number,
-                  number,
-                ],
+                [currentDrawing.points[0].lat, currentDrawing.points[0].lng] as [number, number],
               ]}
               color={currentDrawing.color}
               weight={3}

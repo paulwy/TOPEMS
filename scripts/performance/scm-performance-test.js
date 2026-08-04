@@ -26,6 +26,7 @@ import { check, sleep, group } from 'k6';
 import { Counter, Gauge, Rate, Trend } from 'k6/metrics';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8040';
+const IAM_URL = __ENV.IAM_URL || 'http://localhost:8000';
 const SMOKE = __ENV.SMOKE === 'true';
 
 const errors = new Rate('errors');
@@ -55,16 +56,16 @@ export const options = SMOKE ? {
 };
 
 function getAuthToken() {
-  const response = http.post(`${BASE_URL}/api/scm/login`, JSON.stringify({
+  const response = http.post(`${IAM_URL}/api/core/iam/auth/login`, JSON.stringify({
     username: 'admin',
     password: 'admin123',
   }), {
     headers: { 'Content-Type': 'application/json' },
   });
-  
+
   if (response.status === 200) {
     const body = JSON.parse(response.body);
-    return body.data.token;
+    return body.data.access_token;
   }
   return null;
 }

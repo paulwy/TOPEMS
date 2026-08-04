@@ -212,7 +212,10 @@ export const workflowMonitorSchema: EntitySchema = {
     ],
     statusBadge: {
       field: 'status',
-      colorMap: STATUS_COLORS as Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'>,
+      colorMap: STATUS_COLORS as Record<
+        string,
+        'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'
+      >,
       labelMap: STATUS_LABELS,
     },
   },

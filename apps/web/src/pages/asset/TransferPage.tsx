@@ -12,6 +12,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
 import { useTranslation } from 'react-i18next';
+
 const transferSchema = z.object({
   asset_id: z.string().min(1, '请选择资产'),
   asset_name: z.string().optional(),

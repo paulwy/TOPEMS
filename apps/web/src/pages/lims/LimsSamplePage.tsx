@@ -3,7 +3,9 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { sampleSchema } from '@/schemas/lims';
 import { limsApi } from '@/api/lims';
 
-const apiAdapter = createCrudPageAdapter(limsApi.samples as unknown as Parameters<typeof createCrudPageAdapter>[0]);
+const apiAdapter = createCrudPageAdapter(
+  limsApi.samples as unknown as Parameters<typeof createCrudPageAdapter>[0]
+);
 
 export default function LimsSamplePage() {
   return (

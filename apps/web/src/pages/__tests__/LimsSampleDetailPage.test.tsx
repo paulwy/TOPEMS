@@ -97,50 +97,48 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
-    (useNotificationStore.getState as vi.Mock).mockReturnValue({
-      addNotification: mockAddNotification,
-      notifications: [],
-      removeNotification: vi.fn(),
-      clearNotifications: vi.fn(),
-    });
-    (limsApi.getSample as vi.Mock).mockResolvedValue({
-      success: true,
-      data: mockSampleDetail,
-    });
-    (limsApi.listTasksBySample as vi.Mock).mockResolvedValue({
-      success: true,
-      data: [],
-    });
-  });
+(useNotificationStore.getState as vi.Mock).mockReturnValue({
+  addNotification: mockAddNotification,
+  notifications: [],
+  removeNotification: vi.fn(),
+  clearNotifications: vi.fn(),
+});
+(limsApi.getSample as vi.Mock).mockResolvedValue({
+  success: true,
+  data: mockSampleDetail,
+});
+(limsApi.listTasksBySample as vi.Mock).mockResolvedValue({
+  success: true,
+  data: [],
+});
 
 describe('LimsSampleDetailPage', () => {
-it('should render loading state initially', async () => {
+  it('should render loading state initially', async () => {
     renderWithProviders(<LimsSampleDetailPage />);
     await waitFor(() => {
       expect(screen.getByText('加载中...')).toBeInTheDocument();
+    });
   });
-});
 
-it('should render page title', async () => {
+  it('should render page title', async () => {
     renderWithProviders(<LimsSampleDetailPage />);
     await waitFor(() => {
       expect(screen.getByText('土壤样本A')).toBeInTheDocument();
+    });
   });
-});
 
-it('should render sample details', async () => {
+  it('should render sample details', async () => {
     renderWithProviders(<LimsSampleDetailPage />);
     await waitFor(() => {
       expect(screen.getByText('SMP-2024-001')).toBeInTheDocument();
+    });
   });
-});
 
-it('should handle API error', async () => {
+  it('should handle API error', async () => {
     (limsApi.getSample as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<LimsSampleDetailPage />);
     await waitFor(() => {
       expect(screen.getByText('样品不存在或已被删除')).toBeInTheDocument();
+    });
   });
-});
-;
 });

@@ -7,14 +7,7 @@
 
 import React from 'react';
 import { Box, Chip, Typography, Paper, Stack, Tooltip } from '@mui/material';
-import {
-  Clock,
-  AlertCircle,
-  AlertTriangle,
-  Info,
-  Bug,
-  Server,
-} from 'lucide-react';
+import { Clock, AlertCircle, AlertTriangle, Info, Bug, Server } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens } from '@/theme/tokens';
 
@@ -76,7 +69,7 @@ const getLevelChip = (level: LogLevel): React.ReactNode => {
   };
   return (
     <Chip
-      size="small"
+      size='small'
       label={LEVEL_LABELS[level]}
       icon={icons[level]}
       sx={{
@@ -87,7 +80,7 @@ const getLevelChip = (level: LogLevel): React.ReactNode => {
         height: 24,
         '& .MuiChip-icon': { ml: 0.5, color: colors.color },
       }}
-      variant="outlined"
+      variant='outlined'
     />
   );
 };
@@ -100,7 +93,7 @@ const highlightText = (text: string, keyword: string): React.ReactNode => {
     <>
       {text.slice(0, index)}
       <Box
-        component="span"
+        component='span'
         sx={{ bgcolor: 'warning.light', px: 0.25, borderRadius: 0.5 }}
       >
         {text.slice(index, index + keyword.length)}
@@ -121,8 +114,15 @@ const logFields: SchemaField[] = [
       const ts = row.timestamp as string;
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Clock size={14} color="text.disabled" />
-          <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+          <Clock
+            size={14}
+            color='text.disabled'
+          />
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+          >
             {formatTimeWithMs(ts)}
           </Typography>
         </Box>
@@ -154,9 +154,15 @@ const logFields: SchemaField[] = [
             justifyContent: 'center',
           }}
         >
-          <Server size={12} color="primary.main" />
+          <Server
+            size={12}
+            color='primary.main'
+          />
         </Box>
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+        <Typography
+          variant='body2'
+          sx={{ fontWeight: 500 }}
+        >
           {row.service as string}
         </Typography>
       </Box>
@@ -171,9 +177,12 @@ const logFields: SchemaField[] = [
       const msg = row.message as string;
       const keyword = (row._searchQuery as string) || '';
       return (
-        <Tooltip title={msg} placement="top-start">
+        <Tooltip
+          title={msg}
+          placement='top-start'
+        >
           <Typography
-            variant="body2"
+            variant='body2'
             sx={{
               maxWidth: 400,
               whiteSpace: 'nowrap',
@@ -195,7 +204,7 @@ const logFields: SchemaField[] = [
     renderCell: (row: Record<string, unknown>) => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography
-          variant="body2"
+          variant='body2'
           sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}
         >
           {row.trace_id as string}
@@ -211,10 +220,20 @@ const logFields: SchemaField[] = [
     renderCell: (row: Record<string, unknown>) => {
       const dur = row.duration_ms as number | undefined;
       if (!dur)
-        return <Typography variant="body2" color="text.disabled">-</Typography>;
+        return (
+          <Typography
+            variant='body2'
+            color='text.disabled'
+          >
+            -
+          </Typography>
+        );
       const isSlow = dur > 1000;
       return (
-        <Typography variant="body2" sx={{ fontWeight: 500, color: isSlow ? 'error.main' : 'text.secondary' }}>
+        <Typography
+          variant='body2'
+          sx={{ fontWeight: 500, color: isSlow ? 'error.main' : 'text.secondary' }}
+        >
           {dur}ms
         </Typography>
       );
@@ -227,7 +246,13 @@ const logFields: SchemaField[] = [
     listWidth: 110,
     renderCell: (row: Record<string, unknown>) => {
       const t = row.type as LogType;
-      return <Chip size="small" label={TYPE_LABELS[t]} variant="outlined" />;
+      return (
+        <Chip
+          size='small'
+          label={TYPE_LABELS[t]}
+          variant='outlined'
+        />
+      );
     },
   },
 ];
@@ -311,53 +336,93 @@ export const logSchema: EntitySchema = {
   renderDetail: (row) => {
     const level = row.level as LogLevel;
     return (
-      <Stack spacing={3} sx={{ pt: 1 }}>
+      <Stack
+        spacing={3}
+        sx={{ pt: 1 }}
+      >
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
           <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
             <Paper sx={{ p: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              <Typography
+                variant='subtitle2'
+                color='text.secondary'
+                gutterBottom
+              >
                 基本信息
               </Typography>
               <Stack spacing={1.5}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     日志ID
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 500, fontFamily: 'monospace' }}
+                  >
                     {row.id as string}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     时间
                   </Typography>
-                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontFamily: 'monospace' }}
+                  >
                     {formatTimeWithMs(row.timestamp as string)}
                   </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     级别
                   </Typography>
                   {getLevelChip(level)}
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     类型
                   </Typography>
-                  <Chip size="small" label={TYPE_LABELS[row.type as LogType]} variant="outlined" />
+                  <Chip
+                    size='small'
+                    label={TYPE_LABELS[row.type as LogType]}
+                    variant='outlined'
+                  />
                 </Box>
               </Stack>
             </Paper>
           </Box>
           <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
             <Paper sx={{ p: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              <Typography
+                variant='subtitle2'
+                color='text.secondary'
+                gutterBottom
+              >
                 服务信息
               </Typography>
               <Stack spacing={1.5}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     服务名
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -372,27 +437,44 @@ export const logSchema: EntitySchema = {
                         justifyContent: 'center',
                       }}
                     >
-                      <Server size={10} color="primary.main" />
+                      <Server
+                        size={10}
+                        color='primary.main'
+                      />
                     </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                    >
                       {row.service as string}
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     Trace ID
                   </Typography>
-                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                  >
                     {row.trace_id as string}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     耗时
                   </Typography>
                   <Typography
-                    variant="body2"
+                    variant='body2'
                     sx={{
                       fontWeight: 500,
                       color:
@@ -414,11 +496,15 @@ export const logSchema: EntitySchema = {
                 bgcolor: level === 'error' ? 'error.light' : 'grey.50',
               }}
             >
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              <Typography
+                variant='subtitle2'
+                color='text.secondary'
+                gutterBottom
+              >
                 日志内容
               </Typography>
               <Typography
-                variant="body2"
+                variant='body2'
                 sx={{
                   fontFamily: 'monospace',
                   whiteSpace: 'pre-wrap',

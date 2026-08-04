@@ -4,6 +4,7 @@ import { Dialog, StatusBadge } from '@/components/common';
 import type { FinancialVoucher, VoucherItem } from '@/api/erp';
 
 import { useTranslation } from 'react-i18next';
+
 interface VoucherDetailModalProps {
   open: boolean;
   onClose: () => void;

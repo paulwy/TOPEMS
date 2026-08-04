@@ -181,9 +181,7 @@ class RegistryApi {
 
   async pingAllModules(): Promise<ModuleHealthStatus[]> {
     const modules = moduleRegistry.listModules({ status: 'active' });
-    const results = await Promise.all(
-      modules.map((m) => this.pingModule(m.id))
-    );
+    const results = await Promise.all(modules.map((m) => this.pingModule(m.id)));
     return results;
   }
 

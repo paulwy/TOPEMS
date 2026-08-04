@@ -14,7 +14,7 @@
  * autoTriggerEngine.createTrigger({
  *   trigger_id: 't-1',
  *   name: '每日巡检',
- *   type: TriggerType.Schedule,
+ *   type: TriggerType.SCHEDULE,
  *   config: { cron_expression: '0 9 * * *', timezone: 'Asia/Shanghai' },
  *   enabled: true,
  *   fire_count: 0,
@@ -27,13 +27,13 @@ import { NodeType, type Workflow } from './workflow-editor';
 // ==================== 枚举 ====================
 
 export enum TriggerType {
-  Schedule = 'schedule',
-  Event = 'event',
-  Webhook = 'webhook',
-  DataChange = 'data-change',
-  Threshold = 'threshold',
-  Manual = 'manual',
-  Compound = 'compound',
+  SCHEDULE = 'schedule',
+  EVENT = 'event',
+  WEBHOOK = 'webhook',
+  DATACHANGE = 'data-change',
+  THRESHOLD = 'threshold',
+  MANUAL = 'manual',
+  COMPOUND = 'compound',
 }
 
 export enum LogicalOperator {
@@ -42,9 +42,9 @@ export enum LogicalOperator {
 }
 
 export enum TriggerFireResult {
-  Success = 'success',
-  Failed = 'failed',
-  Skipped = 'skipped',
+  SUCCESS = 'success',
+  FAILED = 'failed',
+  SKIPPED = 'skipped',
 }
 
 // ==================== 接口 ====================
@@ -215,14 +215,14 @@ export class AutoTriggerEngine {
     if (!trigger || !trigger.enabled) return false;
 
     switch (trigger.type) {
-      case TriggerType.Schedule: {
+      case TriggerType.SCHEDULE: {
         const config = trigger.config as ScheduleConfig;
         const now = Date.now();
         if (config.start_date && now < config.start_date) return false;
         if (config.end_date && now > config.end_date) return false;
         return true;
       }
-      case TriggerType.Event: {
+      case TriggerType.EVENT: {
         const config = trigger.config as EventConfig;
         if (context.event_type !== config.event_type) return false;
         if (context.source !== config.source) return false;
@@ -233,7 +233,7 @@ export class AutoTriggerEngine {
         }
         return true;
       }
-      case TriggerType.Webhook: {
+      case TriggerType.WEBHOOK: {
         const config = trigger.config as WebhookConfig;
         if (
           config.allowed_ips &&
@@ -244,22 +244,22 @@ export class AutoTriggerEngine {
         }
         return true;
       }
-      case TriggerType.DataChange: {
+      case TriggerType.DATACHANGE: {
         const config = trigger.config as DataChangeConfig;
         if (context.entity !== config.entity) return false;
         if (context.operation !== config.operation) return false;
         return true;
       }
-      case TriggerType.Threshold: {
+      case TriggerType.THRESHOLD: {
         const config = trigger.config as ThresholdConfig;
         const value = Number(context[config.metric]);
         if (Number.isNaN(value)) return false;
         return this.compareThreshold(value, config.operator, config.value);
       }
-      case TriggerType.Manual: {
+      case TriggerType.MANUAL: {
         return true;
       }
-      case TriggerType.Compound: {
+      case TriggerType.COMPOUND: {
         const config = trigger.config as CompoundConfig;
         const results = config.sub_triggers.map((subId) => this.evaluateTrigger(subId, context));
         return config.operator === LogicalOperator.AND
@@ -303,7 +303,7 @@ export class AutoTriggerEngine {
         trigger_id: triggerId,
         workflow_id: trigger?.workflow_id || '',
         fired_at: now,
-        result: TriggerFireResult.Skipped,
+        result: TriggerFireResult.SKIPPED,
         payload,
         error: !trigger ? '触发器不存在' : '触发器已禁用',
       };
@@ -319,7 +319,7 @@ export class AutoTriggerEngine {
       trigger_id: triggerId,
       workflow_id: trigger.workflow_id,
       fired_at: now,
-      result: TriggerFireResult.Success,
+      result: TriggerFireResult.SUCCESS,
       payload,
     };
     this.histories.push(history);
@@ -341,10 +341,10 @@ export class AutoTriggerEngine {
     if (!trigger) return null;
     const triggerHistory = this.histories.filter((h) => h.trigger_id === triggerId);
     const successCount = triggerHistory.filter(
-      (h) => h.result === TriggerFireResult.Success
+      (h) => h.result === TriggerFireResult.SUCCESS
     ).length;
-    const failedCount = triggerHistory.filter((h) => h.result === TriggerFireResult.Failed).length;
-    const skipCount = triggerHistory.filter((h) => h.result === TriggerFireResult.Skipped).length;
+    const failedCount = triggerHistory.filter((h) => h.result === TriggerFireResult.FAILED).length;
+    const skipCount = triggerHistory.filter((h) => h.result === TriggerFireResult.SKIPPED).length;
 
     let avgInterval = 0;
     if (triggerHistory.length > 1) {
@@ -374,9 +374,9 @@ export class AutoTriggerEngine {
     const nodeTypes = workflow.nodes.map((n) => n.type);
 
     // 包含 HTTPRequest / DatabaseQuery → 建议 Webhook 触发
-    if (nodeTypes.includes(NodeType.HTTPRequest) || nodeTypes.includes(NodeType.DatabaseQuery)) {
+    if (nodeTypes.includes(NodeType.HTTPREQUEST) || nodeTypes.includes(NodeType.DATABASEQUERY)) {
       suggestions.push({
-        trigger_type: TriggerType.Webhook,
+        trigger_type: TriggerType.WEBHOOK,
         name: `${workflow.name} Webhook 触发器`,
         confidence: 0.85,
         config: {
@@ -388,9 +388,9 @@ export class AutoTriggerEngine {
     }
 
     // 包含定时巡检类节点 → 建议定时触发
-    if (nodeTypes.includes(NodeType.Delay) || nodeTypes.includes(NodeType.Loop)) {
+    if (nodeTypes.includes(NodeType.DELAY) || nodeTypes.includes(NodeType.LOOP)) {
       suggestions.push({
-        trigger_type: TriggerType.Schedule,
+        trigger_type: TriggerType.SCHEDULE,
         name: `${workflow.name} 定时触发器`,
         confidence: 0.75,
         config: {
@@ -402,9 +402,9 @@ export class AutoTriggerEngine {
     }
 
     // 包含 Notify 节点 → 建议事件触发
-    if (nodeTypes.includes(NodeType.Notify)) {
+    if (nodeTypes.includes(NodeType.NOTIFY)) {
       suggestions.push({
-        trigger_type: TriggerType.Event,
+        trigger_type: TriggerType.EVENT,
         name: `${workflow.name} 事件触发器`,
         confidence: 0.7,
         config: {
@@ -416,9 +416,9 @@ export class AutoTriggerEngine {
     }
 
     // 包含 AI / Aggregate → 建议数据变更触发
-    if (nodeTypes.includes(NodeType.Aggregate) || nodeTypes.includes(NodeType.AI)) {
+    if (nodeTypes.includes(NodeType.AGGREGATE) || nodeTypes.includes(NodeType.AI)) {
       suggestions.push({
-        trigger_type: TriggerType.DataChange,
+        trigger_type: TriggerType.DATACHANGE,
         name: `${workflow.name} 数据变更触发器`,
         confidence: 0.8,
         config: {
@@ -432,7 +432,7 @@ export class AutoTriggerEngine {
     // 默认建议手动触发
     if (suggestions.length === 0) {
       suggestions.push({
-        trigger_type: TriggerType.Manual,
+        trigger_type: TriggerType.MANUAL,
         name: `${workflow.name} 手动触发器`,
         confidence: 0.5,
         config: {},
@@ -482,7 +482,7 @@ export class AutoTriggerEngine {
 
   validateWebhook(triggerId: string, signature: string, payload: string): boolean {
     const trigger = this.triggers.get(triggerId);
-    if (!trigger || trigger.type !== TriggerType.Webhook) return false;
+    if (!trigger || trigger.type !== TriggerType.WEBHOOK) return false;
     const config = trigger.config as WebhookConfig;
     if (!config.secret) return true; // 无密钥则跳过校验
     // 简化校验：实际应使用 HMAC
@@ -493,7 +493,7 @@ export class AutoTriggerEngine {
 
   getNextFireTime(triggerId: string): number | null {
     const trigger = this.triggers.get(triggerId);
-    if (!trigger || trigger.type !== TriggerType.Schedule) return null;
+    if (!trigger || trigger.type !== TriggerType.SCHEDULE) return null;
     const config = trigger.config as ScheduleConfig;
     // 简化：基于 cron 表达式估算（实际应使用 cron 解析库）
     const now = Date.now();

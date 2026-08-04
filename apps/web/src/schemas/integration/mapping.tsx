@@ -35,10 +35,7 @@ export const MAPPING_STATUS_LABELS: Record<MappingStatus, string> = {
   draft: '草稿',
 };
 
-export const MAPPING_STATUS_COLORS: Record<
-  MappingStatus,
-  'success' | 'default' | 'warning'
-> = {
+export const MAPPING_STATUS_COLORS: Record<MappingStatus, 'success' | 'default' | 'warning'> = {
   active: 'success',
   inactive: 'default',
   draft: 'warning',

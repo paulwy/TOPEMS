@@ -24,14 +24,7 @@
  * ```
  */
 
-import React, {
-  Suspense,
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-  type ReactNode,
-} from 'react';
+import React, { Suspense, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { Box, Skeleton, Stack } from '@mui/material';
 import { readSSRData } from '@/utils/streaming-ssr';
 import { logger } from '@/utils/logger';
@@ -244,18 +237,12 @@ export const StaticShell: React.FC<StaticShellProps> = ({ children, route, immed
 
   useEffect(() => {
     if (route) {
-      pprLogger.debug(
-        `静态壳挂载: ${route} (${Date.now() - mountedAt.current}ms)`
-      );
+      pprLogger.debug(`静态壳挂载: ${route} (${Date.now() - mountedAt.current}ms)`);
     }
   }, [route]);
 
   if (!immediate) {
-    return (
-      <Box sx={{ visibility: 'hidden' }}>
-        {children}
-      </Box>
-    );
+    return <Box sx={{ visibility: 'hidden' }}>{children}</Box>;
   }
 
   return <>{children}</>;
@@ -462,9 +449,7 @@ export function getPPRStats(): {
   const loaded = pprSlotRecords.filter((r) => r.loaded && r.duration !== null);
   const pending = pprSlotRecords.filter((r) => !r.loaded);
   const avgLoadDuration =
-    loaded.length > 0
-      ? loaded.reduce((sum, r) => sum + (r.duration ?? 0), 0) / loaded.length
-      : 0;
+    loaded.length > 0 ? loaded.reduce((sum, r) => sum + (r.duration ?? 0), 0) / loaded.length : 0;
   return {
     records: [...pprSlotRecords],
     totalSlots: pprSlotRecords.length,

@@ -382,7 +382,12 @@ export function TypographyShowcase() {
           <Box sx={{ flex: 1 }}>
             <Typography
               variant={variant as unknown as React.ComponentProps<typeof Typography>['variant']}
-            sx={{ ...(props as unknown as Record<string, unknown>), textTransform: (props as unknown as Record<string, unknown>).textTransform as string | undefined ?? undefined }}
+              sx={{
+                ...(props as unknown as Record<string, unknown>),
+                textTransform:
+                  ((props as unknown as Record<string, unknown>).textTransform as
+                    string | undefined) ?? undefined,
+              }}
             >
               {label} — The quick brown fox jumps over the lazy dog
             </Typography>
@@ -618,9 +623,9 @@ export function DarkShadowComparison() {
                     height: 60,
                     borderRadius: 3,
                     boxShadow: value as string,
-                    backgroundColor: '#ffffff',
+                    backgroundColor: 'primary.contrastText',
                     border: '1px solid',
-                    borderColor: '#e5e7eb',
+                    borderColor: 'grey.200',
                   }}
                 />
                 <Typography
@@ -652,9 +657,9 @@ export function DarkShadowComparison() {
                     height: 60,
                     borderRadius: 3,
                     boxShadow: value as string,
-                    backgroundColor: '#1f2937',
+                    backgroundColor: 'grey.800',
                     border: '1px solid',
-                    borderColor: '#374151',
+                    borderColor: 'grey.700',
                   }}
                 />
                 <Typography

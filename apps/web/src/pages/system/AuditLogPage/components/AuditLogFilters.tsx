@@ -65,7 +65,7 @@ const AuditLogFilters: React.FC<AuditLogFiltersProps> = ({
       >
         <TextField
           size='small'
-          placeholder={t('system.audit_page.search_placeholder')}
+          placeholder={t('system.auditPage.search_placeholder')}
           value={filters.searchQuery}
           onChange={(e) => updateFilter('searchQuery', e.target.value)}
           slotProps={{

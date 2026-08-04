@@ -45,6 +45,7 @@ import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const mockSalesData = [
@@ -252,7 +253,13 @@ const DataAnalysisPage = () => {
               销售趋势分析
             </Typography>
             <Chip
-              label={drillLevel === 0 ? t('bi.data_analysis_page.text_047d4a') : drillLevel === 1 ? t('bi.data_analysis_page.text_4a7b52') : t('bi.data_analysis_page.product_2')}
+              label={
+                drillLevel === 0
+                  ? t('bi.data_analysis_page.text_047d4a')
+                  : drillLevel === 1
+                    ? t('bi.data_analysis_page.text_4a7b52')
+                    : t('bi.data_analysis_page.product_2')
+              }
               size='small'
               color='primary'
               variant='outlined'
@@ -274,7 +281,11 @@ const DataAnalysisPage = () => {
               type={chartType}
               data={mockSalesData}
               xKey='month'
-              yKeys={[t('bi.data_analysis_page.text_9ae444'), t('bi.data_analysis_page.order'), t('bi.data_analysis_page.customer')]}
+              yKeys={[
+                t('bi.data_analysis_page.text_9ae444'),
+                t('bi.data_analysis_page.order'),
+                t('bi.data_analysis_page.customer'),
+              ]}
               chartHeight={400}
               chartWidth={800}
               smooth
@@ -328,10 +339,30 @@ const DataAnalysisPage = () => {
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                 {[
-                  { label: t('bi.data_analysis_page.text_4cbae8'), value: '¥913,000', change: '+12.5%', color: 'success.main' },
-                  { label: t('bi.data_analysis_page.order_1'), value: '3,130', change: '+8.3%', color: 'primary.main' },
-                  { label: t('bi.data_analysis_page.customer'), value: '1,270', change: '+15.2%', color: 'secondary.main' },
-                  { label: t('bi.data_analysis_page.text_53c7e7'), value: '¥291.7', change: '+3.8%', color: 'warning.main' },
+                  {
+                    label: t('bi.data_analysis_page.text_4cbae8'),
+                    value: '¥913,000',
+                    change: '+12.5%',
+                    color: 'success.main',
+                  },
+                  {
+                    label: t('bi.data_analysis_page.order_1'),
+                    value: '3,130',
+                    change: '+8.3%',
+                    color: 'primary.main',
+                  },
+                  {
+                    label: t('bi.data_analysis_page.customer'),
+                    value: '1,270',
+                    change: '+15.2%',
+                    color: 'secondary.main',
+                  },
+                  {
+                    label: t('bi.data_analysis_page.text_53c7e7'),
+                    value: '¥291.7',
+                    change: '+3.8%',
+                    color: 'warning.main',
+                  },
                 ].map((metric, idx) => (
                   <Box
                     key={idx}
@@ -404,7 +435,14 @@ const DataAnalysisPage = () => {
                   <TableCell sx={{ fontWeight: 600, backgroundColor: ct.grey[50] }}>
                     产品类别
                   </TableCell>
-                  {[t('bi.data_analysis_page.text_fccc2b'), t('bi.data_analysis_page.text_c1d13f'), t('bi.data_analysis_page.text_c4767b'), t('bi.data_analysis_page.text_3eaf4b'), t('bi.data_analysis_page.text_0545f1'), t('bi.data_analysis_page.text_f2422a')].map((month) => (
+                  {[
+                    t('bi.data_analysis_page.text_fccc2b'),
+                    t('bi.data_analysis_page.text_c1d13f'),
+                    t('bi.data_analysis_page.text_c4767b'),
+                    t('bi.data_analysis_page.text_3eaf4b'),
+                    t('bi.data_analysis_page.text_0545f1'),
+                    t('bi.data_analysis_page.text_f2422a'),
+                  ].map((month) => (
                     <TableCell
                       key={month}
                       align='right'
@@ -422,12 +460,36 @@ const DataAnalysisPage = () => {
                     hover
                   >
                     <TableCell sx={{ fontWeight: 500 }}>{row.category}</TableCell>
-                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_fccc2b')].toLocaleString()}</TableCell>
-                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_c1d13f')].toLocaleString()}</TableCell>
-                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_c4767b')].toLocaleString()}</TableCell>
-                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_3eaf4b')].toLocaleString()}</TableCell>
-                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_0545f1')].toLocaleString()}</TableCell>
-                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_f2422a')].toLocaleString()}</TableCell>
+                    <TableCell align='right'>
+                      {(row as Record<string, any>)[
+                        t('bi.data_analysis_page.text_fccc2b')
+                      ].toLocaleString()}
+                    </TableCell>
+                    <TableCell align='right'>
+                      {(row as Record<string, any>)[
+                        t('bi.data_analysis_page.text_c1d13f')
+                      ].toLocaleString()}
+                    </TableCell>
+                    <TableCell align='right'>
+                      {(row as Record<string, any>)[
+                        t('bi.data_analysis_page.text_c4767b')
+                      ].toLocaleString()}
+                    </TableCell>
+                    <TableCell align='right'>
+                      {(row as Record<string, any>)[
+                        t('bi.data_analysis_page.text_3eaf4b')
+                      ].toLocaleString()}
+                    </TableCell>
+                    <TableCell align='right'>
+                      {(row as Record<string, any>)[
+                        t('bi.data_analysis_page.text_0545f1')
+                      ].toLocaleString()}
+                    </TableCell>
+                    <TableCell align='right'>
+                      {(row as Record<string, any>)[
+                        t('bi.data_analysis_page.text_f2422a')
+                      ].toLocaleString()}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -536,7 +598,11 @@ const DataAnalysisPage = () => {
                       <Chip
                         label={row.status}
                         size='small'
-                        color={row.status === t('bi.data_analysis_page.completed') ? 'success' : 'warning'}
+                        color={
+                          row.status === t('bi.data_analysis_page.completed')
+                            ? 'success'
+                            : 'warning'
+                        }
                         variant='outlined'
                       />
                     </TableCell>

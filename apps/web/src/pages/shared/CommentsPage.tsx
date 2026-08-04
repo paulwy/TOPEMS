@@ -60,12 +60,12 @@ const CommentsPage: React.FC = () => {
 
   // 创建评论
   const createMutation = useMutation({
-    mutationFn: (data: { content: string; parent_id?: string }) =>
+    mutationFn: (data: { content: string; parentId?: string }) =>
       commentApi.create({
         content: data.content,
         entity_type: entityType,
         entity_id: entityId,
-        parent_id: data.parent_id,
+        parentId: data.parentId,
       }),
     onSuccess: () => {
       addNotification({ type: 'success', title: '已发表', message: '评论已发布' });
@@ -122,7 +122,7 @@ const CommentsPage: React.FC = () => {
 
   const handleReply = (parentId: string) => {
     if (!replyContent.trim()) return;
-    createMutation.mutate({ content: replyContent.trim(), parent_id: parentId });
+    createMutation.mutate({ content: replyContent.trim(), parentId });
   };
 
   const handleUpdate = (id: string) => {

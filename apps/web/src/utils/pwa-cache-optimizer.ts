@@ -3,7 +3,8 @@
  * 提供智能预缓存、stale-while-revalidate 优化和缓存命中率统计
  */
 
-export type CacheStrategy = 'cacheFirst' | 'networkFirst' | 'staleWhileRevalidate' | 'networkOnly' | 'cacheOnly';
+export type CacheStrategy =
+  'cacheFirst' | 'networkFirst' | 'staleWhileRevalidate' | 'networkOnly' | 'cacheOnly';
 
 export interface RouteCacheConfig {
   /** 缓存名称 */
@@ -74,12 +75,12 @@ export class CacheStatsTracker {
 /**
  * 创建带统计的 CacheFirst 策略
  */
-export function createCacheFirstWithStats(
-  config: RouteCacheConfig,
-  stats: CacheStatsTracker
-) {
+export function createCacheFirstWithStats(config: RouteCacheConfig, stats: CacheStatsTracker) {
   return {
-    async handle(request: Request, fetchFn: (req: Request) => Promise<Response>): Promise<Response> {
+    async handle(
+      request: Request,
+      fetchFn: (req: Request) => Promise<Response>
+    ): Promise<Response> {
       try {
         const cache = await caches.open(config.cacheName);
         const cachedResponse = await cache.match(request);
@@ -87,13 +88,15 @@ export function createCacheFirstWithStats(
         if (cachedResponse) {
           stats.recordHit();
           // 后台异步更新（不阻塞响应）
-          fetchFn(request).then((networkResponse) => {
-            if (networkResponse?.ok) {
-              cache.put(request, networkResponse.clone());
-            }
-          }).catch(() => {
-            // 静默失败
-          });
+          fetchFn(request)
+            .then((networkResponse) => {
+              if (networkResponse?.ok) {
+                cache.put(request, networkResponse.clone());
+              }
+            })
+            .catch(() => {
+              // 静默失败
+            });
           return cachedResponse;
         }
 
@@ -119,21 +122,26 @@ export function createStaleWhileRevalidateWithStats(
   stats: CacheStatsTracker
 ) {
   return {
-    async handle(request: Request, fetchFn: (req: Request) => Promise<Response>): Promise<Response> {
+    async handle(
+      request: Request,
+      fetchFn: (req: Request) => Promise<Response>
+    ): Promise<Response> {
       try {
         const cache = await caches.open(config.cacheName);
         const cachedResponse = await cache.match(request);
 
         // 异步更新（不阻塞响应）
-        const fetchPromise = fetchFn(request).then((networkResponse) => {
-          if (networkResponse?.ok) {
-            cache.put(request, networkResponse.clone());
-          }
-          return networkResponse;
-        }).catch((err) => {
-          stats.recordError();
-          throw err;
-        });
+        const fetchPromise = fetchFn(request)
+          .then((networkResponse) => {
+            if (networkResponse?.ok) {
+              cache.put(request, networkResponse.clone());
+            }
+            return networkResponse;
+          })
+          .catch((err) => {
+            stats.recordError();
+            throw err;
+          });
 
         if (cachedResponse) {
           stats.recordHit();
@@ -153,18 +161,21 @@ export function createStaleWhileRevalidateWithStats(
 /**
  * 创建带统计的 NetworkFirst 策略
  */
-export function createNetworkFirstWithStats(
-  config: RouteCacheConfig,
-  stats: CacheStatsTracker
-) {
+export function createNetworkFirstWithStats(config: RouteCacheConfig, stats: CacheStatsTracker) {
   return {
-    async handle(request: Request, fetchFn: (req: Request) => Promise<Response>): Promise<Response> {
+    async handle(
+      request: Request,
+      fetchFn: (req: Request) => Promise<Response>
+    ): Promise<Response> {
       const cache = await caches.open(config.cacheName);
 
       try {
         const timeoutPromise = config.networkTimeoutSeconds
           ? new Promise<Response>((_, reject) =>
-              setTimeout(() => reject(new Error('Network timeout')), config.networkTimeoutSeconds! * 1000)
+              setTimeout(
+                () => reject(new Error('Network timeout')),
+                config.networkTimeoutSeconds! * 1000
+              )
             )
           : null;
 
@@ -221,7 +232,9 @@ export class SmartPrecacheController {
   private isNetworkSuitable(): boolean {
     if (!this.options.onlyOnFastNetwork) return true;
     if (typeof navigator === 'undefined' || !('connection' in navigator)) return true;
-    const conn = (navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean } }).connection;
+    const conn = (
+      navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean } }
+    ).connection;
     if (!conn) return true;
     if (conn.saveData) return false;
     if (conn.effectiveType === '4g') return true;
@@ -248,9 +261,7 @@ export class SmartPrecacheController {
       for (let i = 0; i < this.routes.length; i += concurrency) {
         if (this.abortController.signal.aborted) break;
         const batch = this.routes.slice(i, i + concurrency);
-        await Promise.allSettled(
-          batch.map((url) => this.precacheSingle(url, timeout))
-        );
+        await Promise.allSettled(batch.map((url) => this.precacheSingle(url, timeout)));
       }
     } finally {
       this.isRunning = false;

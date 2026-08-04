@@ -142,14 +142,14 @@ export class SmartRecommender {
     return SmartRecommender.instance;
   }
 
-  get_recommendations(
+  getRecommendations(
     userId: string,
     context: Record<string, unknown> = {},
     limit: number = 5
   ): Recommendation[] {
     const userBehaviors = this.behaviors.get(userId) || [];
-    const collaborativeResults = this.collaborative_filtering(userId, userBehaviors);
-    const contentResults = this.content_based_filtering(userBehaviors);
+    const collaborativeResults = this.collaborativeFiltering(userId, userBehaviors);
+    const contentResults = this.contentBasedFiltering(userBehaviors);
 
     const merged = [...collaborativeResults, ...contentResults];
     const deduplicated = this.deduplicate(merged);
@@ -163,7 +163,7 @@ export class SmartRecommender {
       }));
   }
 
-  record_behavior(behavior: UserBehavior): void {
+  recordBehavior(behavior: UserBehavior): void {
     const userBehaviors = this.behaviors.get(behavior.userId) || [];
     userBehaviors.push(behavior);
 
@@ -181,9 +181,9 @@ export class SmartRecommender {
     countMap.set(key, (countMap.get(key) || 0) + 1);
   }
 
-  get_personalized_content(userId: string, category?: RecommendationType): Recommendation[] {
+  getPersonalizedContent(userId: string, category?: RecommendationType): Recommendation[] {
     const userBehaviors = this.behaviors.get(userId) || [];
-    const results = this.content_based_filtering(userBehaviors);
+    const results = this.contentBasedFiltering(userBehaviors);
 
     if (category) {
       return results.filter((r) => r.type === category);
@@ -191,7 +191,7 @@ export class SmartRecommender {
     return results;
   }
 
-  get_trending(limit: number = 5): Recommendation[] {
+  getTrending(limit: number = 5): Recommendation[] {
     const scoreMap = new Map<string, number>();
 
     for (const [, behaviors] of this.behaviors) {
@@ -219,7 +219,7 @@ export class SmartRecommender {
     });
   }
 
-  get_similar_items(itemId: string, limit: number = 5): Recommendation[] {
+  getSimilarItems(itemId: string, limit: number = 5): Recommendation[] {
     const item = this.contentLibrary.find((c) => c.id === itemId);
     if (!item) return [];
 
@@ -227,7 +227,7 @@ export class SmartRecommender {
       .filter((c) => c.id !== itemId)
       .map((c) => ({
         item: c,
-        similarity: this.compute_similarity(item, c),
+        similarity: this.computeSimilarity(item, c),
       }))
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, limit);
@@ -241,7 +241,7 @@ export class SmartRecommender {
     }));
   }
 
-  get_recommendation_stats(): RecommendationStats {
+  getRecommendationStats(): RecommendationStats {
     let total = 0;
     const typeCounts = new Map<RecommendationType, number>();
     const totalConfidence = 0;
@@ -268,21 +268,21 @@ export class SmartRecommender {
     };
   }
 
-  mark_accepted(recommendationId: string): void {
+  markAccepted(recommendationId: string): void {
     this.acceptedRecs.add(recommendationId);
     this.rejectedRecs.delete(recommendationId);
   }
 
-  mark_rejected(recommendationId: string): void {
+  markRejected(recommendationId: string): void {
     this.rejectedRecs.add(recommendationId);
     this.acceptedRecs.delete(recommendationId);
   }
 
-  add_content_item(item: ContentItem): void {
+  addContentItem(item: ContentItem): void {
     this.contentLibrary.push(item);
   }
 
-  private collaborative_filtering(userId: string, userBehaviors: UserBehavior[]): Recommendation[] {
+  private collaborativeFiltering(userId: string, userBehaviors: UserBehavior[]): Recommendation[] {
     if (userBehaviors.length < 3) return [];
 
     const clusters: BehaviorCluster[] = [];
@@ -338,7 +338,7 @@ export class SmartRecommender {
       });
   }
 
-  private content_based_filtering(userBehaviors: UserBehavior[]): Recommendation[] {
+  private contentBasedFiltering(userBehaviors: UserBehavior[]): Recommendation[] {
     if (userBehaviors.length === 0) return [];
 
     const targetTags = new Set<string>();
@@ -379,7 +379,7 @@ export class SmartRecommender {
     }));
   }
 
-  private compute_similarity(a: ContentItem, b: ContentItem): number {
+  private computeSimilarity(a: ContentItem, b: ContentItem): number {
     const tagA = new Set(a.tags);
     const tagB = new Set(b.tags);
     const intersection = a.tags.filter((t) => tagB.has(t));

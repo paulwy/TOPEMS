@@ -170,8 +170,8 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
             <FormControlLabel
               control={
                 <Switch
-                  checked={!!formData.is_enabled}
-                  onChange={(e) => setFormData({ ...formData, is_enabled: e.target.checked })}
+                  checked={!!formData.isEnabled}
+                  onChange={(e) => setFormData({ ...formData, isEnabled: e.target.checked })}
                 />
               }
               label={t('bi.bi_permission_page.active_1')}

@@ -19,7 +19,7 @@ export interface SchemaDefinition {
   description?: string;
   schema_json: Record<string, unknown>;
   table_name: string;
-  is_active: boolean;
+  isActive: boolean;
   version: number;
   created_at: string;
   updated_at: string;
@@ -36,14 +36,14 @@ export interface UpdateSchemaRequest {
   title?: string;
   description?: string;
   schema_json?: Record<string, unknown>;
-  is_active?: boolean;
+  isActive?: boolean;
 }
 
 export interface ListSchemaQuery {
   page?: number;
   page_size?: number;
   search?: string;
-  is_active?: boolean;
+  isActive?: boolean;
 }
 
 export interface DynamicDataRecord {
@@ -66,9 +66,7 @@ const BASE_PATH = '/schema-registry';
 
 export const schemaRegistryApi = {
   // Schema CRUD
-  createSchema: async (
-    data: CreateSchemaRequest
-  ): Promise<ApiResponse<SchemaDefinition>> => {
+  createSchema: async (data: CreateSchemaRequest): Promise<ApiResponse<SchemaDefinition>> => {
     return apiClient.master.post(`${BASE_PATH}/schemas`, data);
   },
 
@@ -104,14 +102,15 @@ export const schemaRegistryApi = {
   listData: async (
     schemaId: string,
     params?: ListDataQuery
-  ): Promise<ApiResponse<PaginatedResponse<DynamicDataRecord> & { schema: { id: string; name: string; title: string } }>> => {
+  ): Promise<
+    ApiResponse<
+      PaginatedResponse<DynamicDataRecord> & { schema: { id: string; name: string; title: string } }
+    >
+  > => {
     return apiClient.master.get(`${BASE_PATH}/schemas/${schemaId}/data`, { params });
   },
 
-  getData: async (
-    schemaId: string,
-    recordId: string
-  ): Promise<ApiResponse<DynamicDataRecord>> => {
+  getData: async (schemaId: string, recordId: string): Promise<ApiResponse<DynamicDataRecord>> => {
     return apiClient.master.get(`${BASE_PATH}/schemas/${schemaId}/data/${recordId}`);
   },
 
@@ -123,10 +122,7 @@ export const schemaRegistryApi = {
     return apiClient.master.put(`${BASE_PATH}/schemas/${schemaId}/data/${recordId}`, data);
   },
 
-  deleteData: async (
-    schemaId: string,
-    recordId: string
-  ): Promise<ApiResponse<string>> => {
+  deleteData: async (schemaId: string, recordId: string): Promise<ApiResponse<string>> => {
     return apiClient.master.delete(`${BASE_PATH}/schemas/${schemaId}/data/${recordId}`);
   },
 };

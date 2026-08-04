@@ -24,7 +24,7 @@ function getImportMetaEnvSafe(): Record<string, string | boolean | undefined> {
 
 /**
  * Safely read environment variable (generic support, return type matches defaultValue)
- * @param key Environment variable key (e.g. VITE_API_BASE_URL)
+ * @param key Environment variable key (e.g. VITEApiBaseUrl)
  * @param defaultValue Default value when not set (undefined if not provided)
  */
 export function getEnv<T = string>(key: string, defaultValue?: T): T | undefined {
@@ -54,13 +54,12 @@ export function isProd(): boolean {
 }
 
 /** Deployment mode: static | module-federation | standalone */
-export const VITE_DEPLOYMENT_MODE = (): string =>
-  getEnv('VITE_DEPLOYMENT_MODE', 'static') as string;
+export const VITEDeploymentMode = (): string => getEnv('VITEDeploymentMode', 'static') as string;
 
 /** Common quick getters (lazy evaluation via functions) */
-export const VITE_API_BASE_URL = (): string => getEnv('VITE_API_BASE_URL', '/api') as string;
+export const VITEApiBaseUrl = (): string => getEnv('VITEApiBaseUrl', '/api') as string;
 
-export const VITE_ENABLE_DEBUG_MODE = (): boolean =>
-  getEnv<boolean>('VITE_ENABLE_DEBUG_MODE', false) ?? false;
+export const VITEEnableDebugMode = (): boolean =>
+  getEnv<boolean>('VITEEnableDebugMode', false) ?? false;
 
-export const VITE_LOG_LEVEL = (): string => getEnv('VITE_LOG_LEVEL', 'info') as string;
+export const VITELogLevel = (): string => getEnv('VITELogLevel', 'info') as string;

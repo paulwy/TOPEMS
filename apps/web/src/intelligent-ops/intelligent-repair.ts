@@ -29,10 +29,10 @@ class IntelligentRepairImpl {
   private actionHistory: RepairAction[] = [];
 
   constructor() {
-    this.init_default_playbooks();
+    this.initDefaultPlaybooks();
   }
 
-  private init_default_playbooks(): void {
+  private initDefaultPlaybooks(): void {
     const defaults: Omit<RepairPlaybook, 'id'>[] = [
       {
         name: 'CPU High Auto-Scale',
@@ -90,7 +90,7 @@ class IntelligentRepairImpl {
     });
   }
 
-  create_playbook(
+  createPlaybook(
     name: string,
     triggerCondition: string,
     actions: Omit<RepairAction, 'id' | 'status' | 'created_at'>[],
@@ -120,7 +120,7 @@ class IntelligentRepairImpl {
     return playbook;
   }
 
-  run_playbook(playbookId: string): RepairAction[] {
+  runPlaybook(playbookId: string): RepairAction[] {
     const playbook = this.playbooks.get(playbookId);
     if (!playbook) return [];
 
@@ -153,7 +153,7 @@ class IntelligentRepairImpl {
     return executed;
   }
 
-  execute_repair(type: RepairType, target: string, approvable: boolean = false): RepairAction {
+  executeRepair(type: RepairType, target: string, approvable: boolean = false): RepairAction {
     const action: RepairAction = {
       id: `repair-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       type,
@@ -180,7 +180,7 @@ class IntelligentRepairImpl {
     return action;
   }
 
-  approve_repair(actionId: string): RepairAction | null {
+  approveRepair(actionId: string): RepairAction | null {
     const action = this.actions.get(actionId);
     if (!action || action.status !== 'Pending') return null;
     action.status = 'Executing';
@@ -199,7 +199,7 @@ class IntelligentRepairImpl {
     return action;
   }
 
-  rollback_repair(actionId: string): RepairAction | null {
+  rollbackRepair(actionId: string): RepairAction | null {
     const action = this.actions.get(actionId);
     if (!action) return null;
     action.status = 'RolledBack';
@@ -207,26 +207,26 @@ class IntelligentRepairImpl {
     return action;
   }
 
-  get_repair_status(actionId: string): RepairAction | null {
+  getRepairStatus(actionId: string): RepairAction | null {
     return this.actions.get(actionId) || null;
   }
 
-  get_playbooks(): RepairPlaybook[] {
+  getPlaybooks(): RepairPlaybook[] {
     return Array.from(this.playbooks.values());
   }
 
-  get_action_history(limit: number = 50): RepairAction[] {
+  getActionHistory(limit: number = 50): RepairAction[] {
     return this.actionHistory.slice(0, limit);
   }
 
-  toggle_playbook_status(playbookId: string): RepairPlaybook | null {
+  togglePlaybookStatus(playbookId: string): RepairPlaybook | null {
     const playbook = this.playbooks.get(playbookId);
     if (!playbook) return null;
     playbook.status = playbook.status === 'Active' ? 'Paused' : 'Active';
     return playbook;
   }
 
-  delete_playbook(playbookId: string): boolean {
+  deletePlaybook(playbookId: string): boolean {
     const playbook = this.playbooks.get(playbookId);
     if (!playbook) return false;
     playbook.status = 'Archived';

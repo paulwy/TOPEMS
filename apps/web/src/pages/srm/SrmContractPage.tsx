@@ -15,7 +15,7 @@ const ct = designTokens.colors;
 
 interface SupplierContract {
   id: string;
-  contract_no: string;
+  contractNo: string;
   supplier_id: string;
   supplier_name?: string;
   title: string;
@@ -47,7 +47,7 @@ const contractApiAdapter: CrudApiAdapter = {
       filtered = items.filter(
         (c) =>
           c.title.toLowerCase().includes(search) ||
-          c.contract_no.toLowerCase().includes(search) ||
+          c.contractNo.toLowerCase().includes(search) ||
           (c.supplier_name?.toLowerCase().includes(search) ?? false)
       );
     }

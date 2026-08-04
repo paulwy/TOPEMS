@@ -114,16 +114,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('EhsHazardPage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <EhsHazardPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have safety issue API methods defined', () => {
+  it('should have safety issue API methods defined', () => {
     render(
       <BrowserRouter>
         <EhsHazardPage />
@@ -133,15 +133,14 @@ it('should have safety issue API methods defined', () => {
     expect(ehsApi.createSafetyIssue).toBeDefined();
     expect(ehsApi.getSafetyIssue).toBeDefined();
     expect(ehsApi.updateSafetyIssue).toBeDefined();
-});
+  });
 
-it('should call listSafetyIssues API on mount', () => {
+  it('should call listSafetyIssues API on mount', () => {
     render(
       <BrowserRouter>
         <EhsHazardPage />
       </BrowserRouter>
     );
     expect(ehsApi.listSafetyIssues).toHaveBeenCalled();
-});
-;
+  });
 });

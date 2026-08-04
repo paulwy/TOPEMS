@@ -88,7 +88,7 @@ export const V57AutomationPanel: React.FC<{ onClose: () => void }> = ({ onClose 
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -159,7 +159,7 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       alignItems: 'center',
       justifyContent: 'space-between',
       background: 'linear-gradient(135deg, #10b981, #059669, #0d9488)',
-      color: 'white',
+      color: 'common.white',
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -185,7 +185,7 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
     <IconButton
       size='small'
       onClick={onClose}
-      sx={{ color: 'white' }}
+      sx={{ color: 'common.white' }}
     >
       <XIcon size={20} />
     </IconButton>
@@ -196,17 +196,17 @@ const TestsTab: React.FC = () => {
   const [scenarios, setScenarios] = React.useState<TestScenario[]>([]);
   const [results, setResults] = React.useState<TestResult[]>([]);
   const [coverage, setCoverage] = React.useState<CoverageReport | null>(null);
-  const [stats, setStats] = React.useState(smartTester.get_stats());
+  const [stats, setStats] = React.useState(smartTester.getStats());
   const [selectedScenario, setSelectedScenario] = React.useState<TestScenario | null>(null);
   const [failureAnalysis, setFailureAnalysis] = React.useState<FailureAnalysis | null>(null);
   const [filterType, setFilterType] = React.useState<TestType | 'all'>('all');
   const [showGenerate, setShowGenerate] = React.useState(false);
 
   const refresh = React.useCallback(() => {
-    setScenarios(smartTester.list_scenarios());
-    setResults(smartTester.get_test_results());
-    setCoverage(smartTester.get_coverage());
-    setStats(smartTester.get_stats());
+    setScenarios(smartTester.listScenarios());
+    setResults(smartTester.getTestResults());
+    setCoverage(smartTester.getCoverage());
+    setStats(smartTester.getStats());
   }, []);
 
   React.useEffect(() => {
@@ -226,25 +226,25 @@ const TestsTab: React.FC = () => {
   }, [scenarios, filterType]);
 
   const handleRunAll = async () => {
-    const all = smartTester.list_scenarios();
+    const all = smartTester.listScenarios();
     const ids = all.map((s) => s.id);
-    await smartTester.run_tests(ids);
+    await smartTester.runTests(ids);
     refresh();
   };
 
   const handleRunScenario = async (id: string) => {
-    await smartTester.run_tests([id]);
+    await smartTester.runTests([id]);
     refresh();
   };
 
   const handleSelectScenario = (scenario: TestScenario) => {
     setSelectedScenario(scenario);
-    const analysis = smartTester.get_failure_analysis(scenario.id);
+    const analysis = smartTester.getFailureAnalysis(scenario.id);
     setFailureAnalysis(analysis);
   };
 
   const handleGenerate = (count: number, module: string) => {
-    smartTester.generate_tests({ count, module });
+    smartTester.generateTests({ count, module });
     setShowGenerate(false);
     refresh();
   };
@@ -296,7 +296,7 @@ const TestsTab: React.FC = () => {
 
       <V51Card
         title='测试场景列表'
-        subtitle={`${filteredScenarios.length} 个场景 (${stats.by_type.unit} 单元, ${stats.by_type.integration} 集成, ${stats.by_type.e2e} E2E)`}
+        subtitle={`${filteredScenarios.length} 个场景 (${stats.byType.unit} 单元, ${stats.byType.integration} 集成, ${stats.byType.e2e} E2E)`}
         headerAction={
           <Stack
             direction='row'
@@ -450,8 +450,8 @@ const TestsTab: React.FC = () => {
                     width: 24,
                     height: 24,
                     borderRadius: '50%',
-                    bgcolor: '#10b981',
-                    color: 'white',
+                    bgcolor: 'teal.500',
+                    color: 'common.white',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -490,7 +490,7 @@ const TestsTab: React.FC = () => {
               <Divider sx={{ my: 2 }} />
               <Typography
                 variant='subtitle2'
-                sx={{ mb: 1, fontWeight: 600, color: '#ef4444' }}
+                sx={{ mb: 1, fontWeight: 600, color: 'error.500' }}
               >
                 失败分析
               </Typography>
@@ -587,8 +587,8 @@ const CITab: React.FC = () => {
   const [showConfigDialog, setShowConfigDialog] = React.useState(false);
 
   const refresh = React.useCallback(() => {
-    setConfigs(ciIntegrator.list_configs());
-    setRuns(ciIntegrator.get_run_history());
+    setConfigs(ciIntegrator.listConfigs());
+    setRuns(ciIntegrator.getRunHistory());
   }, []);
 
   React.useEffect(() => {
@@ -611,12 +611,12 @@ const CITab: React.FC = () => {
   }, [runs]);
 
   const handleTrigger = (pipelineName: string) => {
-    ciIntegrator.trigger_pipeline(pipelineName, 'manual');
+    ciIntegrator.triggerPipeline(pipelineName, 'manual');
     setTimeout(refresh, 100);
   };
 
   const handleCancel = (runId: string) => {
-    ciIntegrator.cancel_pipeline(runId);
+    ciIntegrator.cancelPipeline(runId);
     refresh();
   };
 
@@ -878,7 +878,7 @@ const CITab: React.FC = () => {
         <ConfigPipelineDialog
           onClose={() => setShowConfigDialog(false)}
           onCreated={(config) => {
-            ciIntegrator.configure_pipeline(config);
+            ciIntegrator.configurePipeline(config);
             setShowConfigDialog(false);
             refresh();
           }}
@@ -891,14 +891,14 @@ const CITab: React.FC = () => {
 const QualityTab: React.FC = () => {
   const [criteria, setCriteria] = React.useState<GateCriteria[]>([]);
   const [results, setResults] = React.useState<GateResult[]>([]);
-  const [summary, setSummary] = React.useState(qualityGate.get_summary());
+  const [summary, setSummary] = React.useState(qualityGate.getSummary());
   const [selectedCriteria, setSelectedCriteria] = React.useState<GateCriteria | null>(null);
   const [showOverride, setShowOverride] = React.useState(false);
 
   const refresh = React.useCallback(() => {
-    setCriteria(qualityGate.list_criteria());
-    setResults(qualityGate.get_gate_results());
-    setSummary(qualityGate.get_summary());
+    setCriteria(qualityGate.listCriteria());
+    setResults(qualityGate.getGateResults());
+    setSummary(qualityGate.getSummary());
   }, []);
 
   React.useEffect(() => {
@@ -906,7 +906,7 @@ const QualityTab: React.FC = () => {
   }, [refresh]);
 
   const handleEvaluate = () => {
-    qualityGate.evaluate_gate();
+    qualityGate.evaluateGate();
     refresh();
   };
 
@@ -1160,7 +1160,7 @@ const QualityTab: React.FC = () => {
             setSelectedCriteria(null);
           }}
           onOverride={(reason, by) => {
-            qualityGate.override_gate(selectedCriteria.id, reason, by);
+            qualityGate.overrideGate(selectedCriteria.id, reason, by);
             setShowOverride(false);
             setSelectedCriteria(null);
             refresh();
@@ -1177,7 +1177,7 @@ const TrendsTab: React.FC = () => {
   const [trendData, setTrendData] = React.useState<TrendPoint[]>([]);
 
   const refresh = React.useCallback(() => {
-    setCriteria(qualityGate.list_criteria());
+    setCriteria(qualityGate.listCriteria());
   }, []);
 
   React.useEffect(() => {
@@ -1186,12 +1186,12 @@ const TrendsTab: React.FC = () => {
 
   const handleSelectCriteria = (c: GateCriteria) => {
     setSelectedCriteria(c);
-    setTrendData(qualityGate.get_trend(c.id, 20));
+    setTrendData(qualityGate.getTrend(c.id, 20));
   };
 
-  const testStats = smartTester.get_stats();
-  const ciStats = ciIntegrator.get_stats();
-  const gateSummary = qualityGate.get_summary();
+  const testStats = smartTester.getStats();
+  const ciStats = ciIntegrator.getStats();
+  const gateSummary = qualityGate.getSummary();
 
   return (
     <Box sx={{ p: 3 }}>
@@ -1565,7 +1565,7 @@ const GenerateTestDialog: React.FC<{
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'action.active',
         zIndex: 10001,
         display: 'flex',
         alignItems: 'center',
@@ -1642,7 +1642,7 @@ const ConfigPipelineDialog: React.FC<{
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'action.active',
         zIndex: 10001,
         display: 'flex',
         alignItems: 'center',
@@ -1746,7 +1746,7 @@ const OverrideDialog: React.FC<{
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'action.active',
         zIndex: 10001,
         display: 'flex',
         alignItems: 'center',

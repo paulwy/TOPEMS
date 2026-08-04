@@ -1,9 +1,9 @@
 export enum TrustLevel {
-  Trusted = 'trusted',
-  Verified = 'verified',
-  Unknown = 'unknown',
-  Untrusted = 'untrusted',
-  Revoked = 'revoked',
+  TRUSTED = 'trusted',
+  VERIFIED = 'verified',
+  UNKNOWN = 'unknown',
+  UNTRUSTED = 'untrusted',
+  REVOKED = 'revoked',
 }
 
 export interface ModuleSignature {
@@ -113,7 +113,7 @@ export class ModuleSigner {
     if (this.revokedSignatures.has(key)) {
       return {
         valid: false,
-        trustLevel: TrustLevel.Revoked,
+        trustLevel: TrustLevel.REVOKED,
         reason: '该模块签名已被吊销',
       };
     }
@@ -122,7 +122,7 @@ export class ModuleSigner {
     if (!signature) {
       return {
         valid: false,
-        trustLevel: TrustLevel.Unknown,
+        trustLevel: TrustLevel.UNKNOWN,
         reason: '未找到模块签名信息',
       };
     }
@@ -131,21 +131,21 @@ export class ModuleSigner {
     if (computedSignature !== signature.signature) {
       return {
         valid: false,
-        trustLevel: TrustLevel.Untrusted,
+        trustLevel: TrustLevel.UNTRUSTED,
         reason: '模块内容完整性校验失败，内容可能被篡改',
         signer: signature.publisher,
         signedAt: signature.signedAt,
       };
     }
 
-    const publisher = Array.from(this.trustedPublishers.values()).find(
+    const publisher = Array.from(this.trustedPublishers.values()).some(
       (p) => p.publicKey === signature.publicKey
     );
 
     if (publisher) {
       return {
         valid: true,
-        trustLevel: TrustLevel.Trusted,
+        trustLevel: TrustLevel.TRUSTED,
         reason: '模块签名验证通过，来自可信发布者',
         signer: signature.publisher,
         signedAt: signature.signedAt,
@@ -154,7 +154,7 @@ export class ModuleSigner {
 
     return {
       valid: true,
-      trustLevel: TrustLevel.Verified,
+      trustLevel: TrustLevel.VERIFIED,
       reason: '模块签名验证通过，但发布者不在可信列表中',
       signer: signature.publisher,
       signedAt: signature.signedAt,
@@ -216,7 +216,7 @@ export class ModuleSigner {
     return Promise.resolve([
       {
         valid: true,
-        trustLevel: TrustLevel.Trusted,
+        trustLevel: TrustLevel.TRUSTED,
         reason: '根签名验证通过',
         signer: 'system-publisher',
         signedAt: Date.now(),
@@ -225,9 +225,7 @@ export class ModuleSigner {
   }
 
   getPublisherByPublicKey(publicKey: string): TrustedPublisher | undefined {
-    return Array.from(this.trustedPublishers.values()).find(
-      (p) => p.publicKey === publicKey
-    );
+    return Array.from(this.trustedPublishers.values()).find((p) => p.publicKey === publicKey);
   }
 
   updatePublisherPermissions(publisherId: string, permissions: string[]): boolean {

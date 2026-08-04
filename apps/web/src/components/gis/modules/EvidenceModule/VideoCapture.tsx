@@ -203,7 +203,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        bgcolor: 'black',
+        bgcolor: 'common.black',
       }}
     >
       {/* Video Preview */}
@@ -244,12 +244,12 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                   sx={{
                     width: 8,
                     height: 8,
-                    bgcolor: 'white',
+                    bgcolor: 'common.white',
                     borderRadius: '9999px',
                     animation: 'pulse 1.5s infinite',
                   }}
                 />
-                <Typography sx={{ color: 'white', fontSize: '0.875rem', fontWeight: 500 }}>
+                <Typography sx={{ color: 'common.white', fontSize: '0.875rem', fontWeight: 500 }}>
                   录制中
                 </Typography>
               </Box>
@@ -261,11 +261,11 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 position: 'absolute',
                 top: 16,
                 right: 16,
-                bgcolor: 'rgba(0,0,0,0.5)',
+                bgcolor: 'action.active',
                 px: 12,
                 py: 4,
                 borderRadius: '9999px',
-                color: 'white',
+                color: 'common.white',
                 fontFamily: 'monospace',
               }}
             >
@@ -294,7 +294,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                     bgcolor: isRecording ? 'rgba(31,41,55,0.5)' : 'rgba(0,0,0,0.7)',
                   },
                   '&.Mui-disabled': {
-                    bgcolor: 'rgba(31,41,55,0.5)',
+                    bgcolor: 'common.white',
                     color: 'text.secondary',
                   },
                 }}
@@ -320,10 +320,10 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              bgcolor: 'rgba(0,0,0,0.8)',
+              bgcolor: 'action.active',
             }}
           >
-            <Box sx={{ textAlign: 'center', color: 'white', p: 16 }}>
+            <Box sx={{ textAlign: 'center', color: 'common.white', p: 16 }}>
               <Typography sx={{ color: 'error.light', mb: 8 }}>{error}</Typography>
               <Button
                 onClick={onCancel}
@@ -332,7 +332,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                   py: 8,
                   bgcolor: 'grey.700',
                   borderRadius: 8,
-                  color: 'white',
+                  color: 'common.white',
                   '&:hover': { bgcolor: 'text.secondary' },
                 }}
               >
@@ -349,9 +349,9 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               onClick={onCancel}
               sx={{
                 borderRadius: '9999px',
-                bgcolor: 'rgba(0,0,0,0.5)',
-                color: 'white',
-                '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                bgcolor: 'action.active',
+                color: 'common.white',
+                '&:hover': { bgcolor: 'action.active' },
               }}
             >
               <X size={24} />
@@ -364,7 +364,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
       <Box
         sx={{
           p: 24,
-          bgcolor: 'black',
+          bgcolor: 'common.black',
           display: 'flex',
           justifyContent: 'center',
         }}
@@ -376,7 +376,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               p: 16,
               bgcolor: 'error.main',
               borderRadius: '9999px',
-              color: 'white',
+              color: 'common.white',
               '&:hover': { bgcolor: 'error.dark' },
             }}
           >
@@ -392,7 +392,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 p: 12,
                 bgcolor: 'grey.700',
                 borderRadius: '9999px',
-                color: 'white',
+                color: 'common.white',
                 mx: 8,
                 '&:hover': { bgcolor: 'text.secondary' },
               }}
@@ -405,7 +405,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 p: 16,
                 bgcolor: 'error.main',
                 borderRadius: '9999px',
-                color: 'white',
+                color: 'common.white',
                 mx: 8,
                 '&:hover': { bgcolor: 'error.dark' },
               }}
@@ -429,7 +429,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 py: 8,
                 bgcolor: 'grey.700',
                 borderRadius: 8,
-                color: 'white',
+                color: 'common.white',
                 '&:hover': { bgcolor: 'text.secondary' },
               }}
             >
@@ -443,7 +443,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 py: 8,
                 bgcolor: 'success.dark',
                 borderRadius: 8,
-                color: 'white',
+                color: 'common.white',
                 '&:hover': { bgcolor: 'success.dark' },
               }}
             >

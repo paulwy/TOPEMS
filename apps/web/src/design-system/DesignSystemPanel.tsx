@@ -68,7 +68,7 @@ const DesignSystemPanelContent: React.FC<{ onClose: () => void }> = ({ onClose }
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -96,8 +96,8 @@ const DesignSystemPanelContent: React.FC<{ onClose: () => void }> = ({ onClose }
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            bgcolor: '#6366f1',
-            color: 'white',
+            bgcolor: 'secondary.500',
+            color: 'common.white',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -117,7 +117,7 @@ const DesignSystemPanelContent: React.FC<{ onClose: () => void }> = ({ onClose }
           <IconButton
             size='small'
             onClick={onClose}
-            sx={{ color: 'white' }}
+            sx={{ color: 'common.white' }}
           >
             <XIcon size={20} />
           </IconButton>

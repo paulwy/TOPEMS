@@ -76,7 +76,7 @@ export interface InventoryItem {
 export interface ProductionOrder {
   id: string;
   tenant_id?: string;
-  order_no: string;
+  orderNo: string;
   product_name: string;
   product_code: string;
   quantity: number;
@@ -150,7 +150,7 @@ export interface DeviceInfo {
   device_model?: string;
   app_version?: string;
   os_version?: string;
-  is_active?: boolean;
+  isActive?: boolean;
   created_at: string;
   updated_at: string;
 }

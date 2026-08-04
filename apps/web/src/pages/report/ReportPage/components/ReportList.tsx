@@ -137,9 +137,7 @@ const ReportList: React.FC<ReportListProps> = ({
                       }}
                     >
                       {getFormatIcon(report.config.format)}
-                      <span style={{ marginLeft: 4 }}>
-                        {report.config.format.toUpperCase()}
-                      </span>
+                      <span style={{ marginLeft: 4 }}>{report.config.format.toUpperCase()}</span>
                     </Box>
                     <Box
                       sx={{

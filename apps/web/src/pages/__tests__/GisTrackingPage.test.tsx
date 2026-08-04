@@ -116,16 +116,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('GisTrackingPage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <GisTrackingPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have GIS API methods defined', () => {
+  it('should have GIS API methods defined', () => {
     render(
       <BrowserRouter>
         <GisTrackingPage />
@@ -133,6 +133,5 @@ it('should have GIS API methods defined', () => {
     );
     expect(gisApi.devices.list).toBeDefined();
     expect(gisApi.tracking.list).toBeDefined();
-});
-;
+  });
 });

@@ -262,7 +262,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   const updateGroupedNavItems = useCallback(() => {
     const currentCheckPermission = checkPermissionRef.current;
-    const groupedBySuite = navigationRegistryV2.getNavItemsGroupedByBusinessDomain(currentCheckPermission);
+    const groupedBySuite =
+      navigationRegistryV2.getNavItemsGroupedByBusinessDomain(currentCheckPermission);
 
     const result: Record<string, NavItem[]> = {};
     const orders: Array<{ suite: string; order: number }> = [];
@@ -624,7 +625,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             {suiteOrder.map((suiteKey, groupIndex) => {
               const items = groupedModules[suiteKey] || [];
               if (items.length === 0) return null;
-              const suiteInfo = SUITE_GROUPS[suiteKey as keyof typeof SUITE_GROUPS] || SUITE_GROUPS.other;
+              const suiteInfo =
+                SUITE_GROUPS[suiteKey as keyof typeof SUITE_GROUPS] || SUITE_GROUPS.other;
               const isFirstGroup = groupIndex === 0;
 
               return (
@@ -687,7 +689,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                                     fontSize: '0.625rem',
                                     fontWeight: 600,
                                     bgcolor: 'error.main',
-                                    color: 'white',
+                                    color: 'common.white',
                                     '& .MuiChip-label': {
                                       px: 0.5,
                                     },

@@ -19,7 +19,7 @@ const groups: TimelineGroup[] = [
     id: 'milestones',
     title: '里程碑',
     icon: <Rocket style={{ width: 18, height: 18 }} />,
-    color: '#8B5CF6',
+    color: 'secondary.500',
     collapsible: true,
     nodes: [
       {
@@ -78,7 +78,7 @@ const groups: TimelineGroup[] = [
     id: 'tasks',
     title: '任务',
     icon: <Target style={{ width: 18, height: 18 }} />,
-    color: '#3B82F6',
+    color: 'primary.500',
     collapsible: true,
     nodes: [
       {
@@ -90,7 +90,7 @@ const groups: TimelineGroup[] = [
         type: 'task',
         status: 'completed',
         priority: 'high',
-        tags: [{ label: '开发', color: '#22C55E' }],
+        tags: [{ label: '开发', color: 'success.500' }],
       },
       {
         id: 't2',
@@ -101,7 +101,7 @@ const groups: TimelineGroup[] = [
         type: 'task',
         status: 'in-progress',
         priority: 'high',
-        tags: [{ label: '开发', color: '#22C55E' }],
+        tags: [{ label: '开发', color: 'success.500' }],
         children: [
           {
             id: 't2-1',
@@ -134,7 +134,7 @@ const groups: TimelineGroup[] = [
         type: 'task',
         status: 'pending',
         priority: 'medium',
-        tags: [{ label: '前端', color: '#06B6D4' }],
+        tags: [{ label: '前端', color: 'cyan.500' }],
       },
     ],
   },
@@ -142,7 +142,7 @@ const groups: TimelineGroup[] = [
     id: 'meetings',
     title: '会议',
     icon: <Calendar style={{ width: 18, height: 18 }} />,
-    color: '#F59E0B',
+    color: 'warning.500',
     collapsible: true,
     nodes: [
       {

@@ -45,7 +45,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       } else {
         set({ error: response.message || '登录失败', isLoading: false });
       }
-    } catch (err) {
+    } catch {
       set({ error: '登录失败，请检查网络连接', isLoading: false });
     }
   },

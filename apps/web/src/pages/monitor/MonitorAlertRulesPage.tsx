@@ -1,10 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Chip,
-  Switch,
-} from '@mui/material';
+import { Box, Typography, Chip, Switch } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { alertRuleSchema } from '@/schemas/monitor';
@@ -245,9 +240,7 @@ const MonitorAlertRulesPage: React.FC = () => {
     update: async (id, data) => {
       setRules(
         rules.map((r) =>
-          r.id === id
-            ? { ...r, ...data, updated_at: new Date().toISOString().split('T')[0] }
-            : r
+          r.id === id ? { ...r, ...data, updated_at: new Date().toISOString().split('T')[0] } : r
         )
       );
       return { ...rules.find((r) => r.id === id), ...data } as AlertRule;
@@ -314,13 +307,22 @@ const MonitorAlertRulesPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertTriangle size={18} color='primary.main' />
+              <AlertTriangle
+                size={18}
+                color='primary.main'
+              />
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 {row.name}
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {row.metric_name}
               </Typography>
             </Box>
@@ -355,7 +357,10 @@ const MonitorAlertRulesPage: React.FC = () => {
         id: 'condition',
         label: '触发条件',
         render: (row) => (
-          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace' }}
+          >
             {row.condition} {row.threshold}
             {row.unit}
           </Typography>
@@ -369,7 +374,13 @@ const MonitorAlertRulesPage: React.FC = () => {
             label: row.severity,
             color: 'default' as const,
           };
-          return <Chip size='small' color={config.color} label={config.label} />;
+          return (
+            <Chip
+              size='small'
+              color={config.color}
+              label={config.label}
+            />
+          );
         },
       },
       {
@@ -429,7 +440,10 @@ const MonitorAlertRulesPage: React.FC = () => {
         id: 'last_triggered_at',
         label: '最后触发时间',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.last_triggered_at || '-'}
           </Typography>
         ),
@@ -472,45 +486,81 @@ const MonitorAlertRulesPage: React.FC = () => {
       >
         <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Settings size={18} sx={{ color: 'primary.dark' }} />
-            <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+            <Settings
+              size={18}
+              sx={{ color: 'primary.dark' }}
+            />
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary' }}
+            >
               规则总数
             </Typography>
           </Box>
-          <Typography variant='h5' sx={{ fontWeight: 700, color: 'primary.dark' }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700, color: 'primary.dark' }}
+          >
             {total}
           </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Power size={18} sx={{ color: 'success.700' }} />
-            <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+            <Power
+              size={18}
+              sx={{ color: 'success.700' }}
+            />
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary' }}
+            >
               启用规则
             </Typography>
           </Box>
-          <Typography variant='h5' sx={{ fontWeight: 700, color: 'success.700' }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700, color: 'success.700' }}
+          >
             {enabledCount}
           </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <PowerOff size={18} sx={{ color: 'text.secondary' }} />
-            <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+            <PowerOff
+              size={18}
+              sx={{ color: 'text.secondary' }}
+            />
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary' }}
+            >
               禁用规则
             </Typography>
           </Box>
-          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
             {disabledCount}
           </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <AlertTriangle size={18} sx={{ color: 'warning.700' }} />
-            <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+            <AlertTriangle
+              size={18}
+              sx={{ color: 'warning.700' }}
+            />
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary' }}
+            >
               今日触发次数
             </Typography>
           </Box>
-          <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.700' }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700, color: 'warning.700' }}
+          >
             {totalTriggersToday}
           </Typography>
         </Box>

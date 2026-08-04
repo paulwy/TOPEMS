@@ -18,6 +18,7 @@ import { AIHelperButton } from '@/components/ai';
 import type { EmployeeFormDialogProps } from '../types';
 
 import { useTranslation } from 'react-i18next';
+
 const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
   open,
   onClose,
@@ -34,187 +35,197 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
 }) => {
   const { t } = useTranslation();
   return (
-  <Dialog
-    open={open}
-    onClose={onClose}
-    maxWidth='sm'
-    fullWidth
-  >
-    <DialogTitle>{mode === 'create' ? t('hrm.hrm_employee_page_components__employee_form_dialog.add') : t('hrm.hrm_employee_page_components__employee_form_dialog.edit')}</DialogTitle>
-    <DialogContent>
-      <Box
-        component='form'
-        onSubmit={onSubmit}
-        sx={{ display: 'grid', gap: 2, pt: 1 }}
-      >
-        <FormControl
-          size='small'
-          fullWidth
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth='sm'
+      fullWidth
+    >
+      <DialogTitle>
+        {mode === 'create'
+          ? t('hrm.hrm_employee_page_components__employee_form_dialog.add')
+          : t('hrm.hrm_employee_page_components__employee_form_dialog.edit')}
+      </DialogTitle>
+      <DialogContent>
+        <Box
+          component='form'
+          onSubmit={onSubmit}
+          sx={{ display: 'grid', gap: 2, pt: 1 }}
         >
-          <InputLabel>所属公司 *</InputLabel>
-          <Select
-            value={(formData as { company_id?: string })?.company_id || ''}
-            label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_c3846b')}
-            onChange={(e) => onChange('company_id', e.target.value)}
-            required
-          >
-            {companies.map((c) => (
-              <MenuItem
-                key={c.id}
-                value={c.id}
-              >
-                {c.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <Box>
-          <Typography
-            variant='caption'
-            color='text.secondary'
-            sx={{ mb: 1, display: 'block' }}
-          >
-            员工头像
-          </Typography>
-          <ImageUpload
-            value={(formData as unknown as Record<string, unknown>)?.avatar_url ? [(formData as unknown as Record<string, unknown>).avatar_url as string] : []}
-            onChange={(files) => onChange('avatar_url', files[0] || '')}
-            maxCount={1}
-            accept='image/*'
-            cropEnabled
-            cropAspect={1}
-            height={120}
-          />
-        </Box>
-
-        <Box sx={{ display: 'grid', gridTemplateColumns: 2, gap: 2 }}>
-          <TextField
-            label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_88eff5')}
+          <FormControl
             size='small'
-            value={(formData as { name?: string })?.name || ''}
-            onChange={(e) => onChange('name', e.target.value)}
-            required
-          />
-          <Box sx={{ position: 'relative' }}>
+            fullWidth
+          >
+            <InputLabel>所属公司 *</InputLabel>
+            <Select
+              value={(formData as { company_id?: string })?.company_id || ''}
+              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_c3846b')}
+              onChange={(e) => onChange('company_id', e.target.value)}
+              required
+            >
+              {companies.map((c) => (
+                <MenuItem
+                  key={c.id}
+                  value={c.id}
+                >
+                  {c.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Box>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{ mb: 1, display: 'block' }}
+            >
+              员工头像
+            </Typography>
+            <ImageUpload
+              value={
+                (formData as unknown as Record<string, unknown>)?.avatar_url
+                  ? [(formData as unknown as Record<string, unknown>).avatar_url as string]
+                  : []
+              }
+              onChange={(files) => onChange('avatar_url', files[0] || '')}
+              maxCount={1}
+              accept='image/*'
+              cropEnabled
+              cropAspect={1}
+              height={120}
+            />
+          </Box>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: 2, gap: 2 }}>
             <TextField
-              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_752d38')}
+              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_88eff5')}
               size='small'
-              value={(formData as { employee_no?: string })?.employee_no || ''}
-              onChange={(e) => onChange('employee_no', e.target.value)}
-              fullWidth
+              value={(formData as { name?: string })?.name || ''}
+              onChange={(e) => onChange('name', e.target.value)}
+              required
+            />
+            <Box sx={{ position: 'relative' }}>
+              <TextField
+                label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_752d38')}
+                size='small'
+                value={(formData as { employee_no?: string })?.employee_no || ''}
+                onChange={(e) => onChange('employee_no', e.target.value)}
+                fullWidth
+              />
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: 2, gap: 2 }}>
+            <TextField
+              label={t('hrm.hrm_employee_page_components__employee_form_dialog.email')}
+              type='email'
+              size='small'
+              value={(formData as { email?: string })?.email || ''}
+              onChange={(e) => onChange('email', e.target.value)}
+            />
+            <TextField
+              label={t('hrm.hrm_employee_page_components__employee_form_dialog.phone')}
+              size='small'
+              value={(formData as { phone?: string })?.phone || ''}
+              onChange={(e) => onChange('phone', e.target.value)}
             />
           </Box>
-        </Box>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: 2, gap: 2 }}>
-          <TextField
-            label={t('hrm.hrm_employee_page_components__employee_form_dialog.email')}
-            type='email'
+          <FormControl
             size='small'
-            value={(formData as { email?: string })?.email || ''}
-            onChange={(e) => onChange('email', e.target.value)}
-          />
-          <TextField
-            label={t('hrm.hrm_employee_page_components__employee_form_dialog.phone')}
-            size='small'
-            value={(formData as { phone?: string })?.phone || ''}
-            onChange={(e) => onChange('phone', e.target.value)}
-          />
-        </Box>
-
-        <FormControl
-          size='small'
-          fullWidth
-        >
-          <InputLabel>所属部门</InputLabel>
-          <Select
-            value={(formData as { department_id?: string })?.department_id || ''}
-            label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_68923b')}
-            onChange={(e) => onChange('department_id', e.target.value)}
+            fullWidth
           >
-            <MenuItem value=''>无</MenuItem>
-            {departments.map((d) => (
-              <MenuItem
-                key={d.id}
-                value={d.id}
+            <InputLabel>所属部门</InputLabel>
+            <Select
+              value={(formData as { department_id?: string })?.department_id || ''}
+              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_68923b')}
+              onChange={(e) => onChange('department_id', e.target.value)}
+            >
+              <MenuItem value=''>无</MenuItem>
+              {departments.map((d) => (
+                <MenuItem
+                  key={d.id}
+                  value={d.id}
+                >
+                  {d.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_b652de')}
+            size='small'
+            value={(formData as { position?: string })?.position || ''}
+            onChange={(e) => onChange('position', e.target.value)}
+          />
+
+          <TextField
+            label={t('hrm.hrm_employee_page_components__employee_form_dialog.date')}
+            type='date'
+            size='small'
+            value={(formData as { hire_date?: string })?.hire_date || ''}
+            onChange={(e) => onChange('hire_date', e.target.value)}
+            slotProps={{ inputLabel: { shrink: true } } as const}
+          />
+
+          <FormControl
+            size='small'
+            fullWidth
+          >
+            <InputLabel>状态</InputLabel>
+            <Select
+              value={(formData as { status?: string })?.status || 'active'}
+              label={t('hrm.hrm_employee_page_components__employee_form_dialog.status')}
+              onChange={(e) => onChange('status', e.target.value)}
+            >
+              <MenuItem value='active'>在职</MenuItem>
+              <MenuItem value='inactive'>离职</MenuItem>
+            </Select>
+          </FormControl>
+
+          <DialogActions sx={{ p: 0, pt: 2, justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <AIHelperButton
+                type='generate'
+                onClick={() => onOpenAICodeGenerator(mode)}
+                size='small'
+                label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_0dd441')}
+              />
+              <AIHelperButton
+                type='complete'
+                onClick={onOpenAIDataCompleter}
+                size='small'
+                label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_e93748')}
+              />
+              <AIHelperButton
+                type='validate'
+                onClick={onOpenAIFormValidator}
+                size='small'
+                label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_6bc019')}
+              />
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                onClick={onClose}
+                variant='outlined'
               >
-                {d.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <TextField
-          label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_b652de')}
-          size='small'
-          value={(formData as { position?: string })?.position || ''}
-          onChange={(e) => onChange('position', e.target.value)}
-        />
-
-        <TextField
-          label={t('hrm.hrm_employee_page_components__employee_form_dialog.date')}
-          type='date'
-          size='small'
-          value={(formData as { hire_date?: string })?.hire_date || ''}
-          onChange={(e) => onChange('hire_date', e.target.value)}
-          slotProps={{ inputLabel: { shrink: true } } as const}
-        />
-
-        <FormControl
-          size='small'
-          fullWidth
-        >
-          <InputLabel>状态</InputLabel>
-          <Select
-            value={(formData as { status?: string })?.status || 'active'}
-            label={t('hrm.hrm_employee_page_components__employee_form_dialog.status')}
-            onChange={(e) => onChange('status', e.target.value)}
-          >
-            <MenuItem value='active'>在职</MenuItem>
-            <MenuItem value='inactive'>离职</MenuItem>
-          </Select>
-        </FormControl>
-
-        <DialogActions sx={{ p: 0, pt: 2, justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <AIHelperButton
-              type='generate'
-              onClick={() => onOpenAICodeGenerator(mode)}
-              size='small'
-              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_0dd441')}
-            />
-            <AIHelperButton
-              type='complete'
-              onClick={onOpenAIDataCompleter}
-              size='small'
-              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_e93748')}
-            />
-            <AIHelperButton
-              type='validate'
-              onClick={onOpenAIFormValidator}
-              size='small'
-              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_6bc019')}
-            />
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              onClick={onClose}
-              variant='outlined'
-            >
-              取消
-            </Button>
-            <Button
-              type='submit'
-              variant='contained'
-            >
-              {mode === 'create' ? t('hrm.hrm_employee_page_components__employee_form_dialog.create') : t('hrm.hrm_employee_page_components__employee_form_dialog.save')}
-            </Button>
-          </Box>
-        </DialogActions>
-      </Box>
-    </DialogContent>
-  </Dialog>
+                取消
+              </Button>
+              <Button
+                type='submit'
+                variant='contained'
+              >
+                {mode === 'create'
+                  ? t('hrm.hrm_employee_page_components__employee_form_dialog.create')
+                  : t('hrm.hrm_employee_page_components__employee_form_dialog.save')}
+              </Button>
+            </Box>
+          </DialogActions>
+        </Box>
+      </DialogContent>
+    </Dialog>
   );
 };
 

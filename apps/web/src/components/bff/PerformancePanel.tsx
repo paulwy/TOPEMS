@@ -69,11 +69,7 @@ import {
   onSuspenseStatsChange,
   type SuspenseMountRecord,
 } from '@/hooks/bff/useBffSuspense';
-import {
-  getPPRStats,
-  onPPRStatsChange,
-  type PPRSlotRecord,
-} from '@/hooks/bff/usePartialPreRender';
+import { getPPRStats, onPPRStatsChange, type PPRSlotRecord } from '@/hooks/bff/usePartialPreRender';
 import {
   getHydrationStats,
   onHydrationStatsChange,
@@ -625,7 +621,7 @@ const QueryCostPanel: React.FC<{ recentRecords: QueryPerformanceRecord[] }> = ({
                   label={label}
                   sx={{
                     bgcolor: color,
-                    color: 'white',
+                    color: 'common.white',
                     fontWeight: 600,
                   }}
                 />

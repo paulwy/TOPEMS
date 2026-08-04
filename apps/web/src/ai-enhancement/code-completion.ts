@@ -11,14 +11,14 @@
  */
 
 export enum CompletionKind {
-  Snippet = 'snippet',
-  Property = 'property',
-  Function = 'function',
-  Import = 'import',
-  Keyword = 'keyword',
-  Variable = 'variable',
-  Type = 'type',
-  SnippetPlaceholder = 'snippet-placeholder',
+  SNIPPET = 'snippet',
+  PROPERTY = 'property',
+  FUNCTION = 'function',
+  IMPORT = 'import',
+  KEYWORD = 'keyword',
+  VARIABLE = 'variable',
+  TYPE = 'type',
+  SNIPPETPLACEHOLDER = 'snippet-placeholder',
 }
 
 export interface CompletionContext {
@@ -87,7 +87,7 @@ const REACT_SNIPPETS: SnippetDefinition[] = [
     label: 'React Function Component',
     description: '创建一个 React 函数组件',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `interface \${1:ComponentName}Props {
   \${2:children}: React.ReactNode;
 }
@@ -111,7 +111,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
     label: 'useState Hook',
     description: '创建 useState 状态钩子',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `const [\${1:state}, set\${1:State}] = useState<\${2:type}>(\${3:initialValue});`,
     placeholders: [{ name: 'state' }, { name: 'type' }, { name: 'initialValue' }],
     sort_order: 200,
@@ -122,7 +122,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
     label: 'useEffect Hook',
     description: '创建 useEffect 副作用钩子',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `useEffect(() => {
   \${0}
   return () => {
@@ -138,7 +138,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
     label: 'useCallback Hook',
     description: '创建 useCallback 记忆化回调',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `const \${1:callback} = useCallback((\${2:params}) => {
   \${0}
 }, [\${3:deps}]);`,
@@ -151,7 +151,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
     label: 'useMemo Hook',
     description: '创建 useMemo 记忆化值',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `const \${1:memoValue} = useMemo(() => {
   \${0}
 }, [\${2:deps}]);`,
@@ -164,7 +164,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
     label: 'useRef Hook',
     description: '创建 useRef 引用钩子',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `const \${1:ref} = useRef<\${2:type}>(\${3:initialValue});`,
     placeholders: [{ name: 'ref' }, { name: 'type' }, { name: 'initialValue' }],
     sort_order: 240,
@@ -175,7 +175,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
     label: 'useQuery (TanStack Query)',
     description: '创建 TanStack Query 数据查询钩子',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `const { data, isLoading, error } = useQuery({
   queryKey: ['\${1:key}'],
   queryFn: () => \${2:fetchFn}(),
@@ -189,7 +189,7 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
     label: 'useMutation (TanStack Query)',
     description: '创建 TanStack Query 数据变更钩子',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `const { mutate, isPending } = useMutation({
   mutationFn: (\${1:vars}) => \${2:apiFn}(\${1:vars}),
   onSuccess: (data) => {
@@ -208,7 +208,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
     label: 'Interface',
     description: '定义 TypeScript 接口',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `interface \${1:Name} {
   \${2:property}: \${3:type};
   \${0}
@@ -222,7 +222,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
     label: 'Type Alias',
     description: '定义 TypeScript 类型别名',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `type \${1:Name} = \${2:type};`,
     placeholders: [{ name: 'Name' }, { name: 'type' }],
     sort_order: 110,
@@ -233,7 +233,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
     label: 'Enum',
     description: '定义 TypeScript 枚举',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `enum \${1:Name} {
   \${2:Member} = '\${2:Member}',
   \${0}
@@ -247,7 +247,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
     label: 'Async Function',
     description: '定义异步函数',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `async function \${1:name}(\${2:params}): Promise<\${3:type}> {
   \${0}
 }`,
@@ -260,7 +260,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
     label: 'Generic Function',
     description: '定义泛型函数',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `function \${1:name}<\${2:T}>(\${3:arg}: \${2:T}): \${2:T} {
   \${0}
   return \${3:arg};
@@ -274,7 +274,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
     label: 'Import Type',
     description: '导入类型定义',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `import type { \${1:Type} } from '\${2:path}';`,
     placeholders: [{ name: 'Type' }, { name: 'path' }],
     sort_order: 150,
@@ -285,7 +285,7 @@ const TYPESCRIPT_SNIPPETS: SnippetDefinition[] = [
     label: 'Zod Schema',
     description: '定义 Zod 验证模式',
     language: 'typescript',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `const \${1:schema} = z.object({
   \${2:field}: z.\${3:string}(),
   \${0}
@@ -302,7 +302,7 @@ const CSS_SNIPPETS: SnippetDefinition[] = [
     label: 'Flexbox Layout',
     description: '创建 Flexbox 布局容器',
     language: 'css',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `display: flex;
 flex-direction: \${1:row};
 justify-content: \${2:flex-start};
@@ -322,7 +322,7 @@ gap: \${4:8px};`,
     label: 'Grid Layout',
     description: '创建 Grid 网格布局',
     language: 'css',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `display: grid;
 grid-template-columns: \${1:repeat(12, 1fr)};
 gap: \${2:8px};
@@ -336,7 +336,7 @@ grid-template-areas: \${3:header};`,
     label: 'Responsive Breakpoint',
     description: '响应式断点媒体查询',
     language: 'css',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `@media (max-width: \${1:768px}) {
   \${0}
 }`,
@@ -352,7 +352,7 @@ const JSON_SNIPPETS: SnippetDefinition[] = [
     label: 'API Response Schema',
     description: 'API 响应 JSON 结构',
     language: 'json',
-    kind: CompletionKind.Snippet,
+    kind: CompletionKind.SNIPPET,
     template: `{
   "code": \${1:200},
   "message": "\${2:success}",
@@ -383,37 +383,37 @@ const COMMON_TYPESCRIPT_KEYWORDS: Array<{
   detail: string;
   insert_text: string;
 }> = [
-  { label: 'import', kind: CompletionKind.Keyword, detail: '导入模块', insert_text: 'import ' },
-  { label: 'export', kind: CompletionKind.Keyword, detail: '导出声明', insert_text: 'export ' },
+  { label: 'import', kind: CompletionKind.KEYWORD, detail: '导入模块', insert_text: 'import ' },
+  { label: 'export', kind: CompletionKind.KEYWORD, detail: '导出声明', insert_text: 'export ' },
   {
     label: 'interface',
-    kind: CompletionKind.Keyword,
+    kind: CompletionKind.KEYWORD,
     detail: '接口声明',
     insert_text: 'interface ',
   },
-  { label: 'type', kind: CompletionKind.Keyword, detail: '类型别名', insert_text: 'type ' },
-  { label: 'class', kind: CompletionKind.Keyword, detail: '类声明', insert_text: 'class ' },
-  { label: 'function', kind: CompletionKind.Keyword, detail: '函数声明', insert_text: 'function ' },
-  { label: 'const', kind: CompletionKind.Keyword, detail: '常量声明', insert_text: 'const ' },
-  { label: 'let', kind: CompletionKind.Keyword, detail: '变量声明', insert_text: 'let ' },
-  { label: 'var', kind: CompletionKind.Keyword, detail: '变量声明 (旧式)', insert_text: 'var ' },
-  { label: 'return', kind: CompletionKind.Keyword, detail: '返回值', insert_text: 'return ' },
-  { label: 'async', kind: CompletionKind.Keyword, detail: '异步修饰符', insert_text: 'async ' },
-  { label: 'await', kind: CompletionKind.Keyword, detail: '等待异步操作', insert_text: 'await ' },
-  { label: 'extends', kind: CompletionKind.Keyword, detail: '继承', insert_text: 'extends ' },
+  { label: 'type', kind: CompletionKind.KEYWORD, detail: '类型别名', insert_text: 'type ' },
+  { label: 'class', kind: CompletionKind.KEYWORD, detail: '类声明', insert_text: 'class ' },
+  { label: 'function', kind: CompletionKind.KEYWORD, detail: '函数声明', insert_text: 'function ' },
+  { label: 'const', kind: CompletionKind.KEYWORD, detail: '常量声明', insert_text: 'const ' },
+  { label: 'let', kind: CompletionKind.KEYWORD, detail: '变量声明', insert_text: 'let ' },
+  { label: 'var', kind: CompletionKind.KEYWORD, detail: '变量声明 (旧式)', insert_text: 'var ' },
+  { label: 'return', kind: CompletionKind.KEYWORD, detail: '返回值', insert_text: 'return ' },
+  { label: 'async', kind: CompletionKind.KEYWORD, detail: '异步修饰符', insert_text: 'async ' },
+  { label: 'await', kind: CompletionKind.KEYWORD, detail: '等待异步操作', insert_text: 'await ' },
+  { label: 'extends', kind: CompletionKind.KEYWORD, detail: '继承', insert_text: 'extends ' },
   {
     label: 'implements',
-    kind: CompletionKind.Keyword,
+    kind: CompletionKind.KEYWORD,
     detail: '实现接口',
     insert_text: 'implements ',
   },
   {
     label: 'namespace',
-    kind: CompletionKind.Keyword,
+    kind: CompletionKind.KEYWORD,
     detail: '命名空间',
     insert_text: 'namespace ',
   },
-  { label: 'declare', kind: CompletionKind.Keyword, detail: '声明', insert_text: 'declare ' },
+  { label: 'declare', kind: CompletionKind.KEYWORD, detail: '声明', insert_text: 'declare ' },
 ];
 
 const COMMON_REACT_HOOKS: Array<{ label: string; detail: string; insert_text: string }> = [
@@ -632,7 +632,7 @@ export class IntelligentCodeCompletion {
         if (!word || exp.toLowerCase().startsWith(word.toLowerCase())) {
           items.push({
             label: exp,
-            kind: CompletionKind.Import,
+            kind: CompletionKind.IMPORT,
             detail: `从 ${module} 导入`,
             insert_text: `import { ${exp} } from '${module}';`,
             sort_order: 80,
@@ -654,7 +654,7 @@ export class IntelligentCodeCompletion {
       (hook) => !word || hook.label.toLowerCase().startsWith(word.toLowerCase())
     ).map((hook) => ({
       label: hook.label,
-      kind: CompletionKind.Function,
+      kind: CompletionKind.FUNCTION,
       detail: hook.detail,
       insert_text: `${hook.label}`,
       sort_order: 100,
@@ -680,7 +680,7 @@ export class IntelligentCodeCompletion {
           .filter((p) => !word || p.name.toLowerCase().startsWith(word.toLowerCase()))
           .map((p) => ({
             label: p.name,
-            kind: CompletionKind.Property,
+            kind: CompletionKind.PROPERTY,
             detail: `${p.name}: ${p.type}`,
             insert_text: `${p.name}`,
             sort_order: 30,
@@ -712,7 +712,7 @@ export class IntelligentCodeCompletion {
       .filter((p) => !propName || p.name.toLowerCase().startsWith(propName.toLowerCase()))
       .map((p) => ({
         label: p.name,
-        kind: CompletionKind.Property,
+        kind: CompletionKind.PROPERTY,
         detail: `${p.name}${p.required ? ' (必填)' : ''}: ${p.type}${p.description ? ` — ${p.description}` : ''}`,
         insert_text: `${p.name}={}`,
         sort_order: 40,
@@ -736,7 +736,7 @@ export class IntelligentCodeCompletion {
 
     return endpoints.map((ep) => ({
       label: `${ep.method} ${ep.path}`,
-      kind: CompletionKind.Function,
+      kind: CompletionKind.FUNCTION,
       detail: `${ep.description}${ep.request_type ? ` | 请求: ${ep.request_type}` : ''}${ep.response_type ? ` | 响应: ${ep.response_type}` : ''}`,
       insert_text: `// ${ep.description}\n${ep.method} ${ep.path}`,
       sort_order: 60,

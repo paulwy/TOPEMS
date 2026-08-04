@@ -64,7 +64,7 @@ const noHardcodedColors = {
     }
 
     function isColorProperty(propName) {
-      if (!propName) return false;
+      if (!propName || typeof propName !== 'string') return false;
       const name = propName.toLowerCase();
       return name.includes('color') || name.includes('bgcolor') ||
              name.includes('background') || name.includes('bordercolor') ||

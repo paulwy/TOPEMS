@@ -200,7 +200,8 @@ export function useCrudForm<T = any, TCreate = Partial<T>, TUpdate = Partial<T>>
         if (showErrorNotification) {
           addNotification({
             title: '操作失败',
-            message: extractErrorMessage(err) || `${mode === 'create' ? '创建' : '更新'}${entityName}失败`,
+            message:
+              extractErrorMessage(err) || `${mode === 'create' ? '创建' : '更新'}${entityName}失败`,
             type: 'error',
           });
         }
@@ -210,10 +211,25 @@ export function useCrudForm<T = any, TCreate = Partial<T>, TUpdate = Partial<T>>
         setSubmitting(false);
       }
     },
-    [submitting, mode, onCreate, onUpdate, currentRecord, entityName, showSuccessNotification, showErrorNotification, onSuccess, onError, closeOnSuccess, addNotification]
+    [
+      submitting,
+      mode,
+      onCreate,
+      onUpdate,
+      currentRecord,
+      entityName,
+      showSuccessNotification,
+      showErrorNotification,
+      onSuccess,
+      onError,
+      closeOnSuccess,
+      addNotification,
+    ]
   );
 
-  const id = currentRecord ? (currentRecord as unknown as Record<string, unknown>).id as string | number : null;
+  const id = currentRecord
+    ? ((currentRecord as unknown as Record<string, unknown>).id as string | number)
+    : null;
   const isCreate = mode === 'create';
   const isEdit = mode === 'edit';
   const isView = mode === 'view';

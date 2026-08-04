@@ -151,9 +151,7 @@ const PerformanceTestPage: React.FC = () => {
       setRenderComplete(true);
     }, 100);
 
-    const navTiming = performance.getEntriesByType(
-      'navigation'
-    )[0] as PerformanceNavigationTiming;
+    const navTiming = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
     if (navTiming) {
       setNavigationTime(navTiming.loadEventEnd - navTiming.startTime);
       setDomContentLoaded(navTiming.domContentLoadedEventEnd - navTiming.startTime);
@@ -278,8 +276,8 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: '性能测试',
       value: '通过',
-      color: '#16a34a',
-      bgColor: '#dcfce7',
+      color: 'success.600',
+      bgColor: 'success.100',
       description: 'Lighthouse性能基准测试页面',
     },
     {
@@ -357,8 +355,8 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: '渲染次数',
       value: `${renderCount}次`,
-      color: '#2563eb',
-      bgColor: '#dbeafe',
+      color: 'primary.600',
+      bgColor: 'primary.100',
       description: '组件渲染计数',
     },
     {
@@ -378,29 +376,29 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: 'CPU占用',
       value: '低',
-      color: '#16a34a',
-      bgColor: '#dcfce7',
+      color: 'success.600',
+      bgColor: 'success.100',
       description: '静态页面CPU占用率',
     },
     {
       label: 'DOM节点',
       value: '精简',
-      color: '#16a34a',
-      bgColor: '#dcfce7',
+      color: 'success.600',
+      bgColor: 'success.100',
       description: '最小化DOM结构',
     },
     {
       label: '安全性',
       value: '已启用',
-      color: '#16a34a',
-      bgColor: '#dcfce7',
+      color: 'success.600',
+      bgColor: 'success.100',
       description: '安全头已配置',
     },
     {
       label: '框架',
       value: 'React',
-      color: '#2563eb',
-      bgColor: '#dbeafe',
+      color: 'primary.600',
+      bgColor: 'primary.100',
       description: 'React 19 + Vite',
     },
   ];
@@ -435,7 +433,7 @@ const PerformanceTestPage: React.FC = () => {
             style={{
               width: '80px',
               height: '80px',
-              background: 'rgba(255,255,255,0.2)',
+              background: 'action.disabledBackground',
               borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
@@ -459,7 +457,7 @@ const PerformanceTestPage: React.FC = () => {
           </div>
           <h1
             style={{
-              color: 'white',
+              color: 'common.white',
               fontWeight: 700,
               fontSize: '2rem',
               marginBottom: '0.5rem',
@@ -469,7 +467,7 @@ const PerformanceTestPage: React.FC = () => {
           </h1>
           <p
             style={{
-              color: 'rgba(255,255,255,0.8)',
+              color: 'common.white',
               maxWidth: '600px',
               margin: '0 auto',
               fontSize: '1rem',
@@ -483,8 +481,8 @@ const PerformanceTestPage: React.FC = () => {
               display: 'inline-block',
               marginTop: '1rem',
               padding: '0.5rem 1rem',
-              background: 'rgba(255,255,255,0.2)',
-              color: 'white',
+              background: 'action.disabledBackground',
+              color: 'common.white',
               borderRadius: '20px',
               fontSize: '0.875rem',
             }}
@@ -505,7 +503,7 @@ const PerformanceTestPage: React.FC = () => {
             <div
               key={index}
               style={{
-                background: 'rgba(255,255,255,0.95)',
+                background: 'common.white',
                 backdropFilter: 'blur(20px)',
                 borderRadius: '16px',
                 boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
@@ -554,7 +552,7 @@ const PerformanceTestPage: React.FC = () => {
                     {icons[iconKeys[index]]}
                   </svg>
                 </div>
-                <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#374151' }}>
+                <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'grey.700' }}>
                   {metric.label}
                 </span>
               </div>
@@ -563,12 +561,12 @@ const PerformanceTestPage: React.FC = () => {
                   fontWeight: 700,
                   fontSize: '1.5rem',
                   marginBottom: '0.25rem',
-                  color: '#111827',
+                  color: 'grey.900',
                 }}
               >
                 {metric.value}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{metric.description}</div>
+              <div style={{ fontSize: '0.75rem', color: 'grey.500' }}>{metric.description}</div>
             </div>
           ))}
         </div>
@@ -576,7 +574,7 @@ const PerformanceTestPage: React.FC = () => {
         <div style={{ marginTop: '3rem', textAlign: 'center' }}>
           <div
             style={{
-              background: 'rgba(255,255,255,0.95)',
+              background: 'common.white',
               backdropFilter: 'blur(20px)',
               borderRadius: '16px',
               boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
@@ -591,27 +589,27 @@ const PerformanceTestPage: React.FC = () => {
                 fontWeight: 600,
                 fontSize: '1.125rem',
                 marginBottom: '1rem',
-                color: '#111827',
+                color: 'grey.900',
               }}
             >
               页面信息
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
               <div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>路径</div>
-                <div style={{ fontWeight: 500, color: '#111827' }}>/performance</div>
+                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>路径</div>
+                <div style={{ fontWeight: 500, color: 'grey.900' }}>/performance</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>类型</div>
-                <div style={{ fontWeight: 500, color: '#111827' }}>静态页面</div>
+                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>类型</div>
+                <div style={{ fontWeight: 500, color: 'grey.900' }}>静态页面</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>认证</div>
-                <div style={{ fontWeight: 500, color: '#16a34a' }}>无需</div>
+                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>认证</div>
+                <div style={{ fontWeight: 500, color: 'success.600' }}>无需</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>依赖</div>
-                <div style={{ fontWeight: 500, color: '#16a34a' }}>独立</div>
+                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>依赖</div>
+                <div style={{ fontWeight: 500, color: 'success.600' }}>独立</div>
               </div>
             </div>
             <div
@@ -627,7 +625,7 @@ const PerformanceTestPage: React.FC = () => {
                 style={{
                   padding: '0.75rem 1.5rem',
                   background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
-                  color: 'white',
+                  color: 'common.white',
                   border: 'none',
                   borderRadius: '8px',
                   fontWeight: 600,
@@ -646,8 +644,8 @@ const PerformanceTestPage: React.FC = () => {
                 }}
                 style={{
                   padding: '0.75rem 1.5rem',
-                  background: 'white',
-                  color: '#3b82f6',
+                  background: 'common.white',
+                  color: 'primary.500',
                   border: '1px solid #3b82f6',
                   borderRadius: '8px',
                   fontWeight: 600,
@@ -662,7 +660,7 @@ const PerformanceTestPage: React.FC = () => {
         </div>
 
         <div style={{ marginTop: '3rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.6)' }}>
+          <div style={{ fontSize: '0.875rem', color: 'common.white' }}>
             TOPEMS - 企业数字化平台 | 性能基准测试页
           </div>
         </div>

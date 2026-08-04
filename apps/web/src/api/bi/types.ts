@@ -184,7 +184,7 @@ export interface DataSource {
   data_volume?: number;
   sync_frequency?: string;
   description?: string;
-  is_enabled?: boolean;
+  isEnabled?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -299,7 +299,7 @@ export interface ReportSchedule {
   cron_expression: string;
   format: 'pdf' | 'excel' | 'csv' | 'word';
   recipients: string[];
-  is_enabled: boolean;
+  isEnabled: boolean;
   last_run_at?: string;
   next_run_at?: string;
   created_at: string;
@@ -348,7 +348,7 @@ export interface RowLevelPermission {
   condition: string;
   roles: string[];
   users: string[];
-  is_enabled: boolean;
+  isEnabled: boolean;
   priority: number;
   created_at: string;
   updated_at: string;

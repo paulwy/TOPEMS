@@ -37,7 +37,7 @@ export interface FileListResponse {
 export interface Folder {
   id: string;
   name: string;
-  parent_id: string | null;
+  parentId: string | null;
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -53,7 +53,7 @@ export interface ListFoldersData {
 
 export interface CreateFolderRequest {
   name: string;
-  parent_id?: string;
+  parentId?: string;
 }
 
 export interface UploadFileResponse {
@@ -108,7 +108,7 @@ export const docApi = {
   },
 
   listFolders: async (parentId?: string): Promise<ApiResponse<ListFoldersData>> => {
-    const params = parentId ? { parent_id: parentId } : {};
+    const params = parentId ? { parentId } : {};
     return apiClient.doc.get<ListFoldersData>('/folders', { params });
   },
 

@@ -782,13 +782,13 @@ export const masterDataApi = {
     rule_type: 'required' | 'format' | 'range' | 'uniqueness' | 'reference' | 'custom';
     severity?: 'error' | 'warning' | 'info';
     config?: Record<string, unknown>;
-    is_active?: boolean;
+    isActive?: boolean;
   }) => apiClient.erp.post<ApiResponse<QualityRule>>('/master-data-refs/quality-rules', data),
 
   /** V39.0 AC-11: 列出质量规则（支持 domain 过滤 + 分页） */
   listQualityRules: (params?: {
     domain?: string;
-    is_active?: boolean;
+    isActive?: boolean;
     page?: number;
     page_size?: number;
   }) =>
@@ -817,7 +817,7 @@ export const masterDataApi = {
       rule_type?: 'required' | 'format' | 'range' | 'uniqueness' | 'reference' | 'custom';
       severity?: 'error' | 'warning' | 'info';
       config?: Record<string, unknown>;
-      is_active?: boolean;
+      isActive?: boolean;
     }
   ) =>
     apiClient.erp.put<ApiResponse<QualityRule>>(`/master-data-refs/quality-rules/${ruleId}`, data),
@@ -917,7 +917,7 @@ export interface QualityRule {
   rule_type: 'required' | 'format' | 'range' | 'uniqueness' | 'reference' | 'custom';
   severity: 'error' | 'warning' | 'info';
   config: Record<string, unknown>;
-  is_active: boolean;
+  isActive: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -5384,12 +5384,7 @@ export async function updateStreamConfig(config: StreamConfigInput): Promise<boo
 // ==================== V45.0 Track E: GraphQL 企业级治理 ====================
 
 /** V45.0: Schema 版本状态 */
-export type SchemaVersionStatus =
-  | 'DRAFT'
-  | 'STAGING'
-  | 'ACTIVE'
-  | 'DEPRECATED'
-  | 'RETIRED';
+export type SchemaVersionStatus = 'DRAFT' | 'STAGING' | 'ACTIVE' | 'DEPRECATED' | 'RETIRED';
 
 /** V45.0: Schema 变更类型 */
 export type SchemaChangeType =
@@ -5886,10 +5881,7 @@ export async function registerSchema(
  * @param service 服务名称
  * @param version 版本号
  */
-export async function deprecateSchemaVersion(
-  service: string,
-  version: string
-): Promise<boolean> {
+export async function deprecateSchemaVersion(service: string, version: string): Promise<boolean> {
   const result = await bffGraphQL<{ deprecateSchemaVersion: boolean }>(
     `
     mutation DeprecateSchemaVersion($service: String!, $version: String!) {
@@ -5906,10 +5898,7 @@ export async function deprecateSchemaVersion(
  * @param service 服务名称
  * @param version 版本号
  */
-export async function retireSchemaVersion(
-  service: string,
-  version: string
-): Promise<boolean> {
+export async function retireSchemaVersion(service: string, version: string): Promise<boolean> {
   const result = await bffGraphQL<{ retireSchemaVersion: boolean }>(
     `
     mutation RetireSchemaVersion($service: String!, $version: String!) {
@@ -5943,10 +5932,7 @@ export async function addContractTest(input: ContractTestInput): Promise<string>
  * @param id 测试 ID
  * @param input 契约测试输入
  */
-export async function updateContractTest(
-  id: string,
-  input: ContractTestInput
-): Promise<boolean> {
+export async function updateContractTest(id: string, input: ContractTestInput): Promise<boolean> {
   const result = await bffGraphQL<{ updateContractTest: boolean }>(
     `
     mutation UpdateContractTest($id: String!, $input: ContractTestInput!) {
@@ -6050,10 +6036,7 @@ export async function publishSchemaVersion(
  * @param service 服务名称
  * @param version 版本号
  */
-export async function promoteSchemaVersion(
-  service: string,
-  version: string
-): Promise<boolean> {
+export async function promoteSchemaVersion(service: string, version: string): Promise<boolean> {
   const result = await bffGraphQL<{ promoteSchemaVersion: boolean }>(
     `
     mutation PromoteSchemaVersion($service: String!, $version: String!) {
@@ -6070,10 +6053,7 @@ export async function promoteSchemaVersion(
  * @param service 服务名称
  * @param toVersion 目标版本
  */
-export async function rollbackSchema(
-  service: string,
-  toVersion: string
-): Promise<boolean> {
+export async function rollbackSchema(service: string, toVersion: string): Promise<boolean> {
   const result = await bffGraphQL<{ rollbackSchema: boolean }>(
     `
     mutation RollbackSchema($service: String!, $toVersion: String!) {

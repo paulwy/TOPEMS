@@ -10,6 +10,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
 import { CreditCard } from 'lucide-react';
+
 const BankAccountStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.ERP.BANK_ACCOUNTS, 'stats'],

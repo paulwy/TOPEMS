@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Chip,
-  CircularProgress,
-  Paper,
-  Typography,
-  Stack,
-} from '@mui/material';
+import { Box, Chip, CircularProgress, Paper, Typography, Stack } from '@mui/material';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 
 const StatCard: React.FC<{

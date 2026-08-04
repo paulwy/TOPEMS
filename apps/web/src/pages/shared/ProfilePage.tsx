@@ -532,7 +532,7 @@ const ProfilePage: React.FC = () => {
                       bottom: 8,
                       right: 0,
                       bgcolor: 'primary.main',
-                      color: 'white',
+                      color: 'common.white',
                       '&:hover': { bgcolor: 'primary.dark' },
                       width: 32,
                       height: 32,
@@ -1166,7 +1166,7 @@ const ProfilePage: React.FC = () => {
                             >
                               <Icon
                                 size={24}
-                                style={{ color: 'white' }}
+                                style={{ color: 'common.white' }}
                               />
                             </Box>
                             <Typography

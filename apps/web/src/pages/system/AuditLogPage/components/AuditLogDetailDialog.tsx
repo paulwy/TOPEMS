@@ -42,7 +42,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <FileText size={24} />
-          <Typography variant='h6'>{t('system.audit_page.detail_title')}</Typography>
+          <Typography variant='h6'>{t('system.auditPage.detail_title')}</Typography>
         </Box>
         <IconButton onClick={onClose}>
           <X size={20} />
@@ -61,7 +61,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                   color='text.secondary'
                   gutterBottom
                 >
-                  {t('system.audit_page.basic_info')}
+                  {t('system.auditPage.basic_info')}
                 </Typography>
                 <Grid
                   container
@@ -73,7 +73,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('system.audit_page.id_label')}
+                        {t('system.auditPage.id_label')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -89,7 +89,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('system.audit_page.operation_label')}
+                        {t('system.auditPage.operation_label')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -105,7 +105,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('system.audit_page.entity_type_label')}
+                        {t('system.auditPage.entity_type_label')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -121,7 +121,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('system.audit_page.entity_id_label')}
+                        {t('system.auditPage.entity_id_label')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -137,7 +137,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('system.audit_page.status_label')}
+                        {t('system.auditPage.status_label')}
                       </Typography>
                       {getStatusBadge(currentLog.status)}
                     </Box>
@@ -152,7 +152,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                   color='text.secondary'
                   gutterBottom
                 >
-                  {t('system.audit_page.user_info')}
+                  {t('system.auditPage.user_info')}
                 </Typography>
                 <Grid
                   container
@@ -164,7 +164,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('system.audit_page.user_id_label')}
+                        {t('system.auditPage.user_id_label')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -180,7 +180,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('system.audit_page.username_label')}
+                        {t('system.auditPage.username_label')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -196,7 +196,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('system.audit_page.ip_address_label')}
+                        {t('system.auditPage.ip_address_label')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -212,7 +212,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                         variant='body2'
                         color='text.secondary'
                       >
-                        {t('system.audit_page.created_at_label')}
+                        {t('system.auditPage.created_at_label')}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -229,7 +229,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                           variant='body2'
                           color='text.secondary'
                         >
-                          {t('system.audit_page.duration_label')}
+                          {t('system.auditPage.duration_label')}
                         </Typography>
                         <Typography
                           variant='body2'
@@ -251,7 +251,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                     color='error.main'
                     gutterBottom
                   >
-                    {t('system.audit_page.error_info')}
+                    {t('system.auditPage.error_info')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -270,7 +270,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                     color='text.secondary'
                     gutterBottom
                   >
-                    {t('system.audit_page.request_details')}
+                    {t('system.auditPage.request_details')}
                   </Typography>
                   <pre
                     style={{
@@ -295,7 +295,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                     color='text.secondary'
                     gutterBottom
                   >
-                    {t('system.audit_page.response_details')}
+                    {t('system.auditPage.response_details')}
                   </Typography>
                   <pre
                     style={{

@@ -26,15 +26,31 @@ export const MicroAppRouter: React.FC<{ userPermissions: string[] }> = ({ userPe
           element={
             <RemoteLoader
               moduleName={module.name}
-              component="./App"
+              component='./App'
               fallback={<div>加载 {module.displayName}...</div>}
             />
           }
         />
       ))}
       {/* 默认重定向到核心 */}
-      <Route path="/" element={<Navigate to="/core" replace />} />
-      <Route path="*" element={<Navigate to="/core" replace />} />
+      <Route
+        path='/'
+        element={
+          <Navigate
+            to='/core'
+            replace
+          />
+        }
+      />
+      <Route
+        path='*'
+        element={
+          <Navigate
+            to='/core'
+            replace
+          />
+        }
+      />
     </Routes>
   );
 };

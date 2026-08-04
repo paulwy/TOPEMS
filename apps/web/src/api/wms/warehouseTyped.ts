@@ -12,11 +12,7 @@
  */
 
 import apiClient from '../client';
-import {
-  createTypedApiClient,
-  defineApiSchema,
-  type InferEntity,
-} from '@topems/shared-types';
+import { createTypedApiClient, defineApiSchema, type InferEntity } from '@topems/shared-types';
 import type { Warehouse, CreateWarehouseRequest, UpdateWarehouseRequest } from './types';
 
 // ============ 类型映射定义 ============

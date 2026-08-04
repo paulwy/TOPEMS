@@ -61,13 +61,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
         position: 'absolute',
         top: 16,
         left: 16,
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderRadius: 2,
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         overflow: 'hidden',
       }}
     >
-      <MuiBox sx={{ padding: '12px', borderBottom: '1px solid grey.100' }}>
+      <MuiBox sx={{ padding: 1.5, borderBottom: '1px solid grey.100' }}>
         <Typography
           variant='caption'
           sx={{ fontWeight: 'medium', color: 'text.secondary' }}

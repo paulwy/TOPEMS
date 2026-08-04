@@ -67,7 +67,7 @@ describe('MES productionOrderApi', () => {
   });
 
   it('should call POST /orders for create', async () => {
-    const data = { order_no: 'PO001', product_code: 'P001' };
+    const data = { orderNo: 'PO001', product_code: 'P001' };
     mockApiClient.post.mockResolvedValue({ success: true, data });
     await productionOrderApi.create(data);
     expect(mockApiClient.post).toHaveBeenCalledWith('/orders', data);

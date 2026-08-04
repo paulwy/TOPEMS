@@ -106,9 +106,7 @@ export const instrumentSchema: EntitySchema = {
           'span',
           {
             style: {
-              color: needsCalibration
-                ? 'var(--mui-palette-warning-main)'
-                : 'inherit',
+              color: needsCalibration ? 'var(--mui-palette-warning-main)' : 'inherit',
             },
           },
           date.toLocaleDateString('zh-CN')
@@ -144,16 +142,16 @@ export const instrumentSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: {
-        '正常': 'success',
-        '校准中': 'info',
-        '维修中': 'warning',
-        '停用': 'default',
+        正常: 'success',
+        校准中: 'info',
+        维修中: 'warning',
+        停用: 'default',
       },
       labelMap: {
-        '正常': '正常',
-        '校准中': '校准中',
-        '维修中': '维修中',
-        '停用': '停用',
+        正常: '正常',
+        校准中: '校准中',
+        维修中: '维修中',
+        停用: '停用',
       },
     },
     filters: [

@@ -69,7 +69,7 @@ export const V59DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -99,7 +99,7 @@ export const V59DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
             justifyContent: 'space-between',
             background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
             bgcolor: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
-            color: 'white',
+            color: 'common.white',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -113,13 +113,13 @@ export const V59DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
             <Chip
               label='AI-Powered'
               size='small'
-              sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 600 }}
+              sx={{ bgcolor: 'action.disabledBackground', color: 'common.white', fontWeight: 600 }}
             />
           </Box>
           <IconButton
             size='small'
             onClick={onClose}
-            sx={{ color: 'white' }}
+            sx={{ color: 'common.white' }}
           >
             <XIcon size={20} />
           </IconButton>
@@ -166,19 +166,19 @@ export const V59DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
 
 const QuickActionsToolbar: React.FC = () => {
   const handleQuickDebug = () => {
-    smartDebugger.create_session('quick-debug', 0);
+    smartDebugger.createSession('quick-debug', 0);
   };
 
   const handleQuickProfile = () => {
-    if (!performanceAnalyzerV59.is_active()) {
-      performanceAnalyzerV59.start_profiling();
+    if (!performanceAnalyzerV59.isActive()) {
+      performanceAnalyzerV59.startProfiling();
     } else {
-      performanceAnalyzerV59.stop_profiling();
+      performanceAnalyzerV59.stopProfiling();
     }
   };
 
   const handleQuickScan = () => {
-    codeRefactorer.scan_code(
+    codeRefactorer.scanCode(
       'unsaved-file',
       'const x = 1;\nconst y = 2;\nif (x > 0) { if (y > 0) { if (x + y > 0) { console.log("deep"); } } }'
     );
@@ -244,7 +244,7 @@ const QuickActionsToolbar: React.FC = () => {
       <Box sx={{ flex: 1 }} />
       <Tooltip title='AI 建议'>
         <Chip
-          label={`${smartDebugger.get_debug_suggestions('global', 0).length} 条建议`}
+          label={`${smartDebugger.getDebugSuggestions('global', 0).length} 条建议`}
           size='small'
           icon={<Sparkles size={12} />}
           variant='outlined'
@@ -265,8 +265,8 @@ const DebugSessionView: React.FC = () => {
   const [evalResult, setEvalResult] = React.useState<string>('');
 
   const refresh = () => {
-    setSessions(smartDebugger.list_sessions());
-    setBreakpoints(smartDebugger.list_breakpoints());
+    setSessions(smartDebugger.listSessions());
+    setBreakpoints(smartDebugger.listBreakpoints());
   };
 
   React.useEffect(() => {
@@ -281,23 +281,23 @@ const DebugSessionView: React.FC = () => {
   }, []);
 
   const handleCreateSession = () => {
-    const session = smartDebugger.create_session('untitled', 1);
+    const session = smartDebugger.createSession('untitled', 1);
     setSelectedSession(session);
     refresh();
   };
 
   const handleSetBreakpoint = () => {
     if (!newBpFile) return;
-    smartDebugger.set_breakpoint(newBpFile, newBpLine);
+    smartDebugger.setBreakpoint(newBpFile, newBpLine);
     setNewBpFile('');
     setNewBpLine(1);
     refresh();
   };
 
   const handleAnalyzeState = (session: DebugSession) => {
-    const analysis = smartDebugger.analyze_state(session.file, session.variables);
+    const analysis = smartDebugger.analyzeState(session.file, session.variables);
     setSuggestions([
-      ...smartDebugger.suggest_fix(session.id),
+      ...smartDebugger.suggestFix(session.id),
       ...analysis.issues.map((issue) => ({
         id: `state_${Date.now()}`,
         type: 'logic' as const,
@@ -310,37 +310,37 @@ const DebugSessionView: React.FC = () => {
   };
 
   const handleGetSuggestions = (session: DebugSession) => {
-    const fixSuggestions = smartDebugger.suggest_fix(session.id);
-    const debugSuggestions = smartDebugger.get_debug_suggestions(session.file, session.line);
+    const fixSuggestions = smartDebugger.suggestFix(session.id);
+    const debugSuggestions = smartDebugger.getDebugSuggestions(session.file, session.line);
     setSuggestions([...fixSuggestions, ...debugSuggestions]);
   };
 
   const handleEvaluate = () => {
     if (!selectedSession || !evalExpr) return;
-    const result = smartDebugger.evaluate_expression(selectedSession.id, evalExpr);
+    const result = smartDebugger.evaluateExpression(selectedSession.id, evalExpr);
     setEvalResult(
       result.success ? JSON.stringify(result.value, null, 2) : `Error: ${result.error}`
     );
   };
 
   const handleGetCallStack = (session: DebugSession) => {
-    const stack = smartDebugger.get_call_stack(session.id);
+    const stack = smartDebugger.getCallStack(session.id);
     setEvalResult(JSON.stringify(stack, null, 2));
   };
 
   const handleRemoveSession = (id: string) => {
-    smartDebugger.remove_session(id);
+    smartDebugger.removeSession(id);
     if (selectedSession?.id === id) setSelectedSession(null);
     refresh();
   };
 
   const handleToggleBreakpoint = (bp: Breakpoint) => {
-    smartDebugger.update_breakpoint(bp.id, { enabled: !bp.enabled });
+    smartDebugger.updateBreakpoint(bp.id, { enabled: !bp.enabled });
     refresh();
   };
 
   const handleRemoveBreakpoint = (id: string) => {
-    smartDebugger.remove_breakpoint(id);
+    smartDebugger.removeBreakpoint(id);
     refresh();
   };
 
@@ -723,15 +723,15 @@ const PerformanceLiveGraph: React.FC = () => {
   const [trend, setTrend] = React.useState<TrendPoint[]>([]);
   const [isProfiling, setIsProfiling] = React.useState(false);
   const [analysis, setAnalysis] = React.useState<ReturnType<
-    (typeof performanceAnalyzerV59)['analyze_performance']
+    (typeof performanceAnalyzerV59)['analyzePerformance']
   > | null>(null);
 
   const refresh = () => {
-    setSnapshots(performanceAnalyzerV59.get_snapshots().slice(-30));
-    setIssues(performanceAnalyzerV59.get_issues());
-    setBudget(performanceAnalyzerV59.get_budget_usage());
-    setTrend(performanceAnalyzerV59.get_trend(30000));
-    setAnalysis(performanceAnalyzerV59.analyze_performance());
+    setSnapshots(performanceAnalyzerV59.getSnapshots().slice(-30));
+    setIssues(performanceAnalyzerV59.getIssues());
+    setBudget(performanceAnalyzerV59.getBudgetUsage());
+    setTrend(performanceAnalyzerV59.getTrend(30000));
+    setAnalysis(performanceAnalyzerV59.analyzePerformance());
   };
 
   React.useEffect(() => {
@@ -757,15 +757,15 @@ const PerformanceLiveGraph: React.FC = () => {
 
   const handleToggleProfiling = () => {
     if (isProfiling) {
-      performanceAnalyzerV59.stop_profiling();
+      performanceAnalyzerV59.stopProfiling();
     } else {
-      performanceAnalyzerV59.start_profiling();
+      performanceAnalyzerV59.startProfiling();
     }
   };
 
   const handleClear = () => {
-    performanceAnalyzerV59.clear_snapshots();
-    performanceAnalyzerV59.clear_issues();
+    performanceAnalyzerV59.clearSnapshots();
+    performanceAnalyzerV59.clearIssues();
     refresh();
   };
 
@@ -1229,7 +1229,7 @@ const PerformanceLiveGraph: React.FC = () => {
 const RefactoringSuggestions: React.FC = () => {
   const [issues, setIssues] = React.useState<CodeIssue[]>([]);
   const [plans, setPlans] = React.useState<RefactoringPlan[]>([]);
-  const [history, setHistory] = React.useState(codeRefactorer.get_refactoring_history());
+  const [history, setHistory] = React.useState(codeRefactorer.getRefactoringHistory());
   const [selectedIssue, setSelectedIssue] = React.useState<CodeIssue | null>(null);
   const [preview, setPreview] = React.useState<{ additions: string[]; removals: string[] } | null>(
     null
@@ -1240,9 +1240,9 @@ const RefactoringSuggestions: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = React.useState<RefactoringPlan | null>(null);
 
   const refresh = () => {
-    setIssues(codeRefactorer.get_issues());
-    setPlans(codeRefactorer.get_pending_plans());
-    setHistory(codeRefactorer.get_refactoring_history());
+    setIssues(codeRefactorer.getIssues());
+    setPlans(codeRefactorer.getPendingPlans());
+    setHistory(codeRefactorer.getRefactoringHistory());
   };
 
   React.useEffect(() => {
@@ -1258,7 +1258,7 @@ const RefactoringSuggestions: React.FC = () => {
 
   const handleScan = () => {
     if (!scanFile || !scanCode) return;
-    codeRefactorer.scan_code(scanFile, scanCode);
+    codeRefactorer.scanCode(scanFile, scanCode);
     setScanFile('');
     setScanCode('');
   };
@@ -1291,7 +1291,7 @@ const RefactoringSuggestions: React.FC = () => {
     };
 
     const mapping = refactorMap[issue.type];
-    const plan = codeRefactorer.create_plan(
+    const plan = codeRefactorer.createPlan(
       issue.file,
       mapping.type,
       mapping.oldCode,
@@ -1300,14 +1300,14 @@ const RefactoringSuggestions: React.FC = () => {
     );
 
     setSelectedPlan(plan);
-    const planPreview = codeRefactorer.preview_changes(plan.id);
+    const planPreview = codeRefactorer.previewChanges(plan.id);
     setPreview(planPreview);
-    const planImpact = codeRefactorer.estimate_impact(plan.id);
+    const planImpact = codeRefactorer.estimateImpact(plan.id);
     setImpact(planImpact);
   };
 
   const handleApply = (planId: string) => {
-    codeRefactorer.apply_refactoring(planId);
+    codeRefactorer.applyRefactoring(planId);
     setSelectedPlan(null);
     setPreview(null);
     setImpact(null);
@@ -1315,7 +1315,7 @@ const RefactoringSuggestions: React.FC = () => {
   };
 
   const handleReject = (planId: string) => {
-    codeRefactorer.reject_plan(planId);
+    codeRefactorer.rejectPlan(planId);
     setSelectedPlan(null);
     setPreview(null);
     setImpact(null);
@@ -1524,8 +1524,8 @@ const RefactoringSuggestions: React.FC = () => {
                     }}
                     onClick={() => {
                       setSelectedPlan(plan);
-                      setPreview(codeRefactorer.preview_changes(plan.id));
-                      setImpact(codeRefactorer.estimate_impact(plan.id));
+                      setPreview(codeRefactorer.previewChanges(plan.id));
+                      setImpact(codeRefactorer.estimateImpact(plan.id));
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>

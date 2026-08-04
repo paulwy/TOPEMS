@@ -183,7 +183,7 @@ class SmartTestV2Impl {
     }
   }
 
-  generate_tests(params?: {
+  generateTests(params?: {
     module?: string;
     type?: TestType;
     priority?: TestPriority;
@@ -230,7 +230,7 @@ class SmartTestV2Impl {
     return generated;
   }
 
-  async run_tests(
+  async runTests(
     testCaseIds?: string[],
     options?: { parallel?: boolean; timeout_ms?: number }
   ): Promise<TestRun> {
@@ -316,7 +316,7 @@ class SmartTestV2Impl {
     return run;
   }
 
-  get_test_results(testCaseId?: string): TestResultDetail[] {
+  getTestResults(testCaseId?: string): TestResultDetail[] {
     if (testCaseId) {
       return this.results.get(testCaseId) || [];
     }
@@ -327,9 +327,9 @@ class SmartTestV2Impl {
     return all.sort((a, b) => b.duration_ms - a.duration_ms);
   }
 
-  get_coverage(): {
+  getCoverage(): {
     overall: number;
-    by_type: Record<TestType, number>;
+    byType: Record<TestType, number>;
     by_priority: Record<TestPriority, number>;
     total_test_cases: number;
     passed: number;
@@ -337,7 +337,7 @@ class SmartTestV2Impl {
     pending: number;
   } {
     const testCases = Array.from(this.testCases.values());
-    const results = this.get_test_results();
+    const results = this.getTestResults();
     const totalCoverage =
       results.length > 0 ? results.reduce((sum, r) => sum + r.coverage, 0) / results.length : 0;
 
@@ -372,7 +372,7 @@ class SmartTestV2Impl {
 
     return {
       overall: totalCoverage,
-      by_type: byType,
+      byType,
       by_priority: byPriority,
       total_test_cases: testCases.length,
       passed: testCases.filter((tc) => tc.status === 'passed').length,
@@ -381,10 +381,10 @@ class SmartTestV2Impl {
     };
   }
 
-  get_test_suggestions(): TestSuggestion[] {
+  getTestSuggestions(): TestSuggestion[] {
     const suggestions: TestSuggestion[] = [];
     const testCases = Array.from(this.testCases.values());
-    const results = this.get_test_results();
+    const results = this.getTestResults();
 
     const lowCoverage = testCases.filter((tc) => tc.coverage < 0.5);
     for (const tc of lowCoverage) {
@@ -443,7 +443,7 @@ class SmartTestV2Impl {
     return suggestions;
   }
 
-  regenerate_failed(): TestCase[] {
+  regenerateFailed(): TestCase[] {
     const failedCases = Array.from(this.testCases.values()).filter((tc) => tc.status === 'failed');
     const regenerated: TestCase[] = [];
 
@@ -467,7 +467,7 @@ class SmartTestV2Impl {
     return regenerated;
   }
 
-  get_test_trends(): TestTrendPoint[] {
+  getTestTrends(): TestTrendPoint[] {
     return [...this.trends];
   }
 
@@ -487,7 +487,7 @@ class SmartTestV2Impl {
     }
   }
 
-  get_test_cases(filters?: { type?: TestType; status?: TestStatus; module?: string }): TestCase[] {
+  getTestCases(filters?: { type?: TestType; status?: TestStatus; module?: string }): TestCase[] {
     let result = Array.from(this.testCases.values());
     if (filters?.type) result = result.filter((tc) => tc.type === filters.type);
     if (filters?.status) result = result.filter((tc) => tc.status === filters.status);
@@ -495,11 +495,11 @@ class SmartTestV2Impl {
     return result;
   }
 
-  get_test_run(runId: string): TestRun | undefined {
+  getTestRun(runId: string): TestRun | undefined {
     return this.testRuns.get(runId);
   }
 
-  get_all_runs(): TestRun[] {
+  getAllRuns(): TestRun[] {
     return Array.from(this.testRuns.values()).sort(
       (a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime()
     );

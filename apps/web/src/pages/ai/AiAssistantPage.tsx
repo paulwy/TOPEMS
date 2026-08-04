@@ -333,248 +333,251 @@ const ReportResult: React.FC<{ result: ReportAssistantResponse }> = ({ result })
 const FlowResult: React.FC<{ result: FlowAssistantResponse }> = ({ result }) => {
   const { t } = useTranslation();
   return (
-  <Box sx={{ mt: 3 }}>
-    <Typography
-      variant='h6'
-      sx={{ mb: 1 }}
-    >
-      {result.title}
-    </Typography>
-    {result.description && (
+    <Box sx={{ mt: 3 }}>
       <Typography
-        variant='body2'
-        color='text.secondary'
-        sx={{ mb: 2 }}
+        variant='h6'
+        sx={{ mb: 1 }}
       >
-        {result.description}
+        {result.title}
       </Typography>
-    )}
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {result.steps.map((step) => (
-        <Paper
-          key={step.step}
-          sx={{ p: 2, borderLeft: 4, borderColor: 'primary.main' }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-            <Chip
-              label={t('ai.assistant.flow.step_label', { step: step.step })}
-              size='small'
-              color='primary'
-            />
-            <Typography
-              variant='subtitle1'
-              sx={{ fontWeight: 600 }}
-            >
-              {step.name}
-            </Typography>
-          </Box>
-          <Typography
-            variant='body2'
-            sx={{ mb: 0.5 }}
-          >
-            {step.description}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {step.responsible && (
-              <Chip
-                label={t('ai.assistant.flow.responsible', { person: step.responsible })}
-                size='small'
-                variant='outlined'
-              />
-            )}
-            {step.estimated_time && (
-              <Chip
-                label={t('ai.assistant.flow.estimated_time', { time: step.estimated_time })}
-                size='small'
-                variant='outlined'
-              />
-            )}
-          </Box>
-        </Paper>
-      ))}
-    </Box>
-    {result.suggestions && result.suggestions.length > 0 && (
-      <Box sx={{ mt: 2 }}>
+      {result.description && (
         <Typography
-          variant='subtitle2'
-          sx={{ mb: 1 }}
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 2 }}
         >
-          {t('ai.assistant.flow.optimization_suggestion')}
+          {result.description}
         </Typography>
-        {result.suggestions.map((suggestion, index) => (
-          <Alert
-            key={index}
-            severity='info'
-            sx={{ mb: 1 }}
+      )}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {result.steps.map((step) => (
+          <Paper
+            key={step.step}
+            sx={{ p: 2, borderLeft: 4, borderColor: 'primary.main' }}
           >
-            {suggestion}
-          </Alert>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Chip
+                label={t('ai.assistant.flow.step_label', { step: step.step })}
+                size='small'
+                color='primary'
+              />
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+              >
+                {step.name}
+              </Typography>
+            </Box>
+            <Typography
+              variant='body2'
+              sx={{ mb: 0.5 }}
+            >
+              {step.description}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {step.responsible && (
+                <Chip
+                  label={t('ai.assistant.flow.responsible', { person: step.responsible })}
+                  size='small'
+                  variant='outlined'
+                />
+              )}
+              {step.estimated_time && (
+                <Chip
+                  label={t('ai.assistant.flow.estimated_time', { time: step.estimated_time })}
+                  size='small'
+                  variant='outlined'
+                />
+              )}
+            </Box>
+          </Paper>
         ))}
       </Box>
-    )}
-  </Box>
+      {result.suggestions && result.suggestions.length > 0 && (
+        <Box sx={{ mt: 2 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1 }}
+          >
+            {t('ai.assistant.flow.optimization_suggestion')}
+          </Typography>
+          {result.suggestions.map((suggestion, index) => (
+            <Alert
+              key={index}
+              severity='info'
+              sx={{ mb: 1 }}
+            >
+              {suggestion}
+            </Alert>
+          ))}
+        </Box>
+      )}
+    </Box>
   );
 };
 
 const AnomalyResult: React.FC<{ result: AnomalyPredictResponse }> = ({ result }) => {
   const { t } = useTranslation();
   return (
-  <Box sx={{ mt: 3 }}>
-    <Typography
-      variant='h6'
-      sx={{ mb: 1 }}
-    >
-      {t('ai.assistant.anomaly.result_title')}：{result.metric}
-    </Typography>
-    <Typography
-      variant='body2'
-      color='text.secondary'
-      sx={{ mb: 2 }}
-    >
-      {result.summary}
-    </Typography>
-    <Grid
-      container
-      spacing={2}
-      sx={{ mb: 2 }}
-    >
-      <Grid size={{ xs: 12, sm: 6 }}>
-        <MetricCard
-          label={t('ai.assistant.anomaly.count')}
-          value={result.anomaly_count}
-        />
+    <Box sx={{ mt: 3 }}>
+      <Typography
+        variant='h6'
+        sx={{ mb: 1 }}
+      >
+        {t('ai.assistant.anomaly.result_title')}：{result.metric}
+      </Typography>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+        sx={{ mb: 2 }}
+      >
+        {result.summary}
+      </Typography>
+      <Grid
+        container
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <MetricCard
+            label={t('ai.assistant.anomaly.count')}
+            value={result.anomaly_count}
+          />
+        </Grid>
       </Grid>
-    </Grid>
-    {result.anomalies.length > 0 && (
-      <TableContainer component={Paper}>
-        <Table size='small'>
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('ai.assistant.anomaly.col_timestamp')}</TableCell>
-              <TableCell>{t('ai.assistant.anomaly.col_value')}</TableCell>
-              <TableCell>{t('ai.assistant.anomaly.col_expected')}</TableCell>
-              <TableCell>{t('ai.assistant.anomaly.col_severity')}</TableCell>
-              <TableCell>{t('ai.assistant.anomaly.col_reason')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {result.anomalies.map((anomaly, index) => (
-              <TableRow key={index}>
-                <TableCell>{anomaly.timestamp}</TableCell>
-                <TableCell>{anomaly.value}</TableCell>
-                <TableCell>{anomaly.expected ?? '-'}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={t('ai.assistant.severity.' + getSeverityLabel(anomaly.severity))}
-                    color={
-                      getSeverityColor(anomaly.severity) as 'error' | 'warning' | 'info' | 'default'
-                    }
-                    size='small'
-                  />
-                </TableCell>
-                <TableCell>{anomaly.reason ?? '-'}</TableCell>
+      {result.anomalies.length > 0 && (
+        <TableContainer component={Paper}>
+          <Table size='small'>
+            <TableHead>
+              <TableRow>
+                <TableCell>{t('ai.assistant.anomaly.col_timestamp')}</TableCell>
+                <TableCell>{t('ai.assistant.anomaly.col_value')}</TableCell>
+                <TableCell>{t('ai.assistant.anomaly.col_expected')}</TableCell>
+                <TableCell>{t('ai.assistant.anomaly.col_severity')}</TableCell>
+                <TableCell>{t('ai.assistant.anomaly.col_reason')}</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    )}
-    {result.suggestions && result.suggestions.length > 0 && (
-      <Box sx={{ mt: 2 }}>
-        {result.suggestions.map((suggestion, index) => (
-          <Alert
-            key={index}
-            severity='warning'
-            sx={{ mb: 1 }}
-          >
-            {suggestion}
-          </Alert>
-        ))}
-      </Box>
-    )}
-  </Box>
+            </TableHead>
+            <TableBody>
+              {result.anomalies.map((anomaly, index) => (
+                <TableRow key={index}>
+                  <TableCell>{anomaly.timestamp}</TableCell>
+                  <TableCell>{anomaly.value}</TableCell>
+                  <TableCell>{anomaly.expected ?? '-'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={t(`ai.assistant.severity.${getSeverityLabel(anomaly.severity)}`)}
+                      color={
+                        getSeverityColor(anomaly.severity) as
+                          'error' | 'warning' | 'info' | 'default'
+                      }
+                      size='small'
+                    />
+                  </TableCell>
+                  <TableCell>{anomaly.reason ?? '-'}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+      {result.suggestions && result.suggestions.length > 0 && (
+        <Box sx={{ mt: 2 }}>
+          {result.suggestions.map((suggestion, index) => (
+            <Alert
+              key={index}
+              severity='warning'
+              sx={{ mb: 1 }}
+            >
+              {suggestion}
+            </Alert>
+          ))}
+        </Box>
+      )}
+    </Box>
   );
 };
 
 const KnowledgeResult: React.FC<{ result: KnowledgeAskResponse }> = ({ result }) => {
   const { t } = useTranslation();
   return (
-  <Box sx={{ mt: 3 }}>
-    <Paper sx={{ p: 3, bgcolor: 'primary.50' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-        <Sparkles size={18} />
-        <Typography
-          variant='subtitle1'
-          sx={{ fontWeight: 600 }}
-        >
-          {t('ai.assistant.knowledge.ai_answer')}
-        </Typography>
-      </Box>
-      <Typography
-        variant='body1'
-        sx={{ whiteSpace: 'pre-wrap' }}
-      >
-        {result.answer}
-      </Typography>
-    </Paper>
-    <Box sx={{ mt: 2 }}>
-      <Typography
-        variant='subtitle2'
-        sx={{ mb: 1 }}
-      >
-        {t('ai.assistant.knowledge.reference_source')}
-      </Typography>
-      {result.sources.map((source, index) => (
-        <Paper
-          key={index}
-          sx={{ p: 2, mb: 1 }}
-          variant='outlined'
-        >
+    <Box sx={{ mt: 3 }}>
+      <Paper sx={{ p: 3, bgcolor: 'primary.50' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Sparkles size={18} />
           <Typography
-            variant='body2'
-            sx={{ fontWeight: 500 }}
+            variant='subtitle1'
+            sx={{ fontWeight: 600 }}
           >
-            {source.title}
+            {t('ai.assistant.knowledge.ai_answer')}
           </Typography>
-          {source.content && (
-            <Typography
-              variant='caption'
-              color='text.secondary'
-            >
-              {source.content}
-            </Typography>
-          )}
-          {source.relevance !== undefined && (
-            <Chip
-              label={t('ai.assistant.knowledge.relevance', { pct: (source.relevance * 100).toFixed(0) })}
-              size='small'
-              sx={{ mt: 0.5 }}
-            />
-          )}
-        </Paper>
-      ))}
-    </Box>
-    {result.follow_up_questions && result.follow_up_questions.length > 0 && (
+        </Box>
+        <Typography
+          variant='body1'
+          sx={{ whiteSpace: 'pre-wrap' }}
+        >
+          {result.answer}
+        </Typography>
+      </Paper>
       <Box sx={{ mt: 2 }}>
         <Typography
           variant='subtitle2'
           sx={{ mb: 1 }}
         >
-          {t('ai.assistant.knowledge.follow_up')}
+          {t('ai.assistant.knowledge.reference_source')}
         </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {result.follow_up_questions.map((question, index) => (
-            <Chip
-              key={index}
-              label={question}
-              variant='outlined'
-              size='small'
-            />
-          ))}
-        </Box>
+        {result.sources.map((source, index) => (
+          <Paper
+            key={index}
+            sx={{ p: 2, mb: 1 }}
+            variant='outlined'
+          >
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
+              {source.title}
+            </Typography>
+            {source.content && (
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {source.content}
+              </Typography>
+            )}
+            {source.relevance !== undefined && (
+              <Chip
+                label={t('ai.assistant.knowledge.relevance', {
+                  pct: (source.relevance * 100).toFixed(0),
+                })}
+                size='small'
+                sx={{ mt: 0.5 }}
+              />
+            )}
+          </Paper>
+        ))}
       </Box>
-    )}
-  </Box>
+      {result.follow_up_questions && result.follow_up_questions.length > 0 && (
+        <Box sx={{ mt: 2 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1 }}
+          >
+            {t('ai.assistant.knowledge.follow_up')}
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {result.follow_up_questions.map((question, index) => (
+              <Chip
+                key={index}
+                label={question}
+                variant='outlined'
+                size='small'
+              />
+            ))}
+          </Box>
+        </Box>
+      )}
+    </Box>
   );
 };
 
@@ -735,7 +738,7 @@ export const AiAssistantPage: React.FC = () => {
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   {tab.icon}
-                  {t('ai.' + tab.label)}
+                  {t(`ai.${tab.label}`)}
                 </Box>
               }
             />

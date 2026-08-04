@@ -384,7 +384,7 @@ const MobileWorkbenchPage: React.FC = () => {
                 borderRadius: 3,
                 mb: 3,
                 background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                color: 'white',
+                color: 'common.white',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -392,7 +392,7 @@ const MobileWorkbenchPage: React.FC = () => {
                   sx={{
                     width: 48,
                     height: 48,
-                    bgcolor: 'rgba(255,255,255,0.2)',
+                    bgcolor: 'action.disabledBackground',
                     fontSize: '1rem',
                   }}
                 >
@@ -639,7 +639,11 @@ const MobileWorkbenchPage: React.FC = () => {
                               <Chip
                                 label={item.status}
                                 size='small'
-                                color={getStatusColor(item.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                                color={
+                                  getStatusColor(item.status) as React.ComponentProps<
+                                    typeof Chip
+                                  >['color']
+                                }
                                 sx={{ height: 20, fontSize: '0.7rem' }}
                               />
                             ) : undefined

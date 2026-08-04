@@ -259,7 +259,7 @@ export interface IncomingInspection {
   supplier_id?: string;
   supplier_name?: string;
   order_id?: string;
-  order_no?: string;
+  orderNo?: string;
   warehouse?: string;
   inspection_date?: string;
   inspector?: string;
@@ -857,7 +857,7 @@ export interface PurchaseRequisitionQueryParams extends PaginationParams {
 
 export interface PurchaseContract {
   id: string;
-  contract_no: string;
+  contractNo: string;
   title: string;
   contract_type: string;
   supplier_id: string;
@@ -897,7 +897,7 @@ export interface PurchaseContractItem {
 }
 
 export interface CreatePurchaseContractRequest {
-  contract_no: string;
+  contractNo: string;
   title: string;
   contract_type: string;
   supplier_id: string;

@@ -475,7 +475,7 @@ export function toColumnDef(field: SchemaField): ColumnDef | null {
                   label: opt.label,
                 }));
               }
-              return undefined;
+              return;
             })()
           : undefined;
 

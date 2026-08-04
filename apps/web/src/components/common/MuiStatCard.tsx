@@ -107,7 +107,7 @@ export const StatCard: React.FC<StatCardProps> = ({
         ...(gradient && {
           background:
             customGradient || `linear-gradient(135deg, ${colors.main} 0%, ${colors.dark} 100%)`,
-          color: 'white',
+          color: 'common.white',
         }),
       }}
       onClick={onClick}
@@ -121,7 +121,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             width: 150,
             height: 150,
             borderRadius: '50%',
-            background: `rgba(255, 255, 255, 0.1)`,
+            background: 'action.disabledBackground',
           }}
         />
       )}
@@ -228,7 +228,8 @@ export const StatCard: React.FC<StatCardProps> = ({
                     ? undefined
                     : `${colors.main}15`,
                 color: gradient ? 'white' : colors.main,
-                ...(customGradient && !gradient && { background: customGradient, color: '#fff' }),
+                ...(customGradient &&
+                  !gradient && { background: customGradient, color: 'common.white' }),
               }}
             >
               {icon}

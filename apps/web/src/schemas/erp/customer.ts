@@ -267,7 +267,16 @@ export const customerSchema: EntitySchema = {
     },
     {
       title: '联系信息',
-      fields: ['contact_person', 'contact_phone', 'contact_email', 'address', 'country', 'province', 'city', 'zip_code'],
+      fields: [
+        'contact_person',
+        'contact_phone',
+        'contact_email',
+        'address',
+        'country',
+        'province',
+        'city',
+        'zip_code',
+      ],
     },
     {
       title: '财务与信用',

@@ -68,7 +68,8 @@ export const voucherTemplateApi = {
   /**
    * 删除凭证模板
    */
-  deleteTemplate: (templateId: string) => apiClient.finance.delete(`/voucher-templates/${templateId}`),
+  deleteTemplate: (templateId: string) =>
+    apiClient.finance.delete(`/voucher-templates/${templateId}`),
 
   /**
    * 复制凭证模板
@@ -252,7 +253,8 @@ export const voucherTemplateApi = {
   /**
    * 删除凭证生成规则
    */
-  deleteGenerationRule: (ruleId: string) => apiClient.finance.delete(`/voucher-generation-rules/${ruleId}`),
+  deleteGenerationRule: (ruleId: string) =>
+    apiClient.finance.delete(`/voucher-generation-rules/${ruleId}`),
 
   /**
    * 启用/禁用生成规则

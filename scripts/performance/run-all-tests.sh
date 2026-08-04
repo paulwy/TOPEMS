@@ -47,6 +47,7 @@ fi
 # 检测模式
 SMOKE="${SMOKE:-false}"
 BASE_URL="${BASE_URL:-http://localhost:8040}"
+IAM_URL="${IAM_URL:-http://localhost:8000}"
 
 if [ "$SMOKE" = "true" ]; then
     echo "🔬 冒烟测试模式（无需后端，仅验证脚本可运行）"
@@ -67,7 +68,7 @@ PASS=0
 FAIL=0
 
 # 构建 k6 -e 参数数组（每个 -e 只传一个 KEY=VALUE）
-K6_E_ARGS=(-e "BASE_URL=$BASE_URL")
+K6_E_ARGS=(-e "BASE_URL=$BASE_URL" -e "IAM_URL=$IAM_URL")
 [ "$SMOKE" = "true" ] && K6_E_ARGS+=(-e "SMOKE=true")
 
 echo "📊 1/2: 运行 SCM 服务性能测试..."

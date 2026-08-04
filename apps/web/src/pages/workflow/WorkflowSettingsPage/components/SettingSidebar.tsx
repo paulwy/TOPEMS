@@ -1,6 +1,6 @@
 import { Box, Typography, Stack } from '@mui/material';
 import React from 'react';
-import { SettingGroup } from '../types';
+import type { SettingGroup } from '../types';
 
 interface SettingSidebarProps {
   groups: SettingGroup[];

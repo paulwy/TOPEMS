@@ -242,6 +242,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     filters.forEach((f) => {
       newFilters[f.id] = f.value ?? f.defaultValue;
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalFilters(newFilters);
   }, [filters]);
 

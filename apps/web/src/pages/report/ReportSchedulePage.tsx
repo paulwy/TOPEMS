@@ -316,7 +316,7 @@ const ReportSchedulePage: React.FC = () => {
     return (
       <Chip
         label={statusInfo?.label || status}
-        color={statusInfo?.color as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+        color={statusInfo?.color as React.ComponentProps<typeof Chip>['color']}
         size='small'
       />
     );

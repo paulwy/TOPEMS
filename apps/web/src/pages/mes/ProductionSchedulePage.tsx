@@ -72,9 +72,7 @@ function GanttView() {
 
   return (
     <Box>
-      <Box
-        sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-      >
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant='h6'>甘特图视图</Typography>
         <Button
           startIcon={<RefreshCw size={16} />}
@@ -147,7 +145,7 @@ function GanttView() {
                             overflow: 'hidden',
                             whiteSpace: 'nowrap',
                             textOverflow: 'ellipsis',
-                            color: 'white',
+                            color: 'common.white',
                             fontSize: 12,
                           }}
                         >

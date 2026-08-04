@@ -164,7 +164,7 @@ class QualityGateImpl {
     }
   }
 
-  evaluate_gate(metrics?: Record<string, number>): GateResult[] {
+  evaluateGate(metrics?: Record<string, number>): GateResult[] {
     const allCriteria = Array.from(this.criteria.values()).filter((c) => c.enabled);
     const results: GateResult[] = [];
     const now = new Date().toISOString();
@@ -243,7 +243,7 @@ class QualityGateImpl {
     }
   }
 
-  get_gate_results(criteriaId?: string, limit: number = 10): GateResult[] {
+  getGateResults(criteriaId?: string, limit: number = 10): GateResult[] {
     if (criteriaId) {
       return (this.results.get(criteriaId) || []).slice(0, limit);
     }
@@ -254,7 +254,7 @@ class QualityGateImpl {
     return all.sort((a, b) => b.measured_at.localeCompare(a.measured_at)).slice(0, limit);
   }
 
-  configure_criteria(criteria: Omit<GateCriteria, 'id'>): GateCriteria {
+  configureCriteria(criteria: Omit<GateCriteria, 'id'>): GateCriteria {
     const id = generateId();
     const newCriteria: GateCriteria = { ...criteria, id };
     this.criteria.set(id, newCriteria);
@@ -262,7 +262,7 @@ class QualityGateImpl {
     return newCriteria;
   }
 
-  list_criteria(filter?: { type?: GateType; enabled?: boolean }): GateCriteria[] {
+  listCriteria(filter?: { type?: GateType; enabled?: boolean }): GateCriteria[] {
     let result = Array.from(this.criteria.values());
     if (filter?.type) result = result.filter((c) => c.type === filter.type);
     if (filter?.enabled !== undefined) result = result.filter((c) => c.enabled === filter.enabled);
@@ -272,7 +272,7 @@ class QualityGateImpl {
     });
   }
 
-  override_gate(
+  overrideGate(
     criteriaId: string,
     reason: string,
     approvedBy: string,
@@ -305,7 +305,7 @@ class QualityGateImpl {
     return override;
   }
 
-  get_overrides(criteriaId?: string): GateOverride[] {
+  getOverrides(criteriaId?: string): GateOverride[] {
     if (criteriaId) {
       return this.overrides.get(criteriaId) || [];
     }
@@ -316,7 +316,7 @@ class QualityGateImpl {
     return all.sort((a, b) => b.approved_at.localeCompare(a.approved_at));
   }
 
-  get_trend(criteriaId: string, limit: number = 20): TrendPoint[] {
+  getTrend(criteriaId: string, limit: number = 20): TrendPoint[] {
     const results = this.results.get(criteriaId) || [];
     const criteria = this.criteria.get(criteriaId);
     if (!criteria) return [];
@@ -347,7 +347,7 @@ class QualityGateImpl {
     return points;
   }
 
-  get_summary(): {
+  getSummary(): {
     total_criteria: number;
     enabled_count: number;
     last_results: Array<GateResult & { criteria_name: string }>;

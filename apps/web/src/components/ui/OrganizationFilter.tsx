@@ -64,7 +64,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
   const filteredDepartments = useMemo(() => {
     if (!value.companyId) return departments;
     return departments.filter(
-      (dept) => dept.parent_id === null || dept.parent_id === value.companyId
+      (dept) => dept.parentId === null || dept.parentId === value.companyId
     );
   }, [departments, value.companyId]);
 

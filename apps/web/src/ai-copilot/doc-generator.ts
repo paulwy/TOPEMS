@@ -41,7 +41,7 @@ export class DocGenerator {
     this.initDefaultFormatters();
   }
 
-  generate_doc(
+  generateDoc(
     kind: 'function' | 'class' | 'interface' | 'type' | 'method',
     name: string,
     options: GenerateDocOptions = {}
@@ -61,10 +61,10 @@ export class DocGenerator {
       deprecated: options.deprecated ? '\n * @deprecated' : '',
     };
 
-    return this.format_doc(template.template, values);
+    return this.formatDoc(template.template, values);
   }
 
-  generate_api_docs(
+  generateApiDocs(
     interfaceName: string,
     properties: Array<{ name: string; type: string; required: boolean; description?: string }>
   ): string {
@@ -97,7 +97,7 @@ export class DocGenerator {
     return lines.join('\n');
   }
 
-  generate_readme(
+  generateReadme(
     moduleName: string,
     options: {
       description: string;
@@ -168,7 +168,7 @@ export class DocGenerator {
     return sections.map((s) => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
   }
 
-  generate_changelog(
+  generateChangelog(
     version?: string,
     entries?: Omit<ChangelogEntry, 'version' | 'date'>[]
   ): string {
@@ -233,14 +233,12 @@ export class DocGenerator {
     return lines.join('\n');
   }
 
-  get_doc_template(
-    kind: 'function' | 'class' | 'interface' | 'type' | 'method'
-  ): DocTemplate | null {
+  getDocTemplate(kind: 'function' | 'class' | 'interface' | 'type' | 'method'): DocTemplate | null {
     const templateId = this.getTemplateId(kind);
     return this.templates.get(templateId) || null;
   }
 
-  format_doc(template: string, values: Record<string, string>): string {
+  formatDoc(template: string, values: Record<string, string>): string {
     const formatter = this.formatters.get('default');
     if (formatter) {
       return formatter(template, values);
@@ -249,18 +247,18 @@ export class DocGenerator {
     return template.replace(/\{\{(\w+)\}\}/g, (_, key) => values[key] || '');
   }
 
-  add_changelog_entry(entry: Omit<ChangelogEntry, 'date'>): void {
+  addChangelogEntry(entry: Omit<ChangelogEntry, 'date'>): void {
     this.changelog.push({
       ...entry,
       date: new Date().toISOString().split('T')[0],
     });
   }
 
-  get_changelog(): ChangelogEntry[] {
+  getChangelog(): ChangelogEntry[] {
     return [...this.changelog];
   }
 
-  clear_changelog(): void {
+  clearChangelog(): void {
     this.changelog = [];
   }
 

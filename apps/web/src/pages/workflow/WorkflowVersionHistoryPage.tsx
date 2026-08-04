@@ -76,8 +76,7 @@ const FlowVersionHistoryPage: React.FC = () => {
       const versionsResponse = await workflowApi.getVersions(id);
       if (versionsResponse.success && versionsResponse.data) {
         const data = versionsResponse.data as unknown as
-          | WorkflowVersion[]
-          | { items: WorkflowVersion[] };
+          WorkflowVersion[] | { items: WorkflowVersion[] };
         const versionList = Array.isArray(data) ? data : data.items || [];
         return versionList;
       }
@@ -384,7 +383,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                             <Chip
                               label='当前版本'
                               size='small'
-                              sx={{ bgcolor: 'secondary.main', color: 'white' }}
+                              sx={{ bgcolor: 'secondary.main', color: 'common.white' }}
                             />
                           )}
                         </Stack>

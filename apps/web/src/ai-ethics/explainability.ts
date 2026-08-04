@@ -65,7 +65,7 @@ export class ExplainabilityEngine {
     return ExplainabilityEngine.instance;
   }
 
-  get_explanation(
+  getExplanation(
     predictionId: string,
     modelId: string,
     options?: { method?: ExplainabilityMethod }
@@ -104,7 +104,7 @@ export class ExplainabilityEngine {
     return explanation;
   }
 
-  get_global_importance(modelId: string): Array<{ feature: string; importance: number }> {
+  getGlobalImportance(modelId: string): Array<{ feature: string; importance: number }> {
     const importance = SHAP_FEATURES.map((feature) => ({
       feature,
       importance: Math.round(Math.random() * 10000) / 10000,
@@ -122,7 +122,7 @@ export class ExplainabilityEngine {
     return importance;
   }
 
-  generate_counterfactual(
+  generateCounterfactual(
     modelId: string,
     predictionId: string,
     targetPrediction?: number
@@ -142,10 +142,8 @@ export class ExplainabilityEngine {
     };
   }
 
-  get_feature_ranking(
-    modelId: string
-  ): Array<{ feature: string; rank: number; shapValue: number }> {
-    const importance = this.get_global_importance(modelId);
+  getFeatureRanking(modelId: string): Array<{ feature: string; rank: number; shapValue: number }> {
+    const importance = this.getGlobalImportance(modelId);
     return importance.map((item, index) => ({
       feature: item.feature,
       rank: index + 1,
@@ -153,12 +151,12 @@ export class ExplainabilityEngine {
     }));
   }
 
-  get_explainability_report(modelId: string): ExplainabilityReport {
-    const globalImportance = this.get_global_importance(modelId);
-    const featureRanking = this.get_feature_ranking(modelId);
+  getExplainabilityReport(modelId: string): ExplainabilityReport {
+    const globalImportance = this.getGlobalImportance(modelId);
+    const featureRanking = this.getFeatureRanking(modelId);
 
     const counterfactuals = Array.from({ length: 3 }, () =>
-      this.generate_counterfactual(modelId, `demo-${Date.now()}`)
+      this.generateCounterfactual(modelId, `demo-${Date.now()}`)
     );
 
     const limitations = [
@@ -182,7 +180,7 @@ export class ExplainabilityEngine {
     return report;
   }
 
-  compare_explanations(
+  compareExplanations(
     predictionIds: string[],
     modelId: string
   ): Array<{
@@ -201,17 +199,17 @@ export class ExplainabilityEngine {
     });
   }
 
-  get_explainability_coverage(modelId: string): {
+  getExplainabilityCoverage(modelId: string): {
     total_predictions: number;
     explained_predictions: number;
     coverage_rate: number;
-    by_method: Record<ExplainabilityMethod, number>;
+    byMethod: Record<ExplainabilityMethod, number>;
   } {
     const totalPredictions = Math.floor(50 + Math.random() * 150);
     const explainedPredictions = Math.floor(totalPredictions * (0.6 + Math.random() * 0.35));
     const coverageRate = Math.round((explainedPredictions / totalPredictions) * 10000) / 10000;
 
-    const by_method: Record<ExplainabilityMethod, number> = {
+    const byMethod: Record<ExplainabilityMethod, number> = {
       SHAP: Math.floor(explainedPredictions * 0.5),
       LIME: Math.floor(explainedPredictions * 0.3),
       Attention: Math.floor(explainedPredictions * 0.2),
@@ -221,11 +219,11 @@ export class ExplainabilityEngine {
       total_predictions: totalPredictions,
       explained_predictions: explainedPredictions,
       coverage_rate: coverageRate,
-      by_method,
+      byMethod,
     };
   }
 
-  get_prediction_explanations(predictionId: string): Explanation[] {
+  getPredictionExplanations(predictionId: string): Explanation[] {
     const ids = this.predictionExplanations.get(predictionId) ?? [];
     return ids
       .map((id) => this.explanations.get(id))
@@ -233,7 +231,7 @@ export class ExplainabilityEngine {
       .sort((a, b) => b.timestamp - a.timestamp);
   }
 
-  list_explanations(modelId?: string, limit?: number): Explanation[] {
+  listExplanations(modelId?: string, limit?: number): Explanation[] {
     const all = Array.from(this.explanations.values());
     const filtered = modelId ? all.filter((e) => e.modelId === modelId) : all;
     const sorted = filtered.sort((a, b) => b.timestamp - a.timestamp);

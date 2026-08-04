@@ -241,7 +241,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             borderBottom: 1,
             borderColor: 'divider',
             background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
-            color: 'white',
+            color: 'common.white',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -250,7 +250,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 width: 32,
                 height: 32,
                 borderRadius: 1,
-                backgroundColor: 'rgba(255,255,255,0.2)',
+                backgroundColor: 'action.disabledBackground',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -267,7 +267,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
           </Box>
           <IconButton
             onClick={onClose}
-            sx={{ color: 'white' }}
+            sx={{ color: 'common.white' }}
           >
             <X style={{ width: 20, height: 20 }} />
           </IconButton>

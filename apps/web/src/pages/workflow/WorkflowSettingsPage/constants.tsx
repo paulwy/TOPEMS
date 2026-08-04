@@ -1,6 +1,6 @@
 import React from 'react';
 import { Settings, CheckSquare, Bell, FileText, Shield, Plug } from 'lucide-react';
-import { SettingGroup } from './types';
+import type { SettingGroup } from './types';
 
 export const SETTING_GROUPS: SettingGroup[] = [
   {

@@ -112,12 +112,12 @@ const AuditLogPage: React.FC = () => {
   return (
     <PageContainer
       title={t('system.page.audit_log')}
-      subtitle={t('system.audit_page.subtitle')}
+      subtitle={t('system.auditPage.subtitle')}
       maxWidth='xl'
       headerProps={{
         actions: [
           {
-            label: t('system.audit_page.export_logs'),
+            label: t('system.auditPage.export_logs'),
             icon: <Download size={16} />,
             onClick: handleExport,
             variant: 'contained',
@@ -142,7 +142,7 @@ const AuditLogPage: React.FC = () => {
       >
         {[
           {
-            label: t('system.audit_page.total_operations'),
+            label: t('system.auditPage.total_operations'),
             value: stats.total,
             icon: <FileText size={20} />,
             color: 'primary',

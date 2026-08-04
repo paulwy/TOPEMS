@@ -21,30 +21,30 @@
 // ==================== 枚举 ====================
 
 export enum DocFormat {
-  Markdown = 'markdown',
+  MARKDOWN = 'markdown',
   HTML = 'html',
   JSON = 'json',
-  OpenAPI = 'openapi',
+  OPENAPI = 'openapi',
 }
 
 export enum DocSectionType {
-  Overview = 'overview',
-  Endpoints = 'endpoints',
-  Schema = 'schema',
-  Examples = 'examples',
-  Errors = 'errors',
-  Flows = 'flows',
-  Components = 'components',
+  OVERVIEW = 'overview',
+  ENDPOINTS = 'endpoints',
+  SCHEMA = 'schema',
+  EXAMPLES = 'examples',
+  ERRORS = 'errors',
+  FLOWS = 'flows',
+  COMPONENTS = 'components',
 }
 
 export enum ComponentType {
-  Page = 'page',
-  Layout = 'layout',
-  Widget = 'widget',
-  Form = 'form',
-  Table = 'table',
-  Chart = 'chart',
-  Custom = 'custom',
+  PAGE = 'page',
+  LAYOUT = 'layout',
+  WIDGET = 'widget',
+  FORM = 'form',
+  TABLE = 'table',
+  CHART = 'chart',
+  CUSTOM = 'custom',
 }
 
 // ==================== 接口 ====================
@@ -110,7 +110,7 @@ export interface ComponentDoc {
 // ==================== 常量 ====================
 
 const DOC_TEMPLATES = {
-  [DocFormat.Markdown]: {
+  [DocFormat.MARKDOWN]: {
     section: (title: string, content: string) => `## ${title}\n\n${content}`,
     h1: (title: string) => `# ${title}`,
     h2: (title: string) => `## ${title}`,
@@ -159,7 +159,7 @@ const DOC_TEMPLATES = {
     inlineCode: (text: string) => text,
     link: (text: string, _url: string) => text,
   },
-  [DocFormat.OpenAPI]: {
+  [DocFormat.OPENAPI]: {
     section: (_title: string, content: string) => content,
     h1: (_title: string) => '',
     h2: (_title: string) => '',
@@ -211,7 +211,7 @@ export class AutoDocGenerator {
   generateApiDoc(
     id: string,
     config: EndpointDocConfig,
-    format: DocFormat = DocFormat.Markdown
+    format: DocFormat = DocFormat.MARKDOWN
   ): GeneratedDoc {
     this.apiSourceCache.set(id, config);
     const sections: DocSection[] = [];
@@ -219,35 +219,35 @@ export class AutoDocGenerator {
     const now = Date.now();
 
     sections.push({
-      type: DocSectionType.Overview,
+      type: DocSectionType.OVERVIEW,
       title: '概述',
       order: 0,
       content: this.buildOverviewSection(config, tmpl),
     });
 
     sections.push({
-      type: DocSectionType.Endpoints,
+      type: DocSectionType.ENDPOINTS,
       title: 'API 端点',
       order: 1,
       content: this.buildEndpointsSection(config, tmpl),
     });
 
     sections.push({
-      type: DocSectionType.Schema,
+      type: DocSectionType.SCHEMA,
       title: '数据模型',
       order: 2,
       content: this.buildSchemaSection(config, tmpl),
     });
 
     sections.push({
-      type: DocSectionType.Examples,
+      type: DocSectionType.EXAMPLES,
       title: '示例',
       order: 3,
       content: this.buildExamplesSection(config, tmpl),
     });
 
     sections.push({
-      type: DocSectionType.Errors,
+      type: DocSectionType.ERRORS,
       title: '错误码',
       order: 4,
       content: this.buildErrorsSection(tmpl),
@@ -281,7 +281,7 @@ export class AutoDocGenerator {
   generateFlowDoc(
     id: string,
     config: FlowDocConfig,
-    format: DocFormat = DocFormat.Markdown
+    format: DocFormat = DocFormat.MARKDOWN
   ): GeneratedDoc {
     this.flowSourceCache.set(id, config);
     const sections: DocSection[] = [];
@@ -289,21 +289,21 @@ export class AutoDocGenerator {
     const now = Date.now();
 
     sections.push({
-      type: DocSectionType.Overview,
+      type: DocSectionType.OVERVIEW,
       title: '概述',
       order: 0,
       content: tmpl.paragraph(config.description ?? ''),
     });
 
     sections.push({
-      type: DocSectionType.Flows,
+      type: DocSectionType.FLOWS,
       title: '数据流',
       order: 1,
       content: this.buildFlowSection(config, tmpl),
     });
 
     sections.push({
-      type: DocSectionType.Examples,
+      type: DocSectionType.EXAMPLES,
       title: '执行示例',
       order: 2,
       content: this.buildFlowExamplesSection(config, tmpl),
@@ -337,7 +337,7 @@ export class AutoDocGenerator {
   generateComponentDoc(
     id: string,
     componentIds: string[],
-    format: DocFormat = DocFormat.Markdown
+    format: DocFormat = DocFormat.MARKDOWN
   ): GeneratedDoc {
     const sections: DocSection[] = [];
     const tmpl = DOC_TEMPLATES[format];
@@ -347,7 +347,7 @@ export class AutoDocGenerator {
       const comp = this.components.get(componentIds[i]);
       if (!comp) continue;
       sections.push({
-        type: DocSectionType.Components,
+        type: DocSectionType.COMPONENTS,
         title: comp.name,
         order: i,
         content: this.buildComponentSection(comp, tmpl),
@@ -423,7 +423,7 @@ export class AutoDocGenerator {
 
   private buildOverviewSection(
     config: EndpointDocConfig,
-    tmpl: (typeof DOC_TEMPLATES)[DocFormat.Markdown]
+    tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]
   ): string {
     const parts: string[] = [];
     if (config.description) {
@@ -439,7 +439,7 @@ export class AutoDocGenerator {
 
   private buildEndpointsSection(
     config: EndpointDocConfig,
-    tmpl: (typeof DOC_TEMPLATES)[DocFormat.Markdown]
+    tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]
   ): string {
     const rows = config.endpoints.map((id, idx) => [
       String(idx + 1),
@@ -452,7 +452,7 @@ export class AutoDocGenerator {
 
   private buildSchemaSection(
     _config: EndpointDocConfig,
-    tmpl: (typeof DOC_TEMPLATES)[DocFormat.Markdown]
+    tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]
   ): string {
     const rows = [
       ['id', 'string', '是', '唯一标识符'],
@@ -465,7 +465,7 @@ export class AutoDocGenerator {
 
   private buildExamplesSection(
     config: EndpointDocConfig,
-    tmpl: (typeof DOC_TEMPLATES)[DocFormat.Markdown]
+    tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]
   ): string {
     const parts: string[] = [];
     for (const endpointId of config.endpoints) {
@@ -480,7 +480,7 @@ export class AutoDocGenerator {
     return parts.join('\n\n');
   }
 
-  private buildErrorsSection(tmpl: (typeof DOC_TEMPLATES)[DocFormat.Markdown]): string {
+  private buildErrorsSection(tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]): string {
     const rows = [
       ['200', '成功'],
       ['400', '请求参数错误'],
@@ -494,7 +494,7 @@ export class AutoDocGenerator {
 
   private buildFlowSection(
     config: FlowDocConfig,
-    tmpl: (typeof DOC_TEMPLATES)[DocFormat.Markdown]
+    tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]
   ): string {
     const parts: string[] = [];
     for (const flowId of config.flows) {
@@ -506,7 +506,7 @@ export class AutoDocGenerator {
 
   private buildFlowExamplesSection(
     config: FlowDocConfig,
-    tmpl: (typeof DOC_TEMPLATES)[DocFormat.Markdown]
+    tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]
   ): string {
     const parts: string[] = [];
     for (const flowId of config.flows) {
@@ -518,7 +518,7 @@ export class AutoDocGenerator {
 
   private buildComponentSection(
     comp: ComponentDoc,
-    tmpl: (typeof DOC_TEMPLATES)[DocFormat.Markdown]
+    tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]
   ): string {
     const parts: string[] = [];
     if (comp.description) {
@@ -550,7 +550,7 @@ export class AutoDocGenerator {
   private assembleDocument(
     metadata: DocMetadata,
     sections: DocSection[],
-    tmpl: (typeof DOC_TEMPLATES)[DocFormat.Markdown]
+    tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]
   ): string {
     const parts: string[] = [];
     parts.push(tmpl.h1(metadata.title));

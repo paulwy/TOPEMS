@@ -40,7 +40,7 @@ export function useRealtimeSync<T>(options: SyncOptions<T>): SyncState<T> & Sync
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const pendingUpdates = useRef<Map<string, Partial<T>>>(new Map());
-  
+
   const requestIdRef = useRef(0);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
@@ -49,93 +49,102 @@ export function useRealtimeSync<T>(options: SyncOptions<T>): SyncState<T> & Sync
     return `req-${Date.now()}-${requestIdRef.current}`;
   }, []);
 
-  const handleMessage = useCallback((message: WebSocketMessage) => {
-    if (message.type !== channel) return;
+  const handleMessage = useCallback(
+    (message: WebSocketMessage) => {
+      if (message.type !== channel) return;
 
-    try {
-      const payload = message.payload as Record<string, unknown>;
-      const requestId = payload.request_id as string;
-      
-      if (requestId) {
-        pendingUpdates.current.delete(requestId);
+      try {
+        const payload = message.payload as Record<string, unknown>;
+        const requestId = payload.request_id as string;
+
+        if (requestId) {
+          pendingUpdates.current.delete(requestId);
+        }
+
+        const newData = payload.data as T;
+        if (newData) {
+          setData(newData);
+          setLastSyncTime(Date.now());
+          setError(null);
+          onDataChange?.(newData);
+        }
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Failed to parse sync message';
+        setError(errorMsg);
+        onSyncError?.(errorMsg);
       }
+    },
+    [channel, onDataChange, onSyncError]
+  );
 
-      const newData = payload.data as T;
-      if (newData) {
-        setData(newData);
-        setLastSyncTime(Date.now());
-        setError(null);
-        onDataChange?.(newData);
-      }
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : 'Failed to parse sync message';
-      setError(errorMsg);
-      onSyncError?.(errorMsg);
-    }
-  }, [channel, onDataChange, onSyncError]);
+  const update = useCallback(
+    async (partial: Partial<T>) => {
+      const requestId = generateRequestId();
 
-  const update = useCallback(async (partial: Partial<T>) => {
-    const requestId = generateRequestId();
-    
-    if (optimisticUpdate) {
-      setData((prev) => ({ ...prev, ...partial }));
-      pendingUpdates.current.set(requestId, partial);
-    }
-
-    setIsSyncing(true);
-    
-    try {
-      await webSocketService.send({
-        type: channel,
-        payload: {
-          action: 'update',
-          request_id: requestId,
-          data: partial,
-        },
-      });
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : 'Failed to send update';
-      setError(errorMsg);
-      onSyncError?.(errorMsg);
-      
       if (optimisticUpdate) {
-        pendingUpdates.current.delete(requestId);
+        setData((prev) => ({ ...prev, ...partial }));
+        pendingUpdates.current.set(requestId, partial);
       }
-    } finally {
-      setTimeout(() => {
-        setIsSyncing(false);
-      }, 1000);
-    }
-  }, [channel, generateRequestId, optimisticUpdate, onSyncError]);
 
-  const replace = useCallback(async (newData: T) => {
-    const requestId = generateRequestId();
-    
-    if (optimisticUpdate) {
-      setData(newData);
-    }
+      setIsSyncing(true);
 
-    setIsSyncing(true);
-    
-    try {
-      await webSocketService.send({
-        type: channel,
-        payload: {
-          action: 'replace',
-          request_id: requestId,
-          data: newData,
-        },
-      });
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : 'Failed to send replace';
-      setError(errorMsg);
-      onSyncError?.(errorMsg);
-    } finally {
-      setTimeout(() => {
-        setIsSyncing(false);
-      }, 1000);
-    }
-  }, [channel, generateRequestId, optimisticUpdate, onSyncError]);
+      try {
+        await webSocketService.send({
+          type: channel,
+          payload: {
+            action: 'update',
+            request_id: requestId,
+            data: partial,
+          },
+        });
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Failed to send update';
+        setError(errorMsg);
+        onSyncError?.(errorMsg);
+
+        if (optimisticUpdate) {
+          pendingUpdates.current.delete(requestId);
+        }
+      } finally {
+        setTimeout(() => {
+          setIsSyncing(false);
+        }, 1000);
+      }
+    },
+    [channel, generateRequestId, optimisticUpdate, onSyncError]
+  );
+
+  const replace = useCallback(
+    async (newData: T) => {
+      const requestId = generateRequestId();
+
+      if (optimisticUpdate) {
+        setData(newData);
+      }
+
+      setIsSyncing(true);
+
+      try {
+        await webSocketService.send({
+          type: channel,
+          payload: {
+            action: 'replace',
+            request_id: requestId,
+            data: newData,
+          },
+        });
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Failed to send replace';
+        setError(errorMsg);
+        onSyncError?.(errorMsg);
+      } finally {
+        setTimeout(() => {
+          setIsSyncing(false);
+        }, 1000);
+      }
+    },
+    [channel, generateRequestId, optimisticUpdate, onSyncError]
+  );
 
   const refresh = useCallback(() => {
     webSocketService.send({
@@ -146,7 +155,7 @@ export function useRealtimeSync<T>(options: SyncOptions<T>): SyncState<T> & Sync
 
   const subscribe = useCallback(() => {
     if (unsubscribeRef.current) return;
-    
+
     unsubscribeRef.current = webSocketService.subscribe(channel, handleMessage);
     refresh();
   }, [channel, handleMessage, refresh]);
@@ -172,7 +181,7 @@ export function useRealtimeSync<T>(options: SyncOptions<T>): SyncState<T> & Sync
     const cleanupPending = setInterval(() => {
       const now = Date.now();
       let expiredCount = 0;
-      
+
       pendingUpdates.current.forEach((_, requestId) => {
         const timestamp = parseInt(requestId.split('-')[1]) || 0;
         if (now - timestamp > 30000) {
@@ -180,7 +189,7 @@ export function useRealtimeSync<T>(options: SyncOptions<T>): SyncState<T> & Sync
           expiredCount++;
         }
       });
-      
+
       if (expiredCount > 0) {
         setError('Sync timeout, some updates may not have been applied');
       }
@@ -229,7 +238,9 @@ export interface ListSyncActions<T> {
   unsubscribe: () => void;
 }
 
-export function useRealtimeListSync<T>(options: ListSyncOptions<T>): ListSyncState<T> & ListSyncActions<T> {
+export function useRealtimeListSync<T>(
+  options: ListSyncOptions<T>
+): ListSyncState<T> & ListSyncActions<T> {
   const {
     channel,
     initialData = [],
@@ -244,7 +255,7 @@ export function useRealtimeListSync<T>(options: ListSyncOptions<T>): ListSyncSta
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   const requestIdRef = useRef(0);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
@@ -253,200 +264,218 @@ export function useRealtimeListSync<T>(options: ListSyncOptions<T>): ListSyncSta
     return `req-${Date.now()}-${requestIdRef.current}`;
   }, []);
 
-  const getItemId = useCallback((item: T): string | number => {
-    return (item as Record<string, unknown>)[itemIdField] as string | number;
-  }, [itemIdField]);
+  const getItemId = useCallback(
+    (item: T): string | number => {
+      return (item as Record<string, unknown>)[itemIdField] as string | number;
+    },
+    [itemIdField]
+  );
 
-  const handleMessage = useCallback((message: WebSocketMessage) => {
-    if (message.type !== channel) return;
+  const handleMessage = useCallback(
+    (message: WebSocketMessage) => {
+      if (message.type !== channel) return;
 
-    try {
-      const payload = message.payload as Record<string, unknown>;
-      const action = payload.action as string;
-      const itemData = payload.data as T;
-      const itemsData = payload.items as T[];
+      try {
+        const payload = message.payload as Record<string, unknown>;
+        const action = payload.action as string;
+        const itemData = payload.data as T;
+        const itemsData = payload.items as T[];
 
-      switch (action) {
-        case 'init':
-        case 'replace':
-          if (itemsData) {
-            setData(itemsData);
-            setLastSyncTime(Date.now());
-            onDataChange?.(itemsData);
-          }
-          break;
-        case 'add':
-          if (itemData) {
+        switch (action) {
+          case 'init':
+          case 'replace':
+            if (itemsData) {
+              setData(itemsData);
+              setLastSyncTime(Date.now());
+              onDataChange?.(itemsData);
+            }
+            break;
+          case 'add':
+            if (itemData) {
+              setData((prev) => {
+                const newList = [...prev, itemData];
+                onDataChange?.(newList);
+                return newList;
+              });
+              setLastSyncTime(Date.now());
+            }
+            break;
+          case 'update':
+            if (itemData) {
+              setData((prev) => {
+                const newList = prev.map((item) =>
+                  getItemId(item) === getItemId(itemData) ? itemData : item
+                );
+                onDataChange?.(newList);
+                return newList;
+              });
+              setLastSyncTime(Date.now());
+            }
+            break;
+          case 'remove':
+            const removeId = payload.id as string | number;
             setData((prev) => {
-              const newList = [...prev, itemData];
+              const newList = prev.filter((item) => getItemId(item) !== removeId);
               onDataChange?.(newList);
               return newList;
             });
             setLastSyncTime(Date.now());
-          }
-          break;
-        case 'update':
-          if (itemData) {
-            setData((prev) => {
-              const newList = prev.map((item) =>
-                getItemId(item) === getItemId(itemData) ? itemData : item
-              );
-              onDataChange?.(newList);
-              return newList;
-            });
-            setLastSyncTime(Date.now());
-          }
-          break;
-        case 'remove':
-          const removeId = payload.id as string | number;
-          setData((prev) => {
-            const newList = prev.filter((item) => getItemId(item) !== removeId);
-            onDataChange?.(newList);
-            return newList;
-          });
-          setLastSyncTime(Date.now());
-          break;
+            break;
+        }
+
+        setError(null);
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Failed to parse sync message';
+        setError(errorMsg);
+        onSyncError?.(errorMsg);
+      }
+    },
+    [channel, getItemId, onDataChange, onSyncError]
+  );
+
+  const add = useCallback(
+    async (item: T) => {
+      const requestId = generateRequestId();
+
+      if (optimisticUpdate) {
+        setData((prev) => {
+          const newList = [...prev, item];
+          onDataChange?.(newList);
+          return newList;
+        });
       }
 
-      setError(null);
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : 'Failed to parse sync message';
-      setError(errorMsg);
-      onSyncError?.(errorMsg);
-    }
-  }, [channel, getItemId, onDataChange, onSyncError]);
+      setIsSyncing(true);
 
-  const add = useCallback(async (item: T) => {
-    const requestId = generateRequestId();
-    
-    if (optimisticUpdate) {
-      setData((prev) => {
-        const newList = [...prev, item];
-        onDataChange?.(newList);
-        return newList;
-      });
-    }
+      try {
+        await webSocketService.send({
+          type: channel,
+          payload: {
+            action: 'add',
+            request_id: requestId,
+            data: item,
+          },
+        });
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Failed to add item';
+        setError(errorMsg);
+        onSyncError?.(errorMsg);
+      } finally {
+        setTimeout(() => {
+          setIsSyncing(false);
+        }, 1000);
+      }
+    },
+    [channel, generateRequestId, optimisticUpdate, onDataChange, onSyncError]
+  );
 
-    setIsSyncing(true);
-    
-    try {
-      await webSocketService.send({
-        type: channel,
-        payload: {
-          action: 'add',
-          request_id: requestId,
-          data: item,
-        },
-      });
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : 'Failed to add item';
-      setError(errorMsg);
-      onSyncError?.(errorMsg);
-    } finally {
-      setTimeout(() => {
-        setIsSyncing(false);
-      }, 1000);
-    }
-  }, [channel, generateRequestId, optimisticUpdate, onDataChange, onSyncError]);
+  const update = useCallback(
+    async (id: string | number, partial: Partial<T>) => {
+      const requestId = generateRequestId();
 
-  const update = useCallback(async (id: string | number, partial: Partial<T>) => {
-    const requestId = generateRequestId();
-    
-    if (optimisticUpdate) {
-      setData((prev) => {
-        const newList = prev.map((item) =>
-          getItemId(item) === id ? { ...item, ...partial } : item
-        );
-        onDataChange?.(newList);
-        return newList;
-      });
-    }
+      if (optimisticUpdate) {
+        setData((prev) => {
+          const newList = prev.map((item) =>
+            getItemId(item) === id ? { ...item, ...partial } : item
+          );
+          onDataChange?.(newList);
+          return newList;
+        });
+      }
 
-    setIsSyncing(true);
-    
-    try {
-      await webSocketService.send({
-        type: channel,
-        payload: {
-          action: 'update',
-          request_id: requestId,
-          id,
-          data: partial,
-        },
-      });
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : 'Failed to update item';
-      setError(errorMsg);
-      onSyncError?.(errorMsg);
-    } finally {
-      setTimeout(() => {
-        setIsSyncing(false);
-      }, 1000);
-    }
-  }, [channel, generateRequestId, optimisticUpdate, getItemId, onDataChange, onSyncError]);
+      setIsSyncing(true);
 
-  const remove = useCallback(async (id: string | number) => {
-    const requestId = generateRequestId();
-    
-    if (optimisticUpdate) {
-      setData((prev) => {
-        const newList = prev.filter((item) => getItemId(item) !== id);
-        onDataChange?.(newList);
-        return newList;
-      });
-    }
+      try {
+        await webSocketService.send({
+          type: channel,
+          payload: {
+            action: 'update',
+            request_id: requestId,
+            id,
+            data: partial,
+          },
+        });
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Failed to update item';
+        setError(errorMsg);
+        onSyncError?.(errorMsg);
+      } finally {
+        setTimeout(() => {
+          setIsSyncing(false);
+        }, 1000);
+      }
+    },
+    [channel, generateRequestId, optimisticUpdate, getItemId, onDataChange, onSyncError]
+  );
 
-    setIsSyncing(true);
-    
-    try {
-      await webSocketService.send({
-        type: channel,
-        payload: {
-          action: 'remove',
-          request_id: requestId,
-          id,
-        },
-      });
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : 'Failed to remove item';
-      setError(errorMsg);
-      onSyncError?.(errorMsg);
-    } finally {
-      setTimeout(() => {
-        setIsSyncing(false);
-      }, 1000);
-    }
-  }, [channel, generateRequestId, optimisticUpdate, getItemId, onDataChange, onSyncError]);
+  const remove = useCallback(
+    async (id: string | number) => {
+      const requestId = generateRequestId();
 
-  const replace = useCallback(async (newData: T[]) => {
-    const requestId = generateRequestId();
-    
-    if (optimisticUpdate) {
-      setData(newData);
-      onDataChange?.(newData);
-    }
+      if (optimisticUpdate) {
+        setData((prev) => {
+          const newList = prev.filter((item) => getItemId(item) !== id);
+          onDataChange?.(newList);
+          return newList;
+        });
+      }
 
-    setIsSyncing(true);
-    
-    try {
-      await webSocketService.send({
-        type: channel,
-        payload: {
-          action: 'replace',
-          request_id: requestId,
-          data: newData,
-        },
-      });
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : 'Failed to replace data';
-      setError(errorMsg);
-      onSyncError?.(errorMsg);
-    } finally {
-      setTimeout(() => {
-        setIsSyncing(false);
-      }, 1000);
-    }
-  }, [channel, generateRequestId, optimisticUpdate, onDataChange, onSyncError]);
+      setIsSyncing(true);
+
+      try {
+        await webSocketService.send({
+          type: channel,
+          payload: {
+            action: 'remove',
+            request_id: requestId,
+            id,
+          },
+        });
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Failed to remove item';
+        setError(errorMsg);
+        onSyncError?.(errorMsg);
+      } finally {
+        setTimeout(() => {
+          setIsSyncing(false);
+        }, 1000);
+      }
+    },
+    [channel, generateRequestId, optimisticUpdate, getItemId, onDataChange, onSyncError]
+  );
+
+  const replace = useCallback(
+    async (newData: T[]) => {
+      const requestId = generateRequestId();
+
+      if (optimisticUpdate) {
+        setData(newData);
+        onDataChange?.(newData);
+      }
+
+      setIsSyncing(true);
+
+      try {
+        await webSocketService.send({
+          type: channel,
+          payload: {
+            action: 'replace',
+            request_id: requestId,
+            data: newData,
+          },
+        });
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Failed to replace data';
+        setError(errorMsg);
+        onSyncError?.(errorMsg);
+      } finally {
+        setTimeout(() => {
+          setIsSyncing(false);
+        }, 1000);
+      }
+    },
+    [channel, generateRequestId, optimisticUpdate, onDataChange, onSyncError]
+  );
 
   const refresh = useCallback(() => {
     webSocketService.send({
@@ -457,7 +486,7 @@ export function useRealtimeListSync<T>(options: ListSyncOptions<T>): ListSyncSta
 
   const subscribe = useCallback(() => {
     if (unsubscribeRef.current) return;
-    
+
     unsubscribeRef.current = webSocketService.subscribe(channel, handleMessage);
     refresh();
   }, [channel, handleMessage, refresh]);

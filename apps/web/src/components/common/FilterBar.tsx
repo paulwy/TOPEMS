@@ -1,7 +1,7 @@
-import React from "react";
+import React from 'react';
 
 const FilterBar: React.FC = () => {
-  return React.createElement("div", null, "FilterBar");
+  return React.createElement('div', null, 'FilterBar');
 };
 
 export default FilterBar;

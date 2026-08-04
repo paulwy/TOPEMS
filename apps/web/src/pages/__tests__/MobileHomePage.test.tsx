@@ -99,35 +99,34 @@ vi.mock('@/store', () => ({
 }));
 
 describe('MobileHomePage', () => {
-it('should render page title', async () => {
+  it('should render page title', async () => {
     renderWithProviders(<MobileHomePage />);
     expect(
       await screen.findByRole('heading', { name: '首页' }, { timeout: 10000 })
     ).toBeInTheDocument();
-});
+  });
 
-it('should render quick actions', async () => {
+  it('should render quick actions', async () => {
     renderWithProviders(<MobileHomePage />);
     await waitFor(() => {
       expect(screen.getByText('考勤打卡')).toBeInTheDocument();
       expect(screen.getByText('审批任务')).toBeInTheDocument();
       expect(screen.getByText('扫码功能')).toBeInTheDocument();
+    });
   });
-});
 
-it('should render stats cards', async () => {
+  it('should render stats cards', async () => {
     renderWithProviders(<MobileHomePage />);
     await waitFor(() => {
       expect(screen.getByText('待办事项')).toBeInTheDocument();
       expect(screen.getByText('最近动态')).toBeInTheDocument();
+    });
   });
-});
 
-it('should render user info', async () => {
+  it('should render user info', async () => {
     renderWithProviders(<MobileHomePage />);
     await waitFor(() => {
       expect(screen.getByText('陈管理员')).toBeInTheDocument();
+    });
   });
-});
-;
 });

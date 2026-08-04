@@ -1,17 +1,17 @@
 import { logger } from '../logger';
 
 export enum ReplayEventType {
-  Snapshot = 'snapshot',
-  Click = 'click',
-  Input = 'input',
-  Scroll = 'scroll',
-  MouseMove = 'mousemove',
-  Navigation = 'navigation',
-  Network = 'network',
-  Console = 'console',
-  Resize = 'resize',
-  Focus = 'focus',
-  Blur = 'blur',
+  SNAPSHOT = 'snapshot',
+  CLICK = 'click',
+  INPUT = 'input',
+  SCROLL = 'scroll',
+  MOUSEMOVE = 'mousemove',
+  NAVIGATION = 'navigation',
+  NETWORK = 'network',
+  CONSOLE = 'console',
+  RESIZE = 'resize',
+  FOCUS = 'focus',
+  BLUR = 'blur',
 }
 
 export interface ReplayEvent<T = unknown> {
@@ -328,7 +328,7 @@ export class SessionReplayer {
       url: window.location.href,
     };
 
-    this.addEvent(ReplayEventType.Snapshot, snapshot);
+    this.addEvent(ReplayEventType.SNAPSHOT, snapshot);
   }
 
   private maskSensitiveContent(html: string): string {
@@ -411,7 +411,7 @@ export class SessionReplayer {
         : target.textContent?.substring(0, 100) || '',
     };
 
-    this.addEvent(ReplayEventType.Click, data);
+    this.addEvent(ReplayEventType.CLICK, data);
   }
 
   private handleInput(event: Event): void {
@@ -428,7 +428,7 @@ export class SessionReplayer {
       inputType: (target as HTMLInputElement).type || 'text',
     };
 
-    this.addEvent(ReplayEventType.Input, data);
+    this.addEvent(ReplayEventType.INPUT, data);
   }
 
   private handleScroll(): void {
@@ -437,7 +437,7 @@ export class SessionReplayer {
       scrollY: window.scrollY,
     };
 
-    this.addEvent(ReplayEventType.Scroll, data);
+    this.addEvent(ReplayEventType.SCROLL, data);
   }
 
   private handleMouseMove(event: Event): void {
@@ -450,7 +450,7 @@ export class SessionReplayer {
       y: (event as MouseEvent).clientY,
     };
 
-    this.addEvent(ReplayEventType.MouseMove, data);
+    this.addEvent(ReplayEventType.MOUSEMOVE, data);
   }
 
   private handleResize(): void {
@@ -459,19 +459,19 @@ export class SessionReplayer {
       height: window.innerHeight,
     };
 
-    this.addEvent(ReplayEventType.Resize, data);
+    this.addEvent(ReplayEventType.RESIZE, data);
   }
 
   private handleFocus(event: Event): void {
     const target = event.target as HTMLElement;
-    this.addEvent(ReplayEventType.Focus, {
+    this.addEvent(ReplayEventType.FOCUS, {
       targetSelector: getSelector(target),
     });
   }
 
   private handleBlur(event: Event): void {
     const target = event.target as HTMLElement;
-    this.addEvent(ReplayEventType.Blur, {
+    this.addEvent(ReplayEventType.BLUR, {
       targetSelector: getSelector(target),
     });
   }
@@ -486,7 +486,7 @@ export class SessionReplayer {
       this.session.metadata.url = window.location.href;
     }
 
-    this.addEvent(ReplayEventType.Navigation, data);
+    this.addEvent(ReplayEventType.NAVIGATION, data);
     this.captureSnapshot();
   }
 
@@ -520,7 +520,7 @@ export class SessionReplayer {
             requestSize,
             responseSize: parseInt(response.headers.get('content-length') || '0'),
           };
-          replayer.addEvent(ReplayEventType.Network, data);
+          replayer.addEvent(ReplayEventType.NETWORK, data);
           return response;
         })
         .catch((error) => {
@@ -531,7 +531,7 @@ export class SessionReplayer {
             requestSize,
             error: error instanceof Error ? error.message : String(error),
           };
-          replayer.addEvent(ReplayEventType.Network, data);
+          replayer.addEvent(ReplayEventType.NETWORK, data);
           throw error;
         });
     };
@@ -540,13 +540,14 @@ export class SessionReplayer {
   private instrumentConsole(): void {
     if (typeof console === 'undefined') return;
 
+    const consoleRef = console;
     const levels: ('log' | 'info' | 'warn' | 'error')[] = ['log', 'info', 'warn', 'error'];
     const replayer = this;
 
     levels.forEach((level) => {
-      replayer.originalConsole[level] = console[level].bind(console);
+      replayer.originalConsole[level] = consoleRef[level].bind(consoleRef);
 
-      console[level] = function (...args: unknown[]) {
+      consoleRef[level] = function (...args: unknown[]) {
         const data: ConsoleData = {
           level,
           message: args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' '),
@@ -560,7 +561,7 @@ export class SessionReplayer {
           }
         }
 
-        replayer.addEvent(ReplayEventType.Console, data);
+        replayer.addEvent(ReplayEventType.CONSOLE, data);
 
         replayer.originalConsole[level]!(...args);
       };

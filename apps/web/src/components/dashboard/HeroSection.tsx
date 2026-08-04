@@ -120,7 +120,7 @@ export const HeroSection: React.FC = () => {
                 px: 3,
                 py: 1.5,
                 background: 'linear-gradient(to right, rgb(59, 130, 246), rgb(147, 51, 234))',
-                color: 'white',
+                color: 'common.white',
                 fontWeight: 600,
                 borderRadius: 3,
                 transition: 'all 0.3s',
@@ -141,14 +141,14 @@ export const HeroSection: React.FC = () => {
                 gap: 1,
                 px: 3,
                 py: 1.5,
-                bgcolor: 'rgba(255, 255, 255, 0.05)',
-                color: 'white',
+                bgcolor: 'action.disabledBackground',
+                color: 'common.white',
                 fontWeight: 600,
                 borderRadius: 3,
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 transition: 'all 0.3s',
                 '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  bgcolor: 'action.disabledBackground',
                 },
               }}
             >

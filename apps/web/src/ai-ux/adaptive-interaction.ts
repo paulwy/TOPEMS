@@ -117,21 +117,21 @@ export class AdaptiveInteraction {
     return this;
   }
 
-  adapt_interface(userId: string, context: Record<string, unknown> = {}): AdaptiveResponse {
-    const profile = this.get_interaction_profile(userId);
-    const signals = this.collect_signals(profile, context);
+  adaptInterface(userId: string, context: Record<string, unknown> = {}): AdaptiveResponse {
+    const profile = this.getInteractionProfile(userId);
+    const signals = this.collectSignals(profile, context);
 
     const response: AdaptiveResponse = {
       component: {
-        variant: this.determine_component_variant(profile, signals),
-        size: this.determine_component_size(profile),
+        variant: this.determineComponentVariant(profile, signals),
+        size: this.determineComponentSize(profile),
         density: profile.preferences.density,
       },
       layout: {
-        template: this.determine_layout_template(profile, signals),
+        template: this.determineLayoutTemplate(profile, signals),
         sidebarCollapsed: profile.device.type === 'mobile',
-        contentWidth: this.determine_content_width(profile),
-        spacing: this.determine_spacing(profile),
+        contentWidth: this.determineContentWidth(profile),
+        spacing: this.determineSpacing(profile),
       },
       content: {
         simplified: profile.proficiency_level === 'beginner',
@@ -150,21 +150,21 @@ export class AdaptiveInteraction {
         gestureSupport: profile.device.touchSupport,
         autoComplete: profile.proficiency_level !== 'beginner',
       },
-      confidence: this.compute_confidence(profile, signals),
-      reason: this.build_reason(profile, signals),
+      confidence: this.computeConfidence(profile, signals),
+      reason: this.buildReason(profile, signals),
     };
 
-    this.record_adaptation(userId, profile, response);
+    this.recordAdaptation(userId, profile, response);
 
     return response;
   }
 
-  get_interaction_profile(userId: string): InteractionProfile {
+  getInteractionProfile(userId: string): InteractionProfile {
     return this.profiles.get(userId) || { ...DEFAULT_PROFILE, userId };
   }
 
-  update_profile(userId: string, updates: Partial<InteractionProfile>): InteractionProfile {
-    const current = this.get_interaction_profile(userId);
+  updateProfile(userId: string, updates: Partial<InteractionProfile>): InteractionProfile {
+    const current = this.getInteractionProfile(userId);
     const updated: InteractionProfile = {
       ...current,
       ...updates,
@@ -187,22 +187,22 @@ export class AdaptiveInteraction {
     return updated;
   }
 
-  get_accessibility_settings(userId: string): InteractionProfile['preferences'] {
-    const profile = this.get_interaction_profile(userId);
+  getAccessibilitySettings(userId: string): InteractionProfile['preferences'] {
+    const profile = this.getInteractionProfile(userId);
     return { ...profile.preferences };
   }
 
-  optimize_for_device(
+  optimizeForDevice(
     userId: string,
     deviceInfo: Partial<InteractionProfile['device']>
   ): AdaptiveResponse {
-    const profile = this.update_profile(userId, {
+    const profile = this.updateProfile(userId, {
       device: deviceInfo,
     } as Partial<InteractionProfile>);
-    return this.adapt_interface(userId, { trigger: 'device_change' });
+    return this.adaptInterface(userId, { trigger: 'device_change' });
   }
 
-  get_adaptation_history(userId?: string): AdaptationRecord[] {
+  getAdaptationHistory(userId?: string): AdaptationRecord[] {
     if (!userId) {
       return [...this.adaptationHistory].sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
     }
@@ -212,7 +212,7 @@ export class AdaptiveInteraction {
       .slice(0, 20);
   }
 
-  reset_profile(userId: string): InteractionProfile {
+  resetProfile(userId: string): InteractionProfile {
     const reset: InteractionProfile = {
       ...DEFAULT_PROFILE,
       userId,
@@ -222,11 +222,11 @@ export class AdaptiveInteraction {
     return reset;
   }
 
-  set_proficiency(userId: string, level: ProficiencyLevel): InteractionProfile {
-    return this.update_profile(userId, { proficiency_level: level });
+  setProficiency(userId: string, level: ProficiencyLevel): InteractionProfile {
+    return this.updateProfile(userId, { proficiency_level: level });
   }
 
-  private collect_signals(
+  private collectSignals(
     profile: InteractionProfile,
     context: Record<string, unknown>
   ): Map<string, number> {
@@ -248,7 +248,7 @@ export class AdaptiveInteraction {
     return signals;
   }
 
-  private determine_component_variant(
+  private determineComponentVariant(
     profile: InteractionProfile,
     signals: Map<string, number>
   ): string {
@@ -259,7 +259,7 @@ export class AdaptiveInteraction {
     return 'standard';
   }
 
-  private determine_component_size(profile: InteractionProfile): 'small' | 'medium' | 'large' {
+  private determineComponentSize(profile: InteractionProfile): 'small' | 'medium' | 'large' {
     if (profile.preferences.largeText || profile.accessibility.needs.includes('large_text')) {
       return 'large';
     }
@@ -269,7 +269,7 @@ export class AdaptiveInteraction {
     return 'medium';
   }
 
-  private determine_layout_template(
+  private determineLayoutTemplate(
     profile: InteractionProfile,
     signals: Map<string, number>
   ): AdaptiveResponse['layout']['template'] {
@@ -279,7 +279,7 @@ export class AdaptiveInteraction {
     return 'split-view';
   }
 
-  private determine_content_width(
+  private determineContentWidth(
     profile: InteractionProfile
   ): 'narrow' | 'medium' | 'wide' | 'full' {
     if (profile.device.type === 'mobile') return 'full';
@@ -288,14 +288,14 @@ export class AdaptiveInteraction {
     return 'wide';
   }
 
-  private determine_spacing(profile: InteractionProfile): 'tight' | 'normal' | 'spacious' {
+  private determineSpacing(profile: InteractionProfile): 'tight' | 'normal' | 'spacious' {
     if (profile.preferences.density === 'compact') return 'tight';
     if (profile.preferences.density === 'relaxed') return 'spacious';
     if (profile.accessibility.needs.includes('large_text')) return 'spacious';
     return 'normal';
   }
 
-  private compute_confidence(profile: InteractionProfile, signals: Map<string, number>): number {
+  private computeConfidence(profile: InteractionProfile, signals: Map<string, number>): number {
     let score = 0.5;
     const signalCount = signals.size;
     const strongSignals = Array.from(signals.values()).filter((v) => v > 0).length;
@@ -305,7 +305,7 @@ export class AdaptiveInteraction {
     return Math.min(0.98, score);
   }
 
-  private build_reason(profile: InteractionProfile, signals: Map<string, number>): string {
+  private buildReason(profile: InteractionProfile, signals: Map<string, number>): string {
     const reasons: string[] = [];
 
     if (signals.get('mobile')) reasons.push('检测到移动端设备');
@@ -320,7 +320,7 @@ export class AdaptiveInteraction {
     return reasons.length > 0 ? reasons.join('；') : '使用默认适配配置';
   }
 
-  private record_adaptation(
+  private recordAdaptation(
     userId: string,
     profile: InteractionProfile,
     response: AdaptiveResponse

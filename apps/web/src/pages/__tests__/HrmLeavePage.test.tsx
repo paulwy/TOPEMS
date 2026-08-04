@@ -131,16 +131,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('HrmLeavePage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <HrmLeavePage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have leave API methods defined', async () => {
+  it('should have leave API methods defined', async () => {
     render(
       <BrowserRouter>
         <HrmLeavePage />
@@ -153,15 +153,14 @@ it('should have leave API methods defined', async () => {
     expect(leaveApi.delete).toBeDefined();
     expect(leaveApi.approve).toBeDefined();
     expect(leaveApi.reject).toBeDefined();
-});
+  });
 
-it('should call leave list API on mount', async () => {
+  it('should call leave list API on mount', async () => {
     render(
       <BrowserRouter>
         <HrmLeavePage />
       </BrowserRouter>
     );
     expect(leaveApi.list).toHaveBeenCalled();
-});
-;
+  });
 });

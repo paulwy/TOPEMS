@@ -41,6 +41,7 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 interface BudgetItem {
@@ -153,7 +154,9 @@ const FinanceBudgetDetailPage: React.FC = () => {
 
   const budget = budgetQuery.data ?? null;
   const loading = budgetQuery.isLoading;
-  const errorMessage = budgetQuery.error ? t('finance.finance_budget_detail_page.detail_1') : undefined;
+  const errorMessage = budgetQuery.error
+    ? t('finance.finance_budget_detail_page.detail_1')
+    : undefined;
 
   const getCategoryLabel = (category?: string) => {
     const labels: Record<string, string> = {
@@ -492,7 +495,9 @@ const FinanceBudgetDetailPage: React.FC = () => {
             color='text.secondary'
             sx={{ mt: 1, display: 'block' }}
           >
-            {budget.usageRate > 80 ? t('finance.finance_budget_detail_page.text_88bb52') : t('finance.finance_budget_detail_page.normal_1')}
+            {budget.usageRate > 80
+              ? t('finance.finance_budget_detail_page.text_88bb52')
+              : t('finance.finance_budget_detail_page.normal_1')}
           </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
@@ -529,9 +534,21 @@ const FinanceBudgetDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: t('finance.finance_budget_detail_page.info'), content: basicInfoContent || <></> },
-      { id: 'items', label: t('finance.finance_budget_detail_page.text_ffaebd'), content: itemsContent || <></> },
-      { id: 'analysis', label: t('finance.finance_budget_detail_page.text_986695'), content: analysisContent || <></> },
+      {
+        id: 'basic',
+        label: t('finance.finance_budget_detail_page.info'),
+        content: basicInfoContent || <></>,
+      },
+      {
+        id: 'items',
+        label: t('finance.finance_budget_detail_page.text_ffaebd'),
+        content: itemsContent || <></>,
+      },
+      {
+        id: 'analysis',
+        label: t('finance.finance_budget_detail_page.text_986695'),
+        content: analysisContent || <></>,
+      },
     ],
     [basicInfoContent, itemsContent, analysisContent]
   );
@@ -548,9 +565,18 @@ const FinanceBudgetDetailPage: React.FC = () => {
       subtitle: budget?.code || undefined,
       tags: [budget?.fiscalYear ? `${budget.fiscalYear}年度` : ''],
       stats: [
-        { label: t('finance.finance_budget_detail_page.text_b91eb1'), value: budget ? formatCurrency(budget.totalBudget) : '-' },
-        { label: t('finance.finance_budget_detail_page.text_b59b00'), value: budget ? formatCurrency(budget.usedAmount) : '-' },
-        { label: t('finance.finance_budget_detail_page.text_41d8b2'), value: budget ? `${budget.usageRate}%` : '-' },
+        {
+          label: t('finance.finance_budget_detail_page.text_b91eb1'),
+          value: budget ? formatCurrency(budget.totalBudget) : '-',
+        },
+        {
+          label: t('finance.finance_budget_detail_page.text_b59b00'),
+          value: budget ? formatCurrency(budget.usedAmount) : '-',
+        },
+        {
+          label: t('finance.finance_budget_detail_page.text_41d8b2'),
+          value: budget ? `${budget.usageRate}%` : '-',
+        },
       ],
     }),
     [budget]
@@ -611,7 +637,10 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 variant='body2'
                 sx={{ mt: 1 }}
               >
-                当前预算使用率{budget?.usageRate && budget.usageRate >= 80 ? t('finance.finance_budget_detail_page.text_6233c5') : t('finance.finance_budget_detail_page.normal')}
+                当前预算使用率
+                {budget?.usageRate && budget.usageRate >= 80
+                  ? t('finance.finance_budget_detail_page.text_6233c5')
+                  : t('finance.finance_budget_detail_page.normal')}
                 ，请关注后续支出情况。
               </Typography>
             </Box>

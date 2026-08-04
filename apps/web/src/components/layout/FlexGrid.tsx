@@ -15,7 +15,8 @@ export interface FlexGridProps {
   xxl?: number | boolean;
   spacing?: number | Partial<Record<Breakpoint, number>>;
   direction?: ResponsiveValue<'row' | 'row-reverse' | 'column' | 'column-reverse'>;
-  justify?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
+  justify?:
+    'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
   alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline';
   wrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
   children?: React.ReactNode;
@@ -133,7 +134,10 @@ export interface FlexItemProps {
 }
 
 export const FlexItem: React.FC<FlexItemProps> = ({ children, ...props }) => (
-  <FlexGrid item {...props}>
+  <FlexGrid
+    item
+    {...props}
+  >
     {children}
   </FlexGrid>
 );

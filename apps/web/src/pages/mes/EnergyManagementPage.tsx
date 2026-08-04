@@ -88,11 +88,26 @@ const EnergyManagementPage: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'normal':
-        return <CheckCircle style={{ color: '#22c55e' }} size={24} />;
+        return (
+          <CheckCircle
+            style={{ color: 'success.500' }}
+            size={24}
+          />
+        );
       case 'warning':
-        return <AlertCircle style={{ color: '#f59e0b' }} size={24} />;
+        return (
+          <AlertCircle
+            style={{ color: 'warning.500' }}
+            size={24}
+          />
+        );
       case 'critical':
-        return <AlertTriangle style={{ color: '#ef4444' }} size={24} />;
+        return (
+          <AlertTriangle
+            style={{ color: 'error.500' }}
+            size={24}
+          />
+        );
       default:
         return null;
     }
@@ -130,7 +145,10 @@ const EnergyManagementPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 4 }}>
+      <Typography
+        variant='h4'
+        sx={{ mb: 4 }}
+      >
         能耗管理
       </Typography>
 
@@ -139,18 +157,33 @@ const EnergyManagementPage: React.FC = () => {
         onChange={(_, newValue) => setActiveTab(newValue)}
         sx={{ mb: 4 }}
       >
-        <Tab label="实时监控" icon={<Activity size={20} />} />
-        <Tab label="能耗报表" icon={<BarChart3 size={20} />} />
-        <Tab label="能耗预测" icon={<BatteryCharging size={20} />} />
-        <Tab label="告警管理" icon={<AlertTriangle size={20} />} />
+        <Tab
+          label='实时监控'
+          icon={<Activity size={20} />}
+        />
+        <Tab
+          label='能耗报表'
+          icon={<BarChart3 size={20} />}
+        />
+        <Tab
+          label='能耗预测'
+          icon={<BatteryCharging size={20} />}
+        />
+        <Tab
+          label='告警管理'
+          icon={<AlertTriangle size={20} />}
+        />
       </Tabs>
 
       {activeTab === 0 && (
         <Card>
           <CardHeader
-            title="实时能耗监控"
+            title='实时能耗监控'
             action={
-              <Button onClick={handleRefresh} startIcon={<RefreshCw size={20} />}>
+              <Button
+                onClick={handleRefresh}
+                startIcon={<RefreshCw size={20} />}
+              >
                 刷新
               </Button>
             }
@@ -158,25 +191,55 @@ const EnergyManagementPage: React.FC = () => {
           <CardContent>
             <Grid sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3 }}>
               {realTimeData.map((item) => (
-                <Grid sx={{ gridColumn: 'span 4' }} key={item.equipment_id}>
-                  <Card sx={{ borderLeft: `4px solid ${item.status === 'normal' ? '#22c55e' : item.status === 'warning' ? '#f59e0b' : '#ef4444'}` }}>
+                <Grid
+                  sx={{ gridColumn: 'span 4' }}
+                  key={item.equipment_id}
+                >
+                  <Card
+                    sx={{
+                      borderLeft: `4px solid ${item.status === 'normal' ? '#22c55e' : item.status === 'warning' ? '#f59e0b' : '#ef4444'}`,
+                    }}
+                  >
                     <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          mb: 2,
+                        }}
+                      >
+                        <Typography
+                          variant='subtitle1'
+                          sx={{ fontWeight: 'bold' }}
+                        >
                           {item.equipment_name}
                         </Typography>
                         {getStatusIcon(item.status)}
                       </Box>
-                      <Typography variant="h3" sx={{ mb: 1 }}>
+                      <Typography
+                        variant='h3'
+                        sx={{ mb: 1 }}
+                      >
                         {formatNumber(item.current_value)}
-                        <Typography variant="body1" component="span" sx={{ ml: 1, color: 'text.secondary' }}>
+                        <Typography
+                          variant='body1'
+                          component='span'
+                          sx={{ ml: 1, color: 'text.secondary' }}
+                        >
                           {item.unit}
                         </Typography>
                       </Typography>
                       <Chip
-                        label={item.status === 'normal' ? '正常' : item.status === 'warning' ? '警告' : '异常'}
+                        label={
+                          item.status === 'normal'
+                            ? '正常'
+                            : item.status === 'warning'
+                              ? '警告'
+                              : '异常'
+                        }
                         color={getStatusColor(item.status)}
-                        size="small"
+                        size='small'
                       />
                     </CardContent>
                   </Card>
@@ -190,9 +253,12 @@ const EnergyManagementPage: React.FC = () => {
       {activeTab === 1 && reportData && (
         <Card>
           <CardHeader
-            title="能耗报表"
+            title='能耗报表'
             action={
-              <Button onClick={handleExport} startIcon={<Download size={20} />}>
+              <Button
+                onClick={handleExport}
+                startIcon={<Download size={20} />}
+              >
                 导出报表
               </Button>
             }
@@ -202,9 +268,16 @@ const EnergyManagementPage: React.FC = () => {
               <Grid sx={{ gridColumn: 'span 4' }}>
                 <Card>
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <BatteryCharging style={{ fontSize: 40, color: '#f59e0b', marginBottom: 8 }} />
-                    <Typography variant="h5">{formatNumber(reportData.total_consumption)} kWh</Typography>
-                    <Typography variant="body2" color="textSecondary">
+                    <BatteryCharging
+                      style={{ fontSize: 40, color: 'warning.500', marginBottom: 8 }}
+                    />
+                    <Typography variant='h5'>
+                      {formatNumber(reportData.total_consumption)} kWh
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                    >
                       总能耗
                     </Typography>
                   </CardContent>
@@ -213,8 +286,11 @@ const EnergyManagementPage: React.FC = () => {
               <Grid sx={{ gridColumn: 'span 4' }}>
                 <Card>
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h5">{formatCurrency(reportData.total_cost)}</Typography>
-                    <Typography variant="body2" color="textSecondary">
+                    <Typography variant='h5'>{formatCurrency(reportData.total_cost)}</Typography>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                    >
                       能耗费用
                     </Typography>
                   </CardContent>
@@ -223,8 +299,13 @@ const EnergyManagementPage: React.FC = () => {
               <Grid sx={{ gridColumn: 'span 4' }}>
                 <Card>
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h5">{formatCurrency(reportData.avg_cost_per_unit)}</Typography>
-                    <Typography variant="body2" color="textSecondary">
+                    <Typography variant='h5'>
+                      {formatCurrency(reportData.avg_cost_per_unit)}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                    >
                       单位电价
                     </Typography>
                   </CardContent>
@@ -233,7 +314,7 @@ const EnergyManagementPage: React.FC = () => {
             </Grid>
 
             <Card sx={{ mt: 3 }}>
-              <CardHeader title="设备能耗排行" />
+              <CardHeader title='设备能耗排行' />
               <CardContent>
                 <Table>
                   <TableHead>
@@ -253,7 +334,10 @@ const EnergyManagementPage: React.FC = () => {
                         <TableCell>{formatNumber(item.total_consumption)}</TableCell>
                         <TableCell>{formatNumber(item.avg_consumption)}</TableCell>
                         <TableCell>
-                          <Chip label={`${item.percentage}%`} size="small" />
+                          <Chip
+                            label={`${item.percentage}%`}
+                            size='small'
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -263,7 +347,7 @@ const EnergyManagementPage: React.FC = () => {
             </Card>
 
             <Card sx={{ mt: 3 }}>
-              <CardHeader title="车间能耗分布" />
+              <CardHeader title='车间能耗分布' />
               <CardContent>
                 <Table>
                   <TableHead>
@@ -279,7 +363,10 @@ const EnergyManagementPage: React.FC = () => {
                         <TableCell>{item.workshop_name}</TableCell>
                         <TableCell>{formatNumber(item.total_consumption)}</TableCell>
                         <TableCell>
-                          <Chip label={`${item.percentage}%`} size="small" />
+                          <Chip
+                            label={`${item.percentage}%`}
+                            size='small'
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -289,7 +376,7 @@ const EnergyManagementPage: React.FC = () => {
             </Card>
 
             <Card sx={{ mt: 3 }}>
-              <CardHeader title="能耗趋势" />
+              <CardHeader title='能耗趋势' />
               <CardContent>
                 <Table>
                   <TableHead>
@@ -307,8 +394,14 @@ const EnergyManagementPage: React.FC = () => {
                         <TableCell>
                           <Chip
                             label={`${item.change_rate > 0 ? '+' : ''}${item.change_rate.toFixed(2)}%`}
-                            size="small"
-                            color={item.change_rate > 0 ? 'error' : item.change_rate < 0 ? 'success' : 'default'}
+                            size='small'
+                            color={
+                              item.change_rate > 0
+                                ? 'error'
+                                : item.change_rate < 0
+                                  ? 'success'
+                                  : 'default'
+                            }
                           />
                         </TableCell>
                       </TableRow>
@@ -323,15 +416,22 @@ const EnergyManagementPage: React.FC = () => {
 
       {activeTab === 2 && forecastData && (
         <Card>
-          <CardHeader title="能耗预测" />
+          <CardHeader title='能耗预测' />
           <CardContent>
             <Grid sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3 }}>
               <Grid sx={{ gridColumn: 'span 4' }}>
                 <Card>
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <BatteryCharging style={{ fontSize: 40, color: '#8b5cf6', marginBottom: 8 }} />
-                    <Typography variant="h5">{formatNumber(forecastData.forecast_consumption)} kWh</Typography>
-                    <Typography variant="body2" color="textSecondary">
+                    <BatteryCharging
+                      style={{ fontSize: 40, color: 'secondary.500', marginBottom: 8 }}
+                    />
+                    <Typography variant='h5'>
+                      {formatNumber(forecastData.forecast_consumption)} kWh
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                    >
                       预测能耗
                     </Typography>
                   </CardContent>
@@ -340,8 +440,13 @@ const EnergyManagementPage: React.FC = () => {
               <Grid sx={{ gridColumn: 'span 4' }}>
                 <Card>
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h5">{formatCurrency(forecastData.forecast_cost)}</Typography>
-                    <Typography variant="body2" color="textSecondary">
+                    <Typography variant='h5'>
+                      {formatCurrency(forecastData.forecast_cost)}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                    >
                       预测费用
                     </Typography>
                   </CardContent>
@@ -350,9 +455,10 @@ const EnergyManagementPage: React.FC = () => {
               <Grid sx={{ gridColumn: 'span 4' }}>
                 <Card>
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h6">置信区间</Typography>
-                    <Typography variant="h5">
-                      {formatNumber(forecastData.confidence_interval[0])} - {formatNumber(forecastData.confidence_interval[1])} kWh
+                    <Typography variant='h6'>置信区间</Typography>
+                    <Typography variant='h5'>
+                      {formatNumber(forecastData.confidence_interval[0])} -{' '}
+                      {formatNumber(forecastData.confidence_interval[1])} kWh
                     </Typography>
                   </CardContent>
                 </Card>
@@ -360,9 +466,11 @@ const EnergyManagementPage: React.FC = () => {
             </Grid>
 
             <Box sx={{ mt: 4 }}>
-              <Typography variant="subtitle1">预测周期: {forecastData.forecast_period}</Typography>
-              <Typography variant="subtitle1">趋势因子: {forecastData.trend_factor}</Typography>
-              <Typography variant="subtitle1">季节性因子: {forecastData.seasonality_factor}</Typography>
+              <Typography variant='subtitle1'>预测周期: {forecastData.forecast_period}</Typography>
+              <Typography variant='subtitle1'>趋势因子: {forecastData.trend_factor}</Typography>
+              <Typography variant='subtitle1'>
+                季节性因子: {forecastData.seasonality_factor}
+              </Typography>
             </Box>
           </CardContent>
         </Card>
@@ -370,17 +478,23 @@ const EnergyManagementPage: React.FC = () => {
 
       {activeTab === 3 && alertsData && (
         <Card>
-          <CardHeader title="能耗告警" />
+          <CardHeader title='能耗告警' />
           <CardContent>
             <Grid sx={{ display: 'flex', gap: 2, mb: 4 }}>
               <Grid>
                 <Chip label={`总计: ${alertsData.total_count}`} />
               </Grid>
               <Grid>
-                <Chip label={`严重: ${alertsData.critical_count}`} color="error" />
+                <Chip
+                  label={`严重: ${alertsData.critical_count}`}
+                  color='error'
+                />
               </Grid>
               <Grid>
-                <Chip label={`警告: ${alertsData.warning_count}`} color="warning" />
+                <Chip
+                  label={`警告: ${alertsData.warning_count}`}
+                  color='warning'
+                />
               </Grid>
             </Grid>
 
@@ -394,11 +508,14 @@ const EnergyManagementPage: React.FC = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                   <span>{alert.message}</span>
                   <span>
-                    <Chip label={alert.status === 'active' ? '活跃' : '已解决'} size="small" />
+                    <Chip
+                      label={alert.status === 'active' ? '活跃' : '已解决'}
+                      size='small'
+                    />
                   </span>
                 </Box>
                 <Box sx={{ mt: 1, fontSize: '0.875rem' }}>
-                  阈值: {alert.threshold_value} | 当前值: {alert.actual_value} | {alert.timestamp}
+                  阈值: {alert.threshold_value} | 当前值: {alert.actualValue} | {alert.timestamp}
                 </Box>
               </Alert>
             ))}

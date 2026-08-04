@@ -6,6 +6,7 @@ import { MapPin, ArrowRight, Warehouse, Camera, Map, Building2 } from 'lucide-re
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 interface StatsSectionProps {
@@ -25,7 +26,11 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
   const { t } = useTranslation();
   return (
     <>
-      <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid
+        container
+        spacing={2}
+        sx={{ mb: 4 }}
+      >
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
           <MetricCard
             title={t('bi.gis_page_components__stats_section.equipment')}
@@ -78,7 +83,11 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
         </Grid>
       </Grid>
 
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ mb: 4 }}
+      >
         <Grid size={{ xs: 12, lg: 6 }}>
           <StatsChart
             title={t('bi.gis_page_components__stats_section.type')}
@@ -131,7 +140,10 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
               },
             ]}
             dataKey='name'
-            yKeys={[t('bi.gis_page_components__stats_section.active_2'), t('bi.gis_page_components__stats_section.text_9ed7d3')]}
+            yKeys={[
+              t('bi.gis_page_components__stats_section.active_2'),
+              t('bi.gis_page_components__stats_section.text_9ed7d3'),
+            ]}
             colors={[ct.success.main, ct.secondary[400]]}
           />
         </Grid>

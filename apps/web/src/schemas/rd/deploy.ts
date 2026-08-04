@@ -139,11 +139,11 @@ export const deploySchema: EntitySchema = {
         const color = STATUS_COLOR_MAP[val] || 'default';
         let icon: React.ReactNode = null;
         if (val === 'success') {
-          icon = React.createElement(CheckCircle, { size: 14, color: 'green' });
+          icon = React.createElement(CheckCircle, { size: 14, color: 'success.main' });
         } else if (val === 'failed') {
-          icon = React.createElement(XCircle, { size: 14, color: 'red' });
+          icon = React.createElement(XCircle, { size: 14, color: 'error.main' });
         } else if (val === 'running') {
-          icon = React.createElement(Clock, { size: 14, color: 'orange' });
+          icon = React.createElement(Clock, { size: 14, color: 'warning.main' });
         }
         return React.createElement(
           Box,

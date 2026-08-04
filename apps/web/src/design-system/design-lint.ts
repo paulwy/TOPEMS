@@ -102,15 +102,55 @@ export function runColorContrastChecks(): ColorContrastCheck[] {
   const issues: ColorContrastCheck[] = [];
 
   const textPairs: Array<{ fg: string; bg: string; label: string; minRatio?: number }> = [
-    { fg: v51DesignTokens.semantic.text.primary.light, bg: lightBg, label: 'Light / Primary Text on Card' },
-    { fg: v51DesignTokens.semantic.text.secondary.light, bg: lightBg, label: 'Light / Secondary Text on Card', minRatio: 4.5 },
-    { fg: v51DesignTokens.semantic.text.tertiary.light, bg: lightBg, label: 'Light / Tertiary Text on Card', minRatio: 3 },
-    { fg: v51DesignTokens.semantic.text.primary.dark, bg: darkBg, label: 'Dark / Primary Text on Card' },
-    { fg: v51DesignTokens.semantic.text.secondary.dark, bg: darkBg, label: 'Dark / Secondary Text on Card', minRatio: 4.5 },
-    { fg: v51DesignTokens.semantic.text.tertiary.dark, bg: darkBg, label: 'Dark / Tertiary Text on Card', minRatio: 3 },
-    { fg: v51DesignTokens.colors.primary.contrastText, bg: v51DesignTokens.colors.primary.main, label: 'Primary Button Text' },
-    { fg: v51DesignTokens.colors.error.contrastText, bg: v51DesignTokens.colors.error.main, label: 'Error Button Text' },
-    { fg: v51DesignTokens.colors.success.contrastText, bg: v51DesignTokens.colors.success.main, label: 'Success Button Text' },
+    {
+      fg: v51DesignTokens.semantic.text.primary.light,
+      bg: lightBg,
+      label: 'Light / Primary Text on Card',
+    },
+    {
+      fg: v51DesignTokens.semantic.text.secondary.light,
+      bg: lightBg,
+      label: 'Light / Secondary Text on Card',
+      minRatio: 4.5,
+    },
+    {
+      fg: v51DesignTokens.semantic.text.tertiary.light,
+      bg: lightBg,
+      label: 'Light / Tertiary Text on Card',
+      minRatio: 3,
+    },
+    {
+      fg: v51DesignTokens.semantic.text.primary.dark,
+      bg: darkBg,
+      label: 'Dark / Primary Text on Card',
+    },
+    {
+      fg: v51DesignTokens.semantic.text.secondary.dark,
+      bg: darkBg,
+      label: 'Dark / Secondary Text on Card',
+      minRatio: 4.5,
+    },
+    {
+      fg: v51DesignTokens.semantic.text.tertiary.dark,
+      bg: darkBg,
+      label: 'Dark / Tertiary Text on Card',
+      minRatio: 3,
+    },
+    {
+      fg: v51DesignTokens.colors.primary.contrastText,
+      bg: v51DesignTokens.colors.primary.main,
+      label: 'Primary Button Text',
+    },
+    {
+      fg: v51DesignTokens.colors.error.contrastText,
+      bg: v51DesignTokens.colors.error.main,
+      label: 'Error Button Text',
+    },
+    {
+      fg: v51DesignTokens.colors.success.contrastText,
+      bg: v51DesignTokens.colors.success.main,
+      label: 'Success Button Text',
+    },
   ];
 
   for (const pair of textPairs) {
@@ -144,19 +184,46 @@ export function lintColorContrast(): LintIssue[] {
 // ============================================================
 
 const validSpacingValues = new Set([
-  '0', '4px', '8px', '12px', '16px', '20px', '24px', '32px', '40px', '48px', '56px', '64px', '80px',
-  '0.5rem', '1rem', '1.5rem', '2rem', '3rem', '4rem',
-  'var(--v51-spacing-xs)', 'var(--v51-spacing-sm)', 'var(--v51-spacing-md)',
-  'var(--v51-spacing-base)', 'var(--v51-spacing-lg)', 'var(--v51-spacing-xl)',
+  '0',
+  '4px',
+  '8px',
+  '12px',
+  '16px',
+  '20px',
+  '24px',
+  '32px',
+  '40px',
+  '48px',
+  '56px',
+  '64px',
+  '80px',
+  '0.5rem',
+  '1rem',
+  '1.5rem',
+  '2rem',
+  '3rem',
+  '4rem',
+  'var(--v51-spacing-xs)',
+  'var(--v51-spacing-sm)',
+  'var(--v51-spacing-md)',
+  'var(--v51-spacing-base)',
+  'var(--v51-spacing-lg)',
+  'var(--v51-spacing-xl)',
 ]);
 
-export function lintSpacing(components: Array<{ name: string; spacingValues: string[] }>): LintIssue[] {
+export function lintSpacing(
+  components: Array<{ name: string; spacingValues: string[] }>
+): LintIssue[] {
   const issues: LintIssue[] = [];
 
   for (const component of components) {
     for (const value of component.spacingValues) {
       const normalizedValue = value.replace(/\s+/g, '');
-      if (!validSpacingValues.has(normalizedValue) && !normalizedValue.startsWith('calc(') && !normalizedValue.startsWith('clamp(')) {
+      if (
+        !validSpacingValues.has(normalizedValue) &&
+        !normalizedValue.startsWith('calc(') &&
+        !normalizedValue.startsWith('clamp(')
+      ) {
         issues.push({
           id: `spacing-${component.name}-${normalizedValue.replace(/[^a-z0-9]/gi, '')}`,
           category: 'spacing',
@@ -395,7 +462,8 @@ export function formatReport(report: LintReport): string {
     lines.push('问题详情:');
     lines.push('----------');
     for (const issue of report.issues) {
-      const severityIcon = issue.severity === 'error' ? '🔴' : issue.severity === 'warning' ? '🟡' : '🔵';
+      const severityIcon =
+        issue.severity === 'error' ? '🔴' : issue.severity === 'warning' ? '🟡' : '🔵';
       lines.push(`${severityIcon} [${issue.category}] ${issue.message}`);
       if (issue.suggestion) {
         lines.push(`   💡 ${issue.suggestion}`);

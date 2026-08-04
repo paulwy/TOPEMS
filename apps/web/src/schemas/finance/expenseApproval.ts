@@ -328,7 +328,14 @@ export const expenseApprovalSchema: EntitySchema & {
   formSections: [
     {
       title: '基本信息',
-      fields: ['expense_no', 'employee_id', 'employee_name', 'department', 'expense_date', 'expense_type'],
+      fields: [
+        'expense_no',
+        'employee_id',
+        'employee_name',
+        'department',
+        'expense_date',
+        'expense_type',
+      ],
     },
     {
       title: '费用汇总',

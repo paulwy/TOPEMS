@@ -268,7 +268,7 @@ export const voucherSchema: EntitySchema & {
       confirm: true,
       confirmMessage: '确定要批量提交选中的凭证吗？',
       onClick: (ids: string[]) => {
-        console.log('批量提交凭证:', ids);
+        // TODO: 实现批量提交凭证逻辑
       },
     },
     {
@@ -279,7 +279,7 @@ export const voucherSchema: EntitySchema & {
       confirm: true,
       confirmMessage: '确定要批量审核选中的凭证吗？',
       onClick: (ids: string[]) => {
-        console.log('批量审核凭证:', ids);
+        // TODO: 实现批量审核凭证逻辑
       },
     },
   ],

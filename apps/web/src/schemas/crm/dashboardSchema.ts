@@ -3,6 +3,7 @@ import type { CrmDashboardStats } from '@/api/crm/dashboard';
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     __crmStats?: CrmDashboardStats;
   }
 }

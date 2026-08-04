@@ -20,10 +20,7 @@ export const ticketModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: TICKET_PATHS.center,
-      element: lazyWithRetry(
-        () => import('@/pages/ticket/TicketCenterPage'),
-        'TicketCenterPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/ticket/TicketCenterPage'), 'TicketCenterPage'),
       module: 'ticket',
       code: 'ticket-center',
       title: '工单中心',

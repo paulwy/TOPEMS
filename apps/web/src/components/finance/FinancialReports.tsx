@@ -98,7 +98,7 @@ function ReportTable({ items, totalLabel, totalAmount }: ReportTableProps) {
             alignItems: 'center',
             py: 2,
             borderTop: 2,
-            borderColor: 'black',
+            borderColor: 'common.black',
             fontWeight: 600,
           }}
         >

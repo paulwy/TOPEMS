@@ -1,19 +1,19 @@
 import { logger } from '../logger';
 
 export enum BottleneckType {
-  Rendering = 'rendering',
-  Network = 'network',
-  JavaScript = 'javascript',
-  Memory = 'memory',
-  Layout = 'layout',
-  Paint = 'paint',
+  RENDERING = 'rendering',
+  NETWORK = 'network',
+  JAVASCRIPT = 'javascript',
+  MEMORY = 'memory',
+  LAYOUT = 'layout',
+  PAINT = 'paint',
 }
 
 export enum BottleneckSeverity {
-  Critical = 'critical',
-  High = 'high',
-  Medium = 'medium',
-  Low = 'low',
+  CRITICAL = 'critical',
+  HIGH = 'high',
+  MEDIUM = 'medium',
+  LOW = 'low',
 }
 
 export interface BottleneckInfo {
@@ -275,7 +275,7 @@ export class PerformanceBottleneckDetector {
 
           if (entry.duration > this.config.thresholds.longTask) {
             this.addBottleneck({
-              type: BottleneckType.JavaScript,
+              type: BottleneckType.JAVASCRIPT,
               severity: this.getSeverity(
                 entry.duration,
                 this.config.thresholds.longTask,
@@ -310,7 +310,7 @@ export class PerformanceBottleneckDetector {
 
       if (usageRatio > this.config.thresholds.memoryUsage) {
         this.addBottleneck({
-          type: BottleneckType.Memory,
+          type: BottleneckType.MEMORY,
           severity: this.getSeverity(usageRatio, this.config.thresholds.memoryUsage, 0.95),
           description: `内存使用率过高: ${(usageRatio * 100).toFixed(1)}%`,
           metric: 'memoryUsage',
@@ -355,8 +355,8 @@ export class PerformanceBottleneckDetector {
 
       if (slowCount > 0) {
         this.addBottleneck({
-          type: BottleneckType.Network,
-          severity: slowCount > 5 ? BottleneckSeverity.High : BottleneckSeverity.Medium,
+          type: BottleneckType.NETWORK,
+          severity: slowCount > 5 ? BottleneckSeverity.HIGH : BottleneckSeverity.MEDIUM,
           description: `检测到 ${slowCount} 个慢速网络请求`,
           metric: 'slowRequests',
           value: slowCount,
@@ -390,7 +390,7 @@ export class PerformanceBottleneckDetector {
 
     if (this.webVitals.fcp && this.webVitals.fcp > this.config.thresholds.fcp) {
       detected.push({
-        type: BottleneckType.Paint,
+        type: BottleneckType.PAINT,
         severity: this.getSeverity(this.webVitals.fcp, this.config.thresholds.fcp, 3000),
         description: `首次内容绘制较慢: ${this.webVitals.fcp.toFixed(0)}ms`,
         metric: 'fcp',
@@ -403,7 +403,7 @@ export class PerformanceBottleneckDetector {
 
     if (this.webVitals.lcp && this.webVitals.lcp > this.config.thresholds.lcp) {
       detected.push({
-        type: BottleneckType.Rendering,
+        type: BottleneckType.RENDERING,
         severity: this.getSeverity(this.webVitals.lcp, this.config.thresholds.lcp, 4000),
         description: `最大内容绘制较慢: ${this.webVitals.lcp.toFixed(0)}ms`,
         metric: 'lcp',
@@ -416,7 +416,7 @@ export class PerformanceBottleneckDetector {
 
     if (this.webVitals.cls && this.webVitals.cls > this.config.thresholds.cls) {
       detected.push({
-        type: BottleneckType.Layout,
+        type: BottleneckType.LAYOUT,
         severity: this.getSeverity(this.webVitals.cls, this.config.thresholds.cls, 0.25),
         description: `布局偏移过大: ${this.webVitals.cls.toFixed(3)}`,
         metric: 'cls',
@@ -429,7 +429,7 @@ export class PerformanceBottleneckDetector {
 
     if (this.webVitals.inp && this.webVitals.inp > this.config.thresholds.inp) {
       detected.push({
-        type: BottleneckType.JavaScript,
+        type: BottleneckType.JAVASCRIPT,
         severity: this.getSeverity(this.webVitals.inp, this.config.thresholds.inp, 500),
         description: `交互延迟较高: ${this.webVitals.inp.toFixed(0)}ms`,
         metric: 'inp',
@@ -442,7 +442,7 @@ export class PerformanceBottleneckDetector {
 
     if (this.webVitals.ttfb && this.webVitals.ttfb > this.config.thresholds.ttfb) {
       detected.push({
-        type: BottleneckType.Network,
+        type: BottleneckType.NETWORK,
         severity: this.getSeverity(this.webVitals.ttfb, this.config.thresholds.ttfb, 1800),
         description: `首字节时间过长: ${this.webVitals.ttfb.toFixed(0)}ms`,
         metric: 'ttfb',
@@ -538,10 +538,10 @@ export class PerformanceBottleneckDetector {
     let score = 100;
 
     const severityPenalty: Record<BottleneckSeverity, number> = {
-      [BottleneckSeverity.Critical]: 20,
-      [BottleneckSeverity.High]: 10,
-      [BottleneckSeverity.Medium]: 5,
-      [BottleneckSeverity.Low]: 2,
+      [BottleneckSeverity.CRITICAL]: 20,
+      [BottleneckSeverity.HIGH]: 10,
+      [BottleneckSeverity.MEDIUM]: 5,
+      [BottleneckSeverity.LOW]: 2,
     };
 
     bottlenecks.forEach((b) => {
@@ -556,9 +556,9 @@ export class PerformanceBottleneckDetector {
       return '性能优秀，未检测到明显瓶颈';
     }
 
-    const critical = bottlenecks.filter((b) => b.severity === BottleneckSeverity.Critical).length;
-    const high = bottlenecks.filter((b) => b.severity === BottleneckSeverity.High).length;
-    const medium = bottlenecks.filter((b) => b.severity === BottleneckSeverity.Medium).length;
+    const critical = bottlenecks.filter((b) => b.severity === BottleneckSeverity.CRITICAL).length;
+    const high = bottlenecks.filter((b) => b.severity === BottleneckSeverity.HIGH).length;
+    const medium = bottlenecks.filter((b) => b.severity === BottleneckSeverity.MEDIUM).length;
 
     let rating = '';
     if (score >= 90) rating = '优秀';
@@ -610,15 +610,15 @@ export class PerformanceBottleneckDetector {
     criticalThreshold: number
   ): BottleneckSeverity {
     if (value >= criticalThreshold) {
-      return BottleneckSeverity.Critical;
+      return BottleneckSeverity.CRITICAL;
     }
     if (value >= threshold * 1.5) {
-      return BottleneckSeverity.High;
+      return BottleneckSeverity.HIGH;
     }
     if (value >= threshold) {
-      return BottleneckSeverity.Medium;
+      return BottleneckSeverity.MEDIUM;
     }
-    return BottleneckSeverity.Low;
+    return BottleneckSeverity.LOW;
   }
 
   private generateLongTaskSuggestions(duration: number): string[] {

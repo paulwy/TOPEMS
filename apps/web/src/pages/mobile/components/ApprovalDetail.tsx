@@ -81,9 +81,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
                 label={getPriorityLabel(approval.priority, t)}
                 size='small'
                 color={
-                  getPriorityColor(approval.priority) as React.ComponentProps<
-                    typeof import('@mui/material/Chip').default
-                  >['color']
+                  getPriorityColor(approval.priority) as React.ComponentProps<typeof Chip>['color']
                 }
                 sx={{ height: 20, fontSize: '0.7rem' }}
               />

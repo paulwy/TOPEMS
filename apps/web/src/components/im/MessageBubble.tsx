@@ -130,7 +130,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   width: 16,
                   height: 16,
                   color: theme.palette.text.disabled,
-                  backgroundColor: 'white',
+                  backgroundColor: 'common.white',
                   borderRadius: '9999px',
                   padding: 2,
                 }}
@@ -144,7 +144,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 position: 'absolute',
                 top: -64,
                 right: -4,
-                backgroundColor: 'white',
+                backgroundColor: 'common.white',
                 borderRadius: 8,
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                 border: '1px solid grey.200',
@@ -255,7 +255,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           ) : isImage && message.content ? (
             <>
               <button
-                type="button"
+                type='button'
                 onClick={() => window.open(message.content, '_blank')}
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
               >

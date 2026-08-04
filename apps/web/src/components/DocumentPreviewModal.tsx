@@ -168,7 +168,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'action.active',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -178,7 +178,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderRadius: '12px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           width: '100%',
@@ -247,7 +247,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: 'common.white',
                 zIndex: 10,
               }}
             >
@@ -257,7 +257,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   height: 40,
                   color: 'primary.dark',
                   animation: 'spin 1s linear infinite',
-                  marginBottom: '12px',
+                  marginBottom: 1.5,
                 }}
               />
               <p style={{ color: theme.palette.text.secondary }}>正在加载文档...</p>
@@ -273,7 +273,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: 'common.white',
                 zIndex: 10,
               }}
             >
@@ -282,7 +282,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   width: 40,
                   height: 40,
                   color: 'error.main',
-                  marginBottom: '12px',
+                  marginBottom: 1.5,
                 }}
               />
               <p style={{ color: theme.palette.error.dark, marginBottom: '16px' }}>{error}</p>

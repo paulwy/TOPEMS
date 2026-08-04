@@ -10,7 +10,7 @@ export interface ConsolidationEntity {
   id: string;
   name: string;
   code: string;
-  parent_id?: string;
+  parentId?: string;
   entity_type: 'holding' | 'subsidiary' | 'associate' | 'joint_venture';
   ownership_percentage: number;
   currency_code?: string;
@@ -292,7 +292,7 @@ export const financialReportApi = {
    * 获取合并主体列表
    */
   getConsolidationEntities: (params?: {
-    parent_id?: string;
+    parentId?: string;
     include_disabled?: boolean;
     page?: number;
     pagesize?: number;
@@ -304,7 +304,7 @@ export const financialReportApi = {
   createConsolidationEntity: (data: {
     name: string;
     code: string;
-    parent_id?: string;
+    parentId?: string;
     entity_type: 'holding' | 'subsidiary' | 'associate' | 'joint_venture';
     ownership_percentage: number;
     currency_code?: string;

@@ -23,7 +23,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
         bottom: 16,
         left: 16,
         width: '320px',
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderRadius: 3,
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
         overflow: 'hidden',
@@ -41,7 +41,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
       >
         <Typography
           variant='h6'
-          sx={{ fontWeight: 'semibold', color: 'white' }}
+          sx={{ fontWeight: 'semibold', color: 'common.white' }}
         >
           详情信息
         </Typography>
@@ -50,14 +50,14 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
           sx={{
             padding: 0.5,
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              backgroundColor: 'action.disabledBackground',
             },
             borderRadius: 1,
           }}
         >
           <X
             size={20}
-            style={{ color: 'white' }}
+            style={{ color: 'common.white' }}
           />
         </IconButton>
       </MuiBox>
@@ -207,8 +207,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
             variant='body2'
             sx={{ color: 'grey.700', fontFamily: 'monospace' }}
           >
-            {formatCoordinate(selectedItem.latitude)},{' '}
-            {formatCoordinate(selectedItem.longitude)}
+            {formatCoordinate(selectedItem.latitude)}, {formatCoordinate(selectedItem.longitude)}
           </Typography>
         </MuiBox>
       </MuiBox>

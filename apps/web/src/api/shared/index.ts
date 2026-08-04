@@ -21,18 +21,25 @@ export interface UploadAttachmentRequest {
 }
 
 export const attachmentApi = {
-  async upload(file: File, entityType?: string, entityId?: string): Promise<ApiResponse<Attachment>> {
+  async upload(
+    file: File,
+    entityType?: string,
+    entityId?: string
+  ): Promise<ApiResponse<Attachment>> {
     const formData = new FormData();
     formData.append('file', file);
     if (entityType) formData.append('entity_type', entityType);
     if (entityId) formData.append('entity_id', entityId);
-    
+
     return apiClient.file.post('/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
 
-  async list(params?: { entity_type?: string; entity_id?: string }): Promise<ApiResponse<Attachment[]>> {
+  async list(params?: {
+    entity_type?: string;
+    entity_id?: string;
+  }): Promise<ApiResponse<Attachment[]>> {
     const searchParams = new URLSearchParams();
     if (params?.entity_type) searchParams.set('entity_type', params.entity_type);
     if (params?.entity_id) searchParams.set('entity_id', params.entity_id);
@@ -64,7 +71,7 @@ export interface Comment {
   author_name: string;
   entity_type: string;
   entity_id: string;
-  parent_id?: string;
+  parentId?: string;
   replies?: Comment[];
   created_at: string;
   updated_at?: string;
@@ -74,7 +81,7 @@ export interface CreateCommentRequest {
   content: string;
   entity_type: string;
   entity_id: string;
-  parent_id?: string;
+  parentId?: string;
 }
 
 export interface UpdateCommentRequest {

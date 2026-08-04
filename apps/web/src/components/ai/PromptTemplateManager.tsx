@@ -23,6 +23,7 @@ import {
   Lightbulb,
   Check,
 } from 'lucide-react';
+import type { Theme } from '@mui/material';
 import {
   Box,
   Typography,
@@ -32,7 +33,6 @@ import {
   CardContent,
   Chip,
   IconButton,
-  Theme,
   TextField,
   Dialog,
   DialogTitle,

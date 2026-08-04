@@ -35,7 +35,7 @@ export interface Project {
   risklevel?: string;
   priority?: number;
   tags?: string[];
-  parent_id?: string;
+  parentId?: string;
   workspace_id?: string;
   repo_url?: string;
   tech_stack?: string;
@@ -56,7 +56,7 @@ export interface CreateProjectRequest {
   risklevel?: string;
   priority?: number;
   tags?: string[];
-  parent_id?: string;
+  parentId?: string;
   workspace_id?: string;
 }
 
@@ -74,7 +74,7 @@ export interface UpdateProjectRequest {
   risklevel?: string;
   priority?: number;
   tags?: string[];
-  parent_id?: string;
+  parentId?: string;
   workspace_id?: string;
   repo_url?: string;
   tech_stack?: string;

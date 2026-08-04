@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ChipProps } from '@mui/material';
 
 export const getStatusColor = (status: string) => {
   const colorMap: Record<string, string> = {
@@ -49,4 +49,4 @@ export const parseJsonInput = (str: string) => {
   }
 };
 
-export type ChipColor = React.ComponentProps<typeof import('@mui/material/Chip').default>['color'];
+export type ChipColor = ChipProps['color'];

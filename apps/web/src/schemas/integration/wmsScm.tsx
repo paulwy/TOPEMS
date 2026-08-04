@@ -95,7 +95,10 @@ const wmsScmFields: SchemaField[] = [
     sortable: true,
     listWidth: 160,
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant='body2' color='text.secondary'>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {row.last_synced_at
           ? new Date(String(row.last_synced_at)).toLocaleString('zh-CN')
           : '从未同步'}
@@ -110,7 +113,10 @@ const wmsScmFields: SchemaField[] = [
     listWidth: 160,
     hideInForm: true,
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant='body2' color='text.secondary'>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {new Date(String(row.created_at)).toLocaleString('zh-CN')}
       </Typography>
     ),

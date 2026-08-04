@@ -7,13 +7,7 @@
 
 import React from 'react';
 import { Box, Chip, Typography, Paper, Stack } from '@mui/material';
-import {
-  Clock,
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle,
-  Bell,
-} from 'lucide-react';
+import { Clock, AlertTriangle, AlertCircle, CheckCircle, Bell } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
@@ -31,9 +25,7 @@ const STATUS_LABELS: Record<string, string> = {
   resolved: '已解决',
 };
 
-const getSeverityColor = (
-  severity: string
-): 'error' | 'warning' | 'info' | 'default' => {
+const getSeverityColor = (severity: string): 'error' | 'warning' | 'info' | 'default' => {
   switch (severity) {
     case 'critical':
       return 'error';
@@ -46,9 +38,7 @@ const getSeverityColor = (
   }
 };
 
-const getStatusColor = (
-  status: string
-): 'error' | 'warning' | 'success' | 'default' => {
+const getStatusColor = (status: string): 'error' | 'warning' | 'success' | 'default' => {
   switch (status) {
     case 'active':
       return 'error';

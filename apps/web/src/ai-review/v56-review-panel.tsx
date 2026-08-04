@@ -155,20 +155,20 @@ const V56ReviewPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     Array<{ time: number; score: number; risk: number; passed: boolean }>
   >([]);
 
-  const run_full_analysis = () => {
+  const runFullAnalysis = () => {
     setIsAnalyzing(true);
 
     setTimeout(() => {
-      const review = codeReviewer.review_file(SAMPLE_CODE, 'Dashboard.tsx');
+      const review = codeReviewer.reviewFile(SAMPLE_CODE, 'Dashboard.tsx');
       setReviewResult(review);
 
-      const findings = securityScanner.scan_code(SAMPLE_CODE, 'Dashboard.tsx');
-      const depFindings = securityScanner.scan_dependencies(SAMPLE_DEPENDENCIES);
+      const findings = securityScanner.scanCode(SAMPLE_CODE, 'Dashboard.tsx');
+      const depFindings = securityScanner.scanDependencies(SAMPLE_DEPENDENCIES);
       const allFindings = [...findings, ...depFindings];
-      const scan = securityScanner.generate_report(allFindings);
+      const scan = securityScanner.generateReport(allFindings);
       setScanResult(scan);
 
-      const audit = performanceAuditor.audit_bundle(SAMPLE_BUNDLES);
+      const audit = performanceAuditor.auditBundle(SAMPLE_BUNDLES);
       setAuditResult(audit);
 
       setHistory((prev) => [
@@ -186,7 +186,7 @@ const V56ReviewPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   };
 
   React.useEffect(() => {
-    run_full_analysis();
+    runFullAnalysis();
   }, []);
 
   return (
@@ -197,7 +197,7 @@ const V56ReviewPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.6)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -284,7 +284,7 @@ const V56ReviewPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 scanResult={scanResult}
                 auditResult={auditResult}
                 history={history}
-                onReRun={run_full_analysis}
+                onReRun={runFullAnalysis}
               />
             )}
 
@@ -313,7 +313,7 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       alignItems: 'center',
       justifyContent: 'space-between',
       background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%)',
-      color: 'white',
+      color: 'common.white',
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -322,7 +322,7 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           width: 40,
           height: 40,
           borderRadius: 2,
-          bgcolor: 'rgba(255,255,255,0.2)',
+          bgcolor: 'action.disabledBackground',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -351,8 +351,8 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         color='secondary'
         sx={{
           '& .MuiBadge-badge': {
-            bgcolor: '#fbbf24',
-            color: '#1e293b',
+            bgcolor: 'warning.400',
+            color: 'text.primary',
             fontWeight: 700,
             fontSize: 10,
           },
@@ -363,7 +363,7 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       <IconButton
         size='small'
         onClick={onClose}
-        sx={{ color: 'white' }}
+        sx={{ color: 'common.white' }}
       >
         <XIcon size={20} />
       </IconButton>
@@ -582,13 +582,23 @@ const OverviewTab: React.FC<{
                           <Chip
                             label='通过'
                             size='small'
-                            sx={{ fontSize: 10, height: 18, bgcolor: '#d1fae5', color: '#065f46' }}
+                            sx={{
+                              fontSize: 10,
+                              height: 18,
+                              bgcolor: 'success.100',
+                              color: 'teal.900',
+                            }}
                           />
                         ) : (
                           <Chip
                             label='未通过'
                             size='small'
-                            sx={{ fontSize: 10, height: 18, bgcolor: '#fef2f2', color: '#991b1b' }}
+                            sx={{
+                              fontSize: 10,
+                              height: 18,
+                              bgcolor: 'error.50',
+                              color: 'error.800',
+                            }}
                           />
                         )}
                       </TableCell>
@@ -738,7 +748,7 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
           <Chip
             label={`评分: ${result.score}`}
             size='small'
-            sx={{ bgcolor: '#dbeafe', color: '#1e40af', fontWeight: 600 }}
+            sx={{ bgcolor: 'primary.100', color: 'primary.800', fontWeight: 600 }}
           />
         </Stack>
       </Stack>
@@ -884,12 +894,12 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
           <Chip
             label={`高危: ${result.high_risk_count}`}
             size='small'
-            sx={{ bgcolor: '#fef2f2', color: '#991b1b', fontWeight: 600 }}
+            sx={{ bgcolor: 'error.50', color: 'error.800', fontWeight: 600 }}
           />
           <Chip
             label={`风险评分: ${result.risk_score}`}
             size='small'
-            sx={{ bgcolor: '#dbeafe', color: '#1e40af', fontWeight: 600 }}
+            sx={{ bgcolor: 'primary.100', color: 'primary.800', fontWeight: 600 }}
           />
         </Stack>
       </Stack>

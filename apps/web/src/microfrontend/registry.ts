@@ -5,7 +5,7 @@
  * 用于支持插件市场按需安装模块。
  */
 
-import { RemoteModuleConfig } from './config';
+import type { RemoteModuleConfig } from './config';
 
 type ModuleStatus = 'registered' | 'loaded' | 'error' | 'unloaded';
 

@@ -20,7 +20,7 @@ const TaskPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
-  const [_total, setTotal] = useState(0);
+  const [, setTotal] = useState(0);
 
   useEffect(() => {
     fetchTasks();

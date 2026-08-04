@@ -70,25 +70,112 @@ const INTENT_PATH_MAP: Record<string, string[]> = {
 };
 
 const PERFORMANCE_PROFILES: Record<string, RoutePerformance> = {
-  '/dashboard': { path: '/dashboard', avg_latency_ms: 120, p95_latency_ms: 280, error_rate: 0.002, cache_hit_rate: 0.85, last_updated: Date.now() },
-  '/bi/analytics': { path: '/bi/analytics', avg_latency_ms: 350, p95_latency_ms: 800, error_rate: 0.01, cache_hit_rate: 0.6, last_updated: Date.now() },
-  '/crm/customers': { path: '/crm/customers', avg_latency_ms: 200, p95_latency_ms: 450, error_rate: 0.005, cache_hit_rate: 0.75, last_updated: Date.now() },
-  '/scm/orders': { path: '/scm/orders', avg_latency_ms: 180, p95_latency_ms: 400, error_rate: 0.008, cache_hit_rate: 0.7, last_updated: Date.now() },
-  '/pdm/products': { path: '/pdm/products', avg_latency_ms: 150, p95_latency_ms: 350, error_rate: 0.003, cache_hit_rate: 0.8, last_updated: Date.now() },
-  '/hrm/employees': { path: '/hrm/employees', avg_latency_ms: 130, p95_latency_ms: 300, error_rate: 0.004, cache_hit_rate: 0.82, last_updated: Date.now() },
-  '/erp/finance': { path: '/erp/finance', avg_latency_ms: 220, p95_latency_ms: 500, error_rate: 0.006, cache_hit_rate: 0.72, last_updated: Date.now() },
-  '/wms/inventory': { path: '/wms/inventory', avg_latency_ms: 160, p95_latency_ms: 380, error_rate: 0.007, cache_hit_rate: 0.78, last_updated: Date.now() },
-  '/qms/dashboard': { path: '/qms/dashboard', avg_latency_ms: 190, p95_latency_ms: 420, error_rate: 0.005, cache_hit_rate: 0.76, last_updated: Date.now() },
-  '/workflow/tasks': { path: '/workflow/tasks', avg_latency_ms: 140, p95_latency_ms: 320, error_rate: 0.003, cache_hit_rate: 0.83, last_updated: Date.now() },
-  '/ai/chat': { path: '/ai/chat', avg_latency_ms: 80, p95_latency_ms: 180, error_rate: 0.001, cache_hit_rate: 0.9, last_updated: Date.now() },
-  '/admin/monitor': { path: '/admin/monitor', avg_latency_ms: 250, p95_latency_ms: 550, error_rate: 0.012, cache_hit_rate: 0.55, last_updated: Date.now() },
+  '/dashboard': {
+    path: '/dashboard',
+    avg_latency_ms: 120,
+    p95_latency_ms: 280,
+    error_rate: 0.002,
+    cache_hit_rate: 0.85,
+    last_updated: Date.now(),
+  },
+  '/bi/analytics': {
+    path: '/bi/analytics',
+    avg_latency_ms: 350,
+    p95_latency_ms: 800,
+    error_rate: 0.01,
+    cache_hit_rate: 0.6,
+    last_updated: Date.now(),
+  },
+  '/crm/customers': {
+    path: '/crm/customers',
+    avg_latency_ms: 200,
+    p95_latency_ms: 450,
+    error_rate: 0.005,
+    cache_hit_rate: 0.75,
+    last_updated: Date.now(),
+  },
+  '/scm/orders': {
+    path: '/scm/orders',
+    avg_latency_ms: 180,
+    p95_latency_ms: 400,
+    error_rate: 0.008,
+    cache_hit_rate: 0.7,
+    last_updated: Date.now(),
+  },
+  '/pdm/products': {
+    path: '/pdm/products',
+    avg_latency_ms: 150,
+    p95_latency_ms: 350,
+    error_rate: 0.003,
+    cache_hit_rate: 0.8,
+    last_updated: Date.now(),
+  },
+  '/hrm/employees': {
+    path: '/hrm/employees',
+    avg_latency_ms: 130,
+    p95_latency_ms: 300,
+    error_rate: 0.004,
+    cache_hit_rate: 0.82,
+    last_updated: Date.now(),
+  },
+  '/erp/finance': {
+    path: '/erp/finance',
+    avg_latency_ms: 220,
+    p95_latency_ms: 500,
+    error_rate: 0.006,
+    cache_hit_rate: 0.72,
+    last_updated: Date.now(),
+  },
+  '/wms/inventory': {
+    path: '/wms/inventory',
+    avg_latency_ms: 160,
+    p95_latency_ms: 380,
+    error_rate: 0.007,
+    cache_hit_rate: 0.78,
+    last_updated: Date.now(),
+  },
+  '/qms/dashboard': {
+    path: '/qms/dashboard',
+    avg_latency_ms: 190,
+    p95_latency_ms: 420,
+    error_rate: 0.005,
+    cache_hit_rate: 0.76,
+    last_updated: Date.now(),
+  },
+  '/workflow/tasks': {
+    path: '/workflow/tasks',
+    avg_latency_ms: 140,
+    p95_latency_ms: 320,
+    error_rate: 0.003,
+    cache_hit_rate: 0.83,
+    last_updated: Date.now(),
+  },
+  '/ai/chat': {
+    path: '/ai/chat',
+    avg_latency_ms: 80,
+    p95_latency_ms: 180,
+    error_rate: 0.001,
+    cache_hit_rate: 0.9,
+    last_updated: Date.now(),
+  },
+  '/admin/monitor': {
+    path: '/admin/monitor',
+    avg_latency_ms: 250,
+    p95_latency_ms: 550,
+    error_rate: 0.012,
+    cache_hit_rate: 0.55,
+    last_updated: Date.now(),
+  },
 };
 
 class IntelligentRouterImpl {
   private strategy: RoutingStrategy;
   private history: BehaviorEntry[];
   private recommendations: Map<string, RouteRecommendation[]>;
-  private abTests: Map<string, { variants: Array<{ variant: string; traffic: number; conversions: number }> }>;
+  private abTests: Map<
+    string,
+    { variants: Array<{ variant: string; traffic: number; conversions: number }> }
+  >;
   private performanceProfiles: Map<string, RoutePerformance>;
   private recommendationCount: number;
   private acceptanceCount: number;
@@ -122,8 +209,14 @@ class IntelligentRouterImpl {
     return this.strategy;
   }
 
-  recommendRoute(intent: string | RouteIntent, context?: { device?: string; network?: string; location?: string }): RouteRecommendation {
-    const query = typeof intent === 'string' ? intent : `${intent.action} ${intent.target} ${intent.context.join(' ')}`;
+  recommendRoute(
+    intent: string | RouteIntent,
+    context?: { device?: string; network?: string; location?: string }
+  ): RouteRecommendation {
+    const query =
+      typeof intent === 'string'
+        ? intent
+        : `${intent.action} ${intent.target} ${intent.context.join(' ')}`;
     const intentLower = query.toLowerCase();
 
     this.strategyCounts[this.strategy]++;
@@ -258,7 +351,10 @@ class IntelligentRouterImpl {
     };
   }
 
-  private generateAlternatives(primaryPath: string, intent: string): RouteRecommendation['alternatives'] {
+  private generateAlternatives(
+    primaryPath: string,
+    intent: string
+  ): RouteRecommendation['alternatives'] {
     const result: RouteRecommendation['alternatives'] = [];
     const allPaths = Array.from(this.performanceProfiles.keys()).filter((p) => p !== primaryPath);
 
@@ -284,7 +380,8 @@ class IntelligentRouterImpl {
     const existing = this.learnedPaths.get(entry.path);
     if (existing) {
       const newCount = existing.count + 1;
-      existing.avgConfidence = (existing.avgConfidence * existing.count + (entry.conversion ? 0.9 : 0.5)) / newCount;
+      existing.avgConfidence =
+        (existing.avgConfidence * existing.count + (entry.conversion ? 0.9 : 0.5)) / newCount;
       existing.count = newCount;
     } else {
       this.learnedPaths.set(entry.path, {
@@ -295,7 +392,7 @@ class IntelligentRouterImpl {
 
     const perf = this.performanceProfiles.get(entry.path);
     if (perf) {
-      const newAvg = (perf.avg_latency_ms * 0.8 + entry.duration_ms * 0.2);
+      const newAvg = perf.avg_latency_ms * 0.8 + entry.duration_ms * 0.2;
       this.performanceProfiles.set(entry.path, {
         ...perf,
         avg_latency_ms: Math.round(newAvg),
@@ -312,7 +409,8 @@ class IntelligentRouterImpl {
       const learned = this.learnedPaths.get(path);
       if (learned) {
         learned.count++;
-        learned.avgConfidence = (learned.avgConfidence * (learned.count - 1) + confidence) / learned.count;
+        learned.avgConfidence =
+          (learned.avgConfidence * (learned.count - 1) + confidence) / learned.count;
       }
     }
   }
@@ -330,8 +428,10 @@ class IntelligentRouterImpl {
     return {
       total_recommendations: this.recommendationCount,
       accepted_recommendations: this.acceptanceCount,
-      acceptance_rate: this.recommendationCount > 0 ? this.acceptanceCount / this.recommendationCount : 0,
-      avg_confidence: this.recommendationCount > 0 ? this.confidenceSum / this.recommendationCount : 0,
+      acceptance_rate:
+        this.recommendationCount > 0 ? this.acceptanceCount / this.recommendationCount : 0,
+      avg_confidence:
+        this.recommendationCount > 0 ? this.confidenceSum / this.recommendationCount : 0,
       by_strategy: { ...this.strategyCounts },
       top_routes: topRoutes,
       performance: Array.from(this.performanceProfiles.values()),

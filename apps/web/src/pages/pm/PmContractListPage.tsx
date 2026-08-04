@@ -75,7 +75,7 @@ const contractApiAdapter: CrudApiAdapter = {
     if (params?.search) {
       const q = String(params.search).toLowerCase();
       items = items.filter(
-        (c) => c.contract_name.toLowerCase().includes(q) || c.contract_no.toLowerCase().includes(q)
+        (c) => c.contract_name.toLowerCase().includes(q) || c.contractNo.toLowerCase().includes(q)
       );
     }
 
@@ -88,11 +88,11 @@ const contractApiAdapter: CrudApiAdapter = {
 
   create: async (data) => {
     const payload = data as Record<string, unknown>;
-    // 后端 create 接口使用 contract_code 字段，列表数据使用 contract_no
-    const { contract_no, ...rest } = payload;
+    // 后端 create 接口使用 contract_code 字段，列表数据使用 contractNo
+    const { contractNo, ...rest } = payload;
     const response = await pmApi.contracts.create({
       ...(rest as Parameters<typeof pmApi.contracts.create>[0]),
-      contract_code: (contract_no as string) || '',
+      contract_code: (contractNo as string) || '',
     });
     if (!response.success) {
       throw new Error(response.message || '创建合同失败');

@@ -188,8 +188,6 @@ export const productionCostApi = {
     items: { id: string; name: string; type: string }[];
   }) => apiClient.post<CostComparisonResponse>('/mes/v1/cost/comparison', data),
 
-  getCostForecast: (params?: {
-    months?: number;
-    product_id?: string;
-  }) => apiClient.get<CostForecastResponse>('/mes/v1/cost/forecast', { params }),
+  getCostForecast: (params?: { months?: number; product_id?: string }) =>
+    apiClient.get<CostForecastResponse>('/mes/v1/cost/forecast', { params }),
 };

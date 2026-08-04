@@ -442,7 +442,7 @@ export const ChatInterface: React.FC = () => {
       <div
         style={{
           width: 320,
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderRight: '1px solid grey.200',
           display: 'flex',
           flexDirection: 'column',
@@ -612,7 +612,7 @@ export const ChatInterface: React.FC = () => {
           <>
             <div
               style={{
-                backgroundColor: 'white',
+                backgroundColor: 'common.white',
                 borderBottom: '1px solid grey.200',
                 padding: 16,
               }}
@@ -724,7 +724,7 @@ export const ChatInterface: React.FC = () => {
                         borderRadius: 8,
                       }}
                     >
-                      <span style={{ fontSize: 14, color: '#854d0e' }}>
+                      <span style={{ fontSize: 14, color: 'yellow.800' }}>
                         找到 {filteredMessages.length} 条匹配消息
                       </span>
                     </div>

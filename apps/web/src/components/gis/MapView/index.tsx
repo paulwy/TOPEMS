@@ -1,21 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo, useId } from 'react';
-import {
-  MapContainer,
-  TileLayer,
-  useMap,
-  useMapEvents,
-} from 'react-leaflet';
-import {
-  ZoomIn,
-  ZoomOut,
-} from 'lucide-react';
-import {
-  Box as MuiBox,
-  Typography,
-  Paper,
-  IconButton,
-  useTheme,
-} from '@mui/material';
+import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { ZoomIn, ZoomOut } from 'lucide-react';
+import { Box as MuiBox, Typography, Paper, IconButton, useTheme } from '@mui/material';
 import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../../api/gis';
 import DeviceTrackPanel from '../DeviceTrackPanel';
 import HeatmapLayer, { HeatmapLegend } from '../HeatmapLayer';
@@ -45,10 +31,7 @@ const MapView: React.FC<MapViewProps> = ({
   onMarkerClick,
 }) => {
   const theme = useTheme();
-  const [mapCenter, _setMapCenter] = useState<[number, number]>([
-    39.9,
-    116.4,
-  ]);
+  const [mapCenter, _setMapCenter] = useState<[number, number]>([39.9, 116.4]);
   const [zoom, setZoom] = useState(10);
   const [selectedItem, setSelectedItem] = useState<DevicePoint | StorageLocation | null>(null);
   const [showDetailsPanel, setShowDetailsPanel] = useState(false);
@@ -549,7 +532,7 @@ const MapView: React.FC<MapViewProps> = ({
             position: 'absolute',
             top: 16,
             left: 128,
-            backgroundColor: 'white',
+            backgroundColor: 'common.white',
             borderRadius: 2,
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
             padding: '8px 16px',
@@ -600,7 +583,7 @@ const MapView: React.FC<MapViewProps> = ({
           title='放大'
           sx={{
             padding: 1,
-            backgroundColor: 'white',
+            backgroundColor: 'common.white',
             borderRadius: 2,
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
             '&:hover': {
@@ -618,7 +601,7 @@ const MapView: React.FC<MapViewProps> = ({
           title='缩小'
           sx={{
             padding: 1,
-            backgroundColor: 'white',
+            backgroundColor: 'common.white',
             borderRadius: 2,
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
             '&:hover': {
@@ -664,7 +647,7 @@ const MapView: React.FC<MapViewProps> = ({
           sx={{
             position: 'absolute',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'action.active',
             zIndex: 50,
             display: 'flex',
             alignItems: 'center',
@@ -673,7 +656,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <Paper
             sx={{
-              backgroundColor: 'white',
+              backgroundColor: 'common.white',
               borderRadius: 3,
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
               width: '90%',
@@ -702,7 +685,7 @@ const MapView: React.FC<MapViewProps> = ({
           sx={{
             position: 'absolute',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backgroundColor: 'action.active',
             zIndex: 50,
             display: 'flex',
             alignItems: 'center',
@@ -711,7 +694,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <Paper
             sx={{
-              backgroundColor: 'white',
+              backgroundColor: 'common.white',
               borderRadius: 3,
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
               width: '95%',

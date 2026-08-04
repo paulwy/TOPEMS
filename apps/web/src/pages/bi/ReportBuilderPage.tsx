@@ -59,6 +59,7 @@ import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'builder';
@@ -485,7 +486,9 @@ const ReportBuilderPage = () => {
             variant='h5'
             sx={{ fontWeight: 600 }}
           >
-            {selectedReport ? t('bi.report_builder_page.edit_1') : t('bi.report_builder_page.create')}
+            {selectedReport
+              ? t('bi.report_builder_page.edit_1')
+              : t('bi.report_builder_page.create')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -613,10 +616,22 @@ const ReportBuilderPage = () => {
                 spacing={2}
               >
                 {[
-                  { name: t('bi.report_builder_page.text_93c5b1'), desc: t('bi.report_builder_page.text_08d85e') },
-                  { name: t('bi.report_builder_page.text_945783'), desc: t('bi.report_builder_page.text_a13eb6') },
-                  { name: t('bi.report_builder_page.text_4ae3a8'), desc: t('bi.report_builder_page.text_386c14') },
-                  { name: t('bi.report_builder_page.text_3d2c48'), desc: t('bi.report_builder_page.text_95ccc2') },
+                  {
+                    name: t('bi.report_builder_page.text_93c5b1'),
+                    desc: t('bi.report_builder_page.text_08d85e'),
+                  },
+                  {
+                    name: t('bi.report_builder_page.text_945783'),
+                    desc: t('bi.report_builder_page.text_a13eb6'),
+                  },
+                  {
+                    name: t('bi.report_builder_page.text_4ae3a8'),
+                    desc: t('bi.report_builder_page.text_386c14'),
+                  },
+                  {
+                    name: t('bi.report_builder_page.text_3d2c48'),
+                    desc: t('bi.report_builder_page.text_95ccc2'),
+                  },
                 ].map((template, idx) => (
                   <Grid
                     size={{ xs: 12, sm: 6, md: 3 }}
@@ -770,7 +785,11 @@ const ReportBuilderPage = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: t('bi.report_builder_page.home'), href: '/dashboard' }, { label: 'BI' }, { label: t('bi.report_builder_page.text_fc00f3') }]}
+        breadcrumbs={[
+          { label: t('bi.report_builder_page.home'), href: '/dashboard' },
+          { label: 'BI' },
+          { label: t('bi.report_builder_page.text_fc00f3') },
+        ]}
       >
         {viewMode === 'list' ? renderListView() : renderBuilderView()}
       </DashboardTemplate>

@@ -458,11 +458,7 @@ export type {
   V51Motion,
   V51SemanticTokens,
 } from '@/design-system/tokens/v51-tokens';
-export {
-  V51ThemeProvider,
-  useV51Theme,
-  themeManager,
-} from '@/design-system/theme-manager';
+export { V51ThemeProvider, useV51Theme, themeManager } from '@/design-system/theme-manager';
 export type {
   V51ThemeMode,
   V51ThemeConfig,

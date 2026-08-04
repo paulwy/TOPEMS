@@ -1,13 +1,6 @@
-import {
-  Box,
-  Typography,
-  Switch,
-  TextField,
-  Stack,
-  Divider,
-} from '@mui/material';
+import { Box, Typography, Switch, TextField, Stack, Divider } from '@mui/material';
 import React from 'react';
-import { PermissionSettings as PermissionSettingsType } from '../types';
+import type { PermissionSettings as PermissionSettingsType } from '../types';
 
 interface PermissionSettingsProps {
   settings: PermissionSettingsType;

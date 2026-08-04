@@ -52,6 +52,7 @@ import { fetchWidgets, createWidget, updateWidget, deleteWidget, type Widget } f
 import { logger } from '@/utils/logger';
 
 import { useTranslation } from 'react-i18next';
+
 interface VisualizationComponent {
   id: string;
   type: 'bar' | 'line' | 'pie' | 'gauge' | 'table' | 'text' | 'image' | 'metric';
@@ -542,7 +543,7 @@ const BIVisualizationPage = () => {
             <CardContent
               sx={{
                 flex: 1,
-                bgcolor: 'white',
+                bgcolor: 'common.white',
                 borderRadius: 1,
                 m: 1,
                 overflow: 'auto',

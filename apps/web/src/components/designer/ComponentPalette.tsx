@@ -112,9 +112,12 @@ export function ComponentPalette({ onDragStart, onDragEnd }: ComponentPalettePro
             >
               {comps.map((comp) => {
                 const IconComp = comp.icon
-                  ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[
-                      comp.icon
-                    ]
+                  ? (
+                      LucideIcons as unknown as Record<
+                        string,
+                        React.ComponentType<{ size?: number }>
+                      >
+                    )[comp.icon]
                   : null;
 
                 return (

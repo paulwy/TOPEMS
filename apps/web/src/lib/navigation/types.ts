@@ -111,7 +111,10 @@ export const NAV_GROUPS: Record<NavGroup, { label: string; icon: string; order: 
   runtime: { label: '运行', icon: 'Play', order: 10 },
 };
 
-export const SUITE_GROUPS: Record<ModuleSuite | 'other' | 'platform', { label: string; icon: string; order: number }> = {
+export const SUITE_GROUPS: Record<
+  ModuleSuite | 'other' | 'platform',
+  { label: string; icon: string; order: number }
+> = {
   platform: { label: '平台中心', icon: 'LayoutDashboard', order: 0 },
   finance: { label: '财务领域', icon: 'Wallet', order: 10 },
   hr: { label: '人力领域', icon: 'Users', order: 20 },

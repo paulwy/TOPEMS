@@ -59,7 +59,7 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
 
   fields: [
     {
-      name: 'order_no',
+      name: 'orderNo',
       label: '订单号',
       type: 'text',
       required: true,
@@ -126,7 +126,7 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
 
   list: {
     columns: [
-      'order_no',
+      'orderNo',
       'supplier_id',
       'title',
       'total_amount',
@@ -134,7 +134,7 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
       'order_date',
       'expected_date',
     ],
-    searchFields: ['order_no', 'title', 'supplier_id'],
+    searchFields: ['orderNo', 'title', 'supplier_id'],
     pageSize: 10,
     statusBadge: {
       field: 'status',
@@ -178,7 +178,7 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
   formSections: [
     {
       title: '基本信息',
-      fields: ['order_no', 'supplier_id', 'title', 'status'],
+      fields: ['orderNo', 'supplier_id', 'title', 'status'],
     },
     {
       title: '金额与日期',
@@ -214,7 +214,7 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
         key: 'basic',
         title: '基本信息',
         description: '填写订单基本信息',
-        fields: ['order_no', 'supplier_id', 'title', 'order_date', 'expected_date', 'status'],
+        fields: ['orderNo', 'supplier_id', 'title', 'order_date', 'expected_date', 'status'],
       },
       {
         key: 'items',

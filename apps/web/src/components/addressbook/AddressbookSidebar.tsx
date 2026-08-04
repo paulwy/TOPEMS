@@ -134,7 +134,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
     <div
       style={{
         width: 256,
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderRight: '1px solid border.default',
         height: '100%',
         display: 'flex',

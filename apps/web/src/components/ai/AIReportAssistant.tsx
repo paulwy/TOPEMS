@@ -90,20 +90,31 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
     const maxValue = Math.max(...result.data.map((d: any) => d.value));
     return (
       <Box sx={{ mt: 3 }}>
-        <Typography variant="subtitle2" sx={{ mb: 2 }}>趋势图</Typography>
+        <Typography
+          variant='subtitle2'
+          sx={{ mb: 2 }}
+        >
+          趋势图
+        </Typography>
         <Box sx={{ display: 'flex', alignItems: 'flex-end', height: 200, gap: 4 }}>
           {result.data.map((item: any, idx: number) => (
-            <Box key={idx} sx={{ flex: 1 }}>
+            <Box
+              key={idx}
+              sx={{ flex: 1 }}
+            >
               <Box
                 sx={{
-                  bgcolor: '#3b82f6',
+                  bgcolor: 'primary.500',
                   borderRadius: '4px 4px 0 0',
                   height: `${(item.value / maxValue) * 100}%`,
                   minHeight: 20,
                   transition: 'height 0.5s ease',
                 }}
               />
-              <Typography variant="caption" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
+              <Typography
+                variant='caption'
+                sx={{ mt: 1, display: 'block', textAlign: 'center' }}
+              >
                 {item.label}
               </Typography>
             </Box>
@@ -117,20 +128,31 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
     const maxValue = Math.max(...result.data.map((d: any) => d.value));
     return (
       <Box sx={{ mt: 3 }}>
-        <Typography variant="subtitle2" sx={{ mb: 2 }}>柱状图</Typography>
+        <Typography
+          variant='subtitle2'
+          sx={{ mb: 2 }}
+        >
+          柱状图
+        </Typography>
         <Box sx={{ display: 'flex', alignItems: 'flex-end', height: 200, gap: 4 }}>
           {result.data.map((item: any, idx: number) => (
-            <Box key={idx} sx={{ flex: 1 }}>
+            <Box
+              key={idx}
+              sx={{ flex: 1 }}
+            >
               <Box
                 sx={{
-                  bgcolor: '#10b981',
+                  bgcolor: 'teal.500',
                   borderRadius: '4px 4px 0 0',
                   height: `${(item.value / maxValue) * 100}%`,
                   minHeight: 20,
                   transition: 'height 0.5s ease',
                 }}
               />
-              <Typography variant="caption" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
+              <Typography
+                variant='caption'
+                sx={{ mt: 1, display: 'block', textAlign: 'center' }}
+              >
                 {item.label}
               </Typography>
             </Box>
@@ -148,7 +170,10 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
     return (
       <Box sx={{ mt: 3, display: 'flex', gap: 8 }}>
         <Box sx={{ position: 'relative', width: 200, height: 200 }}>
-          <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
+          <svg
+            viewBox='0 0 100 100'
+            style={{ width: '100%', height: '100%' }}
+          >
             {result.data.map((item: any, idx: number) => {
               const angle = (item.value / total) * 360;
               const startAngle = cumulativeAngle;
@@ -169,23 +194,44 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
                   key={idx}
                   d={`M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z`}
                   fill={colors[idx % colors.length]}
-                  stroke="white"
-                  strokeWidth="1"
+                  stroke='white'
+                  strokeWidth='1'
                 />
               );
             })}
           </svg>
-          <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-            <Typography variant="h4">{result.data.length}</Typography>
-            <Typography variant="caption">类别</Typography>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center',
+            }}
+          >
+            <Typography variant='h4'>{result.data.length}</Typography>
+            <Typography variant='caption'>类别</Typography>
           </Box>
         </Box>
         <Box sx={{ flex: 1 }}>
           {result.data.map((item: any, idx: number) => (
-            <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Box sx={{ width: 12, height: 12, borderRadius: 2, bgcolor: colors[idx % colors.length] }} />
-              <Typography variant="body2">{item.label}</Typography>
-              <Typography variant="body2" sx={{ marginLeft: 'auto', fontWeight: 500 }}>
+            <Box
+              key={idx}
+              sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}
+            >
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 2,
+                  bgcolor: colors[idx % colors.length],
+                }}
+              />
+              <Typography variant='body2'>{item.label}</Typography>
+              <Typography
+                variant='body2'
+                sx={{ marginLeft: 'auto', fontWeight: 500 }}
+              >
                 {item.value.toLocaleString()} ({((item.value / total) * 100).toFixed(1)}%)
               </Typography>
             </Box>
@@ -197,7 +243,14 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
 
   const renderTable = () => {
     if (!result.data || result.data.length === 0) {
-      return <Typography variant="body2" sx={{ mt: 3, color: 'text.secondary' }}>暂无数据</Typography>;
+      return (
+        <Typography
+          variant='body2'
+          sx={{ mt: 3, color: 'text.secondary' }}
+        >
+          暂无数据
+        </Typography>
+      );
     }
 
     const headers = Object.keys(result.data[0]);
@@ -215,7 +268,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
                     padding: '8px 12px',
                     textAlign: 'left',
                     fontWeight: 600,
-                    color: '#4b5563',
+                    color: 'grey.600',
                   }}
                 >
                   {header}
@@ -225,11 +278,14 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           </thead>
           <tbody>
             {result.data.map((row: any, idx: number) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
+              <tr
+                key={idx}
+                style={{ borderBottom: '1px solid #f3f4f6' }}
+              >
                 {headers.map((header) => (
                   <td
                     key={header}
-                    style={{ padding: '8px 12px', color: '#374151' }}
+                    style={{ padding: '8px 12px', color: 'grey.700' }}
                   >
                     {row[header]}
                   </td>
@@ -246,17 +302,34 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
     if (!result.metrics || result.metrics.length === 0) return null;
 
     return (
-      <Box sx={{ mt: 3, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3 }}>
+      <Box
+        sx={{
+          mt: 3,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: 3,
+        }}
+      >
         {result.metrics.map((metric: any, idx: number) => (
           <Card key={idx}>
             <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', mb: 1 }}
+              >
                 {metric.label}
               </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 600 }}>
+              <Typography
+                variant='h4'
+                sx={{ fontWeight: 600 }}
+              >
                 {metric.value.toLocaleString()}
                 {metric.unit && (
-                  <Typography variant="body1" component="span" sx={{ ml: 1, color: 'text.secondary' }}>
+                  <Typography
+                    variant='body1'
+                    component='span'
+                    sx={{ ml: 1, color: 'text.secondary' }}
+                  >
                     {metric.unit}
                   </Typography>
                 )}
@@ -297,18 +370,23 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
   return (
     <Card>
       <CardHeader
-        title="AI 报表助手"
-        subheader="用自然语言描述您想要的报表，AI 将为您自动生成"
+        title='AI 报表助手'
+        subheader='用自然语言描述您想要的报表，AI 将为您自动生成'
       />
       <CardContent>
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary' }}>快速示例:</Typography>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 2, color: 'text.secondary' }}
+          >
+            快速示例:
+          </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {examples.map((example, idx) => (
               <Chip
                 key={idx}
                 label={example}
-                size="small"
+                size='small'
                 onClick={() => setQuery(example)}
                 sx={{ cursor: 'pointer', bgcolor: 'grey.100', '&:hover': { bgcolor: 'grey.200' } }}
               />
@@ -318,26 +396,38 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
 
         <TextField
           fullWidth
-          label="输入报表需求"
-          placeholder="例如：显示本月各产品的销售对比柱状图"
+          label='输入报表需求'
+          placeholder='例如：显示本月各产品的销售对比柱状图'
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          size="small"
+          size='small'
           sx={{ mb: 3 }}
         />
 
         <Button
-          variant="contained"
+          variant='contained'
           onClick={handleGenerateReport}
           disabled={isLoading || !query.trim()}
-          startIcon={isLoading ? <RefreshCw size={18} sx={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={18} />}
+          startIcon={
+            isLoading ? (
+              <RefreshCw
+                size={18}
+                sx={{ animation: 'spin 1s linear infinite' }}
+              />
+            ) : (
+              <Sparkles size={18} />
+            )
+          }
           fullWidth
         >
           {isLoading ? '生成中...' : '生成报表'}
         </Button>
 
         {error && (
-          <Alert severity="error" sx={{ mt: 3 }}>
+          <Alert
+            severity='error'
+            sx={{ mt: 3 }}
+          >
             {error}
           </Alert>
         )}
@@ -350,9 +440,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
                 subheader={result.description}
                 action={getChartIcon()}
               />
-              <CardContent>
-                {renderChart()}
-              </CardContent>
+              <CardContent>{renderChart()}</CardContent>
             </Card>
           </Box>
         )}

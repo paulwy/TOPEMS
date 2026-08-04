@@ -75,7 +75,7 @@ export const documentFolderApi = {
   create: async (
     projectId: string,
     data: {
-      parent_id?: string;
+      parentId?: string;
       folder_name: string;
       description?: string;
       created_by?: string;

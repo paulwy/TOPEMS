@@ -124,7 +124,7 @@ class ContinuousPerformanceImpl {
     }
   }
 
-  set_baseline(metrics: Record<string, number>, version?: string, name?: string): PerfBaseline {
+  setBaseline(metrics: Record<string, number>, version?: string, name?: string): PerfBaseline {
     const baseline: PerfBaseline = {
       id: generateId(),
       metrics,
@@ -139,7 +139,7 @@ class ContinuousPerformanceImpl {
     return baseline;
   }
 
-  measure_performance(): PerfMetric[] {
+  measurePerformance(): PerfMetric[] {
     const currentMetrics: PerfMetric[] = [];
     for (const def of DEFAULT_METRICS) {
       const variation = (Math.random() - 0.4) * 0.4;
@@ -164,14 +164,14 @@ class ContinuousPerformanceImpl {
     return currentMetrics;
   }
 
-  detect_regression(currentMetrics?: PerfMetric[]): PerfRegression[] {
+  detectRegression(currentMetrics?: PerfMetric[]): PerfRegression[] {
     const activeBaselines = Array.from(this.baselines.values());
     if (activeBaselines.length === 0) {
       return [];
     }
 
     const baseline = activeBaselines[activeBaselines.length - 1];
-    const metrics = currentMetrics || this.measure_performance();
+    const metrics = currentMetrics || this.measurePerformance();
     const regressions: PerfRegression[] = [];
 
     for (const metric of metrics) {
@@ -189,7 +189,7 @@ class ContinuousPerformanceImpl {
       }
 
       if (severity !== 'info') {
-        const history_data = this.history.get(metric.name) || [];
+        const historyData = this.history.get(metric.name) || [];
         const regression: PerfRegression = {
           id: generateId(),
           metric: metric.name,
@@ -200,7 +200,7 @@ class ContinuousPerformanceImpl {
           detectedAt: new Date().toISOString(),
           threshold,
           trend: delta > 0 ? 'degrading' : 'improving',
-          history: history_data.slice(-20).map((h) => ({
+          history: historyData.slice(-20).map((h) => ({
             timestamp: h.timestamp,
             value: h.value,
           })),
@@ -221,13 +221,13 @@ class ContinuousPerformanceImpl {
     return regressions;
   }
 
-  get_baselines(): PerfBaseline[] {
+  getBaselines(): PerfBaseline[] {
     return Array.from(this.baselines.values()).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
 
-  get_regressions(filters?: { severity?: RegressionSeverity; metric?: string }): PerfRegression[] {
+  getRegressions(filters?: { severity?: RegressionSeverity; metric?: string }): PerfRegression[] {
     let result = Array.from(this.regressions.values());
     if (filters?.severity) result = result.filter((r) => r.severity === filters.severity);
     if (filters?.metric) result = result.filter((r) => r.metric === filters.metric);
@@ -236,7 +236,7 @@ class ContinuousPerformanceImpl {
     );
   }
 
-  get_performance_trend(metricName?: string): PerfTrendPoint[] {
+  getPerformanceTrend(metricName?: string): PerfTrendPoint[] {
     const activeBaselines = Array.from(this.baselines.values());
     const baseline = activeBaselines[activeBaselines.length - 1];
     const result: PerfTrendPoint[] = [];
@@ -269,7 +269,7 @@ class ContinuousPerformanceImpl {
     return result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   }
 
-  alert_on_regression(regressionId: string): PerfAlert | null {
+  alertOnRegression(regressionId: string): PerfAlert | null {
     const regression = this.regressions.get(regressionId);
     if (!regression) return null;
 
@@ -288,13 +288,13 @@ class ContinuousPerformanceImpl {
     return alert;
   }
 
-  get_alerts(): PerfAlert[] {
+  getAlerts(): PerfAlert[] {
     return Array.from(this.alerts.values()).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
 
-  acknowledge_alert(alertId: string): void {
+  acknowledgeAlert(alertId: string): void {
     const alert = this.alerts.get(alertId);
     if (alert) {
       alert.acknowledged = true;
@@ -302,15 +302,15 @@ class ContinuousPerformanceImpl {
     }
   }
 
-  set_threshold(metric: string, threshold: number): void {
+  setThreshold(metric: string, threshold: number): void {
     this.thresholds.set(metric, threshold);
   }
 
-  get_thresholds(): Map<string, number> {
+  getThresholds(): Map<string, number> {
     return new Map(this.thresholds);
   }
 
-  get_current_metrics(): PerfMetric[] {
+  getCurrentMetrics(): PerfMetric[] {
     const result: PerfMetric[] = [];
     for (const [name, history] of this.history.entries()) {
       if (history.length > 0) {

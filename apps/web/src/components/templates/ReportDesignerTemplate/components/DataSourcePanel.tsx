@@ -13,13 +13,7 @@ import {
   MenuItem,
   Chip,
 } from '@mui/material';
-import {
-  Database,
-  Globe,
-  FileSpreadsheet,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react';
+import { Database, Globe, FileSpreadsheet, ChevronDown, ChevronUp } from 'lucide-react';
 import type { DataSourceType, DataSourceConfig } from '../types';
 
 interface DataSourcePanelProps {

@@ -12,11 +12,7 @@ import {
   Slider,
   AlertTitle,
 } from '@mui/material';
-import {
-  Activity,
-  RefreshCw,
-  Lightbulb,
-} from 'lucide-react';
+import { Activity, RefreshCw, Lightbulb } from 'lucide-react';
 import { assistantApi } from '../../api/ai/assistant';
 import { useNotificationStore } from '@/store/notificationStore';
 import { logger } from '@/utils/logger';
@@ -106,13 +102,21 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
 
     return (
       <Box sx={{ mt: 3, mb: 4 }}>
-        <Typography variant="subtitle2" sx={{ mb: 2 }}>异常点分布</Typography>
+        <Typography
+          variant='subtitle2'
+          sx={{ mb: 2 }}
+        >
+          异常点分布
+        </Typography>
         <Box sx={{ display: 'flex', alignItems: 'flex-end', height: 180, gap: 1, px: 2 }}>
           {result.anomalies.map((item: any, idx: number) => {
             const height = ((item.value - minValue) / range) * 100;
             const isAnomaly = item.severity !== 'low';
             return (
-              <Box key={idx} sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Box
+                key={idx}
+                sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+              >
                 <Box
                   sx={{
                     width: '100%',
@@ -124,8 +128,19 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
                     transition: 'height 0.5s ease',
                   }}
                 />
-                <Typography variant="caption" sx={{ mt: 0.5, fontSize: '0.65rem', transform: 'rotate(-45deg)', transformOrigin: 'top left' }}>
-                  {new Date(item.timestamp).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
+                <Typography
+                  variant='caption'
+                  sx={{
+                    mt: 0.5,
+                    fontSize: '0.65rem',
+                    transform: 'rotate(-45deg)',
+                    transformOrigin: 'top left',
+                  }}
+                >
+                  {new Date(item.timestamp).toLocaleDateString('zh-CN', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
                 </Typography>
               </Box>
             );
@@ -156,18 +171,23 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
   return (
     <Card>
       <CardHeader
-        title="AI 异常预警"
-        subheader="基于历史数据预测业务指标异常，提前发现潜在风险"
+        title='AI 异常预警'
+        subheader='基于历史数据预测业务指标异常，提前发现潜在风险'
       />
       <CardContent>
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary' }}>监控指标:</Typography>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 2, color: 'text.secondary' }}
+          >
+            监控指标:
+          </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {metrics.map((item) => (
               <Chip
                 key={item.value}
                 label={item.label}
-                size="small"
+                size='small'
                 onClick={() => setMetric(item.value)}
                 color={metric === item.value ? 'primary' : 'default'}
                 sx={{ cursor: 'pointer' }}
@@ -178,22 +198,27 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
 
         <TextField
           fullWidth
-          label="监控指标"
-          placeholder="例如：cpu_usage、production_yield"
+          label='监控指标'
+          placeholder='例如：cpu_usage、production_yield'
           value={metric}
           onChange={(e) => setMetric(e.target.value)}
-          size="small"
+          size='small'
           sx={{ mb: 3 }}
         />
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, color: 'text.secondary' }}>时间范围:</Typography>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1.5, color: 'text.secondary' }}
+          >
+            时间范围:
+          </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {timeRanges.map((item) => (
               <Chip
                 key={item.value}
                 label={item.label}
-                size="small"
+                size='small'
                 onClick={() => setTimeRange(item.value)}
                 color={timeRange === item.value ? 'primary' : 'default'}
                 sx={{ cursor: 'pointer' }}
@@ -203,7 +228,10 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
         </Box>
 
         <Box sx={{ mb: 3, px: 1 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, color: 'text.secondary' }}
+          >
             异常阈值: {threshold} 倍标准差
           </Typography>
           <Slider
@@ -219,22 +247,34 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
               { value: 4, label: '4σ' },
               { value: 5, label: '5σ' },
             ]}
-            valueLabelDisplay="auto"
+            valueLabelDisplay='auto'
           />
         </Box>
 
         <Button
-          variant="contained"
+          variant='contained'
           onClick={handlePredictAnomaly}
           disabled={isLoading || !metric.trim()}
-          startIcon={isLoading ? <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Activity size={18} />}
+          startIcon={
+            isLoading ? (
+              <RefreshCw
+                size={18}
+                style={{ animation: 'spin 1s linear infinite' }}
+              />
+            ) : (
+              <Activity size={18} />
+            )
+          }
           fullWidth
         >
           {isLoading ? '分析中...' : '开始异常预测'}
         </Button>
 
         {error && (
-          <Alert severity="error" sx={{ mt: 3 }}>
+          <Alert
+            severity='error'
+            sx={{ mt: 3 }}
+          >
             {error}
           </Alert>
         )}
@@ -249,7 +289,7 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
                   <Chip
                     label={`${result.anomaly_count} 个异常`}
                     color={result.anomaly_count > 0 ? 'error' : 'success'}
-                    size="small"
+                    size='small'
                   />
                 }
               />
@@ -258,7 +298,12 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
 
                 {result.anomalies && result.anomalies.length > 0 && (
                   <Box sx={{ mt: 3 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 2 }}>异常详情</Typography>
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ mb: 2 }}
+                    >
+                      异常详情
+                    </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       {result.anomalies.map((anomaly: any, idx: number) => (
                         <Alert
@@ -270,17 +315,20 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
                             {new Date(anomaly.timestamp).toLocaleString('zh-CN')}
                           </AlertTitle>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                            <Typography variant="body2">
+                            <Typography variant='body2'>
                               实际值: <strong>{anomaly.value.toFixed(2)}</strong>
                               {anomaly.expected !== undefined && (
                                 <span> | 预期值: {anomaly.expected.toFixed(2)}</span>
                               )}
                             </Typography>
-                            <Typography variant="body2">
+                            <Typography variant='body2'>
                               严重程度: <strong>{getSeverityLabel(anomaly.severity)}</strong>
                             </Typography>
                             {anomaly.reason && (
-                              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                              <Typography
+                                variant='body2'
+                                sx={{ mt: 0.5 }}
+                              >
                                 {anomaly.reason}
                               </Typography>
                             )}
@@ -295,12 +343,23 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
                   <Card sx={{ mt: 4 }}>
                     <CardContent>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                        <Lightbulb size={20} style={{ color: '#f59e0b' }} />
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>处理建议</Typography>
+                        <Lightbulb
+                          size={20}
+                          style={{ color: 'warning.500' }}
+                        />
+                        <Typography
+                          variant='subtitle1'
+                          sx={{ fontWeight: 600 }}
+                        >
+                          处理建议
+                        </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                         {result.suggestions.map((suggestion: string, idx: number) => (
-                          <Typography key={idx} variant="body2">
+                          <Typography
+                            key={idx}
+                            variant='body2'
+                          >
                             {idx + 1}. {suggestion}
                           </Typography>
                         ))}

@@ -60,7 +60,7 @@ export const departmentSchema: EntitySchema = {
       },
     },
     {
-      name: 'parent_id',
+      name: 'parentId',
       label: '上级部门',
       type: 'select',
       listWidth: 140,
@@ -92,7 +92,7 @@ export const departmentSchema: EntitySchema = {
   ],
 
   list: {
-    columns: ['name', 'code', 'company_id', 'parent_id', 'description', 'status'],
+    columns: ['name', 'code', 'company_id', 'parentId', 'description', 'status'],
     searchFields: ['name', 'code', 'description'],
     pageSize: 10,
     statusBadge: {
@@ -119,7 +119,7 @@ export const departmentSchema: EntitySchema = {
     },
     {
       title: '组织关系',
-      fields: ['company_id', 'parent_id'],
+      fields: ['company_id', 'parentId'],
     },
     {
       title: '其他',
@@ -148,7 +148,7 @@ export const departmentSchema: EntitySchema = {
       },
     },
     {
-      field: 'parent_id',
+      field: 'parentId',
       queryKey: ['hrm', 'departments'],
       loader: async () => {
         const res = await departmentApi.list({ pagesize: 200 });

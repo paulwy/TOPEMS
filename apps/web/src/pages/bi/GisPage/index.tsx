@@ -81,6 +81,7 @@ import { EntityFormModal } from './components/EntityFormModal';
 import { ImportModal } from './components/ImportModal';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const GisContent: React.FC = () => {
@@ -683,15 +684,18 @@ const GisContent: React.FC = () => {
     switch (activeTab) {
       case 'devicePoints':
         return devicePoints.filter(
-          (d: DevicePoint) => d.name.toLowerCase().includes(term) || d.device_type.toLowerCase().includes(term)
+          (d: DevicePoint) =>
+            d.name.toLowerCase().includes(term) || d.device_type.toLowerCase().includes(term)
         ) as GisEntity[];
       case 'pipelines':
         return pipelines.filter(
-          (p: Pipeline) => p.name.toLowerCase().includes(term) || p.pipeline_type.toLowerCase().includes(term)
+          (p: Pipeline) =>
+            p.name.toLowerCase().includes(term) || p.pipeline_type.toLowerCase().includes(term)
         ) as GisEntity[];
       case 'storageLocations':
         return storageLocations.filter(
-          (s: StorageLocation) => s.name.toLowerCase().includes(term) || s.location_type.toLowerCase().includes(term)
+          (s: StorageLocation) =>
+            s.name.toLowerCase().includes(term) || s.location_type.toLowerCase().includes(term)
         ) as GisEntity[];
       case 'evidenceRecords':
         return evidenceRecords.filter(
@@ -700,7 +704,8 @@ const GisContent: React.FC = () => {
         ) as GisEntity[];
       case 'factoryMaps':
         return factoryMaps.filter(
-          (m: FactoryMap) => m.name.toLowerCase().includes(term) || m.code.toLowerCase().includes(term)
+          (m: FactoryMap) =>
+            m.name.toLowerCase().includes(term) || m.code.toLowerCase().includes(term)
         ) as GisEntity[];
       case 'businessLocations':
         return businessLocations.filter(
@@ -727,7 +732,10 @@ const GisContent: React.FC = () => {
   };
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <Box
         sx={{
           minHeight: '100vh',
@@ -744,7 +752,11 @@ const GisContent: React.FC = () => {
           />
 
           {error && (
-            <Alert severity='error' icon={<AlertTriangle size={20} />} sx={{ mb: 3 }}>
+            <Alert
+              severity='error'
+              icon={<AlertTriangle size={20} />}
+              sx={{ mb: 3 }}
+            >
               {error}
             </Alert>
           )}

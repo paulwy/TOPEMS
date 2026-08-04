@@ -11,14 +11,7 @@ import {
   Typography,
   Chip,
 } from '@mui/material';
-import {
-  Folder,
-  FolderOpen,
-  ChevronRight,
-  ChevronDown,
-  Plus,
-  FolderPlus,
-} from 'lucide-react';
+import { Folder, FolderOpen, ChevronRight, ChevronDown, Plus, FolderPlus } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import CrudPage from '@/components/templates/CrudPage';
@@ -45,7 +38,7 @@ interface TreeNode {
   name: string;
   code: string;
   children: TreeNode[];
-  parent_id?: string | null;
+  parentId?: string | null;
   status?: string;
 }
 
@@ -59,15 +52,15 @@ function buildTree(items: AssetCategory[]): TreeNode[] {
       name: item.name,
       code: item.code,
       children: [],
-      parent_id: item.parent_id,
+      parentId: item.parentId,
       status: item.status,
     });
   });
 
   items.forEach((item) => {
     const node = map.get(item.id)!;
-    if (item.parent_id && map.has(item.parent_id)) {
-      map.get(item.parent_id)!.children.push(node);
+    if (item.parentId && map.has(item.parentId)) {
+      map.get(item.parentId)!.children.push(node);
     } else {
       roots.push(node);
     }
@@ -104,7 +97,10 @@ const TreeItem: React.FC<{
 
   return (
     <>
-      <ListItem disablePadding sx={{ display: 'block' }}>
+      <ListItem
+        disablePadding
+        sx={{ display: 'block' }}
+      >
         <ListItemButton
           selected={isSelected}
           onClick={() => onSelect(node.id)}
@@ -135,17 +131,27 @@ const TreeItem: React.FC<{
             </ListItemIcon>
           ) : (
             <ListItemIcon sx={{ minWidth: 28 }}>
-              <Folder size={16} color={isSelected ? 'primary' : undefined} />
+              <Folder
+                size={16}
+                color={isSelected ? 'primary' : undefined}
+              />
             </ListItemIcon>
           )}
           <ListItemText
             primary={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {hasChildren && (
-                  isExpanded
-                    ? <FolderOpen size={14} style={{ color: isSelected ? 'var(--mui-palette-primary-main)' : undefined }} />
-                    : <Folder size={14} style={{ color: isSelected ? 'var(--mui-palette-primary-main)' : undefined }} />
-                )}
+                {hasChildren &&
+                  (isExpanded ? (
+                    <FolderOpen
+                      size={14}
+                      style={{ color: isSelected ? 'var(--mui-palette-primary-main)' : undefined }}
+                    />
+                  ) : (
+                    <Folder
+                      size={14}
+                      style={{ color: isSelected ? 'var(--mui-palette-primary-main)' : undefined }}
+                    />
+                  ))}
                 <Typography
                   variant='body2'
                   sx={{
@@ -163,8 +169,15 @@ const TreeItem: React.FC<{
         </ListItemButton>
       </ListItem>
       {hasChildren && (
-        <Collapse in={isExpanded} timeout='auto' unmountOnExit>
-          <List component='div' disablePadding>
+        <Collapse
+          in={isExpanded}
+          timeout='auto'
+          unmountOnExit
+        >
+          <List
+            component='div'
+            disablePadding
+          >
             {node.children.map((child) => (
               <TreeItem
                 key={child.id}
@@ -200,9 +213,9 @@ export const CategoryManagementPage: React.FC = () => {
   const filteredCategories = useMemo(() => {
     if (!selectedCategoryId) return categories;
     const getDescendants = (id: string): string[] => {
-      const node = categories.find((c) => c.id === id);
+      const node = categories.some((c) => c.id === id);
       if (!node) return [id];
-      const children = categories.filter((c) => c.parent_id === id).flatMap((c) => getDescendants(c.id));
+      const children = categories.flatMap((c) => (c.parentId === id ? getDescendants(c.id) : []));
       return [id, ...children];
     };
     const ids = new Set(getDescendants(selectedCategoryId));
@@ -226,7 +239,10 @@ export const CategoryManagementPage: React.FC = () => {
   const treeContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='subtitle2'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           分类树
         </Typography>
         <Box
@@ -242,7 +258,10 @@ export const CategoryManagementPage: React.FC = () => {
           }}
           onClick={() => setSelectedCategoryId(null)}
         >
-          <Folder size={16} color={selectedCategoryId === null ? 'primary' : undefined} />
+          <Folder
+            size={16}
+            color={selectedCategoryId === null ? 'primary' : undefined}
+          />
           <Typography
             variant='body2'
             sx={{
@@ -261,11 +280,12 @@ export const CategoryManagementPage: React.FC = () => {
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
         {tree.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
-            暂无分类数据
-          </Box>
+          <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>暂无分类数据</Box>
         ) : (
-          <List dense sx={{ width: '100%' }}>
+          <List
+            dense
+            sx={{ width: '100%' }}
+          >
             {tree.map((node) => (
               <TreeItem
                 key={node.id}

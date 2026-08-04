@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  InputLabel,
-} from '@mui/material';
+import { Box, Typography, InputLabel } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainer';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -33,7 +29,10 @@ const MaterialRequirementPage: React.FC = () => {
         >
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>需求单号</InputLabel>
-            <Box component='span' sx={{ fontWeight: 500 }}>
+            <Box
+              component='span'
+              sx={{ fontWeight: 500 }}
+            >
               {req.mrp_no}
             </Box>
           </Box>
@@ -78,8 +77,7 @@ const MaterialRequirementPage: React.FC = () => {
             <Box
               component='span'
               sx={{
-                color:
-                  (req.shortfall_quantity || 0) > 0 ? 'error.main' : 'success.main',
+                color: (req.shortfall_quantity || 0) > 0 ? 'error.main' : 'success.main',
                 fontWeight: 500,
               }}
             >
@@ -89,9 +87,7 @@ const MaterialRequirementPage: React.FC = () => {
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>需求日期</InputLabel>
             <Box component='span'>
-              {req.required_date
-                ? new Date(req.required_date).toLocaleDateString('zh-CN')
-                : '-'}
+              {req.required_date ? new Date(req.required_date).toLocaleDateString('zh-CN') : '-'}
             </Box>
           </Box>
           <Box>
@@ -112,15 +108,11 @@ const MaterialRequirementPage: React.FC = () => {
           </Box>
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>创建时间</InputLabel>
-            <Box component='span'>
-              {new Date(req.created_at).toLocaleString('zh-CN')}
-            </Box>
+            <Box component='span'>{new Date(req.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>更新时间</InputLabel>
-            <Box component='span'>
-              {new Date(req.updated_at).toLocaleString('zh-CN')}
-            </Box>
+            <Box component='span'>{new Date(req.updated_at).toLocaleString('zh-CN')}</Box>
           </Box>
         </Box>
       </Box>
@@ -145,42 +137,72 @@ const MaterialRequirementPage: React.FC = () => {
         }}
       >
         <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             总需求数
           </Typography>
-          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
             {total}
           </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             草稿
           </Typography>
-          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
             {draft}
           </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             已确认
           </Typography>
-          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
             {confirmed}
           </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             已下达
           </Typography>
-          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
             {released}
           </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             需求总数
           </Typography>
-          <Typography variant='h5' sx={{ fontWeight: 700, color: 'secondary.700' }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700, color: 'secondary.700' }}
+          >
             {totalRequired}
           </Typography>
         </Box>

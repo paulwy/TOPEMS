@@ -179,11 +179,31 @@ export const AiDocumentAnalysisPage: React.FC = () => {
   };
 
   const tabConfig = [
-    { id: 'summary' as AnalysisTab, label: t('ai.document_analysis.tab.summary'), icon: <FileText size={18} /> },
-    { id: 'translate' as AnalysisTab, label: t('ai.document_analysis.tab.translate'), icon: <Languages size={18} /> },
-    { id: 'qa' as AnalysisTab, label: t('ai.document_analysis.tab.qa'), icon: <MessageSquare size={18} /> },
-    { id: 'extract' as AnalysisTab, label: t('ai.document_analysis.tab.extract'), icon: <FileSearch size={18} /> },
-    { id: 'ocr' as AnalysisTab, label: t('ai.document_analysis.tab.ocr'), icon: <BookOpen size={18} /> },
+    {
+      id: 'summary' as AnalysisTab,
+      label: t('ai.document_analysis.tab.summary'),
+      icon: <FileText size={18} />,
+    },
+    {
+      id: 'translate' as AnalysisTab,
+      label: t('ai.document_analysis.tab.translate'),
+      icon: <Languages size={18} />,
+    },
+    {
+      id: 'qa' as AnalysisTab,
+      label: t('ai.document_analysis.tab.qa'),
+      icon: <MessageSquare size={18} />,
+    },
+    {
+      id: 'extract' as AnalysisTab,
+      label: t('ai.document_analysis.tab.extract'),
+      icon: <FileSearch size={18} />,
+    },
+    {
+      id: 'ocr' as AnalysisTab,
+      label: t('ai.document_analysis.tab.ocr'),
+      icon: <BookOpen size={18} />,
+    },
   ];
 
   return (
@@ -248,7 +268,9 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                   size={32}
                   style={{ margin: '0 auto 8px', color: ct.grey[400] }}
                 />
-                <Typography variant='body2'>{t('ai.document_analysis.label.click_upload')}</Typography>
+                <Typography variant='body2'>
+                  {t('ai.document_analysis.label.click_upload')}
+                </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
@@ -302,7 +324,9 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 onClick={handleAnalyze}
                 disabled={analyzing || (!selectedDocument && !uploadedFile)}
               >
-                {analyzing ? t('ai.document_analysis.button.analyzing') : t('ai.document_analysis.button.start_analysis')}
+                {analyzing
+                  ? t('ai.document_analysis.button.analyzing')
+                  : t('ai.document_analysis.button.start_analysis')}
               </Button>
             </Paper>
 
@@ -484,7 +508,9 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             startIcon={<Copy size={16} />}
                             onClick={() => handleCopy(summaryResult)}
                           >
-                            {copied ? t('ai.document_analysis.button.copied') : t('ai.document_analysis.button.copy')}
+                            {copied
+                              ? t('ai.document_analysis.button.copied')
+                              : t('ai.document_analysis.button.copy')}
                           </Button>
                         </Box>
                       </Box>
@@ -549,18 +575,30 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             size='small'
                             sx={{ width: 150 }}
                           >
-                            <InputLabel id='translate-target-label'>{t('ai.document_analysis.label.target_language')}</InputLabel>
+                            <InputLabel id='translate-target-label'>
+                              {t('ai.document_analysis.label.target_language')}
+                            </InputLabel>
                             <Select
                               labelId='translate-target-label'
                               value={translateTarget}
                               label={t('ai.document_analysis.label.target_language')}
                               onChange={(e) => setTranslateTarget(e.target.value)}
                             >
-                              <MenuItem value='en'>{t('ai.document_analysis.language.english')}</MenuItem>
-                              <MenuItem value='ja'>{t('ai.document_analysis.language.japanese')}</MenuItem>
-                              <MenuItem value='ko'>{t('ai.document_analysis.language.korean')}</MenuItem>
-                              <MenuItem value='fr'>{t('ai.document_analysis.language.french')}</MenuItem>
-                              <MenuItem value='de'>{t('ai.document_analysis.language.german')}</MenuItem>
+                              <MenuItem value='en'>
+                                {t('ai.document_analysis.language.english')}
+                              </MenuItem>
+                              <MenuItem value='ja'>
+                                {t('ai.document_analysis.language.japanese')}
+                              </MenuItem>
+                              <MenuItem value='ko'>
+                                {t('ai.document_analysis.language.korean')}
+                              </MenuItem>
+                              <MenuItem value='fr'>
+                                {t('ai.document_analysis.language.french')}
+                              </MenuItem>
+                              <MenuItem value='de'>
+                                {t('ai.document_analysis.language.german')}
+                              </MenuItem>
                             </Select>
                           </FormControl>
                           <Button
@@ -671,7 +709,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                                     p: 2,
                                     maxWidth: '70%',
                                     bgcolor: 'primary.main',
-                                    color: 'white',
+                                    color: 'common.white',
                                     borderRadius: '16px 16px 4px 16px',
                                   }}
                                 >

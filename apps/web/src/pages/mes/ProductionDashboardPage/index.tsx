@@ -51,13 +51,7 @@ import type {
   RefreshStatus,
 } from './types';
 import { ct, REFRESH_INTERVAL_MS, TREND_HOURS, EQUIPMENT_STATUS_META } from './constants';
-import {
-  safeNumber,
-  formatTime,
-  formatPercent,
-  buildHourlyTrend,
-  buildDailyTarget,
-} from './utils';
+import { safeNumber, formatTime, formatPercent, buildHourlyTrend, buildDailyTarget } from './utils';
 import StatCard from './components/StatCard';
 import AlarmList from './components/AlarmList';
 import WorkStationUtilizationCard from './components/WorkStationUtilizationCard';

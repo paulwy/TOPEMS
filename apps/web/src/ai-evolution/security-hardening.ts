@@ -180,7 +180,7 @@ class SecurityHardenerImpl {
     return () => this.listeners.delete(listener);
   }
 
-  run_security_scan(): SecurityReport {
+  runSecurityScan(): SecurityReport {
     const checks: SecurityCheckV58[] = CHECK_TEMPLATES.map((tpl) => {
       const rand = Math.random();
       let status: SecurityStatus;
@@ -213,8 +213,8 @@ class SecurityHardenerImpl {
     };
   }
 
-  get_security_status(): { score: number; lastScan: number; status: string } {
-    const scan = this.run_security_scan();
+  getSecurityStatus(): { score: number; lastScan: number; status: string } {
+    const scan = this.runSecurityScan();
     const avgScore = scan.score;
     let status = 'secure';
     if (avgScore < 60) status = 'critical';
@@ -222,11 +222,11 @@ class SecurityHardenerImpl {
     return { score: avgScore, lastScan: scan.generatedAt, status };
   }
 
-  get_security_report(): SecurityReport {
-    return this.run_security_scan();
+  getSecurityReport(): SecurityReport {
+    return this.runSecurityScan();
   }
 
-  create_threat_model(
+  createThreatModel(
     threat_type: string,
     severity: ThreatSeverity,
     likelihood: ThreatLikelihood,
@@ -247,7 +247,7 @@ class SecurityHardenerImpl {
     return threat;
   }
 
-  update_threat_model(threatId: string, updates: Partial<Omit<ThreatModel, 'id'>>): ThreatModel {
+  updateThreatModel(threatId: string, updates: Partial<Omit<ThreatModel, 'id'>>): ThreatModel {
     const threat = this.threats.get(threatId);
     if (!threat) throw new Error(`Threat not found: ${threatId}`);
 
@@ -256,7 +256,7 @@ class SecurityHardenerImpl {
     return threat;
   }
 
-  list_threats(): ThreatModel[] {
+  listThreats(): ThreatModel[] {
     if (this.threats.size === 0) {
       this.seed();
     }
@@ -271,16 +271,16 @@ class SecurityHardenerImpl {
     });
   }
 
-  apply_hardening(): { applied: number; details: string[] } {
+  applyHardening(): { applied: number; details: string[] } {
     const details: string[] = [];
     let applied = 0;
 
-    const currentThreats = this.list_threats();
+    const currentThreats = this.listThreats();
     currentThreats.forEach((threat) => {
       if (threat.status === 'Identified') {
         const mitigationApplied = Math.random() > 0.3;
         if (mitigationApplied) {
-          this.update_threat_model(threat.id, { status: 'Mitigated' });
+          this.updateThreatModel(threat.id, { status: 'Mitigated' });
           details.push(`已应用缓解措施: ${threat.threat_type} - ${threat.mitigation}`);
           applied++;
         }

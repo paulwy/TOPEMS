@@ -77,11 +77,13 @@ export const LazyImage: React.FC<LazyImageProps> = ({
 
   React.useEffect(() => {
     if (isIntersecting && !imgSrc) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setImgSrc(src);
     }
   }, [isIntersecting, src, imgSrc]);
 
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoaded(false);
     setHasError(false);
     setImgSrc('');

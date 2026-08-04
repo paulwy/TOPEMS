@@ -109,7 +109,7 @@ export class CICDPipeline {
     };
   }
 
-  create_pipeline(params: {
+  createPipeline(params: {
     name: string;
     stages: Omit<PipelineStage, 'status'>[];
     triggers?: string[];
@@ -134,7 +134,7 @@ export class CICDPipeline {
     return pipeline;
   }
 
-  list_pipelines(environment?: Environment): Pipeline[] {
+  listPipelines(environment?: Environment): Pipeline[] {
     const pipelines = Array.from(PIPELINE_STORE.values());
     if (environment) {
       return pipelines.filter((p) => p.environment === environment);
@@ -142,11 +142,11 @@ export class CICDPipeline {
     return pipelines;
   }
 
-  get_pipeline(id: string): Pipeline | undefined {
+  getPipeline(id: string): Pipeline | undefined {
     return PIPELINE_STORE.get(id);
   }
 
-  async run_pipeline(pipelineId: string, triggeredBy?: string): Promise<PipelineRun> {
+  async runPipeline(pipelineId: string, triggeredBy?: string): Promise<PipelineRun> {
     const pipeline = PIPELINE_STORE.get(pipelineId);
     if (!pipeline) {
       throw new Error(`Pipeline not found: ${pipelineId}`);
@@ -303,7 +303,7 @@ export class CICDPipeline {
     }
   }
 
-  cancel_run(runId: string): boolean {
+  cancelRun(runId: string): boolean {
     const runs = RUN_STORE.get(runId);
     if (!runs || runs.length === 0) return false;
 
@@ -331,26 +331,26 @@ export class CICDPipeline {
     return true;
   }
 
-  get_pipeline_status(pipelineId: string): Pipeline | undefined {
+  getPipelineStatus(pipelineId: string): Pipeline | undefined {
     return PIPELINE_STORE.get(pipelineId);
   }
 
-  get_run_history(pipelineId?: string, limit: number = 20): PipelineRun[] {
+  getRunHistory(pipelineId?: string, limit: number = 20): PipelineRun[] {
     const allRuns = Array.from(RUN_STORE.values()).flat();
     const filtered = pipelineId ? allRuns.filter((r) => r.pipeline_id === pipelineId) : allRuns;
     return filtered.slice(0, limit);
   }
 
-  get_run(runId: string): PipelineRun | undefined {
+  getRun(runId: string): PipelineRun | undefined {
     const runs = RUN_STORE.get(runId);
     return runs?.[0];
   }
 
-  delete_pipeline(pipelineId: string): boolean {
+  deletePipeline(pipelineId: string): boolean {
     return PIPELINE_STORE.delete(pipelineId);
   }
 
-  clear_all(): void {
+  clearAll(): void {
     PIPELINE_STORE.clear();
     RUN_STORE.clear();
     EVENT_LISTENERS.clear();

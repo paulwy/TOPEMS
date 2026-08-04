@@ -1,7 +1,7 @@
-import React from "react";
+import React from 'react';
 
 const Pagination: React.FC = () => {
-  return React.createElement("div", null, "Pagination");
+  return React.createElement('div', null, 'Pagination');
 };
 
 export default Pagination;

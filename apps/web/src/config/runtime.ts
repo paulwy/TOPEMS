@@ -15,8 +15,15 @@ function getImportMetaEnvSafe(): Record<string, string | boolean | undefined> {
 }
 
 export function getEnv(key: string, defaultValue: string = ''): string {
-  if (typeof globalThis !== 'undefined' && (globalThis as unknown as { import?: { meta?: { env?: Record<string, string> } } }).import?.meta?.env) {
-    return (globalThis as unknown as { import: { meta: { env: Record<string, string> } } }).import.meta.env[key] || defaultValue;
+  if (
+    typeof globalThis !== 'undefined' &&
+    (globalThis as unknown as { import?: { meta?: { env?: Record<string, string> } } }).import?.meta
+      ?.env
+  ) {
+    return (
+      (globalThis as unknown as { import: { meta: { env: Record<string, string> } } }).import.meta
+        .env[key] || defaultValue
+    );
   }
 
   const env = getImportMetaEnvSafe();
@@ -40,12 +47,15 @@ function getEnvNumber(key: string, defaultValue: number): number {
 
 const config: RuntimeConfig = {
   api: {
-    baseUrl: getEnv('VITE_API_BASE_URL', '/api'),
+    baseUrl: getEnv('VITEApiBaseUrl', '/api'),
     timeout: getEnvNumber('VITE_API_TIMEOUT', 5000),
   },
   ws: {
     reconnectInterval: getEnvNumber('VITE_WS_RECONNECT_INTERVAL', WS_TIMEOUT.RECONNECT_DELAY),
-    maxReconnectAttempts: getEnvNumber('VITE_WS_MAX_RECONNECT_ATTEMPTS', WS_TIMEOUT.MAX_RECONNECT_ATTEMPTS),
+    maxReconnectAttempts: getEnvNumber(
+      'VITE_WS_MAX_RECONNECT_ATTEMPTS',
+      WS_TIMEOUT.MAX_RECONNECT_ATTEMPTS
+    ),
   },
   services: {
     // === Group 1: core 虚拟服务（unified-core 承载，8000 端口） ===
@@ -92,7 +102,7 @@ const config: RuntimeConfig = {
     jaeger: getEnv('VITE_JAEGER_SERVICE_URL', 'http://localhost:14268'),
   },
   features: {
-    debugMode: getEnvBool('VITE_ENABLE_DEBUG_MODE', false),
+    debugMode: getEnvBool('VITEEnableDebugMode', false),
     hotReload: getEnvBool('VITE_ENABLE_HOT_RELOAD', false),
     apiDocs: getEnvBool('VITE_ENABLE_API_DOCS', false),
     oauthGithub: getEnvBool('VITE_OAUTH_GITHUB_ENABLED', false),
@@ -104,7 +114,7 @@ const config: RuntimeConfig = {
     allowedTypes: getEnv('VITE_ALLOWED_FILE_TYPES', '')?.split(',') || [],
   },
   logging: {
-    level: getEnv('VITE_LOG_LEVEL', 'info'),
+    level: getEnv('VITELogLevel', 'info'),
     errorTracking: getEnvBool('VITE_ENABLE_ERROR_TRACKING', false),
   },
   theme: {

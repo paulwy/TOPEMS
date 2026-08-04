@@ -33,7 +33,8 @@ export const mrpMaterialSummarySchema: EntitySchema = {
       label: '规格',
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => (row.specification ? String(row.specification) : '-'),
+      renderCell: (row: Record<string, unknown>) =>
+        row.specification ? String(row.specification) : '-',
     },
     {
       name: 'unit',
@@ -74,7 +75,8 @@ export const mrpMaterialSummarySchema: EntitySchema = {
       type: 'number',
       align: 'right',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => (row.safety_stock != null ? Number(row.safety_stock) : 0),
+      renderCell: (row: Record<string, unknown>) =>
+        row.safety_stock != null ? Number(row.safety_stock) : 0,
     },
     {
       name: 'category',

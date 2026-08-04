@@ -147,14 +147,14 @@ export class CodeReviewer {
     this.rules = [...DEFAULT_RULES];
   }
 
-  review_code(code: string, file: string = 'inline'): ReviewIssue[] {
+  reviewCode(code: string, file: string = 'inline'): ReviewIssue[] {
     const issues: ReviewIssue[] = [];
 
     for (const rule of this.rules) {
       const matches = code.match(new RegExp(rule.pattern.source, rule.pattern.flags));
       if (matches) {
         for (let i = 0; i < matches.length; i++) {
-          const lineNo = this.find_line_number(code, matches[i]);
+          const lineNo = this.findLineNumber(code, matches[i]);
           issues.push({
             id: `${rule.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
             type: rule.type,
@@ -174,21 +174,21 @@ export class CodeReviewer {
     });
   }
 
-  review_file(content: string, filePath: string): ReviewResult {
-    const issues = this.review_code(content, filePath);
-    return this.build_result(issues);
+  reviewFile(content: string, filePath: string): ReviewResult {
+    const issues = this.reviewCode(content, filePath);
+    return this.buildResult(issues);
   }
 
-  review_directory(files: Array<{ path: string; content: string }>): ReviewResult {
+  reviewDirectory(files: Array<{ path: string; content: string }>): ReviewResult {
     const allIssues: ReviewIssue[] = [];
     for (const file of files) {
-      const issues = this.review_code(file.content, file.path);
+      const issues = this.reviewCode(file.content, file.path);
       allIssues.push(...issues);
     }
-    return this.build_result(allIssues);
+    return this.buildResult(allIssues);
   }
 
-  get_issues_by_severity(issues: ReviewIssue[]): Record<IssueSeverity, ReviewIssue[]> {
+  getIssuesBySeverity(issues: ReviewIssue[]): Record<IssueSeverity, ReviewIssue[]> {
     return {
       error: issues.filter((i) => i.severity === 'error'),
       warning: issues.filter((i) => i.severity === 'warning'),
@@ -196,9 +196,9 @@ export class CodeReviewer {
     };
   }
 
-  generate_summary(issues: ReviewIssue[]): string {
-    const bySeverity = this.get_issues_by_severity(issues);
-    const byType = this.get_issues_by_type(issues);
+  generateSummary(issues: ReviewIssue[]): string {
+    const bySeverity = this.getIssuesBySeverity(issues);
+    const byType = this.getIssuesByType(issues);
 
     const parts: string[] = [];
     parts.push(`共发现 ${issues.length} 个问题`);
@@ -215,7 +215,7 @@ export class CodeReviewer {
 
     const typeSummaries = Object.entries(byType)
       .filter(([, v]) => v.length > 0)
-      .map(([k, v]) => `${this.get_type_label(k)} ${v.length} 个`);
+      .map(([k, v]) => `${this.getTypeLabel(k)} ${v.length} 个`);
     if (typeSummaries.length > 0) {
       parts.push(`涉及 ${typeSummaries.join('、')}`);
     }
@@ -223,11 +223,11 @@ export class CodeReviewer {
     return `${parts.join('；')}。`;
   }
 
-  get_review_rules(): ReviewRule[] {
+  getReviewRules(): ReviewRule[] {
     return [...this.rules];
   }
 
-  add_custom_rule(rule: Omit<ReviewRule, 'id'>): ReviewRule {
+  addCustomRule(rule: Omit<ReviewRule, 'id'>): ReviewRule {
     const newRule: ReviewRule = {
       ...rule,
       id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -236,23 +236,23 @@ export class CodeReviewer {
     return newRule;
   }
 
-  private build_result(issues: ReviewIssue[]): ReviewResult {
+  private buildResult(issues: ReviewIssue[]): ReviewResult {
     const errors = issues.filter((i) => i.severity === 'error').length;
     const warnings = issues.filter((i) => i.severity === 'warning').length;
 
-    const score = this.calculate_score(issues);
+    const score = this.calculateScore(issues);
     const passed = errors === 0;
 
     return {
       issues,
-      summary: this.generate_summary(issues),
+      summary: this.generateSummary(issues),
       score,
       passed,
       reviewed_at: Date.now(),
     };
   }
 
-  private calculate_score(issues: ReviewIssue[]): number {
+  private calculateScore(issues: ReviewIssue[]): number {
     let score = 100;
     for (const issue of issues) {
       switch (issue.severity) {
@@ -270,7 +270,7 @@ export class CodeReviewer {
     return Math.max(0, Math.min(100, score));
   }
 
-  private get_issues_by_type(issues: ReviewIssue[]): Record<string, ReviewIssue[]> {
+  private getIssuesByType(issues: ReviewIssue[]): Record<string, ReviewIssue[]> {
     const grouped: Record<string, ReviewIssue[]> = {};
     for (const issue of issues) {
       if (!grouped[issue.type]) {
@@ -281,7 +281,7 @@ export class CodeReviewer {
     return grouped;
   }
 
-  private get_type_label(type: string): string {
+  private getTypeLabel(type: string): string {
     const labels: Record<string, string> = {
       bug: 'Bug',
       style: '样式',
@@ -292,7 +292,7 @@ export class CodeReviewer {
     return labels[type] ?? type;
   }
 
-  private find_line_number(code: string, match: string): number {
+  private findLineNumber(code: string, match: string): number {
     const idx = code.indexOf(match);
     if (idx === -1) return 1;
     return code.slice(0, idx).split('\n').length;

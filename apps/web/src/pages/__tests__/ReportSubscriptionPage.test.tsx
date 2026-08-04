@@ -113,16 +113,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('ReportSubscriptionPage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <ReportSubscriptionPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have subscription API methods defined', () => {
+  it('should have subscription API methods defined', () => {
     render(
       <BrowserRouter>
         <ReportSubscriptionPage />
@@ -131,15 +131,14 @@ it('should have subscription API methods defined', () => {
     expect(reportApi.listSubscriptions).toBeDefined();
     expect(reportApi.createSubscription).toBeDefined();
     expect(reportApi.updateSubscription).toBeDefined();
-});
+  });
 
-it('should call listSubscriptions API on mount', () => {
+  it('should call listSubscriptions API on mount', () => {
     render(
       <BrowserRouter>
         <ReportSubscriptionPage />
       </BrowserRouter>
     );
     expect(reportApi.listSubscriptions).toHaveBeenCalled();
-});
-;
+  });
 });

@@ -22,7 +22,8 @@ export const productionRecordSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => React.createElement(Box, { sx: { fontWeight: 500 } }, String(row.order_id ?? '')),
+      renderCell: (row: Record<string, unknown>) =>
+        React.createElement(Box, { sx: { fontWeight: 500 } }, String(row.order_id ?? '')),
     },
     {
       name: 'process_id',

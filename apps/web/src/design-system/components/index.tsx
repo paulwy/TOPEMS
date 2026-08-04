@@ -215,7 +215,7 @@ export const V51Card: React.FC<V51CardProps> = ({
       )}
       <CardContent
         sx={{
-          padding: '20px',
+          padding: 2.5,
           '&:last-child': { paddingBottom: '20px' },
           ...contentSx,
         }}
@@ -227,7 +227,7 @@ export const V51Card: React.FC<V51CardProps> = ({
           sx={{
             padding: '16px 20px',
             borderTop: '1px solid var(--v51-border-default)',
-            gap: '8px',
+            gap: 1,
             ...footerSx,
           }}
         >
@@ -1492,7 +1492,7 @@ export const V51Avatar: React.FC<V51AvatarProps> = ({
           fontSize: config.fontSize,
           fontWeight: v51DesignTokens.typography.fontWeight.semibold,
           backgroundColor: showFallback ? color : 'transparent',
-          color: '#fff',
+          color: 'common.white',
           ...sx,
         }}
       >
@@ -1507,9 +1507,7 @@ export const V51Avatar: React.FC<V51AvatarProps> = ({
             width: Math.max(8, config.size * 0.25),
             height: Math.max(8, config.size * 0.25),
             borderRadius: '50%',
-            bgcolor: online
-              ? v51DesignTokens.colors.success.main
-              : 'grey.400',
+            bgcolor: online ? v51DesignTokens.colors.success.main : 'grey.400',
             border: '2px solid var(--v51-surface-card)',
           }}
         />

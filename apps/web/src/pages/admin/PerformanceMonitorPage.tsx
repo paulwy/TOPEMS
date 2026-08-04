@@ -182,7 +182,7 @@ const PerformanceMonitorPage: React.FC = () => {
       {/* 页面性能指标 */}
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderRadius: 8,
           padding: 24,
           marginBottom: 12,
@@ -213,7 +213,7 @@ const PerformanceMonitorPage: React.FC = () => {
       {/* 慢 API 调用 */}
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderRadius: 8,
           padding: 24,
           marginBottom: 12,

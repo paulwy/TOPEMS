@@ -273,7 +273,7 @@ function LayerPanel({
               {isSelected && (
                 <Layers
                   size={16}
-                  sx={{ color: '#fff' }}
+                  sx={{ color: 'common.white' }}
                 />
               )}
             </ListItem>

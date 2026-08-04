@@ -155,18 +155,18 @@ const DetailsPanel: React.FC<{
     if (s.includes('active') || s.includes('启用')) {
       return {
         backgroundColor: 'success.lighter',
-        color: '#166534',
+        color: 'success.800',
       };
     }
     if (s.includes('pending') || s.includes('待处理')) {
       return {
         backgroundColor: 'warning.light',
-        color: '#92400e',
+        color: 'warning.800',
       };
     }
     return {
       backgroundColor: 'error.lighter',
-      color: '#991b1b',
+      color: 'error.800',
     };
   };
 
@@ -177,7 +177,7 @@ const DetailsPanel: React.FC<{
         bottom: '1rem',
         left: '1rem',
         width: '20rem',
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderRadius: '0.75rem',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         overflow: 'hidden',
@@ -193,7 +193,7 @@ const DetailsPanel: React.FC<{
           background: 'linear-gradient(to right, #06b6d4, primary.main)',
         }}
       >
-        <h3 style={{ fontWeight: 600, color: 'white', margin: 0 }}>详情信息</h3>
+        <h3 style={{ fontWeight: 600, color: 'common.white', margin: 0 }}>详情信息</h3>
         <button
           onClick={onClose}
           style={{
@@ -211,7 +211,7 @@ const DetailsPanel: React.FC<{
             e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
-          <X style={{ width: '1.25rem', height: '1.25rem', color: 'white' }} />
+          <X style={{ width: '1.25rem', height: '1.25rem', color: 'common.white' }} />
         </button>
       </div>
       <div style={{ padding: '1rem' }}>
@@ -704,7 +704,7 @@ const MapView: React.FC<MapViewProps> = ({
                   >
                     <div
                       style={{
-                        backgroundColor: 'white',
+                        backgroundColor: 'common.white',
                         padding: '0.5rem 0.75rem',
                         borderRadius: '0.5rem',
                         boxShadow:
@@ -798,8 +798,8 @@ const MapView: React.FC<MapViewProps> = ({
                         marginTop: '0.5rem',
                         padding: '0.25rem 0.5rem',
                         fontSize: '0.875rem',
-                        color: '#0891b2',
-                        backgroundColor: '#ecfeff',
+                        color: 'cyan.600',
+                        backgroundColor: 'cyan.50',
                         borderRadius: '0.25rem',
                         border: 'none',
                         cursor: 'pointer',
@@ -880,8 +880,8 @@ const MapView: React.FC<MapViewProps> = ({
                         marginTop: '0.5rem',
                         padding: '0.25rem 0.5rem',
                         fontSize: '0.875rem',
-                        color: '#0891b2',
-                        backgroundColor: '#ecfeff',
+                        color: 'cyan.600',
+                        backgroundColor: 'cyan.50',
                         borderRadius: '0.25rem',
                         border: 'none',
                         cursor: 'pointer',
@@ -1056,7 +1056,7 @@ const MapView: React.FC<MapViewProps> = ({
             position: 'absolute',
             top: '1rem',
             left: '8rem',
-            backgroundColor: 'white',
+            backgroundColor: 'common.white',
             borderRadius: '0.5rem',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
             padding: '0.5rem 1rem',
@@ -1087,7 +1087,7 @@ const MapView: React.FC<MapViewProps> = ({
             padding: '0.5rem 1rem',
           }}
         >
-          <span style={{ fontSize: '0.75rem', color: '#a16207' }}>
+          <span style={{ fontSize: '0.75rem', color: 'yellow.700' }}>
             按 ESC 退出工具模式 | 按 Enter 完成绘制
           </span>
         </div>
@@ -1135,7 +1135,7 @@ const MapView: React.FC<MapViewProps> = ({
           style={{
             position: 'absolute',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'action.active',
             zIndex: 50,
             display: 'flex',
             alignItems: 'center',
@@ -1144,7 +1144,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <div
             style={{
-              backgroundColor: 'white',
+              backgroundColor: 'common.white',
               borderRadius: '0.75rem',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
               width: '90%',
@@ -1175,7 +1175,7 @@ const MapView: React.FC<MapViewProps> = ({
           style={{
             position: 'absolute',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backgroundColor: 'action.active',
             zIndex: 50,
             display: 'flex',
             alignItems: 'center',
@@ -1184,7 +1184,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <div
             style={{
-              backgroundColor: 'white',
+              backgroundColor: 'common.white',
               borderRadius: '0.75rem',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
               width: '95%',

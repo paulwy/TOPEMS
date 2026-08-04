@@ -64,9 +64,7 @@ export const AttendanceRecordsTab: React.FC<AttendanceRecordsTabProps> = ({ reco
                   label={getStatusLabel(record.status)}
                   size='small'
                   color={
-                    getStatusColor(record.status) as React.ComponentProps<
-                      typeof import('@mui/material/Chip').default
-                    >['color']
+                    getStatusColor(record.status) as React.ComponentProps<typeof Chip>['color']
                   }
                   sx={{ height: 20, fontSize: '0.7rem' }}
                 />

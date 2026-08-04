@@ -37,6 +37,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 import { useTranslation } from 'react-i18next';
+
 interface FormSection {
   id: string;
   title: string;

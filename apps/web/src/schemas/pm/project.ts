@@ -2,10 +2,7 @@ import React from 'react';
 import { Box, LinearProgress, Typography } from '@mui/material';
 import type { EntitySchema } from '@/schema';
 
-const STATUS_COLOR_MAP: Record<
-  string,
-  'default' | 'primary' | 'success' | 'warning' | 'error'
-> = {
+const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   draft: 'default',
   pending: 'warning',
   approved: 'primary',
@@ -101,14 +98,20 @@ export const projectSchema: EntitySchema = {
         return React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1.5 } },
-          React.createElement(Box, { sx: { width: 96 } },
+          React.createElement(
+            Box,
+            { sx: { width: 96 } },
             React.createElement(LinearProgress, {
               variant: 'determinate',
               value: val,
               sx: { height: 8, borderRadius: 4 },
             })
           ),
-          React.createElement(Typography, { sx: { fontSize: '0.875rem', color: 'grey.600' } }, `${val}%`)
+          React.createElement(
+            Typography,
+            { sx: { fontSize: '0.875rem', color: 'grey.600' } },
+            `${val}%`
+          )
         );
       },
     },

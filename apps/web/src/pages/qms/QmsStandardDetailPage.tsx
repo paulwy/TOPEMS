@@ -54,7 +54,8 @@ const QmsStandardDetailPage: React.FC = () => {
       if (!res.success) {
         throw new Error(res.message || '加载版本历史失败');
       }
-      const revisionsData = res.data as unknown as StandardRevision[] | { revisions?: StandardRevision[] };
+      const revisionsData = res.data as unknown as
+        StandardRevision[] | { revisions?: StandardRevision[] };
       return Array.isArray(revisionsData) ? revisionsData : revisionsData.revisions || [];
     },
     enabled: !!id,

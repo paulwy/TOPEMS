@@ -220,17 +220,12 @@ export const metricsApi = {
   listBusinessMetrics: (
     params?: BusinessMetricQuery
   ): Promise<ApiResponse<PaginatedResponse<BusinessMetric>>> =>
-    apiClient.monitor.get<PaginatedResponse<BusinessMetric>>(
-      '/business-metrics',
-      { params }
-    ),
+    apiClient.monitor.get<PaginatedResponse<BusinessMetric>>('/business-metrics', { params }),
 
   getBusinessMetric: (id: string): Promise<ApiResponse<BusinessMetric>> =>
     apiClient.monitor.get<BusinessMetric>(`/business-metrics/${id}`),
 
-  createBusinessMetric: (
-    payload: BusinessMetricRequest
-  ): Promise<ApiResponse<BusinessMetric>> =>
+  createBusinessMetric: (payload: BusinessMetricRequest): Promise<ApiResponse<BusinessMetric>> =>
     apiClient.monitor.post<BusinessMetric>('/business-metrics', payload),
 
   updateBusinessMetric: (
@@ -268,8 +263,7 @@ export const metricsApi = {
   listSlos: (params?: SloQuery): Promise<ApiResponse<PaginatedResponse<Slo>>> =>
     apiClient.monitor.get<PaginatedResponse<Slo>>('/slos', { params }),
 
-  getSlo: (id: string): Promise<ApiResponse<Slo>> =>
-    apiClient.monitor.get<Slo>(`/slos/${id}`),
+  getSlo: (id: string): Promise<ApiResponse<Slo>> => apiClient.monitor.get<Slo>(`/slos/${id}`),
 
   createSlo: (payload: SloRequest): Promise<ApiResponse<Slo>> =>
     apiClient.monitor.post<Slo>('/slos', payload),
@@ -286,17 +280,18 @@ export const metricsApi = {
   getSloBudget: (): Promise<ApiResponse<SloBudget[]>> =>
     apiClient.monitor.get<SloBudget[]>('/slos/budget'),
 
-  getSloTrend: (
-    sloId: string,
-    period?: string
-  ): Promise<ApiResponse<SloTrendPoint[]>> =>
+  getSloTrend: (sloId: string, period?: string): Promise<ApiResponse<SloTrendPoint[]>> =>
     apiClient.monitor.get<SloTrendPoint[]>('/slos/trend', {
       params: { slo_id: sloId, period: period ?? '7d' },
     }),
 
-  listSloViolations: (
-    params?: { slo_id?: string; service_name?: string; resolved?: boolean; page?: number; page_size?: number }
-  ): Promise<ApiResponse<PaginatedResponse<SloViolation>>> =>
+  listSloViolations: (params?: {
+    slo_id?: string;
+    service_name?: string;
+    resolved?: boolean;
+    page?: number;
+    page_size?: number;
+  }): Promise<ApiResponse<PaginatedResponse<SloViolation>>> =>
     apiClient.monitor.get<PaginatedResponse<SloViolation>>('/slos/violations', { params }),
 
   resolveSloViolation: (
@@ -313,9 +308,7 @@ export const metricsApi = {
   getAlertRule: (id: string): Promise<ApiResponse<AlertRuleRecord>> =>
     apiClient.monitor.get<AlertRuleRecord>(`/rules/${id}`),
 
-  createAlertRule: (
-    payload: AlertRuleCreateRequest
-  ): Promise<ApiResponse<AlertRuleRecord>> =>
+  createAlertRule: (payload: AlertRuleCreateRequest): Promise<ApiResponse<AlertRuleRecord>> =>
     apiClient.monitor.post<AlertRuleRecord>('/rules', payload),
 
   updateAlertRule: (

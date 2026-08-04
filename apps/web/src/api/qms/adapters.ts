@@ -454,7 +454,7 @@ export const adaptFmeaStatisticsToFrontend = (backend: FmeaStatisticsBackend): F
   lowRiskCount: backend.low_risk_count,
   averageRpn: backend.average_rpn,
   maxRpn: backend.max_rpn,
-  bySeverity: backend.by_severity,
+  bySeverity: backend.bySeverity,
   byOccurrence: backend.by_occurrence,
   byDetection: backend.by_detection,
 });

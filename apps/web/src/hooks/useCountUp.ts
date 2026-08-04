@@ -65,7 +65,7 @@ export function useCountUp(
     }
 
     // 重置起始值
-    let fromValue = startValue;
+    const fromValue = startValue;
     startTimeRef.current = null;
 
     const animate = (timestamp: number) => {
@@ -129,8 +129,7 @@ export const countUpEasings = {
   easeOutExpo,
   easeOutQuart: (t: number) => 1 - Math.pow(1 - t, 4),
   easeOutQuint: (t: number) => 1 - Math.pow(1 - t, 5),
-  easeInOutCubic: (t: number) =>
-    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+  easeInOutCubic: (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
 };
 
 export default useCountUp;

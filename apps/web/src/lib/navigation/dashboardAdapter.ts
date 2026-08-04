@@ -85,7 +85,10 @@ import {
   Users2,
 } from 'lucide-react';
 
-const iconMap: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+const iconMap: Record<
+  string,
+  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+> = {
   FileText,
   GitBranch,
   Bot,
@@ -210,7 +213,7 @@ const defaultColor = 'bg-blue-500';
 
 export function convertModuleCardToModuleItem(moduleCard: ModuleCardConfig): ModuleItem {
   const Icon = iconMap[moduleCard.icon] || defaultIcon;
-  
+
   return {
     title: moduleCard.name,
     icon: Icon,
@@ -220,7 +223,8 @@ export function convertModuleCardToModuleItem(moduleCard: ModuleCardConfig): Mod
     status: moduleCard.status || 'online',
     permission: moduleCard.permission || null,
     module: moduleCard.code,
-    adminOnly: moduleCard.permission?.includes('admin') || moduleCard.permission?.includes('system'),
+    adminOnly:
+      moduleCard.permission?.includes('admin') || moduleCard.permission?.includes('system'),
   };
 }
 

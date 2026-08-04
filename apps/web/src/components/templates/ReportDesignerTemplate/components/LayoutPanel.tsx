@@ -11,7 +11,13 @@ import {
   Switch,
 } from '@mui/material';
 import { Table, BarChart3, LayoutGrid } from 'lucide-react';
-import type { LayoutConfig, LayoutType, ChartType, ReportChartConfig, SelectedField } from '../types';
+import type {
+  LayoutConfig,
+  LayoutType,
+  ChartType,
+  ReportChartConfig,
+  SelectedField,
+} from '../types';
 
 interface LayoutPanelProps {
   layout: LayoutConfig;

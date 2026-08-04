@@ -71,9 +71,7 @@ export const LazyChart: React.FC<LazyChartProps> = (props) => {
   }
 
   return (
-    <Suspense fallback={<ChartLoadingFallback height={props.height} />}>
-      {chartElement}
-    </Suspense>
+    <Suspense fallback={<ChartLoadingFallback height={props.height} />}>{chartElement}</Suspense>
   );
 };
 

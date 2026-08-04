@@ -87,7 +87,7 @@ export class KnowledgeQA {
     };
   }
 
-  search_knowledge(query: string, limit: number = 10): KnowledgeDocument[] {
+  searchKnowledge(query: string, limit: number = 10): KnowledgeDocument[] {
     const lowerQuery = query.toLowerCase();
     const results: KnowledgeDocument[] = [];
 
@@ -118,18 +118,18 @@ export class KnowledgeQA {
       .slice(0, limit);
   }
 
-  get_history(limit?: number): QAEntry[] {
+  getHistory(limit?: number): QAEntry[] {
     if (limit) {
       return this.history.slice(-limit);
     }
     return [...this.history];
   }
 
-  clear_history(): void {
+  clearHistory(): void {
     this.history = [];
   }
 
-  add_document(doc: Omit<KnowledgeDocument, 'id' | 'addedAt'>): KnowledgeDocument {
+  addDocument(doc: Omit<KnowledgeDocument, 'id' | 'addedAt'>): KnowledgeDocument {
     const newDoc: KnowledgeDocument = {
       ...doc,
       id: `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -144,21 +144,21 @@ export class KnowledgeQA {
     return newDoc;
   }
 
-  get_citations(entryId: string): string[] {
+  getCitations(entryId: string): string[] {
     const entry = this.history.find((e) => e.id === entryId);
     if (!entry) return [];
     return entry.sources;
   }
 
-  get_tags(): string[] {
+  getTags(): string[] {
     return [...this.tags];
   }
 
-  get_documents(): KnowledgeDocument[] {
+  getDocuments(): KnowledgeDocument[] {
     return [...this.documents.values()];
   }
 
-  get_stats(): { totalQA: number; totalDocs: number; totalTags: number } {
+  getStats(): { totalQA: number; totalDocs: number; totalTags: number } {
     return {
       totalQA: this.history.length,
       totalDocs: this.documents.size,

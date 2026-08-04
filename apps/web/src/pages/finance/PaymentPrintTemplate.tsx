@@ -16,6 +16,7 @@ import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+
 interface PaymentPrintTemplateProps {
   payment: Payment;
 }
@@ -48,7 +49,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
     >
       <Box
         className='payment-print-container'
-        sx={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}
+        sx={{ padding: 2.5, maxWidth: '800px', margin: '0 auto' }}
       >
         <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Typography
@@ -202,7 +203,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
         </Box>
 
         {payment.bankName && payment.bankAccountNo && (
-          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: '16px', mb: 4 }}>
+          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: 2, mb: 4 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -233,7 +234,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
         )}
 
         {(payment.actualPaymentDate || payment.bankTransactionNo || payment.executedBy) && (
-          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: '16px', mb: 4 }}>
+          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: 2, mb: 4 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -290,7 +291,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
             >
               <Table size='small'>
                 <TableHead>
-                  <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                  <TableRow sx={{ bgcolor: 'surface.100' }}>
                     <TableCell sx={{ width: 40 }}>#</TableCell>
                     <TableCell>发票号</TableCell>
                     <TableCell align='right'>应付金额</TableCell>
@@ -357,7 +358,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: '#1976d2' }}
+                  sx={{ fontWeight: 700, color: 'info.600' }}
                 >
                   ¥
                   {payment.totalAmount.toLocaleString('zh-CN', {
@@ -370,7 +371,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
         </Box>
 
         {payment.remark && (
-          <Box sx={{ mt: 4, p: 2, bgcolor: '#fafafa', borderRadius: '4px' }}>
+          <Box sx={{ mt: 4, p: 2, bgcolor: 'surface.50', borderRadius: '4px' }}>
             <Typography
               variant='body2'
               color='text.secondary'

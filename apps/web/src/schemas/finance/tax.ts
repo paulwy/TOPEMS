@@ -84,7 +84,8 @@ export const taxSchema: EntitySchema = {
       label: '应税收入',
       type: 'number',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => formatMoney(row.taxable_income as number, { color: 'text.secondary' }),
+      renderCell: (row: Record<string, unknown>) =>
+        formatMoney(row.taxable_income as number, { color: 'text.secondary' }),
     },
     {
       name: 'tax_rate',
@@ -114,7 +115,8 @@ export const taxSchema: EntitySchema = {
       label: '已缴税额',
       type: 'number',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => formatMoney(row.paid_amount as number, { color: 'success.main' }),
+      renderCell: (row: Record<string, unknown>) =>
+        formatMoney(row.paid_amount as number, { color: 'success.main' }),
     },
     {
       name: 'owed_amount',

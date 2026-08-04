@@ -178,7 +178,7 @@ class SmartTesterImpl {
     }
   }
 
-  generate_tests(params?: {
+  generateTests(params?: {
     module?: string;
     type?: TestType;
     priority?: TestPriority;
@@ -224,7 +224,7 @@ class SmartTesterImpl {
     return generated;
   }
 
-  async run_tests(
+  async runTests(
     scenarioIds?: string[],
     options?: { parallel?: boolean; timeout_ms?: number }
   ): Promise<TestResult[]> {
@@ -284,7 +284,7 @@ class SmartTesterImpl {
     return results;
   }
 
-  get_test_results(scenarioId?: string): TestResult[] {
+  getTestResults(scenarioId?: string): TestResult[] {
     if (scenarioId) {
       return this.results.get(scenarioId) || [];
     }
@@ -295,8 +295,8 @@ class SmartTesterImpl {
     return all.sort((a, b) => b.duration_ms - a.duration_ms);
   }
 
-  get_coverage(): CoverageReport {
-    const results = this.get_test_results();
+  getCoverage(): CoverageReport {
+    const results = this.getTestResults();
     const totalScenarios = this.scenarios.size;
     const passedScenarios = results.filter((r) => r.passed).length;
     const totalCoverage =
@@ -321,7 +321,7 @@ class SmartTesterImpl {
     };
   }
 
-  add_scenario(scenario: Omit<TestScenario, 'id' | 'status' | 'created_at'>): TestScenario {
+  addScenario(scenario: Omit<TestScenario, 'id' | 'status' | 'created_at'>): TestScenario {
     const newScenario: TestScenario = {
       ...scenario,
       id: generateId(),
@@ -333,7 +333,7 @@ class SmartTesterImpl {
     return newScenario;
   }
 
-  list_scenarios(filter?: {
+  listScenarios(filter?: {
     type?: TestType;
     status?: TestStatus;
     module?: string;
@@ -348,7 +348,7 @@ class SmartTesterImpl {
     });
   }
 
-  get_failure_analysis(scenarioId: string): FailureAnalysis | null {
+  getFailureAnalysis(scenarioId: string): FailureAnalysis | null {
     const results = this.results.get(scenarioId) || [];
     const failures = results.filter((r) => !r.passed);
     if (failures.length === 0) return null;
@@ -374,15 +374,15 @@ class SmartTesterImpl {
     };
   }
 
-  get_stats(): {
+  getStats(): {
     total: number;
-    by_type: Record<TestType, number>;
+    byType: Record<TestType, number>;
     by_status: Record<TestStatus, number>;
   } {
     const all = Array.from(this.scenarios.values());
     return {
       total: all.length,
-      by_type: {
+      byType: {
         unit: all.filter((s) => s.type === 'unit').length,
         integration: all.filter((s) => s.type === 'integration').length,
         e2e: all.filter((s) => s.type === 'e2e').length,

@@ -69,9 +69,7 @@ const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
             <Select
               value={formData.collection_mode}
               label='采集方式'
-              onChange={(e) =>
-                onFormDataChange({ ...formData, collection_mode: e.target.value })
-              }
+              onChange={(e) => onFormDataChange({ ...formData, collection_mode: e.target.value })}
             >
               <MenuItem value='manual'>手动触发</MenuItem>
               <MenuItem value='scheduled'>定时采集</MenuItem>
@@ -84,9 +82,7 @@ const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
               fullWidth
               placeholder='0 0 * * *'
               value={formData.cron_expression}
-              onChange={(e) =>
-                onFormDataChange({ ...formData, cron_expression: e.target.value })
-              }
+              onChange={(e) => onFormDataChange({ ...formData, cron_expression: e.target.value })}
             />
           )}
           {formData.collection_mode === 'interval' && (

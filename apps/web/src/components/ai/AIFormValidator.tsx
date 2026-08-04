@@ -255,7 +255,7 @@ export function AIFormValidator({
                             fontFamily: 'monospace',
                             color: 'primary.dark',
                             mt: 0.5,
-                            bgcolor: 'white',
+                            bgcolor: 'common.white',
                             px: 0.5,
                             py: 0.5,
                             borderRadius: 0.5,

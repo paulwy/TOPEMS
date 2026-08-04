@@ -68,6 +68,7 @@ import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const BiPermissionPage = () => {
@@ -85,7 +86,7 @@ const BiPermissionPage = () => {
     condition: '',
     roles: [],
     users: [],
-    is_enabled: true,
+    isEnabled: true,
     priority: 1,
   });
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -162,7 +163,7 @@ const BiPermissionPage = () => {
 
   const toggleMutation = useMutation({
     mutationFn: (item: RowLevelPermission) =>
-      updateRowLevelPermission(item.id, { is_enabled: !item.is_enabled }),
+      updateRowLevelPermission(item.id, { isEnabled: !item.isEnabled }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bi-row-permissions'] });
     },
@@ -188,7 +189,7 @@ const BiPermissionPage = () => {
         condition: '',
         roles: [],
         users: [],
-        is_enabled: true,
+        isEnabled: true,
         priority: 1,
       });
     }
@@ -390,7 +391,7 @@ const BiPermissionPage = () => {
                         variant='h5'
                         sx={{ fontWeight: 700 }}
                       >
-                        {rowPermissions.filter((p) => p.is_enabled).length}
+                        {rowPermissions.filter((p) => p.isEnabled).length}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -630,11 +631,15 @@ const BiPermissionPage = () => {
                                   control={
                                     <Switch
                                       size='small'
-                                      checked={perm.is_enabled}
+                                      checked={perm.isEnabled}
                                       onChange={() => handleToggle(perm)}
                                     />
                                   }
-                                  label={perm.is_enabled ? t('bi.bi_permission_page.active') : t('bi.bi_permission_page.inactive')}
+                                  label={
+                                    perm.isEnabled
+                                      ? t('bi.bi_permission_page.active')
+                                      : t('bi.bi_permission_page.inactive')
+                                  }
                                   sx={{ m: 0 }}
                                 />
                               </TableCell>
@@ -732,7 +737,11 @@ const BiPermissionPage = () => {
                                 <Chip
                                   label={getPermissionTypeLabel(perm.permission_type)}
                                   size='small'
-                                  color={getPermissionTypeColor(perm.permission_type) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                                  color={
+                                    getPermissionTypeColor(
+                                      perm.permission_type
+                                    ) as React.ComponentProps<typeof Chip>['color']
+                                  }
                                 />
                               </TableCell>
                               <TableCell>
@@ -815,7 +824,11 @@ const BiPermissionPage = () => {
             maxWidth='md'
             fullWidth
           >
-            <DialogTitle>{editingItem ? t('bi.bi_permission_page.edit_3') : t('bi.bi_permission_page.text_f36bf2')}</DialogTitle>
+            <DialogTitle>
+              {editingItem
+                ? t('bi.bi_permission_page.edit_3')
+                : t('bi.bi_permission_page.text_f36bf2')}
+            </DialogTitle>
             <DialogContent sx={{ mt: 2 }}>
               <Grid
                 container
@@ -927,8 +940,8 @@ const BiPermissionPage = () => {
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={formData.is_enabled}
-                        onChange={(e) => setFormData({ ...formData, is_enabled: e.target.checked })}
+                        checked={formData.isEnabled}
+                        onChange={(e) => setFormData({ ...formData, isEnabled: e.target.checked })}
                       />
                     }
                     label={t('bi.bi_permission_page.active_1')}

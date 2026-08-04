@@ -192,7 +192,7 @@ export namespace MesTypes {
   // material_requirement, production_kanban, production_process, production_record,
   // production_scheduling, quality_management, quality_traceability, team, wip,
   // work_station, aps_scheduling, production_cost, energy_management, anomaly_detection
-  // @差异 手写类型用 order_number，后端用 order_no；替换时需注意字段映射
+  // @差异 手写类型用 order_number，后端用 orderNo；替换时需注意字段映射
 }
 
 // ============================================================================

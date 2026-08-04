@@ -99,7 +99,7 @@ export const ShortcutsHelpPanel = ({ isOpen, onClose }: ShortcutsHelpPanelProps)
                                   fontWeight: 600,
                                   fontFamily: 'monospace',
                                   bgcolor: 'action.active',
-                                  color: 'white',
+                                  color: 'common.white',
                                   height: 22,
                                 }}
                               />

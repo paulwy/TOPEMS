@@ -198,7 +198,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
           mb: 3,
           borderRadius: 2,
           background: gradientBg,
-          color: 'white',
+          color: 'common.white',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3 }}>
@@ -209,7 +209,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                 height: 80,
                 borderRadius: 2,
                 overflow: 'hidden',
-                bgcolor: 'rgba(255,255,255,0.2)',
+                bgcolor: 'action.disabledBackground',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -224,12 +224,12 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                 <Skeleton
                   width={150}
                   height={32}
-                  sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}
+                  sx={{ bgcolor: 'action.disabledBackground' }}
                 />
                 <Skeleton
                   width={100}
                   height={20}
-                  sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}
+                  sx={{ bgcolor: 'action.disabledBackground' }}
                 />
               </>
             ) : (
@@ -243,8 +243,8 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                     <Chip
                       label={moduleChip}
                       sx={{
-                        bgcolor: 'rgba(255,255,255,0.2)',
-                        color: '#fff',
+                        bgcolor: 'action.disabledBackground',
+                        color: 'common.white',
                         fontWeight: 600,
                         ml: 1,
                       }}
@@ -268,8 +268,8 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                         label={tag}
                         size='small'
                         sx={{
-                          bgcolor: 'rgba(255,255,255,0.2)',
-                          color: 'white',
+                          bgcolor: 'action.disabledBackground',
+                          color: 'common.white',
                           fontSize: '0.75rem',
                         }}
                       />

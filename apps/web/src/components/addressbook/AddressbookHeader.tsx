@@ -14,7 +14,7 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
   return (
     <div
       style={{
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderBottom: '1px solid border.default',
         padding: 16,
       }}
@@ -83,7 +83,7 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
               border: '1px solid #cbd5e1',
               borderRadius: 8,
               color: 'grey.700',
-              backgroundColor: 'white',
+              backgroundColor: 'common.white',
               cursor: 'pointer',
               transition: 'colors 0.2s',
             }}

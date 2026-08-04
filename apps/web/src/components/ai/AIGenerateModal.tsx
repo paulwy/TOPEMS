@@ -50,11 +50,11 @@ export function AIGenerateModal({
               backgroundColor: 'secondary.100',
             }}
           >
-            <Sparkles style={{ width: 16, height: 16, color: '#9333ea' }} />
+            <Sparkles style={{ width: 16, height: 16, color: 'purple.600' }} />
           </div>
           <DialogTitle sx={{ padding: 0, margin: 0 }}>{title}</DialogTitle>
         </div>
-        {description && <p style={{ marginTop: 8, color: 'rgba(0,0,0,0.6)' }}>{description}</p>}
+        {description && <p style={{ marginTop: 8, color: 'action.active' }}>{description}</p>}
 
         <div style={{ paddingTop: 16, paddingBottom: 16 }}>{children}</div>
 

@@ -235,7 +235,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
                   x={pos.x + 70}
                   y={pos.y + 34}
                   textAnchor='middle'
-                  style={{ fontSize: 10, fill: '#666' }}
+                  style={{ fontSize: 10, fill: 'surface.500' }}
                 >
                   v{node.version}
                 </text>
@@ -246,7 +246,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
       </Box>
       <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box sx={{ width: 12, height: 12, borderRadius: 2, bgcolor: '#1976d2' }} />
+          <Box sx={{ width: 12, height: 12, borderRadius: 2, bgcolor: 'info.600' }} />
           <Typography
             variant='caption'
             color='text.secondary'
@@ -255,7 +255,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box sx={{ width: 12, height: 12, borderRadius: 2, bgcolor: '#388e3c' }} />
+          <Box sx={{ width: 12, height: 12, borderRadius: 2, bgcolor: 'success.700' }} />
           <Typography
             variant='caption'
             color='text.secondary'
@@ -264,7 +264,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box sx={{ width: 12, height: 12, borderRadius: 2, bgcolor: '#f57c00' }} />
+          <Box sx={{ width: 12, height: 12, borderRadius: 2, bgcolor: 'orange.500' }} />
           <Typography
             variant='caption'
             color='text.secondary'
@@ -352,7 +352,7 @@ const CyclePathDisplay: React.FC<{ cycles: string[][] }> = ({ cycles }) => {
       <Paper sx={{ p: 4, textAlign: 'center' }}>
         <CheckCircleIcon
           size={48}
-          style={{ color: '#10b981', marginBottom: 16 }}
+          style={{ color: 'teal.500', marginBottom: 16 }}
         />
         <Typography
           variant='h6'
@@ -375,12 +375,12 @@ const CyclePathDisplay: React.FC<{ cycles: string[][] }> = ({ cycles }) => {
       {cycles.map((cycle, idx) => (
         <Paper
           key={idx}
-          sx={{ p: 2, mb: 2, borderLeft: 4, borderColor: '#f59e0b' }}
+          sx={{ p: 2, mb: 2, borderLeft: 4, borderColor: 'warning.500' }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <AlertCircleIcon
               size={18}
-              style={{ color: '#f59e0b' }}
+              style={{ color: 'warning.500' }}
             />
             <Typography
               variant='subtitle2'
@@ -402,7 +402,7 @@ const CyclePathDisplay: React.FC<{ cycles: string[][] }> = ({ cycles }) => {
                 {modIdx < cycle.length - 1 && (
                   <ArrowUpIcon
                     size={16}
-                    style={{ color: '#f59e0b', transform: 'rotate(90deg)' }}
+                    style={{ color: 'warning.500', transform: 'rotate(90deg)' }}
                   />
                 )}
               </React.Fragment>
@@ -419,7 +419,7 @@ const UpgradeSuggestionItem: React.FC<{ suggestion: VersionUpgradeSuggestion }> 
 }) => (
   <Paper sx={{ p: 2, mb: 2 }}>
     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-      <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: '#10b98115', color: '#10b981' }}>
+      <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'teal.500', color: 'teal.500' }}>
         <TrendingUpIcon size={24} />
       </Box>
       <Box sx={{ flex: 1 }}>
@@ -448,7 +448,7 @@ const UpgradeSuggestionItem: React.FC<{ suggestion: VersionUpgradeSuggestion }> 
           <Box sx={{ mb: 1 }}>
             <Typography
               variant='caption'
-              sx={{ fontWeight: 600, color: '#10b981' }}
+              sx={{ fontWeight: 600, color: 'teal.500' }}
             >
               升级收益:
             </Typography>
@@ -470,7 +470,7 @@ const UpgradeSuggestionItem: React.FC<{ suggestion: VersionUpgradeSuggestion }> 
           <Box sx={{ mb: 2 }}>
             <Typography
               variant='caption'
-              sx={{ fontWeight: 600, color: '#f59e0b' }}
+              sx={{ fontWeight: 600, color: 'warning.500' }}
             >
               破坏性变更:
             </Typography>
@@ -709,7 +709,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
               <Paper sx={{ p: 4, textAlign: 'center' }}>
                 <CheckCircleIcon
                   size={48}
-                  style={{ color: '#10b981', marginBottom: 16 }}
+                  style={{ color: 'teal.500', marginBottom: 16 }}
                 />
                 <Typography
                   variant='h6'
@@ -743,7 +743,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
               <Paper sx={{ p: 4, textAlign: 'center' }}>
                 <CheckCircleIcon
                   size={48}
-                  style={{ color: '#10b981', marginBottom: 16 }}
+                  style={{ color: 'teal.500', marginBottom: 16 }}
                 />
                 <Typography
                   variant='h6'
@@ -867,12 +867,12 @@ const LicenseCompliancePanel: React.FC = () => {
               {hasIssue ? (
                 <AlertTriangleIcon
                   size={20}
-                  style={{ color: '#f59e0b' }}
+                  style={{ color: 'warning.500' }}
                 />
               ) : (
                 <CheckCircleIcon
                   size={20}
-                  style={{ color: '#10b981' }}
+                  style={{ color: 'teal.500' }}
                 />
               )}
             </ListItem>
