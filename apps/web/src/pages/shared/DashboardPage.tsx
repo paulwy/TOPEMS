@@ -346,35 +346,39 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     bffDashboardQuery.isLoading ||
     activitiesQuery.isLoading;
 
+  // V64 降级：开发环境微服务未启动是常态，404/连接失败降级为 warn，
+  // 生产环境保持 error 级别，以便监控真正的路由/服务异常
+  const logLvl: 'error' | 'warn' = import.meta.env.DEV ? 'warn' : 'error';
+
   useEffect(() => {
     if (statsQuery.isError) {
-      apiLogger.error('加载统计失败:', statsQuery.error);
+      apiLogger[logLvl]('加载统计失败:', statsQuery.error);
     }
-  }, [statsQuery.isError, statsQuery.error]);
+  }, [statsQuery.isError, statsQuery.error, logLvl]);
 
   useEffect(() => {
     if (moduleStatsQuery.isError) {
-      apiLogger.error('加载模块统计失败:', moduleStatsQuery.error);
+      apiLogger[logLvl]('加载模块统计失败:', moduleStatsQuery.error);
     }
-  }, [moduleStatsQuery.isError, moduleStatsQuery.error]);
+  }, [moduleStatsQuery.isError, moduleStatsQuery.error, logLvl]);
 
   useEffect(() => {
     if (chartDataQuery.isError) {
-      apiLogger.error('加载图表数据失败:', chartDataQuery.error);
+      apiLogger[logLvl]('加载图表数据失败:', chartDataQuery.error);
     }
-  }, [chartDataQuery.isError, chartDataQuery.error]);
+  }, [chartDataQuery.isError, chartDataQuery.error, logLvl]);
 
   useEffect(() => {
     if (bffDashboardQuery.isError) {
-      apiLogger.error('BFF GraphQL 加载失败:', bffDashboardQuery.error);
+      apiLogger[logLvl]('BFF GraphQL 加载失败:', bffDashboardQuery.error);
     }
-  }, [bffDashboardQuery.isError, bffDashboardQuery.error]);
+  }, [bffDashboardQuery.isError, bffDashboardQuery.error, logLvl]);
 
   useEffect(() => {
     if (activitiesQuery.isError) {
-      apiLogger.error('加载最近活动失败:', activitiesQuery.error);
+      apiLogger[logLvl]('加载最近活动失败:', activitiesQuery.error);
     }
-  }, [activitiesQuery.isError, activitiesQuery.error]);
+  }, [activitiesQuery.isError, activitiesQuery.error, logLvl]);
 
   const moduleToService: Record<string, string> = {
     rs: 'rs',
@@ -518,7 +522,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           queryKey: [...QUERY_KEYS.DASHBOARD.TODOS, 'bff-graphql'],
         });
       } catch (err) {
-        apiLogger.error('BFF Mutation 完成待办失败:', err);
+        // V64 降级：开发环境 portal 服务未启动是常态
+        apiLogger[logLvl]('BFF Mutation 完成待办失败:', err);
       }
     },
     [queryClient]

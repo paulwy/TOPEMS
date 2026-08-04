@@ -95,6 +95,14 @@ export function useBffSubscription<T>(
   );
 
   useEffect(() => {
+    // V64 静默降级：开发环境下 portal 服务（8063）通常未启动，
+    // 跳过 WebSocket 连接避免 Firefox "无法建立连接" 刷屏。
+    // 如需在开发环境启用 BFF WebSocket，设置 VITE_BFF_WS_ENABLED=true
+    if (import.meta.env.DEV && !import.meta.env.VITE_BFF_WS_ENABLED) {
+      setStatus('disconnected');
+      return;
+    }
+
     const wsUrl = `ws://${window.location.host}/api/portal/graphql/ws`;
     let ws: WebSocket | null = null;
     let closed = false;
