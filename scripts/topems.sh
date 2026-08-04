@@ -115,6 +115,7 @@ load_env() {
 # 编译服务
 build_service() {
     local service_name=$1
+    local extra_opts=${2:-""}
     local service_path=$(get_service_path "$service_name")
     [ -z "$service_path" ] && error "服务 $service_name 不存在" && return 1
 
@@ -122,16 +123,39 @@ build_service() {
     local executable_name=$(get_executable_name "$service_name")
     cd "$PROJECT_ROOT"
 
-    if SQLX_OFFLINE=true cargo build --release --bin "$executable_name" 2>&1; then
-        success "$service_name 编译成功"
+    # V64+ 编译策略：默认优先离线（SQLX_OFFLINE=true），依赖根目录 .sqlx/
+    # 除非显式声明 --online 或 env FORCE_ONLINE_BUILD=1
+    local online="${FORCE_ONLINE_BUILD:-0}"
+    local profile="--release"
+    if [[ "$extra_opts" == *"--dev"* ]] || [[ "$extra_opts" == *"--debug"* ]]; then
+        profile=""
+    fi
+    if [[ "$extra_opts" == *"--online"* ]]; then
+        online=1
+    fi
+    if [[ "$extra_opts" == *"--offline"* ]]; then
+        online=0
+    fi
+
+    local cmd
+    if [ "$online" = "1" ]; then
+        cmd="SQLX_OFFLINE= cargo build $profile --bin $executable_name"
+    else
+        cmd="SQLX_OFFLINE=true cargo build $profile --bin $executable_name"
+    fi
+    info "  命令: $cmd"
+
+    if eval "$cmd" 2>&1; then
+        success "$service_name 编译成功 ($( [ -z "$profile" ] && echo "debug" || echo "release" ), $( [ "$online" = "1" ] && echo "online" || echo "offline sqlx" ))"
         return 0
     else
-        warning "$service_name 离线编译失败，尝试在线编译..."
-        if cargo build --release --bin "$executable_name" 2>&1; then
+        warning "$service_name 离线编译失败，自动尝试在线编译（需要 DATABASE_URL）..."
+        load_env
+        if SQLX_OFFLINE= cargo build $profile --bin "$executable_name" 2>&1; then
             success "$service_name 在线编译成功"
             return 0
         else
-            error "$service_name 编译失败"
+            error "$service_name 编译失败（离线+在线均失败），建议执行: ./scripts/dev/sqlx-prepare.sh 刷新根 .sqlx/"
             return 1
         fi
     fi
@@ -140,6 +164,15 @@ build_service() {
 # 获取所有服务的二进制名（去重）
 get_all_executables() {
     echo "$SERVICES_CONFIG" | grep -v "^$" | awk '{print $3}' | sort -u
+}
+
+# 按"依赖层"排序的服务编译顺序（有 query! 宏的包靠后，避免并行时被早期缓存拖慢）
+get_build_order() {
+    # 层 0（无依赖，纯库级别包不单独编）
+    # 层 1（核心：iam = unified-core）
+    # 层 2（业务：finance/erp/crm/scm/srm/hrm/pm/billing/qms/wms/mes/pdm/ehs/lims/rd/portal）
+    # 层 3（分析/搜索/AI/集成等扩展）
+    echo "iam finance erp crm scm srm hrm pm billing qms wms mes pdm ehs lims rd portal master-data ticket feedback communication mobile gis integration search ai bi"
 }
 
 # 检测包管理器（pnpm > yarn）
@@ -176,40 +209,86 @@ ensure_frontend_deps() {
 
 # 全量编译所有后端服务（只编译服务包，避免编译 workspace 中所有包）
 build_all_backend() {
+    local extra_opts="${1:-""}"
     info "全量编译所有后端服务..."
 
     cd "$PROJECT_ROOT"
 
-    local executables=$(get_all_executables)
+    # V64+ 新参数: --prepare（先刷新 sqlx 缓存，需要 DATABASE_URL）
+    #              --online（强制在线编译，跳过离线）
+    #              --offline（强制离线编译，失败即停）
+    #              --only-core（只编 iam+finance+erp+scm+srm+crm 核心组）
+    local do_prepare=0
+    local only_core=0
+    local skip_packages=""
+    for opt in $extra_opts; do
+        case "$opt" in
+            --prepare)       do_prepare=1 ;;
+            --only-core)     only_core=1 ;;
+            --skip=*)        skip_packages="${skip_packages} ${opt#--skip=}" ;;
+        esac
+    done
+
+    if [ "$do_prepare" = "1" ]; then
+        info "========== 预处理: 刷新 SQLx 离线缓存 =========="
+        load_env
+        if [ -x "$SCRIPT_DIR/dev/sqlx-prepare.sh" ]; then
+            "$SCRIPT_DIR/dev/sqlx-prepare.sh" || warning "sqlx prepare 失败，但继续尝试编译"
+        else
+            warning "找不到 $SCRIPT_DIR/dev/sqlx-prepare.sh，跳过 sqlx prepare 阶段"
+        fi
+    fi
+
+    # 决定编译顺序
+    local svc_order
+    if [ "$only_core" = "1" ]; then
+        svc_order="iam finance erp scm srm crm"
+    else
+        svc_order="$(get_build_order)"
+    fi
+
     local build_success=0
     local build_failed=0
+    local build_skipped=0
+    local failed_list=""
 
-    for exe in $executables; do
-        info "编译 $exe..."
-        if SQLX_OFFLINE=true cargo build --release --bin "$exe" 2>&1; then
+    for svc in $svc_order; do
+        # 按 --skip 过滤
+        local skip_this=0
+        for s in $skip_packages; do
+            [ "$svc" = "$s" ] && skip_this=1 && break
+        done
+        [ $skip_this -eq 1 ] && { build_skipped=$((build_skipped + 1)); warning "跳过 $svc (--skip)"; continue; }
+
+        # 某些 svc 别名 bi=analytics，需要映射
+        local binary_name
+        case "$svc" in
+            bi) binary_name="analytics-service" ;;
+            *)  binary_name="$(get_executable_name "$svc")" ;;
+        esac
+        [ -z "$binary_name" ] && { build_skipped=$((build_skipped+1)); warning "$svc 找不到可执行名，跳过"; continue; }
+
+        info "编译 $svc -> bin=$binary_name ..."
+        # 单包离线构建优先
+        if build_service "$svc" "$extra_opts" >/tmp/topems-build-"$svc".log 2>&1; then
             build_success=$((build_success + 1))
+            success "  ✅ $svc 构建成功"
         else
-            warning "$exe 离线编译失败，尝试在线编译..."
-            if cargo build --release --bin "$exe" 2>&1; then
-                build_success=$((build_success + 1))
-            else
-                error "$exe 编译失败"
-                build_failed=$((build_failed + 1))
-            fi
+            build_failed=$((build_failed + 1))
+            failed_list="$failed_list $svc"
+            error "  ❌ $svc 构建失败，日志 /tmp/topems-build-$svc.log（末 15 行）"
+            tail -n 15 "/tmp/topems-build-$svc.log" >&2
         fi
     done
 
+    echo ""
+    info "========== 后端编译汇总 =========="
+    info "成功: $build_success   失败: $build_failed   跳过: $build_skipped"
+    [ -n "$failed_list" ] && error "失败列表:$failed_list"
+    info "产物目录: $PROJECT_ROOT/target/release/ (release) 或 target/debug/ (debug)"
+
     if [ $build_failed -eq 0 ]; then
         success "所有后端服务编译完成 ($build_success 成功)"
-        
-        info "生成 sqlx 查询缓存..."
-        if command -v cargo-sqlx &> /dev/null || command -v sqlx &> /dev/null; then
-            cargo sqlx prepare --workspace -- --release 2>&1 | tail -5
-            success "sqlx 查询缓存生成完成"
-        else
-            warning "cargo-sqlx 未安装，跳过 sqlx-data.json 生成"
-        fi
-        
         return 0
     else
         error "后端编译失败 ($build_success 成功, $build_failed 失败)"
@@ -219,37 +298,108 @@ build_all_backend() {
 
 # 编译前端
 build_frontend() {
+    local extra_opts="${1:-""}"
     info "编译前端..."
-    
+
     local pkg_cmd=$(get_pkg_cmd) || return 1
     ensure_frontend_deps "$pkg_cmd" || return 1
-    
-    $pkg_cmd build 2>&1 && success "前端编译成功" || { error "前端编译失败"; return 1; }
+
+    local dev_mode=0
+    local skip_lint=0
+    for opt in $extra_opts; do
+        case "$opt" in
+            --dev|--debug) dev_mode=1 ;;
+            --skip-lint)   skip_lint=1 ;;
+        esac
+    done
+
+    # V64+ 防御：只调用 apps/web/package.json 中"真正存在"的 scripts，
+    # 不再假设 build:dev / build:prod 存在，避免 "Command xxx not found"。
+    local pkg_scripts
+    pkg_scripts=$(cd "$PROJECT_ROOT/apps/web" && node -e 'console.log(Object.keys(require("./package.json").scripts || {}).join("\n"))' 2>/dev/null || true)
+    has_script() {
+        local name="$1"
+        printf '%s\n' "$pkg_scripts" | grep -Fxq "$name"
+    }
+
+    local cmd="$pkg_cmd build"
+    # 1. --dev / --debug：优先 build:dev（若存在），否则回退到 build + 提示
+    if [ $dev_mode -eq 1 ]; then
+        if has_script "build:dev"; then
+            cmd="$pkg_cmd build:dev"
+        else
+            warning "apps/web/package.json 未定义 build:dev 脚本，回退到默认 build（tsc && vite build）"
+            cmd="$pkg_cmd build"
+        fi
+    fi
+
+    # 2. --skip-lint：如果有 build:nolint 之类变体就用，否则直接忽略
+    if [ $skip_lint -eq 1 ]; then
+        if has_script "build:nolint"; then
+            cmd="$pkg_cmd build:nolint"
+        else
+            warning "apps/web/package.json 未定义 build:nolint，--skip-lint 被忽略（当前 build 不跑 lint，可直接使用）"
+        fi
+    fi
+
+    info "  命令: cd apps/web && $cmd"
+    if ( cd "$PROJECT_ROOT/apps/web" && eval "$cmd" 2>&1 ); then
+        success "前端编译成功"
+        return 0
+    fi
+
+    # 二次降级：如果 pnpm <script> 失败（如未定义脚本 / packageManager 版本不兼容）
+    # 再尝试直接调用 vite build（生产形态）或 tsc 再 vite
+    warning "脚本 $cmd 失败，自动降级尝试直接调用 vite build ..."
+    local fallback_cmd="$pkg_cmd exec -- tsc && $pkg_cmd exec -- vite build"
+    info "  降级命令: cd apps/web && $fallback_cmd"
+    if ( cd "$PROJECT_ROOT/apps/web" && eval "$fallback_cmd" 2>&1 ); then
+        success "前端编译成功（降级 vite build）"
+        return 0
+    fi
+
+    error "前端编译失败（两次尝试均失败）。直接手工排查：cd apps/web && $pkg_cmd build"
+    return 1
 }
 
 # 全量编译（后端+前端）
 build_all() {
+    local extra_opts="$*"
     info "========== 全量编译开始 =========="
+    info "参数: $( [ -z "$extra_opts" ] && echo "(无)" || echo "$extra_opts" )"
+    info "支持参数: --prepare --only-core --online --offline --dev/--debug --skip=<svc> --skip-lint --backend-only/--no-frontend"
 
     local backend_result=0
     local frontend_result=0
+    local skip_fe=0
 
-    if ! build_all_backend; then
-        backend_result=1
-    fi
+    for opt in $extra_opts; do
+        case "$opt" in
+            --no-frontend|--backend-only) skip_fe=1 ;;
+        esac
+    done
 
-    info "========== 编译前端 =========="
-    if ! build_frontend; then
-        frontend_result=1
+    if ! build_all_backend "$extra_opts"; then backend_result=1; fi
+
+    if [ $skip_fe -eq 0 ]; then
+        info "========== 编译前端 =========="
+        if ! build_frontend "$extra_opts"; then frontend_result=1; fi
+    else
+        info "========== 已指定跳过前端（--backend-only / --no-frontend）=========="
     fi
 
     echo ""
     info "========== 全量编译完成 =========="
     if [ $backend_result -eq 0 ] && [ $frontend_result -eq 0 ]; then
-        success "全量编译成功"
+        success "全量编译成功 ✅"
+        echo ""
+        info "提示：接下来可启动服务"
+        echo "  $0 start-all                       # 启动全部服务+前端"
+        echo "  $0 start-all --only-core           # 只启动核心服务"
+        echo "  $0 run                             # 一键启动 DB+Redis+所有服务"
         return 0
     else
-        error "全量编译失败"
+        error "全量编译失败（后端=$backend_result 前端=$frontend_result）"
         return 1
     fi
 }
@@ -658,17 +808,37 @@ wait_for_core_services() {
     done
 }
 
-# 启动所有服务
+# 启动所有服务（V64 支持: --only-core / --no-frontend / --skip=<svc> / --register）
 start_all_services() {
+    local extra_opts="$*"
     info "启动所有服务..."
     load_env
+
+    local only_core=0
+    local skip_fe=0
+    local no_register=0
+    local skip_packages=""
+    for opt in $extra_opts; do
+        case "$opt" in
+            --only-core)    only_core=1 ;;
+            --no-frontend)  skip_fe=1 ;;
+            --no-register)  no_register=1 ;;
+            --skip=*)       skip_packages="${skip_packages} ${opt#--skip=}" ;;
+        esac
+    done
 
     local success_count=0
     local fail_count=0
 
-    info "启动核心服务..."
+    info "========== [1/3] 启动核心服务 (iam=unified-core) =========="
     for service in $CORE_SERVICES; do
-        if start_service "$service" 2>/dev/null; then
+        local skip_this=0
+        for s in $skip_packages; do
+            [ "$service" = "$s" ] && skip_this=1 && break
+        done
+        [ $skip_this -eq 1 ] && { warning "跳过 $service (--skip)"; continue; }
+
+        if start_service "$service"; then
             success_count=$((success_count + 1))
         else
             fail_count=$((fail_count + 1))
@@ -677,28 +847,54 @@ start_all_services() {
 
     wait_for_core_services
 
-    info "启动其他服务..."
-    for service in $(get_all_services); do
-        if echo "$CORE_SERVICES" | grep -wq "$service"; then
-            continue
-        fi
-        if start_service "$service" 2>/dev/null; then
+    # 自动注册插件（V64+ 默认开启）
+    if [ "$no_register" = "0" ] && [ -x "$SCRIPT_DIR/dev/register-plugins.sh" ]; then
+        info "========== [1b/3] 自动注册插件 =========="
+        "$SCRIPT_DIR/dev/register-plugins.sh" >/tmp/topems-register.log 2>&1 || warning "插件注册失败，日志 /tmp/topems-register.log"
+    fi
+
+    if [ "$only_core" = "1" ]; then
+        info "========== --only-core 指定，仅启动核心服务，退出 =========="
+    else
+        info "========== [2/3] 启动其他服务 =========="
+        for service in $(get_all_services); do
+            if echo "$CORE_SERVICES" | grep -wq "$service"; then
+                continue
+            fi
+            local skip_this=0
+            for s in $skip_packages; do
+                [ "$service" = "$s" ] && skip_this=1 && break
+            done
+            [ $skip_this -eq 1 ] && { warning "跳过 $service (--skip)"; continue; }
+
+            if start_service "$service"; then
+                success_count=$((success_count + 1))
+            else
+                fail_count=$((fail_count + 1))
+            fi
+        done
+    fi
+
+    if [ $skip_fe -eq 1 ]; then
+        info "========== [3/3] 已指定 --no-frontend，跳过前端 =========="
+    else
+        info "========== [3/3] 启动前端 =========="
+        if start_frontend; then
             success_count=$((success_count + 1))
         else
             fail_count=$((fail_count + 1))
         fi
-    done
-
-    # 启动前端
-    if start_frontend 2>/dev/null; then
-        success_count=$((success_count + 1))
-    else
-        fail_count=$((fail_count + 1))
     fi
 
     echo ""
+    info "========== 启动汇总 =========="
+    info "成功: $success_count   失败: $fail_count"
+    info "查看日志: ls $LOG_DIR/"
+    info "健康检查: $0 health"
+    info "停止服务: $0 stop-all"
+
     if [ $fail_count -eq 0 ]; then
-        success "所有服务启动完成 ($success_count 成功)"
+        success "所有服务启动完成 ($success_count 成功) ✅"
     else
         warning "服务启动完成 ($success_count 成功, $fail_count 失败)"
     fi
@@ -1174,12 +1370,12 @@ stop_everything() {
     success "一键停止完成"
 }
 
-# 重启所有服务
+# 重启所有服务（支持透传 --only-core / --no-frontend / --skip= 等）
 restart_all() {
     info "========== 重启所有服务 =========="
     stop_all_services
     sleep 2
-    start_all_services
+    start_all_services "$@"
     show_all_status
 }
 
@@ -1222,13 +1418,26 @@ TOPEMS 服务管理工具
   restart <服务>          重启服务
   check                   检查服务状态并自动重启异常服务
   logs <服务> [行数]      查看服务日志
-  build <服务>            编译服务
-  build-all               全量编译所有服务（后端+前端）
-  build-backend           编译所有后端服务
-  build-frontend          编译前端
-  start-all               启动所有服务（含前端，自动注册）
+  build <服务> [--online|--offline|--dev]  编译服务
+  build-all [选项]        全量编译所有服务（后端+前端）
+                            --prepare         先刷新 sqlx 缓存（需要 DATABASE_URL）
+                            --only-core       只编核心服务（iam finance erp scm srm crm）
+                            --online          强制在线编译（无缓存也可）
+                            --offline         强制离线编译（失败立即停止）
+                            --dev|--debug     编 debug 版（默认 release）
+                            --skip=<svc>      跳过某个包，可重复
+                            --backend-only    只编后端，跳过前端
+  build-backend [选项]    编译所有后端服务（同 build-all 的后端子集）
+  build-frontend          编译前端 (tsc && vite build)
+                            --dev        若存在 build:dev 脚本则用，否则回退默认 build
+                            --skip-lint  若存在 build:nolint 脚本则用，否则忽略（默认 build 不跑 lint）
+  start-all [选项]        启动所有服务（含前端，自动注册）
+                            --only-core       只启动核心服务（iam=unified-core）
+                            --no-frontend     不启动前端
+                            --no-register     不自动注册插件
+                            --skip=<svc>      跳过某个服务
   stop-all                停止所有服务（含前端）
-  restart-all             重启所有服务
+  restart-all [选项]      重启所有服务（透传 start-all 选项）
 
 一键运行:
   run                     一键启动数据库+所有服务
@@ -1242,6 +1451,12 @@ TOPEMS 服务管理工具
   test-all                运行所有测试（后端+前端）
   test-backend            运行后端测试
   test-frontend           运行前端测试
+
+SQLx 离线缓存 (V64+):
+  sqlx prepare [--pkg=X] [--all]  生成离线缓存
+  sqlx prepare --check            校验离线缓存
+  sqlx prepare --merge            合并分包缓存到根 .sqlx
+  sqlx check-offline              无 DATABASE_URL 下全量离线编译校验
 
 数据库:
   db start                启动 PostgreSQL
@@ -1278,14 +1493,18 @@ WebSocket:
   MAX_RETRIES             最大重试次数（默认: 3）
   RETRY_DELAY             初始重试间隔（默认: 3秒）
   BACKOFF_FACTOR          退避系数（默认: 2，指数退避）
+  FORCE_ONLINE_BUILD      设为 1 时 build/build-all 默认在线编译
 
 示例:
   topems status               查看所有服务状态
   topems start iam            启动 IAM 服务
-  topems start-all            启动所有服务（含前端）
-  topems start web            启动前端
+  topems start-all --only-core     仅启动核心服务
+  topems start-all --no-frontend   只启动后端服务
   topems logs hrm 100         查看 HRM 最近 100 行日志
-  topems build-all            全量编译所有服务
+  topems build-all            全量编译（离线优先，失败自动切在线）
+  topems build-all --prepare  先刷新 sqlx 缓存再编译
+  topems build-all --only-core --dev  仅 debug 编译核心服务
+  topems sqlx prepare --all   生成全量 SQLx 离线缓存
   topems test-all             运行所有测试
   topems run                  一键运行（数据库+所有服务）
   topems db status            查看数据库状态
@@ -1353,16 +1572,16 @@ case "${1:-help}" in
         ;;
     build)
         [ -z "$2" ] && { error "请指定服务名"; show_help; exit 1; }
-        build_service "$2"
+        build_service "$2" "${@:3}"
         ;;
     build-all)
-        build_all
+        build_all "${@:2}"
         ;;
     build-backend)
-        build_all_backend
+        build_all_backend "${@:2}"
         ;;
     build-frontend)
-        build_frontend
+        build_frontend "${@:2}"
         ;;
     test-all)
         test_all
@@ -1374,17 +1593,37 @@ case "${1:-help}" in
         test_frontend
         ;;
     start-all)
-        start_all_services
+        start_all_services "${@:2}"
         show_all_status
         ;;
     stop-all)
         stop_all_services
         ;;
     restart-all)
-        restart_all
+        restart_all "${@:2}"
         ;;
     check)
         check_and_restart_services
+        ;;
+    sqlx)
+        case "${2:-prepare}" in
+            prepare)
+                shift 2 || true
+                "$SCRIPT_DIR/dev/sqlx-prepare.sh" "$@"
+                ;;
+            check|check-offline)
+                export SQLX_OFFLINE=true
+                "$SCRIPT_DIR/dev/sqlx-prepare.sh" --check
+                ;;
+            merge)
+                "$SCRIPT_DIR/dev/sqlx-prepare.sh" --merge
+                ;;
+            *)
+                error "未知 sqlx 子命令: $2"
+                echo "可用命令: prepare, check-offline, merge"
+                exit 1
+                ;;
+        esac
         ;;
     run)
         run_all

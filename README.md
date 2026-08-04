@@ -194,7 +194,11 @@ cd TOPEMS
 
 # 2. 安装依赖
 pnpm install
-cargo build --workspace  # 首次需要 5-10 分钟
+# 首次编译：先刷新 sqlx 离线缓存（需要本地 PostgreSQL 在线）
+./scripts/topems.sh sqlx prepare --all
+# 或直接编译（离线优先，失败自动切换在线编译）
+./scripts/topems.sh build-all --only-core          # 只编核心服务（约 3-5 分钟）
+./scripts/topems.sh build-all                       # 全量编译（后端+前端）
 
 # 3. 启动本地 PostgreSQL/Redis（macOS）
 brew services start postgresql@16
@@ -202,13 +206,20 @@ brew services start redis
 createdb topems
 
 # 4. 一键启动所有服务（前端 + 后端 + 数据库）
-./scripts/dev/start-local.sh
+./scripts/topems.sh start-all
 ```
 
 启动后访问：
 - **前端**: http://localhost:3000
 - **后端 API**: http://localhost:8000
 - **默认账号**: admin / admin123
+
+> **V64+ 新能力**: build/start 命令支持分层和参数化
+> ```bash
+> ./scripts/topems.sh build-all --prepare --only-core --dev      # 先刷新缓存再 debug 编核心组
+> ./scripts/topems.sh build-all --backend-only --skip=ai         # 只编后端并跳过 ai 包
+> ./scripts/topems.sh start-all --only-core --no-frontend        # 只起核心后端，不起前端
+> ```
 
 ### 环境配置
 
@@ -270,8 +281,18 @@ pnpm run dev
 项目采用 Cargo Workspace 架构，所有服务共享依赖。
 
 ```bash
-# 编译所有服务（使用 workspace）
-cargo build --workspace
+# 推荐：使用统一脚本编译（支持离线缓存、分层、失败汇总）
+./scripts/topems.sh build-all --only-core       # 仅核心服务，失败自动重试在线编译
+./scripts/topems.sh build-all                   # 全量（后端+前端）
+./scripts/topems.sh build <svc> [--online|--dev]  # 单包编译
+
+# 底层：直接使用 Cargo（需要 DATABASE_URL 或 SQLX_OFFLINE）
+SQLX_OFFLINE=true cargo build --workspace       # 依赖根目录 .sqlx/
+cargo build -p topems-mes --release             # 仅编 MES
+
+# 修改 SQL 语句后刷新离线缓存
+./scripts/topems.sh sqlx prepare --all
+./scripts/topems.sh sqlx check-offline          # 验证所有包均可离线编译
 
 # 运行统一核心服务
 cd svc/unified-core
@@ -520,14 +541,24 @@ python3 -m topems_cli db migrate
 ./scripts/topems.sh build <服务>             # 编译服务
 
 # 编译/构建
-./scripts/topems.sh build-all                # 全量编译（后端+前端）
-./scripts/topems.sh build-backend            # 编译所有后端
-./scripts/topems.sh build-frontend           # 编译前端
+./scripts/topems.sh build-all [--prepare|--only-core|--online|--offline|--dev|--skip=<svc>|--backend-only]
+./scripts/topems.sh build-backend                 # 编译所有后端（同 build-all 后端子集，支持相同参数）
+./scripts/topems.sh build-frontend [--dev|--skip-lint]
+  # 说明: --dev 若 apps/web/package.json 中存在 build:dev 则调用，否则回退到默认 build (tsc && vite build)
+  #       --skip-lint 若存在 build:nolint 则调用，否则忽略（默认 build 不跑 lint）
+./scripts/topems.sh build <svc> [--online|--offline|--dev]
+
+# SQLx 离线缓存（V64+ 新增）
+./scripts/topems.sh sqlx prepare --all            # 分包生成 .sqlx 并合并到根目录
+./scripts/topems.sh sqlx prepare --pkg=topems-mes # 仅刷新某个包
+./scripts/topems.sh sqlx prepare --check          # 校验缓存完整性
+./scripts/topems.sh sqlx check-offline            # 全量离线编译校验（DATABASE_URL 未设置）
+./scripts/topems.sh sqlx merge                    # 合并分包缓存
 
 # 批量操作
-./scripts/topems.sh start-all                # 启动所有服务（含前端）
-./scripts/topems.sh stop-all                 # 停止所有服务（含前端）
-./scripts/topems.sh restart-all              # 重启所有服务
+./scripts/topems.sh start-all [--only-core|--no-frontend|--no-register|--skip=<svc>]
+./scripts/topems.sh stop-all                      # 停止所有服务（含前端）
+./scripts/topems.sh restart-all [同上选项]        # 重启所有服务
 
 # 一键运行
 ./scripts/topems.sh run                      # 一键启动数据库+所有服务
