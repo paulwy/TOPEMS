@@ -5,8 +5,8 @@
 # Convenience wrapper that:
 #   1. Starts the target services if they are not already running
 #   2. Waits for each service's /health endpoint to return 200
-#   3. Runs scripts/perf/benchmark.sh
-#   4. Saves the output to scripts/perf/results/benchmark_<timestamp>.txt
+#   3. Runs scripts/performance/benchmark.sh
+#   4. Saves the output to scripts/performance/results/benchmark_<timestamp>.txt
 #
 # Usage:
 #   ./run_benchmark.sh [HOST] [AUTH_TOKEN] [REQUESTS]

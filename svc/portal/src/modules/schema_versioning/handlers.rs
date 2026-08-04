@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_imports)]
 use axum::extract::{Json, Path};
 use axum::http::StatusCode;
 use serde_json::Value;

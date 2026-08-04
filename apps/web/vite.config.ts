@@ -88,6 +88,33 @@ const SERVICES: ServiceConfig[] = [
   { name: 'integration', port: 8072, apiPrefix: '/api/integration', legacyPrefix: '/integration/api' },
 ];
 
+// ============================================================================
+// Module Federation Remote 配置
+// 远程模块端口映射（与 apps/web/src/microfrontend/config.ts 保持同步）
+// ============================================================================
+
+const REMOTE_MODULES: { name: string; port: number }[] = [
+  { name: 'topems_core', port: 3001 },
+  { name: 'topems_erp', port: 3002 },
+  { name: 'topems_hrm', port: 3003 },
+  { name: 'topems_crm', port: 3004 },
+  { name: 'topems_scm', port: 3005 },
+  { name: 'topems_wms', port: 3006 },
+  { name: 'topems_mes', port: 3007 },
+  { name: 'topems_pm', port: 3008 },
+  { name: 'topems_finance', port: 3009 },
+  { name: 'topems_srm', port: 3010 },
+  { name: 'topems_pdm', port: 3011 },
+  { name: 'topems_qms', port: 3012 },
+  { name: 'topems_lims', port: 3013 },
+  { name: 'topems_ehs', port: 3014 },
+  { name: 'topems_bi', port: 3015 },
+  { name: 'topems_monitor', port: 3016 },
+  { name: 'topems_ai', port: 3017 },
+  { name: 'topems_gis', port: 3018 },
+  { name: 'topems_doc', port: 3019 },
+];
+
 // Deployment mode: 'module-federation' | 'static' | 'hybrid'
 const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'static';
 
@@ -106,14 +133,27 @@ const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'static';
  * 完整模块清单与运行时配置见 apps/web/src/microfrontend/config.ts
  * （REMOTE_MODULES 中定义了所有可启用的业务域模块）
  */
-const getRemoteEntry = (name: string, defaultValue: string): string => {
+const getRemoteEntry = (name: string, port: number): string => {
   const env = loadEnv('', process.cwd(), '');
   if (DEPLOYMENT_MODE === 'static') {
     // 静态部署模式下不加载任何 remote
     return '';
   }
   const envKey = `VITE_REMOTE_${name.toUpperCase()}`;
-  return env[envKey] || defaultValue;
+  const envUrl = env[envKey];
+  
+  // 如果环境变量设置了完整 URL，直接使用（生产环境）
+  if (envUrl) {
+    return envUrl;
+  }
+  
+  // 开发模式：使用 Vite 代理路径避免 CORS
+  if (DEPLOYMENT_MODE === 'module-federation') {
+    return `/remote/${name}/remoteEntry.js`;
+  }
+  
+  // 默认：直接访问
+  return `http://localhost:${port}/remoteEntry.js`;
 };
 
 /**
@@ -128,9 +168,9 @@ const getRemoteEntry = (name: string, defaultValue: string): string => {
  *   3. 可按下方示例在返回对象中追加 remote（仅显式声明的 remote 会被 federation 编译期处理）
  *
  *   return {
- *     topems_core: getRemoteEntry('topems_core', 'http://localhost:3001/remoteEntry.js'),
- *     topems_erp:  getRemoteEntry('topems_erp',  'http://localhost:3002/remoteEntry.js'),
- *     topems_hrm:  getRemoteEntry('topems_hrm',  'http://localhost:3003/remoteEntry.js'),
+ *     topems_core: getRemoteEntry('topems_core', 3001),
+ *     topems_erp:  getRemoteEntry('topems_erp',  3002),
+ *     topems_hrm:  getRemoteEntry('topems_hrm',  3003),
  *     // ...
  *   };
  *
@@ -143,7 +183,7 @@ const buildRemotes = (): Record<string, string> => {
   }
   // 保留 topems_core 作为基础 remote，向后兼容
   return {
-    topems_core: getRemoteEntry('topems_core', 'http://localhost:3001/remoteEntry.js'),
+    topems_core: getRemoteEntry('topems_core', 3001),
   };
 };
 
@@ -312,12 +352,29 @@ const buildServiceProxies = (): Record<string, any> => {
   // 通用 health 端点
   proxies['/health'] = { target: `http://localhost:${CORE_PORT}`, changeOrigin: true };
 
-  // Module Federation remote
-  proxies['/core-remote'] = {
-    target: 'http://localhost:3001',
-    changeOrigin: true,
-    rewrite: (path: string) => path.replace(/^\/core-remote/, ''),
-  };
+  // Module Federation remotes - proxy all remoteEntry.js requests through the host
+  // This prevents CORS issues when loading remote modules
+  for (const remote of REMOTE_MODULES) {
+    const proxyPath = `/remote/${remote.name}`;
+    proxies[proxyPath] = {
+      target: `http://localhost:${remote.port}`,
+      changeOrigin: true,
+      rewrite: (path: string) => path.replace(new RegExp(`^\\/remote\\/${remote.name}`), ''),
+      configure: (proxy: any) => {
+        proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
+          if (!res.headersSent) {
+            res.writeHead(503, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+              code: 503,
+              success: false,
+              message: `Remote module ${remote.name} (port ${remote.port}) is currently unavailable`,
+              data: null
+            }));
+          }
+        });
+      }
+    };
+  }
 
   // ERP 插件代理（通过 unified-core）
   proxies['/api/plugins/erp'] = {
@@ -344,9 +401,40 @@ const buildServiceProxies = (): Record<string, any> => {
   return proxies;
 };
 
+// Fix for @module-federation/vite + Vite 8:
+// The `generateLocalSharedImportMap` plugin's resolveId compares
+// `source === getLocalSharedImportMapPath()`, but Vite 8 passes
+// the source with a \0 prefix (null byte) in resolveId hooks.
+// This pre-plugin normalizes the comparison so the virtual module resolves correctly.
+const fixLocalSharedImportMapNullBytePlugin = {
+  name: 'fix-mf-localSharedImportMap-nullbyte',
+  enforce: 'pre' as const,
+  resolveId(source: string) {
+    const LOCAL_SHARED_IMPORT_MAP_ID = 'virtual:mf-localSharedImportMap';
+    const INTERNAL_NAME_PREFIX = '__mfe_internal__';
+    const federationName = 'topems_portal';
+    const internalName = federationName.startsWith(INTERNAL_NAME_PREFIX)
+      ? federationName
+      : `${INTERNAL_NAME_PREFIX}${federationName}`;
+    // packageNameEncode: replaces @ / - . with _mf_X_ placeholders
+    const encodedName = internalName
+      .replace(/@/g, '_mf_0_')
+      .replace(/\//g, '_mf_1_')
+      .replace(/-/g, '_mf_2_')
+      .replace(/\./g, '_mf_3_');
+    const expectedPath = `${LOCAL_SHARED_IMPORT_MAP_ID}:${encodedName}`;
+    const expectedResolved = `\0${expectedPath}`;
+    const normalizedSource = source.replace(/^\0+/, '');
+    if (normalizedSource === expectedPath || source === expectedResolved) {
+      return expectedResolved;
+    }
+  },
+};
+
 export default defineConfig({
   plugins: [
     react(),
+    fixLocalSharedImportMapNullBytePlugin,
     federation({
       name: 'topems_portal',
       /**
@@ -469,7 +557,7 @@ export default defineConfig({
       '@topems/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
       '@topems/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/src'),
       '@topems/shared-components': path.resolve(__dirname, '../../packages/shared-components/src'),
-      '@topems/tokens': path.resolve(__dirname, '../../packages/tokens/dist'),
+      '@topems/tokens': path.resolve(__dirname, '../../packages/tokens/src'),
       '@topems/shared-constants': path.resolve(__dirname, '../../packages/shared-constants/src'),
       '@topems/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/src'),
     },
@@ -484,51 +572,85 @@ export default defineConfig({
     reportCompressedSize: false,
     rollupOptions: {
       treeshake: true,
+      // https://rolldown.rs/reference/InputOptions.checks
+      checks: {
+        // Disable noisy plugin timing summary; only useful when tuning builds.
+        pluginTimings: false,
+      },
+      // Suppress Module Federation virtual-file IMPORT_IS_UNDEFINED warnings for
+      // shared packages that use named-only ESM exports (no default export).
+      // This covers two MF virtual-module families:
+      //   1. __prebuild__: shared-dependency prebuild shim that references
+      //      __mfPrebuildNamespace.default for named-export-only libs.
+      //   2. __loadShare__: runtime loadShare wrapper that proxies React.act
+      //      and similar optional helpers via string access.
+      // Runtime behavior is unaffected (prebuild uses ?? fallback; loadShare
+      // returns undefined for missing members which consumers guard against).
+      onwarn(warning, warn) {
+        if (
+          warning.code === 'IMPORT_IS_UNDEFINED' &&
+          typeof warning.id === 'string' &&
+          warning.id.includes('__mfe_internal__') &&
+          (warning.id.includes('__prebuild__') || warning.id.includes('__loadShare__'))
+        ) {
+          return;
+        }
+        warn(warning);
+      },
       output: {
-        manualChunks: (id: string) => {
-          if (id.includes('node_modules')) {
-            // React 核心
-            if (id.includes('react') || id.includes('scheduler')) return 'vendor';
-            // MUI 组件库
-            if (id.includes('@mui') || id.includes('@emotion')) return 'mui';
-            // 图标库
-            if (id.includes('lucide-react') || id.includes('@heroicons') || id.includes('react-icons')) return 'icons';
-            // 图表库（大型，单独分包）
-            if (id.includes('recharts')) return 'charts';
-            if (id.includes('echarts')) return 'echarts';
-            // 地图库（大型，单独分包）
-            if (id.includes('leaflet') || id.includes('react-leaflet')) return 'maps';
-            // Excel 处理库（大型，单独分包）
-            if (id.includes('xlsx') || id.includes('exceljs')) return 'excel';
-            // 国际化
-            if (id.includes('i18next') || id.includes('react-i18next')) return 'i18n';
-            // 表单库
-            if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) return 'forms';
-            // 3D 渲染库（大型，单独分包）
-            if (id.includes('three') || id.includes('@react-three')) return 'three';
-            // 数据获取和状态管理
-            if (id.includes('@tanstack/react-query') || id.includes('zustand')) return 'vendor';
-            // 日期处理（使用 dayjs，轻量）
-            if (id.includes('dayjs')) return 'vendor';
-            // HTTP 客户端
-            if (id.includes('axios')) return 'vendor';
-            // 动画库
-            if (id.includes('framer-motion')) return 'vendor';
-            // 工具库（大型，单独分包）
-            if (id.includes('lodash')) return 'lodash';
-            // 旧日期库（如存在，单独分包以便后续替换）
-            if (id.includes('moment')) return 'moment';
-            // 表格库（大型）
-            if (id.includes('@tanstack/react-table')) return 'tables';
-            // 数学计算库（大型）
-            if (id.includes('mathjs') || id.includes('decimal.js')) return 'math';
-            // Markdown 渲染
-            if (id.includes('react-markdown') || id.includes('remark') || id.includes('rehype')) return 'markdown';
-            // 富文本编辑器
-            if (id.includes('@tiptap') || id.includes('prosemirror')) return 'editor';
-            return 'vendor-misc';
-          }
-        },
+        // NOTE: manualChunks is skipped for module-federation / hybrid modes
+        // because MF wraps shared imports with async init helpers, and
+        // grouping those into a single chunk creates circular async deps
+        // that can cause the application to silently hang.
+        // (see the "Ignoring output.manualChunks" MF warning)
+        manualChunks:
+          DEPLOYMENT_MODE === 'static'
+            ? (id: string) => {
+                if (id.includes('node_modules')) {
+                  // React 核心
+                  if (id.includes('react') || id.includes('scheduler')) return 'vendor';
+                  // MUI 组件库
+                  if (id.includes('@mui') || id.includes('@emotion')) return 'mui';
+                  // 图标库
+                  if (id.includes('lucide-react') || id.includes('@heroicons') || id.includes('react-icons')) return 'icons';
+                  // 图表库（大型，单独分包）
+                  if (id.includes('recharts')) return 'charts';
+                  if (id.includes('echarts')) return 'echarts';
+                  // 地图库（大型，单独分包）
+                  if (id.includes('leaflet') || id.includes('react-leaflet')) return 'maps';
+                  // Excel 处理库（大型，单独分包）
+                  if (id.includes('xlsx') || id.includes('exceljs')) return 'excel';
+                  // 国际化
+                  if (id.includes('i18next') || id.includes('react-i18next')) return 'i18n';
+                  // 表单库
+                  if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) return 'forms';
+                  // 3D 渲染库（大型，单独分包）
+                  if (id.includes('three') || id.includes('@react-three')) return 'three';
+                  // 数据获取和状态管理
+                  if (id.includes('@tanstack/react-query') || id.includes('zustand')) return 'vendor';
+                  // 日期处理（使用 dayjs，轻量）
+                  if (id.includes('dayjs')) return 'vendor';
+                  // HTTP 客户端
+                  if (id.includes('axios')) return 'vendor';
+                  // 动画库
+                  if (id.includes('framer-motion')) return 'vendor';
+                  // 工具库（大型，单独分包）
+                  if (id.includes('lodash')) return 'lodash';
+                  // 旧日期库（如存在，单独分包以便后续替换）
+                  if (id.includes('moment')) return 'moment';
+                  // 表格库（大型）
+                  if (id.includes('@tanstack/react-table')) return 'tables';
+                  // 数学计算库（大型）
+                  if (id.includes('mathjs') || id.includes('decimal.js')) return 'math';
+                  // Markdown 渲染
+                  if (id.includes('react-markdown') || id.includes('remark') || id.includes('rehype')) return 'markdown';
+                  // 富文本编辑器
+                  if (id.includes('@tiptap') || id.includes('prosemirror')) return 'editor';
+                  return 'vendor-misc';
+                }
+                return undefined;
+              }
+            : undefined,
       },
       plugins: [
         visualizer({
@@ -558,7 +680,12 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',
     strictPort: true,
-    hmr: {
+    // Vite 8: use server.ws instead of deprecated server.hmr.
+    // host: '127.0.0.1' forces IPv4 for the HMR client, avoiding Firefox's
+    // IPv6-first resolution of `localhost` (which fails since the dev server
+    // listens on 0.0.0.0 / IPv4 only and WebSocket has no Happy Eyeballs fallback).
+    ws: {
+      host: '127.0.0.1',
       path: '/vite-hmr',
     },
     fs: {

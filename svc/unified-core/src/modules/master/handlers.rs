@@ -3,6 +3,8 @@
 //! 提供 5 大主数据域的 CRUD API 和事件发布。
 //! 所有变更操作都会通过 Redis Pub/Sub 发布 MasterDataEvent。
 
+use std::str::FromStr;
+
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post},
@@ -986,8 +988,8 @@ async fn publish_master_data_event(
     payload: Option<serde_json::Value>,
 ) -> Result<(), String> {
     let domain = match MasterDataDomain::from_str(&ref_data.domain) {
-        Some(d) => d,
-        None => return Err(format!("Invalid domain: {}", ref_data.domain)),
+        Ok(d) => d,
+        Err(_) => return Err(format!("Invalid domain: {}", ref_data.domain)),
     };
 
     let event_payload = payload.unwrap_or_else(|| {

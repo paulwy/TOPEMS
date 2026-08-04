@@ -10,13 +10,12 @@
 
 'use strict';
 
-const COLOR_REGEX = /^#([0-9a-fA-F]{3,8}|transparent)$/;
+const COLOR_REGEX = /^#([0-9a-fA-F]{3,8})$/;
 const RGB_REGEX = /^(rgb|rgba|hsl|hsla)\(/i;
 const NAMED_COLORS = new Set([
   'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan',
   'magenta', 'lime', 'teal', 'indigo', 'violet', 'brown', 'gray', 'grey',
   'black', 'white', 'silver', 'gold', 'navy', 'maroon', 'olive', 'aqua',
-  'transparent', 'currentColor', 'inherit', 'initial', 'unset',
 ]);
 
 function isHardcodedColor(value) {

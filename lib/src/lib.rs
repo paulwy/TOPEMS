@@ -50,6 +50,11 @@ pub use topems_shared_event::messaging;
 pub use topems_shared_event::redis;
 pub use topems_shared_event::saga;
 pub use topems_shared_event::service_discovery;
+/// 通用测试辅助工具（Redis Pub/Sub 两阶段订阅 API）。
+///
+/// 公开导出使所有依赖 `topems-shared` 的服务 crate 能在自己的集成测试中复用
+/// `prepare_subscription` + `wait_for_match` 模式，避免 Future 惰性执行竞态。
+pub use topems_shared_event::test_helpers;
 pub use topems_shared_observability::monitoring;
 pub use topems_shared_observability::observability;
 pub use topems_shared_observability::performance;

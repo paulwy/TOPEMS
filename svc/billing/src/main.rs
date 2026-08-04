@@ -1,9 +1,9 @@
-use axum::{routing::delete, routing::get, routing::post, routing::put, Router};
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use axum::{routing::get, routing::post, routing::put, Router};
+use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use topems_shared::{
     auth_middleware, create_cors_layer, init_telemetry, register_routes_with_legacy_alias,
-    ApiResponse, AuthState,
+    AuthState,
 };
 use utoipa::OpenApi;
 

@@ -76,13 +76,14 @@ impl SecurityHeadersConfig {
             x_xss_protection: Some("1; mode=block".to_string()),
             strict_transport_security: None,
             content_security_policy: Some(format!(
-                "default-src 'self' 'unsafe-inline' 'unsafe-eval'; \
-                 script-src 'self' 'unsafe-inline' 'unsafe-eval'; \
+                "default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; \
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; \
                  style-src 'self' 'unsafe-inline'; \
                  img-src 'self' data: http: https:; \
                  font-src 'self'; \
                  connect-src 'self' http://localhost:* ws://localhost:*; \
-                 frame-src 'self' http://localhost:*;"
+                 frame-src 'self' http://localhost:*; \
+                 prefetch-src 'self' http://localhost:*;"
             )),
             referrer_policy: Some("strict-origin-when-cross-origin".to_string()),
             permissions_policy: Some("geolocation=(), microphone=(), camera=()".to_string()),

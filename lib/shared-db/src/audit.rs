@@ -126,8 +126,7 @@ impl AuditLogService {
         let details_str = request
             .request_details
             .as_ref()
-            .map(|d| serde_json::to_string(d).ok())
-            .flatten();
+            .and_then(|d| serde_json::to_string(d).ok());
         let user_uuid = request
             .user_id
             .as_deref()
@@ -176,6 +175,7 @@ impl AuditLogService {
             String::new()
         };
 
+        let resource_filter_len = resources_filter.map(|r| r.len()).unwrap_or(0);
         let sql = format!(
             r#"
             SELECT 
@@ -192,16 +192,8 @@ impl AuditLogService {
             LIMIT ${} OFFSET ${}
             "#,
             resource_filter_sql,
-            if resources_filter.is_some() {
-                5 + resources_filter.unwrap().len()
-            } else {
-                5
-            },
-            if resources_filter.is_some() {
-                6 + resources_filter.unwrap().len()
-            } else {
-                6
-            },
+            5 + resource_filter_len,
+            6 + resource_filter_len,
         );
 
         let mut q = sqlx::query_as::<_, AuditLogRecord>(&sql)

@@ -272,11 +272,11 @@ pub fn cqrs_routes() -> Router<AppState> {
             axum::routing::post(handle_create_voucher),
         )
         .route(
-            "/commands/post-voucher/:id",
+            "/commands/post-voucher/{id}",
             axum::routing::post(handle_post_voucher),
         )
         .route(
-            "/commands/reverse-voucher/:id",
+            "/commands/reverse-voucher/{id}",
             axum::routing::post(handle_reverse_voucher),
         )
         .route(
@@ -284,14 +284,14 @@ pub fn cqrs_routes() -> Router<AppState> {
             axum::routing::get(list_voucher_summary),
         )
         .route(
-            "/views/voucher-summary/:id",
+            "/views/voucher-summary/{id}",
             axum::routing::get(get_voucher_summary_by_id),
         )
         .route(
             "/views/receivable-aging",
             axum::routing::get(list_receivable_aging),
         )
-        .route("/events/:aggregate_id", axum::routing::get(get_events))
+        .route("/events/{aggregate_id}", axum::routing::get(get_events))
         .route("/views/rebuild", axum::routing::post(rebuild_views))
         .route("/stats", axum::routing::get(get_stats))
         .route(
@@ -299,5 +299,5 @@ pub fn cqrs_routes() -> Router<AppState> {
             axum::routing::get(get_projection_progress),
         )
         .route("/events", axum::routing::get(list_events_paginated))
-        .route("/views/replay/:view_name", axum::routing::post(replay_view))
+        .route("/views/replay/{view_name}", axum::routing::post(replay_view))
 }

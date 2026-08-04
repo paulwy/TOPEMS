@@ -17,7 +17,7 @@ route registration modules) and the authoritative port table
 ### 1.1 Finance — Voucher List Query
 
 | Field | Value |
-|---|---|
+| --- | --- |
 | Service | `topems-finance` |
 | Port | `8011` (`FINANCE_PORT`) |
 | Method | `GET` |
@@ -31,7 +31,7 @@ route registration modules) and the authoritative port table
 ### 1.2 MDM — Master Data Metadata List
 
 | Field | Value |
-|---|---|
+| --- | --- |
 | Service | `topems-master-data` |
 | Port | `8090` (`MASTER_DATA_PORT`, default) |
 | Method | `GET` |
@@ -44,7 +44,7 @@ route registration modules) and the authoritative port table
 ### 1.3 Portal BFF — GraphQL Query
 
 | Field | Value |
-|---|---|
+| --- | --- |
 | Service | `topems-portal` |
 | Port | `8063` (`PORTAL_PORT`) |
 | Method | `POST` |
@@ -58,7 +58,7 @@ route registration modules) and the authoritative port table
 ### 1.4 Portal BFF — SLA Policy Query
 
 | Field | Value |
-|---|---|
+| --- | --- |
 | Service | `topems-portal` |
 | Port | `8063` (`PORTAL_PORT`) |
 | Method | `GET` |
@@ -70,7 +70,7 @@ route registration modules) and the authoritative port table
 ### 1.5 Unified-Core — User Login
 
 | Field | Value |
-|---|---|
+| --- | --- |
 | Service | `topems-unified-core` (IAM module) |
 | Port | `8000` (`CORE_PORT` / `IAM_PORT`) |
 | Method | `POST` |
@@ -89,7 +89,7 @@ route registration modules) and the authoritative port table
 ### 2.1 Tooling
 
 | Tool | Required | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `curl` | yes | HTTP client with `-w` write-out timing |
 | `awk` | yes | Percentile and average computation |
 | `sort` | yes | Sorting samples for percentile lookup |
@@ -103,7 +103,7 @@ sequential latency**, not throughput under concurrency.
 ### 2.2 Parameters
 
 | Parameter | Default | Override |
-|---|---|---|
+| --- | --- | --- |
 | Warmup requests | 10 | `WARMUP=` in `benchmark.sh` |
 | Measured requests | 100 | 3rd positional arg |
 | Per-request timeout | 30s | `--max-time 30` |
@@ -202,7 +202,7 @@ results are reproducible.
 ### Environment
 
 | Field | Value |
-|---|---|
+| --- | --- |
 | Date | _YYYY-MM-DD_ |
 | Machine | _e.g. Apple M2 Pro, 16GB_ |
 | OS | _e.g. macOS 14.5_ |
@@ -215,7 +215,7 @@ results are reproducible.
 ### Results
 
 | API | METH | min(ms) | max(ms) | avg(ms) | p50(ms) | p95(ms) | p99(ms) | ok | fail | succ% |
-|---|---|---|---|---|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Finance Voucher List | GET | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ |
 | MDM Metadata List | GET | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ |
 | Portal GraphQL | POST | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ | _fill_ |
@@ -225,7 +225,7 @@ results are reproducible.
 ### SLO Targets (proposed)
 
 | API | p50 target | p95 target | p99 target |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Finance Voucher List | < 50ms | < 150ms | < 300ms |
 | MDM Metadata List | < 80ms | < 200ms | < 400ms |
 | Portal GraphQL (serviceHealth) | < 30ms | < 100ms | < 200ms |
@@ -308,7 +308,7 @@ Results are written to `scripts/perf/results/benchmark_<timestamp>.txt`.
 > §1 中的权威路由信息（端口、路径、SQL profile）仍然适用。
 
 | 配置项 | 值 |
-|--------|-----|
+| -------- | ----- |
 | OS | macOS |
 | Rust | stable |
 | DB | PostgreSQL 16 (local) |
@@ -325,7 +325,7 @@ Results are written to `scripts/perf/results/benchmark_<timestamp>.txt`.
 ### 8.1 IAM 认证 API
 
 | 端点 | 方法 | p50 | p95 | p99 | 说明 |
-|------|------|-----|-----|-----|------|
+| ------ | ------ | ----- | ----- | ----- | ------ |
 | /api/iam/auth/login | POST | ~50ms | ~120ms | ~200ms | JWT 签发（对应 §1.5 unified-core 登录，bcrypt 主导） |
 | /api/iam/auth/verify | GET | ~5ms | ~15ms | ~30ms | JWT 验证 |
 | /api/iam/users | GET | ~20ms | ~50ms | ~80ms | 列表查询 |
@@ -341,7 +341,7 @@ Results are written to `scripts/perf/results/benchmark_<timestamp>.txt`.
 ### 8.3 MDM 主数据 API
 
 | 端点 | 方法 | p50 | p95 | p99 | 说明 |
-|------|------|-----|-----|-----|------|
+| ------ | ------ | ----- | ----- | ----- | ------ |
 | /api/mdm/materials | GET | ~15ms | ~40ms | ~70ms | 物料列表 |
 | /api/mdm/suppliers | GET | ~15ms | ~40ms | ~70ms | 供应商列表 |
 | /api/master/mdm-v60/metadata | GET | ~20ms | ~200ms | ~400ms | 元数据列表（对应 §1.2，含 RLS 谓词开销） |
@@ -360,7 +360,7 @@ Results are written to `scripts/perf/results/benchmark_<timestamp>.txt`.
 ### 9.1 子 crate 编译时间（clean build）
 
 | Crate | 编译时间(clean) | 说明 |
-|-------|---------------|------|
+| ------- | --------------- | ------ |
 | topems-shared-core | 22.33s | 核心基础模块 |
 | topems-shared-db | ~15s | 数据库模块 |
 | topems-shared-auth | ~18s | 认证模块 |
@@ -373,7 +373,7 @@ Results are written to `scripts/perf/results/benchmark_<timestamp>.txt`.
 ### 9.2 增量编译时间
 
 | 场景 | 增量编译时间 | 说明 |
-|------|------------|------|
+| ------ | ------------ | ------ |
 | 修改 shared-core 中单文件 | ~3-5s | 仅重编 core + 依赖链 |
 | 修改 shared-db 中单文件 | ~2-3s | 仅重编 db + 依赖链 |
 | 修改主 crate 单文件 | ~5-8s | 重编 shared + 依赖服务 |
@@ -384,7 +384,7 @@ Results are written to `scripts/perf/results/benchmark_<timestamp>.txt`.
 ## 10. Binary Size Baseline
 
 | 服务 | release 大小 | 说明 |
-|------|-------------|------|
+| ------ | ------------- | ------ |
 | topems-iam | ~25MB | 认证服务 |
 | topems-portal | ~35MB | GraphQL 网关 |
 | topems-unified-core | ~40MB | 核心平台 |
@@ -452,7 +452,7 @@ CI 中的 `scripts/ci/lint-check.sh` 会检测编译警告和类型错误。
 ### 13.1 回归判定阈值
 
 | 指标 | 告警阈值 | 依据 |
-|------|---------|------|
+| ------ | --------- | ------ |
 | API p95 延迟 | > 基线 × 1.5 | §4.3 SLO 约定 |
 | 子 crate clean 编译时间 | > 基线 × 1.2 | §9.1 |
 | 二进制大小 | > 基线 × 1.2 | §10 |
@@ -467,3 +467,93 @@ CI 中的 `scripts/ci/lint-check.sh` 会检测编译警告和类型错误。
 4. 建议每次重大架构变更后更新基线
 5. §1–§6 的 curl 顺序采样与 §8 的近似基线值共同构成完整基线；
    当两者不一致时，以 `benchmark.sh` 实测结果为准并回填 §4 / §8
+
+---
+
+## 15. k6 并发性能测试套件
+
+> 与 §2 的 curl 单客户端顺序采样互补，本节使用 **k6** 进行并发负载测试，
+> 测量多虚拟用户同时请求下的吞吐量、稳定性与资源瓶颈。
+
+### 15.1 工具链
+
+| 工具 | 用途 | 版本要求 |
+| --- | --- | --- |
+| `k6` | 负载生成器 | ≥ v2.0 (`brew install k6`) |
+| `scm-performance-test.js` | SCM 供应链管理服务测试 | 内置 |
+| `database-performance-test.js` | 数据库查询性能测试 | 内置 |
+| `run-all-tests.sh` | 套件入口（自动分发 + 汇总） | 内置 |
+
+### 15.2 双模式配置
+
+| | 冒烟测试 `SMOKE=true` | 完整性能测试（默认） |
+| --- | --- | --- |
+| **VUs** | 1 | 50-100 |
+| **Duration** | 5s | 60-120s |
+| **阈值** | errors < 50% | 严格（errors < 1%，p95/p99 分级） |
+| **需后端** | 否（CI 友好） | 是 |
+| **用途** | CI 验证脚本无语法错误 | 真实性能评估 |
+
+### 15.3 快速开始
+
+```bash
+# 安装 k6
+brew install k6
+
+# 方式 1：一键 E2E（自动启动后端 → 测试 → 清理）
+./scripts/performance/run-e2e-performance.sh
+
+# 方式 2：冒烟测试（无需后端，5s 完成）
+SMOKE=true ./scripts/performance/run-all-tests.sh
+
+# 方式 3：完整性能测试（需先启动后端服务）
+./scripts/performance/run-all-tests.sh
+
+# 指定后端地址
+BASE_URL=http://192.168.1.100:8040 ./scripts/performance/run-all-tests.sh
+```
+
+### 15.4 阈值配置
+
+#### SCM 服务
+
+| 指标 | 冒烟阈值 | 完整阈值 |
+|---|---|---|
+| `errors` | `< 50%` | `< 1%` |
+| `http_req_duration` p95 | — | `< 500ms` |
+| `http_req_duration` p99 | — | `< 1000ms` |
+| `list_suppliers` p95 | — | `< 300ms` |
+| `get_supplier` p95 | — | `< 200ms` |
+
+#### 数据库
+
+| 指标 | 冒烟阈值 | 完整阈值 |
+| --- | --- | --- |
+| `errors` | 无 | — |
+| `http_req_duration` p95 | — | `< 800ms` |
+| `http_req_duration` p99 | — | `< 1500ms` |
+
+### 15.5 输出文件
+
+| 文件 | 内容 |
+| --- | --- |
+| `scm-test-results.json` | k6 原始时序数据 |
+| `database-test-results.json` | k6 原始时序数据 |
+| `performance-report.json` | SCM 聚合摘要（由 `handleSummary` 生成） |
+| `database-performance-report.json` | 数据库聚合摘要 |
+
+### 15.6 k6 v2 注意事项
+
+- **`scenarios` vs 顶层 `vus`/`duration`**：k6 v2 不允许同时使用 `scenarios` 和顶层 `vus`/`duration` 属性。SCM 脚本使用 `scenarios`（`constant-vus`），数据库脚本使用顶层属性。
+- **Counter 指标访问**：k6 v2 中 `Counter` 类型使用 `.values.count`（非 `.value`）。
+- **可选链**：`data.metrics['name']?.values.count ?? 0` 安全访问。
+
+### 15.7 两种测试方法对比
+
+| | curl `benchmark.sh` | k6 `run-all-tests.sh` |
+| --- | --- | --- |
+| **并发模型** | 单客户端顺序 | 多 VUs 并发 |
+| **测量维度** | 延迟分布 (p50/p95/p99) | 延迟 + 吞吐量 + 错误率 |
+| **工具依赖** | 仅 curl | 需 k6 |
+| **适合场景** | API 延迟基线 | 并发压力 / 稳定性 |
+| **CI 集成** | 需后端 | SMOKE 模式无需后端 |

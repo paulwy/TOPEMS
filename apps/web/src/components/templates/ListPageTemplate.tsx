@@ -291,18 +291,25 @@ export function ListPageTemplate<T>({
         }
       : null;
 
-  const internalListStateResult = effectiveListState
-    ? effectiveListState.urlSync
-      ? useUrlListState({
+  const urlListStateResult = useUrlListState(
+    effectiveListState?.urlSync
+      ? {
           defaultSearch: effectiveListState.defaultSearch,
           baseIndex: effectiveListState.baseIndex,
           defaultPage: effectiveListState.defaultPage,
           defaultPageSize: effectiveListState.defaultPageSize,
           debounceMs: effectiveListState.debounceMs,
           prefix: effectiveListState.urlPrefix,
-          historyMode: effectiveListState.urlSync,
-        })
-      : useListPageState(effectiveListState)
+        }
+      : { prefix: '__unused__', defaultPageSize: 10 }
+  );
+
+  const listPageStateResult = useListPageState(effectiveListState ?? undefined);
+
+  const internalListStateResult = effectiveListState
+    ? effectiveListState.urlSync
+      ? urlListStateResult
+      : listPageStateResult
     : null;
 
   // 解析最终数据/加载状态/错误：外部传入优先，其次 crud 内部
@@ -1904,7 +1911,6 @@ export function ListPageTemplate<T>({
       const result: ColumnConfig[] = [];
       // 先加 URL 中出现的列（可见，按 URL 顺序）
       urlIds.forEach((id, idx) => {
-        const existing = prev.find((c) => c.id === id);
         result.push({
           id,
           visible: true,
@@ -2147,18 +2153,6 @@ export function ListPageTemplate<T>({
   const handleCancelConfirm = useCallback(() => {
     setConfirmDialogOpen(false);
     setPendingAction(null);
-  }, []);
-
-  const updateBatchProgress = useCallback((processed: number, total: number) => {
-    setBatchOperationState((prev) => ({
-      ...prev,
-      processed,
-      total,
-      isProcessing: processed < total,
-    }));
-    if (processed >= total) {
-      setSelectedIds(new Set());
-    }
   }, []);
 
   const handleFilterChange = useCallback(
@@ -2509,7 +2503,7 @@ export function ListPageTemplate<T>({
         // 获取导出列的标签和 id
         const exportColDefs = resolvedExportColumns.map((colId) => {
           const col = visibleColumns.find((c) => c.id === colId);
-          let label = col?.label || col?.header || colId;
+          let label = col?.label || colId;
           if (crud?.formFields) {
             const field = crud.formFields.find((f) => f.key === colId);
             if (field) label = field.label;
@@ -2541,13 +2535,11 @@ export function ListPageTemplate<T>({
 
         let blob: Blob;
         let ext: string;
-        let mimeType: string;
 
         if (format === 'json') {
           const jsonContent = JSON.stringify(transformedRows, null, 2);
           blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
           ext = 'json';
-          mimeType = 'application/json';
         } else {
           // CSV / Excel 格式
           const csvRows = transformedRows.map((row) => {
@@ -2577,7 +2569,6 @@ export function ListPageTemplate<T>({
                 : 'text/csv;charset=utf-8;',
           });
           ext = format === 'excel' ? 'xls' : 'csv';
-          mimeType = format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv';
         }
 
         const url = URL.createObjectURL(blob);
@@ -2765,10 +2756,10 @@ export function ListPageTemplate<T>({
                     direction={sortBy === column.id ? sortOrder : 'asc'}
                     onClick={() => handleSort(column.id)}
                   >
-                    {column.label || column.header}
+                    {column.label || column.id}
                   </TableSortLabel>
                 ) : (
-                  column.label || column.header
+                  column.label || column.id
                 )}
               </Box>
               {canResize && (
@@ -3645,7 +3636,7 @@ export function ListPageTemplate<T>({
                       primaryActionButton.gradient
                         ? {
                             background: primaryActionButton.gradient,
-                            color: '#fff',
+                            color: theme.palette.common.white,
                             '&:hover': { opacity: 0.9 },
                           }
                         : {}

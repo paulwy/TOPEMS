@@ -2305,7 +2305,7 @@ impl QueryRoot {
     async fn federation_circuit_breakers(
         &self,
         _ctx: &Context<'_>,
-    ) -> async_graphql::Result<Vec<CircuitBreakerStateGql>> {
+    ) -> async_graphql::Result<Vec<CircuitBreakerStateGqlSimple>> {
         Ok(get_all_circuit_breakers())
     }
 
@@ -3308,7 +3308,7 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
         service: String,
-        config: CircuitBreakerConfigInput,
+        config: CircuitBreakerConfigInputGql,
     ) -> async_graphql::Result<bool> {
         Ok(set_circuit_breaker_config(&service, config))
     }
@@ -9018,9 +9018,9 @@ pub struct QueryDependencyGraphGql {
     pub depth: i32,
 }
 
-/// V44.0: 熔断器状态 GQL
+/// V44.0: 熔断器状态 GQL (简化版，避免与 rate_limiting::CircuitBreakerStateGql 冲突)
 #[derive(SimpleObject)]
-pub struct CircuitBreakerStateGql {
+pub struct CircuitBreakerStateGqlSimple {
     pub service: String,
     pub state: String,
     pub failure_count: i32,
@@ -9033,7 +9033,7 @@ pub struct CircuitBreakerStateGql {
 
 /// V44.0: 熔断器配置输入
 #[derive(async_graphql::InputObject)]
-pub struct CircuitBreakerConfigInput {
+pub struct CircuitBreakerConfigInputGql {
     pub failure_threshold: i32,
     pub success_threshold: i32,
     pub timeout_ms: i32,
@@ -9454,7 +9454,7 @@ pub fn reset_circuit_breaker(service: &str) -> bool {
 }
 
 /// V44.0: 设置熔断器配置
-pub fn set_circuit_breaker_config(service: &str, config: CircuitBreakerConfigInput) -> bool {
+pub fn set_circuit_breaker_config(service: &str, config: CircuitBreakerConfigInputGql) -> bool {
     let mut breakers = federation_v3_circuit_breakers().lock().unwrap();
     if let Some(cb) = breakers.get_mut(service) {
         cb.config = CircuitBreakerConfig {
@@ -9864,11 +9864,11 @@ pub fn get_federation_v3_stats() -> FederationV3StatsGql {
     }
 }
 
-pub fn get_all_circuit_breakers() -> Vec<CircuitBreakerStateGql> {
+pub fn get_all_circuit_breakers() -> Vec<CircuitBreakerStateGqlSimple> {
     let breakers = federation_v3_circuit_breakers().lock().unwrap();
     breakers
         .iter()
-        .map(|(name, cb)| CircuitBreakerStateGql {
+        .map(|(name, cb)| CircuitBreakerStateGqlSimple {
             service: name.clone(),
             state: cb.state.as_str().to_string(),
             failure_count: cb.failure_count as i32,

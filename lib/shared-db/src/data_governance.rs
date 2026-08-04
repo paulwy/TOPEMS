@@ -219,7 +219,7 @@ impl EntityDataTags {
     pub fn classification_for(&self, field_path: &str) -> DataClassification {
         self.field_tags
             .get(field_path)
-            .map(|t| t.classification.clone())
+            .map(|t| t.classification)
             .unwrap_or(self.default_classification)
     }
 
@@ -430,7 +430,7 @@ impl DataMaskingEngine {
     pub fn add_rule(&mut self, rule: MaskingRule) {
         if let Ok(regex) = Regex::new(&rule.pattern) {
             self.compiled_patterns
-                .push((rule.name.clone(), regex, rule.strategy.clone()));
+                .push((rule.name.clone(), regex, rule.strategy));
         }
         self.rules.push(rule);
     }
@@ -1452,7 +1452,7 @@ impl ClassificationEngine {
             if rule.pattern.is_match(field_name) {
                 let current_confidence = best_match.map(|(_, c)| c).unwrap_or(0.0);
                 if rule.confidence > current_confidence {
-                    best_match = Some((rule.classification.clone(), rule.confidence));
+                    best_match = Some((rule.classification, rule.confidence));
                 }
             }
         }

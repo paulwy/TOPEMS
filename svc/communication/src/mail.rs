@@ -1,5 +1,7 @@
 //! Mail submodule - Email handlers with database support and real mail sending
 
+#![allow(dead_code)]
+
 use axum::Extension;
 use axum::{
     extract::{Path, State},

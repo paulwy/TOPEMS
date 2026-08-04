@@ -22,10 +22,12 @@ struct UserSearchRow {
 #[derive(Debug, Clone, FromRow)]
 struct CustomerSearchRow {
     id: Uuid,
+    #[allow(dead_code)]
     code: String,
     name: String,
     contact_person: Option<String>,
     phone: Option<String>,
+    #[allow(dead_code)]
     email: Option<String>,
     address: Option<String>,
 }
@@ -50,6 +52,7 @@ struct PurchaseOrderSearchRow {
 struct DocumentSearchRow {
     id: Uuid,
     name: String,
+    #[allow(dead_code)]
     path: String,
     mime_type: Option<String>,
 }
@@ -299,6 +302,7 @@ pub async fn health_handler() -> &'static str {
     "OK"
 }
 
+#[allow(dead_code)]
 pub fn search_routes() -> Router<PgPool> {
     Router::new().route("/", get(search_handler))
 }
