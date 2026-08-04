@@ -154,7 +154,21 @@ jobs:
             sleep 1
           done
 
-      - name: Quick check (quality gate)
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
+
+      - name: Verify sqlx offline cache consistency
+        # 仅校验"有 query! 宏且当前代码可编译"的 package 的 .sqlx 缓存与源码是否一致
+        # 失败时提示用户本地执行 `./scripts/dev/sqlx-prepare.sh -p <FAIL_PKGS>` 刷新
+        env:
+          DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
+        run: ./scripts/dev/sqlx-prepare.sh --check
+
+      - name: Quick check (quality gate, SQLX_OFFLINE=true)
+        # CI 默认完全离线：只用仓库中的 .sqlx/，不需要临时起 DB 做宏检查
+        # 这样即便后续 PostgreSQL/Redis 服务延迟，也不会阻断前期质量门禁
+        env:
+          SQLX_OFFLINE: "true"
         run: cargo check --workspace
 
       - name: Build tests with nextest

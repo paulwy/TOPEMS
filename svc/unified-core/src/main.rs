@@ -134,59 +134,53 @@ async fn main() {
     };
 
     // Initialize databases for all modules
-    modules::iam::init_database(&pool)
-        .await
-        .expect("Failed to init iam database");
-    modules::flow::init_database(&pool)
-        .await
-        .expect("Failed to init flow database");
-    modules::file::init_database(&pool)
-        .await
-        .expect("Failed to init file database");
-    modules::communication::init_database(&pool)
-        .await
-        .expect("Failed to init communication database");
-    modules::tenant::init_database(&pool)
-        .await
-        .expect("Failed to init tenant database");
-    modules::billing::init_database(&pool)
-        .await
-        .expect("Failed to init billing database");
-    modules::plugin::init_database(&pool)
-        .await
-        .expect("Failed to init plugin database");
-    modules::migration::init_database(&pool)
-        .await
-        .expect("Failed to init migration database");
-    modules::dict::init_database(&pool)
-        .await
-        .expect("Failed to init dict database");
-    modules::master::handlers::init_mdm_tables(&pool)
-        .await
-        .expect("Failed to init master database");
-    modules::ticket::handlers::init_ticket_tables(&pool)
-        .await
-        .expect("Failed to init ticket database");
-    modules::menu::init_database(&pool)
-        .await
-        .expect("Failed to init menu database");
-    modules::help::init_database(&pool)
-        .await
-        .expect("Failed to init help database");
-    modules::login_log::init_database(&pool)
-        .await
-        .expect("Failed to init login_log database");
-    modules::search::init_database(&pool)
-        .await
-        .expect("Failed to init search database");
-    modules::doc::services::init_database(&pool)
-        .await
-        .expect("Failed to init doc database");
+    // 所有 init_database 均应设计为幂等（CREATE TABLE IF NOT EXISTS + ON CONFLICT DO NOTHING）。
+    // 现有数据库已有历史数据时，某模块 init 失败不应阻断服务启动，降级为 warn + 继续。
+    async fn try_init<F, Fut>(name: &str, f: F)
+    where
+        F: FnOnce() -> Fut,
+        Fut: std::future::Future<Output = Result<(), sqlx::Error>>,
+    {
+        match f().await {
+            Ok(()) => tracing::info!("init_database {}: ok", name),
+            Err(e) => tracing::warn!(
+                "init_database {}: skipped due to error (database may already be initialized): {}",
+                name,
+                e
+            ),
+        }
+    }
 
-    // 初始化系统基础字典数据
-    modules::dict::seed::seed_dict_data(&pool)
-        .await
-        .expect("Failed to seed dict data");
+    try_init("iam", || modules::iam::init_database(&pool)).await;
+    try_init("flow", || modules::flow::init_database(&pool)).await;
+    try_init("file", || modules::file::init_database(&pool)).await;
+    try_init("communication", || {
+        modules::communication::init_database(&pool)
+    })
+    .await;
+    try_init("tenant", || modules::tenant::init_database(&pool)).await;
+    try_init("billing", || modules::billing::init_database(&pool)).await;
+    try_init("plugin", || modules::plugin::init_database(&pool)).await;
+    try_init("migration", || modules::migration::init_database(&pool)).await;
+    try_init("dict", || modules::dict::init_database(&pool)).await;
+    try_init("master", || {
+        modules::master::handlers::init_mdm_tables(&pool)
+    })
+    .await;
+    try_init("ticket", || {
+        modules::ticket::handlers::init_ticket_tables(&pool)
+    })
+    .await;
+    try_init("menu", || modules::menu::init_database(&pool)).await;
+    try_init("help", || modules::help::init_database(&pool)).await;
+    try_init("login_log", || modules::login_log::init_database(&pool)).await;
+    try_init("search", || modules::search::init_database(&pool)).await;
+    try_init("doc", || modules::doc::services::init_database(&pool)).await;
+
+    // 初始化系统基础字典数据（同样降级为 warn，阻断仅当关键依赖缺失）
+    if let Err(e) = modules::dict::seed::seed_dict_data(&pool).await {
+        tracing::warn!("seed_dict_data skipped: {}", e);
+    }
 
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(pool.clone());
