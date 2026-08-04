@@ -599,9 +599,27 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
                       fontSize: '0.875rem',
                     }}
                   >
-                    {col.render ? (
-                      col.render(row, index)
-                    ) : (
+                    {col.render
+                      ? // V64 防御：render(row) 空值兜底 + try/catch 失败回退显示原始值
+                        (() => {
+                          try {
+                            return col.render!(row ?? ({} as any), index);
+                          } catch (e) {
+                            if (typeof console !== 'undefined' && console?.warn) {
+                              console.warn(
+                                `[SubTableBuilder] render for column="${col.id ?? ''}" failed, fallback:`,
+                                e
+                              );
+                            }
+                            const rawValue = (row as Record<string, unknown>)?.[col.id as string];
+                            return (
+                              <Typography variant='body2'>
+                                {rawValue != null ? String(rawValue) : '-'}
+                              </Typography>
+                            );
+                          }
+                        })()
+                      : (
                       <Typography
                         variant='body2'
                         noWrap

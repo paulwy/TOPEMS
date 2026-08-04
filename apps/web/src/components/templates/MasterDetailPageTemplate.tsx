@@ -462,9 +462,29 @@ export function MasterDetailPageTemplate<T>({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {col.render ? (
-                    col.render(value, item, index)
-                  ) : (
+                  {col.render
+                    ? // V64 防御：render(value, item) 空值兜底 + try/catch 失败回退显示原始值
+                      (() => {
+                        try {
+                          return col.render!(value, item ?? ({} as any), index);
+                        } catch (e) {
+                          if (typeof console !== 'undefined' && console?.warn) {
+                            console.warn(
+                              `[MasterDetailPageTemplate] render for column="${col.id}" failed, fallback:`,
+                              e
+                            );
+                          }
+                          return (
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: col.id === columns[0].id ? 500 : 400 }}
+                            >
+                              {value != null ? String(value) : '-'}
+                            </Typography>
+                          );
+                        }
+                      })()
+                    : (
                     <Typography
                       variant='body2'
                       sx={{ fontWeight: col.id === columns[0].id ? 500 : 400 }}
@@ -524,13 +544,29 @@ export function MasterDetailPageTemplate<T>({
                 sx={{ fontWeight: 600, mb: 0.25 }}
               >
                 {primaryColumn.render
-                  ? primaryColumn.render(
-                      primaryColumn.field
-                        ? (item as unknown as Record<string, unknown>)[primaryColumn.field!]
-                        : undefined,
-                      item,
-                      index
-                    )
+                  ? // V64 防御：render(value, item) 空值兜底 + try/catch 失败回退原始值
+                    (() => {
+                      try {
+                        // V64: 用临时 Record<string, unknown> 别名绕过 TS 联合类型索引签名检查
+                        const safeItem = (item ?? {}) as unknown as Record<string, unknown>;
+                        return primaryColumn.render!(
+                          primaryColumn.field ? safeItem[primaryColumn.field!] : undefined,
+                          item ?? ({} as any),
+                          index
+                        );
+                      } catch (e) {
+                        if (typeof console !== 'undefined' && console?.warn) {
+                          console.warn(
+                            `[MasterDetailPageTemplate] primaryColumn.render failed, fallback:`,
+                            e
+                          );
+                        }
+                        const safeItem = (item ?? {}) as unknown as Record<string, unknown>;
+                        return primaryColumn.field
+                          ? String(safeItem[primaryColumn.field!] ?? '-')
+                          : '-';
+                      }
+                    })()
                   : primaryColumn.field
                     ? String((item as unknown as Record<string, unknown>)[primaryColumn.field!])
                     : '-'}
@@ -542,13 +578,28 @@ export function MasterDetailPageTemplate<T>({
                 sx={{ color: isSelected ? 'rgba(255,255,255,0.7)' : 'text.secondary' }}
               >
                 {secondaryColumn.render
-                  ? secondaryColumn.render(
-                      secondaryColumn.field
-                        ? (item as unknown as Record<string, unknown>)[secondaryColumn.field!]
-                        : undefined,
-                      item,
-                      index
-                    )
+                  ? // V64 防御：render(value, item) 空值兜底 + try/catch 失败回退原始值
+                    (() => {
+                      try {
+                        const safeItem = (item ?? {}) as unknown as Record<string, unknown>;
+                        return secondaryColumn.render!(
+                          secondaryColumn.field ? safeItem[secondaryColumn.field!] : undefined,
+                          item ?? ({} as any),
+                          index
+                        );
+                      } catch (e) {
+                        if (typeof console !== 'undefined' && console?.warn) {
+                          console.warn(
+                            `[MasterDetailPageTemplate] secondaryColumn.render failed, fallback:`,
+                            e
+                          );
+                        }
+                        const safeItem = (item ?? {}) as unknown as Record<string, unknown>;
+                        return secondaryColumn.field
+                          ? String(safeItem[secondaryColumn.field!] ?? '-')
+                          : '-';
+                      }
+                    })()
                   : secondaryColumn.field
                     ? String((item as unknown as Record<string, unknown>)[secondaryColumn.field!])
                     : '-'}

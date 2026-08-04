@@ -313,7 +313,10 @@ export function ListPageTemplate<T>({
     : null;
 
   // 解析最终数据/加载状态/错误：外部传入优先，其次 crud 内部
-  const data = propData ?? (crud ? crudResult.data : []);
+  // V64 防御：过滤掉 data 中可能存在的 null / undefined 元素，避免 300+ 处
+  // schema renderCell 因 "row is undefined" 抛错（典型：can't access property "isactive"）
+  const rawData = propData ?? (crud ? crudResult.data : []);
+  const data = Array.isArray(rawData) ? rawData.filter((r): r is NonNullable<typeof r> => r != null) : [];
   const loading = propLoading ?? (crud ? crudResult.loading : false);
   const error = propError ?? (crud && crudResult.error ? crudResult.error : null);
   const resolvedTotal = total ?? (crud ? crudResult.pagination.total : 0);
@@ -339,7 +342,11 @@ export function ListPageTemplate<T>({
 
         // 自定义渲染（优先级最高）
         if (field.tableRender) {
-          col.render = (row: any, index: number) => field.tableRender!(row[field.key], row, index);
+          col.render = (row: any, index: number) => {
+            // V64 防御：row 空值兜底，避免 schema renderCell 解构报错
+            const safeRow = row ?? {};
+            return field.tableRender!(safeRow[field.key], safeRow, index);
+          };
           return col;
         }
 
@@ -351,7 +358,9 @@ export function ListPageTemplate<T>({
           const colorMap = field.tableStatusColorMap || {};
           const labelMap = field.tableStatusLabelMap || {};
           col.render = (row: any) => {
-            const value = row[field.key];
+            // V64 防御：row 空值兜底
+            const safeRow = row ?? {};
+            const value = safeRow[field.key];
             const label = labelMap[value] || value || '-';
             const color = colorMap[value] || 'default';
             return (
@@ -369,7 +378,9 @@ export function ListPageTemplate<T>({
         // 布尔值 / switch 类型渲染
         if (field.type === 'switch') {
           col.render = (row: any) => {
-            const value = row[field.key];
+            // V64 防御：row 空值兜底
+            const safeRow = row ?? {};
+            const value = safeRow[field.key];
             return (
               <Chip
                 label={value ? '是' : '否'}
@@ -385,7 +396,9 @@ export function ListPageTemplate<T>({
         // 日期类型格式化
         if (field.type === 'date') {
           col.render = (row: any) => {
-            const value = row[field.key];
+            // V64 防御：row 空值兜底
+            const safeRow = row ?? {};
+            const value = safeRow[field.key];
             return value || '-';
           };
           return col;
@@ -3114,7 +3127,22 @@ export function ListPageTemplate<T>({
                         onCancel={() => cancelEditing(row)}
                       />
                     ) : column.render ? (
-                      column.render(row, index)
+                      // V64 防御：调用外部 column.render 前 row 兜底，
+                      //      避免 325 处 schema.renderCell 遇到 undefined 报错
+                      (() => {
+                        try {
+                          return column.render(row ?? ({} as T), index);
+                        } catch (e) {
+                          // 任何自定义渲染报错都不打断整表渲染，返回占位 '-'
+                          if (typeof console !== 'undefined' && console?.warn) {
+                            console.warn(
+                              `[ListPageTemplate] renderCell for column="${column.id}" failed, fallback to "-":`,
+                              e
+                            );
+                          }
+                          return '-';
+                        }
+                      })()
                     ) : cellValue !== undefined && cellValue !== null ? (
                       String(cellValue)
                     ) : (

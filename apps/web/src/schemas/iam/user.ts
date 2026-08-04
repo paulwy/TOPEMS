@@ -167,7 +167,8 @@ export const userSchema: EntitySchema = {
       defaultValue: true,
       listWidth: 80,
       renderCell: (row: Record<string, unknown>) => {
-        const isActive = row.isactive !== false;
+        // V64 防御：row 为空兜底（上层已防御，这里做双保险避免未来重构/换模板时再炸）
+        const isActive = row?.isactive !== false;
         return React.createElement(
           'div',
           {
