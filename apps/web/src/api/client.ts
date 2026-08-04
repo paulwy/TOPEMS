@@ -295,8 +295,16 @@ export const createAxiosClient = ({
       const baseURL = error.config?.baseURL || '';
       const fullUrl = `${baseURL}${url}`;
       const retries = error.config?.headers?.['X-Retry-Count'] || 0;
+      const errorStatus = error.response?.status;
 
-      apiLogger.error(`[API Error] ${error.response?.status || 'N/A'} ${fullUrl}`, {
+      // V64 静默降级：开发环境下后端微服务未启动时会产生大量 404/502/503，
+      // 将这些"服务未就绪"类错误降级为 warn，避免控制台被 ERROR 刷屏。
+      // 生产环境仍保持 error 级别以捕获真正的路由缺失问题。
+      const isDevEnv = isDevelopment();
+      const isServiceDown =
+        errorStatus === 404 || errorStatus === 502 || errorStatus === 503;
+      const logLevel = isDevEnv && isServiceDown ? 'warn' : 'error';
+      apiLogger[logLevel](`[API ${isDevEnv && isServiceDown ? 'Warn' : 'Error'}] ${errorStatus || 'N/A'} ${fullUrl}`, {
         url: fullUrl,
         method: error.config?.method?.toUpperCase(),
         status: error.response?.status,

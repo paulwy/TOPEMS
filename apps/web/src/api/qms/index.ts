@@ -206,17 +206,18 @@ export const qmsApi = {
   // Statistics
   getStatistics: async (): Promise<ApiResponse<QmsStatistics>> => {
     try {
-      const [standardsRes, checksRes, issuesRes, improvementsRes] = await Promise.all([
+      // V64 容错：用 allSettled 替代 all，单个子 API 404（服务未启动）不影响整体
+      const [standardsRes, checksRes, issuesRes, improvementsRes] = await Promise.allSettled([
         qmsApi.listStandards(),
         qmsApi.listChecks(),
         qmsApi.listIssues(),
         qmsApi.listImprovements(),
       ]);
 
-      const standards = standardsRes.data || [];
-      const checks = checksRes.data || [];
-      const issues = issuesRes.data || [];
-      const improvements = improvementsRes.data || [];
+      const standards = standardsRes.status === 'fulfilled' ? (standardsRes.value.data || []) : [];
+      const checks = checksRes.status === 'fulfilled' ? (checksRes.value.data || []) : [];
+      const issues = issuesRes.status === 'fulfilled' ? (issuesRes.value.data || []) : [];
+      const improvements = improvementsRes.status === 'fulfilled' ? (improvementsRes.value.data || []) : [];
 
       const statistics: QmsStatistics = {
         total_standards: standards.length,
@@ -264,7 +265,8 @@ export const qmsApi = {
         timestamp: Date.now(),
       };
     } catch (error: unknown) {
-      apiLogger.error('Failed to calculate QMS statistics:', error);
+      // V64 降级：statistics 是聚合统计，服务未启动时返回空数据即可，不应刷屏 ERROR
+      apiLogger.warn('Failed to calculate QMS statistics (service may be down):', error);
       const fallbackStats: QmsStatistics = {
         total_standards: 0,
         active_standards: 0,

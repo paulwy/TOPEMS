@@ -88,7 +88,10 @@ export interface UnifiedTodo {
   source: 'workflow' | 'portal' | 'notification';
   priority: number;
   status: string;
-  created_at: string;
+  // V64: GraphQL schema 用驼峰 createdAt（后端 UnifiedTodoGql 字段），
+  // TS 接口保留 created_at 兼容旧代码消费方，两者二选一存在皆可
+  createdAt?: string;
+  created_at?: string;
 }
 
 export const bffApi = {
@@ -122,6 +125,54 @@ async function computeQueryHash(query: string): Promise<string> {
   return hashHex;
 }
 
+// V64 mock fallback：开发环境 + portal 服务未启动时，bffGraphQL 直接返回空结构，
+// 避免 Dashboard 整页出现错误状态。生产环境 / 显式设置 VITE_BFF_MOCK=false 时关闭。
+function shouldMockBff(): boolean {
+  return Boolean(
+    import.meta.env.DEV && import.meta.env.VITE_BFF_MOCK !== 'false'
+  );
+}
+
+function buildMockForQuery<T>(query: string): T | null {
+  const q = query.trim();
+  // Dashboard 复合查询：返回空 stats/todos/services 结构
+  if (/query\s+Dashboard\b/i.test(q)) {
+    return {
+      dashboard: {
+        stats: {
+          erp: { service: 'erp', total: 0, active: 0, available: false },
+          crm: { service: 'crm', total: 0, active: 0, available: false },
+          hrm: { service: 'hrm', total: 0, active: 0, available: false },
+          finance: { service: 'finance', total: 0, active: 0, available: false },
+          mes: { service: 'mes', total: 0, active: 0, available: false },
+          workflow: { service: 'workflow', total: 0, active: 0, available: false },
+        },
+        todos: [],
+        services: [],
+      },
+    } as unknown as T;
+  }
+  if (/query\s+BusinessStats\b/i.test(q)) {
+    return {
+      businessStats: {
+        erp: { service: 'erp', total: 0, active: 0, available: false },
+        crm: { service: 'crm', total: 0, active: 0, available: false },
+        hrm: { service: 'hrm', total: 0, active: 0, available: false },
+        finance: { service: 'finance', total: 0, active: 0, available: false },
+        mes: { service: 'mes', total: 0, active: 0, available: false },
+        workflow: { service: 'workflow', total: 0, active: 0, available: false },
+      },
+    } as unknown as T;
+  }
+  if (/query\s+UnifiedTodos\b/i.test(q)) {
+    return { unifiedTodos: [] } as unknown as T;
+  }
+  if (/mutation\s+CompleteTodo\b/i.test(q)) {
+    return { completeTodo: { id: '', title: '', source: 'workflow', priority: 0, status: 'done' } } as unknown as T;
+  }
+  return null;
+}
+
 /**
  * 执行 GraphQL 请求（带 APQ 持久化查询支持）
  *
@@ -130,6 +181,14 @@ async function computeQueryHash(query: string): Promise<string> {
  * - 后续请求：仅发送哈希，减少请求体积
  */
 async function executeGraphQL<T>(body: Record<string, unknown>): Promise<T> {
+  // V64 早返回：开发环境 mock 模式直接返回空结构，不发送请求
+  if (shouldMockBff()) {
+    const queryStr = typeof body.query === 'string' ? body.query : '';
+    const mock = buildMockForQuery<T>(queryStr);
+    if (mock) return mock;
+    throw new Error('BFF mock fallback (portal service not started in dev mode)');
+  }
+
   const response = await fetch('/api/portal/graphql', {
     method: 'POST',
     headers: {
@@ -244,7 +303,7 @@ export async function getDashboard() {
           mes { service total active available }
           workflow { service total active available }
         }
-        todos { id title source priority status created_at }
+        todos { id title source priority status createdAt }
         services { service healthy url }
       }
     }
@@ -284,7 +343,7 @@ export async function getUnifiedTodosGql() {
         source
         priority
         status
-        created_at
+        createdAt
       }
     }
   `);
@@ -364,7 +423,7 @@ export async function createTodoGql(title: string, userId?: string) {
         source
         priority
         status
-        created_at
+        createdAt
       }
     }
   `,
@@ -410,6 +469,12 @@ export async function deleteTodoGql(id: string) {
 export function subscribeServiceHealth(
   callback: (health: { service: string; healthy: boolean; url: string }) => void
 ): () => void {
+  // V64 静默降级：开发环境下 portal 服务（8063）通常未启动，
+  // 跳过 WebSocket 连接避免浏览器控制台刷屏。
+  if (import.meta.env.DEV && !import.meta.env.VITE_BFF_WS_ENABLED) {
+    return () => {}; // no-op
+  }
+
   const wsUrl = `ws://${window.location.host}/api/portal/graphql/ws`;
   let ws: WebSocket | null = null;
   let closed = false;
