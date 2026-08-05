@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 function renderDateCell(row: Record<string, unknown>, field: string) {
   const val = row[field] as string | null | undefined;
@@ -40,8 +41,8 @@ function renderStockStatusCell(row: Record<string, unknown>) {
 
 export const inventorySchema: EntitySchema = {
   entity: 'erpInventory',
-  title: '库存管理',
-  description: '管理库存信息，包括物料、数量、仓库、库位等',
+  title: i18n.t('schema:erp.inventory.meta.title'),
+  description: i18n.t('schema:erp.inventory.meta.description'),
 
   api: {
     module: 'erp',
@@ -51,81 +52,81 @@ export const inventorySchema: EntitySchema = {
   fields: [
     {
       name: 'material_code',
-      label: '物料编码',
+      label: i18n.t('schema:erp.inventory.material_code.label'),
       type: 'text',
       required: true,
       sortable: true,
       listWidth: 120,
-      placeholder: '请输入物料编码',
+      placeholder: i18n.t('schema:erp.inventory.material_code.placeholder'),
     },
     {
       name: 'material_name',
-      label: '物料名称',
+      label: i18n.t('schema:erp.inventory.material_name.label'),
       type: 'text',
       required: true,
       sortable: true,
       listWidth: 160,
-      placeholder: '请输入物料名称',
+      placeholder: i18n.t('schema:erp.inventory.material_name.placeholder'),
     },
     {
       name: 'material_id',
-      label: '物料ID',
+      label: i18n.t('schema:erp.inventory.material_id.label'),
       type: 'text',
       showInList: false,
       showInDetail: false,
     },
     {
       name: 'specification',
-      label: '规格型号',
+      label: i18n.t('schema:erp.inventory.specification.label'),
       type: 'text',
       listWidth: 120,
-      placeholder: '请输入规格型号',
+      placeholder: i18n.t('schema:erp.inventory.specification.placeholder'),
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('schema:erp.inventory.unit.label'),
       type: 'text',
       listWidth: 80,
-      placeholder: '请输入单位',
+      placeholder: i18n.t('schema:erp.inventory.unit.placeholder'),
     },
     {
       name: 'warehouse_name',
-      label: '仓库',
+      label: i18n.t('schema:erp.inventory.warehouse_name.label'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: '原材料仓库', label: '原材料仓库' },
-          { value: '成品仓库', label: '成品仓库' },
-          { value: '半成品仓库', label: '半成品仓库' },
+          { value: '原材料仓库', label: i18n.t('schema:erp.inventory.warehouse_name.option.原材料仓库') },
+          { value: '成品仓库', label: i18n.t('schema:erp.inventory.warehouse_name.option.成品仓库') },
+          { value: '半成品仓库', label: i18n.t('schema:erp.inventory.warehouse_name.option.半成品仓库') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'warehouse_id',
-      label: '仓库ID',
+      label: i18n.t('schema:erp.inventory.warehouse_id.label'),
       type: 'text',
       showInList: false,
       showInDetail: false,
     },
     {
       name: 'location_name',
-      label: '库位',
+      label: i18n.t('schema:erp.inventory.location_name.label'),
       type: 'text',
       listWidth: 100,
-      placeholder: '请输入库位',
+      placeholder: i18n.t('schema:erp.inventory.location_name.placeholder'),
     },
     {
       name: 'location_id',
-      label: '库位ID',
+      label: i18n.t('schema:erp.inventory.location_id.label'),
       type: 'text',
       showInList: false,
       showInDetail: false,
     },
     {
       name: 'quantity',
-      label: '库存数量',
+      label: i18n.t('schema:erp.inventory.quantity.label'),
       type: 'number',
       defaultValue: 0,
       required: true,
@@ -134,7 +135,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'available_quantity',
-      label: '可用数量',
+      label: i18n.t('schema:erp.inventory.available_quantity.label'),
       type: 'number',
       readonly: true,
       showInList: false,
@@ -142,7 +143,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'reserved_quantity',
-      label: '预留数量',
+      label: i18n.t('schema:erp.inventory.reserved_quantity.label'),
       type: 'number',
       readonly: true,
       showInList: false,
@@ -150,7 +151,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'safety_stock',
-      label: '安全库存',
+      label: i18n.t('schema:erp.inventory.safety_stock.label'),
       type: 'number',
       defaultValue: 0,
       showInList: false,
@@ -158,7 +159,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'max_stock',
-      label: '最大库存',
+      label: i18n.t('schema:erp.inventory.max_stock.label'),
       type: 'number',
       defaultValue: 0,
       showInList: false,
@@ -166,7 +167,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'unit_cost',
-      label: '单位成本',
+      label: i18n.t('schema:erp.inventory.unit_cost.label'),
       type: 'number',
       defaultValue: 0,
       listWidth: 120,
@@ -174,7 +175,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'total_cost',
-      label: '库存金额',
+      label: i18n.t('schema:erp.inventory.total_cost.label'),
       type: 'number',
       readonly: true,
       listWidth: 140,
@@ -182,14 +183,14 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'batch_number',
-      label: '批次号',
+      label: i18n.t('schema:erp.inventory.batch_number.label'),
       type: 'text',
       listWidth: 120,
-      placeholder: '请输入批次号',
+      placeholder: i18n.t('schema:erp.inventory.batch_number.placeholder'),
     },
     {
       name: 'production_date',
-      label: '生产日期',
+      label: i18n.t('schema:erp.inventory.production_date.label'),
       type: 'date',
       showInList: false,
       showInDetail: true,
@@ -197,7 +198,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'expiry_date',
-      label: '有效期',
+      label: i18n.t('schema:erp.inventory.expiry_date.label'),
       type: 'date',
       showInList: false,
       showInDetail: true,
@@ -205,7 +206,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'stock_status',
-      label: '库存状态',
+      label: i18n.t('schema:erp.inventory.stock_status.label'),
       type: 'text',
       readonly: true,
       listWidth: 120,
@@ -213,7 +214,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('schema:erp.inventory.created_at.label'),
       type: 'date',
       readonly: true,
       listWidth: 120,
@@ -221,7 +222,7 @@ export const inventorySchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('schema:erp.inventory.updated_at.label'),
       type: 'date',
       readonly: true,
       showInList: false,
@@ -236,13 +237,13 @@ export const inventorySchema: EntitySchema = {
     filters: [
       {
         id: 'warehouse',
-        label: '仓库',
+        label: i18n.t('schema:erp.inventory.filter.warehouse.label'),
         type: 'select',
         options: [
-          { label: '全部仓库', value: 'all' },
-          { label: '原材料仓库', value: 'W001' },
-          { label: '成品仓库', value: 'W002' },
-          { label: '半成品仓库', value: 'W003' },
+          { label: i18n.t('schema:erp.inventory.filter.warehouse.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.inventory.filter.warehouse.option.W001'), value: 'W001' },
+          { label: i18n.t('schema:erp.inventory.filter.warehouse.option.W002'), value: 'W002' },
+          { label: i18n.t('schema:erp.inventory.filter.warehouse.option.W003'), value: 'W003' },
         ],
         defaultValue: 'all',
       },
@@ -251,27 +252,27 @@ export const inventorySchema: EntitySchema = {
 
   formSections: [
     {
-      title: '物料信息',
+      title: i18n.t('schema:erp.inventory.section.0.title'),
       fields: ['material_code', 'material_name', 'specification', 'unit'],
     },
     {
-      title: '仓库库位',
+      title: i18n.t('schema:erp.inventory.section.1.title'),
       fields: ['warehouse_name', 'location_name'],
     },
     {
-      title: '数量与成本',
+      title: i18n.t('schema:erp.inventory.section.2.title'),
       fields: ['quantity', 'safety_stock', 'max_stock', 'unit_cost'],
     },
     {
-      title: '批次信息',
+      title: i18n.t('schema:erp.inventory.section.3.title'),
       fields: ['batch_number', 'production_date', 'expiry_date'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增库存',
-  editTitle: '编辑库存',
-  detailTitle: '库存详情',
+  createTitle: i18n.t('schema:erp.inventory.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.inventory.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.inventory.meta.detailTitle'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

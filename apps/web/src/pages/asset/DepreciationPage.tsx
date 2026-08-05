@@ -47,7 +47,7 @@ const DepreciationPage: React.FC = () => {
         addNotification({
           type: 'success',
           title: t('asset.depreciation_page.success'),
-          message: `已完成 ${result.data.depreciated_count} 项资产的折旧`,
+          message: t('asset:depreciation.notify_success_message', { count: result.data.depreciated_count }),
         });
         queryClient.invalidateQueries({ queryKey: ['fixed-assets'] });
         setShowDepreciateDialog(false);
@@ -124,14 +124,14 @@ const DepreciationPage: React.FC = () => {
         if (res.success && res.data) {
           return res.data as any;
         }
-        throw new Error(res.message || '创建失败');
+        throw new Error(res.message || t('asset:depreciation.create_fail'));
       },
       update: async (id, data) => {
         const res = await fixedAssetApi.update(id, data as Partial<FixedAsset>);
         if (res.success && res.data) {
           return res.data as any;
         }
-        throw new Error(res.message || '更新失败');
+        throw new Error(res.message || t('asset:depreciation.update_fail'));
       },
       delete: async (id) => {
         await fixedAssetApi.delete(id);

@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { Folder, FolderOpen, ChevronRight, ChevronDown, Plus, FolderPlus } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudTab } from '@/components/templates/CrudPage';
@@ -197,6 +198,7 @@ const TreeItem: React.FC<{
 };
 
 export const CategoryManagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -243,7 +245,7 @@ export const CategoryManagementPage: React.FC = () => {
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 1 }}
         >
-          分类树
+          {t('asset:categorymanagement.tree_title')}
         </Typography>
         <Box
           sx={{
@@ -269,7 +271,7 @@ export const CategoryManagementPage: React.FC = () => {
               color: selectedCategoryId === null ? 'primary.main' : 'text.primary',
             }}
           >
-            全部分类
+            {t('asset:categorymanagement.all_categories')}
           </Typography>
           <Chip
             label={categories.length}
@@ -280,7 +282,7 @@ export const CategoryManagementPage: React.FC = () => {
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
         {tree.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>暂无分类数据</Box>
+          <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>{t('asset:categorymanagement.no_category_data')}</Box>
         ) : (
           <List
             dense
@@ -336,7 +338,7 @@ export const CategoryManagementPage: React.FC = () => {
           <CrudPage
             schema={assetCategorySchema}
             apiAdapter={baseAdapter}
-            breadcrumbs={[{ label: '资产管理' }, { label: '资产分类' }]}
+            breadcrumbs={[{ label: t('asset:categorymanagement.breadcrumb_asset_management') }, { label: t('asset:categorymanagement.breadcrumb_asset_category') }]}
             detailMaxWidth='md'
           />
         </Box>

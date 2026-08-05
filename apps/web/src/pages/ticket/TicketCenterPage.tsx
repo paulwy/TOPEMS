@@ -19,10 +19,13 @@ import {
   Send,
 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 import { ticketApi } from '@/api/ticket';
 import type {
   Ticket,
@@ -34,22 +37,6 @@ import type {
 import { ticketSchema } from '@/schemas/ticket';
 
 const ct = designTokens.colors;
-
-const STATUS_LABELS: Record<string, string> = {
-  open: '待处理',
-  in_progress: '处理中',
-  pending: '等待中',
-  resolved: '已解决',
-  closed: '已关闭',
-  cancelled: '已取消',
-};
-
-const SEVERITY_LABELS: Record<string, string> = {
-  critical: '严重',
-  high: '高',
-  medium: '中',
-  low: '低',
-};
 
 const STATUS_COLORS: Record<string, 'error' | 'warning' | 'info' | 'success' | 'default'> = {
   open: 'error',
@@ -91,23 +78,47 @@ const ticketApiAdapter: CrudApiAdapter<Ticket> = {
     return res.data.data;
   },
   delete: async () => {
-    throw new Error('工单暂不支持删除');
+    throw new Error(i18n.t('ticket:errors.deleteNotSupported'));
   },
 };
 
-function formatDuration(minutes?: number): string {
+function formatDuration(
+  minutes: number | undefined,
+  t: TFunction
+): string {
   if (minutes === undefined || minutes === null) return '-';
-  if (minutes < 0)
-    return `已超时 ${Math.abs(Math.floor(minutes / 60))}小时${Math.abs(minutes % 60)}分`;
+  if (minutes < 0) {
+    const h = Math.abs(Math.floor(minutes / 60));
+    const m = Math.abs(minutes % 60);
+    return `${t('ticket:duration.overtime')} ${h}${t('ticket:duration.hours')}${m}${t('ticket:duration.minutes')}`;
+  }
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  if (hours > 0) return `${hours}小时${mins}分`;
-  return `${mins}分钟`;
+  if (hours > 0)
+    return `${hours}${t('ticket:duration.hours')}${mins}${t('ticket:duration.minutes')}`;
+  return `${mins}${t('ticket:duration.minutesOnly')}`;
 }
 
 const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [commentText, setCommentText] = useState('');
+
+  const statusLabels: Record<string, string> = {
+    open: t('ticket:status.open'),
+    in_progress: t('ticket:status.in_progress'),
+    pending: t('ticket:status.pending'),
+    resolved: t('ticket:status.resolved'),
+    closed: t('ticket:status.closed'),
+    cancelled: t('ticket:status.cancelled'),
+  };
+
+  const severityLabels: Record<string, string> = {
+    critical: t('ticket:severity.critical'),
+    high: t('ticket:severity.high'),
+    medium: t('ticket:severity.medium'),
+    low: t('ticket:severity.low'),
+  };
 
   const { data: commentsData } = useQuery({
     queryKey: ['ticket-comments', ticket.id],
@@ -143,17 +154,17 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
     <Stack spacing={2}>
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
         <Chip
-          label={STATUS_LABELS[ticket.status] || ticket.status}
+          label={statusLabels[ticket.status] || ticket.status}
           color={STATUS_COLORS[ticket.status] || 'default'}
           size='small'
         />
         <Chip
-          label={SEVERITY_LABELS[ticket.severity] || ticket.severity}
+          label={severityLabels[ticket.severity] || ticket.severity}
           color={SEVERITY_COLORS[ticket.severity] || 'default'}
           size='small'
         />
         <Chip
-          label={`来源: ${ticket.source_service}`}
+          label={`${t('ticket:source')}: ${ticket.source_service}`}
           size='small'
           variant='outlined'
         />
@@ -162,7 +173,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
         variant='body2'
         color='text.secondary'
       >
-        {ticket.description || '无描述'}
+        {ticket.description || t('ticket:noDescription')}
       </Typography>
       <Divider />
       {sla && (
@@ -172,10 +183,10 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
             sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Clock size={16} />
-            SLA 信息
+            {t('ticket:sla.info')}
             {sla.is_breached && (
               <Chip
-                label='已超时'
+                label={t('ticket:sla.breached')}
                 size='small'
                 color='error'
               />
@@ -187,20 +198,20 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
                 variant='caption'
                 color='text.secondary'
               >
-                响应时限
+                {t('ticket:sla.responseLimit')}
               </Typography>
               <Typography
                 variant='body2'
                 sx={{ fontWeight: 600 }}
               >
-                {sla.response_hours ?? '-'} 小时
+                {sla.response_hours ?? '-'} {t('ticket:sla.hours')}
               </Typography>
               <Typography
                 variant='caption'
                 color={sla.response_breached ? 'error' : 'text.secondary'}
               >
                 {sla.response_due_at
-                  ? `截止: ${new Date(sla.response_due_at).toLocaleString('zh-CN')}`
+                  ? `${t('ticket:sla.deadline')}: ${new Date(sla.response_due_at).toLocaleString('zh-CN')}`
                   : '-'}
               </Typography>
             </Paper>
@@ -209,19 +220,21 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
                 variant='caption'
                 color='text.secondary'
               >
-                解决时限
+                {t('ticket:sla.resolutionLimit')}
               </Typography>
               <Typography
                 variant='body2'
                 sx={{ fontWeight: 600 }}
               >
-                {sla.resolution_hours ?? '-'} 小时
+                {sla.resolution_hours ?? '-'} {t('ticket:sla.hours')}
               </Typography>
               <Typography
                 variant='caption'
                 color={sla.is_breached ? 'error' : 'text.secondary'}
               >
-                {sla.sla_due_at ? `截止: ${new Date(sla.sla_due_at).toLocaleString('zh-CN')}` : '-'}
+                {sla.sla_due_at
+                  ? `${t('ticket:sla.deadline')}: ${new Date(sla.sla_due_at).toLocaleString('zh-CN')}`
+                  : '-'}
               </Typography>
             </Paper>
             <Paper sx={{ p: 1.5, borderRadius: 2 }}>
@@ -229,7 +242,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
                 variant='caption'
                 color='text.secondary'
               >
-                剩余解决时间
+                {t('ticket:sla.remainingTime')}
               </Typography>
               <Typography
                 variant='body2'
@@ -242,7 +255,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
                       : 'text.primary',
                 }}
               >
-                {formatDuration(sla.time_remaining_minutes)}
+                {formatDuration(sla.time_remaining_minutes, t)}
               </Typography>
             </Paper>
             <Paper sx={{ p: 1.5, borderRadius: 2 }}>
@@ -250,7 +263,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
                 variant='caption'
                 color='text.secondary'
               >
-                当前升级级别
+                {t('ticket:sla.currentEscalationLevel')}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
@@ -271,7 +284,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  策略: {sla.policy_name}
+                  {t('ticket:sla.policy')}: {sla.policy_name}
                 </Typography>
               )}
             </Paper>
@@ -283,7 +296,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
                 color='text.secondary'
                 sx={{ mb: 1, display: 'block' }}
               >
-                升级历史
+                {t('ticket:sla.escalationHistory')}
               </Typography>
               <Stack spacing={0.5}>
                 {sla.escalation_history.map((e) => (
@@ -318,7 +331,9 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
         </Box>
       )}
       <Divider />
-      <Typography variant='subtitle2'>评论 ({comments.length})</Typography>
+      <Typography variant='subtitle2'>
+        {t('ticket:comments.title')} ({comments.length})
+      </Typography>
       <Stack spacing={1}>
         {comments.map((c) => (
           <Box
@@ -333,7 +348,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
                 variant='caption'
                 sx={{ fontWeight: 600 }}
               >
-                {c.user_name || '未知用户'}
+                {c.user_name || t('ticket:comments.unknownUser')}
               </Typography>
               <Typography
                 variant='caption'
@@ -350,7 +365,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
         <TextField
           fullWidth
           size='small'
-          placeholder='输入评论...'
+          placeholder={t('ticket:comments.placeholder')}
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
           onKeyDown={(e) => {
@@ -373,6 +388,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
 };
 
 const TicketCenterPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: statsData } = useQuery({
@@ -403,11 +419,26 @@ const TicketCenterPage: React.FC = () => {
   };
 
   const statCards = [
-    { label: '全部工单', value: stats.total, icon: TicketIcon, color: ct.primary[500] },
-    { label: '待处理', value: stats.open, icon: AlertCircle, color: ct.error[500] },
-    { label: '处理中', value: stats.in_progress, icon: Clock, color: ct.warning[500] },
-    { label: '已解决', value: stats.resolved, icon: CheckCircle, color: ct.success[500] },
-    { label: 'SLA 超时', value: stats.sla_breached, icon: AlertTriangle, color: ct.error[700] },
+    { label: t('ticket:stats.all'), value: stats.total, icon: TicketIcon, color: ct.primary[500] },
+    { label: t('ticket:status.open'), value: stats.open, icon: AlertCircle, color: ct.error[500] },
+    {
+      label: t('ticket:status.in_progress'),
+      value: stats.in_progress,
+      icon: Clock,
+      color: ct.warning[500],
+    },
+    {
+      label: t('ticket:status.resolved'),
+      value: stats.resolved,
+      icon: CheckCircle,
+      color: ct.success[500],
+    },
+    {
+      label: t('ticket:stats.slaTimeout'),
+      value: stats.sla_breached,
+      icon: AlertTriangle,
+      color: ct.error[700],
+    },
   ];
 
   const headerContent = React.useCallback(() => {
@@ -444,13 +475,14 @@ const TicketCenterPage: React.FC = () => {
         ))}
       </Box>
     );
-  }, [statsData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statsData, t]);
 
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
         key: 'start-progress',
-        label: '开始处理',
+        label: t('ticket:actions.startProgress'),
         icon: <Clock size={16} />,
         show: (row) => row.status === 'open',
         onClick: (row) => {
@@ -459,7 +491,7 @@ const TicketCenterPage: React.FC = () => {
       },
       {
         key: 'resolve',
-        label: '标记已解决',
+        label: t('ticket:actions.markResolved'),
         icon: <CheckCircle size={16} />,
         show: (row) => row.status === 'in_progress',
         onClick: (row) => {
@@ -467,7 +499,7 @@ const TicketCenterPage: React.FC = () => {
         },
       },
     ],
-    [updateMutation]
+    [updateMutation, t]
   );
 
   const detailContent = React.useCallback((row: Record<string, unknown>) => {
@@ -476,8 +508,8 @@ const TicketCenterPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='工单中心'
-      description='统一管理对账差异、审批超时、系统告警等工单'
+      title={t('ticket:page.title')}
+      description={t('ticket:page.description')}
     >
       <CrudPage
         schema={ticketSchema}
@@ -486,7 +518,10 @@ const TicketCenterPage: React.FC = () => {
         headerContent={headerContent}
         detailContent={detailContent}
         detailMaxWidth='md'
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '工单中心' }]}
+        breadcrumbs={[
+          { label: t('ticket:breadcrumb.home'), href: '/dashboard' },
+          { label: t('ticket:page.title') },
+        ]}
       />
     </PageContainer>
   );

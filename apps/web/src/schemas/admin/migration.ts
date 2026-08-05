@@ -4,11 +4,12 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const migrationSchema: EntitySchema = {
   entity: 'adminMigration',
-  title: '数据迁移管理',
-  description: '管理各服务的数据迁移，支持执行迁移、回滚和查看迁移状态',
+  title: i18n.t('schema:admin.migration.meta.title'),
+  description: i18n.t('schema:admin.migration.meta.description'),
 
   api: {
     module: 'migration',
@@ -18,7 +19,7 @@ export const migrationSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '服务名称',
+      label: i18n.t('schema:admin.migration.name.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -44,13 +45,13 @@ export const migrationSchema: EntitySchema = {
     },
     {
       name: 'port',
-      label: '端口',
+      label: i18n.t('schema:admin.migration.port.label'),
       type: 'number',
       listWidth: 80,
     },
     {
       name: 'tables',
-      label: '表数量',
+      label: i18n.t('schema:admin.migration.tables.label'),
       type: 'number',
       listWidth: 90,
       renderCell: (row: Record<string, unknown>) => {
@@ -61,7 +62,7 @@ export const migrationSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('schema:admin.migration.description.label'),
       type: 'text',
       listWidth: 250,
     },
@@ -76,5 +77,5 @@ export const migrationSchema: EntitySchema = {
   actions: ['detail'],
 
   formColCount: 2,
-  detailTitle: '服务详情',
+  detailTitle: i18n.t('schema:admin.migration.meta.detailTitle'),
 };

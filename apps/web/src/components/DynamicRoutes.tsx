@@ -4,6 +4,8 @@ import { logger } from '@/utils/logger';
 import { loadModuleConfig, coreModuleCodes, type RouteConfig } from '../routes';
 import ProtectedRouteWrapper from './ProtectedRouteWrapper';
 import PageLoader from './PageLoader';
+// V37.0 Phase 7: 记录用户导航历史 + 触发智能预加载
+import { recordNavigation, prefetchIntelligent } from '@/lib/pwa';
 
 const DynamicRoutes: React.FC = () => {
   const [routes, setRoutes] = useState<RouteConfig[]>([]);
@@ -72,6 +74,14 @@ const DynamicRoutes: React.FC = () => {
     };
 
     loadRoutes();
+  }, [location.pathname]);
+
+  // V37.0 Phase 7: 记录用户导航历史 + 触发智能预加载
+  useEffect(() => {
+    recordNavigation(location.pathname);
+    // 延迟触发智能预加载，避免与当前路由加载竞争
+    const timer = setTimeout(() => prefetchIntelligent(), 2000);
+    return () => clearTimeout(timer);
   }, [location.pathname]);
 
   if (loading) {

@@ -495,21 +495,480 @@
       "title": "Billing History",
       "description": "View tenant billing and invoice information",
       "invoice_id": "Invoice No.",
-      "period_start": "Period Start",
-      "period_end": "Period End",
-      "amount": "Amount",
-      "currency": "Currency",
-      "status": "Status",
+      "period_start": {
+        "label": "Period Start"
+      },
+      "period_end": {
+        "label": "Period End"
+      },
+      "amount": {
+        "label": "Amount"
+      },
+      "currency": {
+        "label": "Currency"
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "paid": "Paid",
+          "pending": "Pending Payment",
+          "failed": "Payment Failed",
+          "draft": "Draft"
+        }
+      },
       "status_paid": "Paid",
       "status_pending": "Pending",
       "status_failed": "Failed",
       "status_draft": "Draft",
-      "paid_at": "Paid At",
-      "created_at": "Created At",
+      "paid_at": {
+        "label": "Paid At"
+      },
+      "created_at": {
+        "label": "Created At"
+      },
       "filter_status": "Status",
       "filter_all_status": "All Status",
       "detail_title": "Invoice Detail",
-      "action_download": "Download Invoice"
+      "action_download": "Download Invoice",
+      "meta": {
+        "title": "Billing History",
+        "description": "View tenant billing and invoice information",
+        "detailTitle": "Invoice Detail"
+      },
+      "id": {
+        "label": "Invoice ID"
+      },
+      "period": {
+        "label": "Billing Period"
+      },
+      "section": {
+        "0": {
+          "title": "Billing Information"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Download Invoice",
+          "option": {
+            "all": "All Status",
+            "paid": "Paid",
+            "pending": "Pending Payment",
+            "failed": "Payment Failed",
+            "draft": "Draft"
+          }
+        }
+      }
+    },
+    "account": {
+      "meta": {
+        "title": "Accounting Subject",
+        "description": "Manage corporate accounting subject system, supporting multi-level subject structure",
+        "createTitle": "Create Subject",
+        "editTitle": "Edit Subject",
+        "detailTitle": "Subject Detail"
+      },
+      "code": {
+        "label": "Subject Code"
+      },
+      "name": {
+        "label": "Subject Name"
+      },
+      "type": {
+        "label": "Subject Type",
+        "option": {
+          "asset": "Asset",
+          "liability": "Liabilities",
+          "equity": "Equity",
+          "revenue": "Revenue",
+          "expense": "Expense",
+          "cost": "Cost"
+        }
+      },
+      "balance_direction": {
+        "label": "Balance Direction",
+        "option": {
+          "debit": "Debit",
+          "credit": "Credit"
+        }
+      },
+      "is_detail": {
+        "label": "Detail"
+      },
+      "isactive": {
+        "label": "Status"
+      },
+      "parentId": {
+        "label": "Parent Account"
+      },
+      "description": {
+        "label": "Description"
+      },
+      "filter": {
+        "type": {
+          "label": "Subject Type",
+          "option": {
+            "all": "All Types",
+            "asset": "Asset",
+            "liability": "Liabilities",
+            "equity": "Equity",
+            "revenue": "Revenue",
+            "expense": "Expense",
+            "cost": "Cost"
+          }
+        },
+        "is_detail": {
+          "label": "Detail Type",
+          "option": {
+            "all": "All",
+            "detail": "Detail Account",
+            "summary": "General Ledger Account"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Subject Properties"
+        }
+      }
+    },
+    "bank_account": {
+      "meta": {
+        "title": "Bank Account",
+        "description": "Manage corporate bank account information",
+        "createTitle": "Create Bank Account",
+        "editTitle": "Edit Bank Account",
+        "detailTitle": "Bank Account Detail"
+      },
+      "account_number": {
+        "label": "Account Number"
+      },
+      "account_name": {
+        "label": "Account Name"
+      },
+      "bank_name": {
+        "label": "Bank"
+      },
+      "bank_branch": {
+        "label": "Branch Name"
+      },
+      "account_type": {
+        "label": "Account Type",
+        "option": {
+          "checking": "Basic Account",
+          "savings": "General Account",
+          "dedicated": "Special Account",
+          "foreign": "Foreign Currency Account"
+        }
+      },
+      "currency": {
+        "label": "Currency",
+        "option": {
+          "CNY": "CNY",
+          "USD": "USD",
+          "EUR": "EUR",
+          "GBP": "GBP",
+          "JPY": "JPY",
+          "HKD": "HKD"
+        }
+      },
+      "balance": {
+        "label": "Balance"
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "active": "Normal",
+          "frozen": "Frozen",
+          "closed": "Closed"
+        }
+      },
+      "is_primary": {
+        "label": "Main Account"
+      },
+      "description": {
+        "label": "Description"
+      },
+      "filter": {
+        "account_type": {
+          "label": "Account Type",
+          "option": {
+            "all": "All Types",
+            "checking": "Basic Account",
+            "savings": "General Account",
+            "dedicated": "Special Account",
+            "foreign": "Foreign Currency Account"
+          }
+        },
+        "status": {
+          "label": "Account Status",
+          "option": {
+            "all": "All Status",
+            "active": "Normal",
+            "frozen": "Frozen",
+            "closed": "Closed"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Account Properties"
+        }
+      }
+    },
+    "dict_type": {
+      "meta": {
+        "title": "Dictionary Type",
+        "description": "Manage system dictionary types, such as order status, user type, etc.",
+        "createTitle": "Create Dictionary Type",
+        "editTitle": "Edit Dictionary Type",
+        "detailTitle": "Dictionary Type Detail"
+      },
+      "filter": {
+        "category": {
+          "label": "Category",
+          "option": {
+            "all": "All",
+            "system": "System Dictionary",
+            "business": "Business Dictionary",
+            "basic": "Basic Data",
+            "custom": "Custom Dictionary"
+          }
+        },
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All",
+            "active": "Enabled",
+            "inactive": "Disabled"
+          }
+        }
+      },
+      "status": {
+        "option": {
+          "active": "Enabled",
+          "inactive": "Disabled"
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        }
+      },
+      "label": "Parent Dictionary Item"
+    },
+    "dict_item": {
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        }
+      },
+      "meta": {
+        "description": "Manage specific options under dictionary types",
+        "createTitle": "Create Dictionary Item",
+        "editTitle": "Edit Dictionary Item",
+        "detailTitle": "Dictionary Item Detail"
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All",
+            "active": "Enabled",
+            "inactive": "Disabled"
+          }
+        }
+      },
+      "status": {
+        "option": {
+          "active": "Enabled",
+          "inactive": "Disabled"
+        }
+      },
+      "batchAction": {
+        "batch-delete": {
+          "label": "Batch Delete",
+          "confirmMessage": "Are you sure to delete the selected dictionary items?"
+        }
+      }
+    },
+    "migration": {
+      "meta": {
+        "title": "Data Migration Management",
+        "description": "Manage data migration for services, support execution, rollback and status viewing",
+        "detailTitle": "Service Detail"
+      },
+      "name": {
+        "label": "Service Name"
+      },
+      "port": {
+        "label": "Port"
+      },
+      "tables": {
+        "label": "Quantity"
+      },
+      "description": {
+        "label": "Description"
+      }
+    },
+    "plugin": {
+      "meta": {
+        "title": "Plugin Management",
+        "description": "Manage system plugins, enable, disable or uninstall plugins",
+        "createTitle": "Install Plugin",
+        "editTitle": "Edit Plugin",
+        "detailTitle": "Plugin Detail"
+      },
+      "name": {
+        "label": "Name"
+      },
+      "code": {
+        "label": "Code"
+      },
+      "version": {
+        "label": "Version"
+      },
+      "plugin_type": {
+        "label": "Type",
+        "option": {
+          "core": "Core Plugin",
+          "business": "Business Plugin"
+        }
+      },
+      "runtime_status": {
+        "label": "Status"
+      },
+      "runtime_url": {
+        "label": "Runtime Address"
+      },
+      "filter": {
+        "plugin_type": {
+          "label": "Plugin Type",
+          "option": {
+            "all": "All Types",
+            "core": "Core Plugin",
+            "business": "Business Plugin"
+          }
+        }
+      }
+    },
+    "tenant": {
+      "meta": {
+        "title": "Tenant Management",
+        "description": "Manage tenant information, including name, plan, status, etc.",
+        "createTitle": "Create Tenant",
+        "editTitle": "Edit Tenant",
+        "detailTitle": "Tenant Detail"
+      },
+      "name": {
+        "label": "Tenant Name",
+        "placeholder": "Enter tenant name"
+      },
+      "slug": {
+        "label": "Tenant Identifier",
+        "placeholder": "Enter tenant identifier"
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "active": "Activated",
+          "trial": "Trial",
+          "suspended": "Disabled",
+          "deleted": "Deleted"
+        }
+      },
+      "plan": {
+        "label": "Plan",
+        "option": {
+          "free": "Free Edition",
+          "basic": "Basic Edition",
+          "professional": "Pro Edition",
+          "enterprise": "Enterprise Edition"
+        }
+      },
+      "max_users": {
+        "label": "User Count"
+      },
+      "max_storage_gb": {
+        "label": "Storage Quota (GB)"
+      },
+      "created_at": {
+        "label": "Created At"
+      },
+      "updated_at": {
+        "label": "Updated At"
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "active": "Activated",
+            "trial": "Trial",
+            "suspended": "Disabled"
+          }
+        },
+        "plan": {
+          "label": "Plan",
+          "option": {
+            "all": "All Plans",
+            "free": "Free Edition",
+            "basic": "Basic Edition",
+            "professional": "Pro Edition",
+            "enterprise": "Enterprise Edition"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        }
+      }
+    },
+    "tenant_user": {
+      "meta": {
+        "title": "Tenant Member",
+        "description": "Manage tenant member information",
+        "createTitle": "Invite Member",
+        "editTitle": "Edit Member",
+        "detailTitle": "Member Detail"
+      },
+      "email": {
+        "label": "Member"
+      },
+      "role": {
+        "label": "Role",
+        "option": {
+          "owner": "Owner",
+          "admin": "Admin",
+          "member": "Member",
+          "guest": "Visitor"
+        }
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "active": "Active",
+          "invited": "Invited",
+          "suspended": "Disabled"
+        }
+      },
+      "created_at": {
+        "label": "Join Time"
+      },
+      "last_login": {
+        "label": "Last Login"
+      },
+      "section": {
+        "0": {
+          "title": "Member Information"
+        }
+      }
     }
   },
   "lims": {
@@ -567,6 +1026,1378 @@
       "title": "Documents",
       "description": "Manage all your documents",
       "detail_title": "Document Detail"
+    }
+  },
+  "erp": {
+    "announcement": {
+      "meta": {
+        "title": "Announcement Management",
+        "description": "Manage system announcements, including title, content, priority, publish status, etc.",
+        "createTitle": "Create Announcement",
+        "editTitle": "Edit Announcement",
+        "detailTitle": "Announcement Detail"
+      },
+      "title": {
+        "label": "Announcement Title"
+      },
+      "author": {
+        "label": "Publisher"
+      },
+      "priority": {
+        "label": "Priority",
+        "option": {
+          "low": "Low",
+          "normal": "Medium",
+          "high": "High",
+          "urgent": "Urgent"
+        }
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "draft": "Draft",
+          "published": "Published",
+          "archived": "Archived"
+        }
+      },
+      "content": {
+        "label": "Announcement Content"
+      },
+      "publish_at": {
+        "label": "Publish Time"
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "draft": "Draft",
+            "published": "Published",
+            "archived": "Archived"
+          }
+        },
+        "priority": {
+          "label": "Priority",
+          "option": {
+            "all": "All Priorities",
+            "low": "Low",
+            "normal": "Medium",
+            "high": "High",
+            "urgent": "Urgent"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Announcement Content"
+        }
+      }
+    },
+    "asset": {
+      "meta": {
+        "title": "Asset Management",
+        "description": "Manage company current assets, including equipment, tools, office supplies, etc.",
+        "createTitle": "Create Asset",
+        "editTitle": "Edit Asset",
+        "detailTitle": "Asset Detail"
+      },
+      "name": {
+        "label": "Asset Name"
+      },
+      "asset_number": {
+        "label": "Asset Code"
+      },
+      "category": {
+        "label": "Category"
+      },
+      "brand": {
+        "label": "Brand"
+      },
+      "model": {
+        "label": "Model"
+      },
+      "serial_number": {
+        "label": "Serial Number"
+      },
+      "manufacturer": {
+        "label": "Manufacturer"
+      },
+      "department": {
+        "label": "Department"
+      },
+      "location": {
+        "label": "Storage Location"
+      },
+      "responsible_id": {
+        "label": "Responsible Person ID"
+      },
+      "purchase_date": {
+        "label": "Acquisition Date"
+      },
+      "purchase_amount": {
+        "label": "Acquisition Amount"
+      },
+      "rated_power": {
+        "label": "Rated Power (kW)"
+      },
+      "rated_voltage": {
+        "label": "Rated Voltage (V)"
+      },
+      "rated_current": {
+        "label": "Rated Current (A)"
+      },
+      "specifications": {
+        "label": "Specification"
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "active": "In Use",
+          "idle": "Idle",
+          "maintenance": "Under Repair",
+          "retired": "Scrapped",
+          "transferred": "Transferred"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "active": "In Use",
+            "idle": "Idle",
+            "maintenance": "Under Repair",
+            "retired": "Scrapped",
+            "transferred": "Transferred"
+          }
+        },
+        "category": {
+          "label": "Category",
+          "option": {
+            "all": "All Categories",
+            "电子设备": "Electronic Equipment",
+            "机械设备": "Machinery Equipment",
+            "办公设备": "Office Equipment",
+            "家具": "Furniture",
+            "其他": "Other"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Location & Responsible Person"
+        },
+        "2": {
+          "title": "Purchase Information"
+        },
+        "3": {
+          "title": "Technical Parameters"
+        },
+        "4": {
+          "title": "Status"
+        }
+      }
+    },
+    "asset_category": {
+      "meta": {
+        "title": "Asset Category",
+        "description": "Manage asset categories, supporting tree hierarchy structure",
+        "createTitle": "Create Category",
+        "editTitle": "Edit Category",
+        "detailTitle": "Category Detail"
+      },
+      "code": {
+        "label": "Category Code"
+      },
+      "name": {
+        "label": "Category Name"
+      },
+      "parentId": {
+        "label": "Parent Category"
+      },
+      "description": {
+        "label": "Description"
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "active": "Enabled",
+          "inactive": "Disabled"
+        }
+      },
+      "created_at": {
+        "label": "Created At"
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "active": "Enabled",
+            "inactive": "Disabled"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Status & Description"
+        }
+      }
+    },
+    "bank_account": {
+      "meta": {
+        "title": "Bank Account Management",
+        "description": "Manage company bank account information, including bank, account number, balance, status, etc.",
+        "createTitle": "Create Bank Account",
+        "editTitle": "Edit Bank Account",
+        "detailTitle": "Bank Account Detail"
+      },
+      "bank_name": {
+        "label": "Bank Name"
+      },
+      "branch_name": {
+        "label": "Branch Name"
+      },
+      "account_name": {
+        "label": "Account Name"
+      },
+      "account_number": {
+        "label": "Account Number"
+      },
+      "account_type": {
+        "label": "Account Type",
+        "option": {
+          "basic": "Basic Account",
+          "general": "General Account",
+          "special": "Special Account",
+          "temporary": "Temporary Account"
+        }
+      },
+      "balance": {
+        "label": "Account Balance"
+      },
+      "currency": {
+        "label": "Currency",
+        "option": {
+          "CNY": "CNY",
+          "USD": "USD",
+          "EUR": "EUR"
+        }
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "active": "Normal",
+          "frozen": "Frozen",
+          "closed": "Cancelled",
+          "pending": "Pending Review"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "active": "Normal",
+            "frozen": "Frozen",
+            "closed": "Cancelled",
+            "pending": "Pending Review"
+          }
+        },
+        "account_type": {
+          "label": "Account Type",
+          "option": {
+            "all": "All Types",
+            "basic": "Basic Account",
+            "general": "General Account",
+            "special": "Special Account",
+            "temporary": "Temporary Account"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Account Basic Information"
+        },
+        "1": {
+          "title": "Account Properties"
+        }
+      }
+    },
+    "budget": {
+      "meta": {
+        "title": "Budget Management",
+        "description": "Manage budget information, including type, amount, department, status, etc.",
+        "createTitle": "Create Budget",
+        "editTitle": "Edit Budget",
+        "detailTitle": "Budget Detail"
+      },
+      "budget_type": {
+        "label": "Budget Type",
+        "option": {
+          "annual": "Annual Budget",
+          "quarterly": "Quarterly Budget",
+          "monthly": "Monthly Budget",
+          "project": "Project Budget"
+        }
+      },
+      "department_id": {
+        "label": "Department",
+        "placeholder": "Enter department"
+      },
+      "fiscal_year": {
+        "label": "Budget Period",
+        "placeholder": "Enter budget period"
+      },
+      "total_budget": {
+        "label": "Budget Amount"
+      },
+      "used_amount": {
+        "label": "Used Amount"
+      },
+      "remaining_amount": {
+        "label": "Remaining Amount"
+      },
+      "usage_rate": {
+        "label": "Usage Rate"
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "active": "In Progress",
+          "completed": "Completed",
+          "exceeded": "Overspent",
+          "pending": "Pending Approval",
+          "cancelled": "Cancelled"
+        }
+      },
+      "created_at": {
+        "label": "Created At"
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "active": "In Progress",
+            "completed": "Completed",
+            "exceeded": "Overspent",
+            "pending": "Pending Approval",
+            "cancelled": "Cancelled"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Amount Information"
+        }
+      }
+    },
+    "expense": {
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Amount & Date"
+        },
+        "2": {
+          "title": "Approval Information"
+        },
+        "3": {
+          "title": "Remarks"
+        }
+      },
+      "meta": {
+        "description": "Manage expense reimbursement, including type, amount, applicant, status, etc.",
+        "createTitle": "Create Expense",
+        "editTitle": "Edit Expense",
+        "detailTitle": "Expense Detail"
+      },
+      "label": "Created At",
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "active": "In Progress",
+            "completed": "Completed",
+            "pending": "Pending Approval",
+            "cancelled": "Cancelled"
+          }
+        }
+      }
+    },
+    "customer": {
+      "meta": {
+        "title": "Customer Management",
+        "description": "Manage customer basic information, including code, name, contact, credit rating, etc.",
+        "createTitle": "Create Customer",
+        "editTitle": "Edit Customer",
+        "detailTitle": "Customer Detail"
+      },
+      "customer_code": {
+        "label": "Customer Code"
+      },
+      "customer_name": {
+        "label": "Customer Name"
+      },
+      "short_name": {
+        "label": "Short Name"
+      },
+      "category": {
+        "label": "Customer Category",
+        "option": {
+          "大型企业": "Large Enterprise",
+          "中型企业": "Medium Enterprise",
+          "小型企业": "Small Enterprise",
+          "政府机构": "Government Agency",
+          "个人客户": "Individual Customer"
+        }
+      },
+      "industry": {
+        "label": "Industry",
+        "option": {
+          "电子制造": "Electronics Manufacturing",
+          "机械制造": "Machinery Manufacturing",
+          "化工": "Chemical Industry",
+          "金融": "Finance",
+          "互联网": "Internet",
+          "医疗": "Healthcare"
+        }
+      },
+      "credit_rating": {
+        "label": "Credit Rating",
+        "option": {
+          "AAA": "AAA (Excellent)",
+          "AA": "AA (Good)",
+          "A": "A (Fair)",
+          "BBB": "BBB (Average)",
+          "BB": "BB (Poor)"
+        }
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "active": "Active Partnership",
+          "inactive": "Suspended Partnership",
+          "blacklisted": "Blacklisted"
+        }
+      },
+      "contact_person": {
+        "label": "Contact Person"
+      },
+      "contact_phone": {
+        "label": "Contact Phone"
+      },
+      "contact_email": {
+        "label": "Email"
+      },
+      "address": {
+        "label": "Detailed Address"
+      },
+      "country": {
+        "label": "Country"
+      },
+      "province": {
+        "label": "Province"
+      },
+      "city": {
+        "label": "City"
+      },
+      "zip_code": {
+        "label": "Postal Code"
+      },
+      "tax_number": {
+        "label": "Tax Number"
+      },
+      "bank_name": {
+        "label": "Bank"
+      },
+      "bank_account": {
+        "label": "Bank Account Number"
+      },
+      "credit_limit": {
+        "label": "Credit Limit"
+      },
+      "remark": {
+        "label": "Remarks"
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "active": "Active Partnership",
+            "inactive": "Suspended Partnership",
+            "blacklisted": "Blacklisted"
+          }
+        },
+        "category": {
+          "label": "Category",
+          "option": {
+            "all": "All Categories",
+            "大型企业": "Large Enterprise",
+            "中型企业": "Medium Enterprise",
+            "小型企业": "Small Enterprise",
+            "政府机构": "Government Agency",
+            "个人客户": "Individual Customer"
+          }
+        },
+        "industry": {
+          "label": "Industry",
+          "option": {
+            "all": "All Industries",
+            "电子制造": "Electronics Manufacturing",
+            "机械制造": "Machinery Manufacturing",
+            "化工": "Chemical Industry",
+            "金融": "Finance",
+            "互联网": "Internet",
+            "医疗": "Healthcare"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Contact Information"
+        },
+        "2": {
+          "title": "Finance & Credit"
+        },
+        "3": {
+          "title": "Remarks"
+        }
+      }
+    },
+    "inventory": {
+      "meta": {
+        "title": "Inventory Management",
+        "description": "Manage inventory information, including material, quantity, warehouse, location, etc.",
+        "createTitle": "Create Inventory",
+        "editTitle": "Edit Inventory",
+        "detailTitle": "Inventory Detail"
+      },
+      "material_code": {
+        "label": "Material Code",
+        "placeholder": "Enter material code"
+      },
+      "material_name": {
+        "label": "Material Name",
+        "placeholder": "Enter material name"
+      },
+      "material_id": {
+        "label": "Material ID"
+      },
+      "specification": {
+        "label": "Specification Model",
+        "placeholder": "Enter specification model"
+      },
+      "unit": {
+        "label": "Unit",
+        "placeholder": "Enter unit"
+      },
+      "warehouse_name": {
+        "label": "Warehouse",
+        "option": {
+          "原材料仓库": "Raw Material Warehouse",
+          "成品仓库": "Finished Goods Warehouse",
+          "半成品仓库": "Semi-finished Goods Warehouse"
+        }
+      },
+      "warehouse_id": {
+        "label": "Warehouse ID"
+      },
+      "location_name": {
+        "label": "Storage Location",
+        "placeholder": "Enter storage location"
+      },
+      "location_id": {
+        "label": "Location ID"
+      },
+      "quantity": {
+        "label": "Stock Quantity"
+      },
+      "available_quantity": {
+        "label": "Available Quantity"
+      },
+      "reserved_quantity": {
+        "label": "Reserved Quantity"
+      },
+      "safety_stock": {
+        "label": "Safety Stock"
+      },
+      "max_stock": {
+        "label": "Max Stock"
+      },
+      "unit_cost": {
+        "label": "Unit Cost"
+      },
+      "total_cost": {
+        "label": "Inventory Amount"
+      },
+      "batch_number": {
+        "label": "Batch Number",
+        "placeholder": "Enter batch number"
+      },
+      "production_date": {
+        "label": "Production Date"
+      },
+      "expiry_date": {
+        "label": "Valid Period"
+      },
+      "stock_status": {
+        "label": "Inventory Status"
+      },
+      "created_at": {
+        "label": "Created At"
+      },
+      "updated_at": {
+        "label": "Updated At"
+      },
+      "filter": {
+        "warehouse": {
+          "label": "Warehouse",
+          "option": {
+            "all": "All Warehouses",
+            "W001": "Raw Material Warehouse",
+            "W002": "Finished Goods Warehouse",
+            "W003": "Semi-finished Goods Warehouse"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Material Information"
+        },
+        "1": {
+          "title": "Warehouse Location"
+        },
+        "2": {
+          "title": "Quantity & Cost"
+        },
+        "3": {
+          "title": "Batch Information"
+        }
+      }
+    },
+    "material": {
+      "meta": {
+        "title": "Material Management",
+        "description": "Manage material basic information, including code, name, specification, category, etc.",
+        "createTitle": "Create Material",
+        "editTitle": "Edit Material",
+        "detailTitle": "Material Detail"
+      },
+      "material_code": {
+        "label": "Material Code"
+      },
+      "material_name": {
+        "label": "Material Name"
+      },
+      "specification": {
+        "label": "Specification Model"
+      },
+      "category": {
+        "label": "Category",
+        "option": {
+          "电子元件": "Electronic Components",
+          "机械零件": "Mechanical Parts",
+          "原材料": "Raw Materials",
+          "包装材料": "Packaging Materials",
+          "辅助材料": "Auxiliary Materials"
+        }
+      },
+      "unit": {
+        "label": "Unit"
+      },
+      "unit_price": {
+        "label": "Unit Price"
+      },
+      "supplier_id": {
+        "label": "Supplier ID"
+      },
+      "supplier_name": {
+        "label": "Primary Supplier"
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "active": "Enabled",
+          "inactive": "Disabled",
+          "obsolete": "Eliminated"
+        }
+      },
+      "barcode": {
+        "label": "Barcode"
+      },
+      "weight": {
+        "label": "Weight (kg)"
+      },
+      "volume": {
+        "label": "Volume (m³)"
+      },
+      "description": {
+        "label": "Description"
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "active": "Enabled",
+            "inactive": "Disabled",
+            "obsolete": "Eliminated"
+          }
+        },
+        "category": {
+          "label": "Category",
+          "option": {
+            "all": "All Categories",
+            "电子元件": "Electronic Components",
+            "机械零件": "Mechanical Parts",
+            "原材料": "Raw Materials",
+            "包装材料": "Packaging Materials",
+            "辅助材料": "Auxiliary Materials"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Price & Supplier"
+        },
+        "2": {
+          "title": "Physical Properties"
+        },
+        "3": {
+          "title": "Status & Description"
+        }
+      }
+    },
+    "meeting_room": {
+      "meta": {
+        "title": "Meeting Room Management",
+        "description": "Manage meeting room information, including name, location, capacity, facilities, etc.",
+        "createTitle": "Create Meeting Room",
+        "editTitle": "Edit Meeting Room",
+        "detailTitle": "Meeting Room Detail"
+      },
+      "name": {
+        "label": "Meeting Room Name"
+      },
+      "location": {
+        "label": "Location"
+      },
+      "capacity": {
+        "label": "Capacity"
+      },
+      "facilities": {
+        "label": "Facilities"
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "available": "Available",
+          "occupied": "Occupied",
+          "maintenance": "Under Maintenance",
+          "unavailable": "Unavailable"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "available": "Available",
+            "occupied": "Occupied",
+            "maintenance": "Under Maintenance",
+            "unavailable": "Unavailable"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Facilities & Status"
+        }
+      }
+    },
+    "office_supply": {
+      "meta": {
+        "title": "Office Supply Management",
+        "description": "Manage office supply inventory, including stationery, electronics, furniture, consumables, etc.",
+        "createTitle": "Create Office Supply",
+        "editTitle": "Edit Office Supply",
+        "detailTitle": "Office Supply Detail"
+      },
+      "name": {
+        "label": "Name"
+      },
+      "category": {
+        "label": "Category",
+        "option": {
+          "stationery": "Stationery",
+          "electronics": "Electronic Equipment",
+          "furniture": "Furniture",
+          "consumables": "Consumables",
+          "other": "Other"
+        }
+      },
+      "quantity": {
+        "label": "Quantity"
+      },
+      "unit": {
+        "label": "Unit"
+      },
+      "price": {
+        "label": "Unit Price"
+      },
+      "location": {
+        "label": "Storage Location"
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "in_stock": "In Stock",
+          "low_stock": "Low Stock",
+          "out_of_stock": "Out of Stock",
+          "discontinued": "Disabled"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "in_stock": "In Stock",
+            "low_stock": "Low Stock",
+            "out_of_stock": "Out of Stock",
+            "discontinued": "Disabled"
+          }
+        },
+        "category": {
+          "label": "Category",
+          "option": {
+            "all": "All Categories",
+            "stationery": "Stationery",
+            "electronics": "Electronic Equipment",
+            "furniture": "Furniture",
+            "consumables": "Consumables",
+            "other": "Other"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Inventory Information"
+        }
+      }
+    },
+    "purchase_order": {
+      "meta": {
+        "title": "Purchase Order Management",
+        "description": "Manage purchase order information, including order number, supplier, amount, status, etc.",
+        "createTitle": "Create Purchase Order",
+        "editTitle": "Edit Purchase Order",
+        "detailTitle": "Purchase Order Detail"
+      },
+      "order_number": {
+        "label": "Order Number"
+      },
+      "supplier_name": {
+        "label": "Supplier Name"
+      },
+      "total_amount": {
+        "label": "Order Amount"
+      },
+      "order_date": {
+        "label": "Order Date"
+      },
+      "expected_date": {
+        "label": "Expected Arrival"
+      },
+      "currency": {
+        "label": "Currency",
+        "option": {
+          "CNY": "CNY",
+          "USD": "USD",
+          "EUR": "EUR"
+        }
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "draft": "Draft",
+          "pending": "Pending Approval",
+          "approved": "Approved",
+          "partially_received": "Partial Receipt",
+          "received": "Received",
+          "cancelled": "Cancelled"
+        }
+      },
+      "remark": {
+        "label": "Remarks"
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "draft": "Draft",
+            "pending": "Pending Approval",
+            "approved": "Approved",
+            "partially_received": "Partial Receipt",
+            "received": "Received",
+            "cancelled": "Cancelled"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Amount & Date"
+        },
+        "2": {
+          "title": "Remarks"
+        }
+      }
+    },
+    "sales_order": {
+      "meta": {
+        "title": "Sales Order Management",
+        "description": "Manage sales order information, including order number, customer, amount, status, etc.",
+        "createTitle": "Create Sales Order",
+        "editTitle": "Edit Sales Order",
+        "detailTitle": "Sales Order Detail"
+      },
+      "order_number": {
+        "label": "Order Number"
+      },
+      "customer_name": {
+        "label": "Customer Name"
+      },
+      "total_amount": {
+        "label": "Order Amount"
+      },
+      "order_date": {
+        "label": "Order Date"
+      },
+      "delivery_date": {
+        "label": "Delivery Date"
+      },
+      "currency": {
+        "label": "Currency",
+        "option": {
+          "CNY": "CNY",
+          "USD": "USD",
+          "EUR": "EUR"
+        }
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "draft": "Draft",
+          "pending": "Pending Approval",
+          "approved": "Approved",
+          "partially_shipped": "Partial Shipment",
+          "shipped": "Shipped",
+          "completed": "Completed",
+          "cancelled": "Cancelled"
+        }
+      },
+      "remark": {
+        "label": "Remarks"
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "draft": "Draft",
+            "pending": "Pending Approval",
+            "approved": "Approved",
+            "partially_shipped": "Partial Shipment",
+            "shipped": "Shipped",
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Amount & Date"
+        },
+        "2": {
+          "title": "Remarks"
+        }
+      }
+    },
+    "supplier": {
+      "meta": {
+        "title": "Supplier Management",
+        "description": "Manage supplier basic information, including code, name, contact, credit rating, etc.",
+        "createTitle": "Create Supplier",
+        "editTitle": "Edit Supplier",
+        "detailTitle": "Supplier Detail"
+      },
+      "supplier_code": {
+        "label": "Supplier Code"
+      },
+      "supplier_name": {
+        "label": "Supplier Name"
+      },
+      "short_name": {
+        "label": "Short Name"
+      },
+      "category": {
+        "label": "Supplier Category",
+        "option": {
+          "原材料供应商": "Raw Material Supplier",
+          "配件供应商": "Parts Supplier",
+          "设备供应商": "Equipment Supplier",
+          "服务供应商": "Service Supplier"
+        }
+      },
+      "credit_rating": {
+        "label": "Credit Rating",
+        "option": {
+          "AAA": "AAA (Excellent)",
+          "AA": "AA (Good)",
+          "A": "A (Fair)",
+          "BBB": "BBB (Average)",
+          "BB": "BB (Poor)"
+        }
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "active": "Active Partnership",
+          "inactive": "Suspended Partnership",
+          "blacklisted": "Blacklisted"
+        }
+      },
+      "contact_person": {
+        "label": "Contact Person"
+      },
+      "contact_phone": {
+        "label": "Contact Phone"
+      },
+      "contact_email": {
+        "label": "Email"
+      },
+      "address": {
+        "label": "Detailed Address"
+      },
+      "country": {
+        "label": "Country"
+      },
+      "province": {
+        "label": "Province"
+      },
+      "city": {
+        "label": "City"
+      },
+      "zip_code": {
+        "label": "Postal Code"
+      },
+      "tax_number": {
+        "label": "Tax Number"
+      },
+      "bank_name": {
+        "label": "Bank"
+      },
+      "bank_account": {
+        "label": "Bank Account Number"
+      },
+      "remark": {
+        "label": "Remarks"
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "active": "Active Partnership",
+            "inactive": "Suspended Partnership",
+            "blacklisted": "Blacklisted"
+          }
+        },
+        "category": {
+          "label": "Category",
+          "option": {
+            "all": "All Categories",
+            "原材料供应商": "Raw Material Supplier",
+            "配件供应商": "Parts Supplier",
+            "设备供应商": "Equipment Supplier",
+            "服务供应商": "Service Supplier"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Contact Information"
+        },
+        "2": {
+          "title": "Financial Information"
+        },
+        "3": {
+          "title": "Remarks"
+        }
+      }
+    },
+    "vehicle": {
+      "meta": {
+        "title": "Vehicle Management",
+        "description": "Manage company vehicle information, including license plate, brand, model, driver, status, etc.",
+        "createTitle": "Create Vehicle",
+        "editTitle": "Edit Vehicle",
+        "detailTitle": "Vehicle Detail"
+      },
+      "plate_number": {
+        "label": "License Plate"
+      },
+      "brand": {
+        "label": "Brand"
+      },
+      "model": {
+        "label": "Model"
+      },
+      "vehicle_type": {
+        "label": "Vehicle Type",
+        "option": {
+          "sedan": "Sedan",
+          "van": "Van",
+          "truck": "Truck",
+          "bus": "Bus"
+        }
+      },
+      "driver": {
+        "label": "Driver"
+      },
+      "mileage": {
+        "label": "Mileage (km)"
+      },
+      "last_service": {
+        "label": "Last Maintenance"
+      },
+      "fuel_type": {
+        "label": "Fuel Type",
+        "option": {
+          "gasoline": "Gasoline",
+          "diesel": "Diesel",
+          "electric": "Electric",
+          "hybrid": "Hybrid"
+        }
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "available": "Available",
+          "in_use": "In Use",
+          "maintenance": "Under Maintenance",
+          "unavailable": "Unavailable"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "available": "Available",
+            "in_use": "In Use",
+            "maintenance": "Under Maintenance",
+            "unavailable": "Unavailable"
+          }
+        },
+        "vehicle_type": {
+          "label": "Vehicle Type",
+          "option": {
+            "all": "All Types",
+            "sedan": "Sedan",
+            "van": "Van",
+            "truck": "Truck",
+            "bus": "Bus"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Vehicle Information"
+        },
+        "1": {
+          "title": "Usage Information"
+        }
+      }
+    },
+    "vehicle_request": {
+      "meta": {
+        "title": "Vehicle Request",
+        "description": "Manage vehicle request information, including applicant, vehicle, purpose, time, etc.",
+        "createTitle": "Create Vehicle Request",
+        "editTitle": "Edit Vehicle Request",
+        "detailTitle": "Vehicle Request Detail"
+      },
+      "vehicle_plate": {
+        "label": "License Plate"
+      },
+      "requester": {
+        "label": "Applicant"
+      },
+      "purpose": {
+        "label": "Purpose"
+      },
+      "start_time": {
+        "label": "Start Time"
+      },
+      "end_time": {
+        "label": "End Time"
+      },
+      "driver_required": {
+        "label": "Driver Required"
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "pending": "Pending Approval",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "completed": "Completed"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "pending": "Pending Approval",
+            "approved": "Approved",
+            "rejected": "Rejected",
+            "completed": "Completed"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Application Information"
+        },
+        "1": {
+          "title": "Time & Status"
+        }
+      }
+    },
+    "voucher": {
+      "meta": {
+        "title": "Voucher Management",
+        "description": "Manage financial vouchers, including creation, review, posting, etc.",
+        "createTitle": "Create Voucher",
+        "editTitle": "Edit Voucher",
+        "detailTitle": "Voucher Detail"
+      },
+      "voucher_number": {
+        "label": "Voucher Number"
+      },
+      "voucher_date": {
+        "label": "Voucher Date"
+      },
+      "period": {
+        "label": "Accounting Period"
+      },
+      "voucher_type": {
+        "label": "Voucher Type",
+        "option": {
+          "记": "Accounting Voucher",
+          "收": "Receipt Voucher",
+          "付": "Payment Voucher",
+          "转": "Transfer Voucher"
+        }
+      },
+      "summary": {
+        "label": "Summary"
+      },
+      "attachment_count": {
+        "label": "Attachment Count"
+      },
+      "status": {
+        "label": "Status",
+        "option": {
+          "draft": "Draft",
+          "submitted": "Submitted",
+          "approved": "Reviewed",
+          "posted": "Posted",
+          "voided": "Voided"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Status",
+          "option": {
+            "all": "All Status",
+            "draft": "Draft",
+            "submitted": "Submitted",
+            "approved": "Reviewed",
+            "posted": "Posted",
+            "voided": "Voided"
+          }
+        },
+        "voucher_type": {
+          "label": "Voucher Type",
+          "option": {
+            "all": "All Types",
+            "记": "Accounting Voucher",
+            "收": "Receipt Voucher",
+            "付": "Payment Voucher",
+            "转": "Transfer Voucher"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Basic Information"
+        },
+        "1": {
+          "title": "Other Information"
+        }
+      },
+      "batchAction": {
+        "batchSubmit": {
+          "label": "Batch Submit",
+          "confirmMessage": "Are you sure to batch submit the selected vouchers?"
+        },
+        "batchApprove": {
+          "label": "Batch Review",
+          "confirmMessage": "Are you sure to batch review the selected vouchers?"
+        }
+      }
     }
   }
 }

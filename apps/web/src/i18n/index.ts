@@ -1,5 +1,8 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+// 静态导入 schema 翻译 — schema 模块在导入时即调用 i18n.t()，需要同步可用
+import schemaZh from './locales/zh/schema.json';
+import schemaEn from './locales/en/schema.json';
 
 // 动态导入翻译文件以优化首屏加载
 const loadTranslations = async () => {
@@ -74,16 +77,16 @@ const loadTranslations = async () => {
   };
 };
 
-// 初始配置使用空资源，后续动态加载完整翻译
+// 初始配置：schema namespace 静态加载，其余动态加载
 i18n.use(initReactI18next).init({
   resources: {
-    en: { translation: {}, erp: {}, finance: {} },
-    zh: { translation: {}, erp: {}, finance: {} },
+    en: { translation: {}, erp: {}, finance: {}, schema: schemaEn },
+    zh: { translation: {}, erp: {}, finance: {}, schema: schemaZh },
   },
   lng: localStorage.getItem('language') || 'zh',
   fallbackLng: 'zh',
   defaultNS: 'translation',
-  ns: ['translation', 'erp', 'finance'],
+  ns: ['translation', 'erp', 'finance', 'schema'],
   interpolation: {
     escapeValue: false,
   },

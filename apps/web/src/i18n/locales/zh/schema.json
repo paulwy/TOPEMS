@@ -495,21 +495,480 @@
       "title": "账单历史",
       "description": "查看租户账单和发票信息",
       "invoice_id": "账单编号",
-      "period_start": "账单周期开始",
-      "period_end": "账单周期结束",
-      "amount": "金额",
-      "currency": "币种",
-      "status": "状态",
+      "period_start": {
+        "label": "账单周期开始"
+      },
+      "period_end": {
+        "label": "账单周期结束"
+      },
+      "amount": {
+        "label": "金额"
+      },
+      "currency": {
+        "label": "币种"
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "paid": "已支付",
+          "pending": "待支付",
+          "failed": "支付失败",
+          "draft": "草稿"
+        }
+      },
       "status_paid": "已支付",
       "status_pending": "待支付",
       "status_failed": "支付失败",
       "status_draft": "草稿",
-      "paid_at": "支付时间",
-      "created_at": "创建时间",
+      "paid_at": {
+        "label": "支付时间"
+      },
+      "created_at": {
+        "label": "创建时间"
+      },
       "filter_status": "状态",
       "filter_all_status": "全部状态",
       "detail_title": "发票详情",
-      "action_download": "下载发票"
+      "action_download": "下载发票",
+      "meta": {
+        "title": "账单历史",
+        "description": "查看租户账单和发票信息",
+        "detailTitle": "发票详情"
+      },
+      "id": {
+        "label": "账单编号"
+      },
+      "period": {
+        "label": "账单周期"
+      },
+      "section": {
+        "0": {
+          "title": "账单信息"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "下载发票",
+          "option": {
+            "all": "全部状态",
+            "paid": "已支付",
+            "pending": "待支付",
+            "failed": "支付失败",
+            "draft": "草稿"
+          }
+        }
+      }
+    },
+    "account": {
+      "meta": {
+        "title": "会计科目",
+        "description": "管理企业会计科目体系，支持多级科目结构",
+        "createTitle": "新增科目",
+        "editTitle": "编辑科目",
+        "detailTitle": "科目详情"
+      },
+      "code": {
+        "label": "科目编码"
+      },
+      "name": {
+        "label": "科目名称"
+      },
+      "type": {
+        "label": "科目类型",
+        "option": {
+          "asset": "资产",
+          "liability": "负债",
+          "equity": "权益",
+          "revenue": "收入",
+          "expense": "费用",
+          "cost": "成本"
+        }
+      },
+      "balance_direction": {
+        "label": "余额方向",
+        "option": {
+          "debit": "借",
+          "credit": "贷"
+        }
+      },
+      "is_detail": {
+        "label": "明细"
+      },
+      "isactive": {
+        "label": "状态"
+      },
+      "parentId": {
+        "label": "上级科目"
+      },
+      "description": {
+        "label": "描述"
+      },
+      "filter": {
+        "type": {
+          "label": "科目类型",
+          "option": {
+            "all": "全部类型",
+            "asset": "资产",
+            "liability": "负债",
+            "equity": "权益",
+            "revenue": "收入",
+            "expense": "费用",
+            "cost": "成本"
+          }
+        },
+        "is_detail": {
+          "label": "明细类型",
+          "option": {
+            "all": "全部",
+            "detail": "明细科目",
+            "summary": "总账科目"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "科目属性"
+        }
+      }
+    },
+    "bank_account": {
+      "meta": {
+        "title": "银行账户",
+        "description": "管理企业银行账户信息",
+        "createTitle": "新增银行账户",
+        "editTitle": "编辑银行账户",
+        "detailTitle": "银行账户详情"
+      },
+      "account_number": {
+        "label": "账号"
+      },
+      "account_name": {
+        "label": "账户名称"
+      },
+      "bank_name": {
+        "label": "开户银行"
+      },
+      "bank_branch": {
+        "label": "支行名称"
+      },
+      "account_type": {
+        "label": "账户类型",
+        "option": {
+          "checking": "基本户",
+          "savings": "一般户",
+          "dedicated": "专用户",
+          "foreign": "外币户"
+        }
+      },
+      "currency": {
+        "label": "币种",
+        "option": {
+          "CNY": "人民币 (CNY)",
+          "USD": "美元 (USD)",
+          "EUR": "欧元 (EUR)",
+          "GBP": "英镑 (GBP)",
+          "JPY": "日元 (JPY)",
+          "HKD": "港币 (HKD)"
+        }
+      },
+      "balance": {
+        "label": "余额"
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "active": "正常",
+          "frozen": "冻结",
+          "closed": "销户"
+        }
+      },
+      "is_primary": {
+        "label": "主账户"
+      },
+      "description": {
+        "label": "描述"
+      },
+      "filter": {
+        "account_type": {
+          "label": "账户类型",
+          "option": {
+            "all": "全部类型",
+            "checking": "基本户",
+            "savings": "一般户",
+            "dedicated": "专用户",
+            "foreign": "外币户"
+          }
+        },
+        "status": {
+          "label": "账户状态",
+          "option": {
+            "all": "全部状态",
+            "active": "正常",
+            "frozen": "冻结",
+            "closed": "销户"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "账户属性"
+        }
+      }
+    },
+    "dict_type": {
+      "meta": {
+        "title": "字典类型",
+        "description": "管理系统字典类型，如订单状态、用户类型等",
+        "createTitle": "新增字典类型",
+        "editTitle": "编辑字典类型",
+        "detailTitle": "字典类型详情"
+      },
+      "filter": {
+        "category": {
+          "label": "分类",
+          "option": {
+            "all": "全部",
+            "system": "系统字典",
+            "business": "业务字典",
+            "basic": "基础数据",
+            "custom": "自定义字典"
+          }
+        },
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部",
+            "active": "启用",
+            "inactive": "禁用"
+          }
+        }
+      },
+      "status": {
+        "option": {
+          "active": "启用",
+          "inactive": "禁用"
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        }
+      },
+      "label": "上级字典项"
+    },
+    "dict_item": {
+      "section": {
+        "0": {
+          "title": "基本信息"
+        }
+      },
+      "meta": {
+        "description": "管理字典类型下的具体选项",
+        "createTitle": "新增字典项",
+        "editTitle": "编辑字典项",
+        "detailTitle": "字典项详情"
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部",
+            "active": "启用",
+            "inactive": "禁用"
+          }
+        }
+      },
+      "status": {
+        "option": {
+          "active": "启用",
+          "inactive": "禁用"
+        }
+      },
+      "batchAction": {
+        "batch-delete": {
+          "label": "批量删除",
+          "confirmMessage": "确定要删除选中的字典项吗？"
+        }
+      }
+    },
+    "migration": {
+      "meta": {
+        "title": "数据迁移管理",
+        "description": "管理各服务的数据迁移，支持执行迁移、回滚和查看迁移状态",
+        "detailTitle": "服务详情"
+      },
+      "name": {
+        "label": "服务名称"
+      },
+      "port": {
+        "label": "端口"
+      },
+      "tables": {
+        "label": "表数量"
+      },
+      "description": {
+        "label": "描述"
+      }
+    },
+    "plugin": {
+      "meta": {
+        "title": "插件管理",
+        "description": "管理系统插件，启用、禁用或卸载插件",
+        "createTitle": "安装插件",
+        "editTitle": "编辑插件",
+        "detailTitle": "插件详情"
+      },
+      "name": {
+        "label": "名称"
+      },
+      "code": {
+        "label": "代码"
+      },
+      "version": {
+        "label": "版本"
+      },
+      "plugin_type": {
+        "label": "类型",
+        "option": {
+          "core": "核心插件",
+          "business": "业务插件"
+        }
+      },
+      "runtime_status": {
+        "label": "状态"
+      },
+      "runtime_url": {
+        "label": "运行地址"
+      },
+      "filter": {
+        "plugin_type": {
+          "label": "插件类型",
+          "option": {
+            "all": "全部类型",
+            "core": "核心插件",
+            "business": "业务插件"
+          }
+        }
+      }
+    },
+    "tenant": {
+      "meta": {
+        "title": "租户管理",
+        "description": "管理租户信息，包括租户名称、套餐、状态等",
+        "createTitle": "创建租户",
+        "editTitle": "编辑租户",
+        "detailTitle": "租户详情"
+      },
+      "name": {
+        "label": "租户名称",
+        "placeholder": "请输入租户名称"
+      },
+      "slug": {
+        "label": "租户标识",
+        "placeholder": "请输入租户标识"
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "active": "已激活",
+          "trial": "试用中",
+          "suspended": "已停用",
+          "deleted": "已删除"
+        }
+      },
+      "plan": {
+        "label": "套餐",
+        "option": {
+          "free": "免费版",
+          "basic": "基础版",
+          "professional": "专业版",
+          "enterprise": "企业版"
+        }
+      },
+      "max_users": {
+        "label": "用户数"
+      },
+      "max_storage_gb": {
+        "label": "存储配额 (GB)"
+      },
+      "created_at": {
+        "label": "创建时间"
+      },
+      "updated_at": {
+        "label": "更新时间"
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "active": "已激活",
+            "trial": "试用中",
+            "suspended": "已停用"
+          }
+        },
+        "plan": {
+          "label": "套餐",
+          "option": {
+            "all": "全部套餐",
+            "free": "免费版",
+            "basic": "基础版",
+            "professional": "专业版",
+            "enterprise": "企业版"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        }
+      }
+    },
+    "tenant_user": {
+      "meta": {
+        "title": "租户成员",
+        "description": "管理租户成员信息",
+        "createTitle": "邀请成员",
+        "editTitle": "编辑成员",
+        "detailTitle": "成员详情"
+      },
+      "email": {
+        "label": "成员"
+      },
+      "role": {
+        "label": "角色",
+        "option": {
+          "owner": "所有者",
+          "admin": "管理员",
+          "member": "成员",
+          "guest": "访客"
+        }
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "active": "活跃",
+          "invited": "已邀请",
+          "suspended": "已停用"
+        }
+      },
+      "created_at": {
+        "label": "加入时间"
+      },
+      "last_login": {
+        "label": "最近登录"
+      },
+      "section": {
+        "0": {
+          "title": "成员信息"
+        }
+      }
     }
   },
   "lims": {
@@ -567,6 +1026,1378 @@
       "title": "文档",
       "description": "管理您的所有文档",
       "detail_title": "文档详情"
+    }
+  },
+  "erp": {
+    "announcement": {
+      "meta": {
+        "title": "公告管理",
+        "description": "管理系统公告，包括标题、内容、优先级、发布状态等",
+        "createTitle": "新增公告",
+        "editTitle": "编辑公告",
+        "detailTitle": "公告详情"
+      },
+      "title": {
+        "label": "公告标题"
+      },
+      "author": {
+        "label": "发布人"
+      },
+      "priority": {
+        "label": "优先级",
+        "option": {
+          "low": "低",
+          "normal": "中",
+          "high": "高",
+          "urgent": "紧急"
+        }
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "draft": "草稿",
+          "published": "已发布",
+          "archived": "已归档"
+        }
+      },
+      "content": {
+        "label": "公告内容"
+      },
+      "publish_at": {
+        "label": "发布时间"
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "draft": "草稿",
+            "published": "已发布",
+            "archived": "已归档"
+          }
+        },
+        "priority": {
+          "label": "优先级",
+          "option": {
+            "all": "全部优先级",
+            "low": "低",
+            "normal": "中",
+            "high": "高",
+            "urgent": "紧急"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "公告内容"
+        }
+      }
+    },
+    "asset": {
+      "meta": {
+        "title": "资产管理",
+        "description": "管理公司流动资产，包括设备、工具、办公用品等",
+        "createTitle": "新增资产",
+        "editTitle": "编辑资产",
+        "detailTitle": "资产详情"
+      },
+      "name": {
+        "label": "资产名称"
+      },
+      "asset_number": {
+        "label": "资产编号"
+      },
+      "category": {
+        "label": "类别"
+      },
+      "brand": {
+        "label": "品牌"
+      },
+      "model": {
+        "label": "型号"
+      },
+      "serial_number": {
+        "label": "序列号"
+      },
+      "manufacturer": {
+        "label": "制造商"
+      },
+      "department": {
+        "label": "所属部门"
+      },
+      "location": {
+        "label": "存放位置"
+      },
+      "responsible_id": {
+        "label": "负责人ID"
+      },
+      "purchase_date": {
+        "label": "购置日期"
+      },
+      "purchase_amount": {
+        "label": "购置金额"
+      },
+      "rated_power": {
+        "label": "额定功率(kW)"
+      },
+      "rated_voltage": {
+        "label": "额定电压(V)"
+      },
+      "rated_current": {
+        "label": "额定电流(A)"
+      },
+      "specifications": {
+        "label": "规格说明"
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "active": "在用",
+          "idle": "闲置",
+          "maintenance": "维修中",
+          "retired": "已报废",
+          "transferred": "已转移"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "active": "在用",
+            "idle": "闲置",
+            "maintenance": "维修中",
+            "retired": "已报废",
+            "transferred": "已转移"
+          }
+        },
+        "category": {
+          "label": "类别",
+          "option": {
+            "all": "全部类别",
+            "电子设备": "电子设备",
+            "机械设备": "机械设备",
+            "办公设备": "办公设备",
+            "家具": "家具",
+            "其他": "其他"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "位置与责任人"
+        },
+        "2": {
+          "title": "采购信息"
+        },
+        "3": {
+          "title": "技术参数"
+        },
+        "4": {
+          "title": "状态"
+        }
+      }
+    },
+    "asset_category": {
+      "meta": {
+        "title": "资产分类",
+        "description": "管理资产分类，支持树形层级结构",
+        "createTitle": "新增分类",
+        "editTitle": "编辑分类",
+        "detailTitle": "分类详情"
+      },
+      "code": {
+        "label": "分类编码"
+      },
+      "name": {
+        "label": "分类名称"
+      },
+      "parentId": {
+        "label": "上级分类"
+      },
+      "description": {
+        "label": "描述"
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "active": "启用",
+          "inactive": "停用"
+        }
+      },
+      "created_at": {
+        "label": "创建时间"
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "active": "启用",
+            "inactive": "停用"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "状态与描述"
+        }
+      }
+    },
+    "bank_account": {
+      "meta": {
+        "title": "银行账户管理",
+        "description": "管理公司银行账户信息，包括开户行、账号、余额、状态等",
+        "createTitle": "新增银行账户",
+        "editTitle": "编辑银行账户",
+        "detailTitle": "银行账户详情"
+      },
+      "bank_name": {
+        "label": "银行名称"
+      },
+      "branch_name": {
+        "label": "支行名称"
+      },
+      "account_name": {
+        "label": "账户名称"
+      },
+      "account_number": {
+        "label": "账号"
+      },
+      "account_type": {
+        "label": "账户类型",
+        "option": {
+          "basic": "基本账户",
+          "general": "一般账户",
+          "special": "专用账户",
+          "temporary": "临时账户"
+        }
+      },
+      "balance": {
+        "label": "账户余额"
+      },
+      "currency": {
+        "label": "货币",
+        "option": {
+          "CNY": "人民币 (CNY)",
+          "USD": "美元 (USD)",
+          "EUR": "欧元 (EUR)"
+        }
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "active": "正常",
+          "frozen": "冻结",
+          "closed": "已注销",
+          "pending": "待审核"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "active": "正常",
+            "frozen": "冻结",
+            "closed": "已注销",
+            "pending": "待审核"
+          }
+        },
+        "account_type": {
+          "label": "账户类型",
+          "option": {
+            "all": "全部类型",
+            "basic": "基本账户",
+            "general": "一般账户",
+            "special": "专用账户",
+            "temporary": "临时账户"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "账户基本信息"
+        },
+        "1": {
+          "title": "账户属性"
+        }
+      }
+    },
+    "budget": {
+      "meta": {
+        "title": "预算管理",
+        "description": "管理预算信息，包括预算类型、金额、部门和状态等",
+        "createTitle": "新增预算",
+        "editTitle": "编辑预算",
+        "detailTitle": "预算详情"
+      },
+      "budget_type": {
+        "label": "预算类型",
+        "option": {
+          "annual": "年度预算",
+          "quarterly": "季度预算",
+          "monthly": "月度预算",
+          "project": "项目预算"
+        }
+      },
+      "department_id": {
+        "label": "所属部门",
+        "placeholder": "请输入所属部门"
+      },
+      "fiscal_year": {
+        "label": "预算周期",
+        "placeholder": "请输入预算周期"
+      },
+      "total_budget": {
+        "label": "预算金额"
+      },
+      "used_amount": {
+        "label": "已使用金额"
+      },
+      "remaining_amount": {
+        "label": "剩余金额"
+      },
+      "usage_rate": {
+        "label": "使用率"
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "active": "进行中",
+          "completed": "已完成",
+          "exceeded": "超支",
+          "pending": "待审批",
+          "cancelled": "已取消"
+        }
+      },
+      "created_at": {
+        "label": "创建时间"
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "active": "进行中",
+            "completed": "已完成",
+            "exceeded": "超支",
+            "pending": "待审批",
+            "cancelled": "已取消"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "金额信息"
+        }
+      }
+    },
+    "expense": {
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "金额与日期"
+        },
+        "2": {
+          "title": "审批信息"
+        },
+        "3": {
+          "title": "备注"
+        }
+      },
+      "meta": {
+        "description": "管理费用报销信息，包括费用类型、金额、申请人和状态等",
+        "createTitle": "新增费用报销",
+        "editTitle": "编辑费用报销",
+        "detailTitle": "费用报销详情"
+      },
+      "label": "创建时间",
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "active": "进行中",
+            "completed": "已完成",
+            "pending": "待审批",
+            "cancelled": "已取消"
+          }
+        }
+      }
+    },
+    "customer": {
+      "meta": {
+        "title": "客户管理",
+        "description": "管理客户基础信息，包括编码、名称、联系人、信用等级等",
+        "createTitle": "新增客户",
+        "editTitle": "编辑客户",
+        "detailTitle": "客户详情"
+      },
+      "customer_code": {
+        "label": "客户编码"
+      },
+      "customer_name": {
+        "label": "客户名称"
+      },
+      "short_name": {
+        "label": "简称"
+      },
+      "category": {
+        "label": "客户分类",
+        "option": {
+          "大型企业": "大型企业",
+          "中型企业": "中型企业",
+          "小型企业": "小型企业",
+          "政府机构": "政府机构",
+          "个人客户": "个人客户"
+        }
+      },
+      "industry": {
+        "label": "所属行业",
+        "option": {
+          "电子制造": "电子制造",
+          "机械制造": "机械制造",
+          "化工": "化工",
+          "金融": "金融",
+          "互联网": "互联网",
+          "医疗": "医疗"
+        }
+      },
+      "credit_rating": {
+        "label": "信用等级",
+        "option": {
+          "AAA": "AAA (极好)",
+          "AA": "AA (优良)",
+          "A": "A (良好)",
+          "BBB": "BBB (一般)",
+          "BB": "BB (较差)"
+        }
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "active": "正常合作",
+          "inactive": "暂停合作",
+          "blacklisted": "黑名单"
+        }
+      },
+      "contact_person": {
+        "label": "联系人"
+      },
+      "contact_phone": {
+        "label": "联系电话"
+      },
+      "contact_email": {
+        "label": "电子邮箱"
+      },
+      "address": {
+        "label": "详细地址"
+      },
+      "country": {
+        "label": "国家"
+      },
+      "province": {
+        "label": "省份"
+      },
+      "city": {
+        "label": "城市"
+      },
+      "zip_code": {
+        "label": "邮编"
+      },
+      "tax_number": {
+        "label": "税号"
+      },
+      "bank_name": {
+        "label": "开户银行"
+      },
+      "bank_account": {
+        "label": "银行账号"
+      },
+      "credit_limit": {
+        "label": "信用额度"
+      },
+      "remark": {
+        "label": "备注"
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "active": "正常合作",
+            "inactive": "暂停合作",
+            "blacklisted": "黑名单"
+          }
+        },
+        "category": {
+          "label": "分类",
+          "option": {
+            "all": "全部分类",
+            "大型企业": "大型企业",
+            "中型企业": "中型企业",
+            "小型企业": "小型企业",
+            "政府机构": "政府机构",
+            "个人客户": "个人客户"
+          }
+        },
+        "industry": {
+          "label": "行业",
+          "option": {
+            "all": "全部行业",
+            "电子制造": "电子制造",
+            "机械制造": "机械制造",
+            "化工": "化工",
+            "金融": "金融",
+            "互联网": "互联网",
+            "医疗": "医疗"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "联系信息"
+        },
+        "2": {
+          "title": "财务与信用"
+        },
+        "3": {
+          "title": "备注"
+        }
+      }
+    },
+    "inventory": {
+      "meta": {
+        "title": "库存管理",
+        "description": "管理库存信息，包括物料、数量、仓库、库位等",
+        "createTitle": "新增库存",
+        "editTitle": "编辑库存",
+        "detailTitle": "库存详情"
+      },
+      "material_code": {
+        "label": "物料编码",
+        "placeholder": "请输入物料编码"
+      },
+      "material_name": {
+        "label": "物料名称",
+        "placeholder": "请输入物料名称"
+      },
+      "material_id": {
+        "label": "物料ID"
+      },
+      "specification": {
+        "label": "规格型号",
+        "placeholder": "请输入规格型号"
+      },
+      "unit": {
+        "label": "单位",
+        "placeholder": "请输入单位"
+      },
+      "warehouse_name": {
+        "label": "仓库",
+        "option": {
+          "原材料仓库": "原材料仓库",
+          "成品仓库": "成品仓库",
+          "半成品仓库": "半成品仓库"
+        }
+      },
+      "warehouse_id": {
+        "label": "仓库ID"
+      },
+      "location_name": {
+        "label": "库位",
+        "placeholder": "请输入库位"
+      },
+      "location_id": {
+        "label": "库位ID"
+      },
+      "quantity": {
+        "label": "库存数量"
+      },
+      "available_quantity": {
+        "label": "可用数量"
+      },
+      "reserved_quantity": {
+        "label": "预留数量"
+      },
+      "safety_stock": {
+        "label": "安全库存"
+      },
+      "max_stock": {
+        "label": "最大库存"
+      },
+      "unit_cost": {
+        "label": "单位成本"
+      },
+      "total_cost": {
+        "label": "库存金额"
+      },
+      "batch_number": {
+        "label": "批次号",
+        "placeholder": "请输入批次号"
+      },
+      "production_date": {
+        "label": "生产日期"
+      },
+      "expiry_date": {
+        "label": "有效期"
+      },
+      "stock_status": {
+        "label": "库存状态"
+      },
+      "created_at": {
+        "label": "创建时间"
+      },
+      "updated_at": {
+        "label": "更新时间"
+      },
+      "filter": {
+        "warehouse": {
+          "label": "仓库",
+          "option": {
+            "all": "全部仓库",
+            "W001": "原材料仓库",
+            "W002": "成品仓库",
+            "W003": "半成品仓库"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "物料信息"
+        },
+        "1": {
+          "title": "仓库库位"
+        },
+        "2": {
+          "title": "数量与成本"
+        },
+        "3": {
+          "title": "批次信息"
+        }
+      }
+    },
+    "material": {
+      "meta": {
+        "title": "物料管理",
+        "description": "管理物料基础信息，包括编码、名称、规格、分类等",
+        "createTitle": "新增物料",
+        "editTitle": "编辑物料",
+        "detailTitle": "物料详情"
+      },
+      "material_code": {
+        "label": "物料编码"
+      },
+      "material_name": {
+        "label": "物料名称"
+      },
+      "specification": {
+        "label": "规格型号"
+      },
+      "category": {
+        "label": "分类",
+        "option": {
+          "电子元件": "电子元件",
+          "机械零件": "机械零件",
+          "原材料": "原材料",
+          "包装材料": "包装材料",
+          "辅助材料": "辅助材料"
+        }
+      },
+      "unit": {
+        "label": "单位"
+      },
+      "unit_price": {
+        "label": "单价"
+      },
+      "supplier_id": {
+        "label": "供应商ID"
+      },
+      "supplier_name": {
+        "label": "主供应商"
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "active": "启用",
+          "inactive": "停用",
+          "obsolete": "淘汰"
+        }
+      },
+      "barcode": {
+        "label": "条形码"
+      },
+      "weight": {
+        "label": "重量 (kg)"
+      },
+      "volume": {
+        "label": "体积 (m³)"
+      },
+      "description": {
+        "label": "描述"
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "active": "启用",
+            "inactive": "停用",
+            "obsolete": "淘汰"
+          }
+        },
+        "category": {
+          "label": "分类",
+          "option": {
+            "all": "全部分类",
+            "电子元件": "电子元件",
+            "机械零件": "机械零件",
+            "原材料": "原材料",
+            "包装材料": "包装材料",
+            "辅助材料": "辅助材料"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "价格与供应商"
+        },
+        "2": {
+          "title": "物理属性"
+        },
+        "3": {
+          "title": "状态与描述"
+        }
+      }
+    },
+    "meeting_room": {
+      "meta": {
+        "title": "会议室管理",
+        "description": "管理会议室基础信息，包括名称、位置、容纳人数、设施等",
+        "createTitle": "新增会议室",
+        "editTitle": "编辑会议室",
+        "detailTitle": "会议室详情"
+      },
+      "name": {
+        "label": "会议室名称"
+      },
+      "location": {
+        "label": "位置"
+      },
+      "capacity": {
+        "label": "容纳人数"
+      },
+      "facilities": {
+        "label": "设施"
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "available": "可用",
+          "occupied": "占用中",
+          "maintenance": "维护中",
+          "unavailable": "不可用"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "available": "可用",
+            "occupied": "占用中",
+            "maintenance": "维护中",
+            "unavailable": "不可用"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "设施与状态"
+        }
+      }
+    },
+    "office_supply": {
+      "meta": {
+        "title": "办公用品管理",
+        "description": "管理办公用品库存，包括文具、电子设备、家具、耗材等",
+        "createTitle": "新增办公用品",
+        "editTitle": "编辑办公用品",
+        "detailTitle": "办公用品详情"
+      },
+      "name": {
+        "label": "名称"
+      },
+      "category": {
+        "label": "类别",
+        "option": {
+          "stationery": "文具",
+          "electronics": "电子设备",
+          "furniture": "家具",
+          "consumables": "耗材",
+          "other": "其他"
+        }
+      },
+      "quantity": {
+        "label": "数量"
+      },
+      "unit": {
+        "label": "单位"
+      },
+      "price": {
+        "label": "单价"
+      },
+      "location": {
+        "label": "存放位置"
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "in_stock": "在库",
+          "low_stock": "库存不足",
+          "out_of_stock": "缺货",
+          "discontinued": "已停用"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "in_stock": "在库",
+            "low_stock": "库存不足",
+            "out_of_stock": "缺货",
+            "discontinued": "已停用"
+          }
+        },
+        "category": {
+          "label": "类别",
+          "option": {
+            "all": "全部类别",
+            "stationery": "文具",
+            "electronics": "电子设备",
+            "furniture": "家具",
+            "consumables": "耗材",
+            "other": "其他"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "库存信息"
+        }
+      }
+    },
+    "purchase_order": {
+      "meta": {
+        "title": "采购订单管理",
+        "description": "管理采购订单信息，包括订单号、供应商、金额、状态等",
+        "createTitle": "新增采购订单",
+        "editTitle": "编辑采购订单",
+        "detailTitle": "采购订单详情"
+      },
+      "order_number": {
+        "label": "订单号"
+      },
+      "supplier_name": {
+        "label": "供应商名称"
+      },
+      "total_amount": {
+        "label": "订单金额"
+      },
+      "order_date": {
+        "label": "订单日期"
+      },
+      "expected_date": {
+        "label": "预计到货"
+      },
+      "currency": {
+        "label": "币种",
+        "option": {
+          "CNY": "人民币 (CNY)",
+          "USD": "美元 (USD)",
+          "EUR": "欧元 (EUR)"
+        }
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "draft": "草稿",
+          "pending": "待审批",
+          "approved": "已审批",
+          "partially_received": "部分收货",
+          "received": "已收货",
+          "cancelled": "已取消"
+        }
+      },
+      "remark": {
+        "label": "备注"
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "draft": "草稿",
+            "pending": "待审批",
+            "approved": "已审批",
+            "partially_received": "部分收货",
+            "received": "已收货",
+            "cancelled": "已取消"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "金额与日期"
+        },
+        "2": {
+          "title": "备注"
+        }
+      }
+    },
+    "sales_order": {
+      "meta": {
+        "title": "销售订单管理",
+        "description": "管理销售订单信息，包括订单号、客户、金额、状态等",
+        "createTitle": "新增销售订单",
+        "editTitle": "编辑销售订单",
+        "detailTitle": "销售订单详情"
+      },
+      "order_number": {
+        "label": "订单号"
+      },
+      "customer_name": {
+        "label": "客户名称"
+      },
+      "total_amount": {
+        "label": "订单金额"
+      },
+      "order_date": {
+        "label": "订单日期"
+      },
+      "delivery_date": {
+        "label": "交货日期"
+      },
+      "currency": {
+        "label": "币种",
+        "option": {
+          "CNY": "人民币 (CNY)",
+          "USD": "美元 (USD)",
+          "EUR": "欧元 (EUR)"
+        }
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "draft": "草稿",
+          "pending": "待审批",
+          "approved": "已审批",
+          "partially_shipped": "部分发货",
+          "shipped": "已发货",
+          "completed": "已完成",
+          "cancelled": "已取消"
+        }
+      },
+      "remark": {
+        "label": "备注"
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "draft": "草稿",
+            "pending": "待审批",
+            "approved": "已审批",
+            "partially_shipped": "部分发货",
+            "shipped": "已发货",
+            "completed": "已完成",
+            "cancelled": "已取消"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "金额与日期"
+        },
+        "2": {
+          "title": "备注"
+        }
+      }
+    },
+    "supplier": {
+      "meta": {
+        "title": "供应商管理",
+        "description": "管理供应商基础信息，包括编码、名称、联系人、信用等级等",
+        "createTitle": "新增供应商",
+        "editTitle": "编辑供应商",
+        "detailTitle": "供应商详情"
+      },
+      "supplier_code": {
+        "label": "供应商编码"
+      },
+      "supplier_name": {
+        "label": "供应商名称"
+      },
+      "short_name": {
+        "label": "简称"
+      },
+      "category": {
+        "label": "供应商分类",
+        "option": {
+          "原材料供应商": "原材料供应商",
+          "配件供应商": "配件供应商",
+          "设备供应商": "设备供应商",
+          "服务供应商": "服务供应商"
+        }
+      },
+      "credit_rating": {
+        "label": "信用等级",
+        "option": {
+          "AAA": "AAA (极好)",
+          "AA": "AA (优良)",
+          "A": "A (良好)",
+          "BBB": "BBB (一般)",
+          "BB": "BB (较差)"
+        }
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "active": "正常合作",
+          "inactive": "暂停合作",
+          "blacklisted": "黑名单"
+        }
+      },
+      "contact_person": {
+        "label": "联系人"
+      },
+      "contact_phone": {
+        "label": "联系电话"
+      },
+      "contact_email": {
+        "label": "电子邮箱"
+      },
+      "address": {
+        "label": "详细地址"
+      },
+      "country": {
+        "label": "国家"
+      },
+      "province": {
+        "label": "省份"
+      },
+      "city": {
+        "label": "城市"
+      },
+      "zip_code": {
+        "label": "邮编"
+      },
+      "tax_number": {
+        "label": "税号"
+      },
+      "bank_name": {
+        "label": "开户银行"
+      },
+      "bank_account": {
+        "label": "银行账号"
+      },
+      "remark": {
+        "label": "备注"
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "active": "正常合作",
+            "inactive": "暂停合作",
+            "blacklisted": "黑名单"
+          }
+        },
+        "category": {
+          "label": "分类",
+          "option": {
+            "all": "全部分类",
+            "原材料供应商": "原材料供应商",
+            "配件供应商": "配件供应商",
+            "设备供应商": "设备供应商",
+            "服务供应商": "服务供应商"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "联系信息"
+        },
+        "2": {
+          "title": "财务信息"
+        },
+        "3": {
+          "title": "备注"
+        }
+      }
+    },
+    "vehicle": {
+      "meta": {
+        "title": "车辆管理",
+        "description": "管理公司车辆信息，包括车牌号、品牌、型号、驾驶员、状态等",
+        "createTitle": "新增车辆",
+        "editTitle": "编辑车辆",
+        "detailTitle": "车辆详情"
+      },
+      "plate_number": {
+        "label": "车牌号"
+      },
+      "brand": {
+        "label": "品牌"
+      },
+      "model": {
+        "label": "型号"
+      },
+      "vehicle_type": {
+        "label": "车辆类型",
+        "option": {
+          "sedan": "轿车",
+          "van": "面包车",
+          "truck": "卡车",
+          "bus": "巴士"
+        }
+      },
+      "driver": {
+        "label": "驾驶员"
+      },
+      "mileage": {
+        "label": "里程(km)"
+      },
+      "last_service": {
+        "label": "上次保养"
+      },
+      "fuel_type": {
+        "label": "燃料类型",
+        "option": {
+          "gasoline": "汽油",
+          "diesel": "柴油",
+          "electric": "电动",
+          "hybrid": "混合动力"
+        }
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "available": "可用",
+          "in_use": "使用中",
+          "maintenance": "维护中",
+          "unavailable": "不可用"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "available": "可用",
+            "in_use": "使用中",
+            "maintenance": "维护中",
+            "unavailable": "不可用"
+          }
+        },
+        "vehicle_type": {
+          "label": "车辆类型",
+          "option": {
+            "all": "全部类型",
+            "sedan": "轿车",
+            "van": "面包车",
+            "truck": "卡车",
+            "bus": "巴士"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "车辆信息"
+        },
+        "1": {
+          "title": "使用信息"
+        }
+      }
+    },
+    "vehicle_request": {
+      "meta": {
+        "title": "车辆申请",
+        "description": "管理车辆申请信息，包括申请人、车辆、用途、时间等",
+        "createTitle": "新增车辆申请",
+        "editTitle": "编辑车辆申请",
+        "detailTitle": "车辆申请详情"
+      },
+      "vehicle_plate": {
+        "label": "车牌号"
+      },
+      "requester": {
+        "label": "申请人"
+      },
+      "purpose": {
+        "label": "用途"
+      },
+      "start_time": {
+        "label": "开始时间"
+      },
+      "end_time": {
+        "label": "结束时间"
+      },
+      "driver_required": {
+        "label": "需要司机"
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "pending": "待审批",
+          "approved": "已批准",
+          "rejected": "已拒绝",
+          "completed": "已完成"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "pending": "待审批",
+            "approved": "已批准",
+            "rejected": "已拒绝",
+            "completed": "已完成"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "申请信息"
+        },
+        "1": {
+          "title": "时间与状态"
+        }
+      }
+    },
+    "voucher": {
+      "meta": {
+        "title": "凭证管理",
+        "description": "管理财务凭证，包括创建、审核、过账等全流程",
+        "createTitle": "创建凭证",
+        "editTitle": "编辑凭证",
+        "detailTitle": "凭证详情"
+      },
+      "voucher_number": {
+        "label": "凭证号"
+      },
+      "voucher_date": {
+        "label": "凭证日期"
+      },
+      "period": {
+        "label": "会计期间"
+      },
+      "voucher_type": {
+        "label": "凭证类型",
+        "option": {
+          "记": "记账凭证",
+          "收": "收款凭证",
+          "付": "付款凭证",
+          "转": "转账凭证"
+        }
+      },
+      "summary": {
+        "label": "摘要"
+      },
+      "attachment_count": {
+        "label": "附件数量"
+      },
+      "status": {
+        "label": "状态",
+        "option": {
+          "draft": "草稿",
+          "submitted": "已提交",
+          "approved": "已审核",
+          "posted": "已过账",
+          "voided": "已作废"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "状态",
+          "option": {
+            "all": "全部状态",
+            "draft": "草稿",
+            "submitted": "已提交",
+            "approved": "已审核",
+            "posted": "已过账",
+            "voided": "已作废"
+          }
+        },
+        "voucher_type": {
+          "label": "凭证类型",
+          "option": {
+            "all": "全部类型",
+            "记": "记账凭证",
+            "收": "收款凭证",
+            "付": "付款凭证",
+            "转": "转账凭证"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "基本信息"
+        },
+        "1": {
+          "title": "其他信息"
+        }
+      },
+      "batchAction": {
+        "batchSubmit": {
+          "label": "批量提交",
+          "confirmMessage": "确定要批量提交选中的凭证吗？"
+        },
+        "batchApprove": {
+          "label": "批量审核",
+          "confirmMessage": "确定要批量审核选中的凭证吗？"
+        }
+      }
     }
   }
 }

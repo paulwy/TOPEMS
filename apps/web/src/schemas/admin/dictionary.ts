@@ -1,6 +1,7 @@
 import React from 'react';
 import type { EntitySchema, SchemaField } from '@/schema/types';
 import { dictTypeApi, dictItemApi } from '@/api/system';
+import i18n from '@/i18n';
 
 const categoryLabels: Record<string, string> = {
   system: '系统字典',
@@ -144,8 +145,8 @@ export const dictTypeFields: SchemaField[] = [
 
 export const dictTypeSchema: EntitySchema = {
   entity: 'dict-type',
-  title: '字典类型',
-  description: '管理系统字典类型，如订单状态、用户类型等',
+  title: i18n.t('schema:admin.dict_type.meta.title'),
+  description: i18n.t('schema:admin.dict_type.meta.description'),
   api: {
     module: 'system',
     resource: 'dict-types',
@@ -160,25 +161,25 @@ export const dictTypeSchema: EntitySchema = {
     filters: [
       {
         id: 'category',
-        label: '分类',
+        label: i18n.t('schema:admin.dict_type.filter.category.label'),
         type: 'select',
         options: [
-          { value: 'all', label: '全部' },
-          { value: 'system', label: '系统字典' },
-          { value: 'business', label: '业务字典' },
-          { value: 'basic', label: '基础数据' },
-          { value: 'custom', label: '自定义字典' },
+          { value: 'all', label: i18n.t('schema:admin.dict_type.filter.category.option.all') },
+          { value: 'system', label: i18n.t('schema:admin.dict_type.filter.category.option.system') },
+          { value: 'business', label: i18n.t('schema:admin.dict_type.filter.category.option.business') },
+          { value: 'basic', label: i18n.t('schema:admin.dict_type.filter.category.option.basic') },
+          { value: 'custom', label: i18n.t('schema:admin.dict_type.filter.category.option.custom') },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:admin.dict_type.filter.status.label'),
         type: 'select',
         options: [
-          { value: 'all', label: '全部' },
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
+          { value: 'all', label: i18n.t('schema:admin.dict_type.filter.status.option.all') },
+          { value: 'active', label: i18n.t('schema:admin.dict_type.filter.status.option.active') },
+          { value: 'inactive', label: i18n.t('schema:admin.dict_type.filter.status.option.inactive') },
         ],
         defaultValue: 'all',
       },
@@ -190,27 +191,27 @@ export const dictTypeSchema: EntitySchema = {
         inactive: 'error',
       },
       labelMap: {
-        active: '启用',
-        inactive: '禁用',
+        active: i18n.t('schema:admin.dict_type.status.option.active'),
+        inactive: i18n.t('schema:admin.dict_type.status.option.inactive'),
       },
     },
   },
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:admin.dict_type.section.0.title'),
       fields: ['code', 'name', 'category', 'description'],
     },
   ],
   formColCount: 2,
-  createTitle: '新增字典类型',
-  editTitle: '编辑字典类型',
-  detailTitle: '字典类型详情',
+  createTitle: i18n.t('schema:admin.dict_type.meta.createTitle'),
+  editTitle: i18n.t('schema:admin.dict_type.meta.editTitle'),
+  detailTitle: i18n.t('schema:admin.dict_type.meta.detailTitle'),
 };
 
 export const dictItemFields: SchemaField[] = [
   {
     name: 'sort_order',
-    label: '排序',
+    label: i18n.t('schema:admin.dict_type.label'),
     type: 'number',
     defaultValue: 0,
     listWidth: 70,
@@ -225,7 +226,7 @@ export const dictItemFields: SchemaField[] = [
   },
   {
     name: 'code',
-    label: '编码',
+    label: i18n.t('schema:admin.dict_type.label'),
     type: 'text',
     required: true,
     validation: [{ type: 'required' }],
@@ -237,7 +238,7 @@ export const dictItemFields: SchemaField[] = [
   },
   {
     name: 'name',
-    label: '名称',
+    label: i18n.t('schema:admin.dict_type.label'),
     type: 'text',
     required: true,
     validation: [{ type: 'required' }],
@@ -262,7 +263,7 @@ export const dictItemFields: SchemaField[] = [
   },
   {
     name: 'value',
-    label: '值',
+    label: i18n.t('schema:admin.dict_type.label'),
     type: 'text',
     listWidth: 100,
     renderCell: (row: Record<string, unknown>) => {
@@ -276,7 +277,7 @@ export const dictItemFields: SchemaField[] = [
   },
   {
     name: 'status',
-    label: '状态',
+    label: i18n.t('schema:admin.dict_type.label'),
     type: 'switch',
     defaultValue: 'active',
     listWidth: 80,
@@ -312,7 +313,7 @@ export const dictItemFields: SchemaField[] = [
   },
   {
     name: 'parentId',
-    label: '上级字典项',
+    label: i18n.t('schema:admin.dict_type.label'),
     type: 'select',
     listWidth: 120,
     showInList: false,
@@ -321,8 +322,8 @@ export const dictItemFields: SchemaField[] = [
 
 export const dictItemSchema: EntitySchema = {
   entity: 'dict-item',
-  title: '字典项',
-  description: '管理字典类型下的具体选项',
+  title: i18n.t('schema:admin.dict_item.section.0.title'),
+  description: i18n.t('schema:admin.dict_item.meta.description'),
   api: {
     module: 'system',
     resource: 'dict-items',
@@ -337,12 +338,12 @@ export const dictItemSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:admin.dict_item.filter.status.label'),
         type: 'select',
         options: [
-          { value: 'all', label: '全部' },
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '禁用' },
+          { value: 'all', label: i18n.t('schema:admin.dict_item.filter.status.option.all') },
+          { value: 'active', label: i18n.t('schema:admin.dict_item.filter.status.option.active') },
+          { value: 'inactive', label: i18n.t('schema:admin.dict_item.filter.status.option.inactive') },
         ],
         defaultValue: 'all',
       },
@@ -354,15 +355,15 @@ export const dictItemSchema: EntitySchema = {
         inactive: 'error',
       },
       labelMap: {
-        active: '启用',
-        inactive: '禁用',
+        active: i18n.t('schema:admin.dict_item.status.option.active'),
+        inactive: i18n.t('schema:admin.dict_item.status.option.inactive'),
       },
     },
   },
   batchActions: [
     {
       key: 'batch-delete',
-      label: '批量删除',
+      label: i18n.t('schema:admin.dict_item.batchAction.batch-delete.label'),
       color: 'error',
       icon: React.createElement(React.Fragment),
       onClick: async (selectedIds) => {
@@ -375,19 +376,19 @@ export const dictItemSchema: EntitySchema = {
         }
       },
       confirm: true,
-      confirmMessage: '确定要删除选中的字典项吗？',
+      confirmMessage: i18n.t('schema:admin.dict_item.batchAction.batch-delete.confirmMessage'),
     },
   ],
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:admin.dict_item.section.0.title'),
       fields: ['code', 'name', 'value', 'sort_order', 'parentId'],
     },
   ],
   formColCount: 2,
-  createTitle: '新增字典项',
-  editTitle: '编辑字典项',
-  detailTitle: '字典项详情',
+  createTitle: i18n.t('schema:admin.dict_item.meta.createTitle'),
+  editTitle: i18n.t('schema:admin.dict_item.meta.editTitle'),
+  detailTitle: i18n.t('schema:admin.dict_item.meta.detailTitle'),
 };
 
 export async function toggleDictItemStatus(id: string, currentStatus: string): Promise<void> {

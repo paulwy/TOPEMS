@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const budgetStatusColorMap: Record<string, 'success' | 'default' | 'error' | 'warning'> = {
   active: 'success',
@@ -45,8 +46,8 @@ function renderBudgetAmountCell(row: Record<string, unknown>, field: string) {
 
 export const budgetSchema: EntitySchema = {
   entity: 'erpBudget',
-  title: '预算管理',
-  description: '管理预算信息，包括预算类型、金额、部门和状态等',
+  title: i18n.t('schema:erp.budget.meta.title'),
+  description: i18n.t('schema:erp.budget.meta.description'),
 
   api: {
     module: 'erp',
@@ -56,16 +57,16 @@ export const budgetSchema: EntitySchema = {
   fields: [
     {
       name: 'budget_type',
-      label: '预算类型',
+      label: i18n.t('schema:erp.budget.budget_type.label'),
       type: 'select',
       defaultValue: 'annual',
       options: {
         type: 'static',
         options: [
-          { value: 'annual', label: '年度预算' },
-          { value: 'quarterly', label: '季度预算' },
-          { value: 'monthly', label: '月度预算' },
-          { value: 'project', label: '项目预算' },
+          { value: 'annual', label: i18n.t('schema:erp.budget.budget_type.option.annual') },
+          { value: 'quarterly', label: i18n.t('schema:erp.budget.budget_type.option.quarterly') },
+          { value: 'monthly', label: i18n.t('schema:erp.budget.budget_type.option.monthly') },
+          { value: 'project', label: i18n.t('schema:erp.budget.budget_type.option.project') },
         ],
       },
       sortable: true,
@@ -73,21 +74,21 @@ export const budgetSchema: EntitySchema = {
     },
     {
       name: 'department_id',
-      label: '所属部门',
+      label: i18n.t('schema:erp.budget.department_id.label'),
       type: 'text',
       listWidth: 120,
-      placeholder: '请输入所属部门',
+      placeholder: i18n.t('schema:erp.budget.department_id.placeholder'),
     },
     {
       name: 'fiscal_year',
-      label: '预算周期',
+      label: i18n.t('schema:erp.budget.fiscal_year.label'),
       type: 'text',
       listWidth: 120,
-      placeholder: '请输入预算周期',
+      placeholder: i18n.t('schema:erp.budget.fiscal_year.placeholder'),
     },
     {
       name: 'total_budget',
-      label: '预算金额',
+      label: i18n.t('schema:erp.budget.total_budget.label'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -96,7 +97,7 @@ export const budgetSchema: EntitySchema = {
     },
     {
       name: 'used_amount',
-      label: '已使用金额',
+      label: i18n.t('schema:erp.budget.used_amount.label'),
       type: 'number',
       defaultValue: 0,
       listWidth: 140,
@@ -104,7 +105,7 @@ export const budgetSchema: EntitySchema = {
     },
     {
       name: 'remaining_amount',
-      label: '剩余金额',
+      label: i18n.t('schema:erp.budget.remaining_amount.label'),
       type: 'number',
       readonly: true,
       showInList: false,
@@ -112,7 +113,7 @@ export const budgetSchema: EntitySchema = {
     },
     {
       name: 'usage_rate',
-      label: '使用率',
+      label: i18n.t('schema:erp.budget.usage_rate.label'),
       type: 'number',
       readonly: true,
       showInList: false,
@@ -120,17 +121,17 @@ export const budgetSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.budget.status.label'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'exceeded', label: '超支' },
-          { value: 'pending', label: '待审批' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'active', label: i18n.t('schema:erp.budget.status.option.active') },
+          { value: 'completed', label: i18n.t('schema:erp.budget.status.option.completed') },
+          { value: 'exceeded', label: i18n.t('schema:erp.budget.status.option.exceeded') },
+          { value: 'pending', label: i18n.t('schema:erp.budget.status.option.pending') },
+          { value: 'cancelled', label: i18n.t('schema:erp.budget.status.option.cancelled') },
         ],
       },
       listWidth: 100,
@@ -138,7 +139,7 @@ export const budgetSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('schema:erp.budget.created_at.label'),
       type: 'date',
       readonly: true,
       sortable: true,
@@ -153,15 +154,15 @@ export const budgetSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.budget.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '进行中', value: 'active' },
-          { label: '已完成', value: 'completed' },
-          { label: '超支', value: 'exceeded' },
-          { label: '待审批', value: 'pending' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('schema:erp.budget.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.budget.filter.status.option.active'), value: 'active' },
+          { label: i18n.t('schema:erp.budget.filter.status.option.completed'), value: 'completed' },
+          { label: i18n.t('schema:erp.budget.filter.status.option.exceeded'), value: 'exceeded' },
+          { label: i18n.t('schema:erp.budget.filter.status.option.pending'), value: 'pending' },
+          { label: i18n.t('schema:erp.budget.filter.status.option.cancelled'), value: 'cancelled' },
         ],
         defaultValue: 'all',
       },
@@ -175,27 +176,27 @@ export const budgetSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:erp.budget.section.0.title'),
       fields: ['budget_type', 'department_id', 'fiscal_year', 'status'],
     },
     {
-      title: '金额信息',
+      title: i18n.t('schema:erp.budget.section.1.title'),
       fields: ['total_budget', 'used_amount', 'remaining_amount', 'usage_rate'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增预算',
-  editTitle: '编辑预算',
-  detailTitle: '预算详情',
+  createTitle: i18n.t('schema:erp.budget.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.budget.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.budget.meta.detailTitle'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };
 
 export const expenseSchema: EntitySchema = {
   entity: 'erpExpense',
-  title: '费用报销',
-  description: '管理费用报销信息，包括费用类型、金额、申请人和状态等',
+  title: i18n.t('schema:erp.expense.section.0.title'),
+  description: i18n.t('schema:erp.expense.meta.description'),
 
   api: {
     module: 'erp',
@@ -205,7 +206,7 @@ export const expenseSchema: EntitySchema = {
   fields: [
     {
       name: 'expense_number',
-      label: '费用编号',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'text',
       readonlyOnEdit: true,
       sortable: true,
@@ -214,7 +215,7 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'expense_type',
-      label: '费用类型',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -223,7 +224,7 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'applicant_name',
-      label: '申请人',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'text',
       listWidth: 100,
       showInList: false,
@@ -231,7 +232,7 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'department_id',
-      label: '所属部门',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'text',
       listWidth: 120,
       showInList: false,
@@ -239,7 +240,7 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'amount',
-      label: '费用金额',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'number',
       defaultValue: 0,
       required: true,
@@ -249,14 +250,14 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'expense_date',
-      label: '费用日期',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'date',
       showInList: false,
       showInDetail: true,
     },
     {
       name: 'receipt_count',
-      label: '票据数量',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'number',
       defaultValue: 0,
       showInList: false,
@@ -264,16 +265,16 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'select',
       defaultValue: 'pending',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: '待审批' },
-          { value: 'active', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'pending', label: i18n.t('schema:erp.expense.label') },
+          { value: 'active', label: i18n.t('schema:erp.expense.label') },
+          { value: 'completed', label: i18n.t('schema:erp.expense.label') },
+          { value: 'cancelled', label: i18n.t('schema:erp.expense.label') },
         ],
       },
       listWidth: 100,
@@ -281,14 +282,14 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'approver_id',
-      label: '审批人',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'text',
       showInList: false,
       showInDetail: true,
     },
     {
       name: 'approved_at',
-      label: '审批时间',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'date',
       readonly: true,
       showInList: false,
@@ -297,7 +298,7 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'reimbursed_at',
-      label: '报销时间',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'date',
       readonly: true,
       showInList: false,
@@ -306,14 +307,14 @@ export const expenseSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '备注',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'textarea',
       showInList: false,
       placeholder: '请输入备注',
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('schema:erp.expense.label'),
       type: 'date',
       readonly: true,
       sortable: true,
@@ -328,14 +329,14 @@ export const expenseSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.expense.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '进行中', value: 'active' },
-          { label: '已完成', value: 'completed' },
-          { label: '待审批', value: 'pending' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('schema:erp.expense.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.expense.filter.status.option.active'), value: 'active' },
+          { label: i18n.t('schema:erp.expense.filter.status.option.completed'), value: 'completed' },
+          { label: i18n.t('schema:erp.expense.filter.status.option.pending'), value: 'pending' },
+          { label: i18n.t('schema:erp.expense.filter.status.option.cancelled'), value: 'cancelled' },
         ],
         defaultValue: 'all',
       },
@@ -349,27 +350,27 @@ export const expenseSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:erp.expense.section.0.title'),
       fields: ['expense_number', 'expense_type', 'applicant_name', 'department_id'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('schema:erp.expense.section.1.title'),
       fields: ['amount', 'expense_date', 'receipt_count', 'status'],
     },
     {
-      title: '审批信息',
+      title: i18n.t('schema:erp.expense.section.2.title'),
       fields: ['approver_id', 'approved_at', 'reimbursed_at'],
     },
     {
-      title: '备注',
+      title: i18n.t('schema:erp.expense.section.3.title'),
       fields: ['description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增费用报销',
-  editTitle: '编辑费用报销',
-  detailTitle: '费用报销详情',
+  createTitle: i18n.t('schema:erp.expense.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.expense.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.expense.meta.detailTitle'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

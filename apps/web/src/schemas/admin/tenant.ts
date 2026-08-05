@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const tenantStatusColorMap: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   active: 'success',
@@ -64,8 +65,8 @@ function renderDateCell(row: Record<string, unknown>, field: string) {
 
 export const tenantSchema: EntitySchema = {
   entity: 'adminTenant',
-  title: '租户管理',
-  description: '管理租户信息，包括租户名称、套餐、状态等',
+  title: i18n.t('schema:admin.tenant.meta.title'),
+  description: i18n.t('schema:admin.tenant.meta.description'),
 
   api: {
     module: 'admin',
@@ -75,33 +76,33 @@ export const tenantSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '租户名称',
+      label: i18n.t('schema:admin.tenant.name.label'),
       type: 'text',
       required: true,
       sortable: true,
       listWidth: 180,
-      placeholder: '请输入租户名称',
+      placeholder: i18n.t('schema:admin.tenant.name.placeholder'),
     },
     {
       name: 'slug',
-      label: '租户标识',
+      label: i18n.t('schema:admin.tenant.slug.label'),
       type: 'text',
       required: true,
       listWidth: 140,
-      placeholder: '请输入租户标识',
+      placeholder: i18n.t('schema:admin.tenant.slug.placeholder'),
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:admin.tenant.status.label'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '已激活' },
-          { value: 'trial', label: '试用中' },
-          { value: 'suspended', label: '已停用' },
-          { value: 'deleted', label: '已删除' },
+          { value: 'active', label: i18n.t('schema:admin.tenant.status.option.active') },
+          { value: 'trial', label: i18n.t('schema:admin.tenant.status.option.trial') },
+          { value: 'suspended', label: i18n.t('schema:admin.tenant.status.option.suspended') },
+          { value: 'deleted', label: i18n.t('schema:admin.tenant.status.option.deleted') },
         ],
       },
       listWidth: 100,
@@ -109,16 +110,16 @@ export const tenantSchema: EntitySchema = {
     },
     {
       name: 'plan',
-      label: '套餐',
+      label: i18n.t('schema:admin.tenant.plan.label'),
       type: 'select',
       defaultValue: 'professional',
       options: {
         type: 'static',
         options: [
-          { value: 'free', label: '免费版' },
-          { value: 'basic', label: '基础版' },
-          { value: 'professional', label: '专业版' },
-          { value: 'enterprise', label: '企业版' },
+          { value: 'free', label: i18n.t('schema:admin.tenant.plan.option.free') },
+          { value: 'basic', label: i18n.t('schema:admin.tenant.plan.option.basic') },
+          { value: 'professional', label: i18n.t('schema:admin.tenant.plan.option.professional') },
+          { value: 'enterprise', label: i18n.t('schema:admin.tenant.plan.option.enterprise') },
         ],
       },
       listWidth: 100,
@@ -126,7 +127,7 @@ export const tenantSchema: EntitySchema = {
     },
     {
       name: 'max_users',
-      label: '用户数',
+      label: i18n.t('schema:admin.tenant.max_users.label'),
       type: 'number',
       readonly: true,
       listWidth: 100,
@@ -134,7 +135,7 @@ export const tenantSchema: EntitySchema = {
     },
     {
       name: 'max_storage_gb',
-      label: '存储配额 (GB)',
+      label: i18n.t('schema:admin.tenant.max_storage_gb.label'),
       type: 'number',
       readonly: true,
       listWidth: 120,
@@ -142,7 +143,7 @@ export const tenantSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('schema:admin.tenant.created_at.label'),
       type: 'date',
       readonly: true,
       sortable: true,
@@ -151,7 +152,7 @@ export const tenantSchema: EntitySchema = {
     },
     {
       name: 'updated_at',
-      label: '更新时间',
+      label: i18n.t('schema:admin.tenant.updated_at.label'),
       type: 'date',
       readonly: true,
       showInList: false,
@@ -166,26 +167,26 @@ export const tenantSchema: EntitySchema = {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:admin.tenant.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '已激活', value: 'active' },
-          { label: '试用中', value: 'trial' },
-          { label: '已停用', value: 'suspended' },
+          { label: i18n.t('schema:admin.tenant.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:admin.tenant.filter.status.option.active'), value: 'active' },
+          { label: i18n.t('schema:admin.tenant.filter.status.option.trial'), value: 'trial' },
+          { label: i18n.t('schema:admin.tenant.filter.status.option.suspended'), value: 'suspended' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'plan',
-        label: '套餐',
+        label: i18n.t('schema:admin.tenant.filter.plan.label'),
         type: 'select',
         options: [
-          { label: '全部套餐', value: 'all' },
-          { label: '免费版', value: 'free' },
-          { label: '基础版', value: 'basic' },
-          { label: '专业版', value: 'professional' },
-          { label: '企业版', value: 'enterprise' },
+          { label: i18n.t('schema:admin.tenant.filter.plan.option.all'), value: 'all' },
+          { label: i18n.t('schema:admin.tenant.filter.plan.option.free'), value: 'free' },
+          { label: i18n.t('schema:admin.tenant.filter.plan.option.basic'), value: 'basic' },
+          { label: i18n.t('schema:admin.tenant.filter.plan.option.professional'), value: 'professional' },
+          { label: i18n.t('schema:admin.tenant.filter.plan.option.enterprise'), value: 'enterprise' },
         ],
         defaultValue: 'all',
       },
@@ -199,15 +200,15 @@ export const tenantSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:admin.tenant.section.0.title'),
       fields: ['name', 'slug', 'plan', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '创建租户',
-  editTitle: '编辑租户',
-  detailTitle: '租户详情',
+  createTitle: i18n.t('schema:admin.tenant.meta.createTitle'),
+  editTitle: i18n.t('schema:admin.tenant.meta.editTitle'),
+  detailTitle: i18n.t('schema:admin.tenant.meta.detailTitle'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 };

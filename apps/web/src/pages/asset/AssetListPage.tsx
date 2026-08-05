@@ -16,6 +16,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudTab } from '@/components/templates/CrudPage';
@@ -56,15 +57,6 @@ const statusColorMap: Record<string, { bg: string; color: string }> = {
   disposed: { bg: 'error.lighter', color: 'error.dark' },
 };
 
-const statusLabelMap: Record<string, string> = {
-  active: '在用',
-  idle: '闲置',
-  in_use: '使用中',
-  maintenance: '维修中',
-  retired: '已报废',
-  disposed: '已处置',
-};
-
 function extractListData(response: unknown): AssetRow[] {
   if (!response || typeof response !== 'object') return [];
   const obj = response as Record<string, unknown>;
@@ -87,9 +79,19 @@ const formatCurrency = (value: number | string | undefined | null): string => {
 };
 
 export const AssetListPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [activeTab, setActiveTab] = useState('list');
+
+  const statusLabelMap: Record<string, string> = {
+    active: t('asset:assetlist.status_active'),
+    idle: t('asset:assetlist.status_idle'),
+    in_use: t('asset:assetlist.status_in_use'),
+    maintenance: t('asset:assetlist.status_maintenance'),
+    retired: t('asset:assetlist.status_retired'),
+    disposed: t('asset:assetlist.status_disposed'),
+  };
 
   const { data: assetsResp } = useQuery({
     queryKey: QUERY_KEYS.ERP.ASSETS,
@@ -119,17 +121,17 @@ export const AssetListPage: React.FC = () => {
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       assetApi.update(id, { status } as Partial<Asset>),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '资产状态已更新', type: 'success' });
+      addNotification({ title: t('asset:assetlist.notify_success_title'), message: t('asset:assetlist.notify_success_message'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ERP.ASSETS });
     },
     onError: () => {
-      addNotification({ title: '错误', message: '状态更新失败', type: 'error' });
+      addNotification({ title: t('asset:assetlist.notify_error_title'), message: t('asset:assetlist.notify_error_message'), type: 'error' });
     },
   });
 
   const customRowActions = [
     {
-      label: '投入使用',
+      label: t('asset:assetlist.action_put_in_use'),
       icon: <CheckCircle size={16} />,
       color: 'success' as const,
       onClick: (row: Record<string, unknown>) => {
@@ -142,7 +144,7 @@ export const AssetListPage: React.FC = () => {
       },
     },
     {
-      label: '送修',
+      label: t('asset:assetlist.action_repair'),
       icon: <Wrench size={16} />,
       color: 'warning' as const,
       onClick: (row: Record<string, unknown>) => {
@@ -155,7 +157,7 @@ export const AssetListPage: React.FC = () => {
       },
     },
     {
-      label: '报废',
+      label: t('asset:assetlist.action_retire'),
       icon: <Archive size={16} />,
       color: 'error' as const,
       onClick: (row: Record<string, unknown>) => {
@@ -200,7 +202,7 @@ export const AssetListPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                资产总数
+                {t('asset:assetlist.stat_total')}
               </Typography>
               <Typography
                 variant='h5'
@@ -233,7 +235,7 @@ export const AssetListPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                在用
+                {t('asset:assetlist.stat_active')}
               </Typography>
               <Typography
                 variant='h5'
@@ -266,7 +268,7 @@ export const AssetListPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                维修中
+                {t('asset:assetlist.stat_maintenance')}
               </Typography>
               <Typography
                 variant='h5'
@@ -299,7 +301,7 @@ export const AssetListPage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                资产总值
+                {t('asset:assetlist.stat_total_value')}
               </Typography>
               <Typography
                 variant='h6'
@@ -377,7 +379,7 @@ export const AssetListPage: React.FC = () => {
                   variant='caption'
                   sx={{ color: 'text.secondary', display: 'block' }}
                 >
-                  资产编号
+                  {t('asset:assetlist.detail_asset_code')}
                 </Typography>
                 <Typography variant='body2'>{asset.asset_code || '-'}</Typography>
               </Box>
@@ -394,7 +396,7 @@ export const AssetListPage: React.FC = () => {
                   variant='caption'
                   sx={{ color: 'text.secondary', display: 'block' }}
                 >
-                  规格型号
+                  {t('asset:assetlist.detail_specification')}
                 </Typography>
                 <Typography variant='body2'>{asset.specification || '-'}</Typography>
               </Box>
@@ -411,7 +413,7 @@ export const AssetListPage: React.FC = () => {
                   variant='caption'
                   sx={{ color: 'text.secondary', display: 'block' }}
                 >
-                  存放位置
+                  {t('asset:assetlist.detail_location')}
                 </Typography>
                 <Typography variant='body2'>{asset.location || '-'}</Typography>
               </Box>
@@ -428,7 +430,7 @@ export const AssetListPage: React.FC = () => {
                   variant='caption'
                   sx={{ color: 'text.secondary', display: 'block' }}
                 >
-                  所属部门
+                  {t('asset:assetlist.detail_department')}
                 </Typography>
                 <Typography variant='body2'>{asset.department_name || '-'}</Typography>
               </Box>
@@ -445,7 +447,7 @@ export const AssetListPage: React.FC = () => {
                   variant='caption'
                   sx={{ color: 'text.secondary', display: 'block' }}
                 >
-                  负责人
+                  {t('asset:assetlist.detail_responsible_person')}
                 </Typography>
                 <Typography variant='body2'>{asset.responsible_person || '-'}</Typography>
               </Box>
@@ -462,7 +464,7 @@ export const AssetListPage: React.FC = () => {
                   variant='caption'
                   sx={{ color: 'text.secondary', display: 'block' }}
                 >
-                  购置价格
+                  {t('asset:assetlist.detail_purchase_price')}
                 </Typography>
                 <Typography variant='body2'>{formatCurrency(asset.purchase_price)}</Typography>
               </Box>
@@ -479,7 +481,7 @@ export const AssetListPage: React.FC = () => {
                   variant='caption'
                   sx={{ color: 'text.secondary', display: 'block' }}
                 >
-                  购置日期
+                  {t('asset:assetlist.detail_purchase_date')}
                 </Typography>
                 <Typography variant='body2'>
                   {asset.purchase_date
@@ -500,7 +502,7 @@ export const AssetListPage: React.FC = () => {
                   variant='caption'
                   sx={{ color: 'text.secondary', display: 'block' }}
                 >
-                  创建时间
+                  {t('asset:assetlist.detail_created_at')}
                 </Typography>
                 <Typography variant='body2'>
                   {asset.created_at ? new Date(asset.created_at).toLocaleDateString('zh-CN') : '-'}
@@ -520,7 +522,7 @@ export const AssetListPage: React.FC = () => {
                     variant='caption'
                     sx={{ color: 'text.secondary', display: 'block' }}
                   >
-                    描述
+                    {t('asset:assetlist.detail_description')}
                   </Typography>
                   <Typography variant='body2'>{asset.description}</Typography>
                 </Box>
@@ -535,7 +537,7 @@ export const AssetListPage: React.FC = () => {
   const tabs: CrudTab[] = [
     {
       id: 'list',
-      label: '资产列表',
+      label: t('asset:assetlist.tab_list'),
       content: null,
     },
   ];
@@ -551,7 +553,7 @@ export const AssetListPage: React.FC = () => {
       <CrudPage
         schema={assetSchema}
         apiAdapter={baseAdapter}
-        breadcrumbs={[{ label: '资产管理' }, { label: '资产列表' }]}
+        breadcrumbs={[{ label: t('asset:assetlist.breadcrumb_asset_management') }, { label: t('asset:assetlist.breadcrumb_asset_list') }]}
         headerContent={headerContent}
         detailContent={detailContent}
         detailMaxWidth='lg'

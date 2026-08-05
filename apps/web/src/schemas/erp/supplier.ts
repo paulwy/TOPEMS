@@ -7,14 +7,15 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
 import { erpApi } from '@/api/erp';
+import i18n from '@/i18n';
 
 /**
  * 供应商管理 Schema
  */
 export const supplierSchema: EntitySchema = {
   entity: 'supplier',
-  title: '供应商管理',
-  description: '管理供应商基础信息，包括编码、名称、联系人、信用等级等',
+  title: i18n.t('schema:erp.supplier.meta.title'),
+  description: i18n.t('schema:erp.supplier.meta.description'),
 
   api: {
     module: 'erp',
@@ -24,7 +25,7 @@ export const supplierSchema: EntitySchema = {
   fields: [
     {
       name: 'supplier_code',
-      label: '供应商编码',
+      label: i18n.t('schema:erp.supplier.supplier_code.label'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -33,7 +34,7 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'supplier_name',
-      label: '供应商名称',
+      label: i18n.t('schema:erp.supplier.supplier_name.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -41,126 +42,126 @@ export const supplierSchema: EntitySchema = {
     },
     {
       name: 'short_name',
-      label: '简称',
+      label: i18n.t('schema:erp.supplier.short_name.label'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'category',
-      label: '供应商分类',
+      label: i18n.t('schema:erp.supplier.category.label'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: '原材料供应商', label: '原材料供应商' },
-          { value: '配件供应商', label: '配件供应商' },
-          { value: '设备供应商', label: '设备供应商' },
-          { value: '服务供应商', label: '服务供应商' },
+          { value: '原材料供应商', label: i18n.t('schema:erp.supplier.category.option.原材料供应商') },
+          { value: '配件供应商', label: i18n.t('schema:erp.supplier.category.option.配件供应商') },
+          { value: '设备供应商', label: i18n.t('schema:erp.supplier.category.option.设备供应商') },
+          { value: '服务供应商', label: i18n.t('schema:erp.supplier.category.option.服务供应商') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'credit_rating',
-      label: '信用等级',
+      label: i18n.t('schema:erp.supplier.credit_rating.label'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'AAA', label: 'AAA (极好)' },
-          { value: 'AA', label: 'AA (优良)' },
-          { value: 'A', label: 'A (良好)' },
-          { value: 'BBB', label: 'BBB (一般)' },
-          { value: 'BB', label: 'BB (较差)' },
+          { value: 'AAA', label: i18n.t('schema:erp.supplier.credit_rating.option.AAA') },
+          { value: 'AA', label: i18n.t('schema:erp.supplier.credit_rating.option.AA') },
+          { value: 'A', label: i18n.t('schema:erp.supplier.credit_rating.option.A') },
+          { value: 'BBB', label: i18n.t('schema:erp.supplier.credit_rating.option.BBB') },
+          { value: 'BB', label: i18n.t('schema:erp.supplier.credit_rating.option.BB') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.supplier.status.label'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '正常合作' },
-          { value: 'inactive', label: '暂停合作' },
-          { value: 'blacklisted', label: '黑名单' },
+          { value: 'active', label: i18n.t('schema:erp.supplier.status.option.active') },
+          { value: 'inactive', label: i18n.t('schema:erp.supplier.status.option.inactive') },
+          { value: 'blacklisted', label: i18n.t('schema:erp.supplier.status.option.blacklisted') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'contact_person',
-      label: '联系人',
+      label: i18n.t('schema:erp.supplier.contact_person.label'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'contact_phone',
-      label: '联系电话',
+      label: i18n.t('schema:erp.supplier.contact_phone.label'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'contact_email',
-      label: '电子邮箱',
+      label: i18n.t('schema:erp.supplier.contact_email.label'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'address',
-      label: '详细地址',
+      label: i18n.t('schema:erp.supplier.address.label'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'country',
-      label: '国家',
+      label: i18n.t('schema:erp.supplier.country.label'),
       type: 'text',
       defaultValue: '中国',
       showInList: false,
     },
     {
       name: 'province',
-      label: '省份',
+      label: i18n.t('schema:erp.supplier.province.label'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'city',
-      label: '城市',
+      label: i18n.t('schema:erp.supplier.city.label'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'zip_code',
-      label: '邮编',
+      label: i18n.t('schema:erp.supplier.zip_code.label'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'tax_number',
-      label: '税号',
+      label: i18n.t('schema:erp.supplier.tax_number.label'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'bank_name',
-      label: '开户银行',
+      label: i18n.t('schema:erp.supplier.bank_name.label'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'bank_account',
-      label: '银行账号',
+      label: i18n.t('schema:erp.supplier.bank_account.label'),
       type: 'text',
       showInList: false,
     },
     {
       name: 'remark',
-      label: '备注',
+      label: i18n.t('schema:erp.supplier.remark.label'),
       type: 'textarea',
       showInList: false,
     },
@@ -186,33 +187,33 @@ export const supplierSchema: EntitySchema = {
         blacklisted: 'error',
       },
       labelMap: {
-        active: '正常合作',
-        inactive: '暂停合作',
-        blacklisted: '黑名单',
+        active: i18n.t('schema:erp.supplier.status.option.active'),
+        inactive: i18n.t('schema:erp.supplier.status.option.inactive'),
+        blacklisted: i18n.t('schema:erp.supplier.status.option.blacklisted'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.supplier.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '正常合作', value: 'active' },
-          { label: '暂停合作', value: 'inactive' },
-          { label: '黑名单', value: 'blacklisted' },
+          { label: i18n.t('schema:erp.supplier.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.supplier.filter.status.option.active'), value: 'active' },
+          { label: i18n.t('schema:erp.supplier.filter.status.option.inactive'), value: 'inactive' },
+          { label: i18n.t('schema:erp.supplier.filter.status.option.blacklisted'), value: 'blacklisted' },
         ],
       },
       {
         id: 'category',
-        label: '分类',
+        label: i18n.t('schema:erp.supplier.filter.category.label'),
         type: 'select',
         options: [
-          { label: '全部分类', value: 'all' },
-          { label: '原材料供应商', value: '原材料供应商' },
-          { label: '配件供应商', value: '配件供应商' },
-          { label: '设备供应商', value: '设备供应商' },
-          { label: '服务供应商', value: '服务供应商' },
+          { label: i18n.t('schema:erp.supplier.filter.category.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.supplier.filter.category.option.原材料供应商'), value: '原材料供应商' },
+          { label: i18n.t('schema:erp.supplier.filter.category.option.配件供应商'), value: '配件供应商' },
+          { label: i18n.t('schema:erp.supplier.filter.category.option.设备供应商'), value: '设备供应商' },
+          { label: i18n.t('schema:erp.supplier.filter.category.option.服务供应商'), value: '服务供应商' },
         ],
       },
     ],
@@ -222,7 +223,7 @@ export const supplierSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:erp.supplier.section.0.title'),
       fields: [
         'supplier_code',
         'supplier_name',
@@ -233,7 +234,7 @@ export const supplierSchema: EntitySchema = {
       ],
     },
     {
-      title: '联系信息',
+      title: i18n.t('schema:erp.supplier.section.1.title'),
       fields: [
         'contact_person',
         'contact_phone',
@@ -246,17 +247,17 @@ export const supplierSchema: EntitySchema = {
       ],
     },
     {
-      title: '财务信息',
+      title: i18n.t('schema:erp.supplier.section.2.title'),
       fields: ['tax_number', 'bank_name', 'bank_account'],
     },
     {
-      title: '备注',
+      title: i18n.t('schema:erp.supplier.section.3.title'),
       fields: ['remark'],
     },
   ],
 
   formColCount: 3,
-  createTitle: '新增供应商',
-  editTitle: '编辑供应商',
-  detailTitle: '供应商详情',
+  createTitle: i18n.t('schema:erp.supplier.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.supplier.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.supplier.meta.detailTitle'),
 };

@@ -4,11 +4,12 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const officeSuppliesSchema: EntitySchema = {
   entity: 'office_supply',
-  title: '办公用品管理',
-  description: '管理办公用品库存，包括文具、电子设备、家具、耗材等',
+  title: i18n.t('schema:erp.office_supply.meta.title'),
+  description: i18n.t('schema:erp.office_supply.meta.description'),
 
   api: {
     module: 'erp',
@@ -18,7 +19,7 @@ export const officeSuppliesSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '名称',
+      label: i18n.t('schema:erp.office_supply.name.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -26,23 +27,23 @@ export const officeSuppliesSchema: EntitySchema = {
     },
     {
       name: 'category',
-      label: '类别',
+      label: i18n.t('schema:erp.office_supply.category.label'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'stationery', label: '文具' },
-          { value: 'electronics', label: '电子设备' },
-          { value: 'furniture', label: '家具' },
-          { value: 'consumables', label: '耗材' },
-          { value: 'other', label: '其他' },
+          { value: 'stationery', label: i18n.t('schema:erp.office_supply.category.option.stationery') },
+          { value: 'electronics', label: i18n.t('schema:erp.office_supply.category.option.electronics') },
+          { value: 'furniture', label: i18n.t('schema:erp.office_supply.category.option.furniture') },
+          { value: 'consumables', label: i18n.t('schema:erp.office_supply.category.option.consumables') },
+          { value: 'other', label: i18n.t('schema:erp.office_supply.category.option.other') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'quantity',
-      label: '数量',
+      label: i18n.t('schema:erp.office_supply.quantity.label'),
       type: 'number',
       required: true,
       sortable: true,
@@ -50,13 +51,13 @@ export const officeSuppliesSchema: EntitySchema = {
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('schema:erp.office_supply.unit.label'),
       type: 'text',
       listWidth: 80,
     },
     {
       name: 'price',
-      label: '单价',
+      label: i18n.t('schema:erp.office_supply.price.label'),
       type: 'number',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
@@ -66,22 +67,22 @@ export const officeSuppliesSchema: EntitySchema = {
     },
     {
       name: 'location',
-      label: '存放位置',
+      label: i18n.t('schema:erp.office_supply.location.label'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.office_supply.status.label'),
       type: 'select',
       defaultValue: 'in_stock',
       options: {
         type: 'static',
         options: [
-          { value: 'in_stock', label: '在库' },
-          { value: 'low_stock', label: '库存不足' },
-          { value: 'out_of_stock', label: '缺货' },
-          { value: 'discontinued', label: '已停用' },
+          { value: 'in_stock', label: i18n.t('schema:erp.office_supply.status.option.in_stock') },
+          { value: 'low_stock', label: i18n.t('schema:erp.office_supply.status.option.low_stock') },
+          { value: 'out_of_stock', label: i18n.t('schema:erp.office_supply.status.option.out_of_stock') },
+          { value: 'discontinued', label: i18n.t('schema:erp.office_supply.status.option.discontinued') },
         ],
       },
       listWidth: 100,
@@ -101,36 +102,36 @@ export const officeSuppliesSchema: EntitySchema = {
         discontinued: 'default',
       },
       labelMap: {
-        in_stock: '在库',
-        low_stock: '库存不足',
-        out_of_stock: '缺货',
-        discontinued: '已停用',
+        in_stock: i18n.t('schema:erp.office_supply.status.option.in_stock'),
+        low_stock: i18n.t('schema:erp.office_supply.status.option.low_stock'),
+        out_of_stock: i18n.t('schema:erp.office_supply.status.option.out_of_stock'),
+        discontinued: i18n.t('schema:erp.office_supply.status.option.discontinued'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.office_supply.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '在库', value: 'in_stock' },
-          { label: '库存不足', value: 'low_stock' },
-          { label: '缺货', value: 'out_of_stock' },
-          { label: '已停用', value: 'discontinued' },
+          { label: i18n.t('schema:erp.office_supply.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.office_supply.filter.status.option.in_stock'), value: 'in_stock' },
+          { label: i18n.t('schema:erp.office_supply.filter.status.option.low_stock'), value: 'low_stock' },
+          { label: i18n.t('schema:erp.office_supply.filter.status.option.out_of_stock'), value: 'out_of_stock' },
+          { label: i18n.t('schema:erp.office_supply.filter.status.option.discontinued'), value: 'discontinued' },
         ],
       },
       {
         id: 'category',
-        label: '类别',
+        label: i18n.t('schema:erp.office_supply.filter.category.label'),
         type: 'select',
         options: [
-          { label: '全部类别', value: 'all' },
-          { label: '文具', value: 'stationery' },
-          { label: '电子设备', value: 'electronics' },
-          { label: '家具', value: 'furniture' },
-          { label: '耗材', value: 'consumables' },
-          { label: '其他', value: 'other' },
+          { label: i18n.t('schema:erp.office_supply.filter.category.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.office_supply.filter.category.option.stationery'), value: 'stationery' },
+          { label: i18n.t('schema:erp.office_supply.filter.category.option.electronics'), value: 'electronics' },
+          { label: i18n.t('schema:erp.office_supply.filter.category.option.furniture'), value: 'furniture' },
+          { label: i18n.t('schema:erp.office_supply.filter.category.option.consumables'), value: 'consumables' },
+          { label: i18n.t('schema:erp.office_supply.filter.category.option.other'), value: 'other' },
         ],
       },
     ],
@@ -140,17 +141,17 @@ export const officeSuppliesSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:erp.office_supply.section.0.title'),
       fields: ['name', 'category', 'unit', 'location'],
     },
     {
-      title: '库存信息',
+      title: i18n.t('schema:erp.office_supply.section.1.title'),
       fields: ['quantity', 'price', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增办公用品',
-  editTitle: '编辑办公用品',
-  detailTitle: '办公用品详情',
+  createTitle: i18n.t('schema:erp.office_supply.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.office_supply.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.office_supply.meta.detailTitle'),
 };

@@ -1,72 +1,59 @@
 {
-  "ticketcenter": {
-    "待处理": "待处理",
-    "处理中": "处理中",
-    "等待中": "等待中",
-    "已解决": "已解决",
-    "已关闭": "已关闭",
-    "已取消": "已取消",
-    "严重": "严重",
-    "高": "高",
-    "中": "中",
-    "低": "低",
-    "工单暂不支持删除": "工单暂不支持删除",
-    "无描述": "无描述",
-    "响应时限_typography_typography_variant": "\n              >\n                响应时限\n              </Typography>\n              <Typography\n                variant=",
-    "解决时限_typography_typography_variant": "\n              >\n                解决时限\n              </Typography>\n              <Typography\n                variant=",
-    "剩余解决时间_typography_typography_variant": "\n              >\n                剩余解决时间\n              </Typography>\n              <Typography\n                variant=",
-    "未知用户": "未知用户",
-    "输入评论": "输入评论...",
-    "全部工单": "全部工单",
-    "sla_超时": "SLA 超时",
-    "开始处理": "开始处理",
-    "标记已解决": "标记已解决",
-    "工单中心": "工单中心",
-    "统一管理对账差异_审批超时_系统告警等工单": "统一管理对账差异、审批超时、系统告警等工单",
-    "首页": "首页",
-    "已超时": "已超时",
-    "响应时限": "响应时限\n              ",
-    "解决时限": "解决时限\n              ",
-    "剩余解决时间": "剩余解决时间\n              ",
-    "当前升级级别": "当前升级级别\n              ",
-    "升级历史": "升级历史\n              ",
-    "ticketcenter_待处理": "ticketcenter.待处理",
-    "ticketcenter_处理中": "ticketcenter.处理中",
-    "ticketcenter_等待中": "ticketcenter.等待中",
-    "ticketcenter_已解决": "ticketcenter.已解决",
-    "ticketcenter_已关闭": "ticketcenter.已关闭",
-    "ticketcenter_已取消": "ticketcenter.已取消",
-    "ticketcenter_严重": "ticketcenter.严重",
-    "ticketcenter_高": "ticketcenter.高",
-    "ticketcenter_中": "ticketcenter.中",
-    "ticketcenter_低": "ticketcenter.低",
-    "ticketcenter_工单暂不支持删除": "ticketcenter.工单暂不支持删除",
-    "ticketcenter_无描述": "ticketcenter.无描述",
-    "ticketcenter_已超时": "ticketcenter.已超时",
-    "ticketcenter_响应时限": "ticketcenter.响应时限",
-    "ticketcenter_解决时限": "ticketcenter.解决时限",
-    "ticketcenter_剩余解决时间": "ticketcenter.剩余解决时间",
-    "ticketcenter_当前升级级别": "ticketcenter.当前升级级别",
-    "ticketcenter_升级历史": "ticketcenter.升级历史",
-    "ticketcenter_未知用户": "ticketcenter.未知用户",
-    "ticketcenter_全部工单": "ticketcenter.全部工单",
-    "ticketcenter_sla_超时": "ticketcenter.sla_超时",
-    "ticketcenter_开始处理": "ticketcenter.开始处理",
-    "ticketcenter_标记已解决": "ticketcenter.标记已解决",
-    "ticketcenter_工单中心": "ticketcenter.工单中心",
-    "ticketcenter_统一管理对账差异_审批超时_系统告警等工单": "ticketcenter.统一管理对账差异_审批超时_系统告警等工单",
-    "ticketcenter_首页": "ticketcenter.首页"
+  "status": {
+    "open": "待处理",
+    "in_progress": "处理中",
+    "pending": "等待中",
+    "resolved": "已解决",
+    "closed": "已关闭",
+    "cancelled": "已取消"
   },
-  "ticket_center_page.": "标记已解决",
-  "ticket_center_page.medium": "工单中心",
-  "ticket_center_page.cancel": "已取消",
-  "ticket_center_page.high": "高",
-  "ticket_center_page.low": "低",
-  "ticket_center_page.delete": "工单暂不支持删除",
-  "ticket_center_page.desc": "无描述",
-  "ticket_center_page.input": "输入评论...",
-  "ticket_center_page.sla": "SLA 超时",
-  "ticket_center_page.start": "开始处理",
-  "ticket_center_page.manage": "统一管理对账差异、审批超时、系统告警等工单",
-  "ticket_center_page.home": "首页"
+  "severity": {
+    "critical": "严重",
+    "high": "高",
+    "medium": "中",
+    "low": "低"
+  },
+  "stats": {
+    "all": "全部工单",
+    "slaTimeout": "SLA 超时"
+  },
+  "sla": {
+    "info": "SLA 信息",
+    "breached": "已超时",
+    "responseLimit": "响应时限",
+    "resolutionLimit": "解决时限",
+    "remainingTime": "剩余解决时间",
+    "currentEscalationLevel": "当前升级级别",
+    "escalationHistory": "升级历史",
+    "policy": "策略",
+    "hours": "小时",
+    "deadline": "截止"
+  },
+  "duration": {
+    "overtime": "已超时",
+    "hours": "小时",
+    "minutes": "分",
+    "minutesOnly": "分钟"
+  },
+  "source": "来源",
+  "noDescription": "无描述",
+  "comments": {
+    "title": "评论",
+    "placeholder": "输入评论...",
+    "unknownUser": "未知用户"
+  },
+  "actions": {
+    "startProgress": "开始处理",
+    "markResolved": "标记已解决"
+  },
+  "errors": {
+    "deleteNotSupported": "工单暂不支持删除"
+  },
+  "page": {
+    "title": "工单中心",
+    "description": "统一管理对账差异、审批超时、系统告警等工单"
+  },
+  "breadcrumb": {
+    "home": "首页"
+  }
 }

@@ -10,6 +10,7 @@ import React from 'react';
 import type { EntitySchema } from '@/schema';
 import { columnsFromFields } from '@/schema/schemaExtensions';
 import type { NestedTableConfig, WizardConfig } from '@/schema/schemaExtensions';
+import i18n from '@/i18n';
 
 // ============ 凭证明细子表配置 ============
 
@@ -110,8 +111,8 @@ export const voucherSchema: EntitySchema & {
   wizard: WizardConfig;
 } = {
   entity: 'voucher',
-  title: '凭证管理',
-  description: '管理财务凭证，包括创建、审核、过账等全流程',
+  title: i18n.t('schema:erp.voucher.meta.title'),
+  description: i18n.t('schema:erp.voucher.meta.description'),
 
   api: {
     module: 'erp',
@@ -121,7 +122,7 @@ export const voucherSchema: EntitySchema & {
   fields: [
     {
       name: 'voucher_number',
-      label: '凭证号',
+      label: i18n.t('schema:erp.voucher.voucher_number.label'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -130,7 +131,7 @@ export const voucherSchema: EntitySchema & {
     },
     {
       name: 'voucher_date',
-      label: '凭证日期',
+      label: i18n.t('schema:erp.voucher.voucher_date.label'),
       type: 'date',
       required: true,
       sortable: true,
@@ -138,23 +139,23 @@ export const voucherSchema: EntitySchema & {
     },
     {
       name: 'period',
-      label: '会计期间',
+      label: i18n.t('schema:erp.voucher.period.label'),
       type: 'text',
       required: true,
       showInList: true,
     },
     {
       name: 'voucher_type',
-      label: '凭证类型',
+      label: i18n.t('schema:erp.voucher.voucher_type.label'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { label: '记账凭证', value: '记' },
-          { label: '收款凭证', value: '收' },
-          { label: '付款凭证', value: '付' },
-          { label: '转账凭证', value: '转' },
+          { label: i18n.t('schema:erp.voucher.voucher_type.option.记'), value: '记' },
+          { label: i18n.t('schema:erp.voucher.voucher_type.option.收'), value: '收' },
+          { label: i18n.t('schema:erp.voucher.voucher_type.option.付'), value: '付' },
+          { label: i18n.t('schema:erp.voucher.voucher_type.option.转'), value: '转' },
         ],
       },
       defaultValue: '记',
@@ -162,28 +163,28 @@ export const voucherSchema: EntitySchema & {
     },
     {
       name: 'summary',
-      label: '摘要',
+      label: i18n.t('schema:erp.voucher.summary.label'),
       type: 'textarea',
       showInList: true,
     },
     {
       name: 'attachment_count',
-      label: '附件数量',
+      label: i18n.t('schema:erp.voucher.attachment_count.label'),
       type: 'number',
       defaultValue: 0,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.voucher.status.label'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { label: '草稿', value: 'draft' },
-          { label: '已提交', value: 'submitted' },
-          { label: '已审核', value: 'approved' },
-          { label: '已过账', value: 'posted' },
-          { label: '已作废', value: 'voided' },
+          { label: i18n.t('schema:erp.voucher.status.option.draft'), value: 'draft' },
+          { label: i18n.t('schema:erp.voucher.status.option.submitted'), value: 'submitted' },
+          { label: i18n.t('schema:erp.voucher.status.option.approved'), value: 'approved' },
+          { label: i18n.t('schema:erp.voucher.status.option.posted'), value: 'posted' },
+          { label: i18n.t('schema:erp.voucher.status.option.voided'), value: 'voided' },
         ],
       },
       showInList: true,
@@ -196,28 +197,28 @@ export const voucherSchema: EntitySchema & {
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.voucher.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已提交', value: 'submitted' },
-          { label: '已审核', value: 'approved' },
-          { label: '已过账', value: 'posted' },
-          { label: '已作废', value: 'voided' },
+          { label: i18n.t('schema:erp.voucher.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.voucher.filter.status.option.draft'), value: 'draft' },
+          { label: i18n.t('schema:erp.voucher.filter.status.option.submitted'), value: 'submitted' },
+          { label: i18n.t('schema:erp.voucher.filter.status.option.approved'), value: 'approved' },
+          { label: i18n.t('schema:erp.voucher.filter.status.option.posted'), value: 'posted' },
+          { label: i18n.t('schema:erp.voucher.filter.status.option.voided'), value: 'voided' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'voucher_type',
-        label: '凭证类型',
+        label: i18n.t('schema:erp.voucher.filter.voucher_type.label'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '记账凭证', value: '记' },
-          { label: '收款凭证', value: '收' },
-          { label: '付款凭证', value: '付' },
-          { label: '转账凭证', value: '转' },
+          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.记'), value: '记' },
+          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.收'), value: '收' },
+          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.付'), value: '付' },
+          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.转'), value: '转' },
         ],
         defaultValue: 'all',
       },
@@ -232,52 +233,52 @@ export const voucherSchema: EntitySchema & {
         voided: 'error',
       },
       labelMap: {
-        draft: '草稿',
-        submitted: '已提交',
-        approved: '已审核',
-        posted: '已过账',
-        voided: '已作废',
+        draft: i18n.t('schema:erp.voucher.status.option.draft'),
+        submitted: i18n.t('schema:erp.voucher.status.option.submitted'),
+        approved: i18n.t('schema:erp.voucher.status.option.approved'),
+        posted: i18n.t('schema:erp.voucher.status.option.posted'),
+        voided: i18n.t('schema:erp.voucher.status.option.voided'),
       },
     },
   },
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:erp.voucher.section.0.title'),
       fields: ['voucher_number', 'voucher_date', 'period', 'voucher_type'],
     },
     {
-      title: '其他信息',
+      title: i18n.t('schema:erp.voucher.section.1.title'),
       fields: ['summary', 'attachment_count'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '创建凭证',
-  editTitle: '编辑凭证',
-  detailTitle: '凭证详情',
+  createTitle: i18n.t('schema:erp.voucher.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.voucher.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.voucher.meta.detailTitle'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
 
   batchActions: [
     {
       key: 'batchSubmit',
-      label: '批量提交',
+      label: i18n.t('schema:erp.voucher.batchAction.batchSubmit.label'),
       icon: React.createElement(CheckIcon),
       color: 'primary',
       confirm: true,
-      confirmMessage: '确定要批量提交选中的凭证吗？',
+      confirmMessage: i18n.t('schema:erp.voucher.batchAction.batchSubmit.confirmMessage'),
       onClick: (ids: string[]) => {
         // TODO: 实现批量提交凭证逻辑
       },
     },
     {
       key: 'batchApprove',
-      label: '批量审核',
+      label: i18n.t('schema:erp.voucher.batchAction.batchApprove.label'),
       icon: React.createElement(CheckIcon),
       color: 'success',
       confirm: true,
-      confirmMessage: '确定要批量审核选中的凭证吗？',
+      confirmMessage: i18n.t('schema:erp.voucher.batchAction.batchApprove.confirmMessage'),
       onClick: (ids: string[]) => {
         // TODO: 实现批量审核凭证逻辑
       },

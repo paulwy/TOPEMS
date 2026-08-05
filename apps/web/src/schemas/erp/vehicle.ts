@@ -4,11 +4,12 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const vehicleSchema: EntitySchema = {
   entity: 'vehicle',
-  title: '车辆管理',
-  description: '管理公司车辆信息，包括车牌号、品牌、型号、驾驶员、状态等',
+  title: i18n.t('schema:erp.vehicle.meta.title'),
+  description: i18n.t('schema:erp.vehicle.meta.description'),
 
   api: {
     module: 'erp',
@@ -18,7 +19,7 @@ export const vehicleSchema: EntitySchema = {
   fields: [
     {
       name: 'plate_number',
-      label: '车牌号',
+      label: i18n.t('schema:erp.vehicle.plate_number.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -26,42 +27,42 @@ export const vehicleSchema: EntitySchema = {
     },
     {
       name: 'brand',
-      label: '品牌',
+      label: i18n.t('schema:erp.vehicle.brand.label'),
       type: 'text',
       sortable: true,
       listWidth: 100,
     },
     {
       name: 'model',
-      label: '型号',
+      label: i18n.t('schema:erp.vehicle.model.label'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'vehicle_type',
-      label: '车辆类型',
+      label: i18n.t('schema:erp.vehicle.vehicle_type.label'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'sedan', label: '轿车' },
+          { value: 'sedan', label: i18n.t('schema:erp.vehicle.vehicle_type.option.sedan') },
           { value: 'suv', label: 'SUV' },
-          { value: 'van', label: '面包车' },
-          { value: 'truck', label: '卡车' },
-          { value: 'bus', label: '巴士' },
+          { value: 'van', label: i18n.t('schema:erp.vehicle.vehicle_type.option.van') },
+          { value: 'truck', label: i18n.t('schema:erp.vehicle.vehicle_type.option.truck') },
+          { value: 'bus', label: i18n.t('schema:erp.vehicle.vehicle_type.option.bus') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'driver',
-      label: '驾驶员',
+      label: i18n.t('schema:erp.vehicle.driver.label'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'mileage',
-      label: '里程(km)',
+      label: i18n.t('schema:erp.vehicle.mileage.label'),
       type: 'number',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
@@ -71,37 +72,37 @@ export const vehicleSchema: EntitySchema = {
     },
     {
       name: 'last_service',
-      label: '上次保养',
+      label: i18n.t('schema:erp.vehicle.last_service.label'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'fuel_type',
-      label: '燃料类型',
+      label: i18n.t('schema:erp.vehicle.fuel_type.label'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'gasoline', label: '汽油' },
-          { value: 'diesel', label: '柴油' },
-          { value: 'electric', label: '电动' },
-          { value: 'hybrid', label: '混合动力' },
+          { value: 'gasoline', label: i18n.t('schema:erp.vehicle.fuel_type.option.gasoline') },
+          { value: 'diesel', label: i18n.t('schema:erp.vehicle.fuel_type.option.diesel') },
+          { value: 'electric', label: i18n.t('schema:erp.vehicle.fuel_type.option.electric') },
+          { value: 'hybrid', label: i18n.t('schema:erp.vehicle.fuel_type.option.hybrid') },
         ],
       },
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.vehicle.status.label'),
       type: 'select',
       defaultValue: 'available',
       options: {
         type: 'static',
         options: [
-          { value: 'available', label: '可用' },
-          { value: 'in_use', label: '使用中' },
-          { value: 'maintenance', label: '维护中' },
-          { value: 'unavailable', label: '不可用' },
+          { value: 'available', label: i18n.t('schema:erp.vehicle.status.option.available') },
+          { value: 'in_use', label: i18n.t('schema:erp.vehicle.status.option.in_use') },
+          { value: 'maintenance', label: i18n.t('schema:erp.vehicle.status.option.maintenance') },
+          { value: 'unavailable', label: i18n.t('schema:erp.vehicle.status.option.unavailable') },
         ],
       },
       listWidth: 100,
@@ -130,36 +131,36 @@ export const vehicleSchema: EntitySchema = {
         unavailable: 'error',
       },
       labelMap: {
-        available: '可用',
-        in_use: '使用中',
-        maintenance: '维护中',
-        unavailable: '不可用',
+        available: i18n.t('schema:erp.vehicle.status.option.available'),
+        in_use: i18n.t('schema:erp.vehicle.status.option.in_use'),
+        maintenance: i18n.t('schema:erp.vehicle.status.option.maintenance'),
+        unavailable: i18n.t('schema:erp.vehicle.status.option.unavailable'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.vehicle.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '可用', value: 'available' },
-          { label: '使用中', value: 'in_use' },
-          { label: '维护中', value: 'maintenance' },
-          { label: '不可用', value: 'unavailable' },
+          { label: i18n.t('schema:erp.vehicle.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.vehicle.filter.status.option.available'), value: 'available' },
+          { label: i18n.t('schema:erp.vehicle.filter.status.option.in_use'), value: 'in_use' },
+          { label: i18n.t('schema:erp.vehicle.filter.status.option.maintenance'), value: 'maintenance' },
+          { label: i18n.t('schema:erp.vehicle.filter.status.option.unavailable'), value: 'unavailable' },
         ],
       },
       {
         id: 'vehicle_type',
-        label: '车辆类型',
+        label: i18n.t('schema:erp.vehicle.filter.vehicle_type.label'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '轿车', value: 'sedan' },
+          { label: i18n.t('schema:erp.vehicle.filter.vehicle_type.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.vehicle.filter.vehicle_type.option.sedan'), value: 'sedan' },
           { label: 'SUV', value: 'suv' },
-          { label: '面包车', value: 'van' },
-          { label: '卡车', value: 'truck' },
-          { label: '巴士', value: 'bus' },
+          { label: i18n.t('schema:erp.vehicle.filter.vehicle_type.option.van'), value: 'van' },
+          { label: i18n.t('schema:erp.vehicle.filter.vehicle_type.option.truck'), value: 'truck' },
+          { label: i18n.t('schema:erp.vehicle.filter.vehicle_type.option.bus'), value: 'bus' },
         ],
       },
     ],
@@ -169,17 +170,17 @@ export const vehicleSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '车辆信息',
+      title: i18n.t('schema:erp.vehicle.section.0.title'),
       fields: ['plate_number', 'brand', 'model', 'vehicle_type', 'fuel_type'],
     },
     {
-      title: '使用信息',
+      title: i18n.t('schema:erp.vehicle.section.1.title'),
       fields: ['driver', 'mileage', 'last_service', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增车辆',
-  editTitle: '编辑车辆',
-  detailTitle: '车辆详情',
+  createTitle: i18n.t('schema:erp.vehicle.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.vehicle.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.vehicle.meta.detailTitle'),
 };
