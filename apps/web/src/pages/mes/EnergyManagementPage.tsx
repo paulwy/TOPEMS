@@ -31,6 +31,7 @@ import {
 import { energyManagementApi } from '../../api/mes/energyManagement';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
+import { PageContainer } from '@/components/common';
 
 const EnergyManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -144,7 +145,8 @@ const EnergyManagementPage: React.FC = () => {
   const alertsData = energyAlerts.data?.data;
 
   return (
-    <Box sx={{ p: 3 }}>
+    <PageContainer title='能源管理'>
+      <Box sx={{ p: 3 }}>
       <Typography
         variant='h4'
         sx={{ mb: 4 }}
@@ -522,7 +524,8 @@ const EnergyManagementPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

@@ -11,6 +11,7 @@ import { CloudUpload as CloudUploadIcon, CloudOff as CloudOffIcon } from 'lucide
 import { useSearchParams } from 'react-router-dom';
 import { lowcodeAppsApi } from '@/api/lowcode';
 import type { LowcodeApp } from '@/api/lowcode';
+import { PageContainer } from '@/components/common';
 
 export const AppManagementPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -90,21 +91,26 @@ export const AppManagementPage: React.FC = () => {
 
   if (!appId) {
     return (
+      <PageContainer title="应用管理">
       <Box sx={{ p: 3 }}>
         <Typography color="text.secondary">请在 URL 上携带 ?app_id=xxx 以管理具体应用。</Typography>
       </Box>
+      </PageContainer>
     );
   }
 
   if (loading) {
     return (
+      <PageContainer title="应用管理">
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
       </Box>
+      </PageContainer>
     );
   }
 
   return (
+    <PageContainer title="应用管理">
     <Box sx={{ p: 3, maxWidth: 720 }}>
       <Typography variant="h5" sx={{ mb: 2 }}>
         应用管理 {app ? `· ${app.code}` : ''}
@@ -174,6 +180,7 @@ export const AppManagementPage: React.FC = () => {
         </Stack>
       )}
     </Box>
+    </PageContainer>
   );
 };
 

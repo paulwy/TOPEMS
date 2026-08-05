@@ -24,6 +24,7 @@ import {
 import { Plus as AddIcon, Trash2 as DeleteOutlineIcon, Play as PlayArrowIcon, Square as StopIcon } from 'lucide-react';
 import { lowcodeWorkflowsApi } from '@/api/lowcode';
 import type { LowcodeWorkflow, LowcodeWorkflowTriggerType } from '@/api/lowcode';
+import { PageContainer } from '@/components/common';
 
 const TRIGGER_TYPES: LowcodeWorkflowTriggerType[] = ['manual', 'form_submit', 'schedule', 'event', 'webhook'];
 
@@ -102,6 +103,7 @@ export const WorkflowConfigPage: React.FC = () => {
   };
 
   return (
+    <PageContainer title="流程配置">
     <Box sx={{ p: 3 }}>
       <Stack direction="row" spacing={2} sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5">流程配置</Typography>
@@ -250,6 +252,7 @@ export const WorkflowConfigPage: React.FC = () => {
         </DialogActions>
       </Dialog>
     </Box>
+    </PageContainer>
   );
 };
 

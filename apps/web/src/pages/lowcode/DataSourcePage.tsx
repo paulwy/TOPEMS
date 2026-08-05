@@ -24,6 +24,7 @@ import {
 import { Plus as AddIcon, Trash2 as DeleteOutlineIcon, Wifi as NetworkCheckIcon } from 'lucide-react';
 import { lowcodeDataSourcesApi } from '@/api/lowcode';
 import type { LowcodeDataSource, DataSourceType, DataSourceTestResult } from '@/api/lowcode';
+import { PageContainer } from '@/components/common';
 
 const DS_TYPES: DataSourceType[] = ['mysql', 'postgres', 'sqlite', 'rest', 'mongodb', 'redis'];
 
@@ -113,6 +114,7 @@ export const DataSourcePage: React.FC = () => {
   };
 
   return (
+    <PageContainer title="数据源管理">
     <Box sx={{ p: 3 }}>
       <Stack direction="row" spacing={2} sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5">数据源管理</Typography>
@@ -292,6 +294,7 @@ export const DataSourcePage: React.FC = () => {
         </DialogActions>
       </Dialog>
     </Box>
+    </PageContainer>
   );
 };
 

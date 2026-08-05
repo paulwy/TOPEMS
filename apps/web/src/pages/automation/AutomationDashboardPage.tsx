@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { automationApi } from '@/api/automation';
 import type { AutomationDashboardStats, AutomationRunStatus } from '@/api/automation';
+import { PageContainer } from '@/components/common';
 
 interface StatCardProps {
   label: string;
@@ -106,11 +107,12 @@ export const AutomationDashboardPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h5" sx={{ mb: 3 }}>
-        自动化总览
-      </Typography>
-      {error && (
+    <PageContainer title="自动化总览">
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h5" sx={{ mb: 3 }}>
+          自动化总览
+        </Typography>
+        {error && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           {error}（后端 automation 服务未就绪时显示占位统计）
         </Alert>
@@ -256,7 +258,8 @@ export const AutomationDashboardPage: React.FC = () => {
           </TableContainer>
         </Paper>
       )}
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

@@ -30,6 +30,7 @@ import {
 import { productionCostApi } from '../../api/mes/productionCost';
 import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
+import { PageContainer } from '@/components/common';
 
 const ProductionCostPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -111,7 +112,8 @@ const ProductionCostPage: React.FC = () => {
   const forecastData = costForecast.data?.data;
 
   return (
-    <Box sx={{ p: 3 }}>
+    <PageContainer title='生产成本'>
+      <Box sx={{ p: 3 }}>
       <Typography
         variant='h4'
         sx={{ mb: 4 }}
@@ -576,7 +578,8 @@ const ProductionCostPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { automationRunsApi } from '@/api/automation';
 import type { AutomationRun, AutomationRunStatus } from '@/api/automation';
+import { PageContainer } from '@/components/common';
 
 const RUN_STATUS_COLOR: Record<AutomationRunStatus, 'success' | 'error' | 'warning' | 'info' | 'default'> = {
   success: 'success',
@@ -97,13 +98,14 @@ export const AutomationRunsPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Stack
-        direction="row"
-        spacing={2}
-        sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
-      >
-        <Typography variant="h5">执行历史</Typography>
+    <PageContainer title="执行历史">
+      <Box sx={{ p: 3 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <Typography variant="h5">执行历史</Typography>
         <Button startIcon={<RefreshIcon />} onClick={load} size="small">
           刷新
         </Button>
@@ -286,7 +288,8 @@ export const AutomationRunsPage: React.FC = () => {
           <Button onClick={() => setDetailRun(null)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

@@ -23,6 +23,7 @@ import {
 import { Plus as AddIcon, Trash2 as DeleteOutlineIcon, Eye as VisibilityIcon } from 'lucide-react';
 import { lowcodeFormsApi } from '@/api/lowcode';
 import type { LowcodeForm } from '@/api/lowcode';
+import { PageContainer } from '@/components/common';
 
 export const FormListPage: React.FC = () => {
   const [forms, setForms] = useState<LowcodeForm[]>([]);
@@ -103,6 +104,7 @@ export const FormListPage: React.FC = () => {
   };
 
   return (
+    <PageContainer title="表单列表">
     <Box sx={{ p: 3 }}>
       <Stack direction="row" spacing={2} sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5">表单列表</Typography>
@@ -244,6 +246,7 @@ export const FormListPage: React.FC = () => {
         </DialogActions>
       </Dialog>
     </Box>
+    </PageContainer>
   );
 };
 

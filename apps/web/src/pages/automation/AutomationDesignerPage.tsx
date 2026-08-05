@@ -30,6 +30,7 @@ import type {
   AutomationNodeType,
   AutomationRule,
 } from '@/api/automation';
+import { PageContainer } from '@/components/common';
 
 const NODE_TYPE_LABEL: Record<AutomationNodeType, string> = {
   trigger: '触发器',
@@ -241,13 +242,14 @@ export const AutomationDesignerPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Stack
-        direction="row"
-        spacing={2}
-        sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
-      >
-        <Typography variant="h5">可视化编排</Typography>
+    <PageContainer title="自动化设计器">
+      <Box sx={{ p: 3 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <Typography variant="h5">可视化编排</Typography>
         <Stack direction="row" spacing={1}>
           <Button
             startIcon={<RefreshIcon />}
@@ -406,7 +408,8 @@ export const AutomationDesignerPage: React.FC = () => {
         onClose={() => setEditNode(null)}
         onSave={handleSaveNode}
       />
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 
