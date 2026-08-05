@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from '@topems/shared-hooks';
 import { Search, Shield, User, Calendar, Download, RefreshCw, ArrowRight } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { permissionAuditApi } from '@/api/admin/permissionAudit';
@@ -47,47 +48,44 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   const PER_PAGE = 20;
 
   const permissionChangesQuery = useQuery<{ items: PermissionChange[]; total: number }>({
-    queryKey: ['admin-permission-changes', currentPage, searchQuery, filterType],
+    queryKey: ['admin-permission-changes', currentPage, debouncedSearch, filterType],
     queryFn: async () => {
-      const params: Record<string, unknown> = {
+      const response = await permissionAuditApi.listPermissionChanges({
         page: currentPage,
-        per_page: PER_PAGE,
-      };
-      if (searchQuery) params.query = searchQuery;
-      if (filterType !== 'all') params.change_type = filterType;
-
-      const response = await permissionAuditApi.listPermissionChanges(params as never);
+        pagesize: PER_PAGE,
+        ...(debouncedSearch ? { search: debouncedSearch } : {}),
+        ...(filterType !== 'all' ? { change_type: filterType } : {}),
+      });
       if (response.success && response.data) {
         return { items: response.data.items || [], total: response.data.total || 0 };
       }
       return { items: [], total: 0 };
     },
     enabled: activeTab === 'permissionChanges',
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
   });
 
   const accessLogsQuery = useQuery<{ items: AccessControlLog[]; total: number }>({
-    queryKey: ['admin-access-logs', currentPage, searchQuery, filterType],
+    queryKey: ['admin-access-logs', currentPage, debouncedSearch, filterType],
     queryFn: async () => {
-      const params: Record<string, unknown> = {
+      const response = await permissionAuditApi.listAccessLogs({
         page: currentPage,
-        per_page: PER_PAGE,
-      };
-      if (searchQuery) params.query = searchQuery;
-      if (filterType !== 'all') params.access_type = filterType;
-
-      const response = await permissionAuditApi.listAccessLogs(params as never);
+        pagesize: PER_PAGE,
+        ...(debouncedSearch ? { search: debouncedSearch } : {}),
+        ...(filterType !== 'all' ? { action: filterType } : {}),
+      });
       if (response.success && response.data) {
         return { items: response.data.items || [], total: response.data.total || 0 };
       }
       return { items: [], total: 0 };
     },
     enabled: activeTab === 'accessControl',
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
   });
 
   const permissionStatsQuery = useQuery<PermissionChangeStats | null>({
@@ -121,9 +119,17 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
   const permissionStats = permissionStatsQuery.data ?? null;
   const accessStats = accessStatsQuery.data ?? null;
 
+  // 切换 Tab 时重置分页、搜索和筛选类型
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, filterType]);
+    setSearchQuery('');
+    setFilterType('all');
+  }, [activeTab]);
+
+  // 切换筛选类型时仅重置分页
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterType]);
 
   useEffect(() => {
     if (permissionChangesQuery.isError) {
@@ -157,11 +163,27 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
     }
   }, [accessStatsQuery.isError, accessStatsQuery.error]);
 
-  const handleExport = () => {
-    if (activeTab === 'permissionChanges') {
-      permissionAuditApi.exportPermissionChanges({ format: 'excel' });
-    } else {
-      permissionAuditApi.exportAccessLogs({ format: 'excel' });
+  const handleExport = async () => {
+    try {
+      const blob =
+        activeTab === 'permissionChanges'
+          ? await permissionAuditApi.exportPermissionChanges({ format: 'excel' })
+          : await permissionAuditApi.exportAccessLogs({ format: 'excel' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${activeTab}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      addNotification({ type: 'success', message: '导出成功' });
+    } catch (error) {
+      apiLogger.error('导出失败:', error);
+      addNotification({
+        type: 'error',
+        message: `导出失败: ${extractErrorMessage(error)}`,
+      });
     }
   };
 
@@ -198,6 +220,12 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
     if (status === 'failed') return 'error';
     if (status === 'denied') return 'warning';
     return 'info';
+  };
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? '-' : d.toLocaleString('zh-CN');
   };
 
   return (
@@ -415,25 +443,23 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                     label='类型筛选'
                   >
                     <MenuItem value='all'>全部类型</MenuItem>
-                    {activeTab === 'permissionChanges' ? (
-                      <>
-                        <MenuItem value='role_assignment'>角色分配</MenuItem>
-                        <MenuItem value='role_removal'>角色移除</MenuItem>
-                        <MenuItem value='permission_add'>权限添加</MenuItem>
-                        <MenuItem value='permission_remove'>权限移除</MenuItem>
-                        <MenuItem value='role_create'>角色创建</MenuItem>
-                        <MenuItem value='role_update'>角色更新</MenuItem>
-                        <MenuItem value='role_delete'>角色删除</MenuItem>
-                      </>
-                    ) : (
-                      <>
-                        <MenuItem value='login'>登录</MenuItem>
-                        <MenuItem value='logout'>登出</MenuItem>
-                        <MenuItem value='api_access'>API访问</MenuItem>
-                        <MenuItem value='page_access'>页面访问</MenuItem>
-                        <MenuItem value='denied'>访问拒绝</MenuItem>
-                      </>
-                    )}
+                    {activeTab === 'permissionChanges'
+                      ? [
+                          <MenuItem key='role_assignment' value='role_assignment'>角色分配</MenuItem>,
+                          <MenuItem key='role_removal' value='role_removal'>角色移除</MenuItem>,
+                          <MenuItem key='permission_add' value='permission_add'>权限添加</MenuItem>,
+                          <MenuItem key='permission_remove' value='permission_remove'>权限移除</MenuItem>,
+                          <MenuItem key='role_create' value='role_create'>角色创建</MenuItem>,
+                          <MenuItem key='role_update' value='role_update'>角色更新</MenuItem>,
+                          <MenuItem key='role_delete' value='role_delete'>角色删除</MenuItem>,
+                        ]
+                      : [
+                          <MenuItem key='login' value='login'>登录</MenuItem>,
+                          <MenuItem key='logout' value='logout'>登出</MenuItem>,
+                          <MenuItem key='api_access' value='api_access'>API访问</MenuItem>,
+                          <MenuItem key='page_access' value='page_access'>页面访问</MenuItem>,
+                          <MenuItem key='denied' value='denied'>访问拒绝</MenuItem>,
+                        ]}
                   </Select>
                 </FormControl>
               </Box>
@@ -470,13 +496,29 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                   <TableBody>
                     {loading ? (
                       <TableRow>
-                        <TableCell colSpan={activeTab === 'permissionChanges' ? 8 : 8}>
+                        <TableCell colSpan={8}>
                           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                             <Typography
                               variant='body1'
                               color='textSecondary'
                             >
                               加载中...
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ) : (activeTab === 'permissionChanges'
+                      ? permissionChanges
+                      : accessLogs
+                    ).length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8}>
+                          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                            <Typography
+                              variant='body1'
+                              color='textSecondary'
+                            >
+                              暂无数据
                             </Typography>
                           </Box>
                         </TableCell>
@@ -488,7 +530,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Calendar className='w-4 h-4' />
                               <Typography variant='body2'>
-                                {new Date(change.created_at).toLocaleString('zh-CN')}
+                                {formatDate(change.created_at)}
                               </Typography>
                             </Box>
                           </TableCell>
@@ -548,9 +590,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Calendar className='w-4 h-4' />
                               <Typography variant='body2'>
-                                {new Date(log.access_time || log.created_at).toLocaleString(
-                                  'zh-CN'
-                                )}
+                                {formatDate(log.access_time || log.created_at)}
                               </Typography>
                             </Box>
                           </TableCell>

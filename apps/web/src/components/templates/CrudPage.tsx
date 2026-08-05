@@ -119,8 +119,8 @@ export interface CrudPageProps<T = Record<string, unknown>> {
   extraQueryParams?: Record<string, unknown>;
   /** 行数据的 ID 字段名，默认 'id' */
   idField?: string;
-  /** 自定义头部内容（覆盖 Schema 中的 headerContent）。支持渲染函数接收数据和总数 */
-  headerContent?: React.ReactNode | ((rows: any[], total: number) => React.ReactNode);
+  /** 自定义头部内容（覆盖 Schema 中的 headerContent）。支持渲染函数接收数据、总数和当前搜索词 */
+  headerContent?: React.ReactNode | ((rows: any[], total: number, search: string) => React.ReactNode);
   /**
    * 树形模式数据适配器
    *
@@ -635,10 +635,10 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   const resolvedHeaderContent = useMemo(() => {
     const hc = headerContentProp ?? schema.headerContent;
     if (typeof hc === 'function') {
-      return hc(rows as T[], total);
+      return hc(rows as T[], total, search);
     }
     return hc;
-  }, [headerContentProp, schema.headerContent, rows, total]);
+  }, [headerContentProp, schema.headerContent, rows, total, search]);
 
   // ── 顶部筛选栏 ──
   const filtersBar =
