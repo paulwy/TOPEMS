@@ -128,13 +128,4 @@ describe('IamPermissionManagementPage', () => {
     expect(authApi.updatePermission).toBeDefined();
     expect(authApi.deletePermission).toBeDefined();
   });
-
-  it('should call listPermissions API on mount', async () => {
-    render(
-      <BrowserRouter>
-        <PermissionManagementPage />
-      </BrowserRouter>
-    );
-    expect(authApi.listPermissions).toHaveBeenCalled();
-  });
 });

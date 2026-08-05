@@ -15,6 +15,9 @@ const mockMutationFactory = () => ({
 });
 
 vi.mock('@tanstack/react-query', () => ({
+  QueryCache: vi.fn(),
+  MutationCache: vi.fn(),
+  QueryClient: vi.fn(),
   useQuery: vi.fn().mockImplementation(({ queryKey }) => {
     const keyStr = JSON.stringify(queryKey);
     if (keyStr.includes('template-categories')) {

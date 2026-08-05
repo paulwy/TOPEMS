@@ -65,6 +65,7 @@ scripts/
 ├── blue-green-deploy.sh       # 蓝绿部署
 ├── bundle-check.sh            # 前端包体积检查
 ├── sccache-setup.sh           # Rust 编译缓存设置
+├── patch-react-transition-group.js  # ESM 兼容性补丁（pnpm install 后执行）
 │
 └── archive/                   # 【归档】历史一次性脚本（不再使用）
 ```
@@ -121,6 +122,21 @@ pm          svc/pm                 topems-pm             8023
 | `./scripts/test/run-iam-tests.sh` | IAM 模块测试 |
 | `./scripts/performance/run-all-tests.sh` | 性能测试套件（支持冒烟/完整双模式） |
 | `./scripts/performance/run-e2e-performance.sh` | **一键 E2E 性能测试**（自动启动后端 → 执行测试 → 清理） |
+| `node scripts/patch-react-transition-group.js` | ESM 兼容性补丁（`pnpm install` 后必须执行一次） |
+
+#### ESM 兼容性补丁
+
+`react-transition-group@4.x` / `dom-helpers` / `@opentelemetry/resources` 在 pnpm 虚拟存储中的子路径导入存在 ESM 兼容性问题，会导致 Vitest 分片测试崩溃。`patch-react-transition-group.js` 会自动扫描所有 pnpm 副本并添加 `exports` 字段和目录入口文件。
+
+```bash
+# 安装依赖后执行
+node scripts/patch-react-transition-group.js
+
+# 验证补丁是否生效
+node scripts/patch-react-transition-group.js --check
+```
+
+> CI 中每个前端 job 都会自动执行此脚本。本地开发时需在 `pnpm install` 后手动执行一次。
 
 #### 性能测试套件
 

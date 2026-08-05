@@ -126,13 +126,65 @@ cargo test -p topems-erp -- test_name
 
 ### 前端测试
 
+前端测试分为 **unit**（工具/Hook/API 层）和 **component**（页面/组件层）两个 project，component 层进一步拆分为 8 个分片以并行执行。
+
 ```bash
-# 运行所有前端测试
-./scripts/topems.sh test-frontend
+# 运行全部前端测试（unit + 8 分片，串行）
+cd apps/web && pnpm test:all
+
+# 仅运行 unit 测试（~626 用例，约 15s）
+cd apps/web && pnpm test:unit
+
+# 运行单个分片（每片 ~130-1500 用例）
+cd apps/web && pnpm test:shard:1   # shard:1 ~ shard:8
+
+# 运行覆盖率测试
+cd apps/web && pnpm test:coverage
 
 # 运行端到端测试
 cd apps/web && pnpm run e2e
 ```
+
+> **ESM 兼容性**：首次安装依赖后需执行 `node scripts/patch-react-transition-group.js` 修补 `react-transition-group` / `dom-helpers` / `@opentelemetry/resources` 的 ESM 导入问题，否则 component 分片会因 `Directory import is not supported` 崩溃。
+
+### CI/CD 流水线
+
+GitHub Actions 配置在 `.github/workflows/` 目录：
+
+| Workflow | 文件 | 触发条件 | 说明 |
+|----------|------|---------|------|
+| CI | `ci.yml` | push/PR（main/develop）、tag `v*`、每日 02:00 UTC、手动 | Lint + Type Check + 9 路分片测试 + 覆盖率 + 构建 + Rust 测试 |
+| E2E | `e2e.yml` | 每日 03:00 UTC、手动 | Playwright 端到端测试 |
+
+**CI 分片策略**：`unit`（1 job）+ `shard-1` ~ `shard-8`（8 个并行 matrix job），共 9 路并行，总 ~2936 用例。
+
+**本地模拟 CI**：
+
+```bash
+# 模拟完整 CI 前端测试流程（9 路分片串行）
+cd apps/web && pnpm test:all
+
+# 模拟单个 CI 分片
+cd apps/web && pnpm test:shard:3
+
+# 模拟 CI 覆盖率检查
+cd apps/web && NODE_OPTIONS=--max-old-space-size=4096 pnpm test:coverage
+```
+
+**CI 失败排查**：
+
+```bash
+# 使用 gh CLI 查看失败日志
+gh run list --workflow=ci.yml --limit 5
+gh run view <run-id> --log-failed
+
+# 本地复现失败分片
+cd apps/web && pnpm test:shard:<N>
+```
+
+**覆盖率阈值**：statements 60%、branches 50%、functions 55%、lines 60%。
+
+**Bundle 限制**：单 chunk ≤ 500KB，vendor chunk ≤ 2.5MB。
 
 ## 代码审查
 

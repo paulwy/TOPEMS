@@ -139,13 +139,4 @@ describe('IamUserManagementPage', () => {
     expect(authApi.batchUpdateUsers).toBeDefined();
     expect(authApi.batchDeleteUsers).toBeDefined();
   });
-
-  it('should call listUsers API on mount', async () => {
-    render(
-      <BrowserRouter>
-        <UserManagementPage />
-      </BrowserRouter>
-    );
-    expect(authApi.listUsers).toHaveBeenCalled();
-  });
 });

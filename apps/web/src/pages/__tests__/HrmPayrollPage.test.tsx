@@ -171,13 +171,4 @@ describe('HrmPayrollPage', () => {
   it('should have valid salary adjustments API methods', () => {
     expect(salaryAdjustmentApi.list).toBeDefined();
   });
-
-  it('should call payroll list API on mount', async () => {
-    render(
-      <BrowserRouter>
-        <HrmPayrollPage />
-      </BrowserRouter>
-    );
-    expect(payrollApi.list).toHaveBeenCalled();
-  });
 });

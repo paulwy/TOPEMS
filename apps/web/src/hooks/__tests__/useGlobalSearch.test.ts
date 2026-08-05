@@ -4,24 +4,38 @@ import { useGlobalSearch } from '@/hooks/useGlobalSearch';
 
 import { loadSearchHistory, saveSearchHistory } from '@/components/GlobalSearchBar/utils';
 
+const { mockSearchResult, mockSearchResponse } = vi.hoisted(() => {
+  const mockSearchResult = {
+    id: '1',
+    title: 'Test Result',
+    summary: 'Test summary',
+    highlight_title: 'Test Result',
+    highlight_summary: 'Test summary',
+    service: 'user',
+    service_name: '用户管理',
+    module: 'user',
+    result_type: 'user',
+    type_name: '用户',
+    url: '/test',
+  };
+  const mockSearchResponse = {
+    success: true,
+    code: 200,
+    message: 'ok',
+    data: {
+      results: [mockSearchResult],
+      total: 1,
+      by_service: { user: 1 },
+      duration_ms: 10,
+    },
+    timestamp: Date.now(),
+  };
+  return { mockSearchResult, mockSearchResponse };
+});
+
 vi.mock('@/api/search', () => ({
   searchApi: {
-    globalSearch: vi.fn().mockResolvedValue({
-      success: true,
-      code: 200,
-      message: 'ok',
-      data: [
-        {
-          id: '1',
-          title: 'Test Result',
-          description: 'Test description',
-          module: 'user',
-          path: '/test',
-          type_name: '用户',
-        },
-      ],
-      timestamp: Date.now(),
-    }),
+    globalSearch: vi.fn().mockResolvedValue(mockSearchResponse),
   },
 }));
 
@@ -33,6 +47,7 @@ vi.mock('@/components/GlobalSearchBar/utils', () => ({
   filterResults: vi.fn((results) => results),
   getAvailableModules: vi.fn().mockReturnValue([]),
   getAvailableTypes: vi.fn().mockReturnValue([]),
+  getAvailableServices: vi.fn(() => []),
 }));
 
 describe('useGlobalSearch', () => {
@@ -154,22 +169,7 @@ describe('useGlobalSearch', () => {
         if (signal) {
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
-        return {
-          success: true,
-          code: 200,
-          message: 'ok',
-          data: [
-            {
-              id: '1',
-              title: 'Test Result',
-              description: 'Test description',
-              module: 'user',
-              path: '/test',
-              type_name: '用户',
-            },
-          ],
-          timestamp: Date.now(),
-        };
+        return mockSearchResponse;
       });
       const { result } = renderHook(() => useGlobalSearch(mockNavigate));
 
@@ -570,14 +570,7 @@ describe('useGlobalSearch', () => {
       const mockNavigate = vi.fn();
       const { result } = renderHook(() => useGlobalSearch(mockNavigate));
 
-      const mockResult = {
-        id: '1',
-        title: 'Test',
-        description: '',
-        module: 'user',
-        path: '/test',
-        type_name: '用户',
-      };
+      const mockResult = { ...mockSearchResult, title: 'Test' };
 
       act(() => {
         result.current.setQuery('test');
@@ -613,6 +606,10 @@ describe('useGlobalSearch', () => {
       act(() => {
         unmount();
       });
+
+      // Resolve the pending promise to prevent the worker from hanging
+      resolvePromise!(mockSearchResponse);
+      await pendingPromise;
     });
 
     it('should clear debounce timer when hook unmounts', async () => {

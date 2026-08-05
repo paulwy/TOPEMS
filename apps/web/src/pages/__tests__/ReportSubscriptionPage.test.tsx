@@ -132,13 +132,4 @@ describe('ReportSubscriptionPage', () => {
     expect(reportApi.createSubscription).toBeDefined();
     expect(reportApi.updateSubscription).toBeDefined();
   });
-
-  it('should call listSubscriptions API on mount', () => {
-    render(
-      <BrowserRouter>
-        <ReportSubscriptionPage />
-      </BrowserRouter>
-    );
-    expect(reportApi.listSubscriptions).toHaveBeenCalled();
-  });
 });

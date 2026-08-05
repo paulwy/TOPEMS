@@ -5,6 +5,8 @@ import { renderHook, act } from '@testing-library/react';
 import { useProfile } from '@/pages/shared/hooks/useProfile';
 
 vi.mock('@tanstack/react-query', () => ({
+  QueryCache: vi.fn(),
+  MutationCache: vi.fn(),
   useQuery: vi.fn(() => ({
     data: undefined,
     isLoading: false,

@@ -12,6 +12,17 @@ import AiPromptLibraryPage from '../ai/AiPromptLibraryPage';
 import { aiApi } from '@/api/ai';
 import { useNotificationStore, useAuthStore } from '@/store';
 
+vi.mock('@/components/common', () => {
+  const MockPageContainer = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockPageContainer');
+  const MockGrid = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockGrid');
+  return {
+    PageContainer: MockPageContainer,
+    Grid: MockGrid,
+  };
+});
+
 vi.mock('@/api/ai', () => ({
   aiApi: {
     listDocuments: vi.fn().mockResolvedValue({ data: { items: [], total: 0 } }),

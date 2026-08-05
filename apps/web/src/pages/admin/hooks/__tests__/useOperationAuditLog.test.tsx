@@ -5,6 +5,9 @@ import { useOperationAuditLog } from '../useOperationAuditLog';
 import type { OperationLog } from '@/api/admin/operationAudit';
 
 vi.mock('@tanstack/react-query', () => ({
+  QueryCache: vi.fn(),
+  MutationCache: vi.fn(),
+  QueryClient: vi.fn(),
   useQuery: vi.fn(() => ({
     data: {
       items: [

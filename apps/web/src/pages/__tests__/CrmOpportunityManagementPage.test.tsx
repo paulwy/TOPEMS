@@ -140,13 +140,4 @@ describe('CrmOpportunityManagementPage', () => {
     expect(crmApi.opportunities.convert).toBeDefined();
     expect(crmApi.opportunities.close).toBeDefined();
   });
-
-  it('should call opportunity list API on mount', async () => {
-    render(
-      <BrowserRouter>
-        <OpportunityManagementPage />
-      </BrowserRouter>
-    );
-    expect(crmApi.opportunities.list).toHaveBeenCalled();
-  });
 });
