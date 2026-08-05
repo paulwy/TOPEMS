@@ -29,15 +29,18 @@ export const securityConfig: SecurityConfig = {
   xXssProtection: '1; mode=block',
 
   csp: {
-    defaultSrc: isDev ? ["'self'", 'http://localhost:*'] : ["'self'"],
+    defaultSrc: isDev ? ["'self'", 'http://localhost:*', 'http://127.0.0.1:*'] : ["'self'"],
     scriptSrc: isDev
       ? [
           "'self'",
           "'unsafe-inline'",
           "'unsafe-eval'",
           'http://localhost:*',
+          'http://127.0.0.1:*',
           'ws://localhost:*',
+          'ws://127.0.0.1:*',
           'wss://localhost:*',
+          'wss://127.0.0.1:*',
         ]
       : [
           "'self'",
@@ -59,7 +62,7 @@ export const securityConfig: SecurityConfig = {
     ],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
     connectSrc: isDev
-      ? ["'self'", 'http://localhost:*', 'ws://localhost:*', 'wss://localhost:*']
+      ? ["'self'", 'http://localhost:*', 'http://127.0.0.1:*', 'ws://localhost:*', 'ws://127.0.0.1:*', 'wss://localhost:*', 'wss://127.0.0.1:*']
       : ["'self'", 'https://*.amap.com', 'https://api.map.baidu.com', 'wss://*'],
     objectSrc: ["'none'"],
     frameSrc: ["'self'", 'https://*.amap.com'],
@@ -71,12 +74,12 @@ export const securityConfig: SecurityConfig = {
 
   contentSecurityPolicy: isDev
     ? [
-        "default-src 'self' http://localhost:*",
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* ws://localhost:* wss://localhost:*",
+        "default-src 'self' http://localhost:* http://127.0.0.1:*",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* wss://localhost:* wss://127.0.0.1:*",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
         "font-src 'self' https://fonts.gstatic.com",
-        "connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*",
+        "connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* wss://localhost:* wss://127.0.0.1:*",
         "object-src 'none'",
         "frame-src 'self' https://*.amap.com",
         "form-action 'self'",

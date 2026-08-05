@@ -339,8 +339,23 @@ const AuditLogPage: React.FC = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>('all');
+  const [currentSearch, setCurrentSearch] = useState('');
 
   const handleClearDateFilters = useCallback(() => {
+    setStartDate('');
+    setEndDate('');
+  }, []);
+
+  const dateRangeError = useMemo(() => {
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      return '开始时间不能晚于结束时间';
+    }
+    return '';
+  }, [startDate, endDate]);
+
+  const switchSource = useCallback((newSource: AuditLogSource) => {
+    setSource(newSource);
+    setEntityTypeFilter('all');
     setStartDate('');
     setEndDate('');
   }, []);
@@ -380,7 +395,7 @@ const AuditLogPage: React.FC = () => {
             const response = await apiClient.core.get<{
               items: Record<string, unknown>[];
               total: number;
-            }>('/api/core/iam/v1/audit/logs', { params: queryParams });
+            }>('/iam/v1/audit/logs', { params: queryParams });
             if (response.success && response.data) {
               const items = (response.data.items || []).map((item) => ({
                 ...item,
@@ -438,11 +453,12 @@ const AuditLogPage: React.FC = () => {
       if (startDate) params.start_date = formatDateTimeForApi(startDate);
       if (endDate) params.end_date = formatDateTimeForApi(endDate);
       if (entityTypeFilter !== 'all') params.entity_type = entityTypeFilter;
+      if (currentSearch) params.search = currentSearch;
 
       if (source === 'core') {
         params.format = 'csv';
         params.source = 'audit_logs';
-        const response = await apiClient.core.get<unknown>('/api/core/iam/v1/audit/logs/export', {
+        const response = await apiClient.core.get<unknown>('/iam/v1/audit/logs/export', {
           params,
           responseType: 'blob' as never,
         });
@@ -623,7 +639,9 @@ const AuditLogPage: React.FC = () => {
   );
 
   const headerContent = useCallback(
-    (rows: Record<string, unknown>[], _total: number) => {
+    (rows: Record<string, unknown>[], _total: number, search: string) => {
+      // 同步 CrudPage 内部搜索状态，供导出使用
+      if (search !== currentSearch) setCurrentSearch(search);
       const uniqueEntityTypes = Array.from(
         new Set(
           rows
@@ -647,10 +665,7 @@ const AuditLogPage: React.FC = () => {
                 <Button
                   size='small'
                   variant={source === 'core' ? 'contained' : 'text'}
-                  onClick={() => {
-                    setSource('core');
-                    setEntityTypeFilter('all');
-                  }}
+                  onClick={() => switchSource('core')}
                   startIcon={<Database size={16} />}
                 >
                   统一审计
@@ -658,10 +673,7 @@ const AuditLogPage: React.FC = () => {
                 <Button
                   size='small'
                   variant={source === 'lims' ? 'contained' : 'text'}
-                  onClick={() => {
-                    setSource('lims');
-                    setEntityTypeFilter('all');
-                  }}
+                  onClick={() => switchSource('lims')}
                   startIcon={<FileText size={16} />}
                 >
                   LIMS
@@ -669,10 +681,7 @@ const AuditLogPage: React.FC = () => {
                 <Button
                   size='small'
                   variant={source === 'rd' ? 'contained' : 'text'}
-                  onClick={() => {
-                    setSource('rd');
-                    setEntityTypeFilter('all');
-                  }}
+                  onClick={() => switchSource('rd')}
                   startIcon={<FlaskConical size={16} />}
                 >
                   RD
@@ -726,6 +735,14 @@ const AuditLogPage: React.FC = () => {
                   清除
                 </Button>
               )}
+              {dateRangeError && (
+                <Typography
+                  variant='caption'
+                  color='error'
+                >
+                  {dateRangeError}
+                </Typography>
+              )}
 
               <FormControl
                 size='small'
@@ -770,7 +787,10 @@ const AuditLogPage: React.FC = () => {
       startDate,
       endDate,
       entityTypeFilter,
+      currentSearch,
+      dateRangeError,
       handleClearDateFilters,
+      switchSource,
       handleExport,
       exportMutation.isPending,
     ]
