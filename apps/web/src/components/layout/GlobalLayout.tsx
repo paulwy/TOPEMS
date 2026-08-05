@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, useTheme, useMediaQuery, Drawer } from '@mui/material';
+import { Box, Typography, useMediaQuery } from '@mui/material';
 
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -37,7 +37,6 @@ interface GlobalLayoutProps {
 export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const { t } = useTranslation();
   const location = useLocation();
-  const theme = useTheme();
   const { checkPermission } = usePermission();
   const navigate = useNavigate();
   const sidebarCollapsed = useUIStore((state) => state.sidebarCollapsed);
@@ -45,7 +44,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const currentTheme = useThemeStore((state) => state.theme);
   const isCyberpunk = currentTheme === 'cyberpunk';
 
-  const { isMobile, isTablet, isTabletNarrow, isTabletWide } = useResponsive();
+  const { isMobile, isTablet, isTabletNarrow } = useResponsive();
   const isDesktop = useMediaQuery('(min-width:1025px)');
 
   // 动态获取未读通知数（移动端审批 Tab 徽章）

@@ -187,7 +187,6 @@ export const SandboxedRemoteLoader: React.FC<SandboxedRemoteLoaderProps> = ({
 }) => {
   const startTimeRef = useRef<number>(performance.now());
   const renderTimeRef = useRef<number>(0);
-  const moduleId = `${moduleName}/${expose}`;
   const sandboxId = `sandbox-${moduleName}`;
   const shadowHostRef = useRef<HTMLDivElement | null>(null);
   const bundleRef = useRef<SandboxBundle | null>(null);

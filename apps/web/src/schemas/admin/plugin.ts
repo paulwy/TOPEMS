@@ -219,7 +219,10 @@ export const pluginSchema: EntitySchema = {
         options: [
           { label: i18n.t('schema:admin.plugin.filter.plugin_type.option.all'), value: 'all' },
           { label: i18n.t('schema:admin.plugin.filter.plugin_type.option.core'), value: 'core' },
-          { label: i18n.t('schema:admin.plugin.filter.plugin_type.option.business'), value: 'business' },
+          {
+            label: i18n.t('schema:admin.plugin.filter.plugin_type.option.business'),
+            value: 'business',
+          },
         ],
         defaultValue: 'all',
       },

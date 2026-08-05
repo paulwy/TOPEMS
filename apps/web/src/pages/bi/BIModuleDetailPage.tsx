@@ -1,42 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import {
-  RefreshCw,
-  Download,
-  BarChart3,
-  PieChart,
-  LineChart,
-  Table as TableIcon,
-  Clock,
-  TrendingUp,
-  TrendingDown,
-  CheckCircle,
-  AlertCircle,
-} from 'lucide-react';
+import { BarChart3, Table as TableIcon, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import {
   Card,
   CardContent,
   CardHeader,
   Typography,
   Box,
-  Skeleton,
   Table,
   TableHead,
   TableBody,
   TableRow,
   TableCell,
-  Chip,
   Alert,
-  Button,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Grid } from '@/components';
-import { useNotificationStore } from '@/store';
-import { LoadingSpinner } from '@topems/shared-components';
 import { ExportButton } from '@/components/export';
-import { apiLogger, logger } from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import {
   DashboardTemplate,
   type StatCard,
@@ -44,7 +26,6 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import {
-  fetchModuleData,
   fetchRsSummary,
   fetchLimsSummary,
   fetchQmsSummary,
@@ -533,7 +514,7 @@ const BIModuleDetailPage = () => {
               dataKey='value'
             >
               {distributionChartData.map(
-                (entry: { name: string; value: number }, index: number) => (
+                (_entry: { name: string; value: number }, index: number) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={BIChartColors.series[index % BIChartColors.series.length]}

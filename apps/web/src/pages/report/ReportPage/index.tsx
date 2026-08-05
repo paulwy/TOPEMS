@@ -12,7 +12,6 @@ import type {
   CreateReportFromTemplateRequest,
 } from '@/api/report';
 import { reportApi } from '@/api/report';
-import { useNotificationStore } from '@/store';
 import ReportBuilder from '../ReportBuilder';
 import ReportViewer from '../ReportViewer';
 import { ExportModal } from '@/components/export';
@@ -47,7 +46,7 @@ const ReportPage: React.FC = () => {
   };
 
   const checkServiceStatus = async (
-    serviceName: string,
+    _serviceName: string,
     port: number,
     setStatus: (up: boolean) => void
   ) => {
@@ -92,7 +91,7 @@ const ReportPage: React.FC = () => {
 
   const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false);
   const [showEditTemplateModal, setShowEditTemplateModal] = useState(false);
-  const [showCreateReportFromTemplateModal, setShowCreateReportFromTemplateModal] = useState(false);
+  const [, setShowCreateReportFromTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null);
   const [activeTab, setActiveTab] = useState<'reports' | 'templates'>('reports');
 

@@ -32,10 +32,7 @@ export const lowcodeFormsApi = {
     return apiClient.lowcode.post<LowcodeForm>('/forms', data);
   },
 
-  update: async (
-    id: string,
-    data: UpdateLowcodeFormRequest
-  ): Promise<ApiResponse<LowcodeForm>> => {
+  update: async (id: string, data: UpdateLowcodeFormRequest): Promise<ApiResponse<LowcodeForm>> => {
     return apiClient.lowcode.put<LowcodeForm>(`/forms/${id}`, data);
   },
 

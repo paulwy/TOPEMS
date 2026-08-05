@@ -62,7 +62,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             />
           )}
         </Box>
-        <IconButton size='small'>
+        <IconButton size='small'aria-label="展开" >
           {showFilterPanel ? (
             <ChevronUp sx={{ width: 18, height: 18 }} />
           ) : (
@@ -141,6 +141,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               <IconButton
                 size='small'
                 onClick={() => handleRemoveFilter(filter.id)}
+              aria-label="删除"
               >
                 <Trash2 sx={{ width: 16, height: 16, color: 'error.main' }} />
               </IconButton>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
-import { RefreshCw } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 
 export const LIMS_QMS_STATUS_CONFIG: Record<

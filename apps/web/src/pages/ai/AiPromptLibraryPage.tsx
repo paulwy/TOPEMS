@@ -6,7 +6,6 @@ import {
   Paper,
   Card,
   CardContent,
-  CardActionArea,
   Chip,
   IconButton,
   TextField,
@@ -34,11 +33,7 @@ import {
   Copy,
   PlayCircle,
   Plus,
-  Edit3,
-  Trash2,
-  FolderOpen,
   Tag,
-  Clock,
   Sparkles,
   Lightbulb,
   FileText,
@@ -47,11 +42,9 @@ import {
   BarChart3,
   ThumbsUp,
   X,
-  Check,
 } from 'lucide-react';
 import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
-import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -549,6 +542,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                                   e.stopPropagation();
                                   handleToggleFavorite(prompt.id);
                                 }}
+                              aria-label="收藏"
                               >
                                 <Star
                                   size={18}
@@ -620,6 +614,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                                     e.stopPropagation();
                                     handleCopyPrompt(prompt.content);
                                   }}
+                                aria-label="复制"
                                 >
                                   <Copy size={14} />
                                 </IconButton>
@@ -629,6 +624,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                                     e.stopPropagation();
                                     handleUsePrompt(prompt);
                                   }}
+                                aria-label="执行"
                                 >
                                   <PlayCircle size={14} />
                                 </IconButton>
@@ -679,6 +675,7 @@ export const AiPromptLibraryPage: React.FC = () => {
             <IconButton
               size='small'
               onClick={() => setUseDialogOpen(false)}
+            aria-label="关闭"
             >
               <X size={18} />
             </IconButton>

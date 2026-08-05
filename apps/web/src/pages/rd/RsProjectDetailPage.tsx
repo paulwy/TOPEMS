@@ -1,4 +1,3 @@
-import { Grid } from '@/components';
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -7,20 +6,15 @@ import { RD_PATHS } from '@/modules/rd/config';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Chip,
   LinearProgress,
   Paper,
-  Tabs,
-  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Divider,
   List,
   ListItemButton,
   ListItemIcon,
@@ -56,7 +50,6 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 const RsProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(0);
 
   const projectQuery = useQuery({
     queryKey: QUERY_KEYS.RD.PROJECT(id || ''),

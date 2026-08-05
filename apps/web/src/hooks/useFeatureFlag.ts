@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 /**
  * 特性开关状态
@@ -40,7 +40,6 @@ export interface FeatureFlagResult {
 
 // 全局特性开关缓存（从 API 懒加载）
 const featureFlagsCache: Map<string, boolean> = new Map();
-const cacheLoaded = false;
 
 /**
  * 检查特性是否开启

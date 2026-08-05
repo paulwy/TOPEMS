@@ -13,7 +13,6 @@ import {
   Button,
   Paper,
   Avatar,
-  Divider,
   useTheme,
 } from '@mui/material';
 import {
@@ -26,13 +25,12 @@ import {
   FileText,
   CheckCircle2,
   MessageSquare,
-  Eye,
   ArrowRightLeft,
   UserPlus,
   PlayCircle,
   GitBranch,
 } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import type { Approval, ApprovalRecord } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useNotificationStore, useAuthStore } from '../../store';
@@ -53,7 +51,6 @@ interface ApprovalDetails {
 
 const FlowApprovalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const user = useAuthStore((state) => state.user);
   const theme = useTheme();
@@ -606,7 +603,6 @@ const FlowApprovalDetailPage: React.FC = () => {
 
                   {/* 各审批步骤 */}
                   {records.map((record, index) => {
-                    const isLast = index === records.length - 1;
                     const isApproved = record.action === 'approve';
                     return (
                       <Box

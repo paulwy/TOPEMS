@@ -49,7 +49,13 @@ const RULE_STATUS_LABEL: Record<AutomationRuleStatus, string> = {
   draft: '草稿',
 };
 
-const TRIGGER_TYPES: AutomationTriggerType[] = ['cron', 'event', 'webhook', 'form_submit', 'manual'];
+const TRIGGER_TYPES: AutomationTriggerType[] = [
+  'cron',
+  'event',
+  'webhook',
+  'form_submit',
+  'manual',
+];
 const ACTION_TYPES: AutomationActionType[] = [
   'workflow',
   'integration',
@@ -180,204 +186,232 @@ export const AutomationRulesPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title="自动化规则">
+    <PageContainer title='自动化规则'>
       <Box sx={{ p: 3 }}>
         <Stack
-          direction="row"
+          direction='row'
           spacing={2}
           sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant="h5">自动化规则</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-          新建规则
-        </Button>
-      </Stack>
+          <Typography variant='h5'>自动化规则</Typography>
+          <Button
+            variant='contained'
+            startIcon={<AddIcon />}
+            onClick={() => setCreateOpen(true)}
+          >
+            新建规则
+          </Button>
+        </Stack>
 
-      {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 1 }}>
-          {error}
-        </Typography>
-      )}
+        {error && (
+          <Typography
+            color='error'
+            variant='body2'
+            sx={{ mb: 1 }}
+          >
+            {error}
+          </Typography>
+        )}
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>规则名称</TableCell>
-                <TableCell>编码</TableCell>
-                <TableCell>触发器</TableCell>
-                <TableCell>动作</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>运行/成功/失败</TableCell>
-                <TableCell>最近运行</TableCell>
-                <TableCell align="right">操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rules.length === 0 ? (
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer
+            component={Paper}
+            variant='outlined'
+          >
+            <Table size='small'>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    暂无规则，点击右上角新建
-                  </TableCell>
+                  <TableCell>规则名称</TableCell>
+                  <TableCell>编码</TableCell>
+                  <TableCell>触发器</TableCell>
+                  <TableCell>动作</TableCell>
+                  <TableCell>状态</TableCell>
+                  <TableCell>运行/成功/失败</TableCell>
+                  <TableCell>最近运行</TableCell>
+                  <TableCell align='right'>操作</TableCell>
                 </TableRow>
-              ) : (
-                rules.map((rule) => (
-                  <TableRow key={rule.id}>
-                    <TableCell>{rule.name}</TableCell>
-                    <TableCell>{rule.code}</TableCell>
-                    <TableCell>{rule.trigger.type}</TableCell>
-                    <TableCell>{rule.action.type}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        color={RULE_STATUS_COLOR[rule.status]}
-                        label={RULE_STATUS_LABEL[rule.status]}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {rule.run_count} / {rule.success_count} / {rule.failed_count}
-                    </TableCell>
-                    <TableCell>{rule.last_run_at ?? '-'}</TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleTrigger(rule.id)}
-                        title="手动触发"
-                      >
-                        <PlayIcon size={18} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleToggle(rule)}
-                        title={rule.status === 'enabled' ? '禁用' : '启用'}
-                      >
-                        <PowerIcon size={18} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDuplicate(rule.id)}
-                        title="复制"
-                      >
-                        <ContentCopyIcon size={18} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDelete(rule.id)}
-                        title="删除"
-                      >
-                        <DeleteOutlineIcon size={18} />
-                      </IconButton>
+              </TableHead>
+              <TableBody>
+                {rules.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      align='center'
+                    >
+                      暂无规则，点击右上角新建
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+                ) : (
+                  rules.map((rule) => (
+                    <TableRow key={rule.id}>
+                      <TableCell>{rule.name}</TableCell>
+                      <TableCell>{rule.code}</TableCell>
+                      <TableCell>{rule.trigger.type}</TableCell>
+                      <TableCell>{rule.action.type}</TableCell>
+                      <TableCell>
+                        <Chip
+                          size='small'
+                          color={RULE_STATUS_COLOR[rule.status]}
+                          label={RULE_STATUS_LABEL[rule.status]}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {rule.run_count} / {rule.success_count} / {rule.failed_count}
+                      </TableCell>
+                      <TableCell>{rule.last_run_at ?? '-'}</TableCell>
+                      <TableCell align='right'>
+                        <IconButton
+                          size='small'
+                          onClick={() => handleTrigger(rule.id)}
+                          aria-label='手动触发'
+                          title='手动触发'
+                        >
+                          <PlayIcon size={18} />
+                        </IconButton>
+                        <IconButton
+                          size='small'
+                          onClick={() => handleToggle(rule)}
+                          aria-label={rule.status === 'enabled' ? '禁用' : '启用'}
+                          title={rule.status === 'enabled' ? '禁用' : '启用'}
+                        >
+                          <PowerIcon size={18} />
+                        </IconButton>
+                        <IconButton
+                          size='small'
+                          onClick={() => handleDuplicate(rule.id)}
+                          aria-label='复制'
+                          title='复制'
+                        >
+                          <ContentCopyIcon size={18} />
+                        </IconButton>
+                        <IconButton
+                          size='small'
+                          color='error'
+                          onClick={() => handleDelete(rule.id)}
+                          aria-label='删除'
+                          title='删除'
+                        >
+                          <DeleteOutlineIcon size={18} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
 
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>新建自动化规则</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="规则名称"
-              value={createForm.name}
-              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-              fullWidth
-              required
-            />
-            <TextField
-              label="规则编码"
-              value={createForm.code}
-              onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
-              fullWidth
-              required
-              helperText="规则唯一标识，创建后不可修改"
-            />
-            <TextField
-              label="描述"
-              value={createForm.description}
-              onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-              fullWidth
-              multiline
-              rows={2}
-            />
-            <TextField
-              select
-              label="触发器类型"
-              value={createForm.trigger_type}
-              onChange={(e) =>
-                setCreateForm({
-                  ...createForm,
-                  trigger_type: e.target.value as AutomationTriggerType,
-                })
-              }
-              fullWidth
+        <Dialog
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>新建自动化规则</DialogTitle>
+          <DialogContent>
+            <Stack
+              spacing={2}
+              sx={{ mt: 1 }}
             >
-              {TRIGGER_TYPES.map((t) => (
-                <MenuItem key={t} value={t}>
-                  {t}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label="触发器载荷（JSON）"
-              value={createForm.trigger_payload}
-              onChange={(e) =>
-                setCreateForm({ ...createForm, trigger_payload: e.target.value })
-              }
-              fullWidth
-              multiline
-              rows={3}
-              helperText="cron: {expression, timezone}; event: {event_name, source}; webhook: {path, secret}; form_submit: {form_id, app_id}"
-            />
-            <TextField
-              select
-              label="动作类型"
-              value={createForm.action_type}
-              onChange={(e) =>
-                setCreateForm({
-                  ...createForm,
-                  action_type: e.target.value as AutomationActionType,
-                })
-              }
-              fullWidth
+              <TextField
+                label='规则名称'
+                value={createForm.name}
+                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                fullWidth
+                required
+              />
+              <TextField
+                label='规则编码'
+                value={createForm.code}
+                onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
+                fullWidth
+                required
+                helperText='规则唯一标识，创建后不可修改'
+              />
+              <TextField
+                label='描述'
+                value={createForm.description}
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                fullWidth
+                multiline
+                rows={2}
+              />
+              <TextField
+                select
+                label='触发器类型'
+                value={createForm.trigger_type}
+                onChange={(e) =>
+                  setCreateForm({
+                    ...createForm,
+                    trigger_type: e.target.value as AutomationTriggerType,
+                  })
+                }
+                fullWidth
+              >
+                {TRIGGER_TYPES.map((t) => (
+                  <MenuItem
+                    key={t}
+                    value={t}
+                  >
+                    {t}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                label='触发器载荷（JSON）'
+                value={createForm.trigger_payload}
+                onChange={(e) => setCreateForm({ ...createForm, trigger_payload: e.target.value })}
+                fullWidth
+                multiline
+                rows={3}
+                helperText='cron: {expression, timezone}; event: {event_name, source}; webhook: {path, secret}; form_submit: {form_id, app_id}'
+              />
+              <TextField
+                select
+                label='动作类型'
+                value={createForm.action_type}
+                onChange={(e) =>
+                  setCreateForm({
+                    ...createForm,
+                    action_type: e.target.value as AutomationActionType,
+                  })
+                }
+                fullWidth
+              >
+                {ACTION_TYPES.map((t) => (
+                  <MenuItem
+                    key={t}
+                    value={t}
+                  >
+                    {t}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                label='动作目标 ID'
+                value={createForm.action_target}
+                onChange={(e) => setCreateForm({ ...createForm, action_target: e.target.value })}
+                fullWidth
+                helperText='workflow_id / integration_endpoint_id / API URL / page_id / channel_id'
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button
+              onClick={handleCreate}
+              variant='contained'
+              disabled={creating || !createForm.name || !createForm.code}
             >
-              {ACTION_TYPES.map((t) => (
-                <MenuItem key={t} value={t}>
-                  {t}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label="动作目标 ID"
-              value={createForm.action_target}
-              onChange={(e) =>
-                setCreateForm({ ...createForm, action_target: e.target.value })
-              }
-              fullWidth
-              helperText="workflow_id / integration_endpoint_id / API URL / page_id / channel_id"
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>取消</Button>
-          <Button
-            onClick={handleCreate}
-            variant="contained"
-            disabled={creating || !createForm.name || !createForm.code}
-          >
-            {creating ? '创建中…' : '创建'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+              {creating ? '创建中…' : '创建'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </PageContainer>
   );

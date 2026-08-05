@@ -38,16 +38,7 @@ import {
   type SxProps,
   type Theme,
 } from '@mui/material';
-import {
-  Search,
-  ChevronDown,
-  X as XIcon,
-  CheckCircle2,
-  AlertCircle,
-  Info,
-  AlertTriangle,
-  Plus,
-} from 'lucide-react';
+import { Search, X as XIcon, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { v51DesignTokens } from '../tokens/v51-tokens';
 
 // ============================================================

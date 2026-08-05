@@ -61,7 +61,7 @@ export const GroupPanel: React.FC<GroupPanelProps> = ({
             />
           )}
         </Box>
-        <IconButton size='small'>
+        <IconButton size='small'aria-label="展开" >
           {showGroupPanel ? (
             <ChevronUp sx={{ width: 18, height: 18 }} />
           ) : (
@@ -127,6 +127,7 @@ export const GroupPanel: React.FC<GroupPanelProps> = ({
               <IconButton
                 size='small'
                 onClick={() => handleRemoveGroupBy(index)}
+              aria-label="删除"
               >
                 <Trash2 sx={{ width: 16, height: 16, color: 'error.main' }} />
               </IconButton>

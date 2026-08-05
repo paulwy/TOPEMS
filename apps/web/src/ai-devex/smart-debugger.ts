@@ -263,8 +263,8 @@ export class SmartDebugger {
 
   getDebugSuggestions(
     file: string,
-    line: number,
-    context?: Record<string, unknown>
+    _line: number,
+    _context?: Record<string, unknown>
   ): DebugSuggestion[] {
     const suggestions: DebugSuggestion[] = [];
 

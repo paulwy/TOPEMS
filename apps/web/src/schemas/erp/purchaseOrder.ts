@@ -83,9 +83,15 @@ export const purchaseOrderSchema: EntitySchema = {
           { value: 'draft', label: i18n.t('schema:erp.purchase_order.status.option.draft') },
           { value: 'pending', label: i18n.t('schema:erp.purchase_order.status.option.pending') },
           { value: 'approved', label: i18n.t('schema:erp.purchase_order.status.option.approved') },
-          { value: 'partially_received', label: i18n.t('schema:erp.purchase_order.status.option.partially_received') },
+          {
+            value: 'partially_received',
+            label: i18n.t('schema:erp.purchase_order.status.option.partially_received'),
+          },
           { value: 'received', label: i18n.t('schema:erp.purchase_order.status.option.received') },
-          { value: 'cancelled', label: i18n.t('schema:erp.purchase_order.status.option.cancelled') },
+          {
+            value: 'cancelled',
+            label: i18n.t('schema:erp.purchase_order.status.option.cancelled'),
+          },
         ],
       },
       listWidth: 100,
@@ -129,11 +135,26 @@ export const purchaseOrderSchema: EntitySchema = {
         options: [
           { label: i18n.t('schema:erp.purchase_order.filter.status.option.all'), value: 'all' },
           { label: i18n.t('schema:erp.purchase_order.filter.status.option.draft'), value: 'draft' },
-          { label: i18n.t('schema:erp.purchase_order.filter.status.option.pending'), value: 'pending' },
-          { label: i18n.t('schema:erp.purchase_order.filter.status.option.approved'), value: 'approved' },
-          { label: i18n.t('schema:erp.purchase_order.filter.status.option.partially_received'), value: 'partially_received' },
-          { label: i18n.t('schema:erp.purchase_order.filter.status.option.received'), value: 'received' },
-          { label: i18n.t('schema:erp.purchase_order.filter.status.option.cancelled'), value: 'cancelled' },
+          {
+            label: i18n.t('schema:erp.purchase_order.filter.status.option.pending'),
+            value: 'pending',
+          },
+          {
+            label: i18n.t('schema:erp.purchase_order.filter.status.option.approved'),
+            value: 'approved',
+          },
+          {
+            label: i18n.t('schema:erp.purchase_order.filter.status.option.partially_received'),
+            value: 'partially_received',
+          },
+          {
+            label: i18n.t('schema:erp.purchase_order.filter.status.option.received'),
+            value: 'received',
+          },
+          {
+            label: i18n.t('schema:erp.purchase_order.filter.status.option.cancelled'),
+            value: 'cancelled',
+          },
         ],
       },
     ],

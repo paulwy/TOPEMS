@@ -1,24 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
 import {
-  GitMerge,
   Building2,
   TrendingUp,
   DollarSign,
   BarChart3,
   FileSpreadsheet,
   Plus,
-  Eye,
   Send,
   Check,
   Download,
-  Search,
-  RefreshCw,
 } from 'lucide-react';
 import {
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,

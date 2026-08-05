@@ -1,13 +1,10 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
   Button,
   Chip,
   List,
-  ListItem,
-  ListItemText,
-  Divider,
   IconButton,
   useTheme,
   Tabs,
@@ -25,7 +22,6 @@ import {
   Flashlight,
   Image,
   History,
-  X,
   Search,
   Barcode,
   QrCode,
@@ -33,7 +29,6 @@ import {
   ArrowRight,
   Clock,
   Trash2,
-  Copy,
   Settings,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -68,7 +63,6 @@ const MobileScanPage: React.FC = () => {
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [manualInput, setManualInput] = useState('');
 
   const tabs = ['扫码', '历史记录', '手动输入'];
@@ -291,6 +285,7 @@ const MobileScanPage: React.FC = () => {
           size='large'
           onClick={() => navigate(MOBILE_PATHS.scan)}
           sx={{ minWidth: 44, minHeight: 44 }}
+        aria-label="设置"
         >
           <Settings size={20} />
         </IconButton>
@@ -510,6 +505,7 @@ const MobileScanPage: React.FC = () => {
                     },
                   }}
                   onClick={() => setFlashOn(!flashOn)}
+                aria-label="手电筒"
                 >
                   <Flashlight style={{ width: 24, height: 24 }} />
                 </IconButton>
@@ -532,6 +528,7 @@ const MobileScanPage: React.FC = () => {
                       bgcolor: 'grey.200',
                     },
                   }}
+                aria-label="图片"
                 >
                   <Image style={{ width: 24, height: 24 }} />
                 </IconButton>
@@ -555,6 +552,7 @@ const MobileScanPage: React.FC = () => {
                     },
                   }}
                   onClick={() => setActiveTab(2)}
+                aria-label="扫码"
                 >
                   <Barcode style={{ width: 24, height: 24 }} />
                 </IconButton>
@@ -648,6 +646,7 @@ const MobileScanPage: React.FC = () => {
                           <IconButton
                             size='small'
                             onClick={handleClearHistory}
+                          aria-label="删除"
                           >
                             <Trash2 style={{ width: 18, height: 18 }} />
                           </IconButton>
@@ -697,7 +696,7 @@ const MobileScanPage: React.FC = () => {
               </Box>
             ) : (
               <List disablePadding>
-                {filteredHistory.map((item, index) => (
+                {filteredHistory.map((item, _index) => (
                   <React.Fragment key={item.id}>
                     <MobileCard
                       leftIcon={

@@ -1,7 +1,7 @@
-import { Typography, Box, InputLabel, Chip } from '@mui/material';
+import { Typography, Box, InputLabel } from '@mui/material';
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FileText, Download } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { docApi, type FileMetadata } from '@/api/doc';
 import { useNotification } from '@/hooks/useNotification';

@@ -32,7 +32,6 @@ const ProductionRecordPage: React.FC = () => {
           const total = rows.length;
           const completed = rows.filter((r) => r.status === 'completed').length;
           const inProgress = rows.filter((r) => r.status === 'in_progress').length;
-          const totalOutput = rows.reduce((sum, r) => sum + (Number(r.quantity_completed) || 0), 0);
 
           return (
             <Box

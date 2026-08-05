@@ -123,7 +123,7 @@ export const IntegrationEventsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const handleRetry = useCallback(
-    async (event: IntegrationEvent) => {
+    async (_event: IntegrationEvent) => {
       try {
         // 重试任务占位调用（原页面同样为空实现）
         addNotification({

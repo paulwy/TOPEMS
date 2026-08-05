@@ -36,13 +36,10 @@ import {
   Download,
   RefreshCw,
   Bell,
-  BellOff,
   Settings,
   TrendingUp,
   Server,
   Cpu,
-  HardDrive,
-  Wifi,
 } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { monitoringApi } from '@/api/admin/monitoring';

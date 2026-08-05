@@ -5,14 +5,10 @@ import { GlobalLayout } from '../components/layout';
 import DynamicRoutes from '../components/DynamicRoutes';
 import ProtectedRouteWrapper from '../components/ProtectedRouteWrapper';
 import PageLoader from '../components/PageLoader';
+import { PageErrorBoundary } from '../components/ErrorBoundary';
 import { useAppInit } from '../hooks/useAppInit';
 import { createSafeLazy, lazyWithPreload } from '../utils/createSafeLazy';
-import {
-  authRoutes,
-  dashboardRoutes,
-  commonRoutes,
-  type RouteConfig,
-} from './index';
+import { authRoutes, dashboardRoutes, commonRoutes, type RouteConfig } from './index';
 import { DASHBOARD_PATHS } from './dashboard';
 import { HRM_PATHS } from '../modules/hrm/config';
 import { CRM_PATHS } from '../modules/crm/config';
@@ -32,6 +28,9 @@ const IS_STATIC_MODE = VITEDeploymentMode() !== 'module-federation';
 
 /**
  * 将 RouteConfig[] 渲染为受保护的路由节点
+ *
+ * V65.1.1: 路由级 ErrorBoundary — 每个路由用 PageErrorBoundary 包裹 Suspense，
+ * 让单页 lazy load 失败/运行时崩溃隔离在该路由内，不冒泡到 AppLayout 顶层边界。
  */
 const renderRoutes = (routes: RouteConfig[]) => {
   return routes.map((route) => {
@@ -43,9 +42,11 @@ const renderRoutes = (routes: RouteConfig[]) => {
         path={route.path}
         element={
           <ProtectedRouteWrapper route={route}>
-            <Suspense fallback={<PageLoader />}>
-              <Element />
-            </Suspense>
+            <PageErrorBoundary>
+              <Suspense fallback={<PageLoader />}>
+                <Element />
+              </Suspense>
+            </PageErrorBoundary>
           </ProtectedRouteWrapper>
         }
       />
@@ -76,9 +77,11 @@ const AppRoutes: React.FC = () => {
           path='/performance'
           element={
             <ProtectedRoute>
-              <Suspense fallback={<PageLoader />}>
-                <PerformanceTestPage />
-              </Suspense>
+              <PageErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <PerformanceTestPage />
+                </Suspense>
+              </PageErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -91,9 +94,11 @@ const AppRoutes: React.FC = () => {
               path={route.path}
               element={
                 <GuestRoute>
-                  <Suspense fallback={<PageLoader />}>
-                    <Element />
-                  </Suspense>
+                  <PageErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Element />
+                    </Suspense>
+                  </PageErrorBoundary>
                 </GuestRoute>
               }
             />

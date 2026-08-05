@@ -2,12 +2,20 @@ import { QueryClient, QueryCache, MutationCache, type DefaultOptions } from '@ta
 import { logger } from '@/utils/logger';
 import { useNotificationStore } from '../store';
 
+// 延迟导入 i18n 实例，避免模块加载时的循环依赖
+// （i18n/index.ts 依赖 initReactI18next，测试中可能被 mock）
+function getT() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const i18n = require('../i18n').default;
+  return (key: string) => i18n.t(key);
+}
+
 const queryCache = new QueryCache({
   onError: (error) => {
     try {
       const addNotification = useNotificationStore.getState().addNotification;
       addNotification({
-        title: '数据加载失败',
+        title: getT()('shared:reactQuery.data_load_failed'),
         message: error.message,
         type: 'error',
       });
@@ -22,7 +30,7 @@ const mutationCache = new MutationCache({
     try {
       const addNotification = useNotificationStore.getState().addNotification;
       addNotification({
-        title: '操作失败',
+        title: getT()('shared:reactQuery.operation_failed'),
         message: error.message,
         type: 'error',
       });
@@ -48,9 +56,10 @@ const defaultMutationOptions: DefaultOptions['mutations'] = {
   onSuccess: () => {
     try {
       const addNotification = useNotificationStore.getState().addNotification;
+      const t = getT();
       addNotification({
-        title: '操作成功',
-        message: '数据已更新',
+        title: t('shared:reactQuery.operation_success'),
+        message: t('shared:reactQuery.data_updated'),
         type: 'success',
       });
     } catch {

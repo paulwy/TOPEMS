@@ -6,7 +6,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useNotificationStore } from '@/store';
-import { mobileApi, type ProductionOrder, type WorkReport, type Equipment } from '@/api/mobile';
+import { type ProductionOrder, type WorkReport, type Equipment } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 
 export interface ReportForm {

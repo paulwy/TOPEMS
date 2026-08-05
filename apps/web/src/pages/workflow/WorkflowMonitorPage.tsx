@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Box, Typography, Grid } from '@mui/material';
+import { Box, Grid } from '@mui/material';
 import { Activity, AlertTriangle, Clock, XCircle, Zap, RotateCw, EyeOff } from 'lucide-react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 
@@ -188,7 +188,7 @@ export const WorkflowMonitorPage: React.FC = () => {
     },
   ];
 
-  const renderHeaderContent = (rows: any[], _total: number) => {
+  const renderHeaderContent = (_rows: any[], _total: number) => {
     const exceptions = allExceptions;
     const total = exceptions.length;
     const timeoutCount = exceptions.filter((d) => d.exceptionType === 'timeout').length;

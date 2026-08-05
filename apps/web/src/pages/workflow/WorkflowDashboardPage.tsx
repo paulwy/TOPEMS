@@ -13,9 +13,6 @@ import {
   AlertTriangle,
   FileCode,
   BarChart3,
-  ArrowRight,
-  TrendingUp,
-  TrendingDown,
   Zap,
 } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
@@ -23,13 +20,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
-import {
-  DashboardTemplate,
-  type StatCard,
-  type ChartCard,
-  type QuickAction,
-  type RecentItem,
-} from '@/components/templates';
+import { DashboardTemplate, type StatCard, type QuickAction } from '@/components/templates';
 import { useQuery } from '@tanstack/react-query';
 import type { StatisticsResponse } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';

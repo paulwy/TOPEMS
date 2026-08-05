@@ -17,16 +17,12 @@ import {
   Card,
   CardContent,
   Chip,
-  Divider,
   Button,
   IconButton,
   List,
   ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
   Grid,
   Paper,
-  LinearProgress,
   Tooltip,
   Select,
   MenuItem,
@@ -80,8 +76,6 @@ import {
 import {
   designSystemManager,
   TokenType,
-  LIGHT_THEME,
-  DARK_THEME,
   type DesignToken,
   type ThemeConfig,
 } from './design-system';
@@ -608,7 +602,6 @@ const CrossFrameworkTab: React.FC = () => {
     msg: '',
     type: 'success',
   });
-  const mountContainerRef = useRef<HTMLDivElement>(null);
   const testMountRef = useRef<HTMLDivElement>(null);
   const componentCounter = useRef(0);
 
@@ -1335,7 +1328,6 @@ const LifecycleTab: React.FC = () => {
   ];
 
   const selectedRecord = selectedModule ? lifecycleManager.getRecord(selectedModule) : undefined;
-  const selectedHistory = selectedModule ? lifecycleManager.getHistory(selectedModule) : [];
 
   return (
     <Box>

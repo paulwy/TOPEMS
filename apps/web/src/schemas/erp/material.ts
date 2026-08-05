@@ -178,11 +178,23 @@ export const materialSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.material.filter.category.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.material.filter.category.option.电子元件'), value: '电子元件' },
-          { label: i18n.t('schema:erp.material.filter.category.option.机械零件'), value: '机械零件' },
+          {
+            label: i18n.t('schema:erp.material.filter.category.option.电子元件'),
+            value: '电子元件',
+          },
+          {
+            label: i18n.t('schema:erp.material.filter.category.option.机械零件'),
+            value: '机械零件',
+          },
           { label: i18n.t('schema:erp.material.filter.category.option.原材料'), value: '原材料' },
-          { label: i18n.t('schema:erp.material.filter.category.option.包装材料'), value: '包装材料' },
-          { label: i18n.t('schema:erp.material.filter.category.option.辅助材料'), value: '辅助材料' },
+          {
+            label: i18n.t('schema:erp.material.filter.category.option.包装材料'),
+            value: '包装材料',
+          },
+          {
+            label: i18n.t('schema:erp.material.filter.category.option.辅助材料'),
+            value: '辅助材料',
+          },
         ],
       },
     ],

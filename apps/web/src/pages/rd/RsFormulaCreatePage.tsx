@@ -1,11 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  FormPageTemplate,
-  type FormSection,
-  type FormField,
-} from '@/components/templates/FormPageTemplate';
+import { FormPageTemplate, type FormSection } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { formulaApi, rdApi } from '@/api/rd';
 import type {
@@ -367,6 +363,7 @@ const RsFormulaCreatePage: React.FC = () => {
                     color='error'
                     onClick={() => handleRemoveIngredient(index)}
                     disabled={submitting || ingredients.length === 1}
+                  aria-label="删除"
                   >
                     <Trash2 />
                   </IconButton>

@@ -502,6 +502,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                               backgroundColor: 'action.hover',
                             },
                           }}
+                        aria-label="删除"
                         >
                           <Trash2 style={{ width: 18, height: 18 }} />
                         </IconButton>

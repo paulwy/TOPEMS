@@ -14,9 +14,6 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Switch,
-  FormGroup,
-  FormControlLabel,
   Chip,
   Table,
   TableBody,
@@ -45,14 +42,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   reportApi,
   type ReportSchedule,
-  type ReportTemplate,
   type CreateScheduleRequest,
   type UpdateScheduleRequest,
   type ScheduleType,
   type ScheduleStatus,
   type ScheduleExecutionRecord,
 } from '@/api/report';
-import { logger } from '@/utils/logger';
 
 const SCHEDULE_TYPE_OPTIONS: { value: ScheduleType; label: string }[] = [
   { value: 'cron', label: 'Cron表达式' },
@@ -76,7 +71,6 @@ const ReportSchedulePage: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
   const [currentSchedule, setCurrentSchedule] = useState<ReportSchedule | null>(null);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-  const [executionHistory, setExecutionHistory] = useState<ScheduleExecutionRecord[]>([]);
   const [error, setError] = useState<string>('');
 
   const [formData, setFormData] = useState<CreateScheduleRequest | UpdateScheduleRequest>({
@@ -422,6 +416,7 @@ const ReportSchedulePage: React.FC = () => {
                               size='small'
                               color='primary'
                               onClick={() => handleExecute(schedule.id)}
+                            aria-label="执行"
                             >
                               <PlayIcon />
                             </IconButton>
@@ -431,6 +426,7 @@ const ReportSchedulePage: React.FC = () => {
                               size='small'
                               color='info'
                               onClick={() => handleViewHistory(schedule)}
+                            aria-label="历史"
                             >
                               <HistoryIcon />
                             </IconButton>
@@ -440,6 +436,7 @@ const ReportSchedulePage: React.FC = () => {
                               size='small'
                               color='warning'
                               onClick={() => handleOpenEditDialog(schedule)}
+                            aria-label="编辑"
                             >
                               <EditIcon />
                             </IconButton>
@@ -449,6 +446,7 @@ const ReportSchedulePage: React.FC = () => {
                               size='small'
                               color='error'
                               onClick={() => handleDelete(schedule.id)}
+                            aria-label="删除"
                             >
                               <DeleteIcon />
                             </IconButton>
@@ -556,6 +554,7 @@ const ReportSchedulePage: React.FC = () => {
                     <IconButton
                       onClick={() => handleRemoveRecipient(index)}
                       color='error'
+                    aria-label="关闭"
                     >
                       <XIcon />
                     </IconButton>

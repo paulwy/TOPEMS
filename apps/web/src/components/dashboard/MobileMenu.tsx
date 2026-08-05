@@ -112,6 +112,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 borderRadius: 3,
                 '&:hover': { backgroundColor: 'grey.100' },
               }}
+            aria-label="关闭"
             >
               <X size={20} />
             </IconButton>

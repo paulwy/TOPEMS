@@ -12,7 +12,6 @@ import type {
   ProductionBatch,
 } from '@/api/pdm';
 import { designTokens } from '@/theme/tokens';
-import { logger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;

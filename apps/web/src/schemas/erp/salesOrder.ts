@@ -83,7 +83,10 @@ export const salesOrderSchema: EntitySchema = {
           { value: 'draft', label: i18n.t('schema:erp.sales_order.status.option.draft') },
           { value: 'pending', label: i18n.t('schema:erp.sales_order.status.option.pending') },
           { value: 'approved', label: i18n.t('schema:erp.sales_order.status.option.approved') },
-          { value: 'partially_shipped', label: i18n.t('schema:erp.sales_order.status.option.partially_shipped') },
+          {
+            value: 'partially_shipped',
+            label: i18n.t('schema:erp.sales_order.status.option.partially_shipped'),
+          },
           { value: 'shipped', label: i18n.t('schema:erp.sales_order.status.option.shipped') },
           { value: 'completed', label: i18n.t('schema:erp.sales_order.status.option.completed') },
           { value: 'cancelled', label: i18n.t('schema:erp.sales_order.status.option.cancelled') },
@@ -132,12 +135,30 @@ export const salesOrderSchema: EntitySchema = {
         options: [
           { label: i18n.t('schema:erp.sales_order.filter.status.option.all'), value: 'all' },
           { label: i18n.t('schema:erp.sales_order.filter.status.option.draft'), value: 'draft' },
-          { label: i18n.t('schema:erp.sales_order.filter.status.option.pending'), value: 'pending' },
-          { label: i18n.t('schema:erp.sales_order.filter.status.option.approved'), value: 'approved' },
-          { label: i18n.t('schema:erp.sales_order.filter.status.option.partially_shipped'), value: 'partially_shipped' },
-          { label: i18n.t('schema:erp.sales_order.filter.status.option.shipped'), value: 'shipped' },
-          { label: i18n.t('schema:erp.sales_order.filter.status.option.completed'), value: 'completed' },
-          { label: i18n.t('schema:erp.sales_order.filter.status.option.cancelled'), value: 'cancelled' },
+          {
+            label: i18n.t('schema:erp.sales_order.filter.status.option.pending'),
+            value: 'pending',
+          },
+          {
+            label: i18n.t('schema:erp.sales_order.filter.status.option.approved'),
+            value: 'approved',
+          },
+          {
+            label: i18n.t('schema:erp.sales_order.filter.status.option.partially_shipped'),
+            value: 'partially_shipped',
+          },
+          {
+            label: i18n.t('schema:erp.sales_order.filter.status.option.shipped'),
+            value: 'shipped',
+          },
+          {
+            label: i18n.t('schema:erp.sales_order.filter.status.option.completed'),
+            value: 'completed',
+          },
+          {
+            label: i18n.t('schema:erp.sales_order.filter.status.option.cancelled'),
+            value: 'cancelled',
+          },
         ],
       },
     ],

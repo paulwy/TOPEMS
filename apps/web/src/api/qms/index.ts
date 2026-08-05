@@ -214,10 +214,11 @@ export const qmsApi = {
         qmsApi.listImprovements(),
       ]);
 
-      const standards = standardsRes.status === 'fulfilled' ? (standardsRes.value.data || []) : [];
-      const checks = checksRes.status === 'fulfilled' ? (checksRes.value.data || []) : [];
-      const issues = issuesRes.status === 'fulfilled' ? (issuesRes.value.data || []) : [];
-      const improvements = improvementsRes.status === 'fulfilled' ? (improvementsRes.value.data || []) : [];
+      const standards = standardsRes.status === 'fulfilled' ? standardsRes.value.data || [] : [];
+      const checks = checksRes.status === 'fulfilled' ? checksRes.value.data || [] : [];
+      const issues = issuesRes.status === 'fulfilled' ? issuesRes.value.data || [] : [];
+      const improvements =
+        improvementsRes.status === 'fulfilled' ? improvementsRes.value.data || [] : [];
 
       const statistics: QmsStatistics = {
         total_standards: standards.length,

@@ -2,7 +2,6 @@ import { useState, useCallback, type ComponentType } from 'react';
 import {
   Box,
   List,
-  ListItem,
   ListItemButton,
   ListItemIcon,
   Collapse,

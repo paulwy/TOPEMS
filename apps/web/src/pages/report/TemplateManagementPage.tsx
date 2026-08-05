@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   FileText,
   Plus,
@@ -13,7 +13,6 @@ import {
   ToggleLeft,
   ToggleRight,
 } from 'lucide-react';
-import { BackButton } from '@/components/common';
 import {
   templateApi,
   type Template,
@@ -34,8 +33,6 @@ import {
   Card,
   CardContent,
   IconButton,
-  Tabs,
-  Tab,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -367,6 +364,7 @@ const TemplateManagementPage: React.FC = () => {
                           bgcolor: template.isactive ? 'success.light' : 'grey.200',
                         },
                       }}
+                      aria-label={template.isactive ? '已启用' : '已禁用'}
                       title={template.isactive ? '已启用' : '已禁用'}
                     >
                       {template.isactive ? (
@@ -438,6 +436,7 @@ const TemplateManagementPage: React.FC = () => {
                         setShowPreviewModal(true);
                       }}
                       sx={{ color: 'primary.main' }}
+                      aria-label='预览'
                       title='预览'
                     >
                       <Eye sx={{ width: 16, height: 16 }} />
@@ -445,6 +444,7 @@ const TemplateManagementPage: React.FC = () => {
                     <IconButton
                       onClick={() => handleDuplicateTemplate(template.id)}
                       sx={{ color: 'success.main' }}
+                      aria-label='复制'
                       title='复制'
                     >
                       <Copy sx={{ width: 16, height: 16 }} />
@@ -455,6 +455,7 @@ const TemplateManagementPage: React.FC = () => {
                         setShowEditModal(true);
                       }}
                       sx={{ color: 'primary.main' }}
+                      aria-label='编辑'
                       title='编辑'
                     >
                       <Edit sx={{ width: 16, height: 16 }} />
@@ -462,6 +463,7 @@ const TemplateManagementPage: React.FC = () => {
                     <IconButton
                       onClick={() => handleDeleteTemplate(template.id)}
                       sx={{ color: 'error.main' }}
+                      aria-label='删除'
                       title='删除'
                     >
                       <Trash2 sx={{ width: 16, height: 16 }} />
@@ -536,6 +538,7 @@ const TemplateManagementPage: React.FC = () => {
                     sx={{
                       color: template.isactive ? 'success.main' : 'grey.400',
                     }}
+                  aria-label="切换"
                   >
                     {template.isactive ? (
                       <ToggleRight sx={{ width: 20, height: 20 }} />
@@ -549,12 +552,14 @@ const TemplateManagementPage: React.FC = () => {
                       setShowPreviewModal(true);
                     }}
                     sx={{ color: 'primary.main' }}
+                  aria-label="查看"
                   >
                     <Eye sx={{ width: 16, height: 16 }} />
                   </IconButton>
                   <IconButton
                     onClick={() => handleDuplicateTemplate(template.id)}
                     sx={{ color: 'success.main' }}
+                  aria-label="复制"
                   >
                     <Copy sx={{ width: 16, height: 16 }} />
                   </IconButton>
@@ -564,12 +569,14 @@ const TemplateManagementPage: React.FC = () => {
                       setShowEditModal(true);
                     }}
                     sx={{ color: 'primary.main' }}
+                  aria-label="编辑"
                   >
                     <Edit sx={{ width: 16, height: 16 }} />
                   </IconButton>
                   <IconButton
                     onClick={() => handleDeleteTemplate(template.id)}
                     sx={{ color: 'error.main' }}
+                  aria-label="删除"
                   >
                     <Trash2 sx={{ width: 16, height: 16 }} />
                   </IconButton>

@@ -1,15 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import {
-  Box,
-  Tabs,
-  Tab,
-  Card,
-  CardContent,
-  Stack,
-  Typography,
-  Button,
-  TextField,
-} from '@mui/material';
+import React, { useState, useCallback } from 'react';
+import { Box, Tabs, Tab, Card, CardContent, Stack, Typography, TextField } from '@mui/material';
 import {
   CheckSquare,
   Clock,
@@ -27,13 +17,10 @@ import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer, ConfirmDialog } from '@/components/common';
 import { useConfirmDialog } from '@/hooks';
 import { extractErrorMessage } from '@/utils/errors';
-import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { approvalTaskApi } from '@/api/workflow/approval';
 import type { ApiResponse } from '@/api/client';
 import { workflowApprovalSchema } from '@/schemas/workflow';
-
-const ct = designTokens.colors;
 
 type TabType = 'pending' | 'approved' | 'initiated' | 'cc';
 
@@ -84,7 +71,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [selectedTask, setSelectedTask] = useState<ApprovalTask | null>(null);
 
-  const { confirmOpen, confirmConfig, openConfirm, closeConfirm } = useConfirmDialog();
+  const { confirmOpen, confirmConfig, closeConfirm } = useConfirmDialog();
 
   const getStatusParam = (tab: TabType): string | undefined => {
     switch (tab) {
@@ -274,7 +261,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
     },
   ];
 
-  const renderStatsCards = (tab: TabType) => {
+  const renderStatsCards = (_tab: TabType) => {
     const stats = [
       {
         id: 'pending',

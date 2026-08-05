@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Box, Chip, Typography, InputLabel, Stack } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { Route, Eye } from 'lucide-react';
+import { Route } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import CrudPage from '@/components/templates/CrudPage';

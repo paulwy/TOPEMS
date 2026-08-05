@@ -301,37 +301,41 @@ export const createAxiosClient = ({
       // 将这些"服务未就绪"类错误降级为 warn，避免控制台被 ERROR 刷屏。
       // 生产环境仍保持 error 级别以捕获真正的路由缺失问题。
       const isDevEnv = isDevelopment();
-      const isServiceDown =
-        errorStatus === 404 || errorStatus === 502 || errorStatus === 503;
+      const isServiceDown = errorStatus === 404 || errorStatus === 502 || errorStatus === 503;
       const logLevel = isDevEnv && isServiceDown ? 'warn' : 'error';
-      apiLogger[logLevel](`[API ${isDevEnv && isServiceDown ? 'Warn' : 'Error'}] ${errorStatus || 'N/A'} ${fullUrl}`, {
-        url: fullUrl,
-        method: error.config?.method?.toUpperCase(),
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        errorCode: error.code,
-        errorMessage: error.message,
-        retries,
-        responseData: error.response?.data
-          ? JSON.stringify(error.response?.data).length > 2000
-            ? 'Truncated (over 2000 chars)'
-            : error.response?.data
-          : undefined,
-        responseHeaders: error.response?.headers,
-        requestConfig: {
-          url,
-          baseURL,
-          params: error.config?.params,
-          data: error.config?.data
-            ? JSON.stringify(error.config?.data).length > 1000
-              ? 'Truncated (over 1000 chars)'
-              : error.config?.data
+      apiLogger[logLevel](
+        `[API ${isDevEnv && isServiceDown ? 'Warn' : 'Error'}] ${errorStatus || 'N/A'} ${fullUrl}`,
+        {
+          url: fullUrl,
+          method: error.config?.method?.toUpperCase(),
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          errorCode: error.code,
+          errorMessage: error.message,
+          retries,
+          responseData: error.response?.data
+            ? JSON.stringify(error.response?.data).length > 2000
+              ? 'Truncated (over 2000 chars)'
+              : error.response?.data
             : undefined,
-          headers: {
-            Authorization: error.config?.headers?.['Authorization'] ? 'Bearer [token]' : undefined,
+          responseHeaders: error.response?.headers,
+          requestConfig: {
+            url,
+            baseURL,
+            params: error.config?.params,
+            data: error.config?.data
+              ? JSON.stringify(error.config?.data).length > 1000
+                ? 'Truncated (over 1000 chars)'
+                : error.config?.data
+              : undefined,
+            headers: {
+              Authorization: error.config?.headers?.['Authorization']
+                ? 'Bearer [token]'
+                : undefined,
+            },
           },
-        },
-      });
+        }
+      );
 
       if (error.code === 'ERR_CANCELED' || error.name === 'AbortError') {
         logger.debug('Request was canceled or aborted:', url);

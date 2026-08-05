@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Box, Button } from '@mui/material';
-import { Plus, TrendingUp, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
+import { Plus, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { crmApi } from '@/api/crm';
 import { useNotificationStore } from '@/store';

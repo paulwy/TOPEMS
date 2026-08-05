@@ -1,12 +1,11 @@
 import React, { useCallback } from 'react';
-import { IconButton, useTheme } from '@mui/material';
+import { IconButton } from '@mui/material';
 import { Maximize2 } from 'lucide-react';
 
 const FitBoundsControl: React.FC<{
   bounds: [number, number][] | undefined;
   mapRef: React.RefObject<any>;
 }> = ({ bounds, mapRef }) => {
-  const theme = useTheme();
   const fitBounds = useCallback(() => {
     const map = mapRef.current;
     if (map && bounds && bounds.length >= 2) {
@@ -17,6 +16,7 @@ const FitBoundsControl: React.FC<{
   return (
     <IconButton
       onClick={fitBounds}
+      aria-label='缩放到所有标记'
       title='缩放到所有标记'
       sx={{
         padding: 1,

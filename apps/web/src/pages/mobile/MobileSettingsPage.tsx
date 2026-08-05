@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNotificationStore } from '../../store';
-import { Smartphone, Shield, Bell, Battery, RefreshCw } from 'lucide-react';
+import { Smartphone, Shield, RefreshCw } from 'lucide-react';
 import {
   SettingsPageTemplate,
   type SettingSection,

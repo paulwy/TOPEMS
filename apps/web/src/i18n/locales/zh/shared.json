@@ -1,4 +1,10 @@
 {
+  "reactQuery": {
+    "data_load_failed": "数据加载失败",
+    "operation_failed": "操作失败",
+    "operation_success": "操作成功",
+    "data_updated": "数据已更新"
+  },
   "attachments": {
     "已上传": "已上传",
     "附件上传成功": "附件上传成功",

@@ -97,7 +97,6 @@ const PmReportPage: React.FC = () => {
   const stats = statsQuery.data ?? DEFAULT_STATS;
   const benefits = benefitsQuery.data ?? [];
   const loading = statsQuery.isLoading || benefitsQuery.isLoading;
-  const error = statsQuery.isError || benefitsQuery.isError ? '加载报表数据失败' : '';
 
   const loadReportData = useCallback(() => {
     statsQuery.refetch();

@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { Building2, MapPin, FileText, Calendar, User } from 'lucide-react';
+import { Building2, MapPin, Calendar } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
@@ -70,7 +70,7 @@ const TransferPage: React.FC = () => {
   ];
 
   const createMutation = useMutation({
-    mutationFn: async (data: TransferFormData) => {
+    mutationFn: async (_data: TransferFormData) => {
       await new Promise((resolve) => setTimeout(resolve, 500));
       return { success: true };
     },

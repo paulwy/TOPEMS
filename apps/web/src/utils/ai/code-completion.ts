@@ -543,7 +543,6 @@ export class CodeCompletionEngine {
   private getContextAwareCompletions(context: CompletionContext): CompletionSuggestion[] {
     const suggestions: CompletionSuggestion[] = [];
     const currentWord = context.current_word ?? '';
-    const currentLine = context.current_line ?? context.surrounding_code;
 
     // 匹配变量名补全
     for (const variable of context.variables) {

@@ -202,7 +202,10 @@ export const voucherSchema: EntitySchema & {
         options: [
           { label: i18n.t('schema:erp.voucher.filter.status.option.all'), value: 'all' },
           { label: i18n.t('schema:erp.voucher.filter.status.option.draft'), value: 'draft' },
-          { label: i18n.t('schema:erp.voucher.filter.status.option.submitted'), value: 'submitted' },
+          {
+            label: i18n.t('schema:erp.voucher.filter.status.option.submitted'),
+            value: 'submitted',
+          },
           { label: i18n.t('schema:erp.voucher.filter.status.option.approved'), value: 'approved' },
           { label: i18n.t('schema:erp.voucher.filter.status.option.posted'), value: 'posted' },
           { label: i18n.t('schema:erp.voucher.filter.status.option.voided'), value: 'voided' },
@@ -268,7 +271,7 @@ export const voucherSchema: EntitySchema & {
       color: 'primary',
       confirm: true,
       confirmMessage: i18n.t('schema:erp.voucher.batchAction.batchSubmit.confirmMessage'),
-      onClick: (ids: string[]) => {
+      onClick: (_ids: string[]) => {
         // TODO: 实现批量提交凭证逻辑
       },
     },
@@ -279,7 +282,7 @@ export const voucherSchema: EntitySchema & {
       color: 'success',
       confirm: true,
       confirmMessage: i18n.t('schema:erp.voucher.batchAction.batchApprove.confirmMessage'),
-      onClick: (ids: string[]) => {
+      onClick: (_ids: string[]) => {
         // TODO: 实现批量审核凭证逻辑
       },
     },

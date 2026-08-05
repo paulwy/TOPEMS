@@ -145,7 +145,7 @@ export function useOfflineManager(options: UseOfflineManagerOptions): UseOffline
 
   // 计算瓦片数量
   const getTileCount = useCallback(
-    (bounds: [[number, number], [number, number]], zoomLevels: number[]): number => {
+    (_bounds: [[number, number], [number, number]], zoomLevels: number[]): number => {
       let count = 0;
       for (const z of zoomLevels) {
         const tilesAtZoom = Math.pow(4, z); // 每个缩放级别4倍

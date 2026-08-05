@@ -1,6 +1,6 @@
 import React from 'react';
 import { Chip, Stack, Box } from '@mui/material';
-import { User, Package, Clock } from 'lucide-react';
+import { User, Package } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
 
 export const productionRecordSchema: EntitySchema = {

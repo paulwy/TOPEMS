@@ -44,7 +44,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
           <FileText size={24} />
           <Typography variant='h6'>{t('system.auditPage.detail_title')}</Typography>
         </Box>
-        <IconButton onClick={onClose}>
+        <IconButton onClick={onClose}aria-label="关闭" >
           <X size={20} />
         </IconButton>
       </DialogTitle>

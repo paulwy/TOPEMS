@@ -13,7 +13,7 @@ import {
   Checkbox,
   Typography,
 } from '@mui/material';
-import { ListTodo, CheckCircle, GitBranch } from 'lucide-react';
+import { ListTodo, CheckCircle } from 'lucide-react';
 import { TodoListSection } from '@/components/dashboard';
 
 interface Todo {

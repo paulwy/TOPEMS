@@ -12,20 +12,10 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import {
-  FileText,
-  Calendar,
-  User,
-  Building2,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-} from 'lucide-react';
+import { FileText, Calendar, User, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Contract } from '@/api/hrm';
-import { useNotification } from '@/hooks/useNotification';
 import { HRM_PATHS } from '@/modules/hrm/config';
-import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
@@ -38,7 +28,6 @@ const HrmContractDetailPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { error } = useNotification();
 
   const [showRenewDialog, setShowRenewDialog] = useState(false);
 

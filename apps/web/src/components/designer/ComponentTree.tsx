@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Box, Paper, Typography, IconButton, Tooltip } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import * as LucideIcons from 'lucide-react';
 import type { CanvasNode } from './types';

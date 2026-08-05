@@ -7,20 +7,15 @@ import {
   TextField,
   IconButton,
   Tooltip,
-  Divider,
   Skeleton,
   Alert,
   Collapse,
-  useTheme,
-  useMediaQuery,
   FormControl,
   FormLabel,
   FormHelperText,
   Snackbar,
   Alert as MuiAlert,
-  Slide,
   Chip,
-  Badge,
   LinearProgress,
   Tab,
   Tabs,
@@ -40,23 +35,13 @@ import {
   AlertTriangle,
   RotateCcw,
   FileText,
-  History,
-  Eye,
-  EyeOff,
-  Lock,
   Unlock,
-  GripVertical,
-  Plus,
-  Minus,
 } from 'lucide-react';
 import {
   useForm,
   Controller,
   FormProvider,
-  useWatch,
-  type FieldValues,
   type UseFormReturn,
-  type FieldErrors,
   type Resolver,
 } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -428,9 +413,6 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   permissions = { canEdit: true, canDelete: false, canViewHistory: false },
   ...props
 }) => {
-  const theme = useTheme();
-  const _isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(sections.filter((s) => s.defaultExpanded !== false).map((s) => s.id))
   );
@@ -834,6 +816,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             <IconButton
               size='small'
               sx={{ position: 'absolute', top: 0, right: 0 }}
+            aria-label="信息"
             >
               <Info style={{ width: 16, height: 16 }} />
             </IconButton>
@@ -1176,7 +1159,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             </Box>
           </Box>
           {section.collapsible && (
-            <IconButton size='small'>
+            <IconButton size='small'aria-label="展开" >
               {isExpanded ? (
                 <ChevronUp style={{ width: 18, height: 18 }} />
               ) : (
@@ -1237,7 +1220,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     return (
       <Tabs
         value={currentGroup}
-        onChange={(e, newValue) => setCurrentGroup(newValue)}
+        onChange={(_e, newValue) => setCurrentGroup(newValue)}
         sx={{ mb: 2 }}
       >
         <Tab
@@ -1443,6 +1426,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               <IconButton
                 size='small'
                 onClick={() => {}}
+              aria-label="关闭"
               >
                 <X style={{ width: 16, height: 16 }} />
               </IconButton>
@@ -1462,6 +1446,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               <IconButton
                 size='small'
                 onClick={() => {}}
+              aria-label="关闭"
               >
                 <X style={{ width: 16, height: 16 }} />
               </IconButton>

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Paper, useTheme, useMediaQuery, Skeleton } from '@mui/material';
+import { Box, Paper, Skeleton } from '@mui/material';
 import { PageHeader } from '../templates/PageHeader';
 import type { PageHeaderProps, PageAction } from '../templates/PageHeader';
 import { useNavHierarchy, useCurrentNavItem } from '@/lib/navigation/hooks';
@@ -98,9 +98,6 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     ...(backButtonConfig && { backButton: backButtonConfig }),
     ...(breadcrumbs && { breadcrumbs }),
   };
-
-  const theme = useTheme();
-  const _isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const hasHeader = Boolean(title || Object.keys(mergedHeaderProps).length > 0);
 

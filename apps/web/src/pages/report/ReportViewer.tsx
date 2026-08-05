@@ -399,6 +399,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                     '&:hover': { bgcolor: 'grey.50' },
                     '&.Mui-disabled': { opacity: 0.5 },
                   }}
+                aria-label="展开"
                 >
                   <ChevronLeft sx={{ width: 16, height: 16 }} />
                 </IconButton>
@@ -435,6 +436,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                     '&:hover': { bgcolor: 'grey.50' },
                     '&.Mui-disabled': { opacity: 0.5 },
                   }}
+                aria-label="展开"
                 >
                   <ChevronRight sx={{ width: 16, height: 16 }} />
                 </IconButton>

@@ -136,7 +136,6 @@ function parseSelectionSet(
   let i = start;
   let currentField = '';
   let inField = false;
-  let inArgs = false;
   let argsStart = 0;
   let alias: string | undefined;
   let fieldName = '';
@@ -183,7 +182,6 @@ function parseSelectionSet(
     }
 
     if (char === '(') {
-      inArgs = true;
       argsStart = i;
       const end = findMatchingParen(query, i);
       const argsStr = query.slice(argsStart, end + 1);
@@ -196,7 +194,6 @@ function parseSelectionSet(
         }
       }
       i = end;
-      inArgs = false;
       continue;
     }
 

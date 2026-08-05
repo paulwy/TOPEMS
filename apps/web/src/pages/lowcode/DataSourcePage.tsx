@@ -21,7 +21,11 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Plus as AddIcon, Trash2 as DeleteOutlineIcon, Wifi as NetworkCheckIcon } from 'lucide-react';
+import {
+  Plus as AddIcon,
+  Trash2 as DeleteOutlineIcon,
+  Wifi as NetworkCheckIcon,
+} from 'lucide-react';
 import { lowcodeDataSourcesApi } from '@/api/lowcode';
 import type { LowcodeDataSource, DataSourceType, DataSourceTestResult } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
@@ -114,186 +118,230 @@ export const DataSourcePage: React.FC = () => {
   };
 
   return (
-    <PageContainer title="数据源管理">
-    <Box sx={{ p: 3 }}>
-      <Stack direction="row" spacing={2} sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5">数据源管理</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-          新建数据源
-        </Button>
-      </Stack>
+    <PageContainer title='数据源管理'>
+      <Box sx={{ p: 3 }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <Typography variant='h5'>数据源管理</Typography>
+          <Button
+            variant='contained'
+            startIcon={<AddIcon />}
+            onClick={() => setCreateOpen(true)}
+          >
+            新建数据源
+          </Button>
+        </Stack>
 
-      {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 1 }}>
-          {error}
-        </Typography>
-      )}
+        {error && (
+          <Typography
+            color='error'
+            variant='body2'
+            sx={{ mb: 1 }}
+          >
+            {error}
+          </Typography>
+        )}
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>名称</TableCell>
-                <TableCell>类型</TableCell>
-                <TableCell>主机/库</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell align="right">操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sources.length === 0 ? (
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer
+            component={Paper}
+            variant='outlined'
+          >
+            <Table size='small'>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    暂无数据源
-                  </TableCell>
+                  <TableCell>名称</TableCell>
+                  <TableCell>类型</TableCell>
+                  <TableCell>主机/库</TableCell>
+                  <TableCell>状态</TableCell>
+                  <TableCell align='right'>操作</TableCell>
                 </TableRow>
-              ) : (
-                sources.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell>{s.name}</TableCell>
-                    <TableCell>{s.type}</TableCell>
-                    <TableCell>
-                      {s.config.host}
-                      {s.config.database ? ` / ${s.config.database}` : ''}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={s.status}
-                        color={
-                          s.status === 'connected'
-                            ? 'success'
-                            : s.status === 'error'
-                              ? 'error'
-                              : 'default'
-                        }
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleTest(s.id)}
-                        disabled={testing === s.id}
-                        title="测试连接"
-                      >
-                        <NetworkCheckIcon size={18} />
-                      </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(s.id)}>
-                        <DeleteOutlineIcon size={18} />
-                      </IconButton>
+              </TableHead>
+              <TableBody>
+                {sources.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      align='center'
+                    >
+                      暂无数据源
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+                ) : (
+                  sources.map((s) => (
+                    <TableRow key={s.id}>
+                      <TableCell>{s.name}</TableCell>
+                      <TableCell>{s.type}</TableCell>
+                      <TableCell>
+                        {s.config.host}
+                        {s.config.database ? ` / ${s.config.database}` : ''}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size='small'
+                          label={s.status}
+                          color={
+                            s.status === 'connected'
+                              ? 'success'
+                              : s.status === 'error'
+                                ? 'error'
+                                : 'default'
+                          }
+                        />
+                      </TableCell>
+                      <TableCell align='right'>
+                        <IconButton
+                          size='small'
+                          onClick={() => handleTest(s.id)}
+                          disabled={testing === s.id}
+                          aria-label='测试连接'
+                          title='测试连接'
+                        >
+                          <NetworkCheckIcon size={18} />
+                        </IconButton>
+                        <IconButton
+                          size='small'
+                          color='error'
+                          onClick={() => handleDelete(s.id)}
+                        aria-label="删除"
+                        >
+                          <DeleteOutlineIcon size={18} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
 
-      {testResult && (
-        <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
-          <Typography variant="body2">
-            测试结果：{testResult.success ? '✅ 成功' : '❌ 失败'} · {testResult.message}
-            {testResult.latency_ms ? ` · ${testResult.latency_ms}ms` : ''}
-          </Typography>
-        </Paper>
-      )}
-
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>新建数据源</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="所属应用 ID"
-              value={createForm.app_id}
-              onChange={(e) => setCreateForm({ ...createForm, app_id: e.target.value })}
-              fullWidth
-              required
-            />
-            <TextField
-              label="数据源名称"
-              value={createForm.name}
-              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-              fullWidth
-              required
-            />
-            <TextField
-              label="类型"
-              value={createForm.type}
-              onChange={(e) =>
-                setCreateForm({ ...createForm, type: e.target.value as DataSourceType })
-              }
-              select
-              fullWidth
-            >
-              {DS_TYPES.map((t) => (
-                <MenuItem key={t} value={t}>
-                  {t}
-                </MenuItem>
-              ))}
-            </TextField>
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="主机"
-                value={createForm.host}
-                onChange={(e) => setCreateForm({ ...createForm, host: e.target.value })}
-                fullWidth
-              />
-              <TextField
-                label="端口"
-                value={createForm.port}
-                onChange={(e) => setCreateForm({ ...createForm, port: e.target.value })}
-                sx={{ width: 120 }}
-              />
-            </Stack>
-            <TextField
-              label="数据库"
-              value={createForm.database}
-              onChange={(e) => setCreateForm({ ...createForm, database: e.target.value })}
-              fullWidth
-            />
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="用户名"
-                value={createForm.username}
-                onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
-                fullWidth
-              />
-              <TextField
-                label="密码"
-                type="password"
-                value={createForm.password}
-                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                fullWidth
-              />
-            </Stack>
-            <TextField
-              label="描述"
-              value={createForm.description}
-              onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-              fullWidth
-              multiline
-              rows={2}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>取消</Button>
-          <Button
-            onClick={handleCreate}
-            variant="contained"
-            disabled={creating || !createForm.app_id || !createForm.name}
+        {testResult && (
+          <Paper
+            variant='outlined'
+            sx={{ p: 2, mt: 2 }}
           >
-            {creating ? '创建中…' : '创建'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+            <Typography variant='body2'>
+              测试结果：{testResult.success ? '✅ 成功' : '❌ 失败'} · {testResult.message}
+              {testResult.latency_ms ? ` · ${testResult.latency_ms}ms` : ''}
+            </Typography>
+          </Paper>
+        )}
+
+        <Dialog
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>新建数据源</DialogTitle>
+          <DialogContent>
+            <Stack
+              spacing={2}
+              sx={{ mt: 1 }}
+            >
+              <TextField
+                label='所属应用 ID'
+                value={createForm.app_id}
+                onChange={(e) => setCreateForm({ ...createForm, app_id: e.target.value })}
+                fullWidth
+                required
+              />
+              <TextField
+                label='数据源名称'
+                value={createForm.name}
+                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                fullWidth
+                required
+              />
+              <TextField
+                label='类型'
+                value={createForm.type}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, type: e.target.value as DataSourceType })
+                }
+                select
+                fullWidth
+              >
+                {DS_TYPES.map((t) => (
+                  <MenuItem
+                    key={t}
+                    value={t}
+                  >
+                    {t}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Stack
+                direction='row'
+                spacing={2}
+              >
+                <TextField
+                  label='主机'
+                  value={createForm.host}
+                  onChange={(e) => setCreateForm({ ...createForm, host: e.target.value })}
+                  fullWidth
+                />
+                <TextField
+                  label='端口'
+                  value={createForm.port}
+                  onChange={(e) => setCreateForm({ ...createForm, port: e.target.value })}
+                  sx={{ width: 120 }}
+                />
+              </Stack>
+              <TextField
+                label='数据库'
+                value={createForm.database}
+                onChange={(e) => setCreateForm({ ...createForm, database: e.target.value })}
+                fullWidth
+              />
+              <Stack
+                direction='row'
+                spacing={2}
+              >
+                <TextField
+                  label='用户名'
+                  value={createForm.username}
+                  onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+                  fullWidth
+                />
+                <TextField
+                  label='密码'
+                  type='password'
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                  fullWidth
+                />
+              </Stack>
+              <TextField
+                label='描述'
+                value={createForm.description}
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                fullWidth
+                multiline
+                rows={2}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button
+              onClick={handleCreate}
+              variant='contained'
+              disabled={creating || !createForm.app_id || !createForm.name}
+            >
+              {creating ? '创建中…' : '创建'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
     </PageContainer>
   );
 };

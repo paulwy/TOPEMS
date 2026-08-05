@@ -294,6 +294,7 @@ const VoucherFormDialog: React.FC<VoucherFormDialogProps> = (vm) => {
                             size='small'
                             color='error'
                             onClick={() => removeVoucherItem(index)}
+                          aria-label="关闭"
                           >
                             <X size={16} />
                           </IconButton>

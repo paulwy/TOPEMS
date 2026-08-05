@@ -19,7 +19,6 @@ import {
 } from '@mui/material';
 import type { Plugin } from '@/api/plugin';
 import { getPluginReviews, getPluginVersions, submitPluginReview } from '@/api/plugin';
-import { usePluginStore } from '@/store/pluginStore';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { PluginInstallProgress } from './PluginInstallProgress';

@@ -1,19 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import {
-  AlertTriangle,
-  MapPin,
-  Users,
-  Shield,
-  Clock,
-  Edit3,
-  Plus,
-  AlertCircle,
-  Trash2,
-} from 'lucide-react';
+import { AlertTriangle, MapPin, Users, Shield, Clock, Plus, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogTitle,
@@ -27,7 +17,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  LinearProgress,
   Button,
 } from '@mui/material';
 import { DataTable } from '@/components/common/DataTable';
@@ -56,7 +45,6 @@ interface ControlFormData {
 const EhsHazardDetailPage: React.FC = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 

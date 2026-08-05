@@ -1,6 +1,6 @@
 import { Box, Typography, Chip, Stack, useTheme } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
-import { BookOpen, FolderOpen, FileText, Eye, User, Calendar, BarChart3 } from 'lucide-react';
+import { BookOpen, FolderOpen, FileText } from 'lucide-react';
 
 import { useNotificationStore } from '@/store';
 import { TreePageTemplate, type TreeNode } from '@/components/templates';

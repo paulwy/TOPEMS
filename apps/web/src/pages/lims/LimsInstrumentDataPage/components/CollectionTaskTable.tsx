@@ -123,6 +123,7 @@ const CollectionTaskTable: React.FC<CollectionTaskTableProps> = ({
                         <IconButton
                           size='small'
                           onClick={() => onTrigger(task.id)}
+                        aria-label="执行"
                         >
                           <Play size={16} />
                         </IconButton>
@@ -131,6 +132,7 @@ const CollectionTaskTable: React.FC<CollectionTaskTableProps> = ({
                         <IconButton
                           size='small'
                           onClick={() => onEdit(task)}
+                        aria-label="编辑"
                         >
                           <Edit size={16} />
                         </IconButton>
@@ -139,6 +141,7 @@ const CollectionTaskTable: React.FC<CollectionTaskTableProps> = ({
                         <IconButton
                           size='small'
                           onClick={() => onDelete(task.id)}
+                        aria-label="删除"
                         >
                           <Trash2 size={16} />
                         </IconButton>

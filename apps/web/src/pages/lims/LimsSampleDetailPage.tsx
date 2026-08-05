@@ -2,20 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import {
-  Package,
-  Calendar,
-  User,
-  MapPin,
-  FileText,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  Edit3,
-  Trash2,
-  Plus,
-  BarChart3,
-} from 'lucide-react';
+import { Package, User, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import {
   Dialog,
   DialogTitle,
@@ -40,7 +27,6 @@ import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import {
   DetailPageTemplate,
-  ListPageTemplate,
   type ColumnDef as ListColumnDef,
   type SectionConfig,
 } from '@/components/templates';

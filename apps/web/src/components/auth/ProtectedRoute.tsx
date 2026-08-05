@@ -4,7 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import { useRole } from '../../hooks/useRole';
-import { Button, Box, Typography, useTheme } from '@mui/material';
+import { Button, Box, Typography } from '@mui/material';
 import { AUTH_PATHS } from '../../routes/auth';
 
 interface ProtectedRouteProps {
@@ -25,7 +25,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, isLoading, logout } = useAuth();
   const { checkAnyPermission, checkAllPermissions } = usePermission();
   const { checkAnyRole } = useRole();
-  const theme = useTheme();
   const location = useLocation();
 
   if (isLoading) {
@@ -188,7 +187,6 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
   action = 'read',
   fallbackComponent,
 }) => {
-  const theme = useTheme();
   const { canAccessModule, canWriteModule, canDeleteModule, canAdminModule } = usePermission();
 
   const checkAction = () => {

@@ -8,10 +8,8 @@ import React, { useState, useMemo } from 'react';
 import {
   MessageSquare,
   Search,
-  X,
   Clock,
   Trash2,
-  ChevronRight,
   Lightbulb,
   FileText,
   Code,
@@ -20,7 +18,6 @@ import {
 import {
   Box,
   Typography,
-  Paper,
   Chip,
   IconButton,
   TextField,
@@ -33,7 +30,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Divider,
   useTheme,
 } from '@mui/material';
 
@@ -314,6 +310,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                       handleDeleteClick(session.id);
                     }}
                     sx={{ p: 0.5, opacity: 0.6, '&:hover': { opacity: 1 } }}
+                  aria-label="删除"
                   >
                     <Trash2 size={14} />
                   </IconButton>

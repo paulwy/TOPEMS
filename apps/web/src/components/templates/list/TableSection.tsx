@@ -4,7 +4,6 @@ import {
   Checkbox,
   Collapse,
   IconButton,
-  Skeleton,
   TableCell,
   TableBody,
   TableHead,
@@ -341,6 +340,7 @@ export function TableSection<T>({
               <IconButton
                 size='small'
                 onClick={onOpenColumnConfig}
+              aria-label="配置列"
               >
                 <Columns3 style={{ width: 18, height: 18 }} />
               </IconButton>
@@ -460,6 +460,7 @@ export function TableSection<T>({
                     e.stopPropagation();
                     onExpandRow?.(row);
                   }}
+                aria-label="展开"
                 >
                   <ChevronRight
                     style={{
@@ -490,6 +491,7 @@ export function TableSection<T>({
                       e.stopPropagation();
                       onToggleExpand?.(rowId);
                     }}
+                  aria-label="展开"
                   >
                     <ChevronRight
                       style={{
@@ -570,6 +572,7 @@ export function TableSection<T>({
                   <IconButton
                     size='small'
                     onClick={(e) => onRowActionClick?.(e, row)}
+                  aria-label="更多"
                   >
                     <MoreHorizontal style={{ width: 18, height: 18 }} />
                   </IconButton>
@@ -589,6 +592,7 @@ export function TableSection<T>({
                               action.onClick?.(row);
                             }}
                             color={action.color}
+                          aria-label="更多"
                           >
                             {action.icon || <MoreHorizontal style={{ width: 16, height: 16 }} />}
                           </IconButton>
@@ -599,6 +603,7 @@ export function TableSection<T>({
                       <IconButton
                         size='small'
                         onClick={(e) => onRowActionClick?.(e, row)}
+                      aria-label="更多"
                       >
                         <MoreHorizontal style={{ width: 16, height: 16 }} />
                       </IconButton>

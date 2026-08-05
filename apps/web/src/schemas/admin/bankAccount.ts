@@ -108,10 +108,22 @@ export const bankAccountSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'checking', label: i18n.t('schema:admin.bank_account.account_type.option.checking') },
-          { value: 'savings', label: i18n.t('schema:admin.bank_account.account_type.option.savings') },
-          { value: 'dedicated', label: i18n.t('schema:admin.bank_account.account_type.option.dedicated') },
-          { value: 'foreign', label: i18n.t('schema:admin.bank_account.account_type.option.foreign') },
+          {
+            value: 'checking',
+            label: i18n.t('schema:admin.bank_account.account_type.option.checking'),
+          },
+          {
+            value: 'savings',
+            label: i18n.t('schema:admin.bank_account.account_type.option.savings'),
+          },
+          {
+            value: 'dedicated',
+            label: i18n.t('schema:admin.bank_account.account_type.option.dedicated'),
+          },
+          {
+            value: 'foreign',
+            label: i18n.t('schema:admin.bank_account.account_type.option.foreign'),
+          },
         ],
       },
       listWidth: 100,
@@ -302,11 +314,26 @@ export const bankAccountSchema: EntitySchema = {
         label: i18n.t('schema:admin.bank_account.filter.account_type.label'),
         type: 'select',
         options: [
-          { value: 'all', label: i18n.t('schema:admin.bank_account.filter.account_type.option.all') },
-          { value: 'checking', label: i18n.t('schema:admin.bank_account.filter.account_type.option.checking') },
-          { value: 'savings', label: i18n.t('schema:admin.bank_account.filter.account_type.option.savings') },
-          { value: 'dedicated', label: i18n.t('schema:admin.bank_account.filter.account_type.option.dedicated') },
-          { value: 'foreign', label: i18n.t('schema:admin.bank_account.filter.account_type.option.foreign') },
+          {
+            value: 'all',
+            label: i18n.t('schema:admin.bank_account.filter.account_type.option.all'),
+          },
+          {
+            value: 'checking',
+            label: i18n.t('schema:admin.bank_account.filter.account_type.option.checking'),
+          },
+          {
+            value: 'savings',
+            label: i18n.t('schema:admin.bank_account.filter.account_type.option.savings'),
+          },
+          {
+            value: 'dedicated',
+            label: i18n.t('schema:admin.bank_account.filter.account_type.option.dedicated'),
+          },
+          {
+            value: 'foreign',
+            label: i18n.t('schema:admin.bank_account.filter.account_type.option.foreign'),
+          },
         ],
         defaultValue: 'all',
       },
@@ -316,9 +343,18 @@ export const bankAccountSchema: EntitySchema = {
         type: 'select',
         options: [
           { value: 'all', label: i18n.t('schema:admin.bank_account.filter.status.option.all') },
-          { value: 'active', label: i18n.t('schema:admin.bank_account.filter.status.option.active') },
-          { value: 'frozen', label: i18n.t('schema:admin.bank_account.filter.status.option.frozen') },
-          { value: 'closed', label: i18n.t('schema:admin.bank_account.filter.status.option.closed') },
+          {
+            value: 'active',
+            label: i18n.t('schema:admin.bank_account.filter.status.option.active'),
+          },
+          {
+            value: 'frozen',
+            label: i18n.t('schema:admin.bank_account.filter.status.option.frozen'),
+          },
+          {
+            value: 'closed',
+            label: i18n.t('schema:admin.bank_account.filter.status.option.closed'),
+          },
         ],
         defaultValue: 'all',
       },

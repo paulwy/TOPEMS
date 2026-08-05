@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { Wrench, MapPin, Calendar, User, FileText } from 'lucide-react';
+import { Wrench } from 'lucide-react';
 import { assetApi, type Asset } from '@/api/erp';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';

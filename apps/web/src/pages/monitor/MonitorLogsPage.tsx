@@ -168,7 +168,7 @@ const MonitorLogsPage: React.FC = () => {
       {
         label: t('monitor.logs.action.link_log'),
         icon: <LinkIcon size={16} />,
-        onClick: (row: Record<string, unknown>) => {
+        onClick: (_row: Record<string, unknown>) => {
           addNotification({
             type: 'info',
             message: t('monitor.logs.message.link_filtered'),
@@ -364,6 +364,7 @@ const MonitorLogsPage: React.FC = () => {
               <IconButton
                 size='small'
                 onClick={handleExport}
+              aria-label="下载"
               >
                 <Download size={18} />
               </IconButton>

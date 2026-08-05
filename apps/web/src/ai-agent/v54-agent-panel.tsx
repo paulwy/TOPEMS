@@ -13,9 +13,7 @@ import {
   Chip,
   List,
   ListItem,
-  ListItemText,
   Divider,
-  CircularProgress,
   Stack,
   Badge,
   LinearProgress,
@@ -47,12 +45,9 @@ import {
   Database,
   Plus,
   Trash2,
-  ChevronDown,
-  ChevronRight,
   CheckCircle2,
   XCircle,
   Loader2,
-  Sparkles,
   Terminal,
   MessageSquare,
   Cpu,
@@ -411,7 +406,7 @@ const ConversationTab: React.FC<{
     scrollToBottom();
   }, [messages]);
 
-  const generateResponse = (userMessage: string): string => {
+  const generateResponse = (_userMessage: string): string => {
     const ctx = contextEngine.getContext(sessionId);
     const intent = ctx?.intent ?? 'unclear';
     const entities = ctx?.entities ?? [];

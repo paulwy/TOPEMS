@@ -82,10 +82,7 @@ const ticketApiAdapter: CrudApiAdapter<Ticket> = {
   },
 };
 
-function formatDuration(
-  minutes: number | undefined,
-  t: TFunction
-): string {
+function formatDuration(minutes: number | undefined, t: TFunction): string {
   if (minutes === undefined || minutes === null) return '-';
   if (minutes < 0) {
     const h = Math.abs(Math.floor(minutes / 60));

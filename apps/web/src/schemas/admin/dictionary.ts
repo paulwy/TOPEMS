@@ -1,6 +1,6 @@
 import React from 'react';
 import type { EntitySchema, SchemaField } from '@/schema/types';
-import { dictTypeApi, dictItemApi } from '@/api/system';
+import { dictItemApi } from '@/api/system';
 import i18n from '@/i18n';
 
 const categoryLabels: Record<string, string> = {
@@ -165,10 +165,19 @@ export const dictTypeSchema: EntitySchema = {
         type: 'select',
         options: [
           { value: 'all', label: i18n.t('schema:admin.dict_type.filter.category.option.all') },
-          { value: 'system', label: i18n.t('schema:admin.dict_type.filter.category.option.system') },
-          { value: 'business', label: i18n.t('schema:admin.dict_type.filter.category.option.business') },
+          {
+            value: 'system',
+            label: i18n.t('schema:admin.dict_type.filter.category.option.system'),
+          },
+          {
+            value: 'business',
+            label: i18n.t('schema:admin.dict_type.filter.category.option.business'),
+          },
           { value: 'basic', label: i18n.t('schema:admin.dict_type.filter.category.option.basic') },
-          { value: 'custom', label: i18n.t('schema:admin.dict_type.filter.category.option.custom') },
+          {
+            value: 'custom',
+            label: i18n.t('schema:admin.dict_type.filter.category.option.custom'),
+          },
         ],
         defaultValue: 'all',
       },
@@ -179,7 +188,10 @@ export const dictTypeSchema: EntitySchema = {
         options: [
           { value: 'all', label: i18n.t('schema:admin.dict_type.filter.status.option.all') },
           { value: 'active', label: i18n.t('schema:admin.dict_type.filter.status.option.active') },
-          { value: 'inactive', label: i18n.t('schema:admin.dict_type.filter.status.option.inactive') },
+          {
+            value: 'inactive',
+            label: i18n.t('schema:admin.dict_type.filter.status.option.inactive'),
+          },
         ],
         defaultValue: 'all',
       },
@@ -343,7 +355,10 @@ export const dictItemSchema: EntitySchema = {
         options: [
           { value: 'all', label: i18n.t('schema:admin.dict_item.filter.status.option.all') },
           { value: 'active', label: i18n.t('schema:admin.dict_item.filter.status.option.active') },
-          { value: 'inactive', label: i18n.t('schema:admin.dict_item.filter.status.option.inactive') },
+          {
+            value: 'inactive',
+            label: i18n.t('schema:admin.dict_item.filter.status.option.inactive'),
+          },
         ],
         defaultValue: 'all',
       },

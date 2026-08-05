@@ -8,7 +8,6 @@ import {
   Box,
   Typography,
   Button,
-  useTheme,
 } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 
@@ -19,7 +18,6 @@ const CreateFolderModal: React.FC<{
   parentId?: string | null;
   createFolderMutation: any;
 }> = ({ isOpen, onClose, onSuccess, parentId, createFolderMutation }) => {
-  const theme = useTheme();
   const [folderName, setFolderName] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import {
   FileText,
   FolderOpen,
@@ -12,7 +11,6 @@ import {
   FolderPlus,
   FileType,
   Trash2,
-  ArrowRight,
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
@@ -43,7 +41,6 @@ const getGreeting = (): string => {
 };
 
 export const DocumentDashboardPage: React.FC = () => {
-  const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const { data: statsData, isLoading: loading } = useQuery<DocDashboardStats | null>({

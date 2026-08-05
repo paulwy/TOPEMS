@@ -1,8 +1,4 @@
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
   Typography,
   Dialog,
   DialogContent,

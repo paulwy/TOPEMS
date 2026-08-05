@@ -7,10 +7,6 @@ import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { useNotificationStore } from '@/store';
 import {
   Settings,
-  Plus,
-  RefreshCw,
-  Download,
-  Upload,
   Copy,
   Power,
   PowerOff,

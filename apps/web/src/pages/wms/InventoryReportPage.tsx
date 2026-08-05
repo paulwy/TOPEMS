@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -108,7 +108,6 @@ const InventoryReportPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const statistics = statisticsQuery.data;
-  const statisticsLoading = statisticsQuery.isLoading;
 
   useEffect(() => {
     if (statisticsQuery.isError && statisticsQuery.error) {
@@ -143,8 +142,6 @@ const InventoryReportPage: React.FC = () => {
   });
   const abcAnalysis = abcAnalysisQuery.data?.items || [];
   const abcTotalSku = abcAnalysisQuery.data?.total_sku || 0;
-  const abcTotalValue = abcAnalysisQuery.data?.total_value || 0;
-  const abcLoading = abcAnalysisQuery.isLoading;
 
   useEffect(() => {
     if (abcAnalysisQuery.isError && abcAnalysisQuery.error) {
@@ -177,7 +174,6 @@ const InventoryReportPage: React.FC = () => {
     enabled: currentTab === 2,
   });
   const turnoverData = turnoverQuery.data || [];
-  const turnoverLoading = turnoverQuery.isLoading;
 
   useEffect(() => {
     if (turnoverQuery.isError && turnoverQuery.error) {
@@ -211,7 +207,6 @@ const InventoryReportPage: React.FC = () => {
   });
   const valueByWarehouse = valueByWarehouseQuery.data?.items || [];
   const totalWarehouseValue = valueByWarehouseQuery.data?.total_value || 0;
-  const valueByWarehouseLoading = valueByWarehouseQuery.isLoading;
 
   useEffect(() => {
     if (valueByWarehouseQuery.isError && valueByWarehouseQuery.error) {

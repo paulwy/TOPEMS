@@ -1,17 +1,5 @@
 import React, { useMemo } from 'react';
-import { logger } from '@/utils/logger';
-import {
-  Edit,
-  Users,
-  Calendar,
-  DollarSign,
-  FileText,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  TrendingUp,
-  ChevronRight,
-} from 'lucide-react';
+import { Edit, DollarSign, FileText, TrendingUp } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {

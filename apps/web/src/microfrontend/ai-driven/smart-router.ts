@@ -412,7 +412,7 @@ export class SmartRouter {
 
   private updateUserProfile(
     userId: string,
-    fromRoute: string,
+    _fromRoute: string,
     toRoute: string,
     timeSpent: number
   ): void {

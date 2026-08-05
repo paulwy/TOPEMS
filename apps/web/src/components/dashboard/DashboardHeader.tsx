@@ -164,6 +164,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                   color: 'error.light',
                 },
               }}
+              aria-label='退出登录'
               title='退出登录'
             >
               <LogOut style={{ width: 20, height: 20 }} />

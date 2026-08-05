@@ -1,5 +1,5 @@
-import { Grid, PageContainer } from '@/components';
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { PageContainer } from '@/components';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   FileText,
   Folder,
@@ -9,14 +9,10 @@ import {
   ChevronLeft,
   Star,
   BookOpen,
-  MoreVertical,
   Trash2,
   Download,
   Eye,
   History,
-  Share2,
-  X,
-  CheckCircle,
   FolderOpen,
   Filter,
   SortAsc,
@@ -42,23 +38,16 @@ import {
   TextField,
   Card,
   CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Chip,
   Tooltip,
   Tabs,
   Tab,
   Box,
   Typography,
-  Stack,
-  IconButton,
   Button,
   useTheme,
 } from '@mui/material';
 import { ModeToggle } from '@/components/theme/ModeToggle';
-import { designTokens } from '@/theme/tokens';
 
 import CreateFolderModal from './components/CreateFolderModal';
 import StatCard from './components/StatCard';

@@ -128,9 +128,7 @@ async function computeQueryHash(query: string): Promise<string> {
 // V64 mock fallback：开发环境 + portal 服务未启动时，bffGraphQL 直接返回空结构，
 // 避免 Dashboard 整页出现错误状态。生产环境 / 显式设置 VITE_BFF_MOCK=false 时关闭。
 function shouldMockBff(): boolean {
-  return Boolean(
-    import.meta.env.DEV && import.meta.env.VITE_BFF_MOCK !== 'false'
-  );
+  return Boolean(import.meta.env.DEV && import.meta.env.VITE_BFF_MOCK !== 'false');
 }
 
 function buildMockForQuery<T>(query: string): T | null {
@@ -168,7 +166,9 @@ function buildMockForQuery<T>(query: string): T | null {
     return { unifiedTodos: [] } as unknown as T;
   }
   if (/mutation\s+CompleteTodo\b/i.test(q)) {
-    return { completeTodo: { id: '', title: '', source: 'workflow', priority: 0, status: 'done' } } as unknown as T;
+    return {
+      completeTodo: { id: '', title: '', source: 'workflow', priority: 0, status: 'done' },
+    } as unknown as T;
   }
   return null;
 }

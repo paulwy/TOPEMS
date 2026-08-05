@@ -474,7 +474,7 @@ export class AutoRemediation {
 
   private async executeAction(
     action: RemediationAction,
-    context?: Record<string, any>
+    _context?: Record<string, any>
   ): Promise<void> {
     // 模拟动作执行
     const timeout = action.timeout || this.config.defaultTimeout;
@@ -528,8 +528,8 @@ export class AutoRemediation {
   }
 
   private async evaluateCondition(
-    condition: WorkflowCondition,
-    context?: Record<string, any>
+    _condition: WorkflowCondition,
+    _context?: Record<string, any>
   ): Promise<boolean> {
     // 简化实现：随机返回检查结果
     // 在实际应用中，这里应该检查真实的条件
@@ -542,8 +542,8 @@ export class AutoRemediation {
 
   private async requestApproval(
     workflow: RemediationWorkflow,
-    trigger: WorkflowTrigger,
-    context?: Record<string, any>
+    _trigger: WorkflowTrigger,
+    _context?: Record<string, any>
   ): Promise<boolean> {
     return new Promise((resolve) => {
       const executionId = `approval-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;

@@ -55,6 +55,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ item, onEdit, onDe
       size='small'
       sx={{ color: 'info.main' }}
       onClick={() => onEdit(item)}
+    aria-label="编辑"
     >
       <Edit size={16} />
     </IconButton>
@@ -66,6 +67,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ item, onEdit, onDe
           onDelete(item.id);
         }
       }}
+    aria-label="删除"
     >
       <Trash2 size={16} />
     </IconButton>

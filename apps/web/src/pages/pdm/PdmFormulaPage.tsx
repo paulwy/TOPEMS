@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useQueryClient } from '@tanstack/react-query';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';

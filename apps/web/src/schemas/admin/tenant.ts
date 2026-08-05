@@ -173,7 +173,10 @@ export const tenantSchema: EntitySchema = {
           { label: i18n.t('schema:admin.tenant.filter.status.option.all'), value: 'all' },
           { label: i18n.t('schema:admin.tenant.filter.status.option.active'), value: 'active' },
           { label: i18n.t('schema:admin.tenant.filter.status.option.trial'), value: 'trial' },
-          { label: i18n.t('schema:admin.tenant.filter.status.option.suspended'), value: 'suspended' },
+          {
+            label: i18n.t('schema:admin.tenant.filter.status.option.suspended'),
+            value: 'suspended',
+          },
         ],
         defaultValue: 'all',
       },
@@ -185,8 +188,14 @@ export const tenantSchema: EntitySchema = {
           { label: i18n.t('schema:admin.tenant.filter.plan.option.all'), value: 'all' },
           { label: i18n.t('schema:admin.tenant.filter.plan.option.free'), value: 'free' },
           { label: i18n.t('schema:admin.tenant.filter.plan.option.basic'), value: 'basic' },
-          { label: i18n.t('schema:admin.tenant.filter.plan.option.professional'), value: 'professional' },
-          { label: i18n.t('schema:admin.tenant.filter.plan.option.enterprise'), value: 'enterprise' },
+          {
+            label: i18n.t('schema:admin.tenant.filter.plan.option.professional'),
+            value: 'professional',
+          },
+          {
+            label: i18n.t('schema:admin.tenant.filter.plan.option.enterprise'),
+            value: 'enterprise',
+          },
         ],
         defaultValue: 'all',
       },

@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Box } from '@mui/material';
 import { Users, Award, ClipboardList, DollarSign, ScrollText, Building2 } from 'lucide-react';
 import { StatsChart } from '@/components/bi/StatsChart';
 import { srmApi } from '@/api/srm';

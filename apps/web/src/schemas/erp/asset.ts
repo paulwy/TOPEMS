@@ -173,9 +173,15 @@ export const assetSchema: EntitySchema = {
           { label: i18n.t('schema:erp.asset.filter.status.option.all'), value: 'all' },
           { label: i18n.t('schema:erp.asset.filter.status.option.active'), value: 'active' },
           { label: i18n.t('schema:erp.asset.filter.status.option.idle'), value: 'idle' },
-          { label: i18n.t('schema:erp.asset.filter.status.option.maintenance'), value: 'maintenance' },
+          {
+            label: i18n.t('schema:erp.asset.filter.status.option.maintenance'),
+            value: 'maintenance',
+          },
           { label: i18n.t('schema:erp.asset.filter.status.option.retired'), value: 'retired' },
-          { label: i18n.t('schema:erp.asset.filter.status.option.transferred'), value: 'transferred' },
+          {
+            label: i18n.t('schema:erp.asset.filter.status.option.transferred'),
+            value: 'transferred',
+          },
         ],
       },
       {

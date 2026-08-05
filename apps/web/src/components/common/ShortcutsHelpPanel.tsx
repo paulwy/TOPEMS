@@ -1,5 +1,5 @@
 import React from 'react';
-import { Keyboard, X, Command } from 'lucide-react';
+import { Keyboard } from 'lucide-react';
 import {
   Dialog,
   DialogContent,

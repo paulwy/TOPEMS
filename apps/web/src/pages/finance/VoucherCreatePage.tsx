@@ -5,8 +5,6 @@ import {
   TextField,
   Typography,
   Box,
-  Stack,
-  Divider,
   IconButton,
   Table,
   TableBody,
@@ -24,7 +22,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { Plus, Trash2, Save, X, Calculator, AlertCircle, FileText, Info } from 'lucide-react';
+import { Plus, Trash2, Calculator, AlertCircle } from 'lucide-react';
 import { FormPageTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import {
@@ -34,7 +32,6 @@ import {
   type VoucherItemRequest,
 } from '@/api/erp';
 import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
 
 import { useTranslation } from 'react-i18next';
 
@@ -506,6 +503,7 @@ const VoucherCreatePage: React.FC = () => {
                       color='error'
                       onClick={() => removeVoucherItem(index)}
                       disabled={voucherItems.length <= 1}
+                    aria-label="删除"
                     >
                       <Trash2 size={16} />
                     </IconButton>

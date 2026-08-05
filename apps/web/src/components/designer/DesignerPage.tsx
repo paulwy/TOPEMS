@@ -95,6 +95,7 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
               onClick={designer.undo}
               disabled={!designer.canUndo}
               size='small'
+              aria-label='撤销'
             >
               <LucideIcons.Undo2 size={18} />
             </IconButton>
@@ -107,6 +108,7 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
               onClick={designer.redo}
               disabled={!designer.canRedo}
               size='small'
+              aria-label='重做'
             >
               <LucideIcons.Redo2 size={18} />
             </IconButton>
@@ -124,6 +126,7 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
             onClick={designer.clear}
             size='small'
             color='error'
+            aria-label='清空画布'
           >
             <LucideIcons.Trash2 size={18} />
           </IconButton>

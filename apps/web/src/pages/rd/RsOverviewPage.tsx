@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -10,9 +10,7 @@ import {
   Rocket,
   GitBranch,
   FileCode,
-  Users,
   Plus,
-  ClipboardList,
   ShieldCheck,
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';

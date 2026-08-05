@@ -7,7 +7,6 @@ import {
   Eye,
   EyeOff,
   Trash2,
-  GripVertical,
   BarChart3,
   PieChart,
   LineChart,

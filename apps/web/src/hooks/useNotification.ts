@@ -28,7 +28,7 @@ export interface UseNotificationResult {
 }
 
 function parseArgs(
-  message: string,
+  _message: string,
   titleOrDuration?: string | number,
   duration?: number
 ): { title?: string; duration?: number } {

@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronUp,
   Bug,
-  Wifi,
   FileX,
   Layers,
 } from 'lucide-react';

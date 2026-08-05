@@ -21,7 +21,6 @@ import {
   MessageSquare,
   BarChart3,
   Lightbulb,
-  Check,
 } from 'lucide-react';
 import type { Theme } from '@mui/material';
 import {
@@ -389,6 +388,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                             <IconButton
                               size='small'
                               onClick={() => onToggleFavorite(prompt.id)}
+                            aria-label="收藏"
                             >
                               <Star
                                 size={18}
@@ -401,12 +401,14 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                             <IconButton
                               size='small'
                               onClick={() => handleOpenEditDialog(prompt)}
+                            aria-label="编辑"
                             >
                               <Edit3 size={18} />
                             </IconButton>
                             <IconButton
                               size='small'
                               onClick={() => onDeletePrompt(prompt.id)}
+                            aria-label="删除"
                             >
                               <Trash2 size={18} />
                             </IconButton>
@@ -467,12 +469,14 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                             <IconButton
                               size='small'
                               onClick={() => onCopyPrompt(prompt.content)}
+                            aria-label="复制"
                             >
                               <Copy size={14} />
                             </IconButton>
                             <IconButton
                               size='small'
                               onClick={() => onUsePrompt(prompt)}
+                            aria-label="执行"
                             >
                               <PlayCircle size={14} />
                             </IconButton>
@@ -521,6 +525,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
             <IconButton
               size='small'
               onClick={handleCloseEditDialog}
+            aria-label="关闭"
             >
               <X size={18} />
             </IconButton>

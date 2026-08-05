@@ -164,7 +164,6 @@ export class ContextEngine {
     const context = this.conversations.get(sessionId);
     if (!context) return '';
 
-    const recentMessages = context.messages.slice(-10);
     const olderMessages = context.messages.slice(0, -10);
 
     const summaryParts: string[] = [];

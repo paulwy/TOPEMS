@@ -42,6 +42,7 @@ export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ modes, current, 
                   bgcolor: current === mode ? 'background.paper' : 'action.selected',
                 },
               }}
+            aria-label="配置列"
             >
               {mode === 'table' ? <Columns3 size={18} /> : <FileText size={18} />}
             </IconButton>

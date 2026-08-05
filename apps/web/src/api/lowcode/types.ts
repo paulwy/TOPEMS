@@ -318,13 +318,7 @@ export interface UpdateLowcodeFormRequest {
 // 5. 页面（Page）
 // ============================================================================
 
-export type LowcodePageType =
-  | 'list'
-  | 'detail'
-  | 'form'
-  | 'dashboard'
-  | 'custom'
-  | 'external_link';
+export type LowcodePageType = 'list' | 'detail' | 'form' | 'dashboard' | 'custom' | 'external_link';
 
 export interface PageComponent {
   id: string;
@@ -402,11 +396,7 @@ export interface FormSubmitHookResponse {
 // ============================================================================
 
 export type LowcodeWorkflowTriggerType =
-  | 'manual'
-  | 'form_submit'
-  | 'schedule'
-  | 'event'
-  | 'webhook';
+  'manual' | 'form_submit' | 'schedule' | 'event' | 'webhook';
 
 export type LowcodeWorkflowNodeType =
   | 'start'

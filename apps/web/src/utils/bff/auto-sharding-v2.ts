@@ -243,7 +243,7 @@ export class SmartShardingDecider {
     strategy: ShardStrategyV2,
     targetShardCount?: number
   ): number {
-    const { maxRecordsPerShard, minShardSize, maxShards } = this.options;
+    const { maxRecordsPerShard, minShardSize } = this.options;
 
     if (targetShardCount) {
       const targetSize = Math.ceil(estimatedRecords / targetShardCount);
@@ -298,7 +298,7 @@ export class SmartShardingDecider {
     shardIndex: number,
     totalShards: number,
     pageSize: number,
-    totalRecords: number
+    _totalRecords: number
   ): Record<string, unknown> {
     const variables = { ...baseVariables };
 

@@ -139,7 +139,7 @@ export class GraphqlToRestFallback<T = unknown> implements FallbackStrategy<T> {
 
   private restFn: FallbackAction<T>;
 
-  constructor(restFn: FallbackAction<T>, priority = 100) {
+  constructor(restFn: FallbackAction<T>, _priority = 100) {
     this.restFn = restFn;
   }
 

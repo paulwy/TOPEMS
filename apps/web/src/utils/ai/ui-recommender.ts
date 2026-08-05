@@ -906,7 +906,7 @@ export class UIRecommender {
   }
 
   private suggestProps(
-    component: ComponentKnowledge,
+    _component: ComponentKnowledge,
     context: RecommendationContext
   ): Record<string, unknown> {
     const props: Record<string, unknown> = {};
@@ -949,7 +949,7 @@ export class UIRecommender {
     return props;
   }
 
-  private formatProps(props: Record<string, unknown>, component: ComponentKnowledge): string {
+  private formatProps(props: Record<string, unknown>, _component: ComponentKnowledge): string {
     if (Object.keys(props).length === 0) return '';
 
     const propStrings = Object.entries(props)
@@ -1165,7 +1165,6 @@ export class UIRecommender {
     primary: ComponentKnowledge,
     supporting: ComponentKnowledge[]
   ): string {
-    const hasButton = supporting.some((s) => s.name === 'Button');
     const hasSelect = supporting.some((s) => s.name === 'Select');
 
     const lines: string[] = [];
@@ -1200,7 +1199,7 @@ export class UIRecommender {
 
   private generateNavCompositionCode(
     primary: ComponentKnowledge,
-    supporting: ComponentKnowledge[]
+    _supporting: ComponentKnowledge[]
   ): string {
     const lines: string[] = [];
     lines.push('// 导航组合示例');
@@ -1231,7 +1230,7 @@ export class UIRecommender {
 
   private generateDataCompositionCode(
     primary: ComponentKnowledge,
-    supporting: ComponentKnowledge[]
+    _supporting: ComponentKnowledge[]
   ): string {
     const lines: string[] = [];
     lines.push('// 数据展示组合示例');

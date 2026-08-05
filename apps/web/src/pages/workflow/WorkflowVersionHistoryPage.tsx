@@ -41,7 +41,6 @@ const FlowVersionHistoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-  const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showRollbackModal, setShowRollbackModal] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<WorkflowVersion | null>(null);
@@ -258,7 +257,7 @@ const FlowVersionHistoryPage: React.FC = () => {
     deleteVersionMutation.mutate(version.id);
   };
 
-  const handleCompare = (version1: string, version2: string) => {
+  const handleCompare = (_version1: string, _version2: string) => {
     navigate(WORKFLOW_PATHS.definitions);
   };
 
@@ -443,6 +442,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                                 setShowRollbackModal(true);
                               }}
                               sx={{ color: 'warning.main' }}
+                            aria-label="重置"
                             >
                               <RotateCcw size={20} />
                             </IconButton>
@@ -452,6 +452,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                               size='small'
                               onClick={() => handleDeleteVersion(version)}
                               sx={{ color: 'error.main' }}
+                            aria-label="删除"
                             >
                               <Trash2 size={20} />
                             </IconButton>

@@ -3,14 +3,12 @@
  * 管理母子公司关系、持股比例、控制类型等，用于合并报表
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
-  Plus,
   Search,
   Building2,
   Network,
-  Edit2,
   Trash2,
   ChevronRight,
   ChevronDown,
@@ -19,7 +17,6 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -27,7 +24,6 @@ import {
   Chip,
   Box,
   Typography,
-  Stack,
   Tabs,
   Tab,
   Button,
@@ -36,8 +32,6 @@ import { PageContainer } from '@/components/common';
 import {
   useCompanyRelations,
   useCompanyTree,
-  useCreateCompanyRelation,
-  useUpdateCompanyRelation,
   useDeleteCompanyRelation,
 } from '@/hooks/useConsolidation';
 import { DataTable } from '@/components/common/DataTable';
@@ -156,11 +150,10 @@ const TreeNodeComponent: React.FC<{
 
 export default function CompanyStructurePage() {
   // 状态
-  const navigate = useNavigate();
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [selectedRelation, setSelectedRelation] = useState<CompanyRelation | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [, setSelectedRelation] = useState<CompanyRelation | null>(null);
 
   const {
     confirmOpen: confirmDialogOpen,
@@ -178,10 +171,8 @@ export default function CompanyStructurePage() {
   const { data: treeData, isLoading: treeLoading } = useCompanyTree();
 
   // 创建公司关系
-  const createRelation = useCreateCompanyRelation();
 
   // 更新公司关系
-  const updateRelation = useUpdateCompanyRelation();
 
   // 删除公司关系
   const deleteRelation = useDeleteCompanyRelation();

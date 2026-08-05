@@ -14,10 +14,8 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
   Avatar,
   Chip,
-  Divider,
   useTheme,
   useMediaQuery,
   Skeleton,
@@ -30,9 +28,6 @@ import {
   ChevronRight,
   ChevronDown,
   Plus,
-  Edit,
-  Trash2,
-  Eye,
   Building2,
   Users,
   TrendingUp,
@@ -371,6 +366,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                   e.stopPropagation();
                   if (!node.disabled) toggleExpand(node.id);
                 }}
+              aria-label="展开"
               >
                 {isExpanded ? (
                   <ChevronDown sx={{ width: 16, height: 16 }} />
@@ -589,6 +585,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
               <IconButton
                 onClick={onRefresh}
                 disabled={loading}
+              aria-label="刷新"
               >
                 <RefreshCw
                   sx={{
@@ -794,6 +791,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                               }}
                               onClick={() => action.onClick(selectedNode)}
                               disabled={action.disabled?.(selectedNode)}
+                              aria-label={action.label}
                             >
                               {action.icon}
                             </IconButton>

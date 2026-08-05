@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography, Box } from '@mui/material';
-import { Dialog, StatusBadge } from '@/components/common';
+import { Dialog } from '@/components/common';
 import type { FinancialVoucher, VoucherItem } from '@/api/erp';
 
 import { useTranslation } from 'react-i18next';

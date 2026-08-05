@@ -1,9 +1,8 @@
 import { Grid } from '@/components';
 import React, { useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { RD_PATHS } from '@/modules/rd/config';
 import {
-  Box,
   Container,
   Typography,
   Card,
@@ -11,12 +10,6 @@ import {
   Chip,
   Paper,
   Divider,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Stack,
   Dialog,
   DialogTitle,
@@ -51,12 +44,7 @@ import {
   Plus as PlusIcon,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  rdApi,
-  type Experiment,
-  type ExperimentRecord,
-  type CreateExperimentRecordRequest,
-} from '@/api/rd';
+import { rdApi, type Experiment, type CreateExperimentRecordRequest } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';

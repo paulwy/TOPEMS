@@ -171,7 +171,10 @@ export const accountSchema: EntitySchema = {
         type: 'static',
         options: [
           { value: 'debit', label: i18n.t('schema:admin.account.balance_direction.option.debit') },
-          { value: 'credit', label: i18n.t('schema:admin.account.balance_direction.option.credit') },
+          {
+            value: 'credit',
+            label: i18n.t('schema:admin.account.balance_direction.option.credit'),
+          },
         ],
       },
       listWidth: 100,
@@ -283,7 +286,10 @@ export const accountSchema: EntitySchema = {
         options: [
           { label: i18n.t('schema:admin.account.filter.type.option.all'), value: 'all' },
           { label: i18n.t('schema:admin.account.filter.type.option.asset'), value: 'asset' },
-          { label: i18n.t('schema:admin.account.filter.type.option.liability'), value: 'liability' },
+          {
+            label: i18n.t('schema:admin.account.filter.type.option.liability'),
+            value: 'liability',
+          },
           { label: i18n.t('schema:admin.account.filter.type.option.equity'), value: 'equity' },
           { label: i18n.t('schema:admin.account.filter.type.option.revenue'), value: 'revenue' },
           { label: i18n.t('schema:admin.account.filter.type.option.expense'), value: 'expense' },
@@ -298,7 +304,10 @@ export const accountSchema: EntitySchema = {
         options: [
           { label: i18n.t('schema:admin.account.filter.is_detail.option.all'), value: 'all' },
           { label: i18n.t('schema:admin.account.filter.is_detail.option.detail'), value: 'detail' },
-          { label: i18n.t('schema:admin.account.filter.is_detail.option.summary'), value: 'summary' },
+          {
+            label: i18n.t('schema:admin.account.filter.is_detail.option.summary'),
+            value: 'summary',
+          },
         ],
         defaultValue: 'all',
       },

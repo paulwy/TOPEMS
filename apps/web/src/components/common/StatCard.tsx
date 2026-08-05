@@ -13,9 +13,7 @@ import {
   Menu,
   MenuItem,
   Skeleton,
-  Chip,
   IconButton,
-  Tooltip,
   LinearProgress,
   Button,
   useTheme,
@@ -25,7 +23,6 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Activity,
   Download,
   Maximize2,
   RefreshCw,
@@ -36,10 +33,6 @@ import {
   PieChart,
   AreaChart,
   MoreVertical,
-  Eye,
-  Target,
-  Award,
-  type LucideIcon,
 } from 'lucide-react';
 import { useTouchFeedback } from '@/hooks/useTouchFeedback';
 import { useCountUp, countUpEasings } from '@/hooks/useCountUp';
@@ -383,7 +376,6 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
   sx,
   children,
 }) => {
-  const theme = useTheme();
   const [isHovered, _setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -939,6 +931,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                     key={type}
                     size='small'
                     onClick={() => onChartTypeChange?.(type)}
+                    aria-label={type}
                     sx={{
                       borderRadius: 0.5,
                       bgcolor: activeChartType === type ? 'background.paper' : 'transparent',
@@ -967,6 +960,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             <IconButton
               size='small'
               onClick={(e) => setActionMenuAnchor(e.currentTarget)}
+            aria-label="更多"
             >
               <MoreVertical style={{ width: 16, height: 16 }} />
             </IconButton>

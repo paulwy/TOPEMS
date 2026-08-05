@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { IconButton, Card, CardActionArea, ListItem, Chip, Switch } from '@mui/material';
+import { IconButton, Card, ListItem, Chip, Switch } from '@mui/material';
 import { useTouchFeedback, type TouchFeedbackOptions } from '@/hooks/useTouchFeedback';
 import { useSwipeGesture } from '@/hooks/useTouchFeedback';
 

@@ -38,6 +38,7 @@ const MapControls: React.FC<MapControlsProps> = ({
           boxShadow: 2,
           '&:hover': { bgcolor: 'action.hover' },
         }}
+        aria-label='放大'
         title='放大'
       >
         <ZoomIn
@@ -54,6 +55,7 @@ const MapControls: React.FC<MapControlsProps> = ({
           boxShadow: 2,
           '&:hover': { bgcolor: 'action.hover' },
         }}
+        aria-label='缩小'
         title='缩小'
       >
         <ZoomOut
@@ -71,6 +73,7 @@ const MapControls: React.FC<MapControlsProps> = ({
             boxShadow: 2,
             '&:hover': { bgcolor: 'action.hover' },
           }}
+          aria-label='缩放到所有标记'
           title='缩放到所有标记'
         >
           <Maximize2

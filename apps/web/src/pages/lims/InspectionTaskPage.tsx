@@ -21,7 +21,6 @@ import { inspectionTaskSchema } from '@/schemas/lims';
 import {
   limsApi,
   type InspectionTask,
-  type InspectionRecord,
   type InspectionProcess,
   type Sample,
   type CreateInspectionRecordRequest,

@@ -9,7 +9,6 @@ import {
   Step,
   StepLabel,
   StepContent,
-  Divider,
   LinearProgress,
   useTheme,
   useMediaQuery,
@@ -470,6 +469,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
             <IconButton
               size='small'
               onClick={() => setValidationError(null)}
+            aria-label="关闭"
             >
               <XCircle style={{ width: 16, height: 16 }} />
             </IconButton>

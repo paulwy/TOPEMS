@@ -1,9 +1,8 @@
 import React from 'react';
-import { Box, Paper, Typography, Card, CardContent, CardHeader } from '@mui/material';
+import { Box, Paper, Typography, CardContent, CardHeader } from '@mui/material';
 import { Server, Database, Code } from 'lucide-react';
 import config from '../../config/runtime';
 import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
-import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;

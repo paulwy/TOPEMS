@@ -14,7 +14,6 @@ import {
   Activity,
   Clock,
   Flame,
-  TrendingUp,
   Search,
   CheckCircle2,
   XCircle,

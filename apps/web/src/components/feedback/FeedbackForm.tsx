@@ -10,7 +10,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Slider,
   TextField,
   Typography,
   Rating,

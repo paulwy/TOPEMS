@@ -1,36 +1,23 @@
-import { Grid } from '@/components';
-import { useNotificationStore } from '@/store';
 import React, { useState, useMemo, useCallback } from 'react';
 import { apiLogger } from '@/utils/logger';
 import {
   MapPin,
-  Plus,
   Search as SearchIcon,
-  ChevronRight,
   ArrowRight,
   Warehouse,
   Camera,
-  X,
-  Edit,
-  Trash2,
   Map,
   Building2,
   Layers,
-  RefreshCw,
   AlertTriangle,
   AlertCircle,
   CheckCircle2,
-  FileText,
-  Upload,
-  Download,
   Loader2,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useGis, GisProvider } from '../../../context/GisContext';
 import MapView from '@/components/gis/MapView';
 import MetricCard from '@/components/bi/MetricCard';
 import StatsChart from '@/components/bi/StatsChart';
-import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import type {
   DevicePoint,
@@ -43,24 +30,10 @@ import type {
 import {
   Box,
   Paper,
-  Stack,
-  Chip,
-  IconButton,
-  TextField,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Tabs,
   Tab,
   Snackbar,
   Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
   TableRow,
   Checkbox,
   FormControlLabel,
@@ -71,7 +44,6 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import type { TabType, ModalType, FormErrors, GisEntity } from './types';
 import { PageHeader } from './components/PageHeader';
 import { StatsSection } from './components/StatsSection';
@@ -80,14 +52,9 @@ import { DataTableSection } from './components/DataTableSection';
 import { EntityFormModal } from './components/EntityFormModal';
 import { ImportModal } from './components/ImportModal';
 
-import { useTranslation } from 'react-i18next';
-
 const ct = designTokens.colors;
 
 const GisContent: React.FC = () => {
-  const { t } = useTranslation();
-  const theme = useTheme();
-  const navigate = useNavigate();
   const {
     state,
     loadAllData,
@@ -111,7 +78,6 @@ const GisContent: React.FC = () => {
   } = useGis();
 
   const [activeTab, setActiveTab] = useState<TabType>('map');
-  const addNotification = useNotificationStore((state) => state.addNotification);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<GisEntity | null>(null);
@@ -126,7 +92,7 @@ const GisContent: React.FC = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<string[][] | null>(null);
   const [importConfirm, setImportConfirm] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<DevicePoint | StorageLocation | null>(null);
+  const [, setSelectedItem] = useState<DevicePoint | StorageLocation | null>(null);
 
   const {
     devicePoints,

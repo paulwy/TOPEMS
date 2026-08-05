@@ -438,12 +438,14 @@ const FrequentContacts: React.FC = () => {
             <IconButton
               size='small'
               sx={{ color: 'text.secondary' }}
+            aria-label="消息"
             >
               <MessageSquare size={16} />
             </IconButton>
             <IconButton
               size='small'
               sx={{ color: 'text.secondary' }}
+            aria-label="电话"
             >
               <Phone size={16} />
             </IconButton>

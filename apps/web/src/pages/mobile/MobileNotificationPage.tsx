@@ -2,22 +2,12 @@ import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
   Chip,
   Switch,
-  Divider,
   Button,
-  TextField,
-  InputAdornment,
   Tabs,
   Tab,
   Paper,
-  Avatar,
   FormControlLabel,
 } from '@mui/material';
 import {
@@ -26,7 +16,6 @@ import {
   Check,
   CheckCheck,
   Trash2,
-  Search,
   MessageSquare,
   Clock,
   Settings,
@@ -142,8 +131,6 @@ const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
   task: <Clock size={20} />,
   message: <MessageSquare size={20} />,
 };
-
-const getTypeIcon = (type: NotificationType) => TYPE_ICONS[type];
 
 export const MobileNotificationPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);

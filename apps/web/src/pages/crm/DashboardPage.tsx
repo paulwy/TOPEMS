@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
 import { Box, Typography, Card, CardContent, CardHeader, Grid, useTheme } from '@mui/material';
 import {
   TrendingUp,
@@ -8,12 +7,10 @@ import {
   ArrowRight,
   Target,
   CheckCircle,
-  TrendingDown,
   Activity,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import BarChartComponent from '../../components/charts/BarChart';
-import { useNotificationStore } from '@/store';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
 import {
@@ -41,7 +38,6 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
-  const navigate = useNavigate();
 
   const statsQuery = useQuery({
     queryKey: QUERY_KEYS.CRM.OPPORTUNITY_STATS,

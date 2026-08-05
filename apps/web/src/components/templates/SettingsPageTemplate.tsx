@@ -30,14 +30,8 @@ import {
   CheckCircle,
   AlertCircle,
   X,
-  Edit2,
   ChevronRight,
-  RefreshCw,
   Settings,
-  User,
-  Bell,
-  Shield,
-  Palette,
 } from 'lucide-react';
 import type { BreadcrumbItem } from './PageHeader';
 import { PageHeader } from './PageHeader';
@@ -272,7 +266,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           </FormLabel>
           {field.description && (
             <Tooltip title={field.description}>
-              <IconButton size='small'>
+              <IconButton size='small'aria-label="信息" >
                 <Info style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
               </IconButton>
             </Tooltip>
@@ -470,7 +464,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             </Box>
           </Box>
           {section.collapsible && (
-            <IconButton size='small'>
+            <IconButton size='small'aria-label="展开" >
               <ChevronRight
                 style={{
                   width: 18,
@@ -628,6 +622,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             <IconButton
               size='small'
               onClick={() => setErrors({})}
+            aria-label="关闭"
             >
               <X style={{ width: 16, height: 16 }} />
             </IconButton>
@@ -646,6 +641,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             <IconButton
               size='small'
               onClick={() => {}}
+            aria-label="关闭"
             >
               <X style={{ width: 16, height: 16 }} />
             </IconButton>

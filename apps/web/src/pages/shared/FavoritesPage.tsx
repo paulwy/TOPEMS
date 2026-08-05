@@ -29,17 +29,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import {
-  Star,
-  Trash2,
-  Search,
-  Clock,
-  FileText,
-  Users,
-  Package,
-  RefreshCw,
-  Plus,
-} from 'lucide-react';
+import { Star, Trash2, Search, Clock, FileText, Users, Package, Plus } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { favoriteApi, searchApi, type Favorite, type SearchResult } from '@/api/shared';
 import { useNotificationStore } from '@/store';
@@ -284,6 +274,7 @@ const FavoritesPage: React.FC = () => {
                         edge='end'
                         color='primary'
                         onClick={() => checkFavorite(fav.entity_type, fav.entity_id)}
+                        aria-label='检查收藏状态'
                         title='检查收藏状态'
                       >
                         <Star size={18} />
@@ -292,6 +283,7 @@ const FavoritesPage: React.FC = () => {
                         edge='end'
                         color='error'
                         onClick={() => removeMutation.mutate(fav.id)}
+                      aria-label="删除"
                       >
                         <Trash2 size={18} />
                       </IconButton>

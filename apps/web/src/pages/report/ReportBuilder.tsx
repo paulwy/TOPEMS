@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   FileText,
   Calendar,
@@ -11,10 +11,9 @@ import {
   CheckCircle,
   AlertCircle,
 } from 'lucide-react';
-import { Box, Typography, TextField, Checkbox, FormControlLabel, Button } from '@mui/material';
+import { Box, Typography, TextField, Checkbox, Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import type { ReportTypeInfo, ReportType, ExportFormat, CreateReportRequest } from '@/api/report';
-import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
 interface ReportBuilderProps {
@@ -60,7 +59,6 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
   onSuccess = () => {},
   isModal = true,
 }) => {
-  const addNotification = useNotificationStore((state) => state.addNotification);
   const [formData, setFormData] = useState({
     title: '',
     description: '',

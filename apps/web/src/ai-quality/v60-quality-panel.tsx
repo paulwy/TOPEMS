@@ -4,7 +4,6 @@ import {
   Typography,
   IconButton,
   Button,
-  Paper,
   Chip,
   Stack,
   Tabs,
@@ -15,7 +14,6 @@ import {
   LinearProgress,
   Divider,
   Alert,
-  Tooltip,
   Card,
   CardContent,
   Grid,
@@ -40,12 +38,9 @@ import {
   Target,
   Zap,
   Layers,
-  Settings,
   BarChart3,
   Brain,
   Eye,
-  Cpu,
-  Flame,
   Lightbulb,
   RefreshCw,
   Bug,
@@ -152,8 +147,6 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
     });
 
     try {
-      const allIds = smartTestV2.getTestCases().map((tc) => tc.id);
-      const run = await smartTestV2.runTests(allIds);
       setRunProgress(100);
 
       setTimeout(() => {

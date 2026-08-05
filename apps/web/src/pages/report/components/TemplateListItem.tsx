@@ -88,6 +88,7 @@ const TemplateListItem: React.FC<TemplateListItemProps> = ({
           sx={{
             color: template.isactive ? 'success.main' : 'grey.400',
           }}
+        aria-label="切换"
         >
           {template.isactive ? (
             <ToggleRight sx={{ width: 20, height: 20 }} />
@@ -98,24 +99,28 @@ const TemplateListItem: React.FC<TemplateListItemProps> = ({
         <IconButton
           onClick={() => onPreview(template)}
           sx={{ color: 'primary.main' }}
+        aria-label="查看"
         >
           <Eye sx={{ width: 16, height: 16 }} />
         </IconButton>
         <IconButton
           onClick={() => onDuplicate(template.id)}
           sx={{ color: 'success.main' }}
+        aria-label="复制"
         >
           <Copy sx={{ width: 16, height: 16 }} />
         </IconButton>
         <IconButton
           onClick={() => onEdit(template)}
           sx={{ color: 'primary.main' }}
+        aria-label="编辑"
         >
           <Edit sx={{ width: 16, height: 16 }} />
         </IconButton>
         <IconButton
           onClick={() => onDelete(template.id)}
           sx={{ color: 'error.main' }}
+        aria-label="删除"
         >
           <Trash2 sx={{ width: 16, height: 16 }} />
         </IconButton>

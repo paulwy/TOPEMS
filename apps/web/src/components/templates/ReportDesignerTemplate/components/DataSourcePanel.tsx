@@ -59,7 +59,7 @@ export const DataSourcePanel: React.FC<DataSourcePanelProps> = ({
             数据源
           </Typography>
         </Box>
-        <IconButton size='small'>
+        <IconButton size='small'aria-label="展开" >
           {showDataSourcePanel ? (
             <ChevronUp sx={{ width: 18, height: 18 }} />
           ) : (

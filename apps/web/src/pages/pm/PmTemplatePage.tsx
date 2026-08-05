@@ -1,19 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { logger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  TextField,
-  InputAdornment,
-  Typography,
-  Box,
-  Button,
-} from '@mui/material';
+import { Card, CardContent, TextField, InputAdornment, Typography, Box } from '@mui/material';
 import type { ProjectTemplate } from '@/components/pm/ProjectTemplateCard';
 import ProjectTemplateCard from '@/components/pm/ProjectTemplateCard';
 import ProjectTemplateModal from '@/components/pm/ProjectTemplateModal';
@@ -25,7 +16,6 @@ import { PM_PATHS } from '@/modules/pm/config';
 const PmTemplatePage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,8 +32,6 @@ const PmTemplatePage: React.FC = () => {
       addNotification({ title: '错误', message: '创建项目失败', type: 'error' });
     },
   });
-
-  const loading = createProjectMutation.isPending;
 
   const templates: ProjectTemplate[] = [
     {

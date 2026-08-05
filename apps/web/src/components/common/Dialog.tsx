@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Box,
   Typography,
   Button,
 } from '@mui/material';
@@ -219,6 +218,7 @@ export const Dialog: React.FC<DialogProps> = ({
               size='small'
               onClick={handleClose}
               sx={{ ml: 'auto' }}
+            aria-label="关闭"
             >
               <X size={20} />
             </IconButton>

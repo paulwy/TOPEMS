@@ -205,17 +205,17 @@ export const useAuth = () => {
   };
 };
 
-export const useHasPermission = (permission: string) => {
+export const useHasPermission = (_permission: string) => {
   const hasPermission = useAuthStore((state) => state.hasPermission);
   return (perm: string) => hasPermission(perm);
 };
 
-export const useHasAnyPermission = (permissions: string[]) => {
+export const useHasAnyPermission = (_permissions: string[]) => {
   const hasAnyPermission = useAuthStore((state) => state.hasAnyPermission);
   return (perms: string[]) => hasAnyPermission(perms);
 };
 
-export const useHasRole = (role: string) => {
+export const useHasRole = (_role: string) => {
   const hasRole = useAuthStore((state) => state.hasRole);
   return (r: string) => hasRole(r);
 };

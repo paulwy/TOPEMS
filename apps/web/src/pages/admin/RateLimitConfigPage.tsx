@@ -5,7 +5,6 @@ import {
   CardContent,
   Chip,
   Divider,
-  FormControl,
   FormControlLabel,
   Grid,
   IconButton,
@@ -35,11 +34,11 @@ import {
   Users,
   Server,
   AlertCircle,
-  Check,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { PageContainer, BackButton } from '@/components/common';
+import { PageContainer } from '@/components/common';
 import { apiClient } from '@/api/client';
 import { designTokens } from '@/theme/tokens';
 import { extractErrorMessage } from '@/utils/errors';
@@ -107,6 +106,7 @@ const DEFAULT_ANTI_REPLAY: AntiReplayConfig = {
 };
 
 const RateLimitConfigPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((s) => s.addNotification);
   const [config, setConfig] = useState<RateLimitConfig>(DEFAULT_CONFIG);
@@ -166,24 +166,24 @@ const RateLimitConfigPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         addNotification({
-          title: '保存成功',
-          message: '限流配置已更新',
+          title: t('admin:rate_limit_config_page.save_success'),
+          message: t('admin:rate_limit_config_page.rate_limit_config_updated'),
           type: 'success',
         });
         queryClient.invalidateQueries({ queryKey: ['admin-rate-limit-config'] });
       } else {
         addNotification({
-          title: '保存失败',
-          message: res.message || '限流配置保存失败',
+          title: t('admin:rate_limit_config_page.save_fail'),
+          message: res.message || t('admin:rate_limit_config_page.rate_limit_config_save_fail'),
           type: 'error',
         });
       }
     },
     onError: (err: unknown) => {
-      apiLogger.error('保存限流配置失败:', err);
+      apiLogger.error(t('admin:rate_limit_config_page.log_save_rate_limit_fail'), err);
       addNotification({
-        title: '保存失败',
-        message: extractErrorMessage(err, '保存限流配置失败'),
+        title: t('admin:rate_limit_config_page.save_fail'),
+        message: extractErrorMessage(err, t('admin:rate_limit_config_page.save_rate_limit_fail')),
         type: 'error',
       });
     },
@@ -200,24 +200,24 @@ const RateLimitConfigPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success) {
         addNotification({
-          title: '保存成功',
-          message: '防重放配置已更新',
+          title: t('admin:rate_limit_config_page.save_success'),
+          message: t('admin:rate_limit_config_page.anti_replay_config_updated'),
           type: 'success',
         });
         queryClient.invalidateQueries({ queryKey: ['admin-anti-replay-config'] });
       } else {
         addNotification({
-          title: '保存失败',
-          message: res.message || '防重放配置保存失败',
+          title: t('admin:rate_limit_config_page.save_fail'),
+          message: res.message || t('admin:rate_limit_config_page.anti_replay_config_save_fail'),
           type: 'error',
         });
       }
     },
     onError: (err: unknown) => {
-      apiLogger.error('保存防重放配置失败:', err);
+      apiLogger.error(t('admin:rate_limit_config_page.log_save_anti_replay_fail'), err);
       addNotification({
-        title: '保存失败',
-        message: extractErrorMessage(err, '保存防重放配置失败'),
+        title: t('admin:rate_limit_config_page.save_fail'),
+        message: extractErrorMessage(err, t('admin:rate_limit_config_page.save_anti_replay_fail')),
         type: 'error',
       });
     },
@@ -235,8 +235,8 @@ const RateLimitConfigPage: React.FC = () => {
       if (res.success && res.data) {
         setConfig(res.data);
         addNotification({
-          title: '已重置',
-          message: '限流配置已重置为默认值',
+          title: t('admin:rate_limit_config_page.reset_done'),
+          message: t('admin:rate_limit_config_page.rate_limit_config_reset'),
           type: 'success',
         });
         queryClient.invalidateQueries({ queryKey: ['admin-rate-limit-config'] });
@@ -323,7 +323,7 @@ const RateLimitConfigPage: React.FC = () => {
   };
 
   const handleReset = () => {
-    if (window.confirm('确定要重置为默认配置吗？')) {
+    if (window.confirm(t('admin:rate_limit_config_page.confirm_reset'))) {
       resetMutation.mutate();
     }
   };
@@ -336,40 +336,40 @@ const RateLimitConfigPage: React.FC = () => {
     () => [
       {
         key: 'tenant_default' as const,
-        title: '租户维度',
+        title: t('admin:rate_limit_config_page.dimension_tenant'),
         icon: <Server size={18} />,
         color: ct.primary.dark,
-        description: '按租户 ID 限流，控制单租户整体访问频率',
+        description: t('admin:rate_limit_config_page.dimension_tenant_desc'),
       },
       {
         key: 'user_default' as const,
-        title: '用户维度',
+        title: t('admin:rate_limit_config_page.dimension_user'),
         icon: <Users size={18} />,
         color: ct.info.dark,
-        description: '按用户 ID 限流，防止单个账号过度请求',
+        description: t('admin:rate_limit_config_page.dimension_user_desc'),
       },
       {
         key: 'ip_default' as const,
-        title: 'IP 维度',
+        title: t('admin:rate_limit_config_page.dimension_ip'),
         icon: <Globe size={18} />,
         color: ct.success.dark,
-        description: '按客户端 IP 限流，抵御自动化攻击',
+        description: t('admin:rate_limit_config_page.dimension_ip_desc'),
       },
       {
         key: 'global_default' as const,
-        title: '全局维度',
+        title: t('admin:rate_limit_config_page.dimension_global'),
         icon: <Shield size={18} />,
         color: ct.warning.dark,
-        description: '兜底限流，保护后端服务的最大吞吐',
+        description: t('admin:rate_limit_config_page.dimension_global_desc'),
       },
     ],
-    []
+    [t]
   );
 
   return (
     <PageContainer
-      title='限流配置'
-      subtitle='多维度限流策略与防重放保护'
+      title={t('admin:rate_limit_config_page.title')}
+      subtitle={t('admin:rate_limit_config_page.subtitle')}
       headerProps={{
         backButton: { href: '/admin/system' },
         pageIcon: <Shield size={20} />,
@@ -395,13 +395,13 @@ const RateLimitConfigPage: React.FC = () => {
                     variant='subtitle1'
                     sx={{ fontWeight: 600 }}
                   >
-                    启用限流
+                    {t('admin:rate_limit_config_page.enable_rate_limit')}
                   </Typography>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    关闭后所有限流规则将不再生效（防重放仍可独立控制）
+                    {t('admin:rate_limit_config_page.enable_rate_limit_desc')}
                   </Typography>
                 </Box>
                 <Switch
@@ -422,17 +422,17 @@ const RateLimitConfigPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                限流维度
+                {t('admin:rate_limit_config_page.dimensions_title')}
               </Typography>
               <Grid
                 container
                 spacing={2}
               >
                 {[
-                  { key: 'by_tenant', label: '租户', desc: '按 tenant_id' },
-                  { key: 'by_user', label: '用户', desc: '按 user_id' },
-                  { key: 'by_ip', label: 'IP', desc: '按客户端 IP' },
-                  { key: 'by_global', label: '全局', desc: '兜底规则' },
+                  { key: 'by_tenant', label: t('admin:rate_limit_config_page.dim_tenant'), desc: t('admin:rate_limit_config_page.dim_tenant_desc') },
+                  { key: 'by_user', label: t('admin:rate_limit_config_page.dim_user'), desc: t('admin:rate_limit_config_page.dim_user_desc') },
+                  { key: 'by_ip', label: 'IP', desc: t('admin:rate_limit_config_page.dim_ip_desc') },
+                  { key: 'by_global', label: t('admin:rate_limit_config_page.dim_global'), desc: t('admin:rate_limit_config_page.dim_global_desc') },
                 ].map((dim) => (
                   <Grid
                     size={{ xs: 6, sm: 3 }}
@@ -521,7 +521,7 @@ const RateLimitConfigPage: React.FC = () => {
                   >
                     <Grid size={{ xs: 6 }}>
                       <TextField
-                        label='允许请求数'
+                        label={t('admin:rate_limit_config_page.label_max_requests')}
                         type='number'
                         fullWidth
                         value={rule.requests}
@@ -530,14 +530,14 @@ const RateLimitConfigPage: React.FC = () => {
                         }
                         slotProps={{
                           input: {
-                            endAdornment: <InputAdornment position='end'>次</InputAdornment>,
+                            endAdornment: <InputAdornment position='end'>{t('admin:rate_limit_config_page.unit_times')}</InputAdornment>,
                           },
                         }}
                       />
                     </Grid>
                     <Grid size={{ xs: 6 }}>
                       <TextField
-                        label='时间窗口'
+                        label={t('admin:rate_limit_config_page.label_time_window')}
                         type='number'
                         fullWidth
                         value={rule.window_secs}
@@ -546,21 +546,21 @@ const RateLimitConfigPage: React.FC = () => {
                         }
                         slotProps={{
                           input: {
-                            endAdornment: <InputAdornment position='end'>秒</InputAdornment>,
+                            endAdornment: <InputAdornment position='end'>{t('admin:rate_limit_config_page.unit_seconds')}</InputAdornment>,
                           },
                         }}
                       />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                       <TextField
-                        label='优先级'
+                        label={t('admin:rate_limit_config_page.label_priority')}
                         type='number'
                         fullWidth
                         value={rule.priority}
                         onChange={(e) =>
                           updateRule(dim.key, 'priority', Number(e.target.value) || 0)
                         }
-                        helperText='数值越大优先级越高'
+                        helperText={t('admin:rate_limit_config_page.priority_helper')}
                       />
                     </Grid>
                   </Grid>
@@ -578,11 +578,11 @@ const RateLimitConfigPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                路径级自定义规则
+                {t('admin:rate_limit_config_page.path_rules_title')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
                 <TextField
-                  label='路径前缀'
+                  label={t('admin:rate_limit_config_page.label_path_prefix')}
                   size='small'
                   value={newPath}
                   onChange={(e) => setNewPath(e.target.value)}
@@ -590,14 +590,14 @@ const RateLimitConfigPage: React.FC = () => {
                   sx={{ minWidth: 240 }}
                 />
                 <TextField
-                  label='请求数'
+                  label={t('admin:rate_limit_config_page.label_requests')}
                   type='number'
                   size='small'
                   value={newPathRequests}
                   onChange={(e) => setNewPathRequests(Number(e.target.value) || 0)}
                 />
                 <TextField
-                  label='窗口(秒)'
+                  label={t('admin:rate_limit_config_page.label_window_seconds')}
                   type='number'
                   size='small'
                   value={newPathWindow}
@@ -608,7 +608,7 @@ const RateLimitConfigPage: React.FC = () => {
                   startIcon={<Plus size={16} />}
                   onClick={handleAddPath}
                 >
-                  添加规则
+                  {t('admin:rate_limit_config_page.add_rule')}
                 </Button>
               </Box>
               <TableContainer
@@ -618,10 +618,10 @@ const RateLimitConfigPage: React.FC = () => {
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell>路径前缀</TableCell>
-                      <TableCell>请求数</TableCell>
-                      <TableCell>窗口(秒)</TableCell>
-                      <TableCell align='right'>操作</TableCell>
+                      <TableCell>{t('admin:rate_limit_config_page.label_path_prefix')}</TableCell>
+                      <TableCell>{t('admin:rate_limit_config_page.label_requests')}</TableCell>
+                      <TableCell>{t('admin:rate_limit_config_page.label_window_seconds')}</TableCell>
+                      <TableCell align='right'>{t('admin:rate_limit_config_page.col_action')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -636,7 +636,7 @@ const RateLimitConfigPage: React.FC = () => {
                             color='text.secondary'
                             sx={{ py: 2 }}
                           >
-                            暂无自定义规则
+                            {t('admin:rate_limit_config_page.no_custom_rules')}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -652,10 +652,11 @@ const RateLimitConfigPage: React.FC = () => {
                           <TableCell>{rule.rule.requests}</TableCell>
                           <TableCell>{rule.rule.window_secs}</TableCell>
                           <TableCell align='right'>
-                            <Tooltip title='删除'>
+                            <Tooltip title={t('admin:rate_limit_config_page.delete')}>
                               <IconButton
                                 size='small'
                                 onClick={() => handleRemovePath(rule.path)}
+                              aria-label={t('admin:rate_limit_config_page.delete')}
                               >
                                 <Trash2 size={16} />
                               </IconButton>
@@ -679,7 +680,7 @@ const RateLimitConfigPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                跳过路径
+                {t('admin:rate_limit_config_page.skip_paths_title')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                 <TextField
@@ -693,7 +694,7 @@ const RateLimitConfigPage: React.FC = () => {
                   variant='outlined'
                   onClick={handleAddSkipPath}
                 >
-                  添加
+                  {t('admin:rate_limit_config_page.add')}
                 </Button>
               </Box>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -723,7 +724,7 @@ const RateLimitConfigPage: React.FC = () => {
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}
                 >
-                  防重放保护
+                  {t('admin:rate_limit_config_page.anti_replay_title')}
                 </Typography>
                 <Box sx={{ flex: 1 }} />
                 <Switch
@@ -737,7 +738,7 @@ const RateLimitConfigPage: React.FC = () => {
               >
                 <Grid size={{ xs: 6 }}>
                   <TextField
-                    label='时间戳容差(秒)'
+                    label={t('admin:rate_limit_config_page.label_tolerance_secs')}
                     type='number'
                     fullWidth
                     size='small'
@@ -752,7 +753,7 @@ const RateLimitConfigPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <TextField
-                    label='nonce 缓存(秒)'
+                    label={t('admin:rate_limit_config_page.label_nonce_cache_secs')}
                     type='number'
                     fullWidth
                     size='small'
@@ -767,7 +768,7 @@ const RateLimitConfigPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <TextField
-                    label='时间戳 Header'
+                    label={t('admin:rate_limit_config_page.label_timestamp_header')}
                     fullWidth
                     size='small'
                     value={antiReplay.timestamp_header}
@@ -799,7 +800,7 @@ const RateLimitConfigPage: React.FC = () => {
                     variant='body2'
                     sx={{ mb: 1, fontWeight: 500 }}
                   >
-                    强制启用防重放的路径
+                    {t('admin:rate_limit_config_page.enforce_paths_title')}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                     <TextField
@@ -813,7 +814,7 @@ const RateLimitConfigPage: React.FC = () => {
                       variant='outlined'
                       onClick={handleAddEnforcePath}
                     >
-                      添加
+                      {t('admin:rate_limit_config_page.add')}
                     </Button>
                   </Box>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -834,7 +835,7 @@ const RateLimitConfigPage: React.FC = () => {
                     onClick={handleSaveAntiReplay}
                     disabled={saveAntiReplayMutation.isPending}
                   >
-                    保存防重放配置
+                    {t('admin:rate_limit_config_page.save_anti_replay')}
                   </Button>
                 </Grid>
               </Grid>
@@ -852,7 +853,7 @@ const RateLimitConfigPage: React.FC = () => {
               onClick={handleReset}
               disabled={resetMutation.isPending}
             >
-              重置为默认
+              {t('admin:rate_limit_config_page.reset_to_default')}
             </Button>
             <Button
               variant='contained'
@@ -860,7 +861,7 @@ const RateLimitConfigPage: React.FC = () => {
               onClick={handleSave}
               disabled={saveMutation.isPending}
             >
-              {saveMutation.isPending ? '保存中...' : '保存配置'}
+              {saveMutation.isPending ? t('admin:rate_limit_config_page.saving') : t('admin:rate_limit_config_page.save_config')}
             </Button>
           </Box>
         </Grid>

@@ -29,9 +29,7 @@ export const automationVariablesApi = {
   },
 
   get: async (key: string): Promise<ApiResponse<AutomationVariable>> => {
-    return apiClient.automation.get<AutomationVariable>(
-      `/variables/${encodeURIComponent(key)}`
-    );
+    return apiClient.automation.get<AutomationVariable>(`/variables/${encodeURIComponent(key)}`);
   },
 
   create: async (

@@ -3,9 +3,8 @@
  * 显示员工的银行账户、薪资、社保公积金等财务信息
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { logger } from '@/utils/logger';
-import { useNotificationStore } from '@/store';
 import { useEmployeeFinanceInfo, useUpdateEmployeeFinanceInfo } from '@/hooks/useHrmFinance';
 import {
   TextField,
@@ -15,7 +14,6 @@ import {
   CardContent,
   CardHeader,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   Box,

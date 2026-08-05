@@ -2,17 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import {
-  ClipboardCheck,
-  Package,
-  User,
-  Clock,
-  FileText,
-  CheckCircle,
-  AlertCircle,
-  Play,
-  Plus,
-} from 'lucide-react';
+import { ClipboardCheck, FileText, CheckCircle, AlertCircle, Play, Plus } from 'lucide-react';
 import {
   Dialog,
   DialogTitle,

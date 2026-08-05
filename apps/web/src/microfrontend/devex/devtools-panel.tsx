@@ -12,11 +12,7 @@ import {
   TableRow,
   Chip,
   Button,
-  Tooltip,
-  Switch,
-  FormControlLabel,
   Grid,
-  LinearProgress,
   Stack,
 } from '@mui/material';
 import {
@@ -35,7 +31,7 @@ import {
   Bug,
   FileCode,
 } from 'lucide-react';
-import { V51Tabs, V51Card, V51Badge, V51Button } from '../../design-system';
+import { V51Tabs, V51Card, V51Badge } from '../../design-system';
 import {
   smartDebugger,
   type ComponentTreeNode,
@@ -43,13 +39,7 @@ import {
   type DebugSession,
   type StateStoreInfo,
 } from './smart-debugger';
-import {
-  performanceAnalyzer,
-  type PerformanceReport,
-  type CoreWebVital,
-  type ModuleLoadMetric,
-  type RenderMetric,
-} from './performance-analyzer';
+import { performanceAnalyzer, type PerformanceReport } from './performance-analyzer';
 import { codeCompletion, type CompletionItem, type Snippet } from './code-completion';
 
 export const V51DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {

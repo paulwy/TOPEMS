@@ -284,7 +284,6 @@ export class FairnessAssurance {
     const calibrationScore = attrs.length > 0 ? totalCalibration / attrs.length : 0.8;
 
     const parityThreshold = config.thresholds.demographic_parity_diff ?? 0.1;
-    const calibThreshold = config.thresholds.calibration_diff ?? 0.05;
 
     const parityScore = Math.max(0, 1 - parityDifference / Math.max(parityThreshold * 2, 0.01));
     const calibScore = Math.max(0, Math.min(1, calibrationScore));

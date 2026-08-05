@@ -126,6 +126,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               borderRadius: 1,
               '&:hover': { backgroundColor: 'grey.200' },
             }}
+          aria-label="展开"
           >
             <ChevronLeft style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -136,6 +137,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               borderRadius: 1,
               '&:hover': { backgroundColor: 'grey.200' },
             }}
+          aria-label="展开"
           >
             <ChevronRight style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -148,6 +150,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               borderRadius: 1,
               '&:hover': { backgroundColor: 'grey.200' },
             }}
+            aria-label='缩小'
             title='缩小'
           >
             <ZoomOut style={{ width: 16, height: 16 }} />
@@ -160,6 +163,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               borderRadius: 1,
               '&:hover': { backgroundColor: 'grey.200' },
             }}
+            aria-label='放大'
             title='放大'
           >
             <ZoomIn style={{ width: 16, height: 16 }} />

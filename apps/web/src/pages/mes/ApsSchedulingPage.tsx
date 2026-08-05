@@ -13,8 +13,6 @@ import {
   Chip,
   LinearProgress,
   Alert,
-  Tooltip,
-  IconButton,
   Tabs,
   Tab,
   Table,
@@ -34,20 +32,7 @@ import { PageContainer } from '@/components/common';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
-import {
-  Brain,
-  Play,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  TrendingUp,
-  Clock,
-  Gauge,
-  Zap,
-  RefreshCw,
-  BarChart3,
-  ChevronRight,
-} from 'lucide-react';
+import { Brain, Play, CheckCircle, XCircle, TrendingUp, Gauge, Zap, BarChart3 } from 'lucide-react';
 import type {
   ApsScheduleResult,
   ApsScheduleItem,

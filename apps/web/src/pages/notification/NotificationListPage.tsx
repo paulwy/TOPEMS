@@ -18,9 +18,6 @@ import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter, type CrudTab } from '@/components/templates/CrudPage';
-import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 
 type NotificationTab = 'all' | 'unread' | 'read' | 'important';
 

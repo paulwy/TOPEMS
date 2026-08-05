@@ -226,7 +226,10 @@ export const customerSchema: EntitySchema = {
           { label: i18n.t('schema:erp.customer.filter.status.option.all'), value: 'all' },
           { label: i18n.t('schema:erp.customer.filter.status.option.active'), value: 'active' },
           { label: i18n.t('schema:erp.customer.filter.status.option.inactive'), value: 'inactive' },
-          { label: i18n.t('schema:erp.customer.filter.status.option.blacklisted'), value: 'blacklisted' },
+          {
+            label: i18n.t('schema:erp.customer.filter.status.option.blacklisted'),
+            value: 'blacklisted',
+          },
         ],
       },
       {
@@ -235,11 +238,26 @@ export const customerSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.customer.filter.category.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.customer.filter.category.option.大型企业'), value: '大型企业' },
-          { label: i18n.t('schema:erp.customer.filter.category.option.中型企业'), value: '中型企业' },
-          { label: i18n.t('schema:erp.customer.filter.category.option.小型企业'), value: '小型企业' },
-          { label: i18n.t('schema:erp.customer.filter.category.option.政府机构'), value: '政府机构' },
-          { label: i18n.t('schema:erp.customer.filter.category.option.个人客户'), value: '个人客户' },
+          {
+            label: i18n.t('schema:erp.customer.filter.category.option.大型企业'),
+            value: '大型企业',
+          },
+          {
+            label: i18n.t('schema:erp.customer.filter.category.option.中型企业'),
+            value: '中型企业',
+          },
+          {
+            label: i18n.t('schema:erp.customer.filter.category.option.小型企业'),
+            value: '小型企业',
+          },
+          {
+            label: i18n.t('schema:erp.customer.filter.category.option.政府机构'),
+            value: '政府机构',
+          },
+          {
+            label: i18n.t('schema:erp.customer.filter.category.option.个人客户'),
+            value: '个人客户',
+          },
         ],
       },
       {
@@ -248,8 +266,14 @@ export const customerSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.customer.filter.industry.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.customer.filter.industry.option.电子制造'), value: '电子制造' },
-          { label: i18n.t('schema:erp.customer.filter.industry.option.机械制造'), value: '机械制造' },
+          {
+            label: i18n.t('schema:erp.customer.filter.industry.option.电子制造'),
+            value: '电子制造',
+          },
+          {
+            label: i18n.t('schema:erp.customer.filter.industry.option.机械制造'),
+            value: '机械制造',
+          },
           { label: i18n.t('schema:erp.customer.filter.industry.option.化工'), value: '化工' },
           { label: i18n.t('schema:erp.customer.filter.industry.option.金融'), value: '金融' },
           { label: i18n.t('schema:erp.customer.filter.industry.option.互联网'), value: '互联网' },

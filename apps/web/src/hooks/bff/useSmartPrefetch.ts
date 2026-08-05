@@ -8,7 +8,7 @@
  * - 可配置预加载策略
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getPrefetchEngine,

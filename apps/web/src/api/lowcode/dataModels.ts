@@ -27,9 +27,7 @@ export const lowcodeDataModelsApi = {
     return apiClient.lowcode.get<LowcodeDataModel>(`/data-models/${id}`);
   },
 
-  create: async (
-    data: CreateLowcodeDataModelRequest
-  ): Promise<ApiResponse<LowcodeDataModel>> => {
+  create: async (data: CreateLowcodeDataModelRequest): Promise<ApiResponse<LowcodeDataModel>> => {
     return apiClient.lowcode.post<LowcodeDataModel>('/data-models', data);
   },
 

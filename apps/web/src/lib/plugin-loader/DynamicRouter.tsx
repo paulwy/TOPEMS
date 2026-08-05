@@ -1,7 +1,7 @@
 import React, { useEffect, useState, Suspense, lazy, useCallback } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import type { PluginManifest, PluginRoute } from './PluginLoader';
-import { ModuleLoadingFallback, ModuleErrorFallback, PluginLoader } from './PluginLoader';
+import { ModuleLoadingFallback, PluginLoader } from './PluginLoader';
 import { moduleRegistry } from '@/modules/registry';
 import { eventBus, ModuleEvents } from './EventBus';
 import { logger } from '@/utils/logger';

@@ -1,6 +1,4 @@
 import {
-  Card,
-  CardContent,
   Chip,
   Typography,
   Box,
@@ -17,7 +15,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Truck,
-  Edit2,
   FileText,
   DollarSign,
   CreditCard,
@@ -27,9 +24,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { scmApi } from '@/api/scm';
-import { useNotification } from '@/hooks/useNotification';
 import type { Supplier } from '@/api/scm';
-import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { SCM_PATHS } from '@/modules/scm/config';
@@ -40,7 +35,6 @@ const SupplierDetailPage: React.FC = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { error } = useNotification();
 
   const [isEditing, setIsEditing] = useState(false);
 

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { Plugin, TenantInstalledPlugin } from '@/api/plugin';
-import { PLUGIN_REGISTRY, checkAllPluginsHealth, pluginApi } from '@/api/plugin';
+import { checkAllPluginsHealth, pluginApi } from '@/api/plugin';
 import { useAuth } from '@/hooks/useAuth';
 import createLogger from '@/utils/logger';
 

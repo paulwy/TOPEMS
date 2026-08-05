@@ -3,7 +3,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   FormControl,
   InputLabel,
   MenuItem,
@@ -557,6 +556,7 @@ const EmailList: React.FC<EmailListProps> = ({
                 size='small'
                 onClick={handlePrevPage}
                 disabled={currentPage === 1}
+                aria-label='上一页'
               >
                 <ChevronLeft size={16} />
               </Button>

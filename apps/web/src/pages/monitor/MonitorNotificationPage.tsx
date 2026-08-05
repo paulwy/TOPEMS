@@ -10,7 +10,7 @@
 
 import React, { useMemo, useRef, useCallback, useState } from 'react';
 import { Box, Typography, Paper, Alert } from '@mui/material';
-import { Bell, TestTube, Power, PowerOff } from 'lucide-react';
+import { Bell, TestTube, Power } from 'lucide-react';
 import { LoadingSpinner } from '@topems/shared-components';
 
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';

@@ -6,9 +6,7 @@ import {
   FileText,
   Database,
   Shield,
-  TrendingUp,
   Clock,
-  Plus,
   ChevronRight,
   Search,
   Sparkles,
@@ -29,7 +27,6 @@ import {
   ListItemIcon,
   ListItemText,
   ListItemButton,
-  Divider,
   Paper,
   Chip,
 } from '@mui/material';
@@ -161,11 +158,6 @@ const BiIndexPage = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-
-  const dashboards = biDataQuery.data?.dashboards ?? [];
-  const reports = biDataQuery.data?.reports ?? [];
-  const datasets = biDataQuery.data?.datasets ?? [];
-  const loading = biDataQuery.isLoading;
 
   useEffect(() => {
     if (biDataQuery.isError) {

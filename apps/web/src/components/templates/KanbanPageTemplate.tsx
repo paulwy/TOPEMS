@@ -18,7 +18,6 @@ import {
   Plus,
   MoreHorizontal,
   GripVertical,
-  Trash2,
   Edit,
   Archive,
   Filter,
@@ -227,13 +226,11 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
       if (!draggedCard) return;
 
       let sourceColumnId: string | null = null;
-      let sourceIndex = -1;
 
       columns.forEach((col) => {
         const index = col.cards.findIndex((card) => card.id === draggedCard);
         if (index !== -1) {
           sourceColumnId = col.id;
-          sourceIndex = index;
         }
       });
 
@@ -397,14 +394,14 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
 
         {showFilter && (
           <Tooltip title='筛选'>
-            <IconButton size='small'>
+            <IconButton size='small'aria-label="筛选" >
               <Filter style={{ width: 18, height: 18 }} />
             </IconButton>
           </Tooltip>
         )}
 
         <Tooltip title='刷新'>
-          <IconButton size='small'>
+          <IconButton size='small'aria-label="刷新" >
             <RefreshCw style={{ width: 18, height: 18 }} />
           </IconButton>
         </Tooltip>
@@ -456,7 +453,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               </Typography>
             )}
           </Box>
-          <IconButton size='small'>
+          <IconButton size='small'aria-label="更多" >
             <MoreHorizontal style={{ width: 16, height: 16 }} />
           </IconButton>
         </Box>
@@ -537,6 +534,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 <IconButton
                   size='small'
                   sx={{ p: 0 }}
+                aria-label="编辑"
                 >
                   <Edit style={{ width: 14, height: 14 }} />
                 </IconButton>
@@ -550,6 +548,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 <IconButton
                   size='small'
                   sx={{ p: 0 }}
+                aria-label="归档"
                 >
                   <Archive style={{ width: 14, height: 14 }} />
                 </IconButton>
@@ -660,6 +659,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                   <IconButton
                     size='small'
                     onClick={column.onAddCard}
+                  aria-label="新增"
                   >
                     <Plus style={{ width: 16, height: 16 }} />
                   </IconButton>
@@ -670,6 +670,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                   <IconButton
                     size='small'
                     onClick={() => toggleColumn(column.id)}
+                  aria-label="配置列"
                   >
                     <Columns3
                       style={{

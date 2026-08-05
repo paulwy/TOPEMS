@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { RemoteLoader } from './RemoteLoader';
-import { REMOTE_MODULES, getEnabledModules, RemoteModuleConfig } from './config';
+import { getEnabledModules } from './config';
 
 /**
  * 微前端路由组件

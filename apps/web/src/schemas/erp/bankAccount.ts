@@ -55,9 +55,18 @@ export const bankAccountSchema: EntitySchema = {
         type: 'static',
         options: [
           { value: 'basic', label: i18n.t('schema:erp.bank_account.account_type.option.basic') },
-          { value: 'general', label: i18n.t('schema:erp.bank_account.account_type.option.general') },
-          { value: 'special', label: i18n.t('schema:erp.bank_account.account_type.option.special') },
-          { value: 'temporary', label: i18n.t('schema:erp.bank_account.account_type.option.temporary') },
+          {
+            value: 'general',
+            label: i18n.t('schema:erp.bank_account.account_type.option.general'),
+          },
+          {
+            value: 'special',
+            label: i18n.t('schema:erp.bank_account.account_type.option.special'),
+          },
+          {
+            value: 'temporary',
+            label: i18n.t('schema:erp.bank_account.account_type.option.temporary'),
+          },
         ],
       },
       listWidth: 120,
@@ -146,7 +155,10 @@ export const bankAccountSchema: EntitySchema = {
           { label: i18n.t('schema:erp.bank_account.filter.status.option.active'), value: 'active' },
           { label: i18n.t('schema:erp.bank_account.filter.status.option.frozen'), value: 'frozen' },
           { label: i18n.t('schema:erp.bank_account.filter.status.option.closed'), value: 'closed' },
-          { label: i18n.t('schema:erp.bank_account.filter.status.option.pending'), value: 'pending' },
+          {
+            label: i18n.t('schema:erp.bank_account.filter.status.option.pending'),
+            value: 'pending',
+          },
         ],
       },
       {
@@ -155,10 +167,22 @@ export const bankAccountSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.bank_account.filter.account_type.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.bank_account.filter.account_type.option.basic'), value: 'basic' },
-          { label: i18n.t('schema:erp.bank_account.filter.account_type.option.general'), value: 'general' },
-          { label: i18n.t('schema:erp.bank_account.filter.account_type.option.special'), value: 'special' },
-          { label: i18n.t('schema:erp.bank_account.filter.account_type.option.temporary'), value: 'temporary' },
+          {
+            label: i18n.t('schema:erp.bank_account.filter.account_type.option.basic'),
+            value: 'basic',
+          },
+          {
+            label: i18n.t('schema:erp.bank_account.filter.account_type.option.general'),
+            value: 'general',
+          },
+          {
+            label: i18n.t('schema:erp.bank_account.filter.account_type.option.special'),
+            value: 'special',
+          },
+          {
+            label: i18n.t('schema:erp.bank_account.filter.account_type.option.temporary'),
+            value: 'temporary',
+          },
         ],
       },
     ],

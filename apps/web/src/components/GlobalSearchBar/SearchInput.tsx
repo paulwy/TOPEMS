@@ -12,7 +12,7 @@ import {
   Checkbox,
   FormControlLabel,
 } from '@mui/material';
-import { Search, X, Filter, ChevronDown } from 'lucide-react';
+import { Search, X, Filter } from 'lucide-react';
 import { SEARCH_SHORTCUTS, getShortcutKeyLabel } from '@/hooks/shortcuts';
 import type { SearchInputProps } from './types';
 
@@ -120,6 +120,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             size='small'
             onClick={handleClear}
             sx={{ p: 0.5 }}
+          aria-label="关闭"
           >
             <X size={14} />
           </IconButton>
@@ -129,6 +130,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           onClick={handleFilterClick}
           sx={{ p: 0.5, opacity: availableServices?.length || availableTypes?.length ? 0.6 : 0.3 }}
           disabled={!availableServices?.length && !availableTypes?.length}
+        aria-label="筛选"
         >
           <Filter size={14} />
         </IconButton>

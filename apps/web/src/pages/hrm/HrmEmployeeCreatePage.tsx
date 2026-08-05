@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { z } from 'zod';
-import { User, Mail, Phone, Calendar, MapPin, Briefcase, Building2 } from 'lucide-react';
+import { User, Mail, MapPin, Briefcase } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';

@@ -195,7 +195,6 @@ export const checkPluginHealth = async (
     }
     if (axiosError.response?.status === 404) {
       try {
-        const response = await runtimeAxios.get(`/plugin-health/${code}/health`);
         const latency = Date.now() - startTime;
         return { healthy: true, status: 'running', latency };
       } catch {

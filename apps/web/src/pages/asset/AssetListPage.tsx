@@ -3,7 +3,6 @@ import { Box, Card, CardContent, Typography, Chip, Grid, Divider, Avatar } from 
 import {
   Package,
   CheckCircle,
-  AlertTriangle,
   Wrench,
   Clock,
   Archive,
@@ -82,7 +81,6 @@ export const AssetListPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [activeTab, setActiveTab] = useState('list');
 
   const statusLabelMap: Record<string, string> = {
     active: t('asset:assetlist.status_active'),
@@ -121,11 +119,19 @@ export const AssetListPage: React.FC = () => {
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       assetApi.update(id, { status } as Partial<Asset>),
     onSuccess: () => {
-      addNotification({ title: t('asset:assetlist.notify_success_title'), message: t('asset:assetlist.notify_success_message'), type: 'success' });
+      addNotification({
+        title: t('asset:assetlist.notify_success_title'),
+        message: t('asset:assetlist.notify_success_message'),
+        type: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ERP.ASSETS });
     },
     onError: () => {
-      addNotification({ title: t('asset:assetlist.notify_error_title'), message: t('asset:assetlist.notify_error_message'), type: 'error' });
+      addNotification({
+        title: t('asset:assetlist.notify_error_title'),
+        message: t('asset:assetlist.notify_error_message'),
+        type: 'error',
+      });
     },
   });
 
@@ -553,7 +559,10 @@ export const AssetListPage: React.FC = () => {
       <CrudPage
         schema={assetSchema}
         apiAdapter={baseAdapter}
-        breadcrumbs={[{ label: t('asset:assetlist.breadcrumb_asset_management') }, { label: t('asset:assetlist.breadcrumb_asset_list') }]}
+        breadcrumbs={[
+          { label: t('asset:assetlist.breadcrumb_asset_management') },
+          { label: t('asset:assetlist.breadcrumb_asset_list') },
+        ]}
         headerContent={headerContent}
         detailContent={detailContent}
         detailMaxWidth='lg'

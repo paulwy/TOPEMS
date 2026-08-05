@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
-import { useNotificationStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
 import { BI_PATHS } from '@/modules/bi/config';
 import {
@@ -13,7 +12,6 @@ import {
   Database,
   CheckCircle,
   AlertCircle,
-  RefreshCw,
 } from 'lucide-react';
 import {
   BarChart,
@@ -26,18 +24,9 @@ import {
   PieChart as RechartsPieChart,
   Pie,
 } from 'recharts';
-import {
-  fetchAnalyticsOverview,
-  fetchDevelopmentAnalytics,
-  fetchQualityAnalytics,
-  fetchProductionAnalytics,
-  fetchLaboratoryAnalytics,
-  fetchModuleData,
-} from '@/api/bi';
+import { fetchAnalyticsOverview, fetchModuleData } from '@/api/bi';
 import { BIChartColors } from '@/components/charts/chartTheme';
-import OrganizationFilter, {
-  type OrganizationFilterValue,
-} from '@/components/ui/OrganizationFilter';
+import { type OrganizationFilterValue } from '@/components/ui/OrganizationFilter';
 import { Box, Typography, Skeleton, Alert } from '@mui/material';
 import {
   DashboardTemplate,
@@ -272,7 +261,6 @@ const moduleConfigs: Omit<ModuleInfo, 'stats' | 'trend'>[] = [
 const BIAnalyticsPage = () => {
   const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
-  const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
   const navigate = useNavigate();
 
   const overviewQuery = useQuery<{
@@ -457,8 +445,6 @@ const BIAnalyticsPage = () => {
     );
   }
 
-  const moduleData = overview?.modules || {};
-
   const fallbackChartData = modules.map((m) => ({
     name: m.name,
     value: (Object.values(m.stats)[0] as number) || 0,
@@ -543,7 +529,7 @@ const BIAnalyticsPage = () => {
               dataKey='value'
               radius={[4, 4, 0, 0]}
             >
-              {chartData.map((entry: { name: string; value: number }, index: number) => (
+              {chartData.map((_entry: { name: string; value: number }, index: number) => (
                 <rect
                   key={`cell-${index}`}
                   fill={BIChartColors.series[index % BIChartColors.series.length]}
@@ -581,7 +567,7 @@ const BIAnalyticsPage = () => {
               innerRadius={50}
               dataKey='value'
             >
-              {chartData.map((entry: { name: string; value: number }, index: number) => (
+              {chartData.map((_entry: { name: string; value: number }, index: number) => (
                 <rect
                   key={`cell-${index}`}
                   fill={BIChartColors.series[index % BIChartColors.series.length]}

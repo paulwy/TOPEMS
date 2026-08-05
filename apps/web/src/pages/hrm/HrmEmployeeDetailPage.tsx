@@ -1,34 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import {
-  Box,
-  Typography,
-  InputLabel,
-  Avatar,
-  Chip,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-} from '@mui/material';
-import {
-  User,
-  Building2,
-  Calendar,
-  Phone,
-  Mail,
-  MapPin,
-  GraduationCap,
-  Briefcase,
-  Clock,
-  AlertCircle,
-} from 'lucide-react';
+import { Box, Typography, InputLabel, Avatar } from '@mui/material';
+import { User, Briefcase } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Employee } from '@/api/hrm';
-import { useNotification } from '@/hooks/useNotification';
 import { HRM_PATHS } from '@/modules/hrm/config';
-import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { StatusBadge } from '@topems/shared-components';
 import { Dialog } from '@/components/common/Dialog';
@@ -43,7 +20,6 @@ const HrmEmployeeDetailPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { error } = useNotification();
 
   const [showTransferDialog, setShowTransferDialog] = useState(false);
 
@@ -122,7 +98,6 @@ const HrmEmployeeDetailPage: React.FC = () => {
 
   const basicInfoContent = useMemo(() => {
     if (!employee) return null;
-    const statusConfig = getStatusConfig(employee.status);
 
     return (
       <Box>

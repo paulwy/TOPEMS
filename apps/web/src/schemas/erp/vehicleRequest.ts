@@ -68,7 +68,10 @@ export const vehicleRequestSchema: EntitySchema = {
           { value: 'pending', label: i18n.t('schema:erp.vehicle_request.status.option.pending') },
           { value: 'approved', label: i18n.t('schema:erp.vehicle_request.status.option.approved') },
           { value: 'rejected', label: i18n.t('schema:erp.vehicle_request.status.option.rejected') },
-          { value: 'completed', label: i18n.t('schema:erp.vehicle_request.status.option.completed') },
+          {
+            value: 'completed',
+            label: i18n.t('schema:erp.vehicle_request.status.option.completed'),
+          },
         ],
       },
       listWidth: 100,
@@ -101,10 +104,22 @@ export const vehicleRequestSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.vehicle_request.filter.status.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.vehicle_request.filter.status.option.pending'), value: 'pending' },
-          { label: i18n.t('schema:erp.vehicle_request.filter.status.option.approved'), value: 'approved' },
-          { label: i18n.t('schema:erp.vehicle_request.filter.status.option.rejected'), value: 'rejected' },
-          { label: i18n.t('schema:erp.vehicle_request.filter.status.option.completed'), value: 'completed' },
+          {
+            label: i18n.t('schema:erp.vehicle_request.filter.status.option.pending'),
+            value: 'pending',
+          },
+          {
+            label: i18n.t('schema:erp.vehicle_request.filter.status.option.approved'),
+            value: 'approved',
+          },
+          {
+            label: i18n.t('schema:erp.vehicle_request.filter.status.option.rejected'),
+            value: 'rejected',
+          },
+          {
+            label: i18n.t('schema:erp.vehicle_request.filter.status.option.completed'),
+            value: 'completed',
+          },
         ],
       },
     ],

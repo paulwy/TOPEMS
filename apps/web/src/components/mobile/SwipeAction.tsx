@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Box, IconButton, Typography, useTheme } from '@mui/material';
+import { Box, IconButton, Typography } from '@mui/material';
 
 export interface SwipeActionItem {
   id: string;
@@ -24,7 +24,6 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
   onOpen,
   onClose,
 }) => {
-  const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number>(0);
   const [translateX, setTranslateX] = useState(0);
@@ -158,6 +157,7 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
               <IconButton
                 sx={{ color: 'common.white' }}
                 size='small'
+                aria-label={action.label}
               >
                 {action.icon}
               </IconButton>
@@ -202,6 +202,7 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
               <IconButton
                 sx={{ color: 'common.white' }}
                 size='small'
+                aria-label={action.label}
               >
                 {action.icon}
               </IconButton>

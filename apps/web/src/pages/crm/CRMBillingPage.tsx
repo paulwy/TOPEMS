@@ -1,15 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Box, Typography, Stack, Paper, useTheme, Tooltip, alpha, Chip } from '@mui/material';
-import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Clock,
-  AlertTriangle,
-  FileText,
-  CheckCircle,
-  Send,
-} from 'lucide-react';
+import { Box, Typography, Stack, Paper, useTheme, alpha, Chip } from '@mui/material';
+import { CheckCircle, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
@@ -18,7 +9,7 @@ import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage'
 import { useNotificationStore } from '@/store/notificationStore';
 import { crmApi } from '@/api/crm';
 import type { BillingRecord } from '@/api/crm';
-import { billingSchema, getBillingRowActions } from '@/schemas/crm';
+import { billingSchema } from '@/schemas/crm';
 
 interface BillingStats {
   total_amount: number;

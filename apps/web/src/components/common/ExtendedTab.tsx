@@ -32,28 +32,26 @@ export interface ExtendedTabProps {
  * 渲染关联模块扩展 Tab 列表
  * 过滤掉未安装模块的 Tab，返回可渲染的 Tab 元素数组
  */
-export const ExtendedTab: React.FC<ExtendedTabProps> = React.memo(
-  ({ configs, value, onChange }) => {
-    const { isPluginInstalled } = usePlugins();
+export const ExtendedTab: React.FC<ExtendedTabProps> = React.memo(({ configs, onChange }) => {
+  const { isPluginInstalled } = usePlugins();
 
-    const visibleConfigs = configs.filter((config) => isPluginInstalled(config.moduleCode));
+  const visibleConfigs = configs.filter((config) => isPluginInstalled(config.moduleCode));
 
-    if (visibleConfigs.length === 0) return null;
+  if (visibleConfigs.length === 0) return null;
 
-    return (
-      <>
-        {visibleConfigs.map((config) => (
-          <Tab
-            key={config.value}
-            label={config.label}
-            value={config.value}
-            icon={config.icon ? <span style={{ marginRight: 4 }}>{config.icon}</span> : undefined}
-            iconPosition='start'
-          />
-        ))}
-      </>
-    );
-  }
-);
+  return (
+    <>
+      {visibleConfigs.map((config) => (
+        <Tab
+          key={config.value}
+          label={config.label}
+          value={config.value}
+          icon={config.icon ? <span style={{ marginRight: 4 }}>{config.icon}</span> : undefined}
+          iconPosition='start'
+        />
+      ))}
+    </>
+  );
+});
 
 export default ExtendedTab;

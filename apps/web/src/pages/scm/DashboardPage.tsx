@@ -1,8 +1,7 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
-  FileText,
   ArrowRight,
   ShoppingCart,
   RefreshCw,
@@ -82,7 +81,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: mrpPlans, isLoading: mrpLoading } = useQuery({
+  const { isLoading: mrpLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.MRP_PLANS,
     queryFn: async () => {
       const response = await scmApi.mrpPlans.list({ page: 1, pageSize: 5 });
@@ -94,7 +93,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: incomingInspections, isLoading: inspectionLoading } = useQuery({
+  const { isLoading: inspectionLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.INCOMING_INSPECTIONS,
     queryFn: async () => {
       const response = await scmApi.incomingInspections.list({ page: 1, pageSize: 5 });
@@ -106,7 +105,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: inventoryTurnover, isLoading: inventoryLoading } = useQuery({
+  const { isLoading: inventoryLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.INVENTORY_TURNOVER,
     queryFn: async () => {
       const response = await scmApi.inventoryTurnover.list({ page: 1, pageSize: 5 });
@@ -118,7 +117,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: priceComparisons, isLoading: priceLoading } = useQuery({
+  const { isLoading: priceLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.PRICE_COMPARISONS,
     queryFn: async () => {
       const response = await scmApi.priceComparisons.list({ page: 1, pageSize: 5 });

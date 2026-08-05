@@ -9,7 +9,6 @@ import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
-  Grid,
   Card,
   CardContent,
   Chip,
@@ -20,13 +19,10 @@ import {
   ListItemIcon,
   ListItemText,
   Avatar,
-  IconButton,
   Divider,
 } from '@mui/material';
 import {
   Building2,
-  ArrowUpRight,
-  ArrowDownRight,
   RefreshCw,
   Settings,
   Database,
@@ -35,8 +31,6 @@ import {
   CheckCircle2,
   Clock,
   TrendingUp,
-  TrendingDown,
-  ExternalLink,
   Bell,
 } from 'lucide-react';
 
@@ -44,7 +38,6 @@ import { PageContainer } from '@/components/common';
 import {
   DashboardTemplate,
   type StatCard,
-  type ChartCard,
   type QuickAction,
   type RecentItem,
 } from '@/components/templates';
@@ -217,7 +210,6 @@ const getStatusColor = (status: SyncStatus) => {
 
 export const IntegrationErpOverviewPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [loading, setLoading] = useState(false);
 
   const stats: StatCard[] = useMemo(
     () => [

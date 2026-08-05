@@ -6,7 +6,6 @@ import {
   Typography,
   Badge,
   Tooltip,
-  Stack,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 

@@ -428,6 +428,7 @@ const ForgotPasswordPage: React.FC = () => {
                         <IconButton
                           onClick={() => setShowPassword(!showPassword)}
                           sx={{ color: 'grey.400' }}
+                        aria-label="隐藏"
                         >
                           {showPassword ? (
                             <EyeOff sx={{ width: 20, height: 20 }} />

@@ -63,6 +63,7 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
                     <IconButton
                       size='small'
                       onClick={onClearHistory}
+                    aria-label="删除"
                     >
                       <Trash2 style={{ width: 18, height: 18 }} />
                     </IconButton>

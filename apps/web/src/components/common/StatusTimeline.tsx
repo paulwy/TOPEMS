@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Chip, useTheme } from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
 import { CheckCircle2, Circle, Clock, AlertCircle, AlertTriangle, ArrowRight } from 'lucide-react';
 
 export interface TimelineItem {
@@ -65,8 +65,6 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
   showIcons = true,
   dotSize,
 }) => {
-  const theme = useTheme();
-
   if (orientation === 'horizontal') {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>

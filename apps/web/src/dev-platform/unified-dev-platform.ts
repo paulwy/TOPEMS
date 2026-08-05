@@ -514,7 +514,7 @@ export class UnifiedDevPlatform {
     return true;
   }
 
-  setSecret(projectId: string, env: EnvironmentName, secretName: string, value: string): boolean {
+  setSecret(projectId: string, env: EnvironmentName, secretName: string, _value: string): boolean {
     const config = this.getEnvironment(projectId, env);
     if (!config) return false;
     if (!config.secrets.includes(secretName)) {

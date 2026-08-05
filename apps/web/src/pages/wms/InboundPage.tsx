@@ -5,7 +5,7 @@ import { inboundOrderSchema } from '@/schemas/wms';
 import { wmsApi } from '@/api/wms';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Box, Typography, Card, CardContent, Stack } from '@mui/material';
-import { Download, Check, Package, ClipboardCheck, Trash2 } from 'lucide-react';
+import { Download, Check, Package, ClipboardCheck } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 

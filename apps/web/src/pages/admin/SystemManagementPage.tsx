@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, ChevronLeft, Book, Database, Users, Shield, Key, FileText } from 'lucide-react';
 import { MobileHeader } from '@/components/mobile';

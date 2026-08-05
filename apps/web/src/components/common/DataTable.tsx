@@ -4,7 +4,7 @@
  * 使用TanStack React Table，支持搜索、排序、筛选、分页、选择、导出等功能
  * 增强特性：列配置持久化、行展开功能、虚拟滚动支持、高级筛选、Excel导出
  */
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -19,7 +19,6 @@ import {
   TableHead,
   TableRow,
   Checkbox,
-  Tooltip,
   Skeleton,
   Dialog,
   DialogContent,
@@ -43,7 +42,6 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
-  MoreVertical,
   ChevronDown,
   ChevronUp,
   Save,
@@ -190,6 +188,7 @@ function DataTableVirtualRow({ index, style, ...data }: RowComponentProps<Virtua
                 e.stopPropagation();
                 handleRowExpand(row.original);
               }}
+            aria-label="展开"
             >
               <ChevronDown sx={{ width: 18, height: 18 }} />
             </IconButton>
@@ -1167,7 +1166,7 @@ export function DataTable<TData, TValue>({
                       >
                         <Checkbox
                           checked={isAllSelected}
-                          onChange={(e) => handleSelectAll()}
+                          onChange={(_e) => handleSelectAll()}
                           indeterminate={hasSelected && !isAllSelected}
                         />
                       </TableCell>
@@ -1371,6 +1370,7 @@ export function DataTable<TData, TValue>({
                                     e.stopPropagation();
                                     handleRowExpand(row.original);
                                   }}
+                                aria-label="展开"
                                 >
                                   {isExpanded ? (
                                     <ChevronUp sx={{ width: 18, height: 18 }} />
@@ -1453,6 +1453,7 @@ export function DataTable<TData, TValue>({
                                       size='small'
                                       color='success'
                                       onClick={() => handleSaveEdit(row.original, rowKey)}
+                                    aria-label="保存"
                                     >
                                       <Save sx={{ width: 16, height: 16 }} />
                                     </IconButton>
@@ -1460,6 +1461,7 @@ export function DataTable<TData, TValue>({
                                       size='small'
                                       color='error'
                                       onClick={handleCancelEdit}
+                                    aria-label="关闭"
                                     >
                                       <XCircle sx={{ width: 16, height: 16 }} />
                                     </IconButton>
@@ -1594,6 +1596,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}
+            aria-label="展开"
             >
               <ChevronLeft sx={{ width: 20, height: 20 }} />
             </IconButton>
@@ -1620,6 +1623,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}
+            aria-label="展开"
             >
               <ChevronRight sx={{ width: 20, height: 20 }} />
             </IconButton>

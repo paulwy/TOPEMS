@@ -2,9 +2,8 @@ import React from 'react';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { categorySchema } from '@/schemas/srm';
-import { useNotificationStore } from '@/store';
 import { Box, Card, CardContent, Typography } from '@mui/material';
-import { FolderTree, Users } from 'lucide-react';
+import { FolderTree } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -235,8 +234,6 @@ const CategoryStats: React.FC<{ rows: SupplierCategory[] }> = ({ rows }) => {
 };
 
 const SrmCategoryPage: React.FC = () => {
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
   return (
     <CrudPage
       schema={categorySchema}

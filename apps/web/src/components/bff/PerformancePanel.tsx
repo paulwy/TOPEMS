@@ -27,7 +27,6 @@ import {
   TableHead,
   TableRow,
   Collapse,
-  Button,
   Select,
   MenuItem,
   FormControl,
@@ -42,7 +41,6 @@ import {
   Download,
   Trash2,
   TrendingUp,
-  TrendingDown,
   CheckCircle,
   XCircle,
   Database,
@@ -62,7 +60,6 @@ import {
   getCostLevelColor,
   getCostLevelLabel,
   type QueryCostAnalysis,
-  type CostLevel,
 } from '@/utils/query-cost-analyzer';
 import {
   getSuspenseStats,
@@ -399,7 +396,7 @@ const OverviewStats: React.FC<{
   totalErrors: number;
   cacheHitRate: number;
   slowQueryCount: number;
-}> = ({ totalQueries, totalSuccess, totalErrors, cacheHitRate, slowQueryCount }) => {
+}> = ({ totalQueries, totalSuccess, cacheHitRate, slowQueryCount }) => {
   const successRate = totalQueries > 0 ? (totalSuccess / totalQueries) * 100 : 0;
 
   const stats = [
@@ -1196,6 +1193,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
         <IconButton
           size='small'
           sx={{ color: 'inherit' }}
+        aria-label="展开"
         >
           {expanded ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
         </IconButton>
@@ -1246,6 +1244,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
               <IconButton
                 size='small'
                 onClick={handleExport}
+              aria-label="下载"
               >
                 <Download size={18} />
               </IconButton>
@@ -1255,6 +1254,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
                 size='small'
                 onClick={clearPerformanceStats}
                 color='error'
+              aria-label="删除"
               >
                 <Trash2 size={18} />
               </IconButton>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -16,7 +16,7 @@ import { PageContainer } from '@/components/common';
 import { ClipboardList, FileText, Play, CheckCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { limsApi, type InspectionProcess, type LimsStatistics } from '@/api/lims';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -52,7 +52,6 @@ const processAdapter: CrudApiAdapter<InspectionProcess> = {
 
 const LimsProcessPage: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [serviceStatuses, setServiceStatuses] = useState<{
     [key: string]: boolean;
   }>({
@@ -278,6 +277,7 @@ const LimsProcessPage: React.FC = () => {
           <IconButton
             size='small'
             onClick={() => setShowTaskModal(false)}
+          aria-label="关闭"
           >
             <X size={20} />
           </IconButton>

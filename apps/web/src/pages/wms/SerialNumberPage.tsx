@@ -10,7 +10,6 @@ import type { SchemaExtensions } from '@/schema/schemaExtensions';
 import { wmsApi } from '@/api/wms';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { useTranslation } from 'react-i18next';
 
 const apiAdapter = createCrudPageAdapter(wmsApi.serialNumbers);
 
@@ -100,7 +99,6 @@ const customColumns: ColumnDef[] = [
 ];
 
 export default function SerialNumberPage() {
-  const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
 
   const customRowActions: RowAction[] = [

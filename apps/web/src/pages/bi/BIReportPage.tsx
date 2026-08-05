@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Download, Edit, Trash2 } from 'lucide-react';
+import { Eye, Download } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { reportSchema } from '@/schemas/bi';

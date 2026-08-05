@@ -7,21 +7,15 @@ import {
   RefreshCw,
   Download,
   Upload,
-  ChevronLeft,
   Eye,
   Trash2,
-  Clock,
-  HardDrive,
-  FileText,
   Play,
   CheckCircle,
   AlertCircle,
   Info,
-  Plus,
   Settings,
-  ArrowUpDown,
 } from 'lucide-react';
-import { PageContainer, StatusBadge, ActionButton, ConfirmDialog } from '@/components/common';
+import { PageContainer, StatusBadge, ConfirmDialog } from '@/components/common';
 import {
   Box,
   Typography,
@@ -59,7 +53,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { ERP_PATHS } from '@/modules/erp/config';
-import { databaseApi, type TableInfo, type ColumnInfo, type TableDetail } from '@/api/erp/database';
+import { databaseApi, type TableInfo, type TableDetail } from '@/api/erp/database';
 import { extractErrorMessage } from '@/utils/errors';
 
 export interface BackupRecord {
@@ -132,7 +126,6 @@ const DatabaseManagementPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('tables');
   const [searchQuery, setSearchQuery] = useState('');
-  const [tableFilter, setTableFilter] = useState('');
 
   const [backups, setBackups] = useState<BackupRecord[]>(mockBackups);
 
@@ -579,6 +572,7 @@ const DatabaseManagementPage: React.FC = () => {
                                 <IconButton
                                   size='small'
                                   onClick={() => handleViewStructure(table)}
+                                aria-label="查看"
                                 >
                                   <Eye size={16} />
                                 </IconButton>
@@ -749,6 +743,7 @@ const DatabaseManagementPage: React.FC = () => {
                                 <IconButton
                                   size='small'
                                   color='primary'
+                                aria-label="下载"
                                 >
                                   <Download size={16} />
                                 </IconButton>
@@ -759,6 +754,7 @@ const DatabaseManagementPage: React.FC = () => {
                                     size='small'
                                     color='warning'
                                     onClick={() => handleRestore(backup.id)}
+                                  aria-label="上传"
                                   >
                                     <Upload size={16} />
                                   </IconButton>
@@ -769,6 +765,7 @@ const DatabaseManagementPage: React.FC = () => {
                                   size='small'
                                   color='error'
                                   onClick={() => handleDeleteBackup(backup.id)}
+                                aria-label="删除"
                                 >
                                   <Trash2 size={16} />
                                 </IconButton>

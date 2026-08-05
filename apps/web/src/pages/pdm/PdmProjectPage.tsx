@@ -21,16 +21,7 @@ import {
   IconButton,
   Typography,
 } from '@mui/material';
-import {
-  Plus,
-  Edit,
-  Delete,
-  FolderKanban,
-  Users,
-  UserPlus,
-  UserMinus,
-  CheckCircle,
-} from 'lucide-react';
+import { FolderKanban, UserPlus, UserMinus, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -46,7 +37,6 @@ import {
   type ProjectPhase,
   type CreatePdmProjectRequest,
 } from '@/api/pdm/project';
-import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -108,7 +98,6 @@ const MEMBER_ROLE_OPTIONS = [
 ];
 
 const PdmProjectPage: React.FC = () => {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
 
@@ -370,6 +359,7 @@ const PdmProjectPage: React.FC = () => {
               <IconButton
                 size='small'
                 onClick={() => setMemberDialogOpen(true)}
+              aria-label="添加用户"
               >
                 <UserPlus size={16} />
               </IconButton>
@@ -383,6 +373,7 @@ const PdmProjectPage: React.FC = () => {
                       edge='end'
                       size='small'
                       onClick={() => handleRemoveMember(selectedProjectId, member.user_id)}
+                    aria-label="移除用户"
                     >
                       <UserMinus size={14} />
                     </IconButton>

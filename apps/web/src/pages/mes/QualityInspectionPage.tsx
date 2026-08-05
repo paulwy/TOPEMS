@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
 import { Download, CheckCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -64,7 +63,6 @@ const qualityApiAdapter: CrudApiAdapter<QualityInspection> = {
 
 const QualityInspectionPage: React.FC = () => {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
 
   const handleBatchExport = useCallback(

@@ -211,7 +211,7 @@ class IntelligentRouterImpl {
 
   recommendRoute(
     intent: string | RouteIntent,
-    context?: { device?: string; network?: string; location?: string }
+    _context?: { device?: string; network?: string; location?: string }
   ): RouteRecommendation {
     const query =
       typeof intent === 'string'
@@ -353,7 +353,7 @@ class IntelligentRouterImpl {
 
   private generateAlternatives(
     primaryPath: string,
-    intent: string
+    _intent: string
   ): RouteRecommendation['alternatives'] {
     const result: RouteRecommendation['alternatives'] = [];
     const allPaths = Array.from(this.performanceProfiles.keys()).filter((p) => p !== primaryPath);

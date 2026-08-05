@@ -249,7 +249,7 @@ export class AdaptiveInteraction {
   }
 
   private determineComponentVariant(
-    profile: InteractionProfile,
+    _profile: InteractionProfile,
     signals: Map<string, number>
   ): string {
     if (signals.get('low_vision')) return 'accessible';
@@ -322,7 +322,7 @@ export class AdaptiveInteraction {
 
   private recordAdaptation(
     userId: string,
-    profile: InteractionProfile,
+    _profile: InteractionProfile,
     response: AdaptiveResponse
   ): void {
     const record: AdaptationRecord = {

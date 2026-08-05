@@ -361,6 +361,7 @@ export function MasterDetailPageTemplate<T>({
             <IconButton
               size='small'
               onClick={() => setCollapsed(!collapsed)}
+            aria-label="展开侧栏"
             >
               {collapsed ? (
                 <PanelLeftOpen style={{ width: 16, height: 16 }} />
@@ -401,6 +402,7 @@ export function MasterDetailPageTemplate<T>({
                     if (controlledSearchValue === undefined) setInternalSearchValue('');
                     onSearchChange?.('');
                   }}
+                aria-label="关闭"
                 >
                   <X style={{ width: 14, height: 14 }} />
                 </IconButton>
@@ -462,29 +464,29 @@ export function MasterDetailPageTemplate<T>({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {col.render
-                    ? // V64 防御：render(value, item) 空值兜底 + try/catch 失败回退显示原始值
-                      (() => {
-                        try {
-                          return col.render!(value, item ?? ({} as any), index);
-                        } catch (e) {
-                          if (typeof console !== 'undefined' && console?.warn) {
-                            console.warn(
-                              `[MasterDetailPageTemplate] render for column="${col.id}" failed, fallback:`,
-                              e
-                            );
-                          }
-                          return (
-                            <Typography
-                              variant='body2'
-                              sx={{ fontWeight: col.id === columns[0].id ? 500 : 400 }}
-                            >
-                              {value != null ? String(value) : '-'}
-                            </Typography>
+                  {col.render ? (
+                    // V64 防御：render(value, item) 空值兜底 + try/catch 失败回退显示原始值
+                    (() => {
+                      try {
+                        return col.render!(value, item ?? ({} as any), index);
+                      } catch (e) {
+                        if (typeof console !== 'undefined' && console?.warn) {
+                          console.warn(
+                            `[MasterDetailPageTemplate] render for column="${col.id}" failed, fallback:`,
+                            e
                           );
                         }
-                      })()
-                    : (
+                        return (
+                          <Typography
+                            variant='body2'
+                            sx={{ fontWeight: col.id === columns[0].id ? 500 : 400 }}
+                          >
+                            {value != null ? String(value) : '-'}
+                          </Typography>
+                        );
+                      }
+                    })()
+                  ) : (
                     <Typography
                       variant='body2'
                       sx={{ fontWeight: col.id === columns[0].id ? 500 : 400 }}
@@ -526,6 +528,7 @@ export function MasterDetailPageTemplate<T>({
                             color: isSelected ? '#fff' : `${action.color || 'primary'}.dark`,
                           },
                         }}
+                      aria-label="前进"
                       >
                         {action.icon || <ChevronsRight style={{ width: 14, height: 14 }} />}
                       </IconButton>
@@ -810,6 +813,7 @@ export function MasterDetailPageTemplate<T>({
               <IconButton
                 size='small'
                 onClick={handleCloseDetail}
+              aria-label="关闭"
               >
                 <X style={{ width: 18, height: 18 }} />
               </IconButton>
@@ -1010,6 +1014,7 @@ export function MasterDetailPageTemplate<T>({
               <IconButton
                 size='small'
                 onClick={() => setCollapsed(false)}
+              aria-label="展开侧栏"
               >
                 <PanelLeftOpen style={{ width: 18, height: 18 }} />
               </IconButton>

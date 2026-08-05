@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   KanbanPageTemplate,
   type KanbanColumn,
-  type KanbanCard,
 } from '../../components/templates/KanbanPageTemplate';
 import { Plus } from 'lucide-react';
 

@@ -23,7 +23,6 @@ import {
   CheckSquare,
   User,
   Search,
-  Filter,
   Clock,
   AlertCircle,
   CheckCircle2,
@@ -33,10 +32,9 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard } from '@/components/mobile';
+import { MobileLayout, PullToRefresh, MobileSkeleton } from '@/components/mobile';
 import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
 import { mobileApi } from '@/api/mobile';
-import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
 

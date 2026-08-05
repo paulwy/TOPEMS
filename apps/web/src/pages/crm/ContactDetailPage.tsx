@@ -1,7 +1,7 @@
 import { Chip, Typography, Box, InputLabel } from '@mui/material';
 import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { User, Phone, Mail, MapPin, Building2 } from 'lucide-react';
+import { User, Phone, Building2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { crmApi } from '@/api/crm';
 import type { Contact } from '@/api/crm';

@@ -7,16 +7,7 @@ import { departmentApi, employeeApi, type Department, type Employee } from '@/ap
 import { designTokens } from '@/theme/tokens';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Box,
-  Typography,
-  Chip,
-  Avatar,
-  Card,
-  CardHeader,
-  CardContent,
-  Divider,
-} from '@mui/material';
+import { Box, Typography, Chip, Avatar, Card, CardHeader, CardContent } from '@mui/material';
 import { Building2, User } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { departmentSchema } from '@/schemas/hrm';

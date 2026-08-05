@@ -1,14 +1,13 @@
 import { Grid } from '@/components';
-import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
   Database,
-  ChevronLeft,
   Search,
   Table,
   Plus,
@@ -21,7 +20,6 @@ import {
 } from 'lucide-react';
 import {
   Box,
-  Container,
   Paper,
   Typography,
   IconButton,
@@ -65,6 +63,7 @@ import {
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const DatabaseStructurePage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedTable, setSelectedTable] = useState<TableDetail | null>(null);
@@ -111,7 +110,7 @@ const DatabaseStructurePage: React.FC = () => {
     queryFn: async () => {
       const res = await dbStructureApi.getTableDetail(selectedTable!.table_name);
       if (res.success && res.data) return res.data;
-      throw new Error(res.message || '加载表结构失败');
+      throw new Error(res.message || t('admin:database_structure_page.loading_fail'));
     },
     enabled: !!selectedTable?.table_name && activeTab === 'structure',
     staleTime: 5 * 60 * 1000,
@@ -130,19 +129,19 @@ const DatabaseStructurePage: React.FC = () => {
 
   useEffect(() => {
     if (tablesQuery.isError) {
-      showNotification('error', extractErrorMessage(tablesQuery.error, '加载表列表失败'));
+      showNotification('error', extractErrorMessage(tablesQuery.error, t('admin:database_structure_page.loading_list_fail')));
     }
   }, [tablesQuery.isError, tablesQuery.error]);
 
   useEffect(() => {
     if (dbChangesQuery.isError) {
-      apiLogger.error('加载变更历史失败:', dbChangesQuery.error);
+      apiLogger.error(t('admin:database_structure_page.loading_changes_fail'), dbChangesQuery.error);
     }
   }, [dbChangesQuery.isError, dbChangesQuery.error]);
 
   useEffect(() => {
     if (tableDetailQuery.isError) {
-      showNotification('error', extractErrorMessage(tableDetailQuery.error, '加载表结构失败'));
+      showNotification('error', extractErrorMessage(tableDetailQuery.error, t('admin:database_structure_page.loading_fail')));
     }
   }, [tableDetailQuery.isError, tableDetailQuery.error]);
 
@@ -158,7 +157,7 @@ const DatabaseStructurePage: React.FC = () => {
     mutationFn: async (params: { table_name: string; column: DbColumnDefinition }) => {
       const res = await dbStructureApi.previewAddColumn(params);
       if (res.success && res.data) return res.data;
-      throw new Error(res.message || '生成SQL预览失败');
+      throw new Error(res.message || t('admin:database_structure_page.sql_fail'));
     },
     onSuccess: (data) => {
       setSqlPreview(data);
@@ -166,7 +165,7 @@ const DatabaseStructurePage: React.FC = () => {
       setShowPreviewModal(true);
     },
     onError: (err: unknown) => {
-      showNotification('error', extractErrorMessage(err, '生成SQL预览失败'));
+      showNotification('error', extractErrorMessage(err, t('admin:database_structure_page.sql_fail')));
     },
   });
 
@@ -174,10 +173,10 @@ const DatabaseStructurePage: React.FC = () => {
     mutationFn: async (params: { table_name: string; column: DbColumnDefinition }) => {
       const res = await dbStructureApi.addColumn(params);
       if (res.success) return true;
-      throw new Error(res.message || '添加字段失败');
+      throw new Error(res.message || t('admin:database_structure_page.fail'));
     },
     onSuccess: async () => {
-      showNotification('success', '字段添加成功');
+      showNotification('success', t('admin:database_structure_page.success'));
       setShowPreviewModal(false);
       setShowAddColumnModal(false);
       setNewColumn({
@@ -191,7 +190,7 @@ const DatabaseStructurePage: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-db-changes'] });
     },
     onError: (err: unknown) => {
-      showNotification('error', extractErrorMessage(err, '添加字段失败'));
+      showNotification('error', extractErrorMessage(err, t('admin:database_structure_page.fail')));
     },
   });
 
@@ -199,21 +198,21 @@ const DatabaseStructurePage: React.FC = () => {
     mutationFn: async (params: { tableName: string; columnName: string }) => {
       const res = await dbStructureApi.dropColumn(params.tableName, params.columnName);
       if (res.success) return true;
-      throw new Error(res.message || '删除字段失败');
+      throw new Error(res.message || t('admin:database_structure_page.delete_fail'));
     },
     onSuccess: async () => {
-      showNotification('success', '字段删除成功');
+      showNotification('success', t('admin:database_structure_page.delete_success'));
       await queryClient.invalidateQueries({ queryKey: ['admin-db-table-detail'] });
       await queryClient.invalidateQueries({ queryKey: ['admin-db-changes'] });
     },
     onError: (err: unknown) => {
-      showNotification('error', extractErrorMessage(err, '删除字段失败'));
+      showNotification('error', extractErrorMessage(err, t('admin:database_structure_page.delete_fail')));
     },
   });
 
   const handlePreviewAddColumn = async () => {
     if (!selectedTable || !newColumn.column_name) {
-      showNotification('error', '请填写字段名');
+      showNotification('error', t('admin:database_structure_page.fill'));
       return;
     }
     previewAddColumnMutation.mutate({
@@ -232,7 +231,7 @@ const DatabaseStructurePage: React.FC = () => {
 
   const handleDropColumn = async (columnName: string) => {
     if (!selectedTable) return;
-    if (!confirm(`确定要删除字段 "${columnName}" 吗？此操作不可恢复！`)) return;
+    if (!confirm(t('admin:database_structure_page.confirm_delete_column', { columnName }))) return;
     dropColumnMutation.mutate({
       tableName: selectedTable.table_name,
       columnName,
@@ -256,9 +255,9 @@ const DatabaseStructurePage: React.FC = () => {
   };
 
   const changeTypeLabels: Record<string, string> = {
-    add_column: '添加字段',
-    modify_column: '修改字段',
-    drop_column: '删除字段',
+    add_column: t('admin:database_structure_page.add_column'),
+    modify_column: t('admin:database_structure_page.modify'),
+    drop_column: t('admin:database_structure_page.delete'),
   };
 
   const getChangeTypeColor = (type: string) => {
@@ -274,8 +273,8 @@ const DatabaseStructurePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='数据库结构管理'
-      subtitle='查看和管理数据库表结构，支持添加、修改、删除字段'
+      title={t('admin:database_structure_page.manage')}
+      subtitle={t('admin:database_structure_page.manage_modify_delete')}
       maxWidth='xl'
       headerProps={{
         backButton: {
@@ -308,7 +307,7 @@ const DatabaseStructurePage: React.FC = () => {
             <TextField
               fullWidth
               size='small'
-              placeholder='搜索表名...'
+              placeholder={t('admin:database_structure_page.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               sx={{ mb: 2 }}
@@ -432,12 +431,12 @@ const DatabaseStructurePage: React.FC = () => {
                 >
                   <Tab
                     value='structure'
-                    label='表结构'
+                    label={t('admin:database_structure_page.tab_structure')}
                     sx={{ minHeight: 48, fontWeight: 500 }}
                   />
                   <Tab
                     value='changes'
-                    label='变更历史'
+                    label={t('admin:database_structure_page.tab_changes')}
                     sx={{ minHeight: 48, fontWeight: 500 }}
                   />
                 </Tabs>
@@ -476,8 +475,8 @@ const DatabaseStructurePage: React.FC = () => {
                         color='text.secondary'
                         sx={{ mt: 0.5 }}
                       >
-                        {selectedTable.columns.length} 个字段 |{' '}
-                        {selectedTable.row_count?.toLocaleString() || '-'} 行数据
+                        {t('admin:database_structure_page.columns_count', { count: selectedTable.columns.length })} |{' '}
+                        {t('admin:database_structure_page.rows_count', { count: selectedTable.row_count?.toLocaleString() || '-' })}
                       </Typography>
                     </Box>
                     <Button
@@ -492,7 +491,7 @@ const DatabaseStructurePage: React.FC = () => {
                         borderRadius: 1.5,
                       }}
                     >
-                      添加字段
+                      {t('admin:database_structure_page.add_column')}
                     </Button>
                   </Box>
 
@@ -531,7 +530,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                字段名
+                                {t('admin:database_structure_page.column_name')}
                               </TableCell>
                               <TableCell
                                 sx={{
@@ -541,7 +540,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                类型
+                                {t('admin:database_structure_page.column_type')}
                               </TableCell>
                               <TableCell
                                 sx={{
@@ -551,7 +550,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                可空
+                                {t('admin:database_structure_page.nullable')}
                               </TableCell>
                               <TableCell
                                 sx={{
@@ -561,7 +560,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                默认值
+                                {t('admin:database_structure_page.default_value')}
                               </TableCell>
                               <TableCell
                                 align='right'
@@ -572,7 +571,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                操作
+                                {t('admin:database_structure_page.action')}
                               </TableCell>
                             </TableRow>
                           </TableHead>
@@ -637,7 +636,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   {col.column_default || '-'}
                                 </TableCell>
                                 <TableCell align='right'>
-                                  <Tooltip title='删除字段'>
+                                  <Tooltip title={t('admin:database_structure_page.delete')}>
                                     <IconButton
                                       size='small'
                                       color='error'
@@ -645,6 +644,7 @@ const DatabaseStructurePage: React.FC = () => {
                                       sx={{
                                         '&:hover': { bgcolor: 'error.lighter' },
                                       }}
+                                    aria-label={t('admin:database_structure_page.delete_action')}
                                     >
                                       <Trash2 size={16} />
                                     </IconButton>
@@ -677,7 +677,7 @@ const DatabaseStructurePage: React.FC = () => {
                         color='text.secondary'
                         sx={{ mt: 2 }}
                       >
-                        暂无变更历史
+                        {t('admin:database_structure_page.no_changes')}
                       </Typography>
                     </Box>
                   ) : (
@@ -693,7 +693,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 textTransform: 'uppercase',
                               }}
                             >
-                              时间
+                              {t('admin:database_structure_page.col_time')}
                             </TableCell>
                             <TableCell
                               sx={{
@@ -703,7 +703,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 textTransform: 'uppercase',
                               }}
                             >
-                              类型
+                              {t('admin:database_structure_page.column_type')}
                             </TableCell>
                             <TableCell
                               sx={{
@@ -713,7 +713,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 textTransform: 'uppercase',
                               }}
                             >
-                              表名
+                              {t('admin:database_structure_page.col_table_name')}
                             </TableCell>
                             <TableCell
                               sx={{
@@ -723,7 +723,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 textTransform: 'uppercase',
                               }}
                             >
-                              字段
+                              {t('admin:database_structure_page.col_field')}
                             </TableCell>
                             <TableCell
                               sx={{
@@ -831,9 +831,9 @@ const DatabaseStructurePage: React.FC = () => {
                 variant='h6'
                 sx={{ ...{ mb: 1 }, fontWeight: 500 }}
               >
-                请选择数据表
+                {t('admin:database_structure_page.select_table')}
               </Typography>
-              <Typography color='text.secondary'>从左侧列表选择一个表查看和管理结构</Typography>
+              <Typography color='text.secondary'>{t('admin:database_structure_page.select_table_hint')}</Typography>
             </Paper>
           )}
         </Grid>
@@ -846,29 +846,29 @@ const DatabaseStructurePage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle sx={{ pb: 1 }}>添加新字段</DialogTitle>
+        <DialogTitle sx={{ pb: 1 }}>{t('admin:database_structure_page.add_new_column')}</DialogTitle>
         <DialogContent>
           <Stack
             spacing={2.5}
             sx={{ pt: 1 }}
           >
             <TextField
-              label='字段名'
+              label={t('admin:database_structure_page.column_name')}
               required
               fullWidth
               size='small'
               value={newColumn.column_name}
               onChange={(e) => setNewColumn({ ...newColumn, column_name: e.target.value })}
-              placeholder='如: new_field'
+              placeholder={t('admin:database_structure_page.new_field')}
             />
             <FormControl
               fullWidth
               size='small'
             >
-              <InputLabel>数据类型</InputLabel>
+              <InputLabel>{t('admin:database_structure_page.type')}</InputLabel>
               <Select
                 value={newColumn.data_type}
-                label='数据类型'
+                label={t('admin:database_structure_page.type')}
                 onChange={(e) => setNewColumn({ ...newColumn, data_type: e.target.value })}
               >
                 <MenuItem value='VARCHAR'>VARCHAR</MenuItem>
@@ -886,7 +886,7 @@ const DatabaseStructurePage: React.FC = () => {
             </FormControl>
             {newColumn.data_type === 'VARCHAR' && (
               <TextField
-                label='最大长度'
+                label={t('admin:database_structure_page.max_length')}
                 type='number'
                 fullWidth
                 size='small'
@@ -911,15 +911,15 @@ const DatabaseStructurePage: React.FC = () => {
                   }
                 />
               }
-              label='允许为空 (NULL)'
+              label={t('admin:database_structure_page.null')}
             />
             <TextField
-              label='默认值'
+              label={t('admin:database_structure_page.default_value')}
               fullWidth
               size='small'
               value={newColumn.default_value || ''}
               onChange={(e) => setNewColumn({ ...newColumn, default_value: e.target.value })}
-              placeholder="如: 'active' 或 NOW()"
+              placeholder={t('admin:database_structure_page.active_now')}
             />
           </Stack>
         </DialogContent>
@@ -933,7 +933,7 @@ const DatabaseStructurePage: React.FC = () => {
               '&:hover': { bgcolor: 'border.default' },
             }}
           >
-            取消
+            {t('admin:database_structure_page.cancel')}
           </Button>
           <Button
             variant='contained'
@@ -944,7 +944,7 @@ const DatabaseStructurePage: React.FC = () => {
               '&:hover': { bgcolor: 'primary.dark' },
             }}
           >
-            预览 SQL
+            {t('admin:database_structure_page.preview_sql')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -967,7 +967,7 @@ const DatabaseStructurePage: React.FC = () => {
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              SQL 预览
+              {t('admin:database_structure_page.sql_preview')}
             </Typography>
           </Stack>
         </DialogTitle>
@@ -1024,7 +1024,7 @@ const DatabaseStructurePage: React.FC = () => {
             severity='info'
             sx={{ mb: 1 }}
           >
-            此操作将修改表结构并记录到变更历史。确定要执行吗？
+            {t('admin:database_structure_page.execute_confirm')}
           </Alert>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -1037,7 +1037,7 @@ const DatabaseStructurePage: React.FC = () => {
               '&:hover': { bgcolor: 'border.default' },
             }}
           >
-            取消
+            {t('admin:database_structure_page.cancel')}
           </Button>
           <Button
             variant='contained'
@@ -1050,7 +1050,7 @@ const DatabaseStructurePage: React.FC = () => {
               '&:hover': { bgcolor: 'error.darker' },
             }}
           >
-            确认执行
+            {t('admin:database_structure_page.confirm_execute')}
           </Button>
         </DialogActions>
       </Dialog>

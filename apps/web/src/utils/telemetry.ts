@@ -10,7 +10,6 @@ import type { Instrumentation } from '@opentelemetry/instrumentation';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
 import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { B3Propagator } from '@opentelemetry/propagator-b3';
 import type { Tracer, Span } from '@opentelemetry/api';
 import { trace, context, propagation, SpanStatusCode } from '@opentelemetry/api';

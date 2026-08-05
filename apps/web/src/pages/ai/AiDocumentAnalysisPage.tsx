@@ -33,7 +33,6 @@ import {
   Upload,
   Sparkles,
   Copy,
-  Download,
   RefreshCw,
   CheckCircle2,
   BookOpen,
@@ -43,7 +42,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
-import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;

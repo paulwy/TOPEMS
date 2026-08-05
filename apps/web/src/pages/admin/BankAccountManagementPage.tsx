@@ -5,7 +5,7 @@
  * 使用 CrudPage + bankAccountSchema 实现 schema 驱动的 CRUD。
  */
 
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { bankAccountSchema } from '@/schemas/admin';

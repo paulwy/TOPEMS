@@ -316,6 +316,7 @@ const AttachmentsPage: React.FC = () => {
                           e.stopPropagation();
                           downloadMutation.mutate(attachment);
                         }}
+                        aria-label='下载'
                         title='下载'
                       >
                         <Download size={16} />
@@ -327,6 +328,7 @@ const AttachmentsPage: React.FC = () => {
                           e.stopPropagation();
                           deleteMutation.mutate(attachment.id);
                         }}
+                        aria-label='删除'
                         title='删除'
                       >
                         <Trash2 size={16} />

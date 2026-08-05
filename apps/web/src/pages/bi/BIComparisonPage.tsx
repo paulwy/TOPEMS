@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Download, Filter, TrendingUp, TrendingDown, Minus, RefreshCw, Plus } from 'lucide-react';
+import { Filter, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -14,7 +14,6 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  TextField,
   MenuItem,
   Select,
   FormControl,
@@ -24,7 +23,6 @@ import {
   Button,
 } from '@mui/material';
 import { LoadingSpinner } from '@topems/shared-components';
-import { useNotificationStore } from '@/store';
 import { ExportButton } from '@/components/export';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -146,8 +144,6 @@ const BIComparisonPage = () => {
       setError(t('bi.bi_comparison_page.fail_1'));
     },
   });
-
-  const actionLoading = runMutation.isPending;
 
   const handleRefresh = () => {
     if (!currentComparisonId) {

@@ -3,16 +3,7 @@ import { type Employee, type Department } from '@/api/hrm';
 import { AIHelperButton, AICodeGenerator, AIDataCompleter, AIFormValidator } from '../ai';
 import type { CompletionItem } from '@/types/ai';
 
-import {
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-  InputAdornment,
-  Button,
-} from '@mui/material';
+import { TextField, FormControl, InputLabel, Select, MenuItem, Box, Button } from '@mui/material';
 
 interface EmployeeFormProps {
   formData: Partial<Employee>;

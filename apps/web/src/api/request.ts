@@ -1,5 +1,5 @@
 import type { ApiResponse } from './client';
-import { handleApiError, type AppError, AppExceptionError } from '../utils/errors';
+import { handleApiError, type AppError } from '../utils/errors';
 import createLogger from '../utils/logger';
 
 const logger = createLogger('request');

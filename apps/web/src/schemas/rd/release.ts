@@ -1,6 +1,6 @@
 import React from 'react';
 import { Chip, Box, Typography, Button } from '@mui/material';
-import { Tag, Calendar, User, RotateCcw, Globe } from 'lucide-react';
+import { Tag, Calendar, User, Globe } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
 
 const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'default'> = {

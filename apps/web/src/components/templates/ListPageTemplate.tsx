@@ -316,7 +316,9 @@ export function ListPageTemplate<T>({
   // V64 防御：过滤掉 data 中可能存在的 null / undefined 元素，避免 300+ 处
   // schema renderCell 因 "row is undefined" 抛错（典型：can't access property "isactive"）
   const rawData = propData ?? (crud ? crudResult.data : []);
-  const data = Array.isArray(rawData) ? rawData.filter((r): r is NonNullable<typeof r> => r != null) : [];
+  const data = Array.isArray(rawData)
+    ? rawData.filter((r): r is NonNullable<typeof r> => r != null)
+    : [];
   const loading = propLoading ?? (crud ? crudResult.loading : false);
   const error = propError ?? (crud && crudResult.error ? crudResult.error : null);
   const resolvedTotal = total ?? (crud ? crudResult.pagination.total : 0);
@@ -1011,15 +1013,16 @@ export function ListPageTemplate<T>({
 
   // 从 formFields 构建初始表单数据
   const buildInitialFormData = useCallback(
-    (mode: 'create' | 'edit' | 'view', record?: any): Record<string, unknown> => {
+    (mode: 'create' | 'edit' | 'view', record?: T): Record<string, unknown> => {
       if (!crud?.formFields) return {};
       const data: Record<string, unknown> = {};
+      const recordData = record as Record<string, unknown> | undefined;
       crud.formFields.forEach((field) => {
         if (mode === 'create' && field.hideInCreate) return;
         if (mode === 'edit' && field.hideInEdit) return;
         if (mode === 'view' && field.hideInView) return;
-        if (record && record[field.key] !== undefined) {
-          data[field.key] = record[field.key];
+        if (recordData && recordData[field.key] !== undefined) {
+          data[field.key] = recordData[field.key];
         } else {
           data[field.key] = field.defaultValue ?? (field.type === 'switch' ? false : '');
         }
@@ -1038,7 +1041,7 @@ export function ListPageTemplate<T>({
   }, [buildInitialFormData]);
 
   const openEditForm = useCallback(
-    (record: any) => {
+    (record: T) => {
       setCurrentRecord(record);
       setFormMode('edit');
       setFormData(buildInitialFormData('edit', record));
@@ -1049,7 +1052,7 @@ export function ListPageTemplate<T>({
   );
 
   const openViewForm = useCallback(
-    (record: any) => {
+    (record: T) => {
       setCurrentRecord(record);
       setFormMode('view');
       setFormData(buildInitialFormData('view', record));
@@ -1060,7 +1063,7 @@ export function ListPageTemplate<T>({
   );
 
   const handleDelete = useCallback(
-    async (record: any): Promise<boolean> => {
+    async (record: T): Promise<boolean> => {
       if (!crud) return false;
       const rowId = getRowId ? getRowId(record) : (record as Record<string, unknown>).id;
       if (!rowId) return false;
@@ -1080,7 +1083,7 @@ export function ListPageTemplate<T>({
   }, []);
 
   const handleFormSubmit = useCallback(
-    async (data: any): Promise<boolean> => {
+    async (data: Record<string, unknown>): Promise<boolean> => {
       if (!crud) return false;
       setFormSubmitting(true);
       try {
@@ -2820,6 +2823,7 @@ export function ListPageTemplate<T>({
               <IconButton
                 size='small'
                 onClick={(e) => setColumnConfigAnchor(e.currentTarget)}
+                aria-label='配置列'
               >
                 <Columns3 style={{ width: 18, height: 18 }} />
               </IconButton>
@@ -3033,6 +3037,7 @@ export function ListPageTemplate<T>({
                     e.stopPropagation();
                     handleExpandRow(row);
                   }}
+                aria-label="展开"
                 >
                   <ChevronRight
                     style={{
@@ -3063,6 +3068,7 @@ export function ListPageTemplate<T>({
                       e.stopPropagation();
                       toggleExpand(rowId);
                     }}
+                  aria-label="展开"
                   >
                     <ChevronRight
                       style={{
@@ -3158,6 +3164,7 @@ export function ListPageTemplate<T>({
                   <IconButton
                     size='small'
                     onClick={(e) => handleRowActionClick(e, row)}
+                    aria-label='更多操作'
                   >
                     <MoreHorizontal style={{ width: 18, height: 18 }} />
                   </IconButton>
@@ -3183,6 +3190,7 @@ export function ListPageTemplate<T>({
                               action.onClick?.(row);
                             }}
                             color={action.color}
+                            aria-label={action.label}
                           >
                             {action.icon || <MoreHorizontal style={{ width: 16, height: 16 }} />}
                           </IconButton>
@@ -3193,6 +3201,7 @@ export function ListPageTemplate<T>({
                       <IconButton
                         size='small'
                         onClick={(e) => handleRowActionClick(e, row)}
+                        aria-label='更多操作'
                       >
                         <MoreHorizontal style={{ width: 16, height: 16 }} />
                       </IconButton>
@@ -3508,6 +3517,7 @@ export function ListPageTemplate<T>({
                     <IconButton
                       size='small'
                       onClick={(e) => handleRowActionClick(e, row)}
+                      aria-label='更多操作'
                     >
                       <MoreHorizontal style={{ width: 18, height: 18 }} />
                     </IconButton>
@@ -3679,6 +3689,7 @@ export function ListPageTemplate<T>({
                     <IconButton
                       onClick={onRefresh}
                       size='small'
+                    aria-label="刷新"
                     >
                       <RefreshCw size={18} />
                     </IconButton>
@@ -3695,6 +3706,7 @@ export function ListPageTemplate<T>({
                         size='small'
                         disabled={data.length === 0 || exporting}
                         color={exportComplete ? 'primary' : 'inherit'}
+                      aria-label="下载"
                       >
                         <Download size={18} />
                       </IconButton>
@@ -3942,6 +3954,7 @@ export function ListPageTemplate<T>({
                 <IconButton
                   size='small'
                   onClick={() => handleViewModeChange(mode)}
+                  aria-label={mode === 'table' ? '表格视图' : '卡片视图'}
                   sx={{
                     borderRadius: 1.5,
                     bgcolor: effectiveViewMode === mode ? 'background.paper' : 'transparent',

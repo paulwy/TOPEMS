@@ -133,8 +133,6 @@ const GaugeChart = ({
   const circumference = 270;
   const radius = 80;
   const strokeWidth = 12;
-  const _startAngle = 135;
-  const _endAngle = -135;
   const offset = circumference * ((100 - percentage) / 100);
 
   return (
@@ -613,7 +611,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
               fill={colors[0]}
               radius={[0, 0, 0, 0]}
             >
-              {data.map((entry, index) => (
+              {data.map((_entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={colors[index % colors.length]}

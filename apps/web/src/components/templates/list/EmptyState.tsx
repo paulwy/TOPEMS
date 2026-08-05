@@ -1,7 +1,6 @@
 import React from 'react';
 import { TableCell, TableRow, Skeleton } from '@mui/material';
 import { EmptyState, ErrorEmptyState } from '@topems/shared-components';
-import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 // Module-level t for use outside React components (shadowed by useTranslation inside components)

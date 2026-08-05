@@ -148,7 +148,7 @@ export interface BackendPaginationResponse {
 
 export function parsePaginationFromResponse(
   response: Record<string, any>,
-  style: BackendParamStyle = 'standard'
+  _style: BackendParamStyle = 'standard'
 ): { items: any[]; total: number; page: number; pageSize: number } {
   const data = response.data ?? response;
   const total = data.total ?? 0;

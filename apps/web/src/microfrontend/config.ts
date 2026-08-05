@@ -51,7 +51,7 @@ export interface RemoteModuleConfig {
  * 生产环境通过 ENV 注入完整 URL：
  *   VITE_REMOTE_TOPEMS_ERP=https://erp.topems.com/remoteEntry.js
  */
-function getRemoteEntry(name: string, port: number): string {
+function getRemoteEntry(name: string, _port: number): string {
   const envKey = `VITE_REMOTE_${name.toUpperCase()}`;
   const envUrl = import.meta.env[envKey];
 

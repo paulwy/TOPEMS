@@ -1,19 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Plus,
-  Edit2,
-  Trash2,
-  Eye,
-  Download,
-  FileText,
-  Calendar,
-  Search,
-  RefreshCw,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-} from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, Download, FileText, RefreshCw } from 'lucide-react';
 import {
   Box,
   Typography,
@@ -22,10 +9,6 @@ import {
   CardContent,
   Chip,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   IconButton,
   Tooltip,
   Tabs,

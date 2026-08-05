@@ -11,6 +11,8 @@
 
 import { getCoreModules } from './core-modules';
 
+import { VITEDeploymentMode } from '@/config/env';
+
 export interface ModuleConfig {
   /** Unique module identifier */
   id: string;
@@ -56,8 +58,6 @@ export interface ModuleRoute {
   /** Child routes */
   children?: ModuleRoute[];
 }
-
-import { VITEDeploymentMode } from '@/config/env';
 
 const isStaticMode = VITEDeploymentMode() === 'static';
 

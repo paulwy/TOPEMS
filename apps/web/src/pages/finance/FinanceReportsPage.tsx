@@ -7,7 +7,6 @@ import {
   TrendingDown,
   DollarSign,
   PieChart,
-  BarChart3,
   Calendar,
   Building2,
   Clock,
@@ -15,16 +14,8 @@ import {
   Wallet,
   Activity,
   Download,
-  RefreshCw,
 } from 'lucide-react';
-import {
-  financeReportApi,
-  type BusinessOverview,
-  type MonthlyTrend,
-  type ProjectFinancialSummary,
-  type DepartmentFinancialSummary,
-} from '@/api/erp';
-import { useNotificationStore } from '@/store';
+import { financeReportApi } from '@/api/erp';
 import {
   Box,
   Button,
@@ -32,7 +23,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Chip,
   Alert,
   useTheme,
 } from '@mui/material';
@@ -43,7 +33,6 @@ import type {
   DataTable,
   TableColumn,
 } from '@/components/templates/StatsPageTemplate';
-import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
@@ -53,7 +42,6 @@ const ct = designTokens.colors;
 const FinanceReportsPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
-  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [period, setPeriod] = useState<string>('');
   const [activeTab, setActiveTab] = useState('overview');

@@ -5,9 +5,9 @@
  * 仅在关联模块已安装时显示，通过 usePluginContext.isPluginInstalled 判断。
  */
 import React, { useState } from 'react';
-import { Box, Typography, Card, CardContent, Button, Chip, Skeleton, Divider } from '@mui/material';
+import { Box, Typography, Card, CardContent, Button, Skeleton, Divider } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
-import { ExternalLink, ChevronRight, TrendingUp, ArrowRight } from 'lucide-react';
+import { ExternalLink, TrendingUp, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePlugins } from '@/context/PluginContext';
 

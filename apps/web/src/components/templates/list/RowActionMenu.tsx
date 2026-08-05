@@ -1,7 +1,6 @@
 import React from 'react';
 import { Divider, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material';
 import type { RowAction } from './types';
-import { useTranslation } from 'react-i18next';
 
 export interface RowActionMenuProps<T = any> {
   anchorEl: HTMLElement | null;

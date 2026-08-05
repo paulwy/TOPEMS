@@ -8,8 +8,6 @@ import {
   Tabs,
   Tab,
   Divider,
-  useTheme,
-  useMediaQuery,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -58,9 +56,6 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
     { name: 'performance_report', label: '绩效报表API', url: '/api/reports/performance' },
   ],
 }) => {
-  const theme = useTheme();
-  const _isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
   const [activeTab, setActiveTab] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [showDataSourcePanel, setShowDataSourcePanel] = useState(false);

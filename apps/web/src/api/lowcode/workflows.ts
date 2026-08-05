@@ -30,9 +30,7 @@ export const lowcodeWorkflowsApi = {
     return apiClient.lowcode.get<LowcodeWorkflow>(`/workflows/${id}`);
   },
 
-  create: async (
-    data: CreateLowcodeWorkflowRequest
-  ): Promise<ApiResponse<LowcodeWorkflow>> => {
+  create: async (data: CreateLowcodeWorkflowRequest): Promise<ApiResponse<LowcodeWorkflow>> => {
     return apiClient.lowcode.post<LowcodeWorkflow>('/workflows', data);
   },
 

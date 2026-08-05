@@ -4,7 +4,6 @@ import {
   Typography,
   Paper,
   Chip,
-  Avatar,
   useTheme,
   List,
   Divider,
@@ -28,26 +27,17 @@ import {
   User,
   ClipboardCheck,
   Search,
-  ChevronRight,
   AlertTriangle,
   CheckCircle,
   XCircle,
   Clock,
   Camera,
-  Plus,
   Barcode,
-  FileText,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  MobileLayout,
-  PullToRefresh,
-  MobileSkeleton,
-  MobileCard,
-  MobileButton,
-} from '@/components/mobile';
+import { MobileLayout, PullToRefresh, MobileSkeleton, MobileButton } from '@/components/mobile';
 import { useNotificationStore, useAuthStore } from '@/store';
-import { mobileApi, type QualityTask, type DefectRecord } from '@/api/mobile';
+import { type QualityTask, type DefectRecord } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
@@ -430,6 +420,7 @@ const MobileQualityPage: React.FC = () => {
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
           onClick={() => navigate(MOBILE_PATHS.scanPage)}
+        aria-label="扫码"
         >
           <Barcode style={{ width: 20, height: 20 }} />
         </IconButton>

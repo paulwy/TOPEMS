@@ -32,10 +32,22 @@ export const officeSuppliesSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'stationery', label: i18n.t('schema:erp.office_supply.category.option.stationery') },
-          { value: 'electronics', label: i18n.t('schema:erp.office_supply.category.option.electronics') },
-          { value: 'furniture', label: i18n.t('schema:erp.office_supply.category.option.furniture') },
-          { value: 'consumables', label: i18n.t('schema:erp.office_supply.category.option.consumables') },
+          {
+            value: 'stationery',
+            label: i18n.t('schema:erp.office_supply.category.option.stationery'),
+          },
+          {
+            value: 'electronics',
+            label: i18n.t('schema:erp.office_supply.category.option.electronics'),
+          },
+          {
+            value: 'furniture',
+            label: i18n.t('schema:erp.office_supply.category.option.furniture'),
+          },
+          {
+            value: 'consumables',
+            label: i18n.t('schema:erp.office_supply.category.option.consumables'),
+          },
           { value: 'other', label: i18n.t('schema:erp.office_supply.category.option.other') },
         ],
       },
@@ -81,8 +93,14 @@ export const officeSuppliesSchema: EntitySchema = {
         options: [
           { value: 'in_stock', label: i18n.t('schema:erp.office_supply.status.option.in_stock') },
           { value: 'low_stock', label: i18n.t('schema:erp.office_supply.status.option.low_stock') },
-          { value: 'out_of_stock', label: i18n.t('schema:erp.office_supply.status.option.out_of_stock') },
-          { value: 'discontinued', label: i18n.t('schema:erp.office_supply.status.option.discontinued') },
+          {
+            value: 'out_of_stock',
+            label: i18n.t('schema:erp.office_supply.status.option.out_of_stock'),
+          },
+          {
+            value: 'discontinued',
+            label: i18n.t('schema:erp.office_supply.status.option.discontinued'),
+          },
         ],
       },
       listWidth: 100,
@@ -115,10 +133,22 @@ export const officeSuppliesSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.office_supply.filter.status.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.office_supply.filter.status.option.in_stock'), value: 'in_stock' },
-          { label: i18n.t('schema:erp.office_supply.filter.status.option.low_stock'), value: 'low_stock' },
-          { label: i18n.t('schema:erp.office_supply.filter.status.option.out_of_stock'), value: 'out_of_stock' },
-          { label: i18n.t('schema:erp.office_supply.filter.status.option.discontinued'), value: 'discontinued' },
+          {
+            label: i18n.t('schema:erp.office_supply.filter.status.option.in_stock'),
+            value: 'in_stock',
+          },
+          {
+            label: i18n.t('schema:erp.office_supply.filter.status.option.low_stock'),
+            value: 'low_stock',
+          },
+          {
+            label: i18n.t('schema:erp.office_supply.filter.status.option.out_of_stock'),
+            value: 'out_of_stock',
+          },
+          {
+            label: i18n.t('schema:erp.office_supply.filter.status.option.discontinued'),
+            value: 'discontinued',
+          },
         ],
       },
       {
@@ -127,11 +157,26 @@ export const officeSuppliesSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.office_supply.filter.category.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.office_supply.filter.category.option.stationery'), value: 'stationery' },
-          { label: i18n.t('schema:erp.office_supply.filter.category.option.electronics'), value: 'electronics' },
-          { label: i18n.t('schema:erp.office_supply.filter.category.option.furniture'), value: 'furniture' },
-          { label: i18n.t('schema:erp.office_supply.filter.category.option.consumables'), value: 'consumables' },
-          { label: i18n.t('schema:erp.office_supply.filter.category.option.other'), value: 'other' },
+          {
+            label: i18n.t('schema:erp.office_supply.filter.category.option.stationery'),
+            value: 'stationery',
+          },
+          {
+            label: i18n.t('schema:erp.office_supply.filter.category.option.electronics'),
+            value: 'electronics',
+          },
+          {
+            label: i18n.t('schema:erp.office_supply.filter.category.option.furniture'),
+            value: 'furniture',
+          },
+          {
+            label: i18n.t('schema:erp.office_supply.filter.category.option.consumables'),
+            value: 'consumables',
+          },
+          {
+            label: i18n.t('schema:erp.office_supply.filter.category.option.other'),
+            value: 'other',
+          },
         ],
       },
     ],

@@ -1,18 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  Settings,
-  Bell,
-  Mail,
-  MessageSquare,
-  Smartphone,
-  Users,
-  Clock,
-  Zap,
-  Webhook,
-  Bookmark,
-  AlertCircle,
-  Layers,
-} from 'lucide-react';
+import { Settings, Bell, MessageSquare, Zap, Bookmark } from 'lucide-react';
 
 import { useNotificationStore } from '@/store';
 import {
@@ -20,7 +7,6 @@ import {
   type SettingTab,
   type SettingValueType,
 } from '@/components/templates';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 
 export const NotificationSettingsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);

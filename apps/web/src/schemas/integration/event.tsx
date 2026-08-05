@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Box, Chip, Typography } from '@mui/material';
+import { Chip, Typography } from '@mui/material';
 import type { EntitySchema, SchemaField } from '@/schema';
 
 export const EVENT_TYPE_CONFIG: Record<

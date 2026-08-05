@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, X, ShoppingCart, CheckCircle } from 'lucide-react';
 import {
-  Box,
   Card,
   CardContent,
   Typography,

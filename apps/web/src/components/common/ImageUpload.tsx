@@ -155,7 +155,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [cropZoom, setCropZoom] = useState(1);
   const [cropRotation, setCropRotation] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const _cropInputRef = useRef<HTMLInputElement>(null);
 
   /**
    * 生成唯一ID
@@ -375,6 +374,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 e.stopPropagation();
                 setPreviewImage(image.preview);
               }}
+            aria-label="图片"
             >
               <Image size={16} />
             </IconButton>
@@ -385,6 +385,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                   e.stopPropagation();
                   handleCrop(image);
                 }}
+              aria-label="裁剪"
               >
                 <Crop size={16} />
               </IconButton>
@@ -395,6 +396,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 e.stopPropagation();
                 handleDelete(image.id);
               }}
+            aria-label="删除"
             >
               <Trash2 size={16} />
             </IconButton>
@@ -428,6 +430,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             <IconButton
               onClick={() => setPreviewImage(null)}
               sx={{ ml: 'auto' }}
+            aria-label="关闭"
             >
               <X size={20} />
             </IconButton>
@@ -457,6 +460,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             <IconButton
               onClick={() => setCropImage(null)}
               sx={{ ml: 'auto' }}
+            aria-label="关闭"
             >
               <X size={20} />
             </IconButton>
@@ -513,7 +517,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               旋转
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <IconButton onClick={() => setCropRotation((r) => r - 90)}>
+              <IconButton onClick={() => setCropRotation((r) => r - 90)}aria-label="旋转" >
                 <RotateCw
                   size={20}
                   style={{ transform: 'scaleX(-1)' }}
@@ -530,7 +534,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                   },
                 }}
               />
-              <IconButton onClick={() => setCropRotation((r) => r + 90)}>
+              <IconButton onClick={() => setCropRotation((r) => r + 90)}aria-label="旋转" >
                 <RotateCw size={20} />
               </IconButton>
             </Box>

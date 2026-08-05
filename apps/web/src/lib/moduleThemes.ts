@@ -12,8 +12,6 @@ import {
   Building2,
   Package,
   Factory,
-  LineChart,
-  FileText,
   Wallet,
   Truck,
   Handshake,

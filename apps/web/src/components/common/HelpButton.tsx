@@ -67,6 +67,7 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
                 color: 'primary.main',
               },
             }}
+          aria-label="帮助"
           >
             {icon || <HelpCircle style={{ width: 20, height: 20 }} />}
           </IconButton>

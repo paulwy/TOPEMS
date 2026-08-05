@@ -1,32 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Plus,
-  Edit2,
-  Trash2,
-  Copy,
-  Search,
-  Grid3X3,
-  LayoutDashboard,
-  FolderOpen,
-  Check,
-  X,
-} from 'lucide-react';
+import { Plus, Edit2, Trash2, Copy, LayoutDashboard, FolderOpen } from 'lucide-react';
 import {
   Box,
   Typography,
   Button,
   Card,
   CardContent,
-  CardHeader,
   CardActions,
   Chip,
-  Divider,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Menu,
   MenuItem,
   IconButton,
   Tooltip,
@@ -369,6 +355,7 @@ export const DashboardTemplateManager: React.FC<{
                     size='small'
                     onClick={() => handleCreateDashboard(template.id)}
                     disabled={!template.isactive}
+                  aria-label="复制"
                   >
                     <Copy sx={{ width: 18, height: 18 }} />
                   </IconButton>
@@ -377,6 +364,7 @@ export const DashboardTemplateManager: React.FC<{
                   <IconButton
                     size='small'
                     onClick={() => handleOpenEditModal(template)}
+                  aria-label="编辑"
                   >
                     <Edit2 sx={{ width: 18, height: 18 }} />
                   </IconButton>
@@ -386,6 +374,7 @@ export const DashboardTemplateManager: React.FC<{
                     size='small'
                     color='error'
                     onClick={() => handleDeleteTemplate(template.id)}
+                  aria-label="删除"
                   >
                     <Trash2 sx={{ width: 18, height: 18 }} />
                   </IconButton>

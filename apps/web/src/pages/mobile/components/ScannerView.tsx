@@ -219,6 +219,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
               },
             }}
             onClick={onFlashToggle}
+          aria-label="手电筒"
           >
             <Flashlight style={{ width: 24, height: 24 }} />
           </IconButton>
@@ -241,6 +242,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                 bgcolor: 'grey.200',
               },
             }}
+          aria-label="图片"
           >
             <Image style={{ width: 24, height: 24 }} />
           </IconButton>
@@ -264,6 +266,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
               },
             }}
             onClick={onManualTabClick}
+          aria-label="扫码"
           >
             <Barcode style={{ width: 24, height: 24 }} />
           </IconButton>

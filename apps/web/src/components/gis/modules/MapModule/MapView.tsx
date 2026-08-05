@@ -375,7 +375,7 @@ const MapView: React.FC<MapViewProps> = ({
   const theme = useTheme();
   const [zoom, setZoom] = useState(10); // 在离线瓦片范围内
   const [selectedItem, setSelectedItem] = useState<DevicePoint | StorageLocation | null>(null);
-  const [showDetailsPanel, setShowDetailsPanel] = useState(false);
+  const [, setShowDetailsPanel] = useState(false);
   const [showLayerPanel, setShowLayerPanel] = useState(true);
   const [visibleLayers, setVisibleLayers] = useState({
     devices: true,

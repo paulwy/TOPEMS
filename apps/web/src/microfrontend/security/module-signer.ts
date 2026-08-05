@@ -209,9 +209,9 @@ export class ModuleSigner {
   }
 
   verifySignatureChain(
-    moduleName: string,
-    version: string,
-    content: string
+    _moduleName: string,
+    _version: string,
+    _content: string
   ): Promise<VerificationResult[]> {
     return Promise.resolve([
       {

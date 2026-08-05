@@ -105,8 +105,6 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   layout: 'grid',
 };
 
-const DEFAULT_SEGMENTS = ['all'];
-
 const BEHAVIOR_THRESHOLDS = {
   high_frequency: 10,
   medium_frequency: 3,

@@ -10,7 +10,7 @@ import {
   Chip,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { financeReportApi } from '@/api/erp';
@@ -19,17 +19,15 @@ import { LoadingSpinner } from '@topems/shared-components';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-import {
-  BarChart3,
-  TrendingUp,
-  PieChart,
-  FileText,
-  Calendar,
-  Download,
-  RefreshCw,
-} from 'lucide-react';
+import { BarChart3, TrendingUp, PieChart, FileText, Download, RefreshCw } from 'lucide-react';
 
 const ct = designTokens.colors;
+
+interface ChartDataItem {
+  category: string;
+  value: number;
+  color: string;
+}
 
 const FinancialAnalysisPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -37,7 +35,7 @@ const FinancialAnalysisPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState(0);
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<ChartDataItem[]>([]);
 
   const invalidateData = () => {
     queryClient.invalidateQueries({ queryKey: ['erp', 'financial-reports'] });
@@ -87,12 +85,12 @@ const FinancialAnalysisPage: React.FC = () => {
       setChartData([
         {
           category: '营业收入',
-          value: (incomeStatementData as any).total_revenue || 0,
+          value: incomeStatementData.total_revenue || 0,
           color: ct.success.main,
         },
         {
           category: '营业成本',
-          value: (incomeStatementData as any).total_cost || 0,
+          value: incomeStatementData.total_cost || 0,
           color: ct.error.main,
         },
         {
@@ -126,17 +124,17 @@ const FinancialAnalysisPage: React.FC = () => {
       setChartData([
         {
           category: '经营活动',
-          value: (cashFlowData as any).operating_cash_flow || 0,
+          value: cashFlowData.operating_cash_flow || 0,
           color: ct.success.main,
         },
         {
           category: '投资活动',
-          value: (cashFlowData as any).investing_cash_flow || 0,
+          value: cashFlowData.investing_cash_flow || 0,
           color: ct.warning.main,
         },
         {
           category: '筹资活动',
-          value: (cashFlowData as any).financing_cash_flow || 0,
+          value: cashFlowData.financing_cash_flow || 0,
           color: ct.info.main,
         },
         { category: '净现金流', value: cashFlowData.net_cash_flow || 0, color: ct.primary.main },
@@ -149,13 +147,17 @@ const FinancialAnalysisPage: React.FC = () => {
     number
   > | null>({
     queryKey: [...QUERY_KEYS.ERP.FINANCIAL_REPORTS.AGING_ANALYSIS, period],
-    queryFn: async () => {
+    queryFn: async (): Promise<Record<string, number> | null> => {
       const response = await financeReportApi.agingAnalysis();
       if (response.success && response.data) {
-        return response.data.reduce((acc: Record<string, number>, item: any) => {
-          acc[item.category] = item.amount;
-          return acc;
-        }, {});
+        const result: Record<string, number> = {};
+        for (const item of response.data as unknown as Array<{
+          category: string;
+          amount: number;
+        }>) {
+          result[item.category] = item.amount;
+        }
+        return result;
       }
       return null;
     },
@@ -174,8 +176,8 @@ const FinancialAnalysisPage: React.FC = () => {
   }, [agingAnalysisData]);
 
   const { data: budgetAnalysisData, isLoading: budgetAnalysisLoading } = useQuery<{
-    budget_amount?: number;
-    actual_amount?: number;
+    budget_amount: number;
+    actual_amount: number;
   } | null>({
     queryKey: [...QUERY_KEYS.ERP.FINANCIAL_REPORTS.EXPENSE_ANALYSIS, 'budget', period],
     queryFn: async () => {
@@ -349,7 +351,7 @@ const FinancialAnalysisPage: React.FC = () => {
   const renderDataGrid = () => {
     if (!currentData) return null;
 
-    const data = currentData as Record<string, any>;
+    const data = currentData as Record<string, unknown>;
     const dataKeys = Object.keys(data).filter((k) => typeof data[k] === 'number');
 
     return (
@@ -474,19 +476,19 @@ const FinancialAnalysisPage: React.FC = () => {
           <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>总资产</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
-              ¥{((balanceSheetData as any).total_assets / 10000).toFixed(1)}万
+              ¥{(balanceSheetData.total_assets / 10000).toFixed(1)}万
             </Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>总负债</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>
-              ¥{((balanceSheetData as any).total_liabilities / 10000).toFixed(1)}万
+              ¥{(balanceSheetData.total_liabilities / 10000).toFixed(1)}万
             </Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>净资产</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'primary.dark' }}>
-              ¥{((balanceSheetData as any).total_equity / 10000).toFixed(1)}万
+              ¥{(balanceSheetData.total_equity / 10000).toFixed(1)}万
             </Box>
           </Box>
         </>
@@ -496,19 +498,19 @@ const FinancialAnalysisPage: React.FC = () => {
           <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>营业收入</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
-              ¥{((incomeStatementData as any).total_revenue / 10000).toFixed(1)}万
+              ¥{(incomeStatementData.total_revenue / 10000).toFixed(1)}万
             </Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>营业成本</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>
-              ¥{((incomeStatementData as any).total_cost / 10000).toFixed(1)}万
+              ¥{(incomeStatementData.total_cost / 10000).toFixed(1)}万
             </Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>净利润</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'primary.dark' }}>
-              ¥{((incomeStatementData as any).net_profit / 10000).toFixed(1)}万
+              ¥{(incomeStatementData.net_profit / 10000).toFixed(1)}万
             </Box>
           </Box>
         </>
@@ -518,19 +520,19 @@ const FinancialAnalysisPage: React.FC = () => {
           <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>经营现金流</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
-              ¥{((cashFlowData as any).net_cash_flow / 10000).toFixed(1)}万
+              ¥{(cashFlowData.net_cash_flow / 10000).toFixed(1)}万
             </Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>投资现金流</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>
-              ¥{((cashFlowData as any).net_cash_flow / 10000).toFixed(1)}万
+              ¥{(cashFlowData.net_cash_flow / 10000).toFixed(1)}万
             </Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>净现金流</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'info.700' }}>
-              ¥{((cashFlowData as any).net_cash_flow / 10000).toFixed(1)}万
+              ¥{(cashFlowData.net_cash_flow / 10000).toFixed(1)}万
             </Box>
           </Box>
         </>
@@ -540,23 +542,19 @@ const FinancialAnalysisPage: React.FC = () => {
           <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>0-30天</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
-              ¥{((agingAnalysisData as any)['0-30'] / 10000).toFixed(1)}万
+              ¥{(agingAnalysisData['0-30'] / 10000).toFixed(1)}万
             </Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>31-60天</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>
-              ¥{((agingAnalysisData as any)['31-60'] / 10000).toFixed(1)}万
+              ¥{(agingAnalysisData['31-60'] / 10000).toFixed(1)}万
             </Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>逾期总额</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>
-              ¥
-              {(((agingAnalysisData as any)['61-90'] || 0) +
-                ((agingAnalysisData as any)['90+'] || 0)) /
-                10000}
-              万
+              ¥{((agingAnalysisData['61-90'] || 0) + (agingAnalysisData['90+'] || 0)) / 10000}万
             </Box>
           </Box>
         </>
@@ -566,21 +564,20 @@ const FinancialAnalysisPage: React.FC = () => {
           <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>预算金额</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
-              ¥{((budgetAnalysisData as any).budget_amount / 10000).toFixed(1)}万
+              ¥{(budgetAnalysisData.budget_amount / 10000).toFixed(1)}万
             </Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>实际支出</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'primary.dark' }}>
-              ¥{((budgetAnalysisData as any).actual_amount / 10000).toFixed(1)}万
+              ¥{(budgetAnalysisData.actual_amount / 10000).toFixed(1)}万
             </Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>预算执行率</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>
               {(
-                ((budgetAnalysisData as any).actual_amount /
-                  (budgetAnalysisData as any).budget_amount) *
+                (budgetAnalysisData.actual_amount / budgetAnalysisData.budget_amount) *
                 100
               ).toFixed(1)}
               %

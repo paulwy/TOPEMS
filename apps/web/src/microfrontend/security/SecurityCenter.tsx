@@ -9,15 +9,12 @@ import {
   Button,
   List,
   ListItem,
-  ListItemText,
   Avatar,
   Grid,
   Paper,
   Tabs,
   Tab,
   LinearProgress,
-  Tooltip,
-  IconButton,
   Select,
   MenuItem,
   FormControl,
@@ -59,7 +56,6 @@ import {
   type SecurityScanResult,
   type SecurityIssue,
   type SecurityIssueSeverity,
-  type SecurityIssueType,
   SecurityCategory,
   type PermissionAudit,
   type ScanHistoryEntry,
@@ -482,7 +478,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
     setScanning(true);
     setTimeout(() => {
       securityScanner.refreshModules();
-      const { results, history } = securityScanner.scanAll();
+      const { results } = securityScanner.scanAll();
       setScanResults(results);
       setAllIssues(securityScanner.getSecurityIssues());
       setOverallScore(securityScanner.getSecurityScore());

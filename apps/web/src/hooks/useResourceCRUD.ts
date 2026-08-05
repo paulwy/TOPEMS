@@ -5,7 +5,7 @@ export interface ListResponse<T> {
   total: number;
 }
 
-export interface ResourceCRUDResult<T, CreateRequest, UpdateRequest> {
+export interface ResourceCRUDResult<T, _CreateRequest, UpdateRequest> {
   queryResult: ReturnType<typeof useQuery<ListResponse<T>>>;
   createMutation: ReturnType<typeof useMutation>;
   updateMutation: ReturnType<typeof useMutation>;

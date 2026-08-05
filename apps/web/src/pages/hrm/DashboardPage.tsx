@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, GraduationCap, Award, ArrowRight } from 'lucide-react';
-import { apiLogger } from '@/utils/logger';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';

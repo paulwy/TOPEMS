@@ -104,7 +104,7 @@ export class ExplainabilityEngine {
     return explanation;
   }
 
-  getGlobalImportance(modelId: string): Array<{ feature: string; importance: number }> {
+  getGlobalImportance(_modelId: string): Array<{ feature: string; importance: number }> {
     const importance = SHAP_FEATURES.map((feature) => ({
       feature,
       importance: Math.round(Math.random() * 10000) / 10000,
@@ -123,9 +123,9 @@ export class ExplainabilityEngine {
   }
 
   generateCounterfactual(
-    modelId: string,
-    predictionId: string,
-    targetPrediction?: number
+    _modelId: string,
+    _predictionId: string,
+    _targetPrediction?: number
   ): ExplainabilityReport['counterfactuals'][number] {
     const changedFeatures = COUNTERFACTUAL_FEATURES.slice(0, 2 + Math.floor(Math.random() * 3));
 
@@ -182,7 +182,7 @@ export class ExplainabilityEngine {
 
   compareExplanations(
     predictionIds: string[],
-    modelId: string
+    _modelId: string
   ): Array<{
     predictionId: string;
     methods: ExplainabilityMethod[];
@@ -199,7 +199,7 @@ export class ExplainabilityEngine {
     });
   }
 
-  getExplainabilityCoverage(modelId: string): {
+  getExplainabilityCoverage(_modelId: string): {
     total_predictions: number;
     explained_predictions: number;
     coverage_rate: number;

@@ -1,22 +1,20 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Play, Eye, RotateCcw, FileSearch, Database } from 'lucide-react';
 import {
   Box,
   Dialog,
   DialogContent,
   DialogTitle,
-  Chip,
   CircularProgress,
   Typography,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Paper,
   Button,
-  useTheme,
 } from '@mui/material';
 import { useNotificationStore } from '@/store';
 import CrudPage from '@/components/templates/CrudPage';
@@ -34,15 +32,15 @@ interface ServiceStatusMap {
 }
 
 const MigrationAdminPage: React.FC = () => {
-  const theme = useTheme();
+  const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
-  const [applyingService, setApplyingService] = useState<string | null>(null);
-  const [rollingBackService, setRollingBackService] = useState<string | null>(null);
   const [batchApplying, setBatchApplying] = useState(false);
   const [activeService, setActiveService] = useState<MigrationService | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [, setApplyingService] = useState<string | null>(null);
+  const [, setRollingBackService] = useState<string | null>(null);
   const {
     confirmOpen: confirmDialogOpen,
     confirmConfig: confirmDialogConfig,
@@ -89,13 +87,13 @@ const MigrationAdminPage: React.FC = () => {
         return { data, total: data.length };
       },
       create: async () => {
-        throw new Error('不支持创建迁移服务');
+        throw new Error(t('admin:migration_admin_page.unsupported_create'));
       },
       update: async () => {
-        throw new Error('不支持更新迁移服务');
+        throw new Error(t('admin:migration_admin_page.unsupported_update'));
       },
       delete: async () => {
-        throw new Error('不支持删除迁移服务');
+        throw new Error(t('admin:migration_admin_page.unsupported_delete'));
       },
     }),
     []
@@ -105,17 +103,17 @@ const MigrationAdminPage: React.FC = () => {
     mutationFn: (serviceName: string) => migrationApi.applyMigration(serviceName, 'schema'),
     onSuccess: (result, serviceName) => {
       addNotification({
-        title: '成功',
-        message: `${serviceName} 迁移执行成功，共 ${result.files.length} 个文件`,
+        title: t('admin:migration_admin_page.success_title'),
+        message: t('admin:migration_admin_page.apply_success_msg', { serviceName, count: result.files.length }),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['migration-status'] });
     },
     onError: (error: unknown, serviceName) => {
-      apiLogger.error('迁移执行失败:', error);
+      apiLogger.error(t('admin:migration_admin_page.apply_failed_log'), error);
       addNotification({
-        title: '错误',
-        message: (error as { message?: string }).message || `${serviceName} 迁移执行失败`,
+        title: t('admin:migration_admin_page.error_title'),
+        message: (error as { message?: string }).message || t('admin:migration_admin_page.apply_failed_msg', { serviceName }),
         type: 'error',
       });
     },
@@ -125,17 +123,20 @@ const MigrationAdminPage: React.FC = () => {
     mutationFn: (serviceName: string) => migrationApi.rollbackMigration(serviceName),
     onSuccess: (result, serviceName) => {
       addNotification({
-        title: '成功',
-        message: `${serviceName} 回滚完成：${result.record ? '已移除记录' : '无记录可回滚'}`,
+        title: t('admin:migration_admin_page.success_title'),
+        message: t('admin:migration_admin_page.rollback_success_msg', {
+          serviceName,
+          result: result.record ? t('admin:migration_admin_page.removed_records') : t('admin:migration_admin_page.no_records_to_rollback'),
+        }),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['migration-status'] });
     },
     onError: (error: unknown, serviceName) => {
-      apiLogger.error('回滚失败:', error);
+      apiLogger.error(t('admin:migration_admin_page.rollback_failed_log'), error);
       addNotification({
-        title: '错误',
-        message: (error as { message?: string }).message || `${serviceName} 回滚失败`,
+        title: t('admin:migration_admin_page.error_title'),
+        message: (error as { message?: string }).message || t('admin:migration_admin_page.rollback_failed_msg', { serviceName }),
         type: 'error',
       });
     },
@@ -149,8 +150,8 @@ const MigrationAdminPage: React.FC = () => {
 
   const handleRollback = (service: MigrationService) => {
     openConfirmDialog({
-      title: '确认回滚',
-      message: `确认回滚 ${service.name} 最近一次迁移？该操作不可恢复。`,
+      title: t('admin:migration_admin_page.confirm_rollback_title'),
+      message: t('admin:migration_admin_page.confirm_rollback_msg', { serviceName: service.name }),
       danger: true,
       onConfirm: async () => {
         setRollingBackService(service.name);
@@ -171,8 +172,8 @@ const MigrationAdminPage: React.FC = () => {
   const handleBatchApply = () => {
     if (services.length === 0) return;
     openConfirmDialog({
-      title: '确认批量迁移',
-      message: `将对全部 ${services.length} 个服务执行 schema 迁移，确认继续？`,
+      title: t('admin:migration_admin_page.confirm_batch_title'),
+      message: t('admin:migration_admin_page.confirm_batch_msg', { count: services.length }),
       danger: true,
       onConfirm: async () => {
         setBatchApplying(true);
@@ -186,8 +187,11 @@ const MigrationAdminPage: React.FC = () => {
           } catch (err: unknown) {
             failed += 1;
             addNotification({
-              title: '错误',
-              message: `${svc.name} 迁移失败：${(err as { message?: string }).message || '未知错误'}`,
+              title: t('admin:migration_admin_page.error_title'),
+              message: t('admin:migration_admin_page.batch_failed_msg', {
+                serviceName: svc.name,
+                message: (err as { message?: string }).message || t('admin:migration_admin_page.unknown_error'),
+              }),
               type: 'error',
             });
           }
@@ -196,8 +200,8 @@ const MigrationAdminPage: React.FC = () => {
         queryClient.invalidateQueries({ queryKey: ['migration-status'] });
 
         addNotification({
-          title: failed === 0 ? '成功' : '警告',
-          message: `批量迁移完成：成功 ${succeeded} 个，失败 ${failed} 个`,
+          title: failed === 0 ? t('admin:migration_admin_page.success_title') : t('admin:migration_admin_page.warning_title'),
+          message: t('admin:migration_admin_page.batch_complete_msg', { succeeded, failed }),
           type: failed === 0 ? 'success' : 'warning',
         });
         setBatchApplying(false);
@@ -211,18 +215,18 @@ const MigrationAdminPage: React.FC = () => {
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        label: '查看状态',
+        label: t('admin:migration_admin_page.view_status'),
         icon: <Eye size={16} />,
         onClick: (row) => handleShowStatus(row as MigrationService),
       },
       {
-        label: '回滚',
+        label: t('admin:migration_admin_page.rollback'),
         icon: <RotateCcw size={16} />,
         color: 'warning',
         onClick: (row) => handleRollback(row as MigrationService),
       },
       {
-        label: '执行迁移',
+        label: t('admin:migration_admin_page.apply_migration'),
         icon: <Play size={16} />,
         onClick: (row) => handleApply(row as MigrationService),
       },
@@ -253,7 +257,7 @@ const MigrationAdminPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                服务总数
+                {t('admin:migration_admin_page.total_services')}
               </Typography>
             </Box>
             <Typography
@@ -279,7 +283,7 @@ const MigrationAdminPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                待执行迁移
+                {t('admin:migration_admin_page.pending_migration')}
               </Typography>
             </Box>
             <Typography
@@ -305,7 +309,7 @@ const MigrationAdminPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                已执行迁移
+                {t('admin:migration_admin_page.applied_migration')}
               </Typography>
             </Box>
             <Typography
@@ -333,7 +337,7 @@ const MigrationAdminPage: React.FC = () => {
                 disabled={batchApplying}
                 fullWidth
               >
-                批量迁移
+                {t('admin:migration_admin_page.batch_migration')}
               </Button>
             </Box>
           </Box>
@@ -344,8 +348,8 @@ const MigrationAdminPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='数据库迁移管理'
-      subtitle='查看各服务迁移状态，生成并执行 schema / index / audit 迁移'
+      title={t('admin:migration_admin_page.page_title')}
+      subtitle={t('admin:migration_admin_page.page_subtitle')}
     >
       <CrudPage
         schema={migrationSchema}
@@ -363,13 +367,13 @@ const MigrationAdminPage: React.FC = () => {
       >
         <DialogContent>
           <DialogTitle>
-            {activeService ? `${activeService.name} · 迁移状态` : '迁移状态'}
+            {activeService ? t('admin:migration_admin_page.service_status_title', { serviceName: activeService.name }) : t('admin:migration_admin_page.migration_status')}
           </DialogTitle>
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary', mb: 4 }}
           >
-            {activeService ? `Schema: ${activeService.schema} ｜ 端口: ${activeService.port}` : ''}
+            {activeService ? t('admin:migration_admin_page.schema_port_info', { schema: activeService.schema, port: activeService.port }) : ''}
           </Typography>
 
           {activeService && statusMap[activeService.name] ? (
@@ -393,7 +397,7 @@ const MigrationAdminPage: React.FC = () => {
                       bgcolor: 'warning.main',
                     }}
                   />
-                  待执行迁移 ({statusMap[activeService.name].pending.length})
+                  {t('admin:migration_admin_page.pending_with_count', { count: statusMap[activeService.name].pending.length })}
                 </Typography>
                 {statusMap[activeService.name].pending.length === 0 ? (
                   <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
@@ -401,7 +405,7 @@ const MigrationAdminPage: React.FC = () => {
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      暂无待执行的迁移文件
+                      {t('admin:migration_admin_page.no_pending_files')}
                     </Typography>
                   </Paper>
                 ) : (
@@ -444,7 +448,7 @@ const MigrationAdminPage: React.FC = () => {
                       bgcolor: 'success.main',
                     }}
                   />
-                  已执行迁移 ({statusMap[activeService.name].applied.length})
+                  {t('admin:migration_admin_page.applied_with_count', { count: statusMap[activeService.name].applied.length })}
                 </Typography>
                 {statusMap[activeService.name].applied.length === 0 ? (
                   <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
@@ -452,7 +456,7 @@ const MigrationAdminPage: React.FC = () => {
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      暂无已执行记录
+                      {t('admin:migration_admin_page.no_applied_records')}
                     </Typography>
                   </Paper>
                 ) : (
@@ -460,9 +464,9 @@ const MigrationAdminPage: React.FC = () => {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ width: 120, fontWeight: 600 }}>版本</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
-                          <TableCell sx={{ width: 180, fontWeight: 600 }}>执行时间</TableCell>
+                          <TableCell sx={{ width: 120, fontWeight: 600 }}>{t('admin:migration_admin_page.version')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{t('admin:migration_admin_page.name')}</TableCell>
+                          <TableCell sx={{ width: 180, fontWeight: 600 }}>{t('admin:migration_admin_page.execution_time')}</TableCell>
                           <TableCell
                             sx={{
                               width: 100,
@@ -470,7 +474,7 @@ const MigrationAdminPage: React.FC = () => {
                               fontWeight: 600,
                             }}
                           >
-                            耗时(ms)
+                            {t('admin:migration_admin_page.duration_ms')}
                           </TableCell>
                         </TableRow>
                       </TableHead>
@@ -503,7 +507,7 @@ const MigrationAdminPage: React.FC = () => {
             </Box>
           ) : (
             <Box sx={{ py: 10, textAlign: 'center', color: 'text.secondary' }}>
-              <Typography variant='body2'>未获取到状态信息</Typography>
+              <Typography variant='body2'>{t('admin:migration_admin_page.no_status_info')}</Typography>
             </Box>
           )}
         </DialogContent>

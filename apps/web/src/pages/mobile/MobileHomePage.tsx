@@ -5,7 +5,7 @@
  * @path /mobile/home
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   Home,
   Clock,
@@ -15,12 +15,10 @@ import {
   Bell,
   User,
   ChevronRight,
-  Calendar,
   FileText,
   AlertTriangle,
-  ArrowUpRight,
 } from 'lucide-react';
-import { Box, Typography, Avatar, Paper, IconButton, Badge, Chip, Divider } from '@mui/material';
+import { Box, Typography, Avatar, Paper, Badge, Chip, Divider } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 import { PageContainer } from '@/components/common';

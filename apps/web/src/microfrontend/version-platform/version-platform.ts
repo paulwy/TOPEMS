@@ -261,7 +261,7 @@ export class VersionPlatform {
     return limit ? versions.slice(0, limit) : versions;
   }
 
-  compareVersions(moduleId: string, v1: string, v2: string): VersionComparison {
+  compareVersions(_moduleId: string, v1: string, v2: string): VersionComparison {
     const cmp = compareSemver(v1, v2);
 
     return {

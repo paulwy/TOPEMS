@@ -1,6 +1,5 @@
 import { moduleRegistry, type ModuleRegistration } from '../registry/module-registry';
 import { smartDebugger, type ComponentTreeNode } from './smart-debugger';
-import { performanceAnalyzer } from './performance-analyzer';
 
 export type CompletionKind = 'module-api' | 'prop' | 'import' | 'snippet' | 'type';
 

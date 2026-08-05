@@ -1,15 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Avatar,
-  useTheme,
-  List,
-  Divider,
-  Switch,
-  Chip,
-  Paper,
-} from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, Avatar, useTheme, Switch, Chip, Paper } from '@mui/material';
 import {
   Home,
   ListTodo,
@@ -17,22 +7,18 @@ import {
   CheckSquare,
   User,
   Bell,
-  Settings,
   Smartphone,
   Database,
   Shield,
   HelpCircle,
   Info,
-  LogOut,
   ChevronRight,
   Moon,
   Globe,
-  RefreshCw,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MobileLayout, MobileCard } from '@/components/mobile';
 import { useAuthStore } from '@/store';
-import { useResponsive } from '@/hooks';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { AUTH_PATHS } from '@/routes/auth';
 import { PageContainer } from '@/components/common';
@@ -58,7 +44,6 @@ const MobileSettingsPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user, setUser } = useAuthStore();
-  const { isMobile } = useResponsive();
   const [darkMode, setDarkMode] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(true);
 
@@ -290,7 +275,7 @@ const MobileSettingsPage: React.FC = () => {
             <ChevronRight style={{ width: 20, height: 20, color: theme.palette.text.secondary }} />
           </Box>
 
-          {settingGroups.map((group, groupIndex) => (
+          {settingGroups.map((group, _groupIndex) => (
             <Box
               key={group.title}
               sx={{ mb: 3 }}
