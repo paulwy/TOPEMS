@@ -80,8 +80,8 @@ test-latest.json
 junit.xml
 
 # Performance test results
-*-performance-report.json
-performance-report.json
+**/*-performance-report.json
+**/performance-report.json
 scripts/performance/*-test-results.json
 scripts/performance/performance-report.json
 allure-report/
