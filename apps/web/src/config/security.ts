@@ -62,7 +62,15 @@ export const securityConfig: SecurityConfig = {
     ],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
     connectSrc: isDev
-      ? ["'self'", 'http://localhost:*', 'http://127.0.0.1:*', 'ws://localhost:*', 'ws://127.0.0.1:*', 'wss://localhost:*', 'wss://127.0.0.1:*']
+      ? [
+          "'self'",
+          'http://localhost:*',
+          'http://127.0.0.1:*',
+          'ws://localhost:*',
+          'ws://127.0.0.1:*',
+          'wss://localhost:*',
+          'wss://127.0.0.1:*',
+        ]
       : ["'self'", 'https://*.amap.com', 'https://api.map.baidu.com', 'wss://*'],
     objectSrc: ["'none'"],
     frameSrc: ["'self'", 'https://*.amap.com'],
