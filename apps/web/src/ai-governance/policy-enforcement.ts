@@ -407,19 +407,32 @@ export class PolicyEnforcer {
     const actualValue = this.resolvePath(context, path);
     const expectedValue = this.parseValue(rawValue.trim());
 
+    // Type coercion for comparison: convert both to numbers if either is numeric
+    const isNumeric = (v: unknown): v is number => typeof v === 'number';
+    const isStringNumeric = (v: unknown): boolean => typeof v === 'string' && !isNaN(Number(v)) && v.trim() !== '';
+    
+    let a: unknown = actualValue;
+    let b: unknown = expectedValue;
+    
+    // Coerce numeric strings to numbers for comparison operators
+    if (operator !== '==' && operator !== '!=') {
+      if (isStringNumeric(a)) a = Number(a);
+      if (isStringNumeric(b)) b = Number(b);
+    }
+
     switch (operator) {
       case '==':
-        return actualValue === expectedValue;
+        return a === b;
       case '!=':
-        return actualValue !== expectedValue;
+        return a !== b;
       case '>':
-        return actualValue > expectedValue;
+        return (a as number) > (b as number);
       case '<':
-        return actualValue < expectedValue;
+        return (a as number) < (b as number);
       case '>=':
-        return actualValue >= expectedValue;
+        return (a as number) >= (b as number);
       case '<=':
-        return actualValue <= expectedValue;
+        return (a as number) <= (b as number);
       default:
         return false;
     }

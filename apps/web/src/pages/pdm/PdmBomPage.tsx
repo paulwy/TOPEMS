@@ -43,16 +43,16 @@ export default function PdmBomPage() {
         }
         const data = response.data as unknown as Record<string, unknown>;
         let items = (Array.isArray(data) ? data : data.items || []) as BomItem[];
-        items = items.map((item: BomItem & Record<string, unknown>) => ({
+        items = items.map((item: BomItem) => ({
           ...item,
-          partNumber: item.part_number || item.partNumber || '',
-          partName: item.part_name || item.partName || '',
-          unitPrice: item.unit_price || item.unitPrice || 0,
-          totalPrice: item.total_price || item.totalPrice || 0,
+          partNumber: (item as any).part_number || (item as any).partNumber || '',
+          partName: (item as any).part_name || (item as any).partName || '',
+          unitPrice: (item as any).unit_price || (item as any).unitPrice || 0,
+          totalPrice: (item as any).total_price || (item as any).totalPrice || 0,
         })) as BomItem[];
         const productId = params?.product_id as string | undefined;
         if (productId) {
-          items = items.filter((item: BomItem & Record<string, unknown>) => item.product_id === productId);
+          items = items.filter((item: BomItem) => (item as any).product_id === productId);
         }
         const search = params?.search;
         if (search) {
@@ -119,8 +119,8 @@ export default function PdmBomPage() {
     (rows: Record<string, unknown>[], _total: number) => {
       const items = rows as unknown as BomItem[];
       const totalCost = items.reduce(
-        (sum: number, item: BomItem & Record<string, unknown>) =>
-          sum + (item.total_price || item.quantity * (item.unit_price || 0)),
+        (sum: number, item: BomItem) =>
+          sum + ((item as any).total_price || (item as any).quantity * ((item as any).unit_price || 0)),
         0
       );
       const stats = {
