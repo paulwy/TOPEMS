@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, type ButtonProps, useTheme } from '@mui/material';
+import { Button, type ButtonProps } from '@mui/material';
 
 export interface MobileButtonProps extends Omit<ButtonProps, 'size'> {
   size?: 'small' | 'medium' | 'large';
@@ -13,8 +13,6 @@ export const MobileButton: React.FC<MobileButtonProps> = ({
   sx,
   ...props
 }) => {
-  const theme = useTheme();
-
   const getHeight = () => {
     switch (size) {
       case 'small':

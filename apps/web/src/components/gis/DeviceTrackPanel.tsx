@@ -24,10 +24,8 @@ import {
   InputLabel,
   IconButton,
   Slider,
-  Chip,
   Stack,
   Grid,
-  Divider,
   Button,
   useTheme,
 } from '@mui/material';
@@ -201,6 +199,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
               color: 'common.white',
               '&:hover': { bgcolor: 'action.disabledBackground' },
             }}
+          aria-label="关闭"
           >
             <X size={20} />
           </IconButton>
@@ -320,7 +319,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 min={0}
                 max={trackData.length - 1}
                 value={currentIndex}
-                onChange={(e, value) => setCurrentIndex(value as number)}
+                onChange={(_e, value) => setCurrentIndex(value as number)}
                 disabled={isPlaying}
                 sx={{ flex: 1 }}
               />
@@ -735,6 +734,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             color: 'common.white',
             '&:hover': { bgcolor: 'action.disabledBackground' },
           }}
+        aria-label="关闭"
         >
           <X size={20} />
         </IconButton>

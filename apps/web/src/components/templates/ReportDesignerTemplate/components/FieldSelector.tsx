@@ -68,6 +68,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
                   size='small'
                   onClick={() => handleAddField(field)}
                   sx={{ p: 0.5 }}
+                aria-label="新增"
                 >
                   <Plus sx={{ width: 16, height: 16, color: 'primary.main' }} />
                 </IconButton>
@@ -116,6 +117,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
               >
                 <IconButton
                   size='small'
+                  aria-label='拖拽排序'
                   sx={{ p: 0.5, cursor: 'move', opacity: 0.5 }}
                   onMouseDown={() => {
                     const handleDragOver = (e: DragEvent) => {
@@ -151,6 +153,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
                   size='small'
                   onClick={() => handleRemoveField(field.fieldId)}
                   sx={{ p: 0.5 }}
+                aria-label="删除"
                 >
                   <Trash2 sx={{ width: 14, height: 14, color: 'error.main' }} />
                 </IconButton>

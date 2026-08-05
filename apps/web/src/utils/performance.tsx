@@ -164,7 +164,7 @@ export function generatePerformanceReport(): PerformanceReport {
 }
 
 export function logPerformanceMetrics(): void {
-  initPerformanceMonitoring().then((metrics) => {
+  initPerformanceMonitoring().then((_metrics) => {
     const report = generatePerformanceReport();
     logger.debug('[TOPEMS Performance]', JSON.stringify(report, null, 2));
 

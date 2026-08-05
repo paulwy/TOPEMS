@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
-import { MessageSquarePlus } from 'lucide-react';
 
 import { Dialog } from '@/components/common/Dialog';
 import FeedbackForm from './FeedbackForm';

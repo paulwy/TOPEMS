@@ -25,12 +25,10 @@ import {
   Tooltip,
   LinearProgress,
   Chip,
-  useTheme,
 } from '@mui/material';
 import { Search, RefreshCw, Filter, ChevronUp, ChevronDown, Layers } from 'lucide-react';
 import useBffCrud from '@/hooks/bff/useBffCrud';
 import type { UseBffCrudOptions } from '@/hooks/bff/useBffCrud';
-import { useAutoSharding } from '@/hooks/bff';
 
 // ============ 类型定义 ============
 
@@ -110,8 +108,6 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
     skeletonRows = 10,
     staleTime,
   } = props;
-
-  const theme = useTheme();
 
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(initialPageSize);
@@ -210,8 +206,6 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
     [sortField, sortOrder]
   );
 
-  const totalPages = Math.ceil(crud.total / pageSize);
-
   return (
     <Paper
       elevation={0}
@@ -258,6 +252,7 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
             <IconButton
               onClick={() => setShowFilterBar(!showFilterBar)}
               size='small'
+            aria-label="筛选"
             >
               <Filter size={18} />
             </IconButton>
@@ -280,6 +275,7 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
           <IconButton
             onClick={() => crud.refresh()}
             size='small'
+          aria-label="刷新"
           >
             <RefreshCw size={18} />
           </IconButton>
@@ -396,49 +392,51 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
               </TableRow>
             ) : (
               // V64 防御：过滤 null/undefined，避免 row 为空时 renderCell 抛 "can't access property"
-              (Array.isArray(crud.data) ? crud.data.filter((r) => r != null) : []).map((row, index) => (
-                <TableRow
-                  key={((row as Record<string, unknown>).id as string) || index}
-                  hover
-                  onClick={() => onRowClick?.(row)}
-                  sx={{
-                    cursor: onRowClick ? 'pointer' : 'default',
-                    '&:last-child td': { borderBottom: 0 },
-                  }}
-                >
-                  {showRowNumber && (
-                    <TableCell sx={{ width: 60, color: 'text.secondary' }}>
-                      {page * pageSize + index + 1}
-                    </TableCell>
-                  )}
-                  {columns.map((col) => {
-                    const value = (row as Record<string, unknown>)[String(col.field)];
-                    return (
-                      <TableCell
-                        key={String(col.field)}
-                        align={col.align || 'left'}
-                      >
-                        {col.renderCell
-                          ? // V64 防御：renderCell(row) 兜底 + try/catch，报错则回退显示原始值
-                            (() => {
-                              try {
-                                return col.renderCell!(value, row ?? ({} as any));
-                              } catch (e) {
-                                if (typeof console !== 'undefined' && console?.warn) {
-                                  console.warn(
-                                    `[BffDataTable] renderCell for column="${String(col.field)}" failed, fallback to raw:`,
-                                    e
-                                  );
-                                }
-                                return String(value ?? '');
-                              }
-                            })()
-                          : String(value ?? '')}
+              (Array.isArray(crud.data) ? crud.data.filter((r) => r != null) : []).map(
+                (row, index) => (
+                  <TableRow
+                    key={((row as Record<string, unknown>).id as string) || index}
+                    hover
+                    onClick={() => onRowClick?.(row)}
+                    sx={{
+                      cursor: onRowClick ? 'pointer' : 'default',
+                      '&:last-child td': { borderBottom: 0 },
+                    }}
+                  >
+                    {showRowNumber && (
+                      <TableCell sx={{ width: 60, color: 'text.secondary' }}>
+                        {page * pageSize + index + 1}
                       </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
+                    )}
+                    {columns.map((col) => {
+                      const value = (row as Record<string, unknown>)[String(col.field)];
+                      return (
+                        <TableCell
+                          key={String(col.field)}
+                          align={col.align || 'left'}
+                        >
+                          {col.renderCell
+                            ? // V64 防御：renderCell(row) 兜底 + try/catch，报错则回退显示原始值
+                              (() => {
+                                try {
+                                  return col.renderCell!(value, row ?? ({} as any));
+                                } catch (e) {
+                                  if (typeof console !== 'undefined' && console?.warn) {
+                                    console.warn(
+                                      `[BffDataTable] renderCell for column="${String(col.field)}" failed, fallback to raw:`,
+                                      e
+                                    );
+                                  }
+                                  return String(value ?? '');
+                                }
+                              })()
+                            : String(value ?? '')}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                )
+              )
             )}
           </TableBody>
         </Table>

@@ -447,6 +447,7 @@ export const MonitorAlertsPage: React.FC = () => {
               <IconButton
                 size='small'
                 onClick={handleExport}
+              aria-label="下载"
               >
                 <Download size={18} />
               </IconButton>

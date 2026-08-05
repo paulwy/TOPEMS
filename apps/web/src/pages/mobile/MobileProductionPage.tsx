@@ -25,9 +25,7 @@ import {
   ScanLine,
   CheckSquare,
   User,
-  Factory,
   Search,
-  ChevronRight,
   Play,
   Pause,
   Clock,
@@ -48,7 +46,7 @@ import {
   MobileButton,
 } from '@/components/mobile';
 import { useNotificationStore, useAuthStore } from '@/store';
-import { mobileApi, type ProductionOrder, type WorkReport, type Equipment } from '@/api/mobile';
+import { type ProductionOrder, type WorkReport, type Equipment } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
@@ -518,6 +516,7 @@ const MobileProductionPage: React.FC = () => {
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
           onClick={() => navigate(MOBILE_PATHS.scanPage)}
+        aria-label="扫码"
         >
           <Barcode style={{ width: 20, height: 20 }} />
         </IconButton>

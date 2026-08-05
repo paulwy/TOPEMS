@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  Home,
-  LayoutDashboard,
-  FileText,
-  Settings,
-  Bell,
-  ChevronLeft,
-  Menu,
-  X,
-} from 'lucide-react';
+import { Home, FileText, Settings, Bell, ChevronLeft, Menu, X } from 'lucide-react';
 import { Badge } from '@mui/material';
 import { shouldUseMobileLayout } from '@/utils/mobileDetector';
 import { useAuth } from '@/hooks/useAuth';

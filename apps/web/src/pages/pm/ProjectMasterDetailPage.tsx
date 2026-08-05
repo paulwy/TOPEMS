@@ -4,7 +4,7 @@ import {
   type MasterColumn,
 } from '../../components/templates/MasterDetailPageTemplate';
 import { Box, Typography, Chip, Divider } from '@mui/material';
-import { Calendar, User, DollarSign, Target, CheckCircle, Edit2 } from 'lucide-react';
+import { Calendar, User, DollarSign, Target, CheckCircle } from 'lucide-react';
 
 interface ProjectItem {
   id: string;

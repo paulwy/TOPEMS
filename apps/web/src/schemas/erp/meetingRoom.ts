@@ -51,8 +51,14 @@ export const meetingRoomSchema: EntitySchema = {
         options: [
           { value: 'available', label: i18n.t('schema:erp.meeting_room.status.option.available') },
           { value: 'occupied', label: i18n.t('schema:erp.meeting_room.status.option.occupied') },
-          { value: 'maintenance', label: i18n.t('schema:erp.meeting_room.status.option.maintenance') },
-          { value: 'unavailable', label: i18n.t('schema:erp.meeting_room.status.option.unavailable') },
+          {
+            value: 'maintenance',
+            label: i18n.t('schema:erp.meeting_room.status.option.maintenance'),
+          },
+          {
+            value: 'unavailable',
+            label: i18n.t('schema:erp.meeting_room.status.option.unavailable'),
+          },
         ],
       },
       listWidth: 100,
@@ -85,10 +91,22 @@ export const meetingRoomSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.meeting_room.filter.status.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.meeting_room.filter.status.option.available'), value: 'available' },
-          { label: i18n.t('schema:erp.meeting_room.filter.status.option.occupied'), value: 'occupied' },
-          { label: i18n.t('schema:erp.meeting_room.filter.status.option.maintenance'), value: 'maintenance' },
-          { label: i18n.t('schema:erp.meeting_room.filter.status.option.unavailable'), value: 'unavailable' },
+          {
+            label: i18n.t('schema:erp.meeting_room.filter.status.option.available'),
+            value: 'available',
+          },
+          {
+            label: i18n.t('schema:erp.meeting_room.filter.status.option.occupied'),
+            value: 'occupied',
+          },
+          {
+            label: i18n.t('schema:erp.meeting_room.filter.status.option.maintenance'),
+            value: 'maintenance',
+          },
+          {
+            label: i18n.t('schema:erp.meeting_room.filter.status.option.unavailable'),
+            value: 'unavailable',
+          },
         ],
       },
     ],

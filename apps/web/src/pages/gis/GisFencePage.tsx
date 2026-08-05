@@ -40,7 +40,6 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  RefreshCw,
 } from 'lucide-react';
 import { GisMapTemplate, type MapMarker, type GeoFence } from '@/components/templates';
 import { PageContainer } from '@/components/common';

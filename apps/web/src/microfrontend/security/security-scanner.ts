@@ -242,7 +242,7 @@ const SECURITY_RULES: SecurityRule[] = [
     description: '模块请求了媒体设备访问权限。',
     recommendation: '仅在必要时请求权限，并明确告知用户用途。',
     cvss_score: 2.5,
-    check: (mod) => false,
+    check: (_mod) => false,
   },
   {
     id: 'R015',

@@ -96,9 +96,18 @@ export const inventorySchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: '原材料仓库', label: i18n.t('schema:erp.inventory.warehouse_name.option.原材料仓库') },
-          { value: '成品仓库', label: i18n.t('schema:erp.inventory.warehouse_name.option.成品仓库') },
-          { value: '半成品仓库', label: i18n.t('schema:erp.inventory.warehouse_name.option.半成品仓库') },
+          {
+            value: '原材料仓库',
+            label: i18n.t('schema:erp.inventory.warehouse_name.option.原材料仓库'),
+          },
+          {
+            value: '成品仓库',
+            label: i18n.t('schema:erp.inventory.warehouse_name.option.成品仓库'),
+          },
+          {
+            value: '半成品仓库',
+            label: i18n.t('schema:erp.inventory.warehouse_name.option.半成品仓库'),
+          },
         ],
       },
       listWidth: 120,

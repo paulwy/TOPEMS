@@ -10,8 +10,6 @@ import {
   MessageSquare,
   Send,
   Plus,
-  Settings,
-  Trash2,
   Copy,
   RefreshCw,
   Sparkles,
@@ -23,9 +21,6 @@ import {
   ChevronRight,
   X,
   Check,
-  Clock,
-  Bookmark,
-  Filter,
 } from 'lucide-react';
 import {
   Box,
@@ -35,7 +30,6 @@ import {
   Button,
   Avatar,
   Paper,
-  Divider,
   Chip,
   Select,
   MenuItem,
@@ -43,10 +37,6 @@ import {
   InputLabel,
   Tabs,
   Tab,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -169,7 +159,6 @@ const getTypeLabel = (type: Message['type']) => {
 };
 
 export const AiChatPage: React.FC = () => {
-  const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>(mockMessages);
@@ -458,6 +447,7 @@ export const AiChatPage: React.FC = () => {
                         handleDeleteSession(session.id);
                       }}
                       sx={{ p: 0.5 }}
+                    aria-label="关闭"
                     >
                       <X size={14} />
                     </IconButton>
@@ -522,6 +512,7 @@ export const AiChatPage: React.FC = () => {
                 size='small'
                 onClick={() => setShowSidebar(!showSidebar)}
                 sx={{ display: { md: 'none' } }}
+              aria-label="展开"
               >
                 <ChevronRight size={20} />
               </IconButton>

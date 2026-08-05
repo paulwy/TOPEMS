@@ -88,6 +88,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         <IconButton
           onClick={onRefresh}
           sx={{ border: 1, borderColor: 'divider' }}
+        aria-label="刷新"
         >
           <RefreshCw
             size={20}

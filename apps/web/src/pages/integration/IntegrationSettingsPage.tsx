@@ -19,24 +19,11 @@ import {
   Divider,
   InputAdornment,
   Chip,
-  IconButton,
   Alert,
 } from '@mui/material';
-import {
-  Save,
-  RefreshCw,
-  Plus,
-  Trash2,
-  TestTube,
-  Bell,
-  Clock,
-  Database,
-  Key,
-  Globe,
-  Lock,
-} from 'lucide-react';
+import { Save, RefreshCw, Plus, TestTube, Bell, Clock, Key, Globe } from 'lucide-react';
 
-import { PageContainer, ConfirmDialog } from '@/components/common';
+import { PageContainer } from '@/components/common';
 import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
@@ -85,8 +72,8 @@ export const IntegrationSettingsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [configs, setConfigs] = useState<IntegrationConfig[]>(MOCK_CONFIGS);
-  const [testDialogOpen, setTestDialogOpen] = useState(false);
-  const [selectedConfig, setSelectedConfig] = useState<IntegrationConfig | null>(null);
+  const [, setTestDialogOpen] = useState(false);
+  const [, setSelectedConfig] = useState<IntegrationConfig | null>(null);
 
   const [globalSettings, setGlobalSettings] = useState({
     autoSync: true,
@@ -146,7 +133,6 @@ export const IntegrationSettingsPage: React.FC = () => {
   });
 
   const loading = saveSettingsMutation.isPending;
-  const testLoading = testConnectionMutation.isPending;
 
   const handleTestConnection = (config: IntegrationConfig) => {
     setSelectedConfig(config);

@@ -5,10 +5,8 @@ import { useNotificationStore } from '@/store';
 import {
   SettingsPageTemplate,
   type SettingTab,
-  type SettingSection,
   type SettingValueType,
 } from '@/components/templates';
-import { MONITOR_PATHS } from '@/modules/monitor/config';
 
 export const MonitorSettingsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);

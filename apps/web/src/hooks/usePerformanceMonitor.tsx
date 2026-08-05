@@ -420,8 +420,8 @@ export function withPerformanceTracking<P extends object>(
   const name = componentName || Component.displayName || Component.name || 'UnknownComponent';
 
   const WrappedComponent: React.FC<P> = (props) => {
-    const [isMounted, setIsMounted] = useState(false);
     const startTime = useRef<number>(0);
+    const [, setIsMounted] = useState(false);
 
     useEffect(() => {
       startTime.current = performance.now();

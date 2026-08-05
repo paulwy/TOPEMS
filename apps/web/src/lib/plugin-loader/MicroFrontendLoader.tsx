@@ -43,7 +43,6 @@ const loadRemoteEntry = async (remoteName: string): Promise<void> => {
       const envKey = `VITE_${name.toUpperCase()}_REMOTE_ENTRY`;
       const envUrl = typeof import.meta !== 'undefined' ? import.meta.env?.[envKey] : undefined;
       if (envUrl) return envUrl;
-      const port = remotePorts[name] ?? 3001;
       // V64 CORS 修复：
       //   - 开发环境：一律走 Vite 同源代理 /remote/<name>/remoteEntry.js，
       //     vite.config.ts 已为 /remote/<name> 配置代理到 localhost:<port>
@@ -65,7 +64,11 @@ const loadRemoteEntry = async (remoteName: string): Promise<void> => {
     // V64 防御：空 URL 说明 static 模式或无有效入口，直接 reject 不注入 script，
     // 避免 <script src=""> 被浏览器解释为当前页面 URL，造成死循环/资源浪费
     if (!src) {
-      reject(new Error(`No valid remote entry for ${remoteName} (deployment mode: static or missing config)`));
+      reject(
+        new Error(
+          `No valid remote entry for ${remoteName} (deployment mode: static or missing config)`
+        )
+      );
       return;
     }
 

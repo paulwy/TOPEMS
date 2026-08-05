@@ -214,6 +214,8 @@ export interface IncomeItem {
 export interface IncomeStatement {
   revenues: IncomeItem[];
   expenses: IncomeItem[];
+  total_revenue: number;
+  total_cost: number;
   gross_profit: number;
   operating_profit: number;
   net_profit: number;
@@ -230,6 +232,9 @@ export interface CashFlowStatement {
   operating_activities: CashFlowItem[];
   investing_activities: CashFlowItem[];
   financing_activities: CashFlowItem[];
+  operating_cash_flow: number;
+  investing_cash_flow: number;
+  financing_cash_flow: number;
   net_cash_flow: number;
   period: string;
 }

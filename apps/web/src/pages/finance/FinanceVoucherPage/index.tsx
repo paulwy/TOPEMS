@@ -29,7 +29,6 @@ import {
   type FinancialVoucher,
   type VoucherItem,
   type VoucherItemRequest,
-  type AccountingSubject,
 } from '@/api/erp';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Paper, Typography } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 
 export interface StatsCardItem {
   key: string;

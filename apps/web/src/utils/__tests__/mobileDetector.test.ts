@@ -89,9 +89,7 @@ describe('utils/mobileDetector', () => {
     });
 
     it('detects WeChat mini program', () => {
-      mockUserAgent(
-        'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 MicroMessenger/8.0'
-      );
+      mockUserAgent('Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 MicroMessenger/8.0');
       (window as any).__wxjs_environment = 'miniprogram';
       const info = getDeviceInfo();
       expect(info.isMiniProgram).toBe(true);
@@ -179,9 +177,7 @@ describe('utils/mobileDetector', () => {
     });
 
     it('isMobileView returns true for mobile UA even on wide screen', () => {
-      mockUserAgent(
-        'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Mobile Safari/537.36'
-      );
+      mockUserAgent('Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Mobile Safari/537.36');
       mockInnerWidth(1024);
       expect(isMobileView()).toBe(true);
     });

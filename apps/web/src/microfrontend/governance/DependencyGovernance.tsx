@@ -17,9 +17,6 @@ import {
   Tab,
   Alert,
   LinearProgress,
-  Tooltip,
-  IconButton,
-  Accordion,
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
@@ -42,7 +39,6 @@ import {
 import {
   dependencyGovernor,
   type DependencyGraph,
-  type DependencyGraphNode,
   type DependencyConflict,
   type VersionUpgradeSuggestion,
   type DependencyStats,

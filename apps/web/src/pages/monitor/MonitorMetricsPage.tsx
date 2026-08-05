@@ -12,17 +12,15 @@ import {
   Cpu,
   HardDrive,
   Server,
-  Wifi,
   Activity,
   Zap,
-  Clock,
   ChevronDown,
   Database,
   Layers,
   Box as BoxIcon,
   Network,
 } from 'lucide-react';
-import { Box, Tabs, Tab, Stack, Menu, MenuItem, Button, Chip } from '@mui/material';
+import { Box, Tabs, Tab, Stack, Menu, MenuItem, Button } from '@mui/material';
 import {
   BarChart,
   Bar,
@@ -40,7 +38,7 @@ import LineChartComponent from '../../components/charts/LineChart';
 import { AreaChart } from '../../components/charts/AreaChart';
 import { BarChartComponent } from '../../components/charts/BarChart';
 import { useNotificationStore } from '@/store';
-import { handleApiError, getErrorMessage } from '@/utils/errors';
+import { getErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 
@@ -115,7 +113,7 @@ const generateRandomData = (length: number, min: number, max: number): number[] 
 const serviceNames = ['用户服务', '订单服务', '支付服务', '库存服务', '网关服务', '认证服务'];
 
 const generateMultiServiceTrendData = (labels: string[], services: string[]) => {
-  return labels.map((label, index) => {
+  return labels.map((label, _index) => {
     const item: Record<string, string | number> = { name: label };
     services.forEach((service, i) => {
       const baseValues = [45, 62, 38, 55, 70, 48];

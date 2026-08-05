@@ -12,11 +12,9 @@ import {
   Tab,
   List,
   ListItem,
-  ListItemText,
   Divider,
   CircularProgress,
   Alert,
-  Tooltip,
   Table,
   TableBody,
   TableCell,
@@ -53,8 +51,6 @@ import {
   Lightbulb,
   Database,
   Trash2,
-  RefreshCw,
-  ChevronRight,
   Link as LinkIcon,
   GitBranch,
 } from 'lucide-react';
@@ -90,7 +86,7 @@ import { Dashboard } from './pages/Dashboard';
  */
 export function App(): JSX.Element {
   const handleClick = (): void => {
-    console.log('Button clicked');
+    // Button click handler
   };
 
   return (

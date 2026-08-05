@@ -1,18 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Chip,
-  Avatar,
-  useTheme,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Divider,
-  Badge,
-} from '@mui/material';
+import React, { useCallback, useEffect } from 'react';
+import { Box, Typography, Paper, Chip, Avatar, useTheme, List, Badge } from '@mui/material';
 import { Grid, PageContainer } from '@/components/common';
 import {
   Home,
@@ -28,15 +15,13 @@ import {
   Clock,
   ChevronRight,
   CalendarCheck,
-  AlertCircle,
-  FileText,
   TrendingUp,
   Zap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard } from '@/components/mobile';
 import { useAuthStore } from '@/store';
-import { mobileApi, type MobileWorkbenchData } from '@/api/mobile';
+import { type MobileWorkbenchData } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';

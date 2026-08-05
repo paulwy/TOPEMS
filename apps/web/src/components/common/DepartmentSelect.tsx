@@ -4,7 +4,6 @@ import {
   TextField,
   Menu,
   MenuItem,
-  ListItemIcon,
   ListItemText,
   Chip,
   CircularProgress,

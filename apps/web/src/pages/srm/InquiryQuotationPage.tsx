@@ -304,6 +304,7 @@ const InquiryQuotationPage: React.FC = () => {
                               size='small'
                               color='success'
                               onClick={() => handleAwardQuotation(quotation)}
+                              aria-label='授标'
                               title='授标'
                             >
                               <Check size={16} />
@@ -312,6 +313,7 @@ const InquiryQuotationPage: React.FC = () => {
                               size='small'
                               color='error'
                               onClick={() => handleRejectQuotation(quotation)}
+                              aria-label='拒绝'
                               title='拒绝'
                             >
                               <XCircle size={16} />

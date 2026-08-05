@@ -1,4 +1,3 @@
-import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
 import { projectApi, phaseApi, milestoneApi, approvalApi } from './project';

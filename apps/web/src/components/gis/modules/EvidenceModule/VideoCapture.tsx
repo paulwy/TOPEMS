@@ -298,6 +298,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                     color: 'text.secondary',
                   },
                 }}
+              aria-label="切换相机"
               >
                 <SwitchCamera size={24} />
               </IconButton>
@@ -353,6 +354,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 color: 'common.white',
                 '&:hover': { bgcolor: 'action.active' },
               }}
+            aria-label="关闭"
             >
               <X size={24} />
             </IconButton>
@@ -379,6 +381,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               color: 'common.white',
               '&:hover': { bgcolor: 'error.dark' },
             }}
+          aria-label="视频"
           >
             <Video size={32} />
           </IconButton>
@@ -396,6 +399,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 mx: 8,
                 '&:hover': { bgcolor: 'text.secondary' },
               }}
+            aria-label="执行"
             >
               {isPaused ? <Play size={24} /> : <Pause size={24} />}
             </IconButton>
@@ -409,6 +413,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 mx: 8,
                 '&:hover': { bgcolor: 'error.dark' },
               }}
+            aria-label="选择"
             >
               <Square size={32} />
             </IconButton>

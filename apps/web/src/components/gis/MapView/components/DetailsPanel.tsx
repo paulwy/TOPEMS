@@ -54,6 +54,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
             },
             borderRadius: 1,
           }}
+        aria-label="关闭"
         >
           <X
             size={20}

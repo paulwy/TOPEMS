@@ -203,7 +203,7 @@ export async function batchOperation<T = any>(
         }
 
         const batchResults = await Promise.allSettled(
-          batch.map(async (item, localIndex) => {
+          batch.map(async (item, _localIndex) => {
             const globalIndex = items.indexOf(item);
             onItemStart?.(item, globalIndex);
 

@@ -21,9 +21,6 @@ import { biddingSchema } from '@/schemas/srm';
 import { srmApi, type Bidding } from '@/api/srm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
-import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 
 const BiddingPage: React.FC = () => {
   const queryClient = useQueryClient();

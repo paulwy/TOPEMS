@@ -188,6 +188,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
         <IconButton
           onClick={onClose}
           sx={{ borderRadius: 4, '&:hover': { bgcolor: 'grey.100' } }}
+        aria-label="关闭"
         >
           <X
             size={20}
@@ -379,6 +380,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               boxShadow: viewMode === 'grid' ? 1 : 0,
               '&:hover': { bgcolor: viewMode === 'grid' ? 'background.paper' : 'action.hover' },
             }}
+          aria-label="网格"
           >
             <Grid
               size={16}
@@ -393,6 +395,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               boxShadow: viewMode === 'list' ? 1 : 0,
               '&:hover': { bgcolor: viewMode === 'list' ? 'background.paper' : 'action.hover' },
             }}
+          aria-label="列表"
           >
             <List
               size={16}

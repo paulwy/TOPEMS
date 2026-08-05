@@ -1,19 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Database,
   Download,
   Upload,
   Trash2,
-  RefreshCw,
   Clock,
   FileText,
   Calendar,
-  CheckCircle,
   AlertCircle,
-  Play,
   Eye,
-  X,
   Package,
 } from 'lucide-react';
 import {
@@ -34,7 +29,6 @@ import {
   Paper,
   Chip,
   CircularProgress,
-  TablePagination,
   IconButton,
   Tooltip,
   Dialog,
@@ -371,6 +365,7 @@ const BackupPage: React.FC = () => {
                             <IconButton
                               size='small'
                               onClick={() => handleOpenDetailModal(backup)}
+                            aria-label="查看"
                             >
                               <Eye size={16} />
                             </IconButton>
@@ -381,6 +376,7 @@ const BackupPage: React.FC = () => {
                                 size='small'
                                 onClick={() => handleOpenRestoreModal(backup)}
                                 disabled={restoreBackupMutation.isPending}
+                              aria-label="上传"
                               >
                                 <Upload size={16} />
                               </IconButton>
@@ -388,7 +384,7 @@ const BackupPage: React.FC = () => {
                           )}
                           {backup.status === 'completed' && (
                             <Tooltip title='下载备份'>
-                              <IconButton size='small'>
+                              <IconButton size='small'aria-label="下载" >
                                 <Download size={16} />
                               </IconButton>
                             </Tooltip>
@@ -399,6 +395,7 @@ const BackupPage: React.FC = () => {
                               onClick={() => handleDeleteBackup(backup.id)}
                               disabled={deleteBackupMutation.isPending}
                               sx={{ color: 'error.main' }}
+                            aria-label="删除"
                             >
                               <Trash2 size={16} />
                             </IconButton>

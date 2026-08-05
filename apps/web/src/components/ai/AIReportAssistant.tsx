@@ -8,7 +8,6 @@ import {
   Chip,
   TextField,
   Typography,
-  CircularProgress,
   Alert,
 } from '@mui/material';
 import {
@@ -19,8 +18,6 @@ import {
   Sparkles,
   RefreshCw,
   TrendingUp,
-  TrendingDown,
-  Minus,
 } from 'lucide-react';
 import { assistantApi } from '../../api/ai/assistant';
 import { useNotificationStore } from '@/store/notificationStore';

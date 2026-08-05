@@ -8,7 +8,6 @@ import {
   FileText,
   Image,
   Database,
-  Loader2,
   ChevronRight,
 } from 'lucide-react';
 import {
@@ -216,6 +215,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
           onClick={onClose}
           size='small'
           sx={{ color: 'inherit' }}
+        aria-label="关闭"
         >
           <X sx={{ width: 24, height: 24 }} />
         </IconButton>

@@ -1,22 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Bell,
-  Check,
-  Trash2,
-  Filter,
-  Archive,
-  Settings,
-  Volume2,
-  VolumeX,
-  Monitor,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  BarChart3,
-  FileText,
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Bell, Check, Settings, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Box, Typography, Dialog, DialogTitle, DialogContent } from '@mui/material';
 import type { Notification, NotificationTypeEnum } from '@/api/notification';
 import {
@@ -32,7 +16,6 @@ import NotificationSettings from '@/components/notifications/NotificationSetting
 import useNotificationSettings from '@/hooks/useNotificationSettings';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 
@@ -41,7 +24,6 @@ const ct = designTokens.colors;
 type NotificationFilterType = 'all' | NotificationTypeEnum;
 
 const NotificationCenter: React.FC = () => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
 

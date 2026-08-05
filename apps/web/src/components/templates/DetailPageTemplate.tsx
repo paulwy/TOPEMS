@@ -6,14 +6,10 @@ import {
   Typography,
   Tabs,
   Tab,
-  IconButton,
-  Tooltip,
-  Divider,
   Skeleton,
   Chip,
   useTheme,
   useMediaQuery,
-  Button,
 } from '@mui/material';
 import { Edit, Delete, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

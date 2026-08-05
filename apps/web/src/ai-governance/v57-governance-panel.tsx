@@ -4,7 +4,6 @@ import {
   Typography,
   IconButton,
   Button,
-  Paper,
   Chip,
   Stack,
   Tabs,
@@ -41,18 +40,14 @@ import {
   XCircle,
   Gauge,
   FileText,
-  Eye,
-  EyeOff,
   Play,
   RotateCcw,
   TrendingUp,
-  TrendingDown,
   Activity,
   Lock,
   Scale,
   Target,
   BarChart3,
-  Search,
   Bell,
   BellOff,
   Filter,
@@ -85,7 +80,6 @@ import {
   type Policy,
   type PolicyDecision,
   type EnforcementMode,
-  type PolicyStatus,
 } from './policy-enforcement';
 
 type TabId = 'compliance' | 'risk' | 'policy' | 'audit';
@@ -172,7 +166,6 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
       setComplianceStatus(complianceAutomator.getComplianceStatus());
       setComplianceReport(complianceAutomator.generateReport());
 
-      const newAlerts = riskAlerter.evaluateRisks();
       setAlerts(riskAlerter.getAlerts({ status: 'all' }));
       setRiskScore(riskAlerter.getRiskScore());
       setIndicators(riskAlerter.getIndicators());

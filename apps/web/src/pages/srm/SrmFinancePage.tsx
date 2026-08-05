@@ -6,7 +6,7 @@ import type { SupplierContract, PurchaseOrder } from '@/api/srm';
 import { PageContainer } from '@/components/common';
 import { MetricCard } from '@/components/bi/MetricCard';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 import CrudPage from '@/components/templates/CrudPage';
@@ -136,7 +136,6 @@ const financeAdapter: CrudApiAdapter<FinanceRecord> = {
 };
 
 const SrmFinancePage: React.FC = () => {
-  const queryClient = useQueryClient();
   const recordsQuery = useQuery<FinanceRecord[]>({
     queryKey: QUERY_KEYS.SRM.FINANCE,
     queryFn: async () => {

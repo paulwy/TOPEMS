@@ -7,7 +7,6 @@ import {
   IconButton,
   Tooltip,
   Paper,
-  Divider,
   Skeleton,
   TextField,
   Tabs,
@@ -17,15 +16,7 @@ import {
   useMediaQuery,
   Button,
 } from '@mui/material';
-import {
-  ChevronRight,
-  RefreshCw,
-  Plus,
-  Download,
-  Upload,
-  Filter,
-  MoreHorizontal,
-} from 'lucide-react';
+import { ChevronRight, RefreshCw, MoreHorizontal } from 'lucide-react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
 import { BackButton } from '@topems/shared-components';
@@ -383,7 +374,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
         {hiddenActions.length > 0 && (
           <Tooltip title='更多操作'>
-            <IconButton size='small'>
+            <IconButton size='small'aria-label="更多" >
               <MoreHorizontal style={{ width: 20, height: 20 }} />
             </IconButton>
           </Tooltip>
@@ -619,6 +610,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   <IconButton
                     size='small'
                     onClick={onRefresh}
+                  aria-label="刷新"
                   >
                     <RefreshCw style={{ width: 18, height: 18 }} />
                   </IconButton>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -100,6 +100,7 @@ export function ThemePresetSwitcher({ sx }: ThemePresetSwitcherProps) {
         <IconButton
           size='small'
           onClick={(e) => setAnchorEl(e.currentTarget)}
+        aria-label="调色板"
         >
           <Palette size={18} />
         </IconButton>

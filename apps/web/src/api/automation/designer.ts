@@ -36,9 +36,10 @@ export const automationDesignerApi = {
       errors: Array<{ node_id?: string; message: string; severity: 'error' | 'warning' }>;
     }>
   > => {
-    return apiClient.automation.post<
-      { valid: boolean; errors: Array<{ node_id?: string; message: string; severity: 'error' | 'warning' }> }
-    >(`/designer/canvas/${encodeURIComponent(ruleId)}/validate`, data);
+    return apiClient.automation.post<{
+      valid: boolean;
+      errors: Array<{ node_id?: string; message: string; severity: 'error' | 'warning' }>;
+    }>(`/designer/canvas/${encodeURIComponent(ruleId)}/validate`, data);
   },
 
   /** 获取设计器可选资源（触发器/动作候选） */
@@ -56,9 +57,7 @@ export const automationDesignerApi = {
   },
 
   /** 从规则定义反向生成画布（首次打开设计器时自动初始化） */
-  syncFromRule: async (
-    ruleId: string
-  ): Promise<ApiResponse<AutomationDesignerCanvas>> => {
+  syncFromRule: async (ruleId: string): Promise<ApiResponse<AutomationDesignerCanvas>> => {
     return apiClient.automation.post<AutomationDesignerCanvas>(
       `/designer/canvas/${encodeURIComponent(ruleId)}/sync-from-rule`
     );

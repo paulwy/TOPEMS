@@ -2,7 +2,6 @@ import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FolderKanban, CheckSquare, Trophy, AlertTriangle, Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { useNotificationStore } from '@/store';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';

@@ -1,18 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import {
-  Users,
-  ShoppingCart,
-  Clock,
-  Calculator,
-  Award,
-  Truck,
-  ArrowRight,
-  Star,
-  FileCheck,
-  PackageSearch,
-} from 'lucide-react';
+import { Users, ShoppingCart, Clock, Calculator, Award, Truck, Star } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';

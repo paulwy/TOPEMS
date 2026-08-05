@@ -8,7 +8,6 @@ import {
   TextField,
   Button,
   Switch,
-  FormControlLabel,
   Divider,
   List,
   ListItem,
@@ -36,7 +35,6 @@ import {
   Building2,
   Save,
   Bell,
-  Globe,
   Clock,
   UserPlus,
   Trash2,
@@ -676,6 +674,7 @@ const TenantSettingsPage: React.FC = () => {
                               edge='end'
                               color='error'
                               onClick={() => handleRemoveMember(member.id)}
+                            aria-label="删除"
                             >
                               <Trash2 size={18} />
                             </IconButton>

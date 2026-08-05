@@ -34,10 +34,7 @@ export const lowcodePagesApi = {
     return apiClient.lowcode.post<LowcodePage>('/pages', data);
   },
 
-  update: async (
-    id: string,
-    data: UpdateLowcodePageRequest
-  ): Promise<ApiResponse<LowcodePage>> => {
+  update: async (id: string, data: UpdateLowcodePageRequest): Promise<ApiResponse<LowcodePage>> => {
     return apiClient.lowcode.put<LowcodePage>(`/pages/${id}`, data);
   },
 

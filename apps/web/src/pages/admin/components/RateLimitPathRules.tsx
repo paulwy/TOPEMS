@@ -133,6 +133,7 @@ export const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
                           <IconButton
                             size='small'
                             onClick={() => onRemovePath(rule.path)}
+                          aria-label="删除"
                           >
                             <Trash2 size={16} />
                           </IconButton>

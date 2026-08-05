@@ -340,6 +340,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
               color: 'common.white',
               '&:hover': { bgcolor: 'action.disabledBackground' },
             }}
+            aria-label='重置视角'
             title='重置视角'
           >
             <RotateCcw size={16} />
@@ -351,6 +352,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
               color: 'common.white',
               '&:hover': { bgcolor: 'action.disabledBackground' },
             }}
+          aria-label="关闭"
           >
             <X size={20} />
           </IconButton>

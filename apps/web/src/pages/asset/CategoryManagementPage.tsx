@@ -11,8 +11,8 @@ import {
   Typography,
   Chip,
 } from '@mui/material';
-import { Folder, FolderOpen, ChevronRight, ChevronDown, Plus, FolderPlus } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Folder, FolderOpen, ChevronRight, ChevronDown } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import CrudPage from '@/components/templates/CrudPage';
@@ -23,7 +23,6 @@ import { assetCategoryApi } from '@/api/erp/finance/assetCategory';
 import type { AssetCategory, CreateAssetCategoryRequest } from '@/api/erp/finance/assetCategory';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -199,7 +198,6 @@ const TreeItem: React.FC<{
 
 export const CategoryManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -235,8 +233,6 @@ export const CategoryManagementPage: React.FC = () => {
       return next;
     });
   }, []);
-
-  const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
 
   const treeContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -282,7 +278,9 @@ export const CategoryManagementPage: React.FC = () => {
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
         {tree.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>{t('asset:categorymanagement.no_category_data')}</Box>
+          <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
+            {t('asset:categorymanagement.no_category_data')}
+          </Box>
         ) : (
           <List
             dense
@@ -338,7 +336,10 @@ export const CategoryManagementPage: React.FC = () => {
           <CrudPage
             schema={assetCategorySchema}
             apiAdapter={baseAdapter}
-            breadcrumbs={[{ label: t('asset:categorymanagement.breadcrumb_asset_management') }, { label: t('asset:categorymanagement.breadcrumb_asset_category') }]}
+            breadcrumbs={[
+              { label: t('asset:categorymanagement.breadcrumb_asset_management') },
+              { label: t('asset:categorymanagement.breadcrumb_asset_category') },
+            ]}
             detailMaxWidth='md'
           />
         </Box>

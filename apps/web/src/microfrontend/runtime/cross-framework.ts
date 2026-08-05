@@ -135,7 +135,7 @@ export class ReactAdapter implements FrameworkAdapter {
     }
   }
 
-  unmount(container: HTMLElement): void {
+  unmount(_container: HTMLElement): void {
     if (this.root) {
       this.root.unmount();
       this.root = null;
@@ -207,7 +207,7 @@ export class VueAdapter implements FrameworkAdapter {
     }
   }
 
-  unmount(container: HTMLElement): void {
+  unmount(_container: HTMLElement): void {
     if (this.app) {
       this.app.unmount();
       this.app = null;
@@ -281,7 +281,7 @@ export class AngularAdapter implements FrameworkAdapter {
     }
   }
 
-  unmount(container: HTMLElement): void {
+  unmount(_container: HTMLElement): void {
     if (this.platformRef) {
       this.platformRef.destroy();
       this.platformRef = null;
@@ -363,7 +363,7 @@ export class SvelteAdapter implements FrameworkAdapter {
     }
   }
 
-  unmount(container: HTMLElement): void {
+  unmount(_container: HTMLElement): void {
     if (this.instance) {
       this.instance.$destroy();
       this.instance = null;

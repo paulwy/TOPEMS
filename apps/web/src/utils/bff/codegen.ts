@@ -149,7 +149,6 @@ export function generateEntityQueries(
   countQuery: string;
 } {
   const pascalName = toPascalCase(entityName);
-  const pluralName = pluralize(entityName);
   const camelName = toCamelCase(entityName);
 
   const scalarFields = fields.filter((f) => !f.relation);
@@ -289,7 +288,6 @@ export function generateReactQueryHooks(
 ): string {
   const pascalName = toPascalCase(entityName);
   const camelName = toCamelCase(entityName);
-  const pluralName = pluralize(entityName);
 
   const lines: string[] = [];
 
@@ -455,7 +453,6 @@ export function ${pascalName}ListPage() {
 export function generateCrudPageTemplate(entityName: string, fields: FieldDefinition[]): string {
   const pascalName = toPascalCase(entityName);
   const camelName = toCamelCase(entityName);
-  const pluralName = pluralize(entityName);
 
   // 生成 schema 字段定义
   const fieldDefinitions: string[] = [];

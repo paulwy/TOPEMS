@@ -238,7 +238,6 @@ export class CodeReviewer {
 
   private buildResult(issues: ReviewIssue[]): ReviewResult {
     const errors = issues.filter((i) => i.severity === 'error').length;
-    const warnings = issues.filter((i) => i.severity === 'warning').length;
 
     const score = this.calculateScore(issues);
     const passed = errors === 0;

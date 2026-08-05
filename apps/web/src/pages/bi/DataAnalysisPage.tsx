@@ -1,15 +1,5 @@
 import { useState } from 'react';
-import {
-  BarChart3,
-  TrendingUp,
-  PieChart,
-  Table2,
-  Filter,
-  RefreshCw,
-  Download,
-  Layers,
-  Search,
-} from 'lucide-react';
+import { BarChart3, TrendingUp, PieChart, Table2, RefreshCw, Download, Layers } from 'lucide-react';
 import {
   Box,
   Typography,
@@ -17,9 +7,6 @@ import {
   Card,
   CardContent,
   Chip,
-  TextField,
-  IconButton,
-  Tooltip,
   Tabs,
   Tab,
   Table,
@@ -28,9 +15,6 @@ import {
   TableHead,
   TableRow,
   TableContainer,
-  Paper,
-  MenuItem,
-  FormControl,
   InputLabel,
   Select,
   Divider,
@@ -41,7 +25,6 @@ import { DashboardTemplate } from '@/components/templates';
 import { ChartComponent } from '@/components/bi/ChartLibrary';
 import { FilterBar } from '@/components/bi/FilterBar';
 import type { FilterConfig } from '@/api/bi';
-import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';

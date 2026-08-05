@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import {
   Box,
   IconButton,
-  Paper,
   Typography,
   TextField,
   Fab,
@@ -11,7 +10,6 @@ import {
   Chip,
   InputAdornment,
   useTheme,
-  useMediaQuery,
   Fade,
   Zoom,
   Button,
@@ -48,7 +46,6 @@ import { AIToolsPanel } from './AIToolsPanel';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { BI_PATHS } from '@/modules/bi/config';
 import { DOC_PATHS } from '@/modules/doc/config';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { AI_PATHS } from '@/modules/ai/config';
 import { HRM_PATHS } from '@/modules/hrm/config';
 import { CRM_PATHS } from '@/modules/crm/config';
@@ -95,8 +92,6 @@ const iconMap: Record<string, React.ReactNode> = {
 export const FloatingAIHelper: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const _isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const _isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const { recommendations, quickCommands: _contextQuickCommands } = useAIContext();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -311,6 +306,7 @@ export const FloatingAIHelper: React.FC = () => {
                   size='small'
                   onClick={handleMinimize}
                   sx={{ color: 'common.white' }}
+                aria-label="减少"
                 >
                   <Minus style={{ width: 16, height: 16 }} />
                 </IconButton>
@@ -318,6 +314,7 @@ export const FloatingAIHelper: React.FC = () => {
                   size='small'
                   onClick={handleClose}
                   sx={{ color: 'common.white' }}
+                aria-label="关闭"
                 >
                   <X style={{ width: 16, height: 16 }} />
                 </IconButton>
@@ -345,6 +342,7 @@ export const FloatingAIHelper: React.FC = () => {
                         <IconButton
                           size='small'
                           onClick={handleSearch}
+                        aria-label="发送"
                         >
                           <Send style={{ width: 16, height: 16 }} />
                         </IconButton>
@@ -755,6 +753,7 @@ export const FloatingAIHelper: React.FC = () => {
             <IconButton
               size='small'
               onClick={handleMaximize}
+            aria-label="展开"
             >
               <ChevronRight style={{ width: 16, height: 16 }} />
             </IconButton>

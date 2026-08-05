@@ -14,15 +14,11 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
   Chip,
   Skeleton,
   Tooltip,
   Tabs,
   Tab,
-  useTheme,
-  useMediaQuery,
-  Divider,
   Button,
 } from '@mui/material';
 import { Search, RefreshCw, Download, Calendar } from 'lucide-react';
@@ -245,10 +241,6 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   showStatCards = true,
   statCardDirection = 'row',
 }) => {
-  const theme = useTheme();
-  const _isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const _isTablet = useMediaQuery(theme.breakpoints.down('lg'));
-
   // 内部状态
   const [internalTabValue, setInternalTabValue] = useState<string>('');
 
@@ -723,6 +715,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
               <IconButton
                 onClick={onRefresh}
                 disabled={loading}
+              aria-label="刷新"
               >
                 <RefreshCw
                   sx={{

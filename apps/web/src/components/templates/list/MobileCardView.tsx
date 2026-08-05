@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Checkbox, IconButton, Skeleton, Typography } from '@mui/material';
 import { MoreHorizontal } from 'lucide-react';
 import type { ColumnDef } from './types';
-import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 // Module-level t for use outside React components (shadowed by useTranslation inside components)
@@ -188,6 +187,7 @@ export function MobileCardView<T>({
                   <IconButton
                     size='small'
                     onClick={(e) => onRowActionClick(e, row)}
+                  aria-label="更多"
                   >
                     <MoreHorizontal style={{ width: 18, height: 18 }} />
                   </IconButton>

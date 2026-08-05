@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { FolderOpen, Calendar, Users, DollarSign, Tag, FileText } from 'lucide-react';
+import { FolderOpen, Calendar, DollarSign, Tag, FileText } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';

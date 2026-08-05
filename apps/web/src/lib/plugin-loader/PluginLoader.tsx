@@ -478,8 +478,8 @@ export const PluginLoaderProvider: React.FC<PluginLoaderProviderProps> = ({
   plugins = [],
 }) => {
   const [loadingPlugins, setLoadingPlugins] = useState<string[]>([]);
-  const [loadedPlugins, setLoadedPlugins] = useState<PluginInfo[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [, setLoadedPlugins] = useState<PluginInfo[]>([]);
 
   const loadPlugins = useCallback(async () => {
     setLoadingPlugins(plugins.map((p) => p.pluginCode));

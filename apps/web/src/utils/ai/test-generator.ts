@@ -154,8 +154,6 @@ export class TestGenerator {
    * 生成测试
    */
   async generateTests(request: TestGenerationRequest): Promise<GeneratedTest> {
-    const framework = request.framework;
-    const testType = request.test_type;
     const designMethods = request.design_methods ?? [
       TestCaseDesignMethod.BOUNDARYVALUEANALYSIS,
       TestCaseDesignMethod.EQUIVALENCEPARTITIONING,
@@ -542,7 +540,7 @@ export class TestGenerator {
     ];
   }
 
-  private generateApiTestCases(request: TestGenerationRequest): TestCase[] {
+  private generateApiTestCases(_request: TestGenerationRequest): TestCase[] {
     return [
       {
         name: 'API should return data on successful request',
@@ -575,7 +573,7 @@ export class TestGenerator {
     ];
   }
 
-  private generateE2ETestCases(request: TestGenerationRequest): TestCase[] {
+  private generateE2ETestCases(_request: TestGenerationRequest): TestCase[] {
     return [
       {
         name: 'should navigate to page',
@@ -722,7 +720,6 @@ export class TestGenerator {
     if (mockFunctions.length > 0) {
       lines.push('// ============ Mock 设置 ============');
       for (const mock of mockFunctions) {
-        const mockName = `mock${this.toPascalCase(mock.name)}`;
         lines.push(`vi.mock('${mock.module}', () => ({`);
         if (mock.is_default) {
           lines.push(`  default: ${mock.implementation ?? 'vi.fn()'},`);
@@ -1022,7 +1019,7 @@ export class TestGenerator {
 
   private collectImports(
     request: TestGenerationRequest,
-    testCases: TestCase[],
+    _testCases: TestCase[],
     mockFunctions: MockFunctionDef[]
   ): string[] {
     const imports: string[] = [];

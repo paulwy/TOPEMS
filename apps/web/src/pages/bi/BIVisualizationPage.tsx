@@ -1,19 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import {
-  Plus,
   Search,
-  Filter,
   BarChart3,
   LineChart,
   PieChart,
   TrendingUp,
   TrendingDown,
-  Eye,
-  Edit,
   Trash2,
-  Copy,
   Grid3X3,
   List,
   Settings,
@@ -41,11 +35,9 @@ import {
   MenuItem,
   Tooltip,
   Divider,
-  Alert,
   Button,
 } from '@mui/material';
 import { EmptyState, Grid } from '@/components';
-import { useNotificationStore } from '@/store';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { fetchWidgets, createWidget, updateWidget, deleteWidget, type Widget } from '@/api/bi';
@@ -155,13 +147,13 @@ const canvasComponentToWidgetData = (comp: CanvasComponent): Partial<Widget> => 
 const BIVisualizationPage = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [canvasComponents, setCanvasComponents] = useState<CanvasComponent[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [, setError] = useState<string | null>(null);
+  const [, setIsDragging] = useState(false);
 
   const widgetsQuery = useQuery<CanvasComponent[]>({
     queryKey: ['bi-widgets'],
@@ -389,6 +381,7 @@ const BIVisualizationPage = () => {
                       size='small'
                       onClick={() => setViewMode('grid')}
                       color={viewMode === 'grid' ? 'primary' : 'default'}
+                    aria-label="网格"
                     >
                       <Grid3X3 size={16} />
                     </IconButton>
@@ -398,6 +391,7 @@ const BIVisualizationPage = () => {
                       size='small'
                       onClick={() => setViewMode('list')}
                       color={viewMode === 'list' ? 'primary' : 'default'}
+                    aria-label="列表"
                     >
                       <List size={16} />
                     </IconButton>
@@ -624,6 +618,7 @@ const BIVisualizationPage = () => {
                             e.stopPropagation();
                             handleDeleteComponent(comp.id);
                           }}
+                        aria-label="删除"
                         >
                           <Trash2 size={14} />
                         </IconButton>

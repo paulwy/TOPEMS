@@ -9,7 +9,7 @@
  * - 响应式布局
  */
 
-import React, { useCallback, useMemo, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Paper,
@@ -20,25 +20,10 @@ import {
   Tooltip,
   Divider,
   Skeleton,
-  Grid,
-  useTheme,
-  useMediaQuery,
   Tabs,
   Tab,
-  Alert,
-  LinearProgress,
 } from '@mui/material';
-import {
-  ArrowLeft,
-  Edit,
-  Delete,
-  RefreshCw,
-  Share2,
-  Download,
-  Copy,
-  Check,
-  ChevronRight,
-} from 'lucide-react';
+import { ArrowLeft, Edit, Delete, RefreshCw, Copy, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useBffCrud from '@/hooks/bff/useBffCrud';
 import type { UseBffCrudOptions } from '@/hooks/bff/useBffCrud';
@@ -184,6 +169,7 @@ function DetailField({
           size='small'
           onClick={handleCopy}
           sx={{ ml: -0.5 }}
+        aria-label="确认"
         >
           {copied ? (
             <Check
@@ -334,8 +320,6 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
     showSkeleton = true,
   } = props;
 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -459,6 +443,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
           <IconButton
             onClick={handleBack}
             size='small'
+          aria-label="返回"
           >
             <ArrowLeft size={20} />
           </IconButton>
@@ -499,6 +484,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
               <IconButton
                 onClick={() => entityId && crud.get(entityId)}
                 size='small'
+              aria-label="刷新"
               >
                 <RefreshCw size={18} />
               </IconButton>
@@ -508,6 +494,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
                 <IconButton
                   onClick={handleEdit}
                   size='small'
+                aria-label="编辑"
                 >
                   <Edit size={18} />
                 </IconButton>
@@ -519,6 +506,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
                   onClick={handleDelete}
                   size='small'
                   color='error'
+                aria-label="删除"
                 >
                   <Delete size={18} />
                 </IconButton>
@@ -597,7 +585,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
             sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
           >
             <Tab label='基本信息' />
-            {relatedQueries.map((q, i) => {
+            {relatedQueries.map((q, _i) => {
               const icon = React.isValidElement(q.icon) ? q.icon : undefined;
               return (
                 <Tab

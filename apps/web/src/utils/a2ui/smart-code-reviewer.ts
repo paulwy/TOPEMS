@@ -361,8 +361,6 @@ const REVIEW_RULES: ReviewRuleDef[] = [
       let maxNestingLine = 0;
 
       lines.forEach((line, idx) => {
-        const opens = (line.match(/[({\[]/g) || []).length;
-        const closes = (line.match(/[)}\]]/g) || []).length;
         const currentNesting = (line.match(/^\s*/)?.[0].length ?? 0) / 2;
 
         if (currentNesting > maxNesting) {

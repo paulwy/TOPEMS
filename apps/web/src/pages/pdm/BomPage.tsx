@@ -189,7 +189,7 @@ export const BomPage: React.FC = () => {
   ];
 
   const bomItemAdapter: CrudApiAdapter<Record<string, unknown>> = {
-    list: async (params) => {
+    list: async (_params) => {
       if (!selectedVersionId) return { data: [], total: 0 };
       const response = await bomApi.listItems(selectedVersionId);
       if (response.success && response.data) {

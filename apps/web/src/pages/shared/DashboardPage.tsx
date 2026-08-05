@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AUTH_PATHS } from '@/routes/auth';
 import {
   Box,
@@ -43,7 +43,6 @@ import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/hooks/useAuth';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { MetricCard } from '@/components/bi/MetricCard';
-import { useShortcutsStore } from '../../store';
 import {
   DashboardQuickActions,
   defaultQuickActions,
@@ -93,11 +92,9 @@ interface AuditLog {
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, logout: authLogout, isAuthenticated, hasPermission } = useAuth();
   const { serviceStatuses, refresh: refreshServiceStatuses } = useServiceStatus();
-  const { installedPlugins, isPluginInstalled } = useInstalledPlugins();
-  const shortcuts = useShortcutsStore((state) => state.shortcuts);
+  const { isPluginInstalled } = useInstalledPlugins();
   const queryClient = useQueryClient();
 
   const [todoTab, setTodoTab] = useState(0);

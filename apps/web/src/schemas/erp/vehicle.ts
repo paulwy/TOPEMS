@@ -144,10 +144,19 @@ export const vehicleSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.vehicle.filter.status.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.vehicle.filter.status.option.available'), value: 'available' },
+          {
+            label: i18n.t('schema:erp.vehicle.filter.status.option.available'),
+            value: 'available',
+          },
           { label: i18n.t('schema:erp.vehicle.filter.status.option.in_use'), value: 'in_use' },
-          { label: i18n.t('schema:erp.vehicle.filter.status.option.maintenance'), value: 'maintenance' },
-          { label: i18n.t('schema:erp.vehicle.filter.status.option.unavailable'), value: 'unavailable' },
+          {
+            label: i18n.t('schema:erp.vehicle.filter.status.option.maintenance'),
+            value: 'maintenance',
+          },
+          {
+            label: i18n.t('schema:erp.vehicle.filter.status.option.unavailable'),
+            value: 'unavailable',
+          },
         ],
       },
       {

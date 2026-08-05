@@ -316,7 +316,7 @@ export class RootCauseAnalyzer {
     };
   }
 
-  private calculateContribution(factor: CausalFactor, context: AnalysisContext): number {
+  private calculateContribution(factor: CausalFactor, _context: AnalysisContext): number {
     // 简化实现：基于类型和上下文计算贡献度
     const typeWeights = {
       metric: 0.25,
@@ -337,7 +337,7 @@ export class RootCauseAnalyzer {
     return Math.min(1, baseWeight + evidenceBoost + knowledgeBoost);
   }
 
-  private calculateConfidence(factor: CausalFactor, context: AnalysisContext): number {
+  private calculateConfidence(factor: CausalFactor, _context: AnalysisContext): number {
     // 简化实现：基于证据强度和类型计算置信度
     let confidence = 0.5;
 

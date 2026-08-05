@@ -8,7 +8,7 @@ import { subscriptionSchema } from '@/schemas/report';
 const ReportSubscriptionPage: React.FC = () => {
   const apiAdapter = useMemo<CrudApiAdapter<ReportSubscription>>(
     () => ({
-      list: async (params) => {
+      list: async (_params) => {
         const response = await reportApi.listSubscriptions();
         if (!response.success) {
           throw new Error(response.message || '获取订阅列表失败');

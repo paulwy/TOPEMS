@@ -84,7 +84,6 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
   };
 
   const renderPreviewChart = () => {
-    const _chartType = layout.chart?.type || 'bar';
     const xField = selectedFields.find((f) => f.fieldId === layout.chart?.xAxisField);
     const yFields = (layout.chart?.yAxisFields || [])
       .map((id) => selectedFields.find((f) => f.fieldId === id))

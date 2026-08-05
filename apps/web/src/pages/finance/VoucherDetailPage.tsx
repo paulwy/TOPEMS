@@ -14,29 +14,13 @@ import {
   TableHead,
   TableRow,
   Paper,
-  IconButton,
-  Tooltip,
   Button,
 } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  FileText,
-  Edit,
-  Trash2,
-  Check,
-  X,
-  Clock,
-  User,
-  Calendar,
-  Building2,
-  Printer,
-  Download,
-  Copy,
-  AlertCircle,
-} from 'lucide-react';
+import { FileText, Check, User, Calendar, Building2, AlertCircle } from 'lucide-react';
 import { DetailPageTemplate } from '@/components/templates';
 import { voucherApi } from '@/api/finance';
 import type { Voucher, VoucherEntry } from '@/types/finance';

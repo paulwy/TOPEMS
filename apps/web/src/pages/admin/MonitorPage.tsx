@@ -6,7 +6,6 @@ import {
   Chip,
   Typography,
   LinearProgress,
-  Button,
   useTheme,
 } from '@mui/material';
 import React, { useEffect } from 'react';
@@ -21,7 +20,6 @@ import {
   Database,
   AlertTriangle,
   CheckCircle,
-  RefreshCw,
   Activity,
   Server,
 } from 'lucide-react';

@@ -97,6 +97,7 @@ export const Drawer: React.FC<DrawerProps> = ({
                 size='small'
                 onClick={handleClose}
                 sx={{ ml: 'auto' }}
+              aria-label="关闭"
               >
                 <X size={20} />
               </IconButton>

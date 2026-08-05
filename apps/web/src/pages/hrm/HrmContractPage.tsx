@@ -9,7 +9,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@/components/common/Dialog';
 import { FormSelect, FormField } from '@topems/shared-components';
-import { Stack, Box, Snackbar, Alert } from '@mui/material';
+import { Stack, Snackbar, Alert } from '@mui/material';
 import { RefreshCw } from 'lucide-react';
 
 const apiAdapter = createCrudPageAdapter(contractApi);

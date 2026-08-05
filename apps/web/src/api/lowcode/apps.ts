@@ -31,10 +31,7 @@ export const lowcodeAppsApi = {
     return apiClient.lowcode.post<LowcodeApp>('/apps', data);
   },
 
-  update: async (
-    id: string,
-    data: UpdateLowcodeAppRequest
-  ): Promise<ApiResponse<LowcodeApp>> => {
+  update: async (id: string, data: UpdateLowcodeAppRequest): Promise<ApiResponse<LowcodeApp>> => {
     return apiClient.lowcode.put<LowcodeApp>(`/apps/${id}`, data);
   },
 

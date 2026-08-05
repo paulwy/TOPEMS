@@ -7,7 +7,7 @@ import { useNotificationStore } from '@/store';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 const quotationApiAdapter: CrudApiAdapter = {
-  list: async (params) => {
+  list: async (_params) => {
     const response = await srmApi.listQuotations();
     if (!response.success) throw new Error('加载报价单失败');
     const items = (response.data || []) as unknown as Array<Record<string, unknown>>;

@@ -67,6 +67,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
                 ? ` + ${t('report.template_management_page.enabled')} + `
                 : t('report.template_management_page.disabled')
             }
+          aria-label="切换"
           >
             {template.isactive ? (
               <ToggleRight sx={{ width: 20, height: 20 }} />
@@ -129,6 +130,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <IconButton
             onClick={() => onPreview(template)}
             sx={{ color: 'primary.main' }}
+            aria-label={t('report.template_management_page.preview')}
             title={t('report.template_management_page.preview')}
           >
             <Eye sx={{ width: 16, height: 16 }} />
@@ -136,6 +138,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <IconButton
             onClick={() => onDuplicate(template.id)}
             sx={{ color: 'success.main' }}
+            aria-label={t('report.template_management_page.duplicate')}
             title={t('report.template_management_page.duplicate')}
           >
             <Copy sx={{ width: 16, height: 16 }} />
@@ -143,6 +146,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <IconButton
             onClick={() => onEdit(template)}
             sx={{ color: 'primary.main' }}
+            aria-label={t('report.template_management_page.edit')}
             title={t('report.template_management_page.edit')}
           >
             <Edit sx={{ width: 16, height: 16 }} />
@@ -150,6 +154,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <IconButton
             onClick={() => onDelete(template.id)}
             sx={{ color: 'error.main' }}
+            aria-label={t('report.template_management_page.delete')}
             title={t('report.template_management_page.delete')}
           >
             <Trash2 sx={{ width: 16, height: 16 }} />

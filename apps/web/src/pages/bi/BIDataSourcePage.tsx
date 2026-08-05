@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { RefreshCw, TestTube, Eye, Edit, Trash2 } from 'lucide-react';
+import { RefreshCw, TestTube } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { dataSourceSchema } from '@/schemas/bi';

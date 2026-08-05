@@ -21,8 +21,9 @@ import {
   Pagination,
 } from '@mui/material';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Shield, User, Calendar, Download, RefreshCw, ArrowRight } from 'lucide-react';
+import { Search, Shield, User, Calendar, Download, RefreshCw } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { permissionAuditApi } from '@/api/admin/permissionAudit';
 import type {
@@ -42,6 +43,7 @@ interface PermissionAuditPageProps {
 type TabType = 'permissionChanges' | 'accessControl';
 
 const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [activeTab, setActiveTab] = useState<TabType>('permissionChanges');
   const [searchQuery, setSearchQuery] = useState('');
@@ -130,7 +132,9 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
       apiLogger.error('Failed to load permission changes:', permissionChangesQuery.error);
       addNotification({
         type: 'error',
-        message: `加载权限变更记录失败: ${extractErrorMessage(permissionChangesQuery.error)}`,
+        message: t('admin:permission_audit_page.load_permission_changes_error', {
+          error: extractErrorMessage(permissionChangesQuery.error),
+        }),
       });
     }
   }, [permissionChangesQuery.isError, permissionChangesQuery.error, addNotification]);
@@ -140,7 +144,9 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
       apiLogger.error('Failed to load access logs:', accessLogsQuery.error);
       addNotification({
         type: 'error',
-        message: `加载访问控制日志失败: ${extractErrorMessage(accessLogsQuery.error)}`,
+        message: t('admin:permission_audit_page.load_access_logs_error', {
+          error: extractErrorMessage(accessLogsQuery.error),
+        }),
       });
     }
   }, [accessLogsQuery.isError, accessLogsQuery.error, addNotification]);
@@ -167,28 +173,28 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
 
   const getChangeTypeLabel = (type?: string) => {
     const labels: Record<string, string> = {
-      role_assignment: '角色分配',
-      role_removal: '角色移除',
-      permission_add: '权限添加',
-      permission_remove: '权限移除',
-      role_create: '角色创建',
-      role_update: '角色更新',
-      role_delete: '角色删除',
-      user_create: '用户创建',
-      user_update: '用户更新',
-      user_delete: '用户删除',
+      role_assignment: t('admin:permission_audit_page.type_role_assignment'),
+      role_removal: t('admin:permission_audit_page.type_role_removal'),
+      permission_add: t('admin:permission_audit_page.type_permission_add'),
+      permission_remove: t('admin:permission_audit_page.type_permission_remove'),
+      role_create: t('admin:permission_audit_page.type_role_create'),
+      role_update: t('admin:permission_audit_page.type_role_update'),
+      role_delete: t('admin:permission_audit_page.type_role_delete'),
+      user_create: t('admin:permission_audit_page.type_user_create'),
+      user_update: t('admin:permission_audit_page.type_user_update'),
+      user_delete: t('admin:permission_audit_page.type_user_delete'),
     };
     return labels[type || ''] || type || '-';
   };
 
   const getAccessTypeLabel = (type?: string) => {
     const labels: Record<string, string> = {
-      login: '登录',
-      logout: '登出',
-      api_access: 'API访问',
-      page_access: '页面访问',
-      permission_check: '权限检查',
-      denied: '访问拒绝',
+      login: t('admin:permission_audit_page.type_login'),
+      logout: t('admin:permission_audit_page.type_logout'),
+      api_access: t('admin:permission_audit_page.type_api_access'),
+      page_access: t('admin:permission_audit_page.type_page_access'),
+      permission_check: t('admin:permission_audit_page.type_permission_check'),
+      denied: t('admin:permission_audit_page.type_denied'),
     };
     return labels[type || ''] || type || '-';
   };
@@ -202,8 +208,8 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
 
   return (
     <PageContainer
-      title='权限审计'
-      subtitle='查看权限变更和访问控制记录'
+      title={t('admin:permission_audit_page.title')}
+      subtitle={t('admin:permission_audit_page.subtitle')}
       headerActions={[
         <Button
           key='refresh'
@@ -214,7 +220,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
           startIcon={<RefreshCw className='w-4 h-4' />}
           variant='outlined'
         >
-          刷新
+          {t('admin:permission_audit_page.refresh')}
         </Button>,
         <Button
           key='export'
@@ -222,7 +228,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
           startIcon={<Download className='w-4 h-4' />}
           variant='contained'
         >
-          导出
+          {t('admin:permission_audit_page.export')}
         </Button>,
       ]}
     >
@@ -233,7 +239,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <Shield className='w-5 h-5 text-blue-600' />
-                  <Typography variant='h6'>权限变更统计</Typography>
+                  <Typography variant='h6'>{t('admin:permission_audit_page.permission_change_stats')}</Typography>
                 </Box>
                 <Grid spacing={2}>
                   <Grid size={{ xs: 6 }}>
@@ -241,7 +247,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      总变更数
+                      {t('admin:permission_audit_page.total_changes')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -255,7 +261,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      今日变更
+                      {t('admin:permission_audit_page.today_changes')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -270,7 +276,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      角色变更
+                      {t('admin:permission_audit_page.role_changes')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -284,7 +290,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      权限变更
+                      {t('admin:permission_audit_page.permission_changes')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -304,7 +310,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <User className='w-5 h-5 text-green-600' />
-                  <Typography variant='h6'>访问控制统计</Typography>
+                  <Typography variant='h6'>{t('admin:permission_audit_page.access_control_stats')}</Typography>
                 </Box>
                 <Grid spacing={2}>
                   <Grid size={{ xs: 6 }}>
@@ -312,7 +318,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      总访问次数
+                      {t('admin:permission_audit_page.total_access')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -326,7 +332,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      今日访问
+                      {t('admin:permission_audit_page.today_access')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -341,7 +347,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      登录次数
+                      {t('admin:permission_audit_page.login_count')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -355,7 +361,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      拒绝次数
+                      {t('admin:permission_audit_page.denied_count')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -380,24 +386,24 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                   variant={activeTab === 'permissionChanges' ? 'contained' : 'outlined'}
                   startIcon={<Shield className='w-4 h-4' />}
                 >
-                  权限变更记录
+                  {t('admin:permission_audit_page.permission_changes_tab')}
                 </Button>
                 <Button
                   onClick={() => setActiveTab('accessControl')}
                   variant={activeTab === 'accessControl' ? 'contained' : 'outlined'}
                   startIcon={<User className='w-4 h-4' />}
                 >
-                  访问控制日志
+                  {t('admin:permission_audit_page.access_control_tab')}
                 </Button>
               </Box>
 
               <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                 <TextField
                   fullWidth
-                  label='搜索'
+                  label={t('admin:permission_audit_page.search_label')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder='搜索用户、角色或权限'
+                  placeholder={t('admin:permission_audit_page.search_placeholder')}
                   slotProps={{
                     input: {
                       startAdornment: <Search className='w-4 h-4 mr-2 text-gray-400' />,
@@ -408,30 +414,30 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                   fullWidth
                   sx={{ minWidth: 150 }}
                 >
-                  <InputLabel>类型筛选</InputLabel>
+                  <InputLabel>{t('admin:permission_audit_page.filter_type')}</InputLabel>
                   <Select
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
-                    label='类型筛选'
+                    label={t('admin:permission_audit_page.filter_type')}
                   >
-                    <MenuItem value='all'>全部类型</MenuItem>
+                    <MenuItem value='all'>{t('admin:permission_audit_page.all_types')}</MenuItem>
                     {activeTab === 'permissionChanges' ? (
                       <>
-                        <MenuItem value='role_assignment'>角色分配</MenuItem>
-                        <MenuItem value='role_removal'>角色移除</MenuItem>
-                        <MenuItem value='permission_add'>权限添加</MenuItem>
-                        <MenuItem value='permission_remove'>权限移除</MenuItem>
-                        <MenuItem value='role_create'>角色创建</MenuItem>
-                        <MenuItem value='role_update'>角色更新</MenuItem>
-                        <MenuItem value='role_delete'>角色删除</MenuItem>
+                        <MenuItem value='role_assignment'>{t('admin:permission_audit_page.type_role_assignment')}</MenuItem>
+                        <MenuItem value='role_removal'>{t('admin:permission_audit_page.type_role_removal')}</MenuItem>
+                        <MenuItem value='permission_add'>{t('admin:permission_audit_page.type_permission_add')}</MenuItem>
+                        <MenuItem value='permission_remove'>{t('admin:permission_audit_page.type_permission_remove')}</MenuItem>
+                        <MenuItem value='role_create'>{t('admin:permission_audit_page.type_role_create')}</MenuItem>
+                        <MenuItem value='role_update'>{t('admin:permission_audit_page.type_role_update')}</MenuItem>
+                        <MenuItem value='role_delete'>{t('admin:permission_audit_page.type_role_delete')}</MenuItem>
                       </>
                     ) : (
                       <>
-                        <MenuItem value='login'>登录</MenuItem>
-                        <MenuItem value='logout'>登出</MenuItem>
-                        <MenuItem value='api_access'>API访问</MenuItem>
-                        <MenuItem value='page_access'>页面访问</MenuItem>
-                        <MenuItem value='denied'>访问拒绝</MenuItem>
+                        <MenuItem value='login'>{t('admin:permission_audit_page.type_login')}</MenuItem>
+                        <MenuItem value='logout'>{t('admin:permission_audit_page.type_logout')}</MenuItem>
+                        <MenuItem value='api_access'>{t('admin:permission_audit_page.type_api_access')}</MenuItem>
+                        <MenuItem value='page_access'>{t('admin:permission_audit_page.type_page_access')}</MenuItem>
+                        <MenuItem value='denied'>{t('admin:permission_audit_page.type_denied')}</MenuItem>
                       </>
                     )}
                   </Select>
@@ -444,25 +450,25 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                     <TableRow>
                       {activeTab === 'permissionChanges' ? (
                         <>
-                          <TableCell>时间</TableCell>
-                          <TableCell>变更类型</TableCell>
-                          <TableCell>操作者</TableCell>
-                          <TableCell>目标用户</TableCell>
-                          <TableCell>角色/权限</TableCell>
-                          <TableCell>变更前</TableCell>
-                          <TableCell>变更后</TableCell>
-                          <TableCell>状态</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_time')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_change_type')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_operator')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_target_user')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_role_permission')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_old_value')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_new_value')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_status')}</TableCell>
                         </>
                       ) : (
                         <>
-                          <TableCell>时间</TableCell>
-                          <TableCell>访问类型</TableCell>
-                          <TableCell>用户</TableCell>
-                          <TableCell>资源路径</TableCell>
-                          <TableCell>IP地址</TableCell>
-                          <TableCell>设备</TableCell>
-                          <TableCell>状态</TableCell>
-                          <TableCell>耗时(ms)</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_time')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_access_type')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_user')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_resource_path')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_ip_address')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_device')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_status')}</TableCell>
+                          <TableCell>{t('admin:permission_audit_page.col_response_time')}</TableCell>
                         </>
                       )}
                     </TableRow>
@@ -476,7 +482,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                               variant='body1'
                               color='textSecondary'
                             >
-                              加载中...
+                              {t('admin:permission_audit_page.loading')}
                             </Typography>
                           </Box>
                         </TableCell>
@@ -530,7 +536,11 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                           </TableCell>
                           <TableCell>
                             <Chip
-                              label={change.status === 'success' ? '成功' : '失败'}
+                              label={
+                                change.status === 'success'
+                                  ? t('admin:permission_audit_page.status_success')
+                                  : t('admin:permission_audit_page.status_failed')
+                              }
                               size='small'
                               color={
                                 getStatusColor(change.status) as React.ComponentProps<
@@ -588,10 +598,10 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                             <Chip
                               label={
                                 log.status === 'success'
-                                  ? '成功'
+                                  ? t('admin:permission_audit_page.status_success')
                                   : log.status === 'denied'
-                                    ? '拒绝'
-                                    : '失败'
+                                    ? t('admin:permission_audit_page.status_denied')
+                                    : t('admin:permission_audit_page.status_failed')
                               }
                               size='small'
                               color={

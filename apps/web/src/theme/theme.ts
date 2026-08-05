@@ -3,7 +3,6 @@ import type { Theme, ThemeOptions } from '@mui/material/styles';
 import { createTheme } from '@mui/material/styles';
 import { designTokens, semanticTokens } from './tokens';
 import { gradients } from './gradients';
-import { cyberpunkTokens } from './tokens/cyberpunk.tokens';
 import { injectCyberpunkComponentStyles } from './animations/cyberpunk.css';
 
 // 扩展 Theme 接口以包含 gradients

@@ -130,6 +130,7 @@ function TreeNodeItem({
           size='small'
           onClick={handleToggle}
           disabled={isDisabled || !hasChildren}
+          aria-label={isExpanded ? '折叠' : '展开'}
           sx={{
             padding: 0.5,
             '&:hover': {

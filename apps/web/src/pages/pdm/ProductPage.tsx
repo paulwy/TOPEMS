@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Box, Typography } from '@mui/material';
 import { Package } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import { CardListTemplate, type CardRenderConfig, type CardAction } from '@/components/templates';
@@ -15,14 +15,12 @@ import {
   Trash2,
   Clock,
   Upload,
-  ChevronLeft,
   ChevronRight,
   History,
   RotateCcw,
   User,
   Loader2,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -49,7 +47,6 @@ interface DocumentWithFavorite extends FileMetadata {
 }
 
 const DocumentCenterPage: React.FC = () => {
-  const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const theme = useTheme();
 
@@ -764,6 +761,7 @@ const DocumentCenterPage: React.FC = () => {
                             size='small'
                             onClick={() => handleRestoreVersion(versionDoc, ver)}
                             sx={{ color: 'warning.main' }}
+                          aria-label="重置"
                           >
                             <RotateCcw size={16} />
                           </IconButton>
@@ -776,6 +774,7 @@ const DocumentCenterPage: React.FC = () => {
                             onClick={() => {
                               if (versionDoc) handleDownload(versionDoc);
                             }}
+                          aria-label="下载"
                           >
                             <Download size={16} />
                           </IconButton>

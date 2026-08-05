@@ -186,7 +186,7 @@ export function useSlowQueryAlert(options: SlowQueryAlertOptions = {}): UseSlowQ
   );
 
   useEffect(() => {
-    const off = onSlowQuery((record, th) => {
+    const off = onSlowQuery((record, _th) => {
       if (record.duration >= threshold) {
         triggerAlert(record);
       }

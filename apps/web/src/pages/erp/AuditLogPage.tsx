@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   FileText,
   Search,
-  Filter,
   Download,
   RefreshCw,
-  Calendar,
   User,
   Monitor,
   Clock,
@@ -14,10 +12,9 @@ import {
   XCircle,
   AlertCircle,
   Info,
-  ChevronLeft,
   Eye,
 } from 'lucide-react';
-import { PageContainer, StatusBadge, ActionButton } from '@/components/common';
+import { PageContainer, StatusBadge } from '@/components/common';
 import {
   Box,
   Typography,
@@ -33,9 +30,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Chip,
-  Alert,
   CircularProgress,
   TablePagination,
   IconButton,
@@ -514,6 +509,7 @@ const AuditLogPage: React.FC = () => {
                             <IconButton
                               size='small'
                               onClick={() => handleViewDetail(log)}
+                            aria-label="查看"
                             >
                               <Eye size={16} />
                             </IconButton>

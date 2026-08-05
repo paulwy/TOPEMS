@@ -85,8 +85,14 @@ export const assetCategorySchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.asset_category.filter.status.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.asset_category.filter.status.option.active'), value: 'active' },
-          { label: i18n.t('schema:erp.asset_category.filter.status.option.inactive'), value: 'inactive' },
+          {
+            label: i18n.t('schema:erp.asset_category.filter.status.option.active'),
+            value: 'active',
+          },
+          {
+            label: i18n.t('schema:erp.asset_category.filter.status.option.inactive'),
+            value: 'inactive',
+          },
         ],
       },
     ],

@@ -1,7 +1,4 @@
 // STATUS: WIRED | Integrated in App.tsx DevTools panel
-import { modelVersionManager } from './model-versioning';
-import { abTestManager } from './ab-testing';
-import { securityHardener } from './security-hardening';
 
 export {
   modelVersionManager,

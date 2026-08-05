@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { GisProvider, useGis } from '../../context/GisContext';
 import MapView from '../../components/gis/MapView';
 import { PageContainer } from '@/components/common';
@@ -564,438 +564,438 @@ const GisContent: React.FC = () => {
         }}
       >
         <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3 }, py: 4 }}>
-        <Stack
-          direction='row'
-          spacing={2}
-          sx={{
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            mb: 4,
-          }}
-        >
           <Stack
             direction='row'
-            spacing={1.5}
-            sx={{ alignItems: 'center' }}
+            spacing={2}
+            sx={{
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              mb: 4,
+            }}
           >
-            <Box>
-              <Typography
-                variant='h4'
-                sx={{ fontWeight: 700 }}
-              >
-                GIS地图
-              </Typography>
-              <Typography color='text.secondary'>
-                管理设备点位、管线、仓储位置、现场取证、厂区地图和业务位置
-              </Typography>
-            </Box>
-          </Stack>
-          <Stack
-            direction='row'
-            spacing={1.5}
-            sx={{ alignItems: 'center' }}
-          >
-            <Button
-              onClick={() => loadAllData(true)}
-              startIcon={
-                <RefreshCw
-                  size={18}
-                  className={loading ? 'animate-spin' : ''}
-                />
-              }
-              sx={{
-                bgcolor: 'common.white',
-                border: 1,
-                borderColor: 'grey.200',
-                borderRadius: 2,
-                '&:hover': { bgcolor: 'grey.50' },
-                textTransform: 'none',
-              }}
+            <Stack
+              direction='row'
+              spacing={1.5}
+              sx={{ alignItems: 'center' }}
             >
-              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>刷新数据</Typography>
-            </Button>
-          </Stack>
-        </Stack>
-
-        {error && (
-          <Alert
-            severity='error'
-            icon={<AlertTriangle size={20} />}
-            sx={{ mb: 3 }}
-          >
-            {error}
-          </Alert>
-        )}
-
-        <Snackbar
-          open={Boolean(notification)}
-          autoHideDuration={3000}
-          onClose={() => setNotification(null)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <Alert
-            severity={notification?.type === 'success' ? 'success' : 'error'}
-            onClose={() => setNotification(null)}
-            icon={
-              notification?.type === 'success' ? (
-                <CheckCircle2 size={20} />
-              ) : (
-                <AlertCircle size={20} />
-              )
-            }
-          >
-            {notification?.message}
-          </Alert>
-        </Snackbar>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: 'repeat(2, 1fr)',
-              md: 'repeat(3, 1fr)',
-              lg: 'repeat(6, 1fr)',
-            },
-            gap: 4,
-            mb: 6,
-          }}
-        >
-          <Paper
-            sx={{
-              borderRadius: 2,
-              p: 4,
-              boxShadow: 1,
-              border: 1,
-              borderColor: 'grey.100',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 2,
-                  bgcolor: 'success.lighter',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <MapPin
-                  size={20}
-                  style={{ color: 'success.dark' }}
-                />
-              </Box>
               <Box>
                 <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 700, color: 'text.primary' }}
+                  variant='h4'
+                  sx={{ fontWeight: 700 }}
                 >
-                  {statistics?.device_points || devicePoints.length}
+                  GIS地图
                 </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  设备点位
+                <Typography color='text.secondary'>
+                  管理设备点位、管线、仓储位置、现场取证、厂区地图和业务位置
                 </Typography>
               </Box>
-            </Box>
-          </Paper>
-          <Paper
-            sx={{
-              borderRadius: 2,
-              p: 4,
-              boxShadow: 1,
-              border: 1,
-              borderColor: 'grey.100',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 2,
-                  bgcolor: 'indigo.light',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <ArrowRight
-                  size={20}
-                  style={{ color: 'primary.light' }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 700, color: 'text.primary' }}
-                >
-                  {statistics?.pipelines || pipelines.length}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  管线管理
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
-          <Paper
-            sx={{
-              borderRadius: 2,
-              p: 4,
-              boxShadow: 1,
-              border: 1,
-              borderColor: 'grey.100',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 2,
-                  bgcolor: 'warning.light',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Warehouse
-                  size={20}
-                  style={{ color: 'warning.dark' }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 700, color: 'text.primary' }}
-                >
-                  {statistics?.storage_locations || storageLocations.length}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  仓储位置
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
-          <Paper
-            sx={{
-              borderRadius: 2,
-              p: 4,
-              boxShadow: 1,
-              border: 1,
-              borderColor: 'grey.100',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 2,
-                  bgcolor: 'secondary.100',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Camera
-                  size={20}
-                  style={{ color: ct.pink.dark }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 700, color: 'text.primary' }}
-                >
-                  {statistics?.evidence_records || evidenceRecords.length}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  现场取证
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
-          <Paper
-            sx={{
-              borderRadius: 2,
-              p: 4,
-              boxShadow: 1,
-              border: 1,
-              borderColor: 'grey.100',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 2,
-                  bgcolor: 'secondary.100',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Map
-                  size={20}
-                  style={{ color: ct.purple.dark }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 700, color: 'text.primary' }}
-                >
-                  {statistics?.factory_maps || factoryMaps.length}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  厂区地图
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
-          <Paper
-            sx={{
-              borderRadius: 2,
-              p: 4,
-              boxShadow: 1,
-              border: 1,
-              borderColor: 'grey.100',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 2,
-                  bgcolor: ct.teal[100],
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Building2
-                  size={20}
-                  style={{ color: ct.teal.main }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 700, color: 'text.primary' }}
-                >
-                  {statistics?.business_locations || businessLocations.length}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  业务位置
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
-        </Box>
-
-        <Paper
-          sx={{
-            borderRadius: 2,
-            boxShadow: 1,
-            border: 1,
-            borderColor: 'grey.100',
-            overflow: 'hidden',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              borderBottom: 1,
-              borderColor: 'grey.100',
-              overflowX: 'auto',
-            }}
-          >
-            {tabs.map((tab) => (
+            </Stack>
+            <Stack
+              direction='row'
+              spacing={1.5}
+              sx={{ alignItems: 'center' }}
+            >
               <Button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => loadAllData(true)}
+                startIcon={
+                  <RefreshCw
+                    size={18}
+                    className={loading ? 'animate-spin' : ''}
+                  />
+                }
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  px: 20,
-                  py: 12,
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  whiteSpace: 'nowrap',
-                  color: activeTab === tab.id ? 'cyan.dark' : 'text.secondary',
-                  borderBottom: activeTab === tab.id ? 2 : 0,
-                  borderColor: activeTab === tab.id ? 'cyan.dark' : 'transparent',
-                  bgcolor: activeTab === tab.id ? 'cyan.light' : 'transparent',
-                  '&:hover': {
-                    bgcolor: activeTab === tab.id ? 'cyan.light' : 'grey.50',
-                  },
+                  bgcolor: 'common.white',
+                  border: 1,
+                  borderColor: 'grey.200',
+                  borderRadius: 2,
+                  '&:hover': { bgcolor: 'grey.50' },
                   textTransform: 'none',
                 }}
               >
-                {tab.icon}
-                {tab.label}
+                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>刷新数据</Typography>
               </Button>
-            ))}
+            </Stack>
+          </Stack>
+
+          {error && (
+            <Alert
+              severity='error'
+              icon={<AlertTriangle size={20} />}
+              sx={{ mb: 3 }}
+            >
+              {error}
+            </Alert>
+          )}
+
+          <Snackbar
+            open={Boolean(notification)}
+            autoHideDuration={3000}
+            onClose={() => setNotification(null)}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <Alert
+              severity={notification?.type === 'success' ? 'success' : 'error'}
+              onClose={() => setNotification(null)}
+              icon={
+                notification?.type === 'success' ? (
+                  <CheckCircle2 size={20} />
+                ) : (
+                  <AlertCircle size={20} />
+                )
+              }
+            >
+              {notification?.message}
+            </Alert>
+          </Snackbar>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'repeat(2, 1fr)',
+                md: 'repeat(3, 1fr)',
+                lg: 'repeat(6, 1fr)',
+              },
+              gap: 4,
+              mb: 6,
+            }}
+          >
+            <Paper
+              sx={{
+                borderRadius: 2,
+                p: 4,
+                boxShadow: 1,
+                border: 1,
+                borderColor: 'grey.100',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    bgcolor: 'success.lighter',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <MapPin
+                    size={20}
+                    style={{ color: 'success.dark' }}
+                  />
+                </Box>
+                <Box>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 700, color: 'text.primary' }}
+                  >
+                    {statistics?.device_points || devicePoints.length}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    设备点位
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+            <Paper
+              sx={{
+                borderRadius: 2,
+                p: 4,
+                boxShadow: 1,
+                border: 1,
+                borderColor: 'grey.100',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    bgcolor: 'indigo.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ArrowRight
+                    size={20}
+                    style={{ color: 'primary.light' }}
+                  />
+                </Box>
+                <Box>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 700, color: 'text.primary' }}
+                  >
+                    {statistics?.pipelines || pipelines.length}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    管线管理
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+            <Paper
+              sx={{
+                borderRadius: 2,
+                p: 4,
+                boxShadow: 1,
+                border: 1,
+                borderColor: 'grey.100',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    bgcolor: 'warning.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Warehouse
+                    size={20}
+                    style={{ color: 'warning.dark' }}
+                  />
+                </Box>
+                <Box>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 700, color: 'text.primary' }}
+                  >
+                    {statistics?.storage_locations || storageLocations.length}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    仓储位置
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+            <Paper
+              sx={{
+                borderRadius: 2,
+                p: 4,
+                boxShadow: 1,
+                border: 1,
+                borderColor: 'grey.100',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    bgcolor: 'secondary.100',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Camera
+                    size={20}
+                    style={{ color: ct.pink.dark }}
+                  />
+                </Box>
+                <Box>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 700, color: 'text.primary' }}
+                  >
+                    {statistics?.evidence_records || evidenceRecords.length}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    现场取证
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+            <Paper
+              sx={{
+                borderRadius: 2,
+                p: 4,
+                boxShadow: 1,
+                border: 1,
+                borderColor: 'grey.100',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    bgcolor: 'secondary.100',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Map
+                    size={20}
+                    style={{ color: ct.purple.dark }}
+                  />
+                </Box>
+                <Box>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 700, color: 'text.primary' }}
+                  >
+                    {statistics?.factory_maps || factoryMaps.length}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    厂区地图
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+            <Paper
+              sx={{
+                borderRadius: 2,
+                p: 4,
+                boxShadow: 1,
+                border: 1,
+                borderColor: 'grey.100',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    bgcolor: ct.teal[100],
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Building2
+                    size={20}
+                    style={{ color: ct.teal.main }}
+                  />
+                </Box>
+                <Box>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 700, color: 'text.primary' }}
+                  >
+                    {statistics?.business_locations || businessLocations.length}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    业务位置
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
           </Box>
 
-          <Box sx={{ p: 4 }}>
-            {loading ? (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  py: 12,
-                }}
-              >
-                <CircularProgress sx={{ color: 'info.main' }} />
-              </Box>
-            ) : activeTab === 'map' ? (
-              <Box
-                sx={{
-                  height: 600,
-                  border: 1,
-                  borderColor: 'grey.200',
-                  borderRadius: 3,
-                  overflow: 'hidden',
-                }}
-              >
-                <MapView
-                  devicePoints={devicePoints}
-                  pipelines={pipelines}
-                  storageLocations={storageLocations}
-                />
-              </Box>
-            ) : (
-              renderDataTable(getCurrentData(), activeTab)
-            )}
-          </Box>
-        </Paper>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              boxShadow: 1,
+              border: 1,
+              borderColor: 'grey.100',
+              overflow: 'hidden',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                borderBottom: 1,
+                borderColor: 'grey.100',
+                overflowX: 'auto',
+              }}
+            >
+              {tabs.map((tab) => (
+                <Button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    px: 20,
+                    py: 12,
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                    color: activeTab === tab.id ? 'cyan.dark' : 'text.secondary',
+                    borderBottom: activeTab === tab.id ? 2 : 0,
+                    borderColor: activeTab === tab.id ? 'cyan.dark' : 'transparent',
+                    bgcolor: activeTab === tab.id ? 'cyan.light' : 'transparent',
+                    '&:hover': {
+                      bgcolor: activeTab === tab.id ? 'cyan.light' : 'grey.50',
+                    },
+                    textTransform: 'none',
+                  }}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </Button>
+              ))}
+            </Box>
+
+            <Box sx={{ p: 4 }}>
+              {loading ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    py: 12,
+                  }}
+                >
+                  <CircularProgress sx={{ color: 'info.main' }} />
+                </Box>
+              ) : activeTab === 'map' ? (
+                <Box
+                  sx={{
+                    height: 600,
+                    border: 1,
+                    borderColor: 'grey.200',
+                    borderRadius: 3,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <MapView
+                    devicePoints={devicePoints}
+                    pipelines={pipelines}
+                    storageLocations={storageLocations}
+                  />
+                </Box>
+              ) : (
+                renderDataTable(getCurrentData(), activeTab)
+              )}
+            </Box>
+          </Paper>
+        </Box>
       </Box>
-    </Box>
     </PageContainer>
   );
 };

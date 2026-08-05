@@ -213,6 +213,7 @@ const CommentsPage: React.FC = () => {
                     setReplyTo(replyTo === comment.id ? null : comment.id);
                     setReplyContent('');
                   }}
+                aria-label="回复"
                 >
                   <Reply size={14} />
                 </IconButton>
@@ -224,6 +225,7 @@ const CommentsPage: React.FC = () => {
                         setEditingId(comment.id);
                         setEditingContent(comment.content);
                       }}
+                    aria-label="编辑"
                     >
                       <Edit2 size={14} />
                     </IconButton>
@@ -231,6 +233,7 @@ const CommentsPage: React.FC = () => {
                       size='small'
                       color='error'
                       onClick={() => deleteMutation.mutate(comment.id)}
+                    aria-label="删除"
                     >
                       <Trash2 size={14} />
                     </IconButton>

@@ -1,14 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import {
-  FolderOpen,
-  Upload,
-  FolderPlus,
-  RefreshCw,
-  Eye,
-  Download,
-  Share2,
-  Trash2,
-} from 'lucide-react';
+import React, { useCallback } from 'react';
+import { FolderOpen, Eye, Download, Share2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { documentSchema } from '@/schemas/doc/document';
@@ -33,7 +24,6 @@ export const DocumentListPage: React.FC = () => {
     list: async (params) => {
       const search = params?.search as string | undefined;
       const typeFilter = params?.type as string | undefined;
-      const categoryFilter = params?.category as string | undefined;
 
       const response = await docApi.list();
       let files: FileMetadata[] = [];

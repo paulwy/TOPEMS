@@ -262,6 +262,7 @@ export function ChartAnnotations({
                   variant='text'
                   size='small'
                   onClick={handleSaveEdit}
+                  aria-label='保存'
                 >
                   <Check sx={{ width: 12, height: 12 }} />
                 </Button>

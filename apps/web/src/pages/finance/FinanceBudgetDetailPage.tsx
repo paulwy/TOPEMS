@@ -22,21 +22,12 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
-import {
-  PieChart,
-  TrendingUp,
-  DollarSign,
-  Calendar,
-  AlertCircle,
-  CheckCircle2,
-  Download,
-} from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { PieChart, TrendingUp, DollarSign, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import { budgetApi } from '@/api/erp';
 import { financeApi } from '@/api/finance';
 import type { AccountBalance } from '@/types/finance';
 import { useNotification } from '@/hooks/useNotification';
-import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 
@@ -73,9 +64,8 @@ interface BudgetDetail {
 
 const FinanceBudgetDetailPage: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { error, success } = useNotification();
+  const { success } = useNotification();
 
   const [showAnalysis, setShowAnalysis] = useState(false);
 

@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  v51DesignTokens,
-  generateV51CSSVariables,
-  injectV51CSSVariables,
-} from './tokens/v51-tokens';
+import { v51DesignTokens, injectV51CSSVariables } from './tokens/v51-tokens';
 
 // ============================================================
 // V51.0 Theme Manager

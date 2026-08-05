@@ -9,7 +9,7 @@ const isMFMode = DEPLOYMENT_MODE !== 'static';
  *   - 开发环境：一律走 Vite 代理 /remote/<name>/remoteEntry.js，杜绝跨端口 CORS
  *   - 生产环境：按 DEPLOYMENT_MODE 决定
  */
-const getRemoteEntryUrl = (name: string, port: number): string | undefined => {
+const getRemoteEntryUrl = (name: string, _port: number): string | undefined => {
   // static 模式（无论开发/生产）：不加载任何远程入口
   if (DEPLOYMENT_MODE === 'static') return undefined;
 

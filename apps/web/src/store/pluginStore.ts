@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Plugin, TenantPlugin, PluginCategory } from '@/api/plugin';
 import { pluginApi, checkAllPluginsHealth, listPlugins } from '@/api/plugin';
-import { REMOTE_MODULES, MODULE_CATEGORIES } from '@/config/plugins.config';
+import { REMOTE_MODULES } from '@/config/plugins.config';
 
 export interface PluginState {
   installedPlugins: TenantPlugin[];

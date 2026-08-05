@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, CheckCircle, Archive, TrendingUp, Calendar } from 'lucide-react';
+import { Bell, CheckCircle, Archive } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import type { NotificationStats } from '@/api/notification';
 import { getMyNotificationStats, notificationServiceApi } from '@/api/notification';

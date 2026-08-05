@@ -1,25 +1,7 @@
 import React, { useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  InputLabel,
-  Chip,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from '@mui/material';
-import {
-  Bell,
-  Clock,
-  User,
-  MessageSquare,
-  AlertCircle,
-  CheckCircle2,
-  FileText,
-} from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Box, Typography, InputLabel, Chip, Button } from '@mui/material';
+import { Bell, Clock, MessageSquare, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationApi, type Notification } from '@/api/notification';
 import { useNotification } from '@/hooks/useNotification';
@@ -33,7 +15,6 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 const ct = designTokens.colors;
 
 const NotificationDetailPage: React.FC = () => {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { success, error } = useNotification();
   const queryClient = useQueryClient();

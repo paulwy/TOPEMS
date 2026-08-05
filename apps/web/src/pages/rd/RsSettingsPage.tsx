@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -24,10 +24,7 @@ import { settingSchema } from '@/schemas/rd';
 import type { EntitySchema } from '@/schema';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
-import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
 
 interface SettingItem extends Record<string, unknown> {
   id: string;

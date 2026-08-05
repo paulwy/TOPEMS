@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { type EntitySchema } from '@/schema';

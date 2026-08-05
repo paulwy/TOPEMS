@@ -10,7 +10,7 @@ const apiAdapter = createCrudPageAdapter({
     financeApi.receivablePayable.createCollection(
       data as Parameters<typeof financeApi.receivablePayable.createCollection>[0]
     ),
-  update: async (id: string, data: unknown) => {
+  update: async (_id: string, data: unknown) => {
     return data as unknown as ApiResponse<CollectionRecord>;
   },
   delete: async (_id: string) => {

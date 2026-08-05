@@ -15,7 +15,6 @@ import {
   RefreshCw,
   Settings,
   GitMerge,
-  ArrowRight,
 } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';

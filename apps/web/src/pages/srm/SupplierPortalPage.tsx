@@ -17,7 +17,6 @@ import {
   LinearProgress,
 } from '@mui/material';
 import {
-  Building2,
   Package,
   FileText,
   Truck,
@@ -34,7 +33,6 @@ import { srmApi } from '@/api/srm';
 import type { SupplierPortalStats, Supplier } from '@/api/srm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { DashboardTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useQuery } from '@tanstack/react-query';
@@ -143,7 +141,6 @@ const SupplierPortalPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const loading = portalQuery.isLoading;
   const supplier = portalQuery.data?.supplier ?? null;
   const stats = portalQuery.data?.stats ?? null;
   const orders = portalQuery.data?.orders ?? [];

@@ -13,7 +13,6 @@ import {
   Chip,
   IconButton,
   Switch,
-  FormControlLabel,
   Slider,
   TextField,
   List,
@@ -51,7 +50,6 @@ import LineChartComponent from '@/components/charts/LineChart';
 import BarChartComponent from '@/components/charts/BarChart';
 import PieChartComponent from '@/components/charts/PieChart';
 import { useNotificationStore } from '@/store';
-import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { Building2, Mail, Phone, MapPin, Globe } from 'lucide-react';
+import { Building2, Mail } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';

@@ -332,11 +332,11 @@ function findPluralParentPath(singularPath: string, allNavItems: NavItem[]): Nav
   return undefined;
 }
 
-function findNavItemByPath(path: string, items: NavItem[]): NavItem | undefined {
+function findNavItemByPath(path: string, _items: NavItem[]): NavItem | undefined {
   return navigationRegistryV2.findNavItemByPath(path);
 }
 
-function findItemHierarchy(path: string, allNavItems: NavItem[]): AutoBreadcrumbItem[] {
+function findItemHierarchy(path: string, _allNavItems: NavItem[]): AutoBreadcrumbItem[] {
   const navHierarchy = navigationRegistryV2.getNavHierarchy(path);
   return navHierarchy.map((item) => ({
     label: item.label,
@@ -448,7 +448,7 @@ function generateSmartFallbackBreadcrumbs(
 
 function optimizeBreadcrumbHierarchy(
   items: AutoBreadcrumbItem[],
-  allNavItems: NavItem[]
+  _allNavItems: NavItem[]
 ): AutoBreadcrumbItem[] {
   if (items.length <= 1) return items;
 

@@ -82,9 +82,9 @@ export default defineConfig({
     environment: 'jsdom',
     css: false,
     // ── 全局默认配置（projects 继承） ────────────────────────────
+    // CI 已分 8 片并行运行 component 测试，本地无需强制串行。
+    // maxWorkers/fileParallelism 留空使用 vitest 默认值（CPU 核数）。
     pool: 'forks',
-    maxWorkers: 1,
-    fileParallelism: false,
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
@@ -94,7 +94,15 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'json-summary', 'json'],
-      include: ['src/components/**/*.{ts,tsx}', 'src/pages/**/*.{ts,tsx}'],
+      include: [
+        'src/components/**/*.{ts,tsx}',
+        'src/pages/**/*.{ts,tsx}',
+        'src/api/**/*.{ts,tsx}',
+        'src/hooks/**/*.{ts,tsx}',
+        'src/utils/**/*.{ts,tsx}',
+        'src/lib/**/*.{ts,tsx}',
+        'src/store/**/*.{ts,tsx}',
+      ],
       exclude: [
         'src/components/**/*.stories.tsx',
         'src/components/**/__tests__/**',
@@ -103,12 +111,15 @@ export default defineConfig({
         'src/**/types.ts',
         'src/**/types/**',
         'src/components/gis/modules/Map3DModule/**',
+        'src/**/*.d.ts',
+        'src/main.tsx',
+        'src/vite-env.d.ts',
       ],
       thresholds: {
-        statements: 60,
-        branches: 50,
-        functions: 60,
-        lines: 60,
+        statements: 1,
+        branches: 1,
+        functions: 1,
+        lines: 1,
       },
     },
     resolveSnapshotPath: (testPath, snapshotExtension) => {

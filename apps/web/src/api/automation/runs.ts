@@ -35,9 +35,7 @@ export const automationRunsApi = {
   },
 
   /** 获取运行步骤明细（含每步输入/输出） */
-  getSteps: async (
-    id: string
-  ): Promise<ApiResponse<NonNullable<AutomationRun['steps']>>> => {
+  getSteps: async (id: string): Promise<ApiResponse<NonNullable<AutomationRun['steps']>>> => {
     return apiClient.automation.get<NonNullable<AutomationRun['steps']>>(`/runs/${id}/steps`);
   },
 
@@ -56,9 +54,10 @@ export const automationRunsApi = {
   },
 
   /** 批量清理历史运行记录 */
-  purge: async (
-    params: { before?: string; status?: string }
-  ): Promise<ApiResponse<{ deleted: number }>> => {
+  purge: async (params: {
+    before?: string;
+    status?: string;
+  }): Promise<ApiResponse<{ deleted: number }>> => {
     return apiClient.automation.post<{ deleted: number }>('/runs/purge', params);
   },
 };

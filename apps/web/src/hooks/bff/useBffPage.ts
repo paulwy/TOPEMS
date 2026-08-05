@@ -131,7 +131,6 @@ export function useBffListPage<
     ...crudOptions
   } = options;
 
-  const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const crud = useBffCrud<T, TCreate, TUpdate>({
@@ -550,7 +549,6 @@ export function useBffFormPage<T extends { id?: string }>(
   } = options;
 
   const queryClient = useQueryClient();
-  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const crud = useBffCrud<T>({
     service,

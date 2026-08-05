@@ -150,6 +150,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
           <IconButton
             onClick={() => setCurrentIndex(0)}
             sx={{ p: 2, '&:hover': { bgcolor: 'grey.100' } }}
+            aria-label='跳到开始'
             title='跳到开始'
           >
             <SkipBack
@@ -165,6 +166,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
               color: 'common.white',
               '&:hover': { bgcolor: 'primary.dark' },
             }}
+            aria-label={isPlaying ? '暂停' : '播放'}
             title={isPlaying ? '暂停' : '播放'}
           >
             {isPlaying ? <Pause size={20} /> : <Play size={20} />}
@@ -172,6 +174,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
           <IconButton
             onClick={onStop}
             sx={{ p: 2, '&:hover': { bgcolor: 'grey.100' } }}
+            aria-label='停止'
             title='停止'
           >
             <Square
@@ -182,6 +185,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
           <IconButton
             onClick={() => setCurrentIndex(track.points.length - 1)}
             sx={{ p: 2, '&:hover': { bgcolor: 'grey.100' } }}
+            aria-label='跳到结尾'
             title='跳到结尾'
           >
             <SkipForward

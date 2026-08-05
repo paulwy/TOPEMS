@@ -109,6 +109,7 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
                   variant={showFilters ? 'contained' : 'text'}
                   size='small'
                   onClick={onToggleFilters}
+                  aria-label={t('doc.documents.filter')}
                 >
                   <Filter sx={{ width: 16, height: 16 }} />
                 </Button>

@@ -2,7 +2,7 @@
  * ModuleLoader - Lazy loading component for modules
  */
 
-import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { CircularProgress, Box, Typography } from '@mui/material';
 import { LOADER_TIMEOUT } from '@topems/shared-constants';
 import type { ModuleStatus } from '@/store/moduleLoadingStore';

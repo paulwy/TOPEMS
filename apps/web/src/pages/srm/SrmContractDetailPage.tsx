@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
-import { Box, Typography, Chip, Card, CardContent, Grid, Avatar, InputLabel } from '@mui/material';
-import { FileText, Building2, Calendar, DollarSign, Clock } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Box, Typography, Chip, Avatar, InputLabel } from '@mui/material';
+import { FileText, Building2, Calendar, DollarSign } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import { srmApi, type SupplierContract } from '@/api/srm';
 import { SRM_PATHS } from '@/modules/srm/config';
 import { apiLogger } from '@/utils/logger';
@@ -11,7 +11,6 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const SrmContractDetailPage: React.FC = () => {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
   const contractQuery = useQuery<SupplierContract | null>({

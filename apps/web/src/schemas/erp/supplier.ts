@@ -6,7 +6,6 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
-import { erpApi } from '@/api/erp';
 import i18n from '@/i18n';
 
 /**
@@ -53,7 +52,10 @@ export const supplierSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: '原材料供应商', label: i18n.t('schema:erp.supplier.category.option.原材料供应商') },
+          {
+            value: '原材料供应商',
+            label: i18n.t('schema:erp.supplier.category.option.原材料供应商'),
+          },
           { value: '配件供应商', label: i18n.t('schema:erp.supplier.category.option.配件供应商') },
           { value: '设备供应商', label: i18n.t('schema:erp.supplier.category.option.设备供应商') },
           { value: '服务供应商', label: i18n.t('schema:erp.supplier.category.option.服务供应商') },
@@ -201,7 +203,10 @@ export const supplierSchema: EntitySchema = {
           { label: i18n.t('schema:erp.supplier.filter.status.option.all'), value: 'all' },
           { label: i18n.t('schema:erp.supplier.filter.status.option.active'), value: 'active' },
           { label: i18n.t('schema:erp.supplier.filter.status.option.inactive'), value: 'inactive' },
-          { label: i18n.t('schema:erp.supplier.filter.status.option.blacklisted'), value: 'blacklisted' },
+          {
+            label: i18n.t('schema:erp.supplier.filter.status.option.blacklisted'),
+            value: 'blacklisted',
+          },
         ],
       },
       {
@@ -210,10 +215,22 @@ export const supplierSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.supplier.filter.category.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.supplier.filter.category.option.原材料供应商'), value: '原材料供应商' },
-          { label: i18n.t('schema:erp.supplier.filter.category.option.配件供应商'), value: '配件供应商' },
-          { label: i18n.t('schema:erp.supplier.filter.category.option.设备供应商'), value: '设备供应商' },
-          { label: i18n.t('schema:erp.supplier.filter.category.option.服务供应商'), value: '服务供应商' },
+          {
+            label: i18n.t('schema:erp.supplier.filter.category.option.原材料供应商'),
+            value: '原材料供应商',
+          },
+          {
+            label: i18n.t('schema:erp.supplier.filter.category.option.配件供应商'),
+            value: '配件供应商',
+          },
+          {
+            label: i18n.t('schema:erp.supplier.filter.category.option.设备供应商'),
+            value: '设备供应商',
+          },
+          {
+            label: i18n.t('schema:erp.supplier.filter.category.option.服务供应商'),
+            value: '服务供应商',
+          },
         ],
       },
     ],

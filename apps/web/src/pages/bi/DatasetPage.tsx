@@ -1,15 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import {
-  Plus,
-  Edit2,
-  Trash2,
-  Eye,
-  Play,
-  Database,
-  Search,
-  RefreshCw,
-  FileText,
-} from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, Play, Database, RefreshCw, FileText } from 'lucide-react';
 import {
   Box,
   Typography,
@@ -18,10 +8,6 @@ import {
   CardContent,
   Chip,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   IconButton,
   Tooltip,
   Tabs,
@@ -51,7 +37,6 @@ import {
   testSqlQuery,
   type Dataset,
   type DatasetField,
-  type DataSource,
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
@@ -69,7 +54,6 @@ const DatasetPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [editorTab, setEditorTab] = useState(0);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Dataset>>({
     name: '',
     description: '',

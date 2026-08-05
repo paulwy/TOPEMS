@@ -1,7 +1,6 @@
 import React from 'react';
 import { FormDialog, FormDrawer } from '@/components/common';
 import type { ListPageCrudConfig } from './types';
-import { useTranslation } from 'react-i18next';
 
 export interface CrudFormDialogProps {
   open: boolean;
@@ -26,7 +25,6 @@ export const CrudFormDialog: React.FC<CrudFormDialogProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const { t } = useTranslation();
   if (!crud) return null;
 
   const title =

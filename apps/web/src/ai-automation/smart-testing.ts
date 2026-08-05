@@ -226,10 +226,9 @@ class SmartTesterImpl {
 
   async runTests(
     scenarioIds?: string[],
-    options?: { parallel?: boolean; timeout_ms?: number }
+    _options?: { parallel?: boolean; timeout_ms?: number }
   ): Promise<TestResult[]> {
     const ids = scenarioIds || Array.from(this.scenarios.keys());
-    const timeout = options?.timeout_ms || 30000;
     const results: TestResult[] = [];
 
     this.emit({ type: 'tests_started', count: ids.length });
@@ -298,7 +297,6 @@ class SmartTesterImpl {
   getCoverage(): CoverageReport {
     const results = this.getTestResults();
     const totalScenarios = this.scenarios.size;
-    const passedScenarios = results.filter((r) => r.passed).length;
     const totalCoverage =
       results.length > 0 ? results.reduce((sum, r) => sum + r.coverage, 0) / results.length : 0;
 

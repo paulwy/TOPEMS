@@ -10,7 +10,7 @@ import {
   Divider,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { Building, Users, Folder, Phone, Mail, Globe } from 'lucide-react';
+import { Building, Folder, Phone, Mail, Globe } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';

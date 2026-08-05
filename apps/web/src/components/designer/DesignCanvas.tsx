@@ -13,7 +13,7 @@ import { Box, Paper, Typography, IconButton, Tooltip } from '@mui/material';
 import { EmptyState } from '@topems/shared-components';
 import * as LucideIcons from 'lucide-react';
 import type { CanvasNode, DesignerComponent } from './types';
-import { getComponentByType, BUILTIN_COMPONENTS } from './types';
+import { getComponentByType } from './types';
 
 interface DesignCanvasProps {
   nodes: CanvasNode[];
@@ -187,6 +187,7 @@ function CanvasNodeItem({
           <Tooltip title='上移'>
             <IconButton
               size='small'
+              aria-label='上移'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onMoveUp();
@@ -198,6 +199,7 @@ function CanvasNodeItem({
           <Tooltip title='下移'>
             <IconButton
               size='small'
+              aria-label='下移'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onMoveDown();
@@ -209,6 +211,7 @@ function CanvasNodeItem({
           <Tooltip title='删除'>
             <IconButton
               size='small'
+              aria-label='删除'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onRemove();

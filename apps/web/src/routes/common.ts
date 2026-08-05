@@ -1,4 +1,3 @@
-import { lazy } from 'react';
 import { createSafeLazy, type RouteConfig } from './utils';
 import { EHS_PATHS } from '@/modules/ehs/config';
 import { DOC_PATHS } from '@/modules/doc/config';

@@ -5,9 +5,8 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { apiLogger } from '@/utils/logger';
-import { Box, Typography, Tabs, Tab, Paper } from '@mui/material';
+import { Box, Tabs, Tab, Paper } from '@mui/material';
 import { Settings, Mail, MessageSquare, FileText } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type {
   FormSection,
@@ -256,8 +255,6 @@ const getSections = (tabId: string): FormSection[] => {
 };
 
 export default function SystemSettingsPage() {
-  const navigate = useNavigate();
-
   const [activeTab, setActiveTab] = useState('basic');
   const [settings, setSettings] = useState(mockSettings);
 

@@ -1,15 +1,6 @@
 import React from 'react';
-import {
-  Checkbox,
-  FormControl,
-  Input,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-} from '@mui/material';
+import { Checkbox, FormControl, Input, MenuItem, Select, TextField } from '@mui/material';
 import type { ColumnDef } from './types';
-import { useTranslation } from 'react-i18next';
 
 export interface EditCellProps<T> {
   column: ColumnDef<T>;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
-import { GitPullRequest, CheckCircle, XCircle, Clock, User } from 'lucide-react';
+import { GitPullRequest, User } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {

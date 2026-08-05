@@ -41,6 +41,7 @@ export const CardGroupComponent: React.FC<CardGroup & { loading?: boolean }> = (
             <IconButton
               size='small'
               onClick={() => setExpanded(!expanded)}
+            aria-label="展开"
             >
               <ChevronDown
                 style={{

@@ -1,5 +1,6 @@
 import { aiNavConfig } from '@/modules/ai/config';
 import { adminNavConfig } from '@/modules/admin/config';
+import { automationNavConfig } from '@/modules/automation/config';
 import { assetNavConfig } from '@/modules/asset/config';
 import { biNavConfig } from '@/modules/bi/config';
 import { crmNavConfig } from '@/modules/crm/config';
@@ -34,6 +35,7 @@ import type { ModuleNavConfig } from '../types';
 
 export const coreModuleNavConfigs: ModuleNavConfig[] = [
   adminNavConfig,
+  automationNavConfig,
   iamNavConfig,
   workflowNavConfig,
   notificationNavConfig,
@@ -70,6 +72,7 @@ export const coreModuleNavConfigs: ModuleNavConfig[] = [
 export {
   aiNavConfig,
   adminNavConfig,
+  automationNavConfig,
   assetNavConfig,
   biNavConfig,
   crmNavConfig,

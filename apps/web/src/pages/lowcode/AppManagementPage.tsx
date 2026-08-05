@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Button, CircularProgress, Stack, TextField, Typography } from '@mui/material';
 import { CloudUpload as CloudUploadIcon, CloudOff as CloudOffIcon } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { lowcodeAppsApi } from '@/api/lowcode';
@@ -91,95 +84,115 @@ export const AppManagementPage: React.FC = () => {
 
   if (!appId) {
     return (
-      <PageContainer title="应用管理">
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">请在 URL 上携带 ?app_id=xxx 以管理具体应用。</Typography>
-      </Box>
+      <PageContainer title='应用管理'>
+        <Box sx={{ p: 3 }}>
+          <Typography color='text.secondary'>
+            请在 URL 上携带 ?app_id=xxx 以管理具体应用。
+          </Typography>
+        </Box>
       </PageContainer>
     );
   }
 
   if (loading) {
     return (
-      <PageContainer title="应用管理">
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <CircularProgress />
-      </Box>
+      <PageContainer title='应用管理'>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer title="应用管理">
-    <Box sx={{ p: 3, maxWidth: 720 }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        应用管理 {app ? `· ${app.code}` : ''}
-      </Typography>
-      {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 1 }}>
-          {error}
+    <PageContainer title='应用管理'>
+      <Box sx={{ p: 3, maxWidth: 720 }}>
+        <Typography
+          variant='h5'
+          sx={{ mb: 2 }}
+        >
+          应用管理 {app ? `· ${app.code}` : ''}
         </Typography>
-      )}
-      {app && (
-        <Stack spacing={2}>
-          <TextField
-            label="应用名称"
-            value={editForm.name}
-            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-            fullWidth
-          />
-          <TextField
-            label="应用编码"
-            value={app.code}
-            disabled
-            fullWidth
-            helperText="编码创建后不可修改"
-          />
-          <TextField
-            label="访问路径"
-            value={editForm.access_path}
-            onChange={(e) => setEditForm({ ...editForm, access_path: e.target.value })}
-            fullWidth
-            helperText="如 /app/leave-request"
-          />
-          <TextField
-            label="描述"
-            value={editForm.description}
-            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-            fullWidth
-            multiline
-            rows={2}
-          />
-          <Stack direction="row" spacing={1}>
-            <Button variant="contained" onClick={handleUpdate} disabled={saving}>
-              {saving ? '保存中…' : '保存'}
-            </Button>
-            {app.status === 'published' ? (
+        {error && (
+          <Typography
+            color='error'
+            variant='body2'
+            sx={{ mb: 1 }}
+          >
+            {error}
+          </Typography>
+        )}
+        {app && (
+          <Stack spacing={2}>
+            <TextField
+              label='应用名称'
+              value={editForm.name}
+              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label='应用编码'
+              value={app.code}
+              disabled
+              fullWidth
+              helperText='编码创建后不可修改'
+            />
+            <TextField
+              label='访问路径'
+              value={editForm.access_path}
+              onChange={(e) => setEditForm({ ...editForm, access_path: e.target.value })}
+              fullWidth
+              helperText='如 /app/leave-request'
+            />
+            <TextField
+              label='描述'
+              value={editForm.description}
+              onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              fullWidth
+              multiline
+              rows={2}
+            />
+            <Stack
+              direction='row'
+              spacing={1}
+            >
               <Button
-                variant="outlined"
-                color="warning"
-                startIcon={<CloudOffIcon />}
-                onClick={handleUnpublish}
+                variant='contained'
+                onClick={handleUpdate}
+                disabled={saving}
               >
-                下架
+                {saving ? '保存中…' : '保存'}
               </Button>
-            ) : (
-              <Button
-                variant="outlined"
-                color="success"
-                startIcon={<CloudUploadIcon />}
-                onClick={handlePublish}
+              {app.status === 'published' ? (
+                <Button
+                  variant='outlined'
+                  color='warning'
+                  startIcon={<CloudOffIcon />}
+                  onClick={handleUnpublish}
+                >
+                  下架
+                </Button>
+              ) : (
+                <Button
+                  variant='outlined'
+                  color='success'
+                  startIcon={<CloudUploadIcon />}
+                  onClick={handlePublish}
+                >
+                  发布
+                </Button>
+              )}
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ alignSelf: 'center' }}
               >
-                发布
-              </Button>
-            )}
-            <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center' }}>
-              当前状态：{app.status} · v{app.version}
-            </Typography>
+                当前状态：{app.status} · v{app.version}
+              </Typography>
+            </Stack>
           </Stack>
-        </Stack>
-      )}
-    </Box>
+        )}
+      </Box>
     </PageContainer>
   );
 };

@@ -47,6 +47,7 @@ const TreeViewComponent: React.FC<TreeViewComponentProps> = ({ data, selectedId,
             <IconButton
               size='small'
               sx={{ p: 0.25 }}
+            aria-label="展开"
             >
               {isExpanded ? (
                 <ChevronDown sx={{ width: 16, height: 16 }} />

@@ -151,7 +151,7 @@ const SrmOrderStats: React.FC = () => {
 };
 
 const orderApiAdapter: CrudApiAdapter = {
-  list: async (params) => {
+  list: async (_params) => {
     const response = await srmApi.listPurchaseOrders();
     if (!response.success) {
       throw new Error('加载订单失败');

@@ -16,7 +16,6 @@ import type {
   MrpMaterialSummaryQueryParams,
 } from '@/api/scm';
 import { useNotificationStore } from '@/store';
-import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const apiAdapter: CrudApiAdapter<MrpSuggestion> = {
   list: async (params) => {
@@ -169,7 +168,7 @@ const MrpSuggestionPage: React.FC = () => {
     });
   };
 
-  const handleGeneratePurchaseOrder = (suggestion: MrpSuggestion) => {
+  const handleGeneratePurchaseOrder = (_suggestion: MrpSuggestion) => {
     setPendingAction({
       title: '生成采购单',
       message: '确定要根据这条采购建议生成采购单吗？',
@@ -183,7 +182,7 @@ const MrpSuggestionPage: React.FC = () => {
     });
   };
 
-  const handleGenerateProductionOrder = (suggestion: MrpSuggestion) => {
+  const handleGenerateProductionOrder = (_suggestion: MrpSuggestion) => {
     setPendingAction({
       title: '生成工单',
       message: '确定要根据这条生产建议生成工单吗？',

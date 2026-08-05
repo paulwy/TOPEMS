@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import i18next from 'i18next';
 
 // i18n key 翻译函数
-const t = (key: string): string => i18next.t(key);
 
 export const parseFileExtension = (filename: string): string => {
   const ext = filename.split('.').pop()?.toLowerCase() || '';

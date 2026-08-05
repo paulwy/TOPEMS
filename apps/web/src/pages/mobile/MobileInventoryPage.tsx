@@ -22,14 +22,9 @@ import {
   User,
   Package,
   Search,
-  ChevronRight,
   ClipboardList,
-  TrendingDown,
-  TrendingUp,
   Warehouse,
   Truck,
-  AlertTriangle,
-  Filter,
   Barcode,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -42,7 +37,6 @@ import {
 } from '@/components/mobile';
 import { useNotificationStore } from '@/store';
 import {
-  mobileApi,
   type InventoryItem,
   type StocktakeTask,
   type InboundOrder,
@@ -412,6 +406,7 @@ const MobileInventoryPage: React.FC = () => {
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
           onClick={() => navigate(MOBILE_PATHS.scanPage)}
+        aria-label="扫码"
         >
           <Barcode style={{ width: 20, height: 20 }} />
         </IconButton>

@@ -20,7 +20,13 @@
  */
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import tsParser from '@typescript-eslint/parser';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import globals from 'globals';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const topemsDesignPlugin = require('./scripts/eslint-plugin-topems-design.cjs');
 
 export default [
   {
@@ -45,6 +51,9 @@ export default [
   },
   {
     files: ['src/**/*.{ts,tsx}'],
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -59,6 +68,11 @@ export default [
     },
     plugins: {
       'jsx-a11y': jsxA11y,
+      // 注册以下插件仅为让源文件中的 eslint-disable 指令被识别，
+      // 不启用它们的任何规则，保持 a11y 审计聚焦。
+      '@typescript-eslint': tsPlugin,
+      'topems-design': topemsDesignPlugin,
+      'react-hooks': reactHooksPlugin,
     },
     rules: {
       // =========================================================================

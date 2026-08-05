@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Card, CardContent, Stack, Chip, Button } from '@mui/material';
-import { Settings, Database, Cloud, Zap, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Settings, Database, Cloud, Zap, CheckCircle, AlertCircle } from 'lucide-react';
 import { useErpConnections } from '@/hooks/useExternalErp';
 import { PageContainer } from '@/components/common';
 import { INTEGRATION_PATHS } from '@/modules/integration/config';
@@ -60,7 +60,7 @@ const STATUS_CONFIG: Record<
 
 const IntegrationExternalErpOverviewPage: React.FC = () => {
   const navigate = useNavigate();
-  const { data: connectionsData, isLoading } = useErpConnections();
+  const { data: connectionsData } = useErpConnections();
 
   const connections = useMemo(() => {
     return connectionsData?.data?.items || [];

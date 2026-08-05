@@ -9,21 +9,16 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
-  Divider,
   Chip,
-  IconButton,
   useTheme,
 } from '@mui/material';
 import {
   Search,
-  X,
   ArrowRight,
   Command,
   Home,
   Settings,
   User,
-  Bell,
-  Sun,
   Moon,
   Bookmark,
   Clock,
@@ -367,7 +362,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
                 dense
                 sx={{ pt: 0 }}
               >
-                {items.map((cmd, index) => {
+                {items.map((cmd, _index) => {
                   const globalIndex = filteredCommands.indexOf(cmd);
                   const isSelected = globalIndex === selectedIndex;
                   return (

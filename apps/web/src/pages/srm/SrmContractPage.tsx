@@ -6,7 +6,7 @@ import { contractSchema } from '@/schemas/srm';
 import { srmApi } from '@/api/srm';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Card, CardContent, Typography } from '@mui/material';
-import { FileText, CheckCircle, Clock, XCircle, Eye } from 'lucide-react';
+import { FileText, CheckCircle, Clock, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SRM_PATHS } from '@/modules/srm/config';
 import { designTokens } from '@/theme/tokens';

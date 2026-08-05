@@ -5,7 +5,7 @@ import type { Notification, ListParams } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useNotificationStore, useAuthStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
-import { Box, Typography, Tabs, Tab, Button } from '@mui/material';
+import { Box, Typography, Tabs, Tab } from '@mui/material';
 import { LoadingSpinner } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
@@ -93,7 +93,6 @@ const FlowNotificationCenter: React.FC = () => {
   };
 
   const getNotificationIcon = (type: string) => {
-    const iconProps = { sx: { width: 20, height: 20 } };
     switch (type) {
       case 'approval_created':
         return <CheckCircle sx={{ width: 20, height: 20, color: 'blue.600' }} />;

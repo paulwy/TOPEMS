@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Chip, Stack, Typography, Paper } from '@mui/material';
-import { Eye, RotateCcw, Tag, Calendar, User } from 'lucide-react';
+import { Eye, RotateCcw } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';

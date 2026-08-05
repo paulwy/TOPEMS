@@ -196,7 +196,6 @@ export class CICDPipeline {
 
     for (const stage of pipeline.stages) {
       const stageRun = stageMap.get(stage.name)!;
-      const stageIndex = pipeline.stages.findIndex((s) => s.name === stage.name);
 
       const depsMet = stage.depends_on.every((dep) => completedStages.has(dep));
       const depsFailed = stage.depends_on.some((dep) => failedStages.has(dep));

@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Box, Typography, Chip, Stack, useTheme } from '@mui/material';
 import {
-  GitBranch,
   CheckCircle,
   XCircle,
   Clock,
   AlertCircle,
-  Loader2,
   User,
   Users,
   FileText,
@@ -14,7 +12,7 @@ import {
   CheckCircle2,
   MessageSquare,
 } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import type { WorkflowInstance, Approval, ApprovalRecord } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useNotificationStore } from '../../store';
@@ -36,7 +34,6 @@ interface InstanceDetails {
 
 const FlowInstanceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const theme = useTheme();
 

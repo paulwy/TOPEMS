@@ -16,15 +16,7 @@ import {
   Button,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
-import {
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle,
-  Info,
-  X,
-  RefreshCw,
-  HelpCircle,
-} from 'lucide-react';
+import { AlertTriangle, AlertCircle, CheckCircle, Info, X, RefreshCw } from 'lucide-react';
 
 // ============ 类型定义 ============
 
@@ -355,6 +347,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
               size='small'
               onClick={onClose}
               sx={{ color: 'inherit' }}
+            aria-label="关闭"
             >
               {closeIcon || <X size={16} />}
             </IconButton>
@@ -534,6 +527,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                   flexShrink: 0,
                   p: 0.5,
                 }}
+              aria-label="关闭"
               >
                 {closeIcon || <X size={16} />}
               </IconButton>
@@ -668,6 +662,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
             flexShrink: 0,
             p: 0.5,
           }}
+        aria-label="关闭"
         >
           {closeIcon || <X size={16} />}
         </IconButton>

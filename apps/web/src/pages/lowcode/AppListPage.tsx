@@ -19,7 +19,11 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Plus as AddIcon, Trash2 as DeleteOutlineIcon, Copy as ContentCopyIcon } from 'lucide-react';
+import {
+  Plus as AddIcon,
+  Trash2 as DeleteOutlineIcon,
+  Copy as ContentCopyIcon,
+} from 'lucide-react';
 import { lowcodeAppsApi } from '@/api/lowcode';
 import type { LowcodeApp } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
@@ -87,114 +91,146 @@ export const AppListPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title="应用列表">
-    <Box sx={{ p: 3 }}>
-      <Stack direction="row" spacing={2} sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5">低代码应用管理</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-          新建应用
-        </Button>
-      </Stack>
+    <PageContainer title='应用列表'>
+      <Box sx={{ p: 3 }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <Typography variant='h5'>低代码应用管理</Typography>
+          <Button
+            variant='contained'
+            startIcon={<AddIcon />}
+            onClick={() => setCreateOpen(true)}
+          >
+            新建应用
+          </Button>
+        </Stack>
 
-      {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 1 }}>
-          {error}
-        </Typography>
-      )}
+        {error && (
+          <Typography
+            color='error'
+            variant='body2'
+            sx={{ mb: 1 }}
+          >
+            {error}
+          </Typography>
+        )}
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>应用名称</TableCell>
-                <TableCell>编码</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>版本</TableCell>
-                <TableCell>更新时间</TableCell>
-                <TableCell align="right">操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {apps.length === 0 ? (
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer
+            component={Paper}
+            variant='outlined'
+          >
+            <Table size='small'>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    暂无应用，点击右上角新建
-                  </TableCell>
+                  <TableCell>应用名称</TableCell>
+                  <TableCell>编码</TableCell>
+                  <TableCell>状态</TableCell>
+                  <TableCell>版本</TableCell>
+                  <TableCell>更新时间</TableCell>
+                  <TableCell align='right'>操作</TableCell>
                 </TableRow>
-              ) : (
-                apps.map((app) => (
-                  <TableRow key={app.id}>
-                    <TableCell>{app.name}</TableCell>
-                    <TableCell>{app.code}</TableCell>
-                    <TableCell>{app.status}</TableCell>
-                    <TableCell>v{app.version}</TableCell>
-                    <TableCell>{app.updated_at}</TableCell>
-                    <TableCell align="right">
-                      <IconButton size="small" onClick={() => handleDuplicate(app.id)} title="复制">
-                        <ContentCopyIcon size={18} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDelete(app.id)}
-                        title="删除"
-                      >
-                        <DeleteOutlineIcon size={18} />
-                      </IconButton>
+              </TableHead>
+              <TableBody>
+                {apps.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      align='center'
+                    >
+                      暂无应用，点击右上角新建
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+                ) : (
+                  apps.map((app) => (
+                    <TableRow key={app.id}>
+                      <TableCell>{app.name}</TableCell>
+                      <TableCell>{app.code}</TableCell>
+                      <TableCell>{app.status}</TableCell>
+                      <TableCell>v{app.version}</TableCell>
+                      <TableCell>{app.updated_at}</TableCell>
+                      <TableCell align='right'>
+                        <IconButton
+                          size='small'
+                          onClick={() => handleDuplicate(app.id)}
+                          aria-label='复制'
+                          title='复制'
+                        >
+                          <ContentCopyIcon size={18} />
+                        </IconButton>
+                        <IconButton
+                          size='small'
+                          color='error'
+                          onClick={() => handleDelete(app.id)}
+                          aria-label='删除'
+                          title='删除'
+                        >
+                          <DeleteOutlineIcon size={18} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
 
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>新建应用</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="应用名称"
-              value={createForm.name}
-              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-              fullWidth
-              required
-            />
-            <TextField
-              label="应用编码"
-              value={createForm.code}
-              onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
-              fullWidth
-              required
-              helperText="应用唯一标识，创建后不可修改"
-            />
-            <TextField
-              label="描述"
-              value={createForm.description}
-              onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-              fullWidth
-              multiline
-              rows={2}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>取消</Button>
-          <Button
-            onClick={handleCreate}
-            variant="contained"
-            disabled={creating || !createForm.name || !createForm.code}
-          >
-            {creating ? '创建中…' : '创建'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Dialog
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>新建应用</DialogTitle>
+          <DialogContent>
+            <Stack
+              spacing={2}
+              sx={{ mt: 1 }}
+            >
+              <TextField
+                label='应用名称'
+                value={createForm.name}
+                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                fullWidth
+                required
+              />
+              <TextField
+                label='应用编码'
+                value={createForm.code}
+                onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
+                fullWidth
+                required
+                helperText='应用唯一标识，创建后不可修改'
+              />
+              <TextField
+                label='描述'
+                value={createForm.description}
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                fullWidth
+                multiline
+                rows={2}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button
+              onClick={handleCreate}
+              variant='contained'
+              disabled={creating || !createForm.name || !createForm.code}
+            >
+              {creating ? '创建中…' : '创建'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </PageContainer>
   );

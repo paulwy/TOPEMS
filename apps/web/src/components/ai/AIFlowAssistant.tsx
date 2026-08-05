@@ -14,16 +14,7 @@ import {
   StepLabel,
   StepContent,
 } from '@mui/material';
-import {
-  Workflow,
-  Sparkles,
-  RefreshCw,
-  Lightbulb,
-  ArrowRight,
-  CheckCircle,
-  Clock,
-  User,
-} from 'lucide-react';
+import { Workflow, RefreshCw, Lightbulb, ArrowRight, CheckCircle, Clock, User } from 'lucide-react';
 import { assistantApi } from '../../api/ai/assistant';
 import { useNotificationStore } from '@/store/notificationStore';
 import { logger } from '@/utils/logger';

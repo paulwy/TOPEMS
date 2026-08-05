@@ -71,7 +71,7 @@ export interface SubTableBuilderProps<T extends Record<string, unknown> = Record
 function validateFieldValue(
   field: SchemaField,
   value: unknown,
-  allValues: Record<string, unknown>
+  _allValues: Record<string, unknown>
 ): string {
   if (field.required && !value) {
     return `${field.label}为必填项`;
@@ -320,6 +320,7 @@ const RowFormDialog: React.FC<RowFormDialogProps> = ({
         <IconButton
           size='small'
           onClick={onClose}
+        aria-label="关闭"
         >
           <X size={18} />
         </IconButton>
@@ -599,27 +600,27 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
                       fontSize: '0.875rem',
                     }}
                   >
-                    {col.render
-                      ? // V64 防御：render(row) 空值兜底 + try/catch 失败回退显示原始值
-                        (() => {
-                          try {
-                            return col.render!(row ?? ({} as any), index);
-                          } catch (e) {
-                            if (typeof console !== 'undefined' && console?.warn) {
-                              console.warn(
-                                `[SubTableBuilder] render for column="${col.id ?? ''}" failed, fallback:`,
-                                e
-                              );
-                            }
-                            const rawValue = (row as Record<string, unknown>)?.[col.id as string];
-                            return (
-                              <Typography variant='body2'>
-                                {rawValue != null ? String(rawValue) : '-'}
-                              </Typography>
+                    {col.render ? (
+                      // V64 防御：render(row) 空值兜底 + try/catch 失败回退显示原始值
+                      (() => {
+                        try {
+                          return col.render!(row ?? ({} as any), index);
+                        } catch (e) {
+                          if (typeof console !== 'undefined' && console?.warn) {
+                            console.warn(
+                              `[SubTableBuilder] render for column="${col.id ?? ''}" failed, fallback:`,
+                              e
                             );
                           }
-                        })()
-                      : (
+                          const rawValue = (row as Record<string, unknown>)?.[col.id as string];
+                          return (
+                            <Typography variant='body2'>
+                              {rawValue != null ? String(rawValue) : '-'}
+                            </Typography>
+                          );
+                        }
+                      })()
+                    ) : (
                       <Typography
                         variant='body2'
                         noWrap
@@ -638,6 +639,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
                             size='small'
                             onClick={() => handleEdit(index)}
                             disabled={disabled}
+                          aria-label="编辑"
                           >
                             <Pencil size={14} />
                           </IconButton>
@@ -650,6 +652,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
                             onClick={() => handleDelete(index)}
                             disabled={disabled}
                             color='error'
+                          aria-label="删除"
                           >
                             <Trash2 size={14} />
                           </IconButton>

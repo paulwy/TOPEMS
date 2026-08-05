@@ -41,9 +41,6 @@ import {
   Image,
   Table,
   Minus,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
   Save,
   Download,
   History,
@@ -553,6 +550,7 @@ ${content
                 <IconButton
                   onClick={() => setShowHistory(true)}
                   size='small'
+                aria-label="历史"
                 >
                   <History size={18} />
                 </IconButton>
@@ -563,6 +561,7 @@ ${content
               <IconButton
                 onClick={handleCopy}
                 size='small'
+              aria-label="确认"
               >
                 {copied ? <Check size={18} /> : <Copy size={18} />}
               </IconButton>
@@ -603,6 +602,7 @@ ${content
                     onClick={() => handleToolbarAction(action.action)}
                     color={tabValue === 0 ? 'inherit' : 'inherit'}
                     disabled={tabValue !== 0}
+                    aria-label={action.label}
                   >
                     {action.icon}
                   </IconButton>
@@ -620,6 +620,7 @@ ${content
                   <IconButton
                     size='small'
                     onClick={() => setImageDialogOpen(true)}
+                  aria-label="新增"
                   >
                     <Plus size={18} />
                     <Image size={18} />
@@ -951,7 +952,7 @@ ${content
                       }
                       secondary={version.comment || '无备注'}
                     />
-                    <IconButton size='small'>
+                    <IconButton size='small'aria-label="查看" >
                       <Eye size={16} />
                     </IconButton>
                   </ListItemButton>

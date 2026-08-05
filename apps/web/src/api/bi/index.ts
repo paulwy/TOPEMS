@@ -43,7 +43,6 @@ import {
   deleteSchedule,
   runSchedule,
   toggleSchedule,
-  reportCrudApi,
 } from './report';
 
 import {
@@ -88,7 +87,6 @@ import {
   deleteDataSource,
   testDataSource,
   refreshDataSource,
-  dataSourceCrudApi,
 } from './dataSource';
 
 import {
@@ -121,7 +119,6 @@ import {
   publishDataset,
   refreshDataset,
   getDatasetPreview,
-  datasetCrudApi,
 } from './dataset';
 
 import {

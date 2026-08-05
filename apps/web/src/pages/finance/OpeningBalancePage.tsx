@@ -10,8 +10,6 @@ import {
   Select,
   MenuItem,
   Box,
-  Tabs,
-  Tab,
   Table,
   TableBody,
   TableCell,
@@ -26,9 +24,8 @@ import {
 } from '@mui/material';
 import { StatCardGroup } from '@/components';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
-  Plus,
   Download,
   Upload,
   RefreshCw,

@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Paper,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import { lowcodePagesApi } from '@/api/lowcode';
 import type { LowcodePage, UpdateLowcodePageRequest } from '@/api/lowcode';
@@ -54,7 +47,7 @@ export const PageDesignPage: React.FC = () => {
     try {
       parsedComponents = JSON.parse(draft);
     } catch (e) {
-      setError('组件树 JSON 解析失败：' + (e instanceof Error ? e.message : ''));
+      setError(`组件树 JSON 解析失败：${e instanceof Error ? e.message : ''}`);
       setSaving(false);
       return;
     }
@@ -73,79 +66,96 @@ export const PageDesignPage: React.FC = () => {
 
   if (!pageId) {
     return (
-      <PageContainer title="页面设计">
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          请在 URL 上携带 ?page_id=xxx 以设计具体页面。
-        </Typography>
-      </Box>
+      <PageContainer title='页面设计'>
+        <Box sx={{ p: 3 }}>
+          <Typography color='text.secondary'>
+            请在 URL 上携带 ?page_id=xxx 以设计具体页面。
+          </Typography>
+        </Box>
       </PageContainer>
     );
   }
 
   if (loading) {
     return (
-      <PageContainer title="页面设计">
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <CircularProgress />
-      </Box>
+      <PageContainer title='页面设计'>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer title="页面设计">
-    <Box sx={{ p: 3 }}>
-      <Stack direction="row" spacing={2} sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5">
-          页面设计器 {page ? `· ${page.name}` : ''}
-        </Typography>
-        <Button variant="contained" onClick={handleSave} disabled={saving || !page}>
-          {saving ? '保存中…' : '保存组件树'}
-        </Button>
-      </Stack>
-
-      {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 1 }}>
-          {error}
-        </Typography>
-      )}
-
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-        当前以 JSON 形式编辑页面组件树（V1 占位，可视化拖拽设计器见 V65）。
-        {page && ` 类型：${page.type} · 路由：${page.route_path}`}
-      </Typography>
-
-      <Paper
-        component="textarea"
-        value={draft}
-        onChange={(e) => setDraft((e.target as HTMLTextAreaElement).value)}
-        sx={{
-          width: '100%',
-          minHeight: 480,
-          p: 2,
-          fontFamily: 'monospace',
-          fontSize: 13,
-          border: '1px solid',
-          borderColor: 'divider',
-          resize: 'vertical',
-          outline: 'none',
-        }}
-        spellCheck={false}
-      />
-      <Typography variant="caption" color="text.secondary">
-        提示：清空 page_id 可返回选择器 ·{' '}
-        <Button
-          size="small"
-          onClick={() => {
-            searchParams.delete('page_id');
-            setSearchParams(searchParams);
-          }}
+    <PageContainer title='页面设计'>
+      <Box sx={{ p: 3 }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          清除选择
-        </Button>
-      </Typography>
-    </Box>
+          <Typography variant='h5'>页面设计器 {page ? `· ${page.name}` : ''}</Typography>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+            disabled={saving || !page}
+          >
+            {saving ? '保存中…' : '保存组件树'}
+          </Button>
+        </Stack>
+
+        {error && (
+          <Typography
+            color='error'
+            variant='body2'
+            sx={{ mb: 1 }}
+          >
+            {error}
+          </Typography>
+        )}
+
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 1 }}
+        >
+          当前以 JSON 形式编辑页面组件树（V1 占位，可视化拖拽设计器见 V65）。
+          {page && ` 类型：${page.type} · 路由：${page.route_path}`}
+        </Typography>
+
+        <Paper
+          component='textarea'
+          value={draft}
+          onChange={(e) => setDraft((e.target as HTMLTextAreaElement).value)}
+          sx={{
+            width: '100%',
+            minHeight: 480,
+            p: 2,
+            fontFamily: 'monospace',
+            fontSize: 13,
+            border: '1px solid',
+            borderColor: 'divider',
+            resize: 'vertical',
+            outline: 'none',
+          }}
+          spellCheck={false}
+        />
+        <Typography
+          variant='caption'
+          color='text.secondary'
+        >
+          提示：清空 page_id 可返回选择器 ·{' '}
+          <Button
+            size='small'
+            onClick={() => {
+              searchParams.delete('page_id');
+              setSearchParams(searchParams);
+            }}
+          >
+            清除选择
+          </Button>
+        </Typography>
+      </Box>
     </PageContainer>
   );
 };

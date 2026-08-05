@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useTheme, Box, Chip } from '@mui/material';
+import { useTheme, Chip } from '@mui/material';
 import { Check, Settings, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import NotificationItem from './NotificationItem';
 import NotificationSettings from './NotificationSettings';

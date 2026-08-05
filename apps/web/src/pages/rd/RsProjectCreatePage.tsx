@@ -53,7 +53,6 @@ const RsProjectCreatePage: React.FC = () => {
     { id: '7', name: '吴九' },
     { id: '8', name: '郑十' },
   ];
-  const availableTags = ['催化剂', '聚合物', '纳米材料', '环保', '新能源', '生物医药', '电子材料'];
 
   const projectQuery = useQuery({
     queryKey: QUERY_KEYS.RD.PROJECT(id || ''),

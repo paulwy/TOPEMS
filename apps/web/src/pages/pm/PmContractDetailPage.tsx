@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { logger } from '@/utils/logger';
 import { Edit, FileText, Calendar, DollarSign, Building, CheckCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {

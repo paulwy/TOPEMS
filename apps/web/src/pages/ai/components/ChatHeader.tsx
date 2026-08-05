@@ -56,6 +56,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             size='small'
             onClick={onToggleSidebar}
             sx={{ display: { md: 'none' } }}
+          aria-label="展开"
           >
             <ChevronRight size={20} />
           </IconButton>

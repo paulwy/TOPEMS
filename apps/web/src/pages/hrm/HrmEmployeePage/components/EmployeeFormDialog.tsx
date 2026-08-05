@@ -23,7 +23,6 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
   open,
   onClose,
   mode,
-  employee,
   formData,
   onChange,
   onSubmit,

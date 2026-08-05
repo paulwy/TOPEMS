@@ -28,9 +28,7 @@ export const lowcodeDataSourcesApi = {
     return apiClient.lowcode.get<LowcodeDataSource>(`/data-sources/${id}`);
   },
 
-  create: async (
-    data: CreateLowcodeDataSourceRequest
-  ): Promise<ApiResponse<LowcodeDataSource>> => {
+  create: async (data: CreateLowcodeDataSourceRequest): Promise<ApiResponse<LowcodeDataSource>> => {
     return apiClient.lowcode.post<LowcodeDataSource>('/data-sources', data);
   },
 

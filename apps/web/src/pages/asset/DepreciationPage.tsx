@@ -47,7 +47,9 @@ const DepreciationPage: React.FC = () => {
         addNotification({
           type: 'success',
           title: t('asset.depreciation_page.success'),
-          message: t('asset:depreciation.notify_success_message', { count: result.data.depreciated_count }),
+          message: t('asset:depreciation.notify_success_message', {
+            count: result.data.depreciated_count,
+          }),
         });
         queryClient.invalidateQueries({ queryKey: ['fixed-assets'] });
         setShowDepreciateDialog(false);

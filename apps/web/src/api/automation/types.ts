@@ -27,7 +27,8 @@ export interface AutomationPaginationParams {
 
 export type AutomationTriggerType = 'cron' | 'event' | 'webhook' | 'form_submit' | 'manual';
 
-export type AutomationActionType = 'workflow' | 'integration' | 'api' | 'lowcode_page' | 'notification';
+export type AutomationActionType =
+  'workflow' | 'integration' | 'api' | 'lowcode_page' | 'notification';
 
 export type AutomationRuleStatus = 'enabled' | 'disabled' | 'draft';
 
@@ -134,7 +135,8 @@ export interface UpdateAutomationRuleRequest {
 // 2. 自动化执行历史（AutomationRun）
 // ============================================================================
 
-export type AutomationRunStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled' | 'timeout';
+export type AutomationRunStatus =
+  'pending' | 'running' | 'success' | 'failed' | 'cancelled' | 'timeout';
 
 export interface AutomationRunStep {
   /** 步骤序号 */

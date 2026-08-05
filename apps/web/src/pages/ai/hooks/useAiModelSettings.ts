@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNotificationStore } from '@/store';
 import i18n from '@/i18n';
 

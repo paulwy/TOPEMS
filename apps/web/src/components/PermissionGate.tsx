@@ -364,13 +364,12 @@ const roleConfig: Record<
   Guest: { variant: 'outline', icon: Eye, label: '访客' },
 };
 
-export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, size = 'md', showIcon = true }) => {
+export const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {
   const config = roleConfig[role] || {
     variant: 'outline' as const,
     icon: Shield,
     label: role,
   };
-  const _Icon = config.icon;
 
   const sizeClasses = {
     sm: 'text-xs px-1.5 py-0.5',

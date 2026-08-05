@@ -1,13 +1,10 @@
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useQueryClient } from '@tanstack/react-query';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { batchSchema } from '@/schemas/pdm';
 import { pdmApi, type ProductionBatch } from '@/api/pdm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 
 export default function PdmBatchPage() {
   const queryClient = useQueryClient();

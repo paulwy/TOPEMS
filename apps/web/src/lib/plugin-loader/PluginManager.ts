@@ -228,7 +228,6 @@ export class PluginManager {
 
   private processInstalledPlugins(plugins: TenantInstalledPlugin[]): void {
     plugins.forEach((plugin) => {
-      const existing = this.plugins.get(plugin.plugin_code);
       const status = plugin.isactive ? 'running' : 'disabled';
 
       this.plugins.set(plugin.plugin_code, {

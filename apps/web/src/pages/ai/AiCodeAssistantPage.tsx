@@ -8,16 +8,12 @@ import {
   Tab,
   TextField,
   Chip,
-  Divider,
   IconButton,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -30,7 +26,6 @@ import {
   Copy,
   Download,
   PlayCircle,
-  CheckCircle2,
   AlertTriangle,
   Info,
   Lightbulb,
@@ -41,7 +36,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
-import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -199,8 +193,8 @@ export const AiCodeAssistantPage: React.FC = () => {
   const [codeInput, setCodeInput] = useState(sampleCode);
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState('');
-  const [copied, setCopied] = useState(false);
   const [reviewScore, setReviewScore] = useState(0);
+  const [, setCopied] = useState(false);
 
   const tabConfig = [
     {
@@ -611,12 +605,14 @@ export const AiCodeAssistantPage: React.FC = () => {
                       <IconButton
                         size='small'
                         onClick={() => handleCopy(result)}
+                        aria-label={t('ai.code_assistant.action.copy')}
                         title={t('ai.code_assistant.action.copy')}
                       >
                         <Copy size={16} />
                       </IconButton>
                       <IconButton
                         size='small'
+                        aria-label={t('ai.code_assistant.action.download')}
                         title={t('ai.code_assistant.action.download')}
                       >
                         <Download size={16} />

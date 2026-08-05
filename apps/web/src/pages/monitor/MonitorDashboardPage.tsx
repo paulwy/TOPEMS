@@ -143,7 +143,7 @@ const MiniLineChart: React.FC<{
   labels: string[];
   color?: string;
   height?: number;
-}> = ({ data, labels, color = ct.primary.dark, height = 180 }) => {
+}> = ({ data, color = ct.primary.dark, height = 180 }) => {
   if (!data || data.length === 0) {
     return <Box sx={{ width: '100%', height }} />;
   }
@@ -207,7 +207,7 @@ const MiniBarChart: React.FC<{
   labels: string[];
   color?: string;
   height?: number;
-}> = ({ data, labels, color = ct.primary.dark, height = 180 }) => {
+}> = ({ data, color = ct.primary.dark, height = 180 }) => {
   if (!data || data.length === 0) {
     return <Box sx={{ width: '100%', height }} />;
   }

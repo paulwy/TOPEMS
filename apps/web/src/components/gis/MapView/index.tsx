@@ -1,7 +1,7 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo, useId } from 'react';
-import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import React, { useState, useRef, useEffect, useMemo, useId } from 'react';
+import { MapContainer, TileLayer } from 'react-leaflet';
 import { ZoomIn, ZoomOut } from 'lucide-react';
-import { Box as MuiBox, Typography, Paper, IconButton, useTheme } from '@mui/material';
+import { Box as MuiBox, Typography, Paper, IconButton } from '@mui/material';
 import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../../api/gis';
 import DeviceTrackPanel from '../DeviceTrackPanel';
 import HeatmapLayer, { HeatmapLegend } from '../HeatmapLayer';
@@ -30,7 +30,6 @@ const MapView: React.FC<MapViewProps> = ({
   storageLocations = [],
   onMarkerClick,
 }) => {
-  const theme = useTheme();
   const [mapCenter, _setMapCenter] = useState<[number, number]>([39.9, 116.4]);
   const [zoom, setZoom] = useState(10);
   const [selectedItem, setSelectedItem] = useState<DevicePoint | StorageLocation | null>(null);
@@ -54,11 +53,9 @@ const MapView: React.FC<MapViewProps> = ({
   const [mapType, setMapType] = useState<'osm' | 'amap'>('osm');
   const [show3DView, setShow3DView] = useState(false);
   const [offlineMode, _setOfflineMode] = useState(true);
-  const _mapRef = useRef<any>(null);
   const leafletMapRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapKey, setMapKey] = useState(0);
-  const _renderCountRef = useRef(0);
   const stableId = useId();
 
   const handleSetMapType = (type: 'osm' | 'amap') => {
@@ -580,6 +577,7 @@ const MapView: React.FC<MapViewProps> = ({
       >
         <IconButton
           onClick={() => setZoom((z) => Math.min(z + 1, 18))}
+          aria-label='放大'
           title='放大'
           sx={{
             padding: 1,
@@ -598,6 +596,7 @@ const MapView: React.FC<MapViewProps> = ({
         </IconButton>
         <IconButton
           onClick={() => setZoom((z) => Math.max(z - 1, 1))}
+          aria-label='缩小'
           title='缩小'
           sx={{
             padding: 1,

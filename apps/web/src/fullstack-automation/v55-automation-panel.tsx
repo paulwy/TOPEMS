@@ -47,11 +47,8 @@ import {
   Clock,
   HardDrive,
   Cpu,
-  Gauge,
   RefreshCw,
   Settings,
-  ChevronDown,
-  ChevronRight,
   Zap,
   Shield,
   TrendingUp,
@@ -79,7 +76,6 @@ import {
   type RollbackCondition,
   type RollbackEvent,
   type RollbackMetric,
-  type RollbackComparison,
 } from './auto-rollback';
 
 type TabId = 'pipelines' | 'deployments' | 'rollbacks' | 'health';

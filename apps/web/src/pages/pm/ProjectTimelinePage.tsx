@@ -1,11 +1,10 @@
 import React from 'react';
 import {
   TimelinePageTemplate,
-  type TimelineNode,
   type TimelineGroup,
 } from '../../components/templates/TimelinePageTemplate';
 import { PageContainer } from '@/components/common';
-import { Plus, Rocket, Target, Calendar, CheckCircle } from 'lucide-react';
+import { Plus, Rocket, Target, Calendar } from 'lucide-react';
 
 const today = new Date();
 const formatDate = (daysOffset: number) => {

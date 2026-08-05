@@ -1,7 +1,4 @@
 // STATUS: WIRED | Integrated in App.tsx DevTools panel
-import { smartRecommender } from './smart-recommender';
-import { adaptiveInteraction } from './adaptive-interaction';
-import { emotionalDesignEngine } from './emotional-design';
 
 export {
   SmartRecommender,

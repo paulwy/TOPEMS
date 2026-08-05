@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { pmApi } from '@/api/pm';
 import type { PmStatistics, ProjectBenefit } from '@/api/pm';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import { PM_PATHS } from '@/modules/pm/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 export const DEFAULT_STATS: PmStatistics = {

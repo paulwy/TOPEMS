@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useNotificationStore } from '../../store';
-import { Bell, MessageCircle, Mail, Smartphone, Clock, Shield } from 'lucide-react';
+import { Bell, Clock } from 'lucide-react';
 import {
   SettingsPageTemplate,
   type SettingSection,

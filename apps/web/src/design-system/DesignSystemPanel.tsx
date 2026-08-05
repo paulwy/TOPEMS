@@ -1,21 +1,7 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  IconButton,
-  Button,
-  Switch,
-  FormControlLabel,
-  Divider,
-  Paper,
-  Grid,
-} from '@mui/material';
+import { Box, Typography, IconButton, Divider, Paper, Grid } from '@mui/material';
 import { X as XIcon, Palette, Type, Layers, Eye, CheckCircle } from 'lucide-react';
-import {
-  v51DesignTokens,
-  generateV51CSSVariables,
-  injectV51CSSVariables,
-} from './tokens/v51-tokens';
+import { v51DesignTokens } from './tokens/v51-tokens';
 import {
   V51Button,
   V51Card,
@@ -37,7 +23,6 @@ const DesignSystemPanelContent: React.FC<{ onClose: () => void }> = ({ onClose }
   const [lintResult, setLintResult] = React.useState<string>('');
 
   const handleRunLint = () => {
-    const checks = runColorContrastChecks();
     const issues = v51DesignLint.lintColorContrast();
     const report = v51DesignLint.generateLintReport(issues);
     setLintResult(formatReport(report));

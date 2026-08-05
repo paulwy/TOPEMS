@@ -4,7 +4,6 @@ import {
   Typography,
   IconButton,
   Button,
-  Paper,
   Chip,
   Stack,
   Tabs,
@@ -35,11 +34,6 @@ import {
   Zap,
   TrendingUp,
   FileText,
-  AlertCircle,
-  CheckCircle2,
-  AlertTriangle,
-  Info,
-  Play,
   RotateCcw,
   BarChart3,
   Target,
@@ -52,23 +46,12 @@ import {
 import { V51Card } from '../design-system/components';
 import {
   codeReviewer,
-  type ReviewIssue,
   type ReviewResult,
   type IssueType,
   type IssueSeverity,
 } from './code-reviewer';
-import {
-  securityScanner,
-  type SecurityFinding,
-  type ScanResult,
-  type SecurityCategory,
-} from './security-scanner';
-import {
-  performanceAuditor,
-  type PerfFinding,
-  type AuditResult,
-  type AuditMetrics,
-} from './performance-auditor';
+import { securityScanner, type ScanResult, type SecurityCategory } from './security-scanner';
+import { performanceAuditor, type AuditResult, type AuditMetrics } from './performance-auditor';
 
 type TabId = 'code' | 'security' | 'performance' | 'overview';
 
@@ -81,7 +64,6 @@ export function Dashboard({ userId }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('Fetching data for user:', userId);
     axios.get('/api/data', {
       headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
     }).then(res => {

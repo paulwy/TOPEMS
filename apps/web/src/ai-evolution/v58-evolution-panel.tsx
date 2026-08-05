@@ -40,19 +40,15 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
-  Clock,
   Activity,
   FileText,
   Plus,
-  Trash2,
   Play,
   Square,
-  Search,
   BarChart3,
   Lock,
   Target,
   Eye,
-  EyeOff,
   RefreshCw,
   Sparkles,
   Gauge,
@@ -64,23 +60,12 @@ import {
   Zap,
 } from 'lucide-react';
 import { V51Card } from '../design-system/components';
-import {
-  modelVersionManager,
-  type Model,
-  type ModelVersion,
-  type VersionStatus,
-} from './model-versioning';
-import {
-  abTestManager,
-  type Experiment,
-  type ExperimentResult,
-  type SignificanceResult,
-} from './ab-testing';
+import { modelVersionManager, type Model, type VersionStatus } from './model-versioning';
+import { abTestManager, type Experiment } from './ab-testing';
 import {
   securityHardener,
   type SecurityReport,
   type ThreatModel,
-  type SecurityCheckV58,
   type SecuritySeverity,
 } from './security-hardening';
 

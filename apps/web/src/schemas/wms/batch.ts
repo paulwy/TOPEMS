@@ -346,8 +346,6 @@ export const batchSchema: EntitySchema = {
     {
       field: 'supplier_id',
       loader: async () => {
-        const { wmsApi } = await import('@/api/wms');
-        const response = await wmsApi.inventory.list({ page: 1, pagesize: 100 });
         return [];
       },
       queryKey: ['supplier-options'],

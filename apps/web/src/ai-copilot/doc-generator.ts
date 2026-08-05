@@ -310,7 +310,7 @@ export class DocGenerator {
   private formatExamples(examples?: string[]): string {
     if (!examples || examples.length === 0) return '';
     return examples
-      .map((ex, i) => ` * @example\n * \`\`\`typescript\n * ${ex}\n * \`\`\``)
+      .map((ex, _i) => ` * @example\n * \`\`\`typescript\n * ${ex}\n * \`\`\``)
       .join('\n');
   }
 

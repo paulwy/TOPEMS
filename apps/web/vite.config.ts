@@ -3,8 +3,12 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { federation } from '@module-federation/vite'
 import { visualizer } from 'rollup-plugin-visualizer'
+import viteCompression from 'vite-plugin-compression'
+import { promises as fsp } from 'fs'
+import zlib from 'zlib'
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import type { Plugin, ResolvedConfig } from 'vite';
 
 // ============================================================================
 // 服务配置（与 config/services.yaml 保持同步）
@@ -445,10 +449,96 @@ const fixLocalSharedImportMapNullBytePlugin = {
   },
 };
 
+// ============================================================================
+// V65.1.2: 自定义 brotli 压缩插件
+// 不用 vite-plugin-compression 的 brotli 实例，因为该插件用模块级 mtimeCache
+// 在 gzip / brotli 双实例间共享：gzip 先跑完会 mtimeCache.set(file, Date.now())，
+// brotli 再跑时 `mtimeMs <= mtimeCache.get(file)` 恒为 true，导致全部文件被跳过。
+// 这里用独立 closeBundle 插件绕开该 bug，只做 brotli，无 mtime 缓存。
+// ============================================================================
+const BROTLI_THRESHOLD = 10240;
+const BROTLI_FILE_RE = /\.(js|mjs|json|css|html)$/i;
+
+async function walkOutputDir(dir: string): Promise<string[]> {
+  const entries = await fsp.readdir(dir, { withFileTypes: true });
+  const results: string[] = [];
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...(await walkOutputDir(fullPath)));
+    } else if (BROTLI_FILE_RE.test(entry.name)) {
+      results.push(fullPath);
+    }
+  }
+  return results;
+}
+
+function brotliCompressPlugin(): Plugin {
+  let outputPath = '';
+  let logger: ResolvedConfig['logger'];
+  return {
+    name: 'vite:compression-brotli',
+    apply: 'build',
+    enforce: 'post',
+    configResolved(resolvedConfig) {
+      logger = resolvedConfig.logger;
+      outputPath = path.isAbsolute(resolvedConfig.build.outDir)
+        ? resolvedConfig.build.outDir
+        : path.join(resolvedConfig.root, resolvedConfig.build.outDir);
+    },
+    async closeBundle() {
+      if (!outputPath) return;
+      let files: string[];
+      try {
+        files = await walkOutputDir(outputPath);
+      } catch {
+        return;
+      }
+      let count = 0;
+      await Promise.all(
+        files.map(async (filePath) => {
+          const stat = await fsp.stat(filePath);
+          if (stat.size < BROTLI_THRESHOLD) return;
+          const content = await fsp.readFile(filePath);
+          const compressed = await new Promise<Buffer>((resolve, reject) => {
+            zlib.brotliCompress(
+              content,
+              {
+                params: {
+                  [zlib.constants.BROTLI_PARAM_QUALITY]: zlib.constants.BROTLI_MAX_QUALITY,
+                  [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT,
+                },
+              },
+              (err, result) => (err ? reject(err) : resolve(result)),
+            );
+          });
+          await fsp.writeFile(`${filePath}.br`, compressed);
+          count++;
+        }),
+      );
+      if (count > 0) {
+        logger.info(`\n✨ [brotli-custom]: compressed ${count} file(s) to .br`);
+      }
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     react(),
     fixLocalSharedImportMapNullBytePlugin,
+    // V65.1.2: 启用 gzip + brotli 压缩
+    // - gzip 兼容性最好（所有现代浏览器），用 vite-plugin-compression
+    // - brotli 压缩率更高（比 gzip 再降 15-25%），主流浏览器均支持；
+    //   因 vite-plugin-compression 双实例 mtimeCache 共享 bug，改用自定义插件
+    // - threshold=10240 只压缩 >10KB 的资源，避免小文件压缩后反而变大
+    // - deleteOriginFile=false 保留原始文件，CDN 可按需 fallback
+    viteCompression({
+      algorithm: 'gzip',
+      threshold: 10240,
+      deleteOriginFile: false,
+    }),
+    brotliCompressPlugin(),
     federation({
       name: 'topems_portal',
       /**
@@ -655,6 +745,13 @@ export default defineConfig({
         // grouping those into a single chunk creates circular async deps
         // that can cause the application to silently hang.
         // (see the "Ignoring output.manualChunks" MF warning)
+        //
+        // V65.1.3: 已评估，确认 MF 模式下不补 manualChunks。
+        // - static 模式：下面的 vendor 分包策略已完整覆盖 three/leaflet/xlsx/recharts
+        // - MF/hybrid 模式：远程模块（topems_core 等）通过 federation shared 机制
+        //   单独加载，大型依赖走 shared singleton，不存在首屏打包全量风险
+        // - 强行加 manualChunks 会触发 "circular async deps → silent hang"
+        //   这是 MF runtime 的设计限制，不是配置 bug
         manualChunks:
           DEPLOYMENT_MODE === 'static'
             ? (id: string) => {

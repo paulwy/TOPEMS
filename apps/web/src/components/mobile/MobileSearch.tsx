@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Box,
   InputBase,
@@ -78,6 +78,7 @@ export function MobileSearch({
               setQuery('');
               inputRef.current?.focus();
             }}
+          aria-label="关闭"
           >
             <X size={16} />
           </IconButton>

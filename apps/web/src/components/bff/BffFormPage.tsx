@@ -16,9 +16,7 @@ import {
   Typography,
   Button,
   IconButton,
-  Tooltip,
   Divider,
-  Grid,
   useTheme,
   useMediaQuery,
   TextField,
@@ -34,7 +32,7 @@ import {
   Alert,
   Chip,
 } from '@mui/material';
-import { ArrowLeft, Save, X, RotateCcw, ChevronRight, Info } from 'lucide-react';
+import { ArrowLeft, Save, X, RotateCcw, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   useForm,
@@ -537,6 +535,7 @@ function BffFormPageInner<T extends FieldValues = FieldValues>(props: BffFormPag
           <IconButton
             onClick={handleBack}
             size='small'
+          aria-label="返回"
           >
             <ArrowLeft size={20} />
           </IconButton>

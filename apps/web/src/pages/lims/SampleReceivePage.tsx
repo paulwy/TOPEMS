@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Card, CardContent, Stepper, Step, StepLabel, Chip } from '@mui/material';
 import { TestTube, Package, CheckCircle, Clock } from 'lucide-react';
 
@@ -42,8 +41,6 @@ const getStatusColor = (status: string): string => {
 };
 
 const SampleReceivePage: React.FC = () => {
-  const navigate = useNavigate();
-
   const sampleApiAdapter: CrudApiAdapter<Sample> = useMemo(
     () => ({
       list: async (params) => {

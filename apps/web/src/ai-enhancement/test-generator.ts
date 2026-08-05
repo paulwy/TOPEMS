@@ -315,7 +315,7 @@ export class AutoTestGenerator {
     };
   }
 
-  private generatePropTests(componentName: string, result: AnalysisResult): TestMethod[] {
+  private generatePropTests(_componentName: string, result: AnalysisResult): TestMethod[] {
     const tests: TestMethod[] = [];
 
     for (const prop of result.props) {
@@ -337,7 +337,7 @@ export class AutoTestGenerator {
     return tests;
   }
 
-  private generateInteractionTests(componentName: string, result: AnalysisResult): TestMethod[] {
+  private generateInteractionTests(_componentName: string, result: AnalysisResult): TestMethod[] {
     const tests: TestMethod[] = [];
 
     for (const handler of result.eventHandlers) {
@@ -369,7 +369,7 @@ export class AutoTestGenerator {
     return tests;
   }
 
-  private generateDataTests(componentName: string, result: AnalysisResult): TestMethod[] {
+  private generateDataTests(_componentName: string, result: AnalysisResult): TestMethod[] {
     const tests: TestMethod[] = [];
 
     if (result.effects.length > 0) {
@@ -388,7 +388,7 @@ export class AutoTestGenerator {
     return tests;
   }
 
-  private generateErrorTests(componentName: string, result: AnalysisResult): TestMethod[] {
+  private generateErrorTests(_componentName: string, result: AnalysisResult): TestMethod[] {
     const tests: TestMethod[] = [];
 
     for (const edgeCase of result.edgeCases.slice(0, 5)) {

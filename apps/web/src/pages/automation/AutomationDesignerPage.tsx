@@ -63,7 +63,10 @@ const NODE_TYPE_LABEL: Record<AutomationNodeType, string> = {
   error_hook: '失败钩子',
 };
 
-const NODE_TYPE_COLOR: Record<AutomationNodeType, 'primary' | 'success' | 'warning' | 'error' | 'info' | 'default'> = {
+const NODE_TYPE_COLOR: Record<
+  AutomationNodeType,
+  'primary' | 'success' | 'warning' | 'error' | 'info' | 'default'
+> = {
   trigger: 'primary',
   workflow_action: 'info',
   integration_action: 'info',
@@ -471,11 +474,11 @@ export const AutomationDesignerPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title="自动化设计器">
+    <PageContainer title='自动化设计器'>
       <Box sx={{ p: 3 }}>
         {/* 顶部工具栏 */}
         <Stack
-          direction="row"
+          direction='row'
           spacing={2}
           sx={{
             mb: 2,
@@ -485,29 +488,43 @@ export const AutomationDesignerPage: React.FC = () => {
             gap: 1,
           }}
         >
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-            <Typography variant="h5">可视化编排</Typography>
+          <Stack
+            direction='row'
+            spacing={2}
+            sx={{ alignItems: 'center' }}
+          >
+            <Typography variant='h5'>可视化编排</Typography>
             <ToggleButtonGroup
               value={mode}
               exclusive
               onChange={(_, value: DesignerMode | null) => value && setMode(value)}
-              size="small"
+              size='small'
             >
-              <ToggleButton value="canvas">
-                <CanvasModeIcon size={16} style={{ marginRight: 4 }} />
+              <ToggleButton value='canvas'>
+                <CanvasModeIcon
+                  size={16}
+                  style={{ marginRight: 4 }}
+                />
                 画布模式
               </ToggleButton>
-              <ToggleButton value="form">
-                <FormModeIcon size={16} style={{ marginRight: 4 }} />
+              <ToggleButton value='form'>
+                <FormModeIcon
+                  size={16}
+                  style={{ marginRight: 4 }}
+                />
                 表单模式
               </ToggleButton>
             </ToggleButtonGroup>
           </Stack>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <Stack
+            direction='row'
+            spacing={1}
+            sx={{ alignItems: 'center' }}
+          >
             <Button
               startIcon={<RefreshIcon />}
               onClick={() => selectedRuleId && loadCanvas(selectedRuleId)}
-              size="small"
+              size='small'
               disabled={!selectedRuleId || loading}
             >
               重载
@@ -515,7 +532,7 @@ export const AutomationDesignerPage: React.FC = () => {
             <Button
               startIcon={<EyeIcon />}
               onClick={handleValidate}
-              size="small"
+              size='small'
               disabled={!selectedRuleId || validating || nodes.length === 0}
             >
               {validating ? '预览中…' : '预览'}
@@ -523,8 +540,8 @@ export const AutomationDesignerPage: React.FC = () => {
             <Button
               startIcon={<ClearIcon />}
               onClick={handleClear}
-              size="small"
-              color="warning"
+              size='small'
+              color='warning'
               disabled={nodes.length === 0}
             >
               清空
@@ -532,8 +549,8 @@ export const AutomationDesignerPage: React.FC = () => {
             <Button
               startIcon={<SaveIcon />}
               onClick={handleSave}
-              size="small"
-              variant="contained"
+              size='small'
+              variant='contained'
               disabled={!selectedRuleId || saving || nodes.length === 0}
             >
               {saving ? '保存中…' : '保存'}
@@ -542,49 +559,67 @@ export const AutomationDesignerPage: React.FC = () => {
         </Stack>
 
         {error && (
-          <Typography color="error" variant="body2" sx={{ mb: 1 }}>
+          <Typography
+            color='error'
+            variant='body2'
+            sx={{ mb: 1 }}
+          >
             {error}
           </Typography>
         )}
 
-        <Stack direction="row" spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ mb: 2, alignItems: 'center' }}
+        >
           <TextField
             select
-            label="选择规则"
+            label='选择规则'
             value={selectedRuleId}
             onChange={(e) => setSelectedRuleId(e.target.value)}
-            size="small"
+            size='small'
             sx={{ minWidth: 300 }}
           >
-            <MenuItem value="">
+            <MenuItem value=''>
               <em>请选择</em>
             </MenuItem>
             {rules.map((r) => (
-              <MenuItem key={r.id} value={r.id}>
+              <MenuItem
+                key={r.id}
+                value={r.id}
+              >
                 {r.name} ({r.code})
               </MenuItem>
             ))}
           </TextField>
           <Button
-            size="small"
+            size='small'
             onClick={handleSyncToRule}
             disabled={!selectedRuleId}
-            variant="outlined"
+            variant='outlined'
           >
             同步到规则
           </Button>
         </Stack>
 
         {validationErrors.length > 0 && (
-          <Paper variant="outlined" sx={{ p: 1.5, mb: 2, bgcolor: 'warning.lighter' }}>
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
+          <Paper
+            variant='outlined'
+            sx={{ p: 1.5, mb: 2, bgcolor: 'warning.lighter' }}
+          >
+            <Stack
+              direction='row'
+              spacing={1}
+              sx={{ alignItems: 'center', mb: 0.5 }}
+            >
               <AlertIcon size={16} />
-              <Typography variant="subtitle2">校验结果</Typography>
+              <Typography variant='subtitle2'>校验结果</Typography>
             </Stack>
             {validationErrors.map((e, idx) => (
               <Typography
                 key={idx}
-                variant="body2"
+                variant='body2'
                 color={e.severity === 'error' ? 'error.main' : 'warning.main'}
               >
                 [{e.severity}] {e.node_id ? `[${e.node_id}] ` : ''}
@@ -599,18 +634,28 @@ export const AutomationDesignerPage: React.FC = () => {
             <CircularProgress />
           </Box>
         ) : !selectedRuleId ? (
-          <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
-            <Typography color="text.secondary">请先选择一个规则以加载或创建画布</Typography>
+          <Paper
+            variant='outlined'
+            sx={{ p: 4, textAlign: 'center' }}
+          >
+            <Typography color='text.secondary'>请先选择一个规则以加载或创建画布</Typography>
           </Paper>
         ) : mode === 'form' ? (
           /* ===== 表单模式（原有编辑器） ===== */
           <Box>
-            <Paper variant="outlined" sx={{ p: 1, mb: 2 }}>
-              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+            <Paper
+              variant='outlined'
+              sx={{ p: 1, mb: 2 }}
+            >
+              <Stack
+                direction='row'
+                spacing={1}
+                sx={{ flexWrap: 'wrap' }}
+              >
                 {availableNodeTypes.map((t) => (
                   <Button
                     key={t}
-                    size="small"
+                    size='small'
                     startIcon={<AddIcon />}
                     onClick={() => handleAddNode(t)}
                   >
@@ -620,9 +665,15 @@ export const AutomationDesignerPage: React.FC = () => {
               </Stack>
             </Paper>
 
-            <Paper variant="outlined" sx={{ p: 2, minHeight: 400 }}>
+            <Paper
+              variant='outlined'
+              sx={{ p: 2, minHeight: 400 }}
+            >
               {nodes.length === 0 ? (
-                <Typography color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
+                <Typography
+                  color='text.secondary'
+                  sx={{ textAlign: 'center', mt: 4 }}
+                >
                   画布为空，请从上方添加节点
                 </Typography>
               ) : (
@@ -630,7 +681,7 @@ export const AutomationDesignerPage: React.FC = () => {
                   {nodes.map((node) => (
                     <Paper
                       key={node.id}
-                      variant="outlined"
+                      variant='outlined'
                       sx={{
                         p: 1.5,
                         display: 'flex',
@@ -640,25 +691,36 @@ export const AutomationDesignerPage: React.FC = () => {
                       }}
                     >
                       <Chip
-                        size="small"
+                        size='small'
                         color={NODE_TYPE_COLOR[node.type]}
                         label={NODE_TYPE_LABEL[node.type]}
                       />
-                      <Typography variant="body2" sx={{ flex: 1 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ flex: 1 }}
+                      >
                         {node.name}
                         {node.isNew && (
-                          <Typography component="span" color="warning.main" sx={{ ml: 1 }}>
+                          <Typography
+                            component='span'
+                            color='warning.main'
+                            sx={{ ml: 1 }}
+                          >
                             (未保存)
                           </Typography>
                         )}
                       </Typography>
-                      <Button size="small" onClick={() => setEditNode(node)}>
+                      <Button
+                        size='small'
+                        onClick={() => setEditNode(node)}
+                      >
                         编辑
                       </Button>
                       <IconButton
-                        size="small"
-                        color="error"
+                        size='small'
+                        color='error'
                         onClick={() => handleDeleteNode(node.id)}
+                      aria-label="删除"
                       >
                         <DeleteIcon size={18} />
                       </IconButton>
@@ -670,11 +732,20 @@ export const AutomationDesignerPage: React.FC = () => {
           </Box>
         ) : (
           /* ===== 画布模式（DAG 可视化） ===== */
-          <Grid container spacing={2}>
+          <Grid
+            container
+            spacing={2}
+          >
             {/* 左侧：节点类型面板 */}
             <Grid size={{ xs: 12, md: 2 }}>
-              <Paper variant="outlined" sx={{ p: 1.5, height: '100%', minHeight: 600 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <Paper
+                variant='outlined'
+                sx={{ p: 1.5, height: '100%', minHeight: 600 }}
+              >
+                <Typography
+                  variant='subtitle2'
+                  sx={{ mb: 1 }}
+                >
                   节点类型
                 </Typography>
                 <Divider sx={{ mb: 1 }} />
@@ -682,9 +753,13 @@ export const AutomationDesignerPage: React.FC = () => {
                   {availableNodeTypes.map((t) => {
                     const Icon = NODE_TYPE_ICON[t];
                     return (
-                      <Tooltip key={t} title="拖拽到画布或点击添加" placement="right">
+                      <Tooltip
+                        key={t}
+                        title='拖拽到画布或点击添加'
+                        placement='right'
+                      >
                         <Paper
-                          variant="outlined"
+                          variant='outlined'
                           draggable
                           onDragStart={(e) => {
                             e.dataTransfer.setData('application/node-type', t);
@@ -709,7 +784,7 @@ export const AutomationDesignerPage: React.FC = () => {
                           }}
                         >
                           {Icon && <Icon size={16} />}
-                          <Typography variant="body2">{NODE_TYPE_LABEL[t]}</Typography>
+                          <Typography variant='body2'>{NODE_TYPE_LABEL[t]}</Typography>
                         </Paper>
                       </Tooltip>
                     );
@@ -721,7 +796,7 @@ export const AutomationDesignerPage: React.FC = () => {
             {/* 中间：DAG 画布 */}
             <Grid size={{ xs: 12, md: 7 }}>
               <Paper
-                variant="outlined"
+                variant='outlined'
                 sx={{
                   position: 'relative',
                   height: 600,
@@ -745,14 +820,17 @@ export const AutomationDesignerPage: React.FC = () => {
                   >
                     <defs>
                       <marker
-                        id="dag-arrowhead"
-                        markerWidth="10"
-                        markerHeight="7"
-                        refX="9"
-                        refY="3.5"
-                        orient="auto"
+                        id='dag-arrowhead'
+                        markerWidth='10'
+                        markerHeight='7'
+                        refX='9'
+                        refY='3.5'
+                        orient='auto'
                       >
-                        <polygon points="0 0, 10 3.5, 0 7" fill="#9e9e9e" />
+                        <polygon
+                          points='0 0, 10 3.5, 0 7'
+                          fill='#9e9e9e'
+                        />
                       </marker>
                     </defs>
                     {edges.map((edge) => {
@@ -761,10 +839,10 @@ export const AutomationDesignerPage: React.FC = () => {
                         <path
                           key={edge.id}
                           d={path}
-                          stroke="#9e9e9e"
+                          stroke='#9e9e9e'
                           strokeWidth={2}
-                          fill="none"
-                          markerEnd="url(#dag-arrowhead)"
+                          fill='none'
+                          markerEnd='url(#dag-arrowhead)'
                         />
                       );
                     })}
@@ -796,25 +874,36 @@ export const AutomationDesignerPage: React.FC = () => {
                           userSelect: 'none',
                         }}
                       >
-                        <Stack direction="row" spacing={1} sx={{ mb: 0.5, alignItems: 'center' }}>
+                        <Stack
+                          direction='row'
+                          spacing={1}
+                          sx={{ mb: 0.5, alignItems: 'center' }}
+                        >
                           {Icon && <Icon size={18} />}
                           <Typography
-                            variant="body2"
+                            variant='body2'
                             noWrap
                             sx={{ flex: 1, fontWeight: isSelected ? 600 : 400 }}
                           >
                             {node.name}
                           </Typography>
                         </Stack>
-                        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                        <Stack
+                          direction='row'
+                          spacing={0.5}
+                          sx={{ alignItems: 'center' }}
+                        >
                           <Chip
-                            size="small"
+                            size='small'
                             color={NODE_TYPE_COLOR[node.type]}
                             label={NODE_TYPE_LABEL[node.type]}
                             sx={{ height: 18, fontSize: 10 }}
                           />
                           {node.isNew && (
-                            <Typography variant="caption" color="warning.main">
+                            <Typography
+                              variant='caption'
+                              color='warning.main'
+                            >
                               未保存
                             </Typography>
                           )}
@@ -834,8 +923,14 @@ export const AutomationDesignerPage: React.FC = () => {
                         pointerEvents: 'none',
                       }}
                     >
-                      <CanvasModeIcon size={48} style={{ opacity: 0.3 }} />
-                      <Typography color="text.secondary" sx={{ mt: 1 }}>
+                      <CanvasModeIcon
+                        size={48}
+                        style={{ opacity: 0.3 }}
+                      />
+                      <Typography
+                        color='text.secondary'
+                        sx={{ mt: 1 }}
+                      >
                         画布为空，从左侧拖拽节点类型到此处
                       </Typography>
                     </Box>
@@ -846,55 +941,75 @@ export const AutomationDesignerPage: React.FC = () => {
 
             {/* 右侧：节点属性配置面板 */}
             <Grid size={{ xs: 12, md: 3 }}>
-              <Paper variant="outlined" sx={{ p: 2, height: '100%', minHeight: 600 }}>
+              <Paper
+                variant='outlined'
+                sx={{ p: 2, height: '100%', minHeight: 600 }}
+              >
                 {selectedNode ? (
                   <Stack spacing={2}>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                      <Typography variant="subtitle2" sx={{ flex: 1 }}>
+                    <Stack
+                      direction='row'
+                      spacing={1}
+                      sx={{ alignItems: 'center' }}
+                    >
+                      <Typography
+                        variant='subtitle2'
+                        sx={{ flex: 1 }}
+                      >
                         节点属性
                       </Typography>
                       <IconButton
-                        size="small"
-                        color="error"
+                        size='small'
+                        color='error'
                         onClick={() => handleDeleteNode(selectedNode.id)}
+                      aria-label="删除"
                       >
                         <DeleteIcon size={18} />
                       </IconButton>
                     </Stack>
                     <Divider />
                     <Box>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
                         节点 ID
                       </Typography>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontFamily: 'monospace' }}
+                      >
                         {selectedNode.id}
                       </Typography>
                     </Box>
                     <Box>
                       <Typography
-                        variant="caption"
-                        color="text.secondary"
+                        variant='caption'
+                        color='text.secondary'
                         sx={{ mb: 0.5, display: 'block' }}
                       >
                         节点类型
                       </Typography>
                       <Chip
-                        size="small"
+                        size='small'
                         color={NODE_TYPE_COLOR[selectedNode.type]}
                         label={NODE_TYPE_LABEL[selectedNode.type]}
                       />
                     </Box>
                     <TextField
-                      label="节点名称"
+                      label='节点名称'
                       value={selectedNode.name}
                       onChange={(e) => handleUpdateNodeName(selectedNode.id, e.target.value)}
-                      size="small"
+                      size='small'
                       fullWidth
                     />
-                    <Stack direction="row" spacing={1}>
+                    <Stack
+                      direction='row'
+                      spacing={1}
+                    >
                       <TextField
-                        label="X 坐标"
-                        type="number"
+                        label='X 坐标'
+                        type='number'
                         value={Math.round(selectedNode.position.x)}
                         onChange={(e) =>
                           handleUpdateNodePosition(
@@ -903,12 +1018,12 @@ export const AutomationDesignerPage: React.FC = () => {
                             selectedNode.position.y
                           )
                         }
-                        size="small"
+                        size='small'
                         fullWidth
                       />
                       <TextField
-                        label="Y 坐标"
-                        type="number"
+                        label='Y 坐标'
+                        type='number'
                         value={Math.round(selectedNode.position.y)}
                         onChange={(e) =>
                           handleUpdateNodePosition(
@@ -917,14 +1032,14 @@ export const AutomationDesignerPage: React.FC = () => {
                             Number(e.target.value)
                           )
                         }
-                        size="small"
+                        size='small'
                         fullWidth
                       />
                     </Stack>
                     <Box>
                       <Typography
-                        variant="caption"
-                        color="text.secondary"
+                        variant='caption'
+                        color='text.secondary'
                         sx={{ mb: 0.5, display: 'block' }}
                       >
                         节点配置（JSON）
@@ -934,18 +1049,22 @@ export const AutomationDesignerPage: React.FC = () => {
                         onChange={(e) => setConfigDraft(e.target.value)}
                         multiline
                         rows={6}
-                        size="small"
+                        size='small'
                         fullWidth
                         sx={{ fontFamily: 'monospace' }}
                       />
-                      <Button size="small" onClick={handleApplyConfig} sx={{ mt: 0.5 }}>
+                      <Button
+                        size='small'
+                        onClick={handleApplyConfig}
+                        sx={{ mt: 0.5 }}
+                      >
                         应用配置
                       </Button>
                     </Box>
                     <Box>
                       <Typography
-                        variant="caption"
-                        color="text.secondary"
+                        variant='caption'
+                        color='text.secondary'
                         sx={{ mb: 0.5, display: 'block' }}
                       >
                         下游节点（连线）
@@ -958,7 +1077,7 @@ export const AutomationDesignerPage: React.FC = () => {
                             return (
                               <Stack
                                 key={n.id}
-                                direction="row"
+                                direction='row'
                                 spacing={1}
                                 sx={{
                                   p: 0.5,
@@ -970,20 +1089,26 @@ export const AutomationDesignerPage: React.FC = () => {
                                 onClick={() => handleToggleNextNode(selectedNode.id, n.id)}
                               >
                                 <Chip
-                                  size="small"
+                                  size='small'
                                   variant={checked ? 'filled' : 'outlined'}
                                   color={checked ? 'primary' : 'default'}
                                   label={checked ? '✓' : '○'}
                                   sx={{ height: 18, minWidth: 24 }}
                                 />
-                                <Typography variant="body2" noWrap>
+                                <Typography
+                                  variant='body2'
+                                  noWrap
+                                >
                                   {n.name}
                                 </Typography>
                               </Stack>
                             );
                           })}
                         {nodes.filter((n) => n.id !== selectedNode.id).length === 0 && (
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             暂无其他节点可连接
                           </Typography>
                         )}
@@ -992,7 +1117,7 @@ export const AutomationDesignerPage: React.FC = () => {
                   </Stack>
                 ) : (
                   <Box sx={{ textAlign: 'center', mt: 4 }}>
-                    <Typography color="text.secondary">点击画布中的节点查看并编辑属性</Typography>
+                    <Typography color='text.secondary'>点击画布中的节点查看并编辑属性</Typography>
                   </Box>
                 )}
               </Paper>
@@ -1041,24 +1166,35 @@ const NodeEditDialog: React.FC<{
       name,
       config,
       next_nodes: nextNodes
-        ? nextNodes.split(',').map((s) => s.trim()).filter(Boolean)
+        ? nextNodes
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
         : undefined,
     });
   };
 
   return (
-    <Dialog open={Boolean(node)} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={Boolean(node)}
+      onClose={onClose}
+      maxWidth='sm'
+      fullWidth
+    >
       <DialogTitle>编辑节点</DialogTitle>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
+        <Stack
+          spacing={2}
+          sx={{ mt: 1 }}
+        >
           <TextField
-            label="节点名称"
+            label='节点名称'
             value={name}
             onChange={(e) => setName(e.target.value)}
             fullWidth
           />
           <TextField
-            label="节点配置（JSON）"
+            label='节点配置（JSON）'
             value={configText}
             onChange={(e) => setConfigText(e.target.value)}
             fullWidth
@@ -1066,17 +1202,20 @@ const NodeEditDialog: React.FC<{
             rows={6}
           />
           <TextField
-            label="下游节点 ID（逗号分隔）"
+            label='下游节点 ID（逗号分隔）'
             value={nextNodes}
             onChange={(e) => setNextNodes(e.target.value)}
             fullWidth
-            helperText="多个节点用英文逗号分隔"
+            helperText='多个节点用英文逗号分隔'
           />
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>取消</Button>
-        <Button onClick={handleSave} variant="contained">
+        <Button
+          onClick={handleSave}
+          variant='contained'
+        >
           保存
         </Button>
       </DialogActions>

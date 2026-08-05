@@ -19,7 +19,6 @@ import {
   Select,
   Divider,
   Switch,
-  FormControlLabel,
   List,
   ListItem,
   ListItemAvatar,
@@ -37,12 +36,10 @@ import {
   Shield,
   Palette,
   UserPlus,
-  Trash2,
-  Download,
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
@@ -104,7 +101,6 @@ const userStatusColors: Record<UserStatus, 'success' | 'warning' | 'error' | 'de
 
 const TenantDetailPage: React.FC = () => {
   const { tenantId } = useParams<{ tenantId: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [showInviteDialog, setShowInviteDialog] = useState(false);

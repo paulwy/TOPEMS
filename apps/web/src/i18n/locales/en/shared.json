@@ -1,4 +1,10 @@
 {
+  "reactQuery": {
+    "data_load_failed": "Data load failed",
+    "operation_failed": "Operation failed",
+    "operation_success": "Operation successful",
+    "data_updated": "Data has been updated"
+  },
   "common.active": "Active",
   "common.inactive": "Inactive",
   "common.search": "Search",

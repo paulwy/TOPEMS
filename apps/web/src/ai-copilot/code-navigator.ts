@@ -400,7 +400,7 @@ export class CodeNavigator {
 
   private calculateScore(
     symbol: SymbolInfo,
-    lowerQuery: string,
+    _lowerQuery: string,
     nameMatch: boolean,
     sigMatch: boolean,
     docMatch: boolean

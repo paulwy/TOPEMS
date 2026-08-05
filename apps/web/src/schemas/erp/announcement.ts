@@ -102,8 +102,14 @@ export const announcementSchema: EntitySchema = {
         options: [
           { label: i18n.t('schema:erp.announcement.filter.status.option.all'), value: 'all' },
           { label: i18n.t('schema:erp.announcement.filter.status.option.draft'), value: 'draft' },
-          { label: i18n.t('schema:erp.announcement.filter.status.option.published'), value: 'published' },
-          { label: i18n.t('schema:erp.announcement.filter.status.option.archived'), value: 'archived' },
+          {
+            label: i18n.t('schema:erp.announcement.filter.status.option.published'),
+            value: 'published',
+          },
+          {
+            label: i18n.t('schema:erp.announcement.filter.status.option.archived'),
+            value: 'archived',
+          },
         ],
       },
       {
@@ -113,9 +119,15 @@ export const announcementSchema: EntitySchema = {
         options: [
           { label: i18n.t('schema:erp.announcement.filter.priority.option.all'), value: 'all' },
           { label: i18n.t('schema:erp.announcement.filter.priority.option.low'), value: 'low' },
-          { label: i18n.t('schema:erp.announcement.filter.priority.option.normal'), value: 'normal' },
+          {
+            label: i18n.t('schema:erp.announcement.filter.priority.option.normal'),
+            value: 'normal',
+          },
           { label: i18n.t('schema:erp.announcement.filter.priority.option.high'), value: 'high' },
-          { label: i18n.t('schema:erp.announcement.filter.priority.option.urgent'), value: 'urgent' },
+          {
+            label: i18n.t('schema:erp.announcement.filter.priority.option.urgent'),
+            value: 'urgent',
+          },
         ],
       },
     ],

@@ -5,7 +5,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import {
@@ -25,7 +24,6 @@ export type NotificationState = {
 export const useDatabaseStructure = () => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
-  const { addNotification } = useNotificationStore();
 
   // State
   const [selectedTable, setSelectedTable] = useState<TableDetail | null>(null);

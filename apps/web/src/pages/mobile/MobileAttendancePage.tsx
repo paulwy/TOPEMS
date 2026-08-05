@@ -28,12 +28,7 @@ import {
   CalendarCheck,
   Clock,
   MapPin,
-  ChevronRight,
-  Calendar,
   FileText,
-  AlertCircle,
-  Check,
-  X,
   Plus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -44,13 +39,8 @@ import {
   MobileCard,
   MobileButton,
 } from '@/components/mobile';
-import { useNotificationStore, useAuthStore } from '@/store';
-import {
-  mobileApi,
-  type AttendanceStats,
-  type AttendanceRecord,
-  type LeaveApplication,
-} from '@/api/mobile';
+import { useNotificationStore } from '@/store';
+import { mobileApi, type AttendanceStats, type LeaveApplication } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
@@ -58,7 +48,6 @@ import { PageContainer } from '@/components/common';
 const MobileAttendancePage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
   const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);

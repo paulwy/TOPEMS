@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import { authApi } from '@/api/iam';
@@ -45,7 +45,7 @@ interface LoginPageProps {
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const navigate = useNavigate();
-  const { login, isAuthenticated, logout, user } = useAuth();
+  const { login } = useAuth();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [isRegister, setIsRegister] = useState(false);
@@ -344,6 +344,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       <IconButton
                         onClick={() => setShowPassword(!showPassword)}
                         sx={{ color: 'grey.400' }}
+                      aria-label="隐藏"
                       >
                         {showPassword ? (
                           <EyeOff sx={{ width: 20, height: 20 }} />

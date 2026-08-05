@@ -259,6 +259,7 @@ export const useOperationAuditLog = () => {
             <IconButton
               size='small'
               onClick={() => handleViewDetail(row)}
+            aria-label="查看"
             >
               <Eye size={16} />
             </IconButton>

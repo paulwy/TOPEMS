@@ -334,9 +334,15 @@ export const expenseSchema: EntitySchema = {
         options: [
           { label: i18n.t('schema:erp.expense.filter.status.option.all'), value: 'all' },
           { label: i18n.t('schema:erp.expense.filter.status.option.active'), value: 'active' },
-          { label: i18n.t('schema:erp.expense.filter.status.option.completed'), value: 'completed' },
+          {
+            label: i18n.t('schema:erp.expense.filter.status.option.completed'),
+            value: 'completed',
+          },
           { label: i18n.t('schema:erp.expense.filter.status.option.pending'), value: 'pending' },
-          { label: i18n.t('schema:erp.expense.filter.status.option.cancelled'), value: 'cancelled' },
+          {
+            label: i18n.t('schema:erp.expense.filter.status.option.cancelled'),
+            value: 'cancelled',
+          },
         ],
         defaultValue: 'all',
       },

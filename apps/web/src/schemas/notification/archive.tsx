@@ -1,7 +1,6 @@
 import type { EntitySchema } from '@/schema';
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
-import { MessageSquare } from 'lucide-react';
 
 const TYPE_LABELS: Record<string, string> = {
   system: '系统通知',

@@ -1,5 +1,5 @@
 import type { ErrorInfo, ReactNode } from 'react';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { Alert, AlertTitle, Button, Box } from '@mui/material';
 import { RefreshCw, AlertTriangle } from 'lucide-react';
 import { logger } from '@/utils/logger';

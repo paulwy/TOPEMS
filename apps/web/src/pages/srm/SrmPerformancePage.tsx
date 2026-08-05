@@ -6,7 +6,7 @@ import { performanceSchema } from '@/schemas/srm';
 import { srmApi } from '@/api/srm';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Card, CardContent, Typography, Chip, Rating } from '@mui/material';
-import { TrendingUp, TrendingDown, Award, Target, BarChart3, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Award, Target, BarChart3 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;

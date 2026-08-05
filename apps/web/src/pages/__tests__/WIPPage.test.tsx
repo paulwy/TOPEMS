@@ -23,14 +23,20 @@ vi.mock('@/api/mes', () => ({
     update: vi.fn(),
     delete: vi.fn(),
     transfer: vi.fn(),
-    getStatistics: vi.fn().mockResolvedValue({ success: true, data: { total_wip: 0, total_quantity: 0 } }),
+    getStatistics: vi
+      .fn()
+      .mockResolvedValue({ success: true, data: { total_wip: 0, total_quantity: 0 } }),
   },
 }));
 
 vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(() => ({ data: undefined, isLoading: false, error: null })),
   useMutation: vi.fn(() => ({ mutate: vi.fn(), mutateAsync: vi.fn() })),
-  useQueryClient: vi.fn(() => ({ invalidateQueries: vi.fn(), getQueryData: vi.fn(), setQueryData: vi.fn() })),
+  useQueryClient: vi.fn(() => ({
+    invalidateQueries: vi.fn(),
+    getQueryData: vi.fn(),
+    setQueryData: vi.fn(),
+  })),
   useQueries: vi.fn(() => []),
   QueryClient: vi.fn(),
   QueryCache: vi.fn(),

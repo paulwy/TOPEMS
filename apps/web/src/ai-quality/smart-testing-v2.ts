@@ -232,10 +232,9 @@ class SmartTestV2Impl {
 
   async runTests(
     testCaseIds?: string[],
-    options?: { parallel?: boolean; timeout_ms?: number }
+    _options?: { parallel?: boolean; timeout_ms?: number }
   ): Promise<TestRun> {
     const ids = testCaseIds || Array.from(this.testCases.keys());
-    const timeout = options?.timeout_ms || 30000;
     const results: TestResultDetail[] = [];
     const startTime = new Date().toISOString();
 

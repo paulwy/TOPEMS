@@ -47,6 +47,22 @@ const NON_NAV_WHITELIST = [
   'crmFinance',
   'financialReport',
   'consolidation',
+  // 以下为 V64.2 补充（辅助/基础设施模块，非导航）：
+  'addressbook', // OA 通讯录，API 散落在 erp/admin 下，无独立导航模块
+  'file', // 文件上传通用服务
+  'mail', // 邮件服务（与 email 同义，历史遗留双目录）
+  'migration', // 数据迁移辅助
+  'shared', // 跨模块共享 API
+  'template', // 模板辅助
+  'tenant', // 租户基础（admin 子模块用，无独立导航）
+];
+
+// 白名单：moduleMapping 注册了但 API 散落在其他目录（无独立 src/api/<name>/ 目录）
+// 原因：这些模块的 API 复用其他模块目录，是计划文档明确允许的现状
+const MAPPING_WITHOUT_API_DIR = [
+  'asset', // API 散落在 erp/finance/asset.ts，未独立（V64 计划文档明确允许）
+  'oa', // API 散落在 erp/admin/* + addressbook/，未独立（V64 计划文档明确允许）
+  'rs', // rd 的别名（service: 'rd'），API 共用 src/api/rd
 ];
 
 // 排除的子目录（不算 API 模块）
@@ -108,6 +124,12 @@ function main() {
 
   // moduleMapping 独有：在 moduleMapping 但不在 API 目录中
   const mappingOnly = mappingKeys.filter((m) => !apiSet.has(m));
+  const mappingOnlyWhitelisted = mappingOnly.filter((m) =>
+    MAPPING_WITHOUT_API_DIR.includes(m)
+  );
+  const mappingOnlyUnexpected = mappingOnly.filter(
+    (m) => !MAPPING_WITHOUT_API_DIR.includes(m)
+  );
 
   const report = {
     total_api_modules: apiModules.length,
@@ -116,10 +138,13 @@ function main() {
       whitelisted: apiOnlyWhitelisted,
       unexpected: apiOnlyUnexpected,
     },
-    mapping_only: mappingOnly,
+    mapping_only: {
+      whitelisted: mappingOnlyWhitelisted,
+      unexpected: mappingOnlyUnexpected,
+    },
   };
 
-  const hasMissing = mappingOnly.length > 0;
+  const hasMissing = mappingOnlyUnexpected.length > 0;
   const hasUnexpected = apiOnlyUnexpected.length > 0;
 
   if (jsonOut) {
@@ -154,9 +179,19 @@ function main() {
     }
     console.log('');
 
-    console.log(`moduleMapping 独有（可能缺失 API 实现）: ${mappingOnly.length}`);
-    if (mappingOnly.length > 0) {
-      for (const m of mappingOnly) {
+    console.log(`moduleMapping 独有 - 白名单内（API 散落他处）: ${mappingOnlyWhitelisted.length}`);
+    if (mappingOnlyWhitelisted.length > 0) {
+      for (const m of mappingOnlyWhitelisted) {
+        console.log(`  ✓ ${m}`);
+      }
+    } else {
+      console.log('  无');
+    }
+    console.log('');
+
+    console.log(`moduleMapping 独有 - 非白名单（需检查）: ${mappingOnlyUnexpected.length}`);
+    if (mappingOnlyUnexpected.length > 0) {
+      for (const m of mappingOnlyUnexpected) {
         console.log(`  ✗ ${m}`);
       }
       console.log('');
@@ -169,7 +204,7 @@ function main() {
     console.log('========================================');
     if (strict && (hasMissing || hasUnexpected)) {
       const reasons = [];
-      if (hasMissing) reasons.push(`${mappingOnly.length} 个 moduleMapping 独有模块`);
+      if (hasMissing) reasons.push(`${mappingOnlyUnexpected.length} 个非白名单 moduleMapping 独有模块`);
       if (hasUnexpected) reasons.push(`${apiOnlyUnexpected.length} 个非白名单 API 独有模块`);
       console.log(`❌ 对齐检查未通过（${reasons.join('，')}）`);
       console.log('========================================');

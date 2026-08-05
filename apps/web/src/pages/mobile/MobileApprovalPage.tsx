@@ -12,7 +12,6 @@ import {
   Avatar,
   useTheme,
   Paper,
-  Button,
   TextField,
   InputAdornment,
   IconButton,
@@ -33,7 +32,6 @@ import {
   DollarSign,
   Package,
   Users,
-  AlertCircle,
   Filter,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -714,6 +712,7 @@ const MobileApprovalPage: React.FC = () => {
         <IconButton
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
+        aria-label="筛选"
         >
           <Filter style={{ width: 20, height: 20 }} />
         </IconButton>

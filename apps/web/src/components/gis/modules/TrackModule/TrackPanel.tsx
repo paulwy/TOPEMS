@@ -1,17 +1,7 @@
 // modules/TrackModule/TrackPanel.tsx
 import React, { useState, useMemo } from 'react';
 import { Search, Calendar, MapPin } from 'lucide-react';
-import {
-  Box,
-  Typography,
-  Paper,
-  TextField,
-  IconButton,
-  Grid,
-  Divider,
-  Button,
-  useTheme,
-} from '@mui/material';
+import { Box, Typography, TextField, IconButton, Button, useTheme } from '@mui/material';
 import type { DevicePoint } from '../../../../api/gis';
 import type { TrackRecord, TrackStatistics, TrackPoint } from './types';
 import TrackPlayer from './TrackPlayer';
@@ -164,6 +154,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
         </Typography>
         <IconButton
           onClick={onClose}
+          aria-label='关闭'
           sx={{ p: 1, '&:hover': { bgcolor: 'grey.100' } }}
         >
           <svg

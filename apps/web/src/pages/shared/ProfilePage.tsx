@@ -46,13 +46,11 @@ import {
   DialogActions,
   Avatar,
   Switch,
-  FormControlLabel,
   Chip,
   Tabs,
   Tab,
   IconButton,
   CircularProgress,
-  Divider,
   Button,
   useTheme,
 } from '@mui/material';
@@ -538,6 +536,7 @@ const ProfilePage: React.FC = () => {
                       height: 32,
                     }}
                     size='small'
+                  aria-label="拍照"
                   >
                     <Camera size={16} />
                   </IconButton>

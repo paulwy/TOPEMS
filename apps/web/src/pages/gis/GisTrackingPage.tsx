@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -18,24 +18,11 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  IconButton,
   Slider,
   CircularProgress,
   Alert,
 } from '@mui/material';
-import {
-  MapPin,
-  Play,
-  Pause,
-  RotateCcw,
-  Search,
-  Navigation,
-  Clock,
-  User,
-  Truck,
-  AlertCircle,
-  Map,
-} from 'lucide-react';
+import { MapPin, Play, Pause, RotateCcw, User, Truck, AlertCircle, Map } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { GisMapTemplate, type MapMarker, type TrackPoint } from '@/components/templates';
 import { useNotificationStore } from '@/store';

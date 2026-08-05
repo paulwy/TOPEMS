@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { Archive, Settings, RotateCcw, Eye } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Settings, RotateCcw, Eye } from 'lucide-react';
 import {
   Box,
   Typography,
@@ -21,17 +20,11 @@ import {
   updateArchiveConfig,
   runAutoArchive,
 } from '@/api/notification';
-import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { useNotification } from '@/hooks/useNotification';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 
 const NotificationArchivePage: React.FC = () => {
-  const theme = useTheme();
-  const navigate = useNavigate();
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
 

@@ -287,7 +287,6 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
 };
 
 const MaintenanceStatsCard: React.FC = () => {
-  const theme = useTheme();
   return (
     <Card>
       <CardHeader sx={{ pb: 1 }}>

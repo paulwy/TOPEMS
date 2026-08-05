@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNotificationStore } from '@/store';
 import {
   Activity,
@@ -24,6 +25,7 @@ import { DASHBOARD_PATHS } from '@/routes/dashboard';
 const ct = designTokens.colors;
 
 const PerformanceMonitorPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const {
@@ -65,8 +67,8 @@ const PerformanceMonitorPage: React.FC = () => {
     a.click();
     URL.revokeObjectURL(url);
     addNotification({
-      title: '成功',
-      message: '性能报告已导出',
+      title: t('admin:performance_monitor_page.notification_success'),
+      message: t('admin:performance_monitor_page.export_success_message'),
       type: 'success',
     });
   };
@@ -74,8 +76,8 @@ const PerformanceMonitorPage: React.FC = () => {
   const handleClear = () => {
     clear();
     addNotification({
-      title: '成功',
-      message: '性能数据已清除',
+      title: t('admin:performance_monitor_page.notification_success'),
+      message: t('admin:performance_monitor_page.clear_success_message'),
       type: 'success',
     });
   };
@@ -83,28 +85,28 @@ const PerformanceMonitorPage: React.FC = () => {
   const statCards: StatCard[] = [
     {
       id: 'page-load-time',
-      title: '页面加载时间',
+      title: t('admin:performance_monitor_page.page_load_time'),
       value: `${(metrics.pageLoadTime / 1000).toFixed(2)}s`,
       icon: <Clock size={24} />,
       color: metrics.pageLoadTime < 2000 ? 'success' : 'warning',
     },
     {
       id: 'api-avg-response',
-      title: 'API 平均响应',
+      title: t('admin:performance_monitor_page.api_avg_response'),
       value: `${avgResponseTime.toFixed(0)}ms`,
       icon: <TrendingUp size={24} />,
       color: avgResponseTime < 500 ? 'success' : avgResponseTime < 1000 ? 'warning' : 'error',
     },
     {
       id: 'api-success-rate',
-      title: 'API 成功率',
+      title: t('admin:performance_monitor_page.api_success_rate'),
       value: `${successRate.toFixed(1)}%`,
       icon: successRate >= 95 ? <CheckCircle size={24} /> : <XCircle size={24} />,
       color: successRate >= 95 ? 'success' : successRate >= 80 ? 'warning' : 'error',
     },
     {
       id: 'slow-api-calls',
-      title: '慢 API 调用',
+      title: t('admin:performance_monitor_page.slow_api_calls'),
       value: slowCalls.length,
       icon: <AlertTriangle size={24} />,
       color: slowCalls.length === 0 ? 'success' : 'warning',
@@ -116,27 +118,27 @@ const PerformanceMonitorPage: React.FC = () => {
   const tables = [
     {
       id: 'api-call-history',
-      title: 'API 调用历史',
+      title: t('admin:performance_monitor_page.api_call_history'),
       columns: [
         {
           id: 'timestamp',
-          label: '时间',
+          label: t('admin:performance_monitor_page.column_time'),
           render: (value: unknown) => new Date(value as number).toLocaleTimeString(),
         },
-        { id: 'endpoint', label: 'API 端点' },
+        { id: 'endpoint', label: t('admin:performance_monitor_page.column_endpoint') },
         {
           id: 'duration',
-          label: '响应时间',
+          label: t('admin:performance_monitor_page.column_response_time'),
           render: (value: unknown) => `${(value as number).toFixed(0)}ms`,
         },
         {
           id: 'status',
-          label: '状态',
+          label: t('admin:performance_monitor_page.column_status'),
           render: (value: unknown) =>
             value === 'success' ? (
-              <span style={{ color: ct.success[500], fontWeight: 500 }}>成功</span>
+              <span style={{ color: ct.success[500], fontWeight: 500 }}>{t('admin:performance_monitor_page.status_success')}</span>
             ) : (
-              <span style={{ color: ct.error.main, fontWeight: 500 }}>失败</span>
+              <span style={{ color: ct.error.main, fontWeight: 500 }}>{t('admin:performance_monitor_page.status_fail')}</span>
             ),
         },
       ],
@@ -145,17 +147,17 @@ const PerformanceMonitorPage: React.FC = () => {
   ];
 
   const timeRangeOptions = [
-    { label: '最近1小时', value: '1h' },
-    { label: '最近6小时', value: '6h' },
-    { label: '最近24小时', value: '24h' },
+    { label: t('admin:performance_monitor_page.time_range_1h'), value: '1h' },
+    { label: t('admin:performance_monitor_page.time_range_6h'), value: '6h' },
+    { label: t('admin:performance_monitor_page.time_range_24h'), value: '24h' },
   ];
 
   const [timeRange, setTimeRange] = useState('1h');
 
   return (
     <PageContainer
-      title='性能监控'
-      subtitle='实时监控系统性能指标'
+      title={t('admin:performance_monitor_page.title')}
+      subtitle={t('admin:performance_monitor_page.subtitle')}
       headerProps={{
         backButton: {
           onClick: () => navigate(DASHBOARD_PATHS.dashboard),
@@ -164,13 +166,13 @@ const PerformanceMonitorPage: React.FC = () => {
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]}, ${ct.secondary.main})`,
         actions: [
           {
-            label: '导出报告',
+            label: t('admin:performance_monitor_page.action_export'),
             icon: <Download style={{ width: 16, height: 16 }} />,
             onClick: handleExport,
             variant: 'outlined',
           },
           {
-            label: '清除数据',
+            label: t('admin:performance_monitor_page.action_clear'),
             icon: <Trash2 style={{ width: 16, height: 16 }} />,
             onClick: handleClear,
             variant: 'contained',
@@ -189,22 +191,22 @@ const PerformanceMonitorPage: React.FC = () => {
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         }}
       >
-        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: 16 }}>页面性能指标</h3>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: 16 }}>{t('admin:performance_monitor_page.section_page_metrics')}</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>首次绘制 (FP)</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>{t('admin:performance_monitor_page.first_paint')}</span>
             <span style={{ fontWeight: 500 }}>{metrics.firstPaint.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>首次内容绘制 (FCP)</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>{t('admin:performance_monitor_page.first_contentful_paint')}</span>
             <span style={{ fontWeight: 500 }}>{metrics.firstContentfulPaint.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>DOM 内容加载</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>{t('admin:performance_monitor_page.dom_content_loaded')}</span>
             <span style={{ fontWeight: 500 }}>{metrics.domContentLoaded.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>页面完全加载</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>{t('admin:performance_monitor_page.page_fully_loaded')}</span>
             <span style={{ fontWeight: 500 }}>{metrics.pageLoadTime.toFixed(0)}ms</span>
           </div>
         </div>
@@ -221,9 +223,9 @@ const PerformanceMonitorPage: React.FC = () => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>慢 API 调用</h3>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>{t('admin:performance_monitor_page.section_slow_api')}</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>阈值:</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>{t('admin:performance_monitor_page.threshold')}</span>
             <input
               type='number'
               value={slowCallThreshold}
@@ -244,7 +246,7 @@ const PerformanceMonitorPage: React.FC = () => {
             <CheckCircle
               style={{ width: 48, height: 48, color: ct.success[500], marginBottom: 8 }}
             />
-            <p style={{ color: ct.grey[500] }}>没有慢 API 调用</p>
+            <p style={{ color: ct.grey[500] }}>{t('admin:performance_monitor_page.no_slow_api')}</p>
           </div>
         ) : (
           <div
@@ -286,7 +288,7 @@ const PerformanceMonitorPage: React.FC = () => {
                       color: call.status === 'success' ? 'success.main' : 'error.main',
                     }}
                   >
-                    {call.status === 'success' ? '成功' : '失败'}
+                    {call.status === 'success' ? t('admin:performance_monitor_page.status_success') : t('admin:performance_monitor_page.status_fail')}
                   </p>
                 </div>
               </div>
@@ -312,7 +314,7 @@ const PerformanceMonitorPage: React.FC = () => {
         showSearch={false}
         showStatCards={false}
         showCharts={false}
-        tableSectionTitle='API 调用历史'
+        tableSectionTitle={t('admin:performance_monitor_page.api_call_history')}
         customToolbar={
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
             <label
@@ -330,7 +332,7 @@ const PerformanceMonitorPage: React.FC = () => {
                 onChange={(e) => setAutoRefresh(e.target.checked)}
                 style={{ width: 18, height: 18 }}
               />
-              自动刷新
+              {t('admin:performance_monitor_page.auto_refresh')}
             </label>
           </div>
         }

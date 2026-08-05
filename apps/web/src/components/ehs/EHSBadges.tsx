@@ -218,7 +218,7 @@ const severityConfig: Record<string, { color: string; label: string }> = {
   未遂: { color: 'bg-blue-100 text-blue-700 border-blue-200', label: '未遂' },
 };
 
-export const EHSSeverityBadge: React.FC<EHSSeverityBadgeProps> = ({ severity, className = '' }) => {
+export const EHSSeverityBadge: React.FC<EHSSeverityBadgeProps> = ({ severity }) => {
   const item = severityConfig[severity] || {
     color: 'bg-gray-100 text-gray-700 border-gray-200',
     label: severity,

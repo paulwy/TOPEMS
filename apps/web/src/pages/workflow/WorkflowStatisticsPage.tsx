@@ -13,13 +13,11 @@ import {
   Timer,
   ThumbsUp,
   ThumbsDown,
-  TrendingUp,
   FileText,
   Zap,
-  ArrowRight,
   Calendar,
 } from 'lucide-react';
-import { Box, Typography, Chip, Stack, Menu, MenuItem, Button } from '@mui/material';
+import { Stack, Menu, MenuItem, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { logger } from '@/utils/logger';
 
 interface LayoutShift {
@@ -111,11 +111,11 @@ const PerformanceTestPage: React.FC = () => {
   const [firstPaint, setFirstPaint] = useState<number | null>(null);
   const [firstContentfulPaint, setFirstContentfulPaint] = useState<number | null>(null);
   const [domContentLoaded, setDomContentLoaded] = useState<number | null>(null);
-  const [windowLoad, setWindowLoad] = useState<number | null>(null);
   const [lcpTime, setLcpTime] = useState<number | null>(null);
   const [ttiTime, setTtiTime] = useState<number | null>(null);
   const [fidTime, setFidTime] = useState<number | null>(null);
   const [clsScore, setClsScore] = useState<number | null>(null);
+  const [, setWindowLoad] = useState<number | null>(null);
   const renderCountRef = useRef(0);
   const lastRenderTimeRef = useRef<number>(performance.now());
   const renderTimesRef = useRef<number[]>([]);

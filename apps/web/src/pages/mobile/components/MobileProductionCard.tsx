@@ -15,7 +15,7 @@ import {
   ClipboardList,
   Monitor,
 } from 'lucide-react';
-import { MobileCard, MobileButton } from '@/components/mobile';
+import { MobileCard } from '@/components/mobile';
 import { sizeTokens } from '@/theme';
 import type { ProductionOrder, WorkReport, Equipment } from '@/api/mobile';
 import { MobileProductionActions } from './MobileProductionActions';

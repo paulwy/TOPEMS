@@ -1,29 +1,7 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Switch,
-  Chip,
-  Divider,
-  Button,
-  Alert,
-  useTheme,
-} from '@mui/material';
-import {
-  Bell,
-  MessageSquare,
-  Mail,
-  Clock,
-  RefreshCw,
-  Plus,
-  Trash2,
-  Settings,
-  Send,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
-import { MobileLayout, MobileSkeleton, MobileCard } from '@/components/mobile';
+import React, { useEffect } from 'react';
+import { Box, Typography, Paper, Switch, Chip, Divider, useTheme } from '@mui/material';
+import { Bell } from 'lucide-react';
+import { MobileLayout, MobileSkeleton } from '@/components/mobile';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';

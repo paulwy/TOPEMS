@@ -221,9 +221,7 @@ export function useCrudQueries<
 
   // ---- 错误处理辅助 ----
   const handleMutationError = useCallback(
-    (err: unknown, defaultMessage: string) => {
-      const errAny = err as { response?: { data?: { message?: string } }; message?: string };
-      const message = errAny?.response?.data?.message || errAny?.message || defaultMessage;
+    (err: unknown, _defaultMessage: string) => {
       onError?.(err);
       return Promise.reject(err);
     },
@@ -236,7 +234,7 @@ export function useCrudQueries<
       const response = await api.post(basePath, item);
       return response.data?.data ?? response.data;
     },
-    onSuccess: (newItem: T) => {
+    onSuccess: (_newItem: T) => {
       queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
       onSuccess?.('创建成功');
     },

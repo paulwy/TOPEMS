@@ -167,8 +167,7 @@ export const DocumentPage: React.FC = () => {
       label: '预览',
       icon: <Eye size={16} />,
       color: 'primary' as const,
-      onClick: (row: Record<string, unknown>) => {
-        const doc = row as unknown as Document;
+      onClick: (_row: Record<string, unknown>) => {
         addNotification({ title: '提示', message: '预览功能开发中', type: 'info' });
       },
     },
@@ -176,8 +175,7 @@ export const DocumentPage: React.FC = () => {
       label: '下载',
       icon: <Download size={16} />,
       color: 'success' as const,
-      onClick: (row: Record<string, unknown>) => {
-        const doc = row as unknown as Document;
+      onClick: (_row: Record<string, unknown>) => {
         addNotification({ title: '提示', message: '下载功能开发中', type: 'info' });
       },
     },
@@ -484,12 +482,12 @@ export const DocumentPage: React.FC = () => {
                   secondaryAction={
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <Tooltip title='下载'>
-                        <IconButton size='small'>
+                        <IconButton size='small'aria-label="下载" >
                           <Download size={16} />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title='预览'>
-                        <IconButton size='small'>
+                        <IconButton size='small'aria-label="查看" >
                           <Eye size={16} />
                         </IconButton>
                       </Tooltip>

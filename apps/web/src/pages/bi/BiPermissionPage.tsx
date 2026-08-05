@@ -9,8 +9,6 @@ import {
   Users,
   KeyRound,
   Search,
-  ToggleLeft,
-  ToggleRight,
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
@@ -20,7 +18,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardActions,
   Chip,
   TextField,
   Dialog,
@@ -58,9 +55,6 @@ import {
   deleteRowLevelPermission,
   testRowLevelPermission,
   listDataPermissions,
-  createDataPermission,
-  updateDataPermission,
-  deleteDataPermission,
   type RowLevelPermission,
   type DataPermissionRule,
 } from '@/api/bi';

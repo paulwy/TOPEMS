@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FileText, Calendar, User, FileCheck, Edit3, Plus, Download, Upload } from 'lucide-react';
+import { FileText, Calendar, FileCheck, Plus, Download, Upload } from 'lucide-react';
 import {
   Dialog,
   DialogTitle,

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { Box, Typography, Card, CardContent, LinearProgress, Chip } from '@mui/material';
-import { TrendingUp, TrendingDown, Users, Target, DollarSign } from 'lucide-react';
+import { TrendingUp, Users, Target, DollarSign } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '../../store';

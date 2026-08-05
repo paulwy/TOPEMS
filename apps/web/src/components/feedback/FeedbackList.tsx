@@ -15,7 +15,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Grid } from '@/components/common/Grid';
 import {
   Bug,
   Plus,
@@ -97,7 +96,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
 
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['feedbacks', filters],
     queryFn: () => feedbackApi.listFeedbacks(filters),
   });
@@ -227,6 +226,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
         <IconButton
           onClick={(e) => handleMenuOpen(e, row.id)}
           sx={{ p: 1 }}
+        aria-label="更多"
         >
           <MoreVertical size={20} />
         </IconButton>

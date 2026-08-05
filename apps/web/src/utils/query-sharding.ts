@@ -143,7 +143,7 @@ export function shardQuery(
 }
 
 function determineStrategy(
-  query: string,
+  _query: string,
   variables: Record<string, unknown>,
   options: ShardOptions
 ): ShardStrategy {
@@ -172,7 +172,7 @@ function generateShardVariables(
   shardIndex: number,
   shardCount: number,
   pageSize: number,
-  totalRecords: number
+  _totalRecords: number
 ): Record<string, unknown> {
   const variables = { ...baseVariables };
 

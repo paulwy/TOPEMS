@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -8,10 +8,7 @@ import {
   Calendar,
   Award,
   GraduationCap,
-  FileCheck,
   DollarSign,
-  PersonStanding,
-  ClipboardList,
   Briefcase,
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';

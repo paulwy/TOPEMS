@@ -130,7 +130,6 @@ export const HelpCenterPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const guides = guidesQuery.data || [];
   const loading = faqsQuery.isLoading || guidesQuery.isLoading;
 
   React.useEffect(() => {

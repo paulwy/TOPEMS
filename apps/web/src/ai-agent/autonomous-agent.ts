@@ -141,7 +141,7 @@ export class AutonomousAgent {
     this.toolRegistry.register({
       name: 'api_call',
       description: '发起 API 请求',
-      execute: async (input, context) => {
+      execute: async (input, _context) => {
         const {
           endpoint,
           method = 'GET',
@@ -187,7 +187,7 @@ export class AutonomousAgent {
       name: 'data_transform',
       description: '数据转换和处理',
       execute: async (input) => {
-        const { data, operation, params } = input as {
+        const { data, operation } = input as {
           data: unknown;
           operation: string;
           params?: Record<string, unknown>;

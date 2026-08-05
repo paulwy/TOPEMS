@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
-import { Package, Upload, Download, Edit, Trash2, Plus } from 'lucide-react';
+import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Package, Edit, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';

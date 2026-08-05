@@ -443,7 +443,7 @@ export class PolicyEnforcer {
     return raw;
   }
 
-  private generateReason(rule: PolicyRule, context: Record<string, any>): string {
+  private generateReason(rule: PolicyRule, _context: Record<string, any>): string {
     const actionLabels: Record<PolicyRule['action'], string> = {
       allow: '允许',
       deny: '拒绝',

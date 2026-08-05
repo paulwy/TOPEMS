@@ -19,13 +19,7 @@ import {
   Divider,
 } from '@mui/material';
 import * as LucideIcons from 'lucide-react';
-import {
-  BUILTIN_COMPONENTS,
-  FORM_COMPONENTS,
-  LAYOUT_COMPONENTS,
-  type DesignerComponent,
-  type ComponentCategory,
-} from './types';
+import { BUILTIN_COMPONENTS, type DesignerComponent, type ComponentCategory } from './types';
 
 interface ComponentPaletteProps {
   /** 拖拽开始回调 */

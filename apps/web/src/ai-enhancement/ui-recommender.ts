@@ -474,7 +474,7 @@ export class UIComponentRecommender {
 
   private buildAlternatives(
     primary: ComponentMeta,
-    context: IntentContext
+    _context: IntentContext
   ): Array<{ name: string; pros: string; cons: string }> {
     const sameCategory = Array.from(this.components.values()).filter(
       (c) => c.category === primary.category && c.name !== primary.name

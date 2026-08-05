@@ -11,17 +11,12 @@ import {
   MessageSquare,
   FileText,
   Code,
-  BarChart3,
   Clock,
   Zap,
   BookOpen,
   Lightbulb,
-  TrendingUp,
-  Target,
-  Users,
   RefreshCw,
   ArrowRight,
-  Activity,
   CircleDot,
 } from 'lucide-react';
 import { Box, Typography, Button, Paper, Chip, useTheme, useMediaQuery } from '@mui/material';
@@ -81,7 +76,6 @@ const StatCard: React.FC<StatCardProps> = ({
   color,
   onClick,
 }) => {
-  const theme = useTheme();
   const isPositive = change >= 0;
 
   const colorMap = {
