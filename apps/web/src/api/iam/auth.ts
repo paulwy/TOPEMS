@@ -35,7 +35,8 @@ export const authModuleApi = {
 
   logout: async (): Promise<void> => {
     try {
-      await apiClient.iam.post('/auth/logout');
+      const refresh_token = localStorage.getItem('refresh_token');
+      await apiClient.iam.post('/auth/logout', { refresh_token });
     } catch (error) {
       // Backend logout failed; continue with local cleanup
     }

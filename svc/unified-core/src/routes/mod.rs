@@ -123,7 +123,7 @@ pub fn create_routes(
 
     // ===== Core API protected routes (dual-rail: /api/core/ + /api/v1/core/) =====
     let core_protected_routes = iam::iam_routes(state)
-        .merge(flow::flow_routes(state))
+        .nest("/flow", flow::flow_routes(state))
         .merge(file::file_routes(state))
         .merge(communication::communication_routes(state))
         .merge(master::master_routes(state))

@@ -464,16 +464,13 @@ pub async fn reject_issue(
 
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
-        .route("/api/qms/issues", get(list_issues))
-        .route("/api/qms/issues", post(create_issue))
-        .route("/api/qms/issues/{id}", get(get_issue))
-        .route("/api/qms/issues/{id}", put(update_issue))
-        .route("/api/qms/issues/{id}", delete(delete_issue))
-        .route("/api/qms/issues/{id}/resolve", post(resolve_issue))
-        .route(
-            "/api/qms/issues/{id}/approval/start",
-            post(start_issue_approval),
-        )
-        .route("/api/qms/issues/{id}/approval/approve", post(approve_issue))
-        .route("/api/qms/issues/{id}/approval/reject", post(reject_issue))
+        .route("/issues", get(list_issues))
+        .route("/issues", post(create_issue))
+        .route("/issues/{id}", get(get_issue))
+        .route("/issues/{id}", put(update_issue))
+        .route("/issues/{id}", delete(delete_issue))
+        .route("/issues/{id}/resolve", post(resolve_issue))
+        .route("/issues/{id}/approval/start", post(start_issue_approval))
+        .route("/issues/{id}/approval/approve", post(approve_issue))
+        .route("/issues/{id}/approval/reject", post(reject_issue))
 }
