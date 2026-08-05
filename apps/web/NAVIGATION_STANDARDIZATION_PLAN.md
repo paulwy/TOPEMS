@@ -9,7 +9,8 @@
 > - ✅ 阶段二：automation 新模块落地完成（5 页面 + API + 模块注册 + 类型检查通过）
 > - ✅ 阶段三：页面标准化完成（8 大模块典范页 + 3 个 CI 审计脚本 + pre-commit 集成）
 > - ✅ 阶段四：API 映射治理收尾完成（plugin API 去 /v1/ 前缀 + apiPath.ts 同步 moduleMapping + 测试修复）
-> - ✅ 阶段五：图标统一收尾完成（iconMapping 补全 Ticket/KeyRound/ArrowLeftRight 等 9 个缺失图标 + tsc 0 error）
+> - ✅ 阶段五：图标统一收尾完成（iconMapping 补全 9 + 14 = 23 个缺失图标 + check-icons.cjs 门禁 + tsc 0 error）
+> - ✅ 阶段五补充：admin 8 个核心 CRUD 页 schema 化验证完成（User/Role/Permission/Account/BankAccount/Dictionary/Plugin/Migration 已用 CrudPage）
 
 ---
 
