@@ -5,6 +5,8 @@ import { renderHook, act } from '@testing-library/react';
 import { useMobileQuality } from '@/pages/mobile/hooks/useMobileQuality';
 
 vi.mock('@tanstack/react-query', () => ({
+  QueryCache: vi.fn(),
+  MutationCache: vi.fn(),
   useQuery: vi.fn(() => ({
     data: undefined,
     isLoading: false,

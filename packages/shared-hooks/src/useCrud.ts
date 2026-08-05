@@ -145,7 +145,9 @@ export function useCrud<
   useEffect(() => {
     if (autoFetch) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetch();
+      void fetch().catch(() => {
+        // Errors are already handled via handleError + onError callback
+      });
     }
   }, [autoFetch, fetch]);
 

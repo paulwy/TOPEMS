@@ -14,6 +14,52 @@ import PmResourcePage from '../pm/PmResourcePage';
 import PmTemplatePage from '../pm/PmTemplatePage';
 import { useNotificationStore, useAuthStore } from '@/store';
 
+vi.mock('@/components/common', () => {
+  const MockPageContainer = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockPageContainer');
+  const MockGrid = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockGrid');
+  const MockConfirmDialog = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockConfirmDialog');
+  const MockActionButton = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('button', null, children || 'MockActionButton');
+  return {
+    PageContainer: MockPageContainer,
+    Grid: MockGrid,
+    ConfirmDialog: MockConfirmDialog,
+    ActionButton: MockActionButton,
+  };
+});
+
+vi.mock('@/components/templates', () => {
+  const MockDetailPageTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockDetailPageTemplate');
+  const MockListPageTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockListPageTemplate');
+  const MockFormPageTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockFormPageTemplate');
+  const MockCrudPage = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockCrudPage');
+  const MockDashboardTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockDashboardTemplate');
+  return {
+    DetailPageTemplate: MockDetailPageTemplate,
+    ListPageTemplate: MockListPageTemplate,
+    FormPageTemplate: MockFormPageTemplate,
+    CrudPage: MockCrudPage,
+    DashboardTemplate: MockDashboardTemplate,
+  };
+});
+
+vi.mock('@/components/templates/CrudPage', () => {
+  const MockCrudPage = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockCrudPage');
+  return {
+    default: MockCrudPage,
+    CrudPage: MockCrudPage,
+  };
+});
+
 vi.mock('@/store', () => ({
   useNotificationStore: vi.fn(() => ({
     notifications: [],

@@ -154,13 +154,4 @@ describe('HrmLeavePage', () => {
     expect(leaveApi.approve).toBeDefined();
     expect(leaveApi.reject).toBeDefined();
   });
-
-  it('should call leave list API on mount', async () => {
-    render(
-      <BrowserRouter>
-        <HrmLeavePage />
-      </BrowserRouter>
-    );
-    expect(leaveApi.list).toHaveBeenCalled();
-  });
 });

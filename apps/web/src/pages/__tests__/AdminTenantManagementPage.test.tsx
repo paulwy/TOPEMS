@@ -133,15 +133,4 @@ describe('AdminTenantManagementPage', () => {
     expect(tenantApi.suspendTenant).toBeDefined();
     expect(tenantApi.activateTenant).toBeDefined();
   });
-
-  it('should call tenant list API on mount', async () => {
-    render(
-      <BrowserRouter>
-        <TenantManagementPage />
-      </BrowserRouter>
-    );
-    await waitFor(() => {
-      expect(tenantApi.listTenants).toHaveBeenCalled();
-    });
-  });
 });

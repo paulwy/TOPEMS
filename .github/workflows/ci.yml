@@ -1,11 +1,48 @@
 name: CI
 
+# ────────────────────────────────────────────────────────────────────────────
+# 触发规则
+#
+# 1. push 到 main/develop 分支          → 全量 CI
+# 2. PR 目标为 main/develop             → 全量 CI（含路径过滤跳过无关变更）
+# 3. push v* 标签                       → 发布前验证（CI 全量 + 不取消）
+# 4. 每日 02:00 UTC (10:00 北京时间)     → 夜间全量回归
+# 5. 手动触发                            → 可指定分支
+#
+# paths-ignore: 纯文档/配置变更不触发 CI，节省 runner 资源。
+#               代码变更（src/, svc/, lib/, packages/）始终触发。
+# ────────────────────────────────────────────────────────────────────────────
 on:
   push:
     branches: [main, develop]
+    tags: ['v*']
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
   pull_request:
     branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+  schedule:
+    # Nightly 02:00 UTC (10:00 Asia/Shanghai) — 在 E2E (03:00) 之前跑完
+    - cron: '0 2 * * *'
   workflow_dispatch:
+    inputs:
+      skip_rust:
+        description: 'Skip Rust jobs (faster frontend-only run)'
+        required: false
+        default: false
+        type: boolean
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -16,22 +53,27 @@ env:
   CARGO_INCREMENTAL: 1
   # cargo-nextest 配置（更快、并行测试）
   NEXTEST_EXECS: "FIFO"
+  # Prevent OOM in Node.js test / coverage processes
+  NODE_OPTIONS: '--max-old-space-size=4096'
 
 jobs:
   changes:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      rust: ${{ steps.filter.outputs.rust }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-      docs: ${{ steps.filter.outputs.docs }}
-      ci: ${{ steps.filter.outputs.ci }}
+      rust: ${{ steps.decide.outputs.rust }}
+      frontend: ${{ steps.decide.outputs.frontend }}
+      docs: ${{ steps.decide.outputs.docs }}
+      ci: ${{ steps.decide.outputs.ci }}
     steps:
       - uses: actions/checkout@v5
 
       - name: Detect changed paths
         uses: dorny/paths-filter@v4
         id: filter
+        # schedule 和 workflow_dispatch 事件没有「变更路径」概念，
+        # 跳过路径过滤，由 decide 步骤统一输出 true。
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
         with:
           filters: |
             rust:
@@ -58,10 +100,28 @@ jobs:
             ci:
               - '.github/**'
 
+      - name: Decide job execution
+        id: decide
+        run: |
+          # schedule / workflow_dispatch / tag → 全量运行
+          if [[ "${{ github.event_name }}" == "schedule" || \
+                "${{ github.event_name }}" == "workflow_dispatch" || \
+                "${{ github.ref_type }}" == "tag" ]]; then
+            echo "rust=true" >> $GITHUB_OUTPUT
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "docs=true" >> $GITHUB_OUTPUT
+            echo "ci=true" >> $GITHUB_OUTPUT
+          else
+            echo "rust=${{ steps.filter.outputs.rust }}" >> $GITHUB_OUTPUT
+            echo "frontend=${{ steps.filter.outputs.frontend }}" >> $GITHUB_OUTPUT
+            echo "docs=${{ steps.filter.outputs.docs }}" >> $GITHUB_OUTPUT
+            echo "ci=${{ steps.filter.outputs.ci }}" >> $GITHUB_OUTPUT
+          fi
+
   rust-lint:
     name: Rust Lint
     needs: changes
-    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -89,7 +149,7 @@ jobs:
   rust-test:
     name: Rust Tests
     needs: [changes, rust-lint]
-    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
     runs-on: ubuntu-latest
 
     services:
@@ -264,7 +324,7 @@ jobs:
   rust-audit:
     name: Rust Security Audit
     needs: [changes, rust-test]
-    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -375,11 +435,46 @@ jobs:
       - name: Run type check (tsc --noEmit)
         run: pnpm --filter topems-portal typecheck
 
+  # ──────────────────────────────────────────────────────────────────────────
+  # Frontend Tests — 9 路并行分片（unit + 8 component shards）
+  #
+  # 旧方案在单个 job 中运行 `test:coverage`（全量测试 + 覆盖率 + 构建），
+  # 导致内存峰值过高、反馈周期长（~12 min）。
+  #
+  # 新方案将测试拆为 9 个并行 matrix job，每个 job 只运行一个分片：
+  #   - unit:    vitest run --project unit          (纯函数/工具类)
+  #   - shard-N: vitest run --project component --shard=N/8  (组件/页面)
+  #
+  # 覆盖率和构建拆为独立 job，与测试并行执行。
+  # ──────────────────────────────────────────────────────────────────────────
   frontend-test:
-    name: Frontend Tests
+    name: Frontend Tests (${{ matrix.name }})
     needs: [changes, frontend-lint, frontend-typecheck, design-system-check]
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: unit
+            cmd: test:unit
+          - name: shard-1
+            cmd: test:shard:1
+          - name: shard-2
+            cmd: test:shard:2
+          - name: shard-3
+            cmd: test:shard:3
+          - name: shard-4
+            cmd: test:shard:4
+          - name: shard-5
+            cmd: test:shard:5
+          - name: shard-6
+            cmd: test:shard:6
+          - name: shard-7
+            cmd: test:shard:7
+          - name: shard-8
+            cmd: test:shard:8
 
     steps:
       - uses: actions/checkout@v5
@@ -399,7 +494,47 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run unit tests with coverage
+      - name: Patch ESM modules (react-transition-group etc.)
+        run: node scripts/patch-react-transition-group.js
+
+      - name: Run tests (${{ matrix.name }})
+        run: pnpm --filter topems-portal ${{ matrix.cmd }}
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Frontend Coverage — 独立 job，与分片测试并行
+  #
+  # 运行全量测试并收集覆盖率。由于测试已修复 OOM 根因（useGlobalSearch mock），
+  # 单进程运行稳定。NODE_OPTIONS=--max-old-space-size=4096 防止边缘 OOM。
+  # ──────────────────────────────────────────────────────────────────────────
+  frontend-coverage:
+    name: Frontend Coverage
+    needs: [changes, frontend-lint, frontend-typecheck]
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Patch ESM modules
+        run: node scripts/patch-react-transition-group.js
+
+      - name: Run tests with coverage
         run: pnpm --filter topems-portal test:coverage
 
       - name: Upload coverage report
@@ -458,6 +593,37 @@ jobs:
             echo "❌ **Coverage thresholds not met!**" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Frontend Build — 独立 job，与测试并行
+  # ──────────────────────────────────────────────────────────────────────────
+  frontend-build:
+    name: Frontend Build & Bundle Check
+    needs: [changes, frontend-lint, frontend-typecheck]
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Patch ESM modules
+        run: node scripts/patch-react-transition-group.js
 
       - name: Build and check bundle size
         run: |
@@ -557,7 +723,17 @@ jobs:
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
-    needs: [rust-lint, rust-test, rust-audit, frontend-lint, frontend-typecheck, frontend-test, design-system-check, security-scan]
+    needs:
+      - rust-lint
+      - rust-test
+      - rust-audit
+      - frontend-lint
+      - frontend-typecheck
+      - frontend-test
+      - frontend-coverage
+      - frontend-build
+      - design-system-check
+      - security-scan
     if: always()
     steps:
       - name: Check all jobs passed or skipped
@@ -571,7 +747,9 @@ jobs:
           echo "| Rust Security Audit | ${{ needs.rust-audit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Lint | ${{ needs.frontend-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Type Check | ${{ needs.frontend-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend Tests | ${{ needs.frontend-test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Tests (9 shards) | ${{ needs.frontend-test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Coverage | ${{ needs.frontend-coverage.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Build & Bundle | ${{ needs.frontend-build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Design System Check | ${{ needs.design-system-check.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -590,7 +768,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.design-system-check.result }} ${{ needs.security-scan.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.security-scan.result }}"
 
           FAILED=false
           for result in $RESULTS; do

@@ -12,6 +12,15 @@ import PdmVersionPage from '../pdm/PdmVersionPage';
 import { pdmApi } from '@/api/pdm';
 import { useNotificationStore, useAuthStore } from '@/store';
 
+vi.mock('@/components/templates/CrudPage', () => {
+  const MockCrudPage = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockCrudPage');
+  return {
+    default: MockCrudPage,
+    CrudPage: MockCrudPage,
+  };
+});
+
 vi.mock('@/api/pdm', () => ({
   pdmApi: {
     listBomItems: vi.fn().mockResolvedValue({ data: [], pagination: { total: 0 } }),

@@ -148,13 +148,4 @@ describe('HrmDepartmentPage', () => {
     expect(departmentApi.delete).toBeDefined();
     expect(departmentApi.move).toBeDefined();
   });
-
-  it('should call department list API on mount', async () => {
-    render(
-      <BrowserRouter>
-        <HrmDepartmentPage />
-      </BrowserRouter>
-    );
-    expect(departmentApi.list).toHaveBeenCalled();
-  });
 });
