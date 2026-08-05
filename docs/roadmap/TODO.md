@@ -155,6 +155,47 @@ A-1: unified-core 5 warning → 0      B-1: ai-ui-generator.ts stub→ollama  C-
 
 ---
 
+## 🎯 V64.0 导航标准化与低代码/自动化落地（2026-08-05）
+
+> **背景**: V63.9 完成后，前端导航/路由/API 存在三套路径系统混用（apiPath `/api/v1/` 已废弃但仍有残留 / moduleMapping `/api/` / 硬编码 fetch）、lowcode 10 页面无 API 接入、automation 模块缺失、iconMapping 缺失 9 个图标、CI 审计脚本缺位等问题。
+> **执行原则**: 五阶段递进 + 每阶段 tsc 0 error + CI 门禁集成 + 不破坏现有契约。
+> **方案文档**: [NAVIGATION_STANDARDIZATION_PLAN.md](../../apps/web/NAVIGATION_STANDARDIZATION_PLAN.md)
+
+### 📊 V64.0 五阶段进度总览
+
+| 阶段 | 内容 | 状态 | 关键交付 |
+|------|------|------|---------|
+| **阶段零** | asset/oa moduleMapping 补全 + docs 重名清理 | ✅ | moduleMapping 28→32 模块 |
+| **阶段一** | lowcode API 补全（10 文件 + 10 页面接入） | ✅ | src/api/lowcode/ 6 文件 + vite proxy + tsc 0 error |
+| **阶段二** | automation 新模块落地（5 页面 + API + 注册） | ✅ | src/api/automation/ + modules/automation/config.ts + 5 页面 |
+| **阶段三** | 页面标准化（8 模块典范页 + 3 CI 脚本 + pre-commit） | ✅ | page-audit.cjs / check-api-coverage.cjs / check-nav-route.cjs |
+| **阶段四** | API 映射治理收尾 | ✅ | plugin API 去 /v1/ + apiPath.ts 同步 moduleMapping + 测试修复 |
+| **阶段五** | 图标统一收尾 | ✅ | iconMapping 补全 9 个缺失图标 + tsc 0 error |
+
+### 🔧 V64.0 阶段四关键修复（API 映射治理）
+
+| 修复项 | 文件 | 说明 |
+|--------|------|------|
+| plugin API 去 /v1/ | [api/plugin/plugin.ts](../../apps/web/src/api/plugin/plugin.ts) + [marketplace.ts](../../apps/web/src/api/plugin/marketplace.ts) | `/api/v1/core/plugin` → `/api/core/plugin`（与 moduleMapping 对齐） |
+| PluginManager 路径修复 | [lib/plugin-loader/PluginManager.ts](../../apps/web/src/lib/plugin-loader/PluginManager.ts) | navigation-config 路径同步去 /v1/ |
+| apiPath.ts 同步 moduleMapping | [utils/apiPath.ts](../../apps/web/src/utils/apiPath.ts) | GROUP1 新增 automation/ticket/plugin/billing/tenant；GROUP2 新增 lowcode/oa/asset；SERVICE_CODES/SERVICES 同步 |
+| 测试文件同步修复 | [utils/__tests__/apiPath.test.ts](../../apps/web/src/utils/__tests__/apiPath.test.ts) | 19 个测试用例从 /api/v1/ 更新为 /api/，匹配实际代码行为 |
+
+### 🔧 V64.0 阶段五关键修复（图标统一）
+
+| 修复项 | 文件 | 说明 |
+|--------|------|------|
+| iconMapping 补全 9 图标 | [lib/iconMapping.tsx](../../apps/web/src/lib/iconMapping.tsx) | 新增 Ticket/KeyRound/ArrowLeftRight/Palette/Play/ListChecks/MoreHorizontal/Tags/Boxes，覆盖 automation/ticket/lowcode 及 navigation types 引用 |
+
+### 📌 V64.0 验收结果
+
+- ✅ `pnpm typecheck` 0 error
+- ✅ `pnpm vitest run src/utils/__tests__/apiPath.test.ts` 19/19 passed
+- ✅ plugin API 路径与 moduleMapping 完全对齐（0 个 /api/v1/ 残留于自有代码）
+- ✅ iconMapping 覆盖 automation/ticket/lowcode 模块全部图标引用
+
+---
+
 ## 📜 V63.8 三路并行实施方案（2026-08-01 后端 workspace 全绿 + i18n 治理）
 
 > **背景**: V63.7 完成前端 typecheck 0 错误后，验收发现后端 `cargo check --workspace` 存在 116 个错误（topems-mes 114 + unified-core 2）。本次三路并行修复后端编译错误并继续前端 i18n 治理。
