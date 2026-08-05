@@ -1,176 +1,171 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { ApiResponse } from '@topems/shared-types';
+import { handleResponse, handleRequestError, safeRequest, paginatedRequest } from '../request';
 
-import { handleResponse, safeRequest, paginatedRequest } from '@/api/request';
-
-// We test the request utilities (handleResponse, safeRequest, paginatedRequest, handleRequestError)
-// These are pure functions that don't depend on axios instance, making them easy to test.
-
-// Mock the logger to avoid side effects
 vi.mock('@/utils/logger', () => ({
-  default: () => ({
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  }),
+  default: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+  __esModule: true,
 }));
 
-// Mock the errors module to control behavior
 vi.mock('@/utils/errors', () => ({
-  handleApiError: vi.fn((error: unknown) => {
-    // Simulate axios-style error response
-    const axiosError = error as {
-      response?: { status: number; data?: { message?: string } };
-      code?: string;
-    };
-    if (axiosError.response) {
-      const { status, data } = axiosError.response;
-      return { code: status, message: data?.message || 'Error', details: null };
-    }
-    return { code: 'UNKNOWN_ERROR', message: 'Unknown error', details: null };
-  }),
-  AppExceptionError: class extends Error {
-    code: string;
-    details?: unknown;
-    originalError?: unknown;
-    constructor(msg: string, opts: { code: string; details?: unknown; originalError?: unknown }) {
-      super(msg);
-      this.code = opts.code;
-      this.details = opts.details;
-      this.originalError = opts.originalError;
-    }
-  },
+  handleApiError: vi.fn((e: unknown) => ({
+    code: 'HANDLED',
+    message: e instanceof Error ? e.message : String(e),
+    details: e,
+  })),
+  AppExceptionError: class AppExceptionError extends Error {},
+  __esModule: true,
 }));
 
-describe('handleResponse', () => {
-  it('should return data when response is successful', () => {
-    const response = { success: true, code: 200, message: 'OK', data: { id: 1 } };
-    const result = handleResponse(response);
-    expect(result).toEqual({ id: 1 });
+const makeResponse = <T>(overrides: Partial<ApiResponse<T>> = {}): ApiResponse<T> => ({
+  success: true,
+  code: 0,
+  message: 'OK',
+  data: null as T,
+  timestamp: Date.now(),
+  ...overrides,
+});
+
+describe('api/request handleResponse', () => {
+  it('returns data for successful responses', () => {
+    const resp = makeResponse({ success: true, data: { id: 42, name: 'topems' } });
+    const result = handleResponse(resp);
+    expect(result).toEqual({ id: 42, name: 'topems' });
   });
 
-  it('should throw error when response is not successful', () => {
-    const response = { success: false, code: 400, message: 'Bad Request', data: null };
-    expect(() => handleResponse(response)).toThrow();
+  it('throws AppError with code/message/details for failure responses', () => {
+    const resp = makeResponse({
+      success: false,
+      code: 40401,
+      message: 'Not Found',
+      data: { entity: 'user' } as unknown as string,
+    });
+    expect(() => handleResponse(resp)).toThrowError(
+      expect.objectContaining({
+        code: 40401,
+        message: 'Not Found',
+        details: { entity: 'user' },
+      })
+    );
   });
 
-  it('should throw error with correct message', () => {
-    const response = { success: false, code: 404, message: 'Not Found', data: null };
+  it('still throws even when skipErrorHandler=true (just skips logging)', () => {
+    const resp = makeResponse({ success: false, code: 500, message: 'boom' });
+    expect(() => handleResponse(resp, { skipErrorHandler: true })).toThrowError(
+      expect.objectContaining({ code: 500, message: 'boom' })
+    );
+  });
+
+  it('throws when skipErrorHandler=false but skipErrorToast=true', () => {
+    // Inner skip skips inner throw, outer unconditional throw still runs
+    const resp = makeResponse({ success: false, code: 403, message: 'Forbidden' });
+    expect(() => handleResponse(resp, { skipErrorToast: true })).toThrowError(
+      expect.objectContaining({ code: 403 })
+    );
+  });
+
+  it('handles null data in success', () => {
+    const resp = makeResponse({ data: undefined as unknown as null });
+    expect(handleResponse(resp)).toBeUndefined();
+  });
+});
+
+describe('api/request handleRequestError', () => {
+  it('passes error through handleApiError and returns appError shape', () => {
+    const out = handleRequestError(new Error('network down'));
+    expect(out).toEqual({
+      code: 'HANDLED',
+      message: 'network down',
+      details: expect.any(Error),
+    });
+  });
+});
+
+describe('api/request safeRequest', () => {
+  it('returns data via handleResponse on success', async () => {
+    const fn = vi.fn(async () => makeResponse({ data: { ok: true } }));
+    const out = await safeRequest(fn);
+    expect(out).toEqual({ ok: true });
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it('rethrows appError when skipErrorHandler=false (default)', async () => {
+    const fn = vi.fn(async () => makeResponse({ success: false, code: 1001, message: 'fail' }));
+    await expect(safeRequest(fn)).rejects.toMatchObject({ code: 'HANDLED' });
+    // handleApiError wraps the original throw from handleResponse, so outer error should have HANDLED code
+  });
+
+  it('returns null instead of throwing when skipErrorHandler=true', async () => {
+    const fn = vi.fn(async () => {
+      throw new Error('network ECONNREFUSED');
+    });
+    const out = await safeRequest(fn, { skipErrorHandler: true });
+    expect(out).toBeNull();
+  });
+
+  it('calls requestFn exactly once even on failure', async () => {
+    const fn = vi.fn(async () => {
+      throw new Error('oops');
+    });
     try {
-      handleResponse(response);
-      expect.unreachable('Should have thrown');
-    } catch (error: unknown) {
-      const err = error as { message: string };
-      expect(err.message).toBe('Not Found');
+      await safeRequest(fn);
+    } catch {
+      /* ignore */
     }
-  });
-
-  it('should handle null data in successful response', () => {
-    const response = { success: true, code: 200, message: 'OK', data: null };
-    expect(handleResponse(response)).toBeNull();
+    expect(fn).toHaveBeenCalledTimes(1);
   });
 });
 
-describe('safeRequest', () => {
-  it('should return data for successful request', async () => {
-    const requestFn = vi.fn().mockResolvedValue({
-      success: true,
-      code: 200,
-      message: 'OK',
-      data: { items: [1, 2, 3] },
+describe('api/request paginatedRequest', () => {
+  const makePage = <T>(
+    items: T[],
+    total: number,
+    page: number,
+    pagesize: number
+  ): ApiResponse<{ items: T[]; total: number; page: number; pagesize: number }> =>
+    makeResponse({
+      data: { items, total, page, pagesize },
     });
 
-    const result = await safeRequest(requestFn);
-    expect(result).toEqual({ items: [1, 2, 3] });
+  it('returns {items,total,page,pagesize} on success', async () => {
+    const fn = vi.fn(async () => makePage([{ id: 1 }, { id: 2 }, { id: 3 }], 100, 1, 10));
+    const result = await paginatedRequest<{ id: number }>(fn, { page: 1, pagesize: 10 });
+    expect(result).toEqual({
+      items: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      total: 100,
+      page: 1,
+      pagesize: 10,
+    });
+    expect(fn).toHaveBeenCalledWith({ page: 1, pagesize: 10 });
   });
 
-  it('should throw for failed request by default', async () => {
-    const requestFn = vi.fn().mockResolvedValue({
-      success: false,
-      code: 500,
-      message: 'Server Error',
-      data: null,
-    });
-
-    await expect(safeRequest(requestFn)).rejects.toThrow();
+  it('throws error with code and message when response.success=false', async () => {
+    const fn = vi.fn(async () =>
+      makeResponse({
+        success: false,
+        code: 50001,
+        message: 'DB Timeout',
+        data: null as unknown as { items: never[]; total: number; page: number; pagesize: number },
+      })
+    );
+    await expect(paginatedRequest(fn)).rejects.toThrowError('DB Timeout');
+    await expect(paginatedRequest(fn)).rejects.toMatchObject({ code: 50001 });
   });
 
-  it('should throw error when skipErrorHandler is false', async () => {
-    const requestFn = vi.fn().mockResolvedValue({
-      success: false,
-      code: 500,
-      message: 'Server Error',
-      data: null,
-    });
-
-    // Default behavior: skipErrorHandler is not set, error is thrown
-    await expect(safeRequest(requestFn, { skipErrorHandler: false })).rejects.toThrow();
-  });
-
-  it('should not throw when skipErrorHandler is true', async () => {
-    const requestFn = vi.fn().mockResolvedValue({
-      success: false,
-      code: 500,
-      message: 'Server Error',
-      data: null,
-    });
-
-    const result = await safeRequest(requestFn, { skipErrorHandler: true });
-    expect(result).toBeNull();
-  });
-});
-
-describe('paginatedRequest', () => {
-  it('should return paginated data for successful request', async () => {
-    const requestFn = vi.fn().mockResolvedValue({
-      success: true,
-      code: 200,
-      message: 'OK',
-      data: { items: [{ id: 1 }, { id: 2 }], total: 2, page: 1, pagesize: 10 },
-    });
-
-    const result = await paginatedRequest(requestFn, { page: 1, pagesize: 10 });
-    expect(result.items).toHaveLength(2);
-    expect(result.total).toBe(2);
-    expect(requestFn).toHaveBeenCalledWith({ page: 1, pagesize: 10 });
-  });
-
-  it('should throw error for failed paginated request', async () => {
-    const requestFn = vi.fn().mockResolvedValue({
-      success: false,
-      code: 500,
-      message: 'Server Error',
-      data: null,
-    });
-
-    await expect(paginatedRequest(requestFn)).rejects.toThrow('Server Error');
-  });
-
-  it('should pass params to request function', async () => {
-    const requestFn = vi.fn().mockResolvedValue({
-      success: true,
-      code: 200,
-      message: 'OK',
-      data: { items: [], total: 0, page: 1, pagesize: 20 },
-    });
-
-    await paginatedRequest(requestFn, { page: 2, pagesize: 20, search: 'test' });
-    expect(requestFn).toHaveBeenCalledWith({
+  it('passes extra params through to requestFn', async () => {
+    const fn = vi.fn(async () => makePage([], 0, 2, 20));
+    await paginatedRequest(fn, { page: 2, pagesize: 20, search: 'abc', sortBy: 'name' });
+    expect(fn).toHaveBeenCalledWith({
       page: 2,
       pagesize: 20,
-      search: 'test',
+      search: 'abc',
+      sortBy: 'name',
     });
   });
 
-  it('should use default params when none provided', async () => {
-    const requestFn = vi.fn().mockResolvedValue({
-      success: true,
-      code: 200,
-      message: 'OK',
-      data: { items: [], total: 0, page: 1, pagesize: 10 },
-    });
-
-    await paginatedRequest(requestFn);
-    expect(requestFn).toHaveBeenCalledWith({});
+  it('defaults params to {} when not provided', async () => {
+    const fn = vi.fn(async () => makePage([], 0, 1, 20));
+    await paginatedRequest(fn);
+    expect(fn).toHaveBeenCalledWith({});
   });
 });

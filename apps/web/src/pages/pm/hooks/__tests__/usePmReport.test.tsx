@@ -4,6 +4,9 @@ import { renderHook, act } from '@testing-library/react';
 import { usePmReport, DEFAULT_STATS } from '../usePmReport';
 
 vi.mock('@tanstack/react-query', () => ({
+  QueryCache: vi.fn(),
+  MutationCache: vi.fn(),
+  QueryClient: vi.fn(),
   useQuery: vi.fn(() => ({
     data: undefined,
     isLoading: false,

@@ -33,6 +33,11 @@ on:
     # Nightly 03:00 UTC (11:00 Asia/Shanghai)
     - cron: '0 3 * * *'
 
+# Cancel superseded E2E runs to save CI minutes (but never cancel nightly).
+concurrency:
+  group: e2e-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+
 env:
   CARGO_TERM_COLOR: always
   NODE_VERSION: '20'

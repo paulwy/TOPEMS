@@ -127,9 +127,7 @@ describe('LimsTaskPage', () => {
   beforeEach(() => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true } as unknown as Record<string, unknown>);
   });
-});
 
-describe('LimsTaskPage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>

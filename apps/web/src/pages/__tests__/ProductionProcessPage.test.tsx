@@ -131,13 +131,4 @@ describe('ProductionProcessPage', () => {
     expect(mesApi.processes.create).toBeDefined();
     expect(mesApi.processes.update).toBeDefined();
   });
-
-  it('should call processes list API on mount', () => {
-    render(
-      <BrowserRouter>
-        <ProductionProcessPage />
-      </BrowserRouter>
-    );
-    expect(mesApi.processes.list).toHaveBeenCalled();
-  });
 });

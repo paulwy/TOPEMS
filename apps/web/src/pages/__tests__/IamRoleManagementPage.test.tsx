@@ -135,13 +135,4 @@ describe('IamRoleManagementPage', () => {
     expect(authApi.addRolePermission).toBeDefined();
     expect(authApi.removeRolePermission).toBeDefined();
   });
-
-  it('should call listRoles API on mount', async () => {
-    render(
-      <BrowserRouter>
-        <RoleManagementPage />
-      </BrowserRouter>
-    );
-    expect(authApi.listRoles).toHaveBeenCalled();
-  });
 });

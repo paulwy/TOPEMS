@@ -8,6 +8,9 @@ const shared = vi.hoisted(() => ({
 }));
 
 vi.mock('@tanstack/react-query', () => ({
+  QueryCache: vi.fn(),
+  MutationCache: vi.fn(),
+  QueryClient: vi.fn(),
   useQuery: vi.fn(() => ({
     data: undefined,
     isLoading: false,

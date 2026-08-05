@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useDebounce, useDebouncedValue, useDebouncedCallback } from '../useDebounce';
 
 describe('useDebounce', () => {
@@ -27,7 +27,12 @@ describe('useDebounce', () => {
     rerender({ value: 'updated', delay: 500 });
     expect(result.current).toBe('initial');
 
-    await vi.advanceTimersByTimeAsync(500);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+
+    // React 19 + Vitest fakeTimers: need an extra render cycle to flush state
+    rerender({ value: 'updated', delay: 500 });
     expect(result.current).toBe('updated');
   });
 
@@ -38,17 +43,33 @@ describe('useDebounce', () => {
     );
 
     rerender({ value: 'first', delay: 500 });
-    await vi.advanceTimersByTimeAsync(300);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
     rerender({ value: 'second', delay: 500 });
-    await vi.advanceTimersByTimeAsync(300);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
     expect(result.current).toBe('initial');
 
-    await vi.advanceTimersByTimeAsync(200);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(200);
+    });
+
+    rerender({ value: 'second', delay: 500 });
     expect(result.current).toBe('second');
   });
 });
 
 describe('useDebouncedValue', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('should behave the same as useDebounce', async () => {
     const { result, rerender } = renderHook(
       ({ value, delay }) => useDebouncedValue(value, delay),
@@ -58,7 +79,11 @@ describe('useDebouncedValue', () => {
     expect(result.current).toBe('initial');
 
     rerender({ value: 'updated', delay: 500 });
-    await vi.advanceTimersByTimeAsync(500);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+
+    rerender({ value: 'updated', delay: 500 });
     expect(result.current).toBe('updated');
   });
 });
@@ -84,7 +109,9 @@ describe('useDebouncedCallback', () => {
 
     expect(callback).not.toHaveBeenCalled();
 
-    await vi.advanceTimersByTimeAsync(500);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
     expect(callback).toHaveBeenCalledWith('arg1');
   });
 
@@ -100,7 +127,9 @@ describe('useDebouncedCallback', () => {
       result.current.debouncedFn('arg3');
     });
 
-    await vi.advanceTimersByTimeAsync(500);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
     expect(callback).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith('arg3');
   });
@@ -124,7 +153,9 @@ describe('useDebouncedCallback', () => {
       result.current('arg2');
     });
 
-    await vi.advanceTimersByTimeAsync(500);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
     expect(callback1).not.toHaveBeenCalled();
     expect(callback2).toHaveBeenCalledTimes(1);
     expect(callback2).toHaveBeenCalledWith('arg2');

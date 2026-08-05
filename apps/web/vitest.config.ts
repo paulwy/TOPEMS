@@ -2,9 +2,64 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import type { Plugin } from 'vite';
+
+const setupEnv = path.resolve(__dirname, './src/__tests__/setup-env-vitest.ts');
+const setupCore = path.resolve(__dirname, './src/__tests__/setup-core.ts');
+const setupMocks = path.resolve(__dirname, './src/__tests__/setup-mocks.ts');
+
+/**
+ * Fix react-transition-group sub-path directory imports from MUI 9.x internals.
+ *
+ * Problem: @mui/material/internal/Transition.mjs imports sub-paths like
+ * `react-transition-group/TransitionGroupContext` (a directory import) but
+ * `react-transition-group@4.x` has no `exports` map in package.json, and in
+ * pnpm isolated node_modules the package lives inside
+ * `@mui+material@9.1.1/node_modules/react-transition-group/` where Vite's
+ * resolve.alias cannot reach (alias only rewrites imports from project-level
+ * imports, not the importer's own private node_modules).
+ *
+ * Solution: intercept the resolve hook at the Vite plugin layer — this runs
+ * BEFORE the node_modules resolution, so it catches ALL imports regardless
+ * of which package in pnpm's virtual store is the importer.
+ */
+function fixReactTransitionGroup(): Plugin {
+  const RTG_SUB_PATHS: Record<string, string> = {
+    'react-transition-group/TransitionGroupContext': 'TransitionGroupContext.js',
+    'react-transition-group/Transition': 'Transition.js',
+    'react-transition-group/CSSTransition': 'CSSTransition.js',
+    'react-transition-group/SwitchTransition': 'SwitchTransition.js',
+    'react-transition-group/TransitionGroup': 'TransitionGroup.js',
+  };
+
+  return {
+    name: 'fix-react-transition-group-subpaths',
+    enforce: 'pre',
+    resolveId(id: string) {
+      // Exact sub-path match
+      if (RTG_SUB_PATHS[id]) {
+        return path.resolve(
+          __dirname,
+          `../../node_modules/react-transition-group/cjs/${RTG_SUB_PATHS[id]}`,
+        );
+      }
+      // Bare main entry
+      if (id === 'react-transition-group') {
+        return path.resolve(
+          __dirname,
+          '../../node_modules/react-transition-group/cjs/react-transition-group.js',
+        );
+      }
+      return null;
+    },
+  };
+}
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    fixReactTransitionGroup(),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -14,7 +69,9 @@ export default defineConfig({
       '@topems/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/src'),
       '@topems/shared-constants': path.resolve(__dirname, '../../packages/shared-constants/src'),
       '@topems/tokens': path.resolve(__dirname, '../../packages/tokens/src'),
-      'react-transition-group': path.resolve(__dirname, '../../node_modules/react-transition-group'),
+      // Note: react-transition-group aliases removed because they cannot reach
+      // pnpm-isolated @mui/material/node_modules/react-transition-group — handled
+      // by fixReactTransitionGroup() plugin instead.
     },
     mainFields: ['module', 'main'],
     dedupe: ['react', 'react-dom', 'scheduler'],
@@ -23,13 +80,16 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: [
-      path.resolve(__dirname, './src/__tests__/setup-env-vitest.ts'),
-      path.resolve(__dirname, './src/__tests__/setup.ts'),
-    ],
-    include: ['src/**/__tests__/**/*.{test,spec}.{ts,tsx}', '../../packages/shared-components/src/**/__tests__/**/*.{test,spec}.{ts,tsx}'],
     css: false,
-    isolate: true,
+    // ── 全局默认配置（projects 继承） ────────────────────────────
+    pool: 'forks',
+    maxWorkers: 1,
+    fileParallelism: false,
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/*.perf.test.*',
+    ],
     testTimeout: 15000,
     coverage: {
       provider: 'v8',
@@ -54,5 +114,48 @@ export default defineConfig({
     resolveSnapshotPath: (testPath, snapshotExtension) => {
       return testPath.replace(/\.test\.([tj]sx?)$/, `${snapshotExtension}`);
     },
+
+    // ── Vitest Projects：分层测试 ─────────────────────────────────
+    // 1. unit：纯函数/工具类测试 → isolate:false + 仅加载 core polyfill
+    //    无 vi.mock 调用，模块图可安全复用，内存占用极低
+    // 2. component：组件/页面测试 → isolate:true + 加载 core + mocks
+    //    大量 vi.mock 需要隔离；用 --shard 分片运行
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          include: [
+            'src/utils/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/lib/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/api/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/services/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/lib/plugin-loader/__tests__/**/*.{test,spec}.{ts,tsx}',
+          ],
+          // isolate: true because some unit tests use vi.mock() (apiClient, security, etc.)
+          // setup-core only loads polyfills; setup-mocks is NOT loaded so test-level
+          // vi.mock calls have full control over their own module mocks.
+          isolate: true,
+          setupFiles: [setupEnv, setupCore],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'component',
+          include: [
+            'src/components/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/pages/**/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/hooks/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/store/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/types/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/__tests__/**/*.{test,spec}.{ts,tsx}',
+            '../../packages/shared-components/src/**/__tests__/**/*.{test,spec}.{ts,tsx}',
+          ],
+          isolate: true,
+          setupFiles: [setupEnv, setupCore, setupMocks],
+        },
+      },
+    ],
   },
 });

@@ -37,6 +37,66 @@ import DocumentCenterPage from '../doc/DocumentCenterPage';
 import KnowledgeBasePage from '../doc/KnowledgeBasePage';
 import { useNotificationStore, useAuthStore } from '@/store';
 
+vi.mock('@/components/common', () => {
+  const MockPageContainer = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockPageContainer');
+  const MockGrid = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockGrid');
+  const MockConfirmDialog = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockConfirmDialog');
+  return {
+    PageContainer: MockPageContainer,
+    Grid: MockGrid,
+    ConfirmDialog: MockConfirmDialog,
+  };
+});
+
+vi.mock('@/components/templates/ListPageTemplate', () => ({
+  default: ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockListPageTemplate'),
+}));
+
+vi.mock('@/components/templates/SettingsPageTemplate', () => ({
+  default: ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockSettingsPageTemplate'),
+}));
+
+vi.mock('@/components/templates/FormPageTemplate', () => ({
+  default: ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockFormPageTemplate'),
+}));
+
+vi.mock('@/components/templates/KanbanPageTemplate', () => ({
+  default: ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockKanbanPageTemplate'),
+}));
+
+vi.mock('@/components/templates/CrudPage', () => {
+  const MockCrudPage = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockCrudPage');
+  return {
+    default: MockCrudPage,
+    CrudPage: MockCrudPage,
+  };
+});
+
+vi.mock('@/components/templates', () => {
+  const MockSettingsPageTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockSettingsPageTemplate');
+  const MockCardListTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockCardListTemplate');
+  const MockTreePageTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockTreePageTemplate');
+  const MockDashboardTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockDashboardTemplate');
+  return {
+    SettingsPageTemplate: MockSettingsPageTemplate,
+    CardListTemplate: MockCardListTemplate,
+    TreePageTemplate: MockTreePageTemplate,
+    DashboardTemplate: MockDashboardTemplate,
+  };
+});
+
 vi.mock('@/store', () => ({
   useNotificationStore: vi.fn(() => ({
     notifications: [],

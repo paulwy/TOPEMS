@@ -21,6 +21,46 @@ import TransferPage from '../wms/TransferPage';
 import WarehouseManagementPage from '../wms/WarehouseManagementPage';
 import { useNotificationStore, useAuthStore } from '@/store';
 
+vi.mock('@/components/common', () => {
+  const MockPageContainer = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockPageContainer');
+  const MockGrid = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockGrid');
+  const MockConfirmDialog = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockConfirmDialog');
+  const MockQuickSearch = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockQuickSearch');
+  return {
+    PageContainer: MockPageContainer,
+    Grid: MockGrid,
+    ConfirmDialog: MockConfirmDialog,
+    QuickSearch: MockQuickSearch,
+  };
+});
+
+vi.mock('@/components/templates', () => {
+  const MockDashboardTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockDashboardTemplate');
+  const MockListPageTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockListPageTemplate');
+  const MockCrudPage = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockCrudPage');
+  return {
+    DashboardTemplate: MockDashboardTemplate,
+    ListPageTemplate: MockListPageTemplate,
+    CrudPage: MockCrudPage,
+  };
+});
+
+vi.mock('@/components/templates/CrudPage', () => {
+  const MockCrudPage = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockCrudPage');
+  return {
+    default: MockCrudPage,
+    CrudPage: MockCrudPage,
+  };
+});
+
 const queryClient = new QueryClient();
 
 vi.mock('@/api/wms', () => ({
