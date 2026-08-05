@@ -56,6 +56,58 @@ check_command() {
 check_port() { lsof -Pi ":$1" -sTCP:LISTEN -t >/dev/null 2>&1; }
 
 # =================================================
+# 数据库连接健康检查
+# =================================================
+check_db_health() {
+  local max_connections=100
+  local warning_threshold=80
+  local critical_threshold=95
+  
+  if ! command -v psql >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local current_connections
+  current_connections=$(psql -h localhost -p 5432 -U topems -d topems -t -A -c "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null)
+  
+  if [ -z "$current_connections" ]; then
+    warn "无法连接到 PostgreSQL，跳过连接检查"
+    return 0
+  fi
+
+  local current_max
+  current_max=$(psql -h localhost -p 5432 -U topems -d topems -t -A -c "SHOW max_connections;" 2>/dev/null)
+  current_max=${current_max:-$max_connections}
+
+  local usage_percent=$((current_connections * 100 / current_max))
+
+  info "数据库连接状态: ${current_connections}/${current_max} (${usage_percent}%)"
+
+  if [ "$current_connections" -ge "$critical_threshold" ]; then
+    error "数据库连接数接近或已达上限 (${current_connections}/${current_max})！"
+    warn "自动终止空闲连接以恢复可用连接..."
+    
+    local idle_connections
+    idle_connections=$(psql -h localhost -p 5432 -U topems -d topems -t -A -c "
+      SELECT count(*) FROM pg_stat_activity WHERE state = 'idle' AND pid <> pg_backend_pid();
+    " 2>/dev/null)
+    
+    if [ -n "$idle_connections" ] && [ "$idle_connections" -gt 0 ]; then
+      psql -h localhost -p 5432 -U topems -d topems -c "
+        SELECT pg_terminate_backend(pid) 
+        FROM pg_stat_activity 
+        WHERE state = 'idle' AND pid <> pg_backend_pid();
+      " >/dev/null 2>&1
+      success "已终止 ${idle_connections} 个空闲连接"
+    fi
+    
+    success "建议: 考虑增加 max_connections 或检查服务连接配置"
+  elif [ "$current_connections" -ge "$warning_threshold" ]; then
+    warn "数据库连接数较高 (${current_connections}/${current_max})，注意可能的连接泄漏"
+  fi
+}
+
+# =================================================
 # 步骤 1：环境检查
 # =================================================
 check_env() {
@@ -111,6 +163,10 @@ start_db() {
       success "topems 数据库已存在"
     fi
   fi
+
+  # 检查数据库连接健康状态
+  sleep 2
+  check_db_health
 }
 
 # =================================================
@@ -158,11 +214,51 @@ start_backend() {
 }
 
 # =================================================
-# 步骤 5：启动前端
+# 步骤 5：清理前端缓存（可选）
+# =================================================
+clean_frontend_cache() {
+  local force="${1:-false}"
+  
+  if [ "$force" = "force" ]; then
+    info "强制清理前端缓存..."
+  else
+    info "检查前端缓存状态..."
+  fi
+
+  # Vite 预构建缓存
+  local vite_cache="$PROJECT_ROOT/apps/web/node_modules/.vite"
+  if [ -d "$vite_cache" ]; then
+    if [ "$force" = "force" ] || [ -f "$vite_cache/deps/_metadata.json" ]; then
+      if [ "$force" = "force" ] || ! grep -q '"hash":' "$vite_cache/deps/_metadata.json" 2>/dev/null; then
+        info "清理 Vite 预构建缓存..."
+        rm -rf "$vite_cache"
+        success "Vite 缓存已清理，下次启动将重新预构建依赖"
+      else
+        success "Vite 缓存状态正常"
+      fi
+    fi
+  else
+    success "Vite 缓存不存在（将在首次启动时创建）"
+  fi
+
+  # pnpm 硬链接缓存检查
+  local pnpm_store="$PROJECT_ROOT/node_modules/.pnpm"
+  if [ -d "$pnpm_store" ]; then
+    local cache_size
+    cache_size=$(du -sh "$pnpm_store" 2>/dev/null | cut -f1)
+    success "pnpm 存储大小: ${cache_size:-未知}"
+  fi
+}
+
+# =================================================
+# 步骤 6：启动前端
 # =================================================
 start_frontend() {
   info "启动前端 (topems-core 3001 + topems-portal 3000)..."
 
+  # 自动检测并清理损坏的 Vite 缓存
+  clean_frontend_cache
+  
   # Core 模块
   if check_port 3001; then
     success "topems-core (3001) 已在运行"
@@ -190,7 +286,7 @@ start_frontend() {
 # =================================================
 show_status() {
   echo ""
-  info "=== 服务状态 ==="
+  info "=== 核心服务状态 ==="
   printf "  %-20s %-10s %s\n" "服务" "端口" "状态"
   printf "  %-20s %-10s %s\n" "----" "----" "----"
   for entry in "PostgreSQL:5432" "Redis:6379" "Unified Core:8000" "Web Portal:3000" "Core Module:3001"; do
@@ -202,6 +298,34 @@ show_status() {
       printf "  ${YELLOW}✗${NC}  %-18s %-10s %s\n" "$name" "$port" "未运行"
     fi
   done
+
+  echo ""
+  info "=== 业务微服务状态 ==="
+  printf "  %-20s %-10s %-15s %s\n" "服务" "端口" "状态" "启动命令"
+  printf "  %-20s %-10s %-15s %s\n" "----" "----" "------" "--------"
+  local biz_services="scm:8040 wms:8041 srm:8042 mes:8030 finance:8011 erp:8010 crm:8029"
+  local stopped_services=""
+  for entry in $biz_services; do
+    name="${entry%:*}"
+    port="${entry#*:}"
+    if check_port "$port"; then
+      printf "  ${GREEN}✓${NC}  %-18s %-10s %-15s %s\n" "$name" "$port" "运行中" ""
+    else
+      printf "  ${YELLOW}✗${NC}  %-18s %-10s %-15s %s\n" "$name" "$port" "未运行" "topems start $name"
+      stopped_services="$stopped_services $name"
+    fi
+  done
+
+  if [ -n "$stopped_services" ]; then
+    echo ""
+    warn "部分业务微服务未运行。启动方式:"
+    echo "  单独启动: ./scripts/topems.sh start <服务名>"
+    echo "  全量启动: ./scripts/topems.sh start-all"
+  fi
+
+  echo ""
+  info "=== 数据库状态 ==="
+  check_db_health
 
   echo ""
   info "=== 访问地址 ==="
@@ -240,6 +364,24 @@ case "$cmd" in
     check_env
     start_frontend
     ;;
+  clean)
+    clean_frontend_cache "force"
+    info "清理 Rust SQL 缓存..."
+    if [ -d "$PROJECT_ROOT/.sqlx" ]; then
+      rm -rf "$PROJECT_ROOT/.sqlx"
+      success "Rust SQL 离线缓存已清理"
+      warn "如需重新生成，请运行: ./scripts/dev/sqlx-prepare.sh"
+    else
+      success "Rust SQL 缓存不存在"
+    fi
+    ;;
+  cache)
+    clean_frontend_cache
+    ;;
+  db-check)
+    info "检查数据库健康状态..."
+    check_db_health
+    ;;
   stop)
     info "停止所有 TOPEMS 服务..."
     "$SCRIPT_DIR/../topems.sh" stop-all 2>/dev/null || true
@@ -269,9 +411,19 @@ TOPEMS 本地一键启动脚本（默认部署方式）
   ./scripts/start-local.sh backend      # 仅启动后端
   ./scripts/start-local.sh db           # 启动本地数据库（macOS）
   ./scripts/start-local.sh install      # 安装所有依赖
+  ./scripts/start-local.sh clean        # 清理所有缓存（Vite + SQLx）
+  ./scripts/start-local.sh cache        # 检查缓存状态
+  ./scripts/start-local.sh db-check     # 检查数据库连接状态
   ./scripts/start-local.sh stop         # 停止所有服务
   ./scripts/start-local.sh status       # 查看服务状态
   ./scripts/start-local.sh help         # 查看帮助
+
+说明:
+  - clean:     强制清理 Vite 预构建缓存和 Rust SQL 离线缓存
+  - cache:     检查缓存状态，仅在损坏时自动清理
+  - db-check:  检查数据库连接数，超过阈值自动清理空闲连接
+  - 启动流程:  启动数据库时自动检查连接状态
+  - 前端启动时会自动检查 Vite 缓存，损坏则自动清理
 
 默认部署方式: 本地进程（无 Docker）
 EOF

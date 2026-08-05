@@ -92,17 +92,23 @@ pub async fn deprecation_middleware(req: Request, next: Next) -> impl IntoRespon
     res
 }
 
-/// 为 Router 注册新路径（已移除 legacy alias 支持）
+/// 为 Router 注册新路径及 legacy alias 路径
 pub fn register_routes_with_legacy_alias<S>(
     router: Router<S>,
     new_prefix: &str,
-    _legacy_prefixes: &[&str],
+    legacy_prefixes: &[&str],
     inner: Router<S>,
 ) -> Router<S>
 where
     S: Clone + Send + Sync + 'static,
 {
-    router.nest(new_prefix, inner)
+    let mut result = router.nest(new_prefix, inner.clone());
+    for &legacy in legacy_prefixes {
+        if legacy != new_prefix {
+            result = result.nest(legacy, inner.clone());
+        }
+    }
+    result
 }
 
 // ============================
