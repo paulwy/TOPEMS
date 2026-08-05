@@ -1,9 +1,88 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V63.9 | **更新日期**: 2026-08-02
+> **版本**: V64.2 | **更新日期**: 2026-08-05
 > **服务总数**: 27 个（含 master-data） | **前端页面**: 423 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,315 个
-> **综合健康评分**: **97/100**（V63.8 后端 workspace 全绿 + i18n 治理推进；V63.9 ollama 本地模型落地 + a2ui 真实接入 + unified-core warning 清零 + crm i18n 治理）
+> **综合健康评分**: **97/100**（V64.0 导航标准化 + V64.1 全量页面标准化 99% + V64.2 i18n 扩面 + DAG 画布 + dead_code 清理）
 > **微服务治理**: Phase 1-9 全部完成 ✅（ERP 瘦身 + 供应链边界 + 服务客户端统一 + unified-core 外迁 + 子 crate 拆分）
+
+---
+
+## 🎯 V64.2 i18n 扩面 + DAG 画布增强 + 后端清理（2026-08-05）
+
+> **背景**: V64.1 完成全量页面标准化（99%）后，本次推进 V63.9 遗留的 i18n 治理扩面、AutomationDesignerPage V2 DAG 画布 UX 完善、unified-core dead_code 清理三项工作。
+> **执行原则**: 多任务并行 + 不破坏现有契约 + 验收 tsc 0 error + TODO.md 实时同步进度。
+
+### 📊 V64.2 三路并行总览
+
+```
+Track A（前端 i18n 扩面）            Track B（DAG 画布 UX）              Track C（后端 dead_code 清理）
+─────────────────────────────────    ─────────────────────────────────    ─────────────────────────────────
+A-1: 已完成 P2-1 schemas/admin      B-1: P2-5 AutomationDesigner       C-1: AuditLogRow 删除
+     + schemas/erp i18n 治理              V2 DAG 画布已完成                ListUsersResponse/CreateUserRequest
+A-2: ticket (1 文件 149 串)              本批次补：缩放+键盘+复制+          保留 #[allow(dead_code)]（OpenAPI
+A-3: plugin (3 文件 74 串)               Minimap                            schema 锚点）
+A-4: asset  (4 文件 276 串)
+─────────────────────────────────    ─────────────────────────────────    ─────────────────────────────────
+依赖：无                              依赖：无                            依赖：无
+并行度：3 模块                        并行度：1 文件                      并行度：1 服务
+```
+
+### 🟣 已完成（上一会话遗留的 P2 三项）
+
+| 任务 | 状态 | 完成内容 |
+|------|------|---------|
+| P2-5 AutomationDesignerPage V2 DAG 画布 | ✅ | 1087 行；表单/画布双模式 + SVG 连线 + 节点拖拽放置 + 节点拖动定位 + 节点选中 + 节点删除按钮 + next_nodes 复选框连线 + 保存/校验/同步/重载/清空 + 错误提示 + 校验结果 banner |
+| P2-1 i18n zh-CN 硬编码治理扩面（schemas/admin + schemas/erp） | ✅ | [i18n/locales/zh/schema.json](../../apps/web/src/i18n/locales/zh/schema.json) 第 493 行 admin 区块 + 第 1031 行 erp 区块 |
+| P2-2 App.tsx 拆分 + i18n | ✅ | [App.tsx](../../apps/web/src/App.tsx) 33 行（仅组合 AppLayout + AppRoutes + DevTools）；[routes/appRoutes.tsx](../../apps/web/src/routes/appRoutes.tsx) 拆出路由树；[hooks/useAppInit.ts](../../apps/web/src/hooks/useAppInit.ts) 拆出全局初始化 |
+
+### 🔵 Track A — i18n 治理扩面（小模块批，3 个）
+
+**目标**: 推进 3 个尚未治理的小模块（ticket/plugin/asset），保持 zh/en key 严格一一对应。
+
+| 模块 | 文件数 | 中文硬编码数 | 已有 i18n 资源 | 状态 |
+|------|--------|------------|--------------|------|
+| ticket | 1 | 149 | zh/en ticket.json ✅ | 🔄 进行中 |
+| plugin | 3 | 74 | zh/en plugin.json ✅ | 🔄 进行中 |
+| asset | 4 | 276 | zh/en asset.json ✅ | 🔄 进行中 |
+
+> **顺序说明**: 优先 ticket (1 文件最小) → plugin (3 文件最小) → asset (4 文件)。每模块验收：tsc 0 error + zh/en key 严格对应 + 用户可见字符串无中文硬编码（注释除外）。
+
+### 🟠 Track B — AutomationDesignerPage V2 DAG 画布 UX 补强
+
+**问题**: V2 DAG 画布已完成基础功能，但与典型 DAG 编辑器对比仍缺关键 UX。本批次补 4 项最高 ROI 功能。
+
+| 功能 | 优先级 | 实现方式 |
+|------|--------|---------|
+| 缩放控制（zoom in/out/fit/reset） | 🔴 高 | 工具栏按钮 + 滚轮缩放（修改 SVG viewBox） |
+| 键盘快捷键（Delete 删除选中节点） | 🔴 高 | useEffect 监听 window keydown，Delete 时删除选中节点 |
+| 节点复制（Duplicate） | 🟡 中 | 节点右键菜单或工具栏按钮，复制选中节点（坐标偏移 +20/+20） |
+| Minimap（缩略图） | 🟡 中 | 右下角小窗，显示当前 viewBox 在画布中的位置 |
+
+> **不在本批次范围**: 撤销/重做、多选、边拖拽建边、节点端口显式渲染、对齐吸附、右键上下文菜单、内联编辑。这些是 V65 范围。
+
+### 🟢 Track C — unified-core dead_code 清理
+
+**问题**: V63.9 遗留 #1：unified-core 3 个 dead_code warning。本次确认后处理。
+
+| Struct | 文件 | 处置 | 理由 |
+|--------|------|------|------|
+| `AuditLogRow` | [modules/iam/user/access_log.rs](../../svc/unified-core/src/modules/iam/user/access_log.rs) | **删除** | 无任何 schema 锚点价值；list_access_logs 已改用 `sqlx::query` + 手动 row mapping，旧 FromRow 结构是遗留 |
+| `ListUsersResponse` | [modules/iam/user/crud.rs](../../svc/unified-core/src/modules/iam/user/crud.rs) | **保留 `#[allow(dead_code)]`**（已存在） | OpenAPI schema 锚点（`#[derive(ToSchema)]` + `#[schema(as = ListUsersResponse)]`） |
+| `CreateUserRequest` | [modules/iam/user/crud.rs](../../svc/unified-core/src/modules/iam/user/crud.rs) | **保留 `#[allow(dead_code)]`**（已存在） | OpenAPI schema 锚点 + `#[utoipa::path(... request_body = CreateUserRequest ...)]` 引用 |
+
+### 📈 V64.2 三路并行进度追踪
+
+| 任务 | 优先级 | 状态 | 完成时间 | 备注 |
+|------|--------|------|---------|------|
+| Track A P2-1 schemas/admin+erp i18n | P2 | ✅ 已完成 | 2026-08-05 | schema.json admin/erp 区块 |
+| Track B P2-5 AutomationDesignerPage V2 DAG | P2 | ✅ 已完成 | 2026-08-05 | 1087 行；表单/画布双模式 |
+| P2-2 App.tsx 拆分 + i18n | P2 | ✅ 已完成 | 2026-08-05 | App.tsx 33 行；appRoutes.tsx + useAppInit.ts 拆出 |
+| Track A ticket i18n 治理 | P2 | 🔄 进行中 | - | 1 文件 149 串 |
+| Track A plugin i18n 治理 | P2 | 🔄 进行中 | - | 3 文件 74 串 |
+| Track A asset i18n 治理 | P2 | 🔄 进行中 | - | 4 文件 276 串 |
+| Track B DAG 画布 UX 补强 | P2 | 🔄 进行中 | - | 缩放+键盘+复制+Minimap |
+| Track C AuditLogRow 删除 | P3 | 🔄 进行中 | - | access_log.rs |
+| 验收 typecheck | P1 | ⏳ 待开始 | - | pnpm typecheck 0 error |
 
 ---
 

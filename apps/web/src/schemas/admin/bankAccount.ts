@@ -6,6 +6,7 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   checking: '基本户',
@@ -54,8 +55,8 @@ const formatBalance = (amount: number | undefined) => {
 
 export const bankAccountSchema: EntitySchema = {
   entity: 'admin_bank_account',
-  title: '银行账户',
-  description: '管理企业银行账户信息',
+  title: i18n.t('schema:admin.bank_account.meta.title'),
+  description: i18n.t('schema:admin.bank_account.meta.description'),
 
   api: {
     module: 'erp',
@@ -65,7 +66,7 @@ export const bankAccountSchema: EntitySchema = {
   fields: [
     {
       name: 'account_number',
-      label: '账号',
+      label: i18n.t('schema:admin.bank_account.account_number.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -79,38 +80,38 @@ export const bankAccountSchema: EntitySchema = {
     },
     {
       name: 'account_name',
-      label: '账户名称',
+      label: i18n.t('schema:admin.bank_account.account_name.label'),
       type: 'text',
       required: true,
       listWidth: 140,
     },
     {
       name: 'bank_name',
-      label: '开户银行',
+      label: i18n.t('schema:admin.bank_account.bank_name.label'),
       type: 'text',
       required: true,
       listWidth: 150,
     },
     {
       name: 'bank_branch',
-      label: '支行名称',
+      label: i18n.t('schema:admin.bank_account.bank_branch.label'),
       type: 'text',
       listWidth: 150,
       showInList: false,
     },
     {
       name: 'account_type',
-      label: '账户类型',
+      label: i18n.t('schema:admin.bank_account.account_type.label'),
       type: 'select',
       required: true,
       defaultValue: 'checking',
       options: {
         type: 'static',
         options: [
-          { value: 'checking', label: '基本户' },
-          { value: 'savings', label: '一般户' },
-          { value: 'dedicated', label: '专用户' },
-          { value: 'foreign', label: '外币户' },
+          { value: 'checking', label: i18n.t('schema:admin.bank_account.account_type.option.checking') },
+          { value: 'savings', label: i18n.t('schema:admin.bank_account.account_type.option.savings') },
+          { value: 'dedicated', label: i18n.t('schema:admin.bank_account.account_type.option.dedicated') },
+          { value: 'foreign', label: i18n.t('schema:admin.bank_account.account_type.option.foreign') },
         ],
       },
       listWidth: 100,
@@ -151,19 +152,19 @@ export const bankAccountSchema: EntitySchema = {
     },
     {
       name: 'currency',
-      label: '币种',
+      label: i18n.t('schema:admin.bank_account.currency.label'),
       type: 'select',
       required: true,
       defaultValue: 'CNY',
       options: {
         type: 'static',
         options: [
-          { value: 'CNY', label: '人民币 (CNY)' },
-          { value: 'USD', label: '美元 (USD)' },
-          { value: 'EUR', label: '欧元 (EUR)' },
-          { value: 'GBP', label: '英镑 (GBP)' },
-          { value: 'JPY', label: '日元 (JPY)' },
-          { value: 'HKD', label: '港币 (HKD)' },
+          { value: 'CNY', label: i18n.t('schema:admin.bank_account.currency.option.CNY') },
+          { value: 'USD', label: i18n.t('schema:admin.bank_account.currency.option.USD') },
+          { value: 'EUR', label: i18n.t('schema:admin.bank_account.currency.option.EUR') },
+          { value: 'GBP', label: i18n.t('schema:admin.bank_account.currency.option.GBP') },
+          { value: 'JPY', label: i18n.t('schema:admin.bank_account.currency.option.JPY') },
+          { value: 'HKD', label: i18n.t('schema:admin.bank_account.currency.option.HKD') },
         ],
       },
       listWidth: 100,
@@ -174,7 +175,7 @@ export const bankAccountSchema: EntitySchema = {
     },
     {
       name: 'balance',
-      label: '余额',
+      label: i18n.t('schema:admin.bank_account.balance.label'),
       type: 'number',
       hideInForm: true,
       listWidth: 140,
@@ -196,16 +197,16 @@ export const bankAccountSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:admin.bank_account.status.label'),
       type: 'select',
       required: true,
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '正常' },
-          { value: 'frozen', label: '冻结' },
-          { value: 'closed', label: '销户' },
+          { value: 'active', label: i18n.t('schema:admin.bank_account.status.option.active') },
+          { value: 'frozen', label: i18n.t('schema:admin.bank_account.status.option.frozen') },
+          { value: 'closed', label: i18n.t('schema:admin.bank_account.status.option.closed') },
         ],
       },
       listWidth: 90,
@@ -244,7 +245,7 @@ export const bankAccountSchema: EntitySchema = {
     },
     {
       name: 'is_primary',
-      label: '主账户',
+      label: i18n.t('schema:admin.bank_account.is_primary.label'),
       type: 'switch',
       defaultValue: false,
       listWidth: 90,
@@ -276,7 +277,7 @@ export const bankAccountSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('schema:admin.bank_account.description.label'),
       type: 'textarea',
       showInList: false,
     },
@@ -298,26 +299,26 @@ export const bankAccountSchema: EntitySchema = {
     filters: [
       {
         id: 'account_type',
-        label: '账户类型',
+        label: i18n.t('schema:admin.bank_account.filter.account_type.label'),
         type: 'select',
         options: [
-          { value: 'all', label: '全部类型' },
-          { value: 'checking', label: '基本户' },
-          { value: 'savings', label: '一般户' },
-          { value: 'dedicated', label: '专用户' },
-          { value: 'foreign', label: '外币户' },
+          { value: 'all', label: i18n.t('schema:admin.bank_account.filter.account_type.option.all') },
+          { value: 'checking', label: i18n.t('schema:admin.bank_account.filter.account_type.option.checking') },
+          { value: 'savings', label: i18n.t('schema:admin.bank_account.filter.account_type.option.savings') },
+          { value: 'dedicated', label: i18n.t('schema:admin.bank_account.filter.account_type.option.dedicated') },
+          { value: 'foreign', label: i18n.t('schema:admin.bank_account.filter.account_type.option.foreign') },
         ],
         defaultValue: 'all',
       },
       {
         id: 'status',
-        label: '账户状态',
+        label: i18n.t('schema:admin.bank_account.filter.status.label'),
         type: 'select',
         options: [
-          { value: 'all', label: '全部状态' },
-          { value: 'active', label: '正常' },
-          { value: 'frozen', label: '冻结' },
-          { value: 'closed', label: '销户' },
+          { value: 'all', label: i18n.t('schema:admin.bank_account.filter.status.option.all') },
+          { value: 'active', label: i18n.t('schema:admin.bank_account.filter.status.option.active') },
+          { value: 'frozen', label: i18n.t('schema:admin.bank_account.filter.status.option.frozen') },
+          { value: 'closed', label: i18n.t('schema:admin.bank_account.filter.status.option.closed') },
         ],
         defaultValue: 'all',
       },
@@ -328,17 +329,17 @@ export const bankAccountSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:admin.bank_account.section.0.title'),
       fields: ['account_name', 'account_number', 'bank_name', 'bank_branch'],
     },
     {
-      title: '账户属性',
+      title: i18n.t('schema:admin.bank_account.section.1.title'),
       fields: ['account_type', 'currency', 'status', 'is_primary', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增银行账户',
-  editTitle: '编辑银行账户',
-  detailTitle: '银行账户详情',
+  createTitle: i18n.t('schema:admin.bank_account.meta.createTitle'),
+  editTitle: i18n.t('schema:admin.bank_account.meta.editTitle'),
+  detailTitle: i18n.t('schema:admin.bank_account.meta.detailTitle'),
 };

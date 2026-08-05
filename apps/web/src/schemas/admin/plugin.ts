@@ -7,6 +7,7 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const PLUGIN_TYPE_LABELS: Record<string, string> = {
   core: '核心插件',
@@ -27,8 +28,8 @@ const RUNTIME_STATUS_COLORS: Record<string, 'success' | 'error' | 'warning'> = {
 
 export const pluginSchema: EntitySchema = {
   entity: 'admin_plugin',
-  title: '插件管理',
-  description: '管理系统插件，启用、禁用或卸载插件',
+  title: i18n.t('schema:admin.plugin.meta.title'),
+  description: i18n.t('schema:admin.plugin.meta.description'),
 
   api: {
     module: 'plugin',
@@ -38,7 +39,7 @@ export const pluginSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '名称',
+      label: i18n.t('schema:admin.plugin.name.label'),
       type: 'text',
       sortable: true,
       listWidth: 250,
@@ -70,7 +71,7 @@ export const pluginSchema: EntitySchema = {
     },
     {
       name: 'code',
-      label: '代码',
+      label: i18n.t('schema:admin.plugin.code.label'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) =>
@@ -78,7 +79,7 @@ export const pluginSchema: EntitySchema = {
     },
     {
       name: 'version',
-      label: '版本',
+      label: i18n.t('schema:admin.plugin.version.label'),
       type: 'text',
       listWidth: 150,
       renderCell: (row: Record<string, unknown>) => {
@@ -110,13 +111,13 @@ export const pluginSchema: EntitySchema = {
     },
     {
       name: 'plugin_type',
-      label: '类型',
+      label: i18n.t('schema:admin.plugin.plugin_type.label'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: 'core', label: '核心插件' },
-          { value: 'business', label: '业务插件' },
+          { value: 'core', label: i18n.t('schema:admin.plugin.plugin_type.option.core') },
+          { value: 'business', label: i18n.t('schema:admin.plugin.plugin_type.option.business') },
         ],
       },
       listWidth: 100,
@@ -140,7 +141,7 @@ export const pluginSchema: EntitySchema = {
     },
     {
       name: 'runtime_status',
-      label: '状态',
+      label: i18n.t('schema:admin.plugin.runtime_status.label'),
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
@@ -186,7 +187,7 @@ export const pluginSchema: EntitySchema = {
     },
     {
       name: 'runtime_url',
-      label: '运行地址',
+      label: i18n.t('schema:admin.plugin.runtime_url.label'),
       type: 'text',
       listWidth: 200,
       renderCell: (row: Record<string, unknown>) => {
@@ -213,12 +214,12 @@ export const pluginSchema: EntitySchema = {
     filters: [
       {
         id: 'plugin_type',
-        label: '插件类型',
+        label: i18n.t('schema:admin.plugin.filter.plugin_type.label'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '核心插件', value: 'core' },
-          { label: '业务插件', value: 'business' },
+          { label: i18n.t('schema:admin.plugin.filter.plugin_type.option.all'), value: 'all' },
+          { label: i18n.t('schema:admin.plugin.filter.plugin_type.option.core'), value: 'core' },
+          { label: i18n.t('schema:admin.plugin.filter.plugin_type.option.business'), value: 'business' },
         ],
         defaultValue: 'all',
       },
@@ -228,7 +229,7 @@ export const pluginSchema: EntitySchema = {
   actions: ['detail'],
 
   formColCount: 2,
-  createTitle: '安装插件',
-  editTitle: '编辑插件',
-  detailTitle: '插件详情',
+  createTitle: i18n.t('schema:admin.plugin.meta.createTitle'),
+  editTitle: i18n.t('schema:admin.plugin.meta.editTitle'),
+  detailTitle: i18n.t('schema:admin.plugin.meta.detailTitle'),
 };

@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const assetCategorySchema: EntitySchema = {
   entity: 'asset_category',
-  title: '资产分类',
-  description: '管理资产分类，支持树形层级结构',
+  title: i18n.t('schema:erp.asset_category.meta.title'),
+  description: i18n.t('schema:erp.asset_category.meta.description'),
 
   api: {
     module: 'erp',
@@ -13,7 +14,7 @@ export const assetCategorySchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '分类编码',
+      label: i18n.t('schema:erp.asset_category.code.label'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -22,7 +23,7 @@ export const assetCategorySchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '分类名称',
+      label: i18n.t('schema:erp.asset_category.name.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -30,33 +31,33 @@ export const assetCategorySchema: EntitySchema = {
     },
     {
       name: 'parentId',
-      label: '上级分类',
+      label: i18n.t('schema:erp.asset_category.parentId.label'),
       type: 'text',
       listWidth: 150,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('schema:erp.asset_category.description.label'),
       type: 'textarea',
       showInList: false,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.asset_category.status.label'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '停用' },
+          { value: 'active', label: i18n.t('schema:erp.asset_category.status.option.active') },
+          { value: 'inactive', label: i18n.t('schema:erp.asset_category.status.option.inactive') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('schema:erp.asset_category.created_at.label'),
       type: 'date',
       listWidth: 160,
     },
@@ -73,19 +74,19 @@ export const assetCategorySchema: EntitySchema = {
         inactive: 'default',
       },
       labelMap: {
-        active: '启用',
-        inactive: '停用',
+        active: i18n.t('schema:erp.asset_category.status.option.active'),
+        inactive: i18n.t('schema:erp.asset_category.status.option.inactive'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.asset_category.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'inactive' },
+          { label: i18n.t('schema:erp.asset_category.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.asset_category.filter.status.option.active'), value: 'active' },
+          { label: i18n.t('schema:erp.asset_category.filter.status.option.inactive'), value: 'inactive' },
         ],
       },
     ],
@@ -95,17 +96,17 @@ export const assetCategorySchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:erp.asset_category.section.0.title'),
       fields: ['code', 'name', 'parentId'],
     },
     {
-      title: '状态与描述',
+      title: i18n.t('schema:erp.asset_category.section.1.title'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增分类',
-  editTitle: '编辑分类',
-  detailTitle: '分类详情',
+  createTitle: i18n.t('schema:erp.asset_category.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.asset_category.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.asset_category.meta.detailTitle'),
 };

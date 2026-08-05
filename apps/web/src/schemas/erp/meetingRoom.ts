@@ -1,10 +1,11 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const meetingRoomSchema: EntitySchema = {
   entity: 'meetingRoom',
-  title: '会议室管理',
-  description: '管理会议室基础信息，包括名称、位置、容纳人数、设施等',
+  title: i18n.t('schema:erp.meeting_room.meta.title'),
+  description: i18n.t('schema:erp.meeting_room.meta.description'),
 
   api: {
     module: 'erp',
@@ -14,7 +15,7 @@ export const meetingRoomSchema: EntitySchema = {
   fields: [
     {
       name: 'name',
-      label: '会议室名称',
+      label: i18n.t('schema:erp.meeting_room.name.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -22,13 +23,13 @@ export const meetingRoomSchema: EntitySchema = {
     },
     {
       name: 'location',
-      label: '位置',
+      label: i18n.t('schema:erp.meeting_room.location.label'),
       type: 'text',
       listWidth: 140,
     },
     {
       name: 'capacity',
-      label: '容纳人数',
+      label: i18n.t('schema:erp.meeting_room.capacity.label'),
       type: 'number',
       defaultValue: 10,
       sortable: true,
@@ -36,22 +37,22 @@ export const meetingRoomSchema: EntitySchema = {
     },
     {
       name: 'facilities',
-      label: '设施',
+      label: i18n.t('schema:erp.meeting_room.facilities.label'),
       type: 'text',
       listWidth: 160,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.meeting_room.status.label'),
       type: 'select',
       defaultValue: 'available',
       options: {
         type: 'static',
         options: [
-          { value: 'available', label: '可用' },
-          { value: 'occupied', label: '占用中' },
-          { value: 'maintenance', label: '维护中' },
-          { value: 'unavailable', label: '不可用' },
+          { value: 'available', label: i18n.t('schema:erp.meeting_room.status.option.available') },
+          { value: 'occupied', label: i18n.t('schema:erp.meeting_room.status.option.occupied') },
+          { value: 'maintenance', label: i18n.t('schema:erp.meeting_room.status.option.maintenance') },
+          { value: 'unavailable', label: i18n.t('schema:erp.meeting_room.status.option.unavailable') },
         ],
       },
       listWidth: 100,
@@ -71,23 +72,23 @@ export const meetingRoomSchema: EntitySchema = {
         unavailable: 'error',
       },
       labelMap: {
-        available: '可用',
-        occupied: '占用中',
-        maintenance: '维护中',
-        unavailable: '不可用',
+        available: i18n.t('schema:erp.meeting_room.status.option.available'),
+        occupied: i18n.t('schema:erp.meeting_room.status.option.occupied'),
+        maintenance: i18n.t('schema:erp.meeting_room.status.option.maintenance'),
+        unavailable: i18n.t('schema:erp.meeting_room.status.option.unavailable'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.meeting_room.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '可用', value: 'available' },
-          { label: '占用中', value: 'occupied' },
-          { label: '维护中', value: 'maintenance' },
-          { label: '不可用', value: 'unavailable' },
+          { label: i18n.t('schema:erp.meeting_room.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.meeting_room.filter.status.option.available'), value: 'available' },
+          { label: i18n.t('schema:erp.meeting_room.filter.status.option.occupied'), value: 'occupied' },
+          { label: i18n.t('schema:erp.meeting_room.filter.status.option.maintenance'), value: 'maintenance' },
+          { label: i18n.t('schema:erp.meeting_room.filter.status.option.unavailable'), value: 'unavailable' },
         ],
       },
     ],
@@ -97,17 +98,17 @@ export const meetingRoomSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:erp.meeting_room.section.0.title'),
       fields: ['name', 'location', 'capacity'],
     },
     {
-      title: '设施与状态',
+      title: i18n.t('schema:erp.meeting_room.section.1.title'),
       fields: ['facilities', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增会议室',
-  editTitle: '编辑会议室',
-  detailTitle: '会议室详情',
+  createTitle: i18n.t('schema:erp.meeting_room.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.meeting_room.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.meeting_room.meta.detailTitle'),
 };

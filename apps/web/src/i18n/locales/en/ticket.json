@@ -1,1 +1,59 @@
-{}
+{
+  "status": {
+    "open": "Pending",
+    "in_progress": "In Progress",
+    "pending": "Waiting",
+    "resolved": "Resolved",
+    "closed": "Closed",
+    "cancelled": "Cancelled"
+  },
+  "severity": {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "stats": {
+    "all": "All Tickets",
+    "slaTimeout": "SLA Breached"
+  },
+  "sla": {
+    "info": "SLA Info",
+    "breached": "Breached",
+    "responseLimit": "Response Deadline",
+    "resolutionLimit": "Resolution Deadline",
+    "remainingTime": "Remaining Resolution Time",
+    "currentEscalationLevel": "Current Escalation Level",
+    "escalationHistory": "Escalation History",
+    "policy": "Policy",
+    "hours": "hours",
+    "deadline": "Due"
+  },
+  "duration": {
+    "overtime": "Overdue",
+    "hours": "h",
+    "minutes": "m",
+    "minutesOnly": "min"
+  },
+  "source": "Source",
+  "noDescription": "No description",
+  "comments": {
+    "title": "Comments",
+    "placeholder": "Enter a comment...",
+    "unknownUser": "Unknown User"
+  },
+  "actions": {
+    "startProgress": "Start Progress",
+    "markResolved": "Mark Resolved"
+  },
+  "errors": {
+    "deleteNotSupported": "Tickets do not support deletion"
+  },
+  "page": {
+    "title": "Ticket Center",
+    "description": "Unified management of reconciliation discrepancies, approval timeouts, system alerts, and other tickets"
+  },
+  "breadcrumb": {
+    "home": "Home"
+  }
+}

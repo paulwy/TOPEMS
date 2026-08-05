@@ -2,6 +2,7 @@ import React from 'react';
 import { Download } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
 import type { RowAction } from '@/components/templates';
+import i18n from '@/i18n';
 
 const formatCurrency = (amount: number | undefined) => {
   return (
@@ -18,8 +19,8 @@ const formatDate = (dateStr?: string) => {
 
 export const tenantInvoiceSchema: EntitySchema = {
   entity: 'tenant_invoice',
-  title: '账单历史',
-  description: '查看租户账单和发票信息',
+  title: i18n.t('schema:admin.tenant_invoice.meta.title'),
+  description: i18n.t('schema:admin.tenant_invoice.meta.description'),
 
   api: {
     module: 'tenant',
@@ -29,7 +30,7 @@ export const tenantInvoiceSchema: EntitySchema = {
   fields: [
     {
       name: 'id',
-      label: '账单编号',
+      label: i18n.t('schema:admin.tenant_invoice.id.label'),
       type: 'text',
       readonly: true,
       sortable: true,
@@ -37,7 +38,7 @@ export const tenantInvoiceSchema: EntitySchema = {
     },
     {
       name: 'period_start',
-      label: '账单周期开始',
+      label: i18n.t('schema:admin.tenant_invoice.period_start.label'),
       type: 'date',
       readonly: true,
       listWidth: 120,
@@ -46,7 +47,7 @@ export const tenantInvoiceSchema: EntitySchema = {
     },
     {
       name: 'period_end',
-      label: '账单周期结束',
+      label: i18n.t('schema:admin.tenant_invoice.period_end.label'),
       type: 'date',
       readonly: true,
       listWidth: 120,
@@ -55,7 +56,7 @@ export const tenantInvoiceSchema: EntitySchema = {
     },
     {
       name: 'amount',
-      label: '金额',
+      label: i18n.t('schema:admin.tenant_invoice.amount.label'),
       type: 'number',
       readonly: true,
       sortable: true,
@@ -64,7 +65,7 @@ export const tenantInvoiceSchema: EntitySchema = {
     },
     {
       name: 'currency',
-      label: '币种',
+      label: i18n.t('schema:admin.tenant_invoice.currency.label'),
       type: 'text',
       readonly: true,
       listWidth: 80,
@@ -72,23 +73,23 @@ export const tenantInvoiceSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:admin.tenant_invoice.status.label'),
       type: 'select',
       readonly: true,
       options: {
         type: 'static',
         options: [
-          { value: 'paid', label: '已支付' },
-          { value: 'pending', label: '待支付' },
-          { value: 'failed', label: '支付失败' },
-          { value: 'draft', label: '草稿' },
+          { value: 'paid', label: i18n.t('schema:admin.tenant_invoice.status.option.paid') },
+          { value: 'pending', label: i18n.t('schema:admin.tenant_invoice.status.option.pending') },
+          { value: 'failed', label: i18n.t('schema:admin.tenant_invoice.status.option.failed') },
+          { value: 'draft', label: i18n.t('schema:admin.tenant_invoice.status.option.draft') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'paid_at',
-      label: '支付时间',
+      label: i18n.t('schema:admin.tenant_invoice.paid_at.label'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -97,7 +98,7 @@ export const tenantInvoiceSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '创建时间',
+      label: i18n.t('schema:admin.tenant_invoice.created_at.label'),
       type: 'datetime',
       readonly: true,
       hideInForm: true,
@@ -120,23 +121,23 @@ export const tenantInvoiceSchema: EntitySchema = {
         draft: 'default',
       },
       labelMap: {
-        paid: '已支付',
-        pending: '待支付',
-        failed: '支付失败',
-        draft: '草稿',
+        paid: i18n.t('schema:admin.tenant_invoice.status.option.paid'),
+        pending: i18n.t('schema:admin.tenant_invoice.status.option.pending'),
+        failed: i18n.t('schema:admin.tenant_invoice.status.option.failed'),
+        draft: i18n.t('schema:admin.tenant_invoice.status.option.draft'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:admin.tenant_invoice.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '已支付', value: 'paid' },
-          { label: '待支付', value: 'pending' },
-          { label: '支付失败', value: 'failed' },
-          { label: '草稿', value: 'draft' },
+          { label: i18n.t('schema:admin.tenant_invoice.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:admin.tenant_invoice.filter.status.option.paid'), value: 'paid' },
+          { label: i18n.t('schema:admin.tenant_invoice.filter.status.option.pending'), value: 'pending' },
+          { label: i18n.t('schema:admin.tenant_invoice.filter.status.option.failed'), value: 'failed' },
+          { label: i18n.t('schema:admin.tenant_invoice.filter.status.option.draft'), value: 'draft' },
         ],
       },
     ],
@@ -145,12 +146,12 @@ export const tenantInvoiceSchema: EntitySchema = {
   actions: ['detail'],
 
   formColCount: 2,
-  detailTitle: '发票详情',
+  detailTitle: i18n.t('schema:admin.tenant_invoice.meta.detailTitle'),
 };
 
 export const invoiceRowActions: RowAction[] = [
   {
-    label: '下载发票',
+    label: i18n.t('schema:admin.tenant_invoice.filter.status.label'),
     icon: <Download size={16} />,
     onClick: () => {},
   },

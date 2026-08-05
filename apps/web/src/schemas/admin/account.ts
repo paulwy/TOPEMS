@@ -7,6 +7,7 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
 import { accountApi } from '@/api/finance/account';
+import i18n from '@/i18n';
 
 /**
  * 加载可用的上级科目（仅总账科目）
@@ -98,8 +99,8 @@ const renderBadge = (
 
 export const accountSchema: EntitySchema = {
   entity: 'admin_account',
-  title: '会计科目',
-  description: '管理企业会计科目体系，支持多级科目结构',
+  title: i18n.t('schema:admin.account.meta.title'),
+  description: i18n.t('schema:admin.account.meta.description'),
 
   api: {
     module: 'finance',
@@ -109,7 +110,7 @@ export const accountSchema: EntitySchema = {
   fields: [
     {
       name: 'code',
-      label: '科目编码',
+      label: i18n.t('schema:admin.account.code.label'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -124,7 +125,7 @@ export const accountSchema: EntitySchema = {
     },
     {
       name: 'name',
-      label: '科目名称',
+      label: i18n.t('schema:admin.account.name.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -137,19 +138,19 @@ export const accountSchema: EntitySchema = {
     },
     {
       name: 'type',
-      label: '科目类型',
+      label: i18n.t('schema:admin.account.type.label'),
       type: 'select',
       required: true,
       defaultValue: 'asset',
       options: {
         type: 'static',
         options: [
-          { value: 'asset', label: '资产' },
-          { value: 'liability', label: '负债' },
-          { value: 'equity', label: '权益' },
-          { value: 'revenue', label: '收入' },
-          { value: 'expense', label: '费用' },
-          { value: 'cost', label: '成本' },
+          { value: 'asset', label: i18n.t('schema:admin.account.type.option.asset') },
+          { value: 'liability', label: i18n.t('schema:admin.account.type.option.liability') },
+          { value: 'equity', label: i18n.t('schema:admin.account.type.option.equity') },
+          { value: 'revenue', label: i18n.t('schema:admin.account.type.option.revenue') },
+          { value: 'expense', label: i18n.t('schema:admin.account.type.option.expense') },
+          { value: 'cost', label: i18n.t('schema:admin.account.type.option.cost') },
         ],
       },
       listWidth: 100,
@@ -162,15 +163,15 @@ export const accountSchema: EntitySchema = {
     },
     {
       name: 'balance_direction',
-      label: '余额方向',
+      label: i18n.t('schema:admin.account.balance_direction.label'),
       type: 'select',
       required: true,
       defaultValue: 'debit',
       options: {
         type: 'static',
         options: [
-          { value: 'debit', label: '借' },
-          { value: 'credit', label: '贷' },
+          { value: 'debit', label: i18n.t('schema:admin.account.balance_direction.option.debit') },
+          { value: 'credit', label: i18n.t('schema:admin.account.balance_direction.option.credit') },
         ],
       },
       listWidth: 100,
@@ -183,7 +184,7 @@ export const accountSchema: EntitySchema = {
     },
     {
       name: 'is_detail',
-      label: '明细',
+      label: i18n.t('schema:admin.account.is_detail.label'),
       type: 'switch',
       defaultValue: true,
       listWidth: 110,
@@ -211,7 +212,7 @@ export const accountSchema: EntitySchema = {
     },
     {
       name: 'isactive',
-      label: '状态',
+      label: i18n.t('schema:admin.account.isactive.label'),
       type: 'switch',
       defaultValue: true,
       listWidth: 90,
@@ -254,7 +255,7 @@ export const accountSchema: EntitySchema = {
     },
     {
       name: 'parentId',
-      label: '上级科目',
+      label: i18n.t('schema:admin.account.parentId.label'),
       type: 'select',
       showInList: false,
       options: {
@@ -264,7 +265,7 @@ export const accountSchema: EntitySchema = {
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('schema:admin.account.description.label'),
       type: 'textarea',
       showInList: false,
     },
@@ -277,27 +278,27 @@ export const accountSchema: EntitySchema = {
     filters: [
       {
         id: 'type',
-        label: '科目类型',
+        label: i18n.t('schema:admin.account.filter.type.label'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '资产', value: 'asset' },
-          { label: '负债', value: 'liability' },
-          { label: '权益', value: 'equity' },
-          { label: '收入', value: 'revenue' },
-          { label: '费用', value: 'expense' },
-          { label: '成本', value: 'cost' },
+          { label: i18n.t('schema:admin.account.filter.type.option.all'), value: 'all' },
+          { label: i18n.t('schema:admin.account.filter.type.option.asset'), value: 'asset' },
+          { label: i18n.t('schema:admin.account.filter.type.option.liability'), value: 'liability' },
+          { label: i18n.t('schema:admin.account.filter.type.option.equity'), value: 'equity' },
+          { label: i18n.t('schema:admin.account.filter.type.option.revenue'), value: 'revenue' },
+          { label: i18n.t('schema:admin.account.filter.type.option.expense'), value: 'expense' },
+          { label: i18n.t('schema:admin.account.filter.type.option.cost'), value: 'cost' },
         ],
         defaultValue: 'all',
       },
       {
         id: 'is_detail',
-        label: '明细类型',
+        label: i18n.t('schema:admin.account.filter.is_detail.label'),
         type: 'select',
         options: [
-          { label: '全部', value: 'all' },
-          { label: '明细科目', value: 'detail' },
-          { label: '总账科目', value: 'summary' },
+          { label: i18n.t('schema:admin.account.filter.is_detail.option.all'), value: 'all' },
+          { label: i18n.t('schema:admin.account.filter.is_detail.option.detail'), value: 'detail' },
+          { label: i18n.t('schema:admin.account.filter.is_detail.option.summary'), value: 'summary' },
         ],
         defaultValue: 'all',
       },
@@ -308,19 +309,19 @@ export const accountSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:admin.account.section.0.title'),
       fields: ['code', 'name', 'type', 'balance_direction'],
     },
     {
-      title: '科目属性',
+      title: i18n.t('schema:admin.account.section.1.title'),
       fields: ['parentId', 'is_detail', 'isactive', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增科目',
-  editTitle: '编辑科目',
-  detailTitle: '科目详情',
+  createTitle: i18n.t('schema:admin.account.meta.createTitle'),
+  editTitle: i18n.t('schema:admin.account.meta.editTitle'),
+  detailTitle: i18n.t('schema:admin.account.meta.detailTitle'),
 
   dynamicOptions: [
     {

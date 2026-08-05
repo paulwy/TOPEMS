@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Building2, MapPin, FileText, Calendar, User } from 'lucide-react';
@@ -13,46 +13,61 @@ import { useNotificationStore } from '@/store';
 
 import { useTranslation } from 'react-i18next';
 
-const transferSchema = z.object({
-  asset_id: z.string().min(1, '请选择资产'),
-  asset_name: z.string().optional(),
-  from_department: z.string().min(1, '请选择调出部门'),
-  to_department: z.string().min(1, '请选择调入部门'),
-  from_location: z.string().optional(),
-  to_location: z.string().optional(),
-  responsible_person: z.string().optional(),
-  transfer_date: z.string().min(1, '请选择调拨日期'),
-  reason: z.string().min(1, '请填写调拨原因'),
-  description: z.string().optional(),
-});
-
-type TransferFormData = z.infer<typeof transferSchema>;
-
-const DEPARTMENTS = [
-  { value: '研发部', label: '研发部' },
-  { value: '市场部', label: '市场部' },
-  { value: '财务部', label: '财务部' },
-  { value: '行政部', label: '行政部' },
-  { value: '生产部', label: '生产部' },
-  { value: '采购部', label: '采购部' },
-];
-
-const ASSETS = [
-  { value: 'AST-001', label: 'AST-001 - 办公电脑-01' },
-  { value: 'AST-002', label: 'AST-002 - 服务器-01' },
-  { value: 'AST-003', label: 'AST-003 - 打印机-01' },
-  { value: 'AST-004', label: 'AST-004 - 投影仪-01' },
-  { value: 'AST-005', label: 'AST-005 - 空调-01' },
-  { value: 'AST-006', label: 'AST-006 - 办公桌-01' },
-  { value: 'AST-007', label: 'AST-007 - 笔记本电脑-01' },
-  { value: 'AST-008', label: 'AST-008 - 监控摄像头-01' },
-];
+type TransferFormData = {
+  asset_id: string;
+  asset_name?: string;
+  from_department: string;
+  to_department: string;
+  from_location?: string;
+  to_location?: string;
+  responsible_person?: string;
+  transfer_date: string;
+  reason: string;
+  description?: string;
+};
 
 const TransferPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
+
+  const transferSchema = useMemo(
+    () =>
+      z.object({
+        asset_id: z.string().min(1, t('asset:transfer.validation_select_asset')),
+        asset_name: z.string().optional(),
+        from_department: z.string().min(1, t('asset:transfer.validation_select_from_dept')),
+        to_department: z.string().min(1, t('asset:transfer.validation_select_to_dept')),
+        from_location: z.string().optional(),
+        to_location: z.string().optional(),
+        responsible_person: z.string().optional(),
+        transfer_date: z.string().min(1, t('asset:transfer.validation_select_date')),
+        reason: z.string().min(1, t('asset:transfer.validation_fill_reason')),
+        description: z.string().optional(),
+      }),
+    [t]
+  );
+
+  const DEPARTMENTS = [
+    { value: '研发部', label: t('asset:transfer.dept_rd') },
+    { value: '市场部', label: t('asset:transfer.dept_marketing') },
+    { value: '财务部', label: t('asset:transfer.dept_finance') },
+    { value: '行政部', label: t('asset:transfer.dept_admin') },
+    { value: '生产部', label: t('asset:transfer.dept_production') },
+    { value: '采购部', label: t('asset:transfer.dept_purchase') },
+  ];
+
+  const ASSETS = [
+    { value: 'AST-001', label: t('asset:transfer.asset_ast_001') },
+    { value: 'AST-002', label: t('asset:transfer.asset_ast_002') },
+    { value: 'AST-003', label: t('asset:transfer.asset_ast_003') },
+    { value: 'AST-004', label: t('asset:transfer.asset_ast_004') },
+    { value: 'AST-005', label: t('asset:transfer.asset_ast_005') },
+    { value: 'AST-006', label: t('asset:transfer.asset_ast_006') },
+    { value: 'AST-007', label: t('asset:transfer.asset_ast_007') },
+    { value: 'AST-008', label: t('asset:transfer.asset_ast_008') },
+  ];
 
   const createMutation = useMutation({
     mutationFn: async (data: TransferFormData) => {

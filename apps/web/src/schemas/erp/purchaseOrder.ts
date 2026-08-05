@@ -1,10 +1,11 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const purchaseOrderSchema: EntitySchema = {
   entity: 'purchaseOrder',
-  title: '采购订单管理',
-  description: '管理采购订单信息，包括订单号、供应商、金额、状态等',
+  title: i18n.t('schema:erp.purchase_order.meta.title'),
+  description: i18n.t('schema:erp.purchase_order.meta.description'),
 
   api: {
     module: 'erp',
@@ -14,7 +15,7 @@ export const purchaseOrderSchema: EntitySchema = {
   fields: [
     {
       name: 'order_number',
-      label: '订单号',
+      label: i18n.t('schema:erp.purchase_order.order_number.label'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -23,7 +24,7 @@ export const purchaseOrderSchema: EntitySchema = {
     },
     {
       name: 'supplier_name',
-      label: '供应商名称',
+      label: i18n.t('schema:erp.purchase_order.supplier_name.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -31,7 +32,7 @@ export const purchaseOrderSchema: EntitySchema = {
     },
     {
       name: 'total_amount',
-      label: '订单金额',
+      label: i18n.t('schema:erp.purchase_order.total_amount.label'),
       type: 'number',
       required: true,
       defaultValue: 0,
@@ -44,28 +45,28 @@ export const purchaseOrderSchema: EntitySchema = {
     },
     {
       name: 'order_date',
-      label: '订单日期',
+      label: i18n.t('schema:erp.purchase_order.order_date.label'),
       type: 'date',
       required: true,
       listWidth: 120,
     },
     {
       name: 'expected_date',
-      label: '预计到货',
+      label: i18n.t('schema:erp.purchase_order.expected_date.label'),
       type: 'date',
       listWidth: 120,
     },
     {
       name: 'currency',
-      label: '币种',
+      label: i18n.t('schema:erp.purchase_order.currency.label'),
       type: 'select',
       defaultValue: 'CNY',
       options: {
         type: 'static',
         options: [
-          { value: 'CNY', label: '人民币 (CNY)' },
-          { value: 'USD', label: '美元 (USD)' },
-          { value: 'EUR', label: '欧元 (EUR)' },
+          { value: 'CNY', label: i18n.t('schema:erp.purchase_order.currency.option.CNY') },
+          { value: 'USD', label: i18n.t('schema:erp.purchase_order.currency.option.USD') },
+          { value: 'EUR', label: i18n.t('schema:erp.purchase_order.currency.option.EUR') },
         ],
       },
       listWidth: 100,
@@ -73,25 +74,25 @@ export const purchaseOrderSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.purchase_order.status.label'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'pending', label: '待审批' },
-          { value: 'approved', label: '已审批' },
-          { value: 'partially_received', label: '部分收货' },
-          { value: 'received', label: '已收货' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'draft', label: i18n.t('schema:erp.purchase_order.status.option.draft') },
+          { value: 'pending', label: i18n.t('schema:erp.purchase_order.status.option.pending') },
+          { value: 'approved', label: i18n.t('schema:erp.purchase_order.status.option.approved') },
+          { value: 'partially_received', label: i18n.t('schema:erp.purchase_order.status.option.partially_received') },
+          { value: 'received', label: i18n.t('schema:erp.purchase_order.status.option.received') },
+          { value: 'cancelled', label: i18n.t('schema:erp.purchase_order.status.option.cancelled') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'remark',
-      label: '备注',
+      label: i18n.t('schema:erp.purchase_order.remark.label'),
       type: 'textarea',
       showInList: false,
     },
@@ -112,27 +113,27 @@ export const purchaseOrderSchema: EntitySchema = {
         cancelled: 'error',
       },
       labelMap: {
-        draft: '草稿',
-        pending: '待审批',
-        approved: '已审批',
-        partially_received: '部分收货',
-        received: '已收货',
-        cancelled: '已取消',
+        draft: i18n.t('schema:erp.purchase_order.status.option.draft'),
+        pending: i18n.t('schema:erp.purchase_order.status.option.pending'),
+        approved: i18n.t('schema:erp.purchase_order.status.option.approved'),
+        partially_received: i18n.t('schema:erp.purchase_order.status.option.partially_received'),
+        received: i18n.t('schema:erp.purchase_order.status.option.received'),
+        cancelled: i18n.t('schema:erp.purchase_order.status.option.cancelled'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.purchase_order.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '待审批', value: 'pending' },
-          { label: '已审批', value: 'approved' },
-          { label: '部分收货', value: 'partially_received' },
-          { label: '已收货', value: 'received' },
-          { label: '已取消', value: 'cancelled' },
+          { label: i18n.t('schema:erp.purchase_order.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.purchase_order.filter.status.option.draft'), value: 'draft' },
+          { label: i18n.t('schema:erp.purchase_order.filter.status.option.pending'), value: 'pending' },
+          { label: i18n.t('schema:erp.purchase_order.filter.status.option.approved'), value: 'approved' },
+          { label: i18n.t('schema:erp.purchase_order.filter.status.option.partially_received'), value: 'partially_received' },
+          { label: i18n.t('schema:erp.purchase_order.filter.status.option.received'), value: 'received' },
+          { label: i18n.t('schema:erp.purchase_order.filter.status.option.cancelled'), value: 'cancelled' },
         ],
       },
     ],
@@ -142,21 +143,21 @@ export const purchaseOrderSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:erp.purchase_order.section.0.title'),
       fields: ['order_number', 'supplier_name', 'currency', 'status'],
     },
     {
-      title: '金额与日期',
+      title: i18n.t('schema:erp.purchase_order.section.1.title'),
       fields: ['total_amount', 'order_date', 'expected_date'],
     },
     {
-      title: '备注',
+      title: i18n.t('schema:erp.purchase_order.section.2.title'),
       fields: ['remark'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增采购订单',
-  editTitle: '编辑采购订单',
-  detailTitle: '采购订单详情',
+  createTitle: i18n.t('schema:erp.purchase_order.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.purchase_order.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.purchase_order.meta.detailTitle'),
 };

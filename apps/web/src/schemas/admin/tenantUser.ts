@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip, Avatar, Box, Typography, FormControl, Select, MenuItem } from '@mui/material';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 const roleLabels: Record<string, string> = {
   owner: '所有者',
@@ -86,8 +87,8 @@ function renderDateCell(row: Record<string, unknown>, field: string) {
 
 export const tenantUserSchema: EntitySchema = {
   entity: 'tenantUser',
-  title: '租户成员',
-  description: '管理租户成员信息',
+  title: i18n.t('schema:admin.tenant_user.meta.title'),
+  description: i18n.t('schema:admin.tenant_user.meta.description'),
 
   api: {
     module: 'admin',
@@ -105,7 +106,7 @@ export const tenantUserSchema: EntitySchema = {
     },
     {
       name: 'email',
-      label: '成员',
+      label: i18n.t('schema:admin.tenant_user.email.label'),
       type: 'text',
       required: true,
       listWidth: 200,
@@ -113,17 +114,17 @@ export const tenantUserSchema: EntitySchema = {
     },
     {
       name: 'role',
-      label: '角色',
+      label: i18n.t('schema:admin.tenant_user.role.label'),
       type: 'select',
       required: true,
       defaultValue: 'member',
       options: {
         type: 'static',
         options: [
-          { value: 'owner', label: '所有者' },
-          { value: 'admin', label: '管理员' },
-          { value: 'member', label: '成员' },
-          { value: 'guest', label: '访客' },
+          { value: 'owner', label: i18n.t('schema:admin.tenant_user.role.option.owner') },
+          { value: 'admin', label: i18n.t('schema:admin.tenant_user.role.option.admin') },
+          { value: 'member', label: i18n.t('schema:admin.tenant_user.role.option.member') },
+          { value: 'guest', label: i18n.t('schema:admin.tenant_user.role.option.guest') },
         ],
       },
       listWidth: 120,
@@ -131,15 +132,15 @@ export const tenantUserSchema: EntitySchema = {
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:admin.tenant_user.status.label'),
       type: 'select',
       required: true,
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '活跃' },
-          { value: 'invited', label: '已邀请' },
-          { value: 'suspended', label: '已停用' },
+          { value: 'active', label: i18n.t('schema:admin.tenant_user.status.option.active') },
+          { value: 'invited', label: i18n.t('schema:admin.tenant_user.status.option.invited') },
+          { value: 'suspended', label: i18n.t('schema:admin.tenant_user.status.option.suspended') },
         ],
       },
       listWidth: 100,
@@ -147,7 +148,7 @@ export const tenantUserSchema: EntitySchema = {
     },
     {
       name: 'created_at',
-      label: '加入时间',
+      label: i18n.t('schema:admin.tenant_user.created_at.label'),
       type: 'datetime',
       readonly: true,
       sortable: true,
@@ -156,7 +157,7 @@ export const tenantUserSchema: EntitySchema = {
     },
     {
       name: 'last_login',
-      label: '最近登录',
+      label: i18n.t('schema:admin.tenant_user.last_login.label'),
       type: 'datetime',
       readonly: true,
       listWidth: 120,
@@ -172,15 +173,15 @@ export const tenantUserSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '成员信息',
+      title: i18n.t('schema:admin.tenant_user.section.0.title'),
       fields: ['email', 'role', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '邀请成员',
-  editTitle: '编辑成员',
-  detailTitle: '成员详情',
+  createTitle: i18n.t('schema:admin.tenant_user.meta.createTitle'),
+  editTitle: i18n.t('schema:admin.tenant_user.meta.editTitle'),
+  detailTitle: i18n.t('schema:admin.tenant_user.meta.detailTitle'),
 
   actions: ['detail', 'delete'],
 };

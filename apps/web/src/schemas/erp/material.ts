@@ -6,14 +6,15 @@
 
 import React from 'react';
 import type { EntitySchema, SchemaField } from '@/schema';
+import i18n from '@/i18n';
 
 /**
  * 物料管理 Schema
  */
 export const materialSchema: EntitySchema = {
   entity: 'material',
-  title: '物料管理',
-  description: '管理物料基础信息，包括编码、名称、规格、分类等',
+  title: i18n.t('schema:erp.material.meta.title'),
+  description: i18n.t('schema:erp.material.meta.description'),
 
   api: {
     module: 'erp',
@@ -23,7 +24,7 @@ export const materialSchema: EntitySchema = {
   fields: [
     {
       name: 'material_code',
-      label: '物料编码',
+      label: i18n.t('schema:erp.material.material_code.label'),
       type: 'text',
       required: true,
       readonlyOnEdit: true,
@@ -32,7 +33,7 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'material_name',
-      label: '物料名称',
+      label: i18n.t('schema:erp.material.material_name.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -40,35 +41,35 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'specification',
-      label: '规格型号',
+      label: i18n.t('schema:erp.material.specification.label'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'category',
-      label: '分类',
+      label: i18n.t('schema:erp.material.category.label'),
       type: 'select',
       options: {
         type: 'static',
         options: [
-          { value: '电子元件', label: '电子元件' },
-          { value: '机械零件', label: '机械零件' },
-          { value: '原材料', label: '原材料' },
-          { value: '包装材料', label: '包装材料' },
-          { value: '辅助材料', label: '辅助材料' },
+          { value: '电子元件', label: i18n.t('schema:erp.material.category.option.电子元件') },
+          { value: '机械零件', label: i18n.t('schema:erp.material.category.option.机械零件') },
+          { value: '原材料', label: i18n.t('schema:erp.material.category.option.原材料') },
+          { value: '包装材料', label: i18n.t('schema:erp.material.category.option.包装材料') },
+          { value: '辅助材料', label: i18n.t('schema:erp.material.category.option.辅助材料') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'unit',
-      label: '单位',
+      label: i18n.t('schema:erp.material.unit.label'),
       type: 'text',
       listWidth: 80,
     },
     {
       name: 'unit_price',
-      label: '单价',
+      label: i18n.t('schema:erp.material.unit_price.label'),
       type: 'number',
       defaultValue: 0,
       listWidth: 100,
@@ -79,55 +80,55 @@ export const materialSchema: EntitySchema = {
     },
     {
       name: 'supplier_id',
-      label: '供应商ID',
+      label: i18n.t('schema:erp.material.supplier_id.label'),
       type: 'text',
       showInList: false,
       showInDetail: false,
     },
     {
       name: 'supplier_name',
-      label: '主供应商',
+      label: i18n.t('schema:erp.material.supplier_name.label'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.material.status.label'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'inactive', label: '停用' },
-          { value: 'obsolete', label: '淘汰' },
+          { value: 'active', label: i18n.t('schema:erp.material.status.option.active') },
+          { value: 'inactive', label: i18n.t('schema:erp.material.status.option.inactive') },
+          { value: 'obsolete', label: i18n.t('schema:erp.material.status.option.obsolete') },
         ],
       },
       listWidth: 80,
     },
     {
       name: 'barcode',
-      label: '条形码',
+      label: i18n.t('schema:erp.material.barcode.label'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'weight',
-      label: '重量 (kg)',
+      label: i18n.t('schema:erp.material.weight.label'),
       type: 'number',
       defaultValue: 0,
       showInList: false,
     },
     {
       name: 'volume',
-      label: '体积 (m³)',
+      label: i18n.t('schema:erp.material.volume.label'),
       type: 'number',
       defaultValue: 0,
       showInList: false,
     },
     {
       name: 'description',
-      label: '描述',
+      label: i18n.t('schema:erp.material.description.label'),
       type: 'textarea',
       showInList: false,
     },
@@ -154,34 +155,34 @@ export const materialSchema: EntitySchema = {
         obsolete: 'error',
       },
       labelMap: {
-        active: '启用',
-        inactive: '停用',
-        obsolete: '淘汰',
+        active: i18n.t('schema:erp.material.status.option.active'),
+        inactive: i18n.t('schema:erp.material.status.option.inactive'),
+        obsolete: i18n.t('schema:erp.material.status.option.obsolete'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.material.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'inactive' },
-          { label: '淘汰', value: 'obsolete' },
+          { label: i18n.t('schema:erp.material.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.material.filter.status.option.active'), value: 'active' },
+          { label: i18n.t('schema:erp.material.filter.status.option.inactive'), value: 'inactive' },
+          { label: i18n.t('schema:erp.material.filter.status.option.obsolete'), value: 'obsolete' },
         ],
       },
       {
         id: 'category',
-        label: '分类',
+        label: i18n.t('schema:erp.material.filter.category.label'),
         type: 'select',
         options: [
-          { label: '全部分类', value: 'all' },
-          { label: '电子元件', value: '电子元件' },
-          { label: '机械零件', value: '机械零件' },
-          { label: '原材料', value: '原材料' },
-          { label: '包装材料', value: '包装材料' },
-          { label: '辅助材料', value: '辅助材料' },
+          { label: i18n.t('schema:erp.material.filter.category.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.material.filter.category.option.电子元件'), value: '电子元件' },
+          { label: i18n.t('schema:erp.material.filter.category.option.机械零件'), value: '机械零件' },
+          { label: i18n.t('schema:erp.material.filter.category.option.原材料'), value: '原材料' },
+          { label: i18n.t('schema:erp.material.filter.category.option.包装材料'), value: '包装材料' },
+          { label: i18n.t('schema:erp.material.filter.category.option.辅助材料'), value: '辅助材料' },
         ],
       },
     ],
@@ -191,25 +192,25 @@ export const materialSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:erp.material.section.0.title'),
       fields: ['material_code', 'material_name', 'specification', 'category', 'unit'],
     },
     {
-      title: '价格与供应商',
+      title: i18n.t('schema:erp.material.section.1.title'),
       fields: ['unit_price', 'supplier_name', 'barcode'],
     },
     {
-      title: '物理属性',
+      title: i18n.t('schema:erp.material.section.2.title'),
       fields: ['weight', 'volume'],
     },
     {
-      title: '状态与描述',
+      title: i18n.t('schema:erp.material.section.3.title'),
       fields: ['status', 'description'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增物料',
-  editTitle: '编辑物料',
-  detailTitle: '物料详情',
+  createTitle: i18n.t('schema:erp.material.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.material.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.material.meta.detailTitle'),
 };

@@ -4,11 +4,12 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const announcementSchema: EntitySchema = {
   entity: 'announcement',
-  title: '公告管理',
-  description: '管理系统公告，包括标题、内容、优先级、发布状态等',
+  title: i18n.t('schema:erp.announcement.meta.title'),
+  description: i18n.t('schema:erp.announcement.meta.description'),
 
   api: {
     module: 'erp',
@@ -18,7 +19,7 @@ export const announcementSchema: EntitySchema = {
   fields: [
     {
       name: 'title',
-      label: '公告标题',
+      label: i18n.t('schema:erp.announcement.title.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -26,51 +27,51 @@ export const announcementSchema: EntitySchema = {
     },
     {
       name: 'author',
-      label: '发布人',
+      label: i18n.t('schema:erp.announcement.author.label'),
       type: 'text',
       listWidth: 100,
     },
     {
       name: 'priority',
-      label: '优先级',
+      label: i18n.t('schema:erp.announcement.priority.label'),
       type: 'select',
       defaultValue: 'normal',
       options: {
         type: 'static',
         options: [
-          { value: 'low', label: '低' },
-          { value: 'normal', label: '中' },
-          { value: 'high', label: '高' },
-          { value: 'urgent', label: '紧急' },
+          { value: 'low', label: i18n.t('schema:erp.announcement.priority.option.low') },
+          { value: 'normal', label: i18n.t('schema:erp.announcement.priority.option.normal') },
+          { value: 'high', label: i18n.t('schema:erp.announcement.priority.option.high') },
+          { value: 'urgent', label: i18n.t('schema:erp.announcement.priority.option.urgent') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.announcement.status.label'),
       type: 'select',
       defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: '草稿' },
-          { value: 'published', label: '已发布' },
-          { value: 'archived', label: '已归档' },
+          { value: 'draft', label: i18n.t('schema:erp.announcement.status.option.draft') },
+          { value: 'published', label: i18n.t('schema:erp.announcement.status.option.published') },
+          { value: 'archived', label: i18n.t('schema:erp.announcement.status.option.archived') },
         ],
       },
       listWidth: 100,
     },
     {
       name: 'content',
-      label: '公告内容',
+      label: i18n.t('schema:erp.announcement.content.label'),
       type: 'textarea',
       required: true,
       showInList: false,
     },
     {
       name: 'publish_at',
-      label: '发布时间',
+      label: i18n.t('schema:erp.announcement.publish_at.label'),
       type: 'datetime',
       showInList: false,
     },
@@ -88,33 +89,33 @@ export const announcementSchema: EntitySchema = {
         archived: 'info',
       },
       labelMap: {
-        draft: '草稿',
-        published: '已发布',
-        archived: '已归档',
+        draft: i18n.t('schema:erp.announcement.status.option.draft'),
+        published: i18n.t('schema:erp.announcement.status.option.published'),
+        archived: i18n.t('schema:erp.announcement.status.option.archived'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.announcement.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已发布', value: 'published' },
-          { label: '已归档', value: 'archived' },
+          { label: i18n.t('schema:erp.announcement.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.announcement.filter.status.option.draft'), value: 'draft' },
+          { label: i18n.t('schema:erp.announcement.filter.status.option.published'), value: 'published' },
+          { label: i18n.t('schema:erp.announcement.filter.status.option.archived'), value: 'archived' },
         ],
       },
       {
         id: 'priority',
-        label: '优先级',
+        label: i18n.t('schema:erp.announcement.filter.priority.label'),
         type: 'select',
         options: [
-          { label: '全部优先级', value: 'all' },
-          { label: '低', value: 'low' },
-          { label: '中', value: 'normal' },
-          { label: '高', value: 'high' },
-          { label: '紧急', value: 'urgent' },
+          { label: i18n.t('schema:erp.announcement.filter.priority.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.announcement.filter.priority.option.low'), value: 'low' },
+          { label: i18n.t('schema:erp.announcement.filter.priority.option.normal'), value: 'normal' },
+          { label: i18n.t('schema:erp.announcement.filter.priority.option.high'), value: 'high' },
+          { label: i18n.t('schema:erp.announcement.filter.priority.option.urgent'), value: 'urgent' },
         ],
       },
     ],
@@ -124,17 +125,17 @@ export const announcementSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '基本信息',
+      title: i18n.t('schema:erp.announcement.section.0.title'),
       fields: ['title', 'author', 'priority', 'status'],
     },
     {
-      title: '公告内容',
+      title: i18n.t('schema:erp.announcement.section.1.title'),
       fields: ['content', 'publish_at'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增公告',
-  editTitle: '编辑公告',
-  detailTitle: '公告详情',
+  createTitle: i18n.t('schema:erp.announcement.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.announcement.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.announcement.meta.detailTitle'),
 };

@@ -4,11 +4,12 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import i18n from '@/i18n';
 
 export const bankAccountSchema: EntitySchema = {
   entity: 'bank_account',
-  title: '银行账户管理',
-  description: '管理公司银行账户信息，包括开户行、账号、余额、状态等',
+  title: i18n.t('schema:erp.bank_account.meta.title'),
+  description: i18n.t('schema:erp.bank_account.meta.description'),
 
   api: {
     module: 'erp',
@@ -18,7 +19,7 @@ export const bankAccountSchema: EntitySchema = {
   fields: [
     {
       name: 'bank_name',
-      label: '银行名称',
+      label: i18n.t('schema:erp.bank_account.bank_name.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -26,13 +27,13 @@ export const bankAccountSchema: EntitySchema = {
     },
     {
       name: 'branch_name',
-      label: '支行名称',
+      label: i18n.t('schema:erp.bank_account.branch_name.label'),
       type: 'text',
       listWidth: 120,
     },
     {
       name: 'account_name',
-      label: '账户名称',
+      label: i18n.t('schema:erp.bank_account.account_name.label'),
       type: 'text',
       required: true,
       sortable: true,
@@ -40,30 +41,30 @@ export const bankAccountSchema: EntitySchema = {
     },
     {
       name: 'account_number',
-      label: '账号',
+      label: i18n.t('schema:erp.bank_account.account_number.label'),
       type: 'text',
       required: true,
       listWidth: 140,
     },
     {
       name: 'account_type',
-      label: '账户类型',
+      label: i18n.t('schema:erp.bank_account.account_type.label'),
       type: 'select',
       defaultValue: 'basic',
       options: {
         type: 'static',
         options: [
-          { value: 'basic', label: '基本账户' },
-          { value: 'general', label: '一般账户' },
-          { value: 'special', label: '专用账户' },
-          { value: 'temporary', label: '临时账户' },
+          { value: 'basic', label: i18n.t('schema:erp.bank_account.account_type.option.basic') },
+          { value: 'general', label: i18n.t('schema:erp.bank_account.account_type.option.general') },
+          { value: 'special', label: i18n.t('schema:erp.bank_account.account_type.option.special') },
+          { value: 'temporary', label: i18n.t('schema:erp.bank_account.account_type.option.temporary') },
         ],
       },
       listWidth: 120,
     },
     {
       name: 'balance',
-      label: '账户余额',
+      label: i18n.t('schema:erp.bank_account.balance.label'),
       type: 'number',
       defaultValue: 0,
       sortable: true,
@@ -77,31 +78,31 @@ export const bankAccountSchema: EntitySchema = {
     },
     {
       name: 'currency',
-      label: '货币',
+      label: i18n.t('schema:erp.bank_account.currency.label'),
       type: 'select',
       defaultValue: 'CNY',
       options: {
         type: 'static',
         options: [
-          { value: 'CNY', label: '人民币 (CNY)' },
-          { value: 'USD', label: '美元 (USD)' },
-          { value: 'EUR', label: '欧元 (EUR)' },
+          { value: 'CNY', label: i18n.t('schema:erp.bank_account.currency.option.CNY') },
+          { value: 'USD', label: i18n.t('schema:erp.bank_account.currency.option.USD') },
+          { value: 'EUR', label: i18n.t('schema:erp.bank_account.currency.option.EUR') },
         ],
       },
       listWidth: 80,
     },
     {
       name: 'status',
-      label: '状态',
+      label: i18n.t('schema:erp.bank_account.status.label'),
       type: 'select',
       defaultValue: 'active',
       options: {
         type: 'static',
         options: [
-          { value: 'active', label: '正常' },
-          { value: 'frozen', label: '冻结' },
-          { value: 'closed', label: '已注销' },
-          { value: 'pending', label: '待审核' },
+          { value: 'active', label: i18n.t('schema:erp.bank_account.status.option.active') },
+          { value: 'frozen', label: i18n.t('schema:erp.bank_account.status.option.frozen') },
+          { value: 'closed', label: i18n.t('schema:erp.bank_account.status.option.closed') },
+          { value: 'pending', label: i18n.t('schema:erp.bank_account.status.option.pending') },
         ],
       },
       listWidth: 100,
@@ -129,35 +130,35 @@ export const bankAccountSchema: EntitySchema = {
         pending: 'info',
       },
       labelMap: {
-        active: '正常',
-        frozen: '冻结',
-        closed: '已注销',
-        pending: '待审核',
+        active: i18n.t('schema:erp.bank_account.status.option.active'),
+        frozen: i18n.t('schema:erp.bank_account.status.option.frozen'),
+        closed: i18n.t('schema:erp.bank_account.status.option.closed'),
+        pending: i18n.t('schema:erp.bank_account.status.option.pending'),
       },
     },
     filters: [
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('schema:erp.bank_account.filter.status.label'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '正常', value: 'active' },
-          { label: '冻结', value: 'frozen' },
-          { label: '已注销', value: 'closed' },
-          { label: '待审核', value: 'pending' },
+          { label: i18n.t('schema:erp.bank_account.filter.status.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.bank_account.filter.status.option.active'), value: 'active' },
+          { label: i18n.t('schema:erp.bank_account.filter.status.option.frozen'), value: 'frozen' },
+          { label: i18n.t('schema:erp.bank_account.filter.status.option.closed'), value: 'closed' },
+          { label: i18n.t('schema:erp.bank_account.filter.status.option.pending'), value: 'pending' },
         ],
       },
       {
         id: 'account_type',
-        label: '账户类型',
+        label: i18n.t('schema:erp.bank_account.filter.account_type.label'),
         type: 'select',
         options: [
-          { label: '全部类型', value: 'all' },
-          { label: '基本账户', value: 'basic' },
-          { label: '一般账户', value: 'general' },
-          { label: '专用账户', value: 'special' },
-          { label: '临时账户', value: 'temporary' },
+          { label: i18n.t('schema:erp.bank_account.filter.account_type.option.all'), value: 'all' },
+          { label: i18n.t('schema:erp.bank_account.filter.account_type.option.basic'), value: 'basic' },
+          { label: i18n.t('schema:erp.bank_account.filter.account_type.option.general'), value: 'general' },
+          { label: i18n.t('schema:erp.bank_account.filter.account_type.option.special'), value: 'special' },
+          { label: i18n.t('schema:erp.bank_account.filter.account_type.option.temporary'), value: 'temporary' },
         ],
       },
     ],
@@ -167,17 +168,17 @@ export const bankAccountSchema: EntitySchema = {
 
   formSections: [
     {
-      title: '账户基本信息',
+      title: i18n.t('schema:erp.bank_account.section.0.title'),
       fields: ['bank_name', 'branch_name', 'account_name', 'account_number'],
     },
     {
-      title: '账户属性',
+      title: i18n.t('schema:erp.bank_account.section.1.title'),
       fields: ['account_type', 'currency', 'balance', 'status'],
     },
   ],
 
   formColCount: 2,
-  createTitle: '新增银行账户',
-  editTitle: '编辑银行账户',
-  detailTitle: '银行账户详情',
+  createTitle: i18n.t('schema:erp.bank_account.meta.createTitle'),
+  editTitle: i18n.t('schema:erp.bank_account.meta.editTitle'),
+  detailTitle: i18n.t('schema:erp.bank_account.meta.detailTitle'),
 };
