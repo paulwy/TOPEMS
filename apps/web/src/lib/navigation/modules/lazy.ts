@@ -5,6 +5,9 @@ type ModuleConfigLoader = () => Promise<{ default: ModuleNavConfig }>;
 const lazyLoaders: Record<string, ModuleConfigLoader> = {
   ai: () => import('@/modules/ai/config').then((m) => ({ default: m.aiNavConfig })),
   admin: () => import('@/modules/admin/config').then((m) => ({ default: m.adminNavConfig })),
+  // 自动化模块（V64 新增，第 33 个模块，order 70，在 workflow 与 integration 之间）
+  automation: () =>
+    import('@/modules/automation/config').then((m) => ({ default: m.automationNavConfig })),
   asset: () => import('@/modules/asset/config').then((m) => ({ default: m.assetNavConfig })),
   bi: () => import('@/modules/bi/config').then((m) => ({ default: m.biNavConfig })),
   crm: () => import('@/modules/crm/config').then((m) => ({ default: m.crmNavConfig })),
@@ -35,6 +38,7 @@ const lazyLoaders: Record<string, ModuleConfigLoader> = {
   scm: () => import('@/modules/scm/config').then((m) => ({ default: m.scmNavConfig })),
   srm: () => import('@/modules/srm/config').then((m) => ({ default: m.srmNavConfig })),
   wms: () => import('@/modules/wms/config').then((m) => ({ default: m.wmsNavConfig })),
+  ticket: () => import('@/modules/ticket/config').then((m) => ({ default: m.ticketNavConfig })),
   workflow: () =>
     import('@/modules/workflow/config').then((m) => ({ default: m.workflowNavConfig })),
 };

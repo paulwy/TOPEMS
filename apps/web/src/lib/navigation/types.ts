@@ -20,7 +20,9 @@ export type NavGroup =
   | 'metrics'
   | 'messages'
   | 'design'
-  | 'runtime';
+  | 'runtime'
+  | 'automation'
+  | 'rules';
 
 export type ModuleSource = 'core' | 'plugin';
 export type ModuleSuite =
@@ -109,6 +111,8 @@ export const NAV_GROUPS: Record<NavGroup, { label: string; icon: string; order: 
   messages: { label: '消息', icon: 'Bell', order: 5 },
   design: { label: '设计', icon: 'Palette', order: 5 },
   runtime: { label: '运行', icon: 'Play', order: 10 },
+  automation: { label: '自动化', icon: 'Zap', order: 20 },
+  rules: { label: '规则', icon: 'ListChecks', order: 25 },
 };
 
 export const SUITE_GROUPS: Record<

@@ -7,6 +7,11 @@ const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleCo
   iam: () => import('@/modules/iam/config').then((m) => ({ iamModuleConfig: m.iamModuleConfig })),
   admin: () =>
     import('@/modules/admin/config').then((m) => ({ adminModuleConfig: m.adminModuleConfig })),
+  // 自动化模块（V64 新增，第 33 个模块，order 70）
+  automation: () =>
+    import('@/modules/automation/config').then((m) => ({
+      automationModuleConfig: m.automationModuleConfig,
+    })),
   workflow: () =>
     import('@/modules/workflow/config').then((m) => ({
       workflowModuleConfig: m.workflowModuleConfig,

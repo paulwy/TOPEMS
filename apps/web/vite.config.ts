@@ -86,6 +86,15 @@ const SERVICES: ServiceConfig[] = [
   { name: 'mobile', port: 8070, apiPrefix: '/api/mobile', legacyPrefix: '/mobile/api' },
   { name: 'gis', port: 8071, apiPrefix: '/api/gis', legacyPrefix: '/gis/api', wsPath: '/ws/gis' },
   { name: 'integration', port: 8072, apiPrefix: '/api/integration', legacyPrefix: '/integration/api' },
+
+  // 低代码平台（V64 新增，独立服务 svc/lowcode，端口 8088 占位）
+  // 后端服务尚未立项时，proxy 指向 8088 会返回 503，前端 client.ts 已做 V64 静默降级
+  { name: 'lowcode', port: 8088, apiPrefix: '/api/lowcode', legacyPrefix: '/lowcode/api' },
+
+  // 自动化编排（V64 新增，初期落地 unified-core，端口 8000）
+  // 路径前缀 /api/core/automation，与 moduleMapping.automation.apiBasePath 对齐
+  // 后端 unified-core 未实现 automation 路由时返回 404，前端 client.ts 已做 V64 静默降级
+  { name: 'automation', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/automation' },
 ];
 
 // ============================================================================

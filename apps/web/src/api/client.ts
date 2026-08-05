@@ -582,6 +582,12 @@ class ApiClient {
   get search() {
     return this.clients.search;
   }
+  get lowcode() {
+    return this.clients.lowcode;
+  }
+  get automation() {
+    return this.clients.automation;
+  }
 
   async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     return this.clients.core.get<T>(url, config);
