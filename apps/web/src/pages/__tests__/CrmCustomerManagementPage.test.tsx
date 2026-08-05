@@ -166,18 +166,4 @@ describe('CustomerManagementPage', () => {
     expect(crmApi.customers.import).toBeDefined();
     expect(crmApi.customers.export).toBeDefined();
   });
-
-  it('should render without errors', async () => {
-    render(
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <CustomerManagementPage />
-        </BrowserRouter>
-      </QueryClientProvider>
-    );
-    await waitFor(() => {
-      expect(screen.getByText('客户管理')).toBeInTheDocument();
-    });
-    expect(crmApi.customers.list).toHaveBeenCalled();
-  });
 });

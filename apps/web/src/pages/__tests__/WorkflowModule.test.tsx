@@ -9,6 +9,31 @@ import WorkflowApprovalsPage from '../workflow/WorkflowApprovalsPage';
 import { workflowApi } from '@/api/workflow';
 import { useNotificationStore, useAuthStore } from '@/store';
 
+vi.mock('@/components/common', () => {
+  const MockPageContainer = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockPageContainer');
+  const MockConfirmDialog = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockConfirmDialog');
+  return {
+    PageContainer: MockPageContainer,
+    ConfirmDialog: MockConfirmDialog,
+  };
+});
+
+vi.mock('@/components/templates/ListPageTemplate', () => ({
+  default: ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockListPageTemplate'),
+}));
+
+vi.mock('@/components/templates/CrudPage', () => {
+  const MockCrudPage = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockCrudPage');
+  return {
+    default: MockCrudPage,
+    CrudPage: MockCrudPage,
+  };
+});
+
 vi.mock('@/api/workflow', () => ({
   workflowApi: {
     definitions: {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { useCrud } from '../useCrud';
 import type { AxiosInstance } from 'axios';
 
@@ -56,21 +56,28 @@ describe('useCrud', () => {
       });
 
       const { result } = renderHook(() =>
-        useCrud({ api: mockApi, basePath: '/test', autoFetch: false })
+        useCrud({ api: mockApi, basePath: '/test', autoFetch: true })
       );
 
       await waitFor(() => expect(result.current.loading).toBe(false));
 
       expect(mockApi.get).toHaveBeenCalledWith('/test', expect.any(Object));
+      expect(result.current.data).toEqual(mockItems);
+      expect(result.current.pagination.total).toBe(2);
     });
 
     it('should handle fetch error', async () => {
       const errorMessage = 'Fetch failed';
-      vi.mocked(mockApi.get).mockRejectedValueOnce(new Error(errorMessage));
+      const err = new Error(errorMessage);
+      (err as any).response = { data: { message: errorMessage } };
+      vi.mocked(mockApi.get).mockRejectedValueOnce(err);
 
-      const onError = vi.fn();
+      const onError = vi.fn((e) => {
+        // swallow rejection to avoid unhandled rejection warning
+        Promise.resolve(e).catch(() => {});
+      });
       const { result } = renderHook(() =>
-        useCrud({ api: mockApi, basePath: '/test', onError, autoFetch: false })
+        useCrud({ api: mockApi, basePath: '/test', onError, autoFetch: true })
       );
 
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -138,7 +145,10 @@ describe('useCrud', () => {
 
       const created = await result.current.create(newItem);
       expect(created).toEqual(newItem);
-      expect(result.current.data).toContainEqual(newItem);
+
+      await waitFor(() => {
+        expect(result.current.data).toContainEqual(newItem);
+      });
     });
 
     it('should call onSuccess callback', async () => {
@@ -156,7 +166,10 @@ describe('useCrud', () => {
       );
 
       await result.current.create(newItem);
-      expect(onSuccess).toHaveBeenCalledWith('创建成功');
+
+      await waitFor(() => {
+        expect(onSuccess).toHaveBeenCalledWith('创建成功');
+      });
     });
   });
 
@@ -180,7 +193,10 @@ describe('useCrud', () => {
 
       const updated = await result.current.update(1, updatedItem);
       expect(updated).toEqual(updatedItem);
-      expect(result.current.data.find((d) => d.id === 1)).toEqual(updatedItem);
+
+      await waitFor(() => {
+        expect(result.current.data.find((d) => d.id === 1)).toEqual(updatedItem);
+      });
     });
   });
 
@@ -202,7 +218,10 @@ describe('useCrud', () => {
       });
 
       await result.current.delete(1);
-      expect(result.current.data.find((d) => d.id === 1)).toBeUndefined();
+
+      await waitFor(() => {
+        expect(result.current.data.find((d) => d.id === 1)).toBeUndefined();
+      });
     });
   });
 
@@ -232,5 +251,3 @@ describe('useCrud', () => {
     });
   });
 });
-
-import { act } from '@testing-library/react';
