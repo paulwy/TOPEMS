@@ -27,6 +27,7 @@ pub mod dict;
 pub mod erp_plugin;
 pub mod fixed_asset;
 pub mod health;
+pub mod holidays;
 pub mod hr_proxy;
 pub mod hrm_integration_example;
 pub mod inventory;

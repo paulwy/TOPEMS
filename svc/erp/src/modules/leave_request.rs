@@ -4,7 +4,7 @@ use axum::{
     routing::*,
     Json, Router,
 };
-use chrono::{Datelike, NaiveDate, Utc, Weekday};
+use chrono::{NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -20,12 +20,16 @@ use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 // ============ 纯函数 ============
 
-/// 判断指定日期是否为工作日（周一至周五）
+/// 判断指定日期是否为工作日
+///
+/// 综合考虑周末、法定节假日和调休补班日（委托 `holidays` 模块）：
+/// - 周末：仅调休补班日算工作日
+/// - 工作日：排除法定节假日
 fn is_workday(date: NaiveDate) -> bool {
-    !matches!(date.weekday(), Weekday::Sat | Weekday::Sun)
+    super::holidays::is_workday(date)
 }
 
-/// 计算请假天数（支持半天粒度，排除周末）
+/// 计算请假天数（支持半天粒度，排除周末和法定节假日，含调休补班）
 ///
 /// # 参数
 /// - `start_date`: 开始日期
@@ -36,7 +40,8 @@ fn is_workday(date: NaiveDate) -> bool {
 /// # 返回
 /// 请假天数（如 0.5、1.0、2.5 等）
 ///
-/// // TODO: 暂不处理法定节假日，后续可接入节假日表
+/// 法定节假日与调休补班日由 `holidays` 模块提供，当前为 2025-2026 年硬编码数据。
+/// TODO: 后续可从数据库 `holidays` 表动态读取节假日配置
 pub fn calculate_leave_days(
     start_date: NaiveDate,
     end_date: NaiveDate,
@@ -1019,6 +1024,43 @@ mod tests {
         let start = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(); // Monday
         let end = NaiveDate::from_ymd_opt(2024, 1, 12).unwrap(); // Friday (next week)
         assert_eq!(calculate_leave_days(start, end, false, false), 10.0);
+    }
+
+    // ===== 法定节假日 / 调休补班 测试（基于 2025 年硬编码数据）=====
+
+    #[test]
+    fn test_holiday_excluded() {
+        // 2024-12-30(周一) ~ 2025-01-03(周五)：1月1日元旦为法定假日
+        // 工作日 = 周一 + 周二 + 周四 + 周五 = 4 天（周三元旦被排除）
+        let start = NaiveDate::from_ymd_opt(2024, 12, 30).unwrap(); // Monday
+        let end = NaiveDate::from_ymd_opt(2025, 1, 3).unwrap(); // Friday
+        assert_eq!(calculate_leave_days(start, end, false, false), 4.0);
+    }
+
+    #[test]
+    fn test_makeup_workday_counted() {
+        // 2025-01-24(周五) ~ 2025-01-27(周一)：1月26日(周日)为春节调休补班
+        // 工作日 = 周五 + 周日(补班) + 周一 = 3 天
+        let start = NaiveDate::from_ymd_opt(2025, 1, 24).unwrap(); // Friday
+        let end = NaiveDate::from_ymd_opt(2025, 1, 27).unwrap(); // Monday
+        assert_eq!(calculate_leave_days(start, end, false, false), 3.0);
+    }
+
+    #[test]
+    fn test_spring_festival_all_holiday() {
+        // 2025-01-28(除夕) ~ 2025-02-04：整个春节假期区间，无法定工作日 = 0 天
+        let start = NaiveDate::from_ymd_opt(2025, 1, 28).unwrap();
+        let end = NaiveDate::from_ymd_opt(2025, 2, 4).unwrap();
+        assert_eq!(calculate_leave_days(start, end, false, false), 0.0);
+    }
+
+    #[test]
+    fn test_holiday_with_half_day() {
+        // 2025-01-02(周四) ~ 2025-01-03(周五)，结束日半天
+        // 1月1日(元旦)不在区间内；两天均为正常工作日 = 2.0 - 0.5 = 1.5
+        let start = NaiveDate::from_ymd_opt(2025, 1, 2).unwrap(); // Thursday
+        let end = NaiveDate::from_ymd_opt(2025, 1, 3).unwrap(); // Friday
+        assert_eq!(calculate_leave_days(start, end, false, true), 1.5);
     }
 
     // ===== check_annual_leave_balance 测试 =====

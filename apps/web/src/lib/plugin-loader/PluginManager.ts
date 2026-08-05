@@ -105,7 +105,7 @@ const PLUGIN_ICON_MAP: Record<string, string> = {
   oa: 'FileText',
   im: 'MessageSquare',
   admin: 'Settings',
-  lowcode: 'Code',
+  lowcode: 'Blocks',
   plugin: 'Puzzle',
 };
 

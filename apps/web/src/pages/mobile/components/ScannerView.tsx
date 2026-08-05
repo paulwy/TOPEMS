@@ -155,8 +155,8 @@ const ScannerView: React.FC<ScannerViewProps> = ({
           >
             <Box
               sx={{
-                width: 60, // TODO: responsive refactor
-                height: 60, // TODO: responsive refactor
+                width: { xs: 52, sm: 56, md: 60 },
+                height: { xs: 52, sm: 56, md: 60 },
                 borderRadius: '50%',
                 bgcolor: 'success.main',
                 display: 'flex',
@@ -210,8 +210,8 @@ const ScannerView: React.FC<ScannerViewProps> = ({
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
           <IconButton
             sx={{
-              width: 52, // TODO: responsive refactor
-              height: 52, // TODO: responsive refactor
+              width: { xs: 48, sm: 52, md: 56 },
+              height: { xs: 48, sm: 52, md: 56 },
               bgcolor: flashOn ? 'warning.main' : 'grey.100',
               color: flashOn ? 'common.white' : 'text.primary',
               '&:hover': {
@@ -233,8 +233,8 @@ const ScannerView: React.FC<ScannerViewProps> = ({
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
           <IconButton
             sx={{
-              width: 52, // TODO: responsive refactor
-              height: 52, // TODO: responsive refactor
+              width: { xs: 48, sm: 52, md: 56 },
+              height: { xs: 48, sm: 52, md: 56 },
               bgcolor: 'grey.100',
               color: 'text.primary',
               '&:hover': {
@@ -255,8 +255,8 @@ const ScannerView: React.FC<ScannerViewProps> = ({
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
           <IconButton
             sx={{
-              width: 52, // TODO: responsive refactor
-              height: 52, // TODO: responsive refactor
+              width: { xs: 48, sm: 52, md: 56 },
+              height: { xs: 48, sm: 52, md: 56 },
               bgcolor: 'grey.100',
               color: 'text.primary',
               '&:hover': {

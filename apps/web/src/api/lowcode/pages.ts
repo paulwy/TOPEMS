@@ -5,6 +5,7 @@ import type {
   CreateLowcodePageRequest,
   UpdateLowcodePageRequest,
   LowcodePaginationParams,
+  FormSubmitHookResponse,
 } from './types';
 
 // 页面 CRUD + 预览发布：对应 PageListPage / PageDesignPage
@@ -64,6 +65,23 @@ export const lowcodePagesApi = {
     return apiClient.lowcode.get<LowcodePage[]>(`/apps/${appId}/pages`);
   },
 
-  // 阶段二预留：表单提交时触发 automation rule 的钩子
-  // onFormSubmitHook: async (pageId, formId, payload) => ...
+  /**
+   * 表单提交钩子：触发与该页面关联的 automation rule
+   *
+   * 当 lowcode 页面中的表单提交时调用，后端会根据页面配置找到关联的
+   * automation rule 并执行，返回被触发的 rule ID 列表。
+   *
+   * @param pageId   页面 ID
+   * @param formData 表单提交数据
+   * @returns        被触发的 automation rule ID 列表
+   */
+  onFormSubmitHook: async (
+    pageId: string,
+    formData: Record<string, unknown>
+  ): Promise<ApiResponse<{ triggered_rules: string[] }>> => {
+    return apiClient.lowcode.post<FormSubmitHookResponse>(
+      `/pages/${pageId}/on-form-submit`,
+      formData
+    );
+  },
 };

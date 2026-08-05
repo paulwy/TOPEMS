@@ -8,7 +8,7 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared::{
     AuditLoggerMiddleware, AuthState, BodyLimitMiddleware, CompressionMiddleware,
-    SecurityHeadersLayer, SimpleHealthConfig, SystemMetrics,
+    FieldEncryptionService, SecurityHeadersLayer, SimpleHealthConfig, SystemMetrics,
 };
 
 use crate::middleware::input_validation::InputValidationConfig;
@@ -37,6 +37,11 @@ pub struct AppState {
     pub input_validation_config: InputValidationConfig,
     pub metrics: Arc<SystemMetrics>,
     pub module_isolation: Option<Arc<ModuleIsolationState>>,
+    /// Optional field-encryption service used to encrypt sensitive settings
+    /// (SMTP password, API key secrets) at rest. `None` when no encryption key
+    /// is provisioned, in which case secrets are stored as plain text for
+    /// backwards compatibility.
+    pub encryption: Option<Arc<FieldEncryptionService>>,
 }
 
 impl FromRef<AppState> for AuthState {

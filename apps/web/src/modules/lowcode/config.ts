@@ -13,7 +13,7 @@ export const LOWCODE_PATHS = {
 export const lowcodeModuleConfig: RouteModuleConfig = {
   code: 'lowcode',
   name: '低代码平台',
-  icon: 'Code',
+  icon: 'Blocks',
   path: LOWCODE_PATHS.root,
   source: 'plugin',
   status: 'online',
@@ -74,7 +74,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
 export const lowcodeNavConfig: ModuleNavConfig = {
   code: 'lowcode',
   name: '低代码平台',
-  icon: 'Code',
+  icon: 'Blocks',
   path: LOWCODE_PATHS.root,
   source: 'plugin' as const,
   order: 90,

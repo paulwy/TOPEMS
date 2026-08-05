@@ -5,7 +5,7 @@
 //! - `PUT /system/settings/smtp` — upsert SMTP config
 //! - `POST /system/settings/smtp/test` — send a test email using provided/saved config
 
-use crate::modules::settings::tenant_uuid;
+use crate::modules::settings::{decrypt_secret, encrypt_secret, tenant_uuid};
 use crate::AppState;
 use axum::extract::State;
 use axum::{Extension, Json};
@@ -84,6 +84,9 @@ pub async fn get_smtp_config(
             let raw: String = row.get("setting_value");
             match serde_json::from_str::<SmtpConfig>(&raw) {
                 Ok(mut cfg) => {
+                    // Decrypt the stored password (no-op for legacy plain text)
+                    // before applying the response mask.
+                    cfg.password = decrypt_secret(&state, &cfg.password);
                     cfg.password = if cfg.password.is_empty() {
                         String::new()
                     } else {
@@ -136,10 +139,16 @@ pub async fn update_smtp_config(
         if let Ok(Some(row)) = existing {
             let raw: String = row.get("setting_value");
             if let Ok(prev) = serde_json::from_str::<SmtpConfig>(&raw) {
+                // `prev.password` may already be an encrypted blob (pass-through)
+                // or legacy plain text; `encrypt_secret` below handles both.
                 to_store.password = prev.password;
             }
         }
     }
+
+    // Encrypt the password for at-rest storage. Already-encrypted values
+    // preserved from the previous row and empty values are left unchanged.
+    to_store.password = encrypt_secret(&state, &to_store.password);
 
     let serialized = match serde_json::to_string(&to_store) {
         Ok(s) => s,
@@ -209,7 +218,12 @@ pub async fn test_smtp_config(
             Ok(Some(r)) => {
                 let raw: String = r.get("setting_value");
                 match serde_json::from_str::<SmtpConfig>(&raw) {
-                    Ok(cfg) => cfg,
+                    Ok(mut cfg) => {
+                        // Decrypt the stored password so SMTP auth uses the real
+                        // credential (no-op for legacy plain text).
+                        cfg.password = decrypt_secret(&state, &cfg.password);
+                        cfg
+                    }
                     Err(_) => {
                         return Json(ApiResponse::error(
                             404,

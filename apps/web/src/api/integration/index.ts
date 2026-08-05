@@ -1,5 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
+import type { IntegrationEndpoint } from './types';
 
 import { connectionApi } from './connection';
 import { syncApi } from './sync';
@@ -69,6 +70,18 @@ export const integrationApi = {
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.integration.get('/health');
+  },
+
+  /**
+   * 获取所有可触发的集成端点列表。
+   *
+   * 供 automation designer 在编排自动化流程时选择可触发的集成点，
+   * 返回每个端点的协议、鉴权方式、状态等元数据。
+   *
+   * @returns 集成端点列表
+   */
+  listEndpoints: async (): Promise<ApiResponse<IntegrationEndpoint[]>> => {
+    return apiClient.integration.get('/endpoints');
   },
 };
 
