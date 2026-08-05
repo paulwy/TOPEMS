@@ -35,6 +35,7 @@ import type {
   AutomationTriggerType,
   AutomationActionType,
 } from '@/api/automation';
+import { PageContainer } from '@/components/common';
 
 const RULE_STATUS_COLOR: Record<AutomationRuleStatus, 'success' | 'default' | 'warning'> = {
   enabled: 'success',
@@ -179,13 +180,14 @@ export const AutomationRulesPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Stack
-        direction="row"
-        spacing={2}
-        sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
-      >
-        <Typography variant="h5">自动化规则</Typography>
+    <PageContainer title="自动化规则">
+      <Box sx={{ p: 3 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <Typography variant="h5">自动化规则</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
           新建规则
         </Button>
@@ -376,7 +378,8 @@ export const AutomationRulesPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

@@ -24,6 +24,7 @@ import {
 import { Plus as AddIcon, Trash2 as DeleteOutlineIcon, Upload as PublishIcon, Home as HomeIcon } from 'lucide-react';
 import { lowcodePagesApi } from '@/api/lowcode';
 import type { LowcodePage, LowcodePageType } from '@/api/lowcode';
+import { PageContainer } from '@/components/common';
 
 const PAGE_TYPES: LowcodePageType[] = ['list', 'detail', 'form', 'dashboard', 'custom', 'external_link'];
 
@@ -107,6 +108,7 @@ export const PageListPage: React.FC = () => {
   };
 
   return (
+    <PageContainer title="页面列表">
     <Box sx={{ p: 3 }}>
       <Stack direction="row" spacing={2} sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5">页面列表</Typography>
@@ -248,6 +250,7 @@ export const PageListPage: React.FC = () => {
         </DialogActions>
       </Dialog>
     </Box>
+    </PageContainer>
   );
 };
 

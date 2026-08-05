@@ -33,6 +33,7 @@ import type {
   AutomationVariable,
   AutomationVariableScope,
 } from '@/api/automation';
+import { PageContainer } from '@/components/common';
 
 const SCOPE_LABEL: Record<AutomationVariableScope, string> = {
   global: '全局',
@@ -145,13 +146,14 @@ export const AutomationVariablesPage: React.FC = () => {
   const maskValue = (v: string) => '•'.repeat(Math.min(v.length, 12) || 8);
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Stack
-        direction="row"
-        spacing={2}
-        sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
-      >
-        <Typography variant="h5">环境变量</Typography>
+    <PageContainer title="环境变量">
+      <Box sx={{ p: 3 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <Typography variant="h5">环境变量</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
           新建变量
         </Button>
@@ -328,7 +330,8 @@ export const AutomationVariablesPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

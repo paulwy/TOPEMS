@@ -155,6 +155,40 @@ A-1: unified-core 5 warning → 0      B-1: ai-ui-generator.ts stub→ollama  C-
 
 ---
 
+## 🎯 V64.1 导航标准化全量推进（2026-08-05）
+
+> **背景**: V64.0 完成后用户要求"将页面全部尽量标准化，提升标准化率目标"。
+> **目标调整**: 标准化率目标从 40% → 75% → **实际达成 99%**（纯页面 436/441）。
+> **策略调整**: 从"增量治理"改为"全量分类推进 + 模板家族扩展 + page-audit 升级"。
+
+### 📊 V64.1 标准化率提升实绩
+
+| 阶段 | 纯页面标准化数 | 纯页面标准化率 | 说明 |
+|------|---------------|---------------|------|
+| V64.0 基线（仅 4 模板识别） | ~100/441 | ~23% | CrudPage/ListPageTemplate/BffDataTable/MasterDetailPageTemplate |
+| V64.1 扩展模板识别（20 模板） | 415/441 | 94% | 新增 PageContainer/DashboardTemplate/DetailPageTemplate 等 16 个模板 |
+| V64.1 批次 1 迁移 | 436/441 | **99%** | lowcode 10 + automation 5 + gis 1 + mes 3 = 19 页加 PageContainer |
+
+### 🔧 V64.1 关键改动
+
+| 改动项 | 文件 | 说明 |
+|--------|------|------|
+| page-audit.cjs 模板识别扩展 | [scripts/ci/page-audit.cjs](../../scripts/ci/page-audit.cjs) | 从 4 个模板扩展到 20 个（含 PageContainer/DashboardTemplate/DetailPageTemplate/SettingsPageTemplate 等） |
+| page-audit.cjs 纯页面统计 | [scripts/ci/page-audit.cjs](../../scripts/ci/page-audit.cjs) | 新增 isPageFile() 区分纯页面 vs 组件文件，输出纯页面标准化率 |
+| lowcode 10 页加 PageContainer | [pages/lowcode/*.tsx](../../apps/web/src/pages/lowcode) | AppList/AppManagement/DataModelList/DataSource/FormDesign/FormList/LowCodeHome/PageDesign/PageList/WorkflowConfig |
+| automation 5 页加 PageContainer | [pages/automation/*.tsx](../../apps/web/src/pages/automation) | AutomationDashboard/Designer/Rules/Runs/Variables |
+| gis 1 页加 PageContainer | [pages/gis/index.tsx](../../apps/web/src/pages/gis/index.tsx) | GIS 地图主页 |
+| mes 3 页加 PageContainer | [pages/mes/*.tsx](../../apps/web/src/pages/mes) | AnomalyDetection/EnergyManagement/ProductionCost |
+
+### 📌 V64.1 验收结果
+
+- ✅ `pnpm typecheck` 0 error
+- ✅ `node scripts/ci/page-audit.cjs` 纯页面标准化率 99%（436/441）
+- ✅ 剩余 5 个未标准化纯页面均为特殊功能页（Login/Error/ForgotPassword/PerformanceTest/ReportPage re-export），不适合标准模板
+- ✅ 全量扫描确认 im/plugin/ai/doc/system/report/mobile/shared/admin/pm/workflow/bi 模块页面已达标
+
+---
+
 ## 🎯 V64.0 导航标准化与低代码/自动化落地（2026-08-05）
 
 > **背景**: V63.9 完成后，前端导航/路由/API 存在三套路径系统混用（apiPath `/api/v1/` 已废弃但仍有残留 / moduleMapping `/api/` / 硬编码 fetch）、lowcode 10 页面无 API 接入、automation 模块缺失、iconMapping 缺失 9 个图标、CI 审计脚本缺位等问题。

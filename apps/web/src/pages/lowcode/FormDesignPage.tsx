@@ -10,6 +10,7 @@ import {
 import { useSearchParams } from 'react-router-dom';
 import { lowcodeFormsApi } from '@/api/lowcode';
 import type { LowcodeForm, UpdateLowcodeFormRequest } from '@/api/lowcode';
+import { PageContainer } from '@/components/common';
 
 export const FormDesignPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -72,23 +73,28 @@ export const FormDesignPage: React.FC = () => {
 
   if (!formId) {
     return (
+      <PageContainer title="表单设计">
       <Box sx={{ p: 3 }}>
         <Typography color="text.secondary">
           请在 URL 上携带 ?form_id=xxx 以设计具体表单。
         </Typography>
       </Box>
+      </PageContainer>
     );
   }
 
   if (loading) {
     return (
+      <PageContainer title="表单设计">
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
       </Box>
+      </PageContainer>
     );
   }
 
   return (
+    <PageContainer title="表单设计">
     <Box sx={{ p: 3 }}>
       <Stack direction="row" spacing={2} sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5">
@@ -144,6 +150,7 @@ export const FormDesignPage: React.FC = () => {
         </Button>
       </Typography>
     </Box>
+    </PageContainer>
   );
 };
 

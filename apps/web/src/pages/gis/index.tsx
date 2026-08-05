@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GisProvider, useGis } from '../../context/GisContext';
 import MapView from '../../components/gis/MapView';
+import { PageContainer } from '@/components/common';
 import {
   MapPin,
   ArrowRight,
@@ -551,13 +552,18 @@ const GisContent: React.FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: `linear-gradient(135deg, ${ct.background.default} 0%, ${ct.cyan[50]} 100%)`,
-      }}
+    <PageContainer
+      title='GIS地图'
+      padding={false}
+      maxWidth={false}
     >
-      <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3 }, py: 4 }}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, ${ct.cyan[50]} 100%)`,
+        }}
+      >
+        <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3 }, py: 4 }}>
         <Stack
           direction='row'
           spacing={2}
@@ -990,6 +996,7 @@ const GisContent: React.FC = () => {
         </Paper>
       </Box>
     </Box>
+    </PageContainer>
   );
 };
 

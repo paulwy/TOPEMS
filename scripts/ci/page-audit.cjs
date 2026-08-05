@@ -21,7 +21,34 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const WEB_ROOT = path.resolve(__dirname, '../../apps/web/src/pages');
-const TEMPLATES = ['CrudPage', 'ListPageTemplate', 'BffDataTable', 'MasterDetailPageTemplate'];
+// V64.1: 扩展模板家族识别（含 Dashboard/Detail/Settings/Form 等非 CRUD 模板）
+const TEMPLATES = [
+  // CRUD 型模板
+  'CrudPage',
+  'ListPageTemplate',
+  'BffDataTable',
+  'MasterDetailPageTemplate',
+  'SubTableBuilder',
+  // Dashboard 型模板
+  'DashboardTemplate',
+  'StatsPageTemplate',
+  // Detail 型模板
+  'DetailPageTemplate',
+  // 表单/设置型模板
+  'FormPageTemplate',
+  'SettingsPageTemplate',
+  // 特殊型模板
+  'KanbanPageTemplate',
+  'TimelinePageTemplate',
+  'TreePageTemplate',
+  'WizardPageTemplate',
+  'CardListTemplate',
+  'GisMapTemplate',
+  'MarkdownEditorTemplate',
+  'ReportDesignerTemplate',
+  // 通用容器（最低标准）
+  'PageContainer',
+];
 
 // CRUD 型页面关键词（页面名包含这些词的，建议用标准模板）
 const CRUD_KEYWORDS = [
@@ -78,6 +105,21 @@ function findTsxFiles(dir) {
     }
   }
   return results;
+}
+
+// V64.1: 区分"纯页面文件"和"组件文件"
+// 纯页面：*Page.tsx 或 index.tsx（在模块根目录下，不在 components/hooks/utils 子目录下）
+function isPageFile(filePath) {
+  const baseName = path.basename(filePath, '.tsx');
+  // index.tsx 在模块根目录算页面
+  if (baseName === 'index') {
+    return !filePath.includes('/components/') && !filePath.includes('/hooks/') && !filePath.includes('/utils/');
+  }
+  // *Page.tsx 算页面
+  return baseName.endsWith('Page') &&
+    !filePath.includes('/components/') &&
+    !filePath.includes('/hooks/') &&
+    !filePath.includes('/utils/');
 }
 
 function checkTemplateUsage(filePath) {
@@ -172,17 +214,32 @@ function main() {
     ? Math.round((totalStandardized / allFiles.length) * 100)
     : 0;
 
+  // V64.1: 纯页面文件标准化率（排除组件文件）
+  const pageFiles = allFiles.filter(isPageFile);
+  let pageStandardized = 0;
+  for (const file of pageFiles) {
+    if (checkTemplateUsage(file)) pageStandardized++;
+  }
+  report.page_only_total = pageFiles.length;
+  report.page_only_standardized = pageStandardized;
+  report.page_only_rate = pageFiles.length > 0
+    ? Math.round((pageStandardized / pageFiles.length) * 100)
+    : 0;
+
   if (jsonOut) {
     console.log(JSON.stringify(report, null, 2));
   } else {
     console.log('========================================');
     console.log('  页面标准化审计报告 (V64)');
     console.log('========================================');
-    console.log(`总页面数: ${report.total_pages}`);
-    console.log(`本次检查: ${report.checked_pages}`);
+    console.log(`总文件数（含组件）: ${report.total_pages}`);
     console.log(`已标准化: ${report.standardized}`);
     console.log(`未标准化: ${report.not_standardized}`);
     console.log(`整体标准化率: ${report.overall_standardization_rate}%`);
+    console.log('');
+    console.log(`纯页面文件数: ${report.page_only_total}`);
+    console.log(`纯页面已标准化: ${report.page_only_standardized}`);
+    console.log(`纯页面标准化率: ${report.page_only_rate}%`);
     console.log('');
 
     console.log('模块统计:');

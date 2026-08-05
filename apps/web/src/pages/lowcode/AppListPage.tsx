@@ -22,6 +22,7 @@ import {
 import { Plus as AddIcon, Trash2 as DeleteOutlineIcon, Copy as ContentCopyIcon } from 'lucide-react';
 import { lowcodeAppsApi } from '@/api/lowcode';
 import type { LowcodeApp } from '@/api/lowcode';
+import { PageContainer } from '@/components/common';
 
 export const AppListPage: React.FC = () => {
   const [apps, setApps] = useState<LowcodeApp[]>([]);
@@ -86,6 +87,7 @@ export const AppListPage: React.FC = () => {
   };
 
   return (
+    <PageContainer title="应用列表">
     <Box sx={{ p: 3 }}>
       <Stack direction="row" spacing={2} sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5">低代码应用管理</Typography>
@@ -193,7 +195,8 @@ export const AppListPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

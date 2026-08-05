@@ -43,6 +43,7 @@ import { anomalyDetectionApi } from '../../api/mes/anomalyDetection';
 import type { AnomalyAlert, AnomalyRule } from '../../api/mes/anomalyDetection';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
+import { PageContainer } from '@/components/common';
 
 const SEVERITY_CONFIG = {
   critical: { color: 'error' as const, icon: <AlertCircle size={16} />, label: '严重' },
@@ -200,7 +201,8 @@ const AnomalyDetectionPage: React.FC = () => {
   const maxTrendCount = Math.max(...trend.map((t) => t.count), 1);
 
   return (
-    <Box sx={{ p: 3 }}>
+    <PageContainer title='异常检测'>
+      <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography
           variant='h5'
@@ -769,7 +771,8 @@ const AnomalyDetectionPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

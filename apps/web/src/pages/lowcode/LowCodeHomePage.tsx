@@ -3,6 +3,7 @@ import { Box, Grid, Paper, Typography, CircularProgress, Alert } from '@mui/mate
 import { Database, FileText, Globe, Share2, LayoutGrid } from 'lucide-react';
 import { lowcodeApi } from '@/api/lowcode';
 import type { LowcodeDashboardStats } from '@/api/lowcode';
+import { PageContainer } from '@/components/common';
 
 interface StatCardProps {
   label: string;
@@ -56,13 +57,16 @@ export const LowCodeHomePage: React.FC = () => {
 
   if (loading) {
     return (
+      <PageContainer title="低代码概览">
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
       </Box>
+      </PageContainer>
     );
   }
 
   return (
+    <PageContainer title="低代码概览">
     <Box sx={{ p: 3 }}>
       <Typography variant="h5" sx={{ mb: 3 }}>
         低代码平台概览
@@ -139,6 +143,7 @@ export const LowCodeHomePage: React.FC = () => {
         </Grid>
       </Grid>
     </Box>
+    </PageContainer>
   );
 };
 

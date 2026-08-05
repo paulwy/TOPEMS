@@ -23,6 +23,7 @@ import {
 import { Plus as AddIcon, Trash2 as DeleteOutlineIcon } from 'lucide-react';
 import { lowcodeDataModelsApi } from '@/api/lowcode';
 import type { LowcodeDataModel } from '@/api/lowcode';
+import { PageContainer } from '@/components/common';
 
 export const DataModelListPage: React.FC = () => {
   const [models, setModels] = useState<LowcodeDataModel[]>([]);
@@ -84,6 +85,7 @@ export const DataModelListPage: React.FC = () => {
   };
 
   return (
+    <PageContainer title="数据模型">
     <Box sx={{ p: 3 }}>
       <Stack direction="row" spacing={2} sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5">数据模型</Typography>
@@ -196,6 +198,7 @@ export const DataModelListPage: React.FC = () => {
         </DialogActions>
       </Dialog>
     </Box>
+    </PageContainer>
   );
 };
 
