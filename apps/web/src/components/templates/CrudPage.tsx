@@ -119,7 +119,8 @@ export interface CrudPageProps<T = Record<string, unknown>> {
   /** 行数据的 ID 字段名，默认 'id' */
   idField?: string;
   /** 自定义头部内容（覆盖 Schema 中的 headerContent）。支持渲染函数接收数据、总数和当前搜索词 */
-  headerContent?: React.ReactNode | ((rows: any[], total: number, search: string) => React.ReactNode);
+  headerContent?:
+    React.ReactNode | ((rows: any[], total: number, search: string) => React.ReactNode);
   /**
    * 树形模式数据适配器
    *

@@ -267,7 +267,9 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <Shield className='w-5 h-5 text-blue-600' />
-                  <Typography variant='h6'>{t('admin:permission_audit_page.permission_change_stats')}</Typography>
+                  <Typography variant='h6'>
+                    {t('admin:permission_audit_page.permission_change_stats')}
+                  </Typography>
                 </Box>
                 <Grid spacing={2}>
                   <Grid size={{ xs: 6 }}>
@@ -338,7 +340,9 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <User className='w-5 h-5 text-green-600' />
-                  <Typography variant='h6'>{t('admin:permission_audit_page.access_control_stats')}</Typography>
+                  <Typography variant='h6'>
+                    {t('admin:permission_audit_page.access_control_stats')}
+                  </Typography>
                 </Box>
                 <Grid spacing={2}>
                   <Grid size={{ xs: 6 }}>
@@ -451,21 +455,45 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                     <MenuItem value='all'>{t('admin:permission_audit_page.all_types')}</MenuItem>
                     {activeTab === 'permissionChanges' ? (
                       <>
-                        <MenuItem value='role_assignment'>{t('admin:permission_audit_page.type_role_assignment')}</MenuItem>
-                        <MenuItem value='role_removal'>{t('admin:permission_audit_page.type_role_removal')}</MenuItem>
-                        <MenuItem value='permission_add'>{t('admin:permission_audit_page.type_permission_add')}</MenuItem>
-                        <MenuItem value='permission_remove'>{t('admin:permission_audit_page.type_permission_remove')}</MenuItem>
-                        <MenuItem value='role_create'>{t('admin:permission_audit_page.type_role_create')}</MenuItem>
-                        <MenuItem value='role_update'>{t('admin:permission_audit_page.type_role_update')}</MenuItem>
-                        <MenuItem value='role_delete'>{t('admin:permission_audit_page.type_role_delete')}</MenuItem>
+                        <MenuItem value='role_assignment'>
+                          {t('admin:permission_audit_page.type_role_assignment')}
+                        </MenuItem>
+                        <MenuItem value='role_removal'>
+                          {t('admin:permission_audit_page.type_role_removal')}
+                        </MenuItem>
+                        <MenuItem value='permission_add'>
+                          {t('admin:permission_audit_page.type_permission_add')}
+                        </MenuItem>
+                        <MenuItem value='permission_remove'>
+                          {t('admin:permission_audit_page.type_permission_remove')}
+                        </MenuItem>
+                        <MenuItem value='role_create'>
+                          {t('admin:permission_audit_page.type_role_create')}
+                        </MenuItem>
+                        <MenuItem value='role_update'>
+                          {t('admin:permission_audit_page.type_role_update')}
+                        </MenuItem>
+                        <MenuItem value='role_delete'>
+                          {t('admin:permission_audit_page.type_role_delete')}
+                        </MenuItem>
                       </>
                     ) : (
                       <>
-                        <MenuItem value='login'>{t('admin:permission_audit_page.type_login')}</MenuItem>
-                        <MenuItem value='logout'>{t('admin:permission_audit_page.type_logout')}</MenuItem>
-                        <MenuItem value='api_access'>{t('admin:permission_audit_page.type_api_access')}</MenuItem>
-                        <MenuItem value='page_access'>{t('admin:permission_audit_page.type_page_access')}</MenuItem>
-                        <MenuItem value='denied'>{t('admin:permission_audit_page.type_denied')}</MenuItem>
+                        <MenuItem value='login'>
+                          {t('admin:permission_audit_page.type_login')}
+                        </MenuItem>
+                        <MenuItem value='logout'>
+                          {t('admin:permission_audit_page.type_logout')}
+                        </MenuItem>
+                        <MenuItem value='api_access'>
+                          {t('admin:permission_audit_page.type_api_access')}
+                        </MenuItem>
+                        <MenuItem value='page_access'>
+                          {t('admin:permission_audit_page.type_page_access')}
+                        </MenuItem>
+                        <MenuItem value='denied'>
+                          {t('admin:permission_audit_page.type_denied')}
+                        </MenuItem>
                       </>
                     )}
                   </Select>
@@ -482,7 +510,9 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                           <TableCell>{t('admin:permission_audit_page.col_change_type')}</TableCell>
                           <TableCell>{t('admin:permission_audit_page.col_operator')}</TableCell>
                           <TableCell>{t('admin:permission_audit_page.col_target_user')}</TableCell>
-                          <TableCell>{t('admin:permission_audit_page.col_role_permission')}</TableCell>
+                          <TableCell>
+                            {t('admin:permission_audit_page.col_role_permission')}
+                          </TableCell>
                           <TableCell>{t('admin:permission_audit_page.col_old_value')}</TableCell>
                           <TableCell>{t('admin:permission_audit_page.col_new_value')}</TableCell>
                           <TableCell>{t('admin:permission_audit_page.col_status')}</TableCell>
@@ -492,11 +522,15 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                           <TableCell>{t('admin:permission_audit_page.col_time')}</TableCell>
                           <TableCell>{t('admin:permission_audit_page.col_access_type')}</TableCell>
                           <TableCell>{t('admin:permission_audit_page.col_user')}</TableCell>
-                          <TableCell>{t('admin:permission_audit_page.col_resource_path')}</TableCell>
+                          <TableCell>
+                            {t('admin:permission_audit_page.col_resource_path')}
+                          </TableCell>
                           <TableCell>{t('admin:permission_audit_page.col_ip_address')}</TableCell>
                           <TableCell>{t('admin:permission_audit_page.col_device')}</TableCell>
                           <TableCell>{t('admin:permission_audit_page.col_status')}</TableCell>
-                          <TableCell>{t('admin:permission_audit_page.col_response_time')}</TableCell>
+                          <TableCell>
+                            {t('admin:permission_audit_page.col_response_time')}
+                          </TableCell>
                         </>
                       )}
                     </TableRow>
@@ -515,10 +549,8 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                           </Box>
                         </TableCell>
                       </TableRow>
-                    ) : (activeTab === 'permissionChanges'
-                      ? permissionChanges
-                      : accessLogs
-                    ).length === 0 ? (
+                    ) : (activeTab === 'permissionChanges' ? permissionChanges : accessLogs)
+                        .length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8}>
                           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
