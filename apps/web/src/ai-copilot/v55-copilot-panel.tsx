@@ -62,6 +62,7 @@ import {
   type SymbolInfo,
 } from './code-navigator';
 import { docGenerator, type ChangelogEntry } from './doc-generator';
+import { sanitizeHtml } from '@/lib/security';
 import { knowledgeQA, type QAEntry, type QAResult, type KnowledgeDocument } from './knowledge-qa';
 
 type TabId = 'navigator' | 'generator' | 'qa' | 'activity';
@@ -1472,13 +1473,15 @@ const GeneratorTab: React.FC<{
                 '& pre': { bgcolor: 'grey.100', p: 1, borderRadius: 1, overflow: 'auto' },
               }}
               dangerouslySetInnerHTML={{
-                __html: readmeResult
-                  .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-                  .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-                  .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                  .replace(/`([^`]+)`/g, '<code>$1</code>')
-                  .replace(/\n/g, '<br/>'),
+                __html: sanitizeHtml(
+                  readmeResult
+                    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/`([^`]+)`/g, '<code>$1</code>')
+                    .replace(/\n/g, '<br/>')
+                ),
               }}
             />
           ) : (

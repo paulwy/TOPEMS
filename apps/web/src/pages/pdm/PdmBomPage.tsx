@@ -43,7 +43,7 @@ export default function PdmBomPage() {
         }
         const data = response.data as unknown as Record<string, unknown>;
         let items = (Array.isArray(data) ? data : data.items || []) as BomItem[];
-        items = items.map((item: any) => ({
+        items = items.map((item: BomItem & Record<string, unknown>) => ({
           ...item,
           partNumber: item.part_number || item.partNumber || '',
           partName: item.part_name || item.partName || '',
@@ -52,7 +52,7 @@ export default function PdmBomPage() {
         })) as BomItem[];
         const productId = params?.product_id as string | undefined;
         if (productId) {
-          items = items.filter((item: any) => item.product_id === productId);
+          items = items.filter((item: BomItem & Record<string, unknown>) => item.product_id === productId);
         }
         const search = params?.search;
         if (search) {
@@ -119,7 +119,7 @@ export default function PdmBomPage() {
     (rows: Record<string, unknown>[], _total: number) => {
       const items = rows as unknown as BomItem[];
       const totalCost = items.reduce(
-        (sum: number, item: any) =>
+        (sum: number, item: BomItem & Record<string, unknown>) =>
           sum + (item.total_price || item.quantity * (item.unit_price || 0)),
         0
       );
@@ -137,7 +137,7 @@ export default function PdmBomPage() {
                 label='选择产品'
                 onChange={(e) => setSelectedProduct(e.target.value)}
               >
-                {products.map((p: any) => (
+                {products.map((p: Product) => (
                   <MenuItem
                     key={p.id}
                     value={p.id}

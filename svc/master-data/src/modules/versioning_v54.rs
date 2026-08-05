@@ -1041,7 +1041,7 @@ pub async fn export_audit_log(
 
     Json(ApiResponse::success(
         serde_json::json!({
-            "export_id": export_logs.last().unwrap().id,
+            "export_id": export_logs.last().expect("export_logs is non-empty after push").id,
             "record_count": record_count,
             "format": "json",
             "exported_at": now,

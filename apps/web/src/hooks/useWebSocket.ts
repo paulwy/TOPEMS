@@ -73,7 +73,7 @@ export interface SubscriptionConfig {
   handler: (message: WebSocketMessage) => void;
 }
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/ws';
+const WS_URL = (import.meta.env.VITE_WS_URL as string | undefined) || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
 
 class WebSocketService {
   private socket: WebSocket | null = null;
@@ -439,7 +439,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     if (!enabled) return;
 
     const url = wsPath
-      ? `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080'}${wsPath}`
+      ? `${(import.meta.env.VITE_WS_URL as string | undefined) || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`}${wsPath}`
       : WS_URL;
 
     const params: Record<string, string> = { ...queryParams };
@@ -615,7 +615,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       setReconnectCount(0);
       setAuthStatus('pending');
       const url = wsPath
-        ? `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080'}${wsPath}`
+        ? `${(import.meta.env.VITE_WS_URL as string | undefined) || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`}${wsPath}`
         : WS_URL;
       const params: Record<string, string> = { ...queryParams };
       if (token && autoAuthToken) {

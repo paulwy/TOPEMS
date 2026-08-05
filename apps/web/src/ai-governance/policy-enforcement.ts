@@ -425,17 +425,17 @@ export class PolicyEnforcer {
     }
   }
 
-  private resolvePath(obj: any, path: string): any {
+  private resolvePath(obj: Record<string, unknown>, path: string): unknown {
     const keys = path.split('.');
-    let current = obj;
+    let current: unknown = obj;
     for (const key of keys) {
       if (current == null) return undefined;
-      current = current[key];
+      current = (current as Record<string, unknown>)[key];
     }
     return current;
   }
 
-  private parseValue(raw: string): any {
+  private parseValue(raw: string): boolean | number | string | null {
     if (raw === 'true') return true;
     if (raw === 'false') return false;
     if (raw === 'null') return null;
@@ -443,7 +443,7 @@ export class PolicyEnforcer {
     return raw;
   }
 
-  private generateReason(rule: PolicyRule, _context: Record<string, any>): string {
+  private generateReason(rule: PolicyRule, _context: Record<string, unknown>): string {
     const actionLabels: Record<PolicyRule['action'], string> = {
       allow: '允许',
       deny: '拒绝',

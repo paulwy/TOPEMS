@@ -79,7 +79,7 @@ export function Dashboard({ userId }) {
 
   return (
     <div style={{ padding: 20 }}>
-      <h1>{dangerouslySetInnerHTML: { __html: pageTitle }}</h1>
+      <h1 dangerouslySetInnerHTML={{ __html: pageTitle }} />
       {data.map(item => (
         <div key={item.id}>{item.name}</div>
       ))}

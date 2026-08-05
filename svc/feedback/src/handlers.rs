@@ -299,7 +299,7 @@ pub fn feedback_routes() -> Router<PgPool> {
     Router::new()
         .route("/feedbacks", post(create_feedback).get(list_feedbacks))
         .route(
-            "/feedbacks/:id",
+            "/feedbacks/{id}",
             get(get_feedback)
                 .put(response_feedback)
                 .delete(delete_feedback),

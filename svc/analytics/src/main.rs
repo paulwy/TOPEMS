@@ -1,4 +1,9 @@
-//! TOPEMS Analytics Service
+//! TOPEMS Analytics Service (API path: /api/bi)
+//!
+//! Note: The service directory is named "analytics" for historical reasons,
+//! but all API routes are registered under /api/bi (not /api/analytics).
+//! The Vite proxy and frontend apiClient.bi both use /api/bi.
+//! Legacy alias: /api/v1/bi (via register_routes_with_legacy_alias).
 //!
 //! Unified service for BI (Business Intelligence) and Report
 

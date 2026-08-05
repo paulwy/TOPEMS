@@ -77,7 +77,7 @@ class SandboxedErrorBoundary extends Component<
   { children: ReactNode; moduleName: string; onError?: (error: Error) => void },
   { error: Error | null }
 > {
-  constructor(props: any) {
+  constructor(props: { children: ReactNode; moduleName: string; onError?: (error: Error) => void }) {
     super(props);
     this.state = { error: null };
   }
