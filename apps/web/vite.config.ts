@@ -829,13 +829,10 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',
     strictPort: true,
-    // Vite 8: use server.ws instead of deprecated server.hmr.
-    // host: '127.0.0.1' forces IPv4 for the HMR client, avoiding Firefox's
-    // IPv6-first resolution of `localhost` (which fails since the dev server
-    // listens on 0.0.0.0 / IPv4 only and WebSocket has no Happy Eyeballs fallback).
-    ws: {
+    // HMR: use host '127.0.0.1' to force IPv4 for Firefox
+    // (Firefox resolves localhost to ::1 first, but dev server listens on 0.0.0.0/IPv4 only)
+    hmr: {
       host: '127.0.0.1',
-      path: '/vite-hmr',
     },
     fs: {
       allow: ['..'],

@@ -226,3 +226,85 @@ pub async fn get_operation_log_stats(
         by_operation,
     }))
 }
+
+// ===== 权限变更审计 stub handlers =====
+
+pub async fn list_permission_changes(
+    Query(query): Query<OperationLogQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
+    Json(api_success(serde_json::json!({
+        "items": [],
+        "total": 0,
+        "page": page,
+        "pagesize": page_size,
+    })))
+}
+
+pub async fn get_permission_change(Path(id): Path<Uuid>) -> Json<ApiResponse<serde_json::Value>> {
+    Json(api_error(404, &format!("权限变更记录 {} 不存在", id)))
+}
+
+pub async fn get_permission_change_stats() -> Json<ApiResponse<serde_json::Value>> {
+    Json(api_success(serde_json::json!({
+        "total_changes": 0,
+        "today_changes": 0,
+        "role_changes": 0,
+        "permission_changes": 0,
+        "grants": 0,
+        "revokes": 0,
+        "updates": 0,
+        "success_rate": 0.0,
+        "by_role": [],
+        "by_user": [],
+        "by_operator": [],
+        "trend": [],
+    })))
+}
+
+pub async fn export_permission_changes() -> Json<ApiResponse<serde_json::Value>> {
+    Json(api_success(serde_json::json!({
+        "url": "",
+        "total": 0,
+    })))
+}
+
+// ===== 访问控制审计 stub handlers =====
+
+pub async fn list_access_logs(
+    Query(query): Query<OperationLogQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
+    Json(api_success(serde_json::json!({
+        "items": [],
+        "total": 0,
+        "page": page,
+        "pagesize": page_size,
+    })))
+}
+
+pub async fn get_access_log(Path(id): Path<Uuid>) -> Json<ApiResponse<serde_json::Value>> {
+    Json(api_error(404, &format!("访问日志 {} 不存在", id)))
+}
+
+pub async fn get_access_log_stats() -> Json<ApiResponse<serde_json::Value>> {
+    Json(api_success(serde_json::json!({
+        "total_logs": 0,
+        "allowed": 0,
+        "denied": 0,
+        "success_rate": 0.0,
+        "by_resource": [],
+        "by_user": [],
+        "by_action": [],
+        "trend": [],
+    })))
+}
+
+pub async fn export_access_logs() -> Json<ApiResponse<serde_json::Value>> {
+    Json(api_success(serde_json::json!({
+        "url": "",
+        "total": 0,
+    })))
+}
