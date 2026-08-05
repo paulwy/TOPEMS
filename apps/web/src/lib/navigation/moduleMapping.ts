@@ -89,7 +89,12 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
     },
   },
 
-  document: {
+  // 文档中心：导航使用 doc（DOC_PATHS.root = '/doc'）。
+  // 历史上 moduleMapping 同时存在 document / docs 两个别名，均无任何代码引用
+  // （grep moduleMapping['docs'|'document'] / apiClient.docs|document 均 0 命中），
+  // 纯属死配置，已删除以避免「docs/document/doc 三个名字」混淆。
+  // 后端实际服务为 unified-core 的 doc 模块，路径 /api/core/doc。
+  doc: {
     service: 'unified-core',
     module: 'doc',
     apiBasePath: '/api/core/doc',
@@ -192,9 +197,17 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
   },
 
   lowcode: {
+    service: 'lowcode',
+    module: 'lowcode',
+    apiBasePath: '/api/lowcode',
+  },
+
+  // 自动化编排（V64 新增）：初期落地 unified-core，业务量足够再拆独立服务
+  // 自动化 = workflow（流程运行时）+ integration（数据桥接）+ lowcode（UI/表单）的编排层
+  automation: {
     service: 'unified-core',
-    module: 'plugin',
-    apiBasePath: '/api/core/plugin',
+    module: 'automation',
+    apiBasePath: '/api/core/automation',
   },
 
   rs: {
@@ -203,16 +216,24 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
     apiBasePath: '/api/rd',
   },
 
+  // rd 模块（lazy.ts 用 code='rd' 注册，moduleMapping 补映射，与 rs 别名共存）
+  rd: {
+    service: 'rd',
+    module: 'rd',
+    apiBasePath: '/api/rd',
+  },
+
+  // ticket 模块（工单系统，独立服务）
+  ticket: {
+    service: 'unified-core',
+    module: 'ticket',
+    apiBasePath: '/api/core/ticket',
+  },
+
   asset: {
     service: 'erp',
     module: 'asset',
     apiBasePath: '/api/erp',
-  },
-
-  docs: {
-    service: 'unified-core',
-    module: 'doc',
-    apiBasePath: '/api/core/doc',
   },
 
   plugin: {

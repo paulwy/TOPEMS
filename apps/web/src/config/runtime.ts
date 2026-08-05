@@ -97,6 +97,15 @@ const config: RuntimeConfig = {
     gis: getEnv('VITE_GIS_SERVICE_URL', '/api/gis'),
     integration: getEnv('VITE_INTEGRATION_SERVICE_URL', '/api/integration'),
 
+    // === 低代码平台（V64 新增，独立服务 svc/lowcode，开发态走 vite proxy） ===
+    // 后端服务尚未立项时，前端通过 vite proxy 占位；后端落地后只需改 VITE_LOWCODE_SERVICE_URL
+    lowcode: getEnv('VITE_LOWCODE_SERVICE_URL', '/api/lowcode'),
+
+    // === 自动化编排（V64 新增，初期落地 unified-core，路径 /api/core/automation） ===
+    // 自动化 = workflow + integration + lowcode 的编排层
+    // 开发态走 vite proxy 指向 unified-core（端口 8000）；后端落地后改 VITE_AUTOMATION_SERVICE_URL
+    automation: getEnv('VITE_AUTOMATION_SERVICE_URL', '/api/core/automation'),
+
     // === 顶层辅助服务 ===
     core: getEnv('VITE_CORE_SERVICE_URL', '/api/core'),
     jaeger: getEnv('VITE_JAEGER_SERVICE_URL', 'http://localhost:14268'),
