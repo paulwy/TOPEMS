@@ -9,7 +9,7 @@
 //! `setting_key` prefix `api_key_{uuid}`. The `setting_value` column holds a
 //! JSON blob `{name, key_type, secret, created_at, last_used}`.
 
-use crate::modules::settings::tenant_uuid;
+use crate::modules::settings::{decrypt_secret, encrypt_secret, tenant_uuid};
 use crate::AppState;
 use axum::extract::{Path, State};
 use axum::{Extension, Json};
@@ -96,7 +96,9 @@ pub async fn list_api_keys(
                 };
                 // Use the canonical id from the row (not the stored value).
                 entry.id = id;
-                entry.secret = mask_secret(&entry.secret);
+                // Decrypt the stored secret (no-op for legacy plain text) before
+                // applying the response mask.
+                entry.secret = mask_secret(&decrypt_secret(&state, &entry.secret));
                 entry.created_at = updated_at.to_rfc3339();
                 entries.push(entry);
             }
@@ -136,11 +138,15 @@ pub async fn create_api_key(
     let key = setting_key(&id);
     let created_at = chrono::Utc::now().to_rfc3339();
 
+    // Keep the plaintext secret around so the response can mask the real value
+    // rather than the ciphertext.
+    let plaintext_secret = payload.secret.clone();
+
     let entry = ApiKeyEntry {
         id: id.clone(),
         name: payload.name,
         key_type: payload.key_type,
-        secret: payload.secret,
+        secret: encrypt_secret(&state, &plaintext_secret),
         created_at: created_at.clone(),
         last_used: None,
     };
@@ -175,9 +181,10 @@ pub async fn create_api_key(
         ));
     }
 
-    // Return the entry with a masked secret.
+    // Return the entry with a masked secret (mask the plaintext, not the
+    // ciphertext that was persisted).
     let mut response = entry;
-    response.secret = mask_secret(&response.secret);
+    response.secret = mask_secret(&plaintext_secret);
     Json(ApiResponse::success(response, "创建 API Key 成功"))
 }
 

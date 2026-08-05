@@ -47,7 +47,7 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
             mb: 2,
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,
-              minHeight: 44, // TODO: responsive refactor
+              minHeight: { xs: 44, sm: 48, md: 52 },
             },
           }}
           slotProps={{
@@ -85,8 +85,8 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
         >
           <Box
             sx={{
-              width: 64, // TODO: responsive refactor
-              height: 64, // TODO: responsive refactor
+              width: { xs: 52, sm: 60, md: 64 },
+              height: { xs: 52, sm: 60, md: 64 },
               borderRadius: '50%',
               bgcolor: 'grey.100',
               display: 'flex',

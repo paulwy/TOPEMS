@@ -31,8 +31,9 @@ use reqwest::Client;
 use topems_shared::init_telemetry;
 use topems_shared::{
     create_cors_layer, AuditLoggerConfig, AuditLoggerMiddleware, AuthState, BodyLimitConfig,
-    BodyLimitMiddleware, CompressionConfig, CompressionMiddleware, SecurityHeadersConfig,
-    SecurityHeadersLayer, SimpleHealthConfig, SystemMetrics, TelemetryExt,
+    BodyLimitMiddleware, CompressionConfig, CompressionMiddleware, FieldEncryptionService,
+    KeyManager, SecurityHeadersConfig, SecurityHeadersLayer, SimpleHealthConfig, SystemMetrics,
+    TelemetryExt,
 };
 use utoipa::{Modify, OpenApi};
 
@@ -100,6 +101,63 @@ impl Modify for ApiDoc {
 }
 
 // ==================== 主入口 ====================
+
+/// Initialize the optional field-encryption service for sensitive settings.
+///
+/// The encryption key is read from the first available of these environment
+/// variables (in priority order):
+/// - `TOPEMS_FIELD_ENCRYPTION_KEY` (documented by the settings module)
+/// - `SETTINGS_ENCRYPTION_KEY`
+/// - `ENCRYPTION_KEY` (shared with other services such as `hrm`)
+///
+/// The value may be either a base64-encoded 32-byte key (optionally prefixed
+/// with `base64:`) or an arbitrary passphrase that is run through SHA-256 to
+/// derive a 32-byte key. When no key is configured the service returns `None`
+/// and secrets are stored as plain text for backwards compatibility.
+fn init_field_encryption() -> Option<std::sync::Arc<FieldEncryptionService>> {
+    let raw_key = [
+        "TOPEMS_FIELD_ENCRYPTION_KEY",
+        "SETTINGS_ENCRYPTION_KEY",
+        "ENCRYPTION_KEY",
+    ]
+    .iter()
+    .map(|name| std::env::var(name).ok())
+    .find_map(|v| v.filter(|s| !s.is_empty()));
+
+    let raw_key = match raw_key {
+        Some(k) => k,
+        None => {
+            tracing::warn!(
+                "未配置字段加密密钥（TOPEMS_FIELD_ENCRYPTION_KEY / SETTINGS_ENCRYPTION_KEY / ENCRYPTION_KEY），settings 模块敏感字段将以明文存储"
+            );
+            return None;
+        }
+    };
+
+    let key_b64 = if let Some(stripped) = raw_key.strip_prefix("base64:") {
+        stripped.to_string()
+    } else {
+        // Treat as a passphrase and derive a 32-byte key via SHA-256.
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(raw_key.as_bytes());
+        base64::Engine::encode(
+            &base64::engine::general_purpose::STANDARD,
+            hasher.finalize(),
+        )
+    };
+
+    match KeyManager::from_base64_key(&key_b64) {
+        Ok(km) => {
+            tracing::info!("🔐 字段加密服务已启用（AES-256-GCM），settings 模块敏感字段将加密存储");
+            Some(std::sync::Arc::new(FieldEncryptionService::new(km)))
+        }
+        Err(e) => {
+            tracing::warn!("字段加密密钥无效，敏感字段将以明文存储: {}", e);
+            None
+        }
+    }
+}
 
 #[tokio::main]
 async fn main() {
@@ -238,6 +296,8 @@ async fn main() {
             }
         };
 
+    let encryption = init_field_encryption();
+
     let state = AppState {
         auth_state,
         pool,
@@ -253,6 +313,7 @@ async fn main() {
         audit_logger_middleware: audit_logger_mw,
         input_validation_config,
         metrics,
+        encryption,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections

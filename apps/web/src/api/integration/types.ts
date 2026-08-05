@@ -339,3 +339,21 @@ export interface ExecuteConversionResponse {
   message: string;
   error_message?: string;
 }
+
+/**
+ * 集成端点元数据，描述一个可被外部或内部触发的集成接入点。
+ * 供 automation designer 在编排自动化流程时选择可触发的集成点。
+ */
+export interface IntegrationEndpoint {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+  type: 'inbound' | 'outbound';
+  protocol: 'rest' | 'webhook' | 'grpc' | 'message_queue';
+  endpoint_url: string;
+  method?: string;
+  auth_type?: 'none' | 'basic' | 'bearer' | 'api_key';
+  status: 'active' | 'inactive';
+  last_triggered_at?: string;
+}

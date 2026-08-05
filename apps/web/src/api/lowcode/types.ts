@@ -386,6 +386,17 @@ export interface UpdateLowcodePageRequest {
   status?: 'draft' | 'published';
 }
 
+/**
+ * 表单提交钩子响应
+ *
+ * 当 lowcode 页面表单提交时，后端会触发所有与该页面关联的 automation rule，
+ * 并在响应中返回被触发的 rule ID 列表。
+ */
+export interface FormSubmitHookResponse {
+  /** 本次表单提交触发到的 automation rule ID 列表 */
+  triggered_rules: string[];
+}
+
 // ============================================================================
 // 6. 低代码内嵌工作流（Workflow）
 // ============================================================================
