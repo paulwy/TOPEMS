@@ -186,13 +186,19 @@ A-1: unified-core 5 warning → 0      B-1: ai-ui-generator.ts stub→ollama  C-
 | 修复项 | 文件 | 说明 |
 |--------|------|------|
 | iconMapping 补全 9 图标 | [lib/iconMapping.tsx](../../apps/web/src/lib/iconMapping.tsx) | 新增 Ticket/KeyRound/ArrowLeftRight/Palette/Play/ListChecks/MoreHorizontal/Tags/Boxes，覆盖 automation/ticket/lowcode 及 navigation types 引用 |
+| check-icons.cjs 门禁脚本 | [scripts/ci/check-icons.cjs](../../scripts/ci/check-icons.cjs) | 新增图标完整性检查脚本，扫描 modules/config.ts 中 395 处 icon 引用 vs iconMapping 注册 |
+| iconMapping 补全 14 图标 | [lib/iconMapping.tsx](../../apps/web/src/lib/iconMapping.tsx) | check-icons.cjs 扫描出 14 个缺失图标：Gauge/RotateCcw/Heart/LifeBuoy/Navigation/Trophy/FilePlus/Barcode/Route/Search/Brain/Scan/MessageSquareQuote/ExternalLink |
+| pre-commit 集成图标门禁 | [.husky/pre-commit](../../.husky/pre-commit) | 新增第 6 步：当 iconMapping/modules/config/navigation/types 变更时触发 check-icons.cjs --strict |
 
 ### 📌 V64.0 验收结果
 
 - ✅ `pnpm typecheck` 0 error
 - ✅ `pnpm vitest run src/utils/__tests__/apiPath.test.ts` 19/19 passed
+- ✅ `node scripts/ci/check-icons.cjs --strict` 0 缺失（395 引用 / 170 注册）
 - ✅ plugin API 路径与 moduleMapping 完全对齐（0 个 /api/v1/ 残留于自有代码）
 - ✅ iconMapping 覆盖 automation/ticket/lowcode 模块全部图标引用
+- ✅ admin 8 个核心 CRUD 页 schema 化验证（User/Role/Permission/Account/BankAccount/Dictionary/Plugin/Migration）
+- ✅ 8 大模块典范页全部使用 CrudPage（crm/erp/finance/hrm/mes/wms/qms/rd 各 10+ 页）
 
 ---
 

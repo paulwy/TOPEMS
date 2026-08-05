@@ -159,6 +159,31 @@ else
 fi
 
 # ============================================================
+# 6. V64 图标完整性检查（仅当 iconMapping 或 modules/config 变更时）
+# ============================================================
+echo ""
+echo "🎨 Checking icon completeness (V64)..."
+
+HAS_ICON_CHANGES=$(echo "$STAGED_FILES" | grep -E "(^apps/web/src/lib/iconMapping\.tsx$|^apps/web/src/modules/[^/]+/config\.ts$|^apps/web/src/lib/navigation/types\.ts$)" | head -1)
+
+if [ -n "$HAS_ICON_CHANGES" ]; then
+  if [ -f "scripts/ci/check-icons.cjs" ]; then
+    node scripts/ci/check-icons.cjs --strict
+    ICON_CHECK_EXIT=$?
+    if [ $ICON_CHECK_EXIT -ne 0 ]; then
+      echo "❌ Icon completeness check failed"
+      ERRORS=$((ERRORS + 1))
+    else
+      echo "✅ Icon completeness check passed"
+    fi
+  else
+    echo "⏭️  Skipped (check-icons.cjs not found)"
+  fi
+else
+  echo "⏭️  Skipped (no icon-related files staged)"
+fi
+
+# ============================================================
 # 总结
 # ============================================================
 echo ""
