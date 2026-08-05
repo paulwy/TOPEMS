@@ -209,21 +209,30 @@ pub fn publish_schema_version(
     change_description: Option<String>,
     approved_by: Option<String>,
 ) -> SchemaVersion {
-    schema_evolution_manager().lock().unwrap().publish(
-        version,
-        schema_definition,
-        change_type.unwrap_or_else(|| "minor".to_string()),
-        change_description.unwrap_or_default(),
-        approved_by,
-    )
+    schema_evolution_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .publish(
+            version,
+            schema_definition,
+            change_type.unwrap_or_else(|| "minor".to_string()),
+            change_description.unwrap_or_default(),
+            approved_by,
+        )
 }
 
 pub fn get_schema_version(version: &str) -> Option<SchemaVersion> {
-    schema_evolution_manager().lock().unwrap().get(version)
+    schema_evolution_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get(version)
 }
 
 pub fn list_schema_versions() -> Vec<SchemaVersion> {
-    schema_evolution_manager().lock().unwrap().list()
+    schema_evolution_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .list()
 }
 
 pub fn rollback_schema(
@@ -238,7 +247,10 @@ pub fn rollback_schema(
 }
 
 pub fn get_current_schema() -> Option<SchemaVersion> {
-    schema_evolution_manager().lock().unwrap().get_current()
+    schema_evolution_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get_current()
 }
 
 pub fn compare_schemas(old_schema: &str, new_schema: &str) -> SchemaCompareResult {
@@ -249,7 +261,10 @@ pub fn compare_schemas(old_schema: &str, new_schema: &str) -> SchemaCompareResul
 }
 
 pub fn get_schema_evolution() -> SchemaEvolution {
-    schema_evolution_manager().lock().unwrap().get_evolution()
+    schema_evolution_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get_evolution()
 }
 
 // ==================== 初始化函数 ====================

@@ -288,7 +288,10 @@ pub fn set_default_version(version: String) {
 }
 
 pub fn set_negotiation_strategy(strategy: VersionNegotiationStrategy) {
-    version_negotiator().lock().unwrap().set_strategy(strategy);
+    version_negotiator()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .set_strategy(strategy);
 }
 
 pub fn add_supported_version(version: String, status: VersionStatus) -> SupportedVersion {
@@ -308,7 +311,9 @@ pub(crate) fn get_negotiation_log(limit: usize) -> Vec<NegotiationLogEntry> {
 // ==================== 初始化函数 ====================
 
 pub fn init_version_negotiation() {
-    let mut negotiator = version_negotiator().lock().unwrap();
+    let mut negotiator = version_negotiator()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
 
     negotiator.add_version("v1.0.0".to_string(), VersionStatus::Active);
     negotiator.add_version("v1.1.0".to_string(), VersionStatus::Active);

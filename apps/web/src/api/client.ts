@@ -586,6 +586,15 @@ class ApiClient {
   get search() {
     return this.clients.search;
   }
+  get billing() {
+    return this.clients.billing;
+  }
+  get ticket() {
+    return this.clients.ticket;
+  }
+  get feedback() {
+    return this.clients.feedback;
+  }
   get lowcode() {
     return this.clients.lowcode;
   }

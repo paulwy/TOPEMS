@@ -35,6 +35,7 @@ import { favoriteApi, searchApi, type Favorite, type SearchResult } from '@/api/
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
+import { sanitizeHtml } from '@/lib/security';
 import { useNavigate } from 'react-router-dom';
 
 const ENTITY_TYPES = ['customer', 'product', 'document', 'order', 'project', 'task'] as const;
@@ -436,7 +437,7 @@ const FavoritesPage: React.FC = () => {
                               variant='caption'
                               color='primary'
                               sx={{ display: 'block', mt: 0.5 }}
-                              dangerouslySetInnerHTML={{ __html: result.highlights }}
+                              dangerouslySetInnerHTML={{ __html: sanitizeHtml(result.highlights) }}
                             />
                           )}
                         </Box>

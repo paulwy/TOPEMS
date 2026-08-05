@@ -65,7 +65,10 @@ export type ServiceName =
   | 'mail'
   | 'file'
   | 'scm'
-  | 'migration';
+  | 'migration'
+  | 'billing'
+  | 'ticket'
+  | 'feedback';
 
 /**
  * Typed wrapper to get a service-specific client.

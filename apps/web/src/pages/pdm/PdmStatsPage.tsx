@@ -127,15 +127,15 @@ const PdmStatsPage: React.FC = () => {
 
   const stats = {
     totalProcesses: processes.length,
-    activeProcesses: processes.filter((p: any) => p.status === '启用').length,
+    activeProcesses: processes.filter((p: { status: string }) => p.status === '启用').length,
     totalSteps: steps.length,
     totalFormulas: formulas.length,
-    activeFormulas: formulas.filter((f: any) => f.status === '启用').length,
+    activeFormulas: formulas.filter((f: { status: string }) => f.status === '启用').length,
     totalBatches: batches.length,
-    planningBatches: batches.filter((b: any) => b.status === '规划中').length,
-    inProgressBatches: batches.filter((b: any) => b.status === '进行中').length,
-    completedBatches: batches.filter((b: any) => b.status === '已完成').length,
-    cancelledBatches: batches.filter((b: any) => b.status === '已取消').length,
+    planningBatches: batches.filter((b: { status: string }) => b.status === '规划中').length,
+    inProgressBatches: batches.filter((b: { status: string }) => b.status === '进行中').length,
+    completedBatches: batches.filter((b: { status: string }) => b.status === '已完成').length,
+    cancelledBatches: batches.filter((b: { status: string }) => b.status === '已取消').length,
   };
 
   const statCards = [

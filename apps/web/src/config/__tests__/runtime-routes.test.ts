@@ -37,6 +37,12 @@ const GROUP2_SERVICES = [
   'mobile',
   'gis',
   'integration',
+  'search',
+  'billing',
+  'ticket',
+  'feedback',
+  'lowcode',
+  'automation',
 ];
 
 const EXTERNAL_SERVICES = ['jaeger'];

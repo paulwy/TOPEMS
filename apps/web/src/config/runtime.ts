@@ -97,6 +97,11 @@ const config: RuntimeConfig = {
     gis: getEnv('VITE_GIS_SERVICE_URL', '/api/gis'),
     integration: getEnv('VITE_INTEGRATION_SERVICE_URL', '/api/integration'),
 
+    // === 独立基础设施服务 ===
+    billing: getEnv('VITE_BILLING_SERVICE_URL', '/api/billing'),
+    ticket: getEnv('VITE_TICKET_SERVICE_URL', '/api/ticket'),
+    feedback: getEnv('VITE_FEEDBACK_SERVICE_URL', '/api/feedback'),
+
     // === 低代码平台（V64 新增，独立服务 svc/lowcode，开发态走 vite proxy） ===
     // 后端服务尚未立项时，前端通过 vite proxy 占位；后端落地后只需改 VITE_LOWCODE_SERVICE_URL
     lowcode: getEnv('VITE_LOWCODE_SERVICE_URL', '/api/lowcode'),

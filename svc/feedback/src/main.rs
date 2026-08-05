@@ -1,7 +1,7 @@
 use axum::{routing::get, Router};
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
-use topems_shared::{create_cors_layer, init_telemetry};
+use topems_shared::{auth_middleware, create_cors_layer, init_telemetry, AuthState};
 
 mod handlers;
 
@@ -37,10 +37,15 @@ async fn main() {
         .expect("Failed to init feedback database");
 
     let cors = create_cors_layer();
+    let auth_state = AuthState::from_env();
+
+    let protected_routes = handlers::feedback_routes().layer(axum::middleware::from_fn_with_state(
+        auth_state.clone(),
+        auth_middleware,
+    ));
 
     let app = Router::new()
-        .nest("/api/feedback", handlers::feedback_routes())
-        .nest("/api/v1/feedback", handlers::feedback_routes())
+        .nest("/api/feedback", protected_routes)
         .route("/health", get(|| async { "OK" }))
         .layer(cors)
         .with_state(pool);

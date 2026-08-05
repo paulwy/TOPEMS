@@ -46,6 +46,10 @@ export interface ServicesConfig {
   master: string;
   // 搜索独立服务
   search: string;
+  // 独立基础设施服务
+  billing: string;
+  ticket: string;
+  feedback: string;
   // 低代码平台独立服务（V64 新增）
   lowcode: string;
   // 自动化编排服务（V64 新增，初期落地 unified-core，前端通过 /api/core/automation 访问）
