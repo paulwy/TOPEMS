@@ -31,6 +31,12 @@ export const GROUP1_CORE_SERVICES = new Set<string>([
   'communication', // comm 别名
   'core', // umbrella
   'help', // 帮助文档/FAQ 归到 unified-core
+  // V64: 新增 unified-core 承载的模块
+  'automation', // 自动化编排（unified-core）
+  'ticket', // 工单系统（unified-core）
+  'plugin', // 插件市场（unified-core）
+  'billing', // 计费（unified-core）
+  'tenant', // 租户管理（unified-core）
 ]);
 
 /** Group2 独立进程服务列表（作为快速引用，实际所有非 Group1 服务都算 Group2） */
@@ -58,6 +64,10 @@ export const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
   'mobile',
   'gis',
   'integration',
+  // V64: 新增独立服务
+  'lowcode', // 低代码平台（独立服务）
+  'oa', // OA（归 erp 服务，但路径独立）
+  'asset', // 资产（归 erp 服务，但路径独立）
 ]);
 
 export const SERVICE_CODES = {
@@ -96,6 +106,13 @@ export const SERVICE_CODES = {
   lowcode: 'lowcode',
   comm: 'comm',
   communication: 'communication',
+  // V64: 新增模块
+  automation: 'automation',
+  ticket: 'ticket',
+  plugin: 'plugin',
+  billing: 'billing',
+  tenant: 'tenant',
+  asset: 'asset',
 } as const;
 
 export type ServiceCode = (typeof SERVICE_CODES)[keyof typeof SERVICE_CODES];
@@ -165,6 +182,11 @@ export const SERVICES = {
   file: createServiceApi('file'),
   ai: createServiceApi('ai'),
   lowcode: createServiceApi('lowcode'),
+  // V64: 新增模块
+  automation: createServiceApi('automation'),
+  ticket: createServiceApi('ticket'),
+  plugin: createServiceApi('plugin'),
+  doc: createServiceApi('doc'),
 } as const;
 
 /* =============================================================
