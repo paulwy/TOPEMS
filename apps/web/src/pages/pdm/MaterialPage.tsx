@@ -6,7 +6,7 @@ import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { materialSchema } from '@/schemas/pdm';
 import { pdmApi, type Material } from '@/api/pdm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;

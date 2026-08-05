@@ -8,7 +8,7 @@ import { mesApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';
 import { FileText, CheckCircle, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 
 const ct = designTokens.colors;
 

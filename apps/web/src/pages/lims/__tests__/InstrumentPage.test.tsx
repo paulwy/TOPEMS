@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
-import InstrumentPage from '@/pages/lims/InstrumentPage';
+import InstrumentPage from '@/pages/lims/LimsInstrumentPage';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

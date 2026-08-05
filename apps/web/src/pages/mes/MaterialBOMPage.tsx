@@ -11,7 +11,7 @@ import {
   Paper,
   InputLabel,
 } from '@mui/material';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { materialBomSchema } from '@/schemas/mes';

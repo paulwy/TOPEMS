@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
-import PdmDocumentPage from '@/pages/pdm/PdmDocumentPage';
+import PdmDocumentPage from '@/pages/pdm/DocumentPage';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

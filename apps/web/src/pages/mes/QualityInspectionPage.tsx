@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
 
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { qualitySchema } from '@/schemas/mes';
 import { qualityApi } from '@/api/mes/quality';

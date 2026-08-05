@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
-import WmsDashboardPage from '@/pages/wms/WmsDashboardPage';
+import WmsDashboardPage from '@/pages/wms/DashboardPage';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

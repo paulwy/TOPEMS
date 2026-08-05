@@ -9,7 +9,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { changeSchema } from '@/schemas/pdm';
 import { pdmApi } from '@/api/pdm';
 import type { ChangeOrder, CreateChangeOrderRequest } from '@/api/pdm';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';

@@ -9,7 +9,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { safetyIssueSchema } from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
 import type { SafetyIssue, CreateSafetyIssueRequest } from '@/api/ehs';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;

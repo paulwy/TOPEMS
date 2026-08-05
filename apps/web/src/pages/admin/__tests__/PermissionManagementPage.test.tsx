@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
-import PermissionManagementPage from '@/pages/admin/PermissionManagementPage';
+import PermissionManagementPage from '@/pages/iam/PermissionManagementPage';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

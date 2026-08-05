@@ -35,7 +35,7 @@ import type { SupplierPortalStats, Supplier } from '@/api/srm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { DashboardTemplate } from '@/components/templates';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';

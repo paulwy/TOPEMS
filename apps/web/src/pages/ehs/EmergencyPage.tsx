@@ -9,7 +9,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { emergencyDrillSchema } from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
 import type { DrillRecord, CreateDrillRecordRequest } from '@/api/ehs';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;

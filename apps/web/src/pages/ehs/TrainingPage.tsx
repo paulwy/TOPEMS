@@ -16,7 +16,7 @@ import type {
   CreateTrainingCertificateRequest,
 } from '@/api/ehs';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 

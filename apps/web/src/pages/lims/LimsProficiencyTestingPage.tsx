@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { FileCheck, Clock, CheckCircle, XCircle, Target } from 'lucide-react';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import { ptPlanSchema } from '@/schemas/lims';
 import { ptPlanApi } from '@/api/lims/proficiencyTesting';

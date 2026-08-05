@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
-import RoleManagementPage from '@/pages/admin/RoleManagementPage';
+import RoleManagementPage from '@/pages/iam/RoleManagementPage';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

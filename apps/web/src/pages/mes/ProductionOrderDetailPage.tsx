@@ -12,7 +12,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Package, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { mesApi } from '@/api/mes';
 import type { ProductionOrder, ProductionRecord, QualityRecord } from '@/api/mes';

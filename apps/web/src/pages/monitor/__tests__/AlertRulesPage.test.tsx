@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
-import AlertRulesPage from '@/pages/monitor/AlertRulesPage';
+import AlertRulesPage from '@/pages/monitor/MonitorAlertRulesPage';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

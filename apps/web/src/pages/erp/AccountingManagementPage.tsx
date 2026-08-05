@@ -15,7 +15,7 @@ import { FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import {

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Box, Tabs, Tab, Card, CardContent, Typography } from '@mui/material';
 import { Wallet, Receipt, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import { budgetSchema, expenseSchema } from '@/schemas/erp';
 import { budgetApi, expenseApi } from '@/api/erp';

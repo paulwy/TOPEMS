@@ -6,7 +6,7 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { bomItemSchema } from '@/schemas/pdm';
 import { pdmApi, type BomItem, type Product, type CreateBomItemRequest } from '@/api/pdm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;

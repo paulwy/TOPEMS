@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCardConfig, ChartConfig } from '@/components/templates/DashboardTemplate';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { useHrmDashboardSchema } from '@/schemas/hrm';
 import type { StatCardSchema, ChartSchema } from '@/schema';
 

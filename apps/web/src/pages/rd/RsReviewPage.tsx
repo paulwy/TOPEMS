@@ -9,7 +9,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { reviewSchema } from '@/schemas/rd';
 import { buildApi } from '@/api/rd';
 import type { Build, CreateBuildRequest } from '@/api/rd';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 

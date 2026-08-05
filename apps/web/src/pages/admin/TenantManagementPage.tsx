@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { Building2, CheckCircle, XCircle, Clock, Users } from 'lucide-react';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import { tenantSchema } from '@/schemas/admin';
 import { tenantApi } from '@/api/tenant';

@@ -5,7 +5,7 @@ import { GitBranch, BarChart3 } from 'lucide-react';
 
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { processFlowSchema } from '@/schemas/mes';
 import {
   processFlowApi,
