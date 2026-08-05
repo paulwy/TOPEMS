@@ -215,12 +215,9 @@ export const monitoringApi = {
     if (params?.end_date) queryParams.append('end_date', params.end_date);
     if (params?.search) queryParams.append('search', params.search);
 
-    const response = await apiClient.core.get(
-      `/monitor/alerts/export?${queryParams.toString()}`,
-      {
-        responseType: 'blob',
-      }
-    );
+    const response = await apiClient.core.get(`/monitor/alerts/export?${queryParams.toString()}`, {
+      responseType: 'blob',
+    });
     return response.data as unknown as Blob;
   },
 
