@@ -6,7 +6,7 @@ import { productionRecordSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import { Activity } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 
 const ct = designTokens.colors;
 

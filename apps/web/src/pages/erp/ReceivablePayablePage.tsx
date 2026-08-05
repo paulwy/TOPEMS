@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Box, Tabs, Tab } from '@mui/material';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { receivableSchema, payableSchema } from '@/schemas/finance';
 import { receivableApi, payableApi, type Receivable, type Payable } from '@/api/erp';

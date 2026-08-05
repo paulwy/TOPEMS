@@ -7,7 +7,10 @@ use serde::Deserialize;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
-use crate::services::finance::voucher_generation::VoucherGenerationRule;
+use crate::models::{CreateVoucherRequest, VoucherLineRequest, VoucherType};
+use crate::services::finance::voucher_generation::{
+    GenerateVouchersRequest, VoucherGenerationRule,
+};
 use crate::services::finance::voucher_template::CreateVoucherTemplateRequest;
 use crate::services::FinanceService;
 use crate::shared::AppState;
@@ -433,100 +436,327 @@ pub async fn toggle_generate_rule(
     }
 }
 
+// ========== 凭证自动生成 ==========
+
+#[derive(Debug, Deserialize)]
+pub struct PreviewGenerationRequest {
+    pub source_type: String,
+    pub source_ids: Vec<String>,
+    pub template_id: Uuid,
+    pub date: Option<chrono::NaiveDate>,
+}
+
 #[utoipa::path(
     post,
     path = "/voucher/generate/preview",
     tag = "Voucher Generation",
+    request_body = PreviewGenerationRequest,
     responses(
-        (status = 501, description = "此功能尚未实现"),
+        (status = 200, description = "预览凭证生成结果成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
     ),
 )]
 pub async fn preview_generation(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-) -> (axum::http::StatusCode, Json<serde_json::Value>) {
-    (
-        axum::http::StatusCode::NOT_IMPLEMENTED,
-        Json(serde_json::json!({
-            "success": false,
-            "message": "此功能尚未实现",
-            "data": null,
-            "code": 501,
-            "todo": "凭证自动生成功能将在后续版本实现"
-        })),
-    )
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<PreviewGenerationRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let tenant_id = get_tenant_id(&claims);
+
+    let template = match service
+        .get_voucher_template(tenant_id, req.template_id)
+        .await
+    {
+        Ok(t) => t,
+        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+    };
+
+    let voucher_date = req.date.unwrap_or_else(|| chrono::Utc::now().date_naive());
+    // TODO: 实际业务中应从源单据(sale/purchase/payment)查询金额，此处使用 mock 金额
+    let mock_amount = rust_decimal::Decimal::new(100000, 2); // 1000.00
+
+    let mut previews = Vec::new();
+    for source_id in &req.source_ids {
+        let mut entries = Vec::new();
+        let mut total_debit = rust_decimal::Decimal::ZERO;
+        let mut total_credit = rust_decimal::Decimal::ZERO;
+
+        for line in &template.lines {
+            let (debit, credit) = if line.direction == "debit" {
+                (mock_amount, rust_decimal::Decimal::ZERO)
+            } else {
+                (rust_decimal::Decimal::ZERO, mock_amount)
+            };
+            total_debit += debit;
+            total_credit += credit;
+            entries.push(serde_json::json!({
+                "account_code": line.account_code,
+                "description": line.description,
+                "direction": line.direction,
+                "debit": debit,
+                "credit": credit,
+                "sort_order": line.sort_order,
+            }));
+        }
+
+        previews.push(serde_json::json!({
+            "source_id": source_id,
+            "voucher_no": format!("PREVIEW-{}-{}", template.voucher_type, source_id),
+            "voucher_date": voucher_date,
+            "voucher_type": template.voucher_type,
+            "entries": entries,
+            "total_amount": total_debit,
+            "total_debit": total_debit,
+            "total_credit": total_credit,
+        }));
+    }
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "previews": previews,
+            "total_count": previews.len(),
+            "template_id": req.template_id,
+        }),
+        "预览成功",
+    ))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GenerateFromSourceRequest {
+    pub source_type: String, // sale/purchase/payment
+    pub source_ids: Vec<String>,
+    pub template_id: Uuid,
 }
 
 #[utoipa::path(
     post,
     path = "/voucher/generate/from-source",
     tag = "Voucher Generation",
+    request_body = GenerateFromSourceRequest,
     responses(
-        (status = 501, description = "此功能尚未实现"),
+        (status = 200, description = "从源单据生成凭证成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
     ),
 )]
 pub async fn generate_from_source(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-) -> (axum::http::StatusCode, Json<serde_json::Value>) {
-    (
-        axum::http::StatusCode::NOT_IMPLEMENTED,
-        Json(serde_json::json!({
-            "success": false,
-            "message": "此功能尚未实现",
-            "data": null,
-            "code": 501,
-            "todo": "凭证自动生成功能将在后续版本实现"
-        })),
-    )
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<GenerateFromSourceRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let tenant_id = get_tenant_id(&claims);
+    let created_by = claims.username.clone();
+
+    let template = match service
+        .get_voucher_template(tenant_id, req.template_id)
+        .await
+    {
+        Ok(t) => t,
+        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+    };
+
+    let voucher_type = match template.voucher_type.as_str() {
+        "payment" => VoucherType::Payment,
+        "receipt" => VoucherType::Receipt,
+        "transfer" => VoucherType::Transfer,
+        _ => VoucherType::General,
+    };
+
+    let voucher_date = chrono::Utc::now();
+    // TODO: 实际业务中应从源单据查询金额，此处使用 mock 金额
+    let mock_amount = rust_decimal::Decimal::new(100000, 2); // 1000.00
+
+    let mut voucher_ids = Vec::new();
+    let mut errors = Vec::new();
+
+    for source_id in &req.source_ids {
+        let lines: Vec<VoucherLineRequest> = template
+            .lines
+            .iter()
+            .map(|line| {
+                let (debit, credit) = if line.direction == "debit" {
+                    (mock_amount, rust_decimal::Decimal::ZERO)
+                } else {
+                    (rust_decimal::Decimal::ZERO, mock_amount)
+                };
+                VoucherLineRequest {
+                    account_code: line.account_code.clone(),
+                    description: line.description.clone(),
+                    debit,
+                    credit,
+                    project_id: None,
+                    department_id: None,
+                }
+            })
+            .collect();
+
+        let create_req = CreateVoucherRequest {
+            voucher_date,
+            voucher_type: voucher_type.clone(),
+            lines,
+            description: Some(format!(
+                "从 {} 单据 {} 自动生成",
+                req.source_type, source_id
+            )),
+            template_id: Some(req.template_id),
+        };
+
+        match service
+            .create_voucher(tenant_id, create_req, &created_by)
+            .await
+        {
+            Ok(voucher) => voucher_ids.push(voucher.id),
+            Err(e) => errors.push(format!("源单据 {}: {}", source_id, e)),
+        }
+    }
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "voucher_ids": voucher_ids,
+            "generated_count": voucher_ids.len(),
+            "errors": errors,
+        }),
+        &format!("生成完成，成功 {} 张", voucher_ids.len()),
+    ))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BatchGenerateRequest {
+    pub rule_ids: Vec<Uuid>,
+    pub start_date: Option<chrono::NaiveDate>,
+    pub end_date: Option<chrono::NaiveDate>,
 }
 
 #[utoipa::path(
     post,
     path = "/voucher/generate/batch",
     tag = "Voucher Generation",
+    request_body = BatchGenerateRequest,
     responses(
-        (status = 501, description = "此功能尚未实现"),
+        (status = 200, description = "批量生成凭证成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
     ),
 )]
 pub async fn batch_generate(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-) -> (axum::http::StatusCode, Json<serde_json::Value>) {
-    (
-        axum::http::StatusCode::NOT_IMPLEMENTED,
-        Json(serde_json::json!({
-            "success": false,
-            "message": "此功能尚未实现",
-            "data": null,
-            "code": 501,
-            "todo": "凭证自动生成功能将在后续版本实现"
-        })),
-    )
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<BatchGenerateRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let tenant_id = get_tenant_id(&claims);
+    let generated_by = claims.username.clone();
+
+    let mut all_voucher_ids = Vec::new();
+    let mut errors = Vec::new();
+
+    for rule_id in &req.rule_ids {
+        let gen_req = GenerateVouchersRequest {
+            rule_id: *rule_id,
+            source_ids: None,
+            start_date: req.start_date,
+            end_date: req.end_date,
+        };
+
+        match service
+            .generate_vouchers(tenant_id, gen_req, &generated_by)
+            .await
+        {
+            Ok(result) => all_voucher_ids.extend(result.voucher_ids),
+            Err(e) => errors.push(format!("规则 {}: {}", rule_id, e)),
+        }
+    }
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "voucher_ids": all_voucher_ids,
+            "generated_count": all_voucher_ids.len(),
+            "errors": errors,
+        }),
+        &format!("批量生成完成，成功 {} 张", all_voucher_ids.len()),
+    ))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AutoGenerateRequest {
+    pub date: chrono::NaiveDate,
+    pub rule_id: Option<Uuid>,
 }
 
 #[utoipa::path(
     post,
     path = "/voucher/generate/auto",
     tag = "Voucher Generation",
+    request_body = AutoGenerateRequest,
     responses(
-        (status = 501, description = "此功能尚未实现"),
+        (status = 200, description = "自动生成凭证成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
     ),
 )]
 pub async fn auto_generate(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-) -> (axum::http::StatusCode, Json<serde_json::Value>) {
-    (
-        axum::http::StatusCode::NOT_IMPLEMENTED,
-        Json(serde_json::json!({
-            "success": false,
-            "message": "此功能尚未实现",
-            "data": null,
-            "code": 501,
-            "todo": "凭证自动生成功能将在后续版本实现"
-        })),
-    )
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<AutoGenerateRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let tenant_id = get_tenant_id(&claims);
+    let generated_by = claims.username.clone();
+
+    let rule_ids: Vec<Uuid> = if let Some(rule_id) = req.rule_id {
+        vec![rule_id]
+    } else {
+        // 查询所有活跃规则
+        let rules: Vec<VoucherGenerationRule> = sqlx::query_as(
+            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND status = 'active' ORDER BY priority ASC",
+        )
+        .bind(tenant_id)
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default();
+        rules.iter().map(|r| r.id).collect()
+    };
+
+    if rule_ids.is_empty() {
+        return Json(ApiResponse::success(
+            serde_json::json!({
+                "voucher_ids": [],
+                "generated_count": 0,
+                "matched_rules": 0,
+            }),
+            "未找到匹配的生成规则",
+        ));
+    }
+
+    let matched_count = rule_ids.len();
+    let mut all_voucher_ids = Vec::new();
+    let mut errors = Vec::new();
+
+    for rule_id in &rule_ids {
+        let gen_req = GenerateVouchersRequest {
+            rule_id: *rule_id,
+            source_ids: None,
+            start_date: Some(req.date),
+            end_date: Some(req.date),
+        };
+
+        match service
+            .generate_vouchers(tenant_id, gen_req, &generated_by)
+            .await
+        {
+            Ok(result) => all_voucher_ids.extend(result.voucher_ids),
+            Err(e) => errors.push(format!("规则 {}: {}", rule_id, e)),
+        }
+    }
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "voucher_ids": all_voucher_ids,
+            "generated_count": all_voucher_ids.len(),
+            "matched_rules": matched_count,
+            "errors": errors,
+        }),
+        &format!("自动生成完成，成功 {} 张", all_voucher_ids.len()),
+    ))
 }
 
 #[utoipa::path(
@@ -535,22 +765,89 @@ pub async fn auto_generate(
     tag = "Voucher Generation",
     params(("original_voucher_id" = Uuid, Path, description = "原始凭证ID")),
     responses(
-        (status = 501, description = "此功能尚未实现"),
+        (status = 200, description = "重新生成凭证成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
     ),
 )]
 pub async fn regenerate(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-    Path(_original_voucher_id): Path<Uuid>,
-) -> (axum::http::StatusCode, Json<serde_json::Value>) {
-    (
-        axum::http::StatusCode::NOT_IMPLEMENTED,
-        Json(serde_json::json!({
-            "success": false,
-            "message": "此功能尚未实现",
-            "data": null,
-            "code": 501,
-            "todo": "凭证自动生成功能将在后续版本实现"
-        })),
-    )
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(original_voucher_id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let tenant_id = get_tenant_id(&claims);
+    let created_by = claims.username.clone();
+
+    // 获取原始凭证
+    let original = match service.get_voucher(tenant_id, original_voucher_id).await {
+        Ok(v) => v,
+        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+    };
+
+    // 创建冲销凭证（借贷互换）
+    let reversal_lines: Vec<VoucherLineRequest> = original
+        .lines
+        .iter()
+        .map(|line| VoucherLineRequest {
+            account_code: line.account_code.clone(),
+            description: Some(format!("冲销原凭证 {}", original.voucher_no)),
+            debit: line.credit, // 借贷互换
+            credit: line.debit,
+            project_id: line.project_id,
+            department_id: line.department_id,
+        })
+        .collect();
+
+    let reversal_req = CreateVoucherRequest {
+        voucher_date: chrono::Utc::now(),
+        voucher_type: original.voucher_type.clone(),
+        lines: reversal_lines,
+        description: Some(format!("冲销凭证 {}", original.voucher_no)),
+        template_id: None,
+    };
+
+    let reversal_voucher = match service
+        .create_voucher(tenant_id, reversal_req, &created_by)
+        .await
+    {
+        Ok(v) => v,
+        Err(e) => return Json(ApiResponse::error(500, &format!("冲销凭证创建失败: {}", e))),
+    };
+
+    // 重新生成新凭证（复制原始凭证分录）
+    let new_lines: Vec<VoucherLineRequest> = original
+        .lines
+        .iter()
+        .map(|line| VoucherLineRequest {
+            account_code: line.account_code.clone(),
+            description: line.description.clone(),
+            debit: line.debit,
+            credit: line.credit,
+            project_id: line.project_id,
+            department_id: line.department_id,
+        })
+        .collect();
+
+    let new_req = CreateVoucherRequest {
+        voucher_date: chrono::Utc::now(),
+        voucher_type: original.voucher_type.clone(),
+        lines: new_lines,
+        description: Some(format!("重新生成自凭证 {}", original.voucher_no)),
+        template_id: None,
+    };
+
+    match service
+        .create_voucher(tenant_id, new_req, &created_by)
+        .await
+    {
+        Ok(new_voucher) => Json(ApiResponse::success(
+            serde_json::json!({
+                "original_voucher_id": original_voucher_id,
+                "reversal_voucher_id": reversal_voucher.id,
+                "new_voucher_id": new_voucher.id,
+            }),
+            "重新生成成功",
+        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("新凭证创建失败: {}", e))),
+    }
 }

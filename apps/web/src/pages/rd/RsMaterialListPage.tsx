@@ -10,7 +10,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { materialSchema } from '@/schemas/rd';
 import { materialApi } from '@/api/rd';
 import type { Material, CreateMaterialRequest, UpdateMaterialRequest } from '@/api/rd';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 

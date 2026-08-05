@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
-import PluginMarketplacePage from '@/pages/shared/PluginMarketplacePage';
+import PluginMarketplacePage from '@/pages/plugin/PluginMarketplacePage';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

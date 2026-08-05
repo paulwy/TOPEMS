@@ -17,7 +17,7 @@ import { LoadingSpinner } from '@topems/shared-components';
 
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { teamSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest } from '@/api/mes/types';

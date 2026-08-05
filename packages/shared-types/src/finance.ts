@@ -119,6 +119,8 @@ export interface Account {
   updated_at: string;
   created_by?: string;
   updated_by?: string;
+  tenant_id: string;
+  currency: string;
 }
 
 export interface AccountOpeningBalance {
@@ -260,6 +262,11 @@ export interface Voucher {
   created_by?: string;
   updated_by?: string;
   updated_at?: string;
+  tenant_id: string;
+  description?: string;
+  approved_by?: string;
+  posted_by?: string;
+  template_id?: string;
 }
 
 export interface CreateVoucherRequest {

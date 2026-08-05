@@ -62,6 +62,7 @@ export interface Employee {
   position_id?: string;
   created_at: string;
   updated_at: string;
+  tenant_id: string;
 }
 
 export interface Role {

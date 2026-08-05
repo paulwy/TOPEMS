@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 import { TrendingUp, Factory, ClipboardList, Package, Activity, CheckCircle } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { pdmApi } from '@/api/pdm';
 import type {
   ProductionProcess,

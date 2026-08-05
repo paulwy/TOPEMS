@@ -23,7 +23,7 @@ import type {
   CreateHazardousMaterialRequest,
   UpdateHazardousMaterialRequest,
 } from '@/api/ehs';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';

@@ -6,7 +6,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { healthManagementSchema } from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
 import type { HealthRecord, CreateHealthRecordRequest } from '@/api/ehs';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 

@@ -3,7 +3,7 @@ import { Box, Grid } from '@mui/material';
 import { DollarSign, CreditCard, Receipt, TrendingUp } from 'lucide-react';
 import { srmApi } from '@/api/srm';
 import type { SupplierContract, PurchaseOrder } from '@/api/srm';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { MetricCard } from '@/components/bi/MetricCard';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useQueryClient } from '@tanstack/react-query';

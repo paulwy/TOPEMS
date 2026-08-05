@@ -42,7 +42,7 @@ import {
   type WorkStation,
 } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 
 import type {
   RealtimeAlarm,

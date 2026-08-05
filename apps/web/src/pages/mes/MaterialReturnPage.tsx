@@ -18,7 +18,7 @@ import { mesApi } from '@/api/mes';
 import type { MaterialReturn, MaterialReturnItem } from '@/api/mes';
 import { Undo2, FileText, Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 
 const ct = designTokens.colors;
 

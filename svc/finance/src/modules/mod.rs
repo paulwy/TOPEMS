@@ -17,6 +17,8 @@ pub mod settlement_v55;
 mod shared_services;
 pub mod tax_v56;
 pub mod treasury_v58;
+pub mod voucher_template;
+pub mod voucher_template_entries;
 
 use axum::{
     extract::{Json, Multipart, Path, Query, State},
@@ -2151,89 +2153,6 @@ async fn generate_vouchers_handler(
     }
 }
 
-// ========== 凭证自动生成（占位实现，返回 501 Not Implemented） ==========
-
-async fn preview_generated_vouchers_handler(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-) -> (axum::http::StatusCode, Json<serde_json::Value>) {
-    (
-        axum::http::StatusCode::NOT_IMPLEMENTED,
-        Json(serde_json::json!({
-            "success": false,
-            "message": "此功能尚未实现",
-            "data": null,
-            "code": 501,
-            "todo": "凭证自动生成功能将在后续版本实现"
-        })),
-    )
-}
-
-async fn generate_voucher_from_source_handler(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-) -> (axum::http::StatusCode, Json<serde_json::Value>) {
-    (
-        axum::http::StatusCode::NOT_IMPLEMENTED,
-        Json(serde_json::json!({
-            "success": false,
-            "message": "此功能尚未实现",
-            "data": null,
-            "code": 501,
-            "todo": "凭证自动生成功能将在后续版本实现"
-        })),
-    )
-}
-
-async fn batch_generate_vouchers_handler(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-) -> (axum::http::StatusCode, Json<serde_json::Value>) {
-    (
-        axum::http::StatusCode::NOT_IMPLEMENTED,
-        Json(serde_json::json!({
-            "success": false,
-            "message": "此功能尚未实现",
-            "data": null,
-            "code": 501,
-            "todo": "凭证自动生成功能将在后续版本实现"
-        })),
-    )
-}
-
-async fn auto_generate_vouchers_handler(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-) -> (axum::http::StatusCode, Json<serde_json::Value>) {
-    (
-        axum::http::StatusCode::NOT_IMPLEMENTED,
-        Json(serde_json::json!({
-            "success": false,
-            "message": "此功能尚未实现",
-            "data": null,
-            "code": 501,
-            "todo": "凭证自动生成功能将在后续版本实现"
-        })),
-    )
-}
-
-async fn regenerate_reversed_voucher_handler(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-    Path(_original_voucher_id): Path<Uuid>,
-) -> (axum::http::StatusCode, Json<serde_json::Value>) {
-    (
-        axum::http::StatusCode::NOT_IMPLEMENTED,
-        Json(serde_json::json!({
-            "success": false,
-            "message": "此功能尚未实现",
-            "data": null,
-            "code": 501,
-            "todo": "凭证自动生成功能将在后续版本实现"
-        })),
-    )
-}
-
 // ========== V40.0 Phase 8: U8 导入 ==========
 
 #[derive(Debug, Deserialize)]
@@ -3173,12 +3092,20 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/voucher-templates/{template_id}/entries",
+            axum::routing::get(voucher_template_entries::list_entries),
+        )
+        .route(
+            "/voucher-templates/{template_id}/entries",
             axum::routing::post(add_template_entry_handler),
         )
         // 注意: reorder 必须在 entries/{entry_id} 之前注册以避免路径匹配冲突
         .route(
             "/voucher-templates/{template_id}/entries/reorder",
             axum::routing::put(reorder_template_entries_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/entries/{entry_id}",
+            axum::routing::get(voucher_template_entries::get_entry),
         )
         .route(
             "/voucher-templates/{template_id}/entries/{entry_id}",
@@ -3193,26 +3120,26 @@ pub fn create_routes() -> Router<AppState> {
             "/voucher-generation-rules/{rule_id}/toggle",
             axum::routing::put(toggle_generation_rule_handler),
         )
-        // 凭证自动生成（占位实现，返回 501）
+        // 凭证自动生成
         .route(
             "/voucher/generate/preview",
-            axum::routing::post(preview_generated_vouchers_handler),
+            axum::routing::post(voucher_template::preview_generation),
         )
         .route(
             "/voucher/generate/from-source",
-            axum::routing::post(generate_voucher_from_source_handler),
+            axum::routing::post(voucher_template::generate_from_source),
         )
         .route(
             "/voucher/generate/batch",
-            axum::routing::post(batch_generate_vouchers_handler),
+            axum::routing::post(voucher_template::batch_generate),
         )
         .route(
             "/voucher/generate/auto",
-            axum::routing::post(auto_generate_vouchers_handler),
+            axum::routing::post(voucher_template::auto_generate),
         )
         .route(
             "/voucher/generate/regenerate/{original_voucher_id}",
-            axum::routing::post(regenerate_reversed_voucher_handler),
+            axum::routing::post(voucher_template::regenerate),
         )
         // V40.0 Phase 8: U8 导入
         .route(

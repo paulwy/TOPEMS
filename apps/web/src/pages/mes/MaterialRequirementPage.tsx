@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, InputLabel } from '@mui/material';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { materialRequirementSchema } from '@/schemas/mes';

@@ -24,7 +24,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { MessageSquare, Edit2, Trash2, Send, Reply, User } from 'lucide-react';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { commentApi, type Comment } from '@/api/shared';
 import { useNotificationStore } from '@/store';
 import { useAuth } from '@/hooks/useAuth';

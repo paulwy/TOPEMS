@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
-import VoucherManagementPage from '@/pages/erp/VoucherManagementPage';
+import VoucherManagementPage from '@/pages/erp/VoucherPage';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

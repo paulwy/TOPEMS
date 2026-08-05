@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCardConfig, ChartConfig } from '@/components/templates/DashboardTemplate';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components/common';
 import { usePdmDashboardSchema } from '@/schemas/pdm';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
