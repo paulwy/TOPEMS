@@ -8,7 +8,8 @@ import type {
   TenantPlugin,
 } from './types';
 
-const API_BASE = '/api/v1/core/plugin';
+// V64: /api/v1/ 前缀已废弃，统一使用 /api/core/plugin（与 moduleMapping 对齐）
+const API_BASE = '/api/core/plugin';
 
 export const pluginApi = {
   listMarketplace: async (): Promise<ApiResponse<Plugin[]>> => {

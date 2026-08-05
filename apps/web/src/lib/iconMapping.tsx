@@ -140,10 +140,22 @@ import {
   Library,
   Landmark,
   Server,
+  // V64: 补全 automation/lowcode/ticket 及 navigation types 引用的图标
+  Ticket,
+  KeyRound,
+  ArrowLeftRight, // lucide-react 实际名称（navigation/types.ts 用 ArrowsLeftRight，map 中注册别名）
+  Palette,
+  Play,
+  ListChecks,
+  MoreHorizontal,
+  Tags,
+  Boxes,
+  // 保留别名导入（lucideIcons map 中通过别名引用）
   Box as BoxIcon,
   DollarSign as DollarSignIcon,
   Layers as LayersIcon,
   Target as TargetIcon,
+  RefreshCw as RefreshCwIcon,
 } from 'lucide-react';
 
 export const lucideIcons: Record<
@@ -290,6 +302,18 @@ export const lucideIcons: Record<
   Library,
   Landmark,
   Server,
+  // V64: 补全 automation/lowcode/ticket 及 navigation types 引用的图标
+  Ticket,
+  KeyRound,
+  ArrowLeftRight,
+  ArrowsLeftRight: ArrowLeftRight, // 兼容 navigation/types.ts 的复数别名
+  Palette,
+  Play,
+  ListChecks,
+  MoreHorizontal,
+  Tags,
+  Boxes,
+  RefreshCwIcon,
 };
 
 /**

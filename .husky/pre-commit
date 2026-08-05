@@ -133,6 +133,32 @@ else
 fi
 
 # ============================================================
+# 5. V64 页面标准化审计（仅检查新建的 CRUD 页面）
+# ============================================================
+echo ""
+echo "📐 Checking page standardization (V64)..."
+
+HAS_NEW_PAGES=$(echo "$STAGED_FILES" | grep -E "^apps/web/src/pages/.*\.tsx$" | grep -v ".test.tsx" | head -1)
+
+if [ -n "$HAS_NEW_PAGES" ]; then
+  if [ -f "scripts/ci/page-audit.cjs" ]; then
+    node scripts/ci/page-audit.cjs --diff --strict
+    PAGE_AUDIT_EXIT=$?
+    if [ $PAGE_AUDIT_EXIT -ne 0 ]; then
+      echo "⚠️  新建 CRUD 页面未使用标准模板（CrudPage/ListPageTemplate）"
+      echo "   参考：apps/web/src/pages/admin/TenantManagementPage.tsx"
+      # V64 阶段：先警告不阻断，后续可改为 ERRORS=$((ERRORS + 1))
+    else
+      echo "✅ Page standardization check passed"
+    fi
+  else
+    echo "⏭️  Skipped (page-audit.cjs not found)"
+  fi
+else
+  echo "⏭️  Skipped (no new page files staged)"
+fi
+
+# ============================================================
 # 总结
 # ============================================================
 echo ""
