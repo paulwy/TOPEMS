@@ -1,38 +1,18 @@
 // AI 服务缓存模块
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use tokio::time::{Duration, Instant};
-
-/// 缓存条目
-struct CacheEntry<V> {
-    value: V,
-    expires_at: Option<Instant>,
-}
-
-impl<V> CacheEntry<V> {
-    fn new(value: V, ttl_seconds: Option<u64>) -> Self {
-        let expires_at = ttl_seconds.map(|ttl| Instant::now() + Duration::from_secs(ttl));
-        Self { value, expires_at }
-    }
-
-    fn is_expired(&self) -> bool {
-        self.expires_at
-            .map(|exp| Instant::now() > exp)
-            .unwrap_or(false)
-    }
-}
+// 使用 moka 实现带容量限制和 TTL 的缓存，防止内存泄漏
+use moka::future::Cache;
+use std::time::Duration;
 
 /// AI 服务缓存
 pub struct AiCacheService {
     // 文档缓存
-    document_cache: Arc<RwLock<HashMap<String, CacheEntry<serde_json::Value>>>>,
+    document_cache: Cache<String, serde_json::Value>,
     // 向量缓存
-    vector_cache: Arc<RwLock<HashMap<String, CacheEntry<Vec<f32>>>>>,
+    vector_cache: Cache<String, Vec<f32>>,
     // 搜索结果缓存
-    search_cache: Arc<RwLock<HashMap<String, CacheEntry<serde_json::Value>>>>,
+    search_cache: Cache<String, serde_json::Value>,
     // QA 历史缓存
-    qa_cache: Arc<RwLock<HashMap<String, CacheEntry<serde_json::Value>>>>,
+    qa_cache: Cache<String, serde_json::Value>,
     // 默认 TTL（秒）
     default_ttl: u64,
 }
@@ -46,215 +26,150 @@ impl Default for AiCacheService {
 impl AiCacheService {
     pub fn new() -> Self {
         Self {
-            document_cache: Arc::new(RwLock::new(HashMap::new())),
-            vector_cache: Arc::new(RwLock::new(HashMap::new())),
-            search_cache: Arc::new(RwLock::new(HashMap::new())),
-            qa_cache: Arc::new(RwLock::new(HashMap::new())),
-            default_ttl: 3600, // 默认 1 小时
+            document_cache: Cache::builder()
+                .max_capacity(500)
+                .time_to_live(Duration::from_secs(3600))
+                .build(),
+            vector_cache: Cache::builder()
+                .max_capacity(1000)
+                .time_to_live(Duration::from_secs(3600))
+                .build(),
+            search_cache: Cache::builder()
+                .max_capacity(200)
+                .time_to_live(Duration::from_secs(300))
+                .build(),
+            qa_cache: Cache::builder()
+                .max_capacity(100)
+                .time_to_live(Duration::from_secs(1800))
+                .build(),
+            default_ttl: 3600,
         }
     }
 
     #[allow(dead_code)]
     pub fn with_ttl(ttl_seconds: u64) -> Self {
         Self {
+            document_cache: Cache::builder()
+                .max_capacity(500)
+                .time_to_live(Duration::from_secs(ttl_seconds))
+                .build(),
+            vector_cache: Cache::builder()
+                .max_capacity(1000)
+                .time_to_live(Duration::from_secs(ttl_seconds))
+                .build(),
+            search_cache: Cache::builder()
+                .max_capacity(200)
+                .time_to_live(Duration::from_secs(300))
+                .build(),
+            qa_cache: Cache::builder()
+                .max_capacity(100)
+                .time_to_live(Duration::from_secs(1800))
+                .build(),
             default_ttl: ttl_seconds,
-            ..Self::new()
         }
     }
 
     // ==================== 文档缓存 ====================
 
-    /// 获取文档缓存
     #[allow(dead_code)]
     pub async fn get_document(&self, id: &str) -> Option<serde_json::Value> {
-        let cache = self.document_cache.read().await;
-        cache.get(id).and_then(|entry| {
-            if entry.is_expired() {
-                None
-            } else {
-                Some(entry.value.clone())
-            }
-        })
+        self.document_cache.get(id).await
     }
 
-    /// 设置文档缓存
     #[allow(dead_code)]
     pub async fn set_document(&self, id: &str, document: serde_json::Value) {
-        let mut cache = self.document_cache.write().await;
-        cache.insert(
-            id.to_string(),
-            CacheEntry::new(document, Some(self.default_ttl)),
-        );
+        self.document_cache.insert(id.to_string(), document).await;
     }
 
-    /// 删除文档缓存
     #[allow(dead_code)]
     pub async fn delete_document(&self, id: &str) {
-        let mut cache = self.document_cache.write().await;
-        cache.remove(id);
+        self.document_cache.invalidate(id).await;
     }
 
-    /// 清空文档缓存
     #[allow(dead_code)]
     pub async fn clear_documents(&self) {
-        let mut cache = self.document_cache.write().await;
-        cache.clear();
+        self.document_cache.invalidate_all();
     }
 
     // ==================== 向量缓存 ====================
 
-    /// 获取向量缓存
     #[allow(dead_code)]
     pub async fn get_vector(&self, id: &str) -> Option<Vec<f32>> {
-        let cache = self.vector_cache.read().await;
-        cache.get(id).and_then(|entry| {
-            if entry.is_expired() {
-                None
-            } else {
-                Some(entry.value.clone())
-            }
-        })
+        self.vector_cache.get(id).await
     }
 
-    /// 设置向量缓存
     #[allow(dead_code)]
     pub async fn set_vector(&self, id: &str, vector: Vec<f32>) {
-        let mut cache = self.vector_cache.write().await;
-        cache.insert(
-            id.to_string(),
-            CacheEntry::new(vector, Some(self.default_ttl)),
-        );
+        self.vector_cache.insert(id.to_string(), vector).await;
     }
 
-    /// 删除向量缓存
     #[allow(dead_code)]
     pub async fn delete_vector(&self, id: &str) {
-        let mut cache = self.vector_cache.write().await;
-        cache.remove(id);
+        self.vector_cache.invalidate(id).await;
     }
 
-    /// 清空向量缓存
     #[allow(dead_code)]
     pub async fn clear_vectors(&self) {
-        let mut cache = self.vector_cache.write().await;
-        cache.clear();
+        self.vector_cache.invalidate_all();
     }
 
     // ==================== 搜索缓存 ====================
 
-    /// 获取搜索结果缓存
     #[allow(dead_code)]
     pub async fn get_search(&self, query_hash: &str) -> Option<serde_json::Value> {
-        let cache = self.search_cache.read().await;
-        cache.get(query_hash).and_then(|entry| {
-            if entry.is_expired() {
-                None
-            } else {
-                Some(entry.value.clone())
-            }
-        })
+        self.search_cache.get(query_hash).await
     }
 
-    /// 设置搜索结果缓存
     #[allow(dead_code)]
     pub async fn set_search(&self, query_hash: &str, results: serde_json::Value) {
-        let mut cache = self.search_cache.write().await;
-        // 搜索缓存默认 5 分钟
-        cache.insert(query_hash.to_string(), CacheEntry::new(results, Some(300)));
+        self.search_cache
+            .insert(query_hash.to_string(), results)
+            .await;
     }
 
-    /// 清空搜索缓存
     #[allow(dead_code)]
     pub async fn clear_search(&self) {
-        let mut cache = self.search_cache.write().await;
-        cache.clear();
+        self.search_cache.invalidate_all();
     }
 
     // ==================== QA 缓存 ====================
 
-    /// 获取 QA 历史缓存
     #[allow(dead_code)]
     pub async fn get_qa_history(&self, conversation_id: &str) -> Option<serde_json::Value> {
-        let cache = self.qa_cache.read().await;
-        cache.get(conversation_id).and_then(|entry| {
-            if entry.is_expired() {
-                None
-            } else {
-                Some(entry.value.clone())
-            }
-        })
+        self.qa_cache.get(conversation_id).await
     }
 
-    /// 设置 QA 历史缓存
     #[allow(dead_code)]
     pub async fn set_qa_history(&self, conversation_id: &str, history: serde_json::Value) {
-        let mut cache = self.qa_cache.write().await;
-        // QA 历史缓存默认 30 分钟
-        cache.insert(
-            conversation_id.to_string(),
-            CacheEntry::new(history, Some(1800)),
-        );
+        self.qa_cache
+            .insert(conversation_id.to_string(), history)
+            .await;
     }
 
-    /// 删除 QA 历史缓存
     #[allow(dead_code)]
     pub async fn delete_qa_history(&self, conversation_id: &str) {
-        let mut cache = self.qa_cache.write().await;
-        cache.remove(conversation_id);
+        self.qa_cache.invalidate(conversation_id).await;
     }
 
     // ==================== 统计信息 ====================
 
-    /// 获取缓存统计
     #[allow(dead_code)]
     pub async fn get_stats(&self) -> CacheStats {
-        let doc_cache = self.document_cache.read().await;
-        let vec_cache = self.vector_cache.read().await;
-        let search_cache = self.search_cache.read().await;
-        let qa_cache = self.qa_cache.read().await;
-
         CacheStats {
-            document_count: doc_cache.len(),
-            vector_count: vec_cache.len(),
-            search_count: search_cache.len(),
-            qa_count: qa_cache.len(),
+            document_count: self.document_cache.entry_count() as usize,
+            vector_count: self.vector_cache.entry_count() as usize,
+            search_count: self.search_cache.entry_count() as usize,
+            qa_count: self.qa_cache.entry_count() as usize,
             default_ttl: self.default_ttl,
         }
     }
 
-    /// 清空所有缓存
     #[allow(dead_code)]
     pub async fn clear_all(&self) {
-        self.clear_documents().await;
-        self.clear_vectors().await;
-        self.clear_search().await;
-        let mut qa = self.qa_cache.write().await;
-        qa.clear();
-    }
-
-    /// 清理过期条目
-    #[allow(dead_code)]
-    pub async fn cleanup_expired(&self) {
-        // 清理文档缓存
-        {
-            let mut cache = self.document_cache.write().await;
-            cache.retain(|_, entry| !entry.is_expired());
-        }
-        // 清理向量缓存
-        {
-            let mut cache = self.vector_cache.write().await;
-            cache.retain(|_, entry| !entry.is_expired());
-        }
-        // 清理搜索缓存
-        {
-            let mut cache = self.search_cache.write().await;
-            cache.retain(|_, entry| !entry.is_expired());
-        }
-        // 清理 QA 缓存
-        {
-            let mut cache = self.qa_cache.write().await;
-            cache.retain(|_, entry| !entry.is_expired());
-        }
+        self.document_cache.invalidate_all();
+        self.vector_cache.invalidate_all();
+        self.search_cache.invalidate_all();
+        self.qa_cache.invalidate_all();
     }
 }
 
@@ -277,14 +192,12 @@ mod tests {
     async fn test_document_cache() {
         let cache = AiCacheService::new();
 
-        // 测试设置和获取
         cache
             .set_document("doc1", serde_json::json!({"title": "Test"}))
             .await;
         let doc = cache.get_document("doc1").await;
         assert!(doc.is_some());
 
-        // 测试删除
         cache.delete_document("doc1").await;
         let doc = cache.get_document("doc1").await;
         assert!(doc.is_none());

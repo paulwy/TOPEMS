@@ -1484,7 +1484,7 @@ impl AiQueryRouter {
         service_registry.insert(
             "AnalyticsQuery".to_string(),
             vec![
-                "analytics-service".to_string(),
+                "topems-analytics".to_string(),
                 "olap-engine".to_string(),
                 "reporting-service".to_string(),
             ],

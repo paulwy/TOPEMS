@@ -9,6 +9,7 @@
 pub mod api;
 pub mod api_security;
 pub mod api_version;
+pub mod cache;
 pub mod compression;
 pub mod config;
 pub mod cors;
@@ -18,6 +19,7 @@ pub mod feature_flag;
 pub mod health;
 pub mod hrm;
 pub mod id;
+pub mod l2_cache;
 pub mod layers;
 pub mod logging;
 pub mod metrics;
@@ -60,6 +62,7 @@ pub use health::{
     ServiceMonitor, SimpleHealthConfig, SystemMetrics,
 };
 pub use hrm::{AppState, PaginatedResult, PaginationQuery};
+pub use l2_cache::{AsyncL2Cache, L2CacheConfig};
 pub use layers::{can_depend, module_layer, modules_by_layer, Layer};
 pub use logging::{
     create_log_filter, generate_request_id, generate_span_id, generate_trace_id,

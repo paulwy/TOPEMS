@@ -1,0 +1,32 @@
+code: communication
+name: 通信服务
+version: 1.0.0
+description: 通信服务 - 站内通知、即时消息、邮件发送
+plugin_type: service
+
+runtime:
+  port: 8084
+  health_endpoint: /health
+  base_path: /api/communication
+
+permissions:
+  - code: communication:notification:read
+    name: 查看通知
+    description: 查看站内通知消息
+  - code: communication:notification:write
+    name: 发送通知
+    description: 发送站内通知消息
+  - code: communication:im:read
+    name: 查看消息
+    description: 查看即时消息记录
+  - code: communication:im:write
+    name: 发送消息
+    description: 发送即时消息
+  - code: communication:mail:read
+    name: 查看邮件
+    description: 查看邮件记录
+  - code: communication:mail:write
+    name: 发送邮件
+    description: 发送邮件
+
+dependencies: []

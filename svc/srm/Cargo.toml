@@ -26,7 +26,6 @@ axum-prometheus = "0.8"
 prometheus = "0.13"
 utoipa = "4"
 reqwest = { version = "0.12", features = ["json"] }
-dashmap = "6"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full", "test-util"] }

@@ -45,8 +45,6 @@ class TestTestIntegration:
     def test_cargo_toml_exists(self):
         """测试 Cargo.toml 存在"""
         # 从 tests/test_commands_test.py -> cli/tests -> cli -> TOPEMS
-        import os
-        # 使用环境变量或相对路径
-        topems_root = Path(os.environ.get('TOPEMS_ROOT', '/Users/air/TOPEMS'))
+        topems_root = Path(__file__).parent.parent.parent
         cargo_toml = topems_root / "Cargo.toml"
         assert cargo_toml.exists()

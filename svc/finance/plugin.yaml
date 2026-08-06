@@ -7,7 +7,7 @@ category: Finance
 plugin_type: service
 
 runtime:
-  port: 8070
+  port: 8011
   health_endpoint: /health
   base_path: /api/finance
 

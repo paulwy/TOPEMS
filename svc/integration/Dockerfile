@@ -1,10 +1,11 @@
+# syntax=docker/dockerfile:1
 # TOPEMS Integration Service Dockerfile
 # Multi-stage build for system integration service
 
 # ============================================
 # Stage 1: Build
 # ============================================
-FROM rust:1.78-alpine AS builder
+FROM rust:nightly-2026-07-01-alpine AS builder
 
 WORKDIR /app
 
@@ -16,7 +17,9 @@ COPY Cargo.toml Cargo.lock ./
 COPY lib ./lib
 
 # Build only integration service to save time
-RUN cargo build --release -p topems-integration
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/app/target \
+    cargo build --release -p topems-integration
 
 # ============================================
 # Stage 2: Runtime

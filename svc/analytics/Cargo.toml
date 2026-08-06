@@ -1,5 +1,5 @@
 [package]
-name = "analytics-service"
+name = "topems-analytics"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

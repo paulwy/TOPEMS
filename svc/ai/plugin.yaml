@@ -33,21 +33,21 @@ permissions:
   - code: ai:delete
     name: 删除文档
     description: 删除已上传的文档
-  - code: ai:read
+  - code: ai:vector:read
     name: 查看向量
     description: 查看向量存储
-  - code: ai:write
+  - code: ai:vector:write
     name: 管理向量
     description: 存储和管理向量
-  - code: ai:write
+  - code: ai:qa:ask
     name: QA 问答
     description: 使用问答功能
-  - code: ai:write
+  - code: ai:sentiment:analyze
     name: 情感分析
     description: 使用情感分析功能
-  - code: ai:write
+  - code: ai:text:classify
     name: 文本分类
     description: 使用文本分类功能
-  - code: ai:write
+  - code: ai:connector:manage
     name: 管理连接器
     description: 管理数据连接器

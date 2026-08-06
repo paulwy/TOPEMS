@@ -305,9 +305,11 @@ async fn main() -> anyhow::Result<()> {
             client
         }
         Err(e) => {
-            tracing::warn!("⚠️ WMS服务客户端初始化失败（不阻塞启动）: {}", e);
-            create_wms_client()
-                .unwrap_or_else(|_| WmsServiceClient::new("http://localhost:8041").unwrap())
+            tracing::warn!(
+                "⚠️ WMS服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
+                e
+            );
+            WmsServiceClient::new("http://localhost:8041").expect("hardcoded fallback URL is valid")
         }
     };
 
@@ -317,10 +319,12 @@ async fn main() -> anyhow::Result<()> {
             client
         }
         Err(e) => {
-            tracing::warn!("⚠️ MES API服务客户端初始化失败（不阻塞启动）: {}", e);
-            TypedServiceClient::<MesApi>::from_env_default().unwrap_or_else(|_| {
-                TypedServiceClient::new(MesApi, "http://localhost:8030").unwrap()
-            })
+            tracing::warn!(
+                "⚠️ MES API服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
+                e
+            );
+            TypedServiceClient::new(MesApi, "http://localhost:8030")
+                .expect("hardcoded fallback URL is valid")
         }
     };
 
@@ -330,10 +334,12 @@ async fn main() -> anyhow::Result<()> {
             client
         }
         Err(e) => {
-            tracing::warn!("⚠️ QMS API服务客户端初始化失败（不阻塞启动）: {}", e);
-            TypedServiceClient::<QmsApi>::from_env_default().unwrap_or_else(|_| {
-                TypedServiceClient::new(QmsApi, "http://localhost:8050").unwrap()
-            })
+            tracing::warn!(
+                "⚠️ QMS API服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
+                e
+            );
+            TypedServiceClient::new(QmsApi, "http://localhost:8050")
+                .expect("hardcoded fallback URL is valid")
         }
     };
 
@@ -343,10 +349,12 @@ async fn main() -> anyhow::Result<()> {
             client
         }
         Err(e) => {
-            tracing::warn!("⚠️ HRM服务客户端初始化失败（不阻塞启动）: {}", e);
-            TypedServiceClient::<HrmApi>::from_env_default().unwrap_or_else(|_| {
-                TypedServiceClient::new(HrmApi, "http://localhost:8020").unwrap()
-            })
+            tracing::warn!(
+                "⚠️ HRM服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
+                e
+            );
+            TypedServiceClient::new(HrmApi, "http://localhost:8020")
+                .expect("hardcoded fallback URL is valid")
         }
     };
 
@@ -356,9 +364,12 @@ async fn main() -> anyhow::Result<()> {
             client
         }
         Err(e) => {
-            tracing::warn!("⚠️ Workflow服务客户端初始化失败（不阻塞启动）: {}", e);
-            create_workflow_client()
-                .unwrap_or_else(|_| WorkflowServiceClient::new("http://localhost:8000").unwrap())
+            tracing::warn!(
+                "⚠️ Workflow服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
+                e
+            );
+            WorkflowServiceClient::new("http://localhost:8000")
+                .expect("hardcoded fallback URL is valid")
         }
     };
 
@@ -368,10 +379,12 @@ async fn main() -> anyhow::Result<()> {
             client
         }
         Err(e) => {
-            tracing::warn!("⚠️ Notification服务客户端初始化失败（不阻塞启动）: {}", e);
-            TypedServiceClient::<NotificationApi>::from_env_default().unwrap_or_else(|_| {
-                TypedServiceClient::new(NotificationApi, "http://localhost:8000").unwrap()
-            })
+            tracing::warn!(
+                "⚠️ Notification服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
+                e
+            );
+            TypedServiceClient::new(NotificationApi, "http://localhost:8000")
+                .expect("hardcoded fallback URL is valid")
         }
     };
 

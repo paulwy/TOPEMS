@@ -22,6 +22,7 @@ NC='\033[0m'
 info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; }
 detail() { echo -e "${CYAN}[DETAIL]${NC} $1"; }
 
@@ -38,7 +39,7 @@ load_services_config() {
     else
         # 默认服务配置（与 scripts/services.conf 保持一致）
         SERVICES_CONFIG="
-iam         svc/unified-core       unified-core-service        8000
+iam         svc/unified-core       topems-unified-core        8000
 pm          svc/pm                 topems-pm                   8023
 erp         svc/erp                topems-erp                  8010
 finance     svc/finance            topems-finance              8011
@@ -54,7 +55,7 @@ qms         svc/qms                topems-qms                  8050
 lims        svc/lims               topems-lims                 8051
 ehs         svc/ehs                topems-ehs                  8052
 rd          svc/rd                 topems-rd                   8053
-bi          svc/analytics          analytics-service           8060
+bi          svc/analytics          topems-analytics           8060
 portal      svc/portal             topems-portal               8063
 mobile      svc/mobile             topems-mobile               8070
 gis         svc/gis                topems-gis                  8071
@@ -263,7 +264,7 @@ build_all_backend() {
         # 某些 svc 别名 bi=analytics，需要映射
         local binary_name
         case "$svc" in
-            bi) binary_name="analytics-service" ;;
+            bi) binary_name="topems-analytics" ;;
             *)  binary_name="$(get_executable_name "$svc")" ;;
         esac
         [ -z "$binary_name" ] && { build_skipped=$((build_skipped+1)); warning "$svc 找不到可执行名，跳过"; continue; }
@@ -531,7 +532,7 @@ start_service() {
     local executable_name=$(get_executable_name "$service_name")
     local executable_path="$PROJECT_ROOT/target/release/${executable_name}"
     
-    if [ -n "$executable_name" ] && ps aux | grep -v grep | grep -q "$executable_name" && [ "$executable_name" != "unified-core-service" ]; then
+    if [ -n "$executable_name" ] && ps aux | grep -v grep | grep -q "$executable_name" && [ "$executable_name" != "topems-unified-core" ]; then
         local other_service=$(echo "$SERVICES_CONFIG" | grep -v "^${service_name} " | grep " ${executable_name} " | awk '{print $1}')
         if [ -n "$other_service" ]; then
             info "$service_name 与 $other_service 共享同一可执行文件，$other_service 已在运行，跳过 $service_name"
@@ -640,7 +641,7 @@ status_service() {
         fi
     else
         local executable_name=$(get_executable_name "$service_name")
-        if [ -n "$executable_name" ] && ps aux | grep -v grep | grep -q "$executable_name" && [ "$executable_name" != "unified-core-service" ]; then
+        if [ -n "$executable_name" ] && ps aux | grep -v grep | grep -q "$executable_name" && [ "$executable_name" != "topems-unified-core" ]; then
             local provider=$(echo "$SERVICES_CONFIG" | grep -v "^${service_name} " | grep " ${executable_name} " | awk '{print $1}')
             if [ -n "$provider" ]; then
                 local provider_port=$(get_service_port "$provider")
@@ -889,8 +890,8 @@ start_all_services() {
     echo ""
     info "========== 启动汇总 =========="
     info "成功: $success_count   失败: $fail_count"
-    info "查看日志: ls $LOG_DIR/"
-    info "健康检查: $0 health"
+    info "查看日志: ls /tmp/topems-*.log"
+    info "健康检查: $0 status"
     info "停止服务: $0 stop-all"
 
     if [ $fail_count -eq 0 ]; then
@@ -955,41 +956,95 @@ start_dev_macos() {
     show_all_status
 }
 
-# 启动前端服务
+# 获取前端 dev 进程 PID（vite/tsc/node）
+get_frontend_pid() {
+    ps aux | grep -v grep \
+        | grep -E "(vite|tsc.*watch|topems-web\.log)" \
+        | grep -E "(apps/web|$PROJECT_ROOT/apps/web)" \
+        | awk '{print $2}' | sort -u | head -5
+}
+
+# 启动前端服务（带轮询等待，避免静态 sleep 5 与实际端口就绪不一致）
 start_frontend() {
     info "启动前端服务..."
-    
+
     local pkg_cmd=$(get_pkg_cmd) || return 1
     ensure_frontend_deps "$pkg_cmd" || return 1
-    
+
     if check_port 3000; then
         info "前端已在端口 3000 运行"
         return 0
     fi
-    
-    nohup $pkg_cmd dev > "/tmp/topems-web.log" 2>&1 &
-    local pid=$!
-    
-    sleep 5
-    
-    if check_port 3000; then
-        success "前端服务启动成功 (PID: $pid, 端口: 3000)"
-        return 0
+
+    # 防止重复启动：已有 vite/tsc 进程在跑就先等它
+    local existing_pid=""
+    existing_pid=$(get_frontend_pid)
+    if [ -n "$existing_pid" ]; then
+        info "前端进程已存在 (PID: $existing_pid)，等待端口就绪..."
     else
-        error "前端服务启动失败，请查看日志: /tmp/topems-web.log"
-        tail -20 "/tmp/topems-web.log" 2>/dev/null
-        return 1
+        nohup $pkg_cmd dev > "/tmp/topems-web.log" 2>&1 &
     fi
+    local pid=$!
+    [ -z "$pid" ] && pid=$existing_pid
+
+    # 轮询等待端口就绪（最长 120s，冷启动含 tsc+vite 预构建通常 15~60s）
+    local waited=0
+    local interval=3
+    local max_wait=120
+    while [ $waited -lt $max_wait ]; do
+        if check_port 3000; then
+            success "前端服务启动成功 (PID: $pid, 端口: 3000, 用时: ${waited}s)"
+            return 0
+        fi
+        # 进程挂了（立即失败）
+        if ! kill -0 "$pid" 2>/dev/null; then
+            local still_any=""
+            still_any=$(get_frontend_pid)
+            [ -z "$still_any" ] && break
+        fi
+        sleep $interval
+        waited=$((waited + interval))
+    done
+
+    # 超过 max_wait：端口未开，但进程仍活着（仍在编译中）
+    local still_pid=""
+    still_pid=$(get_frontend_pid)
+    if [ -n "$still_pid" ] || kill -0 "$pid" 2>/dev/null; then
+        warning "前端服务仍在启动中 (PID: ${still_pid:-$pid})，端口 3000 暂未就绪（tsc 类型检查 / vite 预构建通常需要 30~90 秒）。"
+        detail "日志: tail -f /tmp/topems-web.log"
+        detail "稍后再查看: $0 status"
+        return 0
+    fi
+
+    error "前端服务启动失败，请查看日志: /tmp/topems-web.log"
+    tail -20 "/tmp/topems-web.log" 2>/dev/null
+    return 1
 }
 
 # 停止前端服务
 stop_frontend() {
     info "停止前端服务..."
-    local pid=$(lsof -ti:3000 2>/dev/null)
-    if [ -n "$pid" ]; then
-        kill $pid 2>/dev/null
+    # 先按端口杀（已就绪态）
+    local port_pid
+    port_pid=$(lsof -ti:3000 2>/dev/null)
+    # 再按进程名杀（仍在编译、端口未开的 vite/tsc 进程）
+    local proc_pid
+    proc_pid=$(get_frontend_pid)
+    local all_pid=$(echo "$port_pid $proc_pid" | tr ' ' '\n' | sort -u | grep -v "^$")
+
+    if [ -n "$all_pid" ]; then
+        echo "$all_pid" | xargs -I{} kill {} 2>/dev/null || true
         sleep 1
-        success "前端服务已停止"
+        # 残留强杀
+        local remain=""
+        for p in $all_pid; do
+            kill -0 "$p" 2>/dev/null && remain="$remain $p"
+        done
+        if [ -n "$remain" ]; then
+            echo "$remain" | xargs -I{} kill -9 {} 2>/dev/null || true
+            sleep 1
+        fi
+        success "前端服务已停止 (PID: $(echo "$all_pid" | tr '\n' ' '))"
     else
         warning "前端服务未运行"
     fi
@@ -1016,10 +1071,17 @@ show_all_status() {
         echo -e "${GREEN}✅${NC} 前端 (端口 3000) 运行中"
         running_count=$((running_count + 1))
     else
-        echo -e "${RED}❌${NC} 前端 (端口 3000) 未运行"
+        # 端口未开，但 vite/tsc 仍在编译（仍在启动中 vs 真正未启动）
+        local fe_pid=""
+        fe_pid=$(get_frontend_pid)
+        if [ -n "$fe_pid" ]; then
+            echo -e "${YELLOW}⏳${NC} 前端 (端口 3000) 启动中 (PID: $fe_pid, 仍在编译/预构建，通常需要 30~90 秒)"
+        else
+            echo -e "${RED}❌${NC} 前端 (端口 3000) 未运行"
+        fi
     fi
     total_count=$((total_count + 1))
-    
+
     echo "=================================================="
     info "状态统计: ${running_count}/${total_count} 服务运行中"
 }
@@ -1341,12 +1403,12 @@ run_all() {
     info "========== 一键运行 =========="
 
     # 1. 启动数据库
-    db_start
-    redis_start
+    db_start || { error "数据库启动失败，无法继续。请检查 PostgreSQL 配置。"; return 1; }
+    redis_start || { error "Redis 启动失败，无法继续。请检查 Redis 配置。"; return 1; }
     sleep 2
 
-    # 2. 启动所有服务
-    start_all_services
+    # 2. 启动所有服务（透传 --only-core / --no-frontend / --skip= 等参数）
+    start_all_services "$@"
 
     echo ""
     success "一键运行完成！"
@@ -1405,6 +1467,334 @@ run_cli() {
 }
 
 # 显示帮助
+# =============================================
+# 清理缓存命令
+# =============================================
+clean_project() {
+    local clean_rust=false
+    local clean_frontend=false
+    local clean_cache=false
+    local clean_system_cache=false
+    local clean_logs=false
+    local clean_ollama=false
+    local clean_all=false
+    local dry_run=false
+
+    for arg in "$@"; do
+        case "$arg" in
+            --rust)         clean_rust=true ;;
+            --frontend)     clean_frontend=true ;;
+            --cache)        clean_cache=true ;;
+            --system-cache) clean_system_cache=true ;;
+            --logs)         clean_logs=true ;;
+            --ollama)       clean_ollama=true ;;
+            --all)          clean_all=true ;;
+            --dry-run)      dry_run=true ;;
+            *)
+                error "未知参数: $arg"
+                echo "可用选项: --rust --frontend --cache --system-cache --ollama --logs --all --dry-run"
+                return 1
+                ;;
+        esac
+    done
+
+    # 默认全量清理（仅项目级，system-cache/ollama 需显式指定）
+    if [ "$clean_rust" = false ] && [ "$clean_frontend" = false ] && \
+       [ "$clean_cache" = false ] && [ "$clean_system_cache" = false ] && \
+       [ "$clean_ollama" = false ] && [ "$clean_logs" = false ] && \
+       [ "$clean_all" = false ]; then
+        clean_all=true
+    fi
+    if [ "$clean_all" = true ]; then
+        clean_rust=true
+        clean_frontend=true
+        clean_cache=true
+        clean_logs=true
+    fi
+
+    # --system-cache 是危险操作，需要二次确认
+    local did_clean=false
+    if [ "$clean_system_cache" = true ] && [ "$dry_run" = false ]; then
+        warn "即将清理系统级缓存，这将影响其他应用并触发全量重新下载！"
+        echo "  包括: pnpm 缓存、Cargo registry、IDE 缓存、SCCache 等"
+        echo ""
+        read -r -p "确认继续？(y/N): " confirm
+        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+            warn "已取消系统缓存清理。"
+            clean_system_cache=false
+        fi
+    fi
+
+    echo ""
+    info "================================================"
+    info "  TOPEMS 清理命令"
+    info "================================================"
+    echo ""
+
+    if [ "$clean_rust" = true ]; then
+        local dir="$PROJECT_ROOT/target"
+        if [ -d "$dir" ]; then
+            local size
+            size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+            if [ "$dry_run" = true ]; then
+                info "[DRY-RUN] 将删除 Rust 编译产物: $dir ($size)"
+            else
+                info "清理 Rust 编译产物 (cargo clean)..."
+                cargo clean 2>/dev/null
+                rm -rf "$dir"
+                success "已清理 target/ ($size)"
+                did_clean=true
+            fi
+        else
+            detail "target/ 不存在，跳过"
+        fi
+
+        local sqlx_dir="$PROJECT_ROOT/.sqlx"
+        if [ -d "$sqlx_dir" ]; then
+            local sqlx_size
+            sqlx_size=$(du -sh "$sqlx_dir" 2>/dev/null | awk '{print $1}')
+            if [ "$dry_run" = true ]; then
+                info "[DRY-RUN] 将删除 SQLx 缓存: $sqlx_dir ($sqlx_size)"
+            else
+                rm -rf "$sqlx_dir"
+                detail "已清理 .sqlx ($sqlx_size)"
+                did_clean=true
+            fi
+        fi
+    fi
+
+    if [ "$clean_frontend" = true ]; then
+        local fe_dirs=(
+            "$PROJECT_ROOT/apps/web/dist"
+            "$PROJECT_ROOT/apps/web/coverage"
+            "$PROJECT_ROOT/apps/web/playwright-report"
+            "$PROJECT_ROOT/apps/web/test-results"
+            "$PROJECT_ROOT/apps/desktop/dist"
+            "$PROJECT_ROOT/apps/mobile/dist"
+            "$PROJECT_ROOT/apps/server/dist"
+            "$PROJECT_ROOT/apps/web/.vite"
+        )
+        for dir in "${fe_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+                local size
+                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                if [ "$dry_run" = true ]; then
+                    info "[DRY-RUN] 将删除: $dir ($size)"
+                else
+                    rm -rf "$dir"
+                    detail "已删除 $dir ($size)"
+                    did_clean=true
+                fi
+            fi
+        done
+
+        # node_modules 内部缓存
+        local nm_cache_dirs=(
+            "$PROJECT_ROOT/apps/web/node_modules/.vite"
+            "$PROJECT_ROOT/apps/web/node_modules/.cache"
+        )
+        for dir in "${nm_cache_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+                local size
+                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                if [ "$dry_run" = true ]; then
+                    info "[DRY-RUN] 将删除: $dir ($size)"
+                else
+                    rm -rf "$dir"
+                    detail "已删除 $dir ($size)"
+                    did_clean=true
+                fi
+            fi
+        done
+    fi
+
+    # 项目级缓存（仅影响本项目，安全）
+    if [ "$clean_cache" = true ]; then
+        local project_cache_dirs=(
+            "$PROJECT_ROOT/apps/web/.lighthouseci"
+            "$PROJECT_ROOT/apps/web/.storybook"
+            "$PROJECT_ROOT/cli/.venv"
+            "$PROJECT_ROOT/cli/.pytest_cache"
+            "$PROJECT_ROOT/apps/web/node_modules/.cache"
+        )
+        for dir in "${project_cache_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+                local size
+                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                if [ "$dry_run" = true ]; then
+                    info "[DRY-RUN] 将删除项目缓存: $dir ($size)"
+                else
+                    rm -rf "$dir"
+                    detail "已删除 $dir ($size)"
+                    did_clean=true
+                fi
+            fi
+        done
+
+        # pnpm store prune （仅清理未引用包，不影响其他项目）
+        if command -v pnpm &>/dev/null; then
+            if [ "$dry_run" = true ]; then
+                info "[DRY-RUN] 将执行 pnpm store prune"
+            else
+                info "执行 pnpm store prune..."
+                pnpm store prune 2>/dev/null
+                detail "pnpm store 已清理"
+                did_clean=true
+            fi
+        fi
+    fi
+
+    # 系统级缓存（危险，影响其他应用）
+    if [ "$clean_system_cache" = true ]; then
+        local system_cache_dirs=(
+            "$HOME/Library/Caches/pnpm"
+            "$HOME/Library/Caches/google"
+            "$HOME/Library/Caches/Mozilla.sccache"
+            "$HOME/Library/Caches/com.trae.app.ShipIt"
+            "$HOME/Library/Caches/Trae CN"
+        )
+        for dir in "${system_cache_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+                local size
+                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                if [ "$dry_run" = true ]; then
+                    info "[DRY-RUN] 将删除系统缓存: $dir ($size)"
+                else
+                    rm -rf "$dir"
+                    detail "已删除 $dir ($size)"
+                    did_clean=true
+                fi
+            fi
+        done
+
+        if [ -d "$HOME/.cargo/registry" ]; then
+            local cargo_size
+            cargo_size=$(du -sh "$HOME/.cargo/registry" 2>/dev/null | awk '{print $1}')
+            if [ "$dry_run" = true ]; then
+                info "[DRY-RUN] 将删除 Cargo registry: $HOME/.cargo/registry ($cargo_size)"
+            else
+                rm -rf "$HOME/.cargo/registry"
+                detail "已删除 Cargo registry ($cargo_size)"
+                did_clean=true
+            fi
+        fi
+    fi
+
+    # Ollama 模型清理（保留项目使用的模型，删除其他）
+    if [ "$clean_ollama" = true ]; then
+        # 从 .env 读取项目实际使用的模型
+        local required_models=()
+        if [ -f "$PROJECT_ROOT/.env" ]; then
+            local ollama_model embed_model
+            ollama_model=$(grep "^OLLAMA_MODEL=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d ' ')
+            embed_model=$(grep "^EMBEDDING_MODEL=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d ' ')
+            [ -n "$ollama_model" ] && required_models+=("$ollama_model")
+            [ -n "$embed_model" ] && required_models+=("$embed_model")
+        fi
+        # 默认保留的模型
+        if [ ${#required_models[@]} -eq 0 ]; then
+            required_models=("qwen2.5:7b-instruct" "nomic-embed-text")
+        fi
+
+        info "项目需要保留的 Ollama 模型: ${required_models[*]}"
+
+        if ! command -v ollama &>/dev/null; then
+            warn "未安装 ollama，跳过模型清理"
+        else
+            local installed_models
+            installed_models=$(ollama list 2>/dev/null | tail -n +2 | awk '{print $1}')
+            if [ -z "$installed_models" ]; then
+                detail "无已安装的 Ollama 模型"
+            else
+                for model in $installed_models; do
+                    local is_required=false
+                    for req in "${required_models[@]}"; do
+                        if [ "$model" = "$req" ]; then
+                            is_required=true
+                            break
+                        fi
+                    done
+                    if [ "$is_required" = true ]; then
+                        detail "保留项目模型: $model"
+                    else
+                        if [ "$dry_run" = true ]; then
+                            info "[DRY-RUN] 将删除 Ollama 模型: $model"
+                        else
+                            ollama rm "$model" 2>/dev/null
+                            detail "已删除 Ollama 模型: $model"
+                            did_clean=true
+                        fi
+                    fi
+                done
+            fi
+        fi
+
+        # 清理 Ollama blobs 残留（manifests 已删但 blobs 仍在的情况）
+        local ollama_blobs="$HOME/.ollama/models/blobs"
+        if [ -d "$ollama_blobs" ]; then
+            local blob_size
+            blob_size=$(du -sh "$ollama_blobs" 2>/dev/null | awk '{print $1}')
+            local blob_count
+            blob_count=$(ls "$ollama_blobs" 2>/dev/null | wc -l | tr -d ' ')
+            if [ "$blob_count" -gt 0 ]; then
+                if [ "$dry_run" = true ]; then
+                    info "[DRY-RUN] 将清理 Ollama blobs 残留: $ollama_blobs ($blob_size, $blob_count files)"
+                else
+                    rm -rf "$ollama_blobs"/* 2>/dev/null
+                    detail "已清理 Ollama blobs 残留 ($blob_size)"
+                    did_clean=true
+                fi
+            fi
+        fi
+    fi
+
+    if [ "$clean_logs" = true ]; then
+        local log_dirs=(
+            "$PROJECT_ROOT/logs"
+        )
+        for dir in "${log_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+                local size
+                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                if [ "$dry_run" = true ]; then
+                    info "[DRY-RUN] 将清空: $dir ($size)"
+                else
+                    find "$dir" -name "*.log" -type f -delete 2>/dev/null
+                    detail "已清空 $dir 下的日志"
+                    did_clean=true
+                fi
+            fi
+        done
+
+        local root_logs
+        root_logs=$(find "$PROJECT_ROOT" -maxdepth 1 -name "*.log" -type f 2>/dev/null)
+        if [ -n "$root_logs" ]; then
+            if [ "$dry_run" = true ]; then
+                info "[DRY-RUN] 将删除根目录日志文件"
+            else
+                find "$PROJECT_ROOT" -maxdepth 1 -name "*.log" -type f -delete 2>/dev/null
+                detail "已删除根目录日志文件"
+                did_clean=true
+            fi
+        fi
+    fi
+
+    echo ""
+    if [ "$dry_run" = true ]; then
+        info "[DRY-RUN] 完成。无文件被实际删除。"
+    elif [ "$did_clean" = true ]; then
+        success "清理完成！"
+        echo ""
+        detail "后续建议:"
+        detail "  Rust:    cargo build  (重建 target/)"
+        detail "  前端:    pnpm install && pnpm build"
+        detail "  Python:  cd cli && python3 -m venv .venv && pip install -r requirements.txt"
+    else
+        warn "未执行任何清理操作。"
+        echo "  使用 --dry-run 预览将清理的内容，或指定具体选项如 --rust --cache 等。"
+    fi
+}
+
 show_help() {
     cat << EOF
 TOPEMS 服务管理工具
@@ -1440,7 +1830,10 @@ TOPEMS 服务管理工具
   restart-all [选项]      重启所有服务（透传 start-all 选项）
 
 一键运行:
-  run                     一键启动数据库+所有服务
+  run [选项]             一键启动数据库+所有服务（透传 start-all 选项）
+                          --only-core       只启动核心服务
+                          --no-frontend     不启动前端
+                          --skip=<svc>      跳过某个服务
   run-stop                一键停止所有服务+数据库
 
 前端:
@@ -1468,6 +1861,17 @@ SQLx 离线缓存 (V64+):
   db reset                重置数据库（删除所有数据）
   redis start             启动 Redis
   redis stop              停止 Redis
+
+清理:
+  clean [选项]            清理编译产物、缓存、日志
+                            --rust         清理 Rust 编译产物 (target/, .sqlx)
+                            --frontend     清理前端产物 (dist/, coverage/, .vite 缓存)
+                            --cache        清理项目级缓存 (.lighthouseci, .venv, .storybook 等)
+                            --system-cache 清理系统级缓存 (pnpm/cargo/IDE，危险操作需确认)
+                            --ollama       清理 Ollama 模型（保留项目使用的模型）
+                            --logs         清理日志文件 (logs/*.log)
+                            --all          全量清理（默认）
+                            --dry-run      预演模式，仅显示将删除的内容
 
 开发环境:
   dev                     启动开发环境 (macOS)
@@ -1626,7 +2030,7 @@ case "${1:-help}" in
         esac
         ;;
     run)
-        run_all
+        run_all "${@:2}"
         ;;
     run-stop)
         stop_everything
@@ -1715,6 +2119,9 @@ case "${1:-help}" in
         ;;
     help|--help|-h)
         show_help
+        ;;
+    clean)
+        clean_project "${@:2}"
         ;;
     *)
         run_cli "$@"

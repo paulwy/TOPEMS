@@ -191,10 +191,10 @@ extract_specs() {
   rm -f /tmp/topems-*-openapi.json 2>/dev/null || true
 
   for svc in "${services[@]}"; do
-    # 默认 cargo 包名 = topems-<svc>；unified-core 例外（包名为 unified-core-service）
+    # 默认 cargo 包名 = topems-<svc>；unified-core 例外（包名为 topems-unified-core）
     local pkg
     case "${svc}" in
-      unified-core) pkg="unified-core-service" ;;
+      unified-core) pkg="topems-unified-core" ;;
       *) pkg="topems-${svc}" ;;
     esac
     log_info "  ${pkg} — cargo test extract_openapi_spec"

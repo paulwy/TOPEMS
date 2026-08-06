@@ -65,8 +65,7 @@ pub async fn list_notifications(
     match client.list_notifications(page, page_size, nt).await {
         Ok(raw) => {
             let data = extract_data(&raw);
-            let body = if data.is_array() {
-                let items = data.as_array().unwrap();
+            let body = if let Some(items) = data.as_array() {
                 json!({ "items": items, "total": items.len() })
             } else if data.is_object() {
                 data

@@ -494,7 +494,7 @@ async fn ensure_initialized() {
     *store.retirement_plans.lock().await = retirement_plans;
     *store.archive_policies.lock().await = policies;
     *store.archive_records.lock().await = archive_records;
-    *store.events.lock().unwrap() = Vec::new();
+    *store.events.lock().unwrap_or_else(|e| e.into_inner()) = Vec::new();
 
     *initialized = true;
 }
@@ -960,7 +960,7 @@ pub async fn get_lifecycle_events(
 ) -> Json<ApiResponse<Vec<LifecycleEvent>>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
-    let events = store.events.lock().unwrap();
+    let events = store.events.lock().unwrap_or_else(|e| e.into_inner());
     let items: Vec<LifecycleEvent> = events
         .iter()
         .filter(|e| e.master_data_id == master_data_id)
@@ -1755,7 +1755,7 @@ pub async fn get_lifecycle_stats(
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let entities = store.entities.lock().await;
-    let events = store.events.lock().unwrap();
+    let events = store.events.lock().unwrap_or_else(|e| e.into_inner());
 
     let mut by_stage: Vec<(String, i64)> = LifecycleStage::all()
         .iter()

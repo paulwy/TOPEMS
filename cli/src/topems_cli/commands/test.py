@@ -15,7 +15,7 @@ console = Console()
 def run_cargo_test(cargo_args: list = None, cwd: str = None) -> tuple[int, str]:
     """运行 cargo 测试"""
     if cwd is None:
-        cwd = Path.home() / "TOPEMS"
+        cwd = Path(__file__).parent.parent.parent.parent.parent
 
     cmd = ["cargo", "test", "--color=never"]
     if cargo_args:

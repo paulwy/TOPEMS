@@ -186,9 +186,9 @@ install_deps() {
   fi
 
   # Cargo workspace 检查（只编译核心服务）
-  if [ ! -f "$PROJECT_ROOT/target/release/unified-core-service" ]; then
+  if [ ! -f "$PROJECT_ROOT/target/release/topems-unified-core" ]; then
     info "编译 Rust 核心服务（首次会需要较长时间）..."
-    (cd "$PROJECT_ROOT" && SQLX_OFFLINE=true cargo build --release --bin unified-core-service 2>&1) || warn "Rust 编译失败，请检查 Rust 工具链"
+    (cd "$PROJECT_ROOT" && SQLX_OFFLINE=true cargo build --release --bin topems-unified-core 2>&1) || warn "Rust 编译失败，请检查 Rust 工具链"
   else
     success "Rust 核心服务已编译"
   fi

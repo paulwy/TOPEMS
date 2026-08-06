@@ -125,10 +125,10 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api", get(|| get_api_info_handler("analytics-service")))
+        .route("/api", get(|| get_api_info_handler("topems-analytics")))
         .route(
             "/api/info",
-            get(|| get_api_info_handler("analytics-service")),
+            get(|| get_api_info_handler("topems-analytics")),
         )
         .route(
             "/api/plugins/info",
@@ -894,7 +894,7 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
     };
 
     let response = serde_json::json!({
-        "service": "analytics-service",
+        "service": "topems-analytics",
         "status": if db_status == "healthy" { "healthy" } else { "unhealthy" },
         "timestamp": chrono::Utc::now().to_rfc3339(),
         "modules": {

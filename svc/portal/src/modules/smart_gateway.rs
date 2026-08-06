@@ -503,11 +503,11 @@ impl SmartRouterInner {
 
         let target = match route.load_balancing_strategy {
             RoutingStrategy::RoundRobin => {
-                let counter = self
+                let idx = self
                     .round_robin_counters
                     .get(&route.id)
-                    .unwrap_or_else(|| panic!("counter not found"));
-                let idx = counter.fetch_add(1, Ordering::Relaxed);
+                    .map(|c| c.fetch_add(1, Ordering::Relaxed))
+                    .unwrap_or(0);
                 let services = self.service_registry.get(&route.target_service);
                 if let Some(svcs) = services {
                     if !svcs.is_empty() {

@@ -230,8 +230,8 @@ pub async fn compute_replenishment(
                     - i.available_quantity
                 )
             END as suggested_quantity,
-            s.id as supplier_id,
-            s.name as supplier_name,
+            NULL::uuid as supplier_id,
+            NULL::text as supplier_name,
             'draft' as status,
             CASE
                 WHEN i.available_quantity < COALESCE(r.safety_stock, i.min_quantity, 0) THEN 'urgent'
@@ -259,13 +259,6 @@ pub async fn compute_replenishment(
               AND created_at >= CURRENT_DATE - ($3 || ' days')::INTERVAL
             GROUP BY material_code, warehouse_id
         ) consumption ON i.material_code = consumption.material_code AND i.warehouse_id = consumption.warehouse_id
-        LEFT JOIN (
-            SELECT DISTINCT ON (sp.material_code) sp.supplier_id, s.name, sp.material_code
-            FROM scm.supplier_products sp
-            JOIN scm.suppliers s ON sp.supplier_id = s.id
-            WHERE s.status = 'active'
-            ORDER BY sp.material_code, sp.priority
-        ) s ON i.material_code = s.material_code
         WHERE i.deleted_at IS NULL
           AND ($4::uuid IS NULL OR i.warehouse_id = $4
           AND (
@@ -283,6 +276,7 @@ pub async fn compute_replenishment(
                   )
               END
           ) > 0
+        )
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
                   warehouse_id, warehouse_name, location_id, current_stock, available_stock,
                   safety_stock, reorder_point, max_stock, consumption_rate, lead_time_days,
@@ -297,6 +291,15 @@ pub async fn compute_replenishment(
     .bind(req.rule_based_only.unwrap_or(false))
     .fetch_all(&mut *tx)
     .await;
+
+    // 供应商信息保持 NULL（原跨 schema JOIN scm.supplier_products 已移除，因该表不存在）
+    // 用户在 UI 确认补货建议时可手动选择供应商
+    if let Ok(items) = &insert_result {
+        tracing::info!(
+            "补货计算完成，生成 {} 条建议（supplier 字段留空，由用户手动选择）",
+            items.len()
+        );
+    }
 
     let items = match insert_result {
         Ok(items) => items,

@@ -193,7 +193,7 @@ build_backend() {
   if [ -f "$services_conf" ]; then
     local services=$(grep -v "^#" "$services_conf" | grep -v "^$" | awk '{print $3}' | sort -u)
   else
-    local services="unified-core-service topems-pm topems-erp topems-finance topems-ai topems-hrm topems-crm topems-mes topems-pdm topems-scm topems-wms topems-srm topems-qms topems-lims topems-ehs topems-rd analytics-service topems-portal topems-mobile topems-gis topems-integration"
+    local services="topems-unified-core topems-pm topems-erp topems-finance topems-ai topems-hrm topems-crm topems-mes topems-pdm topems-scm topems-wms topems-srm topems-qms topems-lims topems-ehs topems-rd topems-analytics topems-portal topems-mobile topems-gis topems-integration"
   fi
   
   local success_count=0

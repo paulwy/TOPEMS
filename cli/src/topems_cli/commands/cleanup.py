@@ -7,12 +7,12 @@ import click
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from ..config import get_config
-from ..manager import ServiceManager
-
 console = Console()
-config = get_config()
-manager = ServiceManager(config)
+
+
+def _get_project_root() -> Path:
+    """获取项目根目录"""
+    return Path(__file__).parent.parent.parent.parent.parent
 
 
 @click.group()
@@ -121,26 +121,26 @@ def clean_all(yes: bool):
         if not click.confirm("继续?"):
             return
     
-    project_root = Path(__file__).parent.parent.parent.parent.parent
-    
+    project_root = _get_project_root()
+
     # 停止所有服务
     console.print("停止所有服务...")
-    subprocess.run(["./topems.sh", "stop-all"], cwd=str(project_root), check=False)
-    
+    subprocess.run(["bash", "scripts/topems.sh", "stop-all"], cwd=str(project_root), check=False)
+
     # 清理缓存
     console.print("清理编译缓存...")
     for target in ["target/debug", "target/release", ".cargo"]:
         path = project_root / target
         if path.exists():
             subprocess.run(["rm", "-rf", str(path)], check=False)
-    
+
     # 清理日志
     console.print("清理日志文件...")
     logs_dir = project_root / "logs"
     if logs_dir.exists():
         for log_file in logs_dir.glob("*.log"):
             log_file.unlink()
-    
+
     console.print("[green]✓[/green] 全面清理完成")
 
 
@@ -149,12 +149,14 @@ def clean_all(yes: bool):
 def clean_services(yes: bool):
     """停止所有服务并清理端口"""
     console.print("[bold]清理服务进程...[/bold]")
-    
+
     if not yes:
         if not click.confirm("继续?"):
             return
-    
-    # 停止所有服务
+
+    # 停止所有服务（lazy init 避免 import 时崩溃）
+    from ..manager import get_manager
+    manager = get_manager()
     manager.stop_all()
-    
+
     console.print("[green]✓[/green] 服务清理完成")

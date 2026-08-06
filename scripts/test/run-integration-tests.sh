@@ -59,7 +59,7 @@ DEFAULT_SERVICES="unified-core finance master-data portal mobile crm wms mes hrm
 get_package_name() {
     local service="$1"
     case "$service" in
-        unified-core)   echo "unified-core-service" ;;
+        unified-core)   echo "topems-unified-core" ;;
         finance)        echo "topems-finance" ;;
         master-data)    echo "topems-master-data" ;;
         portal)         echo "topems-portal" ;;
@@ -77,7 +77,7 @@ get_package_name() {
         lims)           echo "topems-lims" ;;
         ehs)            echo "topems-ehs" ;;
         rd)             echo "topems-rd" ;;
-        bi)             echo "analytics-service" ;;
+        bi)             echo "topems-analytics" ;;
         pdm)            echo "topems-pdm" ;;
         gis)            echo "topems-gis" ;;
         integration)    echo "topems-integration" ;;

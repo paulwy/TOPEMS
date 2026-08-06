@@ -1,0 +1,29 @@
+code: ticket
+name: 工单服务
+version: 1.0.0
+description: 工单服务 - 工单创建、分配、处理、关闭全流程管理
+plugin_type: service
+
+runtime:
+  port: 8086
+  health_endpoint: /health
+  base_path: /api/ticket
+
+permissions:
+  - code: ticket:read
+    name: 查看工单
+    description: 查看工单列表和详情
+  - code: ticket:write
+    name: 创建工单
+    description: 创建和更新工单
+  - code: ticket:assign
+    name: 分配工单
+    description: 分配工单给处理人
+  - code: ticket:close
+    name: 关闭工单
+    description: 关闭已处理的工单
+  - code: ticket:admin
+    name: 工单管理
+    description: 工单类型和配置管理
+
+dependencies: []

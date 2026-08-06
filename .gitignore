@@ -112,13 +112,13 @@ trae-ai-contest/
 *.a
 *.lib
 
-# Logs
-*.log
+# Logs (also covers root-level *.log files)
+*.log.*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 logs/
-*.log.*
+nohup.out
 
 # Database
 *.db
@@ -128,12 +128,10 @@ logs/
 *.db-wal
 
 # Cache
-.cache/
 *.tmp
 *.temp
 *.tmp.*
-node_modules
-.cache/
+node_modules/
 .parcel-cache/
 .eslintcache
 .rpt2_cache/
@@ -144,20 +142,24 @@ pids/
 *.pid
 *.pid.lock
 
-# nohup output
-nohup.out
-
 # Debug tools
 debug_jwt.rs
 debug*.rs
 *.debug
 
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.env/
+.pytest_cache/
+*.egg-info/
+
 # Temporary extraction files
 extract_routes.py
 routes_extracted.*
-*.pyc
-__pycache__/
-*.egg-info/
 
 # Archive directories
 svc/archive/
@@ -168,11 +170,13 @@ backup/
 # Storybook
 *storybook.log
 storybook-static
-apps/web/playwright-report/
 
 # Database data
 database/postgres_data/
 database/data/
+
+# User uploaded files (application data)
+storage/files/
 database/*.sql
 database/*.sql.gz
 
@@ -198,7 +202,6 @@ apps/desktop/src-tauri/gen/
 apps/desktop/src-tauri/cargo-crates/
 
 # Node.js
-node_modules/
 package-lock.json
 yarn.lock
 shrinkwrap.json

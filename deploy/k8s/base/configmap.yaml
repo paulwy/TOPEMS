@@ -13,7 +13,7 @@ data:
   REDIS_HOST: "redis-service"
   REDIS_PORT: "6379"
   # Core
-  CORE_URL: "http://unified-core-service:8000"
+  CORE_URL: "http://topems-unified-core:8000"
   # Service Ports
   FINANCE_PORT: "8011"
   AI_PORT: "8013"
@@ -29,7 +29,7 @@ data:
   CONSUL_ENABLED: "true"
   CONSUL_URL: "http://consul-service:8500"
   PLUGIN_AUTO_REGISTER: "true"
-  PLUGIN_REGISTER_URL: "http://unified-core-service:8000/api/core/plugin/dev/plugins"
+  PLUGIN_REGISTER_URL: "http://topems-unified-core:8000/api/core/plugin/dev/plugins"
   SERVICE_HEARTBEAT_INTERVAL: "30"
   PLUGIN_HEARTBEAT_TIMEOUT: "90"
 ---

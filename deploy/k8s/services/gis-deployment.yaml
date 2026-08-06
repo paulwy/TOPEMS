@@ -38,7 +38,7 @@ spec:
                   name: topems-secrets
                   key: jwt-secret
             - name: IAM_SERVICE_URL
-              value: "http://unified-core-service:8000"
+              value: "http://topems-unified-core:8000"
           resources:
             requests:
               memory: "128Mi"

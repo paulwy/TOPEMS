@@ -172,9 +172,9 @@ echo ""
             elif [[ -f "target/release/topems-${svc}" ]]; then
                 cp "target/release/topems-${svc}" "${PREFIX}/bin/${svc}-service"
                 echo -e "${GREEN}✓ Installed ${svc}-service${NC}"
-            elif [[ -f "target/release/unified-core-service" && "$svc" == "unified-core" ]]; then
-                cp "target/release/unified-core-service" "${PREFIX}/bin/unified-core-service"
-                echo -e "${GREEN}✓ Installed unified-core-service${NC}"
+            elif [[ -f "target/release/topems-unified-core" && "$svc" == "unified-core" ]]; then
+                cp "target/release/topems-unified-core" "${PREFIX}/bin/topems-unified-core"
+                echo -e "${GREEN}✓ Installed topems-unified-core${NC}"
             else
                 echo -e "${YELLOW}⚠ Binary for ${svc} not found, skipping${NC}"
             fi
@@ -267,7 +267,7 @@ echo "1. Configure environment variables:"
 echo "   ${PREFIX}/config/.env"
 echo ""
 echo "2. Initialize database:"
-echo "   ${PREFIX}/bin/unified-core-service --init-db"
+echo "   ${PREFIX}/bin/topems-unified-core --init-db"
 echo ""
 echo "3. Start services:"
 echo "   systemctl start topems.target"

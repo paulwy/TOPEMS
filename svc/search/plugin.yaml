@@ -1,0 +1,20 @@
+code: search
+name: 搜索服务
+version: 1.0.0
+description: 全文搜索服务，提供跨模块内容检索能力
+plugin_type: service
+
+runtime:
+  port: 8082
+  health_endpoint: /health
+  base_path: /api/search
+
+permissions:
+  - code: search:read
+    name: 搜索查询
+    description: 执行全文搜索查询
+  - code: search:admin
+    name: 搜索管理
+    description: 管理搜索索引和配置
+
+dependencies: []

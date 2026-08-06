@@ -599,11 +599,19 @@ async fn batch_create_projects(
     let mut success = 0;
     let mut errors = Vec::new();
 
+    // 使用事务批量插入，确保原子性（全部成功或全部失败）
+    let mut tx = match state.db.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(ApiResponse::error(500, &format!("开启事务失败: {}", e)));
+        }
+    };
+
     for (index, project_req) in req.projects.iter().enumerate() {
         let id = Uuid::new_v4();
         let now = Utc::now();
 
-        let result = sqlx::query_as::<_, Project>(
+        let result = sqlx::query(
             r#"
             INSERT INTO projects (
                 id, tenant_id, name, code, description, project_type, status, leader,
@@ -612,10 +620,6 @@ async fn batch_create_projects(
                 priority, tags, parent_id, workspace_id
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
                       $16, $17, $18, $19, $20, $21, $22, $23)
-            RETURNING id, tenant_id, name, code, description, project_type, status, leader,
-                      team_members, start_date, end_date, budget, progress,
-                      created_by, created_at, updated_at, project_config, benefit_target,
-                      risk_level, priority, tags, parent_id, workspace_id
             "#,
         )
         .bind(id)
@@ -643,16 +647,32 @@ async fn batch_create_projects(
         .bind(serde_json::Value::Array(vec![]))
         .bind(None::<Uuid>)
         .bind(None::<Uuid>)
-        .fetch_one(&state.db)
+        .execute(&mut *tx)
         .await;
 
         match result {
             Ok(_) => success += 1,
             Err(e) => {
-                errors.push(format!("项目 {}: {}", index + 1, e));
+                // PostgreSQL 事务中一旦失败，后续所有 SQL 都会失败
+                // 回滚整个事务，确保数据一致性
                 tracing::error!("批量创建项目失败 (索引 {}): {}", index, e);
+                let _ = tx.rollback().await;
+                errors.push(format!("项目 {}: {}", index + 1, e));
+                let total = req.projects.len();
+                let result = BatchOperationResult {
+                    total,
+                    success: 0,
+                    failed: total,
+                    errors,
+                };
+                return Json(ApiResponse::success(result, "批量创建失败，已回滚"));
             }
         }
+    }
+
+    // 提交事务
+    if let Err(e) = tx.commit().await {
+        return Json(ApiResponse::error(500, &format!("提交事务失败: {}", e)));
     }
 
     let total = req.projects.len();

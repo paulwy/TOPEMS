@@ -3253,4 +3253,41 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_aging_detail_handler),
         )
         .route("/aging/trend", axum::routing::get(get_aging_trend_handler))
+        // V41.0 Phase 9: 应收账款管理
+        .route("/receivables", axum::routing::get(list_receivables_handler))
+        .route(
+            "/receivables",
+            axum::routing::post(create_receivable_handler),
+        )
+        .route(
+            "/receivables/{receivable_id}",
+            axum::routing::get(get_receivable_handler),
+        )
+        .route(
+            "/receivables/{receivable_id}",
+            axum::routing::put(update_receivable_handler),
+        )
+        .route(
+            "/receivables/{receivable_id}",
+            axum::routing::delete(delete_receivable_handler),
+        )
+        .route(
+            "/receivables/batch",
+            axum::routing::post(batch_create_receivables_handler),
+        )
+        // V41.0 Phase 9: 应付账款管理
+        .route("/payables", axum::routing::get(list_payables_handler))
+        .route("/payables", axum::routing::post(create_payable_handler))
+        .route(
+            "/payables/{payable_id}",
+            axum::routing::get(get_payable_handler),
+        )
+        .route(
+            "/payables/{payable_id}",
+            axum::routing::put(update_payable_handler),
+        )
+        .route(
+            "/payables/{payable_id}",
+            axum::routing::delete(delete_payable_handler),
+        )
 }
