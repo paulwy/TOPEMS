@@ -12,4 +12,4 @@
 pub mod handlers;
 pub mod models;
 
-pub use handlers::{master_data_routes, MasterDataService};
+pub use handlers::MasterDataService;

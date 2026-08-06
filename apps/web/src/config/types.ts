@@ -12,7 +12,10 @@ export interface ServicesConfig {
   iam: string;
   doc: string;
   ai: string;
+  /** 工作流服务（与 `flow` 同值，推荐使用标准名 `flow`） */
   workflow: string;
+  /** 工作流服务（标准名，与后端 GROUP1_MODULES 对齐） */
+  flow: string;
   rd: string;
   srm: string;
   erp: string;
@@ -34,7 +37,10 @@ export interface ServicesConfig {
   qms: string;
   lims: string;
   ehs: string;
+  /** 商业智能（与 `analytics` 同值，推荐使用标准名 `bi`） */
   bi: string;
+  /** 数据分析服务别名，历史上 svc 目录名为 analytics */
+  analytics: string;
   monitor: string;
   // 统一核心服务
   core: string;
@@ -43,7 +49,10 @@ export interface ServicesConfig {
   im: string;
   notification: string;
   mail: string;
+  /** 主数据服务（与 `master-data` 同值，推荐使用标准名 `masterData` / `master-data`） */
   master: string;
+  /** 主数据服务（标准 kebab-case 名，与后端 service_port.rs 对齐） */
+  'master-data': string;
   // 搜索独立服务
   search: string;
   // 独立基础设施服务

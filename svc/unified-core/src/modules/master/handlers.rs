@@ -7,8 +7,7 @@ use std::str::FromStr;
 
 use axum::{
     extract::{Path, Query, State},
-    routing::{get, post},
-    Extension, Json, Router,
+    Extension, Json,
 };
 use chrono::{DateTime, Duration, Utc};
 use serde::Deserialize;
@@ -1429,62 +1428,6 @@ pub async fn list_approval_history_handler(
 pub struct PendingApprovalQuery {
     pub domain: Option<String>,
     pub limit: Option<i64>,
-}
-
-/// 主数据模块路由
-pub fn master_data_routes() -> Router<AppState> {
-    Router::new()
-        .route(
-            "/master/refs",
-            post(create_ref_handler).get(list_refs_handler),
-        )
-        .route("/master/refs/stats", get(get_overall_stats_handler))
-        .route("/master/refs/sync-status", get(get_sync_status_handler))
-        .route(
-            "/master/refs/{master_data_id}",
-            get(get_ref_handler)
-                .put(update_ref_handler)
-                .delete(delete_ref_handler),
-        )
-        .route(
-            "/master/refs/{master_data_id}/changes",
-            get(list_changes_handler),
-        )
-        .route(
-            "/master/refs/by-code/{domain}/{code}",
-            get(get_ref_by_code_handler),
-        )
-        // V31.0 质量看板路由
-        .route("/master/quality/report", get(get_quality_report_handler))
-        .route("/master/quality/duplicates", get(list_duplicates_handler))
-        .route("/master/quality/stale", get(list_stale_handler))
-        // V31.0 数据对账路由
-        .route(
-            "/master/reconciliation/run",
-            post(run_reconciliation_handler),
-        )
-        .route(
-            "/master/reconciliation/logs",
-            get(list_reconciliation_logs_handler),
-        )
-        .route(
-            "/master/reconciliation/logs/{issue_id}/resolve",
-            post(resolve_reconciliation_issue_handler),
-        )
-        // V31.0 变更审批路由
-        .route("/master/approvals", post(create_approval_handler))
-        .route(
-            "/master/approvals/pending",
-            get(list_pending_approvals_handler),
-        )
-        .route(
-            "/master/approvals/{approval_id}/review",
-            post(review_approval_handler),
-        )
-        .route(
-            "/master/approvals/history/{master_data_id}",
-            get(list_approval_history_handler),
-        )
 }
 
 fn get_tenant_id(claims: &Claims) -> Uuid {

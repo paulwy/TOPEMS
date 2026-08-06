@@ -856,9 +856,9 @@ impl AutoSchemaStitcher {
         let urls = subgraph_urls.unwrap_or_else(|| {
             vec![
                 "http://localhost:8029/graphql".to_string(),
-                "http://localhost:8002/graphql".to_string(),
+                "http://localhost:8010/graphql".to_string(),
+                "http://localhost:8020/graphql".to_string(),
                 "http://localhost:8011/graphql".to_string(),
-                "http://localhost:8006/graphql".to_string(),
             ]
         });
 

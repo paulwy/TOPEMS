@@ -37,7 +37,7 @@ RUN chown -R topems:topems /app
 USER topems
 
 ENV SEARCH_PORT=8082
-ENV RUST_LOG=info
+ENV RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
 
 EXPOSE 8082
 

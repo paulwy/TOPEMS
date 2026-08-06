@@ -191,7 +191,7 @@ pub async fn list_forms(State(_state): State<AppState>) -> Json<ApiResponse<AiFo
     }))
 }
 
-/// GET /api/core/ai-form/forms/:form_type
+/// GET /api/core/ai-form/forms/{form_type}
 ///
 /// 获取指定表单的详细配置（字段、示例、验证规则、业务术语）。
 pub async fn get_form(
@@ -211,7 +211,7 @@ pub async fn get_form(
     }
 }
 
-/// POST /api/core/ai-form/forms/:form_type/suggest
+/// POST /api/core/ai-form/forms/{form_type}/suggest
 ///
 /// 针对特定表单类型提供 AI 字段建议（基于表单配置增强）。
 pub async fn suggest_for_form(
@@ -262,7 +262,7 @@ pub async fn suggest_for_form(
     }
 }
 
-/// POST /api/core/ai-form/forms/:form_type/enhance
+/// POST /api/core/ai-form/forms/{form_type}/enhance
 ///
 /// 针对特定表单类型的文本增强。
 /// 当 enhancement_type 为 "domain_specific" 时，使用业务域专属提示词。

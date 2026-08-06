@@ -165,7 +165,7 @@ async fn main() -> topems_shared::Result<()> {
     let port = env::var("RD_PORT")
         .or_else(|_| env::var("SERVER_PORT"))
         .or_else(|_| env::var("PORT"))
-        .unwrap_or_else(|_| "8025".to_string());
+        .unwrap_or_else(|_| "8053".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-RD 科研研发管理系统启动中...");

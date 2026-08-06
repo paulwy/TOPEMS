@@ -76,7 +76,7 @@ use modules::work_report::{
         description = "TOPEMS 生产执行系统 API 文档\n\n## 功能模块\n\n- **生产订单**: 生产订单创建、排程、进度跟踪\n- **工单管理**: 工单下发、报工、完工\n- **质量管理**: 质检标准、检验记录、不合格品处理\n- **库存管理**: 车间库存、物料领用\n- **设备管理**: 设备台账、维护保养、状态监控\n- **高级排程**: APS 排程优化\n- **生产成本**: 工单成本核算\n- **能耗管理**: 能源消耗监控",
     ),
     servers(
-        (url = "http://localhost:8020", description = "本地开发环境"),
+        (url = "http://localhost:8030", description = "本地开发环境"),
     )
 )]
 struct ApiDoc;

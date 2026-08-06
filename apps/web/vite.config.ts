@@ -88,7 +88,7 @@ const SERVICES: ServiceConfig[] = [
   
   // 基础设施
   { name: 'mobile', port: 8070, apiPrefix: '/api/mobile', legacyPrefix: '/mobile/api' },
-  { name: 'gis', port: 8071, apiPrefix: '/api/gis', legacyPrefix: '/gis/api', wsPath: '/ws/gis' },
+  { name: 'gis', port: 8071, apiPrefix: '/api/gis', legacyPrefix: '/gis/api', wsPath: '/ws/gis/map' },
   { name: 'integration', port: 8072, apiPrefix: '/api/integration', legacyPrefix: '/integration/api' },
 
   // 低代码平台（V64 新增，独立服务 svc/lowcode，端口 8088 占位）

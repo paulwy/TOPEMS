@@ -56,7 +56,7 @@ TOPEMS 统一门户后端（Backend for Frontend）。Portal 是**聚合层**，
 | 即时通讯 | unified-core (IM) | 8000 | `/api/core/im` | `/api/core/im/messages` |
 | 审批流程 | unified-core (Flow) | 8000 | `/api/core/flow` | `/api/core/flow/processes` |
 | 通知 | unified-core (Notification) | 8000 | `/api/core/notification` | `/api/core/notification/send` |
-| 监控（原始 API） | monitor | 8062 | `/api/monitor` | `/api/monitor/health`、`/api/monitor/metrics` |
+| 监控（原始 API） | unified-core (Monitor) | 8000 | `/api/core/monitor` | `/api/core/monitor/health`、`/api/core/monitor/metrics` |
 | ERP | erp | 8010 | `/api/erp` | `/api/erp/orders` |
 | CRM | crm | 8029 | `/api/crm` | `/api/crm/customers` |
 | HRM | hrm | 8020 | `/api/hrm` | `/api/hrm/employees` |

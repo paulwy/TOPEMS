@@ -294,7 +294,7 @@ pub struct VehicleRequest {
         description = "TOPEMS 企业资源计划系统 API 文档\n\n## 功能模块\n\n- **资产管理**: 资产的增删改查、状态管理\n- **财务管理**: 科目管理、预算管理、费用管理\n- **凭证管理**: 财务凭证的创建和审核\n- **审计日志**: 操作记录和审计追踪\n- **数据字典**: 系统配置数据管理",
     ),
     servers(
-        (url = "http://localhost:8009", description = "本地开发环境"),
+        (url = "http://localhost:8010", description = "本地开发环境"),
         (url = "http://erp.topems.local", description = "测试环境"),
         (url = "http://erp.topems.prod", description = "生产环境"),
     )

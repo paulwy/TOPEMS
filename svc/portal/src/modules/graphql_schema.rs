@@ -190,7 +190,7 @@ impl CustomerEntityGql {
     async fn contacts(&self, _ctx: &Context<'_>) -> Vec<ContactEntityGql> {
         record_cross_service_join();
         let url = format!(
-            "http://localhost:8015/api/crm/contacts?customer_id={}",
+            "http://localhost:8029/api/crm/contacts?customer_id={}",
             self.id
         );
         match reqwest::get(&url).await {
@@ -274,7 +274,7 @@ impl EmployeeEntityGql {
     async fn department_info(&self, _ctx: &Context<'_>) -> Option<DepartmentEntityGql> {
         record_cross_service_join();
         let url = format!(
-            "http://localhost:8011/api/hrm/departments?name={}",
+            "http://localhost:8020/api/hrm/departments?name={}",
             self.department
         );
         match reqwest::get(&url).await {
@@ -336,7 +336,7 @@ impl VoucherEntityGql {
     async fn account_subject(&self, _ctx: &Context<'_>) -> Option<AccountSubjectEntityGql> {
         record_cross_service_join();
         let url = format!(
-            "http://localhost:8006/api/finance/accounts?voucher_id={}",
+            "http://localhost:8011/api/finance/accounts?voucher_id={}",
             self.id
         );
         match reqwest::get(&url).await {
@@ -1039,13 +1039,13 @@ impl Loader<uuid::Uuid> for TodoLoader {
 fn service_url(service_name: &str) -> &'static str {
     match service_name {
         "erp" => "http://localhost:8010",
-        "crm" => "http://localhost:8015",
-        "hrm" => "http://localhost:8011",
-        "finance" => "http://localhost:8006",
-        "mes" => "http://localhost:8022",
-        "workflow" => "http://localhost:8018",
-        "iam" => "http://localhost:8001",
-        "notification" => "http://localhost:8003",
+        "crm" => "http://localhost:8029",
+        "hrm" => "http://localhost:8020",
+        "finance" => "http://localhost:8011",
+        "mes" => "http://localhost:8030",
+        "workflow" => "http://localhost:8000",
+        "iam" => "http://localhost:8000",
+        "notification" => "http://localhost:8084",
         _ => "http://localhost:8000",
     }
 }
@@ -1197,13 +1197,13 @@ impl QueryRoot {
     ) -> async_graphql::Result<Vec<ServiceHealthGql>> {
         let services = vec![
             ("erp", "http://localhost:8010"),
-            ("crm", "http://localhost:8015"),
-            ("hrm", "http://localhost:8011"),
-            ("finance", "http://localhost:8006"),
-            ("mes", "http://localhost:8022"),
-            ("workflow", "http://localhost:8018"),
-            ("iam", "http://localhost:8001"),
-            ("notification", "http://localhost:8003"),
+            ("crm", "http://localhost:8029"),
+            ("hrm", "http://localhost:8020"),
+            ("finance", "http://localhost:8011"),
+            ("mes", "http://localhost:8030"),
+            ("workflow", "http://localhost:8000"),
+            ("iam", "http://localhost:8000"),
+            ("notification", "http://localhost:8084"),
         ];
 
         // V34.0 Track F: 并行检查所有服务健康状态
@@ -1341,22 +1341,22 @@ impl QueryRoot {
             ),
             (
                 "crm",
-                "http://localhost:8015",
+                "http://localhost:8029",
                 vec!["contacts", "leads", "opportunities"],
             ),
             (
                 "hrm",
-                "http://localhost:8011",
+                "http://localhost:8020",
                 vec!["employees", "departments", "positions"],
             ),
             (
                 "finance",
-                "http://localhost:8006",
+                "http://localhost:8011",
                 vec!["accounts", "vouchers", "expenses"],
             ),
             (
                 "mes",
-                "http://localhost:8022",
+                "http://localhost:8030",
                 vec!["work_orders", "production_lines"],
             ),
         ];
@@ -1433,10 +1433,10 @@ impl QueryRoot {
     ) -> async_graphql::Result<Vec<FederationServiceSdlGql>> {
         let services = vec![
             ("erp", "http://localhost:8010"),
-            ("crm", "http://localhost:8015"),
-            ("hrm", "http://localhost:8011"),
-            ("finance", "http://localhost:8006"),
-            ("mes", "http://localhost:8022"),
+            ("crm", "http://localhost:8029"),
+            ("hrm", "http://localhost:8020"),
+            ("finance", "http://localhost:8011"),
+            ("mes", "http://localhost:8030"),
         ];
 
         let futures = services.iter().map(|(name, url)| async move {
@@ -1712,7 +1712,7 @@ impl QueryRoot {
         _ctx: &Context<'_>,
         id: String,
     ) -> async_graphql::Result<Option<EmployeeEntityGql>> {
-        let url = format!("http://localhost:8011/api/hrm/employees/{}", id);
+        let url = format!("http://localhost:8020/api/hrm/employees/{}", id);
         match reqwest::get(&url).await {
             Ok(resp) if resp.status().is_success() => {
                 let json: serde_json::Value = resp.json().await.unwrap_or_default();
@@ -1764,7 +1764,7 @@ impl QueryRoot {
         _ctx: &Context<'_>,
         id: String,
     ) -> async_graphql::Result<Option<VoucherEntityGql>> {
-        let url = format!("http://localhost:8006/api/finance/vouchers/{}", id);
+        let url = format!("http://localhost:8011/api/finance/vouchers/{}", id);
         match reqwest::get(&url).await {
             Ok(resp) if resp.status().is_success() => {
                 let json: serde_json::Value = resp.json().await.unwrap_or_default();
@@ -4194,13 +4194,13 @@ pub struct SubscriptionRoot;
 /// 服务健康监控的目标服务列表
 const SUBSCRIPTION_SERVICES: &[(&str, &str)] = &[
     ("erp", "http://localhost:8010"),
-    ("crm", "http://localhost:8015"),
-    ("hrm", "http://localhost:8011"),
-    ("finance", "http://localhost:8006"),
-    ("mes", "http://localhost:8022"),
-    ("workflow", "http://localhost:8018"),
-    ("iam", "http://localhost:8001"),
-    ("notification", "http://localhost:8003"),
+    ("crm", "http://localhost:8029"),
+    ("hrm", "http://localhost:8020"),
+    ("finance", "http://localhost:8011"),
+    ("mes", "http://localhost:8030"),
+    ("workflow", "http://localhost:8000"),
+    ("iam", "http://localhost:8000"),
+    ("notification", "http://localhost:8084"),
 ];
 
 #[Subscription]
@@ -4864,22 +4864,22 @@ async fn resolve_federated_entity(typename: &str, id: &str) -> serde_json::Value
         ),
         "OrderEntity" => ("http://localhost:8010", format!("/api/erp/orders/{}", id)),
         "EmployeeEntity" => (
-            "http://localhost:8011",
+            "http://localhost:8020",
             format!("/api/hrm/employees/{}", id),
         ),
         "DepartmentEntity" => (
-            "http://localhost:8011",
+            "http://localhost:8020",
             format!("/api/hrm/departments/{}", id),
         ),
         "VoucherEntity" => (
-            "http://localhost:8006",
+            "http://localhost:8011",
             format!("/api/finance/vouchers/{}", id),
         ),
         "AccountSubjectEntity" => (
-            "http://localhost:8006",
+            "http://localhost:8011",
             format!("/api/finance/accounts/{}", id),
         ),
-        "ContactEntity" => ("http://localhost:8015", format!("/api/crm/contacts/{}", id)),
+        "ContactEntity" => ("http://localhost:8029", format!("/api/crm/contacts/{}", id)),
         _ => return serde_json::json!({"error": "unknown entity type", "__typename": typename}),
     };
 
@@ -7551,9 +7551,9 @@ pub fn init_service_registry() {
 
     let crm = ServiceMetadata {
         name: "crm".into(),
-        base_url: "http://localhost:8015".into(),
+        base_url: "http://localhost:8029".into(),
         version: "1.0.0".into(),
-        health_check_url: Some("http://localhost:8015/health".into()),
+        health_check_url: Some("http://localhost:8029/health".into()),
         entities: vec![
             EntityMetadata {
                 name: "Contact".into(),
@@ -7604,9 +7604,9 @@ pub fn init_service_registry() {
 
     let hrm = ServiceMetadata {
         name: "hrm".into(),
-        base_url: "http://localhost:8011".into(),
+        base_url: "http://localhost:8020".into(),
         version: "1.0.0".into(),
-        health_check_url: Some("http://localhost:8011/health".into()),
+        health_check_url: Some("http://localhost:8020/health".into()),
         entities: vec![
             EntityMetadata {
                 name: "Employee".into(),
@@ -7653,9 +7653,9 @@ pub fn init_service_registry() {
 
     let finance = ServiceMetadata {
         name: "finance".into(),
-        base_url: "http://localhost:8006".into(),
+        base_url: "http://localhost:8011".into(),
         version: "1.0.0".into(),
-        health_check_url: Some("http://localhost:8006/health".into()),
+        health_check_url: Some("http://localhost:8011/health".into()),
         entities: vec![
             EntityMetadata {
                 name: "Voucher".into(),
@@ -7702,9 +7702,9 @@ pub fn init_service_registry() {
 
     let mes = ServiceMetadata {
         name: "mes".into(),
-        base_url: "http://localhost:8022".into(),
+        base_url: "http://localhost:8030".into(),
         version: "1.0.0".into(),
-        health_check_url: Some("http://localhost:8022/health".into()),
+        health_check_url: Some("http://localhost:8030/health".into()),
         entities: vec![
             EntityMetadata {
                 name: "WorkOrder".into(),

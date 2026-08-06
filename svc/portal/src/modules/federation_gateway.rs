@@ -349,7 +349,7 @@ async fn ensure_initialized() {
         SubgraphConfig {
             id: "sg-erp".to_string(),
             name: "ERP Subgraph".to_string(),
-            url: "http://localhost:8002/graphql".to_string(),
+            url: "http://localhost:8010/graphql".to_string(),
             types: vec![
                 "Order".to_string(),
                 "Product".to_string(),

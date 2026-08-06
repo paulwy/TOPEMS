@@ -566,7 +566,7 @@ impl ServiceRegistry {
         services.insert("ehs".to_string(), 8052);
         services.insert("bi".to_string(), 8060);
         services.insert("report".to_string(), 8061);
-        services.insert("monitor".to_string(), 8062);
+        services.insert("monitor".to_string(), 8000);
 
         Self { services }
     }

@@ -112,8 +112,17 @@ pub fn init_telemetry(service_name: &str) -> TelemetryGuard {
         ],
     ));
 
-    let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new(format!("{},info", service_name)));
+    /// 全链路端口排查日志的默认级别配置（与 shared-core/logging 保持一致）
+    const PORT_DIAGNOSTIC_DIRECTIVES: &str =
+        "service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug";
+
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+        EnvFilter::new(format!(
+            "{service_name}=info,{directives}",
+            service_name = service_name,
+            directives = PORT_DIAGNOSTIC_DIRECTIVES
+        ))
+    });
 
     let fmt_layer = Layer::new().with_writer(std::io::stdout);
 

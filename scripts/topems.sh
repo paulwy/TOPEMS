@@ -1571,7 +1571,6 @@ clean_project() {
             "$PROJECT_ROOT/apps/web/test-results"
             "$PROJECT_ROOT/apps/desktop/dist"
             "$PROJECT_ROOT/apps/mobile/dist"
-            "$PROJECT_ROOT/apps/server/dist"
             "$PROJECT_ROOT/apps/web/.vite"
         )
         for dir in "${fe_dirs[@]}"; do

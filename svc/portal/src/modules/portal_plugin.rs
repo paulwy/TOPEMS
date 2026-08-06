@@ -43,7 +43,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         version: "1.0.0".to_string(),
         description: "Portal 企业门户 - 首页、公告、快捷入口".to_string(),
         deployment: DeploymentInfo {
-            port: 8066,
+            port: 8063,
             base_path: "/api/portal".to_string(),
         },
         permissions: vec![
@@ -81,12 +81,46 @@ pub fn create_routes() -> Router {
 
 /// 获取运行时 URL
 fn get_runtime_url() -> String {
-    std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8066".to_string())
+    match std::env::var("RUNTIME_URL") {
+        Ok(v) if !v.is_empty() => {
+            tracing::info!(
+                target: "portal::portal_plugin",
+                resolved_url = %v,
+                source = "env:RUNTIME_URL",
+                "[PortalPlugin] 解析 portal 运行时地址"
+            );
+            v
+        }
+        _ => {
+            tracing::warn!(
+                target: "portal::portal_plugin",
+                resolved_url = "http://localhost:8063",
+                env_var = "RUNTIME_URL",
+                "[PortalPlugin] 环境变量未设置，回退到权威默认端口"
+            );
+            "http://localhost:8063".to_string()
+        }
+    }
 }
 
 /// 启动时自动注册到统一核心
 pub async fn auto_register_to_core(core_url: Option<&str>) {
-    let core_url = core_url.unwrap_or("http://localhost:8000");
+    let (core_url, source) = match core_url {
+        Some(v) if !v.is_empty() => (v.to_string(), "caller_param".to_string()),
+        _ => match std::env::var("CORE_URL") {
+            Ok(v) if !v.is_empty() => (v, "env:CORE_URL".to_string()),
+            _ => (
+                "http://localhost:8000".to_string(),
+                "default_fallback".to_string(),
+            ),
+        },
+    };
+    tracing::info!(
+        target: "portal::portal_plugin",
+        core_url = %core_url,
+        source = %source,
+        "[PortalPlugin] 解析 unified-core 注册地址"
+    );
     let runtime_url = get_runtime_url();
 
     let info = PluginInfo {
@@ -95,7 +129,7 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         version: env!("CARGO_PKG_VERSION").to_string(),
         description: "Portal 企业门户系统".to_string(),
         deployment: DeploymentInfo {
-            port: 8066,
+            port: 8063,
             base_path: "/api/portal".to_string(),
         },
         permissions: vec![],

@@ -20,7 +20,7 @@ COPY --from=builder /app/target/release/topems-pdm /usr/local/bin/topems-pdm
 RUN chown -R topems:topems /app
 USER topems
 ENV PDM_PORT=8031
-ENV RUST_LOG=info
+ENV RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
 EXPOSE 8031
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8031/health || exit 1

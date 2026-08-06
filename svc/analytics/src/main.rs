@@ -642,7 +642,36 @@ async fn main() -> anyhow::Result<()> {
             "/permissions/check",
             get(modules::bi::row_level_permission::check_permission),
         )
-        // Analytics Summary
+        // Analytics Summary（统一前缀 /api/bi，不再叠词 /bi/analytics/summary → /bi/summary）
+        .route(
+            "/summary",
+            get(modules::bi::analytics::get_summary_analytics),
+        )
+        .route(
+            "/development",
+            get(modules::bi::analytics::get_development_analytics),
+        )
+        .route(
+            "/quality",
+            get(modules::bi::analytics::get_quality_analytics),
+        )
+        .route(
+            "/production",
+            get(modules::bi::analytics::get_production_analytics),
+        )
+        .route(
+            "/laboratory",
+            get(modules::bi::analytics::get_laboratory_analytics),
+        )
+        .route(
+            "/overview",
+            get(modules::bi::analytics::get_analytics_overview),
+        )
+        .route(
+            "/{module_id}",
+            get(modules::bi::analytics::get_module_analytics),
+        )
+        // 兼容遗留路径（v7.7 前使用 /analytics/*，v7.8 起统一为 /*）
         .route(
             "/analytics/summary",
             get(modules::bi::analytics::get_summary_analytics),
@@ -756,9 +785,58 @@ async fn main() -> anyhow::Result<()> {
             "/pdm/batch-status-distribution",
             get(modules::bi::analytics::get_pdm_batch_status_distribution),
         )
-        // ===== Report routes (prefix: /api/report) =====
+        // ===== Report routes (prefix: /api/bi/report/*，不再叠词) =====
         .merge(modules::report::create_routes())
-        // Report (frontend aligned paths)
+        // Report (frontend aligned paths: /api/bi/report/*)
+        .route("/report", get(modules::report::report::list_reports))
+        .route("/report", post(modules::report::report::create_report))
+        .route("/report/{id}", get(modules::report::report::get_report))
+        .route("/report/{id}", put(modules::report::report::update_report))
+        .route(
+            "/report/{id}",
+            delete(modules::report::report::delete_report),
+        )
+        .route(
+            "/report/{id}/export",
+            post(modules::report::report::export_report),
+        )
+        .route(
+            "/report/{report_id}/exports",
+            get(modules::report::report::list_export_jobs),
+        )
+        .route(
+            "/report/exports/{job_id}",
+            get(modules::report::report::get_export_job),
+        )
+        .route(
+            "/report/exports/{job_id}/download",
+            get(modules::report::report::download_export),
+        )
+        .route(
+            "/report/{report_id}/schedules",
+            get(modules::report::schedule::list_schedules),
+        )
+        .route(
+            "/report/{report_id}/schedules",
+            post(modules::report::schedule::create_schedule),
+        )
+        .route(
+            "/report/schedules/{schedule_id}",
+            put(modules::report::schedule::update_schedule),
+        )
+        .route(
+            "/report/schedules/{schedule_id}",
+            delete(modules::report::schedule::delete_schedule),
+        )
+        .route(
+            "/report/schedules/{schedule_id}/run",
+            post(modules::report::schedule::run_schedule),
+        )
+        .route(
+            "/report/schedules/{schedule_id}/toggle",
+            post(modules::report::schedule::toggle_schedule),
+        )
+        // 兼容遗留路径（v7.7 前使用 /analytics/report/*，v7.8 起统一为 /report/*）
         .route(
             "/analytics/report",
             get(modules::report::report::list_reports),

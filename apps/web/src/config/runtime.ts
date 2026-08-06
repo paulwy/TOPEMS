@@ -60,9 +60,13 @@ const config: RuntimeConfig = {
   services: {
     // === Group 1: core 虚拟服务（unified-core 承载，8000 端口） ===
     iam: getEnv('VITE_IAM_SERVICE_URL', '/api/core/iam'),
+    /** @deprecated 推荐使用标准名 `flow`（与后端 GROUP1_MODULES 对齐），workflow 将在后续版本移除 */
     workflow: getEnv('VITE_FLOW_SERVICE_URL', '/api/core/flow'),
+    flow: getEnv('VITE_FLOW_SERVICE_URL', '/api/core/flow'),
     file: getEnv('VITE_FILE_SERVICE_URL', '/api/core/file'),
+    /** @deprecated 推荐使用标准名 `master-data`，master 将在后续版本移除 */
     master: getEnv('VITE_MASTER_SERVICE_URL', '/api/master-data'),
+    'master-data': getEnv('VITE_MASTER_SERVICE_URL', '/api/master-data'),
     migration: getEnv('VITE_MIGRATION_SERVICE_URL', '/api/core/migration'),
 
     // === Group 2: 独立进程服务（独立 deployment/port，路径格式 /api/{svc}） ===
@@ -91,6 +95,8 @@ const config: RuntimeConfig = {
     ehs: getEnv('VITE_EHS_SERVICE_URL', '/api/ehs'),
     rd: getEnv('VITE_RD_SERVICE_URL', '/api/rd'),
     bi: getEnv('VITE_BI_SERVICE_URL', '/api/bi'),
+    /** 别名：历史上 svc 目录名为 analytics，路径与 bi 完全一致 */
+    analytics: getEnv('VITE_BI_SERVICE_URL', '/api/bi'),
     monitor: getEnv('VITE_MONITOR_SERVICE_URL', '/api/core/monitor'),
     portal: getEnv('VITE_PORTAL_SERVICE_URL', '/api/portal'),
     mobile: getEnv('VITE_MOBILE_SERVICE_URL', '/api/mobile'),

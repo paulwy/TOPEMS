@@ -84,7 +84,7 @@ impl VectorApi {
         }
     }
 
-    /// GET /api/vectors/:id - 获取向量信息
+    /// GET /api/vectors/{id} - 获取向量信息
     pub async fn get(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -102,7 +102,7 @@ impl VectorApi {
         }
     }
 
-    /// DELETE /api/vectors/:id - 删除向量
+    /// DELETE /api/vectors/{id} - 删除向量
     pub async fn delete(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,

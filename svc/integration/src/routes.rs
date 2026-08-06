@@ -30,7 +30,7 @@ use crate::plugin;
         description = "TOPEMS 集成服务 - 数据同步、API 网关、消息队列",
     ),
     servers(
-        (url = "http://localhost:8050", description = "本地开发环境"),
+        (url = "http://localhost:8072", description = "本地开发环境"),
     )
 )]
 struct ApiDoc;

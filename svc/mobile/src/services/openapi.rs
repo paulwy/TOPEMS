@@ -57,7 +57,7 @@ pub struct MobileTask {
         description = "TOPEMS 移动端 API - 包含巡检、扫码、任务、生产、库存等功能"
     ),
     servers(
-        (url = "http://localhost:8064", description = "本地开发环境"),
+        (url = "http://localhost:8070", description = "本地开发环境"),
     )
 )]
 pub struct MobileApiDoc;
