@@ -11,6 +11,13 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import type { Plugin, ResolvedConfig } from 'vite';
 
 // ============================================================================
+// 端口单一信源（Single Source of Truth）
+// ports.ts 为权威：BACKEND_PORTS（后端 80xx） + MF_PORTS（前端 MF 30xx）
+// 新增/修改端口：修改 config/ports.env 后同步更新 apps/web/src/config/ports.ts
+// ============================================================================
+import { BACKEND_PORTS, MF_PORTS } from './src/config/ports';
+
+// ============================================================================
 // 服务配置（与 config/services.yaml 保持同步）
 // 新增服务只需在此处添加，proxy 会自动生成
 // ============================================================================
@@ -28,7 +35,7 @@ interface ServiceConfig {
   wsPath?: string;
 }
 
-const CORE_PORT = 8000;
+const CORE_PORT = BACKEND_PORTS.core; // 8000，从 ports.ts 单一信源读取
 
 const SERVICES: ServiceConfig[] = [
   // 核心服务
@@ -42,58 +49,61 @@ const SERVICES: ServiceConfig[] = [
 
   // 独立 communication 服务（从 unified-core 外迁，端口 8084）
   // mail/notification/im 已外迁至此服务，路径为 /api/communication/{mail,notification,im}
-  { name: 'communication', port: 8084, apiPrefix: '/api/communication' },
+  { name: 'communication', port: BACKEND_PORTS.communication, apiPrefix: '/api/communication' },
 
   // 独立 search 服务（全文搜索，端口 8082）
-  { name: 'search', port: 8082, apiPrefix: '/api/search' },
+  { name: 'search', port: BACKEND_PORTS.search, apiPrefix: '/api/search' },
 
   // 独立 billing/ticket/feedback 服务（从 unified-core 外迁）
   // 旧路由 /api/core/{billing,ticket,feedback}/* 由 /api/core 通用代理兼容
-  { name: 'billing', port: 8085, apiPrefix: '/api/billing' },
-  { name: 'ticket', port: 8086, apiPrefix: '/api/ticket' },
-  { name: 'feedback', port: 8087, apiPrefix: '/api/feedback' },
+  { name: 'billing', port: BACKEND_PORTS.billing, apiPrefix: '/api/billing' },
+  { name: 'ticket', port: BACKEND_PORTS.ticket, apiPrefix: '/api/ticket' },
+  { name: 'feedback', port: BACKEND_PORTS.feedback, apiPrefix: '/api/feedback' },
   
   // 经营管理
-  { name: 'erp', port: 8010, apiPrefix: '/api/erp', legacyPrefix: '/erp/api' },
-  { name: 'finance', port: 8011, apiPrefix: '/api/finance', legacyPrefix: '/finance/api' },
-  { name: 'ai', port: 8013, apiPrefix: '/api/ai', legacyPrefix: '/ai/api' },
+  { name: 'erp', port: BACKEND_PORTS.erp, apiPrefix: '/api/erp', legacyPrefix: '/erp/api' },
+  { name: 'finance', port: BACKEND_PORTS.finance, apiPrefix: '/api/finance', legacyPrefix: '/finance/api' },
+  { name: 'ai', port: BACKEND_PORTS.ai, apiPrefix: '/api/ai', legacyPrefix: '/ai/api' },
   
   // 协同办公
-  { name: 'hrm', port: 8020, apiPrefix: '/api/hrm', legacyPrefix: '/hrm/api' },
-  { name: 'pm', port: 8023, apiPrefix: '/api/pm', legacyPrefix: '/pm/api' },
-  { name: 'crm', port: 8029, apiPrefix: '/api/crm', legacyPrefix: '/crm/api' },
+  { name: 'hrm', port: BACKEND_PORTS.hrm, apiPrefix: '/api/hrm', legacyPrefix: '/hrm/api' },
+  { name: 'pm', port: BACKEND_PORTS.pm, apiPrefix: '/api/pm', legacyPrefix: '/pm/api' },
+  { name: 'crm', port: BACKEND_PORTS.crm, apiPrefix: '/api/crm', legacyPrefix: '/crm/api' },
   
   // 生产制造
-  { name: 'mes', port: 8030, apiPrefix: '/api/mes', legacyPrefix: '/mes/api', wsPath: '/ws/mes' },
-  { name: 'pdm', port: 8031, apiPrefix: '/api/pdm', legacyPrefix: '/pdm/api' },
+  { name: 'mes', port: BACKEND_PORTS.mes, apiPrefix: '/api/mes', legacyPrefix: '/mes/api', wsPath: '/ws/mes' },
+  { name: 'pdm', port: BACKEND_PORTS.pdm, apiPrefix: '/api/pdm', legacyPrefix: '/pdm/api' },
   
   // 供应链
-  { name: 'scm', port: 8040, apiPrefix: '/api/scm', legacyPrefix: '/scm/api' },
-  { name: 'wms', port: 8041, apiPrefix: '/api/wms', legacyPrefix: '/wms/api' },
-  { name: 'srm', port: 8042, apiPrefix: '/api/srm', legacyPrefix: '/srm/api' },
+  { name: 'scm', port: BACKEND_PORTS.scm, apiPrefix: '/api/scm', legacyPrefix: '/scm/api' },
+  { name: 'wms', port: BACKEND_PORTS.wms, apiPrefix: '/api/wms', legacyPrefix: '/wms/api' },
+  { name: 'srm', port: BACKEND_PORTS.srm, apiPrefix: '/api/srm', legacyPrefix: '/srm/api' },
   
   // 质量/研发
-  { name: 'qms', port: 8050, apiPrefix: '/api/qms', legacyPrefix: '/qms/api' },
-  { name: 'lims', port: 8051, apiPrefix: '/api/lims', legacyPrefix: '/lims/api' },
-  { name: 'ehs', port: 8052, apiPrefix: '/api/ehs', legacyPrefix: '/ehs/api' },
-  { name: 'rd', port: 8053, apiPrefix: '/api/rd', legacyPrefix: '/rd/api' },
+  { name: 'qms', port: BACKEND_PORTS.qms, apiPrefix: '/api/qms', legacyPrefix: '/qms/api' },
+  { name: 'lims', port: BACKEND_PORTS.lims, apiPrefix: '/api/lims', legacyPrefix: '/lims/api' },
+  { name: 'ehs', port: BACKEND_PORTS.ehs, apiPrefix: '/api/ehs', legacyPrefix: '/ehs/api' },
+  { name: 'rd', port: BACKEND_PORTS.rd, apiPrefix: '/api/rd', legacyPrefix: '/rd/api' },
   
   // 数据分析
-  { name: 'bi', port: 8060, apiPrefix: '/api/bi' },
+  // NOTE: analytics 服务（端口 8060）既承载 /api/bi 也承载 /api/analytics；
+  // WebSocket 路径 /ws/bi/dashboard/{id} 用于 BI 仪表盘实时数据推送
+  { name: 'bi', port: BACKEND_PORTS.bi, apiPrefix: '/api/bi', wsPath: '/ws/bi' },
+  { name: 'analytics', port: BACKEND_PORTS.analytics, apiPrefix: '/api/analytics', wsPath: '/ws/analytics' },
   { name: 'monitor', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/monitor', legacyPrefix: '/monitor/api' },
-  { name: 'portal', port: 8063, apiPrefix: '/api/portal' },
+  { name: 'portal', port: BACKEND_PORTS.portal, apiPrefix: '/api/portal' },
 
   // 主数据服务（独立进程，端口 8090）
-  { name: 'master-data', port: 8090, apiPrefix: '/api/master-data' },
+  { name: 'master-data', port: BACKEND_PORTS['master-data'], apiPrefix: '/api/master-data' },
   
   // 基础设施
-  { name: 'mobile', port: 8070, apiPrefix: '/api/mobile', legacyPrefix: '/mobile/api' },
-  { name: 'gis', port: 8071, apiPrefix: '/api/gis', legacyPrefix: '/gis/api', wsPath: '/ws/gis/map' },
-  { name: 'integration', port: 8072, apiPrefix: '/api/integration', legacyPrefix: '/integration/api' },
+  { name: 'mobile', port: BACKEND_PORTS.mobile, apiPrefix: '/api/mobile', legacyPrefix: '/mobile/api' },
+  { name: 'gis', port: BACKEND_PORTS.gis, apiPrefix: '/api/gis', legacyPrefix: '/gis/api', wsPath: '/ws/gis/map' },
+  { name: 'integration', port: BACKEND_PORTS.integration, apiPrefix: '/api/integration', legacyPrefix: '/integration/api' },
 
   // 低代码平台（V64 新增，独立服务 svc/lowcode，端口 8088 占位）
   // 后端服务尚未立项时，proxy 指向 8088 会返回 503，前端 client.ts 已做 V64 静默降级
-  { name: 'lowcode', port: 8088, apiPrefix: '/api/lowcode', legacyPrefix: '/lowcode/api' },
+  { name: 'lowcode', port: BACKEND_PORTS.lowcode, apiPrefix: '/api/lowcode', legacyPrefix: '/lowcode/api' },
 
   // 自动化编排（V64 新增，初期落地 unified-core，端口 8000）
   // 路径前缀 /api/core/automation，与 moduleMapping.automation.apiBasePath 对齐
@@ -103,30 +113,12 @@ const SERVICES: ServiceConfig[] = [
 
 // ============================================================================
 // Module Federation Remote 配置
-// 远程模块端口映射（与 apps/web/src/microfrontend/config.ts 保持同步）
+// 从 ports.ts MF_PORTS 单一信源动态生成，不再硬编码 19 个端口
 // ============================================================================
 
-const REMOTE_MODULES: { name: string; port: number }[] = [
-  { name: 'topems_core', port: 3001 },
-  { name: 'topems_erp', port: 3002 },
-  { name: 'topems_hrm', port: 3003 },
-  { name: 'topems_crm', port: 3004 },
-  { name: 'topems_scm', port: 3005 },
-  { name: 'topems_wms', port: 3006 },
-  { name: 'topems_mes', port: 3007 },
-  { name: 'topems_pm', port: 3008 },
-  { name: 'topems_finance', port: 3009 },
-  { name: 'topems_srm', port: 3010 },
-  { name: 'topems_pdm', port: 3011 },
-  { name: 'topems_qms', port: 3012 },
-  { name: 'topems_lims', port: 3013 },
-  { name: 'topems_ehs', port: 3014 },
-  { name: 'topems_bi', port: 3015 },
-  { name: 'topems_monitor', port: 3016 },
-  { name: 'topems_ai', port: 3017 },
-  { name: 'topems_gis', port: 3018 },
-  { name: 'topems_doc', port: 3019 },
-];
+const REMOTE_MODULES: { name: string; port: number }[] = Object.entries(MF_PORTS).map(
+  ([name, port]) => ({ name, port })
+);
 
 // Deployment mode: 'module-federation' | 'static' | 'hybrid'
 // V64 CORS 修复：Vite 约定只暴露 VITE_* 前缀（带下划线）的变量给前端 import.meta.env；
@@ -201,7 +193,7 @@ const buildRemotes = (): Record<string, string> => {
   }
   // 保留 topems_core 作为基础 remote，向后兼容
   return {
-    topems_core: getRemoteEntry('topems_core', 3001),
+    topems_core: getRemoteEntry('topems_core', MF_PORTS.topems_core),
   };
 };
 
@@ -820,7 +812,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: BACKEND_PORTS.web,  // 3000，从 ports.ts 单一信源读取
     host: '0.0.0.0',
     strictPort: true,
     // HMR: use host '127.0.0.1' to force IPv4 for Firefox

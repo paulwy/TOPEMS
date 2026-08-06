@@ -11,12 +11,12 @@ members = [
     "lib/shared-observability",
     "lib/shared-ai",
     "lib/shared-bootstrap",
-    # [示例] 按需引入示例
-    "examples/minimal-service",
+    # [示例] 按需引入示例；默认排除以加速 workspace grep 与增量编译
+    # "examples/minimal-service",
     # [核心平台] 统一核心平台 (IAM + Doc + Flow + File + Communication + Monitor)
     "svc/unified-core",
-    # [SDK] 共享工具库
-    "tools/migration-sdk",
+    # [SDK] 默认排除（迁移工具一次性脚本，非业务常驻）
+    # "tools/migration-sdk",
     # [独立服务] 业务模块（插件式架构）
     "svc/ai",
     "svc/erp",
@@ -50,6 +50,8 @@ members = [
     "svc/feedback",
     "svc/search",
     "svc/communication",
+    # [V66.1 占位服务] lowcode 后端占位模板（功能待立项）
+    "svc/lowcode",
 ]
 exclude = [
     "apps/desktop/src-tauri",
@@ -101,8 +103,10 @@ thiserror = "2"
 anyhow = "1"
 bcrypt = "0.15"
 reqwest = { version = "0.12", features = ["json"] }
-utoipa = "4"
-utoipa-swagger-ui = { version = "4", features = ["axum"] }
+utoipa = "=4.2.3"
+# 注：utoipa-swagger-ui（Swagger UI 页面）已从 workspace 移除（原版本 4.x 硬依赖 axum 0.6，与项目 axum 0.8 冲突）
+# erp/pm/rd 3 服务原引用了 workspace utoipa-swagger-ui 但均未在代码中实际 import（Grep 0 命中），属于冗余依赖
+# 未来如需本地 Swagger UI 调试，可单独引入 utoipa v5 + utoipa-swagger-ui v9（匹配 axum 0.8）
 csv = "1"
 once_cell = "1.19"
 zip = "0.6"
@@ -166,3 +170,19 @@ strip = true
 # panic = "abort"
 # 保留默认 incremental：CI cache 命中时可复用增量编译
 # incremental = false
+#
+# > 体积极限模式（CI 正式发布专用，编译 +60~120% 时间）：
+# >   lto = "fat"
+# >   codegen-units = 1
+
+[profile.dev]
+# 开发模式用 opt-level=1：比默认 0 快 1.5~3×，同时保留调试符号
+opt-level = 1
+# 开启增量编译（Rust 默认 true，这里显式声明）
+incremental = true
+# 保留 debug info（debugger/backtrace 友好）
+debug = 1
+# 代码生成并行（多核机器加速）
+codegen-units = 256
+# dev 模式跳过 LTO（节省增量编译时间）
+lto = false

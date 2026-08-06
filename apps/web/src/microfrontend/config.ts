@@ -6,6 +6,7 @@
  */
 
 import { VITEDeploymentMode, isDev } from '@/config/env';
+import { getMfPort } from '@/config/ports';
 
 export interface RemoteModuleConfig {
   /** 模块名（federation name） */
@@ -87,7 +88,7 @@ function getRemoteEntry(name: string, _port: number): string {
 export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'topems_core',
-    entry: getRemoteEntry('topems_core', 3001),
+    entry: getRemoteEntry('topems_core', getMfPort('topems_core')),
     displayName: '核心平台',
     icon: 'Apps',
     routePrefix: '/core',
@@ -98,7 +99,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_erp',
-    entry: getRemoteEntry('topems_erp', 3002),
+    entry: getRemoteEntry('topems_erp', getMfPort('topems_erp')),
     displayName: 'ERP',
     icon: 'AccountBalance',
     routePrefix: '/erp',
@@ -109,7 +110,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_hrm',
-    entry: getRemoteEntry('topems_hrm', 3003),
+    entry: getRemoteEntry('topems_hrm', getMfPort('topems_hrm')),
     displayName: 'HRM',
     icon: 'People',
     routePrefix: '/hrm',
@@ -119,7 +120,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_crm',
-    entry: getRemoteEntry('topems_crm', 3004),
+    entry: getRemoteEntry('topems_crm', getMfPort('topems_crm')),
     displayName: 'CRM',
     icon: 'ContactPhone',
     routePrefix: '/crm',
@@ -129,7 +130,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_mes',
-    entry: getRemoteEntry('topems_mes', 3007),
+    entry: getRemoteEntry('topems_mes', getMfPort('topems_mes')),
     displayName: 'MES',
     icon: 'PrecisionManufacturing',
     routePrefix: '/mes',
@@ -139,7 +140,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_scm',
-    entry: getRemoteEntry('topems_scm', 3005),
+    entry: getRemoteEntry('topems_scm', getMfPort('topems_scm')),
     displayName: 'SCM',
     icon: 'LocalShipping',
     routePrefix: '/scm',
@@ -149,7 +150,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_wms',
-    entry: getRemoteEntry('topems_wms', 3006),
+    entry: getRemoteEntry('topems_wms', getMfPort('topems_wms')),
     displayName: 'WMS',
     icon: 'Warehouse',
     routePrefix: '/wms',
@@ -159,7 +160,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_srm',
-    entry: getRemoteEntry('topems_srm', 3010),
+    entry: getRemoteEntry('topems_srm', getMfPort('topems_srm')),
     displayName: 'SRM',
     icon: 'Handshake',
     routePrefix: '/srm',
@@ -169,7 +170,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_pm',
-    entry: getRemoteEntry('topems_pm', 3008),
+    entry: getRemoteEntry('topems_pm', getMfPort('topems_pm')),
     displayName: 'PM',
     icon: 'Assignment',
     routePrefix: '/pm',
@@ -179,7 +180,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_finance',
-    entry: getRemoteEntry('topems_finance', 3009),
+    entry: getRemoteEntry('topems_finance', getMfPort('topems_finance')),
     displayName: 'Finance',
     icon: 'Paid',
     routePrefix: '/finance',
@@ -189,7 +190,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_pdm',
-    entry: getRemoteEntry('topems_pdm', 3011),
+    entry: getRemoteEntry('topems_pdm', getMfPort('topems_pdm')),
     displayName: 'PDM',
     icon: 'FolderOpen',
     routePrefix: '/pdm',
@@ -199,7 +200,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_qms',
-    entry: getRemoteEntry('topems_qms', 3012),
+    entry: getRemoteEntry('topems_qms', getMfPort('topems_qms')),
     displayName: 'QMS',
     icon: 'CheckCircle',
     routePrefix: '/qms',
@@ -209,7 +210,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_lims',
-    entry: getRemoteEntry('topems_lims', 3013),
+    entry: getRemoteEntry('topems_lims', getMfPort('topems_lims')),
     displayName: 'LIMS',
     icon: 'FlaskConical',
     routePrefix: '/lims',
@@ -219,7 +220,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_ehs',
-    entry: getRemoteEntry('topems_ehs', 3014),
+    entry: getRemoteEntry('topems_ehs', getMfPort('topems_ehs')),
     displayName: 'EHS',
     icon: 'ShieldCheck',
     routePrefix: '/ehs',
@@ -229,7 +230,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_bi',
-    entry: getRemoteEntry('topems_bi', 3015),
+    entry: getRemoteEntry('topems_bi', getMfPort('topems_bi')),
     displayName: 'BI',
     icon: 'BarChart3',
     routePrefix: '/bi',
@@ -239,7 +240,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_monitor',
-    entry: getRemoteEntry('topems_monitor', 3016),
+    entry: getRemoteEntry('topems_monitor', getMfPort('topems_monitor')),
     displayName: 'Monitor',
     icon: 'Activity',
     routePrefix: '/monitor',
@@ -249,7 +250,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_ai',
-    entry: getRemoteEntry('topems_ai', 3017),
+    entry: getRemoteEntry('topems_ai', getMfPort('topems_ai')),
     displayName: 'AI',
     icon: 'Sparkles',
     routePrefix: '/ai',
@@ -259,7 +260,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_gis',
-    entry: getRemoteEntry('topems_gis', 3018),
+    entry: getRemoteEntry('topems_gis', getMfPort('topems_gis')),
     displayName: 'GIS',
     icon: 'Map',
     routePrefix: '/gis',
@@ -269,7 +270,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_doc',
-    entry: getRemoteEntry('topems_doc', 3019),
+    entry: getRemoteEntry('topems_doc', getMfPort('topems_doc')),
     displayName: '文档管理',
     icon: 'FileText',
     routePrefix: '/doc',

@@ -14,28 +14,25 @@ export const API_VERSION = '';
 /**
  * Group1 核心虚拟服务（K8s ingress `/api/core/*` 转发到 unified-core:8000）
  * 这些服务的路径必须以 `/api/core/{svc}/` 开头。
+ *
+ * V66.1 架构一致性修复：mail/im/notification/comm 已外迁到 communication 独立服务（8084），
+ * billing/ticket 已外迁为独立进程（8085/8086），不再属于 Group1。
+ * 独立服务的路径前缀为 `/api/{svc}/`。
  */
 export const GROUP1_CORE_SERVICES = new Set<string>([
   'iam',
   'workflow',
   'flow', // workflow 别名
   'file',
-  'mail',
-  'im',
-  'notification',
   'doc', // 文档管理 (unified-core 虚拟服务)
   'monitor', // 系统监控 (unified-core 虚拟服务)
-  'master',
+  'master', // Group1 master = unified-core 内的 tenant & 主数据引用（master 虚拟模块，路径 /api/core/master）
   'migration',
-  'comm',
-  'communication', // comm 别名
   'core', // umbrella
   'help', // 帮助文档/FAQ 归到 unified-core
-  // V64: 新增 unified-core 承载的模块
-  'automation', // 自动化编排（unified-core）
-  'ticket', // 工单系统（unified-core）
+  // unified-core 承载的虚拟模块
+  'automation', // 自动化编排（unified-core，路径 /api/core/automation）
   'plugin', // 插件市场（unified-core）
-  'billing', // 计费（unified-core）
   'tenant', // 租户管理（unified-core）
 ]);
 
@@ -64,19 +61,33 @@ export const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
   'mobile',
   'gis',
   'integration',
-  // V64: 新增独立服务
-  'lowcode', // 低代码平台（独立服务）
-  'oa', // OA（归 erp 服务，但路径独立）
-  'asset', // 资产（归 erp 服务，但路径独立）
+  // 主数据服务（独立进程，端口 8090，路径 /api/master-data/*）
+  'master-data',
+  // 扩展服务（V66 外迁为独立进程）
+  'communication', // 通讯（mail/im/notification/comm 整合），端口 8084
+  'search',        // 全文搜索，端口 8082
+  'billing',       // 计费，端口 8085
+  'ticket',        // 工单，端口 8086
+  'feedback',      // 反馈，端口 8087
+  'lowcode',       // 低代码平台（独立服务，端口 8088）
+  // 子路径模块（归 Group2）
+  'mail',          // 归 communication 服务，路径 /api/communication/mail
+  'im',            // 归 communication 服务，路径 /api/communication/im
+  'notification',  // 归 communication 服务，路径 /api/communication/notification
+  'comm',          // communication 别名
+  'oa',            // OA（归 erp 服务，但路径独立）
+  'asset',         // 资产（归 erp 服务，但路径独立）
 ]);
 
 export const SERVICE_CODES = {
   iam: 'iam',
   portal: 'portal',
   workflow: 'workflow',
-  notification: 'notification',
-  mail: 'mail',
-  im: 'im',
+  notification: 'notification', // 归 communication Group2
+  mail: 'mail',                 // 归 communication Group2
+  im: 'im',                     // 归 communication Group2
+  comm: 'comm',                 // communication 别名 Group2
+  communication: 'communication',
   file: 'file',
   ai: 'ai',
   doc: 'doc',
@@ -94,25 +105,29 @@ export const SERVICE_CODES = {
   pm: 'pm',
   pdm: 'pdm',
   bi: 'bi',
+  analytics: 'analytics',
   gis: 'gis',
   mobile: 'mobile',
   integration: 'integration',
-  master: 'master',
+  master: 'master',         // Group1: unified-core 内 tenant & 主数据虚拟模块（路径 /api/core/master）
+  'master-data': 'master-data', // Group2: 独立主数据服务（端口 8090）
   migration: 'migration',
   rd: 'rd',
   finance: 'finance',
   monitor: 'monitor',
   oa: 'oa',
-  lowcode: 'lowcode',
-  comm: 'comm',
-  communication: 'communication',
-  // V64: 新增模块
+  search: 'search',         // Group2: 全文搜索（端口 8082）
+  billing: 'billing',       // Group2: 计费（端口 8085）
+  ticket: 'ticket',         // Group2: 工单（端口 8086）
+  feedback: 'feedback',     // Group2: 反馈（端口 8087）
+  lowcode: 'lowcode',       // Group2: 低代码平台（端口 8088）
+  // V64: unified-core 虚拟模块
   automation: 'automation',
-  ticket: 'ticket',
   plugin: 'plugin',
-  billing: 'billing',
   tenant: 'tenant',
   asset: 'asset',
+  core: 'core',
+  help: 'help',
 } as const;
 
 export type ServiceCode = (typeof SERVICE_CODES)[keyof typeof SERVICE_CODES];
@@ -157,8 +172,6 @@ export function createServiceApi(service: ServiceCode | string) {
 export const SERVICES = {
   iam: createServiceApi('iam'),
   workflow: createServiceApi('workflow'),
-  notification: createServiceApi('notification'),
-  document: createServiceApi('document'),
   erp: createServiceApi('erp'),
   hrm: createServiceApi('hrm'),
   crm: createServiceApi('crm'),
@@ -172,6 +185,8 @@ export const SERVICES = {
   pm: createServiceApi('pm'),
   pdm: createServiceApi('pdm'),
   bi: createServiceApi('bi'),
+  analytics: createServiceApi('analytics'),
+  portal: createServiceApi('portal'),
   gis: createServiceApi('gis'),
   mobile: createServiceApi('mobile'),
   integration: createServiceApi('integration'),
@@ -181,12 +196,22 @@ export const SERVICES = {
   oa: createServiceApi('oa'),
   file: createServiceApi('file'),
   ai: createServiceApi('ai'),
-  lowcode: createServiceApi('lowcode'),
-  // V64: 新增模块
-  automation: createServiceApi('automation'),
-  ticket: createServiceApi('ticket'),
-  plugin: createServiceApi('plugin'),
   doc: createServiceApi('doc'),
+  document: createServiceApi('document'),
+  // V64: unified-core 虚拟模块（Group1）
+  automation: createServiceApi('automation'),
+  plugin: createServiceApi('plugin'),
+  tenant: createServiceApi('tenant'),
+  master: createServiceApi('master'),
+  // V66: 扩展独立服务（Group2 — 从 unified-core 外迁）
+  'master-data': createServiceApi('master-data'),
+  communication: createServiceApi('communication'),
+  search: createServiceApi('search'),
+  billing: createServiceApi('billing'),
+  ticket: createServiceApi('ticket'),
+  feedback: createServiceApi('feedback'),
+  lowcode: createServiceApi('lowcode'),
+  asset: createServiceApi('asset'),
 } as const;
 
 /* =============================================================

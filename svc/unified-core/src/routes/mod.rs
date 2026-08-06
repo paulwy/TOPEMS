@@ -5,6 +5,8 @@
 //! with all permission middleware layers applied) and returns a `Router<AppState>`
 //! that the caller finalises with telemetry, CORS, prometheus and state.
 
+/// V66.1：Automation 编排虚拟服务（planned 阶段，全部 501 Not Implemented 占位）
+mod automation;
 mod doc;
 mod file;
 mod flow;
@@ -124,6 +126,8 @@ pub fn create_routes(
         .merge(monitor::monitor_routes(state))
         .merge(system::system_routes(state))
         .merge(doc::doc_routes(state))
+        // V66.1：Automation 编排虚拟服务（planned 阶段，501 Not Implemented）
+        .merge(automation::automation_routes(state))
         .merge(modules::login_log::create_routes(state.clone()))
         .merge(modules::audit::create_routes(state.clone()))
         .layer(axum::middleware::from_fn_with_state(

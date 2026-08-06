@@ -326,6 +326,7 @@ special_ports:
     deployment_modes: [local, docker, saas]
 
 # 服务模块分组 (用于 start-module 命令)
+# V66.1：extension 分组增加；all 组补齐 6 外迁扩展服务
 module_groups:
   core:
     - iam
@@ -362,35 +363,81 @@ module_groups:
   analytics:
     - bi
     - portal
+    # V66.1：cross-reference — 搜索为 BI dashboard 提供全文检索支撑
+    - search
 
   infrastructure:
     - mobile
     - gis
     - integration
+    # V66.1：cross-reference — lowcode 属于基础设施平台层
+    - lowcode
+
+  collaboration:
+    - hrm
+    - pm
+    - crm
+    # V66.1：cross-reference — communication（mail/im/notification）为协同办公提供通讯底座
+    - communication
+    # V66.1：cross-reference — ticket/feedback 为协同办公提供工单/反馈闭环
+    - ticket
+    - feedback
+
+  erp:
+    - erp
+    - finance
+    - ai
+    # V66.1：cross-reference — billing 计费挂入经营管理域
+    - billing
 
   master-data:
     - master-data
 
+  # V66.1：扩展服务（从 unified-core 外迁为独立进程）
+  extension:
+    - search
+    - communication
+    - billing
+    - ticket
+    - feedback
+    - lowcode
+
+  # 全量启动清单（22 + 6 extension = 28 项；iam 代表 unified-core:8000）
   all:
     - iam
+    # 扩展服务（V66 外迁，端口 8082/8084-8088）
+    - search
+    - communication
+    - billing
+    - ticket
+    - feedback
+    - lowcode
+    # 经营管理（8010-8019）
     - erp
     - finance
     - ai
+    # 协同办公（8020-8029）
     - hrm
     - pm
     - crm
+    # 生产制造（8030-8039）
     - mes
     - pdm
+    # 供应链（8040-8049）
     - scm
     - wms
     - srm
+    # 质量/研发（8050-8059）
     - qms
     - lims
     - ehs
     - rd
+    # 数据分析/门户（8060-8069）
     - bi
     - portal
+    # 基础设施（8070-8079）
     - mobile
     - gis
     - integration
+    # 主数据（8090）
     - master-data

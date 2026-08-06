@@ -21,6 +21,7 @@ dotenv.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 topems-shared = { path = "../../lib" }
+topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true

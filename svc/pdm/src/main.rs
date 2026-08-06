@@ -196,6 +196,8 @@ async fn main() {
     .with_state(state);
 
     let port = std::env::var("PDM_PORT")
+        .or_else(|_| std::env::var("SERVER_PORT"))
+        .or_else(|_| std::env::var("PORT"))
         .unwrap_or_else(|_| "8031".to_string())
         .parse()
         .unwrap_or(8031);

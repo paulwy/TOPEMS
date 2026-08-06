@@ -23,23 +23,19 @@ mod shared;
 
 pub mod modules;
 
-use std::net::SocketAddr;
-use std::sync::Arc;
-
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
     Json, Router,
 };
-use axum_prometheus::PrometheusMetricLayer;
+use utoipa::OpenApi;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
-    rate_limit_middleware, register_routes_with_legacy_alias, rls_middleware, simple_health_check,
-    telemetry_middleware, ApiResponse, AuthState, RateLimitConfig, RateLimitMiddleware,
-    ServiceHealth, SimpleHealthConfig,
+    get_api_info_handler, simple_health_check, ApiResponse, ServiceHealth, SimpleHealthConfig,
 };
-use utoipa::OpenApi;
+use topems_shared_bootstrap::{
+    bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
+};
 
 pub use shared::*;
 
@@ -64,67 +60,50 @@ pub use shared::*;
 )]
 struct ApiDoc;
 
-// ==================== 主入口 ====================
+// ==================== 主入口（V2 shared-bootstrap 模板） ====================
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    _ = dotenv::dotenv();
-
-    let _telemetry_guard = init_telemetry("topems-analytics");
-
-    tracing::info!("🚀 TOPEMS Analytics Service starting...");
-
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        std::process::exit(1);
-    });
-
-    let pool = match sqlx::postgres::PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&database_url)
-        .await
-    {
-        Ok(p) => {
-            tracing::info!("Database connection successful");
-            p
-        }
-        Err(e) => {
-            tracing::error!("Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
-        }
+    let config = ServiceConfig {
+        name: "topems-analytics",
+        port: 8060,
+        port_env_var: Some("BI_PORT"),
+        max_db_connections: 10,
+        enable_events: false,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/bi",
+        legacy_prefixes: &["/api/v1/bi"],
     };
 
-    // Initialize databases for all modules
-    if let Err(e) = modules::bi::init_database(&pool).await {
+    let ctx = bootstrap_service(&config).await?;
+    tracing::info!("🚀 TOPEMS Analytics Service starting...");
+
+    // ── 模块级数据库初始化 ────────────────────────────────────────────
+    if let Err(e) = modules::bi::init_database(&ctx.db).await {
         tracing::warn!("BI module database init warning: {}", e);
     }
-    if let Err(e) = modules::report::init_database(&pool).await {
+    if let Err(e) = modules::report::init_database(&ctx.db).await {
         tracing::warn!("Report module database init warning: {}", e);
     }
 
-    // Start report scheduler
-    let scheduler = modules::report::ReportScheduler::new(pool.clone());
+    // ── Report Scheduler（后台定时任务） ──────────────────────────────
+    let scheduler = modules::report::ReportScheduler::new(ctx.db.clone());
     if let Err(e) = scheduler.start().await {
         tracing::warn!("Failed to start report scheduler: {}", e);
     }
 
-    let auth_state = AuthState::from_env();
-    let health_config = SimpleHealthConfig::new("topems-analytics").with_db(pool.clone());
-
-    let state = AppState {
-        auth_state,
-        pool,
+    // ── 向下兼容：ServiceContext → legacy AppState ────────────────────
+    let health_config = SimpleHealthConfig::new("topems-analytics").with_db(ctx.db.clone());
+    let app_state = AppState {
+        auth_state: ctx.auth_state.clone(),
+        pool: ctx.db.clone(),
         health_config,
     };
 
-    let cors = create_cors_layer();
-
-    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
-
-    // Public routes (no auth required)
+    // ── public_routes（无状态路由：不需要 State<AppState>） ──────────
     let public_routes = Router::new()
         .route("/", get(home))
-        .route("/health", get(health))
         .route("/api", get(|| get_api_info_handler("topems-analytics")))
         .route(
             "/api/info",
@@ -133,23 +112,10 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/api/plugins/info",
             get(modules::bi::plugin::get_plugin_info),
-        )
-        .route(
-            "/api/plugins/health",
-            get(modules::bi::plugin::plugin_health_check),
-        )
-        .route(
-            "/metrics",
-            get(move || async move { metric_handle.render() }),
-        )
-        // WebSocket - auth handled via token query param (subscribe message)
-        // Consistent with Core/MES/GIS WebSocket placement
-        .route(
-            "/ws/bi/dashboard/{dashboard_id}",
-            get(modules::bi::websocket::dashboard_websocket),
         );
 
-    // Protected routes (auth required)
+    // ── protected_routes（业务路由：需要 State<AppState>） ────────────
+    // 中间件层（auth / rls / rate_limit）由 build_application 统一处理
     let protected_routes = Router::new()
         // ===== BI routes (prefix: /api/bi) =====
         // Dashboard
@@ -899,57 +865,47 @@ async fn main() -> anyhow::Result<()> {
         )
         // Health & Metrics
         .route("/api/health/detailed", get(detailed_health))
-        .layer(axum::middleware::from_fn_with_state(
-            state.auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.pool.clone(),
-            rls_middleware,
-        ));
+        .with_state(app_state.clone());
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let protected_routes = protected_routes.layer(axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    }));
-
-    let app = register_routes_with_legacy_alias(
-        Router::new().merge(public_routes),
-        "/api/bi",
-        &["/api/v1/bi"],
-        protected_routes,
-    )
-    .route(
-        "/api-docs/openapi.json",
-        get(|| async {
-            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
-                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
-                "{}".to_string()
-            })
+    // ── OpenAPI JSON ──────────────────────────────────────────────────
+    let openapi_json = Some(
+        serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+            tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+            "{}".to_string()
         }),
-    )
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(cors)
-    .layer(prometheus_layer)
-    .with_state(state);
+    );
 
-    let port = std::env::var("ANALYTICS_PORT")
-        .unwrap_or_else(|_| "8060".to_string())
-        .parse()
-        .unwrap_or(8060);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ Analytics Service is running at http://{}", addr);
+    // ── 组装 shared-bootstrap Application ─────────────────────────────
+    let mut app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app.into_make_service()).await?;
+    // ── 有状态公共路由（/health, /metrics, WebSocket /ws/bi/*, /api/plugins/health）─
+    // 放在 build_application 外层嵌套，避免 State 类型与顶层 Router<()> 冲突
+    let stateful_public = Router::new()
+        .route("/health", get(health))
+        .route(
+            "/metrics",
+            get(move || async { prometheus_metrics_handler().await }),
+        )
+        // WebSocket: auth handled internally via token query param (subscribe message)
+        .route(
+            "/ws/bi/dashboard/{dashboard_id}",
+            get(modules::bi::websocket::dashboard_websocket),
+        )
+        .route(
+            "/api/plugins/health",
+            get(modules::bi::plugin::plugin_health_check),
+        )
+        .with_state(app_state);
 
+    app.router = app.router.merge(stateful_public);
+
+    tracing::info!(
+        "✅ Analytics Service is running at http://0.0.0.0:{} (BI prefix: {})",
+        app.port,
+        config.api_prefix
+    );
+
+    run(app).await?;
     Ok(())
 }
 
