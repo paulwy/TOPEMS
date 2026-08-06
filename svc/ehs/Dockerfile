@@ -20,7 +20,7 @@ COPY --from=builder /app/target/release/topems-ehs /usr/local/bin/topems-ehs
 RUN chown -R topems:topems /app
 USER topems
 ENV EHS_PORT=8052
-ENV RUST_LOG=info
+ENV RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
 EXPOSE 8052
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8052/health || exit 1

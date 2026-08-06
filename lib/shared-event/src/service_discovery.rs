@@ -265,7 +265,7 @@ impl PortalServiceAggregator {
                 status: ServiceRegistryStatus::Active,
                 url: None,
                 api_prefix: Some("/api/iam".to_string()),
-                port: 8001,
+                port: 8000,
                 version: "1.0.0".to_string(),
                 order: 1,
                 tags: vec!["auth".to_string(), "permission".to_string()],
@@ -279,7 +279,7 @@ impl PortalServiceAggregator {
                 status: ServiceRegistryStatus::Active,
                 url: None,
                 api_prefix: Some("/api/hrm".to_string()),
-                port: 8015,
+                port: 8020,
                 version: "1.0.0".to_string(),
                 order: 2,
                 tags: vec!["hr".to_string(), "employee".to_string()],
@@ -293,7 +293,7 @@ impl PortalServiceAggregator {
                 status: ServiceRegistryStatus::Active,
                 url: None,
                 api_prefix: Some("/api/doc".to_string()),
-                port: 8002,
+                port: 8000,
                 version: "1.0.0".to_string(),
                 order: 3,
                 tags: vec!["document".to_string(), "wiki".to_string()],
@@ -328,14 +328,36 @@ impl PortalServiceAggregator {
             },
         ];
 
-        for service in default_services {
-            self.registry.register(service).await;
+        for service in &default_services {
+            tracing::info!(
+                target: "service_discovery",
+                service_code = %service.code,
+                service_name = %service.name,
+                service_port = service.port,
+                category = ?service.category,
+                api_prefix = ?service.api_prefix,
+                "[ServiceDiscovery] 注册默认服务到本地注册表"
+            );
+            self.registry.register(service.clone()).await;
         }
+        tracing::info!(
+            target: "service_discovery",
+            total = default_services.len(),
+            "[ServiceDiscovery] 默认服务注册完成"
+        );
     }
 
     pub async fn get_service_url(&self, code: &str) -> Option<String> {
         let service = self.registry.get(code).await?;
-        Some(format!("http://localhost:{}", service.port))
+        let url = format!("http://localhost:{}", service.port);
+        tracing::debug!(
+            target: "service_discovery",
+            service_code = %code,
+            service_port = service.port,
+            resolved_url = %url,
+            "[ServiceDiscovery] 本地服务查询成功"
+        );
+        Some(url)
     }
 
     pub async fn make_proxy_request(
@@ -350,13 +372,30 @@ impl PortalServiceAggregator {
             .ok_or_else(|| TopemsError::Internal(format!("Service {} not found", service_code)))?;
 
         let url = format!("{}{}", base_url, path);
+        tracing::info!(
+            target: "service_discovery",
+            service_code,
+            proxy_url = %url,
+            http_method = %method,
+            "[ServiceDiscovery] 发起代理请求"
+        );
 
         let response = self
             .http_client
             .request(method.parse().unwrap_or(reqwest::Method::GET), &url)
             .send()
             .await
-            .map_err(|e| TopemsError::Internal(format!("Request failed: {}", e)))?;
+            .map_err(|e| {
+                tracing::error!(
+                    target: "service_discovery",
+                    service_code,
+                    proxy_url = %url,
+                    http_method = %method,
+                    error = %e,
+                    "[ServiceDiscovery] 代理请求失败，请检查目标服务端口是否可达"
+                );
+                TopemsError::Internal(format!("Request failed: {}", e))
+            })?;
 
         let body = response
             .text()
@@ -562,15 +601,44 @@ impl SmartServiceClient {
 
         // 从环境变量加载回退地址
         if let Ok(core_url) = std::env::var("CORE_URL") {
+            tracing::info!(
+                target: "service_discovery",
+                service = "unified-core",
+                fallback_url = %core_url,
+                source = "env:CORE_URL",
+                "[SmartServiceClient] 加载回退地址"
+            );
             fallback_urls.insert("unified-core".to_string(), core_url);
         }
         if let Ok(erp_url) = std::env::var("ERP_URL") {
+            tracing::info!(
+                target: "service_discovery",
+                service = "erp",
+                fallback_url = %erp_url,
+                source = "env:ERP_URL",
+                "[SmartServiceClient] 加载回退地址"
+            );
             fallback_urls.insert("erp".to_string(), erp_url);
         }
         if let Ok(hrm_url) = std::env::var("HRM_URL") {
+            tracing::info!(
+                target: "service_discovery",
+                service = "hrm",
+                fallback_url = %hrm_url,
+                source = "env:HRM_URL",
+                "[SmartServiceClient] 加载回退地址"
+            );
             fallback_urls.insert("hrm".to_string(), hrm_url);
         }
         // 可继续添加其他服务...
+
+        tracing::info!(
+            target: "service_discovery",
+            consul_configured = consul_client.is_some(),
+            fallback_count = fallback_urls.len(),
+            fallback_services = ?fallback_urls.keys().cloned().collect::<Vec<_>>(),
+            "[SmartServiceClient] 初始化完成"
+        );
 
         Self {
             consul_client,
@@ -584,12 +652,50 @@ impl SmartServiceClient {
         // 1. 尝试 Consul
         if let Some(consul) = &self.consul_client {
             if let Some(url) = consul.get_service_url(service_name).await {
+                tracing::debug!(
+                    target: "service_discovery",
+                    service_name,
+                    resolved_url = %url,
+                    source = "consul",
+                    "[SmartServiceClient] 通过 Consul 解析服务地址"
+                );
                 return Some(url);
             }
+            tracing::debug!(
+                target: "service_discovery",
+                service_name,
+                "[SmartServiceClient] Consul 无健康实例，尝试环境变量回退"
+            );
+        } else {
+            tracing::debug!(
+                target: "service_discovery",
+                service_name,
+                "[SmartServiceClient] Consul 未配置，将使用环境变量或硬编码 fallback"
+            );
         }
 
         // 2. 回退到环境变量
-        self.fallback_urls.get(service_name).cloned()
+        match self.fallback_urls.get(service_name).cloned() {
+            Some(url) => {
+                tracing::warn!(
+                    target: "service_discovery",
+                    service_name,
+                    resolved_url = %url,
+                    source = "env_fallback",
+                    "[SmartServiceClient] 回退到环境变量配置的服务地址"
+                );
+                Some(url)
+            }
+            None => {
+                tracing::error!(
+                    target: "service_discovery",
+                    service_name,
+                    available_fallbacks = ?self.fallback_urls.keys().cloned().collect::<Vec<_>>(),
+                    "[SmartServiceClient] 服务地址解析失败，请配置 CONSUL 或环境变量端口"
+                );
+                None
+            }
+        }
     }
 
     /// 发起服务调用（自动服务发现 + 回退）
@@ -608,13 +714,27 @@ impl SmartServiceClient {
             })?;
 
         let url = format!("{}{}", base_url.trim_end_matches('/'), path);
-        tracing::debug!("[SmartServiceClient] Calling {} -> {}", service_name, url);
+        tracing::info!(
+            target: "service_discovery",
+            service_name,
+            call_url = %url,
+            http_method = ?method,
+            "[SmartServiceClient] 发起服务调用"
+        );
 
-        let mut req = self.http_client.request(method, &url);
+        let mut req = self.http_client.request(method.clone(), &url);
         if let Some(b) = body {
             req = req.json(&b);
         }
         let response = req.send().await.map_err(|e| {
+            tracing::error!(
+                target: "service_discovery",
+                service_name,
+                call_url = %url,
+                http_method = ?method,
+                error = %e,
+                "[SmartServiceClient] 服务调用失败，请检查服务端口与网络"
+            );
             TopemsError::Internal(format!("Service call to {} failed: {}", service_name, e))
         })?;
 

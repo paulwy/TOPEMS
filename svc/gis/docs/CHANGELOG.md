@@ -89,8 +89,8 @@
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| SERVER_PORT | 8054 | 服务端口（优先） |
-| PORT | 8054 | 服务端口（备选） |
+| SERVER_PORT | 8071 | 服务端口（优先） |
+| PORT | 8071 | 服务端口（备选） |
 | DATABASE_URL | - | 数据库连接URL（必需） |
 | JWT_SECRET | - | JWT密钥（必需） |
 
@@ -105,7 +105,7 @@ cargo run
 cargo run --release
 
 # 指定端口
-SERVER_PORT=8054 cargo run --release
+SERVER_PORT=8071 cargo run --release
 ```
 
 ### 📚 文档更新

@@ -45,7 +45,7 @@ USER topems
 
 # Environment defaults
 ENV CORE_PORT=8000
-ENV RUST_LOG=info
+ENV RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
 
 # Module isolation defaults (P0-3: 模块级故障隔离)
 ENV MODULE_IAM_ENABLED=true

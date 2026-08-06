@@ -1,31 +1,31 @@
 import apiClient from '../client';
 
 export async function fetchSummaryDashboard() {
-  return await apiClient.bi.get('/analytics/summary');
+  return await apiClient.bi.get('/summary');
 }
 
 export async function fetchDevelopmentAnalytics() {
-  return await apiClient.bi.get('/analytics/development');
+  return await apiClient.bi.get('/development');
 }
 
 export async function fetchQualityAnalytics() {
-  return await apiClient.bi.get('/analytics/quality');
+  return await apiClient.bi.get('/quality');
 }
 
 export async function fetchProductionAnalytics() {
-  return await apiClient.bi.get('/analytics/production');
+  return await apiClient.bi.get('/production');
 }
 
 export async function fetchLaboratoryAnalytics() {
-  return await apiClient.bi.get('/analytics/laboratory');
+  return await apiClient.bi.get('/laboratory');
 }
 
 export async function fetchAnalyticsOverview() {
-  return await apiClient.bi.get('/analytics/overview');
+  return await apiClient.bi.get('/overview');
 }
 
 export async function fetchModuleAnalytics(moduleId: string) {
-  return await apiClient.bi.get(`/analytics/${moduleId}`);
+  return await apiClient.bi.get(`/${moduleId}`);
 }
 
 export async function fetchModuleData(moduleId: string) {
@@ -37,7 +37,7 @@ export async function fetchModuleData(moduleId: string) {
     ehs: '/ehs/summary',
     srm: '/srm/summary',
   };
-  const endpoint = endpoints[moduleId] || `/analytics/${moduleId}`;
+  const endpoint = endpoints[moduleId] || `/${moduleId}`;
   return await apiClient.bi.get(endpoint);
 }
 

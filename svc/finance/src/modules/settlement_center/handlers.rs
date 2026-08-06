@@ -78,7 +78,7 @@ pub async fn create_reconciliation(
     }
 }
 
-/// GET /api/core/settlement-center/reconciliations/:id
+/// GET /api/core/settlement-center/reconciliations/{id}
 pub async fn get_reconciliation(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -95,7 +95,7 @@ pub async fn get_reconciliation(
     }
 }
 
-/// POST /api/core/settlement-center/reconciliations/:id/reconcile
+/// POST /api/core/settlement-center/reconciliations/{id}/reconcile
 pub async fn reconcile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -176,7 +176,7 @@ pub async fn create_settlement(
     }
 }
 
-/// GET /api/core/settlement-center/settlements/:id
+/// GET /api/core/settlement-center/settlements/{id}
 pub async fn get_settlement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -193,7 +193,7 @@ pub async fn get_settlement(
     }
 }
 
-/// POST /api/core/settlement-center/settlements/:id/approve
+/// POST /api/core/settlement-center/settlements/{id}/approve
 pub async fn approve_settlement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -238,7 +238,7 @@ pub async fn create_link(
     }
 }
 
-/// DELETE /api/core/settlement-center/links/:id
+/// DELETE /api/core/settlement-center/links/{id}
 pub async fn delete_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -326,7 +326,7 @@ pub async fn create_difference(
     }
 }
 
-/// POST /api/core/settlement-center/differences/:id/approve
+/// POST /api/core/settlement-center/differences/{id}/approve
 pub async fn approve_difference(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -347,7 +347,7 @@ pub async fn approve_difference(
     }
 }
 
-/// POST /api/core/settlement-center/differences/:id/reject
+/// POST /api/core/settlement-center/differences/{id}/reject
 pub async fn reject_difference(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -275,11 +275,13 @@ where
     SharedWebSocketManager: FromRef<S>,
 {
     Router::new()
-        .route("/ws/gis", get(websocket_handler))
+        .route("/ws/gis/map", get(websocket_handler))
         .route(
             "/ws/gis/device/{device_code}",
             get(websocket_device_handler),
         )
+        // 兼容遗留路径（v7.7 前使用 /ws/gis，v7.8 起统一为 /ws/gis/map）
+        .route("/ws/gis", get(websocket_handler))
 }
 
 pub async fn websocket_device_handler(

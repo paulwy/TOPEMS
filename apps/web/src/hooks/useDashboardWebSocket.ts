@@ -29,7 +29,7 @@ export interface DashboardMessage {
 const MODULE_WS_PATHS: Record<string, string> = {
   mes: '/ws/mes/dashboard',
   bi: '/ws/bi/dashboard',
-  gis: '/ws/gis',
+  gis: '/ws/gis/map',
 };
 
 export function useDashboardWebSocket(options: UseDashboardWebSocketOptions = {}) {

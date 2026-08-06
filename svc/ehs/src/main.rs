@@ -56,7 +56,7 @@ pub use shared::*;
         description = "TOPEMS 环境健康安全服务 - 安全检查、隐患管理、事故报告、应急预案",
     ),
     servers(
-        (url = "http://localhost:8025", description = "本地开发环境"),
+        (url = "http://localhost:8052", description = "本地开发环境"),
     )
 )]
 struct ApiDoc;

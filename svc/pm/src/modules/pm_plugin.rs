@@ -42,7 +42,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             "PM 项目管理系统，包含项目、任务、甘特图、合同、预算、风险、质量、验收、结算等模块"
                 .to_string(),
         deployment: DeploymentInfo {
-            port: 8046,
+            port: 8023,
             base_path: "/api/pm".to_string(),
         },
         permissions: vec![
@@ -120,7 +120,7 @@ pub fn create_routes() -> Router {
 
 /// 获取运行时 URL
 fn get_runtime_url() -> String {
-    std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8046".to_string())
+    std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8023".to_string())
 }
 
 /// 启动时自动注册到统一核心
@@ -134,7 +134,7 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         version: env!("CARGO_PKG_VERSION").to_string(),
         description: "PM 项目管理系统".to_string(),
         deployment: DeploymentInfo {
-            port: 8046,
+            port: 8023,
             base_path: "/api/pm".to_string(),
         },
         permissions: vec![],

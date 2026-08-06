@@ -55,7 +55,7 @@ pub use shared::AppState;
         description = "TOPEMS 产品数据管理服务 - BOM管理、工程变更、文档管理",
     ),
     servers(
-        (url = "http://localhost:8022", description = "本地开发环境"),
+        (url = "http://localhost:8031", description = "本地开发环境"),
     )
 )]
 struct ApiDoc;

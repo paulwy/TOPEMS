@@ -13,7 +13,7 @@ RUN chown -R topems:topems /usr/local/bin
 USER topems
 
 ENV MES_PORT=8030
-ENV RUST_LOG=info
+ENV RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
 
 EXPOSE 8030
 

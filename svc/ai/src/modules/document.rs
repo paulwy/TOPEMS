@@ -193,7 +193,7 @@ impl DocumentApi {
         }
     }
 
-    /// GET /api/documents/:id - 获取文档信息
+    /// GET /api/documents/{id} - 获取文档信息
     pub async fn get(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -212,7 +212,7 @@ impl DocumentApi {
         }
     }
 
-    /// DELETE /api/documents/:id - 删除文档
+    /// DELETE /api/documents/{id} - 删除文档
     pub async fn delete(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -238,7 +238,7 @@ impl DocumentApi {
         }
     }
 
-    /// POST /api/documents/:id/extract - 提取文档关键信息（增强版）
+    /// POST /api/documents/{id}/extract - 提取文档关键信息（增强版）
     pub async fn extract(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -439,7 +439,7 @@ impl DocumentApi {
         }
     }
 
-    /// POST /api/documents/:id/summarize - 生成文档摘要
+    /// POST /api/documents/{id}/summarize - 生成文档摘要
     pub async fn summarize(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -463,7 +463,7 @@ impl DocumentApi {
         }
     }
 
-    /// POST /api/documents/:id/key-points - 提取文档关键点
+    /// POST /api/documents/{id}/key-points - 提取文档关键点
     pub async fn extract_key_points(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,

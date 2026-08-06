@@ -256,7 +256,7 @@ impl ServiceConfigRegistry {
             (
                 "monitor",
                 "系统监控",
-                8062,
+                8000,
                 ServiceGroup::Analytics,
                 vec!["unified-core"],
                 "/api/monitor",

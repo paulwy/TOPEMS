@@ -317,16 +317,32 @@ pub fn format_log_entry(mut w: Writer<'_>, entry: &LogEntry) -> std::fmt::Result
     )
 }
 
+/// 全链路端口排查日志的默认级别配置，内嵌到 EnvFilter 基础值里，
+/// 保证无论 RUST_LOG 是否设置，都能直接看到服务发现、AI 集成、智能网关的端口解析。
+const PORT_DIAGNOSTIC_DIRECTIVES: &str =
+    "service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug";
+
 pub fn create_log_filter(service: &str, level: &str) -> EnvFilter {
-    EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new(format!("{}={},info", service, level)))
+    EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+        EnvFilter::new(format!(
+            "{service}={level},{directives}",
+            service = service,
+            level = level,
+            directives = PORT_DIAGNOSTIC_DIRECTIVES
+        ))
+    })
 }
 
 pub fn init_logging(service_name: &str) {
     let log_format = LogFormat::from_env();
 
-    let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new(format!("{},info", service_name)));
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+        EnvFilter::new(format!(
+            "{service_name}=info,{directives}",
+            service_name = service_name,
+            directives = PORT_DIAGNOSTIC_DIRECTIVES
+        ))
+    });
 
     match log_format {
         LogFormat::Json => {

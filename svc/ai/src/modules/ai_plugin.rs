@@ -40,7 +40,7 @@ pub struct PluginHealth {
 // Plugin info endpoint
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url =
-        std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
+        std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8013".to_string());
 
     let plugin_info = PluginInfo {
         code: "ai".to_string(),
@@ -157,7 +157,7 @@ pub fn create_routes() -> Router<AppState> {
 pub async fn auto_register_to_core(core_url: Option<&str>) {
     let core_url = core_url.unwrap_or("http://localhost:8000");
     let runtime_url =
-        std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
+        std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8013".to_string());
 
     let info = PluginInfo {
         code: "ai".to_string(),

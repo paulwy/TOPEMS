@@ -454,7 +454,7 @@ ALTER EXTENSION vector UPDATE;
 | erp | 8010 | plugin_erp, public |
 | hrm | 8020 | plugin_hrm, public |
 | crm | 8029 | plugin_crm, public |
-| ai | 8062 | plugin_ai, public |
+| ai | 8013 | plugin_ai, public |
 
 ---
 

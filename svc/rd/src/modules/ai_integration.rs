@@ -9,9 +9,38 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::env;
+use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
 use topems_shared::response::ApiResponse;
+
+const DEFAULT_AI_SERVICE_URL: &str = "http://localhost:8013";
+
+/// 解析 AI 服务 URL，优先从环境变量 AI_SERVICE_URL 读取，否则使用权威默认端口。
+/// 每次解析都会输出结构化日志，方便排查端口/连接配置问题。
+fn resolve_ai_service_url() -> Option<String> {
+    match env::var("AI_SERVICE_URL") {
+        Ok(url) if !url.is_empty() => {
+            info!(
+                target: "rd::ai_integration",
+                url = %url,
+                source = "env:AI_SERVICE_URL",
+                "[AI Service] 使用环境变量配置的 AI_SERVICE_URL"
+            );
+            Some(url)
+        }
+        _ => {
+            warn!(
+                target: "rd::ai_integration",
+                url = %DEFAULT_AI_SERVICE_URL,
+                source = "default_fallback",
+                env_var = "AI_SERVICE_URL",
+                "[AI Service] 环境变量 AI_SERVICE_URL 未设置，回退到默认端口"
+            );
+            Some(DEFAULT_AI_SERVICE_URL.to_string())
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct AiAnalysis {
@@ -121,9 +150,7 @@ async fn create_analysis(
     State(state): State<super::ApiState>,
     Json(request): Json<CreateAnalysisRequest>,
 ) -> impl IntoResponse {
-    let ai_service_url = env::var("AI_SERVICE_URL")
-        .ok()
-        .or_else(|| Some("http://localhost:8004".to_string()));
+    let ai_service_url = resolve_ai_service_url();
 
     let ai_response = match call_ai_service(&request.prompt, &ai_service_url).await {
         Ok(resp) => resp,
@@ -195,9 +222,7 @@ async fn get_analysis(
 }
 
 async fn ai_chat(Json(request): Json<AiChatRequest>) -> impl IntoResponse {
-    let ai_service_url = env::var("AI_SERVICE_URL")
-        .ok()
-        .or_else(|| Some("http://localhost:8004".to_string()));
+    let ai_service_url = resolve_ai_service_url();
 
     match call_ai_service(&request.query, &ai_service_url).await {
         Ok(answer) => {
@@ -242,35 +267,76 @@ async fn get_entity_analyses(
 }
 
 async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Result<String, String> {
-    let url = ai_service_url.as_deref().unwrap_or("http://localhost:8004");
+    let url = ai_service_url.as_deref().unwrap_or(DEFAULT_AI_SERVICE_URL);
     let client = Client::new();
+    let endpoint = format!("{}/api/core/rd/ai/chat", url);
+
+    debug!(
+        target: "rd::ai_integration",
+        ai_service_url = %url,
+        endpoint = %endpoint,
+        prompt_len = prompt.len(),
+        "[AI Service] 发起 AI 服务请求"
+    );
 
     let request_body = serde_json::json!({
         "query": prompt
     });
 
     match client
-        .post(format!("{}/api/core/rd/ai/chat", url))
+        .post(&endpoint)
         .json(&request_body)
         .timeout(std::time::Duration::from_secs(60))
         .send()
         .await
     {
-        Ok(resp) if resp.status().is_success() => match resp.json::<serde_json::Value>().await {
-            Ok(json) => {
-                if let Some(answer) = json["data"]["answer"].as_str() {
-                    Ok(answer.to_string())
-                } else if let Some(answer) = json["answer"].as_str() {
-                    Ok(answer.to_string())
-                } else if let Some(data) = json["data"].as_str() {
-                    Ok(data.to_string())
-                } else {
-                    Ok("AI服务返回了响应，但格式不符合预期".to_string())
+        Ok(resp) if resp.status().is_success() => {
+            debug!(
+                target: "rd::ai_integration",
+                ai_service_url = %url,
+                status = %resp.status(),
+                "[AI Service] AI 服务请求成功"
+            );
+            match resp.json::<serde_json::Value>().await {
+                Ok(json) => {
+                    if let Some(answer) = json["data"]["answer"].as_str() {
+                        Ok(answer.to_string())
+                    } else if let Some(answer) = json["answer"].as_str() {
+                        Ok(answer.to_string())
+                    } else if let Some(data) = json["data"].as_str() {
+                        Ok(data.to_string())
+                    } else {
+                        Ok("AI服务返回了响应，但格式不符合预期".to_string())
+                    }
+                }
+                Err(e) => {
+                    error!(
+                        target: "rd::ai_integration",
+                        ai_service_url = %url,
+                        error = %e,
+                        "[AI Service] 解析 AI 响应失败"
+                    );
+                    Err(format!("解析AI响应失败: {}", e))
                 }
             }
-            Err(e) => Err(format!("解析AI响应失败: {}", e)),
-        },
-        Ok(resp) => Err(format!("AI服务返回错误: {}", resp.status())),
-        Err(e) => Err(format!("调用AI服务失败: {}", e)),
+        }
+        Ok(resp) => {
+            error!(
+                target: "rd::ai_integration",
+                ai_service_url = %url,
+                status = %resp.status(),
+                "[AI Service] AI 服务返回非成功状态，请检查 AI 服务端口与可用性"
+            );
+            Err(format!("AI服务返回错误: {}", resp.status()))
+        }
+        Err(e) => {
+            error!(
+                target: "rd::ai_integration",
+                ai_service_url = %url,
+                error = %e,
+                "[AI Service] 调用 AI 服务失败，请检查端口配置与网络连通性"
+            );
+            Err(format!("调用AI服务失败: {}", e))
+        }
     }
 }

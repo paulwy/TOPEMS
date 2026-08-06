@@ -61,7 +61,7 @@ pub struct PluginInfo {
 
 /// 获取运行时 URL
 fn get_runtime_url() -> String {
-    std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8054".to_string())
+    std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8071".to_string())
 }
 
 pub fn get_plugin_info() -> PluginInfo {
@@ -73,7 +73,7 @@ pub fn get_plugin_info() -> PluginInfo {
         description: "GIS 地理信息服务 - 位置服务、轨迹追踪、地理围栏".to_string(),
         category: "gis".to_string(),
         plugin_type: "business".to_string(),
-        port: 8054,
+        port: 8071,
         base_path: "/api/gis".to_string(),
         permissions: vec![
             "location".to_string(),

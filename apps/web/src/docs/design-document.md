@@ -717,8 +717,8 @@ Vite 开发服务器通过代理将前端请求转发到后端服务。由于不
 | lims         | `/lims`            | localhost:8051 | `/^\/lims/` → `''`                                     | 标准服务 |
 | ehs          | `/ehs`             | localhost:8052 | `/^\/ehs/` → `''`                                      | 标准服务 |
 | srm          | `/srm/api`         | localhost:8042 | `/^\/srm/` → `''`                                      | 标准服务 |
-| wms          | `/wms/api`         | localhost:8042 | `/^\/wms/` → `''`                                      | 标准服务 |
-| pm           | `/pm/api`          | localhost:8022 | `/^\/pm/` → `''`                                       | 标准服务 |
+| wms          | `/wms/api`         | localhost:8041 | `/^\/wms/` → `''`                                      | 标准服务 |
+| pm           | `/pm/api`          | localhost:8023 | `/^\/pm/` → `''`                                       | 标准服务 |
 | scm          | `/scm/api`         | localhost:8040 | `/^\/scm/` → `''`                                      | 标准服务 |
 | gis          | `/gis/api`         | localhost:8071 | `/^\/gis/` → `''`                                      | 标准服务 |
 | report       | `/report`          | localhost:8060 | `/^\/report/` → `''`                                   | 标准服务 |

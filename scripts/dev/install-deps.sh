@@ -269,7 +269,7 @@ OLLAMA_HOST=http://localhost:11434
 JWT_SECRET=topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256
 REFRESH_SECRET=topems-refresh-secret-key-must-be-at-least-32-characters-long
 CORS_ORIGINS=http://localhost:3000,http://localhost:8000
-RUST_LOG=info
+RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
 EOF
   fi
   

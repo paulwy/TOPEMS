@@ -247,7 +247,7 @@ fn test_api_response_error_structure() {
 #[test]
 fn test_finance_service_url_default() {
     // 验证 Finance 服务客户端的默认 URL
-    let client = FinanceServiceClient::new("http://localhost:8006");
+    let client = FinanceServiceClient::new("http://localhost:8011");
     assert!(client.is_ok(), "FinanceServiceClient 应能以默认 URL 构造");
 }
 

@@ -16,7 +16,28 @@ use crate::{
 };
 
 fn erp_base_url() -> String {
-    std::env::var("ERP_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8010".to_string())
+    match std::env::var("ERP_SERVICE_URL") {
+        Ok(v) if !v.is_empty() => {
+            tracing::info!(
+                target: "portal::announcements",
+                service = "ERP",
+                resolved_url = %v,
+                source = "env:ERP_SERVICE_URL",
+                "[Announcements] 解析 ERP 服务地址"
+            );
+            v
+        }
+        _ => {
+            tracing::warn!(
+                target: "portal::announcements",
+                service = "ERP",
+                resolved_url = "http://localhost:8010",
+                env_var = "ERP_SERVICE_URL",
+                "[Announcements] 环境变量未设置，回退到权威默认端口"
+            );
+            "http://localhost:8010".to_string()
+        }
+    }
 }
 
 fn add_auth_header(

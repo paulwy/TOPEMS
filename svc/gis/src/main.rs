@@ -364,11 +364,13 @@ async fn main() -> Result<()> {
             "/devices/{device_code}/report",
             axum::routing::post(modules::device::report_device_location),
         )
-        .route("/ws/gis", get(modules::websocket::websocket_handler))
+        .route("/ws/gis/map", get(modules::websocket::websocket_handler))
         .route(
             "/ws/gis/device/{device_code}",
             get(modules::websocket::websocket_device_handler),
-        );
+        )
+        // 兼容遗留路径（v7.7 前使用 /ws/gis，v7.8 起统一为 /ws/gis/map）
+        .route("/ws/gis", get(modules::websocket::websocket_handler));
 
     let protected_api = Router::new()
         .route(

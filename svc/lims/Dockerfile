@@ -20,7 +20,7 @@ COPY --from=builder /app/target/release/topems-lims /usr/local/bin/topems-lims
 RUN chown -R topems:topems /app
 USER topems
 ENV LIMS_PORT=8051
-ENV RUST_LOG=info
+ENV RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
 EXPOSE 8051
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8051/health || exit 1

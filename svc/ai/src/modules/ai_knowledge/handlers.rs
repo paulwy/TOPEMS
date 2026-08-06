@@ -105,7 +105,7 @@ pub async fn create_knowledge_base(
     }
 }
 
-/// GET /api/core/ai-knowledge/bases/:id
+/// GET /api/core/ai-knowledge/bases/{id}
 pub async fn get_knowledge_base(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -122,7 +122,7 @@ pub async fn get_knowledge_base(
     }
 }
 
-/// PUT /api/core/ai-knowledge/bases/:id
+/// PUT /api/core/ai-knowledge/bases/{id}
 pub async fn update_knowledge_base(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -152,7 +152,7 @@ pub async fn update_knowledge_base(
     }
 }
 
-/// DELETE /api/core/ai-knowledge/bases/:id
+/// DELETE /api/core/ai-knowledge/bases/{id}
 pub async fn delete_knowledge_base(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -332,7 +332,7 @@ pub async fn upload_document(
     Json(api_success(document))
 }
 
-/// GET /api/core/ai-knowledge/documents/:id
+/// GET /api/core/ai-knowledge/documents/{id}
 pub async fn get_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -349,7 +349,7 @@ pub async fn get_document(
     }
 }
 
-/// PUT /api/core/ai-knowledge/documents/:id
+/// PUT /api/core/ai-knowledge/documents/{id}
 pub async fn update_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -392,7 +392,7 @@ pub async fn update_document(
     }
 }
 
-/// DELETE /api/core/ai-knowledge/documents/:id
+/// DELETE /api/core/ai-knowledge/documents/{id}
 pub async fn delete_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -409,7 +409,7 @@ pub async fn delete_document(
     }
 }
 
-/// POST /api/core/ai-knowledge/documents/:id/reprocess
+/// POST /api/core/ai-knowledge/documents/{id}/reprocess
 ///
 /// 重新处理文档（向量化）。用于：
 /// - 处理失败的文档重试
@@ -518,7 +518,7 @@ pub async fn list_qa_history(
     }
 }
 
-/// POST /api/core/ai-knowledge/qa/:id/feedback
+/// POST /api/core/ai-knowledge/qa/{id}/feedback
 pub async fn submit_feedback(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -21,6 +21,38 @@ use topems_shared::{auth::Claims, ApiResponse};
 
 use crate::{shared::AppState, utils::user_context::extract_bearer_token};
 
+/// 统一的服务地址解析 helper：优先环境变量，否则使用权威默认端口，
+/// 并输出结构化端口排查日志（target: portal::search）。
+fn resolve_service_url(env_var: &str, fallback: &'static str, service_label: &str) -> String {
+    match std::env::var(env_var) {
+        Ok(v) if !v.is_empty() => {
+            tracing::info!(
+                target: "portal::search",
+                service = service_label,
+                resolved_url = %v,
+                source = %format!("env:{env_var}"),
+                "[Search] 解析服务地址（环境变量）"
+            );
+            v
+        }
+        _ => {
+            tracing::warn!(
+                target: "portal::search",
+                service = service_label,
+                resolved_url = %fallback,
+                env_var = %env_var,
+                "[Search] 环境变量未设置，回退到权威默认端口"
+            );
+            fallback.to_string()
+        }
+    }
+}
+
+const DEFAULT_CRM_URL: &str = "http://localhost:8029";
+const DEFAULT_BI_URL: &str = "http://localhost:8060";
+const DEFAULT_DOC_URL: &str = "http://localhost:8000";
+const DEFAULT_ERP_URL: &str = "http://localhost:8010";
+
 #[derive(Serialize, Deserialize)]
 pub struct SearchResult {
     pub id: String,
@@ -205,8 +237,7 @@ async fn search_erp(state: &AppState, query: &str, token: Option<&str>) -> Vec<S
 }
 
 async fn search_crm(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let base =
-        std::env::var("CRM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8020".to_string());
+    let base = resolve_service_url("CRM_SERVICE_URL", DEFAULT_CRM_URL, "CRM");
     let url = format!("{}/api/crm/search", base);
     let mut req = state.http_client.get(&url).query(&[("q", query)]);
     if let Some(t) = token {
@@ -228,8 +259,7 @@ async fn search_crm(state: &AppState, query: &str, token: Option<&str>) -> Vec<S
 }
 
 async fn search_bi(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let base =
-        std::env::var("BI_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8060".to_string());
+    let base = resolve_service_url("BI_SERVICE_URL", DEFAULT_BI_URL, "BI");
     let url = format!("{}/api/bi/search", base);
     let mut req = state.http_client.get(&url).query(&[("q", query)]);
     if let Some(t) = token {
@@ -301,8 +331,7 @@ async fn search_notifications(
 }
 
 async fn search_documents(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let base =
-        std::env::var("DOC_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8070".to_string());
+    let base = resolve_service_url("DOC_SERVICE_URL", DEFAULT_DOC_URL, "DOC");
     let url = format!("{}/api/doc/search", base);
     let mut req =
         state
@@ -613,5 +642,5 @@ fn parse_search_results(
 }
 
 fn erp_base_url() -> String {
-    std::env::var("ERP_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8010".to_string())
+    resolve_service_url("ERP_SERVICE_URL", DEFAULT_ERP_URL, "ERP")
 }

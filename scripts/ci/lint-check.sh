@@ -226,7 +226,6 @@ check_typescript() {
         "apps/web"
         "apps/desktop"
         "apps/mobile"
-        "apps/server"
         "tests/e2e"
     )
 

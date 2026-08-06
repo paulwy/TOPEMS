@@ -148,7 +148,7 @@ pub fn create_routes() -> Router<AppState> {
 
 /// 获取运行时 URL
 fn get_runtime_url() -> String {
-    std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8062".to_string())
+    std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8070".to_string())
 }
 
 /// 启动时自动注册到统一核心

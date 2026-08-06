@@ -2042,7 +2042,7 @@ const BI: ServiceConfig = {
     display_name: '商业智能',
     description: '数据源、分析查询、可视化图表、仪表盘、报表',
     schema: 'bi',
-    port: 8062,
+    port: 8060,
     tables: [
         {
             name: 'data_sources',
