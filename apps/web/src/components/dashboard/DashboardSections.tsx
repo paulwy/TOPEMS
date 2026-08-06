@@ -110,7 +110,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
                 bgcolor: 'grey.100',
                 '&:hover': { bgcolor: 'grey.200' },
               }}
-            aria-label="展开"
+              aria-label='展开'
             >
               {expanded ? (
                 <ChevronUp

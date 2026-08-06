@@ -197,7 +197,7 @@ export const FormListPage: React.FC = () => {
                           size='small'
                           color='error'
                           onClick={() => handleDelete(f.id)}
-                        aria-label="删除"
+                          aria-label='删除'
                         >
                           <DeleteOutlineIcon size={18} />
                         </IconButton>

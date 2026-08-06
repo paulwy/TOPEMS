@@ -486,7 +486,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   <IconButton
                     size='small'
                     onClick={() => window.open(file.url)}
-                  aria-label="下载"
+                    aria-label='下载'
                   >
                     <Download size={16} />
                   </IconButton>
@@ -495,7 +495,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   <IconButton
                     size='small'
                     onClick={() => handlePause(file.id)}
-                  aria-label="执行"
+                    aria-label='执行'
                   >
                     {file.status === 'paused' ? <Play size={16} /> : <Pause size={16} />}
                   </IconButton>
@@ -503,7 +503,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <IconButton
                   size='small'
                   onClick={() => handleDelete(file.id)}
-                aria-label="关闭"
+                  aria-label='关闭'
                 >
                   <X size={16} />
                 </IconButton>

@@ -516,7 +516,7 @@ const MobileProductionPage: React.FC = () => {
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
           onClick={() => navigate(MOBILE_PATHS.scanPage)}
-        aria-label="扫码"
+          aria-label='扫码'
         >
           <Barcode style={{ width: 20, height: 20 }} />
         </IconButton>

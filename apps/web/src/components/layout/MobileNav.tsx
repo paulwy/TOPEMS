@@ -200,7 +200,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
           display: { xs: 'flex', lg: 'none' },
           ml: 1,
         }}
-      aria-label="菜单"
+        aria-label='菜单'
       >
         <Menu style={{ width: 24, height: 24 }} />
       </IconButton>
@@ -258,7 +258,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
           <IconButton
             onClick={onClose}
             sx={{ color: 'common.white' }}
-          aria-label="关闭"
+            aria-label='关闭'
           >
             <X style={{ width: 20, height: 20 }} />
           </IconButton>
@@ -296,7 +296,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 size='small'
                 onClick={() => setSearchQuery('')}
                 sx={{ p: 0, color: 'text.secondary' }}
-              aria-label="关闭"
+                aria-label='关闭'
               >
                 <X style={{ width: 14, height: 14 }} />
               </IconButton>
@@ -387,7 +387,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 navigate(NOTIFICATION_PATHS.list);
                 onClose();
               }}
-            aria-label="通知"
+              aria-label='通知'
             >
               <Bell style={{ width: 20, height: 20 }} />
             </IconButton>
@@ -397,7 +397,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 navigate(AI_PATHS.root);
                 onClose();
               }}
-            aria-label="提示"
+              aria-label='提示'
             >
               <Lightbulb style={{ width: 20, height: 20 }} />
             </IconButton>
@@ -407,7 +407,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 navigate(DASHBOARD_PATHS.help);
                 onClose();
               }}
-            aria-label="帮助"
+              aria-label='帮助'
             >
               <HelpCircle style={{ width: 20, height: 20 }} />
             </IconButton>

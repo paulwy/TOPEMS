@@ -212,7 +212,7 @@ export const WorkflowConfigPage: React.FC = () => {
                           size='small'
                           color='error'
                           onClick={() => handleDelete(w.id)}
-                        aria-label="删除"
+                          aria-label='删除'
                         >
                           <DeleteOutlineIcon size={18} />
                         </IconButton>

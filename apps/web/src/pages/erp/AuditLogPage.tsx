@@ -509,7 +509,7 @@ const AuditLogPage: React.FC = () => {
                             <IconButton
                               size='small'
                               onClick={() => handleViewDetail(log)}
-                            aria-label="查看"
+                              aria-label='查看'
                             >
                               <Eye size={16} />
                             </IconButton>

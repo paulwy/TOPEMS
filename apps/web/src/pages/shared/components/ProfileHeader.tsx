@@ -56,7 +56,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile }) => {
                 height: 32,
               }}
               size='small'
-            aria-label="拍照"
+              aria-label='拍照'
             >
               <Camera size={16} />
             </IconButton>

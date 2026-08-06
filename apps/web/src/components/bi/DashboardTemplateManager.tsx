@@ -355,7 +355,7 @@ export const DashboardTemplateManager: React.FC<{
                     size='small'
                     onClick={() => handleCreateDashboard(template.id)}
                     disabled={!template.isactive}
-                  aria-label="复制"
+                    aria-label='复制'
                   >
                     <Copy sx={{ width: 18, height: 18 }} />
                   </IconButton>
@@ -364,7 +364,7 @@ export const DashboardTemplateManager: React.FC<{
                   <IconButton
                     size='small'
                     onClick={() => handleOpenEditModal(template)}
-                  aria-label="编辑"
+                    aria-label='编辑'
                   >
                     <Edit2 sx={{ width: 18, height: 18 }} />
                   </IconButton>
@@ -374,7 +374,7 @@ export const DashboardTemplateManager: React.FC<{
                     size='small'
                     color='error'
                     onClick={() => handleDeleteTemplate(template.id)}
-                  aria-label="删除"
+                    aria-label='删除'
                   >
                     <Trash2 sx={{ width: 18, height: 18 }} />
                   </IconButton>

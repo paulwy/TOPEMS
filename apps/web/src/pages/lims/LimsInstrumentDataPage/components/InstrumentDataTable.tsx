@@ -127,7 +127,7 @@ const InstrumentDataTable: React.FC<InstrumentDataTableProps> = ({
                         <IconButton
                           size='small'
                           onClick={() => onViewDetail(item)}
-                        aria-label="查看"
+                          aria-label='查看'
                         >
                           <Eye size={16} />
                         </IconButton>
@@ -137,7 +137,7 @@ const InstrumentDataTable: React.FC<InstrumentDataTableProps> = ({
                           <IconButton
                             size='small'
                             onClick={() => onParse(item.id)}
-                          aria-label="刷新"
+                            aria-label='刷新'
                           >
                             <RefreshCw size={16} />
                           </IconButton>
@@ -147,7 +147,7 @@ const InstrumentDataTable: React.FC<InstrumentDataTableProps> = ({
                         <IconButton
                           size='small'
                           onClick={() => onDelete(item.id)}
-                        aria-label="删除"
+                          aria-label='删除'
                         >
                           <Trash2 size={16} />
                         </IconButton>

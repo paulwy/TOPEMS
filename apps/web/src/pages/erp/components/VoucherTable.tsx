@@ -181,7 +181,7 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
                         <IconButton
                           size='small'
                           onClick={() => handleViewDetail(voucher)}
-                        aria-label="查看"
+                          aria-label='查看'
                         >
                           <Eye size={16} />
                         </IconButton>
@@ -191,7 +191,7 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
                           <IconButton
                             size='small'
                             color='primary'
-                          aria-label="编辑"
+                            aria-label='编辑'
                           >
                             <Edit size={16} />
                           </IconButton>
@@ -203,7 +203,7 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
                             size='small'
                             color='success'
                             onClick={() => handleAudit(voucher)}
-                          aria-label="确认"
+                            aria-label='确认'
                           >
                             <Check size={16} />
                           </IconButton>
@@ -215,7 +215,7 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
                             size='small'
                             color='primary'
                             onClick={() => handlePost(voucher)}
-                          aria-label="打开文档"
+                            aria-label='打开文档'
                           >
                             <BookOpen size={16} />
                           </IconButton>
@@ -227,7 +227,7 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
                             size='small'
                             color='error'
                             onClick={() => handleDelete(voucher.id)}
-                          aria-label="删除"
+                            aria-label='删除'
                           >
                             <Trash2 size={16} />
                           </IconButton>

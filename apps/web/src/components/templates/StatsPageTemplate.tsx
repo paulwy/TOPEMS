@@ -715,7 +715,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
               <IconButton
                 onClick={onRefresh}
                 disabled={loading}
-              aria-label="刷新"
+                aria-label='刷新'
               >
                 <RefreshCw
                   sx={{

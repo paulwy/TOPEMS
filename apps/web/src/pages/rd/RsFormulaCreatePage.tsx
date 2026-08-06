@@ -363,7 +363,7 @@ const RsFormulaCreatePage: React.FC = () => {
                     color='error'
                     onClick={() => handleRemoveIngredient(index)}
                     disabled={submitting || ingredients.length === 1}
-                  aria-label="删除"
+                    aria-label='删除'
                   >
                     <Trash2 />
                   </IconButton>

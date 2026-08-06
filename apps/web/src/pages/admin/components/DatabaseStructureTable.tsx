@@ -246,7 +246,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                           sx={{
                             '&:hover': { bgcolor: 'error.lighter' },
                           }}
-                        aria-label="删除"
+                          aria-label='删除'
                         >
                           <Trash2 size={16} />
                         </IconButton>

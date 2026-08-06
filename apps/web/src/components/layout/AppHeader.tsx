@@ -202,7 +202,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               size='small'
               onClick={onBack}
               sx={{ display: { sm: 'none' } }}
-            aria-label="菜单"
+              aria-label='菜单'
             >
               <MenuIcon style={{ width: 20, height: 20 }} />
             </IconButton>
@@ -445,7 +445,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                       <IconButton
                         size='small'
                         sx={{ width: 28, height: 28 }}
-                      aria-label="全部确认"
+                        aria-label='全部确认'
                       >
                         <CheckCheck style={{ width: 16, height: 16 }} />
                       </IconButton>
@@ -454,7 +454,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                       <IconButton
                         size='small'
                         sx={{ width: 28, height: 28 }}
-                      aria-label="设置"
+                        aria-label='设置'
                       >
                         <Settings style={{ width: 16, height: 16 }} />
                       </IconButton>
@@ -540,7 +540,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                           right: 8,
                           top: 8,
                         }}
-                      aria-label="删除"
+                        aria-label='删除'
                       >
                         <Trash2 style={{ width: 14, height: 14 }} />
                       </IconButton>

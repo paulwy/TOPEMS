@@ -137,7 +137,7 @@ export default function ServiceMonitor({
               bgcolor: 'action.hover',
             },
           }}
-        aria-label="刷新"
+          aria-label='刷新'
         >
           <RefreshCw
             size={20}

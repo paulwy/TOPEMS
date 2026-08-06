@@ -221,7 +221,7 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
                           <IconButton
                             size='small'
                             color='primary'
-                          aria-label="下载"
+                            aria-label='下载'
                           >
                             <Download size={16} />
                           </IconButton>
@@ -232,7 +232,7 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
                               size='small'
                               color='warning'
                               onClick={() => onRestore(backup.id)}
-                            aria-label="上传"
+                              aria-label='上传'
                             >
                               <Upload size={16} />
                             </IconButton>
@@ -243,7 +243,7 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
                             size='small'
                             color='error'
                             onClick={() => onDelete(backup.id)}
-                          aria-label="删除"
+                            aria-label='删除'
                           >
                             <Trash2 size={16} />
                           </IconButton>

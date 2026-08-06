@@ -536,7 +536,7 @@ const ProfilePage: React.FC = () => {
                       height: 32,
                     }}
                     size='small'
-                  aria-label="拍照"
+                    aria-label='拍照'
                   >
                     <Camera size={16} />
                   </IconButton>

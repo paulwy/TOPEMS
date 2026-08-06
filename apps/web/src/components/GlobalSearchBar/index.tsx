@@ -68,7 +68,7 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
             }}
             size='small'
             ref={iconButtonRef}
-          aria-label="搜索"
+            aria-label='搜索'
           >
             <Search size={18} />
           </IconButton>

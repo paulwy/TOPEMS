@@ -485,7 +485,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   const [showHint, setShowHint] = useState(false);
 
   // 草稿状态
-  const [drafts, setDrafts] = useState<Array<{ data: Record<string, unknown>; timestamp: number }>>([]);
+  const [drafts, setDrafts] = useState<Array<{ data: Record<string, unknown>; timestamp: number }>>(
+    []
+  );
   const [showDraftDialog, setShowDraftDialog] = useState(false);
 
   // 当前分组标签
@@ -816,7 +818,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             <IconButton
               size='small'
               sx={{ position: 'absolute', top: 0, right: 0 }}
-            aria-label="信息"
+              aria-label='信息'
             >
               <Info style={{ width: 16, height: 16 }} />
             </IconButton>
@@ -1159,7 +1161,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             </Box>
           </Box>
           {section.collapsible && (
-            <IconButton size='small'aria-label="展开" >
+            <IconButton
+              size='small'
+              aria-label='展开'
+            >
               {isExpanded ? (
                 <ChevronUp style={{ width: 18, height: 18 }} />
               ) : (
@@ -1426,7 +1431,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               <IconButton
                 size='small'
                 onClick={() => {}}
-              aria-label="关闭"
+                aria-label='关闭'
               >
                 <X style={{ width: 16, height: 16 }} />
               </IconButton>
@@ -1446,7 +1451,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               <IconButton
                 size='small'
                 onClick={() => {}}
-              aria-label="关闭"
+                aria-label='关闭'
               >
                 <X style={{ width: 16, height: 16 }} />
               </IconButton>

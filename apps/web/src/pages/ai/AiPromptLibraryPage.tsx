@@ -542,7 +542,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                                   e.stopPropagation();
                                   handleToggleFavorite(prompt.id);
                                 }}
-                              aria-label="收藏"
+                                aria-label='收藏'
                               >
                                 <Star
                                   size={18}
@@ -614,7 +614,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                                     e.stopPropagation();
                                     handleCopyPrompt(prompt.content);
                                   }}
-                                aria-label="复制"
+                                  aria-label='复制'
                                 >
                                   <Copy size={14} />
                                 </IconButton>
@@ -624,7 +624,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                                     e.stopPropagation();
                                     handleUsePrompt(prompt);
                                   }}
-                                aria-label="执行"
+                                  aria-label='执行'
                                 >
                                   <PlayCircle size={14} />
                                 </IconButton>
@@ -675,7 +675,7 @@ export const AiPromptLibraryPage: React.FC = () => {
             <IconButton
               size='small'
               onClick={() => setUseDialogOpen(false)}
-            aria-label="关闭"
+              aria-label='关闭'
             >
               <X size={18} />
             </IconButton>

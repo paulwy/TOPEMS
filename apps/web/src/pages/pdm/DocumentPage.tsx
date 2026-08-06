@@ -482,12 +482,18 @@ export const DocumentPage: React.FC = () => {
                   secondaryAction={
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <Tooltip title='下载'>
-                        <IconButton size='small'aria-label="下载" >
+                        <IconButton
+                          size='small'
+                          aria-label='下载'
+                        >
                           <Download size={16} />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title='预览'>
-                        <IconButton size='small'aria-label="查看" >
+                        <IconButton
+                          size='small'
+                          aria-label='查看'
+                        >
                           <Eye size={16} />
                         </IconButton>
                       </Tooltip>

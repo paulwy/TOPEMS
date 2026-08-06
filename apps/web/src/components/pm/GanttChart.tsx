@@ -126,7 +126,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               borderRadius: 1,
               '&:hover': { backgroundColor: 'grey.200' },
             }}
-          aria-label="展开"
+            aria-label='展开'
           >
             <ChevronLeft style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -137,7 +137,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               borderRadius: 1,
               '&:hover': { backgroundColor: 'grey.200' },
             }}
-          aria-label="展开"
+            aria-label='展开'
           >
             <ChevronRight style={{ width: 16, height: 16 }} />
           </IconButton>

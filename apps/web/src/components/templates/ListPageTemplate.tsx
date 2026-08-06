@@ -663,7 +663,9 @@ export function ListPageTemplate<T extends { id?: string | number }>({
 
   // 更新编辑中的字段值
   const updateEditingField = useCallback((field: keyof T, value: unknown) => {
-    setEditingData((prev) => ({
+    setEditingData(
+      (prev) =>
+        ({
           ...prev,
           [field]: value,
         }) as Partial<T>
@@ -3049,7 +3051,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                     e.stopPropagation();
                     handleExpandRow(row);
                   }}
-                aria-label="展开"
+                  aria-label='展开'
                 >
                   <ChevronRight
                     style={{
@@ -3080,7 +3082,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                       e.stopPropagation();
                       toggleExpand(rowId);
                     }}
-                  aria-label="展开"
+                    aria-label='展开'
                   >
                     <ChevronRight
                       style={{
@@ -3701,7 +3703,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                     <IconButton
                       onClick={onRefresh}
                       size='small'
-                    aria-label="刷新"
+                      aria-label='刷新'
                     >
                       <RefreshCw size={18} />
                     </IconButton>
@@ -3718,7 +3720,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                         size='small'
                         disabled={data.length === 0 || exporting}
                         color={exportComplete ? 'primary' : 'inherit'}
-                      aria-label="下载"
+                        aria-label='下载'
                       >
                         <Download size={18} />
                       </IconButton>

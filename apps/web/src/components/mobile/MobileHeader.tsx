@@ -71,7 +71,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               minWidth: 44,
               minHeight: 44,
             }}
-          aria-label="返回"
+            aria-label='返回'
           >
             <ArrowLeft style={{ width: 22, height: 22 }} />
           </IconButton>
@@ -83,7 +83,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               minWidth: 44,
               minHeight: 44,
             }}
-          aria-label="菜单"
+            aria-label='菜单'
           >
             <Menu style={{ width: 22, height: 22 }} />
           </IconButton>
@@ -118,7 +118,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 minWidth: 44,
                 minHeight: 44,
               }}
-            aria-label="搜索"
+              aria-label='搜索'
             >
               <Search style={{ width: 22, height: 22 }} />
             </IconButton>
@@ -132,7 +132,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 minWidth: 44,
                 minHeight: 44,
               }}
-            aria-label="徽章"
+              aria-label='徽章'
             >
               <Badge
                 badgeContent={notificationCount}
@@ -159,7 +159,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 minWidth: 44,
                 minHeight: 44,
               }}
-            aria-label="更多"
+              aria-label='更多'
             >
               <MoreVertical style={{ width: 22, height: 22 }} />
             </IconButton>

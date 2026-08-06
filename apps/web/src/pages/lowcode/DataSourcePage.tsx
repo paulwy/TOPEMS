@@ -210,7 +210,7 @@ export const DataSourcePage: React.FC = () => {
                           size='small'
                           color='error'
                           onClick={() => handleDelete(s.id)}
-                        aria-label="删除"
+                          aria-label='删除'
                         >
                           <DeleteOutlineIcon size={18} />
                         </IconButton>

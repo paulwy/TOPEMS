@@ -535,7 +535,7 @@ function BffFormPageInner<T extends FieldValues = FieldValues>(props: BffFormPag
           <IconButton
             onClick={handleBack}
             size='small'
-          aria-label="返回"
+            aria-label='返回'
           >
             <ArrowLeft size={20} />
           </IconButton>

@@ -47,7 +47,8 @@ export const WorkflowInstancesPage: React.FC = () => {
       let total = 0;
       if (response.success && response.data) {
         items = (response.data as { items: WorkflowInstance[]; total: number }).items || [];
-        total = (response.data as { items: WorkflowInstance[]; total: number }).total || items.length;
+        total =
+          (response.data as { items: WorkflowInstance[]; total: number }).total || items.length;
       }
       if (typeof params?.type === 'string' && params.type !== 'all') {
         items = items.filter((item: WorkflowInstance) => {

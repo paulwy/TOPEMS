@@ -67,7 +67,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
                 ? ` + ${t('report.template_management_page.enabled')} + `
                 : t('report.template_management_page.disabled')
             }
-          aria-label="切换"
+            aria-label='切换'
           >
             {template.isactive ? (
               <ToggleRight sx={{ width: 20, height: 20 }} />

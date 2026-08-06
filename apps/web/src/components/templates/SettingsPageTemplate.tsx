@@ -266,7 +266,10 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           </FormLabel>
           {field.description && (
             <Tooltip title={field.description}>
-              <IconButton size='small'aria-label="信息" >
+              <IconButton
+                size='small'
+                aria-label='信息'
+              >
                 <Info style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
               </IconButton>
             </Tooltip>
@@ -464,7 +467,10 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             </Box>
           </Box>
           {section.collapsible && (
-            <IconButton size='small'aria-label="展开" >
+            <IconButton
+              size='small'
+              aria-label='展开'
+            >
               <ChevronRight
                 style={{
                   width: 18,
@@ -622,7 +628,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             <IconButton
               size='small'
               onClick={() => setErrors({})}
-            aria-label="关闭"
+              aria-label='关闭'
             >
               <X style={{ width: 16, height: 16 }} />
             </IconButton>
@@ -641,7 +647,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             <IconButton
               size='small'
               onClick={() => {}}
-            aria-label="关闭"
+              aria-label='关闭'
             >
               <X style={{ width: 16, height: 16 }} />
             </IconButton>

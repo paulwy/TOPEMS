@@ -344,7 +344,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       <IconButton
                         onClick={() => setShowPassword(!showPassword)}
                         sx={{ color: 'grey.400' }}
-                      aria-label="隐藏"
+                        aria-label='隐藏'
                       >
                         {showPassword ? (
                           <EyeOff sx={{ width: 20, height: 20 }} />

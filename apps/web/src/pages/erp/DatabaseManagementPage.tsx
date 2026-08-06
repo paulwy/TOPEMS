@@ -572,7 +572,7 @@ const DatabaseManagementPage: React.FC = () => {
                                 <IconButton
                                   size='small'
                                   onClick={() => handleViewStructure(table)}
-                                aria-label="查看"
+                                  aria-label='查看'
                                 >
                                   <Eye size={16} />
                                 </IconButton>
@@ -743,7 +743,7 @@ const DatabaseManagementPage: React.FC = () => {
                                 <IconButton
                                   size='small'
                                   color='primary'
-                                aria-label="下载"
+                                  aria-label='下载'
                                 >
                                   <Download size={16} />
                                 </IconButton>
@@ -754,7 +754,7 @@ const DatabaseManagementPage: React.FC = () => {
                                     size='small'
                                     color='warning'
                                     onClick={() => handleRestore(backup.id)}
-                                  aria-label="上传"
+                                    aria-label='上传'
                                   >
                                     <Upload size={16} />
                                   </IconButton>
@@ -765,7 +765,7 @@ const DatabaseManagementPage: React.FC = () => {
                                   size='small'
                                   color='error'
                                   onClick={() => handleDeleteBackup(backup.id)}
-                                aria-label="删除"
+                                  aria-label='删除'
                                 >
                                   <Trash2 size={16} />
                                 </IconButton>

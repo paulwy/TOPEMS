@@ -120,7 +120,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             size='small'
             onClick={handleClear}
             sx={{ p: 0.5 }}
-          aria-label="关闭"
+            aria-label='关闭'
           >
             <X size={14} />
           </IconButton>
@@ -130,7 +130,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           onClick={handleFilterClick}
           sx={{ p: 0.5, opacity: availableServices?.length || availableTypes?.length ? 0.6 : 0.3 }}
           disabled={!availableServices?.length && !availableTypes?.length}
-        aria-label="筛选"
+          aria-label='筛选'
         >
           <Filter size={14} />
         </IconButton>

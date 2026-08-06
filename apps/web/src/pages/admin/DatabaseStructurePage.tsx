@@ -129,19 +129,28 @@ const DatabaseStructurePage: React.FC = () => {
 
   useEffect(() => {
     if (tablesQuery.isError) {
-      showNotification('error', extractErrorMessage(tablesQuery.error, t('admin:database_structure_page.loading_list_fail')));
+      showNotification(
+        'error',
+        extractErrorMessage(tablesQuery.error, t('admin:database_structure_page.loading_list_fail'))
+      );
     }
   }, [tablesQuery.isError, tablesQuery.error]);
 
   useEffect(() => {
     if (dbChangesQuery.isError) {
-      apiLogger.error(t('admin:database_structure_page.loading_changes_fail'), dbChangesQuery.error);
+      apiLogger.error(
+        t('admin:database_structure_page.loading_changes_fail'),
+        dbChangesQuery.error
+      );
     }
   }, [dbChangesQuery.isError, dbChangesQuery.error]);
 
   useEffect(() => {
     if (tableDetailQuery.isError) {
-      showNotification('error', extractErrorMessage(tableDetailQuery.error, t('admin:database_structure_page.loading_fail')));
+      showNotification(
+        'error',
+        extractErrorMessage(tableDetailQuery.error, t('admin:database_structure_page.loading_fail'))
+      );
     }
   }, [tableDetailQuery.isError, tableDetailQuery.error]);
 
@@ -165,7 +174,10 @@ const DatabaseStructurePage: React.FC = () => {
       setShowPreviewModal(true);
     },
     onError: (err: unknown) => {
-      showNotification('error', extractErrorMessage(err, t('admin:database_structure_page.sql_fail')));
+      showNotification(
+        'error',
+        extractErrorMessage(err, t('admin:database_structure_page.sql_fail'))
+      );
     },
   });
 
@@ -206,7 +218,10 @@ const DatabaseStructurePage: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-db-changes'] });
     },
     onError: (err: unknown) => {
-      showNotification('error', extractErrorMessage(err, t('admin:database_structure_page.delete_fail')));
+      showNotification(
+        'error',
+        extractErrorMessage(err, t('admin:database_structure_page.delete_fail'))
+      );
     },
   });
 
@@ -475,8 +490,13 @@ const DatabaseStructurePage: React.FC = () => {
                         color='text.secondary'
                         sx={{ mt: 0.5 }}
                       >
-                        {t('admin:database_structure_page.columns_count', { count: selectedTable.columns.length })} |{' '}
-                        {t('admin:database_structure_page.rows_count', { count: selectedTable.row_count?.toLocaleString() || '-' })}
+                        {t('admin:database_structure_page.columns_count', {
+                          count: selectedTable.columns.length,
+                        })}{' '}
+                        |{' '}
+                        {t('admin:database_structure_page.rows_count', {
+                          count: selectedTable.row_count?.toLocaleString() || '-',
+                        })}
                       </Typography>
                     </Box>
                     <Button
@@ -644,7 +664,7 @@ const DatabaseStructurePage: React.FC = () => {
                                       sx={{
                                         '&:hover': { bgcolor: 'error.lighter' },
                                       }}
-                                    aria-label={t('admin:database_structure_page.delete_action')}
+                                      aria-label={t('admin:database_structure_page.delete_action')}
                                     >
                                       <Trash2 size={16} />
                                     </IconButton>
@@ -833,7 +853,9 @@ const DatabaseStructurePage: React.FC = () => {
               >
                 {t('admin:database_structure_page.select_table')}
               </Typography>
-              <Typography color='text.secondary'>{t('admin:database_structure_page.select_table_hint')}</Typography>
+              <Typography color='text.secondary'>
+                {t('admin:database_structure_page.select_table_hint')}
+              </Typography>
             </Paper>
           )}
         </Grid>
@@ -846,7 +868,9 @@ const DatabaseStructurePage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle sx={{ pb: 1 }}>{t('admin:database_structure_page.add_new_column')}</DialogTitle>
+        <DialogTitle sx={{ pb: 1 }}>
+          {t('admin:database_structure_page.add_new_column')}
+        </DialogTitle>
         <DialogContent>
           <Stack
             spacing={2.5}

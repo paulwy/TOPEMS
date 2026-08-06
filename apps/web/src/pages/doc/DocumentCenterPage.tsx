@@ -761,7 +761,7 @@ const DocumentCenterPage: React.FC = () => {
                             size='small'
                             onClick={() => handleRestoreVersion(versionDoc, ver)}
                             sx={{ color: 'warning.main' }}
-                          aria-label="重置"
+                            aria-label='重置'
                           >
                             <RotateCcw size={16} />
                           </IconButton>
@@ -774,7 +774,7 @@ const DocumentCenterPage: React.FC = () => {
                             onClick={() => {
                               if (versionDoc) handleDownload(versionDoc);
                             }}
-                          aria-label="下载"
+                            aria-label='下载'
                           >
                             <Download size={16} />
                           </IconButton>

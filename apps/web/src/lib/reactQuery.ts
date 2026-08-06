@@ -5,7 +5,6 @@ import { useNotificationStore } from '../store';
 // 延迟导入 i18n 实例，避免模块加载时的循环依赖
 // （i18n/index.ts 依赖 initReactI18next，测试中可能被 mock）
 function getT() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const i18n = require('../i18n').default;
   return (key: string) => i18n.t(key);
 }

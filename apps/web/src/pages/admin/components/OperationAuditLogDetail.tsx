@@ -47,7 +47,10 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
             {t('admin.operation_audit_log.operation_audit_log_detail')}
           </Typography>
         </Box>
-        <IconButton onClick={() => setShowDetailModal(false)}aria-label="关闭" >
+        <IconButton
+          onClick={() => setShowDetailModal(false)}
+          aria-label='关闭'
+        >
           <X size={20} />
         </IconButton>
       </DialogTitle>

@@ -550,7 +550,7 @@ ${content
                 <IconButton
                   onClick={() => setShowHistory(true)}
                   size='small'
-                aria-label="历史"
+                  aria-label='历史'
                 >
                   <History size={18} />
                 </IconButton>
@@ -561,7 +561,7 @@ ${content
               <IconButton
                 onClick={handleCopy}
                 size='small'
-              aria-label="确认"
+                aria-label='确认'
               >
                 {copied ? <Check size={18} /> : <Copy size={18} />}
               </IconButton>
@@ -620,7 +620,7 @@ ${content
                   <IconButton
                     size='small'
                     onClick={() => setImageDialogOpen(true)}
-                  aria-label="新增"
+                    aria-label='新增'
                   >
                     <Plus size={18} />
                     <Image size={18} />
@@ -952,7 +952,10 @@ ${content
                       }
                       secondary={version.comment || '无备注'}
                     />
-                    <IconButton size='small'aria-label="查看" >
+                    <IconButton
+                      size='small'
+                      aria-label='查看'
+                    >
                       <Eye size={16} />
                     </IconButton>
                   </ListItemButton>

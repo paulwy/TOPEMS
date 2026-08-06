@@ -429,10 +429,26 @@ const RateLimitConfigPage: React.FC = () => {
                 spacing={2}
               >
                 {[
-                  { key: 'by_tenant', label: t('admin:rate_limit_config_page.dim_tenant'), desc: t('admin:rate_limit_config_page.dim_tenant_desc') },
-                  { key: 'by_user', label: t('admin:rate_limit_config_page.dim_user'), desc: t('admin:rate_limit_config_page.dim_user_desc') },
-                  { key: 'by_ip', label: 'IP', desc: t('admin:rate_limit_config_page.dim_ip_desc') },
-                  { key: 'by_global', label: t('admin:rate_limit_config_page.dim_global'), desc: t('admin:rate_limit_config_page.dim_global_desc') },
+                  {
+                    key: 'by_tenant',
+                    label: t('admin:rate_limit_config_page.dim_tenant'),
+                    desc: t('admin:rate_limit_config_page.dim_tenant_desc'),
+                  },
+                  {
+                    key: 'by_user',
+                    label: t('admin:rate_limit_config_page.dim_user'),
+                    desc: t('admin:rate_limit_config_page.dim_user_desc'),
+                  },
+                  {
+                    key: 'by_ip',
+                    label: 'IP',
+                    desc: t('admin:rate_limit_config_page.dim_ip_desc'),
+                  },
+                  {
+                    key: 'by_global',
+                    label: t('admin:rate_limit_config_page.dim_global'),
+                    desc: t('admin:rate_limit_config_page.dim_global_desc'),
+                  },
                 ].map((dim) => (
                   <Grid
                     size={{ xs: 6, sm: 3 }}
@@ -530,7 +546,11 @@ const RateLimitConfigPage: React.FC = () => {
                         }
                         slotProps={{
                           input: {
-                            endAdornment: <InputAdornment position='end'>{t('admin:rate_limit_config_page.unit_times')}</InputAdornment>,
+                            endAdornment: (
+                              <InputAdornment position='end'>
+                                {t('admin:rate_limit_config_page.unit_times')}
+                              </InputAdornment>
+                            ),
                           },
                         }}
                       />
@@ -546,7 +566,11 @@ const RateLimitConfigPage: React.FC = () => {
                         }
                         slotProps={{
                           input: {
-                            endAdornment: <InputAdornment position='end'>{t('admin:rate_limit_config_page.unit_seconds')}</InputAdornment>,
+                            endAdornment: (
+                              <InputAdornment position='end'>
+                                {t('admin:rate_limit_config_page.unit_seconds')}
+                              </InputAdornment>
+                            ),
                           },
                         }}
                       />
@@ -620,8 +644,12 @@ const RateLimitConfigPage: React.FC = () => {
                     <TableRow>
                       <TableCell>{t('admin:rate_limit_config_page.label_path_prefix')}</TableCell>
                       <TableCell>{t('admin:rate_limit_config_page.label_requests')}</TableCell>
-                      <TableCell>{t('admin:rate_limit_config_page.label_window_seconds')}</TableCell>
-                      <TableCell align='right'>{t('admin:rate_limit_config_page.col_action')}</TableCell>
+                      <TableCell>
+                        {t('admin:rate_limit_config_page.label_window_seconds')}
+                      </TableCell>
+                      <TableCell align='right'>
+                        {t('admin:rate_limit_config_page.col_action')}
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -656,7 +684,7 @@ const RateLimitConfigPage: React.FC = () => {
                               <IconButton
                                 size='small'
                                 onClick={() => handleRemovePath(rule.path)}
-                              aria-label={t('admin:rate_limit_config_page.delete')}
+                                aria-label={t('admin:rate_limit_config_page.delete')}
                               >
                                 <Trash2 size={16} />
                               </IconButton>
@@ -861,7 +889,9 @@ const RateLimitConfigPage: React.FC = () => {
               onClick={handleSave}
               disabled={saveMutation.isPending}
             >
-              {saveMutation.isPending ? t('admin:rate_limit_config_page.saving') : t('admin:rate_limit_config_page.save_config')}
+              {saveMutation.isPending
+                ? t('admin:rate_limit_config_page.saving')
+                : t('admin:rate_limit_config_page.save_config')}
             </Button>
           </Box>
         </Grid>

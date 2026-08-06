@@ -320,7 +320,7 @@ const RowFormDialog: React.FC<RowFormDialogProps> = ({
         <IconButton
           size='small'
           onClick={onClose}
-        aria-label="关闭"
+          aria-label='关闭'
         >
           <X size={18} />
         </IconButton>
@@ -639,7 +639,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
                             size='small'
                             onClick={() => handleEdit(index)}
                             disabled={disabled}
-                          aria-label="编辑"
+                            aria-label='编辑'
                           >
                             <Pencil size={14} />
                           </IconButton>
@@ -652,7 +652,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
                             onClick={() => handleDelete(index)}
                             disabled={disabled}
                             color='error'
-                          aria-label="删除"
+                            aria-label='删除'
                           >
                             <Trash2 size={14} />
                           </IconButton>

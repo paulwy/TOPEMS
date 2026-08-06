@@ -90,16 +90,13 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
         event_publisher,
     };
     Router::new()
-        .route("/api/pm/projects", get(list_projects).post(create_project))
+        .route("/projects", get(list_projects).post(create_project))
         .route(
-            "/api/pm/projects/{id}",
+            "/projects/{id}",
             get(get_project).put(update_project).delete(delete_project),
         )
-        .route(
-            "/api/pm/projects/{id}/dashboard",
-            get(get_project_dashboard),
-        )
-        .route("/api/pm/projects/{id}/gantt", get(get_project_gantt))
+        .route("/projects/{id}/dashboard", get(get_project_dashboard))
+        .route("/projects/{id}/gantt", get(get_project_gantt))
         .with_state(state)
 }
 

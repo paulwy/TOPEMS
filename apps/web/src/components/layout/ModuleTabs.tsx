@@ -404,7 +404,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
                 backgroundColor: theme.palette.action.hover,
               },
             }}
-          aria-label="关闭"
+            aria-label='关闭'
           >
             <X style={{ width: 12, height: 12 }} />
           </IconButton>
@@ -444,7 +444,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
               backgroundColor: 'background.paper',
               boxShadow: 1,
             }}
-          aria-label="展开"
+            aria-label='展开'
           >
             <ChevronLeft style={{ width: 16, height: 16 }} />
           </IconButton>
@@ -460,7 +460,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
               backgroundColor: 'background.paper',
               boxShadow: 1,
             }}
-          aria-label="展开"
+            aria-label='展开'
           >
             <ChevronRight style={{ width: 16, height: 16 }} />
           </IconButton>

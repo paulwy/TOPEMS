@@ -472,7 +472,10 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                 筛选条件
               </Typography>
             </Box>
-            <IconButton size='small'aria-label="展开" >
+            <IconButton
+              size='small'
+              aria-label='展开'
+            >
               {filterExpanded ? (
                 <ChevronUp sx={{ width: 18, height: 18 }} />
               ) : (
@@ -795,7 +798,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                   bgcolor: viewMode === 'grid' ? 'background.paper' : 'transparent',
                   boxShadow: viewMode === 'grid' ? 1 : 0,
                 }}
-              aria-label="网格"
+                aria-label='网格'
               >
                 <Grid sx={{ width: 16, height: 16 }} />
               </IconButton>
@@ -806,7 +809,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                   bgcolor: viewMode === 'list' ? 'background.paper' : 'transparent',
                   boxShadow: viewMode === 'list' ? 1 : 0,
                 }}
-              aria-label="列表"
+                aria-label='列表'
               >
                 <List sx={{ width: 16, height: 16 }} />
               </IconButton>
@@ -818,7 +821,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               <IconButton
                 onClick={onRefresh}
                 disabled={loading}
-              aria-label="刷新"
+                aria-label='刷新'
               >
                 <RefreshCw
                   sx={{
@@ -869,7 +872,10 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
             >
               数据概览
             </Typography>
-            <IconButton size='small'aria-label="展开" >
+            <IconButton
+              size='small'
+              aria-label='展开'
+            >
               {statsOverviewExpanded ? (
                 <ChevronUp sx={{ width: 18, height: 18 }} />
               ) : (

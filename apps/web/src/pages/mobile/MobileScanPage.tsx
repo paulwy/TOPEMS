@@ -285,7 +285,7 @@ const MobileScanPage: React.FC = () => {
           size='large'
           onClick={() => navigate(MOBILE_PATHS.scan)}
           sx={{ minWidth: 44, minHeight: 44 }}
-        aria-label="设置"
+          aria-label='设置'
         >
           <Settings size={20} />
         </IconButton>
@@ -505,7 +505,7 @@ const MobileScanPage: React.FC = () => {
                     },
                   }}
                   onClick={() => setFlashOn(!flashOn)}
-                aria-label="手电筒"
+                  aria-label='手电筒'
                 >
                   <Flashlight style={{ width: 24, height: 24 }} />
                 </IconButton>
@@ -528,7 +528,7 @@ const MobileScanPage: React.FC = () => {
                       bgcolor: 'grey.200',
                     },
                   }}
-                aria-label="图片"
+                  aria-label='图片'
                 >
                   <Image style={{ width: 24, height: 24 }} />
                 </IconButton>
@@ -552,7 +552,7 @@ const MobileScanPage: React.FC = () => {
                     },
                   }}
                   onClick={() => setActiveTab(2)}
-                aria-label="扫码"
+                  aria-label='扫码'
                 >
                   <Barcode style={{ width: 24, height: 24 }} />
                 </IconButton>
@@ -646,7 +646,7 @@ const MobileScanPage: React.FC = () => {
                           <IconButton
                             size='small'
                             onClick={handleClearHistory}
-                          aria-label="删除"
+                            aria-label='删除'
                           >
                             <Trash2 style={{ width: 18, height: 18 }} />
                           </IconButton>

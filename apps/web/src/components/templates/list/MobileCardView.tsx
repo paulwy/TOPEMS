@@ -187,7 +187,7 @@ export function MobileCardView<T>({
                   <IconButton
                     size='small'
                     onClick={(e) => onRowActionClick(e, row)}
-                  aria-label="更多"
+                    aria-label='更多'
                   >
                     <MoreHorizontal style={{ width: 18, height: 18 }} />
                   </IconButton>

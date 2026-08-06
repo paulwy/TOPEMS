@@ -293,14 +293,20 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
 
         {showFilter && (
           <Tooltip title='筛选'>
-            <IconButton size='small'aria-label="筛选" >
+            <IconButton
+              size='small'
+              aria-label='筛选'
+            >
               <Filter style={{ width: 18, height: 18 }} />
             </IconButton>
           </Tooltip>
         )}
 
         <Tooltip title='刷新'>
-          <IconButton size='small'aria-label="刷新" >
+          <IconButton
+            size='small'
+            aria-label='刷新'
+          >
             <RefreshCw style={{ width: 18, height: 18 }} />
           </IconButton>
         </Tooltip>
@@ -494,7 +500,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                     e.stopPropagation();
                     toggleGroup(node.id);
                   }}
-                aria-label="展开"
+                  aria-label='展开'
                 >
                   {isExpanded ? (
                     <ChevronUp style={{ width: 16, height: 16 }} />
@@ -568,7 +574,10 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
             </Box>
           </Box>
           {group.collapsible && (
-            <IconButton size='small'aria-label="展开" >
+            <IconButton
+              size='small'
+              aria-label='展开'
+            >
               {isExpanded ? (
                 <ChevronUp style={{ width: 18, height: 18 }} />
               ) : (

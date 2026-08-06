@@ -91,7 +91,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
                     transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
                     transition: 'transform 0.3s',
                   }}
-                aria-label="展开"
+                  aria-label='展开'
                 >
                   <ChevronDown style={{ width: 18, height: 18 }} />
                 </IconButton>
@@ -99,7 +99,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
               <IconButton
                 size='small'
                 onClick={(e) => setAnchorEl(e.currentTarget)}
-              aria-label="更多"
+                aria-label='更多'
               >
                 <MoreVertical style={{ width: 18, height: 18 }} />
               </IconButton>

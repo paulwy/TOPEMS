@@ -185,7 +185,7 @@ export const DatabaseManagementTableList: React.FC<DatabaseManagementTableListPr
                           <IconButton
                             size='small'
                             onClick={() => onViewStructure(table)}
-                          aria-label="查看"
+                            aria-label='查看'
                           >
                             <Eye size={16} />
                           </IconButton>

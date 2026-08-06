@@ -720,7 +720,7 @@ export const AutomationDesignerPage: React.FC = () => {
                         size='small'
                         color='error'
                         onClick={() => handleDeleteNode(node.id)}
-                      aria-label="删除"
+                        aria-label='删除'
                       >
                         <DeleteIcon size={18} />
                       </IconButton>
@@ -962,7 +962,7 @@ export const AutomationDesignerPage: React.FC = () => {
                         size='small'
                         color='error'
                         onClick={() => handleDeleteNode(selectedNode.id)}
-                      aria-label="删除"
+                        aria-label='删除'
                       >
                         <DeleteIcon size={18} />
                       </IconButton>

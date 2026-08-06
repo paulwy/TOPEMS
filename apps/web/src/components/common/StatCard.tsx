@@ -960,7 +960,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             <IconButton
               size='small'
               onClick={(e) => setActionMenuAnchor(e.currentTarget)}
-            aria-label="更多"
+              aria-label='更多'
             >
               <MoreVertical style={{ width: 16, height: 16 }} />
             </IconButton>

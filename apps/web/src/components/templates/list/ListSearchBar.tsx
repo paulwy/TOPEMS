@@ -248,7 +248,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
           <IconButton
             size='small'
             onClick={onRefresh}
-          aria-label="刷新"
+            aria-label='刷新'
           >
             <RefreshCw style={{ width: 18, height: 18 }} />
           </IconButton>

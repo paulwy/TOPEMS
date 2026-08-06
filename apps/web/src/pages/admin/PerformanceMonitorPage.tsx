@@ -136,9 +136,13 @@ const PerformanceMonitorPage: React.FC = () => {
           label: t('admin:performance_monitor_page.column_status'),
           render: (value: unknown) =>
             value === 'success' ? (
-              <span style={{ color: ct.success[500], fontWeight: 500 }}>{t('admin:performance_monitor_page.status_success')}</span>
+              <span style={{ color: ct.success[500], fontWeight: 500 }}>
+                {t('admin:performance_monitor_page.status_success')}
+              </span>
             ) : (
-              <span style={{ color: ct.error.main, fontWeight: 500 }}>{t('admin:performance_monitor_page.status_fail')}</span>
+              <span style={{ color: ct.error.main, fontWeight: 500 }}>
+                {t('admin:performance_monitor_page.status_fail')}
+              </span>
             ),
         },
       ],
@@ -191,22 +195,32 @@ const PerformanceMonitorPage: React.FC = () => {
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         }}
       >
-        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: 16 }}>{t('admin:performance_monitor_page.section_page_metrics')}</h3>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: 16 }}>
+          {t('admin:performance_monitor_page.section_page_metrics')}
+        </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>{t('admin:performance_monitor_page.first_paint')}</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
+              {t('admin:performance_monitor_page.first_paint')}
+            </span>
             <span style={{ fontWeight: 500 }}>{metrics.firstPaint.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>{t('admin:performance_monitor_page.first_contentful_paint')}</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
+              {t('admin:performance_monitor_page.first_contentful_paint')}
+            </span>
             <span style={{ fontWeight: 500 }}>{metrics.firstContentfulPaint.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>{t('admin:performance_monitor_page.dom_content_loaded')}</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
+              {t('admin:performance_monitor_page.dom_content_loaded')}
+            </span>
             <span style={{ fontWeight: 500 }}>{metrics.domContentLoaded.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>{t('admin:performance_monitor_page.page_fully_loaded')}</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
+              {t('admin:performance_monitor_page.page_fully_loaded')}
+            </span>
             <span style={{ fontWeight: 500 }}>{metrics.pageLoadTime.toFixed(0)}ms</span>
           </div>
         </div>
@@ -223,9 +237,13 @@ const PerformanceMonitorPage: React.FC = () => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>{t('admin:performance_monitor_page.section_slow_api')}</h3>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>
+            {t('admin:performance_monitor_page.section_slow_api')}
+          </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>{t('admin:performance_monitor_page.threshold')}</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
+              {t('admin:performance_monitor_page.threshold')}
+            </span>
             <input
               type='number'
               value={slowCallThreshold}
@@ -288,7 +306,9 @@ const PerformanceMonitorPage: React.FC = () => {
                       color: call.status === 'success' ? 'success.main' : 'error.main',
                     }}
                   >
-                    {call.status === 'success' ? t('admin:performance_monitor_page.status_success') : t('admin:performance_monitor_page.status_fail')}
+                    {call.status === 'success'
+                      ? t('admin:performance_monitor_page.status_success')
+                      : t('admin:performance_monitor_page.status_fail')}
                   </p>
                 </div>
               </div>

@@ -178,7 +178,7 @@ function MapControl({
         <IconButton
           onClick={onZoomIn}
           sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-        aria-label="放大"
+          aria-label='放大'
         >
           <ZoomIn size={20} />
         </IconButton>
@@ -187,7 +187,7 @@ function MapControl({
         <IconButton
           onClick={onZoomOut}
           sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-        aria-label="缩小"
+          aria-label='缩小'
         >
           <ZoomOut size={20} />
         </IconButton>
@@ -197,7 +197,7 @@ function MapControl({
         <IconButton
           onClick={onLocate}
           sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-        aria-label="定位"
+          aria-label='定位'
         >
           <Locate size={20} />
         </IconButton>
@@ -206,7 +206,7 @@ function MapControl({
         <IconButton
           onClick={onFullscreen}
           sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-        aria-label="最小化"
+          aria-label='最小化'
         >
           {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
         </IconButton>
@@ -397,7 +397,7 @@ function DrawControl({ onDraw, onClear, drawMode }: DrawControlProps) {
         <IconButton
           onClick={() => onDraw('circle')}
           sx={{ color: drawMode === 'circle' ? 'primary.main' : 'text.primary' }}
-        aria-label="状态"
+          aria-label='状态'
         >
           <Circle size={20} />
         </IconButton>
@@ -406,7 +406,7 @@ function DrawControl({ onDraw, onClear, drawMode }: DrawControlProps) {
         <IconButton
           onClick={() => onDraw('rectangle')}
           sx={{ color: drawMode === 'rectangle' ? 'primary.main' : 'text.primary' }}
-        aria-label="选择"
+          aria-label='选择'
         >
           <Square size={20} />
         </IconButton>
@@ -415,7 +415,7 @@ function DrawControl({ onDraw, onClear, drawMode }: DrawControlProps) {
         <IconButton
           onClick={() => onDraw('polygon')}
           sx={{ color: drawMode === 'polygon' ? 'primary.main' : 'text.primary' }}
-        aria-label="编辑"
+          aria-label='编辑'
         >
           <PenTool size={20} />
         </IconButton>
@@ -425,7 +425,7 @@ function DrawControl({ onDraw, onClear, drawMode }: DrawControlProps) {
         <IconButton
           onClick={onClear}
           color='error'
-        aria-label="删除"
+          aria-label='删除'
         >
           <Trash2 size={20} />
         </IconButton>
@@ -471,14 +471,17 @@ function TrackPlayback({
             轨迹回放
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <IconButton onClick={onReset}aria-label="重置" >
+            <IconButton
+              onClick={onReset}
+              aria-label='重置'
+            >
               <RotateCcw size={20} />
             </IconButton>
             {isPlaying ? (
               <IconButton
                 onClick={onPause}
                 color='primary'
-              aria-label="暂停"
+                aria-label='暂停'
               >
                 <Pause size={24} />
               </IconButton>
@@ -486,7 +489,7 @@ function TrackPlayback({
               <IconButton
                 onClick={onPlay}
                 color='primary'
-              aria-label="执行"
+                aria-label='执行'
               >
                 <Play size={24} />
               </IconButton>
@@ -764,7 +767,7 @@ export function GisMapTemplate({
             <IconButton
               onClick={() => setShowSearch(true)}
               sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-            aria-label="搜索"
+              aria-label='搜索'
             >
               <Search size={20} />
             </IconButton>
@@ -775,7 +778,7 @@ export function GisMapTemplate({
             <IconButton
               onClick={() => setShowLayers(true)}
               sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-            aria-label="图层"
+              aria-label='图层'
             >
               <Layers size={20} />
             </IconButton>
@@ -786,7 +789,7 @@ export function GisMapTemplate({
             <IconButton
               onClick={() => setShowTrackPlayback(true)}
               sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-            aria-label="导航"
+              aria-label='导航'
             >
               <Navigation size={20} />
             </IconButton>

@@ -416,7 +416,7 @@ const ReportSchedulePage: React.FC = () => {
                               size='small'
                               color='primary'
                               onClick={() => handleExecute(schedule.id)}
-                            aria-label="执行"
+                              aria-label='执行'
                             >
                               <PlayIcon />
                             </IconButton>
@@ -426,7 +426,7 @@ const ReportSchedulePage: React.FC = () => {
                               size='small'
                               color='info'
                               onClick={() => handleViewHistory(schedule)}
-                            aria-label="历史"
+                              aria-label='历史'
                             >
                               <HistoryIcon />
                             </IconButton>
@@ -436,7 +436,7 @@ const ReportSchedulePage: React.FC = () => {
                               size='small'
                               color='warning'
                               onClick={() => handleOpenEditDialog(schedule)}
-                            aria-label="编辑"
+                              aria-label='编辑'
                             >
                               <EditIcon />
                             </IconButton>
@@ -446,7 +446,7 @@ const ReportSchedulePage: React.FC = () => {
                               size='small'
                               color='error'
                               onClick={() => handleDelete(schedule.id)}
-                            aria-label="删除"
+                              aria-label='删除'
                             >
                               <DeleteIcon />
                             </IconButton>
@@ -554,7 +554,7 @@ const ReportSchedulePage: React.FC = () => {
                     <IconButton
                       onClick={() => handleRemoveRecipient(index)}
                       color='error'
-                    aria-label="关闭"
+                      aria-label='关闭'
                     >
                       <XIcon />
                     </IconButton>
