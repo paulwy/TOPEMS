@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { authApi } from '@/api/iam';
 import { tenantApi } from '@/api/tenant';
-import apiClient from '../api/client';
+import apiClient, { type ApiResponse } from '../api/client';
 import type { User } from '@topems/shared-types';
 import { mapApiUserToUser } from '@topems/shared-types';
 import { authLogger } from '@/utils/logger';
@@ -65,7 +65,7 @@ export interface LoginCredentials {
 
 const AuthContext = createContext<
   | (AuthState & {
-      login: (credentials: LoginCredentials) => Promise<any>;
+      login: (credentials: LoginCredentials) => Promise<ApiResponse>;
       logout: () => void;
       hasPermission: (permission: string) => boolean;
       hasRole: (role: string) => boolean;
@@ -76,7 +76,7 @@ const AuthContext = createContext<
       isSessionExpiringSoon: () => boolean;
       getTimeUntilExpiry: () => number;
       switchTenant: (tenantId: string) => Promise<boolean>;
-      getMyTenants: () => Promise<any[]>;
+      getMyTenants: () => Promise<Record<string, unknown>[]>;
     })
   | null
 >(null);
@@ -477,13 +477,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const response = await tenantApi.switchTenant(tenantId);
       if (response.success && response.data) {
-        const { access_token: accessToken, user, tenant_id: newTenantId } = response.data as any;
+        const {
+          access_token: accessToken,
+          user,
+          tenant_id: newTenantId,
+        } = response.data as unknown as Record<string, unknown>;
 
         if (accessToken) {
-          localStorage.setItem('token', accessToken);
-          apiClient.setAuthToken(accessToken);
+          localStorage.setItem('token', accessToken as string);
+          apiClient.setAuthToken(accessToken as string);
 
-          const newExpiry = parseTokenExpiryFromJWT(accessToken);
+          const newExpiry = parseTokenExpiryFromJWT(accessToken as string);
           setTokenExpiry(newExpiry);
           localStorage.setItem('token_expiry', newExpiry.toString());
         }
@@ -495,7 +499,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         if (newTenantId) {
-          localStorage.setItem('current_tenant_id', newTenantId);
+          localStorage.setItem('current_tenant_id', newTenantId as string);
         }
 
         authLogger.info('Tenant switched successfully:', tenantId);
@@ -508,11 +512,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const getMyTenants = useCallback(async (): Promise<any[]> => {
+  const getMyTenants = useCallback(async (): Promise<Record<string, unknown>[]> => {
     try {
       const response = await tenantApi.getMyTenants();
       if (response.success && response.data) {
-        return response.data as any[];
+        return response.data as unknown as Record<string, unknown>[];
       }
       return [];
     } catch (error: unknown) {

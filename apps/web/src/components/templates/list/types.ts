@@ -49,7 +49,7 @@ export interface CardViewConfig<T = Record<string, unknown>> {
 }
 
 /** 卡片视图操作按钮配置 */
-export interface CardViewAction<T = any> {
+export interface CardViewAction<T = Record<string, unknown>> {
   /** 操作标识 */
   key: string;
   /** 按钮文本 */
@@ -74,7 +74,7 @@ export interface CardViewAction<T = any> {
  * 列定义接口
  * @template T - 数据行类型
  */
-export interface ColumnDef<T = any> {
+export interface ColumnDef<T = Record<string, unknown>> {
   /** 列唯一标识 */
   id: string;
   /** 列标题 */
@@ -135,7 +135,7 @@ export type { FilterConfig };
  * 行操作接口
  * @template T - 数据行类型
  */
-export interface RowAction<T = any> {
+export interface RowAction<T = Record<string, unknown>> {
   /** 操作唯一标识（用于内置 CRUD 行操作的 React key） */
   key?: string;
   /** 操作标签 */
@@ -162,7 +162,7 @@ export interface RowAction<T = any> {
  * 展开行渲染属性
  * @template T - 数据行类型
  */
-export interface ExpandedRowRenderProps<T = any> {
+export interface ExpandedRowRenderProps<T = Record<string, unknown>> {
   /** 当前行数据 */
   row: T;
   /** 行索引 */
@@ -184,7 +184,7 @@ export interface ColumnConfig {
 /**
  * 批量操作接口
  */
-export interface BatchAction<T = any> {
+export interface BatchAction<T = Record<string, unknown>> {
   /** 操作标签 */
   label: string;
   /** 操作图标 */
@@ -207,7 +207,7 @@ export interface BatchAction<T = any> {
   disabledWhen?: (selectedRows: T[]) => boolean;
 }
 
-export interface ListPageTemplateProps<T = any> extends BoxProps {
+export interface ListPageTemplateProps<T = Record<string, unknown>> extends BoxProps {
   // 页面信息
   title?: string;
   subtitle?: string;
@@ -283,8 +283,8 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
   // 筛选
   filters?: FilterConfig[];
   /** 受控的筛选值（与 onFilterChange 配合使用） */
-  filtersValue?: Record<string, any>;
-  onFilterChange?: (filters: Record<string, any>) => void;
+  filtersValue?: Record<string, unknown>;
+  onFilterChange?: (filters: Record<string, unknown>) => void;
 
   // 操作
   actions?: Array<{
@@ -491,7 +491,7 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
     /** 唯一标识（用于 URL 同步，不传则用索引） */
     key?: string;
     label: string;
-    filters: Record<string, any>;
+    filters: Record<string, unknown>;
     searchValue?: string;
   }>;
 
@@ -615,10 +615,14 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
 
 // ============ 声明式 CRUD 配置 ============
 
-export interface ListPageCrudConfig<T = any, TCreate = Partial<T>, TUpdate = Partial<T>> {
+export interface ListPageCrudConfig<
+  T = Record<string, unknown>,
+  TCreate = Partial<T>,
+  TUpdate = Partial<T>,
+> {
   /** 实现标准 CrudOperations 接口的 API 对象 */
   api: {
-    list: (params?: any) => Promise<{
+    list: (params?: Record<string, unknown>) => Promise<{
       success: boolean;
       code: number;
       message: string;

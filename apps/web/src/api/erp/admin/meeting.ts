@@ -68,8 +68,8 @@ export const meetingBookingApi = {
 export const meetingRoomCrudApi: CrudOperations<MeetingRoom> = {
   list: (params?) =>
     meetingRoomApi.list({
-      page: params?.page,
-      pagesize: params?.pagesize,
+      page: params?.page as number,
+      pagesize: params?.pagesize as number,
       ...(params as unknown as Record<string, unknown>),
     }),
   get: meetingRoomApi.get,
@@ -81,8 +81,8 @@ export const meetingRoomCrudApi: CrudOperations<MeetingRoom> = {
 export const meetingBookingCrudApi: CrudOperations<MeetingBooking> = {
   list: (params?) =>
     meetingBookingApi.list({
-      page: params?.page,
-      pagesize: params?.pagesize,
+      page: params?.page as number,
+      pagesize: params?.pagesize as number,
       ...(params as unknown as Record<string, unknown>),
     }),
   get: meetingBookingApi.get,

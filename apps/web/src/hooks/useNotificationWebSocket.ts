@@ -23,7 +23,7 @@ export interface NotificationWsState {
 
 export interface UseNotificationWebSocketOptions {
   userId: string;
-  onNotification?: (notification: any) => void;
+  onNotification?: (notification: Record<string, unknown>) => void;
   onUnreadCountChange?: (count: number) => void;
   maxReconnectAttempts?: number;
   autoConnect?: boolean;
@@ -90,7 +90,7 @@ export function useNotificationWebSocket(
         const payload = message.payload as unknown as NotificationWsPayload;
         setNotifications((prev) => [payload, ...prev]);
         setUnreadCount((prev) => prev + 1);
-        onNotification?.(payload);
+        onNotification?.(payload as unknown as Record<string, unknown>);
       }
     };
 

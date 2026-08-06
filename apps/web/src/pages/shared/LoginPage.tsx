@@ -82,7 +82,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       } else {
         addNotification({
           title: '登录失败',
-          message: response.message || '操作失败',
+          message: (response.message as string) || '操作失败',
           type: 'error',
         });
       }

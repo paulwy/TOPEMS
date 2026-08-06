@@ -59,7 +59,7 @@ import {
   ShieldCheck,
   Zap,
 } from 'lucide-react';
-import { V51Card } from '../design-system/components';
+import { V51Card } from '../../design-system/components';
 import { modelVersionManager, type Model, type VersionStatus } from './model-versioning';
 import { abTestManager, type Experiment } from './ab-testing';
 import {

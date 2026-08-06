@@ -69,6 +69,7 @@ import {
   useColumnWidth,
   useUrlState,
 } from '@/hooks';
+import type { CrudOperations } from '@/hooks';
 import { logger } from '@/utils/logger';
 import { mapListParamsToBackend } from '@/utils/listParamMapping';
 import { FormDialog, FormDrawer } from '@/components/common';
@@ -83,7 +84,7 @@ import type {
   ColumnDef,
 } from './list';
 import type { FilterConfig } from '@topems/shared-components';
-import { loadColumnConfig, saveColumnConfig } from './list/types';
+import { loadColumnConfig, saveColumnConfig, type CardViewConfig } from './list/types';
 import { ListSearchBar } from './list/ListSearchBar';
 import { ListBatchActions } from './list/ListBatchActions';
 import { ListColumnConfig } from './list/ListColumnConfig';
@@ -116,7 +117,7 @@ import { CardView } from './list/CardView';
  * />
  * ```
  */
-export function ListPageTemplate<T>({
+export function ListPageTemplate<T extends { id?: string | number }>({
   title,
   subtitle,
   breadcrumbs: manualBreadcrumbs,
@@ -250,8 +251,8 @@ export function ListPageTemplate<T>({
   ...props
 }: ListPageTemplateProps<T>) {
   // ---- 声明式 CRUD（仅当传入 crud 时启用） ----
-  // 注意：crudResult 使用 `any` 类型以避免影响组件泛型 T 的推断
-  const dummyApi: any = {
+  // 注意：crudResult 已使用泛型 T 绑定，类型安全
+  const dummyApi: CrudOperations<Record<string, unknown>> = {
     list: () =>
       Promise.resolve({ success: true, code: 0, message: '', data: { items: [], total: 0 } }),
     get: () => Promise.resolve({ success: true, code: 0, message: '', data: undefined }),
@@ -259,9 +260,9 @@ export function ListPageTemplate<T>({
     update: () => Promise.resolve({ success: true, code: 0, message: '', data: undefined }),
     delete: () => Promise.resolve({ success: true, code: 0, message: '', data: '' }),
   };
-  const crudApi: any = crud?.api ?? dummyApi;
+  const crudApi = (crud?.api ?? dummyApi) as CrudOperations<T>;
   const crudQueryKey: string = crud?.queryKey ?? `__dummy_${Math.random().toString(36).slice(2)}`;
-  const crudResult: any = useCrudOperations({
+  const crudResult = useCrudOperations({
     api: crudApi,
     queryKey: crudQueryKey,
     autoFetch: crud ? (crud.autoFetch ?? true) : false,
@@ -330,7 +331,7 @@ export function ListPageTemplate<T>({
     return crud.formFields
       .filter((field) => !field.hideInTable && field.key !== 'id')
       .map((field) => {
-        const col: ColumnDef<any> = {
+        const col: ColumnDef<T> = {
           id: field.key,
           label: field.label,
           sortable: field.tableSortable !== false,
@@ -344,10 +345,10 @@ export function ListPageTemplate<T>({
 
         // 自定义渲染（优先级最高）
         if (field.tableRender) {
-          col.render = (row: any, index: number) => {
-            // V64 防御：row 空值兜底，避免 schema renderCell 解构报错
-            const safeRow = row ?? {};
-            return field.tableRender!(safeRow[field.key], safeRow, index);
+          col.render = (row: T, index: number) => {
+            const safeRow = row ?? ({} as T);
+            const rowRecord = safeRow as Record<string, unknown>;
+            return field.tableRender!(rowRecord[field.key], safeRow, index);
           };
           return col;
         }
@@ -359,17 +360,16 @@ export function ListPageTemplate<T>({
         ) {
           const colorMap = field.tableStatusColorMap || {};
           const labelMap = field.tableStatusLabelMap || {};
-          col.render = (row: any) => {
-            // V64 防御：row 空值兜底
-            const safeRow = row ?? {};
-            const value = safeRow[field.key];
+          col.render = (row: T) => {
+            const safeRow = row ?? ({} as T);
+            const value = String((safeRow as Record<string, unknown>)[field.key] ?? '');
             const label = labelMap[value] || value || '-';
             const color = colorMap[value] || 'default';
             return (
               <Chip
                 label={label}
                 size='small'
-                color={color as any}
+                color={color as 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'}
                 variant='outlined'
               />
             );
@@ -379,10 +379,9 @@ export function ListPageTemplate<T>({
 
         // 布尔值 / switch 类型渲染
         if (field.type === 'switch') {
-          col.render = (row: any) => {
-            // V64 防御：row 空值兜底
-            const safeRow = row ?? {};
-            const value = safeRow[field.key];
+          col.render = (row: T) => {
+            const safeRow = row ?? ({} as T);
+            const value = (safeRow as Record<string, unknown>)[field.key];
             return (
               <Chip
                 label={value ? '是' : '否'}
@@ -397,11 +396,10 @@ export function ListPageTemplate<T>({
 
         // 日期类型格式化
         if (field.type === 'date') {
-          col.render = (row: any) => {
-            // V64 防御：row 空值兜底
-            const safeRow = row ?? {};
-            const value = safeRow[field.key];
-            return value || '-';
+          col.render = (row: T) => {
+            const safeRow = row ?? ({} as T);
+            const value = (safeRow as Record<string, unknown>)[field.key];
+            return value ? String(value) : '-';
           };
           return col;
         }
@@ -666,9 +664,10 @@ export function ListPageTemplate<T>({
   // 更新编辑中的字段值
   const updateEditingField = useCallback((field: keyof T, value: unknown) => {
     setEditingData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+          ...prev,
+          [field]: value,
+        }) as Partial<T>
+    );
   }, []);
 
   // 行内编辑单元格组件
@@ -852,7 +851,7 @@ export function ListPageTemplate<T>({
     cards.push({
       key: 'total',
       label: '总数',
-      value: crudResult?.data?.total ?? 0,
+      value: crudResult.pagination.total ?? 0,
       color: 'primary',
     });
 
@@ -871,18 +870,22 @@ export function ListPageTemplate<T>({
 
       options.forEach((opt) => {
         const count =
-          crudResult?.data?.items?.filter((item: any) => item[fieldKey] === opt.value).length || 0;
+          crudResult.data?.filter(
+            (item: T) => (item as Record<string, unknown>)[fieldKey] === opt.value
+          ).length || 0;
+        type CardColor = 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info';
+        const color = (colorMap[opt.value as string] || 'default') as CardColor;
         cards.push({
           key: `status_${opt.value}`,
           label: labelMap[opt.value as string] || String(opt.label),
           value: count,
-          color: (colorMap[opt.value as string] as any) || 'default',
+          color,
         });
       });
     }
 
     return cards;
-  }, [crud, crudResult?.data?.total, crudResult?.data?.items]);
+  }, [crud, crudResult.pagination.total, crudResult.data]);
 
   // crud 模式下自动生成快速筛选
   const resolvedQuickFilters = useMemo(() => {
@@ -907,7 +910,7 @@ export function ListPageTemplate<T>({
     const filters: Array<{
       key: string;
       label: string;
-      filters: Record<string, any>;
+      filters: Record<string, unknown>;
     }> = [];
 
     // 全部选项
@@ -1006,7 +1009,7 @@ export function ListPageTemplate<T>({
   // ============ CRUD 表单状态 ============
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit' | 'view'>('create');
-  const [currentRecord, setCurrentRecord] = useState<any>(null);
+  const [currentRecord, setCurrentRecord] = useState<T | null>(null);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -1088,9 +1091,12 @@ export function ListPageTemplate<T>({
       setFormSubmitting(true);
       try {
         if (formMode === 'create') {
-          await crudResult.createMutation.mutateAsync(data);
+          await crudResult.mutations.createMutation.mutateAsync(data as Partial<T>);
         } else if (formMode === 'edit' && currentRecord?.id) {
-          await crudResult.updateMutation.mutateAsync({ id: String(currentRecord.id), item: data });
+          await crudResult.mutations.updateMutation.mutateAsync({
+            id: String(currentRecord.id),
+            item: data as Partial<T>,
+          });
         }
         setFormOpen(false);
         return true;
@@ -1393,9 +1399,12 @@ export function ListPageTemplate<T>({
                 size='small'
                 label={`${field.label}（最小）`}
                 type='number'
-                value={(value as any)?.min ?? ''}
+                value={(value as Record<string, unknown>)?.min ?? ''}
                 onChange={(e) =>
-                  handleFieldChange(field.key, { ...((value as any) || {}), min: e.target.value })
+                  handleFieldChange(field.key, {
+                    ...((value as Record<string, unknown>) || {}),
+                    min: e.target.value,
+                  })
                 }
                 placeholder='最小值'
                 disabled={disabled}
@@ -1421,9 +1430,12 @@ export function ListPageTemplate<T>({
                 size='small'
                 label={`${field.label}（最大）`}
                 type='number'
-                value={(value as any)?.max ?? ''}
+                value={(value as Record<string, unknown>)?.max ?? ''}
                 onChange={(e) =>
-                  handleFieldChange(field.key, { ...((value as any) || {}), max: e.target.value })
+                  handleFieldChange(field.key, {
+                    ...((value as Record<string, unknown>) || {}),
+                    max: e.target.value,
+                  })
                 }
                 placeholder='最大值'
                 disabled={disabled}
@@ -2029,7 +2041,7 @@ export function ListPageTemplate<T>({
         icon: null,
         color: 'error',
         onClick: (selectedRows: T[]) => {
-          const ids = selectedRows.map((row: any) => row.id).filter(Boolean);
+          const ids = selectedRows.map((row: T) => row.id).filter(Boolean);
           if (ids.length === 0) return;
           if (confirm(`确定删除选中的 ${ids.length} 条记录吗？`)) {
             crudResult.bulkDelete(ids as string[]);
@@ -3937,7 +3949,14 @@ export function ListPageTemplate<T>({
         filters={resolvedFilters}
         filtersValue={localFilters}
         onFilterChange={handleFilterChange}
-        quickFilters={resolvedQuickFilters as any}
+        quickFilters={
+          resolvedQuickFilters as unknown as Array<{
+            key?: string;
+            label: string;
+            filters: Record<string, unknown>;
+            searchValue?: string;
+          }>
+        }
         onQuickFilter={effectiveOnQuickFilter}
         activeQuickFilterKey={isQuickFilterUrlSyncEnabled ? activeQuickFilterKey : null}
       />
@@ -3990,35 +4009,37 @@ export function ListPageTemplate<T>({
             renderCardView(data)
           ) : resolvedCardViewConfig ? (
             <CardView
-              data={data as any[]}
-              config={{
-                ...(resolvedCardViewConfig as any),
-                onClick:
-                  crud && hasForm
-                    ? (row: any) => openViewForm(row)
-                    : (resolvedCardViewConfig as any).onClick,
-                actions:
-                  crud && hasForm
-                    ? [
-                        {
-                          key: 'edit',
-                          label: '编辑',
-                          icon: <Edit size={16} />,
-                          onClick: (row: any) => openEditForm(row),
-                        },
-                        {
-                          key: 'delete',
-                          label: '删除',
-                          icon: <Trash2 size={16} />,
-                          color: 'error' as const,
-                          onClick: (row: any) => handleDelete(row),
-                        },
-                        ...((resolvedCardViewConfig as any).actions || []),
-                      ]
-                    : (resolvedCardViewConfig as any).actions,
-              }}
+              data={data as T[]}
+              config={
+                {
+                  ...resolvedCardViewConfig,
+                  onClick:
+                    crud && hasForm
+                      ? (row: T) => openViewForm(row)
+                      : (resolvedCardViewConfig as CardViewConfig<T>).onClick,
+                  actions:
+                    crud && hasForm
+                      ? [
+                          {
+                            key: 'edit',
+                            label: '编辑',
+                            icon: <Edit size={16} />,
+                            onClick: (row: T) => openEditForm(row),
+                          },
+                          {
+                            key: 'delete',
+                            label: '删除',
+                            icon: <Trash2 size={16} />,
+                            color: 'error' as const,
+                            onClick: (row: T) => handleDelete(row),
+                          },
+                          ...((resolvedCardViewConfig as CardViewConfig<T>).actions || []),
+                        ]
+                      : (resolvedCardViewConfig as CardViewConfig<T>).actions,
+                } as unknown as CardViewConfig<unknown>
+              }
               loading={loading}
-              getRowId={getRowId as any}
+              getRowId={getRowId as (row: unknown) => string | number}
               columns={{
                 xs: 1,
                 sm: 1,
@@ -4080,7 +4101,7 @@ export function ListPageTemplate<T>({
         open={columnConfigurable ? Boolean(columnConfigAnchor) : false}
         anchorEl={columnConfigAnchor}
         onClose={() => setColumnConfigAnchor(null)}
-        columns={columns}
+        columns={columns as ColumnDef<Record<string, unknown>>[]}
         columnConfig={columnConfig}
         onVisibilityChange={handleColumnVisibilityChange}
         onReset={handleResetColumnConfig}
@@ -4200,7 +4221,7 @@ export function ListPageTemplate<T>({
             }}
             loading={formSubmitting}
             width={crud!.drawerWidth}
-            anchor={crud!.drawerAnchor as any}
+            anchor={crud!.drawerAnchor as 'left' | 'right' | 'top' | 'bottom'}
           >
             {formContent}
           </FormDrawer>
@@ -4219,7 +4240,7 @@ export function ListPageTemplate<T>({
               if (crud?.formFields && formMode !== 'view') handleAutoFormSubmit();
             }}
             loading={formSubmitting}
-            maxWidth={crud!.dialogMaxWidth as any}
+            maxWidth={crud!.dialogMaxWidth as 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false}
           >
             {formContent}
           </FormDialog>

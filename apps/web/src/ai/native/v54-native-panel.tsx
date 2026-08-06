@@ -59,7 +59,7 @@ import {
   BarChart3,
   Sliders,
 } from 'lucide-react';
-import { V51Card } from '../design-system/components';
+import { V51Card } from '../../design-system/components';
 import {
   aiFirstPlatform,
   type AIPlatformStatus,

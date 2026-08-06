@@ -18,37 +18,37 @@ import {
 // V51.0 Design System
 import { V51DesignSystemPanel } from '@/design-system';
 // V53.0 AI Enhancement
-import { V53AIPanel } from '@/ai-enhancement';
+import { V53AIPanel } from '@/ai/enhancement';
 // V53.0 微前端平台终局
 import { V53PlatformConsole } from '@/dev-platform';
 // V54.0 AI Agent
-import { V54AgentPanel } from '@/ai-agent';
+import { V54AgentPanel } from '@/ai/agent';
 // V54.0 AI 原生平台
-import { V54NativePanel } from '@/ai-native';
+import { V54NativePanel } from '@/ai/native';
 // V55.0 AI Copilot
-import { V55CopilotPanel } from '@/ai-copilot';
+import { V55CopilotPanel } from '@/ai/copilot';
 // V55.0 全栈自动化
 import { V55AutomationPanel } from '@/fullstack-automation';
 // V56.0 AI 代码审查
-import { V56ReviewPanel } from '@/ai-review';
+import { V56ReviewPanel } from '@/ai/review';
 // V56.0 平台智能运维
 import { V56OpsPanel } from '@/intelligent-ops';
 // V57.0 AI 治理
-import { V57GovernancePanel } from '@/ai-governance';
+import { V57GovernancePanel } from '@/ai/governance';
 // V57.0 AI 自动化
-import { V57AutomationPanel } from '@/ai-automation';
+import { V57AutomationPanel } from '@/ai/automation';
 // V58.0 AI UX
-import { V58UXPanel } from '@/ai-ux';
+import { V58UXPanel } from '@/ai/ux';
 // V58.0 AI 演进
-import { V58EvolutionPanel } from '@/ai-evolution';
+import { V58EvolutionPanel } from '@/ai/evolution';
 // V59.0 AI DevEx
-import { V59DevExPanel } from '@/ai-devex';
+import { V59DevExPanel } from '@/ai/devex';
 // V59.0 AI 安全
-import { V59SecurityPanel } from '@/ai-security';
+import { V59SecurityPanel } from '@/ai/security';
 // V60.0 AI Quality
-import { V60QualityPanel } from '@/ai-quality';
+import { V60QualityPanel } from '@/ai/quality';
 // V60.0 AI 伦理
-import { V60EthicsPanel } from '@/ai-ethics';
+import { V60EthicsPanel } from '@/ai/ethics';
 import V47IntegrationPanel from './V47IntegrationPanel';
 
 const MicroFrontendDevTools: React.FC = () => {

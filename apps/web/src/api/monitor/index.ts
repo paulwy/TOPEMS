@@ -278,8 +278,8 @@ export default monitorApi;
 export const alertCrudApi: CrudOperations<Alert, AlertQueryParams> = {
   list: (params?) =>
     monitorApi.listAlerts({
-      page: params?.page,
-      pagesize: params?.pagesize,
+      page: params?.page as number,
+      pagesize: params?.pagesize as number,
       ...(params as unknown as Record<string, unknown>),
     }) as Promise<{
       success: boolean;

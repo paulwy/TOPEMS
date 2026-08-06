@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import type * as THREE from 'three';
 
 declare global {
@@ -9,42 +9,42 @@ declare global {
         position?: [number, number, number];
         rotation?: [number, number, number];
         scale?: [number, number, number] | number;
-        ref?: any;
-        [key: string]: any;
+        ref?: Ref<THREE.Object3D>;
+        [key: string]: unknown;
       };
       mesh: {
         children?: ReactNode;
         position?: [number, number, number];
         rotation?: [number, number, number];
-        ref?: any;
-        args?: any[];
-        [key: string]: any;
+        ref?: Ref<THREE.Object3D>;
+        args?: unknown[];
+        [key: string]: unknown;
       };
       meshStandardMaterial: {
         children?: ReactNode;
         color?: string | number;
         emissive?: string | number;
         emissiveIntensity?: number;
-        ref?: any;
-        [key: string]: any;
+        ref?: Ref<THREE.Object3D>;
+        [key: string]: unknown;
       };
       meshBasicMaterial: {
         children?: ReactNode;
         color?: string | number;
-        ref?: any;
-        [key: string]: any;
+        ref?: Ref<THREE.Object3D>;
+        [key: string]: unknown;
       };
       meshLambertMaterial: {
         children?: ReactNode;
         color?: string | number;
-        ref?: any;
-        [key: string]: any;
+        ref?: Ref<THREE.Object3D>;
+        [key: string]: unknown;
       };
       ambientLight: {
         children?: ReactNode;
         intensity?: number;
         color?: string | number;
-        [key: string]: any;
+        [key: string]: unknown;
       };
       pointLight: {
         children?: ReactNode;
@@ -52,33 +52,33 @@ declare global {
         intensity?: number;
         color?: string | number;
         distance?: number;
-        [key: string]: any;
+        [key: string]: unknown;
       };
       directionalLight: {
         children?: ReactNode;
         position?: [number, number, number];
         intensity?: number;
         color?: string | number;
-        [key: string]: any;
+        [key: string]: unknown;
       };
       spotLight: {
         children?: ReactNode;
         position?: [number, number, number];
         intensity?: number;
         color?: string | number;
-        [key: string]: any;
+        [key: string]: unknown;
       };
-      sphereGeometry: { args?: any[]; [key: string]: any };
-      boxGeometry: { args?: any[]; [key: string]: any };
-      cylinderGeometry: { args?: any[]; [key: string]: any };
-      coneGeometry: { args?: any[]; [key: string]: any };
-      torusGeometry: { args?: any[]; [key: string]: any };
-      planeGeometry: { args?: any[]; [key: string]: any };
-      lineGeometry: { args?: any[]; [key: string]: any };
-      lineMaterial: { color?: string | number; [key: string]: any };
-      pointLightHelper: { args?: any[]; [key: string]: any };
-      gridHelper: { args?: any[]; [key: string]: any };
-      axesHelper: { args?: any[]; [key: string]: any };
+      sphereGeometry: { args?: unknown[]; [key: string]: unknown };
+      boxGeometry: { args?: unknown[]; [key: string]: unknown };
+      cylinderGeometry: { args?: unknown[]; [key: string]: unknown };
+      coneGeometry: { args?: unknown[]; [key: string]: unknown };
+      torusGeometry: { args?: unknown[]; [key: string]: unknown };
+      planeGeometry: { args?: unknown[]; [key: string]: unknown };
+      lineGeometry: { args?: unknown[]; [key: string]: unknown };
+      lineMaterial: { color?: string | number; [key: string]: unknown };
+      pointLightHelper: { args?: unknown[]; [key: string]: unknown };
+      gridHelper: { args?: unknown[]; [key: string]: unknown };
+      axesHelper: { args?: unknown[]; [key: string]: unknown };
     }
   }
 }

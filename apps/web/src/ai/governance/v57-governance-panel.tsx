@@ -59,7 +59,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react';
-import { V51Card } from '../design-system/components';
+import { V51Card } from '../../design-system/components';
 import {
   complianceAutomator,
   type ComplianceCheck,

@@ -42,6 +42,15 @@ export interface PolicyDecision {
   simulation?: boolean;
 }
 
+interface PolicyEvaluationContext {
+  user?: { role: string; clearance: number; has_consent: boolean; id: string };
+  data?: { classification: string; type: string };
+  action?: { type: string };
+  transaction?: { approver: string; requester: string; amount: number };
+  project?: { budget_remaining: number };
+  output?: { harm_score: number; bias_score: number; contains_pii: boolean };
+}
+
 const DEFAULT_POLICIES: Policy[] = [
   {
     id: 'pol-data-access',
@@ -349,21 +358,30 @@ export class PolicyEnforcer {
     }
 
     const mockContext = {
-      user: (context.user as any) || {
+      user: (context.user as PolicyEvaluationContext['user']) || {
         role: 'user',
         clearance: 1,
         has_consent: true,
         id: 'sim-user',
       },
-      data: (context.data as any) || { classification: 'public', type: 'text' },
-      action: (context.action as any) || { type: 'read' },
-      transaction: (context.transaction as any) || {
+      data: (context.data as PolicyEvaluationContext['data']) || {
+        classification: 'public',
+        type: 'text',
+      },
+      action: (context.action as PolicyEvaluationContext['action']) || { type: 'read' },
+      transaction: (context.transaction as PolicyEvaluationContext['transaction']) || {
         approver: 'other',
         requester: 'user',
         amount: 0,
       },
-      project: (context.project as any) || { budget_remaining: 999999 },
-      output: (context.output as any) || { harm_score: 0.1, bias_score: 0.1, contains_pii: false },
+      project: (context.project as PolicyEvaluationContext['project']) || {
+        budget_remaining: 999999,
+      },
+      output: (context.output as PolicyEvaluationContext['output']) || {
+        harm_score: 0.1,
+        bias_score: 0.1,
+        contains_pii: false,
+      },
     };
 
     const decisions = this.evaluatePolicy(mockContext, policy_id);
@@ -386,7 +404,7 @@ export class PolicyEnforcer {
     };
   }
 
-  private evaluateCondition(condition: string, context: Record<string, any>): boolean {
+  private evaluateCondition(condition: string, context: Record<string, unknown>): boolean {
     const parts = condition.split('&&').map((s) => s.trim());
 
     for (const part of parts) {
@@ -398,7 +416,7 @@ export class PolicyEnforcer {
     return true;
   }
 
-  private evaluateSingleCondition(condition: string, context: Record<string, any>): boolean {
+  private evaluateSingleCondition(condition: string, context: Record<string, unknown>): boolean {
     const match = condition.match(/(\w+(?:\.\w+)*)\s*(==|!=|>=|<=|>|<)\s*["']?([^"']*)["']?/);
 
     if (!match) return false;
@@ -409,11 +427,12 @@ export class PolicyEnforcer {
 
     // Type coercion for comparison: convert both to numbers if either is numeric
     const isNumeric = (v: unknown): v is number => typeof v === 'number';
-    const isStringNumeric = (v: unknown): boolean => typeof v === 'string' && !isNaN(Number(v)) && v.trim() !== '';
-    
+    const isStringNumeric = (v: unknown): boolean =>
+      typeof v === 'string' && !isNaN(Number(v)) && v.trim() !== '';
+
     let a: unknown = actualValue;
     let b: unknown = expectedValue;
-    
+
     // Coerce numeric strings to numbers for comparison operators
     if (operator !== '==' && operator !== '!=') {
       if (isStringNumeric(a)) a = Number(a);
@@ -466,7 +485,7 @@ export class PolicyEnforcer {
     return `规则 "${rule.name}" 匹配条件：${rule.condition}。执行操作：${actionLabels[rule.action]}。`;
   }
 
-  private generateEvidence(rule: PolicyRule, context: Record<string, any>): string {
+  private generateEvidence(rule: PolicyRule, context: Record<string, unknown>): string {
     const relevantContext: Record<string, unknown> = {};
     if (context.user) relevantContext.user = context.user;
     if (context.data) relevantContext.data = context.data;

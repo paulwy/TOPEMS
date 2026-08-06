@@ -170,6 +170,12 @@ function buildMockForQuery<T>(query: string): T | null {
       completeTodo: { id: '', title: '', source: 'workflow', priority: 0, status: 'done' },
     } as unknown as T;
   }
+  // 通用：根据查询名自动生成空结构（避免抛错破坏页面渲染）
+  const queryMatch = q.match(/^(query|mutation|subscription)\s+(\w+)/i);
+  if (queryMatch) {
+    const opName = queryMatch[2];
+    return { [opName.charAt(0).toLowerCase() + opName.slice(1)]: null } as unknown as T;
+  }
   return null;
 }
 
@@ -185,8 +191,30 @@ async function executeGraphQL<T>(body: Record<string, unknown>): Promise<T> {
   if (shouldMockBff()) {
     const queryStr = typeof body.query === 'string' ? body.query : '';
     const mock = buildMockForQuery<T>(queryStr);
-    if (mock) return mock;
-    throw new Error('BFF mock fallback (portal service not started in dev mode)');
+    if (mock) {
+      perfLogger.warn('BFF mock: return stub for query', {
+        name: parseQueryName(queryStr),
+      });
+      return mock;
+    }
+    // 未匹配到 mock 规则：先尝试真正的请求（portal 已启动时正常使用），失败再回落空结构
+    try {
+      const response = await fetch('/api/portal/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (response.ok) {
+        const json = await response.json();
+        if (!json.errors?.length) return json.data as T;
+      }
+    } catch {
+      // fall-through to warn + empty
+    }
+    perfLogger.warn('BFF mock fallback: no rule matched and portal unreachable; returning empty', {
+      name: parseQueryName(typeof body.query === 'string' ? body.query : ''),
+    });
+    return null as unknown as T;
   }
 
   const response = await fetch('/api/portal/graphql', {

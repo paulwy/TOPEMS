@@ -27,10 +27,18 @@ export interface AIReportAssistantProps {
   initialQuery?: string;
 }
 
+interface ReportResult {
+  chart_type: string;
+  data: Record<string, unknown>[];
+  metrics: Record<string, unknown>[];
+  title: string;
+  description: string;
+}
+
 export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQuery }) => {
   const [query, setQuery] = useState(initialQuery || '');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ReportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -50,7 +58,13 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
       });
 
       if (response.success && response.data) {
-        setResult(response.data);
+        setResult({
+          title: response.data.title,
+          description: response.data.description ?? '',
+          chart_type: response.data.chart_type,
+          data: response.data.data as Record<string, unknown>[],
+          metrics: (response.data.metrics ?? []) as unknown as Record<string, unknown>[],
+        });
         addNotification({ title: '成功', message: '报表生成成功', type: 'success' });
       } else {
         setError(response.message || '生成报表失败');
@@ -84,7 +98,10 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
   };
 
   const renderLineChart = () => {
-    const maxValue = Math.max(...result.data.map((d: any) => d.value));
+    if (!result) return null;
+    const maxValue = Math.max(
+      ...result.data.map((d: Record<string, unknown>) => d.value as number)
+    );
     return (
       <Box sx={{ mt: 3 }}>
         <Typography
@@ -94,7 +111,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           趋势图
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'flex-end', height: 200, gap: 4 }}>
-          {result.data.map((item: any, idx: number) => (
+          {result.data.map((item: Record<string, unknown>, idx: number) => (
             <Box
               key={idx}
               sx={{ flex: 1 }}
@@ -103,7 +120,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
                 sx={{
                   bgcolor: 'primary.500',
                   borderRadius: '4px 4px 0 0',
-                  height: `${(item.value / maxValue) * 100}%`,
+                  height: `${((item.value as number) / maxValue) * 100}%`,
                   minHeight: 20,
                   transition: 'height 0.5s ease',
                 }}
@@ -112,7 +129,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
                 variant='caption'
                 sx={{ mt: 1, display: 'block', textAlign: 'center' }}
               >
-                {item.label}
+                {item.label as string}
               </Typography>
             </Box>
           ))}
@@ -122,7 +139,10 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
   };
 
   const renderBarChart = () => {
-    const maxValue = Math.max(...result.data.map((d: any) => d.value));
+    if (!result) return null;
+    const maxValue = Math.max(
+      ...result.data.map((d: Record<string, unknown>) => d.value as number)
+    );
     return (
       <Box sx={{ mt: 3 }}>
         <Typography
@@ -132,7 +152,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           柱状图
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'flex-end', height: 200, gap: 4 }}>
-          {result.data.map((item: any, idx: number) => (
+          {result.data.map((item: Record<string, unknown>, idx: number) => (
             <Box
               key={idx}
               sx={{ flex: 1 }}
@@ -141,7 +161,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
                 sx={{
                   bgcolor: 'teal.500',
                   borderRadius: '4px 4px 0 0',
-                  height: `${(item.value / maxValue) * 100}%`,
+                  height: `${((item.value as number) / maxValue) * 100}%`,
                   minHeight: 20,
                   transition: 'height 0.5s ease',
                 }}
@@ -150,7 +170,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
                 variant='caption'
                 sx={{ mt: 1, display: 'block', textAlign: 'center' }}
               >
-                {item.label}
+                {item.label as string}
               </Typography>
             </Box>
           ))}
@@ -160,7 +180,11 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
   };
 
   const renderPieChart = () => {
-    const total = result.data.reduce((sum: number, item: any) => sum + item.value, 0);
+    if (!result) return null;
+    const total = result.data.reduce(
+      (sum: number, item: Record<string, unknown>) => sum + (item.value as number),
+      0
+    );
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
     let cumulativeAngle = 0;
 
@@ -171,8 +195,8 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
             viewBox='0 0 100 100'
             style={{ width: '100%', height: '100%' }}
           >
-            {result.data.map((item: any, idx: number) => {
-              const angle = (item.value / total) * 360;
+            {result.data.map((item: Record<string, unknown>, idx: number) => {
+              const angle = ((item.value as number) / total) * 360;
               const startAngle = cumulativeAngle;
               cumulativeAngle += angle;
 
@@ -211,7 +235,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           </Box>
         </Box>
         <Box sx={{ flex: 1 }}>
-          {result.data.map((item: any, idx: number) => (
+          {result.data.map((item: Record<string, unknown>, idx: number) => (
             <Box
               key={idx}
               sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}
@@ -224,12 +248,13 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
                   bgcolor: colors[idx % colors.length],
                 }}
               />
-              <Typography variant='body2'>{item.label}</Typography>
+              <Typography variant='body2'>{item.label as string}</Typography>
               <Typography
                 variant='body2'
                 sx={{ marginLeft: 'auto', fontWeight: 500 }}
               >
-                {item.value.toLocaleString()} ({((item.value / total) * 100).toFixed(1)}%)
+                {(item.value as number).toLocaleString()} (
+                {(((item.value as number) / total) * 100).toFixed(1)}%)
               </Typography>
             </Box>
           ))}
@@ -239,6 +264,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
   };
 
   const renderTable = () => {
+    if (!result) return null;
     if (!result.data || result.data.length === 0) {
       return (
         <Typography
@@ -274,7 +300,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
             </tr>
           </thead>
           <tbody>
-            {result.data.map((row: any, idx: number) => (
+            {result.data.map((row: Record<string, unknown>, idx: number) => (
               <tr
                 key={idx}
                 style={{ borderBottom: '1px solid #f3f4f6' }}
@@ -284,7 +310,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
                     key={header}
                     style={{ padding: '8px 12px', color: 'grey.700' }}
                   >
-                    {row[header]}
+                    {row[header] as React.ReactNode}
                   </td>
                 ))}
               </tr>
@@ -296,6 +322,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
   };
 
   const renderMetrics = () => {
+    if (!result) return null;
     if (!result.metrics || result.metrics.length === 0) return null;
 
     return (
@@ -307,27 +334,27 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           gap: 3,
         }}
       >
-        {result.metrics.map((metric: any, idx: number) => (
+        {result.metrics.map((metric: Record<string, unknown>, idx: number) => (
           <Card key={idx}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography
                 variant='body2'
                 sx={{ color: 'text.secondary', mb: 1 }}
               >
-                {metric.label}
+                {metric.label as string}
               </Typography>
               <Typography
                 variant='h4'
                 sx={{ fontWeight: 600 }}
               >
-                {metric.value.toLocaleString()}
-                {metric.unit && (
+                {(metric.value as number).toLocaleString()}
+                {(metric.unit as string | undefined) && (
                   <Typography
                     variant='body1'
                     component='span'
                     sx={{ ml: 1, color: 'text.secondary' }}
                   >
-                    {metric.unit}
+                    {metric.unit as string}
                   </Typography>
                 )}
               </Typography>

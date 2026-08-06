@@ -132,7 +132,7 @@ const InquiryQuotationPage: React.FC = () => {
       label: '发布',
       icon: <Send size={14} />,
       show: (row) => row.status === 'draft',
-      onClick: (row) => handlePublish(row as Inquiry),
+      onClick: (row) => handlePublish(row as unknown as Inquiry),
     },
     {
       label: '查看报价',
@@ -140,7 +140,7 @@ const InquiryQuotationPage: React.FC = () => {
       show: (row) =>
         (row.status === 'published' || row.status === 'in_progress') &&
         (row.quotation_count as number) > 0,
-      onClick: (row) => handleViewQuotations(row as Inquiry),
+      onClick: (row) => handleViewQuotations(row as unknown as Inquiry),
     },
   ];
 

@@ -7,7 +7,7 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { qualityIssueSchema, auditPlanSchema } from '@/schemas/qms';
 import { qmsApi } from '@/api/qms';
-import type { QualityIssue, AuditPlan } from '@/api/qms';
+import type { QualityIssue, AuditPlan, CreateQualityIssueRequest } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -130,16 +130,17 @@ function StatsCards({ stats }: { stats: QualityControlStats }) {
 const issueAdapter = createCrudPageAdapter({
   list: qmsApi.listIssues,
   create: qmsApi.createIssue,
-  update: (id: string, data: any) => qmsApi.updateIssue(id, data),
+  update: (id: string, data: Record<string, unknown>) =>
+    qmsApi.updateIssue(id, data as unknown as CreateQualityIssueRequest),
   delete: (id: string) => qmsApi.deleteIssue(id),
 });
 
 const auditAdapter = createCrudPageAdapter({
   list: qmsApi.listAuditPlans,
-  create: async (_data: any) => {
+  create: async (_data: Record<string, unknown>) => {
     throw new Error('审核计划不支持创建');
   },
-  update: async (_id: string, _data: any) => {
+  update: async (_id: string, _data: Record<string, unknown>) => {
     throw new Error('审核计划不支持更新');
   },
   delete: async (_id: string) => {

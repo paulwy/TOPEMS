@@ -43,7 +43,7 @@ import {
   Lightbulb,
   Sparkles,
 } from 'lucide-react';
-import { V51Card } from '../design-system/components';
+import { V51Card } from '../../design-system/components';
 import {
   codeReviewer,
   type ReviewResult,

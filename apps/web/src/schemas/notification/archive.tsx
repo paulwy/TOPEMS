@@ -29,6 +29,14 @@ const TYPE_COLORS: Record<
   error: 'error',
 };
 
+interface ArchivedNotificationRow {
+  notification_type: string;
+  title: string;
+  content: string;
+  created_at: string;
+  archived_at: string;
+}
+
 export const archiveNotificationSchema: EntitySchema = {
   entity: 'archivedNotification',
   title: '归档通知',
@@ -46,7 +54,7 @@ export const archiveNotificationSchema: EntitySchema = {
       type: 'text',
       listWidth: 280,
       renderCell: (row: Record<string, unknown>) => {
-        const n = row as any;
+        const n = row as unknown as ArchivedNotificationRow;
         return (
           <Box>
             <Typography
@@ -92,13 +100,13 @@ export const archiveNotificationSchema: EntitySchema = {
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
-        const type = (row as any).notification_type || 'info';
+        const type = (row as unknown as ArchivedNotificationRow).notification_type || 'info';
         const color = TYPE_COLORS[type] || 'default';
         const label = TYPE_LABELS[type] || type;
         return (
           <Chip
             size='small'
-            color={color as any}
+            color={color}
             label={label}
             variant='outlined'
           />
@@ -116,7 +124,7 @@ export const archiveNotificationSchema: EntitySchema = {
           variant='body2'
           color='text.secondary'
         >
-          {new Date((row as any).created_at).toLocaleString('zh-CN')}
+          {new Date((row as unknown as ArchivedNotificationRow).created_at).toLocaleString('zh-CN')}
         </Typography>
       ),
     },
@@ -131,7 +139,7 @@ export const archiveNotificationSchema: EntitySchema = {
           variant='body2'
           color='text.secondary'
         >
-          {new Date((row as any).archived_at).toLocaleString('zh-CN')}
+          {new Date((row as unknown as ArchivedNotificationRow).archived_at).toLocaleString('zh-CN')}
         </Typography>
       ),
     },

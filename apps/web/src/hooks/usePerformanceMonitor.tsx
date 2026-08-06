@@ -34,6 +34,15 @@ interface ComponentLoadMetrics {
   timestamp: number;
 }
 
+interface PerformanceMemory {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
+}
+interface PerformanceWithMemory extends Performance {
+  memory?: PerformanceMemory;
+}
+
 class PerformanceMonitor {
   private metrics: PerformanceMetrics = {
     pageLoadTime: 0,
@@ -125,8 +134,8 @@ class PerformanceMonitor {
 
   private initMemoryMonitoring() {
     const updateMemory = () => {
-      if (typeof performance !== 'undefined' && (performance as any).memory) {
-        const memory = (performance as any).memory;
+      if (typeof performance !== 'undefined' && (performance as PerformanceWithMemory).memory) {
+        const memory = (performance as PerformanceWithMemory).memory!;
         this.metrics.memoryUsage = memory.usedJSHeapSize;
         this.metrics.memoryLimit = memory.totalJSHeapSize;
       }
@@ -336,7 +345,7 @@ export async function measureApiCall<T>(endpoint: string, apiCall: () => Promise
   }
 }
 
-export function useApiCall<T, A extends any[] = any[]>(
+export function useApiCall<T, A extends unknown[] = unknown[]>(
   apiCall: (...args: A) => Promise<T>,
   _deps: React.DependencyList = []
 ) {

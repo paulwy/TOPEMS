@@ -444,32 +444,32 @@ const DataAnalysisPage = () => {
                   >
                     <TableCell sx={{ fontWeight: 500 }}>{row.category}</TableCell>
                     <TableCell align='right'>
-                      {(row as Record<string, any>)[
+                      {(row as Record<string, number | string>)[
                         t('bi.data_analysis_page.text_fccc2b')
                       ].toLocaleString()}
                     </TableCell>
                     <TableCell align='right'>
-                      {(row as Record<string, any>)[
+                      {(row as Record<string, number | string>)[
                         t('bi.data_analysis_page.text_c1d13f')
                       ].toLocaleString()}
                     </TableCell>
                     <TableCell align='right'>
-                      {(row as Record<string, any>)[
+                      {(row as Record<string, number | string>)[
                         t('bi.data_analysis_page.text_c4767b')
                       ].toLocaleString()}
                     </TableCell>
                     <TableCell align='right'>
-                      {(row as Record<string, any>)[
+                      {(row as Record<string, number | string>)[
                         t('bi.data_analysis_page.text_3eaf4b')
                       ].toLocaleString()}
                     </TableCell>
                     <TableCell align='right'>
-                      {(row as Record<string, any>)[
+                      {(row as Record<string, number | string>)[
                         t('bi.data_analysis_page.text_0545f1')
                       ].toLocaleString()}
                     </TableCell>
                     <TableCell align='right'>
-                      {(row as Record<string, any>)[
+                      {(row as Record<string, number | string>)[
                         t('bi.data_analysis_page.text_f2422a')
                       ].toLocaleString()}
                     </TableCell>

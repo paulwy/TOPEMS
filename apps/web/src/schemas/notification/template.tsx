@@ -63,8 +63,9 @@ export const notificationTemplateSchema: EntitySchema = {
       sortable: true,
       listWidth: 280,
       renderCell: (row: Record<string, unknown>) => {
-        const t = row as any;
-        const type = t.notification_type || 'info';
+        const type = String(row['notification_type'] || 'info');
+        const name = String(row['name'] || '');
+        const description = row['description'] as string | undefined;
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -88,9 +89,9 @@ export const notificationTemplateSchema: EntitySchema = {
                 variant='body2'
                 sx={{ fontWeight: 500, color: 'grey.900' }}
               >
-                {t.name}
+                {name}
               </Typography>
-              {t.description && (
+              {description && (
                 <Typography
                   variant='caption'
                   sx={{
@@ -102,7 +103,7 @@ export const notificationTemplateSchema: EntitySchema = {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {t.description}
+                  {description}
                 </Typography>
               )}
             </Box>
@@ -131,7 +132,7 @@ export const notificationTemplateSchema: EntitySchema = {
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
-        const type = (row as any).notification_type || 'info';
+        const type = String(row['notification_type'] || 'info');
         const label = TYPE_LABELS[type] || type;
         const color = TYPE_COLORS[type] || 'primary';
         return (

@@ -56,14 +56,14 @@ export interface LifecycleEvent {
   /** 事件时间戳 */
   timestamp: number;
   /** 事件附加数据 */
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 /** 生命周期钩子集合 */
 export interface LifecycleHooks {
-  beforeMount?: (container: HTMLElement, props: Record<string, any>) => void;
+  beforeMount?: (container: HTMLElement, props: Record<string, unknown>) => void;
   mounted?: (container: HTMLElement) => void;
-  beforeUpdate?: (container: HTMLElement, props: Record<string, any>) => void;
+  beforeUpdate?: (container: HTMLElement, props: Record<string, unknown>) => void;
   updated?: (container: HTMLElement) => void;
   beforeUnmount?: (container: HTMLElement) => void;
   unmounted?: (container: HTMLElement) => void;
@@ -85,7 +85,7 @@ export interface ModuleLifecycleRecord {
   /** 挂载容器 */
   container?: HTMLElement;
   /** 当前属性 */
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
   /** 最后错误 */
   lastError?: Error;
   /** 生命周期钩子 */
@@ -200,7 +200,7 @@ export class ModuleLifecycle {
   /**
    * 挂载
    */
-  mount(id: string, container: HTMLElement, props: Record<string, any> = {}): boolean {
+  mount(id: string, container: HTMLElement, props: Record<string, unknown> = {}): boolean {
     const record = this.records.get(id);
     if (!record) {
       console.error(`[Lifecycle] 模块 ${id} 未注册`);
@@ -246,7 +246,7 @@ export class ModuleLifecycle {
   /**
    * 更新
    */
-  update(id: string, props: Record<string, any>): boolean {
+  update(id: string, props: Record<string, unknown>): boolean {
     const record = this.records.get(id);
     if (!record) return false;
 
@@ -446,7 +446,7 @@ export class ModuleLifecycle {
   private emitEvent(
     moduleId: string,
     eventType: LifecycleEventType,
-    data?: Record<string, any>
+    data?: Record<string, unknown>
   ): void {
     const event: LifecycleEvent = {
       module_id: moduleId,

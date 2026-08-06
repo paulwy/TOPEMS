@@ -449,7 +449,7 @@ const CRMCustomerScoringPage: React.FC = () => {
     <CrudPage
       schema={customerScoringSchema}
       apiAdapter={apiAdapter}
-      customColumns={columns as ColumnDef[]}
+      customColumns={columns as unknown as ColumnDef<Record<string, unknown>>[]}
       detailContent={detailContent}
       headerContent={headerContent}
       breadcrumbs={[

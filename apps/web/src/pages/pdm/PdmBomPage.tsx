@@ -45,20 +45,20 @@ export default function PdmBomPage() {
         let items = (Array.isArray(data) ? data : data.items || []) as BomItem[];
         items = items.map((item: BomItem) => ({
           ...item,
-          partNumber: (item as any).part_number || (item as any).partNumber || '',
-          partName: (item as any).part_name || (item as any).partName || '',
-          unitPrice: (item as any).unit_price || (item as any).unitPrice || 0,
-          totalPrice: (item as any).total_price || (item as any).totalPrice || 0,
+          partNumber: item.part_number || '',
+          partName: item.part_name || '',
+          unitPrice: item.unit_price || 0,
+          totalPrice: item.total_price || 0,
         })) as BomItem[];
         const productId = params?.product_id as string | undefined;
         if (productId) {
-          items = items.filter((item: BomItem) => (item as any).product_id === productId);
+          items = items.filter((item: BomItem) => item.product_id === productId);
         }
         const search = params?.search;
         if (search) {
           const lower = search.toLowerCase();
           items = items.filter(
-            (item: any) =>
+            (item: BomItem) =>
               (item.part_name || '').toLowerCase().includes(lower) ||
               (item.part_number || '').toLowerCase().includes(lower)
           );
@@ -67,7 +67,7 @@ export default function PdmBomPage() {
       },
       create: async (data) => {
         const itemData = data as Partial<BomItem> & { total_price?: number };
-        const requestData: CreateBomItemRequest = {
+        const requestData: CreateBomItemRequest & { total_price?: number } = {
           bom_version_id: itemData.bom_version_id || '',
           item_no: itemData.item_no || `${itemData.part_number}-${Date.now()}`,
           part_number: itemData.part_number || '',
@@ -79,8 +79,7 @@ export default function PdmBomPage() {
           is_alternative: itemData.is_alternative || false,
           remarks: itemData.remarks || '',
         };
-        (requestData as any).total_price =
-          (requestData.quantity || 0) * (requestData.unit_price || 0);
+        requestData.total_price = (requestData.quantity || 0) * (requestData.unit_price || 0);
         const response = await pdmApi.createBomItem(requestData);
         if (!response.success) throw new Error(response.message || '创建失败');
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
@@ -88,7 +87,7 @@ export default function PdmBomPage() {
       },
       update: async (id, data) => {
         const itemData = data as Partial<BomItem>;
-        const requestData: Partial<CreateBomItemRequest> = {
+        const requestData: Partial<CreateBomItemRequest> & { total_price?: number } = {
           part_number: itemData.part_number,
           part_name: itemData.part_name,
           quantity: itemData.quantity,
@@ -99,7 +98,7 @@ export default function PdmBomPage() {
           remarks: itemData.remarks,
         };
         if (requestData.quantity !== undefined && requestData.unit_price !== undefined) {
-          (requestData as any).total_price = requestData.quantity * requestData.unit_price;
+          requestData.total_price = requestData.quantity * requestData.unit_price;
         }
         const response = await pdmApi.updateBomItem(id, requestData);
         if (!response.success) throw new Error(response.message || '更新失败');
@@ -120,7 +119,7 @@ export default function PdmBomPage() {
       const items = rows as unknown as BomItem[];
       const totalCost = items.reduce(
         (sum: number, item: BomItem) =>
-          sum + ((item as any).total_price || (item as any).quantity * ((item as any).unit_price || 0)),
+          sum + (item.total_price || item.quantity * (item.unit_price || 0)),
         0
       );
       const stats = {

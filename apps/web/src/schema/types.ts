@@ -502,7 +502,7 @@ export function toColumnDef(field: SchemaField): ColumnDef | null {
 /**
  * 从 Schema 中提取列表列定义（含状态徽章）
  */
-export function getColumns<T = Record<string, unknown>>(schema: EntitySchema<T>): ColumnDef[] {
+export function getColumns<T = Record<string, unknown>>(schema: EntitySchema<T>): ColumnDef<T>[] {
   const fieldMap = new Map(schema.fields.map((f) => [f.name, f]));
   const order = schema.list?.columns || schema.fields.map((f) => f.name);
   const statusBadge = schema.list?.statusBadge;
@@ -511,12 +511,12 @@ export function getColumns<T = Record<string, unknown>>(schema: EntitySchema<T>)
     .map((name) => fieldMap.get(name))
     .filter((f): f is SchemaField => !!f)
     .map((field) => {
-      const col = toColumnDef(field);
+      const col = toColumnDef(field) as ColumnDef<T>;
       if (!col) return null;
 
       if (statusBadge && field.name === statusBadge.field && !field.renderCell) {
-        col.render = (row: Record<string, unknown>) => {
-          const value = String(row[field.name] ?? '');
+        col.render = (row: T) => {
+          const value = String((row as Record<string, unknown>)[field.name] ?? '');
           const label = statusBadge.labelMap[value] || value;
           const color = (statusBadge.colorMap[value] || 'default') as string;
           return React.createElement(Chip, {
@@ -531,7 +531,7 @@ export function getColumns<T = Record<string, unknown>>(schema: EntitySchema<T>)
 
       return col;
     })
-    .filter((c): c is ColumnDef => c !== null);
+    .filter((c): c is ColumnDef<T> => c !== null);
 }
 
 /**

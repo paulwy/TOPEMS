@@ -90,12 +90,12 @@ export interface AdvancedFilter {
 
 interface VirtualRowData {
   rows: Row<any>[];
-  getRowKey: (data: any) => string;
-  onRowClick?: (data: any) => void;
+  getRowKey: (data: unknown) => string;
+  onRowClick?: (data: unknown) => void;
   isSelected: string[];
-  handleSelectRow: (data: any) => void;
+  handleSelectRow: (data: unknown) => void;
   renderRowNumber: (index: number) => React.ReactNode;
-  handleRowExpand: (data: any) => void;
+  handleRowExpand: (data: unknown) => void;
   showSelection: boolean;
   showRowNumber: boolean;
   enableRowExpansion: boolean;
@@ -188,7 +188,7 @@ function DataTableVirtualRow({ index, style, ...data }: RowComponentProps<Virtua
                 e.stopPropagation();
                 handleRowExpand(row.original);
               }}
-            aria-label="展开"
+              aria-label='展开'
             >
               <ChevronDown sx={{ width: 18, height: 18 }} />
             </IconButton>
@@ -1285,12 +1285,12 @@ export function DataTable<TData, TValue>({
                           rowComponent={DataTableVirtualRow}
                           rowProps={{
                             rows: table.getRowModel().rows,
-                            getRowKey,
-                            onRowClick,
+                            getRowKey: getRowKey as (data: unknown) => string,
+                            onRowClick: onRowClick as ((data: unknown) => void) | undefined,
                             isSelected,
-                            handleSelectRow,
+                            handleSelectRow: handleSelectRow as (data: unknown) => void,
                             renderRowNumber,
-                            handleRowExpand,
+                            handleRowExpand: handleRowExpand as (data: unknown) => void,
                             showSelection,
                             showRowNumber,
                             enableRowExpansion,
@@ -1370,7 +1370,7 @@ export function DataTable<TData, TValue>({
                                     e.stopPropagation();
                                     handleRowExpand(row.original);
                                   }}
-                                aria-label="展开"
+                                  aria-label='展开'
                                 >
                                   {isExpanded ? (
                                     <ChevronUp sx={{ width: 18, height: 18 }} />
@@ -1453,7 +1453,7 @@ export function DataTable<TData, TValue>({
                                       size='small'
                                       color='success'
                                       onClick={() => handleSaveEdit(row.original, rowKey)}
-                                    aria-label="保存"
+                                      aria-label='保存'
                                     >
                                       <Save sx={{ width: 16, height: 16 }} />
                                     </IconButton>
@@ -1461,7 +1461,7 @@ export function DataTable<TData, TValue>({
                                       size='small'
                                       color='error'
                                       onClick={handleCancelEdit}
-                                    aria-label="关闭"
+                                      aria-label='关闭'
                                     >
                                       <XCircle sx={{ width: 16, height: 16 }} />
                                     </IconButton>
@@ -1596,7 +1596,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}
-            aria-label="展开"
+              aria-label='展开'
             >
               <ChevronLeft sx={{ width: 20, height: 20 }} />
             </IconButton>
@@ -1623,7 +1623,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}
-            aria-label="展开"
+              aria-label='展开'
             >
               <ChevronRight sx={{ width: 20, height: 20 }} />
             </IconButton>

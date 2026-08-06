@@ -30,8 +30,8 @@ export async function deleteReport(id: string) {
 export const reportCrudApi: CrudOperations<Report> = {
   list: (params?) =>
     fetchReports({
-      page: params?.page,
-      pageSize: params?.pagesize,
+      page: params?.page as number,
+      pageSize: params?.pagesize as number,
       ...(params as unknown as Record<string, unknown>),
     }),
   get: fetchReport,

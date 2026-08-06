@@ -2,9 +2,9 @@ export type RequestPriority = 'critical' | 'high' | 'normal' | 'low' | 'backgrou
 
 interface QueuedRequest {
   priority: RequestPriority;
-  fn: () => Promise<any>;
-  resolve: (value: any) => void;
-  reject: (reason?: any) => void;
+  fn: () => Promise<unknown>;
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
   createdAt: number;
 }
 
@@ -100,9 +100,9 @@ class RequestPriorityQueue {
     return new Promise((resolve, reject) => {
       const queuedRequest: QueuedRequest = {
         priority,
-        fn: fn as () => Promise<any>,
-        resolve,
-        reject,
+        fn: fn as () => Promise<unknown>,
+        resolve: resolve as (value?: unknown) => void,
+        reject: reject as (reason?: unknown) => void,
         createdAt: Date.now(),
       };
 

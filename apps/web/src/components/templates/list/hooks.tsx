@@ -3,8 +3,10 @@ import { Chip } from '@mui/material';
 import { Edit, Trash2, Plus } from 'lucide-react';
 import { logger } from '@/utils/logger';
 import { mapListParamsToBackend } from '@/utils/listParamMapping';
+import type { UseCrudQueriesResult } from '@/hooks';
 import type {
   BatchAction,
+  CardViewConfig,
   ColumnConfig,
   ColumnDef,
   ListPageCrudConfig,
@@ -16,6 +18,18 @@ import i18n from '@/i18n';
 
 // Module-level t for use outside React components (shadowed by useTranslation inside components)
 const t = i18n.t;
+
+/** 内部列表状态结果（传递在各 hook 之间的状态对象） */
+export interface InternalListStateResult {
+  debouncedSearch: string;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+  currentPage: number;
+  pageSize: number;
+  filters: Record<string, unknown>;
+  setFilters: (filters: Record<string, unknown>) => void;
+  searchQuery: string;
+}
 
 // ============ useInlineEditing ============
 
@@ -873,14 +887,14 @@ export function useBatchOperations<T>({
 
 // ============ useCrudForm ============
 
-export interface UseCrudFormParams<T> {
-  crud?: ListPageCrudConfig<T, any, any>;
+export interface UseCrudFormParams<T extends { id?: string | number }> {
+  crud?: ListPageCrudConfig<T>;
   getRowId?: (row: T) => string | number;
-  crudResult: any;
+  crudResult: UseCrudQueriesResult<T>;
   formMode: 'create' | 'edit' | 'view';
   setFormMode: (mode: 'create' | 'edit' | 'view') => void;
-  currentRecord: any;
-  setCurrentRecord: (record: any) => void;
+  currentRecord: T | null;
+  setCurrentRecord: (record: T | null) => void;
   formOpen: boolean;
   setFormOpen: (open: boolean) => void;
   formSubmitting: boolean;
@@ -891,14 +905,14 @@ export interface UseCrudFormParams<T> {
   setFormErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
 
-export interface UseCrudFormResult<T> {
-  buildInitialFormData: (mode: 'create' | 'edit' | 'view', record?: any) => Record<string, unknown>;
+export interface UseCrudFormResult<T extends { id?: string | number }> {
+  buildInitialFormData: (mode: 'create' | 'edit' | 'view', record?: T) => Record<string, unknown>;
   openCreateForm: () => void;
-  openEditForm: (record: any) => void;
-  openViewForm: (record: any) => void;
-  handleDelete: (record: any) => Promise<boolean>;
+  openEditForm: (record: T) => void;
+  openViewForm: (record: T) => void;
+  handleDelete: (record: T) => Promise<boolean>;
   closeForm: () => void;
-  handleFormSubmit: (data: any) => Promise<boolean>;
+  handleFormSubmit: (data: Record<string, unknown>) => Promise<boolean>;
   validateForm: () => boolean;
   handleAutoFormSubmit: () => Promise<boolean>;
   renderAutoForm: () => React.ReactNode;
@@ -910,7 +924,7 @@ export interface UseCrudFormResult<T> {
  * CRUD 表单 Hook
  * 管理表单状态、验证、提交、自动渲染
  */
-export function useCrudForm<T>({
+export function useCrudForm<T extends { id?: string | number }>({
   crud,
   getRowId,
   crudResult,
@@ -928,15 +942,15 @@ export function useCrudForm<T>({
   setFormErrors,
 }: UseCrudFormParams<T>): UseCrudFormResult<T> {
   const buildInitialFormData = useCallback(
-    (mode: 'create' | 'edit' | 'view', record?: any): Record<string, unknown> => {
+    (mode: 'create' | 'edit' | 'view', record?: T): Record<string, unknown> => {
       if (!crud?.formFields) return {};
       const data: Record<string, unknown> = {};
       crud.formFields.forEach((field) => {
         if (mode === 'create' && field.hideInCreate) return;
         if (mode === 'edit' && field.hideInEdit) return;
         if (mode === 'view' && field.hideInView) return;
-        if (record && record[field.key] !== undefined) {
-          data[field.key] = record[field.key];
+        if (record && (record as Record<string, unknown>)[field.key] !== undefined) {
+          data[field.key] = (record as Record<string, unknown>)[field.key];
         } else {
           data[field.key] = field.defaultValue ?? (field.type === 'switch' ? false : '');
         }
@@ -962,7 +976,7 @@ export function useCrudForm<T>({
   ]);
 
   const openEditForm = useCallback(
-    (record: any) => {
+    (record: T) => {
       setCurrentRecord(record);
       setFormMode('edit');
       setFormData(buildInitialFormData('edit', record));
@@ -973,7 +987,7 @@ export function useCrudForm<T>({
   );
 
   const openViewForm = useCallback(
-    (record: any) => {
+    (record: T) => {
       setCurrentRecord(record);
       setFormMode('view');
       setFormData(buildInitialFormData('view', record));
@@ -984,7 +998,7 @@ export function useCrudForm<T>({
   );
 
   const handleDelete = useCallback(
-    async (record: any): Promise<boolean> => {
+    async (record: T): Promise<boolean> => {
       if (!crud) return false;
       const rowId = getRowId ? getRowId(record) : (record as Record<string, unknown>).id;
       if (!rowId) return false;
@@ -1004,16 +1018,16 @@ export function useCrudForm<T>({
   }, [setFormOpen]);
 
   const handleFormSubmit = useCallback(
-    async (data: any): Promise<boolean> => {
+    async (data: Record<string, unknown>): Promise<boolean> => {
       if (!crud) return false;
       setFormSubmitting(true);
       try {
         if (formMode === 'create') {
-          await crudResult.createMutation.mutateAsync(data);
+          await crudResult.mutations.createMutation.mutateAsync(data as Partial<T>);
         } else if (formMode === 'edit' && currentRecord?.id) {
-          await crudResult.updateMutation.mutateAsync({
+          await crudResult.mutations.updateMutation.mutateAsync({
             id: String(currentRecord.id),
-            item: data,
+            item: data as Partial<T>,
           });
         }
         setFormOpen(false);
@@ -1191,7 +1205,7 @@ export function useCrudForm<T>({
 
 export interface UseCrudFetchParamsParams<T> {
   crud?: ListPageCrudConfig<T>;
-  internalListStateResult: any;
+  internalListStateResult: InternalListStateResult;
 }
 
 /**
@@ -1244,17 +1258,17 @@ export function useCrudFetchParams<T>({
 // ============ useListPageFilters ============
 
 export interface UseListPageFiltersParams {
-  filtersValue?: Record<string, any>;
+  filtersValue?: Record<string, unknown>;
   persistFilters?: boolean;
   filterStorageKey?: string;
-  internalListStateResult: any;
-  onFilterChange?: (filters: Record<string, any>) => void;
+  internalListStateResult: InternalListStateResult;
+  onFilterChange?: (filters: Record<string, unknown>) => void;
 }
 
 export interface UseListPageFiltersResult {
-  localFilters: Record<string, any>;
-  setLocalFilters: (newFilters: Record<string, any>) => void;
-  handleFilterChange: (newFilters: Record<string, any>) => void;
+  localFilters: Record<string, unknown>;
+  setLocalFilters: (newFilters: Record<string, unknown>) => void;
+  handleFilterChange: (newFilters: Record<string, unknown>) => void;
 }
 
 /**
@@ -1268,7 +1282,7 @@ export function useListPageFilters({
   internalListStateResult,
   onFilterChange,
 }: UseListPageFiltersParams): UseListPageFiltersResult {
-  const [localFiltersState, setLocalFiltersState] = useState<Record<string, any>>(() => {
+  const [localFiltersState, setLocalFiltersState] = useState<Record<string, unknown>>(() => {
     if (persistFilters) {
       const key = filterStorageKey || window.location.pathname;
       try {
@@ -1284,11 +1298,11 @@ export function useListPageFilters({
   });
 
   const localFilters = internalListStateResult
-    ? (internalListStateResult.filters as Record<string, any>)
+    ? (internalListStateResult.filters as Record<string, unknown>)
     : localFiltersState;
 
   const setLocalFilters = useCallback(
-    (newFilters: Record<string, any>) => {
+    (newFilters: Record<string, unknown>) => {
       if (internalListStateResult) {
         internalListStateResult.setFilters(newFilters);
       } else {
@@ -1310,7 +1324,7 @@ export function useListPageFilters({
   }, [localFilters, persistFilters, filterStorageKey, onFilterChange]);
 
   const handleFilterChange = useCallback(
-    (newFilters: Record<string, any>) => {
+    (newFilters: Record<string, unknown>) => {
       setLocalFilters(newFilters);
       onFilterChange?.(newFilters);
     },
@@ -1326,7 +1340,7 @@ export interface UseListPageSearchParams {
   searchValue?: string;
   persistSearch?: boolean;
   filterStorageKey?: string;
-  internalListStateResult: any;
+  internalListStateResult: InternalListStateResult;
 }
 
 export interface UseListPageSearchResult {
@@ -1445,8 +1459,8 @@ export interface UseCrudRowActionsParams<T> {
   crud?: ListPageCrudConfig<T>;
   hasForm: boolean;
   rowActions?: RowAction<T>[];
-  openEditForm: (record: any) => void;
-  handleDelete: (record: any) => Promise<boolean>;
+  openEditForm: (record: T) => void;
+  handleDelete: (record: T) => Promise<boolean>;
 }
 
 /**
@@ -1486,7 +1500,7 @@ export function useCrudRowActions<T>({
 
 export interface UseCrudBatchActionsParams<T> {
   crud?: ListPageCrudConfig<T>;
-  crudResult: any;
+  crudResult: UseCrudQueriesResult<T>;
   batchActions?: BatchAction<T>[];
 }
 
@@ -1508,7 +1522,9 @@ export function useCrudBatchActions<T>({
         icon: null,
         color: 'error',
         onClick: (selectedRows: T[]) => {
-          const ids = selectedRows.map((row: any) => row.id).filter(Boolean);
+          const ids = selectedRows
+            .map((row: T) => (row as Record<string, unknown>).id)
+            .filter(Boolean);
           if (ids.length === 0) return;
           if (
             confirm(`确定删除选中的 ${ids.length}${t('components.components.hooks.key_8e61d9')}`)
@@ -1579,7 +1595,7 @@ export function useResolvedColumns<T>({ columns, crud }: UseResolvedColumnsParam
     return crud.formFields
       .filter((field) => !field.hideInTable && field.key !== 'id')
       .map((field) => {
-        const col: ColumnDef<any> = {
+        const col: ColumnDef<T> = {
           id: field.key,
           label: field.label,
           sortable: field.tableSortable !== false,
@@ -1587,12 +1603,17 @@ export function useResolvedColumns<T>({ columns, crud }: UseResolvedColumnsParam
           fixed: field.tableFixed,
           treeColumn: field.tableTreeColumn,
           summaryType: field.tableSummaryType,
-          summaryRender: field.tableSummaryRender,
+          summaryRender: field.tableSummaryRender as ((data: T[]) => React.ReactNode) | undefined,
           editable: field.tableEditable,
         };
 
         if (field.tableRender) {
-          col.render = (row: any, index: number) => field.tableRender!(row[field.key], row, index);
+          col.render = (row: T, index: number) =>
+            field.tableRender!(
+              (row as Record<string, unknown>)[field.key],
+              row as Record<string, unknown>,
+              index
+            );
           return col;
         }
 
@@ -1602,15 +1623,15 @@ export function useResolvedColumns<T>({ columns, crud }: UseResolvedColumnsParam
         ) {
           const colorMap = field.tableStatusColorMap || {};
           const labelMap = field.tableStatusLabelMap || {};
-          col.render = (row: any) => {
-            const value = row[field.key];
+          col.render = (row: T) => {
+            const value = String((row as Record<string, unknown>)[field.key] ?? '');
             const label = labelMap[value] || value || '-';
             const color = colorMap[value] || 'default';
             return (
               <Chip
                 label={label}
                 size='small'
-                color={color as any}
+                color={color as 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'}
                 variant='outlined'
               />
             );
@@ -1619,8 +1640,8 @@ export function useResolvedColumns<T>({ columns, crud }: UseResolvedColumnsParam
         }
 
         if (field.type === 'switch') {
-          col.render = (row: any) => {
-            const value = row[field.key];
+          col.render = (row: T) => {
+            const value = (row as Record<string, unknown>)[field.key];
             return (
               <Chip
                 label={
@@ -1636,9 +1657,9 @@ export function useResolvedColumns<T>({ columns, crud }: UseResolvedColumnsParam
         }
 
         if (field.type === 'date') {
-          col.render = (row: any) => {
-            const value = row[field.key];
-            return value || '-';
+          col.render = (row: T) => {
+            const value = (row as Record<string, unknown>)[field.key];
+            return value ? String(value) : '-';
           };
           return col;
         }
@@ -1653,7 +1674,7 @@ export function useResolvedColumns<T>({ columns, crud }: UseResolvedColumnsParam
 // ============ useResolvedCrudConfig ============
 
 export interface UseResolvedCrudConfigParams {
-  crud?: ListPageCrudConfig<any>;
+  crud?: ListPageCrudConfig<Record<string, unknown>>;
   columnResizable?: boolean;
   treeView?: boolean;
   showSummary?: boolean;
@@ -1666,8 +1687,14 @@ export interface UseResolvedCrudConfigParams {
   onSearch?: (value: string) => void;
   onSearchChange?: (value: string) => void;
   title?: string;
-  filters?: any[];
-  cardViewConfig?: any;
+  filters?: Array<{
+    id: string;
+    label: string;
+    type: string;
+    options?: Array<{ label: string; value: string | number }>;
+    defaultValue?: string | number;
+  }>;
+  cardViewConfig?: CardViewConfig<Record<string, unknown>>;
   exportable?: boolean;
   exportFileName?: string;
   exportFormats?: Array<'csv' | 'excel' | 'json'>;

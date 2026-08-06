@@ -1,13 +1,14 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
 import { fmeaSchema } from '@/schemas/qms';
 import { fmeaApi } from '@/api/qms';
+import type { FmeaAnalysis } from '@/api/qms';
 
-const apiAdapter = createCrudPageAdapter({
-  list: fmeaApi.listFmeaAnalyses as any,
-  create: fmeaApi.createFmeaAnalysis as any,
-  update: fmeaApi.updateFmeaAnalysis as any,
-  delete: fmeaApi.deleteFmeaAnalysis as any,
+const apiAdapter = createCrudPageAdapter<FmeaAnalysis>({
+  list: fmeaApi.listFmeaAnalyses as unknown as CrudApi<FmeaAnalysis>['list'],
+  create: fmeaApi.createFmeaAnalysis as unknown as CrudApi<FmeaAnalysis>['create'],
+  update: fmeaApi.updateFmeaAnalysis as unknown as CrudApi<FmeaAnalysis>['update'],
+  delete: fmeaApi.deleteFmeaAnalysis as unknown as CrudApi<FmeaAnalysis>['delete'],
 });
 
 export default function QmsFmeaPage() {

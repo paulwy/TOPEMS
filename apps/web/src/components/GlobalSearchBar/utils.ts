@@ -1,5 +1,6 @@
 import type { SearchResult } from '@/api/search';
 import type { GroupedResults, SearchFilter, SearchFilterOption } from './types';
+import type { Theme } from '@mui/material/styles';
 
 export const SEARCH_HISTORY_KEY = 'topems_search_history';
 export const MAX_HISTORY_ITEMS = 10;
@@ -80,7 +81,7 @@ export const getServiceLabel = (service: string) => {
   return serviceLabels[service] || service;
 };
 
-export const getServiceColor = (service: string, theme: any) => {
+export const getServiceColor = (service: string, theme: Theme) => {
   const colors: Record<string, string> = {
     erp: theme.palette.primary.main,
     crm: theme.palette.success.main,
@@ -94,7 +95,7 @@ export const getServiceColor = (service: string, theme: any) => {
   return colors[service] || theme.palette.text.secondary;
 };
 
-export const getModuleColor = (module: string, theme: any) => {
+export const getModuleColor = (module: string, theme: Theme) => {
   return getServiceColor(module, theme);
 };
 

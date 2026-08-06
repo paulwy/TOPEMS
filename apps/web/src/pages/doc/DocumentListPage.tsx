@@ -20,7 +20,7 @@ export const DocumentListPage: React.FC = () => {
     },
   });
 
-  const apiAdapter: CrudApiAdapter = {
+  const apiAdapter: CrudApiAdapter<FileMetadata> = {
     list: async (params) => {
       const search = params?.search as string | undefined;
       const typeFilter = params?.type as string | undefined;

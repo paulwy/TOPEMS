@@ -1,16 +1,16 @@
 import { Box, Typography } from '@mui/material';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
 import { productionProcessSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { ProductionProcess } from '@/api/mes/types';
 
-const apiAdapter = createCrudPageAdapter(
+const apiAdapter = createCrudPageAdapter<ProductionProcess>(
   {
-    list: mesApi.processes.list as any,
-    create: mesApi.processes.create as any,
-    update: mesApi.processes.update as any,
-    delete: mesApi.processes.delete as any,
+    list: mesApi.processes.list as unknown as CrudApi<ProductionProcess>['list'],
+    create: mesApi.processes.create as unknown as CrudApi<ProductionProcess>['create'],
+    update: mesApi.processes.update as unknown as CrudApi<ProductionProcess>['update'],
+    delete: mesApi.processes.delete as unknown as CrudApi<ProductionProcess>['delete'],
   },
   { itemsField: 'processes' }
 );

@@ -48,7 +48,9 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
     reconnect: _reconnect,
   } = useNotificationWebSocket({
     userId: isAuthenticated ? (userId ?? '') : '',
-    onNotification: handleNewNotification,
+    onNotification: handleNewNotification as unknown as (
+      notification: Record<string, unknown>
+    ) => void,
     onUnreadCountChange: fetchUnreadCount,
     maxReconnectAttempts: 5,
     autoConnect: isAuthenticated,

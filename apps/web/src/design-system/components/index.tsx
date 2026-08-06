@@ -559,10 +559,10 @@ export interface V51TableColumn<T = any> {
   sortable?: boolean;
   width?: string | number;
   align?: 'left' | 'center' | 'right';
-  render?: (value: any, row: T) => React.ReactNode;
+  render?: (value: unknown, row: T) => React.ReactNode;
 }
 
-export interface V51TableProps<T = any> {
+export interface V51TableProps<T = Record<string, unknown>> {
   columns: V51TableColumn<T>[];
   data: T[];
   rowKey?: keyof T;

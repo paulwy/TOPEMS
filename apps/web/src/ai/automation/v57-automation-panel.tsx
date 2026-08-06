@@ -45,7 +45,7 @@ import {
   HardDrive,
   Package,
 } from 'lucide-react';
-import { V51Card, V51Tabs, V51Button, V51Badge } from '../design-system/components';
+import { V51Card, V51Tabs, V51Button, V51Badge } from '../../design-system/components';
 import {
   smartTester,
   type TestScenario,

@@ -31,8 +31,8 @@ export async function deleteDataset(id: string) {
 export const datasetCrudApi: CrudOperations<Dataset> = {
   list: (params?) =>
     listDatasets({
-      page: params?.page,
-      pageSize: params?.pagesize,
+      page: params?.page as number,
+      pageSize: params?.pagesize as number,
       ...(params as unknown as Record<string, unknown>),
     }),
   get: getDataset,

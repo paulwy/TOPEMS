@@ -54,7 +54,7 @@ import {
   Link as LinkIcon,
   GitBranch,
 } from 'lucide-react';
-import { V51Card } from '../design-system/components';
+import { V51Card } from '../../design-system/components';
 import {
   codeNavigator,
   type SearchResult,
@@ -352,7 +352,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         '基于知识库的问答系统',
       ],
       installation: 'npm install',
-      usage: `import { codeNavigator, docGenerator, knowledgeQA } from './ai-copilot';`,
+      usage: `import { codeNavigator, docGenerator, knowledgeQA } from '@/ai/copilot';`,
       api: [
         {
           name: 'searchCode',

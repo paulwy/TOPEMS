@@ -11,6 +11,7 @@ import {
   alpha,
   LinearProgress,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import {
   SearchCode,
   FileText,
@@ -72,7 +73,7 @@ const EmptyResults: React.FC<{ query: string }> = ({ query }) => (
 interface HighlightTextProps {
   text: string;
   highlight: string;
-  theme: any;
+  theme: Theme;
 }
 
 const HighlightText: React.FC<HighlightTextProps> = ({ text, highlight, theme }) => {

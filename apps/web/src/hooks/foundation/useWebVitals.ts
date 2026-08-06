@@ -49,7 +49,7 @@ function observeType(
         callback(entry as PerformanceEntryWithValue);
       }
     });
-    observer.observe({ type: entryType as any, buffered: true, ...options });
+    observer.observe({ type: entryType as string, buffered: true, ...options });
     return () => observer.disconnect();
   } catch {
     return undefined;

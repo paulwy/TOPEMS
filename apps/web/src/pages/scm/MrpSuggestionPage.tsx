@@ -245,7 +245,7 @@ const MrpSuggestionPage: React.FC = () => {
       <CrudPage
         schema={schema}
         apiAdapter={apiAdapter}
-        customRowActions={customRowActions as RowAction[]}
+        customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
         breadcrumbs={[{ label: 'SCM' }, { label: 'MRP建议' }]}
         extraQueryParams={planId ? { plan_id: planId } : undefined}
         tabs={tabs}

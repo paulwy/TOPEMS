@@ -27,7 +27,20 @@ interface WorkflowException {
   status: 'pending' | 'processing' | 'resolved';
 }
 
-const buildExceptionList = (overdueData: any[], errorData: any[]): WorkflowException[] => {
+interface MonitorInstance {
+  id: string;
+  workflow_name?: string;
+  current_node_name?: string;
+  current_node_id?: string;
+  started_at: string;
+  updated_at?: string;
+  created_at: string;
+}
+
+const buildExceptionList = (
+  overdueData: MonitorInstance[],
+  errorData: MonitorInstance[]
+): WorkflowException[] => {
   const result: WorkflowException[] = [];
 
   (overdueData || []).forEach((instance: any) => {

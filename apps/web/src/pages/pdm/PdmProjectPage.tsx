@@ -220,21 +220,21 @@ const PdmProjectPage: React.FC = () => {
           const start = (page - 1) * pageSize;
           const pagedItems = items.slice(start, start + pageSize);
 
-          return { data: pagedItems as any[], total };
+          return { data: pagedItems as unknown as Record<string, unknown>[], total };
         }
         return { data: [], total: 0 };
       },
       create: async (data) => {
         const res = await projectApi.create(data as unknown as CreatePdmProjectRequest);
         if (res.success && res.data) {
-          return res.data as any;
+          return res.data as unknown as Record<string, unknown>;
         }
         throw new Error(res.message || '创建失败');
       },
       update: async (id, data) => {
         const res = await projectApi.update(id, data as Partial<CreatePdmProjectRequest>);
         if (res.success && res.data) {
-          return res.data as any;
+          return res.data as unknown as Record<string, unknown>;
         }
         throw new Error(res.message || '更新失败');
       },
@@ -258,7 +258,7 @@ const PdmProjectPage: React.FC = () => {
     [handleViewProject]
   );
 
-  const statsContent = (rows: any[], _total: number) => {
+  const statsContent = (rows: Record<string, unknown>[], _total: number) => {
     const totalCount = rows.length;
     const activeCount = rows.filter((r) => r.status === 'active').length;
     const planningCount = rows.filter((r) => r.status === 'planning').length;
@@ -359,7 +359,7 @@ const PdmProjectPage: React.FC = () => {
               <IconButton
                 size='small'
                 onClick={() => setMemberDialogOpen(true)}
-              aria-label="添加用户"
+                aria-label='添加用户'
               >
                 <UserPlus size={16} />
               </IconButton>
@@ -373,7 +373,7 @@ const PdmProjectPage: React.FC = () => {
                       edge='end'
                       size='small'
                       onClick={() => handleRemoveMember(selectedProjectId, member.user_id)}
-                    aria-label="移除用户"
+                      aria-label='移除用户'
                     >
                       <UserMinus size={14} />
                     </IconButton>

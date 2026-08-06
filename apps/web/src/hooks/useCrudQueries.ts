@@ -153,11 +153,6 @@ export function useCrudQueries<
     setPageState(1); // 切换每页条数时回到第 1 页
   }, []);
 
-  const pagination = useMemo(
-    () => ({ page, pageSize, total: 0, setPage, setPageSize }),
-    [page, pageSize, setPage, setPageSize]
-  );
-
   // ---- 列表查询 ----
   const listQueryKey = useMemo(
     () => [queryKey, 'list', page, pageSize, extraParams],
@@ -180,8 +175,10 @@ export function useCrudQueries<
   const data = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
 
-  // 动态更新 pagination 中的 total
-  pagination.total = total;
+  const pagination = useMemo(
+    () => ({ page, pageSize, total, setPage, setPageSize }),
+    [page, pageSize, total, setPage, setPageSize]
+  );
 
   // ---- fetch（手动触发 + 额外参数） ----
   const fetch = useCallback(
@@ -372,11 +369,6 @@ export function useModuleQueries<T extends { id?: string }>(
     setPageState(1);
   }, []);
 
-  const pagination = useMemo(
-    () => ({ page, pageSize, total: 0, setPage, setPageSize }),
-    [page, pageSize, setPage, setPageSize]
-  );
-
   // ---- 列表查询 ----
   const listQueryKey = useMemo(
     () => [queryKey, 'list', page, pageSize, extraParams],
@@ -399,11 +391,15 @@ export function useModuleQueries<T extends { id?: string }>(
 
   const data = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
-  pagination.total = total;
+
+  const pagination = useMemo(
+    () => ({ page, pageSize, total, setPage, setPageSize }),
+    [page, pageSize, total, setPage, setPageSize]
+  );
 
   // ---- fetch ----
   const fetch = useCallback(
-    (params?: Record<string, any>) => {
+    (params?: Record<string, unknown>) => {
       if (params) {
         setExtraParams(params);
       }
@@ -572,7 +568,7 @@ export function useModuleQueries<T extends { id?: string }>(
 // ============ useCrudOperations ============
 
 export interface CrudOperations<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
-  list: (params?: any) => Promise<{
+  list: (params?: Record<string, unknown>) => Promise<{
     success: boolean;
     code: number;
     message: string;
@@ -616,7 +612,7 @@ export interface UseCrudOperationsOptions<T, TCreate = Partial<T>, TUpdate = Par
  * ```
  */
 export function useCrudOperations<
-  T extends { id?: string },
+  T extends { id?: string | number },
   TCreate = Partial<T>,
   TUpdate = Partial<T>,
 >(
@@ -648,11 +644,6 @@ export function useCrudOperations<
     setPageState(1);
   }, []);
 
-  const pagination = useMemo(
-    () => ({ page, pageSize, total: 0, setPage, setPageSize }),
-    [page, pageSize, setPage, setPageSize]
-  );
-
   const listQueryKey = useMemo(
     () => [queryKey, 'list', page, pageSize, extraParams],
     [queryKey, page, pageSize, extraParams]
@@ -678,7 +669,11 @@ export function useCrudOperations<
 
   const data = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
-  pagination.total = total;
+
+  const pagination = useMemo(
+    () => ({ page, pageSize, total, setPage, setPageSize }),
+    [page, pageSize, total, setPage, setPageSize]
+  );
 
   const fetch = useCallback(
     (params?: Record<string, unknown>) => {

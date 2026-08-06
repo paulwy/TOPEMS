@@ -125,19 +125,19 @@ const BiddingPage: React.FC = () => {
       label: '发布',
       icon: <Send size={14} />,
       show: (row) => row.status === 'draft',
-      onClick: (row) => handlePublish(row as Bidding),
+      onClick: (row) => handlePublish(row as unknown as Bidding),
     },
     {
       label: '投标人',
       icon: <Users size={14} />,
       show: (row) => (row.supplier_count as number) > 0,
-      onClick: (row) => handleViewSuppliers(row as Bidding),
+      onClick: (row) => handleViewSuppliers(row as unknown as Bidding),
     },
     {
       label: '开标',
       icon: <Gavel size={14} />,
       show: (row) => row.status === 'bidding',
-      onClick: (row) => handleOpenBidding(row as Bidding),
+      onClick: (row) => handleOpenBidding(row as unknown as Bidding),
     },
   ];
 

@@ -19,9 +19,9 @@ export interface UseDashboardWebSocketOptions extends Omit<
 export interface DashboardMessage {
   type?: string;
   data?: {
-    alarms?: any[];
-    metrics?: any[];
-    updates?: any[];
+    alarms?: Record<string, unknown>[];
+    metrics?: Record<string, unknown>[];
+    updates?: Record<string, unknown>[];
   };
   message?: string;
 }

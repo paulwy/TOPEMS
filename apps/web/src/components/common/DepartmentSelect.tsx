@@ -200,7 +200,7 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
             const isSelected = selectedIds.includes(dept.id);
             const hasChildren = dept.children && dept.children.length > 0;
             const isExpanded = expandedIds.has(dept.id);
-            const depth = (dept as any).depth || 0;
+            const depth = ((dept as unknown as Record<string, unknown>).depth as number) || 0;
 
             return (
               <MenuItem

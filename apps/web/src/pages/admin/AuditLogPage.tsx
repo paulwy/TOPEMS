@@ -607,7 +607,7 @@ const AuditLogPage: React.FC = () => {
         width: 200,
         render: (row) => (
           <Box sx={{ maxWidth: 200 }}>
-            {row.error_message && (
+            {(row.error_message as string) && (
               <Typography
                 variant='body2'
                 sx={{ fontSize: '0.75rem', color: 'error.main' }}
@@ -615,7 +615,7 @@ const AuditLogPage: React.FC = () => {
                 {row.error_message as string}
               </Typography>
             )}
-            {!row.error_message && row.request_details && (
+            {!row.error_message && (row.request_details as string) && (
               <Typography
                 variant='body2'
                 sx={{

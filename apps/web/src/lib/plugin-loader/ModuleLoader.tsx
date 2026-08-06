@@ -13,7 +13,7 @@ const DEFAULT_TIMEOUT = LOADER_TIMEOUT.MODULE;
 
 interface ModuleLoaderProps {
   /** Component to load */
-  component: () => Promise<any>;
+  component: () => Promise<{ default: React.ComponentType<unknown> }>;
   /** Loading fallback */
   fallback?: React.ReactNode;
   /** Error fallback */
@@ -250,17 +250,20 @@ export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
  * Dynamic Module Loader with retry support
  */
 export class DynamicModuleLoader {
-  private cache: Map<string, any> = new Map();
+  private cache: Map<string, { default: React.ComponentType<unknown> }> = new Map();
   private retryCount: Map<string, number> = new Map();
   private maxRetries = 3;
   private loadingStore = useModuleLoadingStore.getState();
 
-  async loadModule(component: () => Promise<any>, moduleId?: string): Promise<any> {
+  async loadModule(
+    component: () => Promise<{ default: React.ComponentType<unknown> }>,
+    moduleId?: string
+  ): Promise<{ default: React.ComponentType<unknown> }> {
     const cacheKey = moduleId || component.toString();
 
     if (this.cache.has(cacheKey)) {
       this.loadingStore.setLoaded(moduleId || cacheKey);
-      return this.cache.get(cacheKey);
+      return this.cache.get(cacheKey)!;
     }
 
     const retryKey = moduleId || cacheKey;
@@ -311,7 +314,7 @@ export const moduleLoader = new DynamicModuleLoader();
 
 export interface ModuleRouteWrapperProps {
   routePath: string;
-  component: () => Promise<any>;
+  component: () => Promise<{ default: React.ComponentType<unknown> }>;
   moduleId?: string;
   fallback?: React.ReactNode;
 }
@@ -325,7 +328,9 @@ export const ModuleRouteWrapper: React.FC<ModuleRouteWrapperProps> = ({
   moduleId,
   fallback,
 }) => {
-  const [moduleComponent, setModuleComponent] = React.useState<any>(null);
+  const [moduleComponent, setModuleComponent] = React.useState<React.ComponentType<unknown> | null>(
+    null
+  );
   const [error, setError] = React.useState<Error | null>(null);
   const [loading, setLoading] = React.useState(true);
 

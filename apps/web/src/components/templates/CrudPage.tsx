@@ -111,7 +111,7 @@ export interface CrudPageProps<T = Record<string, unknown>> {
   schema: EntitySchema<T>;
   apiAdapter: CrudApiAdapter<any>;
   /** 自定义列表列（覆盖 Schema 生成的列） */
-  customColumns?: ColumnDef[];
+  customColumns?: ColumnDef<T>[];
   /** 面包屑 */
   breadcrumbs?: Array<{ label: string; href?: string }>;
   /** 列表查询的额外参数 */
@@ -258,7 +258,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   const dynamicOptions = useDynamicOptions(schema.dynamicOptions, dynamicDeps);
 
   // ── 列定义 ──
-  const columns: ColumnDef[] = useMemo(
+  const columns: ColumnDef<T>[] = useMemo(
     () => customColumns || getColumns<T>(schema),
     [schema, customColumns]
   );
@@ -281,8 +281,8 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   const baseActions = actionsProp || schema.actions || ['create', 'edit', 'detail', 'delete'];
   const actions = readOnly ? baseActions.filter((a) => a === 'detail') : baseActions;
 
-  const rowActions: RowAction[] = useMemo(() => {
-    const result: RowAction[] = [];
+  const rowActions: RowAction<T>[] = useMemo(() => {
+    const result: RowAction<T>[] = [];
     if (actions.includes('detail')) {
       result.push({
         label: t('common.view', '查看'),

@@ -303,7 +303,7 @@ export interface FormPageTemplateProps extends Omit<BoxProps, 'onSubmit'> {
 /**
  * 从localStorage读取草稿
  */
-const loadDrafts = (key: string): Array<{ data: Record<string, any>; timestamp: number }> => {
+const loadDrafts = (key: string): Array<{ data: Record<string, unknown>; timestamp: number }> => {
   try {
     const stored = localStorage.getItem(`form:draft:${key}`);
     if (stored) {
@@ -318,7 +318,7 @@ const loadDrafts = (key: string): Array<{ data: Record<string, any>; timestamp: 
 /**
  * 保存草稿到localStorage
  */
-const saveDraft = (key: string, data: Record<string, any>, maxDrafts: number = 5): void => {
+const saveDraft = (key: string, data: Record<string, unknown>, maxDrafts: number = 5): void => {
   try {
     const drafts = loadDrafts(key);
     drafts.unshift({ data, timestamp: Date.now() });
@@ -485,7 +485,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   const [showHint, setShowHint] = useState(false);
 
   // 草稿状态
-  const [drafts, setDrafts] = useState<Array<{ data: Record<string, any>; timestamp: number }>>([]);
+  const [drafts, setDrafts] = useState<Array<{ data: Record<string, unknown>; timestamp: number }>>([]);
   const [showDraftDialog, setShowDraftDialog] = useState(false);
 
   // 当前分组标签
@@ -686,7 +686,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     async (data: unknown) => {
       try {
         // 过滤掉不可见字段的数据
-        const visibleData: Record<string, any> = {};
+        const visibleData: Record<string, unknown> = {};
         Object.keys(data as object).forEach((key) => {
           if (fieldVisibility[key] !== false) {
             visibleData[key] = (data as unknown as Record<string, unknown>)[key];
@@ -733,7 +733,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
   // 加载草稿
   const handleLoadDraft = useCallback(
-    (draft: { data: Record<string, any>; timestamp: number }) => {
+    (draft: { data: Record<string, unknown>; timestamp: number }) => {
       reset(draft.data);
       setShowDraftDialog(false);
       displayValidationHint({
