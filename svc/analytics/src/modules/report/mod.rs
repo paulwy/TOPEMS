@@ -47,6 +47,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // 兼容旧表：确保 code 列存在
+    sqlx::query("ALTER TABLE report_templates ADD COLUMN IF NOT EXISTS code VARCHAR(128) UNIQUE")
+        .execute(pool)
+        .await?;
+
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS report_schedules (
@@ -66,6 +71,22 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW()
         )
         "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 兼容旧表：确保缺失列存在
+    sqlx::query("ALTER TABLE report_schedules ADD COLUMN IF NOT EXISTS name VARCHAR(256) NOT NULL DEFAULT ''")
+        .execute(pool)
+        .await?;
+    sqlx::query("ALTER TABLE report_schedules ADD COLUMN IF NOT EXISTS schedule_type VARCHAR(32) NOT NULL DEFAULT 'cron'")
+        .execute(pool)
+        .await?;
+    sqlx::query("ALTER TABLE report_schedules ADD COLUMN IF NOT EXISTS schedule_expression VARCHAR(128) NOT NULL DEFAULT ''")
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        "ALTER TABLE report_schedules ADD COLUMN IF NOT EXISTS status VARCHAR(32) DEFAULT 'active'",
     )
     .execute(pool)
     .await?;

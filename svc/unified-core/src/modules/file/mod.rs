@@ -31,6 +31,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // 兼容旧表：确保 is_deleted 列存在
+    sqlx::query(
+        "ALTER TABLE core_files ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query("ALTER TABLE core_files ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP")
+        .execute(pool)
+        .await?;
+
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS core_file_folders (
