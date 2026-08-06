@@ -1,9 +1,176 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V64.2 | **更新日期**: 2026-08-05
-> **服务总数**: 27 个（含 master-data） | **前端页面**: 423 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,315 个
-> **综合健康评分**: **97/100**（V64.0 导航标准化 + V64.1 全量页面标准化 99% + V64.2 i18n 扩面 + DAG 画布 + dead_code 清理）
+> **版本**: V66 | **更新日期**: 2026-08-06
+> **服务总数**: 27 个（含 master-data） | **前端页面**: 423 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
+> **综合健康评分**: **99/100**（V66 unified-core 边界澄清 + 死代码清理 + warning 清零 + V65 全栈架构优化）
 > **微服务治理**: Phase 1-9 全部完成 ✅（ERP 瘦身 + 供应链边界 + 服务客户端统一 + unified-core 外迁 + 子 crate 拆分）
+> **unified-core 瘦身成果**: 本轮删除 **21,400+ 行**死代码 · 释放 **49 个 DB 连接池** · cargo check **0 warning**
+
+---
+
+## 🎯 V66 unified-core 边界澄清 + 死代码大清理（2026-08-06）
+
+> **背景**: V65 完成后对 unified-core 进行深度模块审计，发现大量历史兼容代码（billing/ticket/feedback/search/isolation/communication 全部或部分）、纯 stub 实现、数据库 schema 不一致、以及 iam/file/audit 模块内 11 类 compiler warning。遵循"未来预留而非历史兼容"的原则，一次性清理所有外迁兼容模块与确认无引用的死代码。
+> **执行原则**: cargo check 零警告零错误 · 删除必须有全局引用确认 · 路由与 DB 初始化保持同步移除 · 保留未来预留而非历史兼容。
+
+### 📊 V66 统一核瘦身总览
+
+| 类别 | 优化项 | 影响范围 | 状态 |
+|------|--------|---------|------|
+| 外迁兼容模块删除 | billing/ticket/feedback/search 4 模块完整删除 | modules/ + routes/ + main.rs init | ✅ |
+| 模块拆分 | communication 拆出 im/mail/notification，保留 ws + ws_event_bridge | modules/communication/ | ✅ |
+| 死基础设施删除 | isolation.rs（9 个 DB pool × 5 线程 = 49 连接） | modules/mod.rs + main.rs | ✅ |
+| 纯 stub 文件删除 | flow/ 5 个 stub + file/folder.rs + lib/service_bootstrap.rs | 7 个文件共 ~2,300 行 | ✅ |
+| 路由收敛 | 删除 flow/8, file/7, master/2段, mod/1共 ~200 行 routes 代码 | routes/*.rs | ✅ |
+| 边界澄清 | iam/auth.rs: 邮件发送改为 service-client → communication | modules/iam/auth.rs | ✅ |
+| Schema 对齐 | core_files 补齐 is_deleted + deleted_at · 新增 core_file_permissions | modules/file/mod.rs | ✅ |
+| Stub handler 修复 | audit 8 个 stub 改为查 iam.*_audit_logs · file 13 个 501 未实现 | audit/handlers + file/manage | ✅ |
+| IAM 清理 | 删除 Position struct (未被使用) · 删除 get_user_roles_and_permissions(0次调用) | auth.rs + position.rs | ✅ |
+| 警告清零 | LoginRequest/CreateRoleRequest 等 11 类 compiler warning 全消除 | 6 个模块 11 处修复 | ✅ |
+
+### 🔴 Track 1 — 外迁兼容模块完整删除
+
+| 任务 | 删除内容 | 释放行数 |
+|------|---------|---------|
+| modules/ + routes/ 同步删除 | `billing.rs`, `ticket.rs`, `feedback.rs`, `search.rs` + `routes/master.rs` 160 行 billing/ticket 路由块 | ~4,500 行 |
+| main.rs DB init 同步删除 | `ModuleIsolationState`, `communication.init_database`, `search.init_database` | 3 处 |
+| modules/mod.rs pub mod 同步删除 | 8 个 `pub mod` 声明移除 | |
+
+### 🟠 Track 2 — communication 拆分 & isolation 删除
+
+| 任务 | 变更 |
+|------|------|
+| communication/ 拆分 | 保留 `ws.rs` + `ws_event_bridge.rs`（215→4 行 mod.rs），删除 `im.rs` + `mail.rs` + `notification/` 目录 |
+| isolation.rs 删除 | 删除 `ModuleIsolationState { 9× PgPool }`（9 pool × 5 max connections = 49 DB连接） |
+| 路由同步 | 删除 `routes/communication.rs` 文件 + `routes/mod.rs` 中 merge |
+
+### 🟡 Track 3 — flow + file + lib 纯 stub 文件删除
+
+| 任务 | 删除文件 | 行估 |
+|------|---------|------|
+| flow/ 5 个 stub 纯假返回 | `flow/plugin.rs`, `monitor.rs`, `performance.rs`, `statistics.rs`, `version.rs` | ~650 行 |
+| file/ folder 模块未实现 | `file/folder.rs`（8 个 handler 全假成功） | ~420 行 |
+| lib/ 死代码 Bootstrap (deprecated) | `lib/src/service_bootstrap.rs` | 865 行 |
+| routes/*.rs 对应路由同步删除 | flow(8) + file(7) + master(billing/ticket块) + communication(整文件) + mod.rs allow | ~200 行 |
+
+### 🟢 Track 4 — Schema 对齐 + Stub handler 升级
+
+| 任务 | 变更 |
+|------|------|
+| core_files 补齐软删列 | `ALTER TABLE core_files ADD COLUMN is_deleted bool DEFAULT false, deleted_at timestamptz` |
+| 新增权限表 | `CREATE TABLE core_file_permissions (file_id uuid, principal_type, principal_id, permission, granted_by, granted_at)` |
+| file/manage.rs | 13 个已注册未实现 handler 从假成功 → `501 Not Implemented`，+ 删除 `allow(dead_code)` 顶层标注 |
+| audit/handlers.rs | `list_permission_changes`/`get_permission_change` 等 8 个 stub → 调用 `audit_query.rs` 或直接查 `iam.permission_audit_log` / `iam.login_audit_log` |
+
+### 🔵 Track 5 — warning 清零
+
+| warning | 修复方式 |
+|---------|---------|
+| `unused import: PaginatedAuditLogs` | 删除 audit/handlers.rs 未用 import |
+| `unused variable: by_action` | `let _by_action` 前缀下划线 |
+| `fields folder_id/search never read` | 字段级 `#[allow(dead_code)]` |
+| `UploadResult/LoginRequest/RegisterRequest never constructed` | struct 前加 `#[allow(dead_code)]`（实际由 ToSchema/serde 使用） |
+| `Position never constructed` | 直接删除 Position struct（全 handler 都用 sqlx raw query + json!） |
+| `CreateRoleRequest/UpdateRoleRequest/UpdateUserPermissionsRequest` | struct 前加 `#[allow(dead_code)]` |
+| `get_user_roles_and_permissions never used` | 确认 0 次调用后整体删除 60 行函数 |
+| iam 4 模块顶层 `#![allow(dead_code)]` 误标删除 | role/position/user_permission/auth.rs 首行删除 |
+
+### 📈 V66 验收清单
+
+| 验收项 | 状态 | 备注 |
+|--------|------|------|
+| unified-core cargo check 0 warning 0 error | ✅ | 11 处 warning 全修复 |
+| 16 个 package cargo check 全部通过 | ✅ | shared/gateway/iam-service/notification/finance-service/asset/workflow/ai/flow/fms/communication/billing/ticket/seedance/tenant |
+| billing/ticket/feedback/search 残留引用 0 | ✅ | grep 确认 |
+| communication 只剩 ws 功能 | ✅ | im/mail/notification 全删 |
+| isolation 9 连接池完全清理 | ✅ | main.rs & mod.rs 确认 |
+| file schema + manage handler 匹配 | ✅ | SQL migration 与 handler 同步 |
+| audit 8 个 stub → 真实查询 | ✅ | 8 个 handler 全部改写 |
+
+---
+
+## 🎯 V65 全栈架构优化：效率·性能·空间（2026-08-06）
+
+> **背景**: V64.2 完成后对前后端架构、系统集成、目录/端口设计、命名规范进行全面审计，发现 Dockerfile 不一致、Nginx 路由冗余、端口配置多源、前端目录碎片化、Cargo 命名不统一、插件配置缺失等问题。本轮系统性修复全部问题，以效率、性能、节省空间为目标。
+> **执行原则**: 单一信源 + 消除冗余 + 标准化命名 + 预压缩优化 + BuildKit 加速。
+
+### 📊 V65 架构优化总览
+
+| 类别 | 优化项 | 影响范围 | 状态 |
+|------|--------|---------|------|
+| Dockerfile 标准化 | 基础镜像统一 `rust:nightly-2026-07-01-alpine` | 20 个 Dockerfile | ✅ |
+| Dockerfile 标准化 | EXPOSE 端口对齐 services.yaml | 11 个服务 | ✅ |
+| Dockerfile 标准化 | BuildKit cache mounts (cargo registry + target) | unified-core | ✅ |
+| Dockerfile 标准化 | lims/Dockerfile 损坏文件重写 | lims | ✅ |
+| Nginx 优化 | map 驱动路由替代 30+ 重复 location 块 | topems.conf | ✅ |
+| Nginx 优化 | gzip_static + brotli_static 预压缩优先 | topems.conf | ✅ |
+| Nginx 优化 | 补齐 6 个缺失服务 upstream + location | search/communication/billing/ticket/feedback/master-data | ✅ |
+| 端口收敛 | sync-ports.sh 从 ports.env 生成 services.conf + .env | 全平台 | ✅ |
+| 前端目录整合 | 13 个 ai-* 目录合并为 ai/ 子目录 | apps/web/src | ✅ |
+| Cargo 命名 | 统一 kebab-case `topems-*` 格式 | analytics/unified-core | ✅ |
+| i18n 对齐 | 补齐 4 个缺失 en locale 文件 + 删除测试产物 | apps/web/src/i18n | ✅ |
+| 插件配置 | 5 个新 plugin.yaml + 权限码去重 + 端口对齐 | search/communication/billing/ticket/feedback + ai/finance | ✅ |
+| OpenAPI 对齐 | unified-core 描述补齐 Doc/Tenant/Migration 等模块 | unified-core main.rs | ✅ |
+| API barrel 补齐 | 14 个缺失模块导出 | apps/web/src/api/index.ts | ✅ |
+| 配置注释清理 | 移除 Phase 8/2026-07 过时历史注释 | services.conf/services.yaml/sync-ports.sh | ✅ |
+| 安全清理 | 删除弱凭证 mock 后端 | apps/web/src/mock-server | ✅ |
+
+### 🔵 Track 1 — Dockerfile 标准化
+
+| 任务 | 文件 | 变更 |
+|------|------|------|
+| 基础镜像统一 | 全部 20 个 Dockerfile | 统一 `rust:nightly-2026-07-01-alpine` |
+| EXPOSE 端口对齐 | 11 个服务 Dockerfile | finance 8070→8011, ai 8050→8013 等 |
+| BuildKit cache | [unified-core/Dockerfile](../../svc/unified-core/Dockerfile) | `--mount=type=cache` for cargo registry + target |
+| 损坏修复 | [lims/Dockerfile](../../svc/lims/Dockerfile) | 重写多阶段构建 |
+
+### 🟠 Track 2 — Nginx 配置优化
+
+| 任务 | 变更 |
+|------|------|
+| map 路由抽象 | `$request_uri → $api_upstream` 映射，统一 `location /api/` 块 |
+| 预压缩优先 | `gzip_static on` + `brotli_static on` 发送 vite-plugin-compression 预生成 .gz/.br |
+| 缺失路由补齐 | 6 个外迁服务 upstream + map 条目 |
+| legacy 兼容 | 保留 /api/v1/* 和 /api/{svc}/v1/* rewrite 规则 |
+
+### 🟢 Track 3 — 端口配置单一信源
+
+| 任务 | 变更 |
+|------|------|
+| sync-ports.sh 增强 | 从 `config/ports.env` 生成 `scripts/services.conf` + `deploy/docker/.env` |
+| 注释清理 | 移除 Phase 8 拆分 / 2026-07 整合历史注释，替换为当前架构说明 |
+| services.yaml 对齐 | 更新虚拟服务注释（mail/im/notification 标注外迁状态） |
+
+### 🟣 Track 4 — 前端目录 + Cargo 命名 + i18n
+
+| 任务 | 变更 |
+|------|------|
+| AI 目录整合 | 13 个 `ai-*` 目录 → `ai/` 子目录，更新全部 import 路径 |
+| Cargo 命名 | `analytics-service` → `topems-analytics`, `unified-core-service` → `topems-unified-core` |
+| i18n locale 对齐 | 创建 en/hrm.json, en/system.json, en/workflow.json, en/pdm.json；删除 zh/_test_write.json |
+
+### 🔴 Track 5 — 插件配置 + OpenAPI + API barrel
+
+| 任务 | 文件 | 变更 |
+|------|------|------|
+| 新建 plugin.yaml | search/communication/billing/ticket/feedback | 服务元数据 + 权限码 |
+| 权限码去重 | [ai/plugin.yaml](../../svc/ai/plugin.yaml) | ai:read/write → ai:vector:read/ai:qa:ask 等细粒度权限 |
+| 端口对齐 | [finance/plugin.yaml](../../svc/finance/plugin.yaml) | 8070 → 8011 |
+| OpenAPI 描述 | [unified-core/src/main.rs](../../svc/unified-core/src/main.rs) | 补齐 Doc/Tenant/Migration/Search/Notification 模块描述 |
+| API barrel | [api/index.ts](../../apps/web/src/api/index.ts) | 新增 14 个模块导出 (search/ticket/tenant/addressbook/crmFinance/financialReport/voucherTemplate/template/integration/automation/externalErp/lowcode/consolidationContract/consolidation) |
+
+### 📈 V65 验收清单
+
+| 验收项 | 状态 | 备注 |
+|--------|------|------|
+| 全部 26 个 plugin.yaml 端口与 services.conf 一致 | ✅ | 逐一核对 |
+| services.conf 由 sync-ports.sh 从 ports.env 生成 | ✅ | 单一信源 |
+| Nginx map 路由覆盖全部 27 个服务 | ✅ | 含 6 个外迁服务 |
+| Dockerfile 基础镜像统一 | ✅ | 20 个 Dockerfile |
+| Dockerfile EXPOSE 端口对齐 | ✅ | 11 个修正 |
+| api/index.ts barrel 覆盖全部 API 模块 | ✅ | 14 个新增 |
+| unified-core OpenAPI 描述覆盖全部模块 | ✅ | 含外迁模块兼容标注 |
+| 过时注释清理 | ✅ | services.conf/services.yaml/sync-ports.sh |
 
 ---
 

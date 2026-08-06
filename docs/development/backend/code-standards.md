@@ -8,6 +8,7 @@
 - [Rust 代码规范](#rust-代码规范)
 - [TypeScript 代码规范](#typescript-代码规范)
 - [数据库规范](#数据库规范)
+- [缓存规范](#缓存规范)
 - [Git 提交规范](#git-提交规范)
 
 ---
@@ -425,6 +426,121 @@ sqlx migrate add create_employees_table
 
 ---
 
+## 缓存规范
+
+### 1. 缓存架构总览
+
+TOPEMS 采用**两级缓存（L1 + L2）**架构，所有实现统一在 `lib/shared-core/src/cache.rs` 和 `lib/shared-core/src/l2_cache.rs`：
+
+| 层级 | 实现 | 作用域 | 适用场景 |
+|------|------|--------|----------|
+| **L1** | `moka::sync::Cache` | 进程内 | 高频热点数据，超低延迟（纳秒级） |
+| **L2** | Redis | 跨实例共享 | 多副本部署需要数据一致性时 |
+
+**核心 API**：
+
+| 类型 | 路径 | 适用场景 |
+|------|------|----------|
+| `LocalInMemoryCache<T>` | `topems_shared::LocalInMemoryCache` | 同步、纯进程内、高频短 TTL |
+| `AsyncL2Cache<T>` | `topems_shared::AsyncL2Cache` | 异步、L1+L2、跨实例共享 |
+| `CacheService` trait | `topems_shared::redis::CacheService` | 完整特性（Bloom Filter、Mutex 防击穿、预热） |
+
+### 2. 选型决策
+
+```
+是否需要跨实例共享数据？
+├─ 否 → LocalInMemoryCache<T>（同步，简单）
+└─ 是 → 是否需要 Bloom Filter / Mutex 防击穿 / 预热？
+       ├─ 是 → shared-event::MultiLevelCacheManager（参考 hrm/scm init_cache）
+       └─ 否 → AsyncL2Cache<T>（轻量，自动降级）
+```
+
+### 3. 使用规范
+
+#### 3.1 LocalInMemoryCache（同步，推荐默认）
+
+```rust
+use topems_shared::LocalInMemoryCache;
+use std::time::Duration;
+
+// ✅ 推荐：服务局部缓存
+let customer_cache: LocalInMemoryCache<Customer> = LocalInMemoryCache::new(Duration::from_secs(300));
+
+// 读取（同步，立即返回）
+if let Some(c) = customer_cache.get(&id.to_string()) { ... }
+
+// 写入
+customer_cache.set(id.to_string(), customer);
+```
+
+#### 3.2 AsyncL2Cache（异步，L1+L2 分布式）
+
+```rust
+use topems_shared::{AsyncL2Cache, L2CacheConfig};
+use std::time::Duration;
+
+let config = L2CacheConfig {
+    instance_prefix: "crm".to_string(),    // Redis key 前缀，区分服务
+    l1_ttl: Duration::from_secs(60),        // L1 短 TTL，避免 staleness
+    l2_ttl: Duration::from_secs(3600),      // L2 长 TTL，跨实例共享
+    l1_capacity: 5_000,                     // L1 容量上限
+};
+
+// 启动时初始化（Redis 不可用自动降级为纯 L1）
+let cache = match AsyncL2Cache::<Customer>::try_new(
+    config,
+    std::env::var("REDIS_URL").ok().as_deref(),
+).await {
+    Ok(c) => c,
+    Err((c, warn)) => {
+        tracing::warn!("⚠️ {warn}");
+        c
+    }
+};
+
+// 使用（异步）
+if let Some(c) = cache.get(&id.to_string()).await { ... }
+cache.set(id.to_string(), customer).await;
+```
+
+### 4. 缓存键命名规范
+
+强制格式：`{tenant}:{module}:{entity}:{id}`
+
+```rust
+// ✅ 正确
+"tenant123:erp:dict:currency"
+"tenant123:hrm:employee:550e8400-e29b-41d4-a716-446655440000"
+
+// ❌ 错误（无租户隔离）
+"dict:currency"
+```
+
+使用 `CacheKeyGenerator` 统一生成：
+
+```rust
+use topems_shared::CacheKeyGenerator;
+let gen = CacheKeyGenerator::new("tenant123", "hrm");
+let key = gen.entity_key("employee", &id.to_string());
+```
+
+### 5. 缓存失效策略
+
+| 场景 | 策略 |
+|------|------|
+| 单条数据更新 | `cache.remove(key)` 同步删除 L1 + L2 |
+| 批量数据更新 | `cache.clear_l1()` + 让 L2 TTL 自然过期 |
+| 跨实例失效 | 通过事件总线发布 `CacheInvalidatedPayload`（见 `shared-event::cache`） |
+
+### 6. 禁止事项
+
+- ❌ 禁止各服务自实现 InMemoryCache（统一使用 `topems_shared::LocalInMemoryCache`）
+- ❌ 禁止使用 `DashMap` 作为缓存后端（已统一迁移到 moka）
+- ❌ 禁止将非 `Serialize` 的类型用于 `AsyncL2Cache<T>`（L2 Redis 需 JSON 序列化）
+- ❌ 禁止缓存大对象（> 1MB）到 Redis，应考虑分片或直接查询 DB
+
+---
+
 ## Git 提交规范
 
 ### 提交信息格式
@@ -495,6 +611,7 @@ Fixes #456
 - [ ] 敏感信息不硬编码
 - [ ] 错误处理完整
 - [ ] 日志记录适当
+- [ ] 缓存实现统一使用 `topems_shared::LocalInMemoryCache` 或 `AsyncL2Cache`（不自实现）
 
 ---
 

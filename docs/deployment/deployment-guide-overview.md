@@ -142,7 +142,7 @@ sudo -u postgres psql -d topems -c "CREATE EXTENSION IF NOT EXISTS vector;"
 cargo build --release --workspace
 
 # 或单独编译
-cargo build --release -p unified-core-service
+cargo build --release -p topems-unified-core
 cargo build --release -p topems-hrm
 cargo build --release -p topems-ai
 ```
@@ -161,7 +161,7 @@ User=topems
 WorkingDirectory=/opt/topems
 Environment=DATABASE_URL=postgres://topems:password@localhost:5432/topems
 Environment=SERVER_PORT=8000
-ExecStart=/opt/topems/unified-core-service
+ExecStart=/opt/topems/topems-unified-core
 Restart=always
 
 [Install]

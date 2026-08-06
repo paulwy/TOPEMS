@@ -60,6 +60,9 @@ cd TOPEMS
 # 安装 Node.js 依赖（pnpm workspace）
 pnpm install
 
+# 安装 Python CLI 工具（editable 模式，自动安装依赖）
+cd cli && pip3 install -e . && cd ..
+
 # 安装/编译 Rust 依赖（首次会需要 5-10 分钟）
 cargo build --workspace
 # 或者使用项目脚本

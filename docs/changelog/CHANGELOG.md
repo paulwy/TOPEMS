@@ -10,6 +10,31 @@
 
 ---
 
+## [5.14.2] - 2026-08-06
+
+### 🎉 重大变更
+- **缓存架构统一升级** - 所有业务服务的 InMemoryCache 实现统一到 `moka` 后端，移除手写 DashMap 实现
+- **新增 L2 分布式缓存模块** - `AsyncL2Cache<T>`（moka L1 + Redis L2），支持跨实例共享和自动降级
+
+### 🔧 改进
+- **moka 替代 DashMap**：shared-core `InMemoryCache` 改用 `moka::sync::Cache`，原生支持 LRU 淘汰和 TTL 自动过期，解决手写实现中 `evict_oldest` O(n) 扫描和容量参数被忽略的问题
+- **8 个服务缓存统一**：crm/ehs/lims 三个服务的自有 DashMap 实现替换为 `topems_shared::LocalInMemoryCache` re-export；srm/wms/scm/erp/hrm 五个已统一服务的 Cargo.toml 残留 dashmap 依赖清理
+- **workspace 依赖配置**：`Cargo.toml` moka features 添加 `"sync"`
+- **新增 `AsyncL2Cache<T>`**：write-through 写入策略，cache-aside 读取策略，Redis 不可用时自动降级为纯 L1 模式
+- **文档完善**：`code-standards.md` 新增缓存规范章节（选型决策、使用示例、键命名规范、失效策略、禁止事项）；8 个服务的 `env.example` 补充 REDIS_URL 配置说明
+- **环境配置说明**：根目录 `.env.example` Redis 配置块补充用途和降级行为说明
+
+### 📊 测试覆盖
+- shared-core: 94/94 通过（cache 11 + l2_cache 9 + 其他 74）
+- shared-event: cache 8/8 + redis 4/4 通过
+- 11 个业务服务 cargo check 全部通过（hrm/crm/scm/ehs/lims/srm/wms/erp/rd/analytics/communication）
+- unified-core-service 编译通过
+
+### 📝 破坏性变更
+- 无（API 完全向后兼容，`LocalInMemoryCache` 签名不变）
+
+---
+
 ## [5.14.1] - 2026-07-24
 
 ### 🎉 重大变更

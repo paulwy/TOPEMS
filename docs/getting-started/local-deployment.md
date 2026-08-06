@@ -403,7 +403,7 @@ brew install zld
 export RUSTFLAGS="-C link-arg=-fuse-ld=zld"
 
 # 仅构建当前需要的服务
-cargo build -p unified-core-service
+cargo build -p topems-unified-core
 ```
 
 ### 减少内存占用
@@ -426,7 +426,7 @@ cargo build -p unified-core-service
       "name": "Debug unified-core",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}/target/debug/unified-core-service",
+      "program": "${workspaceFolder}/target/debug/topems-unified-core",
       "args": [],
       "cwd": "${workspaceFolder}/svc/unified-core",
       "env": {

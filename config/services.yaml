@@ -9,22 +9,23 @@
 # 2. 策略: 按业务域分组，每 10 个端口预留一个域段
 # 3. 编号: 域内从 X0 开始顺序递增（如 8030, 8031, ...）
 # 4. 首位即主服务: 段首 (X0) 分配给该域的核心服务
-# 5. 虚拟服务: 由 unified-core 内部模块提供的服务（iam/doc/flow/file/mail/im/notification）共用 8000，通过 URL 路径区分
+# 5. 虚拟服务: 由 unified-core 内部模块提供的服务（iam/doc/flow/file）共用 8000，通过 URL 路径区分
 # 6. 权威源: 本文件 + config/ports.env + 各服务 main.rs 中的实际端口
 # 7. 同步: 任何端口变更必须同步到 services.conf, ports.env, docker-compose, vite.config.ts, .env
+# 8. 8080 端口: 仅 docker/saas 部署模式下的 API 网关使用；本地开发 dashboard 路由走各服务自身端口
 #
 # 段位速查:
 #   8000-8009 核心 (Core)         8050-8059 质量/研发 (Q/RD)
 #   8010-8019 经营管理 (ERP)      8060-8069 数据分析/门户 (Analytics)
 #   8020-8029 协同办公 (Collab)   8070-8079 基础设施 (Infra)
 #   8030-8039 生产制造 (Mfg)      3000/5432/6379/8080/11434 基础设施
-#   8040-8049 供应链 (SCM)
+#   8040-8049 供应链 (SCM)        8082-8088 扩展服务 (Extension)
 # ================================================
 
 service_groups:
   # 核心服务 (8000-8009)
   core:
-    - name: unified-core
+    - name: iam
       port: 8000
       env_var: CORE_PORT
       description: 统一核心服务 (IAM + Doc + Flow + File + Communication + Monitor)
@@ -247,15 +248,18 @@ service_groups:
       dependencies: [unified-core]
       service_dir: search
 
-# 虚拟服务（由 unified-core 内部模块提供，不独立启动）
-# 注意：mail/im/notification 已外迁到 communication 服务（端口 8084）
-virtual_services:
-  - name: iam
-    port: 8000
-    env_var: IAM_PORT
-    description: 身份认证服务 (由 unified-core 提供)
-    provider: unified-core
+    - name: lowcode
+      port: 8088
+      env_var: LOWCODE_PORT
+      description: 低代码平台（占位，后端尚未立项）
+      status: reserved
+      dependencies: [unified-core]
+      service_dir: lowcode
 
+# 虚拟服务（由 unified-core 内部模块提供，不独立启动）
+# 注意：iam 已作为独立服务条目存在于 service_groups.core（service_dir: unified-core）
+# 注意：mail/im/notification 已外迁到 communication 独立服务（端口 8084），unified-core 内保留模块兼容
+virtual_services:
   - name: flow
     port: 8000
     env_var: FLOW_PORT
@@ -279,6 +283,13 @@ virtual_services:
     env_var: MONITOR_PORT
     description: 系统监控服务 (由 unified-core 提供，虚拟服务)
     provider: unified-core
+
+  - name: automation
+    port: 8000
+    env_var: AUTOMATION_PORT
+    description: 自动化编排（由 unified-core 提供，虚拟服务，路由 /api/core/automation）
+    provider: unified-core
+    status: planned
 
 # 特殊端口配置
 special_ports:
@@ -317,7 +328,7 @@ special_ports:
 # 服务模块分组 (用于 start-module 命令)
 module_groups:
   core:
-    - unified-core
+    - iam
 
   erp:
     - erp
@@ -344,6 +355,10 @@ module_groups:
     - ehs
     - rd
 
+  plm:
+    - pdm
+    - rd
+
   analytics:
     - bi
     - portal
@@ -357,7 +372,7 @@ module_groups:
     - master-data
 
   all:
-    - unified-core
+    - iam
     - erp
     - finance
     - ai

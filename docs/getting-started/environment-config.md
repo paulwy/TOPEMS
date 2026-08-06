@@ -140,6 +140,12 @@ OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=qwen2.5:7b-instruct
 OLLAMA_VECTOR_DIMENSION=3584
 EMBEDDING_MODEL=nomic-embed-text
+
+# Redis 缓存配置（可选，用于 L2 分布式缓存）
+# 启用后：L1=moka 进程内 + L2=Redis 跨实例共享
+# 未配置：自动降级为纯 L1 模式（moka），不影响服务启动
+# REDIS_URL=redis://localhost:6379
+# 详见：docs/development/backend/code-standards.md 缓存章节
 ```
 
 ## 开发环境配置
@@ -177,6 +183,8 @@ DB_PASSWORD=topems_secret
 DB_NAME=topems
 
 # === Redis 配置 ===
+# 用途：L2 分布式缓存 + 会话存储 + 限流计数器 + 消息队列后端
+# 未配置时各服务自动降级为纯进程内缓存（moka L1），不影响启动
 REDIS_URL=redis://localhost:6379
 REDIS_HOST=localhost
 REDIS_PORT=6379
@@ -388,7 +396,7 @@ CSRF_PROTECTION=true
 ./scripts/topems.sh validate-env
 
 # 2. 初始化数据库
-cargo run --bin unified-core-service -- --migrate
+cargo run --bin topems-unified-core -- --migrate
 
 # 3. 启动服务
 ./scripts/deploy.sh

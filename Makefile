@@ -22,7 +22,7 @@ help: ## 显示本帮助
 sqlx-prepare: ## 刷新全 workspace 的 SQLx 离线缓存（需要本地 DB 在线）
 	./scripts/dev/sqlx-prepare.sh
 
-sqlx-prepare-pkg: ## 刷新单个 package 的缓存：make sqlx-prepare-pkg P=unified-core-service
+sqlx-prepare-pkg: ## 刷新单个 package 的缓存：make sqlx-prepare-pkg P=topems-unified-core
 	@[ -n "$(P)" ] || (echo "用法: make sqlx-prepare-pkg P=<package-name>"; exit 2)
 	./scripts/dev/sqlx-prepare.sh -p $(P)
 
@@ -40,8 +40,8 @@ check-offline: ## 离线 cargo check（SQLX_OFFLINE=true，模拟 CI GitHub Acti
 	DATABASE_URL= SQLX_OFFLINE=true cargo check --workspace
 
 # ---------- 常用快捷命令 ----------
-check-iam: ## 仅离线 check unified-core-service（IAM 端口 8000）
-	DATABASE_URL= SQLX_OFFLINE=true cargo check -p unified-core-service
+check-iam: ## 仅离线 check topems-unified-core（IAM 端口 8000）
+	DATABASE_URL= SQLX_OFFLINE=true cargo check -p topems-unified-core
 
 check-finance: ## 仅离线 check topems-finance（端口 8011）
 	DATABASE_URL= SQLX_OFFLINE=true cargo check -p topems-finance

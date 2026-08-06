@@ -115,7 +115,7 @@ CREATE DATABASE topems_test;
 
 ```bash
 # 运行数据库迁移
-cargo run --bin unified-core-service -- --migrate
+cargo run --bin topems-unified-core -- --migrate
 
 # 或使用脚本
 ./scripts/topems.sh migrate
