@@ -5,9 +5,6 @@
 //! with all permission middleware layers applied) and returns a `Router<AppState>`
 //! that the caller finalises with telemetry, CORS, prometheus and state.
 
-#![allow(deprecated)]
-
-mod communication;
 mod doc;
 mod file;
 mod flow;
@@ -50,10 +47,10 @@ pub fn create_routes(
     let public_routes = Router::new()
         .route("/", get(handlers::home))
         .route("/health", get(handlers::health))
-        .route("/api", get(|| get_api_info_handler("unified-core-service")))
+        .route("/api", get(|| get_api_info_handler("topems-unified-core")))
         .route(
             "/api/info",
-            get(|| get_api_info_handler("unified-core-service")),
+            get(|| get_api_info_handler("topems-unified-core")),
         )
         .route(
             "/api/plugins/info",
@@ -84,10 +81,6 @@ pub fn create_routes(
         .route(
             "/plugin/navigation-config",
             get(modules::plugin::handlers::get_navigation_config),
-        )
-        .route(
-            "/notification/notifications/health/detailed",
-            get(modules::communication::notification::get_notification_health_detailed),
         )
         // IAM permission metadata (public - for service startup auto-sync)
         .route(
@@ -125,7 +118,6 @@ pub fn create_routes(
     let core_protected_routes = iam::iam_routes(state)
         .nest("/flow", flow::flow_routes(state))
         .merge(file::file_routes(state))
-        .merge(communication::communication_routes(state))
         .merge(master::master_routes(state))
         .merge(plugin::plugin_routes(state))
         .merge(help::help_routes(state))
@@ -133,8 +125,6 @@ pub fn create_routes(
         .merge(system::system_routes(state))
         .merge(doc::doc_routes(state))
         .merge(modules::login_log::create_routes(state.clone()))
-        .merge(modules::search::create_routes(state.clone()))
-        .merge(modules::feedback::create_routes(state.clone()))
         .merge(modules::audit::create_routes(state.clone()))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),

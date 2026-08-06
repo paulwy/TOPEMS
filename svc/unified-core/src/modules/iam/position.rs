@@ -1,21 +1,8 @@
-#![allow(dead_code)] // Reserved: IAM 职位模块预留扩展，待组织架构接入后启用
-
 use crate::AppState;
 use axum::{extract::Path, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct Position {
-    id: Uuid,
-    code: String,
-    name: String,
-    department_id: Option<Uuid>,
-    description: Option<String>,
-    permissions: Vec<String>,
-    roles: Vec<Uuid>,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreatePositionRequest {

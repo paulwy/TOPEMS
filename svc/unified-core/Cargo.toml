@@ -1,5 +1,5 @@
 [package]
-name = "unified-core-service"
+name = "topems-unified-core"
 version.workspace = true
 edition = "2021"
 authors.workspace = true
@@ -43,5 +43,5 @@ regex.workspace = true
 rand = "0.8"
 
 [[bin]]
-name = "unified-core-service"
+name = "topems-unified-core"
 path = "src/main.rs"

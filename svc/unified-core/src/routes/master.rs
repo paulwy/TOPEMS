@@ -133,50 +133,6 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             require_permission("tenant:write"),
         ));
 
-    let billing_read = Router::new()
-        .route(
-            "/billing/plans",
-            get(modules::billing::handlers::list_plans),
-        )
-        .route(
-            "/billing/plans/{id}",
-            get(modules::billing::handlers::get_plan),
-        )
-        .route(
-            "/billing/subscriptions/{tenant_id}",
-            get(modules::billing::handlers::get_subscription),
-        )
-        .route(
-            "/billing/invoices/{tenant_id}",
-            get(modules::billing::handlers::list_invoices),
-        )
-        .route(
-            "/billing/usage/{tenant_id}",
-            get(modules::billing::handlers::get_usage_summary),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("billing:read"),
-        ));
-
-    let billing_write = Router::new()
-        .route(
-            "/billing/subscriptions",
-            post(modules::billing::handlers::create_subscription),
-        )
-        .route(
-            "/billing/subscriptions/{tenant_id}/cancel",
-            post(modules::billing::handlers::cancel_subscription),
-        )
-        .route(
-            "/billing/usage/{tenant_id}/{metric_type}",
-            post(modules::billing::handlers::record_usage),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("billing:write"),
-        ));
-
     let dict_read = Router::new()
         .route(
             "/dict/dict-types",
@@ -317,62 +273,12 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             require_permission("system:write"),
         ));
 
-    // ===== V15 Phase 4 工单路由 =====
-    let ticket_read = Router::new()
-        .route(
-            "/tickets",
-            get(modules::ticket::handlers::list_tickets_handler),
-        )
-        .route(
-            "/tickets/stats",
-            get(modules::ticket::handlers::get_stats_handler),
-        )
-        .route(
-            "/tickets/{id}",
-            get(modules::ticket::handlers::get_ticket_handler),
-        )
-        .route(
-            "/tickets/{id}/comments",
-            get(modules::ticket::handlers::list_comments_handler),
-        )
-        .route(
-            "/tickets/{id}/activities",
-            get(modules::ticket::handlers::list_activities_handler),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("system:read"),
-        ));
-
-    let ticket_write = Router::new()
-        .route(
-            "/tickets",
-            post(modules::ticket::handlers::create_ticket_handler),
-        )
-        .route(
-            "/tickets/{id}",
-            put(modules::ticket::handlers::update_ticket_handler)
-                .delete(modules::ticket::handlers::delete_ticket_handler),
-        )
-        .route(
-            "/tickets/{id}/comments",
-            post(modules::ticket::handlers::add_comment_handler),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("system:write"),
-        ));
-
     tenant_read
         .merge(tenant_write)
-        .merge(billing_read)
-        .merge(billing_write)
         .merge(dict_read)
         .merge(dict_write)
         .merge(menu_read)
         .merge(menu_write)
         .merge(mdm_read)
         .merge(mdm_write)
-        .merge(ticket_read)
-        .merge(ticket_write)
 }

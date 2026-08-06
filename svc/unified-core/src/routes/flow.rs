@@ -38,18 +38,6 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
             "/workflows/{id}",
             get(modules::flow::workflow::get_workflow),
         )
-        .route(
-            "/workflows/{workflow_id}/versions",
-            get(modules::flow::version::list_versions),
-        )
-        .route(
-            "/workflows/{workflow_id}/versions/{version_id}",
-            get(modules::flow::version::get_version),
-        )
-        .route(
-            "/workflows/{workflow_id}/compare/{version1}/{version2}",
-            get(modules::flow::version::compare_versions),
-        )
         .route("/instances", get(modules::flow::instance::list_instances))
         .route(
             "/instances/{id}",
@@ -105,14 +93,6 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/settings/key/{key}",
             get(modules::flow::setting::get_setting_by_key),
-        )
-        .route(
-            "/statistics",
-            get(modules::flow::statistics::get_statistics),
-        )
-        .route(
-            "/performance",
-            get(modules::flow::performance::get_performance),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
@@ -178,14 +158,6 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/workflows/{workflow_id}/rollback",
             post(modules::flow::workflow::rollback_workflow),
-        )
-        .route(
-            "/workflows/{workflow_id}/versions",
-            post(modules::flow::version::create_version),
-        )
-        .route(
-            "/workflows/{workflow_id}/versions/{version_id}/activate",
-            post(modules::flow::version::activate_version),
         )
         .route("/instances", post(modules::flow::instance::create_instance))
         .route(
@@ -273,10 +245,6 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/settings/batch",
             post(modules::flow::setting::batch_update_settings),
-        )
-        .route(
-            "/performance/reset",
-            post(modules::flow::performance::reset_performance),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),

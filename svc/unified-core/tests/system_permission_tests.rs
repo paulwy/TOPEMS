@@ -4,7 +4,7 @@
 //!
 //! 运行方式:
 //! ```bash
-//! cargo test --package unified-core-service --test system_permission_tests -- --test-threads=1
+//! cargo test --package topems-unified-core --test system_permission_tests -- --test-threads=1
 //! ```
 
 use reqwest::Client;

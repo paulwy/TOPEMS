@@ -37,8 +37,6 @@ use topems_shared::{
 };
 use utoipa::{Modify, OpenApi};
 
-use crate::modules::isolation::{create_default_module_configs, ModuleIsolationState};
-
 pub use shared::*;
 
 #[derive(OpenApi)]
@@ -73,7 +71,7 @@ pub use shared::*;
     info(
         title = "TOPEMS-unified-core API",
         version = "1.0.0",
-        description = "TOPEMS 统一核心服务 API 文档\n\n包含以下核心模块:\n- **IAM**: 用户管理、角色管理、权限验证、认证授权\n- **Flow**: 工作流引擎、任务管理、审批流程\n- **File**: 文件上传下载、文件夹管理、权限控制\n- **Communication**: 邮件发送、通知服务\n- **IM**: 即时消息、WebSocket实时通信\n- **Master**: 主数据管理\n- **Plugin**: 插件系统管理\n- **Monitor**: 监控指标、健康检查\n\n所有接口路径前缀: `/api/core`\n认证方式: Bearer Token (JWT)",
+        description = "TOPEMS 统一核心服务 API 文档\n\n包含以下核心模块:\n- **IAM**: 用户管理、角色管理、权限验证、认证授权、岗位管理\n- **Flow**: 工作流引擎、任务管理、审批流程、流程监控\n- **File**: 文件上传下载、文件夹管理、权限控制\n- **Doc**: 文档管理、文档模板、文件夹服务\n- **Communication**: 邮件发送、通知服务（已外迁独立服务 8084，此处保留兼容模块）\n- **IM**: 即时消息、WebSocket实时通信（已外迁独立服务 8084，此处保留兼容模块）\n- **Notification**: 通知管理（已外迁独立服务 8084，此处保留兼容模块）\n- **Master**: 主数据管理\n- **Migration**: 数据迁移、数据同步\n- **Plugin**: 插件系统管理\n- **Search**: 全文搜索（已外迁独立服务 8082，此处保留兼容模块）\n- **Monitor**: 监控指标、健康检查、告警\n- **Tenant**: 多租户管理\n\n所有接口路径前缀: `/api/core`\n认证方式: Bearer Token (JWT)",
     ),
     servers(
         (url = "http://localhost:8000", description = "本地开发环境"),
@@ -212,12 +210,7 @@ async fn main() {
     try_init("iam", || modules::iam::init_database(&pool)).await;
     try_init("flow", || modules::flow::init_database(&pool)).await;
     try_init("file", || modules::file::init_database(&pool)).await;
-    try_init("communication", || {
-        modules::communication::init_database(&pool)
-    })
-    .await;
     try_init("tenant", || modules::tenant::init_database(&pool)).await;
-    try_init("billing", || modules::billing::init_database(&pool)).await;
     try_init("plugin", || modules::plugin::init_database(&pool)).await;
     try_init("migration", || modules::migration::init_database(&pool)).await;
     try_init("dict", || modules::dict::init_database(&pool)).await;
@@ -225,14 +218,9 @@ async fn main() {
         modules::master::handlers::init_mdm_tables(&pool)
     })
     .await;
-    try_init("ticket", || {
-        modules::ticket::handlers::init_ticket_tables(&pool)
-    })
-    .await;
     try_init("menu", || modules::menu::init_database(&pool)).await;
     try_init("help", || modules::help::init_database(&pool)).await;
     try_init("login_log", || modules::login_log::init_database(&pool)).await;
-    try_init("search", || modules::search::init_database(&pool)).await;
     try_init("doc", || modules::doc::services::init_database(&pool)).await;
 
     // 初始化系统基础字典数据（同样降级为 warn，阻断仅当关键依赖缺失）
@@ -287,15 +275,6 @@ async fn main() {
 
     let metrics = std::sync::Arc::new(SystemMetrics::new());
 
-    let module_isolation =
-        match ModuleIsolationState::new(&database_url, create_default_module_configs()).await {
-            Ok(isolation) => Some(std::sync::Arc::new(isolation)),
-            Err(e) => {
-                tracing::warn!("Failed to initialize module isolation: {}", e);
-                None
-            }
-        };
-
     let encryption = init_field_encryption();
 
     let state = AppState {
@@ -307,7 +286,6 @@ async fn main() {
         rate_limit_middleware,
         versioning_middleware,
         security_headers_layer,
-        module_isolation,
         compression_middleware,
         body_limit_middleware: body_limit_mw,
         audit_logger_middleware: audit_logger_mw,

@@ -10,9 +10,9 @@
 //! ```bash
 //! # 1. 配置环境变量并启动服务
 //! #    set -a && source .env && set +a
-//! #    cargo run -p unified-core-service --bin unified-core-service
+//! #    cargo run -p topems-unified-core --bin topems-unified-core
 //! # 2. 运行被忽略的集成测试
-//! cargo test --package unified-core-service --test tenant_isolation_test -- --ignored --test-threads=1
+//! cargo test --package topems-unified-core --test tenant_isolation_test -- --ignored --test-threads=1
 //! ```
 
 use axum::http::StatusCode;

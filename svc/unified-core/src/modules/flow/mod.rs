@@ -4,15 +4,10 @@ pub mod approval;
 pub mod history;
 pub mod instance;
 pub mod models;
-pub mod monitor;
-pub mod performance;
-pub mod plugin;
 pub mod record;
 pub mod setting;
-pub mod statistics;
 pub mod task;
 pub mod template;
-pub mod version;
 pub mod workflow;
 
 use sqlx::PgPool;

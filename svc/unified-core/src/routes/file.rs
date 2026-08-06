@@ -40,9 +40,6 @@ pub fn file_routes(state: &AppState) -> Router<AppState> {
         )
         .route("/files/search", get(modules::file::manage::search_files))
         .route("/stats", get(modules::file::manage::get_file_stats))
-        .route("/folders", get(modules::file::folder::list_folders))
-        .route("/folders/{id}", get(modules::file::folder::get_folder))
-        .route("/folders/tree", get(modules::file::folder::get_folder_tree))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("file:read"),
@@ -69,12 +66,6 @@ pub fn file_routes(state: &AppState) -> Router<AppState> {
         )
         .route("/files/export", post(modules::file::manage::export_files))
         .route("/shares/{id}", delete(modules::file::manage::delete_share))
-        .route("/folders", post(modules::file::folder::create_folder))
-        .route("/folders/{id}", put(modules::file::folder::update_folder))
-        .route(
-            "/folders/{id}/move",
-            post(modules::file::folder::move_folder),
-        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("file:write"),
@@ -82,10 +73,6 @@ pub fn file_routes(state: &AppState) -> Router<AppState> {
 
     let delete_routes = Router::new()
         .route("/files/{id}", delete(modules::file::manage::delete_file))
-        .route(
-            "/folders/{id}",
-            delete(modules::file::folder::delete_folder),
-        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("file:delete"),
