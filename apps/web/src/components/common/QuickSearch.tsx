@@ -374,7 +374,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                 inputRef.current?.focus();
               }}
               sx={{ marginRight: 0.5 }}
-            aria-label="关闭"
+              aria-label='关闭'
             >
               <X size={16} />
             </IconButton>

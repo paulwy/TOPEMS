@@ -407,7 +407,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                       size='small'
                       onClick={() => setSearchQuery('')}
                       edge='end'
-                    aria-label="关闭"
+                      aria-label='关闭'
                     >
                       <X style={{ width: 12, height: 12 }} />
                     </IconButton>
@@ -425,7 +425,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               sx={{
                 color: favorites.size > 0 ? 'warning.main' : 'text.secondary',
               }}
-            aria-label="收藏"
+              aria-label='收藏'
             >
               {favorites.size > 0 ? (
                 <BookmarkCheck style={{ width: 16, height: 16 }} />
@@ -540,7 +540,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                       toggleFavorite(item);
                     }}
                     sx={{ ml: 'auto', flexShrink: 0 }}
-                  aria-label="收藏"
+                    aria-label='收藏'
                   >
                     <BookmarkCheck
                       style={{ width: 14, height: 14, color: theme.palette.warning.main }}
@@ -865,7 +865,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 size='small'
                 onClick={() => navigate(ADMIN_PATHS.systemSettings)}
                 sx={{ width: 32, height: 32 }}
-              aria-label="设置"
+                aria-label='设置'
               >
                 <Settings style={{ width: 16, height: 16 }} />
               </IconButton>

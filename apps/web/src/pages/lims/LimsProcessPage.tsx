@@ -277,7 +277,7 @@ const LimsProcessPage: React.FC = () => {
           <IconButton
             size='small'
             onClick={() => setShowTaskModal(false)}
-          aria-label="关闭"
+            aria-label='关闭'
           >
             <X size={20} />
           </IconButton>

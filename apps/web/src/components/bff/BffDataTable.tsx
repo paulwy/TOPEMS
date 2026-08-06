@@ -252,7 +252,7 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
             <IconButton
               onClick={() => setShowFilterBar(!showFilterBar)}
               size='small'
-            aria-label="筛选"
+              aria-label='筛选'
             >
               <Filter size={18} />
             </IconButton>
@@ -275,7 +275,7 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
           <IconButton
             onClick={() => crud.refresh()}
             size='small'
-          aria-label="刷新"
+            aria-label='刷新'
           >
             <RefreshCw size={18} />
           </IconButton>

@@ -176,7 +176,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   onDeleteSession(session.id);
                 }}
                 sx={{ p: 0.5 }}
-              aria-label="关闭"
+                aria-label='关闭'
               >
                 <X size={14} />
               </IconButton>

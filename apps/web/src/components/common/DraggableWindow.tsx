@@ -170,7 +170,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
                 height: 24,
                 '&:hover': { backgroundColor: theme.palette.grey[200] },
               }}
-            aria-label="最小化"
+              aria-label='最小化'
             >
               <Minimize size={14} />
             </IconButton>
@@ -184,7 +184,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
                 height: 24,
                 '&:hover': { backgroundColor: theme.palette.grey[200] },
               }}
-            aria-label="选择"
+              aria-label='选择'
             >
               {windowState.isMaximized ? <Square size={14} /> : <Maximize size={14} />}
             </IconButton>
@@ -198,7 +198,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
                 height: 24,
                 '&:hover': { backgroundColor: theme.palette.error.light, color: 'common.white' },
               }}
-            aria-label="关闭"
+              aria-label='关闭'
             >
               <X size={14} />
             </IconButton>

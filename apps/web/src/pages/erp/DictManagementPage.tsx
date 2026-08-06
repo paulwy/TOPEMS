@@ -354,7 +354,7 @@ const DictManagementPage: React.FC = () => {
                           e.stopPropagation();
                           handleEditType(type);
                         }}
-                      aria-label="编辑"
+                        aria-label='编辑'
                       >
                         <Edit size={14} />
                       </IconButton>
@@ -367,7 +367,7 @@ const DictManagementPage: React.FC = () => {
                           e.stopPropagation();
                           handleDeleteType(type);
                         }}
-                      aria-label="删除"
+                        aria-label='删除'
                       >
                         <Trash2 size={14} />
                       </IconButton>

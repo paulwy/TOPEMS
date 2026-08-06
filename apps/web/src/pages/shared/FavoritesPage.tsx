@@ -284,7 +284,7 @@ const FavoritesPage: React.FC = () => {
                         edge='end'
                         color='error'
                         onClick={() => removeMutation.mutate(fav.id)}
-                      aria-label="删除"
+                        aria-label='删除'
                       >
                         <Trash2 size={18} />
                       </IconButton>

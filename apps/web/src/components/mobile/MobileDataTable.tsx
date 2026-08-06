@@ -182,7 +182,7 @@ export function MobileDataTable<T extends Record<string, unknown>>({
                     onActionClick?.(row);
                   }}
                   sx={{ ml: 0.5, flexShrink: 0 }}
-                aria-label="更多"
+                  aria-label='更多'
                 >
                   <MoreVertical size={18} />
                 </IconButton>

@@ -83,7 +83,10 @@ export const FormFieldGroup: React.FC<FormFieldGroupProps> = ({
         )}
         {tooltip && (
           <Tooltip title={tooltip}>
-            <IconButton size='small'aria-label="信息" >
+            <IconButton
+              size='small'
+              aria-label='信息'
+            >
               <Info size={16} />
             </IconButton>
           </Tooltip>
@@ -92,7 +95,7 @@ export const FormFieldGroup: React.FC<FormFieldGroupProps> = ({
           <IconButton
             size='small'
             onClick={() => setExpanded(!expanded)}
-          aria-label="展开"
+            aria-label='展开'
           >
             <ChevronDown
               size={16}

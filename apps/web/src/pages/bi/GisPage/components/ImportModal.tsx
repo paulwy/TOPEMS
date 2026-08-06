@@ -67,7 +67,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           <IconButton
             onClick={onClose}
             size='small'
-          aria-label="关闭"
+            aria-label='关闭'
           >
             <X size={20} />
           </IconButton>
@@ -154,7 +154,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 <IconButton
                   size='small'
                   onClick={onClose}
-                aria-label="关闭"
+                  aria-label='关闭'
                 >
                   <X size={20} />
                 </IconButton>

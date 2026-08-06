@@ -160,7 +160,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <IconButton
             size='small'
             onClick={() => setExpanded(!expanded)}
-          aria-label="展开"
+            aria-label='展开'
           >
             <ChevronDown
               size={18}

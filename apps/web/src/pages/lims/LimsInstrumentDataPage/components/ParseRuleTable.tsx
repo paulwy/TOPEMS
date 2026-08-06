@@ -121,7 +121,7 @@ const ParseRuleTable: React.FC<ParseRuleTableProps> = ({
                         <IconButton
                           size='small'
                           onClick={() => onEdit(rule)}
-                        aria-label="编辑"
+                          aria-label='编辑'
                         >
                           <Edit size={16} />
                         </IconButton>
@@ -130,7 +130,7 @@ const ParseRuleTable: React.FC<ParseRuleTableProps> = ({
                         <IconButton
                           size='small'
                           onClick={() => onDelete(rule.id)}
-                        aria-label="删除"
+                          aria-label='删除'
                         >
                           <Trash2 size={16} />
                         </IconButton>

@@ -115,7 +115,7 @@ export const DescriptionList: React.FC<DescriptionListProps> = ({
                       size='small'
                       onClick={() => handleCopy(item.value as string, index)}
                       sx={{ ml: 0.5 }}
-                    aria-label="确认"
+                      aria-label='确认'
                     >
                       {copiedIndex === index ? (
                         <Check
@@ -194,7 +194,7 @@ export const DescriptionList: React.FC<DescriptionListProps> = ({
                         size='small'
                         onClick={() => handleCopy(item.value as string, index)}
                         sx={{ ml: 0.5 }}
-                      aria-label="确认"
+                        aria-label='确认'
                       >
                         {copiedIndex === index ? (
                           <Check

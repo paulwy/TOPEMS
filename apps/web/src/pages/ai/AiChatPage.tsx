@@ -447,7 +447,7 @@ export const AiChatPage: React.FC = () => {
                         handleDeleteSession(session.id);
                       }}
                       sx={{ p: 0.5 }}
-                    aria-label="关闭"
+                      aria-label='关闭'
                     >
                       <X size={14} />
                     </IconButton>
@@ -512,7 +512,7 @@ export const AiChatPage: React.FC = () => {
                 size='small'
                 onClick={() => setShowSidebar(!showSidebar)}
                 sx={{ display: { md: 'none' } }}
-              aria-label="展开"
+                aria-label='展开'
               >
                 <ChevronRight size={20} />
               </IconButton>

@@ -563,7 +563,7 @@ const BIDashboardPage = () => {
                               e.stopPropagation();
                               handleOpenEditor(dashboard);
                             }}
-                          aria-label="编辑"
+                            aria-label='编辑'
                           >
                             <Edit2 sx={{ width: 18, height: 18 }} />
                           </IconButton>
@@ -575,7 +575,7 @@ const BIDashboardPage = () => {
                               e.stopPropagation();
                               handleCloneDashboard(dashboard.id);
                             }}
-                          aria-label="复制"
+                            aria-label='复制'
                           >
                             <Copy sx={{ width: 18, height: 18 }} />
                           </IconButton>
@@ -593,7 +593,7 @@ const BIDashboardPage = () => {
                               e.stopPropagation();
                               handleTogglePublic(dashboard);
                             }}
-                          aria-label="查看"
+                            aria-label='查看'
                           >
                             {dashboard.is_public ? (
                               <Eye sx={{ width: 18, height: 18 }} />
@@ -610,7 +610,7 @@ const BIDashboardPage = () => {
                               e.stopPropagation();
                               handleDeleteDashboard(dashboard.id);
                             }}
-                          aria-label="删除"
+                            aria-label='删除'
                           >
                             <Trash2 sx={{ width: 18, height: 18 }} />
                           </IconButton>

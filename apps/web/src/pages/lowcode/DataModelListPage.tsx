@@ -155,7 +155,7 @@ export const DataModelListPage: React.FC = () => {
                           size='small'
                           color='error'
                           onClick={() => handleDelete(m.id)}
-                        aria-label="删除"
+                          aria-label='删除'
                         >
                           <DeleteOutlineIcon size={18} />
                         </IconButton>

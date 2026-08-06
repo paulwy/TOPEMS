@@ -394,14 +394,20 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
 
         {showFilter && (
           <Tooltip title='筛选'>
-            <IconButton size='small'aria-label="筛选" >
+            <IconButton
+              size='small'
+              aria-label='筛选'
+            >
               <Filter style={{ width: 18, height: 18 }} />
             </IconButton>
           </Tooltip>
         )}
 
         <Tooltip title='刷新'>
-          <IconButton size='small'aria-label="刷新" >
+          <IconButton
+            size='small'
+            aria-label='刷新'
+          >
             <RefreshCw style={{ width: 18, height: 18 }} />
           </IconButton>
         </Tooltip>
@@ -453,7 +459,10 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               </Typography>
             )}
           </Box>
-          <IconButton size='small'aria-label="更多" >
+          <IconButton
+            size='small'
+            aria-label='更多'
+          >
             <MoreHorizontal style={{ width: 16, height: 16 }} />
           </IconButton>
         </Box>
@@ -534,7 +543,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 <IconButton
                   size='small'
                   sx={{ p: 0 }}
-                aria-label="编辑"
+                  aria-label='编辑'
                 >
                   <Edit style={{ width: 14, height: 14 }} />
                 </IconButton>
@@ -548,7 +557,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 <IconButton
                   size='small'
                   sx={{ p: 0 }}
-                aria-label="归档"
+                  aria-label='归档'
                 >
                   <Archive style={{ width: 14, height: 14 }} />
                 </IconButton>
@@ -659,7 +668,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                   <IconButton
                     size='small'
                     onClick={column.onAddCard}
-                  aria-label="新增"
+                    aria-label='新增'
                   >
                     <Plus style={{ width: 16, height: 16 }} />
                   </IconButton>
@@ -670,7 +679,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                   <IconButton
                     size='small'
                     onClick={() => toggleColumn(column.id)}
-                  aria-label="配置列"
+                    aria-label='配置列'
                   >
                     <Columns3
                       style={{

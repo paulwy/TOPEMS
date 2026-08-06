@@ -78,7 +78,7 @@ export function MobileSearch({
               setQuery('');
               inputRef.current?.focus();
             }}
-          aria-label="关闭"
+            aria-label='关闭'
           >
             <X size={16} />
           </IconButton>

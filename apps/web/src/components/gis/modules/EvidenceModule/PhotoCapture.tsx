@@ -203,7 +203,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
               color: 'common.white',
               '&:hover': { bgcolor: 'action.active' },
             }}
-          aria-label="关闭"
+            aria-label='关闭'
           >
             <X size={24} />
           </IconButton>
@@ -216,7 +216,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                 color: 'common.white',
                 '&:hover': { bgcolor: flashOn ? 'warning.main' : 'rgba(0,0,0,0.7)' },
               }}
-            aria-label="切换主题"
+              aria-label='切换主题'
             >
               <Sun size={24} />
             </IconButton>
@@ -228,7 +228,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                 color: 'common.white',
                 '&:hover': { bgcolor: 'action.active' },
               }}
-            aria-label="切换相机"
+              aria-label='切换相机'
             >
               <SwitchCamera size={24} />
             </IconButton>
@@ -257,7 +257,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
             '&:active': { transform: 'scale(0.95)' },
             '&.Mui-disabled': { bgcolor: 'text.secondary', color: 'text.disabled' },
           }}
-        aria-label="拍照"
+          aria-label='拍照'
         >
           <Camera size={32} />
         </IconButton>

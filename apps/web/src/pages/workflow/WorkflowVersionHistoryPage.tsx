@@ -442,7 +442,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                                 setShowRollbackModal(true);
                               }}
                               sx={{ color: 'warning.main' }}
-                            aria-label="重置"
+                              aria-label='重置'
                             >
                               <RotateCcw size={20} />
                             </IconButton>
@@ -452,7 +452,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                               size='small'
                               onClick={() => handleDeleteVersion(version)}
                               sx={{ color: 'error.main' }}
-                            aria-label="删除"
+                              aria-label='删除'
                             >
                               <Trash2 size={20} />
                             </IconButton>

@@ -366,7 +366,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                   e.stopPropagation();
                   if (!node.disabled) toggleExpand(node.id);
                 }}
-              aria-label="展开"
+                aria-label='展开'
               >
                 {isExpanded ? (
                   <ChevronDown sx={{ width: 16, height: 16 }} />
@@ -585,7 +585,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
               <IconButton
                 onClick={onRefresh}
                 disabled={loading}
-              aria-label="刷新"
+                aria-label='刷新'
               >
                 <RefreshCw
                   sx={{

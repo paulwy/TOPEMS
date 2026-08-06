@@ -139,7 +139,9 @@ export const archiveNotificationSchema: EntitySchema = {
           variant='body2'
           color='text.secondary'
         >
-          {new Date((row as unknown as ArchivedNotificationRow).archived_at).toLocaleString('zh-CN')}
+          {new Date((row as unknown as ArchivedNotificationRow).archived_at).toLocaleString(
+            'zh-CN'
+          )}
         </Typography>
       ),
     },

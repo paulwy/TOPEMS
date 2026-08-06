@@ -374,7 +374,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
         {hiddenActions.length > 0 && (
           <Tooltip title='更多操作'>
-            <IconButton size='small'aria-label="更多" >
+            <IconButton
+              size='small'
+              aria-label='更多'
+            >
               <MoreHorizontal style={{ width: 20, height: 20 }} />
             </IconButton>
           </Tooltip>
@@ -610,7 +613,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   <IconButton
                     size='small'
                     onClick={onRefresh}
-                  aria-label="刷新"
+                    aria-label='刷新'
                   >
                     <RefreshCw style={{ width: 18, height: 18 }} />
                   </IconButton>

@@ -199,7 +199,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
               color: 'common.white',
               '&:hover': { bgcolor: 'action.disabledBackground' },
             }}
-          aria-label="关闭"
+            aria-label='关闭'
           >
             <X size={20} />
           </IconButton>
@@ -734,7 +734,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             color: 'common.white',
             '&:hover': { bgcolor: 'action.disabledBackground' },
           }}
-        aria-label="关闭"
+          aria-label='关闭'
         >
           <X size={20} />
         </IconButton>

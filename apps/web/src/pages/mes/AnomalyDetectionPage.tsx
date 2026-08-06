@@ -714,7 +714,7 @@ const AnomalyDetectionPage: React.FC = () => {
                           <IconButton
                             size='small'
                             onClick={() => handleEditRule(rule)}
-                          aria-label="设置"
+                            aria-label='设置'
                           >
                             <SettingsIcon size={16} />
                           </IconButton>

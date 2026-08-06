@@ -169,7 +169,7 @@ function DetailField({
           size='small'
           onClick={handleCopy}
           sx={{ ml: -0.5 }}
-        aria-label="确认"
+          aria-label='确认'
         >
           {copied ? (
             <Check
@@ -443,7 +443,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
           <IconButton
             onClick={handleBack}
             size='small'
-          aria-label="返回"
+            aria-label='返回'
           >
             <ArrowLeft size={20} />
           </IconButton>
@@ -484,7 +484,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
               <IconButton
                 onClick={() => entityId && crud.get(entityId)}
                 size='small'
-              aria-label="刷新"
+                aria-label='刷新'
               >
                 <RefreshCw size={18} />
               </IconButton>
@@ -494,7 +494,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
                 <IconButton
                   onClick={handleEdit}
                   size='small'
-                aria-label="编辑"
+                  aria-label='编辑'
                 >
                   <Edit size={18} />
                 </IconButton>
@@ -506,7 +506,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
                   onClick={handleDelete}
                   size='small'
                   color='error'
-                aria-label="删除"
+                  aria-label='删除'
                 >
                   <Delete size={18} />
                 </IconButton>

@@ -381,7 +381,7 @@ const BIVisualizationPage = () => {
                       size='small'
                       onClick={() => setViewMode('grid')}
                       color={viewMode === 'grid' ? 'primary' : 'default'}
-                    aria-label="网格"
+                      aria-label='网格'
                     >
                       <Grid3X3 size={16} />
                     </IconButton>
@@ -391,7 +391,7 @@ const BIVisualizationPage = () => {
                       size='small'
                       onClick={() => setViewMode('list')}
                       color={viewMode === 'list' ? 'primary' : 'default'}
-                    aria-label="列表"
+                      aria-label='列表'
                     >
                       <List size={16} />
                     </IconButton>
@@ -618,7 +618,7 @@ const BIVisualizationPage = () => {
                             e.stopPropagation();
                             handleDeleteComponent(comp.id);
                           }}
-                        aria-label="删除"
+                          aria-label='删除'
                         >
                           <Trash2 size={14} />
                         </IconButton>

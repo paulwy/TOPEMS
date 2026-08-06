@@ -126,7 +126,7 @@ const JsonFormatter: React.FC = () => {
                 size='small'
                 onClick={handleCopy}
                 color={copied ? 'success' : 'primary'}
-              aria-label="确认"
+                aria-label='确认'
               >
                 {copied ? (
                   <Check style={{ width: 16, height: 16 }} />
@@ -460,7 +460,7 @@ const UnitConverter: React.FC = () => {
           <IconButton
             size='small'
             onClick={handleSwap}
-          aria-label="交换"
+            aria-label='交换'
           >
             <ArrowRightLeft style={{ width: 18, height: 18 }} />
           </IconButton>
@@ -496,7 +496,7 @@ const UnitConverter: React.FC = () => {
             size='small'
             onClick={handleCopy}
             color={copied ? 'success' : 'primary'}
-          aria-label="确认"
+            aria-label='确认'
           >
             {copied ? (
               <Check style={{ width: 14, height: 14 }} />
@@ -653,7 +653,7 @@ const DataMasker: React.FC = () => {
               size='small'
               onClick={handleCopy}
               color={copied ? 'success' : 'primary'}
-            aria-label="确认"
+              aria-label='确认'
             >
               {copied ? (
                 <Check style={{ width: 14, height: 14 }} />

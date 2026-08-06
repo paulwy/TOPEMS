@@ -100,7 +100,7 @@ export function ThemePresetSwitcher({ sx }: ThemePresetSwitcherProps) {
         <IconButton
           size='small'
           onClick={(e) => setAnchorEl(e.currentTarget)}
-        aria-label="调色板"
+          aria-label='调色板'
         >
           <Palette size={18} />
         </IconButton>

@@ -361,7 +361,7 @@ export function MasterDetailPageTemplate<T>({
             <IconButton
               size='small'
               onClick={() => setCollapsed(!collapsed)}
-            aria-label="展开侧栏"
+              aria-label='展开侧栏'
             >
               {collapsed ? (
                 <PanelLeftOpen style={{ width: 16, height: 16 }} />
@@ -402,7 +402,7 @@ export function MasterDetailPageTemplate<T>({
                     if (controlledSearchValue === undefined) setInternalSearchValue('');
                     onSearchChange?.('');
                   }}
-                aria-label="关闭"
+                  aria-label='关闭'
                 >
                   <X style={{ width: 14, height: 14 }} />
                 </IconButton>
@@ -528,7 +528,7 @@ export function MasterDetailPageTemplate<T>({
                             color: isSelected ? '#fff' : `${action.color || 'primary'}.dark`,
                           },
                         }}
-                      aria-label="前进"
+                        aria-label='前进'
                       >
                         {action.icon || <ChevronsRight style={{ width: 14, height: 14 }} />}
                       </IconButton>
@@ -813,7 +813,7 @@ export function MasterDetailPageTemplate<T>({
               <IconButton
                 size='small'
                 onClick={handleCloseDetail}
-              aria-label="关闭"
+                aria-label='关闭'
               >
                 <X style={{ width: 18, height: 18 }} />
               </IconButton>
@@ -1014,7 +1014,7 @@ export function MasterDetailPageTemplate<T>({
               <IconButton
                 size='small'
                 onClick={() => setCollapsed(false)}
-              aria-label="展开侧栏"
+                aria-label='展开侧栏'
               >
                 <PanelLeftOpen style={{ width: 18, height: 18 }} />
               </IconButton>

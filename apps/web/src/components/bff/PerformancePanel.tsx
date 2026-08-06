@@ -1193,7 +1193,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
         <IconButton
           size='small'
           sx={{ color: 'inherit' }}
-        aria-label="展开"
+          aria-label='展开'
         >
           {expanded ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
         </IconButton>
@@ -1244,7 +1244,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
               <IconButton
                 size='small'
                 onClick={handleExport}
-              aria-label="下载"
+                aria-label='下载'
               >
                 <Download size={18} />
               </IconButton>
@@ -1254,7 +1254,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
                 size='small'
                 onClick={clearPerformanceStats}
                 color='error'
-              aria-label="删除"
+                aria-label='删除'
               >
                 <Trash2 size={18} />
               </IconButton>

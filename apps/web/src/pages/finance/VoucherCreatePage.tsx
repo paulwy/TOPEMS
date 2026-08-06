@@ -503,7 +503,7 @@ const VoucherCreatePage: React.FC = () => {
                       color='error'
                       onClick={() => removeVoucherItem(index)}
                       disabled={voucherItems.length <= 1}
-                    aria-label="删除"
+                      aria-label='删除'
                     >
                       <Trash2 size={16} />
                     </IconButton>

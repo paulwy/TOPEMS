@@ -674,7 +674,7 @@ const TenantSettingsPage: React.FC = () => {
                               edge='end'
                               color='error'
                               onClick={() => handleRemoveMember(member.id)}
-                            aria-label="删除"
+                              aria-label='删除'
                             >
                               <Trash2 size={18} />
                             </IconButton>

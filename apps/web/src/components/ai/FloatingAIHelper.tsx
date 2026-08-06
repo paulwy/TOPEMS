@@ -306,7 +306,7 @@ export const FloatingAIHelper: React.FC = () => {
                   size='small'
                   onClick={handleMinimize}
                   sx={{ color: 'common.white' }}
-                aria-label="减少"
+                  aria-label='减少'
                 >
                   <Minus style={{ width: 16, height: 16 }} />
                 </IconButton>
@@ -314,7 +314,7 @@ export const FloatingAIHelper: React.FC = () => {
                   size='small'
                   onClick={handleClose}
                   sx={{ color: 'common.white' }}
-                aria-label="关闭"
+                  aria-label='关闭'
                 >
                   <X style={{ width: 16, height: 16 }} />
                 </IconButton>
@@ -342,7 +342,7 @@ export const FloatingAIHelper: React.FC = () => {
                         <IconButton
                           size='small'
                           onClick={handleSearch}
-                        aria-label="发送"
+                          aria-label='发送'
                         >
                           <Send style={{ width: 16, height: 16 }} />
                         </IconButton>
@@ -753,7 +753,7 @@ export const FloatingAIHelper: React.FC = () => {
             <IconButton
               size='small'
               onClick={handleMaximize}
-            aria-label="展开"
+              aria-label='展开'
             >
               <ChevronRight style={{ width: 16, height: 16 }} />
             </IconButton>

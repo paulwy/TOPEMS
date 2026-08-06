@@ -169,7 +169,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
         <IconButton
           onClick={onCancel}
           sx={{ borderRadius: 4, '&:hover': { bgcolor: 'grey.800' } }}
-        aria-label="关闭"
+          aria-label='关闭'
         >
           <X
             size={20}
@@ -233,7 +233,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                 color: 'common.white',
                 '&:hover': { bgcolor: 'error.dark' },
               }}
-            aria-label="麦克风"
+              aria-label='麦克风'
             >
               <Mic size={32} />
             </IconButton>
@@ -250,7 +250,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                   color: 'common.white',
                   '&:hover': { bgcolor: 'text.secondary' },
                 }}
-              aria-label="执行"
+                aria-label='执行'
               >
                 {isPaused ? <Play size={24} /> : <Pause size={24} />}
               </IconButton>
@@ -263,7 +263,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                   color: 'common.white',
                   '&:hover': { bgcolor: 'error.dark' },
                 }}
-              aria-label="选择"
+                aria-label='选择'
               >
                 <Square size={32} />
               </IconButton>

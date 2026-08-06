@@ -306,7 +306,7 @@ const ExperimentRow: React.FC<{
                   size='small'
                   color='primary'
                   onClick={() => onAction('start', experiment.id)}
-                aria-label="执行"
+                  aria-label='执行'
                 >
                   <Play size={16} />
                 </IconButton>
@@ -318,7 +318,7 @@ const ExperimentRow: React.FC<{
                   size='small'
                   color='warning'
                   onClick={() => onAction('pause', experiment.id)}
-                aria-label="暂停"
+                  aria-label='暂停'
                 >
                   <Pause size={16} />
                 </IconButton>
@@ -331,7 +331,7 @@ const ExperimentRow: React.FC<{
                   size='small'
                   color='success'
                   onClick={() => onAction('complete', experiment.id)}
-                aria-label="完成"
+                  aria-label='完成'
                 >
                   <CheckCircle size={16} />
                 </IconButton>
@@ -342,7 +342,7 @@ const ExperimentRow: React.FC<{
                 size='small'
                 color='error'
                 onClick={() => onAction('delete', experiment.id)}
-              aria-label="删除"
+                aria-label='删除'
               >
                 <Trash2 size={16} />
               </IconButton>
@@ -588,7 +588,7 @@ const CreateExperimentForm: React.FC<{
                 color='error'
                 onClick={() => handleRemoveVariant(idx)}
                 disabled={v.is_control || variants.length <= 2}
-              aria-label="删除"
+                aria-label='删除'
               >
                 <Trash2 size={16} />
               </IconButton>
@@ -768,7 +768,7 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
               e.stopPropagation();
               setExpanded((v) => !v);
             }}
-          aria-label="展开"
+            aria-label='展开'
           >
             {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </IconButton>
