@@ -233,6 +233,8 @@ async fn main() {
         .with_state(pool);
 
     let port = std::env::var("COMMUNICATION_PORT")
+        .or_else(|_| std::env::var("SERVER_PORT"))
+        .or_else(|_| std::env::var("PORT"))
         .unwrap_or_else(|_| "8084".to_string())
         .parse()
         .unwrap_or(8084);

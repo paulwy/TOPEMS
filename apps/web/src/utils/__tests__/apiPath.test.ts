@@ -14,32 +14,25 @@ import {
 
 describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
   describe('分类正确性：Group1 / Group2 服务集合', () => {
-    it('Group1 包含 iam/workflow/file/mail/im/notification/master/migration/comm/core/help/doc/monitor/automation/ticket/plugin/billing/tenant（K8s /api/core/* 转发）', () => {
+    it('Group1 包含 iam/workflow/file/master/migration/core/help/doc/monitor/automation/plugin/tenant（K8s /api/core/* 转发到 unified-core:8000）', () => {
       [
         'iam',
         'workflow',
         'flow',
         'file',
-        'mail',
-        'im',
-        'notification',
         'master',
         'migration',
-        'comm',
-        'communication',
         'core',
         'help',
         'doc',
         'monitor',
-        // V64: 新增 unified-core 承载的模块
+        // V64: unified-core 承载的虚拟模块
         'automation',
-        'ticket',
         'plugin',
-        'billing',
         'tenant',
       ].forEach((svc) => expect(GROUP1_CORE_SERVICES.has(svc)).toBe(true));
     });
-    it('Group2 包含 erp/hrm/pm/mes/pdm/scm/wms/srm/qms/lims/ehs/rd/bi/analytics/portal/mobile/gis/integration/finance/ai/lowcode/oa/asset（独立 K8s deployment）', () => {
+    it('Group2 包含 erp/hrm/pm/mes/pdm/scm/wms/srm/qms/lims/ehs/rd/bi/analytics/portal/mobile/gis/integration/finance/ai/lowcode/oa/asset/master-data/search/communication/billing/ticket/feedback/mail/im/notification/comm（独立 K8s deployment）', () => {
       [
         'erp',
         'finance',
@@ -65,6 +58,19 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
         'lowcode',
         'oa',
         'asset',
+        // 主数据（独立进程 8090）
+        'master-data',
+        // V66 扩展外迁服务（8082/8084-8088）
+        'search',
+        'communication',
+        'billing',
+        'ticket',
+        'feedback',
+        // communication 子模块（仍归 Group2）
+        'mail',
+        'im',
+        'notification',
+        'comm',
       ].forEach((svc) => expect(GROUP2_INDEPENDENT_SERVICES.has(svc)).toBe(true));
     });
     it('Group1 与 Group2 集合无交集', () => {
@@ -87,17 +93,18 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
       expect(buildApiPath({ service: 'wms', path: 'inventory' })).toBe('/api/wms/inventory');
       expect(buildApiPath({ service: 'file', path: 'upload' })).toBe('/api/core/file/upload');
     });
-    it('workflow/file/mail/im/notification/master/migration/comm/help/doc 全属于 Group1（/api/core 前缀）', () => {
+    it('workflow/file/master/migration/help/doc 全属于 Group1（/api/core 前缀）；mail/im/notification/comm 外迁到 Group2（/api 前缀，无 core）', () => {
       expect(buildApiPath({ service: 'workflow', path: '/definitions' })).toBe(
         '/api/core/workflow/definitions'
       );
       expect(buildApiPath({ service: 'file', path: '/upload' })).toBe('/api/core/file/upload');
-      expect(buildApiPath({ service: 'mail', path: '/send' })).toBe('/api/core/mail/send');
-      expect(buildApiPath({ service: 'im', path: '/messages' })).toBe('/api/core/im/messages');
+      // V66.1: mail/im/notification/comm 已外迁到 communication 独立服务（Group2，端口 8084）
+      expect(buildApiPath({ service: 'mail', path: '/send' })).toBe('/api/mail/send');
+      expect(buildApiPath({ service: 'im', path: '/messages' })).toBe('/api/im/messages');
       expect(buildApiPath({ service: 'notification', path: '/unread' })).toBe(
-        '/api/core/notification/unread'
+        '/api/notification/unread'
       );
-      expect(buildApiPath({ service: 'comm', path: '/push' })).toBe('/api/core/comm/push');
+      expect(buildApiPath({ service: 'comm', path: '/push' })).toBe('/api/comm/push');
       expect(buildApiPath({ service: 'help', path: '/faqs' })).toBe('/api/core/help/faqs');
       expect(buildApiPath({ service: 'doc', path: '/documents' })).toBe('/api/core/doc/documents');
     });
@@ -148,14 +155,14 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
       expect(API_PATHS.hrm.employees).toBe('/api/hrm/employees');
       expect(API_PATHS.hrm.employee('123')).toBe('/api/hrm/employees/123');
     });
-    it('notification 使用 Group1（/api/core/notification/*）', () => {
+    it('notification 使用 Group2（V66.1 已外迁到 communication 独立服务：/api/notification/*）', () => {
       const path = API_PATHS.notification.list(1, 20, 'alert');
       expect(path).toContain('notification_type=alert');
       expect(path).toContain('page=1');
       expect(path).toContain('pagesize=20');
-      expect(path.startsWith('/api/core/notification/notifications')).toBe(true);
+      expect(path.startsWith('/api/notification/notifications')).toBe(true);
       expect(API_PATHS.notification.unreadCount).toBe(
-        '/api/core/notification/notifications/unread-count'
+        '/api/notification/notifications/unread-count'
       );
     });
     it('workflow 使用 Group1 前缀', () => {

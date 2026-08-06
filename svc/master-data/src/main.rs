@@ -1,19 +1,16 @@
 #![allow(dead_code)]
 
 use crate::shared::AppState;
-use std::net::SocketAddr;
 use std::sync::Arc;
-use std::time::Instant;
 
 use axum::{extract::State, routing::get, Json, Router};
-use axum_prometheus::PrometheusMetricLayer;
 use utoipa::OpenApi;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
-    rate_limit_middleware, rls_middleware, simple_health_check, telemetry_middleware, ApiResponse,
-    AuthState, RateLimitConfig, RateLimitMiddleware, ServiceHealth, SimpleHealthConfig,
-    SystemMetrics,
+    get_api_info_handler, simple_health_check, ApiResponse, ServiceHealth, SimpleHealthConfig,
+};
+use topems_shared_bootstrap::{
+    bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
 
 mod openapi;
@@ -23,105 +20,69 @@ pub mod modules;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    _ = dotenv::dotenv();
+    let config = ServiceConfig {
+        name: "topems-master-data",
+        port: 8090,
+        port_env_var: Some("MASTER_DATA_PORT"),
+        max_db_connections: 10,
+        enable_events: false,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/master-data",
+        legacy_prefixes: &[],
+    };
 
-    let _telemetry_guard = init_telemetry("topems-master-data");
+    let ctx = bootstrap_service(&config).await?;
 
     tracing::info!("🚀 TOPEMS Master Data Service starting...");
 
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        std::process::exit(1);
-    });
-
-    let pool = match sqlx::postgres::PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&database_url)
-        .await
-    {
-        Ok(p) => {
-            tracing::info!("Database connection successful");
-            p
-        }
-        Err(e) => {
-            tracing::error!("Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
-        }
+    // 把 ServiceContext 转换为下游 modules 依赖的 legacy AppState（零改造）
+    let app_state = AppState {
+        db: ctx.db.clone(),
+        auth_state: ctx.auth_state.clone(),
+        metrics: Arc::clone(&ctx.metrics),
+        start_time: ctx.start_time,
     };
 
-    let auth_state = AuthState::from_env();
-    let _health_config = SimpleHealthConfig::new("topems-master-data").with_db(pool.clone());
-
-    let state = AppState {
-        auth_state,
-        db: pool,
-        metrics: Arc::new(SystemMetrics::new()),
-        start_time: Instant::now(),
-    };
-
-    let cors = create_cors_layer();
-
-    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
-
+    // 无状态公共路由（/、/api、/api/info）—— 交给 build_application 的顶层 Router<()>
     let public_routes = Router::new()
         .route("/", get(home))
-        .route("/health", get(health))
         .route("/api", get(|| get_api_info_handler("master-data-service")))
         .route(
             "/api/info",
             get(|| get_api_info_handler("master-data-service")),
-        )
-        .route(
-            "/metrics",
-            get(move || async move { metric_handle.render() }),
         );
 
+    // 业务路由（modules）+ /health/detailed —— 需要 State<AppState>，先 with_state
     let protected_routes = Router::new()
         .merge(modules::create_routes())
         .route("/health/detailed", get(detailed_health))
-        .layer(axum::middleware::from_fn_with_state(
-            state.auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.db.clone(),
-            rls_middleware,
-        ));
+        .with_state(app_state.clone());
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let protected_routes = protected_routes.layer(axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    }));
+    let openapi_json = Some(
+        serde_json::to_string(&openapi::MasterDataApiDoc::openapi())
+            .unwrap_or_else(|_| "{}".to_string()),
+    );
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/master-data", protected_routes)
+    let mut app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
+
+    // 带 State<AppState> 的公共路由（/health, /metrics）—— 在 build_application 外层嵌套
+    let stateful_public = Router::new()
+        .route("/health", get(health))
         .route(
-            "/api-docs/openapi.json",
-            get(|| async move { axum::Json(openapi::MasterDataApiDoc::openapi()) }),
+            "/metrics",
+            get(move || async { prometheus_metrics_handler().await }),
         )
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(cors)
-        .layer(prometheus_layer)
-        .with_state(state);
+        .with_state(app_state);
 
-    let port = std::env::var("MASTER_DATA_PORT")
-        .unwrap_or_else(|_| "8090".to_string())
-        .parse()
-        .unwrap_or(8090);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ Master Data Service is running at http://{}", addr);
+    app.router = app.router.merge(stateful_public);
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app.into_make_service()).await?;
+    tracing::info!(
+        "✅ Master Data Service is running at http://0.0.0.0:{}",
+        app.port
+    );
 
+    run(app).await?;
     Ok(())
 }
 

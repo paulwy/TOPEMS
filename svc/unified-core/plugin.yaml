@@ -1,13 +1,32 @@
-code: "workflow"
-name: "工作流引擎"
+code: "unified-core"
+name: "统一核心服务"
 version: "1.0.0"
-description: "Workflow 工作流引擎，包含流程设计、流程实例、审批、历史记录等模块"
+description: "TOPEMS 统一核心平台（Unified Core）：承载 IAM 认证授权、Flow 工作流引擎、File 文件存储、Doc 文档管理、Tenant 租户管理、Audit 审计日志、Monitor 系统监控等虚拟服务模块，共用 8000 端口通过 URL 路径区分"
 
 deployment:
+  type: standalone
   port: 8000
-  base_path: /api/flow
+  base_path: /api/core
 
 permissions:
+  #  # IAM 权限
+  - code: "iam:user:read"
+    name: "查看用户"
+    resource_type: user
+    action: read
+  - code: "iam:user:write"
+    name: "管理用户"
+    resource_type: user
+    action: write
+  - code: "iam:role:read"
+    name: "查看角色"
+    resource_type: role
+    action: read
+  - code: "iam:role:write"
+    name: "管理角色"
+    resource_type: role
+    action: write
+  # Workflow 权限（保留历史 code 兼容）
   - code: "workflow:read"
     name: "查看工作流"
     resource_type: workflow
@@ -35,4 +54,34 @@ permissions:
   - code: "statistics"
     name: "工作流统计"
     resource_type: statistics
+    action: read
+  # 文件/文档
+  - code: "file:read"
+    name: "查看文件"
+    resource_type: file
+    action: read
+  - code: "file:write"
+    name: "管理文件"
+    resource_type: file
+    action: write
+  - code: "doc:read"
+    name: "查看文档"
+    resource_type: document
+    action: read
+  - code: "doc:write"
+    name: "管理文档"
+    resource_type: document
+    action: write
+  # 租户与监控
+  - code: "tenant:read"
+    name: "查看租户"
+    resource_type: tenant
+    action: read
+  - code: "tenant:write"
+    name: "管理租户"
+    resource_type: tenant
+    action: write
+  - code: "monitor:read"
+    name: "查看监控"
+    resource_type: monitor
     action: read

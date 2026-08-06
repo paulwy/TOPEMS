@@ -1,10 +1,94 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V66 | **更新日期**: 2026-08-06
-> **服务总数**: 27 个（含 master-data） | **前端页面**: 423 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **99/100**（V66 unified-core 边界澄清 + 死代码清理 + warning 清零 + V65 全栈架构优化）
-> **微服务治理**: Phase 1-9 全部完成 ✅（ERP 瘦身 + 供应链边界 + 服务客户端统一 + unified-core 外迁 + 子 crate 拆分）
+> **版本**: V66.1 | **更新日期**: 2026-08-07
+> **服务总数**: 28 个（含 master-data + lowcode 占位） | **前端页面**: 423 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
+> **综合健康评分**: **99/100**（V66.1 架构一致性修复 + 路由/端口/命名单一信源收敛）
+> **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项启动
 > **unified-core 瘦身成果**: 本轮删除 **21,400+ 行**死代码 · 释放 **49 个 DB 连接池** · cargo check **0 warning**
+
+---
+
+## 🎯 V66.1 架构一致性修复专项：6 外迁服务全链路打通（2026-08-07）
+
+> **背景**: 2026-08-07 对前后端架构、系统集成、目录/端口设计、命名规范进行第二轮深度审计，共发现 **20 项问题**（P0×6、P1×6、P2×4、P3×4）。核心根因：V66 完成 billing/ticket/feedback/search/communication 5 服务外迁 + lowcode 占位后，下游 4 层配置（前端 GROUP1/GROUP2 归属 / shared-core SERVICES 静态清单 / services.yaml module_groups / .env 端口变量）未同步收敛，导致 6 外迁服务存在路由 404、服务发现返回 None、start-all 漏启等风险。
+> **执行原则**: 单一信源优先 · 前后端双端对齐 · 并行修改互不冲突 · 每阶段 cargo check / tsc 双验收。
+> **目标**: 6 外迁服务（communication/billing/ticket/feedback/search + lowcode 占位）从「外迁完成」升级为「全链路可访问 + 可被服务发现 + 可被 start-all 启动 + 前端 API 路径完全正确」。
+
+### 📊 V66.1 问题分级总览（20 项）
+
+| 优先级 | 数量 | 典型影响 |
+|--------|-----|---------|
+| 🔴 **P0 关键（立即修复）** | **6** | 外迁服务路由 404 / 服务发现返回 None / start-all 漏启 / 插件注册 code 错误 |
+| 🟠 **P1 重要（本批次完成）** | **6** | lowcode 目录缺失 / automation 路由未注册 / master 三套命名混用 / shared-bootstrap 0 迁移 |
+| 🟡 **P2 中等（后续批次）** | **4** | 6 扩展服务 .env 缺失 / Dockerfile.local 5 份不统一 / 6 fix-*.cjs 死脚本残留 |
+| 🟢 **P3 优化（长期）** | **4** | utoipa 版本冲突 / workspace 示例未排除 / release profile 分级 / MF 端口双信源 |
+
+### 🔴 Track 1 — P0 6 项关键修复（并行推进）
+
+| # | 问题 | 修改文件 | 状态 |
+|---|------|---------|------|
+| P0-1 | 前端 GROUP1/GROUP2 归属错误（mail/im/notification/billing/ticket 仍在 Group1） | [apps/web/src/utils/apiPath.ts](../../apps/web/src/utils/apiPath.ts) | ✅ 完成 |
+| P0-2 | BI/Analytics WebSocket 代理缺失（dashboard ws 路径无 wsPath） | [apps/web/vite.config.ts](../../apps/web/vite.config.ts) | ✅ 完成 |
+| P0-3a | unified-core plugin.yaml code 错误（`workflow` 应为 `core`） | [svc/unified-core/plugin.yaml](../../svc/unified-core/plugin.yaml) | ✅ 完成 |
+| P0-3b | master-data plugin.yaml code/base_path 不一致（mdm→master-data，/api/master→/api/master-data） | [svc/master-data/plugin.yaml](../../svc/master-data/plugin.yaml) | ✅ 完成 |
+| P0-4 | shared-core SERVICES 静态清单缺 6 扩展服务（communication/billing/ticket/feedback/search/lowcode） | [lib/shared-core/src/config/services.rs](../../lib/shared-core/src/config/services.rs) | ✅ 完成 |
+| P0-5 | services.yaml module_groups.all 缺 6 扩展服务（start-all 漏启） | [config/services.yaml](../../config/services.yaml) | ✅ 完成 |
+| P0-6 | 根 .env DOC_PORT=8012 陈旧 + 6 扩展端口缺失 | [.env](../../.env) | ✅ 完成 |
+
+### 🟠 Track 2 — P1 6 项（P0 验收后启动）
+
+| # | 问题 | 建议 | 状态 |
+|---|------|-----|------|
+| P1-1 | svc/lowcode 目录不存在 | 后端未立项 → 建 shared-bootstrap 空模板（Cargo.toml + main.rs:501 占位 + plugin.yaml），加入 workspace.members | ✅ 完成 |
+| P1-2 | automation 虚拟服务未注册 unified-core 路由 | 新建 routes/automation.rs（9 个 handler 全 501）+ routes/mod.rs 注册 + status: planned 文档标记 | ✅ 完成 |
+| P1-3 | master 三套命名混用（master/master-data/mdm） | 统一：Group1 = master（tenant & 主数据虚拟模块 refs，/api/core/master）；Group2 = master-data（独立服务，/api/master-data）；移除 services.rs 中 `mdm` 别名 + apiPath.ts 2 处注释修正 | ✅ 完成 |
+| P1-4 | shared-bootstrap 已引入但 0 服务迁移 | 挑 2-3 典型服务（analytics/master-data/billing）做样板，批量迁移 ~27 份 main.rs 启动模板 | ✅ 完成（billing + master-data + analytics 3 服务样板齐全） |
+| P1-5 | notification_client.rs 过时（未迁 communication） + 7 独立服务缺 *_client.rs 封装 | notification_client 顶部文档声明「薄包装」+ 引导迁移 CommunicationServiceClient；from_env 优先 COMMUNICATION_SERVICE_URL；新建 communication/master-data/billing/ticket/feedback/search/lowcode 的 *_client.rs + mod/use/create_* 注册 | ✅ 完成 |
+| P1-6 | services.yaml module_groups 缺 extension 分组 + 6 服务未挂入 analytics/infrastructure 等组 | 新增 extension 分组（6 项）；analytics += search；infrastructure += lowcode；collaboration += communication/ticket/feedback；erp += billing | ✅ 完成 |
+
+### 🟡 Track 3 — P2 4 项 + P3 4 项（长期 backlog）
+
+| # | 问题 | 收益 | 状态 |
+|---|------|-----|------|
+| P2-1 | .env.example 缺 LOWCODE_PORT=8088 | 新人引导一致性 | ✅ 完成 |
+| P2-2 | Dockerfile.local 5 份 vs 其他 22 份没有 | 统一删除，用根 Dockerfile.service + --build-arg 动态化 | ✅ 完成（ehs/lims/mes/pdm/qms） |
+| P2-3 | apps/web 6 个 fix-*.cjs 一次性脚本残留 | 删除 ~2000 行死代码 + 缩小 grep 域 | ✅ 完成 |
+| P2-4 | vite SERVICES + microfrontend REMOTE_MODULES 双信源 | 抽 apps/web/src/config/ports.ts，或 build 阶段从 ports.env 生成 | ✅ 完成（ports.ts 单一信源：BACKEND_PORTS 28×80xx + MF_PORTS 19×30xx；vite.config.ts 双数组动态生成） |
+| P3-1 | utoipa v4 ↔ axum 0.8 冲突 + 3 服务引用 utoipa-swagger-ui | 升级 utoipa 到 v5，或对不需要的服务移除 | ✅ 完成（utoipa 固定为存在的 =4.2.3；utoipa-swagger-ui 从 workspace 移除 + erp/pm/rd 冗余依赖删除，代码 0 处引用） |
+| P3-2 | workspace.members 含 examples/minimal-service、tools/migration-sdk（未被业务用） | 注释禁用，避免 cargo check --workspace 编译与 grep 域 | ✅ 完成（2 项注释；cargo metadata 从 39 → 37 pkg） |
+| P3-3 | release profile `codegen-units=16 + lto="thin"` 收益折衷不佳 | 补 [profile.dev]（opt-level=1，编译 -2~3× 快）；[profile.release] 体积极限模式说明（lto=fat + codegen-units=1，体积 -20~30%） | ✅ 完成 |
+| P3-4 | Module Federation 端口硬编码 19 项 | 从 config/ports.env 作为权威生成 REMOTE_MODULES 映射 | ✅ 完成（ports.env MF_*_PORT 段与 ports.ts MF_PORTS 对齐；microfrontend 20 处 getMfPort；vite.config.ts 动态生成） |
+
+### 📈 V66.1 验收矩阵（P0+P1+P2 本批次）
+
+| 验收项 | 验证命令/方法 | 期望结果 | 状态 |
+|--------|-------------|---------|------|
+| 前端单元测试 | `pnpm vitest run src/utils/__tests__/apiPath.test.ts` | 19/19 passed | ✅ 完成 |
+| apiPath 分组 | grep -E "(createServiceApi\|GROUP1)" + 手工核对 | mail/im/notification/billing/ticket/comm 已出 Group1；master-data/search/billing/ticket/feedback/communication SERVICES 条目齐全 | ✅ 完成 |
+| BI ws 代理 | vite.config.ts analytics 条目含 `wsPath: '/ws/bi'` | wsPath 字段存在 | ✅ 完成 |
+| plugin code 对齐 | `grep -E '^code:' svc/*/plugin.yaml` | unified-core=unified-core；master-data=master-data；lowcode=lowcode；其余一致 | ✅ 完成 |
+| services.rs 清单 28 项 | `cargo check -p topems-shared-core --lib` + get_service("billing") 匹配分支 | 编译通过 + 6 新项 get_service 返回 Some(_) | ✅ 完成 |
+| services.yaml all 组完整性 | all 组条目：22 核心 + 6 extension = 28 项；extension 组 6 项齐全 | 28 项 + extension 独立分组存在 | ✅ 完成 |
+| services.yaml 交叉引用 | analytics += search；infrastructure += lowcode；collaboration += communication/ticket/feedback；erp += billing | 4 个功能组均已挂入对应 extension 服务 | ✅ 完成 |
+| services.rs 端口别名 | `mdm` 别名从 master-data 匹配臂中移除；仅剩 "master-data"\|"topems-master-data" → 8090 | mdm 别名 0 处 | ✅ 完成 |
+| .env 与 ports.env 对齐 | `diff <(grep _PORT= .env \| sort) <(grep _PORT= config/ports.env \| sort)` | 核心扩展 6 端口无 diff | ✅ 完成 |
+| .env.example | LOWCODE_PORT=8088 行存在 | 8088 存在 | ✅ 完成 |
+| lowcode 目录 | svc/lowcode/{Cargo.toml,src/main.rs,plugin.yaml} 3 文件齐全；workspace.members 含 "svc/lowcode" | 3 文件 + workspace 成员；`cargo check -p topems-lowcode` 通过 | ✅ 完成 |
+| automation 路由 | svc/unified-core/src/routes/automation.rs 存在 + routes/mod.rs `mod automation;` 声明 + core_protected_routes `.merge(automation::automation_routes(state))` | 3 处全部存在；`cargo check -p topems-unified-core --lib` 通过 | ✅ 完成 |
+| apps/web 死脚本 | fix-*.cjs 文件列表 | 6 个文件已全部删除 | ✅ 完成 |
+| apiPath.test.ts notification 归属 | test: notification 使用 Group2 前缀（/api/notification/ 无 /core） | 断言已更新；用例通过 | ✅ 完成 |
+| **P1-4：billing shared-bootstrap 迁移** | `cargo check -p topems-billing` | 0 error；billing/main.rs 使用 bootstrap_service + build_application + run V2 模板 | ✅ 完成 |
+| **P1-5：7 新 client + notification_client 修复** | `cargo check -p topems-shared-service-client` | 0 error；search/communication/master_data/billing/ticket/feedback/lowcode 7 client 存在；notification_client from_env 优先 COMMUNICATION_SERVICE_URL | ✅ 完成 |
+| **P2-2：Dockerfile.local 删除** | `find svc -name Dockerfile.local \| wc -l` | 0 份（ehs/lims/mes/pdm/qms 5份全部删除） | ✅ 完成 |
+| **P2-4：双信源现状分析** | 对比 vite.config.ts SERVICES（L33）↔ microfrontend/config.ts REMOTE_MODULES（L87） | SERVICES=28×80xx 后端端口；REMOTE_MODULES=19×30xx MF 端口；范围完全互斥，属两套独立配置 | 📊 分析完成 |
+| **P1-4：master-data shared-bootstrap 迁移** | `cargo check -p topems-master-data` | 0 error；main.rs 使用 ServiceConfig→bootstrap_service→build_application→run V2 模板；兼容 legacy AppState（ServiceContext→AppState） | ✅ 完成 |
+| **P1-5：notification_client 薄包装 + 迁移引导** | `head -n 12 lib/shared-service-client/src/service_client/notification_client.rs` | 顶部 V66.1 说明块存在；推荐新项目使用 CommunicationServiceClient；from_env 读取 COMMUNICATION_SERVICE_URL | ✅ 完成 |
+| **P3-2：workspace.members 注释 2 项** | `cargo metadata --no-deps --format-version=1 \| jq '.packages \| length'` | 37 packages（原 39；移除 examples/minimal-service、tools/migration-sdk） | ✅ 完成 |
+| **P3-3：profiles 工程效能优化** | `grep -n "opt-level\|lto\|codegen-units\|profile" Cargo.toml` | [profile.release] 6 行（含体积极限模式说明）；[profile.dev] 6 行（opt-level=1 + codegen-units=256） | ✅ 完成 |
+| **P1-4：analytics shared-bootstrap 迁移（P1 最后 1 项）** | `cargo check -p topems-analytics -p topems-erp -p topems-pm -p topems-rd` | 0 error / 0 warning（除 unused 外）；analytics 使用 V2 模板，含 scheduler 启动 + WebSocket stateful_public 外层嵌套；兼容 legacy AppState（ServiceContext→AppState） | ✅ 完成 |
+| **P2-4 / P3-4：端口双信源收敛（前端单一真相源）** | `grep -cE "port: 80[0-9]{2}" apps/web/vite.config.ts` + `grep -ncE "^[^/]*port: 30[0-9]{2}" apps/web/vite.config.ts` + `grep -c "getMfPort" apps/web/src/microfrontend/config.ts` | SERVICES 80xx 硬编码 = 0；REMOTE_MODULES 30xx 硬编码 = 0；microfrontend 用 getMfPort 查 MF_PORTS = 20 处；ports.ts BACKEND_PORTS(28)+MF_PORTS(19) 与 ports.env 对齐 | ✅ 完成 |
+| **P3-1：utoipa 版本冲突修复 + 冗余依赖清理** | `cargo check -p topems-analytics -p topems-erp -p topems-pm -p topems-rd` + `grep -rn "utoipa_swagger\|swagger_ui" svc/*/src/ 2>/dev/null \| wc -l` | utoipa 锁定 =4.2.3（crates.io 实际存在版本）；utoipa-swagger-ui 从 workspace.dependencies 移除（原 4.2.3 版本不存在 + 硬依赖 axum 0.6 与项目 axum 0.8 冲突）；erp/pm/rd 3 服务 .workspace=true 冗余依赖移除；代码中 swagger_ui import = 0 处（纯冗余） | ✅ 完成 |
+| **V66.1 全链路抽样验证（7 crate 抽样）** | `cargo check -p topems-shared-bootstrap -p topems-shared-core -p topems-shared-service-client -p topems-unified-core -p topems-analytics -p topems-erp -p topems-master-data` | 7 crate 0 error 0 warning；shared-bootstrap 中间件（auth/rls/request_context）链路贯通；unified-core 28  SERVICES 服务发现清单完整 | ✅ 完成 |
 
 ---
 

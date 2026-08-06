@@ -1,3 +1,16 @@
+//! ## V66.1 说明（向后兼容薄包装）
+//!
+//! notification 模块已于 V66 从 unified-core 外迁进入 **communication** 独立服务
+//! （端口 8084，路径前缀 `/api/communication/*`）。
+//!
+//! - **新项目 / 新调用方**：请直接使用 [`super::communication_client::CommunicationServiceClient`]，
+//!   其内置 `list_notifications / get_unread_notifications / mark_notification_read` 等 8 个
+//!   原生 notification 方法（路径：`/api/communication/notifications/*`）。
+//! - **遗留调用方**：本文件保留完整的 `NotificationSvcClient` 类型签名与方法集，
+//!   内部 `from_env()` 优先读 `COMMUNICATION_SERVICE_URL`（默认 http://localhost:8084），
+//!   路径前缀从 `/api/core/notification/*` 改为 `/api/communication/notification/*`
+//!   （保持与旧结构一致的单数形式，降低迁移成本）。
+
 use super::base_client::BaseServiceClient;
 use super::error::ServiceClientResult;
 use serde::{Deserialize, Serialize};
@@ -71,8 +84,9 @@ impl NotificationSvcClient {
     }
 
     pub fn from_env() -> ServiceClientResult<Self> {
-        let base_url = std::env::var("NOTIFICATION_SERVICE_URL")
-            .unwrap_or_else(|_| "http://localhost:8000".into());
+        let base_url = std::env::var("COMMUNICATION_SERVICE_URL")
+            .or_else(|_| std::env::var("NOTIFICATION_SERVICE_URL"))
+            .unwrap_or_else(|_| "http://localhost:8084".into());
         Self::new(base_url)
     }
 
@@ -103,7 +117,7 @@ impl NotificationSvcClient {
         notification_type: Option<&str>,
     ) -> ServiceClientResult<NotificationListResponse> {
         let mut path = format!(
-            "/api/core/notification/notifications?page={}&pagesize={}",
+            "/api/communication/notification/notifications?page={}&pagesize={}",
             page, page_size
         );
         if let Some(nt) = notification_type {
@@ -114,25 +128,34 @@ impl NotificationSvcClient {
 
     pub async fn get_unread(&self) -> ServiceClientResult<Vec<Notification>> {
         self.base_client
-            .get("/api/core/notification/notifications/unread")
+            .get("/api/communication/notification/notifications/unread")
             .await
     }
 
     pub async fn get_unread_count(&self) -> ServiceClientResult<i32> {
         self.base_client
-            .get("/api/core/notification/notifications/unread-count")
+            .get("/api/communication/notification/notifications/unread-count")
             .await
     }
 
     pub async fn mark_as_read(&self, id: &str) -> ServiceClientResult<Notification> {
         self.base_client
-            .put(&format!("/api/core/notification/notifications/{}", id), &())
+            .put(
+                &format!(
+                    "/api/communication/notification/notifications/{}",
+                    id
+                ),
+                &(),
+            )
             .await
     }
 
     pub async fn mark_all_as_read(&self) -> ServiceClientResult<i32> {
         self.base_client
-            .put("/api/core/notification/notifications/read-all", &())
+            .put(
+                "/api/communication/notification/notifications/read-all",
+                &(),
+            )
             .await
     }
 
@@ -141,19 +164,27 @@ impl NotificationSvcClient {
         req: &CreateNotificationRequest,
     ) -> ServiceClientResult<Notification> {
         self.base_client
-            .post("/api/core/notification/notifications", req)
+            .post(
+                "/api/communication/notification/notifications",
+                req,
+            )
             .await
     }
 
     pub async fn delete_notification(&self, id: &str) -> ServiceClientResult<bool> {
         self.base_client
-            .delete(&format!("/api/core/notification/notifications/{}", id))
+            .delete(&format!(
+                "/api/communication/notification/notifications/{}",
+                id
+            ))
             .await
     }
 
     pub async fn get_stats(&self) -> ServiceClientResult<NotificationStats> {
         self.base_client
-            .get("/api/core/notification/notifications/stats/me")
+            .get(
+                "/api/communication/notification/notifications/stats/me",
+            )
             .await
     }
 }

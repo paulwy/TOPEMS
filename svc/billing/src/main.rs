@@ -1,10 +1,5 @@
 use axum::{routing::get, routing::post, routing::put, Router};
-use sqlx::postgres::PgPoolOptions;
-use std::net::SocketAddr;
-use topems_shared::{
-    auth_middleware, create_cors_layer, init_telemetry, register_routes_with_legacy_alias,
-    AuthState,
-};
+use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use utoipa::OpenApi;
 
 mod handlers;
@@ -13,37 +8,41 @@ mod openapi;
 
 #[tokio::main]
 async fn main() {
-    let _telemetry_guard = init_telemetry("topems-billing");
+    let config = ServiceConfig {
+        name: "topems-billing",
+        port: 8085,
+        port_env_var: Some("BILLING_PORT"),
+        max_db_connections: 20,
+        enable_events: false,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/billing",
+        legacy_prefixes: &["/api/v1/billing"],
+    };
 
-    tracing::info!("🚀 TOPEMS Billing Service starting...");
-
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        std::process::exit(1);
-    });
-
-    let pool = match PgPoolOptions::new()
-        .max_connections(20)
-        .acquire_timeout(std::time::Duration::from_secs(30))
-        .connect(&database_url)
-        .await
-    {
-        Ok(p) => {
-            tracing::info!("Database connection successful");
-            p
-        }
+    let ctx = match bootstrap_service(&config).await {
+        Ok(c) => c,
         Err(e) => {
-            tracing::error!("Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
+            tracing::error!("❌ Failed to bootstrap billing service: {}", e);
+            std::process::exit(1);
         }
     };
 
-    handlers::init_database(&pool)
+    handlers::init_database(&ctx.db)
         .await
         .expect("Failed to init billing database");
+    tracing::info!("✅ Billing database initialized");
 
-    let auth_state = AuthState::from_env();
-    let cors = create_cors_layer();
+    let public_routes = Router::new().route(
+        "/health",
+        get(|| async {
+            axum::Json(serde_json::json!({
+                "status": "healthy",
+                "service": "topems-billing",
+                "timestamp": chrono::Utc::now().to_rfc3339(),
+            }))
+        }),
+    );
 
     let protected_routes = Router::new()
         .route("/plans", get(handlers::list_plans))
@@ -63,45 +62,22 @@ async fn main() {
             "/usage/{tenant_id}/{metric_type}",
             post(handlers::record_usage),
         )
-        .layer(axum::middleware::from_fn_with_state(
-            auth_state.clone(),
-            auth_middleware,
-        ));
+        .with_state(ctx.db.clone());
 
-    let core_routes = register_routes_with_legacy_alias(
-        Router::new(),
-        "/api/billing",
-        &["/api/v1/billing"],
-        protected_routes,
+    let openapi_json = Some(
+        serde_json::to_string(&openapi::BillingApiDoc::openapi())
+            .unwrap_or_else(|_| "{}".to_string()),
     );
 
-    let app = Router::new()
-        .merge(core_routes)
-        .route("/health", get(|| async { "OK" }))
-        .route(
-            "/api-docs/openapi.json",
-            get(|| async move { axum::Json(openapi::BillingApiDoc::openapi()) }),
-        )
-        .layer(cors)
-        .with_state(pool);
+    let app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
 
-    let port = std::env::var("BILLING_PORT")
-        .unwrap_or_else(|_| "8085".to_string())
-        .parse()
-        .unwrap_or(8085);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ Billing Service is running at http://{}", addr);
-    tracing::info!("📋 API prefix: /api/billing/*");
+    tracing::info!(
+        "📋 Billing API prefix: {} (legacy: {:?})",
+        config.api_prefix,
+        config.legacy_prefixes
+    );
 
-    let listener = match tokio::net::TcpListener::bind(&addr).await {
-        Ok(l) => l,
-        Err(e) => {
-            tracing::error!("Failed to bind to {}: {}", addr, e);
-            return;
-        }
-    };
-
-    if let Err(e) = axum::serve(listener, app.into_make_service()).await {
+    if let Err(e) = run(app).await {
         tracing::error!("Server error: {}", e);
     }
 }

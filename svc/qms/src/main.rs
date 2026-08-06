@@ -166,6 +166,8 @@ async fn main() -> anyhow::Result<()> {
     let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("QMS_PORT")
+        .or_else(|_| std::env::var("SERVER_PORT"))
+        .or_else(|_| std::env::var("PORT"))
         .unwrap_or_else(|_| "8050".to_string())
         .parse()
         .unwrap_or(8050);

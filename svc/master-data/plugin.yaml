@@ -1,46 +1,47 @@
-code: mdm
+code: master-data
 name: 主数据管理
 version: 1.0.0
-description: MDM 主数据管理服务，包含质量闭环、自动修复、数据治理 AI
+description: Master Data 主数据管理服务，包含数据质量闭环、自动修复、数据治理 AI
 plugin_type: business
 
 deployment:
   type: standalone
   port: 8090
-  base_path: /api/master
+  base_path: /api/master-data
 
 permissions:
-  - code: mdm:quality:read
+  - code: master-data:quality:read
     name: 查看质量检查
     resource_type: quality_check
     action: read
-  - code: mdm:quality:write
+  - code: master-data:quality:write
     name: 管理质量规则
     resource_type: quality_rule
     action: write
-  - code: mdm:quality:execute
+  - code: master-data:quality:execute
     name: 执行质量检查
     resource_type: quality_check
     action: execute
-  - code: mdm:autofix:execute
+  - code: master-data:autofix:execute
     name: 执行自动修复
     resource_type: auto_fix
     action: execute
-  - code: mdm:autofix:read
+  - code: master-data:autofix:read
     name: 查看修复历史
     resource_type: fix_history
     action: read
-  - code: mdm:governance:read
+  - code: master-data:governance:read
     name: 查看治理建议
     resource_type: governance_suggestion
     action: read
-  - code: mdm:governance:approve
+  - code: master-data:governance:approve
     name: 批准治理建议
     resource_type: governance_suggestion
     action: approve
-  - code: mdm:dashboard:read
+  - code: master-data:dashboard:read
     name: 查看质量仪表盘
     resource_type: dashboard
     action: read
 
-dependencies: []
+dependencies:
+  - unified-core

@@ -7,9 +7,14 @@ pub mod trait_api;
 pub mod ai_client;
 pub mod base_client;
 pub mod bi_client;
+pub mod billing_client;
+pub mod communication_client;
 pub mod crm_client;
 pub mod doc_client;
 pub mod ehs_client;
+pub mod feedback_client;
+pub mod lowcode_client;
+pub mod master_data_client;
 pub mod erp_client;
 pub mod error;
 pub mod finance_client;
@@ -29,18 +34,23 @@ pub mod portal_client;
 pub mod qms_client;
 pub mod rd_client;
 pub mod scm_client;
+pub mod search_client;
 pub mod srm_client;
+pub mod ticket_client;
 pub mod wms_client;
 pub mod workflow_client;
 
 pub use ai_client::AiServiceClient;
 pub use base_client::BaseServiceClient;
 pub use bi_client::BiServiceClient;
+pub use billing_client::BillingServiceClient;
+pub use communication_client::CommunicationServiceClient;
 pub use crm_client::CrmServiceClient;
 pub use doc_client::DocServiceClient;
 pub use ehs_client::EhsServiceClient;
 pub use erp_client::ErpServiceClient;
 pub use error::{ServiceClientError, ServiceClientResult};
+pub use feedback_client::FeedbackServiceClient;
 pub use finance_client::FinanceServiceClient;
 pub use generic::GenericServiceClient;
 pub use gis_client::GisServiceClient;
@@ -51,6 +61,8 @@ pub use hrm_client::{
 pub use iam_client::{IamServiceClient, Role, User};
 pub use integration_client::IntegrationServiceClient;
 pub use lims_client::LimsServiceClient;
+pub use lowcode_client::LowcodeServiceClient;
+pub use master_data_client::MasterDataServiceClient;
 pub use mes_client::MesServiceClient;
 pub use mobile_client::MobileServiceClient;
 pub use monitor_client::MonitorServiceClient;
@@ -61,7 +73,9 @@ pub use portal_client::PortalServiceClient;
 pub use qms_client::QmsServiceClient;
 pub use rd_client::RdServiceClient;
 pub use scm_client::ScmServiceClient;
+pub use search_client::SearchServiceClient;
 pub use srm_client::SrmServiceClient;
+pub use ticket_client::TicketServiceClient;
 pub use trait_api::{ServiceApi, TypedServiceClient};
 pub use wms_client::WmsServiceClient;
 pub use workflow_client::{
@@ -167,6 +181,34 @@ pub fn create_gis_client() -> ServiceClientResult<GisServiceClient> {
 
 pub fn create_integration_client() -> ServiceClientResult<IntegrationServiceClient> {
     IntegrationServiceClient::from_env()
+}
+
+pub fn create_billing_client() -> ServiceClientResult<BillingServiceClient> {
+    BillingServiceClient::from_env()
+}
+
+pub fn create_communication_client() -> ServiceClientResult<CommunicationServiceClient> {
+    CommunicationServiceClient::from_env()
+}
+
+pub fn create_feedback_client() -> ServiceClientResult<FeedbackServiceClient> {
+    FeedbackServiceClient::from_env()
+}
+
+pub fn create_lowcode_client() -> ServiceClientResult<LowcodeServiceClient> {
+    LowcodeServiceClient::from_env()
+}
+
+pub fn create_master_data_client() -> ServiceClientResult<MasterDataServiceClient> {
+    MasterDataServiceClient::from_env()
+}
+
+pub fn create_search_client() -> ServiceClientResult<SearchServiceClient> {
+    SearchServiceClient::from_env()
+}
+
+pub fn create_ticket_client() -> ServiceClientResult<TicketServiceClient> {
+    TicketServiceClient::from_env()
 }
 
 pub fn create_generic_client(

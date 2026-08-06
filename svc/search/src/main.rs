@@ -62,9 +62,9 @@ async fn main() {
     let port = std::env::var("SEARCH_PORT")
         .or_else(|_| std::env::var("SERVER_PORT"))
         .or_else(|_| std::env::var("PORT"))
-        .unwrap_or_else(|_| "8083".to_string())
+        .unwrap_or_else(|_| "8082".to_string())
         .parse()
-        .unwrap_or(8083);
+        .unwrap_or(8082);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ Search Service is running at http://{}", addr);
     tracing::info!("📋 API prefix: /api/search/*");
