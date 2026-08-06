@@ -137,6 +137,7 @@ tokio-util = { version = "0.7", features = ["io"] }
 tower-cookies = "0.11"
 tower-util = "0.1"
 walkdir = "2"
+moka = { version = "0.12", features = ["future", "sync"] }
 
 # GraphQL BFF 聚合层（V33.0 Portal BFF Phase 3）
 async-graphql = { version = "7", features = ["tokio", "chrono", "uuid", "dataloader", "apollo_persisted_queries"] }

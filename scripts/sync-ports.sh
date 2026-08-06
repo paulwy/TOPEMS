@@ -56,16 +56,10 @@ generate_services_conf() {
 # TOPEMS 统一服务配置文件 (由 scripts/sync-ports.sh 从 config/ports.env 生成)
 # 格式: 服务名 服务路径 二进制名 端口
 #
-# 服务拆分说明 (Phase 8):
-# - unified-core → doc, ai (独立服务)
-# - manufacturing → mes, pdm (独立服务)
-# - quality-assurance → qms, lims, ehs (独立服务)
-# - analytics → bi, report (独立服务)
-#
-# 服务整合说明 (2026-07):
-# - doc → 整合到 unified-core/modules/doc (路由: /api/core/doc/*)
-# - monitor → 整合到 unified-core/modules/monitor (路由: /api/core/monitor/*)
-# - user-service → 整合到 unified-core/iam/user (路由: /api/core/iam/users/*)
+# 架构说明:
+# - unified-core (端口 8000): 平台核心，内含 iam/doc/flow/file/monitor 等模块
+# - communication/billing/ticket/feedback/search: 从 unified-core 外迁的独立进程 (8082-8090)
+# - bi (analytics): 含原 report 报表功能
 #
 # 核心服务 (必须先启动): iam (unified-core)
 #
@@ -82,8 +76,8 @@ generate_services_conf() {
 #   8070-8079 基础设施 (Infra)
 # 最后更新: $(date +%Y-%m-%d)
 
-# 平台核心服务 (unified-core 包含 iam, doc, flow, file, communication, monitor)
-iam         svc/unified-core       unified-core-service        $(get_port IAM_PORT 8000)
+# 平台核心服务 (unified-core 包含 iam, doc, flow, file, monitor; communication 模块保留兼容)
+iam         svc/unified-core       topems-unified-core        $(get_port IAM_PORT 8000)
 pm          svc/pm                 topems-pm                   $(get_port PM_PORT 8023)
 erp         svc/erp                topems-erp                  $(get_port ERP_PORT 8010)
 finance     svc/finance            topems-finance              $(get_port FINANCE_PORT 8011)
@@ -107,15 +101,23 @@ ehs         svc/ehs                topems-ehs                  $(get_port EHS_PO
 rd          svc/rd                 topems-rd                   $(get_port RD_PORT 8053)
 
 # 数据分析/门户服务
-# NOTE: report 功能已整合到 bi 服务(analytics-service)中，不再需要单独端口
+# NOTE: report 功能已整合到 bi 服务(topems-analytics)中，不再需要单独端口
 # NOTE: monitor 功能已整合到 unified-core/modules/monitor 中，不再需要单独端口
-bi          svc/analytics          analytics-service           $(get_port BI_PORT 8060)
+bi          svc/analytics          topems-analytics           $(get_port BI_PORT 8060)
 portal      svc/portal             topems-portal               $(get_port PORTAL_PORT 8063)
 
 # 基础设施服务
 mobile      svc/mobile             topems-mobile               $(get_port MOBILE_PORT 8070)
 gis         svc/gis                topems-gis                  $(get_port GIS_PORT 8071)
 integration svc/integration        topems-integration           $(get_port INTEGRATION_PORT 8072)
+
+# 扩展服务 (8082-8090，从 unified-core 外迁为独立进程)
+search      svc/search             topems-search               $(get_port SEARCH_PORT 8082)
+communication svc/communication    topems-communication         $(get_port COMMUNICATION_PORT 8084)
+billing     svc/billing            topems-billing              $(get_port BILLING_PORT 8085)
+ticket      svc/ticket             topems-ticket               $(get_port TICKET_PORT 8086)
+feedback    svc/feedback           topems-feedback             $(get_port FEEDBACK_PORT 8087)
+master-data svc/master-data        topems-master-data          $(get_port MASTER_DATA_PORT 8090)
 
 # 核心服务列表 (必须先启动)
 CORE_SERVICES=iam

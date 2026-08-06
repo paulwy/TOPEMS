@@ -511,6 +511,9 @@ TOPEMS 使用基于角色的访问控制（RBAC）系统来管理用户权限。
 数据库初始化脚本会自动创建权限表结构和默认数据：
 
 ```bash
+# 首次使用需安装 CLI 工具（项目根目录执行）
+cd cli && pip3 install -e . && cd ..
+
 # 运行数据库初始化脚本
 python3 -m topems_cli db init
 python3 -m topems_cli db migrate
@@ -604,6 +607,7 @@ python3 -m topems_cli db migrate
 | 脚本 | 说明 | 使用方法 |
 |------|------|---------|
 | `scripts/topems.sh` | **统一服务管理脚本**（推荐） | `./scripts/topems.sh help` |
+| `cli/` (Python CLI) | Python CLI 工具（功能同 topems.sh） | `cd cli && pip install -e . && topems --help` |
 | `scripts/dev/install-deps.sh` | 安装依赖 | `./scripts/dev/install-deps.sh` |
 | `scripts/dev/start-local.sh` | 一键本地启动 | `./scripts/dev/start-local.sh` |
 | `scripts/dev/ai-models.sh` | AI 模型管理 | `./scripts/dev/ai-models.sh --help` |

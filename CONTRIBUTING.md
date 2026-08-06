@@ -21,8 +21,8 @@ cd TOPEMS
 # 安装前端依赖
 pnpm install
 
-# 安装 Python CLI 依赖
-cd cli && pip3 install pyyaml click rich httpx && cd ..
+# 安装 Python CLI 工具（editable 模式，自动安装依赖）
+cd cli && pip3 install -e . && cd ..
 
 # 配置环境变量
 cp .env.example .env
@@ -157,6 +157,18 @@ GitHub Actions 配置在 `.github/workflows/` 目录：
 | E2E | `e2e.yml` | 每日 03:00 UTC、手动 | Playwright 端到端测试 |
 
 **CI 分片策略**：`unit`（1 job）+ `shard-1` ~ `shard-8`（8 个并行 matrix job），共 9 路并行，总 ~2936 用例。
+
+### CLI 工具测试
+
+```bash
+# Python CLI 单元测试
+cd cli && pytest
+
+# Shell 脚本测试（topems.sh 核心命令流程）
+bash scripts/test/test-topems-sh.sh
+bash scripts/test/test-commands-flow.sh
+bash scripts/test/test-frontend-lifecycle.sh
+```
 
 **本地模拟 CI**：
 

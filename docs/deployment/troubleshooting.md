@@ -176,7 +176,7 @@ psql -U topems -d topems -f migrations/001_init.sql
 # 3. 重置数据库（慎用！）
 dropdb topems
 createdb topems -O topems
-cargo run --bin unified-core-service -- --migrate
+cargo run --bin topems-unified-core -- --migrate
 ```
 
 ---
