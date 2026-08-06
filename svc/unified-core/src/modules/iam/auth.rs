@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use axum::http::HeaderMap;
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
@@ -8,10 +6,50 @@ use sqlx::Row;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::modules::communication::mail::send_email_async;
 use crate::modules::login_log::handlers::record_login_event;
 use topems_shared::auth::Claims;
 use topems_shared::generate_refresh_token;
+
+fn send_email_async(
+    from: String,
+    to: String,
+    subject: String,
+    body: String,
+    html_body: Option<String>,
+    cc: Option<Vec<String>>,
+    bcc: Option<Vec<String>>,
+) {
+    tokio::spawn(async move {
+        let client = reqwest::Client::new();
+        let endpoint = std::env::var("COMMUNICATION_SERVICE_URL")
+            .unwrap_or_else(|_| "http://localhost:8084".to_string());
+        let params = serde_json::json!({
+            "from": from,
+            "to": to,
+            "subject": subject,
+            "body": body,
+            "html_body": html_body,
+            "cc": cc,
+            "bcc": bcc,
+        });
+        match client
+            .post(format!("{}/api/communication/mail/send", endpoint))
+            .json(&params)
+            .send()
+            .await
+        {
+            Ok(res) if res.status().is_success() => {
+                tracing::info!("Async email sent successfully to: {}", to)
+            }
+            Ok(res) => tracing::error!(
+                "Async email sending failed with status {}: {}",
+                res.status(),
+                to
+            ),
+            Err(e) => tracing::error!("Async email sending failed: {}", e),
+        }
+    });
+}
 
 fn hash_token(token: &str) -> String {
     let mut hasher = Sha256::new();
@@ -20,6 +58,7 @@ fn hash_token(token: &str) -> String {
     format!("{:x}", result)
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 #[schema(as = LoginRequest)]
 struct LoginRequest {
@@ -370,6 +409,7 @@ pub async fn login(
     }))
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 #[schema(as = RegisterRequest)]
 struct RegisterRequest {
@@ -1251,68 +1291,6 @@ pub async fn reset_password(
         "data": null,
         "code": 0
     }))
-}
-
-/// 获取用户角色和权限的辅助函数
-async fn get_user_roles_and_permissions(
-    state: &crate::AppState,
-    user_id: Uuid,
-    is_superuser: bool,
-) -> (Vec<String>, Vec<String>) {
-    if is_superuser {
-        // 超级管理员：获取所有权限
-        let all_permissions =
-            sqlx::query_scalar::<_, String>("SELECT code FROM core_permissions ORDER BY code")
-                .fetch_all(&state.pool)
-                .await
-                .unwrap_or_default();
-
-        (
-            vec![
-                "superadmin".to_string(),
-                "admin".to_string(),
-                "user".to_string(),
-            ],
-            all_permissions,
-        )
-    } else {
-        // 普通用户：从数据库获取角色和权限
-        let roles: Vec<String> = sqlx::query_scalar::<_, String>(
-            r#"
-            SELECT r.name FROM core_roles r
-            INNER JOIN core_user_roles ur ON r.id = ur.role_id
-            WHERE ur.user_id = $1
-            ORDER BY r.name
-            "#,
-        )
-        .bind(user_id)
-        .fetch_all(&state.pool)
-        .await
-        .unwrap_or_default();
-
-        let permissions: Vec<String> = sqlx::query_scalar::<_, String>(
-            r#"
-            SELECT DISTINCT p.code FROM core_permissions p
-            INNER JOIN core_role_permissions rp ON p.id = rp.permission_id
-            INNER JOIN core_user_roles ur ON rp.role_id = ur.role_id
-            WHERE ur.user_id = $1
-            ORDER BY p.code
-            "#,
-        )
-        .bind(user_id)
-        .fetch_all(&state.pool)
-        .await
-        .unwrap_or_default();
-
-        (
-            if roles.is_empty() {
-                vec!["user".to_string()]
-            } else {
-                roles
-            },
-            permissions,
-        )
-    }
 }
 
 fn verify_password(password: &str, password_hash: &str) -> bool {

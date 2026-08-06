@@ -1,10 +1,11 @@
+# syntax=docker/dockerfile:1
 # TOPEMS Unified Core Service Dockerfile
 # Multi-stage build for unified-core (IAM + Doc + Flow + File + Communication + Tenant + Billing + AI + Monitor)
 
 # ============================================
 # Stage 1: Build
 # ============================================
-FROM rust:1.78-alpine AS builder
+FROM rust:nightly-2026-07-01-alpine AS builder
 
 WORKDIR /app
 
@@ -17,7 +18,9 @@ COPY lib ./lib
 COPY svc/unified-core ./svc/unified-core
 
 # Build only unified-core to save time
-RUN cargo build --release -p unified-core-service
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/app/target \
+    cargo build --release -p topems-unified-core
 
 # ============================================
 # Stage 2: Runtime
@@ -33,7 +36,7 @@ RUN addgroup -S topems && adduser -S topems -G topems
 WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /app/target/release/unified-core-service /usr/local/bin/topems-unified-core
+COPY --from=builder /app/target/release/topems-unified-core /usr/local/bin/topems-unified-core
 
 # Set ownership
 RUN chown -R topems:topems /app

@@ -1,7 +1,6 @@
 //! File module - File Storage and Management
 
 pub mod download;
-pub mod folder;
 pub mod manage;
 pub mod upload;
 
@@ -22,6 +21,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             folder_id UUID,
             uploader_id UUID NOT NULL,
             status VARCHAR(32) DEFAULT 'active',
+            is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+            deleted_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
@@ -45,12 +46,40 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_file_permissions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            file_id UUID NOT NULL,
+            user_id UUID NOT NULL,
+            permission VARCHAR(16) NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (file_id, user_id)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_files_folder ON core_files(folder_id)")
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_files_uploader ON core_files(uploader_id)")
         .execute(pool)
         .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_files_is_deleted ON core_files(is_deleted)")
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_file_permissions_file ON core_file_permissions(file_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_file_permissions_user ON core_file_permissions(user_id)",
+    )
+    .execute(pool)
+    .await?;
 
     Ok(())
 }

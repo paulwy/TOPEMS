@@ -15,7 +15,6 @@ use crate::middleware::input_validation::InputValidationConfig;
 use crate::middleware::rate_limit::RateLimitMiddleware;
 use crate::middleware::versioning::VersionMiddleware;
 use crate::modules::communication::ws::WsState;
-use crate::modules::isolation::ModuleIsolationState;
 
 /// Application state shared across all unified-core handlers.
 ///
@@ -36,7 +35,6 @@ pub struct AppState {
     pub audit_logger_middleware: Arc<AuditLoggerMiddleware>,
     pub input_validation_config: InputValidationConfig,
     pub metrics: Arc<SystemMetrics>,
-    pub module_isolation: Option<Arc<ModuleIsolationState>>,
     /// Optional field-encryption service used to encrypt sensitive settings
     /// (SMTP password, API key secrets) at rest. `None` when no encryption key
     /// is provisioned, in which case secrets are stored as plain text for

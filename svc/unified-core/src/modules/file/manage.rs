@@ -1,12 +1,10 @@
-#![allow(dead_code)] // Reserved: 文件管理模块预留扩展，待文件服务接入后启用
-
 //! Manage submodule - File management handlers
 
 use axum::{
     extract::{Path, Query, State},
     Json,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::fs;
 use uuid::Uuid;
@@ -33,7 +31,9 @@ struct FileInfo {
 pub struct FileQuery {
     page: Option<i64>,
     page_size: Option<i64>,
+    #[allow(dead_code)]
     folder_id: Option<String>,
+    #[allow(dead_code)]
     search: Option<String>,
 }
 
@@ -966,8 +966,6 @@ pub async fn set_file_permission(
     }
 }
 
-use serde::Deserialize;
-
 /// 分享文件
 pub async fn share_file(
     State(_state): State<AppState>,
@@ -981,10 +979,10 @@ pub async fn share_file(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "分享文件成功",
+        "success": false,
+        "message": "分享文件功能尚未实现 (Not Implemented)",
         "data": null,
-        "code": 0
+        "code": 501
     }))
 }
 
@@ -1000,10 +998,10 @@ pub async fn get_file_shares(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "获取文件分享列表成功",
-        "data": [],
-        "code": 0
+        "success": false,
+        "message": "获取文件分享列表功能尚未实现 (Not Implemented)",
+        "data": null,
+        "code": 501
     }))
 }
 
@@ -1019,10 +1017,10 @@ pub async fn delete_share(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "删除分享成功",
+        "success": false,
+        "message": "删除分享功能尚未实现 (Not Implemented)",
         "data": null,
-        "code": 0
+        "code": 501
     }))
 }
 
@@ -1039,10 +1037,10 @@ pub async fn set_file_permissions(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "设置文件权限成功",
+        "success": false,
+        "message": "批量设置文件权限功能尚未实现 (Not Implemented)",
         "data": null,
-        "code": 0
+        "code": 501
     }))
 }
 
@@ -1058,10 +1056,10 @@ pub async fn get_file_permissions(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "获取文件权限成功",
-        "data": [],
-        "code": 0
+        "success": false,
+        "message": "获取文件权限功能尚未实现 (Not Implemented)",
+        "data": null,
+        "code": 501
     }))
 }
 
@@ -1075,13 +1073,10 @@ pub async fn get_shared_files(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "获取我分享的文件列表成功",
-        "data": {
-            "files": [],
-            "total": 0
-        },
-        "code": 0
+        "success": false,
+        "message": "获取我分享的文件列表功能尚未实现 (Not Implemented)",
+        "data": null,
+        "code": 501
     }))
 }
 
@@ -1095,13 +1090,10 @@ pub async fn get_received_files(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "获取分享给我的文件列表成功",
-        "data": {
-            "files": [],
-            "total": 0
-        },
-        "code": 0
+        "success": false,
+        "message": "获取分享给我的文件列表功能尚未实现 (Not Implemented)",
+        "data": null,
+        "code": 501
     }))
 }
 
@@ -1115,14 +1107,10 @@ pub async fn get_file_stats(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "获取文件统计信息成功",
-        "data": {
-            "total_size": 0,
-            "total_files": 0,
-            "total_folders": 0
-        },
-        "code": 0
+        "success": false,
+        "message": "获取文件统计信息功能尚未实现 (Not Implemented)",
+        "data": null,
+        "code": 501
     }))
 }
 
@@ -1138,10 +1126,10 @@ pub async fn star_file(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "收藏文件成功",
+        "success": false,
+        "message": "收藏文件功能尚未实现 (Not Implemented)",
         "data": null,
-        "code": 0
+        "code": 501
     }))
 }
 
@@ -1157,10 +1145,10 @@ pub async fn unstar_file(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "取消收藏成功",
+        "success": false,
+        "message": "取消收藏功能尚未实现 (Not Implemented)",
         "data": null,
-        "code": 0
+        "code": 501
     }))
 }
 
@@ -1174,13 +1162,10 @@ pub async fn list_starred_files(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "获取收藏文件列表成功",
-        "data": {
-            "files": [],
-            "total": 0
-        },
-        "code": 0
+        "success": false,
+        "message": "列出收藏文件功能尚未实现 (Not Implemented)",
+        "data": null,
+        "code": 501
     }))
 }
 
@@ -1195,10 +1180,10 @@ pub async fn export_files(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "导出文件成功",
+        "success": false,
+        "message": "导出文件功能尚未实现 (Not Implemented)",
         "data": null,
-        "code": 0
+        "code": 501
     }))
 }
 
@@ -1213,12 +1198,9 @@ pub async fn search_files(
         claims.username
     );
     Json(serde_json::json!({
-        "success": true,
-        "message": "搜索文件成功",
-        "data": {
-            "files": [],
-            "total": 0
-        },
-        "code": 0
+        "success": false,
+        "message": "搜索文件功能尚未实现 (Not Implemented)",
+        "data": null,
+        "code": 501
     }))
 }

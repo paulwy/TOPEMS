@@ -1,5 +1,3 @@
-#![allow(dead_code)] // Reserved: IAM 角色模块预留扩展，待 RBAC 接入后启用
-
 //! Role submodule - Role management handlers
 
 use crate::AppState;
@@ -29,6 +27,7 @@ struct RoleResponse {
     permission_count: i64,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 struct CreateRoleRequest {
     name: String,
@@ -36,6 +35,7 @@ struct CreateRoleRequest {
     permission_ids: Option<Vec<String>>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 struct UpdateRoleRequest {
     name: Option<String>,

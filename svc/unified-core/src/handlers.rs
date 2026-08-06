@@ -144,7 +144,7 @@ pub(crate) async fn detailed_health(
     };
 
     let response = serde_json::json!({
-        "service": "unified-core-service",
+        "service": "topems-unified-core",
         "version": "1.0.0",
         "description": "TOPEMS Unified Core Platform",
         "modules": {
