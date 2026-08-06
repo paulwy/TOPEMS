@@ -2869,8 +2869,10 @@ pub fn create_routes() -> Router<AppState> {
         .nest("/cqrs", cqrs_routes::cqrs_routes())
         .merge(event_routes::event_routes())
         .route("/dashboard", axum::routing::get(get_dashboard_handler))
-        .route("/accounts", axum::routing::post(create_account))
-        .route("/accounts", axum::routing::get(list_accounts))
+        .route(
+            "/accounts",
+            axum::routing::post(create_account).get(list_accounts),
+        )
         .route(
             "/accounts/balances",
             axum::routing::get(get_account_balances),
@@ -2880,13 +2882,15 @@ pub fn create_routes() -> Router<AppState> {
             "/accounts/code/{code}",
             axum::routing::get(get_account_by_code),
         )
-        .route("/vouchers", axum::routing::post(create_voucher))
-        .route("/vouchers", axum::routing::get(list_vouchers))
-        .route("/vouchers/{voucher_id}", axum::routing::get(get_voucher))
-        .route("/vouchers/{voucher_id}", axum::routing::put(update_voucher))
+        .route(
+            "/vouchers",
+            axum::routing::post(create_voucher).get(list_vouchers),
+        )
         .route(
             "/vouchers/{voucher_id}",
-            axum::routing::delete(delete_voucher),
+            axum::routing::get(get_voucher)
+                .put(update_voucher)
+                .delete(delete_voucher),
         )
         .route(
             "/vouchers/{voucher_id}/submit",
@@ -2925,8 +2929,10 @@ pub fn create_routes() -> Router<AppState> {
             "/periods/{year}/{month}/close",
             axum::routing::post(close_period),
         )
-        .route("/aux-accounts", axum::routing::post(create_aux_account))
-        .route("/aux-accounts", axum::routing::get(list_aux_accounts))
+        .route(
+            "/aux-accounts",
+            axum::routing::post(create_aux_account).get(list_aux_accounts),
+        )
         .route("/aux-ledger", axum::routing::get(get_aux_ledger))
         .route("/aux-balance", axum::routing::get(get_aux_balance))
         .route("/cash-flow/{period}", axum::routing::get(get_cash_flow))
@@ -2944,19 +2950,15 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/vouchers/export", axum::routing::post(export_vouchers))
         .route("/year-end-close", axum::routing::post(year_end_close))
-        .route("/payments", axum::routing::post(create_payment_handler))
-        .route("/payments", axum::routing::get(list_payments_handler))
         .route(
-            "/payments/{payment_id}",
-            axum::routing::get(get_payment_handler),
+            "/payments",
+            axum::routing::post(create_payment_handler).get(list_payments_handler),
         )
         .route(
             "/payments/{payment_id}",
-            axum::routing::put(update_payment_handler),
-        )
-        .route(
-            "/payments/{payment_id}",
-            axum::routing::delete(delete_payment_handler),
+            axum::routing::get(get_payment_handler)
+                .put(update_payment_handler)
+                .delete(delete_payment_handler),
         )
         .route(
             "/payments/{payment_id}/submit",
@@ -2984,23 +2986,13 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/approval-configs",
-            axum::routing::get(list_approval_configs_handler),
-        )
-        .route(
-            "/approval-configs",
-            axum::routing::post(create_approval_config_handler),
+            axum::routing::get(list_approval_configs_handler).post(create_approval_config_handler),
         )
         .route(
             "/approval-configs/{config_id}",
-            axum::routing::get(get_approval_config_handler),
-        )
-        .route(
-            "/approval-configs/{config_id}",
-            axum::routing::put(update_approval_config_handler),
-        )
-        .route(
-            "/approval-configs/{config_id}",
-            axum::routing::delete(delete_approval_config_handler),
+            axum::routing::get(get_approval_config_handler)
+                .put(update_approval_config_handler)
+                .delete(delete_approval_config_handler),
         )
         // 审批操作（供 ERP 合并报表审批流程调用）
         .route("/approvals/submit", axum::routing::post(submit_approval))
@@ -3010,23 +3002,14 @@ pub fn create_routes() -> Router<AppState> {
         // V40.0 Phase 8: 凭证模板
         .route(
             "/voucher-templates",
-            axum::routing::get(list_voucher_templates_handler),
-        )
-        .route(
-            "/voucher-templates",
-            axum::routing::post(create_voucher_template_handler),
+            axum::routing::get(list_voucher_templates_handler)
+                .post(create_voucher_template_handler),
         )
         .route(
             "/voucher-templates/{template_id}",
-            axum::routing::get(get_voucher_template_handler),
-        )
-        .route(
-            "/voucher-templates/{template_id}",
-            axum::routing::put(update_voucher_template_handler),
-        )
-        .route(
-            "/voucher-templates/{template_id}",
-            axum::routing::delete(delete_voucher_template_handler),
+            axum::routing::get(get_voucher_template_handler)
+                .put(update_voucher_template_handler)
+                .delete(delete_voucher_template_handler),
         )
         .route(
             "/voucher-templates/{template_id}/set-default",
@@ -3039,23 +3022,13 @@ pub fn create_routes() -> Router<AppState> {
         // V40.0 Phase 8: 凭证生成规则
         .route(
             "/voucher-generation-rules",
-            axum::routing::get(list_generation_rules_handler),
-        )
-        .route(
-            "/voucher-generation-rules",
-            axum::routing::post(create_generation_rule_handler),
+            axum::routing::get(list_generation_rules_handler).post(create_generation_rule_handler),
         )
         .route(
             "/voucher-generation-rules/{rule_id}",
-            axum::routing::get(get_generation_rule_handler),
-        )
-        .route(
-            "/voucher-generation-rules/{rule_id}",
-            axum::routing::put(update_generation_rule_handler),
-        )
-        .route(
-            "/voucher-generation-rules/{rule_id}",
-            axum::routing::delete(delete_generation_rule_handler),
+            axum::routing::get(get_generation_rule_handler)
+                .put(update_generation_rule_handler)
+                .delete(delete_generation_rule_handler),
         )
         .route(
             "/voucher-generation-rules/test",
@@ -3092,11 +3065,8 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/voucher-templates/{template_id}/entries",
-            axum::routing::get(voucher_template_entries::list_entries),
-        )
-        .route(
-            "/voucher-templates/{template_id}/entries",
-            axum::routing::post(add_template_entry_handler),
+            axum::routing::get(voucher_template_entries::list_entries)
+                .post(add_template_entry_handler),
         )
         // 注意: reorder 必须在 entries/{entry_id} 之前注册以避免路径匹配冲突
         .route(
@@ -3105,15 +3075,9 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/voucher-templates/{template_id}/entries/{entry_id}",
-            axum::routing::get(voucher_template_entries::get_entry),
-        )
-        .route(
-            "/voucher-templates/{template_id}/entries/{entry_id}",
-            axum::routing::put(update_template_entry_handler),
-        )
-        .route(
-            "/voucher-templates/{template_id}/entries/{entry_id}",
-            axum::routing::delete(delete_template_entry_handler),
+            axum::routing::get(voucher_template_entries::get_entry)
+                .put(update_template_entry_handler)
+                .delete(delete_template_entry_handler),
         )
         // 凭证生成规则切换
         .route(
@@ -3181,22 +3145,15 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(batch_create_payables_handler),
         )
         // V41.0 Phase 9: 收款管理
-        .route("/collections", axum::routing::get(list_collections_handler))
         .route(
             "/collections",
-            axum::routing::post(create_collection_handler),
+            axum::routing::get(list_collections_handler).post(create_collection_handler),
         )
         .route(
             "/collections/{collection_id}",
-            axum::routing::get(get_collection_handler),
-        )
-        .route(
-            "/collections/{collection_id}",
-            axum::routing::put(update_collection_handler),
-        )
-        .route(
-            "/collections/{collection_id}",
-            axum::routing::delete(delete_collection_handler),
+            axum::routing::get(get_collection_handler)
+                .put(update_collection_handler)
+                .delete(delete_collection_handler),
         )
         .route(
             "/collections/write-off",
@@ -3209,23 +3166,13 @@ pub fn create_routes() -> Router<AppState> {
         // V41.0 Phase 9: 付款管理
         .route(
             "/payment-records",
-            axum::routing::get(list_payment_records_handler),
-        )
-        .route(
-            "/payment-records",
-            axum::routing::post(create_payment_record_handler),
+            axum::routing::get(list_payment_records_handler).post(create_payment_record_handler),
         )
         .route(
             "/payment-records/{payment_id}",
-            axum::routing::get(get_payment_record_handler),
-        )
-        .route(
-            "/payment-records/{payment_id}",
-            axum::routing::put(update_payment_record_handler),
-        )
-        .route(
-            "/payment-records/{payment_id}",
-            axum::routing::delete(delete_payment_record_handler),
+            axum::routing::get(get_payment_record_handler)
+                .put(update_payment_record_handler)
+                .delete(delete_payment_record_handler),
         )
         .route(
             "/payment-records/write-off",
@@ -3253,41 +3200,5 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_aging_detail_handler),
         )
         .route("/aging/trend", axum::routing::get(get_aging_trend_handler))
-        // V41.0 Phase 9: 应收账款管理
-        .route("/receivables", axum::routing::get(list_receivables_handler))
-        .route(
-            "/receivables",
-            axum::routing::post(create_receivable_handler),
-        )
-        .route(
-            "/receivables/{receivable_id}",
-            axum::routing::get(get_receivable_handler),
-        )
-        .route(
-            "/receivables/{receivable_id}",
-            axum::routing::put(update_receivable_handler),
-        )
-        .route(
-            "/receivables/{receivable_id}",
-            axum::routing::delete(delete_receivable_handler),
-        )
-        .route(
-            "/receivables/batch",
-            axum::routing::post(batch_create_receivables_handler),
-        )
-        // V41.0 Phase 9: 应付账款管理
-        .route("/payables", axum::routing::get(list_payables_handler))
-        .route("/payables", axum::routing::post(create_payable_handler))
-        .route(
-            "/payables/{payable_id}",
-            axum::routing::get(get_payable_handler),
-        )
-        .route(
-            "/payables/{payable_id}",
-            axum::routing::put(update_payable_handler),
-        )
-        .route(
-            "/payables/{payable_id}",
-            axum::routing::delete(delete_payable_handler),
-        )
+    // V41.0 Phase 9: 应收/应付账款 CRUD 已由 operational 模块提供，此处仅保留额外接口
 }
