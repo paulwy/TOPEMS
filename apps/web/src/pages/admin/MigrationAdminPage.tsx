@@ -104,7 +104,10 @@ const MigrationAdminPage: React.FC = () => {
     onSuccess: (result, serviceName) => {
       addNotification({
         title: t('admin:migration_admin_page.success_title'),
-        message: t('admin:migration_admin_page.apply_success_msg', { serviceName, count: result.files.length }),
+        message: t('admin:migration_admin_page.apply_success_msg', {
+          serviceName,
+          count: result.files.length,
+        }),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['migration-status'] });
@@ -113,7 +116,9 @@ const MigrationAdminPage: React.FC = () => {
       apiLogger.error(t('admin:migration_admin_page.apply_failed_log'), error);
       addNotification({
         title: t('admin:migration_admin_page.error_title'),
-        message: (error as { message?: string }).message || t('admin:migration_admin_page.apply_failed_msg', { serviceName }),
+        message:
+          (error as { message?: string }).message ||
+          t('admin:migration_admin_page.apply_failed_msg', { serviceName }),
         type: 'error',
       });
     },
@@ -126,7 +131,9 @@ const MigrationAdminPage: React.FC = () => {
         title: t('admin:migration_admin_page.success_title'),
         message: t('admin:migration_admin_page.rollback_success_msg', {
           serviceName,
-          result: result.record ? t('admin:migration_admin_page.removed_records') : t('admin:migration_admin_page.no_records_to_rollback'),
+          result: result.record
+            ? t('admin:migration_admin_page.removed_records')
+            : t('admin:migration_admin_page.no_records_to_rollback'),
         }),
         type: 'success',
       });
@@ -136,7 +143,9 @@ const MigrationAdminPage: React.FC = () => {
       apiLogger.error(t('admin:migration_admin_page.rollback_failed_log'), error);
       addNotification({
         title: t('admin:migration_admin_page.error_title'),
-        message: (error as { message?: string }).message || t('admin:migration_admin_page.rollback_failed_msg', { serviceName }),
+        message:
+          (error as { message?: string }).message ||
+          t('admin:migration_admin_page.rollback_failed_msg', { serviceName }),
         type: 'error',
       });
     },
@@ -190,7 +199,9 @@ const MigrationAdminPage: React.FC = () => {
               title: t('admin:migration_admin_page.error_title'),
               message: t('admin:migration_admin_page.batch_failed_msg', {
                 serviceName: svc.name,
-                message: (err as { message?: string }).message || t('admin:migration_admin_page.unknown_error'),
+                message:
+                  (err as { message?: string }).message ||
+                  t('admin:migration_admin_page.unknown_error'),
               }),
               type: 'error',
             });
@@ -200,7 +211,10 @@ const MigrationAdminPage: React.FC = () => {
         queryClient.invalidateQueries({ queryKey: ['migration-status'] });
 
         addNotification({
-          title: failed === 0 ? t('admin:migration_admin_page.success_title') : t('admin:migration_admin_page.warning_title'),
+          title:
+            failed === 0
+              ? t('admin:migration_admin_page.success_title')
+              : t('admin:migration_admin_page.warning_title'),
           message: t('admin:migration_admin_page.batch_complete_msg', { succeeded, failed }),
           type: failed === 0 ? 'success' : 'warning',
         });
@@ -217,18 +231,18 @@ const MigrationAdminPage: React.FC = () => {
       {
         label: t('admin:migration_admin_page.view_status'),
         icon: <Eye size={16} />,
-        onClick: (row) => handleShowStatus(row as MigrationService),
+        onClick: (row) => handleShowStatus(row as unknown as MigrationService),
       },
       {
         label: t('admin:migration_admin_page.rollback'),
         icon: <RotateCcw size={16} />,
         color: 'warning',
-        onClick: (row) => handleRollback(row as MigrationService),
+        onClick: (row) => handleRollback(row as unknown as MigrationService),
       },
       {
         label: t('admin:migration_admin_page.apply_migration'),
         icon: <Play size={16} />,
-        onClick: (row) => handleApply(row as MigrationService),
+        onClick: (row) => handleApply(row as unknown as MigrationService),
       },
     ],
     [statusMap]
@@ -367,13 +381,22 @@ const MigrationAdminPage: React.FC = () => {
       >
         <DialogContent>
           <DialogTitle>
-            {activeService ? t('admin:migration_admin_page.service_status_title', { serviceName: activeService.name }) : t('admin:migration_admin_page.migration_status')}
+            {activeService
+              ? t('admin:migration_admin_page.service_status_title', {
+                  serviceName: activeService.name,
+                })
+              : t('admin:migration_admin_page.migration_status')}
           </DialogTitle>
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary', mb: 4 }}
           >
-            {activeService ? t('admin:migration_admin_page.schema_port_info', { schema: activeService.schema, port: activeService.port }) : ''}
+            {activeService
+              ? t('admin:migration_admin_page.schema_port_info', {
+                  schema: activeService.schema,
+                  port: activeService.port,
+                })
+              : ''}
           </Typography>
 
           {activeService && statusMap[activeService.name] ? (
@@ -397,7 +420,9 @@ const MigrationAdminPage: React.FC = () => {
                       bgcolor: 'warning.main',
                     }}
                   />
-                  {t('admin:migration_admin_page.pending_with_count', { count: statusMap[activeService.name].pending.length })}
+                  {t('admin:migration_admin_page.pending_with_count', {
+                    count: statusMap[activeService.name].pending.length,
+                  })}
                 </Typography>
                 {statusMap[activeService.name].pending.length === 0 ? (
                   <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
@@ -448,7 +473,9 @@ const MigrationAdminPage: React.FC = () => {
                       bgcolor: 'success.main',
                     }}
                   />
-                  {t('admin:migration_admin_page.applied_with_count', { count: statusMap[activeService.name].applied.length })}
+                  {t('admin:migration_admin_page.applied_with_count', {
+                    count: statusMap[activeService.name].applied.length,
+                  })}
                 </Typography>
                 {statusMap[activeService.name].applied.length === 0 ? (
                   <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
@@ -464,9 +491,15 @@ const MigrationAdminPage: React.FC = () => {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ width: 120, fontWeight: 600 }}>{t('admin:migration_admin_page.version')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{t('admin:migration_admin_page.name')}</TableCell>
-                          <TableCell sx={{ width: 180, fontWeight: 600 }}>{t('admin:migration_admin_page.execution_time')}</TableCell>
+                          <TableCell sx={{ width: 120, fontWeight: 600 }}>
+                            {t('admin:migration_admin_page.version')}
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {t('admin:migration_admin_page.name')}
+                          </TableCell>
+                          <TableCell sx={{ width: 180, fontWeight: 600 }}>
+                            {t('admin:migration_admin_page.execution_time')}
+                          </TableCell>
                           <TableCell
                             sx={{
                               width: 100,
@@ -507,7 +540,9 @@ const MigrationAdminPage: React.FC = () => {
             </Box>
           ) : (
             <Box sx={{ py: 10, textAlign: 'center', color: 'text.secondary' }}>
-              <Typography variant='body2'>{t('admin:migration_admin_page.no_status_info')}</Typography>
+              <Typography variant='body2'>
+                {t('admin:migration_admin_page.no_status_info')}
+              </Typography>
             </Box>
           )}
         </DialogContent>

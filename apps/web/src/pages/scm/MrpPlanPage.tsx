@@ -112,7 +112,7 @@ const MrpPlanPage: React.FC = () => {
       <CrudPage
         schema={mrpPlanSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
-        customRowActions={customRowActions as RowAction[]}
+        customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
         breadcrumbs={[{ label: 'SCM' }, { label: 'MRP计划' }]}
       />
 

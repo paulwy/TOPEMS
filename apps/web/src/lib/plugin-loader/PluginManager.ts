@@ -872,7 +872,7 @@ export class PluginManager {
 
   async getPluginDetails(
     pluginCode: string
-  ): Promise<{ plugin: Plugin; permissions: any[] } | null> {
+  ): Promise<{ plugin: Plugin; permissions: unknown[] } | null> {
     try {
       const response = await pluginApi.getDetails(pluginCode);
       return response?.data || null;

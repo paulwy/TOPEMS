@@ -326,8 +326,8 @@ const CRMCustomerSegmentationPage: React.FC = () => {
     <CrudPage
       schema={customerSegmentationSchema}
       apiAdapter={apiAdapter}
-      customColumns={columns as ColumnDef[]}
-      customRowActions={customRowActions as RowAction[]}
+      customColumns={columns as unknown as ColumnDef<Record<string, unknown>>[]}
+      customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
       detailContent={detailContent}
       headerContent={headerContent}
       breadcrumbs={[

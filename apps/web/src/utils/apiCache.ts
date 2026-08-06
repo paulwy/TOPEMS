@@ -13,13 +13,32 @@ class ApiCache {
   private cache = new Map<string, CacheEntry<unknown>>();
   private pendingRequests = new Map<string, PendingRequest<unknown>>();
   private defaultTTL = 5 * 60 * 1000;
+  private maxSize = 200;
 
   set<T>(key: string, data: T, ttl?: number): void {
+    // 超过容量上限时清理最旧的条目
+    if (this.cache.size >= this.maxSize && !this.cache.has(key)) {
+      this.evictOldest();
+    }
     const cacheTTL = ttl ?? this.defaultTTL;
     this.cache.set(key, {
       data,
       timestamp: Date.now() + cacheTTL,
     });
+  }
+
+  private evictOldest(): void {
+    let oldestKey: string | null = null;
+    let oldestTime = Infinity;
+    for (const [key, entry] of this.cache) {
+      if (entry.timestamp < oldestTime) {
+        oldestTime = entry.timestamp;
+        oldestKey = key;
+      }
+    }
+    if (oldestKey) {
+      this.cache.delete(oldestKey);
+    }
   }
 
   get<T>(key: string): T | null {

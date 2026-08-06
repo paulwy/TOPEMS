@@ -167,8 +167,8 @@ export function useGlobalSearch(
         } else {
           setRawResults([]);
         }
-      } catch (err: any) {
-        if (err.name === 'CanceledError' || err.name === 'AbortError') {
+      } catch (err: unknown) {
+        if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError')) {
           return;
         }
         setRawResults([]);

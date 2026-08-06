@@ -38,7 +38,7 @@ import {
   FileCode,
   Search,
 } from 'lucide-react';
-import { V51Tabs, V51Card } from '../design-system/components';
+import { V51Tabs, V51Card } from '../../design-system/components';
 import {
   intelligentCodeCompletion,
   type CompletionContext,

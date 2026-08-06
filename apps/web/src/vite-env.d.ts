@@ -1,32 +1,8 @@
 /// <reference types="vite/client" />
 
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      group: any;
-      mesh: any;
-      meshStandardMaterial: any;
-      meshBasicMaterial: any;
-      meshLambertMaterial: any;
-      ambientLight: any;
-      pointLight: any;
-      directionalLight: any;
-      spotLight: any;
-      sphereGeometry: any;
-      boxGeometry: any;
-      cylinderGeometry: any;
-      coneGeometry: any;
-      torusGeometry: any;
-      planeGeometry: any;
-      lineGeometry: any;
-      lineMaterial: any;
-      pointLightHelper: any;
-      gridHelper: any;
-      axesHelper: any;
-      primitive: any;
-    }
-  }
-}
+// NOTE: 3D JSX intrinsic elements (group/mesh/etc.) are declared in
+// src/types/react-three-fiber.d.ts with full prop types. Do not redeclare
+// them here with `any` — interface merging would override the detailed types.
 
 declare module 'leaflet.heat' {
   import type * as L from 'leaflet';

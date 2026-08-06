@@ -137,7 +137,7 @@ const QmsStandardListPage: React.FC = () => {
       label: '查看',
       icon: <Eye size={16} />,
       onClick: (row) => {
-        navigate(QMS_PATHS.standardDetail.replace(':id', (row as QualityStandard).id));
+        navigate(QMS_PATHS.standardDetail.replace(':id', (row as unknown as QualityStandard).id));
       },
     },
   ];

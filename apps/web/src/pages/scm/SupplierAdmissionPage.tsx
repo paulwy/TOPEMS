@@ -184,7 +184,7 @@ const SupplierAdmissionPage: React.FC = () => {
       <CrudPage
         schema={supplierAdmissionSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
-        customRowActions={customRowActions as RowAction[]}
+        customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
         breadcrumbs={[{ label: 'SCM' }, { label: '供应商准入管理' }]}
       />
 

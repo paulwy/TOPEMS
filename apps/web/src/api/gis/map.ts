@@ -9,6 +9,8 @@ import type {
   GeoJSON,
   ListQueryParams,
   PaginatedResponse,
+  RawPaginatedResponse,
+  SearchResult,
 } from './types';
 import { adaptResponse } from './utils';
 

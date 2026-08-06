@@ -17,7 +17,9 @@ const versionApiAdapter: CrudApiAdapter<DocumentVersion> = {
       return { data: [], total: 0 };
     }
     const raw = response.data as unknown as Record<string, unknown>;
-    const items = (Array.isArray(raw) ? raw : (raw as any)?.versions || []) as DocumentVersion[];
+    const items = (
+      Array.isArray(raw) ? raw : (raw.versions as DocumentVersion[] | undefined) || []
+    ) as DocumentVersion[];
     const transformed = items.map((v) => ({
       ...v,
       id: `${v.document_id}:${v.id}`,
@@ -32,7 +34,7 @@ const versionApiAdapter: CrudApiAdapter<DocumentVersion> = {
     if (!response.success) throw new Error(response.message || '创建失败');
     const result = (response.data ?? {}) as DocumentVersion;
     if (result.document_id && result.id) {
-      (result as any).id = `${result.document_id}:${result.id}`;
+      (result as unknown as Record<string, unknown>).id = `${result.document_id}:${result.id}`;
     }
     return result;
   },
@@ -50,7 +52,7 @@ const versionApiAdapter: CrudApiAdapter<DocumentVersion> = {
     if (!response.success) throw new Error(response.message || '更新失败');
     const result = (response.data ?? {}) as DocumentVersion;
     if (result.document_id && result.id) {
-      (result as any).id = `${result.document_id}:${result.id}`;
+      (result as unknown as Record<string, unknown>).id = `${result.document_id}:${result.id}`;
     }
     return result;
   },

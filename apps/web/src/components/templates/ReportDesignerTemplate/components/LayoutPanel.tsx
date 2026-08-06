@@ -16,6 +16,7 @@ import type {
   LayoutType,
   ChartType,
   ReportChartConfig,
+  ReportDesignerState,
   SelectedField,
 } from '../types';
 
@@ -23,7 +24,7 @@ interface LayoutPanelProps {
   layout: LayoutConfig;
   selectedFields: SelectedField[];
   handleLayoutChange: (type: LayoutType) => void;
-  setState: React.Dispatch<React.SetStateAction<any>>;
+  setState: React.Dispatch<React.SetStateAction<ReportDesignerState>>;
 }
 
 export const LayoutPanel: React.FC<LayoutPanelProps> = ({
@@ -83,7 +84,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
                 value={layout.chart?.type || 'bar'}
                 label='图表类型'
                 onChange={(e) =>
-                  setState((prev: any) => ({
+                  setState((prev: ReportDesignerState) => ({
                     ...prev,
                     layout: {
                       ...prev.layout,
@@ -106,7 +107,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
                 value={layout.chart?.xAxisField || ''}
                 label='X轴字段'
                 onChange={(e) =>
-                  setState((prev: any) => ({
+                  setState((prev: ReportDesignerState) => ({
                     ...prev,
                     layout: {
                       ...prev.layout,
@@ -138,7 +139,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
                 value={layout.chart?.yAxisFields || []}
                 label='Y轴字段'
                 onChange={(e) =>
-                  setState((prev: any) => ({
+                  setState((prev: ReportDesignerState) => ({
                     ...prev,
                     layout: {
                       ...prev.layout,
@@ -168,7 +169,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
                   <Switch
                     checked={layout.chart?.showLegend}
                     onChange={(e) =>
-                      setState((prev: any) => ({
+                      setState((prev: ReportDesignerState) => ({
                         ...prev,
                         layout: {
                           ...prev.layout,
@@ -188,7 +189,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
                   <Switch
                     checked={layout.chart?.showGrid}
                     onChange={(e) =>
-                      setState((prev: any) => ({
+                      setState((prev: ReportDesignerState) => ({
                         ...prev,
                         layout: {
                           ...prev.layout,
@@ -223,7 +224,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
               value={layout.columns}
               label='列数'
               onChange={(e) =>
-                setState((prev: any) => ({
+                setState((prev: ReportDesignerState) => ({
                   ...prev,
                   layout: { ...prev.layout, columns: e.target.value as number },
                 }))
@@ -244,7 +245,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
             <Switch
               checked={layout.showHeader}
               onChange={(e) =>
-                setState((prev: any) => ({
+                setState((prev: ReportDesignerState) => ({
                   ...prev,
                   layout: { ...prev.layout, showHeader: e.target.checked },
                 }))
@@ -258,7 +259,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
             <Switch
               checked={layout.showFooter}
               onChange={(e) =>
-                setState((prev: any) => ({
+                setState((prev: ReportDesignerState) => ({
                   ...prev,
                   layout: { ...prev.layout, showFooter: e.target.checked },
                 }))
@@ -272,7 +273,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
             <Switch
               checked={layout.pagination}
               onChange={(e) =>
-                setState((prev: any) => ({
+                setState((prev: ReportDesignerState) => ({
                   ...prev,
                   layout: { ...prev.layout, pagination: e.target.checked },
                 }))
@@ -291,7 +292,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
             value={layout.pageSize}
             label='每页条数'
             onChange={(e) =>
-              setState((prev: any) => ({
+              setState((prev: ReportDesignerState) => ({
                 ...prev,
                 layout: { ...prev.layout, pageSize: e.target.value as number },
               }))

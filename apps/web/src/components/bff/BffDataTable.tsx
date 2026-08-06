@@ -419,7 +419,7 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
                             ? // V64 防御：renderCell(row) 兜底 + try/catch，报错则回退显示原始值
                               (() => {
                                 try {
-                                  return col.renderCell!(value, row ?? ({} as any));
+                                  return col.renderCell!(value, row ?? ({} as T));
                                 } catch (e) {
                                   if (typeof console !== 'undefined' && console?.warn) {
                                     console.warn(

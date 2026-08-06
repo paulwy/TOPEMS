@@ -370,11 +370,6 @@ export function useCrudUnified<
     setPageState(1);
   }, []);
 
-  const pagination = useMemo(
-    () => ({ page, pageSize, total: 0, setPage, setPageSize }),
-    [page, pageSize, setPage, setPageSize]
-  );
-
   // ---- 列表查询 ----
   const listQueryKey = useMemo(
     () => [...queryKey, 'list', page, pageSize, extraParams],
@@ -402,7 +397,11 @@ export function useCrudUnified<
 
   const data = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
-  pagination.total = total;
+
+  const pagination = useMemo(
+    () => ({ page, pageSize, total, setPage, setPageSize }),
+    [page, pageSize, total, setPage, setPageSize]
+  );
 
   // ---- fetch（手动筛选 + 额外参数） ----
   const fetch = useCallback(
@@ -559,7 +558,7 @@ export function useCrudUnified<
     bulkDeleteMutation.isPending;
 
   // ---- 错误状态 ----
-  const error: string | null = (listQuery?.error as Error | null)?.message ?? null;
+  const error: string | null = listQuery?.error ? extractErrorMessage(listQuery.error) : null;
 
   return {
     data,

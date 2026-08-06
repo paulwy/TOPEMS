@@ -574,8 +574,8 @@ const MonitorAlertRulesPage: React.FC = () => {
         schema={alertRuleSchema}
         apiAdapter={mockApiAdapter as unknown as CrudApiAdapter}
         breadcrumbs={[{ label: '监控' }, { label: '告警规则' }]}
-        customColumns={customColumns as ColumnDef[]}
-        customRowActions={customRowActions as RowAction[]}
+        customColumns={customColumns as unknown as ColumnDef<Record<string, unknown>>[]}
+        customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
         detailMaxWidth='md'
         headerContent={headerContent}
       />

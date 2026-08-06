@@ -215,7 +215,7 @@ const ReplenishmentPage: React.FC = () => {
         icon: <ShoppingCart size={16} />,
         show: (row) => row.status === 'pending',
         onClick: async (row) => {
-          const suggestion = row as ReplenishmentSuggestion;
+          const suggestion = row as unknown as ReplenishmentSuggestion;
           await createOrderFromSuggestionMutation.mutateAsync({
             warehouse_id: suggestion.warehouse_id,
             supplier_id: suggestion.supplier_id,

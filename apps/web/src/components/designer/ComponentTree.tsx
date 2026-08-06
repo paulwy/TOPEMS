@@ -70,7 +70,7 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
       children: node.children?.map(renderTreeItem) ?? null,
     };
 
-    return <TreeItem {...(treeItemProps as any)} />;
+    return <TreeItem {...(treeItemProps as unknown as React.ComponentProps<typeof TreeItem>)} />;
   };
 
   return (

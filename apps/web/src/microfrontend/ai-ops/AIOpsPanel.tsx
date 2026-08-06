@@ -1357,7 +1357,9 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 <Select
                   value={newRuleOperator}
                   label='操作符'
-                  onChange={(e) => setNewRuleOperator(e.target.value as any)}
+                  onChange={(e) =>
+                    setNewRuleOperator(e.target.value as 'gt' | 'gte' | 'lt' | 'lte')
+                  }
                 >
                   <MenuItem value='gt'>大于 (gt)</MenuItem>
                   <MenuItem value='gte'>大于等于 (gte)</MenuItem>
@@ -1384,7 +1386,9 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 <Select
                   value={newRuleSeverity}
                   label='严重级别'
-                  onChange={(e) => setNewRuleSeverity(e.target.value as any)}
+                  onChange={(e) =>
+                    setNewRuleSeverity(e.target.value as 'low' | 'medium' | 'high' | 'critical')
+                  }
                 >
                   <MenuItem value='critical'>严重</MenuItem>
                   <MenuItem value='high'>高</MenuItem>

@@ -14,6 +14,7 @@ import { ArrowRightLeft, Package, Scale } from 'lucide-react';
 
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { wipSchema } from '@/schemas/mes';
 import { wipApi } from '@/api/mes';
@@ -120,7 +121,7 @@ const WIPPage: React.FC = () => {
         apiAdapter={apiAdapter}
         breadcrumbs={[{ label: 'MES' }, { label: '在制品管理' }]}
         headerContent={headerContent}
-        customRowActions={customRowActions}
+        customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
       />
 
       <Dialog

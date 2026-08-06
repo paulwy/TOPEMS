@@ -304,7 +304,7 @@ const CRMRecommendationPage: React.FC = () => {
     <CrudPage
       schema={recommendationSchema}
       apiAdapter={apiAdapter}
-      customColumns={columns as ColumnDef[]}
+      customColumns={columns as unknown as ColumnDef<Record<string, unknown>>[]}
       detailContent={detailContent}
       idField='customer_id'
       breadcrumbs={[

@@ -147,14 +147,15 @@ export interface BackendPaginationResponse {
 }
 
 export function parsePaginationFromResponse(
-  response: Record<string, any>,
+  response: Record<string, unknown>,
   _style: BackendParamStyle = 'standard'
-): { items: any[]; total: number; page: number; pageSize: number } {
-  const data = response.data ?? response;
-  const total = data.total ?? 0;
-  const page = data.page ?? data.current ?? 1;
-  const pageSize = data.pagesize ?? data.size ?? data.pageSize ?? 10;
-  const items = data.items ?? data.list ?? data.records ?? data.rows ?? [];
+): { items: unknown[]; total: number; page: number; pageSize: number } {
+  const data = (response.data ?? response) as Record<string, unknown>;
+  const total = (data.total as number) ?? 0;
+  const page = (data.page as number) ?? (data.current as number) ?? 1;
+  const pageSize =
+    (data.pagesize as number) ?? (data.size as number) ?? (data.pageSize as number) ?? 10;
+  const items = (data.items ?? data.list ?? data.records ?? data.rows ?? []) as unknown[];
   return { items, total, page, pageSize };
 }
 

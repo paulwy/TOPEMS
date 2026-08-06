@@ -313,15 +313,9 @@ const createHealthProxyConfig = (serviceName: string, target: string) => ({
 const buildServiceProxies = (): Record<string, any> => {
   const proxies: Record<string, any> = {};
 
-  // Dashboard backend proxy - routes /api/{module}/dashboard to port 8080
-  const DASHBOARD_PORT = 8080;
-  const DASHBOARD_MODULES = ['finance', 'ehs', 'lims', 'crm', 'wms', 'hrm', 'pdm', 'qms', 'mes', 'pm'];
-  for (const mod of DASHBOARD_MODULES) {
-    proxies[`/api/${mod}/dashboard`] = {
-      target: `http://localhost:${DASHBOARD_PORT}`,
-      changeOrigin: true,
-    };
-  }
+  // Dashboard 路由走服务自身端口（原硬编码 8080 gateway 已移除）
+  // 各服务的 /api/{mod}/dashboard 会自动被下方的 apiPrefix 规则捕获
+  // （/api/finance/dashboard 匹配 /api/finance/ 前缀 → 转发到 8011）
 
   for (const svc of SERVICES) {
     const target = `http://localhost:${svc.port}`;

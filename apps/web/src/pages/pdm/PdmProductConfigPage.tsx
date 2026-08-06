@@ -156,10 +156,10 @@ export const PdmProductConfigPage: React.FC = () => {
         render: (row) => (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <span style={{ fontSize: '0.875rem' }}>
-              {row.color || '-'} / {row.size || '-'}
+              {String(row.color || '-')} / {String(row.size || '-')}
             </span>
             <span style={{ fontSize: '0.75rem', color: ct.text.muted }}>
-              {row.material || '-'} / {row.grade || '-'}
+              {String(row.material || '-')} / {String(row.grade || '-')}
             </span>
           </Box>
         ),
@@ -189,8 +189,8 @@ export const PdmProductConfigPage: React.FC = () => {
         render: (row) => (
           <Chip
             size='small'
-            label={getStatusLabel(row.status)}
-            color={getStatusColor(row.status)}
+            label={getStatusLabel(String(row.status ?? ''))}
+            color={getStatusColor(String(row.status ?? ''))}
           />
         ),
       },

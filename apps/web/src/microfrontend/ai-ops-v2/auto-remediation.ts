@@ -8,7 +8,7 @@ export interface RemediationAction {
   type: 'restart' | 'scale' | 'rollback' | 'config' | 'script' | 'notification' | 'custom';
   name: string;
   description: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, string | number | boolean>;
   timeout: number;
   retryPolicy: RetryPolicy;
   status: 'pending' | 'running' | 'success' | 'failed' | 'timeout' | 'cancelled';
@@ -36,7 +36,7 @@ export interface RemediationWorkflow {
   priority: 'low' | 'medium' | 'high' | 'critical';
   status: 'inactive' | 'active' | 'paused';
   executionHistory: RemediationExecution[];
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface WorkflowTrigger {
@@ -48,7 +48,7 @@ export interface WorkflowTrigger {
 export interface TriggerCondition {
   field: string;
   operator: 'equals' | 'notEquals' | 'greaterThan' | 'lessThan' | 'contains' | 'matches';
-  value: any;
+  value: unknown;
 }
 
 export interface WorkflowCondition {
@@ -61,7 +61,7 @@ export interface ConditionCheck {
   type: 'metric' | 'health' | 'dependency' | 'custom';
   target: string;
   operator: string;
-  expectedValue: any;
+  expectedValue: unknown;
 }
 
 export interface RemediationExecution {
@@ -177,7 +177,7 @@ export class AutoRemediation {
   execute(
     workflowId: string,
     trigger: WorkflowTrigger,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): Promise<RemediationExecution> {
     return new Promise((resolve, reject) => {
       if (!this.config.enabled) {
@@ -370,7 +370,7 @@ export class AutoRemediation {
   private async performExecution(
     workflow: RemediationWorkflow,
     trigger: WorkflowTrigger,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): Promise<RemediationExecution> {
     const executionId = `exec-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 
@@ -474,7 +474,7 @@ export class AutoRemediation {
 
   private async executeAction(
     action: RemediationAction,
-    _context?: Record<string, any>
+    _context?: Record<string, unknown>
   ): Promise<void> {
     // 模拟动作执行
     const timeout = action.timeout || this.config.defaultTimeout;
@@ -529,7 +529,7 @@ export class AutoRemediation {
 
   private async evaluateCondition(
     _condition: WorkflowCondition,
-    _context?: Record<string, any>
+    _context?: Record<string, unknown>
   ): Promise<boolean> {
     // 简化实现：随机返回检查结果
     // 在实际应用中，这里应该检查真实的条件
@@ -543,7 +543,7 @@ export class AutoRemediation {
   private async requestApproval(
     workflow: RemediationWorkflow,
     _trigger: WorkflowTrigger,
-    _context?: Record<string, any>
+    _context?: Record<string, unknown>
   ): Promise<boolean> {
     return new Promise((resolve) => {
       const executionId = `approval-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;

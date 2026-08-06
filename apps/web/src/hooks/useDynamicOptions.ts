@@ -90,7 +90,7 @@ export function mergeDynamicOptions<T extends { options?: unknown }>(
   dynamicOptions: DynamicOptionsResult
 ): T[] {
   return fields.map((field) => {
-    const dynamic = dynamicOptions[(field as any).name];
+    const dynamic = dynamicOptions[(field as unknown as Record<string, unknown>).name as string];
     if (dynamic?.options.length > 0) {
       return { ...field, options: dynamic.options } as T;
     }

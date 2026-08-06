@@ -82,7 +82,7 @@ const NotificationArchivePage: React.FC = () => {
     },
   });
 
-  const apiAdapter: CrudApiAdapter = {
+  const apiAdapter: CrudApiAdapter<ArchivedNotification> = {
     list: async (params) => {
       const page = params?.page || 1;
       const pageSize = params?.pageSize || 20;

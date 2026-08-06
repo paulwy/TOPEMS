@@ -148,11 +148,6 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
     setPageState(1);
   }, []);
 
-  const pagination = useMemo(
-    () => ({ page, pageSize, total: 0, setPage, setPageSize }),
-    [page, pageSize, setPage, setPageSize]
-  );
-
   // ---- 列表查询 key ----
   const listQueryKey = useMemo(
     () => [...queryKey, 'list', page, pageSize, extraParams],
@@ -181,7 +176,11 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
 
   const data = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
-  pagination.total = total;
+
+  const pagination = useMemo(
+    () => ({ page, pageSize, total, setPage, setPageSize }),
+    [page, pageSize, total, setPage, setPageSize]
+  );
 
   // ---- fetch（手动筛选 + 额外参数） ----
   const fetch = useCallback(

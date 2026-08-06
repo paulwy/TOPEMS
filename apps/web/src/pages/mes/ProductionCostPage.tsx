@@ -27,7 +27,7 @@ import {
   BarChart3,
   PieChart,
 } from 'lucide-react';
-import { productionCostApi } from '../../api/mes/productionCost';
+import { productionCostApi, type WorkOrderCostResult } from '../../api/mes/productionCost';
 import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
@@ -53,7 +53,7 @@ const ProductionCostPage: React.FC = () => {
     queryFn: () => productionCostApi.getCostForecast({ months: 3 }),
   });
 
-  const [workOrderCost, setWorkOrderCost] = useState<any>(null);
+  const [workOrderCost, setWorkOrderCost] = useState<WorkOrderCostResult | null>(null);
   const [loadingWorkOrder, setLoadingWorkOrder] = useState(false);
 
   const handleQueryWorkOrderCost = async () => {
@@ -540,7 +540,7 @@ const ProductionCostPage: React.FC = () => {
                             </TableRow>
                           </TableHead>
                           <TableBody>
-                            {workOrderCost.cost_breakdown.map((item: any, index: number) => (
+                            {workOrderCost.cost_breakdown.map((item, index) => (
                               <TableRow key={index}>
                                 <TableCell>{item.category}</TableCell>
                                 <TableCell>{formatCurrency(item.amount)}</TableCell>
@@ -569,7 +569,7 @@ const ProductionCostPage: React.FC = () => {
                   />
                   <Select
                     value={periodType}
-                    onChange={(e) => setPeriodType(e.target.value as any)}
+                    onChange={(e) => setPeriodType(e.target.value as 'month' | 'quarter' | 'year')}
                     sx={{ minWidth: 120 }}
                   >
                     <option value='month'>本月</option>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, Box, Typography } from '@mui/material';
 import { DollarSign, TrendingDown, AlertTriangle, CheckCircle, BarChart3 } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
 import { qualityCostSchema } from '@/schemas/qms';
 import { qualityCostApi } from '@/api/qms';
 import type { QualityCost } from '@/api/qms';
@@ -11,10 +11,10 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter<QualityCost>({
-  list: qualityCostApi.listQualityCosts as any,
-  create: qualityCostApi.createQualityCost as any,
-  update: qualityCostApi.updateQualityCost as any,
-  delete: qualityCostApi.deleteQualityCost as any,
+  list: qualityCostApi.listQualityCosts as unknown as CrudApi<QualityCost>['list'],
+  create: qualityCostApi.createQualityCost as unknown as CrudApi<QualityCost>['create'],
+  update: qualityCostApi.updateQualityCost as unknown as CrudApi<QualityCost>['update'],
+  delete: qualityCostApi.deleteQualityCost as unknown as CrudApi<QualityCost>['delete'],
 });
 
 function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {

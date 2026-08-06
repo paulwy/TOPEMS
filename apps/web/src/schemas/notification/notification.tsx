@@ -54,6 +54,14 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   error: <MessageSquare size={16} />,
 };
 
+interface NotificationRow {
+  notification_type: string;
+  is_read: boolean;
+  title: string;
+  content: string;
+  created_at: string;
+}
+
 export const notificationSchema: EntitySchema = {
   entity: 'notification',
   title: '通知',
@@ -71,7 +79,7 @@ export const notificationSchema: EntitySchema = {
       type: 'text',
       listWidth: 280,
       renderCell: (row: Record<string, unknown>) => {
-        const n = row as any;
+        const n = row as unknown as NotificationRow;
         const type = n.notification_type || 'info';
         const bgColor = TYPE_BG_COLORS[type]?.bg || 'rgba(14, 165, 233, 0.1)';
         const iconColor = TYPE_BG_COLORS[type]?.color || 'info.main';
@@ -144,13 +152,13 @@ export const notificationSchema: EntitySchema = {
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
-        const type = (row as any).notification_type || 'info';
+        const type = (row as unknown as NotificationRow).notification_type || 'info';
         const color = TYPE_COLORS[type] || 'default';
         const label = TYPE_LABELS[type] || type;
         return (
           <Chip
             size='small'
-            color={color as any}
+            color={color}
             label={label}
             variant='outlined'
           />
@@ -165,8 +173,8 @@ export const notificationSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) => (
         <Chip
           size='small'
-          label={(row as any).is_read ? '已读' : '未读'}
-          color={(row as any).is_read ? 'default' : 'primary'}
+          label={(row as unknown as NotificationRow).is_read ? '已读' : '未读'}
+          color={(row as unknown as NotificationRow).is_read ? 'default' : 'primary'}
           variant='outlined'
         />
       ),
@@ -189,7 +197,7 @@ export const notificationSchema: EntitySchema = {
           variant='body2'
           color='text.secondary'
         >
-          {new Date((row as any).created_at).toLocaleString('zh-CN')}
+          {new Date((row as unknown as NotificationRow).created_at).toLocaleString('zh-CN')}
         </Typography>
       ),
     },

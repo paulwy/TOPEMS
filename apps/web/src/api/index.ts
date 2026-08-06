@@ -42,6 +42,20 @@ export { erpApi } from './erp';
 export { rdApi } from './rd';
 export { gisApi } from './gis';
 export { srmApi } from './srm';
+export { searchApi } from './search';
+export { ticketApi } from './ticket';
+export { tenantApi } from './tenant';
+export { addressbookApi } from './addressbook';
+export { crmFinanceApi } from './crmFinance';
+export { financialReportApi } from './financialReport';
+export { voucherTemplateApi } from './voucherTemplate';
+export { templateApi } from './template';
+export { integrationApi } from './integration';
+export { automationApi } from './automation';
+export { externalErpApi } from './external-erp';
+export { lowcodeApi } from './lowcode';
+export { consolidationContract } from './consolidation-contract';
+export * as consolidationApi from './consolidation';
 
 // Domain modules - Platform APIs
 export * as aiApi from './ai';

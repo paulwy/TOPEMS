@@ -24,10 +24,17 @@ export interface AIFlowAssistantProps {
   module?: string;
 }
 
+interface FlowResult {
+  title: string;
+  description: string;
+  steps: Record<string, unknown>[];
+  suggestions?: string[];
+}
+
 export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, module }) => {
   const [query, setQuery] = useState(initialQuery || '');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<FlowResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -48,7 +55,12 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
       });
 
       if (response.success && response.data) {
-        setResult(response.data);
+        setResult({
+          title: response.data.title,
+          description: response.data.description ?? '',
+          steps: response.data.steps as unknown as Record<string, unknown>[],
+          suggestions: response.data.suggestions,
+        });
         addNotification({ title: '成功', message: '流程分析完成', type: 'success' });
       } else {
         setError(response.message || '流程分析失败');
@@ -176,7 +188,7 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
                   orientation='vertical'
                   sx={{ mb: 4 }}
                 >
-                  {result.steps.map((step: any, idx: number) => (
+                  {result.steps.map((step: Record<string, unknown>, idx: number) => (
                     <Step key={idx}>
                       <StepLabel
                         icon={
@@ -191,7 +203,7 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
                             variant='subtitle1'
                             sx={{ fontWeight: 600 }}
                           >
-                            步骤 {idx + 1}: {step.name}
+                            步骤 {idx + 1}: {step.name as string}
                           </Typography>
                         </Box>
                       </StepLabel>
@@ -200,21 +212,21 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
                           variant='body2'
                           sx={{ mb: 2 }}
                         >
-                          {step.description}
+                          {step.description as string}
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                          {step.responsible && (
+                          {(step.responsible as string | undefined) && (
                             <Chip
                               size='small'
-                              label={step.responsible}
+                              label={step.responsible as string}
                               icon={<User size={14} />}
                               sx={{ bgcolor: 'primary.100', color: 'primary.dark' }}
                             />
                           )}
-                          {step.estimated_time && (
+                          {(step.estimated_time as string | undefined) && (
                             <Chip
                               size='small'
-                              label={step.estimated_time}
+                              label={step.estimated_time as string}
                               icon={<Clock size={14} />}
                               sx={{ bgcolor: 'grey.100' }}
                             />

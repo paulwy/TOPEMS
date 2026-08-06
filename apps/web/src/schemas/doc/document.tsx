@@ -19,6 +19,15 @@ const TYPE_COLORS: Record<string, string> = {
   image: 'secondary.main',
 };
 
+interface DocumentRow {
+  content_type: string;
+  name: string;
+  category: string;
+  size: number;
+  folder_id: string;
+  updated_at: string;
+}
+
 const getFileIcon = (type: string) => {
   const color = TYPE_COLORS[type] || '#9ca3af';
   switch (type) {
@@ -101,7 +110,7 @@ export const documentSchema: EntitySchema = {
       type: 'text',
       listWidth: 240,
       renderCell: (row: Record<string, unknown>) => {
-        const doc = row as any;
+        const doc = row as unknown as DocumentRow;
         const type = doc.content_type ? getFileType(doc.content_type) : 'pdf';
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -153,7 +162,7 @@ export const documentSchema: EntitySchema = {
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
-        const doc = row as any;
+        const doc = row as unknown as DocumentRow;
         const type = doc.content_type ? getFileType(doc.content_type) : 'pdf';
         const color = TYPE_COLORS[type] || '#9ca3af';
         const label = TYPE_LABELS[type] || type;
@@ -180,7 +189,7 @@ export const documentSchema: EntitySchema = {
           variant='body2'
           color='text.secondary'
         >
-          {formatFileSize((row as any).size || 0)}
+          {formatFileSize((row as unknown as DocumentRow).size || 0)}
         </Typography>
       ),
     },
@@ -203,7 +212,7 @@ export const documentSchema: EntitySchema = {
             variant='body2'
             color='text.secondary'
           >
-            {(row as any).folder_id || '根目录'}
+            {(row as unknown as DocumentRow).folder_id || '根目录'}
           </Typography>
         </Stack>
       ),
@@ -219,7 +228,7 @@ export const documentSchema: EntitySchema = {
           variant='body2'
           color='text.secondary'
         >
-          {new Date((row as any).updated_at).toLocaleString('zh-CN')}
+          {new Date((row as unknown as DocumentRow).updated_at).toLocaleString('zh-CN')}
         </Typography>
       ),
     },

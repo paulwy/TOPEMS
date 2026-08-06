@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { equipmentSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
@@ -236,7 +237,7 @@ export default function EquipmentManagementPage() {
         apiAdapter={apiAdapter}
         breadcrumbs={[{ label: 'MES' }, { label: '设备管理' }]}
         headerContent={statsContent}
-        customRowActions={customRowActions}
+        customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
       />
 
       <Dialog

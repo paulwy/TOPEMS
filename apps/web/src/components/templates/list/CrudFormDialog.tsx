@@ -5,7 +5,7 @@ import type { ListPageCrudConfig } from './types';
 export interface CrudFormDialogProps {
   open: boolean;
   mode: 'create' | 'edit' | 'view';
-  crud: ListPageCrudConfig<any, any, any> | undefined;
+  crud: ListPageCrudConfig<unknown> | undefined;
   submitting: boolean;
   formContent: React.ReactNode;
   onClose: () => void;
@@ -43,7 +43,7 @@ export const CrudFormDialog: React.FC<CrudFormDialogProps> = ({
         onSubmit={onSubmit}
         loading={submitting}
         width={crud.drawerWidth}
-        anchor={crud.drawerAnchor as any}
+        anchor={crud.drawerAnchor}
       >
         {formContent}
       </FormDrawer>
@@ -57,7 +57,7 @@ export const CrudFormDialog: React.FC<CrudFormDialogProps> = ({
       onClose={onClose}
       onSubmit={onSubmit}
       loading={submitting}
-      maxWidth={crud.dialogMaxWidth as any}
+      maxWidth={crud.dialogMaxWidth}
     >
       {formContent}
     </FormDialog>

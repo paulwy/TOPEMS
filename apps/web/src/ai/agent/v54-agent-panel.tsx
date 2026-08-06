@@ -59,7 +59,7 @@ import {
   PlayCircle,
   PauseCircle,
 } from 'lucide-react';
-import { V51Card } from '../design-system/components';
+import { V51Card } from '../../design-system/components';
 import {
   autonomousAgent,
   type Task,
