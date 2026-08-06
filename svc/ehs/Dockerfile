@@ -1,13 +1,16 @@
+# syntax=docker/dockerfile:1
 # TOPEMS EHS Service Dockerfile
 # Multi-stage build optimized for workspace
 
-FROM rust:1.78-alpine AS builder
+FROM rust:nightly-2026-07-01-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache musl-dev openssl-dev pkgconfig
 COPY Cargo.toml Cargo.lock ./
 COPY lib ./lib
 COPY svc/ehs ./svc/ehs
-RUN cargo build --release -p topems-ehs
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/app/target \
+    cargo build --release -p topems-ehs
 
 FROM alpine:3.19
 RUN apk add --no-cache libssl3 ca-certificates tzdata

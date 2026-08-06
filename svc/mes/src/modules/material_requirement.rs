@@ -376,7 +376,7 @@ pub async fn create_material_requirement(
         .or_else(|| {
             chrono::NaiveDate::parse_from_str(&body.required_date, "%Y-%m-%d")
                 .ok()
-                .map(|d| d.and_hms_opt(0, 0, 0).unwrap())
+                .and_then(|d| d.and_hms_opt(0, 0, 0))
         });
 
     let result = sqlx::query_unchecked!(
@@ -476,7 +476,7 @@ pub async fn update_material_requirement(
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .map(|d| d.and_hms_opt(0, 0, 0).unwrap())
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
 

@@ -12,9 +12,14 @@ from rich.text import Text
 console = Console()
 
 
+def _get_log_path(service_name: str) -> Path:
+    """获取日志文件路径（与 manager.py _get_log_path 对齐）"""
+    return Path(__file__).parent.parent.parent.parent.parent / "logs" / f"{service_name}.log"
+
+
 def get_log_content(service_name: str, lines: int = 100) -> str:
     """获取日志内容"""
-    log_path = Path.home() / ".topems" / "logs" / f"{service_name}.log"
+    log_path = _get_log_path(service_name)
 
     if not log_path.exists():
         return f"日志文件不存在: {log_path}\n\n提示: 服务可能尚未启动或日志未写入"
@@ -29,7 +34,7 @@ def get_log_content(service_name: str, lines: int = 100) -> str:
 
 def tail_log(service_name: str, lines: int = 100):
     """持续跟踪日志"""
-    log_path = Path.home() / ".topems" / "logs" / f"{service_name}.log"
+    log_path = _get_log_path(service_name)
 
     if not log_path.exists():
         console.print(f"[yellow]日志文件不存在: {log_path}[/yellow]")

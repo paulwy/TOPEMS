@@ -353,7 +353,7 @@ pub fn t_ppf(dof: f64, confidence_level: f64) -> f64 {
         }
     }
     // 超出表范围，返回最后一个值或正态近似
-    let last = table.last().unwrap();
+    let last = table.last().copied().unwrap_or((30.0, 1.960));
     let normal = match confidence_level {
         cl if (cl - 0.90).abs() < 0.001 => 1.645,
         cl if (cl - 0.95).abs() < 0.001 => 1.960,
@@ -440,7 +440,7 @@ fn grubbs_critical_value(n: usize, alpha: f64) -> f64 {
             return y0 + (y1 - y0) * (n as f64 - x0) / (x1 - x0);
         }
     }
-    table.last().unwrap().1
+    table.last().map(|e| e.1).unwrap_or(3.082)
 }
 
 #[cfg(test)]

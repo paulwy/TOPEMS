@@ -76,7 +76,7 @@ scripts/
 
 ```bash
 # 格式: 服务名 服务路径 二进制名 端口
-iam         svc/unified-core       unified-core-service  8000
+iam         svc/unified-core       topems-unified-core  8000
 pm          svc/pm                 topems-pm             8023
 ```
 

@@ -1,5 +1,6 @@
 """构建命令模块"""
 
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -8,6 +9,19 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 console = Console()
+
+# 与 topems.sh SERVICES_CONFIG 对齐的后端服务列表
+BACKEND_SERVICES = [
+    "lib",
+    "svc/unified-core", "svc/pm", "svc/portal",
+    "svc/integration", "svc/erp", "svc/finance", "svc/ai",
+    "svc/hrm", "svc/crm", "svc/mes", "svc/pdm",
+    "svc/scm", "svc/wms", "svc/srm", "svc/qms",
+    "svc/lims", "svc/ehs", "svc/rd", "svc/analytics",
+    "svc/mobile", "svc/gis",
+    "svc/search", "svc/communication", "svc/billing",
+    "svc/ticket", "svc/feedback", "svc/master-data",
+]
 
 
 @click.group()
@@ -22,18 +36,10 @@ def build():
 def build_all(release: bool, jobs: int):
     """构建所有服务"""
     console.print("[bold]构建所有服务...[/bold]")
-    
+
     project_root = Path(__file__).parent.parent.parent.parent.parent
-    
-    services = [
-        "lib",
-        "svc/unified-core", "svc/pm", "svc/portal",
-        "svc/integration", "svc/erp", "svc/hrm",
-        "svc/crm", "svc/rd", "svc/lims", "svc/pdm",
-        "svc/mes", "svc/qms", "svc/ehs", "svc/scm", "svc/srm",
-        "svc/wms", "svc/gis", "svc/analytics", "svc/ai", "svc/mobile",
-        "svc/finance", "svc/master-data",
-    ]
+
+    services = BACKEND_SERVICES
     
     build_type = "release" if release else "debug"
     passed = 0
@@ -139,9 +145,9 @@ def build_frontend(dev: bool):
     
     if dev:
         console.print("[yellow]开发模式启动前端开发服务器...[/yellow]")
-        subprocess.run(["npm", "run", "dev"], cwd=str(web_path))
+        subprocess.run(["pnpm", "dev"], cwd=str(web_path))
     else:
-        result = subprocess.run(["npm", "run", "build"], cwd=str(web_path))
+        result = subprocess.run(["pnpm", "build"], cwd=str(web_path))
         
         if result.returncode == 0:
             console.print("[green]✓[/green] 前端构建成功")
@@ -159,7 +165,7 @@ def build_clean():
     for target in ["debug", "release"]:
         target_path = project_root / "target" / target
         if target_path.exists():
-            subprocess.run(["rm", "-rf", str(target_path)], check=False)
+            shutil.rmtree(target_path, ignore_errors=True)
             console.print(f"删除 target/{target}")
     
     console.print("[green]✓[/green] 清理完成")

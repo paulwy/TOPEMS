@@ -1,10 +1,11 @@
+# syntax=docker/dockerfile:1
 # TOPEMS MES Service Dockerfile
 # Multi-stage build optimized for workspace
 
 # ============================================
 # Stage 1: Build
 # ============================================
-FROM rust:1.78-alpine AS builder
+FROM rust:nightly-2026-07-01-alpine AS builder
 
 WORKDIR /app
 
@@ -17,7 +18,9 @@ COPY lib ./lib
 COPY svc/mes ./svc/mes
 
 # Build the service
-RUN cargo build --release -p topems-mes
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/app/target \
+    cargo build --release -p topems-mes
 
 # ============================================
 # Stage 2: Runtime

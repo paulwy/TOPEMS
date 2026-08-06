@@ -21,7 +21,7 @@ impl TenantService {
 
     pub async fn list_factory_maps(&self) -> Result<Vec<FactoryMap>, sqlx::Error> {
         sqlx::query_as::<_, FactoryMap>(
-            "SELECT * FROM gis.factory_maps WHERE tenant_id = $1 ORDER BY created_at DESC",
+            "SELECT * FROM gis.factory_maps WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 100",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)

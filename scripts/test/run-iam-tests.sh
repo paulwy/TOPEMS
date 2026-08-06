@@ -116,7 +116,7 @@ run_backend_tests() {
 
     # 运行 IAM 模块测试
     echo -e "${YELLOW}2. 运行 IAM 模块测试 (svc/unified-core/tests/iam_permission_tests.rs)${NC}"
-    cargo test --package unified-core-service --test iam_permission_tests 2>&1 || true
+    cargo test --package topems-unified-core --test iam_permission_tests 2>&1 || true
     echo ""
 
     echo -e "${GREEN}后端测试完成${NC}"

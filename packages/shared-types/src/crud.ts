@@ -152,10 +152,10 @@ export interface CrudPageApiAdapter<T = Record<string, unknown>> {
 
 /**
  * 原始 CRUD API 接口
- * 与 schemas/_shared/adapterFactory.ts 中 CrudApi 兼容（list 参数放宽为 any）
+ * 与 schemas/_shared/adapterFactory.ts 中 CrudApi 兼容
  */
 export interface CrudApiClient<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
-  list: (params?: any) => Promise<{
+  list: (params?: Record<string, unknown>) => Promise<{
     success?: boolean;
     code?: number;
     message?: string;

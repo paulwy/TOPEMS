@@ -1,14 +1,32 @@
 use std::num::NonZeroUsize;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 
 use lru::LruCache;
 
+struct CacheEntry<V> {
+    value: V,
+    inserted_at: Instant,
+}
+
+impl<V> CacheEntry<V> {
+    fn new(value: V) -> Self {
+        Self {
+            value,
+            inserted_at: Instant::now(),
+        }
+    }
+
+    fn is_expired(&self, ttl: Duration) -> bool {
+        Instant::now().duration_since(self.inserted_at) > ttl
+    }
+}
+
 pub struct GisCache {
-    factory_maps: RwLock<LruCache<String, serde_json::Value>>,
-    device_locations: RwLock<LruCache<String, serde_json::Value>>,
-    geodata: RwLock<LruCache<String, serde_json::Value>>,
-    statistics: RwLock<LruCache<String, serde_json::Value>>,
+    factory_maps: RwLock<LruCache<String, CacheEntry<serde_json::Value>>>,
+    device_locations: RwLock<LruCache<String, CacheEntry<serde_json::Value>>>,
+    geodata: RwLock<LruCache<String, CacheEntry<serde_json::Value>>>,
+    statistics: RwLock<LruCache<String, CacheEntry<serde_json::Value>>>,
     ttl: Duration,
 }
 
@@ -73,12 +91,16 @@ impl GisCache {
 
     async fn get_entry(
         &self,
-        cache: &RwLock<LruCache<String, serde_json::Value>>,
+        cache: &RwLock<LruCache<String, CacheEntry<serde_json::Value>>>,
         key: &str,
     ) -> Option<serde_json::Value> {
         let mut cache = cache.write().await;
-        if let Some(value) = cache.get(key) {
-            Some(value.clone())
+        if let Some(entry) = cache.get(key) {
+            if entry.is_expired(self.ttl) {
+                cache.pop(key);
+                return None;
+            }
+            Some(entry.value.clone())
         } else {
             None
         }
@@ -86,12 +108,12 @@ impl GisCache {
 
     async fn set_entry(
         &self,
-        cache: &RwLock<LruCache<String, serde_json::Value>>,
+        cache: &RwLock<LruCache<String, CacheEntry<serde_json::Value>>>,
         key: &str,
         value: serde_json::Value,
     ) {
         let mut cache = cache.write().await;
-        cache.put(key.to_string(), value);
+        cache.put(key.to_string(), CacheEntry::new(value));
     }
 
     pub async fn invalidate_all(&self) {

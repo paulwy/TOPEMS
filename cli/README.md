@@ -10,17 +10,18 @@ python -m venv .venv
 source .venv/bin/activate  # Linux/macOS
 # .venv\Scripts\activate   # Windows
 
-pip install pyyaml click rich httpx
+# 以 editable 模式安装（自动安装 pyyaml/click/rich/httpx 依赖，并注册 topems 命令）
+pip install -e .
 ```
 
 ## 快速开始
 
 ```bash
-# 设置环境变量
-export PYTHONPATH=/path/to/TOPEMS/cli/src
-
-# 查看帮助
+# 查看帮助（pip install -e . 后无需手动设置 PYTHONPATH）
 python -m topems_cli --help
+
+# 或直接使用入口脚本
+./bin/topems --help
 ```
 
 ## 命令
@@ -57,12 +58,15 @@ topems start iam pm hrm
 topems start -m core
 topems start -m erp
 
-# 启动所有服务
+# 启动所有服务（含前端）
 topems start --all
+
+# 仅启动后端，不启动前端
+topems start --all --no-frontend
 
 # 停止服务
 topems stop iam
-topems stop --all
+topems stop --all        # 同时停止前端
 ```
 
 ### 自动修复功能
@@ -204,49 +208,55 @@ topems docker exec iam bash
 
 ## 服务模块
 
+> 与 `config/services.yaml` 的 `module_groups` 保持一致
+
 | 模块 | 服务 |
 |------|------|
-| **core** | iam, pm, notification, portal, flow, integration |
-| **erp** | erp, hrm, crm |
-| **plm** | rs, lims, pdm, doc |
-| **mes** | mes, qms, ehs |
-| **scm** | scm, srm, wms |
-| **infra** | file, mail, im, gis |
-| **analytics** | bi, report, ai |
-| **ext** | mobile |
+| **core** | unified-core (iam) |
+| **erp** | erp, finance, ai |
+| **collaboration** | hrm, pm, crm |
+| **manufacturing** | mes, pdm |
+| **supply-chain** | scm, wms, srm |
+| **quality-rd** | qms, lims, ehs, rd |
+| **analytics** | bi, portal |
+| **infrastructure** | mobile, gis, integration |
+| **master-data** | master-data |
+| **extension** | search, communication, billing, ticket, feedback |
 
 ## 端口分配
 
-| 服务 | 端口 |
-|------|------|
-| IAM | 8000 |
-| PM | 8001 |
-| Notification | 8002 |
-| Portal | 8003 |
-| Flow | 8004 |
-| Integration | 8005 |
-| ERP | 8010 |
-| HRM | 8011 |
-| CRM | 8012 |
-| RS | 8020 |
-| LIMS | 8022 |
-| PDM | 8023 |
-| DOC | 8024 |
-| MES | 8030 |
-| QMS | 8031 |
-| EHS | 8032 |
-| SCM | 8040 |
-| SRM | 8041 |
-| WMS | 8042 |
-| File | 8050 |
-| Mail | 8051 |
-| IM | 8052 |
-| GIS | 8053 |
-| BI | 8060 |
-| Report | 8061 |
-| AI | 8062 |
-| Mobile | 8070 |
-| Frontend | 3000 |
+> 与 `scripts/topems.sh` 的 `SERVICES_CONFIG` 保持一致
+
+| 服务 | 端口 | 说明 |
+|------|------|------|
+| unified-core (iam) | 8000 | 统一核心服务 |
+| erp | 8010 | 企业资源计划 |
+| finance | 8011 | 财务管理 |
+| ai | 8013 | AI 服务 |
+| hrm | 8020 | 人力资源 |
+| pm | 8023 | 项目管理 |
+| crm | 8029 | 客户关系 |
+| mes | 8030 | 制造执行 |
+| pdm | 8031 | 产品数据 |
+| scm | 8040 | 供应链 |
+| wms | 8041 | 仓储管理 |
+| srm | 8042 | 供应商管理 |
+| qms | 8050 | 质量管理 |
+| lims | 8051 | 实验室管理 |
+| ehs | 8052 | 环境安全 |
+| rd | 8053 | 研发管理 |
+| bi | 8060 | 商业智能 |
+| portal | 8063 | 企业门户 |
+| mobile | 8070 | 移动端 |
+| gis | 8071 | 地理信息 |
+| integration | 8072 | 系统集成 |
+| search | 8082 | 搜索服务 |
+| communication | 8084 | 通讯服务 |
+| billing | 8085 | 计费服务 |
+| ticket | 8086 | 工单服务 |
+| feedback | 8087 | 反馈服务 |
+| master-data | 8090 | 主数据 |
+| Frontend | 3000 | 前端 |
 
 ## 配置文件
 

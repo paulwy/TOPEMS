@@ -22,7 +22,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: unified-core-service
+            name: topems-unified-core
             port:
               number: 8000
       # ERP API
@@ -142,7 +142,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: unified-core-service
+            name: topems-unified-core
             port:
               number: 8000
       # Portal API
@@ -166,7 +166,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: unified-core-service
+            name: topems-unified-core
             port:
               number: 8000
       # Analytics API（与 BI 共端口）
@@ -222,6 +222,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: unified-core-service
+            name: topems-unified-core
             port:
               number: 8000

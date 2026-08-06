@@ -1,9 +1,8 @@
 use axum::{routing::get, Router};
-use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use topems_shared::{
-    auth_middleware, create_cors_layer, init_telemetry, register_routes_with_legacy_alias,
-    AuthState,
+    auth_middleware, create_cors_layer, create_database_pool, init_telemetry,
+    register_routes_with_legacy_alias, AuthState, DatabaseConfig,
 };
 use utoipa::OpenApi;
 
@@ -23,12 +22,21 @@ async fn main() {
         std::process::exit(1);
     });
 
-    let pool = match PgPoolOptions::new()
-        .max_connections(20)
-        .acquire_timeout(std::time::Duration::from_secs(30))
-        .connect(&database_url)
-        .await
-    {
+    let db_config = DatabaseConfig {
+        url: database_url,
+        max_connections: std::env::var("DB_MAX_CONNECTIONS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(10),
+        min_connections: Some(3),
+        connect_timeout: Some(30),
+        idle_timeout: Some(300),
+        max_lifetime: Some(1800),
+        test_interval: Some(60),
+        enable_connection_reuse: Some(true),
+    };
+
+    let pool = match create_database_pool(&db_config).await {
         Ok(p) => {
             tracing::info!("Database connection successful");
             p

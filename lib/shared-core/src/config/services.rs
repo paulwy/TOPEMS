@@ -164,7 +164,7 @@ impl ServiceRegistry {
             },
             // === 数据分析/门户 (8060-8069) ===
             ServiceConfig {
-                name: "analytics-service".to_string(),
+                name: "topems-analytics".to_string(),
                 display_name: "商业智能".to_string(),
                 description: "数据分析与报表（含原 bi/report 功能）".to_string(),
                 port: 8060,
@@ -276,7 +276,7 @@ pub fn get_default_port(service_name: &str) -> u16 {
         "topems-lims" => 8051,
         "topems-ehs" => 8052,
         "topems-rd" => 8053,
-        "analytics-service" => 8060,
+        "topems-analytics" => 8060,
         "topems-portal" => 8063,
         "topems-mobile" => 8070,
         "topems-gis" => 8071,
@@ -304,7 +304,7 @@ pub fn get_service_name_by_port(port: u16) -> Option<&'static str> {
         8051 => Some("topems-lims"),
         8052 => Some("topems-ehs"),
         8053 => Some("topems-rd"),
-        8060 => Some("analytics-service"),
+        8060 => Some("topems-analytics"),
         8063 => Some("topems-portal"),
         8070 => Some("topems-mobile"),
         8071 => Some("topems-gis"),

@@ -128,14 +128,14 @@ for svc in "${UPDATE_SERVICES[@]}"; do
             systemctl start "topems-${svc}.service"
             echo -e "${GREEN}✓ Started ${svc}-service${NC}"
         fi
-    elif [[ -f "target/release/unified-core-service" && "$svc" == "unified-core" ]]; then
+    elif [[ -f "target/release/topems-unified-core" && "$svc" == "unified-core" ]]; then
         systemctl stop "topems-unified-core.service" 2>/dev/null || true
-        cp "target/release/unified-core-service" "${PREFIX}/bin/unified-core-service"
-        chmod +x "${PREFIX}/bin/unified-core-service"
-        echo -e "${GREEN}✓ Updated unified-core-service${NC}"
+        cp "target/release/topems-unified-core" "${PREFIX}/bin/topems-unified-core"
+        chmod +x "${PREFIX}/bin/topems-unified-core"
+        echo -e "${GREEN}✓ Updated topems-unified-core${NC}"
         if [[ "$RESTART" == true ]]; then
             systemctl start "topems-unified-core.service"
-            echo -e "${GREEN}✓ Started unified-core-service${NC}"
+            echo -e "${GREEN}✓ Started topems-unified-core${NC}"
         fi
     else
         echo -e "${YELLOW}⚠ Binary for ${svc} not found${NC}"

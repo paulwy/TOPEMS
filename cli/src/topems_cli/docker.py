@@ -18,9 +18,8 @@ class DockerManager:
 
     def _find_project_root(self) -> str:
         """查找项目根目录"""
-        if self._is_windows:
-            return str(Path.home() / "TOPEMS")
-        return str(Path.home() / "TOPEMS")
+        # 从当前文件位置向上查找项目根目录（与 manager.py 一致）
+        return str(Path(__file__).parent.parent.parent.parent.parent)
 
     def _get_docker_command(self) -> str:
         """获取 docker 命令（Windows 上可能是 docker.exe）"""

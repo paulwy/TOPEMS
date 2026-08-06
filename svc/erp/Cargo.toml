@@ -24,7 +24,6 @@ reqwest = { workspace = true, features = ["blocking"] }
 topems-shared = { path = "../../lib" }
 utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
-dashmap.workspace = true
 lazy_static.workspace = true
 regex.workspace = true
 prometheus.workspace = true

@@ -25,7 +25,6 @@ prometheus.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
 csv.workspace = true
-dashmap.workspace = true
 
 [[bin]]
 name = "topems-lims"

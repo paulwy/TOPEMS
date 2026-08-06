@@ -32,8 +32,10 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
         let search_path = search_path.clone();
         Box::pin(async move {
             debug!("after_connect: setting search_path to {}", search_path);
-            let query = format!("SET search_path TO {}", search_path);
-            let result = sqlx::query(&query).execute(conn).await;
+            let result = sqlx::query("SELECT set_config('search_path', $1, false)")
+                .bind(&search_path)
+                .execute(conn)
+                .await;
             result.map_err(|e| {
                 error!("Failed to set search path: {}", e);
                 e

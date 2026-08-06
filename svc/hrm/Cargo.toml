@@ -22,7 +22,6 @@ anyhow.workspace = true
 thiserror.workspace = true
 topems-shared = { path = "../../lib" }
 utoipa.workspace = true
-dashmap.workspace = true
 lazy_static.workspace = true
 regex.workspace = true
 axum-prometheus.workspace = true

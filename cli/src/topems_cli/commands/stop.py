@@ -50,6 +50,11 @@ def stop(service: str, module: str, all: bool, force: bool):
         success = manager.stop_service(svc_name, force=force)
         results[svc_name] = success
 
+    # 停止前端（--all 时自动包含）
+    if all:
+        console.print("[cyan]停止前端服务...[/cyan]")
+        manager.stop_frontend(force=force)
+
     # 显示结果
     console.print()
     success_count = sum(1 for v in results.values() if v)

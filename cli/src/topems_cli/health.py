@@ -3,21 +3,11 @@
 import asyncio
 import socket
 import time
-from dataclasses import dataclass
 from typing import Optional
 
 import httpx
 
-
-@dataclass
-class HealthCheckResult:
-    """健康检查结果"""
-    service_name: str
-    port: int
-    is_healthy: bool
-    response_time_ms: Optional[float] = None
-    message: str = ""
-    error: Optional[str] = None
+from .models import HealthCheckResult
 
 
 def check_port(host: str, port: int, timeout: float = 1.0) -> bool:

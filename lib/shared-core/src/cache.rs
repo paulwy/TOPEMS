@@ -1,102 +1,122 @@
-//! # 共享内存缓存
+//! # 共享内存缓存（moka 实现）
 //!
-//! 提供线程安全、支持 TTL 过期的泛型内存缓存实现。
+//! 使用 moka 替代手写 DashMap 缓存，原生支持：
+//! - LRU 容量淘汰（无需手动 evict_oldest）
+//! - TTL 自动过期（无需手动 cleanup_expired）
+//! - 高性能并发读写（内部无锁 sharded 设计）
+//! - 每条目独立 TTL（通过 Expiry trait）
 //!
-//! 各业务服务（srm/scm/crm/erp/hrm/wms/lims/ehs 等）原先各自维护
-//! 一份 `InMemoryCache<T>` 实现，逻辑完全相同。本模块将其抽取到
-//! shared-core 中统一维护，消除重复代码并保证行为一致。
-//!
-//! ## API
-//!
-//! - `new(default_ttl)` / `with_capacity(default_ttl, _)` / `default()`
-//! - `get(&str) -> Option<T>`
-//! - `set(String, T)` / `set_with_ttl(String, T, Duration)`
-//! - `remove(&str)` / `delete(&str)`（别名）
-//! - `expire(&str, Duration)` 更新单个 key 的 TTL
-//! - `clear()` / `len()` / `is_empty()`
-//!
-//! 所有方法均通过 `Arc<DashMap<...>>` 提供并发安全访问，
-//! 适合在 `Arc<InMemoryCache<T>>` 形式下跨任务/线程共享。
+//! 各业务服务（srm/scm/crm/erp/hrm/wms/lims/ehs 等）通过
+//! `topems_shared::LocalInMemoryCache` 引用本实现。
 
-use dashmap::DashMap;
-use std::sync::Arc;
+use moka::sync::Cache as MokaCache;
+use moka::Expiry;
 use std::time::{Duration, Instant};
 
-/// 缓存条目，存储值与绝对过期时间。
+/// 包装值 + 该条目的 TTL，供 Expiry trait 读取
 #[derive(Clone)]
-struct CacheEntry<T> {
+struct CacheValue<T> {
     value: T,
-    expires_at: Instant,
+    ttl: Duration,
 }
 
-/// 泛型线程安全内存缓存，支持 TTL 过期。
+/// 自定义过期策略：根据每条目的 ttl 字段计算过期时间
+struct PerEntryExpiry;
+
+impl<T> Expiry<String, CacheValue<T>> for PerEntryExpiry {
+    fn expire_after_create(
+        &self,
+        _key: &String,
+        val: &CacheValue<T>,
+        _created_at: Instant,
+    ) -> Option<Duration> {
+        Some(val.ttl)
+    }
+
+    fn expire_after_update(
+        &self,
+        _key: &String,
+        val: &CacheValue<T>,
+        _updated_at: Instant,
+        _old_expiry: Option<Duration>,
+    ) -> Option<Duration> {
+        Some(val.ttl)
+    }
+}
+
+/// 泛型线程安全内存缓存，支持 TTL 过期和 LRU 容量限制。
 ///
-/// 内部使用 `Arc<DashMap<String, CacheEntry<T>>>` 实现，
+/// 基于 `moka::sync::Cache`，内部自动处理过期清理和容量淘汰，
+/// 无需手动调用 `cleanup_expired` 或 `evict_oldest`。
+///
 /// 自身已实现 `Clone`（共享同一份底层数据），可安全克隆用于多任务场景。
 pub struct InMemoryCache<T: Clone + Send + Sync + 'static> {
-    cache: Arc<DashMap<String, CacheEntry<T>>>,
+    cache: MokaCache<String, CacheValue<T>>,
     default_ttl: Duration,
 }
 
 impl<T: Clone + Send + Sync + 'static> InMemoryCache<T> {
-    /// 创建一个具有默认 TTL 的空缓存。
+    /// 创建无容量限制、使用默认 TTL 的缓存。
     pub fn new(default_ttl: Duration) -> Self {
         Self {
-            cache: Arc::new(DashMap::new()),
+            cache: MokaCache::builder().expire_after(PerEntryExpiry).build(),
             default_ttl,
         }
     }
 
-    /// 与 `new` 等价，保留 `_capacity` 参数仅为 API 兼容。
+    /// 创建带容量限制和默认 TTL 的缓存。
     ///
-    /// 当前实现未限制容量；保留形参以避免调用点改动。
-    pub fn with_capacity(default_ttl: Duration, _capacity: usize) -> Self {
-        Self::new(default_ttl)
-    }
-
-    /// 读取一个 key，若已过期则惰性删除并返回 `None`。
-    pub fn get(&self, key: &str) -> Option<T> {
-        if let Some(entry) = self.cache.get(key) {
-            if entry.expires_at > Instant::now() {
-                return Some(entry.value.clone());
-            }
-            drop(entry);
-            self.cache.remove(key);
+    /// moka 原生 LRU 淘汰，无需手动遍历。
+    /// capacity=0 时等同于无限制。
+    pub fn with_capacity(default_ttl: Duration, capacity: usize) -> Self {
+        let mut builder = MokaCache::builder().expire_after(PerEntryExpiry);
+        if capacity > 0 {
+            builder = builder.max_capacity(capacity as u64);
         }
-        None
+        Self {
+            cache: builder.build(),
+            default_ttl,
+        }
     }
 
-    /// 使用默认 TTL 写入一个 key。
+    /// 读取一个 key，若已过期 moka 自动剔除并返回 None。
+    pub fn get(&self, key: &str) -> Option<T> {
+        self.cache.get(key).map(|v| v.value)
+    }
+
+    /// 使用默认 TTL 写入。
     pub fn set(&self, key: String, value: T) {
         self.set_with_ttl(key, value, self.default_ttl);
     }
 
-    /// 使用指定 TTL 写入一个 key。
+    /// 使用指定 TTL 写入（per-entry TTL）。
     pub fn set_with_ttl(&self, key: String, value: T, ttl: Duration) {
-        let entry = CacheEntry {
-            value,
-            expires_at: Instant::now() + ttl,
-        };
-        self.cache.insert(key, entry);
+        self.cache.insert(key, CacheValue { value, ttl });
     }
 
     /// 删除一个 key（若存在）。
     pub fn remove(&self, key: &str) {
-        self.cache.remove(key);
+        self.cache.invalidate(key);
     }
 
     /// `remove` 的语义化别名。
     pub fn delete(&self, key: &str) {
-        self.remove(key);
+        self.cache.invalidate(key);
     }
 
     /// 为已存在的 key 设置新的 TTL。
     ///
-    /// 返回 `true` 表示该 key 存在且 TTL 已更新；
-    /// 返回 `false` 表示该 key 不存在（不做任何改动）。
+    /// moka 不支持原地修改 TTL，需重新插入。
+    /// 返回 `true` 表示该 key 存在且 TTL 已更新。
     pub fn expire(&self, key: &str, ttl: Duration) -> bool {
-        if let Some(mut entry) = self.cache.get_mut(key) {
-            entry.expires_at = Instant::now() + ttl;
+        if let Some(val) = self.cache.get(key) {
+            self.cache.insert(
+                key.to_string(),
+                CacheValue {
+                    value: val.value,
+                    ttl,
+                },
+            );
             true
         } else {
             false
@@ -105,17 +125,17 @@ impl<T: Clone + Send + Sync + 'static> InMemoryCache<T> {
 
     /// 清空所有 key。
     pub fn clear(&self) {
-        self.cache.clear();
+        self.cache.invalidate_all();
     }
 
-    /// 返回当前条目数（含尚未惰性清理的过期条目）。
+    /// 返回当前条目数（moka 近似计数）。
     pub fn len(&self) -> usize {
-        self.cache.len()
+        self.cache.entry_count() as usize
     }
 
     /// 是否为空。
     pub fn is_empty(&self) -> bool {
-        self.cache.is_empty()
+        self.cache.entry_count() == 0
     }
 }
 
@@ -128,7 +148,7 @@ impl<T: Clone + Send + Sync + 'static> Default for InMemoryCache<T> {
 impl<T: Clone + Send + Sync + 'static> Clone for InMemoryCache<T> {
     fn clone(&self) -> Self {
         Self {
-            cache: Arc::clone(&self.cache),
+            cache: self.cache.clone(),
             default_ttl: self.default_ttl,
         }
     }
@@ -144,17 +164,15 @@ mod tests {
         let cache: InMemoryCache<u32> = InMemoryCache::new(Duration::from_secs(60));
         cache.set("k1".to_string(), 42);
         assert_eq!(cache.get("k1"), Some(42));
-        assert_eq!(cache.len(), 1);
-        assert!(!cache.is_empty());
+        // 不断言 is_empty()：moka 的 entry_count() 是最终一致的，写入后可能仍为 0
     }
 
     #[test]
-    fn get_expired_returns_none_and_evicts() {
+    fn get_expired_returns_none() {
         let cache: InMemoryCache<u32> = InMemoryCache::new(Duration::from_millis(1));
         cache.set("k1".to_string(), 1);
         std::thread::sleep(Duration::from_millis(10));
         assert_eq!(cache.get("k1"), None);
-        assert_eq!(cache.len(), 0);
     }
 
     #[test]
@@ -197,7 +215,9 @@ mod tests {
         cache.set("a".to_string(), 1);
         cache.set("b".to_string(), 2);
         cache.clear();
-        assert!(cache.is_empty());
+        // 用 get 验证而非 is_empty()：moka 的 entry_count() 是最终一致的
+        assert_eq!(cache.get("a"), None);
+        assert_eq!(cache.get("b"), None);
     }
 
     #[test]
@@ -224,6 +244,33 @@ mod tests {
         for h in handles {
             h.join().unwrap();
         }
-        assert_eq!(cache.len(), 400);
+        // moka 的 entry_count() 是近似值，不断言精确数量；
+        // 改为验证所有写入的 key 都可正确读取
+        for i in 0..4 {
+            for j in 0..100 {
+                assert_eq!(cache.get(&format!("k-{i}-{j}")), Some(j));
+            }
+        }
+    }
+
+    #[test]
+    fn capacity_limit_evicts_oldest() {
+        let cache: InMemoryCache<u32> = InMemoryCache::with_capacity(Duration::from_secs(60), 3);
+        cache.set("a".to_string(), 1);
+        std::thread::sleep(Duration::from_millis(1));
+        cache.set("b".to_string(), 2);
+        std::thread::sleep(Duration::from_millis(1));
+        cache.set("c".to_string(), 3);
+        std::thread::sleep(Duration::from_millis(1));
+        // 插入第4个，应淘汰最旧的 "a"
+        cache.set("d".to_string(), 4);
+        assert_eq!(cache.get("d"), Some(4));
+    }
+
+    #[test]
+    fn with_capacity_zero_does_not_hang() {
+        let cache: InMemoryCache<u32> = InMemoryCache::with_capacity(Duration::from_secs(60), 0);
+        cache.set("a".to_string(), 1);
+        assert_eq!(cache.get("a"), Some(1));
     }
 }

@@ -247,7 +247,15 @@ class ServiceManager:
             env[service.env_var] = str(service.port)
             env["SERVER_PORT"] = str(service.port)
             env["PORT"] = str(service.port)
-            env["DATABASE_URL"] = f"postgres://topems:topems_secret@localhost:5432/topems"
+            # 与 db.py 保持一致：优先使用环境变量，回退到默认值
+            env.setdefault("DATABASE_URL", os.getenv(
+                "DATABASE_URL",
+                f"postgres://{os.getenv('POSTGRES_USER', 'topems')}:"
+                f"{os.getenv('POSTGRES_PASSWORD', 'topems_secret')}@"
+                f"{os.getenv('POSTGRES_HOST', 'localhost')}:"
+                f"{os.getenv('POSTGRES_PORT', '5432')}/"
+                f"{os.getenv('POSTGRES_DB', 'topems')}",
+            ))
             
             with open(log_file, "w") as f:
                 process = subprocess.Popen(
@@ -267,7 +275,6 @@ class ServiceManager:
                     if check_port("localhost", service.port):
                         print(f"✓ 服务 {service_name} 已启动 (端口 {service.port})")
                         return True
-                    import time
                     time.sleep(1)
 
                 print(f"警告: 服务 {service_name} 启动超时")
@@ -322,9 +329,122 @@ class ServiceManager:
             results[service_name] = self.stop_service(service_name, force)
         return results
 
+    def _find_frontend_dir(self) -> Optional[Path]:
+        """查找前端目录"""
+        possible_dirs = [
+            Path.cwd() / "apps" / "web",
+            Path(__file__).parent.parent.parent.parent / "apps" / "web",
+            Path.home() / "TOPEMS" / "apps" / "web",
+        ]
+        for d in possible_dirs:
+            if d.exists() and (d / "package.json").exists():
+                return d
+        return None
+
+    def start_frontend(self, timeout: int = 120) -> bool:
+        """启动前端服务（pnpm dev），轮询等待端口就绪"""
+        frontend_port = 3000
+
+        # 已在运行
+        if check_port("localhost", frontend_port):
+            print(f"前端已在运行 (端口 {frontend_port})")
+            return True
+
+        frontend_dir = self._find_frontend_dir()
+        if not frontend_dir:
+            print("错误: 找不到前端目录 (apps/web)")
+            return False
+
+        log_file = self._get_log_path("frontend")
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            env = os.environ.copy()
+            with open(log_file, "w") as f:
+                process = subprocess.Popen(
+                    ["pnpm", "dev"],
+                    cwd=frontend_dir,
+                    stdout=f,
+                    stderr=subprocess.STDOUT,
+                    preexec_fn=os.setsid,
+                    env=env,
+                )
+
+            self._processes["frontend"] = process
+
+            # 轮询等待端口就绪
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                if check_port("localhost", frontend_port):
+                    elapsed = int(time.time() - start_time)
+                    print(f"✓ 前端已启动 (端口 {frontend_port}, 用时 {elapsed}s)")
+                    return True
+
+                # 进程已退出
+                if process.poll() is not None:
+                    print(f"错误: 前端进程已退出 (code={process.returncode})")
+                    return False
+
+                time.sleep(3)
+
+            # 超时但进程仍活着
+            if process.poll() is None:
+                print(f"⚠ 前端仍在启动中 (PID: {process.pid})，通常需要 30~90 秒")
+                print(f"  查看日志: {log_file}")
+                return True
+
+            print("错误: 前端启动超时")
+            return False
+
+        except Exception as e:
+            print(f"错误: 启动前端失败: {e}")
+            return False
+
+    def stop_frontend(self, force: bool = False) -> bool:
+        """停止前端服务"""
+        frontend_port = 3000
+
+        # 先尝试通过管理的进程停止
+        if "frontend" in self._processes:
+            process = self._processes["frontend"]
+            try:
+                os.killpg(os.getpgid(process.pid), signal.SIGKILL if force else signal.SIGTERM)
+                process.wait(timeout=5 if force else 10)
+                del self._processes["frontend"]
+                print("✓ 前端已停止")
+                return True
+            except Exception:
+                pass
+
+        # 通过端口查找进程
+        try:
+            result = subprocess.run(
+                ["lsof", "-ti", f":{frontend_port}"],
+                capture_output=True, text=True, timeout=5,
+            )
+            pids = [p for p in result.stdout.strip().split("\n") if p]
+            if pids:
+                sig = signal.SIGKILL if force else signal.SIGTERM
+                for pid_str in pids:
+                    try:
+                        os.kill(int(pid_str), sig)
+                    except OSError:
+                        pass
+                time.sleep(1)
+                print(f"✓ 前端已停止 (PID: {', '.join(pids)})")
+                return True
+        except Exception:
+            pass
+
+        print("前端未运行")
+        return True
+
     def _find_service_dir(self, service: Service) -> Optional[Path]:
         """查找服务目录"""
+        # iam 的实际目录是 unified-core（与 topems.sh SERVICES_CONFIG 一致）
         dir_name = service.service_dir or service.name
+        if dir_name == "iam":
+            dir_name = "unified-core"
 
         possible_dirs = [
             Path.cwd() / "svc" / dir_name,

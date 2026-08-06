@@ -57,7 +57,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: analytics-service
+  name: topems-analytics
   namespace: topems
 spec:
   type: ClusterIP

@@ -18,7 +18,7 @@
 #
 # 用法：
 #   ./scripts/dev/sqlx-prepare.sh                # 刷新全部可通过的包
-#   ./scripts/dev/sqlx-prepare.sh -p unified-core-service -p topems-finance
+#   ./scripts/dev/sqlx-prepare.sh -p topems-unified-core -p topems-finance
 #                                                # 只刷新指定 package(s)
 #   ./scripts/dev/sqlx-prepare.sh --check        # 只校验不修改（CI 用）
 #   ./scripts/dev/sqlx-prepare.sh --offline-test # 刷新后执行离线编译测试
@@ -153,7 +153,7 @@ fi
 if [ "$MODE" == "check" ]; then
   log "执行 sqlx 缓存 --check（通过 SQLX_OFFLINE cargo check 一组核心包）..."
   # 有 query! 宏使用且正常可编译的包清单（来自 grep 统计）
-  DEFAULT_CHECK_PKGS=(unified-core-service topems-finance topems-crm topems-erp topems-scm topems-srm topems-qms topems-wms topems-hrm topems-pm topems-billing topems-portal topems-master-data topems-communication topems-ticket topems-ai topems-feedback topems-search analytics-service topems-ehs topems-gis topems-integration topems-lims topems-mobile topems-pdm topems-rd topems-shared-ai)
+  DEFAULT_CHECK_PKGS=(topems-unified-core topems-finance topems-crm topems-erp topems-scm topems-srm topems-qms topems-wms topems-hrm topems-pm topems-billing topems-portal topems-master-data topems-communication topems-ticket topems-ai topems-feedback topems-search topems-analytics topems-ehs topems-gis topems-integration topems-lims topems-mobile topems-pdm topems-rd topems-shared-ai)
   # 若用户指定了 -p，则只 check 指定的
   if [ "${#CUSTOM_PKGS[@]}" -gt 0 ]; then
     CHECK_PKGS=("${CUSTOM_PKGS[@]}")
@@ -269,7 +269,7 @@ LEFTOVER=$(find svc lib -name ".sqlx" -type d 2>/dev/null | wc -l | tr -d ' ')
 # ---------- offline-test 模式：验证离线可用 ----------
 if [ "$MODE" == "offline-test" ]; then
   log "执行 SQLX_OFFLINE=true 离线编译验证（清空 DATABASE_URL）..."
-  TEST_PKGS=(unified-core-service topems-finance topems-crm topems-erp topems-scm topems-srm topems-qms topems-wms analytics-service topems-shared-ai)
+  TEST_PKGS=(topems-unified-core topems-finance topems-crm topems-erp topems-scm topems-srm topems-qms topems-wms topems-analytics topems-shared-ai)
   set +e
   FAIL_TEST=()
   for p in "${TEST_PKGS[@]}"; do

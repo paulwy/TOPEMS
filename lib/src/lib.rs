@@ -168,6 +168,11 @@ pub use permission::{
     ResourcePermission,
 };
 pub use permission_center::{check_permission_with_scope, PermissionCenterClient};
+/// 进程内内存缓存（moka 实现，接受 Duration 作为 TTL）
+/// 与 `cache::InMemoryCache`（接受 CacheConfig）不同，供各服务局部缓存使用。
+pub use topems_shared_core::cache::InMemoryCache as LocalInMemoryCache;
+/// 异步 L2 缓存（进程内 moka L1 + Redis L2），Redis 不可用时自动降级为纯 L1。
+pub use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 
 pub use middleware::{
     current_timestamp, department_middleware, enhanced_rate_limit_middleware, generate_nonce,
