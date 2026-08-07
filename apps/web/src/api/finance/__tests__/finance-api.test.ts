@@ -257,12 +257,21 @@ describe('Finance Module API Tests', () => {
       expect(instance.post).toHaveBeenCalledWith('/vouchers/vou-001/approve', {});
     });
 
-    it('batchApprove should call POST /vouchers/batch-approve with ids', async () => {
+    it('batchApprove should call POST /vouchers/batch/approve with voucher_ids', async () => {
       const { voucherApi } = await import('../voucher');
       await voucherApi.batchApprove(['vou-001', 'vou-002']);
       const instance = mockInstance;
-      expect(instance.post).toHaveBeenCalledWith('/vouchers/batch-approve', {
-        ids: ['vou-001', 'vou-002'],
+      expect(instance.post).toHaveBeenCalledWith('/vouchers/batch/approve', {
+        voucher_ids: ['vou-001', 'vou-002'],
+      });
+    });
+
+    it('batchSubmit should call POST /vouchers/batch/submit with voucher_ids', async () => {
+      const { voucherApi } = await import('../voucher');
+      await voucherApi.batchSubmit(['vou-001', 'vou-002']);
+      const instance = mockInstance;
+      expect(instance.post).toHaveBeenCalledWith('/vouchers/batch/submit', {
+        voucher_ids: ['vou-001', 'vou-002'],
       });
     });
 
@@ -280,12 +289,12 @@ describe('Finance Module API Tests', () => {
       expect(instance.post).toHaveBeenCalledWith('/vouchers/vou-001/post', {});
     });
 
-    it('batchPost should call POST /vouchers/batch-post with ids', async () => {
+    it('batchPost should call POST /vouchers/batch/post with voucher_ids', async () => {
       const { voucherApi } = await import('../voucher');
       await voucherApi.batchPost(['vou-001', 'vou-002']);
       const instance = mockInstance;
-      expect(instance.post).toHaveBeenCalledWith('/vouchers/batch-post', {
-        ids: ['vou-001', 'vou-002'],
+      expect(instance.post).toHaveBeenCalledWith('/vouchers/batch/post', {
+        voucher_ids: ['vou-001', 'vou-002'],
       });
     });
 

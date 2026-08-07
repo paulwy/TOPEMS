@@ -1,18 +1,40 @@
+# TOPEMS 项目专属 Cargo 配置
+#
+# 三层性能加速：
+#   1. sccache 全局缓存（跨 workspace/跨版本复用编译产物）
+#   2. 稀疏注册中心（sparse protocol）：index 下载速度提升 5–10×
+#   3. cargo-nextest 并行测试运行：测试速度 2–5×
+#
+# 注：[profile.*] 以工作区 Cargo.toml 为准（release: opt-level=3 + lto=thin + codegen-units=16；
+#   dev: opt-level=1 + codegen-units=256），本文件仅兜底默认值。
+
 [build]
 target-dir = "target"
+# sccache 编译缓存：跨 workspace / 跨版本 / 跨分支复用，典型命中命中率 40–70%
 rustc-wrapper = "sccache"
 
+[registries.crates-io]
+# 稀疏注册中心：替代旧式 git-based index，增量 crates.io 索引更新快 5–10×
+protocol = "sparse"
+
+[net]
+# 网络不稳定时 3 次重试（指数退避），避免因单次网络抖动导致整次构建失败
+retry = 3
+
 [test]
+# cargo-nextest：2–5× 测试执行速度，测试报告友好
 runner = "cargo-nextest run"
 
 [profile.release]
+# 与 workspace Cargo.toml 保持一致（兜底）
 opt-level = 3
 debug = false
 strip = true
 
 [profile.dev]
-opt-level = 0
-debug = true
+# 兜底：workspace Cargo.toml 中 opt-level=1 + codegen-units=256 为准
+opt-level = 1
+debug = 1
 
 [profile.test]
 opt-level = 1
@@ -21,3 +43,11 @@ split-debuginfo = "unpacked"
 
 [features]
 coverage = ["instrument-coverage"]
+
+# 注册中心镜像（国内环境可启用；USTC 镜像支持 sparse protocol）
+# 注释说明：如需启用，请取消下一节注释；或在 ~/.cargo/config.toml 中配置。
+# [source.crates-io]
+# replace-with = "ustc"
+#
+# [source.ustc]
+# registry = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"

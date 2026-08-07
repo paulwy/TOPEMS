@@ -1,14 +1,17 @@
 // AI 服务审计日志
+//
+// 本模块为 AI 服务的公共 API，当前已实现完整审计日志读写逻辑，
+// 后续将接入 AI 路由的中间件层，自动记录向量/文档/QA/分析/连接器操作。
+#![allow(dead_code)]
+
 use sqlx::PgPool;
 use uuid::Uuid;
 
 /// AI 服务审计日志操作
-#[allow(dead_code)]
 pub struct AiAuditService {
     pool: PgPool,
 }
 
-#[allow(dead_code)]
 impl AiAuditService {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
@@ -216,7 +219,6 @@ impl AiAuditService {
 
 /// 审计日志条目
 #[derive(Debug, Clone, sqlx::FromRow)]
-#[allow(dead_code)]
 pub struct AiAuditLogEntry {
     pub id: Uuid,
     pub action: String,

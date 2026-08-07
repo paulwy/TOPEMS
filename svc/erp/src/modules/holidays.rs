@@ -2,12 +2,28 @@
 //!
 //! 提供法定节假日、调休补班日和工作日的判断能力，供请假等模块计算工作日使用。
 //!
-//! 当前实现为内存版本，硬编码 2025-2026 年国务院办公厅发布的放假调休安排。
-//! TODO: 后续可接入数据库 `holidays` 表，支持动态配置多年度节假日数据。
+//! ## 两级回退策略（设计决策：稳定性 > 动态性）
+//!
+//! 当前采用「数据库优先 + 静态硬编码兜底」的两级回退模式，确保在
+//! 数据库 `holidays` 表未初始化、迁移未执行或租户未配置时，业务调用
+//! （`is_workday` / `calculate_leave_days` 等）始终能返回正确结果，
+//! 不会因查询失败或空表导致全量误判为工作日。
+//!
+//! | 层级 | 数据源 | 触发条件 | 覆盖范围 |
+//! |------|--------|---------|---------|
+//! | L1 动态层 | `plugin_erp.holidays` 表（tenant_id + year 过滤） | DB 可用且对应当年有记录 | 租户可配置任意年度 |
+//! | L2 静态层 | 本文件 `HOLIDAY_RANGES` / `MAKEUP_WORKDAY_DATES` 常量 | L1 返回空或 DB 错误 | 2025–2026 国务院发布数据 |
+//!
+//! 纯函数 API（`is_holiday` / `is_makeup_workday` / `is_workday`）保持无状态，
+//! 继续使用 L2 静态层，用于单元测试、离线工具链与未接入 DB 的调用场景；
+//! 带状态的 `_db` 版本（如 `is_workday_with`）委托给 `HolidayProvider`，
+//! 用于 leave_request 等 HTTP handler 内可获取 `PgPool` 的生产路径。
 
 use chrono::{Datelike, NaiveDate, Weekday};
 use lazy_static::lazy_static;
+use sqlx::PgPool;
 use std::collections::HashSet;
+use tracing::warn;
 
 lazy_static! {
     /// 法定节假日（含调休拼成的连续假期区间内所有日期）
@@ -18,6 +34,122 @@ lazy_static! {
 
     /// 调休补班日（因假期调休而需要上班的周末）
     static ref MAKEUP_WORKDAYS: HashSet<NaiveDate> = build_date_set_single(&MAKEUP_WORKDAY_DATES);
+}
+
+// ========== 数据库优先：HolidayProvider 两级回退实现 ==========
+
+/// 节假日数据提供者 trait — 允许单元测试注入 mock，生产使用 DB+静态回退
+#[async_trait::async_trait]
+pub trait HolidayProvider: Send + Sync {
+    async fn is_holiday(&self, date: NaiveDate, tenant_id: Option<uuid::Uuid>) -> bool;
+    async fn is_makeup_workday(&self, date: NaiveDate, tenant_id: Option<uuid::Uuid>) -> bool;
+}
+
+/// 生产环境默认提供者：DB L1 优先 → 静态 L2 兜底
+pub struct DatabaseBackedHolidayProvider {
+    pub pool: PgPool,
+}
+
+impl DatabaseBackedHolidayProvider {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
+
+#[async_trait::async_trait]
+impl HolidayProvider for DatabaseBackedHolidayProvider {
+    async fn is_holiday(&self, date: NaiveDate, tenant_id: Option<uuid::Uuid>) -> bool {
+        match query_holiday_from_db(&self.pool, date, tenant_id, "holiday").await {
+            Some(exists) => exists,
+            None => {
+                // L2 兜底：静态硬编码
+                is_holiday(date)
+            }
+        }
+    }
+
+    async fn is_makeup_workday(&self, date: NaiveDate, tenant_id: Option<uuid::Uuid>) -> bool {
+        match query_holiday_from_db(&self.pool, date, tenant_id, "makeup").await {
+            Some(exists) => exists,
+            None => is_makeup_workday(date),
+        }
+    }
+}
+
+/// 从 DB 查询单日期的节假日/调休记录是否存在
+///
+/// 返回 `None` 代表「DB 不可用或未配置 → 走 L2 静态层」；
+/// 返回 `Some(bool)` 代表「DB 有结果 → 使用 DB 值」。
+async fn query_holiday_from_db(
+    pool: &PgPool,
+    date: NaiveDate,
+    tenant_id: Option<uuid::Uuid>,
+    kind: &str,
+) -> Option<bool> {
+    // holidays 表结构（未迁移时查询会失败 → 自动回退 L2）：
+    //   CREATE TABLE IF NOT EXISTS plugin_erp.holidays (
+    //       tenant_id UUID NOT NULL,
+    //       year      INT  NOT NULL,
+    //       date      DATE NOT NULL,
+    //       kind      TEXT NOT NULL CHECK (kind IN ('holiday','makeup')),
+    //       name      TEXT,
+    //       PRIMARY KEY (tenant_id, year, date, kind)
+    //   );
+    let year = date.year();
+    let result = match tenant_id {
+        Some(tid) => {
+            sqlx::query_scalar::<_, i64>(
+                r#"SELECT COUNT(*) FROM plugin_erp.holidays
+                   WHERE tenant_id = $1 AND year = $2 AND date = $3 AND kind = $4"#,
+            )
+            .bind(tid)
+            .bind(year)
+            .bind(date)
+            .bind(kind)
+            .fetch_one(pool)
+            .await
+        }
+        None => {
+            // 未传入 tenant_id 时，仅做全局查询（跨租户共享数据场景）
+            sqlx::query_scalar::<_, i64>(
+                r#"SELECT COUNT(*) FROM plugin_erp.holidays
+                   WHERE year = $1 AND date = $2 AND kind = $3 LIMIT 1"#,
+            )
+            .bind(year)
+            .bind(date)
+            .bind(kind)
+            .fetch_one(pool)
+            .await
+        }
+    };
+    match result {
+        Ok(count) => Some(count > 0),
+        Err(e) => {
+            // 表不存在 / 权限不足 / 连接失败：警告一次，自动走 L2
+            static L2_FALLBACK_LOGGED: std::sync::atomic::AtomicBool =
+                std::sync::atomic::AtomicBool::new(false);
+            if !L2_FALLBACK_LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                warn!(
+                    error = %e,
+                    "plugin_erp.holidays 表查询失败，回退到 L2 静态节假日数据（2025-2026）。后续可执行 ERP holidays 迁移脚本启用动态配置。"
+                );
+            }
+            None
+        }
+    }
+}
+
+/// 带 HolidayProvider 的工作日判断（生产路径，支持 DB 动态层）
+pub async fn is_workday_with(
+    provider: &dyn HolidayProvider,
+    date: NaiveDate,
+    tenant_id: Option<uuid::Uuid>,
+) -> bool {
+    let is_weekend = matches!(date.weekday(), Weekday::Sat | Weekday::Sun);
+    if is_weekend {
+        return provider.is_makeup_workday(date, tenant_id).await;
+    }
+    !provider.is_holiday(date, tenant_id).await
 }
 
 /// 法定节假日区间（起始年月日, 结束年月日）

@@ -132,6 +132,8 @@ pub async fn check_phase_completion(
 }
 
 #[instrument(level = "info", skip(db))]
+// 项目时间线：聚合阶段/里程碑/交付物完整时间轴
+// 当前为未连接路由的预实现，后续 /projects/{id}/timeline 端点将调用此函数。
 #[allow(dead_code)]
 pub async fn get_project_timeline(
     db: &PgPool,

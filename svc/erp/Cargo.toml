@@ -31,6 +31,7 @@ rust_decimal.workspace = true
 rand.workspace = true
 base64 = "0.22"
 hex = "0.4"
+async-trait.workspace = true
 
 [dev-dependencies]
 tokio-test.workspace = true

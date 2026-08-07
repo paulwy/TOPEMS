@@ -25,17 +25,14 @@ impl std::fmt::Display for ProjectRole {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum ProjectPermission {
     Read,
     Update,
-    #[allow(dead_code)]
     Delete,
-    #[allow(dead_code)]
     ManageMembers,
     ManagePhases,
-    #[allow(dead_code)]
     ManageMilestones,
-    #[allow(dead_code)]
     All,
 }
 
