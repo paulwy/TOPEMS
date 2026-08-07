@@ -1,14 +1,14 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V67.1 | **更新日期**: 2026-08-07
-> **服务总数**: 28 个（含 unified-core + master-data + lowcode 占位） | **前端页面**: 423 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 P0×10 + P1×20 修复 ✅ · 剩余 P1×5 + P2×20 + P3×12）
+> **版本**: V67.1 | **更新日期**: 2026-08-08
+> **服务总数**: 28 个（含 unified-core + master-data + lowcode 占位） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
+> **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅）
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 28/28 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
-> **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 5 服务试点（CRM/HRM/WMS/Analytics）；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP2 拆分达标**（DocumentsPage -45.5% / ProfilePage -56.4%）
+> **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 21 服务迁移；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP5 拆分达标**（AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72% / IAM 路径归化）
 > **V67.1 第四轮架构审计**: 四探针并行（前端/后端/系统集成/代码质量），发现 **67 项问题**（P0×10 · P1×25 · P2×20 · P3×12），聚焦效率·性能·节省空间
-> **V67.1 P0 修复**: 10 项 P0 全部闭环 ✅（4 路由前缀 404 + 2 Docker 部署阻断 + 1 ERP COUNT bug + 1 SCM 路由 404 + 1 安全 stub + 1 宏创建）
-> **V67.1 P1 修复**: 20 项 P1 闭环 ✅（P1-1~3 + P1-6~P1-15：审计统一/PaginationParams统一/ApiResponse统一/cache.rs删除/GIS DataTable评估完成）
+> **V67.1 修复完成**: P0×10 + P1×25 + P2×20 + P3×12 = **67/67 全闭环** ✅（含 28 服务 plugin schema · 55 处 println→tracing · 17 文件死代码清理 · 12 服务 Docker 锚点压缩 · ERP COUNT 修 bug 等）
+> **V67.1 提交汇总**: 6 个语义提交（262 文件 · +8889 / -9196 · 净减 307 行）—— feat(shared) × 1 · refactor × 2 · fix × 2 · chore × 1
 
 ---
 
