@@ -168,7 +168,7 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
     if (!approval) return;
     if (!comment.trim() && approvalAction === 'reject') {
       addNotification({
-        title: t('common.notice'),
+        title: t('common.info'),
         message: t('workflow.approval_detail.message.please_input_reject_reason'),
         type: 'info',
       });
@@ -185,7 +185,7 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
   const handleDelegate = () => {
     if (!approval || !delegateTarget.trim()) {
       addNotification({
-        title: t('common.notice'),
+        title: t('common.info'),
         message: t('workflow.approval_detail.message.please_input_delegate_target'),
         type: 'info',
       });

@@ -1,7 +1,7 @@
-import React from 'react';
-import { Box, Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ColumnDef } from '@tanstack/react-table';
+import { DataTable as CommonDataTable } from '@/components/ui/DataTable';
 import { StatusChip } from './StatusChip';
 import type {
   DevicePoint,
@@ -20,400 +20,235 @@ interface DataTableProps {
 
 export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
   const { t } = useTranslation();
-  const theme = useTheme();
 
-  if (data.length === 0) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 6 }}>
-        <Typography color='text.secondary'>{t('gis.index.empty_no_data')}</Typography>
-      </Box>
-    );
-  }
+  const devicePointColumns = useMemo<ColumnDef<DevicePoint>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: t('gis.index.col_name'),
+        cell: ({ row }) => row.original.name,
+      },
+      {
+        accessorKey: 'device_type',
+        header: t('gis.index.col_type'),
+        cell: ({ row }) => row.original.device_type,
+      },
+      {
+        accessorKey: 'coordinates',
+        header: t('gis.index.col_coordinates'),
+        cell: ({ row }) => (
+          <span style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+            {row.original.latitude?.toFixed(4)}, {row.original.longitude?.toFixed(4)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: t('gis.index.col_status'),
+        cell: ({ row }) => <StatusChip status={row.original.status} />,
+      },
+    ],
+    [t],
+  );
+
+  const pipelineColumns = useMemo<ColumnDef<Pipeline>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: t('gis.index.col_name'),
+        cell: ({ row }) => row.original.name,
+      },
+      {
+        accessorKey: 'pipeline_type',
+        header: t('gis.index.col_type'),
+        cell: ({ row }) => row.original.pipeline_type,
+      },
+      {
+        accessorKey: 'start_point',
+        header: t('gis.index.col_start_point'),
+        cell: ({ row }) => (
+          <span style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+            {row.original.start_point
+              ? `${row.original.start_point[0].toFixed(4)}, ${row.original.start_point[1].toFixed(4)}`
+              : ''}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'end_point',
+        header: t('gis.index.col_end_point'),
+        cell: ({ row }) => (
+          <span style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+            {row.original.end_point
+              ? `${row.original.end_point[0].toFixed(4)}, ${row.original.end_point[1].toFixed(4)}`
+              : ''}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: t('gis.index.col_status'),
+        cell: ({ row }) => <StatusChip status={row.original.status} />,
+      },
+    ],
+    [t],
+  );
+
+  const storageLocationColumns = useMemo<ColumnDef<StorageLocation>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: t('gis.index.col_name'),
+        cell: ({ row }) => row.original.name,
+      },
+      {
+        accessorKey: 'location_type',
+        header: t('gis.index.col_type'),
+        cell: ({ row }) => row.original.location_type,
+      },
+      {
+        accessorKey: 'capacity',
+        header: t('gis.index.col_capacity'),
+        cell: ({ row }) => row.original.capacity,
+      },
+      {
+        accessorKey: 'coordinates',
+        header: t('gis.index.col_coordinates'),
+        cell: ({ row }) => (
+          <span style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+            {row.original.latitude?.toFixed(4)}, {row.original.longitude?.toFixed(4)}
+          </span>
+        ),
+      },
+    ],
+    [t],
+  );
+
+  const evidenceRecordColumns = useMemo<ColumnDef<EvidenceRecord>[]>(
+    () => [
+      {
+        accessorKey: 'title',
+        header: t('gis.index.col_title'),
+        cell: ({ row }) => row.original.title,
+      },
+      {
+        accessorKey: 'evidence_type',
+        header: t('gis.index.col_type'),
+        cell: ({ row }) => row.original.evidence_type,
+      },
+      {
+        accessorKey: 'recorded_by',
+        header: t('gis.index.col_recorder'),
+        cell: ({ row }) => row.original.recorded_by,
+      },
+      {
+        accessorKey: 'recorded_at',
+        header: t('gis.index.col_time'),
+        cell: ({ row }) =>
+          row.original.recorded_at ? new Date(row.original.recorded_at).toLocaleString() : '',
+      },
+    ],
+    [t],
+  );
+
+  const factoryMapColumns = useMemo<ColumnDef<FactoryMap>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: t('gis.index.col_name'),
+        cell: ({ row }) => row.original.name,
+      },
+      {
+        accessorKey: 'code',
+        header: t('gis.index.col_code'),
+        cell: ({ row }) => row.original.code,
+      },
+      {
+        accessorKey: 'map_type',
+        header: t('gis.index.col_type'),
+        cell: ({ row }) => row.original.map_type,
+      },
+      {
+        accessorKey: 'created_at',
+        header: t('gis.index.col_created_at'),
+        cell: ({ row }) =>
+          row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : '',
+      },
+    ],
+    [t],
+  );
+
+  const businessLocationColumns = useMemo<ColumnDef<BusinessLocation>[]>(
+    () => [
+      {
+        accessorKey: 'business_name',
+        header: t('gis.index.col_name'),
+        cell: ({ row }) => row.original.business_name,
+      },
+      {
+        accessorKey: 'business_type',
+        header: t('gis.index.col_type'),
+        cell: ({ row }) => row.original.business_type,
+      },
+      {
+        accessorKey: 'address',
+        header: t('gis.index.col_address'),
+        cell: ({ row }) => row.original.address,
+      },
+      {
+        accessorKey: 'contact_person',
+        header: t('gis.index.col_contact'),
+        cell: ({ row }) => row.original.contact_person,
+      },
+      {
+        accessorKey: 'status',
+        header: t('gis.index.col_status'),
+        cell: ({ row }) => <StatusChip status={row.original.status} />,
+      },
+    ],
+    [t],
+  );
+
+  const columns = useMemo(() => {
+    switch (type) {
+      case 'devicePoints':
+        return devicePointColumns as ColumnDef<unknown>[];
+      case 'pipelines':
+        return pipelineColumns as ColumnDef<unknown>[];
+      case 'storageLocations':
+        return storageLocationColumns as ColumnDef<unknown>[];
+      case 'evidenceRecords':
+        return evidenceRecordColumns as ColumnDef<unknown>[];
+      case 'factoryMaps':
+        return factoryMapColumns as ColumnDef<unknown>[];
+      case 'businessLocations':
+        return businessLocationColumns as ColumnDef<unknown>[];
+      default:
+        return [];
+    }
+  }, [
+    type,
+    devicePointColumns,
+    pipelineColumns,
+    storageLocationColumns,
+    evidenceRecordColumns,
+    factoryMapColumns,
+    businessLocationColumns,
+  ]);
 
   return (
-    <Box sx={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', fontSize: '0.875rem' }}>
-        <thead>
-          <tr style={{ backgroundColor: 'grey.50' }}>
-            {type === 'devicePoints' && (
-              <>
-                <th
-                  style={{
-                    padding: theme.spacing(1.5, 2),
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_name')}
-                </th>
-                <th
-                  style={{
-                    padding: theme.spacing(1.5, 2),
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_type')}
-                </th>
-                <th
-                  style={{
-                    padding: theme.spacing(1.5, 2),
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_coordinates')}
-                </th>
-                <th
-                  style={{
-                    padding: theme.spacing(1.5, 2),
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_status')}
-                </th>
-              </>
-            )}
-            {type === 'pipelines' && (
-              <>
-                <th
-                  style={{
-                    padding: theme.spacing(1.5, 2),
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_name')}
-                </th>
-                <th
-                  style={{
-                    padding: theme.spacing(1.5, 2),
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_type')}
-                </th>
-                <th
-                  style={{
-                    padding: theme.spacing(1.5, 2),
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_start_point')}
-                </th>
-                <th
-                  style={{
-                    padding: theme.spacing(1.5, 2),
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_end_point')}
-                </th>
-                <th
-                  style={{
-                    padding: theme.spacing(1.5, 2),
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_status')}
-                </th>
-              </>
-            )}
-            {type === 'storageLocations' && (
-              <>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_name')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_type')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_capacity')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_coordinates')}
-                </th>
-              </>
-            )}
-            {type === 'evidenceRecords' && (
-              <>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_title')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_type')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_recorder')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_time')}
-                </th>
-              </>
-            )}
-            {type === 'factoryMaps' && (
-              <>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_name')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_code')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_type')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_created_at')}
-                </th>
-              </>
-            )}
-            {type === 'businessLocations' && (
-              <>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_name')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_type')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_address')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_contact')}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  {t('gis.index.col_status')}
-                </th>
-              </>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {type === 'devicePoints' &&
-            (data as DevicePoint[]).map((item) => (
-              <tr
-                key={item.id}
-                style={{ borderTop: '1px solid grey.200' }}
-              >
-                <td style={{ padding: '12px 16px' }}>{item.name}</td>
-                <td style={{ padding: '12px 16px' }}>{item.device_type}</td>
-                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                  {item.latitude?.toFixed(4)}, {item.longitude?.toFixed(4)}
-                </td>
-                <td style={{ padding: '12px 16px' }}>{<StatusChip status={item.status} />}</td>
-              </tr>
-            ))}
-          {type === 'pipelines' &&
-            (data as Pipeline[]).map((item) => (
-              <tr
-                key={item.id}
-                style={{ borderTop: '1px solid grey.200' }}
-              >
-                <td style={{ padding: '12px 16px' }}>{item.name}</td>
-                <td style={{ padding: '12px 16px' }}>{item.pipeline_type}</td>
-                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                  {item.start_point
-                    ? `${item.start_point[0].toFixed(4)}, ${item.start_point[1].toFixed(4)}`
-                    : ''}
-                </td>
-                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                  {item.end_point
-                    ? `${item.end_point[0].toFixed(4)}, ${item.end_point[1].toFixed(4)}`
-                    : ''}
-                </td>
-                <td style={{ padding: '12px 16px' }}>{<StatusChip status={item.status} />}</td>
-              </tr>
-            ))}
-          {type === 'storageLocations' &&
-            (data as StorageLocation[]).map((item) => (
-              <tr
-                key={item.id}
-                style={{ borderTop: '1px solid grey.200' }}
-              >
-                <td style={{ padding: '12px 16px' }}>{item.name}</td>
-                <td style={{ padding: '12px 16px' }}>{item.location_type}</td>
-                <td style={{ padding: '12px 16px' }}>{item.capacity}</td>
-                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                  {item.latitude?.toFixed(4)}, {item.longitude?.toFixed(4)}
-                </td>
-              </tr>
-            ))}
-          {type === 'evidenceRecords' &&
-            (data as EvidenceRecord[]).map((item) => (
-              <tr
-                key={item.id}
-                style={{ borderTop: '1px solid grey.200' }}
-              >
-                <td style={{ padding: '12px 16px' }}>{item.title}</td>
-                <td style={{ padding: '12px 16px' }}>{item.evidence_type}</td>
-                <td style={{ padding: '12px 16px' }}>{item.recorded_by}</td>
-                <td style={{ padding: '12px 16px' }}>
-                  {item.recorded_at ? new Date(item.recorded_at).toLocaleString() : ''}
-                </td>
-              </tr>
-            ))}
-          {type === 'factoryMaps' &&
-            (data as FactoryMap[]).map((item) => (
-              <tr
-                key={item.id}
-                style={{ borderTop: '1px solid grey.200' }}
-              >
-                <td style={{ padding: '12px 16px' }}>{item.name}</td>
-                <td style={{ padding: '12px 16px' }}>{item.code}</td>
-                <td style={{ padding: '12px 16px' }}>{item.map_type}</td>
-                <td style={{ padding: '12px 16px' }}>
-                  {item.created_at ? new Date(item.created_at).toLocaleDateString() : ''}
-                </td>
-              </tr>
-            ))}
-          {type === 'businessLocations' &&
-            (data as BusinessLocation[]).map((item) => (
-              <tr
-                key={item.id}
-                style={{ borderTop: '1px solid grey.200' }}
-              >
-                <td style={{ padding: '12px 16px' }}>{item.business_name}</td>
-                <td style={{ padding: '12px 16px' }}>{item.business_type}</td>
-                <td style={{ padding: '12px 16px' }}>{item.address}</td>
-                <td style={{ padding: '12px 16px' }}>{item.contact_person}</td>
-                <td style={{ padding: '12px 16px' }}>{<StatusChip status={item.status} />}</td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </Box>
+    <CommonDataTable
+      columns={columns}
+      data={data}
+      enablePagination={false}
+      showSearch={false}
+      showFilters={false}
+      showExport={false}
+      showSelection={false}
+      showCreate={false}
+      emptyMessage={t('gis.index.empty_no_data')}
+      compact
+      getRowKey={(row) => (row as { id: string }).id}
+    />
   );
 };

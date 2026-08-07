@@ -1,4 +1,3 @@
-import React from 'react';
 import type { EntitySchema } from '@/schema';
 
 export const regulationSchema: EntitySchema = {

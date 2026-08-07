@@ -28,6 +28,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/utils/date';
 
 const ct = designTokens.colors;
 
@@ -174,11 +175,6 @@ const VoucherDetailPage: React.FC = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
-  };
-
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('zh-CN');
   };
 
   const getStatusBadge = (status: string) => {

@@ -25,15 +25,15 @@ const SrmDashboardPage: React.FC = () => {
 
   const mapStatusToChinese = (status: string) => {
     const statusMap: Record<string, string> = {
-      active: t('srm.status_active'),
-      inactive: t('srm.status_inactive'),
-      pending: t('srm.status_pending'),
-      completed: t('srm.status_completed'),
-      delivered: t('srm.status_delivered'),
-      cancelled: t('srm.status_cancelled'),
-      processing: t('srm.status_processing'),
-      draft: t('srm.status_draft'),
-      expired: t('srm.status_expired'),
+      active: '活跃',
+      inactive: '停用',
+      pending: '待处理',
+      completed: '已完成',
+      delivered: '已交付',
+      cancelled: '已取消',
+      processing: '处理中',
+      draft: '草稿',
+      expired: '已过期',
     };
     return statusMap[status] || status;
   };
@@ -213,7 +213,7 @@ const SrmDashboardPage: React.FC = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: t('common.home'), href: '/dashboard' }, { label: 'SRM' }]}
+        breadcrumbs={[{ label: t('srm.order.breadcrumb.home'), href: '/dashboard' }, { label: 'SRM' }]}
         stats={stats}
         charts={charts}
         loading={loading}

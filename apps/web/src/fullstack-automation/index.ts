@@ -34,4 +34,4 @@ export {
   type MetricSample,
 } from './auto-rollback';
 
-export { V55AutomationPanel } from './v55-automation-panel';
+export { V55AutomationPanel } from './V55AutomationPanel';

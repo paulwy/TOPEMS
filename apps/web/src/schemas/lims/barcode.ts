@@ -2,7 +2,6 @@
  * 条码管理 Schema — 驱动 BarcodePage 的完整 CRUD
  */
 
-import React from 'react';
 import type { EntitySchema } from '@/schema';
 
 const statusColorMap: Record<

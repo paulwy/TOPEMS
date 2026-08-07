@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx';
 import dayjs from 'dayjs';
 import i18next from 'i18next';
 
@@ -48,11 +47,12 @@ export interface ExportColumn<T> {
   format?: (value: unknown) => string;
 }
 
-export const exportToExcel = <T>(
+export const exportToExcel = async <T>(
   data: T[],
   columns: ExportColumn<T>[],
   fileName: string = 'export'
-): void => {
+): Promise<void> => {
+  const XLSX = await import('xlsx');
   const headers = columns.map((col) => col.label);
 
   const rows = data.map((item) =>
@@ -93,6 +93,7 @@ export const importFromExcel = async <T>(
   columns: ExportColumn<T>[],
   transform?: (raw: Record<string, unknown>) => T
 ): Promise<ImportResult<T>> => {
+  const XLSX = await import('xlsx');
   return new Promise((resolve) => {
     const reader = new FileReader();
 

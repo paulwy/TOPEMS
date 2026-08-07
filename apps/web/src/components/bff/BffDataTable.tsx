@@ -29,6 +29,7 @@ import {
 import { Search, RefreshCw, Filter, ChevronUp, ChevronDown, Layers } from 'lucide-react';
 import useBffCrud from '@/hooks/bff/useBffCrud';
 import type { UseBffCrudOptions } from '@/hooks/bff/useBffCrud';
+import { logger } from '@/utils/logger';
 
 // ============ 类型定义 ============
 
@@ -421,12 +422,10 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
                                 try {
                                   return col.renderCell!(value, row ?? ({} as T));
                                 } catch (e) {
-                                  if (typeof console !== 'undefined' && console?.warn) {
-                                    console.warn(
-                                      `[BffDataTable] renderCell for column="${String(col.field)}" failed, fallback to raw:`,
-                                      e
-                                    );
-                                  }
+                                  logger.warn(
+                                    `[BffDataTable] renderCell for column="${String(col.field)}" failed, fallback to raw:`,
+                                    e
+                                  );
                                   return String(value ?? '');
                                 }
                               })()

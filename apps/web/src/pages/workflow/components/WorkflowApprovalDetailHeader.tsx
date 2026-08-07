@@ -4,6 +4,7 @@ import { Chip } from '@mui/material';
 import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import type { Approval } from '@/api/workflow';
 import { designTokens } from '@/theme/tokens';
+import { getChipStatusColor } from '@/utils/status';
 
 const ct = designTokens.colors;
 
@@ -49,18 +50,7 @@ export const getStatusText = (status: string, t: (key: string) => string) => {
   return statusMap[status] || status;
 };
 
-export const getStatusColor = (status: string): 'success' | 'error' | 'warning' | 'default' => {
-  switch (status) {
-    case 'approved':
-      return 'success';
-    case 'rejected':
-      return 'error';
-    case 'pending':
-      return 'warning';
-    default:
-      return 'default';
-  }
-};
+export const getStatusColor = (status: string) => getChipStatusColor(status, 'workflow');
 
 interface WorkflowApprovalDetailHeaderProps {
   approval: Approval | null;

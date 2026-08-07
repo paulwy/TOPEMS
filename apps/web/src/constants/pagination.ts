@@ -35,7 +35,7 @@ export const LARGE_PAGE_SIZE = 50 as const;
  *   - pagesize  (全小写, notification/email 等历史遗留发送 URLSearchParams)
  * 后端所有服务统一使用 page_size。
  *
- * ⚠️ 最终方向：新增代码统一使用 pageSize（TS API 类型），在 axios request
+ * ⚠️ 最终方向：新增代码统一使用 pageSize（TS API 类型），在 axios Request
  * interceptor 层调用 normalizePaginationParams 自动转成 page_size 发给后端。
  */
 

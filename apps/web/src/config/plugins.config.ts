@@ -1,7 +1,12 @@
 /**
  * Plugin Remote Module Configuration
  * 插件远程模块配置文件 - 定义所有可加载的远程模块
+ *
+ * 端口从 ./ports.ts 的 MF_PORTS 单一信源派生，不再硬编码 30xx 端口。
+ * 新增/修改 MF 端口：修改 config/ports.env 后同步更新 apps/web/src/config/ports.ts
  */
+
+import { MF_PORTS } from './ports';
 
 export interface RemoteModuleConfig {
   name: string;
@@ -29,8 +34,8 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     name: 'Core',
     code: 'topems_core',
     description: '核心模块 - 认证、权限、工作流等基础服务',
-    port: 3001,
-    url: 'http://localhost:3001',
+    port: MF_PORTS.topems_core,
+    url: `http://localhost:${MF_PORTS.topems_core}`,
     category: 'system',
     icon: 'Settings',
     required: true,
@@ -41,8 +46,8 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     name: 'HRM',
     code: 'topems_hrm',
     description: '人力资源管理 - 员工、考勤、薪酬、招聘',
-    port: 3002,
-    url: 'http://localhost:3002',
+    port: MF_PORTS.topems_hrm,
+    url: `http://localhost:${MF_PORTS.topems_hrm}`,
     category: 'business',
     icon: 'Users',
     required: false,
@@ -54,8 +59,8 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     name: 'CRM',
     code: 'topems_crm',
     description: '客户关系管理 - 客户、销售、商机',
-    port: 3003,
-    url: 'http://localhost:3003',
+    port: MF_PORTS.topems_crm,
+    url: `http://localhost:${MF_PORTS.topems_crm}`,
     category: 'business',
     icon: 'Users',
     required: false,
@@ -67,8 +72,8 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     name: 'PM',
     code: 'topems_pm',
     description: '项目管理 - 项目计划、任务分配、进度跟踪',
-    port: 3004,
-    url: 'http://localhost:3004',
+    port: MF_PORTS.topems_pm,
+    url: `http://localhost:${MF_PORTS.topems_pm}`,
     category: 'business',
     icon: 'Target',
     required: false,
@@ -78,10 +83,10 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'Finance',
-    code: 'topems_fin',
+    code: 'topems_finance',
     description: '财务管理 - 预算、费用、报表',
-    port: 3005,
-    url: 'http://localhost:3005',
+    port: MF_PORTS.topems_finance,
+    url: `http://localhost:${MF_PORTS.topems_finance}`,
     category: 'business',
     icon: 'Building2',
     required: false,
@@ -91,10 +96,10 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'Supply Chain',
-    code: 'topems_sc',
+    code: 'topems_scm',
     description: '供应链管理 - 采购、库存、物流',
-    port: 3006,
-    url: 'http://localhost:3006',
+    port: MF_PORTS.topems_scm,
+    url: `http://localhost:${MF_PORTS.topems_scm}`,
     category: 'supply',
     icon: 'Truck',
     required: false,
@@ -106,8 +111,8 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     name: 'Quality',
     code: 'topems_qms',
     description: '质量管理 - 质量控制、检验、追溯',
-    port: 3007,
-    url: 'http://localhost:3007',
+    port: MF_PORTS.topems_qms,
+    url: `http://localhost:${MF_PORTS.topems_qms}`,
     category: 'quality',
     icon: 'Shield',
     required: false,
@@ -119,8 +124,8 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     name: 'BI',
     code: 'topems_bi',
     description: '商业智能 - 数据分析、可视化',
-    port: 3008,
-    url: 'http://localhost:3008',
+    port: MF_PORTS.topems_bi,
+    url: `http://localhost:${MF_PORTS.topems_bi}`,
     category: 'analytics',
     icon: 'BarChart3',
     required: false,
@@ -132,8 +137,8 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     name: 'MES',
     code: 'topems_mes',
     description: '制造执行系统 - 生产跟踪、设备管理',
-    port: 3009,
-    url: 'http://localhost:3009',
+    port: MF_PORTS.topems_mes,
+    url: `http://localhost:${MF_PORTS.topems_mes}`,
     category: 'business',
     icon: 'Factory',
     required: false,
@@ -145,8 +150,8 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     name: 'WMS',
     code: 'topems_wms',
     description: '仓储管理系统 - 库存、出入库',
-    port: 3010,
-    url: 'http://localhost:3010',
+    port: MF_PORTS.topems_wms,
+    url: `http://localhost:${MF_PORTS.topems_wms}`,
     category: 'supply',
     icon: 'Warehouse',
     required: false,

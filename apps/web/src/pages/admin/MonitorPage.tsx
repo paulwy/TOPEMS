@@ -24,6 +24,7 @@ import {
   Server,
 } from 'lucide-react';
 import { PageContainer } from '@/components';
+import { getStatusColor } from '@/utils/status';
 
 const MonitorPage: React.FC = () => {
   const theme = useTheme();
@@ -98,18 +99,7 @@ const MonitorPage: React.FC = () => {
     }
   }, [alertsQuery.isError, alertsQuery.error, addNotification]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'healthy':
-        return 'success.main';
-      case 'degraded':
-        return 'warning.main';
-      case 'unhealthy':
-        return 'error.main';
-      default:
-        return 'grey.500';
-    }
-  };
+  const getMonitorStatusColor = (status: string) => getStatusColor(status, { category: 'monitor' });
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -395,7 +385,7 @@ const MonitorPage: React.FC = () => {
                               )
                             }
                             sx={{
-                              bgcolor: `${getStatusColor(service.status)}20`,
+                              bgcolor: `${getMonitorStatusColor(service.status)}20`,
                             }}
                           />
                         </td>

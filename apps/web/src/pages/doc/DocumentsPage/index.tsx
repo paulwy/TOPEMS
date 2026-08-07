@@ -26,7 +26,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { docApi, type Folder as FolderType } from '@/api/doc';
 import { useNotificationStore } from '@/store';
-import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
@@ -52,7 +51,11 @@ import { ModeToggle } from '@/components/theme/ModeToggle';
 import CreateFolderModal from './components/CreateFolderModal';
 import StatCard from './components/StatCard';
 import FileCard from './components/FileCard';
-import type { FileItem } from './types';
+import DocumentTree from './components/DocumentTree';
+import DocumentList from './components/DocumentList';
+import DocumentPreview from './components/DocumentPreview';
+import UploadDialog from './components/UploadDialog';
+import type { FileItem, DisplayItem, ViewMode } from './types';
 import { ct, formatFileSize } from './utils';
 
 const DocumentsPage: React.FC = () => {
@@ -62,7 +65,7 @@ const DocumentsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -442,8 +445,8 @@ const DocumentsPage: React.FC = () => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (item) =>
-          item.name.toLowerCase().includes(query) ||
-          item.tags.some((t) => t.toLowerCase().includes(query))
+        item.name.toLowerCase().includes(query) ||
+        item.tags.some((t) => t.toLowerCase().includes(query))
       );
     }
 
@@ -488,7 +491,6 @@ const DocumentsPage: React.FC = () => {
         pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
     >
-      {/* Header */}
       <Box
         component='header'
         sx={{
@@ -595,11 +597,11 @@ const DocumentsPage: React.FC = () => {
               <Tooltip title='新建文件夹'>
                 <span>
                   <Button
-                    variant='text'
-                    onClick={() => setShowCreateFolderModal(true)}
-                  >
-                    <Plus sx={{ width: 20, height: 20 }} />
-                  </Button>
+                  variant='text'
+                  onClick={() => setShowCreateFolderModal(true)}
+                >
+                  <Plus sx={{ width: 20, height: 20 }} />
+                </Button>
                 </span>
               </Tooltip>
               <Button
@@ -619,7 +621,6 @@ const DocumentsPage: React.FC = () => {
             </Box>
           </Box>
 
-          {/* Filters Bar */}
           {showFilters && (
             <Box
               sx={{
@@ -711,696 +712,43 @@ const DocumentsPage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Upload Progress */}
-      {uploading && (
-        <Box sx={{ maxWidth: 1400, mx: 'auto', px: 3, py: 2 }}>
-          <Card
-            sx={{
-              bgcolor: 'primary.50',
-              border: 1,
-              borderColor: 'primary.200',
-            }}
-          >
-            <CardContent sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  mb: 1,
-                }}
-              >
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500, color: 'primary.900' }}
-                >
-                  文件上传中...
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'primary.700' }}
-                >
-                  {uploadProgress}%
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  width: '100%',
-                  bgcolor: 'primary.200',
-                  borderRadius: 1,
-                  height: 8,
-                }}
-              >
-                <Box
-                  sx={{
-                    bgcolor: 'primary.main',
-                    height: 8,
-                    borderRadius: 1,
-                    transition: 'width 0.3s',
-                    width: `${uploadProgress}%`,
-                  }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-      )}
+      <UploadDialog uploading={uploading} uploadProgress={uploadProgress} />
 
-      {/* Main Content */}
       <Box
         component='main'
         sx={{ maxWidth: 1400, mx: 'auto', px: 3, py: 4 }}
       >
         <Box sx={{ display: 'flex', gap: 4 }}>
-          {/* Sidebar */}
-          <Box sx={{ width: 256, flexShrink: 0 }}>
-            <Card sx={{ position: 'sticky', top: 96 }}>
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                  <Button
-                    variant='text'
-                    onClick={() => handleFolderSelect(null)}
-                    sx={{ justifyContent: 'flex-start', width: '100%' }}
-                  >
-                    {selectedFolderId === null ? (
-                      <FolderOpen sx={{ width: 20, height: 20, mr: 1.5 }} />
-                    ) : (
-                      <Folder sx={{ width: 20, height: 20, mr: 1.5 }} />
-                    )}
-                    <span style={{ fontWeight: 500 }}>全部文件</span>
-                  </Button>
+          <DocumentTree
+            folders={folders}
+            selectedFolderId={selectedFolderId}
+            onSelectFolder={handleFolderSelect}
+            onDeleteFolder={handleDeleteFolder}
+          />
 
-                  {folders.map((folder) => (
-                    <Box
-                      key={folder.id}
-                      sx={{ '&:hover > .delete-btn': { opacity: 1 } }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Button
-                          variant='text'
-                          onClick={() => handleFolderSelect(folder.id)}
-                          sx={{ flex: 1, justifyContent: 'flex-start' }}
-                        >
-                          {selectedFolderId === folder.id ? (
-                            <FolderOpen sx={{ width: 20, height: 20, mr: 1.5 }} />
-                          ) : (
-                            <Folder sx={{ width: 20, height: 20, mr: 1.5 }} />
-                          )}
-                          <span
-                            style={{
-                              fontWeight: 500,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {folder.name}
-                          </span>
-                        </Button>
-                        <Tooltip title='删除文件夹'>
-                          <span>
-                            <Button
-                              variant='text'
-                              size='small'
-                              className='delete-btn'
-                              sx={{
-                                opacity: 0,
-                                color: 'grey.400',
-                                '&:hover': {
-                                  color: 'error.main',
-                                  bgcolor: 'error.50',
-                                },
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteFolder(folder.id, folder.name);
-                              }}
-                            >
-                              <Trash2 sx={{ width: 16, height: 16 }} />
-                            </Button>
-                          </span>
-                        </Tooltip>
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-
-          {/* Content Area */}
-          <Box sx={{ flex: 1 }}>
-            {/* Quick Stats */}
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: 'repeat(1, 1fr)',
-                  md: 'repeat(4, 1fr)',
-                },
-                gap: 3,
-                mb: 3,
-              }}
-            >
-              <StatCard
-                icon={Folder}
-                title='文件夹'
-                value={String(folders.length)}
-                color='blue'
-              />
-              <StatCard
-                icon={FileText}
-                title='文件'
-                value={String(files.length)}
-                color='purple'
-              />
-              <StatCard
-                icon={Star}
-                title='星标'
-                value={String(starredCount)}
-                color='yellow'
-              />
-              <StatCard
-                icon={History}
-                title='最近更新'
-                value={String(files.length)}
-                color='green'
-              />
-            </Box>
-
-            {/* Batch Actions Bar */}
-            {selectedFiles.length > 0 && (
-              <Card
-                sx={{
-                  mb: 3,
-                  border: 1,
-                  borderColor: 'primary.200',
-                  bgcolor: 'primary.50',
-                }}
-              >
-                <CardContent
-                  sx={{
-                    p: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ fontWeight: 500, color: 'primary.900' }}
-                    >
-                      已选择 {selectedFiles.length} 个文件
-                    </Typography>
-                    <Button
-                      variant='text'
-                      size='small'
-                      onClick={clearSelection}
-                    >
-                      取消选择
-                    </Button>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Button
-                      variant='contained'
-                      size='small'
-                      color='error'
-                      onClick={handleBatchDelete}
-                    >
-                      <Trash2 sx={{ width: 16, height: 16, mr: 1 }} />
-                      批量删除
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Drag and Drop Zone */}
-            <Box
-              ref={dropZoneRef}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              sx={{
-                mb: 3,
-                border: 2,
-                borderStyle: 'dashed',
-                borderRadius: 3,
-                p: 4,
-                textAlign: 'center',
-                borderColor: isDragging ? 'primary.main' : 'grey.300',
-                bgcolor: isDragging ? 'primary.50' : 'transparent',
-                '&:hover': { borderColor: 'grey.400' },
-                transition: 'all 0.2s',
-              }}
-            >
-              <Upload
-                sx={{
-                  width: 48,
-                  height: 48,
-                  mx: 'auto',
-                  mb: 2,
-                  color: isDragging ? 'primary.main' : 'grey.400',
-                }}
-              />
-              <Typography
-                variant='h6'
-                sx={{ mb: 1, color: isDragging ? 'primary.main' : 'grey.700' }}
-              >
-                {isDragging ? '释放以上传文件' : '拖拽文件到这里上传'}
-              </Typography>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                支持 PDF、Word、Excel、图片等格式
-              </Typography>
-            </Box>
-
-            {/* Files Grid/List */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-              <Tabs
-                value={viewMode}
-                onChange={(_, val) => setViewMode(val as 'grid' | 'list')}
-              >
-                <Tab
-                  value='grid'
-                  label='网格视图'
-                />
-                <Tab
-                  value='list'
-                  label='列表视图'
-                />
-              </Tabs>
-            </Box>
-            {viewMode === 'grid' && (
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: {
-                    xs: 'repeat(1, 1fr)',
-                    md: 'repeat(2, 1fr)',
-                    lg: 'repeat(3, 1fr)',
-                    xl: 'repeat(4, 1fr)',
-                  },
-                  gap: 3,
-                }}
-              >
-                {filteredItems.map((item) =>
-                  item.type === 'folder' ? (
-                    <Card
-                      key={item.id}
-                      onClick={() => handleFolderSelect(item.id)}
-                      sx={{
-                        '&:hover': { boxShadow: 6 },
-                        transition: 'box-shadow 0.2s',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <CardContent sx={{ p: 3 }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            justifyContent: 'space-between',
-                            mb: 2,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 56,
-                              height: 56,
-                              borderRadius: 3,
-                              bgcolor: 'primary.100',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <Folder
-                              sx={{
-                                width: 28,
-                                height: 28,
-                                color: 'primary.main',
-                              }}
-                            />
-                          </Box>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                              opacity: 0,
-                            }}
-                          >
-                            <Tooltip title='删除文件夹'>
-                              <Button
-                                variant='text'
-                                size='small'
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteFolder(item.id, item.name);
-                                }}
-                              >
-                                <Trash2 sx={{ width: 16, height: 16 }} />
-                              </Button>
-                            </Tooltip>
-                          </Box>
-                        </Box>
-                        <Typography
-                          variant='h6'
-                          sx={{
-                            fontWeight: 600,
-                            color: 'grey.900',
-                            mb: 1,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {item.name}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          <span>{item.updatedAt}</span>
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <FileCard
-                      key={item.id}
-                      file={item}
-                      onStarToggle={(id) => toggleStar(id)}
-                      onDownload={handleDownload}
-                      onPreview={handlePreview}
-                      isSelected={selectedFiles.includes(item.id)}
-                      onSelect={toggleFileSelect}
-                      onClick={(file) => navigate(DOC_PATHS.documentDetail.replace(':id', file.id))}
-                    />
-                  )
-                )}
-              </Box>
-            )}
-            {viewMode === 'list' && (
-              <Card sx={{ overflow: 'hidden' }}>
-                <CardContent sx={{ p: 0 }}>
-                  <Box sx={{ overflowX: 'auto' }}>
-                    <Box
-                      component='table'
-                      sx={{ width: '100%' }}
-                    >
-                      <Box
-                        component='thead'
-                        sx={{ bgcolor: 'grey.100' }}
-                      >
-                        <tr>
-                          <th
-                            style={{
-                              padding: '12px 24px',
-                              textAlign: 'left',
-                              fontSize: '0.75rem',
-                              fontWeight: 500,
-                              color: theme.palette.grey[500],
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.05em',
-                            }}
-                          >
-                            名称
-                          </th>
-                          <th
-                            style={{
-                              padding: '12px 24px',
-                              textAlign: 'left',
-                              fontSize: '0.75rem',
-                              fontWeight: 500,
-                              color: theme.palette.grey[500],
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.05em',
-                            }}
-                          >
-                            大小
-                          </th>
-                          <th
-                            style={{
-                              padding: '12px 24px',
-                              textAlign: 'left',
-                              fontSize: '0.75rem',
-                              fontWeight: 500,
-                              color: theme.palette.grey[500],
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.05em',
-                            }}
-                          >
-                            更新时间
-                          </th>
-                          <th
-                            style={{
-                              padding: '12px 24px',
-                              textAlign: 'left',
-                              fontSize: '0.75rem',
-                              fontWeight: 500,
-                              color: theme.palette.grey[500],
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.05em',
-                            }}
-                          >
-                            操作
-                          </th>
-                        </tr>
-                      </Box>
-                      <Box
-                        component='tbody'
-                        sx={{
-                          '& > tr': { borderTop: 1, borderColor: 'divider' },
-                        }}
-                      >
-                        {filteredItems.map((item) =>
-                          item.type === 'folder' ? (
-                            <tr
-                              key={item.id}
-                              onClick={() => handleFolderSelect(item.id)}
-                              style={{
-                                cursor: 'pointer',
-                              }}
-                            >
-                              <td
-                                style={{
-                                  padding: '16px 24px',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                  <Folder
-                                    sx={{
-                                      width: 20,
-                                      height: 20,
-                                      color: 'primary.main',
-                                      mr: 1.5,
-                                    }}
-                                  />
-                                  <Box>
-                                    <Typography
-                                      variant='body2'
-                                      sx={{
-                                        fontWeight: 500,
-                                        color: 'grey.900',
-                                      }}
-                                    >
-                                      {item.name}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </td>
-                              <td
-                                style={{
-                                  padding: '16px 24px',
-                                  whiteSpace: 'nowrap',
-                                  fontSize: '0.875rem',
-                                  color: theme.palette.grey[500],
-                                }}
-                              >
-                                -
-                              </td>
-                              <td
-                                style={{
-                                  padding: '16px 24px',
-                                  whiteSpace: 'nowrap',
-                                  fontSize: '0.875rem',
-                                  color: theme.palette.grey[500],
-                                }}
-                              >
-                                {item.updatedAt}
-                              </td>
-                              <td
-                                style={{
-                                  padding: '16px 24px',
-                                  whiteSpace: 'nowrap',
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                }}
-                              >
-                                <Box
-                                  sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1,
-                                  }}
-                                >
-                                  <Button
-                                    variant='text'
-                                    size='small'
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteFolder(item.id, item.name);
-                                    }}
-                                  >
-                                    <Trash2 sx={{ width: 16, height: 16 }} />
-                                  </Button>
-                                </Box>
-                              </td>
-                            </tr>
-                          ) : (
-                            <tr
-                              key={item.id}
-                              onClick={() =>
-                                navigate(DOC_PATHS.documentDetail.replace(':id', item.id))
-                              }
-                              style={{ cursor: 'pointer' }}
-                            >
-                              <td
-                                style={{
-                                  padding: '16px 24px',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                  <FileText
-                                    sx={{
-                                      width: 20,
-                                      height: 20,
-                                      color: 'secondary.main',
-                                      mr: 1.5,
-                                    }}
-                                  />
-                                  <Box>
-                                    <Typography
-                                      variant='body2'
-                                      sx={{
-                                        fontWeight: 500,
-                                        color: 'grey.900',
-                                      }}
-                                    >
-                                      {item.name}
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                                      {item.tags.map((tag) => (
-                                        <Chip
-                                          key={tag}
-                                          label={tag}
-                                          size='small'
-                                          variant='outlined'
-                                        />
-                                      ))}
-                                    </Box>
-                                  </Box>
-                                </Box>
-                              </td>
-                              <td
-                                style={{
-                                  padding: '16px 24px',
-                                  whiteSpace: 'nowrap',
-                                  fontSize: '0.875rem',
-                                  color: theme.palette.grey[500],
-                                }}
-                              >
-                                {item.size || '-'}
-                              </td>
-                              <td
-                                style={{
-                                  padding: '16px 24px',
-                                  whiteSpace: 'nowrap',
-                                  fontSize: '0.875rem',
-                                  color: theme.palette.grey[500],
-                                }}
-                              >
-                                {item.updatedAt}
-                              </td>
-                              <td
-                                style={{
-                                  padding: '16px 24px',
-                                  whiteSpace: 'nowrap',
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                }}
-                              >
-                                <Box
-                                  sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1,
-                                  }}
-                                >
-                                  <Button
-                                    variant='text'
-                                    size='small'
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handlePreview(item);
-                                    }}
-                                  >
-                                    <Eye sx={{ width: 16, height: 16 }} />
-                                  </Button>
-                                  <Button
-                                    variant='text'
-                                    size='small'
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDownload(item);
-                                    }}
-                                  >
-                                    <Download sx={{ width: 16, height: 16 }} />
-                                  </Button>
-                                  <Button
-                                    variant='text'
-                                    size='small'
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleStar(item.id);
-                                    }}
-                                  >
-                                    <Star
-                                      sx={{ width: 16, height: 16 }}
-                                      style={{
-                                        fill: item.starred ? 'currentColor' : 'none',
-                                      }}
-                                    />
-                                  </Button>
-                                  <Button
-                                    variant='text'
-                                    size='small'
-                                    color='error'
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDelete(item.id);
-                                    }}
-                                  >
-                                    <Trash2 sx={{ width: 16, height: 16 }} />
-                                  </Button>
-                                </Box>
-                              </td>
-                            </tr>
-                          )
-                        )}
-                      </Box>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            )}
-          </Box>
+          <DocumentList
+            folders={folders}
+            files={files}
+            filteredItems={filteredItems as DisplayItem[]}
+            selectedFiles={selectedFiles}
+            starredCount={starredCount}
+            viewMode={viewMode}
+            isDragging={isDragging}
+            onSelectFolder={handleFolderSelect}
+            onDeleteFolder={handleDeleteFolder}
+            onToggleSelect={toggleFileSelect}
+            onClearSelection={clearSelection}
+            onBatchDelete={handleBatchDelete}
+            onStarToggle={toggleStar}
+            onDownload={handleDownload}
+            onPreview={handlePreview}
+            onDelete={handleDelete}
+            onViewModeChange={(mode) => setViewMode(mode)}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            dropZoneRef={dropZoneRef as React.RefObject<HTMLDivElement>}
+          />
         </Box>
       </Box>
 
@@ -1412,12 +760,9 @@ const DocumentsPage: React.FC = () => {
         createFolderMutation={createFolderMutation}
       />
 
-      <DocumentPreviewModal
-        isOpen={previewingFile !== null}
+      <DocumentPreview
+        previewFile={previewingFile}
         onClose={() => setPreviewingFile(null)}
-        fileId={previewingFile?.id || ''}
-        fileName={previewingFile?.name || ''}
-        contentType={previewingFile?.contentType || ''}
       />
 
       <ConfirmDialog

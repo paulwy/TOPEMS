@@ -17,6 +17,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
+import { logger } from '@/utils/logger';
 import {
   Table,
   TableBody,
@@ -606,12 +607,10 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
                         try {
                           return col.render!(row ?? ({} as any), index);
                         } catch (e) {
-                          if (typeof console !== 'undefined' && console?.warn) {
-                            console.warn(
-                              `[SubTableBuilder] render for column="${col.id ?? ''}" failed, fallback:`,
-                              e
-                            );
-                          }
+                          logger.warn(
+                            `[SubTableBuilder] render for column="${col.id ?? ''}" failed, fallback:`,
+                            e
+                          );
                           const rawValue = (row as Record<string, unknown>)?.[col.id as string];
                           return (
                             <Typography variant='body2'>

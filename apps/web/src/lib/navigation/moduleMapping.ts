@@ -38,9 +38,9 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
         apiBasePath: '/api/core/iam',
       },
       billing: {
-        service: 'unified-core',
+        service: 'billing',
         module: 'billing',
-        apiBasePath: '/api/core/billing',
+        apiBasePath: '/api/billing',
       },
       plugin: {
         service: 'unified-core',
@@ -77,14 +77,14 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
   },
 
   notification: {
-    service: 'unified-core',
+    service: 'communication',
     module: 'communication',
-    apiBasePath: '/api/core/comm',
+    apiBasePath: '/api/communication/notification',
     subModules: {
       notification: {
-        service: 'unified-core',
+        service: 'communication',
         module: 'communication',
-        apiBasePath: '/api/core/comm',
+        apiBasePath: '/api/communication/notification',
       },
     },
   },
@@ -225,9 +225,9 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
 
   // ticket 模块（工单系统，独立服务）
   ticket: {
-    service: 'unified-core',
+    service: 'ticket',
     module: 'ticket',
-    apiBasePath: '/api/core/ticket',
+    apiBasePath: '/api/ticket',
   },
 
   asset: {
@@ -243,9 +243,9 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
   },
 
   im: {
-    service: 'unified-core',
+    service: 'communication',
     module: 'communication',
-    apiBasePath: '/api/core/comm/im',
+    apiBasePath: '/api/communication/im',
   },
 
   bi: {

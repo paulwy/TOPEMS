@@ -9,6 +9,7 @@ import { sampleSchema } from '@/schemas/lims';
 import { limsApi, type Sample } from '@/api/lims';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
+import { getStatusColor } from '@/utils/status';
 
 const ct = designTokens.colors;
 
@@ -27,18 +28,8 @@ const getStageStep = (status: string): number => {
   return stageMap[status] ?? 0;
 };
 
-const getStatusColor = (status: string): string => {
-  const colorMap: Record<string, string> = {
-    待登记: 'grey.100',
-    待接收: 'warning.light',
-    已接收: 'primary.light',
-    待确认: 'secondary.light',
-    已确认: 'success.lighter',
-    检测中: 'primary.light',
-    已完成: 'success.lighter',
-  };
-  return colorMap[status] || 'grey.100';
-};
+const getSampleStatusColor = (status: string): string =>
+  getStatusColor(status, { category: 'lims', fallback: 'grey.100' }) as string;
 
 const SampleReceivePage: React.FC = () => {
   const sampleApiAdapter: CrudApiAdapter<Sample> = useMemo(
@@ -333,7 +324,7 @@ const SampleReceivePage: React.FC = () => {
                 label={sample.status}
                 size='small'
                 sx={{
-                  backgroundColor: getStatusColor(sample.status),
+                  backgroundColor: getSampleStatusColor(sample.status),
                   fontWeight: 500,
                 }}
               />
