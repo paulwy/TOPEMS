@@ -1,5 +1,10 @@
 // AI 服务缓存模块
 // 使用 moka 实现带容量限制和 TTL 的缓存，防止内存泄漏
+//
+// 本模块为 AI 服务的公共 API，部分方法当前仅在测试中使用，
+// 后续将接入向量检索、搜索缓存、QA 对话历史等生产路径。
+#![allow(dead_code)]
+
 use moka::future::Cache;
 use std::time::Duration;
 
@@ -46,7 +51,6 @@ impl AiCacheService {
         }
     }
 
-    #[allow(dead_code)]
     pub fn with_ttl(ttl_seconds: u64) -> Self {
         Self {
             document_cache: Cache::builder()
@@ -71,89 +75,74 @@ impl AiCacheService {
 
     // ==================== 文档缓存 ====================
 
-    #[allow(dead_code)]
     pub async fn get_document(&self, id: &str) -> Option<serde_json::Value> {
         self.document_cache.get(id).await
     }
 
-    #[allow(dead_code)]
     pub async fn set_document(&self, id: &str, document: serde_json::Value) {
         self.document_cache.insert(id.to_string(), document).await;
     }
 
-    #[allow(dead_code)]
     pub async fn delete_document(&self, id: &str) {
         self.document_cache.invalidate(id).await;
     }
 
-    #[allow(dead_code)]
     pub async fn clear_documents(&self) {
         self.document_cache.invalidate_all();
     }
 
     // ==================== 向量缓存 ====================
 
-    #[allow(dead_code)]
     pub async fn get_vector(&self, id: &str) -> Option<Vec<f32>> {
         self.vector_cache.get(id).await
     }
 
-    #[allow(dead_code)]
     pub async fn set_vector(&self, id: &str, vector: Vec<f32>) {
         self.vector_cache.insert(id.to_string(), vector).await;
     }
 
-    #[allow(dead_code)]
     pub async fn delete_vector(&self, id: &str) {
         self.vector_cache.invalidate(id).await;
     }
 
-    #[allow(dead_code)]
     pub async fn clear_vectors(&self) {
         self.vector_cache.invalidate_all();
     }
 
     // ==================== 搜索缓存 ====================
 
-    #[allow(dead_code)]
     pub async fn get_search(&self, query_hash: &str) -> Option<serde_json::Value> {
         self.search_cache.get(query_hash).await
     }
 
-    #[allow(dead_code)]
     pub async fn set_search(&self, query_hash: &str, results: serde_json::Value) {
         self.search_cache
             .insert(query_hash.to_string(), results)
             .await;
     }
 
-    #[allow(dead_code)]
     pub async fn clear_search(&self) {
         self.search_cache.invalidate_all();
     }
 
     // ==================== QA 缓存 ====================
 
-    #[allow(dead_code)]
     pub async fn get_qa_history(&self, conversation_id: &str) -> Option<serde_json::Value> {
         self.qa_cache.get(conversation_id).await
     }
 
-    #[allow(dead_code)]
     pub async fn set_qa_history(&self, conversation_id: &str, history: serde_json::Value) {
         self.qa_cache
             .insert(conversation_id.to_string(), history)
             .await;
     }
 
-    #[allow(dead_code)]
     pub async fn delete_qa_history(&self, conversation_id: &str) {
         self.qa_cache.invalidate(conversation_id).await;
     }
 
     // ==================== 统计信息 ====================
 
-    #[allow(dead_code)]
     pub async fn get_stats(&self) -> CacheStats {
         CacheStats {
             document_count: self.document_cache.entry_count() as usize,
@@ -164,7 +153,6 @@ impl AiCacheService {
         }
     }
 
-    #[allow(dead_code)]
     pub async fn clear_all(&self) {
         self.document_cache.invalidate_all();
         self.vector_cache.invalidate_all();
@@ -175,7 +163,6 @@ impl AiCacheService {
 
 /// 缓存统计信息
 #[derive(Debug, Clone, serde::Serialize)]
-#[allow(dead_code)]
 pub struct CacheStats {
     pub document_count: usize,
     pub vector_count: usize,

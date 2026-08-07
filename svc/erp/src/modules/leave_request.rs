@@ -40,8 +40,9 @@ fn is_workday(date: NaiveDate) -> bool {
 /// # 返回
 /// 请假天数（如 0.5、1.0、2.5 等）
 ///
-/// 法定节假日与调休补班日由 `holidays` 模块提供，当前为 2025-2026 年硬编码数据。
-/// TODO: 后续可从数据库 `holidays` 表动态读取节假日配置
+/// 法定节假日与调休补班日由 `holidays` 模块提供，采用「DB L1 动态层 + 2025-2026 L2 静态层」
+/// 两级回退策略（详见 holidays.rs 模块文档）。纯函数版本调用静态层，
+/// HTTP handler 中可使用 `holidays::DatabaseBackedHolidayProvider` 接入动态配置。
 pub fn calculate_leave_days(
     start_date: NaiveDate,
     end_date: NaiveDate,

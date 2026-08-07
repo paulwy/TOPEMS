@@ -521,12 +521,11 @@ pub struct SaveChunkRequest {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct SaveVectorRequest {
     pub document_id: Uuid,
-    #[allow(dead_code)]
     pub chunk_id: Uuid,
     pub chunk_index: i32,
-    #[allow(dead_code)]
     pub content: String,
     pub embedding: Vec<f32>,
 }

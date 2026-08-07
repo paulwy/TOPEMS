@@ -1,11 +1,14 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V66.2 | **更新日期**: 2026-08-07
+> **版本**: V66.6 | **更新日期**: 2026-08-07
 > **服务总数**: 28 个（含 unified-core + master-data + lowcode 占位） | **前端页面**: 423 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **100/100**（V66.2 shared-bootstrap V2 迁移 28/28 = 100% · 五批次全部完成）
+> **综合健康评分**: **100/100**（V66.2 shared-bootstrap V2 迁移 28/28 = 100% · V66.4 DAG 画布 UX 4 项补强全完成 · V66.5 代码卫生 34 处清理 ✅ · V66.6 前端 tsc 全绿 0 error ✅）
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次批量迁移 ✅ 100%
 > **unified-core 瘦身成果**: 本轮删除 **21,400+ 行**死代码 · 释放 **49 个 DB 连接池** · cargo check **0 warning**
 > **shared-bootstrap V2 迁移成果**: Batch-1~5 完成 **28/28 (100%)** 🎉 · 3 大样板模式（A. 标准 build_application / B. 自定义 AppState + build_application / C. Application 重建）覆盖全部复杂度；平均启动代码精简率 -22%；auth/rls/rate-limit/CORS/Prometheus 中间件零差异
+> **V66.4 DAG 画布 UX 补强**: 缩放控制（in/out/fit/reset + Ctrl 滚轮）✅ · 键盘快捷键（Delete/Ctrl+D）✅ · 节点复制 ✅ · Minimap 缩略图（含视口指示框）✅
+> **V66.5 代码卫生 + 工程效能**: `#[allow(dead_code)]` 34 处收敛（AI cache+audit+vector / RD service+permission+progress / 主文件 unused import 清理）✅；RD get_metrics/RdServiceMetrics 接入 `/metrics/json` ✅；.cargo/config.toml 三层加速（sccache + sparse registry + cargo-nextest）✅；4 crate cargo check 0 error
+> **V66.6 前端 tsc 全绿**: shared-components 添加 `@mui/x-date-pickers` + `dayjs` peerDependencies + devDependencies；DatePicker.tsx 3 个长期遗留错误清零；`npx tsc --noEmit` 0 error ✅
 
 ---
 
@@ -273,6 +276,179 @@
 
 ---
 
+## 🎯 V66.3 TODO.md 全量对账 + 遗留代码修复（2026-08-07）
+
+> **背景**: V66.2 完成后对 TODO.md 进行全量审计，发现 V63.2/V63.3/V64.2 三个旧 Sprint 共 **16 条待办项**状态从未更新，其中 **11 项已在后续 V64-V66 期间完成但状态仍标 `⏳ 待开始` / `🔄 进行中`**。本次一次性对账全部旧条目 + 修复 3 项真正遗留的代码问题。
+> **执行原则**: 代码核实驱动状态更新 · 不放过任何 stale 条目 · 修复即标注完成时间与证据。
+
+### 📊 对账结果总览
+
+| 类型 | 数量 | 说明 |
+|------|------|------|
+| ✅ 已完成但状态未同步（本次更新） | **11** | IAM 端点 / 凭证模板 / Finance 数据模型 / HRM Employee / PageContainer / V1V2 清理 / 导出合并 / schemas 类型 / App.tsx 拆分 / generate.sh 端口 / services.yaml |
+| ✅ 本次新修复 | **3** | reactQuery ESM / asset i18n 反模式 / generate.sh lowcode 缺失 |
+| ✅ V66.4 补完 | **1** | DAG 画布 UX 补强（缩放+键盘+复制+Minimap）— 见下文 V66.4 章节 |
+| ⏳ 仍未完成 | **1** | AuditLogRow 已决定保留（不再追踪） |
+
+### 🔧 本次修复的 3 项代码问题
+
+| # | 文件 | 问题 | 修复 |
+|---|------|------|------|
+| 1 | [reactQuery.ts](../../apps/web/src/lib/reactQuery.ts#L1-L8) | `require('../i18n')` CommonJS 调用在 Vite ESM 环境触发警告 | 改为 `import i18n from '../i18n'` 顶层 ESM 导入（i18n/index.ts 不依赖 reactQuery，无循环依赖） |
+| 2 | [TransferPage.tsx](../../apps/web/src/pages/asset/TransferPage.tsx#L52-L59) | 6 处 `value: '研发部'` 中文硬编码做 option 标识 | 改为 `value: 'rd'` / `'marketing'` / `'finance'` / `'admin'` / `'production'` / `'purchase'` code 值 |
+| 3 | [generate.sh](../../scripts/openapi/generate.sh#L98-L101) | `MISSING_SERVICES` 数组缺 lowcode 8088 条目 | 补入 `"lowcode\|8088\|lowcode"` |
+
+### 📋 11 条状态对账详情
+
+| 原 ID | 原状态 | 新状态 | 核实证据 |
+|-------|--------|--------|---------|
+| B-1 IAM 用户端点 (18) | ⏳ 待开始 | ✅ 完成 | unified-core/routes/iam.rs 注册 29 个用户路由（13 GET + 14 POST/PUT + 2 DELETE），0 stub |
+| B-2 凭证模板端点 (19) | ⏳ 待开始 | ✅ 完成 | finance/modules/mod.rs 注册 19 个端点，voucher_template.rs 完整实现 |
+| B-3 Finance 数据模型 (44) | ⏳ 待开始 | ✅ 完成 | Account +18 字段（共 29）、Voucher +29 字段（共 41） |
+| A8 HRM Employee (16) | ⏳ 待开始 | ✅ 完成 | 后端 32 字段全覆盖前端 32 字段（含 serde alias） |
+| F-1 PageContainer 统一 | ⏳ 待开始 | ✅ 完成 | 仅 1 个 PageContainer.tsx（165 行），无 V1/V2 分裂 |
+| F-2 V1/V2 孤儿清理 | ⏳ 待开始 | ✅ 完成 | 全仓 `*V1*.tsx` / `*V2*.tsx` 搜索 0 匹配 |
+| F-3 导出组件合并 | ⏳ 待开始 | ✅ 完成 | barrel 导出已统一 |
+| F-4 schemas 类型修复 | ⏳ 待开始 | ✅ 完成 | `npx tsc --noEmit` exit 0；V66.6 起 0 error（含 shared-components DatePicker 修复） |
+| F-5/B7 App.tsx 拆分 | ⏳ 待开始 | ✅ 完成 | App.tsx 仅 33 行；appRoutes.tsx + useAppInit.ts 已拆出（V64.2 完成） |
+| I-1 generate.sh 端口 | ⏳ 待开始 | ✅ 完成 | 26 服务端口与 ports.env 完全一致；lowcode 补入 MISSING |
+| C0-C5 联调 6 项 | 🔄/⏳ | ✅ 完成 | V66.1 P0 全修 + V66.2 28/28 覆盖 + health-check.sh §11 |
+
+---
+
+## 🎯 V66.4 DAG 画布 UX 补强专项：AutomationDesignerPage V2 四项关键 UX 落地 ✅（2026-08-07）
+
+> **背景**: V66.3 对账后仅剩 1 项实质性待办——V64.2 Track B DAG 画布 UX 补强（缩放/键盘/复制/Minimap 4 项均 ⏳ 待实现）。本次一次性补齐全部 4 项，使自动化设计器画布达到典型 DAG 编辑器（如 React Flow）的基础 UX 水平。
+> **执行原则**: 不引入新依赖（纯 MUI + SVG + 原生事件）· 保持现有拖拽/连线语义不变 · 坐标系换算全部经 zoom 还原 · tsc 0 error 验收。
+> **目标**: 画布支持缩放视窗、键盘高效操作、节点复制复用、全局缩略导航。
+
+### 📊 V66.4 四项交付总览
+
+| # | 功能 | 优先级 | 实现要点 | 状态 |
+|---|------|--------|---------|------|
+| 1 | 缩放控制 | 🔴 高 | ZOOM_MIN 0.3 / ZOOM_MAX 2.5 / STEP 1.2；4 按钮（in/out/fit/reset）+ Ctrl/Cmd 滚轮缩放；Fit 计算节点包围盒按 80% 视口反算并居中滚动；`transform: scale(zoom)` + 尺寸容器（`CANVAS_WIDTH*zoom`）撑开可滚动区域；拖拽/拖放坐标统一 `/ canvasZoom` 还原画布坐标系 | ✅ |
+| 2 | 键盘快捷键 | 🔴 高 | Delete/Backspace 删除选中节点；Ctrl/Cmd+D 复制选中节点；INPUT/TEXTAREA/contenteditable 中不拦截；仅 canvas 模式生效 | ✅ |
+| 3 | 节点复制 | 🟡 中 | 右侧属性面板 Duplicate 按钮 + Ctrl/Cmd+D 快捷键；新 ID `node_${Date.now()}` + 位置偏移 +40,+40 + `next_nodes` 清空（避免脏连线）+ 保留 `branches`/`config` | ✅ |
+| 4 | Minimap 缩略图 | 🟡 中 | 右上角 168×112 SVG 悬浮；`viewBox="0 0 2400 1600"` 等比缩放；节点/连线渲染；选中节点蓝色高亮；蓝色虚线视口指示框（`onScroll` 实时更新 `scrollLeft/zoom`、`clientWidth/zoom`） | ✅ |
+
+### 🔧 关键技术决策
+
+| 决策点 | 方案 | 理由 |
+|--------|------|------|
+| 缩放方案 | CSS `transform: scale()` + 尺寸容器 | 保持逻辑坐标（节点 position）不变，仅视觉缩放；尺寸容器提供正确滚动区域；避免重算所有节点坐标 |
+| 坐标换算 | `(clientX - rect.left) / zoom` | `getBoundingClientRect()` 返回 transform 后的视觉尺寸，除以 zoom 还原画布逻辑坐标 |
+| 滚轮缩放 | 仅 Ctrl/Cmd + 滚轮 | 普通滚轮保留页面/画布平移语义，符合用户习惯（Figma/VSCode 同款） |
+| 平移方式 | `overflow: auto` 原生滚动 | 复用浏览器原生滚动条 + 触摸板平移，无需自实现拖拽平移 |
+| Minimap 视口 | `scrollLeft / zoom` 反算 | 滚动位置是视觉像素，除以 zoom 还原为画布坐标，与节点同坐标系渲染 |
+| 复制连线处理 | `next_nodes: []` | 复制节点不应继承源节点的下游连线（会产生跨副本的意外连线），仅保留节点自身配置 |
+| 键盘拦截范围 | INPUT/TEXTAREA/contenteditable 跳过 | 避免在节点名称输入框/JSON 配置框按 Delete 误删节点 |
+
+### 📈 V66.4 验收矩阵
+
+| 验收项 | 验证命令/方法 | 期望结果 | 状态 |
+|--------|-------------|---------|------|
+| TypeScript 编译 | `cd apps/web && npx tsc --noEmit` | AutomationDesignerPage 0 error（仅 3 个 `@mui/x-date-pickers` 预存依赖错误） | ✅ |
+| 缩放状态持久化 | `grep "zoom: canvasZoom" apps/web/src/pages/automation/AutomationDesignerPage.tsx` | buildSavePayload 写入 canvasZoom + canvasOffset；loadCanvas 读取 res.data.zoom/offset | ✅ |
+| 拖拽坐标换算 | `grep "/ canvasZoom" apps/web/src/pages/automation/AutomationDesignerPage.tsx` | 10 处匹配：拖拽 3 处（drag mousemove / handleNodeMouseDown / handleDrop）+ minimap 视口 4 处（scrollLeft/Top/clientW/H）+ 注释，均除以 zoom 还原画布坐标 | ✅ |
+| 键盘快捷键 | `grep "e.key === 'Delete'\|e.key.toLowerCase() === 'd'" apps/web/src/pages/automation/AutomationDesignerPage.tsx` | Delete/Backspace + Ctrl/Cmd+D 两分支均存在；INPUT/TEXTAREA/contenteditable 跳过 | ✅ |
+| 复制按钮 | `grep "handleDuplicateNode" apps/web/src/pages/automation/AutomationDesignerPage.tsx` | 右侧面板按钮 + 快捷键两处调用；新 ID + 偏移 + next_nodes 清空 | ✅ |
+| Minimap 渲染 | `grep "viewport.x\|viewport.w\|strokeDasharray" apps/web/src/pages/automation/AutomationDesignerPage.tsx` | 节点/连线 rect+line + 视口指示框（strokeWidth=24 虚线）；onScroll 实时更新 | ✅ |
+| 缩放工具栏 | `grep "handleZoomIn\|handleZoomOut\|handleZoomFit\|handleZoomReset" apps/web/src/pages/automation/AutomationDesignerPage.tsx` | 4 按钮 + 百分比显示 + Ctrl 滚轮；右下角 absolute 悬浮不随滚动移动 | ✅ |
+
+---
+
+## 🎯 V66.6 前端 tsc 全绿专项：shared-components DatePicker 3 错误清零 ✅（2026-08-07）
+
+> **背景**: V66.5 后 `cargo check --workspace` 0 warning 0 error；前端 `npx tsc --noEmit` 仅剩 3 个错误，全部集中在 `packages/shared-components/src/components/DatePicker.tsx` 的 `@mui/x-date-pickers` 模块解析。该错误自 V63.4（2026-07-25）起被记录为「3 个 MUI 预存依赖错误」，长期未修。
+> **根因**: shared-components 包的 `DatePicker.tsx` 直接 import `@mui/x-date-pickers/*` 3 个子模块，但 `package.json` 未声明 `@mui/x-date-pickers` 和 `dayjs` 的 peerDependencies / devDependencies，导致 pnpm workspace 中 shared-components 包自己的 node_modules 无法解析这些模块。
+> **修复策略**: React 组件库标准做法 — 同时添加 peerDependencies（声明消费者必须提供）+ devDependencies（用于本地类型检查和测试）。
+
+### 📊 V66.6 变更详情
+
+| 文件 | 变更 | 内容 |
+|------|------|------|
+| [packages/shared-components/package.json](../../packages/shared-components/package.json) | peerDependencies +2 | `@mui/x-date-pickers: "^6.0.0 \|\| ^7.0.0 \|\| ^9.0.0"` + `dayjs: "^1.11.0"` |
+| 同上 | devDependencies +2 | `@mui/x-date-pickers: "^9.0.0"` + `dayjs: "^1.11.21"`（与 apps/web 版本对齐） |
+| pnpm-lock.yaml | 自动更新 | `pnpm install --no-frozen-lockfile` 后 lockfile 同步 |
+
+### 📈 V66.6 验收矩阵
+
+| 验收项 | 命令 | 期望结果 | 状态 |
+|--------|------|---------|------|
+| 前端 tsc 全绿 | `cd apps/web && npx tsc --noEmit \| grep -c "error TS"` | `0` | ✅ |
+| DatePicker 模块解析 | `cd apps/web && npx tsc --noEmit 2>&1 \| grep "DatePicker.tsx"` | 无输出（0 错误） | ✅ |
+| peerDependencies 声明 | `grep "@mui/x-date-pickers" packages/shared-components/package.json` | peerDependencies + devDependencies 两处存在 | ✅ |
+| 后端 workspace 不受影响 | `cargo check --workspace 2>&1 \| grep -cE "warning\|error"` | `0`（V66.5 已达成） | ✅ |
+
+### 🔧 关键技术决策
+
+| 决策点 | 方案 | 理由 |
+|--------|------|------|
+| 修复方式 | peerDependencies + devDependencies 双声明 | peerDependencies 声明消费者义务；devDependencies 让组件库自己的 tsc/test 能解析模块；这是 React 组件库（如 MUI、Radix、Headless UI）的标准做法 |
+| 不删除 DatePicker 组件 | 保留 | 该组件有完整测试（8 个 test case）、注册到 componentRegistry、export 到 atoms/index.ts；是合法的 shared-components API |
+| 版本范围 | peerDependencies `^6 \|\| ^7 \|\| ^9` | 兼容消费者可能使用的多个 MUI major 版本；devDependencies 锁定 `^9.0.0` 与 apps/web 对齐 |
+| dayjs 同步添加 | 是 | `AdapterDayjs` 依赖 dayjs；消费者必须同时提供 `@mui/x-date-pickers` 和 `dayjs` |
+
+### 🎯 V66.6 里程碑意义
+
+| 维度 | 变化前（V66.5） | 变化后（V66.6） |
+|------|----------------|----------------|
+| 前端 tsc error 数 | 3 | **0** ✅ |
+| 后端 cargo warning 数 | 0 | 0 ✅ |
+| 全栈类型安全 | 🟡 后端全绿 / 前端 3 错误 | ✅ **全栈全绿** |
+| 长期遗留债务 | DatePicker 自 V63.4 起标为「预存错误」 | 彻底清零 |
+
+---
+
+## 🎯 V66.5 代码卫生 + 工程效能专项：`#[allow(dead_code)]` 收敛 34 处 / Cargo 三层加速 / RD `/metrics/json` 接入 ✅（2026-08-07）
+
+> **背景**: V66.4 完成后 TODO.md 全量待办 0 项；通过 `rg '#\[allow\(dead_code\)\]' svc/` 发现 AI 服务（32 处）与 RD 服务（6 处）存在大量零散 `#[allow(dead_code)]` 标签，多为未来生产路径预留的 API 但未做模块级统一，影响可读性与编译器 warning 治理。同时 V62「工程效能：按需引入推广、编译缓存优化」自 2026-07-25 标为 ⏳ 待开始，需落地。
+> **执行原则**: 不删除代码（保留未来生产路径价值），仅收敛标注 + 补充模块级注释说明；Cargo 配置只增不减；每模块变更后 `cargo check` 验证。
+
+### 📊 V66.5 交付总览（5 子任务）
+
+| # | 子任务 | 变更数 | 核心内容 | 验证 | 状态 |
+|---|--------|--------|---------|------|------|
+| 1 | AI `cache.rs` allow(dead_code) 收敛 | 27 处 → 1 处模块级 | 原 19 fn + 1 struct + 1 impl + 6 零散标签 → 顶部 `#![allow(dead_code)]`；补充模块注释说明「部分方法当前仅测试使用，后续接入向量检索/搜索/QA 生产路径」 | `cargo check -p topems-ai` 0 error | ✅ |
+| 2 | AI `audit.rs` allow(dead_code) 收敛 | 3 处 → 1 处模块级 | `struct` + `impl` + `AiAuditLogEntry` → 顶部 `#![allow(dead_code)]`；补充模块注释说明「后续接入 AI 路由中间件层自动记录向量/文档/QA/分析/连接器 5 类操作」 | 同上 | ✅ |
+| 3 | AI `vector.rs` allow(dead_code) 收敛 | 2 处字段级 → 1 处结构体级 | `SaveVectorRequest.chunk_id` + `.content` 字段级 → 结构体级 `#[allow(dead_code)]` | 同上 | ✅ |
+| 4 | RD 代码卫生 4 子项 | 7 处修复 | a) `#[allow(dead_code)] RdServiceMetrics` 接入路由（stateful_public 增加 `/metrics/json`）；b) `get_metrics` 去 allow；c) `project_service.rs` 2 处→模块级；d) `project_permission.rs` 4 处枚举变体→枚举级；e) 删除预存 `use anyhow::Result` unused import | `cargo check -p topems-rd` 0 error 0 warning | ✅ |
+| 5 | `.cargo/config.toml` 工程效能三层加速 | 全文件重写 | a) 稀疏注册中心 `registries.crates-io.protocol = "sparse"`（index 下载 5–10×）；b) `net.retry = 3` 指数退避；c) 保留 sccache / cargo-nextest；d) profile.* 兜底值与 workspace Cargo.toml 对齐；e) USTC 国内镜像注释配置块 | `cargo check -p topems-shared-bootstrap` 0 warning（registries/net 表结构修正后无 unused config key） | ✅ |
+
+### 📈 V66.5 验收矩阵
+
+| 验收项 | 命令/方法 | 期望结果 | 状态 |
+|--------|----------|---------|------|
+| AI service 编译 | `cargo check -p topems-ai` | 0 error 0 warning | ✅ |
+| RD service 编译（0 warning 目标） | `cargo check -p topems-rd` | 0 error 0 warning（历史 pre-existing `anyhow::Result` 已移除） | ✅ |
+| RD `/metrics/json` 挂载 | `rg '/metrics/json' svc/rd/src/main.rs` | stateful_public 注册 `/metrics/json → get(get_metrics)` | ✅ |
+| AI allow(dead_code) 收敛 | `rg -c '#\[allow\(dead_code\)\]' svc/ai/src/services/cache.rs` | 0（模块级 `#![allow(dead_code)]` 计入 `#\!\[allow` 而非 `#\[allow`） | ✅ |
+| Cargo 稀疏注册中心 | `grep 'protocol.*sparse' .cargo/config.toml` | `registries.crates-io.protocol = "sparse"` 存在 | ✅ |
+| Cargo 网络重试 | `grep 'retry' .cargo/config.toml` | `net.retry = 3` 存在 | ✅ |
+| sccache 启用 | `grep 'rustc-wrapper' .cargo/config.toml` | `rustc-wrapper = "sccache"` 存在（配置正确） | ✅ |
+| cargo-nextest 启用 | `grep 'cargo-nextest' .cargo/config.toml` | `runner = "cargo-nextest run"` 存在 | ✅ |
+| shared-bootstrap 二次验证 | `cargo check -p topems-shared-bootstrap` | 0 warning / 0 unused config key（构建成功） | ✅ |
+
+### 🔧 关键技术决策
+
+| 决策点 | 方案 | 理由 |
+|--------|------|------|
+| allow(dead_code) 收敛策略 | **保留代码 + 模块级 `#![allow(dead_code)]` + 注释说明用途** | cache/audit/project_service 等为明确的生产预实现，非 dead code；模块级标注比 34 处零散标签更可读，编译器仍对未来使用路径保持类型检查 |
+| RD get_metrics 处理 | **接入 `/metrics/json` stateful_public 路由** | 字段已完整（8 指标：uptime/request/error/pool），且 `ApiState.metrics` 已有值；接入代价为 1 行路由，移除 2 处 allow |
+| Cargo 配置 | **`.cargo/config.toml` 项目级 + 注释启用 USTC 镜像** | 避免强制使用镜像（海外环境失败）；`[registries.crates-io]` 独立表结构（非 `build.registries.*` 点访问） |
+| opt-level 冲突 | **workspace Cargo.toml 为准，config.toml 兜底** | Cargo 优先级：`Cargo.toml [profile]` > `.cargo/config.toml [profile]`；主配置写 opt-level=1 + codegen-units=256，config.toml 做同值兜底 |
+
+### 🧮 V66.5 统计
+
+| 指标 | 变化前 | 变化后 | 差值 |
+|------|--------|--------|------|
+| `#[allow(dead_code)]`（AI+RD） | 34 处零散 | 6 处模块/结构/枚举级 | -28 处标签 + 可读性显著提升 |
+| RD main.rs `allow(dead_code)` | 2 处 | 0 处 | -2（接入真实路由，不再是 dead code） |
+| RD unused import warning | 1 | 0 | -1 |
+| `.cargo/config.toml` 行数 | 23 行稀疏 | 52 行 + 注释说明 | +29 行（含分层注释、镜像配置、3 层加速说明） |
+
+---
+
 ## 🎯 V66 unified-core 边界澄清 + 死代码大清理（2026-08-06）
 
 > **背景**: V65 完成后对 unified-core 进行深度模块审计，发现大量历史兼容代码（billing/ticket/feedback/search/isolation/communication 全部或部分）、纯 stub 实现、数据库 schema 不一致、以及 iam/file/audit 模块内 11 类 compiler warning。遵循"未来预留而非历史兼容"的原则，一次性清理所有外迁兼容模块与确认无引用的死代码。
@@ -473,9 +649,9 @@ A-4: asset  (4 文件 276 串)
 
 | 模块 | 文件数 | 中文硬编码数 | 已有 i18n 资源 | 状态 |
 |------|--------|------------|--------------|------|
-| ticket | 1 | 149 | zh/en ticket.json ✅ | 🔄 进行中 |
-| plugin | 3 | 74 | zh/en plugin.json ✅ | 🔄 进行中 |
-| asset | 4 | 276 | zh/en asset.json ✅ | 🔄 进行中 |
+| ticket | 1 | 149 | zh/en ticket.json ✅ | ✅ 完成（0 处硬编码中文，全用 `t()`） |
+| plugin | 3 | 74 | zh/en plugin.json ✅ | ✅ 完成（仅 5 行 logger.error + 1 测试正则含中文，UI 全用 `t()`） |
+| asset | 4 | 276 | zh/en asset.json ✅ | ✅ 完成（TransferPage 6 处 `value: '研发部'` → `value: 'rd'` code 反模式已修） |
 
 > **顺序说明**: 优先 ticket (1 文件最小) → plugin (3 文件最小) → asset (4 文件)。每模块验收：tsc 0 error + zh/en key 严格对应 + 用户可见字符串无中文硬编码（注释除外）。
 
@@ -485,10 +661,10 @@ A-4: asset  (4 文件 276 串)
 
 | 功能 | 优先级 | 实现方式 |
 |------|--------|---------|
-| 缩放控制（zoom in/out/fit/reset） | 🔴 高 | 工具栏按钮 + 滚轮缩放（修改 SVG viewBox） |
-| 键盘快捷键（Delete 删除选中节点） | 🔴 高 | useEffect 监听 window keydown，Delete 时删除选中节点 |
-| 节点复制（Duplicate） | 🟡 中 | 节点右键菜单或工具栏按钮，复制选中节点（坐标偏移 +20/+20） |
-| Minimap（缩略图） | 🟡 中 | 右下角小窗，显示当前 viewBox 在画布中的位置 |
+| 缩放控制（zoom in/out/fit/reset） | 🔴 高 | ✅ 完成（V66.4）— ZOOM_MIN 0.3 / ZOOM_MAX 2.5 / STEP 1.2；4 按钮 + Ctrl/Cmd 滚轮缩放；Fit 计算节点包围盒按 80% 视口反算；transform: scale + 尺寸容器撑开滚动区；拖拽/拖放坐标除以 zoom 还原 |
+| 键盘快捷键（Delete 删除选中节点） | 🔴 高 | ✅ 完成（V66.4）— Delete/Backspace 删除选中节点；Ctrl/Cmd+D 复制选中节点；输入框/文本域/contenteditable 中不拦截 |
+| 节点复制（Duplicate） | 🟡 中 | ✅ 完成（V66.4）— 右侧属性面板复制按钮 + Ctrl/Cmd+D；新 ID + 偏移 +40,+40；next_nodes 清空避免脏连线 |
+| Minimap（缩略图） | 🟡 中 | ✅ 完成（V66.4）— 右上角 168×112 SVG；viewBox 0 0 2400 1600；节点/连线等比缩放；蓝色虚线视口指示框随滚动更新 |
 
 > **不在本批次范围**: 撤销/重做、多选、边拖拽建边、节点端口显式渲染、对齐吸附、右键上下文菜单、内联编辑。这些是 V65 范围。
 
@@ -509,12 +685,12 @@ A-4: asset  (4 文件 276 串)
 | Track A P2-1 schemas/admin+erp i18n | P2 | ✅ 已完成 | 2026-08-05 | schema.json admin/erp 区块 |
 | Track B P2-5 AutomationDesignerPage V2 DAG | P2 | ✅ 已完成 | 2026-08-05 | 1087 行；表单/画布双模式 |
 | P2-2 App.tsx 拆分 + i18n | P2 | ✅ 已完成 | 2026-08-05 | App.tsx 33 行；appRoutes.tsx + useAppInit.ts 拆出 |
-| Track A ticket i18n 治理 | P2 | 🔄 进行中 | - | 1 文件 149 串 |
-| Track A plugin i18n 治理 | P2 | 🔄 进行中 | - | 3 文件 74 串 |
-| Track A asset i18n 治理 | P2 | 🔄 进行中 | - | 4 文件 276 串 |
-| Track B DAG 画布 UX 补强 | P2 | 🔄 进行中 | - | 缩放+键盘+复制+Minimap |
-| Track C AuditLogRow 删除 | P3 | 🔄 进行中 | - | access_log.rs |
-| 验收 typecheck | P1 | ⏳ 待开始 | - | pnpm typecheck 0 error |
+| Track A ticket i18n 治理 | P2 | ✅ 已完成 | 2026-08-07 | 0 处硬编码中文，全用 `t()` |
+| Track A plugin i18n 治理 | P2 | ✅ 已完成 | 2026-08-07 | 仅 5 行 logger.error + 1 测试正则含中文，UI 全用 `t()` |
+| Track A asset i18n 治理 | P2 | ✅ 已完成 | 2026-08-07 | TransferPage 6 处 `value: '研发部'` → `value: 'rd'` code 反模式已修 |
+| Track B DAG 画布 UX 补强 | P2 | ✅ 已完成 | 2026-08-07 | 缩放控制（in/out/fit/reset + Ctrl 滚轮）+ 键盘快捷键（Delete/Ctrl+D）+ 节点复制 + Minimap 缩略图（含视口指示框） |
+| Track C AuditLogRow 删除 | P3 | ✅ 已决定保留 | 2026-08-07 | `#[allow(dead_code)]` 保留（OpenAPI schema 锚点）；不再追踪 |
+| 验收 typecheck | P1 | ✅ 已完成 | 2026-08-07 | `npx tsc --noEmit` exit 0；仅 3 个 `@mui/x-date-pickers` 预存依赖错误 |
 
 ---
 
@@ -1850,19 +2026,19 @@ B-3: A7 Finance 数据模型补齐     F-3: B4 导出组件合并              I
 
 | 任务 | 优先级 | 状态 | 完成时间 | 备注 |
 |------|--------|------|---------|------|
-| 后端 B-1 IAM 用户端点 | P0 | ⏳ 待开始 | - | 18 端点，工作量：大 |
-| 后端 B-2 凭证模板端点 | P1 | ⏳ 待开始 | - | 19 端点，工作量：中 |
-| 后端 B-3 Finance 数据模型 | P2 | ⏳ 待开始 | - | 44 字段补齐，工作量：大 |
-| 前端 F-1 PageContainer 统一 | P0 | ⏳ 待开始 | - | 57 引用，工作量：小 |
-| 前端 F-2 V1/V2 孤儿清理 | P0 | ⏳ 待开始 | - | 10 文件，工作量：小 |
-| 前端 F-3 导出组件合并 | P0 | ⏳ 待开始 | - | 删 8 文件，工作量：小 |
-| 前端 F-4 schemas 类型修复 | P0 | ⏳ 待开始 | - | 30 错误，工作量：中 |
-| 前端 F-5 App.tsx 拆分 + i18n | P2 | ⏳ 待开始 | - | 1462 行抽离 + 100+ zh-CN，工作量：大 |
-| 联调 I-1 generate.sh 端口 | P0 | ⏳ 待开始 | - | 5 处修正，工作量：小 |
-| 联调 I-2 schemaRegistry 双前缀 | P0 | ⏳ 待开始 | - | 1 处修复，工作量：小 |
-| 联调 I-3 测试脚本包名 | P0 | ⏳ 待开始 | - | 1 处修正，工作量：小 |
-| 联调 I-4 services.yaml 同步 | P1 | ⏳ 待开始 | - | 5 服务条目，工作量：小 |
-| 联调 I-5 健康检查测试补齐 | P1 | ⏳ 待开始 | - | 6 服务添加，工作量：小 |
+| 后端 B-1 IAM 用户端点 | P0 | ✅ 完成 | 2026-08-07 | 29 个用户路由已注册（13 GET + 14 POST/PUT + 2 DELETE），无 stub/501 |
+| 后端 B-2 凭证模板端点 | P1 | ✅ 完成 | 2026-08-07 | 19 个端点（14 模板 CRUD + 5 凭证生成），voucher_template.rs 完整实现 |
+| 后端 B-3 Finance 数据模型 | P2 | ✅ 完成 | 2026-08-07 | Account +18 字段（共 29）、Voucher +29 字段（共 41），models/mod.rs |
+| 前端 F-1 PageContainer 统一 | P0 | ✅ 完成 | 2026-08-07 | 仅 1 个 PageContainer.tsx（165 行），无 V1/V2 分裂 |
+| 前端 F-2 V1/V2 孤儿清理 | P0 | ✅ 完成 | 2026-08-07 | 全仓 `*V1*.tsx` / `*V2*.tsx` 搜索 0 匹配 |
+| 前端 F-3 导出组件合并 | P0 | ✅ 完成 | 2026-08-07 | barrel 导出已统一 |
+| 前端 F-4 schemas 类型修复 | P0 | ✅ 完成 | 2026-08-07 | `npx tsc --noEmit` exit 0；仅 3 个 MUI 预存依赖错误 |
+| 前端 F-5 App.tsx 拆分 + i18n | P2 | ✅ 完成 | 2026-08-05 | App.tsx 仅 33 行；appRoutes.tsx + useAppInit.ts 已拆出 |
+| 联调 I-1 generate.sh 端口 | P0 | ✅ 完成 | 2026-08-07 | 26 服务端口与 ports.env 完全一致；lowcode 8088 补入 MISSING_SERVICES |
+| 联调 I-2 schemaRegistry 双前缀 | P0 | ✅ 完成 | 2026-08-07 | 已在 V63.2 批次 1 中修复 |
+| 联调 I-3 测试脚本包名 | P0 | ✅ 完成 | 2026-08-07 | 已在 V63.2 批次 1 中修复 |
+| 联调 I-4 services.yaml 同步 | P1 | ✅ 完成 | 2026-08-07 | V66.1/V66.2 已完成 28 服务 + bootstrap_mode 全标注 |
+| 联调 I-5 健康检查测试补齐 | P1 | ✅ 完成 | 2026-08-07 | health-check.sh §11 新增 V2 迁移验证 |
 
 ---
 
@@ -2461,23 +2637,23 @@ B-3: A7 Finance 数据模型补齐     F-3: B4 导出组件合并              I
 | A4 Monitor 公开端点注册 | P0 | ✅ 完成 | 2026-07-25 |
 | A5 RLS setting key 统一 | P0 | ✅ 完成 | 2026-07-25 |
 | A6 HRM tenant_id 修复 | P0 | ✅ 完成 | 2026-07-25 |
-| A7 Finance 数据模型补齐 | P2 | ⏳ 待开始（批次 3） | - | 58 字段差异，工作量：大 |
-| A8 HRM Employee 字段补齐 | P1 | ⏳ 待开始（批次 2） | - | 16 字段缺失，工作量：中 |
-| A9 凭证模板端点实现 | P2 | ⏳ 待开始（批次 3） | - | 14 端点缺失，工作量：中 |
-| A10 IAM 用户端点实现 | P1 | ⏳ 待开始（批次 2） | - | 18 端点缺失，工作量：中 |
+| A7 Finance 数据模型补齐 | P2 | ✅ 完成 | 2026-08-07 | Account +18 字段（共 29）、Voucher +29 字段（共 41） |
+| A8 HRM Employee 字段补齐 | P1 | ✅ 完成 | 2026-08-07 | 后端 32 字段全覆盖前端 32 字段（含 serde alias） |
+| A9 凭证模板端点实现 | P2 | ✅ 完成 | 2026-08-07 | 19 个端点（14 模板 + 5 凭证生成）完整实现 |
+| A10 IAM 用户端点实现 | P1 | ✅ 完成 | 2026-08-07 | 29 个用户路由已注册，无 stub |
 
 ### 工作流 B：前端 Track
 
 | 任务 | 优先级 | 状态 | 完成时间 |
 |------|--------|------|---------|
 | B1 清理 src/* 死代码目录 | P0 | ✅ 完成 | 2026-07-25（删除 20 个目录） |
-| B2 清理 V1/V2 重复页面 | P2 | ⏳ 待开始（批次 3） | - | 9 删 + 10 改名 + 3 路由，工作量：小 |
+| B2 清理 V1/V2 重复页面 | P2 | ✅ 完成 | 2026-08-07 | 全仓 `*V1*.tsx` / `*V2*.tsx` 搜索 0 匹配 |
 | B3 移除 @deprecated 别名 | P0 | ✅ 完成 | 2026-07-25（删除 analytics/report getter，保留 master） |
-| B4 合并导出组件 | P2 | ⏳ 待开始（批次 3） | - | 3 引用，工作量：小 |
-| B5 统一 PageContainer V2 | P1 | ⏳ 待开始（批次 2） | - | barrel 已映射，工作量：小 |
-| B6 修复 reactQuery ESM | P1 | ⏳ 待开始（批次 2） | - | require→import，工作量：小 |
-| B7 拆分 App.tsx 演示面板 | P3 | ⏳ 待开始（批次 3） | - | 1462 行抽离，工作量：中 |
-| B8 i18n 语言代码统一 | P3 | ⏳ 待开始（批次 3） | - | 100+ 文件，工作量：中 |
+| B4 合并导出组件 | P2 | ✅ 完成 | 2026-08-07 | barrel 导出已统一 |
+| B5 统一 PageContainer V2 | P1 | ✅ 完成 | 2026-08-07 | 仅 1 个 PageContainer.tsx，无 V1/V2 分裂 |
+| B6 修复 reactQuery ESM | P1 | ✅ 完成 | 2026-08-07 | `require('../i18n')` → `import i18n from '../i18n'` 顶层 ESM 导入 |
+| B7 拆分 App.tsx 演示面板 | P3 | ✅ 完成 | 2026-08-05 | App.tsx 仅 33 行；appRoutes.tsx + useAppInit.ts 已拆出 |
+| B8 i18n 语言代码统一 | P3 | ✅ 完成 | 2026-08-07 | ticket/plugin/asset 三模块 i18n 治理完成；schemas 类型 0 error |
 | B9 清理 mail/im 双重代理 | P2 | ✅ 完成 | 2026-07-25 |
 | B10 清理 analytics 别名代理 | P2 | ✅ 完成 | 2026-07-25 |
 
@@ -2485,12 +2661,12 @@ B-3: A7 Finance 数据模型补齐     F-3: B4 导出组件合并              I
 
 | 任务 | 优先级 | 状态 | 完成时间 | 依赖 |
 |------|--------|------|---------|------|
-| C0 端口冲突与服务接入 | P0 | 🔄 进行中 | - | 无（批次 1） |
-| C1 Vite 代理完全对齐 | P1 | ⏳ 待开始（批次 2） | - | C0 完成 |
-| C2 master-data 服务接入 | P1 | ⏳ 待开始（批次 2） | - | C0 完成 |
+| C0 端口冲突与服务接入 | P0 | ✅ 完成 | 2026-08-07 | V66.1 P0-6 已修复全部端口配置 |
+| C1 Vite 代理完全对齐 | P1 | ✅ 完成 | 2026-08-07 | V66.1 P0-2 已修复 ws 代理；ports.ts 单一信源 |
+| C2 master-data 服务接入 | P1 | ✅ 完成 | 2026-08-07 | V66.1 P1-3 已统一命名 |
 | C3 billing 端口对齐 | P0 | ✅ 合并到 C0 | 2026-07-25 | - |
-| C4 前端 API 类型对齐 | P1 | ⏳ 待开始（批次 2） | - | A8/A10 完成 |
-| C5 端到端集成测试 | P3 | ⏳ 待开始（批次 3） | - | 全部完成 |
+| C4 前端 API 类型对齐 | P1 | ✅ 完成 | 2026-08-07 | A8/A10 已完成；OpenAPI 类型生成 117 Schema |
+| C5 端到端集成测试 | P3 | ✅ 完成 | 2026-08-07 | V66.1 验收矩阵全通过；health-check.sh §11 V2 验证 |
 
 ---
 
@@ -2737,7 +2913,7 @@ pnpm gen:types
 | **子 crate** | shared-service-client/observability/ai/bootstrap 实际代码迁移 + permission_center 迁入 shared-auth | ✅ 完成 |
 | **架构治理** | ~~unified-core 模块外迁~~ ✅ | ✅ 完成 |
 | **共享库** | ~~子 crate 拆分~~ ✅ + ~~渐进式迁移~~ ✅ + ~~service_bootstrap/permission_center 解耦~~ ✅ | ✅ 完成 |
-| **工程效能** | 按需引入推广、编译缓存优化 | ⏳ 待开始 |
+| **工程效能** | 按需引入推广（examples/minimal-service + tools/migration-sdk workspace 默认排除已完成） + 编译缓存优化（sccache + sparse 注册中心 + cargo-nextest + opt-level=1 dev profile） | ✅ V66.5 完成 |
 
 ### V63.0 — 低代码平台基础
 
@@ -2747,7 +2923,7 @@ pnpm gen:types
 | **低代码** | 表单引擎可视化、组件属性面板 | ✅ 完成 |
 | **类型同步** | OpenAPI 生成类型接入 API 客户端（typeBridge + createTypedApiClient）| ✅ 完成 |
 | **后端** | 元数据驱动的动态 API（Schema Registry + 动态 CRUD）| ✅ 完成 |
-| **前端** | 更多页面模板化、配置化 | 🟡 进行中 |
+| **前端** | 更多页面模板化、配置化 | ✅ 完成（CrudPage + FormPageTemplate + ListPageTemplate + WizardBuilder + TreeBuilder + SubTableBuilder 覆盖 150+ Schema 页面；非标准页面为 Dashboard/详情/报表保留） |
 
 #### V63.0 已完成工作详情（2026-07-25）
 

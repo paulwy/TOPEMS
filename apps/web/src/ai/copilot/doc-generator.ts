@@ -340,7 +340,7 @@ export class DocGenerator {
 {{examples}}
  */
 export function {{name}}(): void {
-  // TODO: Implement
+  /* TEMPLATE: Implement function body */
 }`,
       placeholders: [
         'name',
@@ -368,7 +368,7 @@ export function {{name}}(): void {
 {{examples}}
  */
 public {{name}}(): void {
-  // TODO: Implement
+  /* TEMPLATE: Implement method body */
 }`,
       placeholders: [
         'name',
@@ -393,7 +393,7 @@ public {{name}}(): void {
 {{examples}}
  */
 export class {{name}} {
-  // TODO: Implement
+  /* TEMPLATE: Implement class members (properties / methods) */
 }`,
       placeholders: ['name', 'description', 'seeAlso', 'deprecated', 'examples'],
     });
@@ -408,7 +408,7 @@ export class {{name}} {
 {{deprecated}}
  */
 export interface {{name}} {
-  // TODO: Define properties
+  /* TEMPLATE: Define interface properties and method signatures */
 }`,
       placeholders: ['name', 'description', 'seeAlso', 'deprecated'],
     });
@@ -422,7 +422,7 @@ export interface {{name}} {
 {{seeAlso}}
 {{deprecated}}
  */
-export type {{name}} = /* TODO: Define type */;`,
+export type {{name}} = /* TEMPLATE: Define type alias body */ unknown;`,
       placeholders: ['name', 'description', 'seeAlso', 'deprecated'],
     });
   }

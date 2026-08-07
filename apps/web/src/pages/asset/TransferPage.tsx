@@ -50,12 +50,12 @@ const TransferPage: React.FC = () => {
   );
 
   const DEPARTMENTS = [
-    { value: '研发部', label: t('asset:transfer.dept_rd') },
-    { value: '市场部', label: t('asset:transfer.dept_marketing') },
-    { value: '财务部', label: t('asset:transfer.dept_finance') },
-    { value: '行政部', label: t('asset:transfer.dept_admin') },
-    { value: '生产部', label: t('asset:transfer.dept_production') },
-    { value: '采购部', label: t('asset:transfer.dept_purchase') },
+    { value: 'rd', label: t('asset:transfer.dept_rd') },
+    { value: 'marketing', label: t('asset:transfer.dept_marketing') },
+    { value: 'finance', label: t('asset:transfer.dept_finance') },
+    { value: 'admin', label: t('asset:transfer.dept_admin') },
+    { value: 'production', label: t('asset:transfer.dept_production') },
+    { value: 'purchase', label: t('asset:transfer.dept_purchase') },
   ];
 
   const ASSETS = [

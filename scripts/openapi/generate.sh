@@ -97,6 +97,7 @@ SERVICES=(
 # 这些服务存在于 svc/ 目录但未实现 OpenAPI 端点
 MISSING_SERVICES=(
   "search|8082|search"
+  "lowcode|8088|lowcode"
 )
 
 # 默认超时配置

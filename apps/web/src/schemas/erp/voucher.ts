@@ -11,6 +11,7 @@ import type { EntitySchema } from '@/schema';
 import { columnsFromFields } from '@/schema/schemaExtensions';
 import type { NestedTableConfig, WizardConfig } from '@/schema/schemaExtensions';
 import i18n from '@/i18n';
+import { voucherApi } from '@/api/finance/voucher';
 
 // ============ 凭证明细子表配置 ============
 
@@ -271,8 +272,18 @@ export const voucherSchema: EntitySchema & {
       color: 'primary',
       confirm: true,
       confirmMessage: i18n.t('schema:erp.voucher.batchAction.batchSubmit.confirmMessage'),
-      onClick: (_ids: string[]) => {
-        // TODO: 实现批量提交凭证逻辑
+      onClick: async (ids: string[]) => {
+        if (!ids.length) return;
+        try {
+          const res = await voucherApi.batchSubmit(ids);
+          if (res.code === 0 || res.success) {
+            alert(i18n.t('schema:erp.voucher.batchAction.batchSubmit.success', { defaultValue: '提交成功' }));
+          } else {
+            alert(i18n.t('schema:erp.voucher.batchAction.batchSubmit.fail', { defaultValue: res.message || '提交失败' }));
+          }
+        } catch (e: any) {
+          alert(i18n.t('schema:erp.voucher.batchAction.batchSubmit.error', { defaultValue: String(e?.message || '网络错误') }));
+        }
       },
     },
     {
@@ -282,8 +293,18 @@ export const voucherSchema: EntitySchema & {
       color: 'success',
       confirm: true,
       confirmMessage: i18n.t('schema:erp.voucher.batchAction.batchApprove.confirmMessage'),
-      onClick: (_ids: string[]) => {
-        // TODO: 实现批量审核凭证逻辑
+      onClick: async (ids: string[]) => {
+        if (!ids.length) return;
+        try {
+          const res = await voucherApi.batchApprove(ids);
+          if (res.code === 0 || res.success) {
+            alert(i18n.t('schema:erp.voucher.batchAction.batchApprove.success', { defaultValue: '审批成功' }));
+          } else {
+            alert(i18n.t('schema:erp.voucher.batchAction.batchApprove.fail', { defaultValue: res.message || '审批失败' }));
+          }
+        } catch (e: any) {
+          alert(i18n.t('schema:erp.voucher.batchAction.batchApprove.error', { defaultValue: String(e?.message || '网络错误') }));
+        }
       },
     },
   ],

@@ -3,7 +3,10 @@ use axum::{
     response::IntoResponse,
 };
 use chrono::Utc;
+use rust_decimal::Decimal;
 use serde::Deserialize;
+use sqlx::PgPool;
+use tracing::warn;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
@@ -436,6 +439,156 @@ pub async fn toggle_generate_rule(
     }
 }
 
+// ========== 从源单据查询金额：sale/purchase/payment 三类型 + 兜底默认 ==========
+
+/// 查询源单据金额，返回 `{ source_id: amount }` 映射；查不到或异常的 ID 使用默认金额兜底。
+///
+/// | source_type | 来源表 | 金额字段 | 说明 |
+/// |-------------|--------|---------|------|
+/// | `sale` / `sales_order` | `plugin_erp.sales_orders` | `payable_amount` (F64→Decimal) | 销售订单应付金额 |
+/// | `purchase` / `purchase_order` | `plugin_erp.purchase_orders` | `payable_amount` (F64→Decimal) | 采购订单应付金额 |
+/// | `payment` | `plugin_finance.payment_records` 或 `plugin_finance.payments` | `amount` (F64→Decimal) | 支付记录金额（两表容错查询） |
+/// | 其他 / 未知 | — | 1000.00 默认 | 兼容 legacy 调用（如 demo/preview） |
+async fn resolve_source_amounts(
+    pool: &PgPool,
+    tenant_id: Uuid,
+    source_type: &str,
+    source_ids: &[String],
+) -> std::collections::HashMap<String, Decimal> {
+    /// 默认兜底金额（1000.00）—— 与原 mock 值一致，防止预览/演示场景因缺数据报 NPE 或 0 金额
+    const DEFAULT_AMOUNT_I128: i128 = 1000_00; // 2 位小数
+    const SCALE: u32 = 2;
+
+    let default = Decimal::from_i128_with_scale(DEFAULT_AMOUNT_I128, SCALE);
+    let mut out = std::collections::HashMap::new();
+
+    if source_ids.is_empty() {
+        return out;
+    }
+
+    // 解析 source_id → Uuid；无法解析的直接塞默认值，不影响批量查询
+    let mut valid_uuids = Vec::with_capacity(source_ids.len());
+    let mut uuid_to_id = std::collections::HashMap::new();
+    for id in source_ids {
+        match Uuid::parse_str(id) {
+            Ok(u) => {
+                valid_uuids.push(u);
+                uuid_to_id.insert(u, id.clone());
+            }
+            Err(_) => {
+                out.insert(id.clone(), default);
+            }
+        }
+    }
+    if valid_uuids.is_empty() {
+        return out;
+    }
+
+    let stype = source_type.to_ascii_lowercase();
+    let amount_f64s: Vec<(Uuid, Option<f64>)> = match stype.as_str() {
+        "sale" | "sales" | "sales_order" | "salesorder" => {
+            sqlx::query_as::<_, (Uuid, Option<f64>)>(
+                r#"SELECT id, payable_amount FROM plugin_erp.sales_orders
+                   WHERE tenant_id = $1 AND id = ANY($2)"#,
+            )
+            .bind(tenant_id)
+            .bind(&valid_uuids)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| {
+                static LOGGED: std::sync::atomic::AtomicBool =
+                    std::sync::atomic::AtomicBool::new(false);
+                if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                    warn!(error = %e, "查询 plugin_erp.sales_orders 失败，使用默认金额 1000.00 兜底");
+                }
+            })
+            .unwrap_or_default()
+        }
+        "purchase" | "purchase_order" | "purchaseorder" => {
+            sqlx::query_as::<_, (Uuid, Option<f64>)>(
+                r#"SELECT id, payable_amount FROM plugin_erp.purchase_orders
+                   WHERE tenant_id = $1 AND id = ANY($2)"#,
+            )
+            .bind(tenant_id)
+            .bind(&valid_uuids)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| {
+                static LOGGED: std::sync::atomic::AtomicBool =
+                    std::sync::atomic::AtomicBool::new(false);
+                if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                    warn!(error = %e, "查询 plugin_erp.purchase_orders 失败，使用默认金额 1000.00 兜底");
+                }
+            })
+            .unwrap_or_default()
+        }
+        "payment" | "pay" => {
+            // 容错：先查 payment_records（新表），没有再查 payments（旧命名）
+            let r1 = sqlx::query_as::<_, (Uuid, Option<f64>)>(
+                r#"SELECT id, amount FROM plugin_finance.payment_records
+                   WHERE tenant_id = $1 AND id = ANY($2)"#,
+            )
+            .bind(tenant_id)
+            .bind(&valid_uuids)
+            .fetch_all(pool)
+            .await;
+            match r1 {
+                Ok(rows) if !rows.is_empty() => rows,
+                _ => sqlx::query_as::<_, (Uuid, Option<f64>)>(
+                    r#"SELECT id, amount FROM plugin_finance.payments
+                       WHERE tenant_id = $1 AND id = ANY($2)"#,
+                )
+                .bind(tenant_id)
+                .bind(&valid_uuids)
+                .fetch_all(pool)
+                .await
+                .map_err(|e| {
+                    static LOGGED: std::sync::atomic::AtomicBool =
+                        std::sync::atomic::AtomicBool::new(false);
+                    if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                        warn!(error = %e, "查询 plugin_finance.payments 失败，使用默认金额 1000.00 兜底");
+                    }
+                })
+                .unwrap_or_default(),
+            }
+        }
+        other => {
+            static LOGGED: std::sync::atomic::AtomicBool =
+                std::sync::atomic::AtomicBool::new(false);
+            if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                warn!(
+                    source_type = other,
+                    "未知 source_type，使用默认金额 1000.00；支持值：sale / purchase / payment"
+                );
+            }
+            Vec::new()
+        }
+    };
+
+    for (uuid, amount_opt) in amount_f64s {
+        let sid = match uuid_to_id.get(&uuid).cloned() {
+            Some(s) => s,
+            None => continue,
+        };
+        let dec = match amount_opt {
+            Some(v) if v.is_finite() && v >= 0.0 => {
+                // f64 → Decimal：round 到 2 位，避免 0.1+0.2=0.300000004 类浮点问题
+                let scaled = (v * 100.0).round() as i128;
+                Decimal::from_i128_with_scale(scaled, SCALE)
+            }
+            _ => default,
+        };
+        out.insert(sid, dec);
+    }
+
+    // 对没有命中 DB 行的 ID，兜底默认值
+    for id in source_ids {
+        out.entry(id.clone()).or_insert(default);
+    }
+
+    out
+}
+
 // ========== 凭证自动生成 ==========
 
 #[derive(Debug, Deserialize)]
@@ -473,20 +626,23 @@ pub async fn preview_generation(
     };
 
     let voucher_date = req.date.unwrap_or_else(|| chrono::Utc::now().date_naive());
-    // TODO: 实际业务中应从源单据(sale/purchase/payment)查询金额，此处使用 mock 金额
-    let mock_amount = rust_decimal::Decimal::new(100000, 2); // 1000.00
+    // 从源单据查询金额：sale/purchase/payment → 对应业务表；DB 失败或未知类型时回退 1000.00 预览默认值
+    let amounts =
+        resolve_source_amounts(&state.pool, tenant_id, &req.source_type, &req.source_ids).await;
+    let default = Decimal::from_i128_with_scale(1000_00, 2);
 
     let mut previews = Vec::new();
     for source_id in &req.source_ids {
+        let amount = amounts.get(source_id).copied().unwrap_or(default);
         let mut entries = Vec::new();
         let mut total_debit = rust_decimal::Decimal::ZERO;
         let mut total_credit = rust_decimal::Decimal::ZERO;
 
         for line in &template.lines {
             let (debit, credit) = if line.direction == "debit" {
-                (mock_amount, rust_decimal::Decimal::ZERO)
+                (amount, rust_decimal::Decimal::ZERO)
             } else {
-                (rust_decimal::Decimal::ZERO, mock_amount)
+                (rust_decimal::Decimal::ZERO, amount)
             };
             total_debit += debit;
             total_credit += credit;
@@ -564,21 +720,24 @@ pub async fn generate_from_source(
     };
 
     let voucher_date = chrono::Utc::now();
-    // TODO: 实际业务中应从源单据查询金额，此处使用 mock 金额
-    let mock_amount = rust_decimal::Decimal::new(100000, 2); // 1000.00
+    // 从源单据查询金额：sale/purchase/payment → 对应业务表；DB 失败或未知类型时回退 1000.00 默认值
+    let amounts =
+        resolve_source_amounts(&state.pool, tenant_id, &req.source_type, &req.source_ids).await;
+    let default = Decimal::from_i128_with_scale(1000_00, 2);
 
     let mut voucher_ids = Vec::new();
     let mut errors = Vec::new();
 
     for source_id in &req.source_ids {
+        let amount = amounts.get(source_id).copied().unwrap_or(default);
         let lines: Vec<VoucherLineRequest> = template
             .lines
             .iter()
             .map(|line| {
                 let (debit, credit) = if line.direction == "debit" {
-                    (mock_amount, rust_decimal::Decimal::ZERO)
+                    (amount, rust_decimal::Decimal::ZERO)
                 } else {
-                    (rust_decimal::Decimal::ZERO, mock_amount)
+                    (rust_decimal::Decimal::ZERO, amount)
                 };
                 VoucherLineRequest {
                     account_code: line.account_code.clone(),

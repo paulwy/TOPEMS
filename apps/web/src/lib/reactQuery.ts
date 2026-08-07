@@ -1,11 +1,9 @@
 import { QueryClient, QueryCache, MutationCache, type DefaultOptions } from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
 import { useNotificationStore } from '../store';
+import i18n from '../i18n';
 
-// 延迟导入 i18n 实例，避免模块加载时的循环依赖
-// （i18n/index.ts 依赖 initReactI18next，测试中可能被 mock）
 function getT() {
-  const i18n = require('../i18n').default;
   return (key: string) => i18n.t(key);
 }
 

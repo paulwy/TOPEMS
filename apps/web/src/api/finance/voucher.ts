@@ -65,9 +65,15 @@ export const voucherApi = {
     return apiClient.finance.post(`/vouchers/${id}/approve`, {});
   },
 
+  batchSubmit: (ids: string[]): Promise<ApiResponse<BatchOperationResult>> => {
+    return apiClient.finance.post('/vouchers/batch/submit', {
+      voucher_ids: ids,
+    });
+  },
+
   batchApprove: (ids: string[]): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.finance.post('/vouchers/batch-approve', {
-      ids,
+    return apiClient.finance.post('/vouchers/batch/approve', {
+      voucher_ids: ids,
     });
   },
 
@@ -80,8 +86,8 @@ export const voucherApi = {
   },
 
   batchPost: (ids: string[]): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.finance.post('/vouchers/batch-post', {
-      ids,
+    return apiClient.finance.post('/vouchers/batch/post', {
+      voucher_ids: ids,
     });
   },
 

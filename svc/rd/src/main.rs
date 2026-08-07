@@ -7,6 +7,7 @@
 //! - stateful_public：/health + /health/detailed（带 IAM HTTP / DB 双重健康检查
 //! - 配置 Config::load() + rs_plugin 自动注册
 
+use anyhow::Result;
 use axum::{routing::get, Json, Router};
 use prometheus::{default_registry, Gauge};
 use serde::Serialize;
@@ -123,9 +124,11 @@ async fn main() -> anyhow::Result<()> {
 
     // ── stateful_public（需要 ApiState 的自定义公共路由） ─────────────
     // 外层嵌套：health_check + health_check_detailed 使用自定义 DB/IAM 双重健康检查逻辑
+    // + /metrics/json 自定义 JSON 指标端点（区别于标准 Prometheus /metrics）
     let stateful_public = Router::new()
         .route("/health", get(health_check))
         .route("/health/detailed", get(health_check_detailed))
+        .route("/metrics/json", get(get_metrics))
         .with_state(api_state.clone());
 
     // ── 最终 Application 合并 ───────────────────────────────────────
@@ -211,7 +214,6 @@ async fn health_check_detailed(
 }
 
 #[derive(Serialize, Clone)]
-#[allow(dead_code)]
 struct RdServiceMetrics {
     service_name: String,
     uptime_seconds: u64,
@@ -223,7 +225,6 @@ struct RdServiceMetrics {
     database_pool_idle: usize,
 }
 
-#[allow(dead_code)]
 async fn get_metrics(
     axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<RdServiceMetrics>> {

@@ -1,3 +1,8 @@
+// RD 项目服务层：封装 ProjectRepository 提供业务逻辑
+// 当前为 Service 接口层（Repository 模式已在路由层直接使用），
+// 后续复杂业务逻辑（多仓库协作、事务编排）将汇聚于此。
+#![allow(dead_code)]
+
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
@@ -5,12 +10,10 @@ use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
 use crate::repositories::project_repository::ProjectRepository;
 use topems_shared::{Result, TopemsError};
 
-#[allow(dead_code)]
 pub struct ProjectService {
     repository: ProjectRepository,
 }
 
-#[allow(dead_code)]
 impl ProjectService {
     pub fn new(db: PgPool) -> Self {
         Self {
