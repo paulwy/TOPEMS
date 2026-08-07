@@ -737,22 +737,32 @@ async fn award_tender(
 
     match transaction {
         Ok(mut tx) => {
-            let _ = sqlx::query(
+            if let Err(e) = sqlx::query(
                 "UPDATE plugin_srm.tenders SET status = 'awarded', updated_at = NOW() WHERE id = $1 AND tenant_id = $2",
             )
             .bind(tender_uuid)
             .bind(tenant_id)
             .execute(&mut *tx)
-            .await;
+            .await
+            {
+                tracing::error!("更新招标状态失败: {}", e);
+                tx.rollback().await.unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
+                return Json(ApiResponse::<serde_json::Value>::error(500, "中标处理失败"));
+            }
 
-            let _ = sqlx::query(
+            if let Err(e) = sqlx::query(
                 "UPDATE plugin_srm.tender_bids SET status = CASE WHEN id = $1 THEN 'won' ELSE 'lost' END, updated_at = NOW() WHERE tender_id = $2 AND tenant_id = $3",
             )
             .bind(winning_bid_uuid)
             .bind(tender_uuid)
             .bind(tenant_id)
             .execute(&mut *tx)
-            .await;
+            .await
+            {
+                tracing::error!("更新投标状态失败: {}", e);
+                tx.rollback().await.unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
+                return Json(ApiResponse::<serde_json::Value>::error(500, "中标处理失败"));
+            }
 
             let award_no = format!("AW-{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
 
@@ -779,7 +789,9 @@ async fn award_tender(
                 Ok(award) => award,
                 Err(e) => {
                     tracing::error!("创建中标记录失败: {}", e);
-                    let _ = tx.rollback().await;
+                    tx.rollback()
+                        .await
+                        .unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
                     return Json(ApiResponse::<serde_json::Value>::error(500, "中标处理失败"));
                 }
             };

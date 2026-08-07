@@ -491,6 +491,156 @@ pub fn decrypt_string_value(
     }
 }
 
+/// 统一加密服务初始化：从环境变量读取密钥并构造 FieldEncryptionService
+///
+/// 环境变量优先级：
+///   1. ENCRYPTION_MASTER_KEY（hex 编码，64 字符 = 32 字节）
+///   2. ENCRYPTION_KEY（支持 base64: 前缀或原始字符串经 SHA256 派生）
+///
+/// 行为：
+///   - 生产环境（DEPLOYMENT_MODE=saas 或 MULTI_TENANT_ENABLED=true）：密钥未设置时 panic
+///   - 开发环境：密钥未设置时 warn 并使用安全随机生成的临时密钥（非硬编码）
+pub fn init_encryption_from_env() -> FieldEncryptionService {
+    use rand::RngCore;
+
+    let is_production = is_production_mode();
+
+    // 优先级 1: ENCRYPTION_MASTER_KEY（hex 编码）
+    if let Ok(master_key_hex) = std::env::var("ENCRYPTION_MASTER_KEY") {
+        if !master_key_hex.is_empty() {
+            return build_from_hex_key(&master_key_hex, is_production);
+        }
+    }
+
+    // 优先级 2: ENCRYPTION_KEY（base64: 前缀或原始字符串经 SHA256 派生）
+    if let Ok(encryption_key) = std::env::var("ENCRYPTION_KEY") {
+        if !encryption_key.is_empty() {
+            return build_from_encryption_key(&encryption_key, is_production);
+        }
+    }
+
+    // 两个环境变量都未设置
+    if is_production {
+        panic!(
+            "生产环境（DEPLOYMENT_MODE=saas 或 MULTI_TENANT_ENABLED=true）下必须设置              ENCRYPTION_MASTER_KEY 或 ENCRYPTION_KEY 环境变量，服务无法启动"
+        );
+    }
+
+    // 开发环境：生成随机临时密钥（非硬编码，重启后变化）
+    tracing::warn!(
+        "ENCRYPTION_MASTER_KEY 和 ENCRYPTION_KEY 均未设置，已生成随机临时密钥。\
+         该密钥重启后会变化，已加密数据将无法解密。生产环境必须显式配置密钥。"
+    );
+    let mut random_key = [0u8; 32];
+    rand::rngs::OsRng.fill_bytes(&mut random_key);
+    FieldEncryptionService::new(KeyManager::new(&random_key))
+}
+
+/// 检测当前是否为生产环境
+fn is_production_mode() -> bool {
+    let deployment_mode = std::env::var("DEPLOYMENT_MODE")
+        .unwrap_or_default()
+        .to_lowercase();
+    if deployment_mode == "saas" {
+        return true;
+    }
+    std::env::var("MULTI_TENANT_ENABLED")
+        .map(|v| v.to_lowercase() == "true")
+        .unwrap_or(false)
+}
+
+/// 从 ENCRYPTION_MASTER_KEY（hex 编码）构造 FieldEncryptionService
+fn build_from_hex_key(master_key_hex: &str, is_production: bool) -> FieldEncryptionService {
+    use sha2::Digest;
+
+    match hex::decode(master_key_hex) {
+        Ok(key_bytes) if key_bytes.len() >= 32 => {
+            if key_bytes.len() > 32 {
+                tracing::warn!(
+                    "ENCRYPTION_MASTER_KEY hex 解码后为 {} 字节，截取前 32 字节作为密钥",
+                    key_bytes.len()
+                );
+            }
+            let mut key_array = [0u8; 32];
+            key_array.copy_from_slice(&key_bytes[..32]);
+            FieldEncryptionService::new(KeyManager::new(&key_array))
+        }
+        Ok(key_bytes) => {
+            // 长度不足 32 字节
+            if is_production {
+                panic!(
+                    "ENCRYPTION_MASTER_KEY hex 解码后仅 {} 字节，要求恰好 32 字节（64 hex 字符），\
+                     生产环境服务无法启动",
+                    key_bytes.len()
+                );
+            }
+            tracing::warn!(
+                "ENCRYPTION_MASTER_KEY hex 解码后仅 {} 字节，不足 32 字节，已用零填充",
+                key_bytes.len()
+            );
+            let mut key_array = [0u8; 32];
+            key_array[..key_bytes.len()].copy_from_slice(&key_bytes);
+            FieldEncryptionService::new(KeyManager::new(&key_array))
+        }
+        Err(e) => {
+            if is_production {
+                panic!(
+                    "ENCRYPTION_MASTER_KEY hex 解码失败: {}，生产环境服务无法启动",
+                    e
+                );
+            }
+            tracing::warn!(
+                "ENCRYPTION_MASTER_KEY hex 解码失败: {}，回退使用 SHA256 派生密钥",
+                e
+            );
+            let mut hasher = sha2::Sha256::new();
+            hasher.update(master_key_hex.as_bytes());
+            let result = hasher.finalize();
+            let mut key_array = [0u8; 32];
+            key_array.copy_from_slice(&result);
+            FieldEncryptionService::new(KeyManager::new(&key_array))
+        }
+    }
+}
+
+/// 从 ENCRYPTION_KEY 构造 FieldEncryptionService
+/// 支持 "base64:" 前缀（直接 base64 解码）或原始字符串（SHA256 派生后 base64 编码）
+fn build_from_encryption_key(encryption_key: &str, is_production: bool) -> FieldEncryptionService {
+    use sha2::Digest;
+
+    let key_b64 = if let Some(stripped) = encryption_key.strip_prefix("base64:") {
+        stripped.to_string()
+    } else {
+        // 原始字符串经 SHA256 派生为 32 字节，再 base64 编码
+        let mut hasher = sha2::Sha256::new();
+        hasher.update(encryption_key.as_bytes());
+        let result = hasher.finalize();
+        STANDARD.encode(result)
+    };
+
+    match KeyManager::from_base64_key(&key_b64) {
+        Ok(key_manager) => FieldEncryptionService::new(key_manager),
+        Err(e) => {
+            if is_production {
+                panic!(
+                    "ENCRYPTION_KEY 初始化加密服务失败: {}，生产环境服务无法启动",
+                    e
+                );
+            }
+            tracing::warn!(
+                "ENCRYPTION_KEY 初始化加密服务失败: {}，回退使用 SHA256 派生密钥",
+                e
+            );
+            let mut hasher = sha2::Sha256::new();
+            hasher.update(encryption_key.as_bytes());
+            let result = hasher.finalize();
+            let mut key_array = [0u8; 32];
+            key_array.copy_from_slice(&result);
+            FieldEncryptionService::new(KeyManager::new(&key_array))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

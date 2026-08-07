@@ -236,7 +236,9 @@ pub async fn compute_mrp(
 
     if let Err(e) = clear_result {
         tracing::error!("清理草稿建议失败: {}", e);
-        let _ = tx.rollback().await;
+        tx.rollback()
+            .await
+            .unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
         return Json(api_error(500, "MRP计算失败"));
     }
 
@@ -322,7 +324,9 @@ pub async fn compute_mrp(
         Ok(items) => items,
         Err(e) => {
             tracing::error!("MRP计算失败: {}", e);
-            let _ = tx.rollback().await;
+            tx.rollback()
+                .await
+                .unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
             log_audit_event(
                 &state.db,
                 "compute".to_string(),

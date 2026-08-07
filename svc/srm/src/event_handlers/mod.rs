@@ -45,7 +45,7 @@ impl SrmEventHandlers {
     }
 
     async fn handle_purchase_plan_created(&self, event: Event) -> HandlerResult {
-        tracing::info!(
+        tracing::debug!(
             "[srm] 采购计划创建事件 - event_type={:?}, trace_id={:?}",
             event.event_type,
             event.trace_id
@@ -55,7 +55,7 @@ impl SrmEventHandlers {
             .parse_payload()
             .map_err(|e| format!("解析采购计划创建事件 payload 失败: {}", e))?;
 
-        tracing::info!(
+        tracing::debug!(
             "[srm] 采购计划创建: {} ({})，金额: {:?}，周期: {:?}",
             payload.plan_name,
             payload.plan_id,
@@ -87,7 +87,7 @@ impl SrmEventHandlers {
 
         match result {
             Ok(inquiry_id) => {
-                tracing::info!("[srm] 联动生成询价单成功: {} ({})", inquiry_no, inquiry_id);
+                tracing::debug!("[srm] 联动生成询价单成功: {} ({})", inquiry_no, inquiry_id);
             }
             Err(e) => {
                 tracing::error!("[srm] 联动生成询价单失败: {}", e);
@@ -98,7 +98,7 @@ impl SrmEventHandlers {
     }
 
     async fn handle_supplier_evaluated(&self, event: Event) -> HandlerResult {
-        tracing::info!(
+        tracing::debug!(
             "[srm] 供应商考评事件 - event_type={:?}, trace_id={:?}",
             event.event_type,
             event.trace_id
@@ -108,7 +108,7 @@ impl SrmEventHandlers {
             .parse_payload()
             .map_err(|e| format!("解析供应商考评事件 payload 失败: {}", e))?;
 
-        tracing::info!(
+        tracing::debug!(
             "[srm] 供应商考评: {} ({})，得分: {:?}，等级: {:?}",
             payload.supplier_name,
             payload.supplier_id,
@@ -160,7 +160,7 @@ impl SrmEventHandlers {
     }
 
     async fn handle_purchase_order_created(&self, event: Event) -> HandlerResult {
-        tracing::info!(
+        tracing::debug!(
             "[srm] 采购订单创建事件 - event_type={:?}, trace_id={:?}",
             event.event_type,
             event.trace_id
@@ -170,7 +170,7 @@ impl SrmEventHandlers {
             .parse_payload()
             .map_err(|e| format!("解析采购订单创建事件 payload 失败: {}", e))?;
 
-        tracing::info!(
+        tracing::debug!(
             "[srm] 采购订单创建: {} ({})，供应商: {:?}，金额: {:?}",
             payload.order_no,
             payload.order_id,
@@ -205,7 +205,7 @@ impl SrmEventHandlers {
 
             match result {
                 Ok(_) => {
-                    tracing::info!(
+                    tracing::debug!(
                         "[srm] 供应商履约记录同步成功: supplier_id={}, perf_records={}",
                         supplier_id,
                         perf_count + 1

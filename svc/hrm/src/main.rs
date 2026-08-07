@@ -14,11 +14,11 @@ use utoipa::OpenApi;
 
 use modules::ApiState;
 use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
-use topems_shared::service_bootstrap::{
+use topems_shared::{config::CacheConfig, CacheService, LocalInMemoryCache as InMemoryCache};
+use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
-use topems_shared::{config::CacheConfig, CacheService, FieldEncryptionService, KeyManager};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
     let cache = init_cache().await;
     tracing::info!("🗄️ 缓存服务初始化完成");
 
-    let encryption = init_encryption_service();
+    let encryption = topems_shared::init_encryption_from_env();
     tracing::info!("🔐 字段加密服务初始化完成");
 
     let api_state = ApiState {
@@ -59,8 +59,8 @@ async fn main() -> Result<()> {
         cache,
         encryption: Arc::new(encryption),
         event_publisher: ctx.event_publisher.clone(),
-        employee_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(3600))),
-        department_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(1800))),
+        employee_cache: Arc::new(InMemoryCache::new(Duration::from_secs(3600))),
+        department_cache: Arc::new(InMemoryCache::new(Duration::from_secs(1800))),
     };
 
     // 标准健康检查路由（使用 BootstrapAppState）
@@ -111,33 +111,6 @@ async fn init_cache() -> Arc<dyn CacheService + Send + Sync> {
             Arc::new(topems_shared::InMemoryCache::new(cache_config))
         }
     }
-}
-
-fn init_encryption_service() -> FieldEncryptionService {
-    let encryption_key = std::env::var("ENCRYPTION_KEY").unwrap_or_else(|_| {
-        tracing::error!("ENCRYPTION_KEY environment variable is required");
-        panic!("ENCRYPTION_KEY environment variable is required - service cannot start without encryption key")
-    });
-
-    let key_b64 = if let Some(stripped) = encryption_key.strip_prefix("base64:") {
-        stripped.to_string()
-    } else {
-        use sha2::{Digest, Sha256};
-        let mut hasher = Sha256::new();
-        hasher.update(encryption_key.as_bytes());
-        let result = hasher.finalize();
-        base64::Engine::encode(&base64::engine::general_purpose::STANDARD, result)
-    };
-
-    KeyManager::from_base64_key(&key_b64)
-        .map(FieldEncryptionService::new)
-        .unwrap_or_else(|e| {
-            tracing::error!("Failed to initialize encryption service: {}", e);
-            panic!(
-                "Failed to initialize encryption service with provided ENCRYPTION_KEY: {}",
-                e
-            )
-        })
 }
 
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {

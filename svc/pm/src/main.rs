@@ -5,7 +5,7 @@
 use anyhow::Result;
 use axum::routing::get;
 use prometheus::{default_registry, Gauge};
-use topems_shared::service_bootstrap::{
+use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };

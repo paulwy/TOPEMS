@@ -92,7 +92,7 @@ async fn test_im_001_list_rooms() {
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let result = auth_request(&client, &token, "GET", "/api/core/comm/im/rooms", None).await;
+    let result = auth_request(&client, &token, "GET", "/api/communication/im/rooms", None).await;
 
     match result {
         Ok((status, body)) => {
@@ -125,7 +125,7 @@ async fn test_im_002_create_room() {
         &client,
         &token,
         "POST",
-        "/api/core/comm/im/rooms",
+        "/api/communication/im/rooms",
         Some(json!({
             "name": format!("测试聊天室_{}", timestamp),
             "type": "group",
@@ -156,7 +156,8 @@ async fn test_im_003_send_message() {
     let client = create_client();
 
     // 先获取聊天室列表
-    let list_result = auth_request(&client, &token, "GET", "/api/core/comm/im/rooms", None).await;
+    let list_result =
+        auth_request(&client, &token, "GET", "/api/communication/im/rooms", None).await;
 
     match list_result {
         Ok((_, body)) => {
@@ -176,7 +177,7 @@ async fn test_im_003_send_message() {
                             &client,
                             &token,
                             "POST",
-                            &format!("/api/core/comm/im/rooms/{}/messages", room_id),
+                            &format!("/api/communication/im/rooms/{}/messages", room_id),
                             Some(json!({
                                 "content": format!("测试消息_{}", timestamp),
                                 "type": "text"
@@ -218,7 +219,8 @@ async fn test_im_004_view_history() {
     let client = create_client();
 
     // 获取聊天室列表
-    let list_result = auth_request(&client, &token, "GET", "/api/core/comm/im/rooms", None).await;
+    let list_result =
+        auth_request(&client, &token, "GET", "/api/communication/im/rooms", None).await;
 
     match list_result {
         Ok((_, body)) => {
@@ -233,7 +235,7 @@ async fn test_im_004_view_history() {
                             &client,
                             &token,
                             "GET",
-                            &format!("/api/core/comm/im/rooms/{}/messages", room_id),
+                            &format!("/api/communication/im/rooms/{}/messages", room_id),
                             None,
                         )
                         .await;
@@ -275,7 +277,7 @@ async fn test_im_005_non_member_view_history() {
                 &client,
                 &token,
                 "GET",
-                &format!("/api/core/comm/im/rooms/{}/messages", fake_room_id),
+                &format!("/api/communication/im/rooms/{}/messages", fake_room_id),
                 None,
             )
             .await;
@@ -327,7 +329,7 @@ async fn test_im_006_add_contact() {
                             &client,
                             &token,
                             "POST",
-                            "/api/core/comm/im/contacts",
+                            "/api/communication/im/contacts",
                             Some(json!({ "user_id": user_id })),
                         )
                         .await;
@@ -381,7 +383,7 @@ async fn test_im_007_view_online_status() {
                             &client,
                             &token,
                             "GET",
-                            &format!("/api/core/comm/im/online-status/{}", user_id),
+                            &format!("/api/communication/im/online-status/{}", user_id),
                             None,
                         )
                         .await;

@@ -1,3 +1,5 @@
+#![allow(dead_code)] // serde/utoipa 序列化需要，运行期未直接引用
+
 //! TOPEMS-RD 科研研发管理系统
 //!
 //! V2 shared-bootstrap 模板：bootstrap_service + build_application + stateful_public 外层嵌套
@@ -11,10 +13,10 @@ use anyhow::Result;
 use axum::{routing::get, Json, Router};
 use prometheus::{default_registry, Gauge};
 use serde::Serialize;
-use topems_shared::service_bootstrap::{
+use topems_shared::{config::Config, ApiResponse, DependencyHealth, HealthStatus, ServiceHealth};
+use topems_shared_bootstrap::{
     bootstrap_service, build_application, check_iam_health, run, Application, ServiceConfig,
 };
-use topems_shared::{config::Config, ApiResponse, DependencyHealth, HealthStatus, ServiceHealth};
 use utoipa::OpenApi;
 
 mod cache;

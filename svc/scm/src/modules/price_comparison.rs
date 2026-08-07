@@ -222,7 +222,7 @@ async fn create_inquiry(
     match result {
         Ok(inquiry) => {
             for item in req.items {
-                let _ = sqlx::query(
+                if let Err(e) = sqlx::query(
                     r#"
                     INSERT INTO scm.purchase_inquiry_items (id, inquiry_id, item_name, specification, unit, quantity, target_price, remarks)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -237,7 +237,10 @@ async fn create_inquiry(
                 .bind(item.target_price)
                 .bind(&item.remarks)
                 .execute(&state.db)
-                .await;
+                .await
+                {
+                    tracing::error!("插入询价单条目失败: {}", e);
+                }
             }
 
             Json(ApiResponse::success(

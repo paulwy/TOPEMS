@@ -67,9 +67,9 @@ resolver = "2"
 #     A. 标准 build_application (10): feedback,search,ticket,lowcode,
 #                                     communication,billing,master-data,
 #                                     hrm,finance,wms
-#     B. stateful + build_application (13): qms,ehs,pdm,lims,erp,crm,
-#                                          srm,scm,mes,ai,pm,rd,mobile
-#     C. Application 重建 (5): analytics,unified-core,integration,gis,portal
+#     B. stateful + build_application (11): qms,ehs,pdm,lims,erp,crm,
+#                                          srm,scm,mes,pm,rd
+#     C. Application 重建 (7): analytics,unified-core,integration,gis,portal,ai,mobile
 # ================================================
 
 # ================================================

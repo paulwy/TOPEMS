@@ -4,6 +4,9 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::time::{Duration, Instant};
 
+const DURATION_1H_SECS: u64 = 60 * 60;
+const DURATION_10M_SECS: u64 = 10 * 60;
+
 struct CacheEntry<V> {
     value: V,
     expires_at: Option<Instant>,
@@ -45,7 +48,7 @@ impl PmCacheService {
             milestone_cache: Arc::new(RwLock::new(HashMap::new())),
             risk_cache: Arc::new(RwLock::new(HashMap::new())),
             report_cache: Arc::new(RwLock::new(HashMap::new())),
-            default_ttl: 3600,
+            default_ttl: DURATION_1H_SECS,
         }
     }
 
@@ -148,8 +151,10 @@ impl PmCacheService {
 
     pub async fn set_report(&self, key: &str, report: serde_json::Value) {
         let mut cache = self.report_cache.write().await;
-        // 报表缓存 10 分钟
-        cache.insert(key.to_string(), CacheEntry::new(report, Some(600)));
+        cache.insert(
+            key.to_string(),
+            CacheEntry::new(report, Some(DURATION_10M_SECS)),
+        );
     }
 
     pub async fn get_stats(&self) -> CacheStats {

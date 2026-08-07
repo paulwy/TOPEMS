@@ -3,7 +3,7 @@ use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
-use topems_shared::{api_error, ApiResponse, FieldEncryptionService};
+use topems_shared::{api_error, ApiResponse, FieldEncryptionService, ListResponse};
 
 pub struct EmployeeService {
     db: PgPool,
@@ -28,7 +28,7 @@ impl EmployeeService {
         status: Option<String>,
         department_id: Option<Uuid>,
         company_id: Option<Uuid>,
-    ) -> ApiResponse<serde_json::Value> {
+    ) -> ApiResponse<ListResponse<Employee>> {
         let offset = (page - 1) * page_size;
         let search_pattern = search.map(|s| format!("%{}%", s));
 
@@ -90,12 +90,7 @@ impl EmployeeService {
                 }
 
                 ApiResponse::success(
-                    serde_json::json!({
-                        "employees": employees,
-                        "total": total,
-                        "page": page,
-                        "page_size": page_size
-                    }),
+                    ListResponse::with_pagination(employees, total, page, page_size),
                     "获取员工列表成功",
                 )
             }

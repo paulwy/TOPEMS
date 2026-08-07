@@ -8,7 +8,6 @@ description = "TOPEMS GIS - 厂区空间数字化系统"
 [dependencies]
 axum.workspace = true
 tokio.workspace = true
-tower.workspace = true
 tower-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -29,9 +28,6 @@ utoipa.workspace = true
 reqwest = { workspace = true, features = ["json"] }
 futures-util.workspace = true
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
-
-[dev-dependencies]
-tokio-test.workspace = true
 
 [[bin]]
 name = "topems-gis"

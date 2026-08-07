@@ -186,7 +186,7 @@ impl Validator {
         field: &str,
     ) -> ValidationResult {
         if !list.contains(value) {
-            let values: Vec<String> = list.iter().map(|v| format!("{}", v)).collect();
+            let values: Vec<String> = list.iter().map(|v| v.to_string()).collect();
             ValidationResult::error(field, &format!("必须是以下值之一: {}", values.join(", ")))
         } else {
             ValidationResult::ok()

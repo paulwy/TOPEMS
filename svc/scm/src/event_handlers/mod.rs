@@ -63,7 +63,7 @@ impl ScmEventHandlers {
     }
 
     async fn handle_purchase_order(&self, event: Event) -> HandlerResult {
-        tracing::info!(
+        tracing::debug!(
             "[scm] 采购订单事件 - event_type={:?}, trace_id={:?}",
             event.event_type,
             event.trace_id
@@ -74,7 +74,7 @@ impl ScmEventHandlers {
                 let payload: PurchaseOrderCreatedPayload = event
                     .parse_payload()
                     .map_err(|e| format!("解析采购订单创建事件 payload 失败: {}", e))?;
-                tracing::info!(
+                tracing::debug!(
                     "[scm] 采购订单创建: {} ({})，供应商: {:?}，金额: {:?}",
                     payload.order_no,
                     payload.order_id,
@@ -93,7 +93,7 @@ impl ScmEventHandlers {
                 match result {
                     Ok(r) => {
                         if r.rows_affected() > 0 {
-                            tracing::info!(
+                            tracing::debug!(
                                 "[scm] 采购订单 {} 状态已设置为 pending",
                                 payload.order_no
                             );
@@ -154,7 +154,7 @@ impl ScmEventHandlers {
     }
 
     async fn handle_stock_change(&self, event: Event) -> HandlerResult {
-        tracing::info!(
+        tracing::debug!(
             "[scm] 库存变更事件 - event_type={:?}, trace_id={:?}",
             event.event_type,
             event.trace_id
@@ -165,7 +165,7 @@ impl ScmEventHandlers {
                 let payload: StockInboundPayload = event
                     .parse_payload()
                     .map_err(|e| format!("解析入库事件 payload 失败: {}", e))?;
-                tracing::info!(
+                tracing::debug!(
                     "[scm] 库存入库: {} ({})，物料: {:?}，数量: {}，关联订单: {:?}",
                     payload.inbound_no,
                     payload.inbound_id,
@@ -207,7 +207,7 @@ impl ScmEventHandlers {
                 let payload: StockOutboundPayload = event
                     .parse_payload()
                     .map_err(|e| format!("解析出库事件 payload 失败: {}", e))?;
-                tracing::info!(
+                tracing::debug!(
                     "[scm] 库存出库: {} ({})，物料: {:?}，数量: {}，关联订单: {:?}",
                     payload.outbound_no,
                     payload.outbound_id,
@@ -217,7 +217,7 @@ impl ScmEventHandlers {
                 );
 
                 if let Some(order_id) = payload.reference_order_id {
-                    tracing::info!("[scm] 出库单关联订单 {}，更新发货跟踪记录", order_id);
+                    tracing::debug!("[scm] 出库单关联订单 {}，更新发货跟踪记录", order_id);
                 }
             }
             _ => {}
@@ -230,7 +230,7 @@ impl ScmEventHandlers {
     ///
     /// 订阅 CRM/ERP 供应商变更事件，同步更新 SCM 中的供应商相关记录
     async fn handle_master_data_supplier_changed(&self, event: MasterDataEvent) -> HandlerResult {
-        tracing::info!(
+        tracing::debug!(
             "[scm-mdm] 供应商主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
             event.domain,
             event.action,
@@ -260,7 +260,7 @@ impl ScmEventHandlers {
     ///
     /// 订阅 PDM 物料变更事件，同步更新 SCM 中的物料相关记录
     async fn handle_master_data_material_changed(&self, event: MasterDataEvent) -> HandlerResult {
-        tracing::info!(
+        tracing::debug!(
             "[scm-mdm] 物料主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
             event.domain,
             event.action,
@@ -326,7 +326,7 @@ impl ScmEventHandlers {
 
         match result {
             Ok(_) => {
-                tracing::info!(
+                tracing::debug!(
                     "[scm-mdm] 本地 ref 已同步 - master_data_id={}, domain={}, action={:?}, local_entity_type={}",
                     event.master_data_id,
                     domain_str,

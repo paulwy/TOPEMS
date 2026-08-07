@@ -27,9 +27,6 @@ anyhow.workspace = true
 reqwest.workspace = true
 bigdecimal = { version = "0.4", features = ["serde"] }
 
-[dev-dependencies]
-axum-test.workspace = true
-
 [lib]
 name = "topems_qms"
 path = "src/lib.rs"

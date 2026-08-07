@@ -335,11 +335,12 @@ pub struct SecurityPolicyV2 {
 
 impl Default for SecurityPolicyV2 {
     fn default() -> Self {
+        const TOKEN_VALIDITY_1H: u32 = 60 * 60;
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             name: "default".to_string(),
             authentication_type: AuthenticationType::JWT,
-            token_validity_sec: 3600,
+            token_validity_sec: TOKEN_VALIDITY_1H,
             rate_limit_per_min: 100,
             ip_whitelist: Vec::new(),
             require_https: true,

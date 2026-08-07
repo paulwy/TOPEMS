@@ -270,6 +270,7 @@ mod tests {
     use crate::models::ProjectType;
     use chrono::Utc;
     use sqlx::PgPool;
+    use tracing;
 
     async fn setup_test_db() -> PgPool {
         let database_url = "postgres://topems:topems_secret@localhost:5432/topems";
@@ -432,7 +433,7 @@ mod tests {
 
         let result = repo.create(&req).await;
         if let Err(e) = &result {
-            eprintln!("Create project error: {}", e);
+            tracing::error!(error = %e, "Create project error");
         }
         assert!(result.is_ok());
 

@@ -10375,7 +10375,7 @@ pub fn mask_value(value: &serde_json::Value, mask_type: &MaskType) -> serde_json
             }
             serde_json::Value::Number(n) => {
                 if let Some(f) = n.as_f64() {
-                    let s = format!("{}", f);
+                    let s = f.to_string();
                     let chars: Vec<char> = s.chars().collect();
                     let show = ((chars.len() as f64) * 0.3).ceil() as usize;
                     let show = show.min(chars.len());

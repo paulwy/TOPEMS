@@ -533,6 +533,8 @@ impl CircuitBreakerManager {
 
     fn ensure_service(&mut self, service: &str) {
         if !self.breakers.contains_key(service) {
+            const FALLBACK_TTL_5M: u64 = 5 * 60;
+            const MAX_DEGRADATION_1H: u64 = 60 * 60;
             let config = self.configs.get(service).copied().unwrap_or((5, 30, 3));
             self.breakers.insert(
                 service.to_string(),
@@ -545,8 +547,8 @@ impl CircuitBreakerManager {
                     service: service.to_string(),
                     enabled: false,
                     strategy: "CacheFallback".to_string(),
-                    fallback_ttl_sec: 300,
-                    max_degradation_duration_sec: 3600,
+                    fallback_ttl_sec: FALLBACK_TTL_5M,
+                    max_degradation_duration_sec: MAX_DEGRADATION_1H,
                 },
             );
         }

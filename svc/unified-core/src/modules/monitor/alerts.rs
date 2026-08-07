@@ -36,7 +36,7 @@ impl NotificationClient {
 
         reqwest::Client::new()
             .post(format!(
-                "{}/api/core/communication/notification/send",
+                "{}/api/communication/notification/send",
                 self.base_url
             ))
             .json(&payload)
@@ -61,10 +61,7 @@ impl NotificationClient {
         });
 
         reqwest::Client::new()
-            .post(format!(
-                "{}/api/core/communication/push/send",
-                self.base_url
-            ))
+            .post(format!("{}/api/communication/push/send", self.base_url))
             .json(&payload)
             .send()
             .await?;
