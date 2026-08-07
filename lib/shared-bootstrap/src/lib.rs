@@ -311,8 +311,21 @@ impl ServiceBootstrap {
             .parse::<u32>()
             .unwrap_or(self.config.database.max_connections);
 
+        let search_path =
+            env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
+
         let pool = PgPoolOptions::new()
             .max_connections(max_connections)
+            .after_connect(move |conn, _meta| {
+                let sp = search_path.clone();
+                Box::pin(async move {
+                    sqlx::query("SELECT set_config('search_path', $1, false)")
+                        .bind(&sp)
+                        .execute(conn)
+                        .await?;
+                    Ok(())
+                })
+            })
             .connect(&database_url)
             .await?;
 

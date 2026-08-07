@@ -32,6 +32,8 @@ use modules::ApiState;
 async fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
 
+    std::env::set_var("SEARCH_PATH", "rs, public");
+
     let config_app: Config = Config::load()
         .await
         .map_err(|e| anyhow::anyhow!(e.to_string()))?;
@@ -99,7 +101,6 @@ async fn main() -> anyhow::Result<()> {
     // ── public_routes（无状态：/api-docs + plugins） ───────────────
     // 注：标准 /health /metrics 被 stateful_public 覆盖（因为 rd 有自定义健康检查）
     let public_routes = Router::new()
-        .route("/api-docs/openapi.json", get(serve_openapi_json))
         .route(
             "/api/plugins/info",
             get(modules::rs_plugin::get_plugin_info),
@@ -258,10 +259,6 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
             }
         }
     }
-}
-
-async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(modules::openapi::ApiDoc::openapi())
 }
 
 async fn init_db(_pool: &sqlx::PgPool) -> anyhow::Result<()> {

@@ -8,6 +8,8 @@ mod openapi;
 
 #[tokio::main]
 async fn main() {
+    std::env::set_var("SEARCH_PATH", "public");
+
     let config = ServiceConfig {
         name: "topems-billing",
         port: 8085,

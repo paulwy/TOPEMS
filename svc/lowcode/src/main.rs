@@ -93,8 +93,6 @@ async fn main() -> anyhow::Result<()> {
                 "TOPEMS Lowcode Service (reserved) — V2 shared-bootstrap template\n"
             }),
         )
-        .route("/api", get(|| get_api_info_handler("topems-lowcode")))
-        .route("/api/info", get(|| get_api_info_handler("topems-lowcode")))
         .route("/health", get(health));
 
     // ── protected_routes（空：当前尚未立项） ─────────────────────────

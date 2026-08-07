@@ -35,7 +35,7 @@ use modules::{scm_plugin, ApiState};
 #[tokio::main]
 async fn main() -> Result<()> {
     // 设置search_path环境变量（供lib使用）
-    env::set_var("SEARCH_PATH", "scm, shared, public");
+    env::set_var("SEARCH_PATH", "scm, public, shared");
 
     let config = ServiceConfig {
         name: "topems-scm",

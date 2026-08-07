@@ -95,6 +95,8 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    std::env::set_var("SEARCH_PATH", "mobile, public");
+
     let config = ServiceConfig {
         name: "topems-mobile",
         port: 8070,

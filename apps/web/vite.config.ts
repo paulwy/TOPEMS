@@ -586,17 +586,32 @@ export default defineConfig({
         '@mui/material': {
           singleton: true,
           requiredVersion: '^9.0.0',
-          strictVersion: true,
+          // CJS 传递依赖（prop-types、@babel/runtime 等）在 MF loadShare
+          // wrapper 中找不到 default export，导致 "doesn't provide an export
+          // named: 'default'" 错误。开启 eager 走静态加载绕开此问题。
+          eager: true,
+          strictVersion: false,
         },
         '@emotion/react': {
           singleton: true,
           requiredVersion: '^11.0.0',
-          strictVersion: true,
+          eager: true,
+          strictVersion: false,
         },
         '@emotion/styled': {
           singleton: true,
           requiredVersion: '^11.0.0',
-          strictVersion: true,
+          eager: true,
+          strictVersion: false,
+        },
+        // CJS 模块：react-is 是 @emotion/react/styled 的传递依赖，
+        // 其 named export (isValidElementType 等) 通过 MF loadShare wrapper
+        // 无法正确导出，需要 eager 走静态加载
+        'react-is': {
+          singleton: true,
+          requiredVersion: '^19.0.0',
+          eager: true,
+          strictVersion: false,
         },
         'zustand': {
           singleton: true,
@@ -651,6 +666,35 @@ export default defineConfig({
     'process.env.NEXT_PUBLIC_WS_URL': JSON.stringify(process.env.VITE_WS_URL || 'ws://localhost:8080/ws'),
     'process.env.NEXT_PUBLIC_WS_SIGNING_SECRET': JSON.stringify(process.env.VITE_WS_SIGNING_SECRET || 'topems-ws-signing-secret'),
   },
+  optimizeDeps: {
+    exclude: [
+      '@mui/lab',
+      'react',
+      'react-dom',
+      '@tanstack/react-query',
+      'react-router-dom',
+      'zustand',
+      'i18next',
+      'react-i18next',
+      'axios',
+      'dayjs',
+      'react-hook-form',
+      'zod',
+      '@tanstack/react-table',
+      'framer-motion',
+    ],
+    // Force-pre-optimize CJS 传递依赖：确保 prop-types 等在被 @mui/material
+    // 引用时以 ESM 包装形式提供 default 导出，而不是以 @fs/ raw disk 形式提供
+    include: [
+      'prop-types',
+      '@emotion/is-prop-valid',
+      'stylis',
+      'clsx',
+      'camelcase',
+      'decamelize',
+      'react-is',
+    ],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -661,7 +705,13 @@ export default defineConfig({
       '@topems/shared-constants': path.resolve(__dirname, '../../packages/shared-constants/src'),
       '@topems/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/src'),
     },
-    dedupe: ['react', 'react-dom', 'scheduler', 'react-router-dom', '@tanstack/react-query'],
+    dedupe: [
+      'react', 'react-dom', 'scheduler', 'react-router-dom', '@tanstack/react-query',
+      // CJS 传递依赖：防止 MF version negotiation 拦截
+      'prop-types', '@babel/runtime', '@babel/runtime/helpers',
+      '@emotion/cache', '@emotion/serialize', '@emotion/utils',
+      'stylis', 'clsx', 'react-is',
+    ],
   },
   build: {
     target: 'es2022',
@@ -771,12 +821,15 @@ export default defineConfig({
   },
   server: {
     port: BACKEND_PORTS.web,  // 3000，从 ports.ts 单一信源读取
-    host: '0.0.0.0',
+    host: '127.0.0.1',
     strictPort: true,
-    // HMR: use host '127.0.0.1' to force IPv4 for Firefox
-    // (Firefox resolves localhost to ::1 first, but dev server listens on 0.0.0.0/IPv4 only)
+    // HMR: 显式指定 host 和 port 确保 Firefox WebSocket 连接正常
+    // Firefox 默认将 localhost 解析为 ::1 (IPv6)，但 Vite 仅监听 IPv4
+    // 因此统一使用 127.0.0.1 强制 IPv4
     hmr: {
       host: '127.0.0.1',
+      port: BACKEND_PORTS.web,
+      protocol: 'ws',
     },
     fs: {
       allow: ['..'],

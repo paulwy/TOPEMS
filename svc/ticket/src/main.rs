@@ -14,6 +14,8 @@ mod sla_service;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    std::env::set_var("SEARCH_PATH", "public");
+
     let config = ServiceConfig {
         name: "topems-ticket",
         port: 8086,
@@ -40,8 +42,6 @@ async fn main() -> anyhow::Result<()> {
     // ── public_routes（无状态） ──────────────────────────────────────
     let public_routes = Router::new()
         .route("/", get(|| async { "TOPEMS Ticket Service API\n\nTicket management + SLA\n- /health - Health check\n- /api-docs/openapi.json - OpenAPI spec\n" }))
-        .route("/api", get(|| get_api_info_handler("topems-ticket")))
-        .route("/api/info", get(|| get_api_info_handler("topems-ticket")))
         .route("/health", get(|| async { "OK" }))
         .route(
             "/api-docs/openapi.json",

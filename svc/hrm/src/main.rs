@@ -22,7 +22,7 @@ use topems_shared::{config::CacheConfig, CacheService, FieldEncryptionService, K
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    std::env::set_var("SEARCH_PATH", "shared, hrm, public");
+    std::env::set_var("SEARCH_PATH", "hrm, public, shared");
 
     let config = ServiceConfig {
         name: "topems-hrm",

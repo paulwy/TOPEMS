@@ -34,6 +34,8 @@ lazy_static::lazy_static! {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    std::env::set_var("SEARCH_PATH", "erp, public");
+
     let config = ServiceConfig {
         name: "topems-erp",
         port: 8010,

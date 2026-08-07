@@ -98,6 +98,9 @@ psql -h localhost -U topems -d topems -f database/init/04_create_scm_wms_srm_tab
 
 # 初始化移动端数据
 psql -h localhost -U topems -d topems -f database/init/05_mobile_init.sql
+
+# 创建 shared schema 及跨服务共享表（单位、币种、字典、地区等）
+psql -h localhost -U topems -d topems -f database/init/06_create_shared_schema.sql
 ```
 
 #### 方式二：在 psql 中执行
@@ -109,6 +112,7 @@ psql -h localhost -U topems -d topems -f database/init/05_mobile_init.sql
 \i database/init/03_init_permissions.sql
 \i database/init/04_create_scm_wms_srm_tables.sql
 \i database/init/05_mobile_init.sql
+\i database/init/06_create_shared_schema.sql
 ```
 
 ### 步骤 5：验证重建结果
@@ -128,6 +132,7 @@ ORDER BY schema_name;
 schema_name
 --------------------
 public
+shared
 unified_core
 plugin_ai
 plugin_bi
@@ -149,7 +154,7 @@ plugin_rs
 plugin_scm
 plugin_srm
 plugin_wms
-(22 rows)
+(23 rows)
 ```
 
 #### 5.2 检查核心表
@@ -223,17 +228,26 @@ DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
 SERVICE_NAME=topems-iam  # 或 topems-erp, topems-hrm 等
 
 # Search Path 配置
-# unified-core 服务
-SEARCH_PATH=unified_core,public
+# unified-core 服务 (使用 public schema)
+SEARCH_PATH=public
 
-# ERP 插件服务
-SEARCH_PATH=plugin_erp,public
+# ERP 业务服务 (访问 erp schema + public + shared)
+SEARCH_PATH=erp, public, shared
 
-# HRM 插件服务
-SEARCH_PATH=plugin_hrm,public
+# HRM 业务服务
+SEARCH_PATH=hrm, public, shared
 
-# AI 插件服务
-SEARCH_PATH=plugin_ai,public
+# AI 业务服务
+SEARCH_PATH=ai_service, public, shared
+
+# PM / WMS / CRM / SCM / SRM 等业务服务
+SEARCH_PATH={svc}, public, shared
+
+# 大多数业务服务 (无需 shared)
+SEARCH_PATH={svc}, public
+
+# RD 服务 (使用 rs schema)
+SEARCH_PATH=rs, public
 ```
 
 #### 6.2 更新代码中的 Schema 引用
@@ -249,9 +263,14 @@ SELECT * FROM erp.assets;
 
 **新代码：**
 ```sql
-SELECT * FROM public.companies;
-SELECT * FROM unified_core.users;
-SELECT * FROM plugin_erp.assets;
+-- 业务表通过服务 schema 访问 (search_path 会自动解析)
+SELECT * FROM companies;       -- 业务服务自身 schema 中的表
+SELECT * FROM core_tenants;    -- 位于 public schema
+SELECT * FROM shared.units;    -- 显式引用 shared schema 中的表
+
+-- 跨 schema 引用建议显式指定
+SELECT * FROM public.core_permissions;
+SELECT * FROM shared.currencies;
 ```
 
 ### 步骤 7：重启服务
@@ -306,6 +325,22 @@ VALUES ('00000000-0000-0000-0000-000000000001', 'Test KB', 'document');
 
 -- 查询知识库
 SELECT * FROM plugin_ai.knowledge_bases;
+```
+
+#### 8.4 测试 shared schema 访问
+
+```sql
+-- 验证 shared schema 已创建
+SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'shared';
+
+-- 查询默认计量单位
+SELECT id, code, name FROM shared.units LIMIT 5;
+
+-- 查询默认币种
+SELECT code, name, symbol FROM shared.currencies;
+
+-- 查询默认字典类型
+SELECT code, name, category FROM shared.shared_dict_types;
 ```
 
 ---
@@ -426,17 +461,34 @@ ALTER EXTENSION vector UPDATE;
 
 | 旧 Schema | 新 Schema | 说明 |
 |-----------|-----------|------|
-| `shared` | `public` | 共享实体（公司、部门、员工） |
+| `shared` (旧) | `public` + `shared` (新) | 基础实体放 public；跨服务共享（单位、币种、字典）放 shared |
 | `iam` | `unified_core` | 用户、角色、权限 |
 | `doc` | `unified_core` | 文档管理 |
 | `flow` | `unified_core` | 工作流引擎 |
 | `notification` | `unified_core` | 通知服务 |
-| `erp` | `plugin_erp` | ERP 企业资源计划 |
-| `hrm` | `plugin_hrm` | HRM 人力资源管理 |
-| `crm` | `plugin_crm` | CRM 客户关系管理 |
-| `ai` | `plugin_ai` | AI 知识库 |
+| `erp` | `plugin_erp` / `erp` | ERP 企业资源计划 |
+| `hrm` | `plugin_hrm` / `hrm` | HRM 人力资源管理 |
+| `crm` | `plugin_crm` / `crm` | CRM 客户关系管理 |
+| `ai` | `plugin_ai` / `ai_service` | AI 知识库 |
 
-### B. 默认账户信息
+### B. Schema 访问策略（search_path）
+
+服务通过 `SEARCH_PATH` 环境变量控制表查找顺序：
+
+| 分类 | search_path 模板 | 典型服务 |
+|------|------------------|---------|
+| 核心服务 | `public` | unified-core, master-data, billing, ticket, feedback, communication |
+| 业务服务（简单） | `{svc}, public` | erp, finance, mes, pdm, qms, lims, ehs, gis, analytics, portal, mobile, integration |
+| 业务服务（访问 shared） | `{svc}, public, shared` | pm, wms, crm, scm, srm, ai, hrm |
+| RD 服务 | `rs, public` | rd |
+
+**设计原则：**
+- 业务 schema 优先，避免访问到其他 schema 的同名表
+- `public` 包含核心表（tenants, users, roles, permissions 等）
+- `shared` 存放跨服务共享的只读/低频写表（units, currencies, dict_types 等）
+- `shared` 放在最后，仅作为兜底，避免遮蔽业务表和 public 表
+
+### C. 默认账户信息
 
 | 项目 | 值 |
 |------|-----|
@@ -446,15 +498,26 @@ ALTER EXTENSION vector UPDATE;
 | 管理员密码 | `admin123` |
 | 管理员邮箱 | `admin@topems.com` |
 
-### C. 端口配置
+### D. 端口配置
 
-| 服务 | 端口 | Schema |
-|------|------|--------|
-| unified-core | 8000 | unified_core, public |
-| erp | 8010 | plugin_erp, public |
-| hrm | 8020 | plugin_hrm, public |
-| crm | 8029 | plugin_crm, public |
-| ai | 8013 | plugin_ai, public |
+| 服务 | 端口 | Schema | Search Path |
+|------|------|--------|-------------|
+| unified-core | 8000 | public | public |
+| erp | 8010 | erp | erp, public, shared |
+| hrm | 8020 | hrm | hrm, public, shared |
+| crm | 8029 | crm | crm, public, shared |
+| pm | 8023 | pm | pm, public, shared |
+| finance | 8011 | finance | finance, public |
+| mes | 8030 | mes | mes, public |
+| srm | 8042 | srm | srm, public, shared |
+| scm | 8040 | scm | scm, public, shared |
+| wms | 8041 | wms | wms, public, shared |
+| qms | 8050 | qms | qms, public |
+| lims | 8051 | lims | lims, public |
+| ehs | 8052 | ehs | ehs, public |
+| rd | 8053 | rs | rs, public |
+| analytics | 8060 | analytics | analytics, public |
+| mobile | 8070 | mobile | mobile, public |
 
 ---
 
@@ -466,5 +529,15 @@ ALTER EXTENSION vector UPDATE;
 
 ---
 
-**版本**: v2.0.0  
-**最后更新**: 2026-06-18
+**版本**: v2.1.0  
+**最后更新**: 2026-08-08
+
+## 更新日志
+
+### v2.1.0 (2026-08-08)
+- 新增 `06_create_shared_schema.sql` 脚本，创建 shared schema 及 15 张跨服务共享表
+- 更新 search_path 策略：业务 schema → public → shared（shared 兜底，避免遮蔽）
+- 修正 unified_core / plugin_* 命名为当前项目实际 schema 命名
+- 完善端口配置表，补充 Search Path 列
+- 新增 shared schema 访问测试步骤（8.4）
+- 新增 Schema 访问策略附录（B）

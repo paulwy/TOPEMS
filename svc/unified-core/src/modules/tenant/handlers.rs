@@ -25,7 +25,7 @@ pub async fn list_tenants(
     let tenants: Vec<Tenant> = match (params.search, params.status, params.plan) {
         (Some(s), Some(st), Some(p)) => {
             sqlx::query_as(
-                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND status = $2 AND plan = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND status = $2 AND plan = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(format!("%{}%", s))
             .bind(st)
@@ -38,7 +38,7 @@ pub async fn list_tenants(
         }
         (Some(s), Some(st), None) => {
             sqlx::query_as(
-                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(format!("%{}%", s))
             .bind(st)
@@ -50,7 +50,7 @@ pub async fn list_tenants(
         }
         (Some(s), None, Some(p)) => {
             sqlx::query_as(
-                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(format!("%{}%", s))
             .bind(p)
@@ -62,7 +62,7 @@ pub async fn list_tenants(
         }
         (None, Some(st), Some(p)) => {
             sqlx::query_as(
-                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE status = $1 AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE status = $1 AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(st)
             .bind(p)
@@ -74,7 +74,7 @@ pub async fn list_tenants(
         }
         (Some(s), None, None) => {
             sqlx::query_as(
-                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(format!("%{}%", s))
             .bind(page_size)
@@ -85,7 +85,7 @@ pub async fn list_tenants(
         }
         (None, Some(st), None) => {
             sqlx::query_as(
-                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(st)
             .bind(page_size)
@@ -96,7 +96,7 @@ pub async fn list_tenants(
         }
         (None, None, Some(p)) => {
             sqlx::query_as(
-                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE plan = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE plan = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(p)
             .bind(page_size)
@@ -107,7 +107,7 @@ pub async fn list_tenants(
         }
         (None, None, None) => {
             sqlx::query_as(
-                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants ORDER BY created_at DESC LIMIT $1 OFFSET $2"
             )
             .bind(page_size)
             .bind(offset)
@@ -147,7 +147,7 @@ pub async fn get_tenant(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant: {}", id);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -166,7 +166,7 @@ pub async fn get_tenant_by_code(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant by code: {}", code);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE code = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE code = $1")
         .bind(&code)
         .fetch_optional(&state.pool)
         .await
@@ -604,7 +604,7 @@ pub async fn get_tenant_quota(
 ) -> Json<CoreResponse<TenantQuotaResponse>> {
     tracing::info!("[Tenant] Getting quota for tenant: {}", id);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -640,7 +640,7 @@ pub async fn get_tenant_quota(
                 overage_cost_cents: None,
                 plugin_cost_cents: None,
                 total_cost_cents: None,
-                created_at: chrono::Utc::now(),
+                created_at: chrono::Utc::now().naive_utc(),
             });
 
             let quota = TenantQuotaResponse {
@@ -925,7 +925,7 @@ pub async fn invite_member(
         email: req.email.clone(),
         role: req.role.clone(),
         status: "invited".to_string(),
-        created_at: chrono::Utc::now(),
+        created_at: chrono::Utc::now().naive_utc(),
         last_login: None,
     };
 
@@ -1117,7 +1117,7 @@ pub async fn get_usage_metrics(
         users_count,
         storage_used_gb,
         api_requests_today,
-        updated_at: chrono::Utc::now(),
+        updated_at: chrono::Utc::now().naive_utc(),
     };
 
     Json(CoreResponse::success(metrics, "Usage metrics retrieved"))
@@ -1130,7 +1130,7 @@ pub async fn get_billing_info(
 ) -> Json<CoreResponse<TenantBillingInfo>> {
     tracing::info!("[Tenant] Getting billing info for tenant: {}", id);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -1167,20 +1167,56 @@ pub async fn get_invoices(
 
 /// Get current tenant context
 pub async fn get_current_tenant_context(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<CoreResponse<TenantContext>> {
-    tracing::info!("[Tenant] Getting current tenant context");
+    tracing::info!(
+        "[Tenant] Getting current tenant context for user: {}",
+        claims.sub
+    );
+
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => return Json(CoreResponse::error("Invalid user ID")),
+    };
+
+    // Get tenant_id from JWT or look up user's first tenant
+    let tenant_id = if let Some(tid) = claims.tenant_id.as_deref() {
+        match Uuid::parse_str(tid) {
+            Ok(id) => id,
+            Err(_) => {
+                return Json(CoreResponse::error("Invalid tenant ID in token"));
+            }
+        }
+    } else {
+        // Look up user's first active tenant membership
+        match sqlx::query_scalar::<_, Uuid>(
+            "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' ORDER BY created_at DESC LIMIT 1",
+        )
+        .bind(user_id)
+        .fetch_optional(&state.pool)
+        .await
+        {
+            Ok(Some(tid)) => tid,
+            Ok(None) => {
+                tracing::warn!("[Tenant] No tenant found for user: {}", user_id);
+                return Json(CoreResponse::error("No tenant membership found"));
+            }
+            Err(e) => {
+                tracing::error!("[Tenant] DB query error: {}", e);
+                return Json(CoreResponse::error(&format!("DB error: {}", e)));
+            }
+        }
+    };
+
+    let permissions = claims.permissions.clone();
+    let role = claims.role.clone();
 
     let context = TenantContext {
-        tenant_id: Uuid::new_v4(),
-        user_id: Uuid::new_v4(),
-        role: "admin".to_string(),
-        permissions: vec![
-            "tenant:read".to_string(),
-            "tenant:write".to_string(),
-            "data:read".to_string(),
-            "data:write".to_string(),
-        ],
+        tenant_id,
+        user_id,
+        role,
+        permissions,
     };
 
     Json(CoreResponse::success(context, "Tenant context retrieved"))
@@ -1266,7 +1302,7 @@ pub async fn switch_tenant(
     };
 
     // 获取租户信息
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
         .bind(tenant_id)
         .fetch_optional(&state.pool)
         .await
@@ -1324,7 +1360,7 @@ pub async fn get_tenant_by_slug(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant by slug: {}", slug);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE code = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE code = $1")
         .bind(&slug)
         .fetch_optional(&state.pool)
         .await

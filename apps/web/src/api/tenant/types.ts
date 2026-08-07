@@ -1,45 +1,33 @@
-export type TenantStatus = 'active' | 'suspended' | 'trial' | 'deleted';
+export type TenantStatus = 'active' | 'suspended' | 'trial' | 'expired';
 
-export type TenantPlan = 'free' | 'basic' | 'professional' | 'enterprise';
+export type TenantPlan = 'basic' | 'professional' | 'enterprise';
 
-export type TenantRole = 'owner' | 'admin' | 'member' | 'guest';
+export type TenantRole = 'superadmin' | 'admin' | 'member' | 'guest';
 
 export type UserStatus = 'active' | 'invited' | 'suspended';
 
 export interface Tenant {
   id: string;
   name: string;
-  slug: string;
-  status: TenantStatus;
+  code: string;
+  tenant_type: string;
   plan: TenantPlan;
-  settings: TenantSettings;
+  license_type: string;
+  license_expires_at?: string;
+  database_host?: string;
+  database_port?: number;
+  database_name?: string;
+  quota_users: number;
+  quota_storage_gb?: number;
+  quota_api_calls?: number;
+  quota_plugins?: string[];
+  features: Record<string, boolean>;
+  status: TenantStatus;
+  trial_expires_at?: string;
   created_at: string;
   updated_at: string;
-  metadata: Record<string, string>;
-}
-
-export interface TenantSettings {
-  max_users: number;
-  max_storage_gb: number;
-  max_api_requests_per_day: number;
-  features: Record<string, boolean>;
-  branding: BrandingSettings;
-  security: SecuritySettings;
-}
-
-export interface BrandingSettings {
-  logo_url?: string;
-  primary_color: string;
-  secondary_color: string;
-  custom_domain?: string;
-}
-
-export interface SecuritySettings {
-  sso_enabled: boolean;
-  two_factor_required: boolean;
-  ip_whitelist_enabled: boolean;
-  allowed_ip_ranges: string[];
-  session_timeout_minutes: number;
+  activated_at?: string;
+  suspended_at?: string;
 }
 
 export interface TenantUser {
@@ -61,12 +49,6 @@ export interface UsageMetrics {
   updated_at: string;
 }
 
-export interface UsageLimitExceeded {
-  limit_type: string;
-  limit: number;
-  current: number;
-}
-
 export interface TenantStats {
   total_users: number;
   active_users: number;
@@ -78,16 +60,22 @@ export interface TenantStats {
 
 export interface CreateTenantRequest {
   name: string;
-  slug: string;
-  plan: TenantPlan;
-  settings?: Partial<TenantSettings>;
+  code: string;
+  tenant_type?: string;
+  plan?: TenantPlan;
+  license_type?: string;
+  license_expires_at?: string;
+  trial_expires_at?: string;
 }
 
 export interface UpdateTenantRequest {
   name?: string;
-  status?: TenantStatus;
   plan?: TenantPlan;
-  settings?: Partial<TenantSettings>;
+  status?: TenantStatus;
+  quota_users?: number;
+  quota_storage_gb?: number;
+  quota_api_calls?: number;
+  features?: Record<string, boolean>;
 }
 
 export interface InviteMemberRequest {
@@ -104,14 +92,14 @@ export interface TenantBillingInfo {
   current_period_start: string;
   current_period_end: string;
   next_billing_date: string;
-  status: 'active' | 'past_due' | 'canceled' | 'trialing';
+  status: string;
 }
 
 export interface TenantInvoice {
   id: string;
   amount: number;
   currency: string;
-  status: 'paid' | 'pending' | 'failed' | 'draft';
+  status: string;
   period_start: string;
   period_end: string;
   created_at: string;
@@ -121,6 +109,20 @@ export interface TenantInvoice {
 export interface TenantContext {
   tenant_id: string;
   user_id: string;
-  role: TenantRole;
+  role: string;
   permissions: string[];
+}
+
+export interface ListTenantsResponse {
+  items: Tenant[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface ListTenantUsersResponse {
+  items: TenantUser[];
+  total: number;
+  page: number;
+  pageSize: number;
 }

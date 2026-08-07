@@ -42,6 +42,8 @@ pub use shared::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    std::env::set_var("SEARCH_PATH", "lims, public");
+
     let config = ServiceConfig {
         name: "topems-lims",
         port: 8051,

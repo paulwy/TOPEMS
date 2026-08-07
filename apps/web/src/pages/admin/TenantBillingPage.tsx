@@ -275,15 +275,12 @@ const TenantBillingPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    /{tenant.settings.max_users}
+                    /{tenant.quota_users}
                   </Typography>
                 </Typography>
                 <LinearProgress
                   variant='determinate'
-                  value={Math.min(
-                    ((usage?.users_count || 0) / tenant.settings.max_users) * 100,
-                    100
-                  )}
+                  value={Math.min(((usage?.users_count || 0) / tenant.quota_users) * 100, 100)}
                   sx={{ height: 8, borderRadius: 4 }}
                 />
               </CardContent>
@@ -318,13 +315,13 @@ const TenantBillingPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    GB/{tenant.settings.max_storage_gb}GB
+                    GB/{tenant.quota_storage_gb}GB
                   </Typography>
                 </Typography>
                 <LinearProgress
                   variant='determinate'
                   value={Math.min(
-                    ((usage?.storage_used_gb || 0) / tenant.settings.max_storage_gb) * 100,
+                    ((usage?.storage_used_gb || 0) / (tenant.quota_storage_gb || 1)) * 100,
                     100
                   )}
                   sx={{ height: 8, borderRadius: 4 }}
@@ -362,13 +359,12 @@ const TenantBillingPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ mb: 1 }}
                 >
-                  上限 {tenant.settings.max_api_requests_per_day.toLocaleString()} 次/天
+                  上限 {(tenant.quota_api_calls || 0).toLocaleString()} 次/天
                 </Typography>
                 <LinearProgress
                   variant='determinate'
                   value={Math.min(
-                    ((usage?.api_requests_today || 0) / tenant.settings.max_api_requests_per_day) *
-                      100,
+                    ((usage?.api_requests_today || 0) / (tenant.quota_api_calls || 1)) * 100,
                     100
                   )}
                   sx={{ height: 8, borderRadius: 4 }}

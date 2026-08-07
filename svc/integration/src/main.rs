@@ -34,6 +34,8 @@ use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application,
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    std::env::set_var("SEARCH_PATH", "integration, public");
+
     let config = ServiceConfig {
         name: "topems-integration",
         port: 8072,
