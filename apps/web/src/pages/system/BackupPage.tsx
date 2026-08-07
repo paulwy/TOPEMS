@@ -45,6 +45,7 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
+import { formatDateTime } from '@/utils/date';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 type BackupRecord = {
@@ -255,16 +256,6 @@ const BackupPage: React.FC = () => {
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   const displayBackups = backups || [];
 
   return (
@@ -350,7 +341,7 @@ const BackupPage: React.FC = () => {
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Calendar size={14} />
-                          <Typography>{formatDate(backup.created_at)}</Typography>
+                          <Typography>{formatDateTime(backup.created_at)}</Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
@@ -511,7 +502,7 @@ const BackupPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  创建时间：{formatDate(selectedBackup.created_at)}
+                  创建时间：{formatDateTime(selectedBackup.created_at)}
                 </Typography>
               </Box>
               <Alert
@@ -601,7 +592,7 @@ const BackupPage: React.FC = () => {
                   >
                     创建时间
                   </Typography>
-                  <Typography>{formatDate(selectedBackup.created_at)}</Typography>
+                  <Typography>{formatDateTime(selectedBackup.created_at)}</Typography>
                 </Box>
                 <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
                   <Typography

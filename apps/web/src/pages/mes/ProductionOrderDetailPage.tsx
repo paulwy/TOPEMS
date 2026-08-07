@@ -18,6 +18,7 @@ import { mesApi } from '@/api/mes';
 import type { ProductionOrder, ProductionRecord, QualityRecord } from '@/api/mes';
 import { designTokens } from '@/theme/tokens';
 import { MES_PATHS } from '@/modules/mes/config';
+import { getChipStatusColor } from '@/utils/status';
 
 import { useTranslation } from 'react-i18next';
 
@@ -77,24 +78,7 @@ const ProductionOrderDetailPage: React.FC = () => {
     ? (orderError as Error).message || t('mes.production_order_detail_page.detail')
     : undefined;
 
-  const getStatusColor = (status: string): ChipProps['color'] => {
-    switch (status) {
-      case 'pending':
-        return 'warning';
-      case 'released':
-        return 'info';
-      case 'in_progress':
-        return 'primary';
-      case 'completed':
-        return 'success';
-      case 'cancelled':
-        return 'error';
-      case 'paused':
-        return 'default';
-      default:
-        return 'default';
-    }
-  };
+  const getOrderStatusColor = (status: string): ChipProps['color'] => getChipStatusColor(status, 'mes');
 
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -153,7 +137,7 @@ const ProductionOrderDetailPage: React.FC = () => {
           <Box sx={{ mt: 0.5 }}>
             <Chip
               label={getStatusLabel(order.status)}
-              color={getStatusColor(order.status)}
+              color={getOrderStatusColor(order.status)}
               size='small'
             />
           </Box>

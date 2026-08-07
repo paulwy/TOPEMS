@@ -3,7 +3,7 @@
  *
  * 整合以下 5+1 个既有 CRUD hook 的能力，消除重复实现：
  *   - useCrudQueries        （AxiosInstance + basePath 模式）
- *   - useModuleQueries      （api 对象：list/get/create/update/delete）
+ *   - useModuleQueries      （API 对象：list/get/create/update/delete）
  *   - useCrudOperations     （CrudOperations 接口：success/code/message）
  *   - useResourceCRUD       （queryFn + createFn/updateFn/deleteFn）
  *   - useCrudMutations      （仅 mutations，无 list 查询）
@@ -231,7 +231,7 @@ export function createCrudOperationsAdapter<T, TCreate = Partial<T>, TUpdate = P
 }
 
 /**
- * 从模块 api 对象构造 adapter（替代 useModuleQueries）
+ * 从模块 API 对象构造 adapter（替代 useModuleQueries）
  *
  * 适配 { success, data } 简化响应格式。
  */

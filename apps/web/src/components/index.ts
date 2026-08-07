@@ -1,7 +1,6 @@
 // Layout components
 export { GlobalLayout } from './layout/GlobalLayout';
-export { ModuleTabs } from './layout/ModuleTabs';
-export type { TabItem } from './layout/ModuleTabs';
+// [已清理] ModuleTabs / TabItem - 0 引用（审计 P2-9）
 export { default as PageHeader } from './templates/PageHeader';
 export type {
   PageHeaderProps,
@@ -10,7 +9,7 @@ export type {
   BreadcrumbItem,
 } from './templates/PageHeader';
 export type { PageAction as PageHeaderAction } from './templates/PageHeader';
-export { default as ServiceMonitor } from './layout/ServiceMonitor';
+// [已清理] ServiceMonitor - 0 引用（审计 P2-9）
 
 // ===== 统一导航组件 (规范版本) =====
 export { MobileNav } from './layout/MobileNav';
@@ -111,23 +110,16 @@ export {
 // [shared] LoadingSpinner - 已提升到 @topems/shared-components
 export { LoadingSpinner } from '@topems/shared-components';
 
-export { default as StatusTimeline } from './common/StatusTimeline';
-export type { StatusTimelineProps, TimelineItem } from './common/StatusTimeline';
+// [已清理] StatusTimeline - 0 引用（审计 P2-9）
 
 // ===== 表单构建器 =====
-export { default as FormBuilder } from './common/FormBuilder';
-export type { FormFieldConfig, FormBuilderConfig } from './common/FormBuilder';
+// [已清理] FormBuilder - 0 引用（审计 P2-9）
 
 // ===== 高级筛选 =====
-export { default as AdvancedFilterPanel } from './common/AdvancedFilter';
-export type {
-  AdvancedFilterProps,
-  FilterCondition as AdvancedFilterCondition,
-} from './common/AdvancedFilter';
+// [已清理] AdvancedFilterPanel - 0 引用（审计 P2-9）
 
 // ===== 数据展示辅助组件 =====
-export { default as AmountDisplay } from './common/AmountDisplay';
-export type { AmountDisplayProps } from './common/AmountDisplay';
+// [已清理] AmountDisplay - 0 引用（审计 P2-9）
 
 // [shared] RelativeTime - 已提升到 @topems/shared-components
 export { RelativeTime, type RelativeTimeProps } from '@topems/shared-components';
@@ -147,24 +139,20 @@ export { default as ImageUpload } from './common/ImageUpload';
 export type { ImageUploadProps } from './common/ImageUpload';
 
 // ===== 数据导出组件 =====
-export { default as DataExport } from './common/DataExport';
-export type { DataExportProps, ExportField, ExportFormat } from './common/DataExport';
+// [已清理] DataExport - 0 引用（通过 @/components/common 直接导入，审计 P2-9）
 
 // ===== 搜索组件 =====
-export { default as QuickSearch } from './common/QuickSearch';
-export type { QuickSearchProps, SearchSuggestion, SearchHistoryItem } from './common/QuickSearch';
+// [已清理] QuickSearch - 0 引用（通过 @/components/common 直接导入，审计 P2-9）
 
 // ===== 评论组件 =====
-export { default as CommentList } from './common/CommentList';
-export type { CommentListProps, Comment } from './common/CommentList';
+// [已清理] CommentList - 0 引用（审计 P2-9）
 
 // ===== 用户/部门选择组件 =====
 // [shared] UserSelect - 已提升到 @topems/shared-components
 export { UserSelect, type UserSelectProps } from '@topems/shared-components';
 export type { User } from '@topems/shared-types';
 
-export { default as DepartmentSelect } from './common/DepartmentSelect';
-export type { DepartmentSelectProps, Department } from './common/DepartmentSelect';
+// [已清理] DepartmentSelect - 0 引用（审计 P2-9）
 
 // ===== 统一通知系统 =====
 export { NotificationProvider } from './notification/NotificationProvider';

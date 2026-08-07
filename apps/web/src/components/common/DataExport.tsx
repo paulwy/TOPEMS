@@ -22,7 +22,6 @@ import {
   Button,
 } from '@mui/material';
 import { Download, FileSpreadsheet, FileText, File, ChevronDown, Settings, X } from 'lucide-react';
-import * as XLSX from 'xlsx';
 
 // ============ 类型定义 ============
 
@@ -190,7 +189,8 @@ const DataExport: React.FC<DataExportProps> = ({
    * 导出为 Excel
    */
   const exportToExcel = useCallback(
-    (exportData: Record<string, unknown>[], name: string) => {
+    async (exportData: Record<string, unknown>[], name: string) => {
+      const XLSX = await import('xlsx');
       const selectedKeys = selectedFields.filter((f) => f.selected).map((f) => f.key);
       const filteredData = exportData.map((row) => {
         const newRow: Record<string, unknown> = {};
@@ -219,7 +219,8 @@ const DataExport: React.FC<DataExportProps> = ({
    * 导出为 CSV
    */
   const exportToCsv = useCallback(
-    (exportData: Record<string, unknown>[], name: string) => {
+    async (exportData: Record<string, unknown>[], name: string) => {
+      const XLSX = await import('xlsx');
       const selectedKeys = selectedFields.filter((f) => f.selected).map((f) => f.key);
       const filteredData = exportData.map((row) => {
         const newRow: Record<string, unknown> = {};
@@ -305,15 +306,15 @@ const DataExport: React.FC<DataExportProps> = ({
   /**
    * 执行导出
    */
-  const handleExport = (format: ExportFormat) => {
+  const handleExport = async (format: ExportFormat) => {
     const exportData = beforeExport ? beforeExport(data) : data;
 
     switch (format) {
       case 'xlsx':
-        exportToExcel(exportData, fileName);
+        await exportToExcel(exportData, fileName);
         break;
       case 'csv':
-        exportToCsv(exportData, fileName);
+        await exportToCsv(exportData, fileName);
         break;
       case 'pdf':
         exportToPdf(exportData, fileName);
@@ -326,8 +327,8 @@ const DataExport: React.FC<DataExportProps> = ({
   /**
    * 确认导出（从设置弹窗）
    */
-  const handleConfirmExport = () => {
-    handleExport(selectedFormat);
+  const handleConfirmExport = async () => {
+    await handleExport(selectedFormat);
     handleCloseSettings();
   };
 

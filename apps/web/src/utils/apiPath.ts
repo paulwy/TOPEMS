@@ -21,12 +21,10 @@ export const API_VERSION = '';
  */
 export const GROUP1_CORE_SERVICES = new Set<string>([
   'iam',
-  'workflow',
-  'flow', // workflow 别名
+  'flow', // 工作流引擎（unified-core 虚拟服务，路径 /api/core/flow）
   'file',
   'doc', // 文档管理 (unified-core 虚拟服务)
   'monitor', // 系统监控 (unified-core 虚拟服务)
-  'master', // Group1 master = unified-core 内的 tenant & 主数据引用（master 虚拟模块，路径 /api/core/master）
   'migration',
   'core', // umbrella
   'help', // 帮助文档/FAQ 归到 unified-core
@@ -82,7 +80,7 @@ export const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
 export const SERVICE_CODES = {
   iam: 'iam',
   portal: 'portal',
-  workflow: 'workflow',
+  workflow: 'flow', // workflow 是别名，实际服务为 'flow'（unified-core 虚拟服务，路径 /api/core/flow）
   notification: 'notification', // 归 communication Group2
   mail: 'mail',                 // 归 communication Group2
   im: 'im',                     // 归 communication Group2
@@ -109,7 +107,7 @@ export const SERVICE_CODES = {
   gis: 'gis',
   mobile: 'mobile',
   integration: 'integration',
-  master: 'master',         // Group1: unified-core 内 tenant & 主数据虚拟模块（路径 /api/core/master）
+  master: 'master-data', // master 是别名，实际服务为 'master-data'（Group2 独立服务，端口 8090）
   'master-data': 'master-data', // Group2: 独立主数据服务（端口 8090）
   migration: 'migration',
   rd: 'rd',
@@ -171,7 +169,7 @@ export function createServiceApi(service: ServiceCode | string) {
 
 export const SERVICES = {
   iam: createServiceApi('iam'),
-  workflow: createServiceApi('workflow'),
+  workflow: createServiceApi('flow'),
   erp: createServiceApi('erp'),
   hrm: createServiceApi('hrm'),
   crm: createServiceApi('crm'),
@@ -202,7 +200,7 @@ export const SERVICES = {
   automation: createServiceApi('automation'),
   plugin: createServiceApi('plugin'),
   tenant: createServiceApi('tenant'),
-  master: createServiceApi('master'),
+  master: createServiceApi('master-data'),
   // V66: 扩展独立服务（Group2 — 从 unified-core 外迁）
   'master-data': createServiceApi('master-data'),
   communication: createServiceApi('communication'),
@@ -254,17 +252,17 @@ export const API_PATHS = {
     templates: buildApiPath({ service: 'notification', path: '/notification-templates' }),
   },
   workflow: {
-    definitions: buildApiPath({ service: 'workflow', path: '/definitions' }),
-    definition: (id: string) => buildApiPath({ service: 'workflow', path: `/definitions/${id}` }),
-    instances: buildApiPath({ service: 'workflow', path: '/instances' }),
-    instance: (id: string) => buildApiPath({ service: 'workflow', path: `/instances/${id}` }),
-    tasks: buildApiPath({ service: 'workflow', path: '/tasks' }),
-    task: (id: string) => buildApiPath({ service: 'workflow', path: `/tasks/${id}` }),
-    approve: (id: string) => buildApiPath({ service: 'workflow', path: `/tasks/${id}/approve` }),
-    reject: (id: string) => buildApiPath({ service: 'workflow', path: `/tasks/${id}/reject` }),
-    start: buildApiPath({ service: 'workflow', path: '/instances/start' }),
+    definitions: buildApiPath({ service: 'flow', path: '/definitions' }),
+    definition: (id: string) => buildApiPath({ service: 'flow', path: `/definitions/${id}` }),
+    instances: buildApiPath({ service: 'flow', path: '/instances' }),
+    instance: (id: string) => buildApiPath({ service: 'flow', path: `/instances/${id}` }),
+    tasks: buildApiPath({ service: 'flow', path: '/tasks' }),
+    task: (id: string) => buildApiPath({ service: 'flow', path: `/tasks/${id}` }),
+    approve: (id: string) => buildApiPath({ service: 'flow', path: `/tasks/${id}/approve` }),
+    reject: (id: string) => buildApiPath({ service: 'flow', path: `/tasks/${id}/reject` }),
+    start: buildApiPath({ service: 'flow', path: '/instances/start' }),
     history: (instanceId: string) =>
-      buildApiPath({ service: 'workflow', path: `/instances/${instanceId}/history` }),
+      buildApiPath({ service: 'flow', path: `/instances/${instanceId}/history` }),
   },
   help: {
     faqs: buildApiPath({ service: 'help', path: '/faqs' }),

@@ -39,6 +39,10 @@ const CORE_PORT = BACKEND_PORTS.core; // 8000，从 ports.ts 单一信源读取
 
 const SERVICES: ServiceConfig[] = [
   // 核心服务
+  // NOTE: unified-core (8000) 同时承载 WebSocket：/ws/core/im（IM 实时推送）、/ws/core（通用 WS）。
+  // IM 的 HTTP API 已外迁到 communication 服务（8084，路径 /api/communication/im），
+  // 但 IM WebSocket 仍由 unified-core:8000 处理 —— communication 服务未实现 WS，
+  // 前端 useImWebSocket hook 消费 /ws/core/im 是预期行为（HTTP/WS 跨服务分离）。
   { name: 'unified-core', port: CORE_PORT, apiPrefix: '/api/core', legacyPrefix: '/core/api', wsPath: '/ws/core' },
   
   // 虚拟服务（由 unified-core 提供）
@@ -89,7 +93,6 @@ const SERVICES: ServiceConfig[] = [
   // NOTE: analytics 服务（端口 8060）既承载 /api/bi 也承载 /api/analytics；
   // WebSocket 路径 /ws/bi/dashboard/{id} 用于 BI 仪表盘实时数据推送
   { name: 'bi', port: BACKEND_PORTS.bi, apiPrefix: '/api/bi', wsPath: '/ws/bi' },
-  { name: 'analytics', port: BACKEND_PORTS.analytics, apiPrefix: '/api/analytics', wsPath: '/ws/analytics' },
   { name: 'monitor', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/monitor', legacyPrefix: '/monitor/api' },
   { name: 'portal', port: BACKEND_PORTS.portal, apiPrefix: '/api/portal' },
 
@@ -388,18 +391,13 @@ const buildServiceProxies = (): Record<string, any> => {
 
   // 通讯服务向后兼容
   proxies['/comm/api'] = {
-    target: `http://localhost:${CORE_PORT}`,
+    target: `http://localhost:${BACKEND_PORTS.communication}`,
     changeOrigin: true,
-    rewrite: (path: string) => path.replace(/^\/comm/, '/api/core/comm'),
+    rewrite: (path: string) => path.replace(/^\/comm/, '/api/communication'),
   };
   proxies['/comm/health'] = {
-    target: `http://localhost:${CORE_PORT}`,
+    target: `http://localhost:${BACKEND_PORTS.communication}`,
     changeOrigin: true,
-  };
-  proxies['/ws/notifications'] = {
-    target: `http://localhost:${CORE_PORT}`,
-    changeOrigin: true,
-    ws: true,
   };
 
   return proxies;
@@ -653,11 +651,6 @@ export default defineConfig({
           requiredVersion: '^8.0.0',
           strictVersion: true,
         },
-        'framer-motion': {
-          singleton: true,
-          requiredVersion: '^12.0.0',
-          strictVersion: true,
-        },
       },
     }),
   ],
@@ -681,7 +674,6 @@ export default defineConfig({
       'react-hook-form',
       'zod',
       '@tanstack/react-table',
-      'framer-motion',
     ],
     // Force-pre-optimize CJS 传递依赖：确保 prop-types 等在被 @mui/material
     // 引用时以 ESM 包装形式提供 default 导出，而不是以 @fs/ raw disk 形式提供

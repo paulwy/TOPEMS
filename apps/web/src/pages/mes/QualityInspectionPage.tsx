@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
 import { Download, CheckCircle } from 'lucide-react';
-import * as XLSX from 'xlsx';
 
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -66,7 +65,7 @@ const QualityInspectionPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
 
   const handleBatchExport = useCallback(
-    (rows: QualityInspection[]) => {
+    async (rows: QualityInspection[]) => {
       if (rows.length === 0) {
         addNotification({
           type: 'warning',
@@ -77,6 +76,7 @@ const QualityInspectionPage: React.FC = () => {
       }
 
       try {
+        const XLSX = await import('xlsx');
         const typeLabelMap: Record<string, string> = {
           incoming: t('mes.quality_inspection_page.inspection'),
           process: t('mes.quality_inspection_page.type_process'),

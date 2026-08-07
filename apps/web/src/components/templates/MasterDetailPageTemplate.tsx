@@ -25,6 +25,7 @@ import { Search, Plus, X, PanelLeftClose, PanelLeftOpen, ChevronsRight } from 'l
 import type { BreadcrumbItem, PageAction } from './PageHeader';
 import { PageHeader } from './PageHeader';
 import { EmptyState, ErrorEmptyState } from '@topems/shared-components';
+import { logger } from '@/utils/logger';
 
 // ============ 类型定义 ============
 
@@ -470,12 +471,10 @@ export function MasterDetailPageTemplate<T>({
                       try {
                         return col.render!(value, item ?? ({} as any), index);
                       } catch (e) {
-                        if (typeof console !== 'undefined' && console?.warn) {
-                          console.warn(
-                            `[MasterDetailPageTemplate] render for column="${col.id}" failed, fallback:`,
-                            e
-                          );
-                        }
+                        logger.warn(
+                          `[MasterDetailPageTemplate] render for column="${col.id}" failed, fallback:`,
+                          e
+                        );
                         return (
                           <Typography
                             variant='body2'
@@ -558,12 +557,10 @@ export function MasterDetailPageTemplate<T>({
                           index
                         );
                       } catch (e) {
-                        if (typeof console !== 'undefined' && console?.warn) {
-                          console.warn(
-                            `[MasterDetailPageTemplate] primaryColumn.render failed, fallback:`,
-                            e
-                          );
-                        }
+                        logger.warn(
+                          `[MasterDetailPageTemplate] primaryColumn.render failed, fallback:`,
+                          e
+                        );
                         const safeItem = (item ?? {}) as unknown as Record<string, unknown>;
                         return primaryColumn.field
                           ? String(safeItem[primaryColumn.field!] ?? '-')
@@ -591,12 +588,10 @@ export function MasterDetailPageTemplate<T>({
                           index
                         );
                       } catch (e) {
-                        if (typeof console !== 'undefined' && console?.warn) {
-                          console.warn(
-                            `[MasterDetailPageTemplate] secondaryColumn.render failed, fallback:`,
-                            e
-                          );
-                        }
+                        logger.warn(
+                          `[MasterDetailPageTemplate] secondaryColumn.render failed, fallback:`,
+                          e
+                        );
                         const safeItem = (item ?? {}) as unknown as Record<string, unknown>;
                         return secondaryColumn.field
                           ? String(safeItem[secondaryColumn.field!] ?? '-')

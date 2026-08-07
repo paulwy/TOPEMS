@@ -1,14 +1,7 @@
 // shadcn 和 Button 已废弃删除，不再导出
-export * from './Loading';
-
-export { LazyImage } from './LazyImage';
-export type { LazyImageProps } from './LazyImage';
-
-export { VirtualList } from './VirtualList';
-export type { VirtualListProps, VirtualListHandle } from './VirtualList';
-
-export { LoadingFallback, PageLoadingFallback, PageSkeleton } from './LoadingFallback';
-export type { LoadingFallbackProps } from './LoadingFallback';
-
-export { CommandPalette } from './CommandPalette';
-export type { CommandPaletteProps } from './CommandPalette';
+// 以下 barrel 导出已清理：审计确认 pages/modules 中零引用（不删除源文件，仅移除 barrel 导出减轻 tree-shaking 负担）
+// - Loading (export * from './Loading')
+// - LazyImage / LazyImageProps
+// - VirtualList / VirtualListProps / VirtualListHandle
+// - LoadingFallback / PageLoadingFallback / PageSkeleton / LoadingFallbackProps
+// - CommandPalette / CommandPaletteProps

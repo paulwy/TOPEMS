@@ -1,20 +1,7 @@
 import type { ChipProps } from '@mui/material';
+import { getStatusColor as getSharedStatusColor } from '@/utils/status';
 
-export const getStatusColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    pending: 'warning',
-    success: 'success',
-    failed: 'error',
-    running: 'info',
-    stopped: 'default',
-    active: 'success',
-    inactive: 'default',
-    manual: 'default',
-    scheduled: 'primary',
-    interval: 'secondary',
-  };
-  return colorMap[status] || 'default';
-};
+export const getStatusColor = (status: string) => getSharedStatusColor(status);
 
 export const getStatusLabel = (status: string) => {
   const statusMap: Record<string, string> = {

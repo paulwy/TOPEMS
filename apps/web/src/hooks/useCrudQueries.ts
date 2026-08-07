@@ -3,7 +3,7 @@
  *
  * 提供两种 hook 工厂:
  * - useCrudQueries: 通用 CRUD（基于 AxiosInstance + basePath，类似现有 useCrud）
- * - useModuleQueries: 模块级 CRUD（基于 api 对象接口，类似 useErpBase）
+ * - useModuleQueries: 模块级 CRUD（基于 API 对象接口，类似 useErpBase）
  *
  * 使用 @tanstack/react-query 替代手动 useState/useEffect，
  * 自动获得缓存、自动重试、stale-while-revalidate 等能力。
@@ -32,7 +32,7 @@ export interface CrudQueriesOptions<T> {
   onSuccess?: (message: string) => void;
   /** 失败回调 */
   onError?: (error: unknown) => void;
-  /** 列表数据转换（从 response 中提取 items） */
+  /** 列表数据转换（从 Response 中提取 items） */
   transformList?: (response: unknown) => { items: T[]; total: number };
 }
 
@@ -334,7 +334,7 @@ export function useCrudQueries<
  * 基于 React Query 的模块级 CRUD hook 工厂。
  *
  * 与现有 useErpBase 对比:
- * - 接受相同结构的 api 对象（list/get/create/update/delete）
+ * - 接受相同结构的 API 对象（list/get/create/update/delete）
  * - 自动集成 addNotification（从 useNotificationStore）
  * - 使用 React Query 管理缓存和状态
  *

@@ -16,17 +16,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
   const { user, isAuthenticated } = useAuth();
 
   const {
-    notifications: _,
     unreadCount,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    loading: __,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    error: ___,
     addNotification,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    updateNotification: ____,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    removeNotification: _____,
     fetchNotifications,
     fetchUnreadCount,
   } = useNotificationState();
@@ -44,8 +35,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
 
   const {
     isConnected,
-    error: _wsError,
-    reconnect: _reconnect,
   } = useNotificationWebSocket({
     userId: isAuthenticated ? (userId ?? '') : '',
     onNotification: handleNewNotification as unknown as (

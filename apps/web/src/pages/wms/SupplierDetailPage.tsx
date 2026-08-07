@@ -29,6 +29,7 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { PageContainer } from '@/components/common';
 import { SCM_PATHS } from '@/modules/scm/config';
 import { useQuery } from '@tanstack/react-query';
+import { formatDate } from '@/utils/date';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const SupplierDetailPage: React.FC = () => {
@@ -57,11 +58,6 @@ const SupplierDetailPage: React.FC = () => {
       currency: 'CNY',
       minimumFractionDigits: 0,
     }).format(amount);
-  };
-
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('zh-CN');
   };
 
   const getStatusBadge = (status: string) => {

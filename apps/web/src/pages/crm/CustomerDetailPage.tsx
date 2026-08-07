@@ -15,6 +15,7 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { PageContainer } from '@/components/common';
 import { CRM_PATHS } from '@/modules/crm/config';
 import { useQuery } from '@tanstack/react-query';
+import { formatDate } from '@/utils/date';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
@@ -51,11 +52,6 @@ const CustomerDetailPage: React.FC = () => {
       currency: 'CNY',
       minimumFractionDigits: 0,
     }).format(amount);
-  };
-
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('zh-CN');
   };
 
   const getStatusBadge = (status: string) => {
@@ -291,7 +287,7 @@ const CustomerDetailPage: React.FC = () => {
               {t('crm.customerDetail.field_last_transaction_date')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium' }}>
-              {formatDate(finInfo?.last_transaction_date)}
+              {finInfo?.last_transaction_date ? formatDate(finInfo.last_transaction_date) : '-'}
             </Typography>
           </Box>
         </Box>
