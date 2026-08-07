@@ -10,6 +10,7 @@ use sqlx::Row;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
+use topems_shared::ListResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct ListDatasetQuery {
@@ -94,7 +95,7 @@ pub fn create_routes() -> Router<AppState> {
 async fn list_datasets(
     State(state): State<AppState>,
     Query(params): Query<ListDatasetQuery>,
-) -> Json<serde_json::Value> {
+) -> Json<ListResponse<Dataset>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -121,24 +122,13 @@ async fn list_datasets(
             .await
             .unwrap_or(0);
 
-            Json(serde_json::json!({
-                "success": true,
-                "data": {
-                    "datasets": datasets,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                },
-                "message": "获取数据集列表成功"
-            }))
+            Json(ListResponse::with_pagination(
+                datasets, total, page, page_size,
+            ))
         }
         Err(e) => {
             warn!("获取数据集列表失败: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "data": null,
-                "message": "获取数据集列表失败"
-            }))
+            Json(ListResponse::new(vec![], 0))
         }
     }
 }

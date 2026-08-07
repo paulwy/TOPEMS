@@ -52,7 +52,7 @@ pub async fn list_records(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthRecord>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing health records");
+    tracing::debug!("Listing health records");
     Json(ApiResponse::success(
         Vec::<HealthRecord>::new(),
         "获取健康记录列表成功",
@@ -66,7 +66,7 @@ pub async fn create_record(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<HealthRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating health record: {:?}", req);
+    tracing::debug!("Creating health record: {:?}", req);
     Json(ApiResponse::success(
         HealthRecord {
             id: uuid::Uuid::new_v4().to_string(),

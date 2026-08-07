@@ -385,7 +385,7 @@ pub async fn list_regulations(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentalRegulation>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing environmental regulations");
+    tracing::debug!("Listing environmental regulations");
     Json(ApiResponse::success(
         Vec::<EnvironmentalRegulation>::new(),
         "获取环保法规列表成功",
@@ -399,7 +399,7 @@ pub async fn create_regulation(
     Json(req): Json<CreateRegulationRequest>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating environmental regulation: {:?}", req);
+    tracing::debug!("Creating environmental regulation: {:?}", req);
     Json(ApiResponse::success(
         EnvironmentalRegulation {
             id: uuid::Uuid::new_v4().to_string(),
@@ -436,7 +436,7 @@ pub async fn get_regulation(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting environmental regulation: {}", id);
+    tracing::debug!("Getting environmental regulation: {}", id);
     Json(ApiResponse::success(
         EnvironmentalRegulation {
             id,
@@ -473,7 +473,7 @@ pub async fn update_regulation(
     Json(req): Json<UpdateRegulationRequest>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating environmental regulation {}: {:?}", id, req);
+    tracing::debug!("Updating environmental regulation {}: {:?}", id, req);
     Json(ApiResponse::success(
         EnvironmentalRegulation {
             id,
@@ -509,7 +509,7 @@ pub async fn delete_regulation(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting environmental regulation: {}", id);
+    tracing::debug!("Deleting environmental regulation: {}", id);
     Json(ApiResponse::success((), "法规删除成功"))
 }
 
@@ -519,7 +519,7 @@ pub async fn list_evaluations(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ComplianceEvaluation>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing compliance evaluations");
+    tracing::debug!("Listing compliance evaluations");
     Json(ApiResponse::success(
         Vec::<ComplianceEvaluation>::new(),
         "获取合规性评价列表成功",
@@ -533,7 +533,7 @@ pub async fn create_evaluation(
     Json(req): Json<CreateEvaluationRequest>,
 ) -> Json<ApiResponse<ComplianceEvaluation>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating compliance evaluation: {:?}", req);
+    tracing::debug!("Creating compliance evaluation: {:?}", req);
     Json(ApiResponse::success(
         ComplianceEvaluation {
             id: uuid::Uuid::new_v4().to_string(),
@@ -570,7 +570,7 @@ pub async fn get_evaluation(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<ComplianceEvaluation>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting compliance evaluation: {}", id);
+    tracing::debug!("Getting compliance evaluation: {}", id);
     Json(ApiResponse::success(
         ComplianceEvaluation {
             id,
@@ -605,7 +605,7 @@ pub async fn update_evaluation(
     Json(req): Json<UpdateEvaluationRequest>,
 ) -> Json<ApiResponse<ComplianceEvaluation>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating compliance evaluation {}: {:?}", id, req);
+    tracing::debug!("Updating compliance evaluation {}: {:?}", id, req);
     let status = req
         .status
         .clone()
@@ -649,7 +649,7 @@ pub async fn delete_evaluation(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting compliance evaluation: {}", id);
+    tracing::debug!("Deleting compliance evaluation: {}", id);
     Json(ApiResponse::success((), "评价删除成功"))
 }
 
@@ -659,7 +659,7 @@ pub async fn list_monitor_records(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentMonitor>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing environment monitor records");
+    tracing::debug!("Listing environment monitor records");
     Json(ApiResponse::success(
         Vec::<EnvironmentMonitor>::new(),
         "获取环境监测记录列表成功",
@@ -673,7 +673,7 @@ pub async fn create_monitor_record(
     Json(req): Json<CreateMonitorRecordRequest>,
 ) -> Json<ApiResponse<EnvironmentMonitor>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating environment monitor record: {:?}", req);
+    tracing::debug!("Creating environment monitor record: {:?}", req);
     Json(ApiResponse::success(
         EnvironmentMonitor {
             id: uuid::Uuid::new_v4().to_string(),
@@ -713,7 +713,7 @@ pub async fn get_monitor_record(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EnvironmentMonitor>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting environment monitor record: {}", id);
+    tracing::debug!("Getting environment monitor record: {}", id);
     Json(ApiResponse::success(
         EnvironmentMonitor {
             id,
@@ -750,7 +750,7 @@ pub async fn delete_monitor_record(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting environment monitor record: {}", id);
+    tracing::debug!("Deleting environment monitor record: {}", id);
     Json(ApiResponse::success((), "监测记录删除成功"))
 }
 
@@ -760,7 +760,7 @@ pub async fn list_permits(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DischargePermit>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing discharge permits");
+    tracing::debug!("Listing discharge permits");
     Json(ApiResponse::success(
         Vec::<DischargePermit>::new(),
         "获取排污许可列表成功",
@@ -774,7 +774,7 @@ pub async fn create_permit(
     Json(req): Json<CreatePermitRequest>,
 ) -> Json<ApiResponse<DischargePermit>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating discharge permit: {:?}", req);
+    tracing::debug!("Creating discharge permit: {:?}", req);
     Json(ApiResponse::success(
         DischargePermit {
             id: uuid::Uuid::new_v4().to_string(),
@@ -812,7 +812,7 @@ pub async fn get_permit(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DischargePermit>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting discharge permit: {}", id);
+    tracing::debug!("Getting discharge permit: {}", id);
     Json(ApiResponse::success(
         DischargePermit {
             id,
@@ -852,7 +852,7 @@ pub async fn update_permit(
     Json(req): Json<UpdatePermitRequest>,
 ) -> Json<ApiResponse<DischargePermit>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating discharge permit {}: {:?}", id, req);
+    tracing::debug!("Updating discharge permit {}: {:?}", id, req);
     Json(ApiResponse::success(
         DischargePermit {
             id,
@@ -887,7 +887,7 @@ pub async fn delete_permit(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting discharge permit: {}", id);
+    tracing::debug!("Deleting discharge permit: {}", id);
     Json(ApiResponse::success((), "排污许可删除成功"))
 }
 
@@ -897,7 +897,7 @@ pub async fn list_incidents(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentIncident>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing environment incidents");
+    tracing::debug!("Listing environment incidents");
     Json(ApiResponse::success(
         Vec::<EnvironmentIncident>::new(),
         "获取环境事件列表成功",
@@ -911,7 +911,7 @@ pub async fn create_incident(
     Json(req): Json<CreateIncidentRequest>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating environment incident: {:?}", req);
+    tracing::debug!("Creating environment incident: {:?}", req);
     Json(ApiResponse::success(
         EnvironmentIncident {
             id: uuid::Uuid::new_v4().to_string(),
@@ -953,7 +953,7 @@ pub async fn get_incident(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting environment incident: {}", id);
+    tracing::debug!("Getting environment incident: {}", id);
     Json(ApiResponse::success(
         EnvironmentIncident {
             id,
@@ -993,7 +993,7 @@ pub async fn update_incident(
     Json(req): Json<UpdateIncidentRequest>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating environment incident {}: {:?}", id, req);
+    tracing::debug!("Updating environment incident {}: {:?}", id, req);
     let status = req
         .status
         .clone()
@@ -1042,7 +1042,7 @@ pub async fn delete_incident(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting environment incident: {}", id);
+    tracing::debug!("Deleting environment incident: {}", id);
     Json(ApiResponse::success((), "环境事件删除成功"))
 }
 
@@ -1052,7 +1052,7 @@ pub async fn get_compliance_statistics(
     headers: HeaderMap,
 ) -> Json<ApiResponse<ComplianceStatistics>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting compliance statistics");
+    tracing::debug!("Getting compliance statistics");
     Json(ApiResponse::success(
         ComplianceStatistics {
             total_regulations: 25,
@@ -1089,7 +1089,7 @@ pub async fn list_regulation_categories(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing regulation categories");
+    tracing::debug!("Listing regulation categories");
     let categories = vec![
         serde_json::json!({ "code": "law", "name": "法律" }),
         serde_json::json!({ "code": "regulation", "name": "行政法规" }),
@@ -1107,7 +1107,7 @@ pub async fn list_monitor_types(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing monitor types");
+    tracing::debug!("Listing monitor types");
     let types = vec![
         serde_json::json!({ "code": "wastewater", "name": "废水监测" }),
         serde_json::json!({ "code": "wastegas", "name": "废气监测" }),

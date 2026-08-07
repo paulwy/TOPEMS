@@ -1,17 +1,17 @@
-code: ehs
-name: EHS
-version: 1.0.0
-description: TOPEMS-EHS
 author: TOPEMS
 category: Quality
+code: ehs
+name: 环境健康安全服务
+description: EHS 环境健康安全管理系统，包含环境管理、职业健康管理、安全管理、应急预案、风险评估、隐患排查、事故管理、合规性管理等模块
+version: 1.0.0
 plugin_type: business
-
-runtime:
-  port: 8052
-  health_endpoint: /health
-  base_path: /api/qa
-
 dependencies:
   - unified-core
   - mes
   - qms
+runtime:
+  port: 8052
+  health_endpoint: /health
+  base_path: /api/ehs
+deployment: {}
+permissions: {}

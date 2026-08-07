@@ -7,6 +7,7 @@ pub struct PdfParser {
 }
 
 impl PdfParser {
+    /// Construct a new default instance. Prefer [`Default::default`] where semantically clear.
     pub fn new() -> Self {
         Self {}
     }

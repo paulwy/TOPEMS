@@ -1,4 +1,4 @@
-pub mod permission;
+// V67.1 P0-9: permission 模块已删除（死代码 + 安全 stub）
 
 use axum::extract::FromRef;
 use sqlx::PgPool;

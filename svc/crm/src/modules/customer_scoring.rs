@@ -15,7 +15,7 @@ use crate::models::{
     CreateCustomerScoreRequest, CustomerScore, CustomerScoringQueryParams,
     UpdateCustomerScoreRequest,
 };
-use crate::modules::audit::log_audit_event;
+use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::modules::scoring_logic::{
     calculate_interaction_score, calculate_loyalty_score, calculate_opportunity_score,
     calculate_revenue_score, calculate_score_level, calculate_total_score, calculate_trend,
@@ -248,16 +248,18 @@ async fn create_customer_score(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "customer_score".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "customer_score".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -343,16 +345,18 @@ async fn update_customer_score(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "customer_score".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "customer_score".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -409,16 +413,18 @@ async fn delete_customer_score(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "customer_score".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "customer_score".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

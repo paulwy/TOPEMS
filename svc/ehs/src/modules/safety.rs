@@ -187,7 +187,7 @@ pub async fn list_plans(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InspectionPlan>>> {
-    tracing::info!("Listing inspection plans");
+    tracing::debug!("Listing inspection plans");
     let _tenant_id = get_tenant_id(&claims, &headers);
     Json(ApiResponse::success(
         Vec::<InspectionPlan>::new(),
@@ -201,7 +201,7 @@ pub async fn create_plan(
     headers: HeaderMap,
     Json(req): Json<CreateInspectionPlanRequest>,
 ) -> Json<ApiResponse<InspectionPlan>> {
-    tracing::info!("Creating inspection plan: {:?}", req);
+    tracing::debug!("Creating inspection plan: {:?}", req);
     let tenant_id = get_tenant_id(&claims, &headers);
     Json(ApiResponse::success(
         InspectionPlan {
@@ -233,7 +233,7 @@ pub async fn get_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InspectionPlan>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting inspection plan: {}", id);
+    tracing::debug!("Getting inspection plan: {}", id);
     Json(ApiResponse::success(
         InspectionPlan {
             id,
@@ -263,7 +263,7 @@ pub async fn update_plan(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<InspectionPlan>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating inspection plan {}: {:?}", id, req);
+    tracing::debug!("Updating inspection plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         InspectionPlan {
             id,
@@ -292,7 +292,7 @@ pub async fn delete_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting inspection plan: {}", id);
+    tracing::debug!("Deleting inspection plan: {}", id);
     Json(ApiResponse::success((), "检查计划删除成功"))
 }
 
@@ -303,7 +303,7 @@ pub async fn list_plan_items(
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<InspectionItem>>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing inspection items for plan: {}", plan_id);
+    tracing::debug!("Listing inspection items for plan: {}", plan_id);
     Json(ApiResponse::success(
         vec![
             InspectionItem {
@@ -355,7 +355,7 @@ pub async fn create_plan_item(
     Json(req): Json<CreateInspectionItemRequest>,
 ) -> Json<ApiResponse<InspectionItem>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating inspection item for plan {}: {:?}", plan_id, req);
+    tracing::debug!("Creating inspection item for plan {}: {:?}", plan_id, req);
     Json(ApiResponse::success(
         InspectionItem {
             id: uuid::Uuid::new_v4().to_string(),
@@ -383,7 +383,7 @@ pub async fn delete_plan_item(
     axum::extract::Path((plan_id, item_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting inspection item {} from plan {}", item_id, plan_id);
+    tracing::debug!("Deleting inspection item {} from plan {}", item_id, plan_id);
     Json(ApiResponse::success((), "检查项删除成功"))
 }
 
@@ -393,7 +393,7 @@ pub async fn list_records(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InspectionRecord>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing inspection records");
+    tracing::debug!("Listing inspection records");
     Json(ApiResponse::success(
         Vec::<InspectionRecord>::new(),
         "获取检查记录列表成功",
@@ -407,7 +407,7 @@ pub async fn create_record(
     Json(req): Json<CreateInspectionRecordRequest>,
 ) -> Json<ApiResponse<InspectionRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating inspection record: {:?}", req);
+    tracing::debug!("Creating inspection record: {:?}", req);
     let result = req
         .items
         .iter()
@@ -450,7 +450,7 @@ pub async fn get_record(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InspectionRecordDetail>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting inspection record: {}", id);
+    tracing::debug!("Getting inspection record: {}", id);
     Json(ApiResponse::success(
         InspectionRecordDetail {
             record: InspectionRecord {
@@ -509,7 +509,7 @@ pub async fn update_record(
     Json(req): Json<UpdateInspectionRecordRequest>,
 ) -> Json<ApiResponse<InspectionRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating inspection record {}: {:?}", id, req);
+    tracing::debug!("Updating inspection record {}: {:?}", id, req);
     Json(ApiResponse::success(
         InspectionRecord {
             id,
@@ -540,6 +540,6 @@ pub async fn delete_record(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting inspection record: {}", id);
+    tracing::debug!("Deleting inspection record: {}", id);
     Json(ApiResponse::success((), "检查记录删除成功"))
 }

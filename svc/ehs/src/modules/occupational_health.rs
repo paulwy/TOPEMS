@@ -338,7 +338,7 @@ pub async fn list_exam_plans(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamPlan>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing health exam plans");
+    tracing::debug!("Listing health exam plans");
     Json(ApiResponse::success(
         Vec::<HealthExamPlan>::new(),
         "获取体检计划列表成功",
@@ -352,7 +352,7 @@ pub async fn create_exam_plan(
     Json(req): Json<CreateExamPlanRequest>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating health exam plan: {:?}", req);
+    tracing::debug!("Creating health exam plan: {:?}", req);
     Json(ApiResponse::success(
         HealthExamPlan {
             id: uuid::Uuid::new_v4().to_string(),
@@ -386,7 +386,7 @@ pub async fn get_exam_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting health exam plan: {}", id);
+    tracing::debug!("Getting health exam plan: {}", id);
     Json(ApiResponse::success(
         HealthExamPlan {
             id,
@@ -418,7 +418,7 @@ pub async fn update_exam_plan(
     Json(req): Json<UpdateExamPlanRequest>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating health exam plan {}: {:?}", id, req);
+    tracing::debug!("Updating health exam plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         HealthExamPlan {
             id,
@@ -451,7 +451,7 @@ pub async fn delete_exam_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting health exam plan: {}", id);
+    tracing::debug!("Deleting health exam plan: {}", id);
     Json(ApiResponse::success((), "体检计划删除成功"))
 }
 
@@ -461,7 +461,7 @@ pub async fn list_exam_records(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamRecord>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing health exam records");
+    tracing::debug!("Listing health exam records");
     Json(ApiResponse::success(
         Vec::<HealthExamRecord>::new(),
         "获取体检记录列表成功",
@@ -475,7 +475,7 @@ pub async fn create_exam_record(
     Json(req): Json<CreateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating health exam record: {:?}", req);
+    tracing::debug!("Creating health exam record: {:?}", req);
     Json(ApiResponse::success(
         HealthExamRecord {
             id: uuid::Uuid::new_v4().to_string(),
@@ -524,7 +524,7 @@ pub async fn get_exam_record(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting health exam record: {}", id);
+    tracing::debug!("Getting health exam record: {}", id);
     Json(ApiResponse::success(
         HealthExamRecord {
             id,
@@ -571,7 +571,7 @@ pub async fn update_exam_record(
     Json(req): Json<UpdateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating health exam record {}: {:?}", id, req);
+    tracing::debug!("Updating health exam record {}: {:?}", id, req);
     Json(ApiResponse::success(
         HealthExamRecord {
             id,
@@ -617,7 +617,7 @@ pub async fn delete_exam_record(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting health exam record: {}", id);
+    tracing::debug!("Deleting health exam record: {}", id);
     Json(ApiResponse::success((), "体检记录删除成功"))
 }
 
@@ -628,7 +628,7 @@ pub async fn get_health_archive(
     axum::extract::Path(employee_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthArchive>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting health archive for employee: {}", employee_id);
+    tracing::debug!("Getting health archive for employee: {}", employee_id);
     Json(ApiResponse::success(
         HealthArchive {
             employee_id: employee_id.clone(),
@@ -654,7 +654,7 @@ pub async fn list_contraindications(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Contraindication>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing contraindications");
+    tracing::debug!("Listing contraindications");
     Json(ApiResponse::success(
         Vec::<Contraindication>::new(),
         "获取职业禁忌症列表成功",
@@ -668,7 +668,7 @@ pub async fn create_contraindication(
     Json(req): Json<CreateContraindicationRequest>,
 ) -> Json<ApiResponse<Contraindication>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating contraindication: {:?}", req);
+    tracing::debug!("Creating contraindication: {:?}", req);
     Json(ApiResponse::success(
         Contraindication {
             id: uuid::Uuid::new_v4().to_string(),
@@ -702,7 +702,7 @@ pub async fn update_contraindication(
     Json(req): Json<UpdateContraindicationRequest>,
 ) -> Json<ApiResponse<Contraindication>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating contraindication {}: {:?}", id, req);
+    tracing::debug!("Updating contraindication {}: {:?}", id, req);
     Json(ApiResponse::success(
         Contraindication {
             id,
@@ -737,7 +737,7 @@ pub async fn delete_contraindication(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting contraindication: {}", id);
+    tracing::debug!("Deleting contraindication: {}", id);
     Json(ApiResponse::success((), "职业禁忌症删除成功"))
 }
 
@@ -747,7 +747,7 @@ pub async fn list_abnormalities(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthAbnormality>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing health abnormalities");
+    tracing::debug!("Listing health abnormalities");
     Json(ApiResponse::success(
         Vec::<HealthAbnormality>::new(),
         "获取体检异常列表成功",
@@ -762,7 +762,7 @@ pub async fn update_abnormality(
     Json(req): Json<UpdateAbnormalityRequest>,
 ) -> Json<ApiResponse<HealthAbnormality>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating abnormality {}: {:?}", id, req);
+    tracing::debug!("Updating abnormality {}: {:?}", id, req);
     Json(ApiResponse::success(
         HealthAbnormality {
             id,
@@ -793,7 +793,7 @@ pub async fn get_health_statistics(
     headers: HeaderMap,
 ) -> Json<ApiResponse<HealthStatistics>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting health statistics");
+    tracing::debug!("Getting health statistics");
     Json(ApiResponse::success(
         HealthStatistics {
             total_employees: 500,
@@ -826,7 +826,7 @@ pub async fn list_exam_types(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing exam types");
+    tracing::debug!("Listing exam types");
     let types = vec![
         serde_json::json!({ "code": "pre_employment", "name": "上岗前体检" }),
         serde_json::json!({ "code": "annual", "name": "年度体检" }),

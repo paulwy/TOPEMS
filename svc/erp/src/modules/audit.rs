@@ -4,22 +4,13 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
+use topems_shared::ApiResponse;
 use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::AuditLog;
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub code: u16,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
 
 #[derive(Debug)]
 pub struct AuditEventParams {
@@ -33,28 +24,6 @@ pub struct AuditEventParams {
     pub response_details: Option<serde_json::Value>,
     pub status: String,
     pub error_message: Option<String>,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            code: 200,
-            success: true,
-            data: Some(data),
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
-
-    pub fn error(code: u16, message: &str) -> Self {
-        Self {
-            code,
-            success: false,
-            data: None,
-            message: message.to_string(),
-            timestamp: Utc::now().to_rfc3339(),
-        }
-    }
 }
 
 pub fn create_routes() -> Router<ApiState> {

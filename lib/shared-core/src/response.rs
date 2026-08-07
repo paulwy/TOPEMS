@@ -149,12 +149,28 @@ pub struct ListResponse<T> {
 
 impl<T> ListResponse<T> {
     pub fn new(items: Vec<T>, total: i64) -> Self {
-        Self { items, total, page: None, page_size: None, total_pages: None }
+        Self {
+            items,
+            total,
+            page: None,
+            page_size: None,
+            total_pages: None,
+        }
     }
 
     pub fn with_pagination(items: Vec<T>, total: i64, page: i64, page_size: i64) -> Self {
-        let total_pages = if total == 0 { 0 } else { (total - 1) / page_size.max(1) + 1 };
-        Self { items, total, page: Some(page), page_size: Some(page_size), total_pages: Some(total_pages) }
+        let total_pages = if total == 0 {
+            0
+        } else {
+            (total - 1) / page_size.max(1) + 1
+        };
+        Self {
+            items,
+            total,
+            page: Some(page),
+            page_size: Some(page_size),
+            total_pages: Some(total_pages),
+        }
     }
 
     pub fn from_parts(data: Vec<T>, count: i64) -> Self {
@@ -164,8 +180,12 @@ impl<T> ListResponse<T> {
 
 #[macro_export]
 macro_rules! list_resp {
-    ($vec:expr, $total:expr) => { $crate::response::ListResponse::new($vec, $total) };
-    ($vec:expr, $total:expr, $page:expr, $page_size:expr) => { $crate::response::ListResponse::with_pagination($vec, $total, $page, $page_size) };
+    ($vec:expr, $total:expr) => {
+        $crate::response::ListResponse::new($vec, $total)
+    };
+    ($vec:expr, $total:expr, $page:expr, $page_size:expr) => {
+        $crate::response::ListResponse::with_pagination($vec, $total, $page, $page_size)
+    };
 }
 
 /// V67.1 P0-10: 统一 handler 错误处理宏
@@ -175,9 +195,7 @@ macro_rules! list_resp {
 macro_rules! handle_result {
     ($expr:expr, $ok_msg:expr) => {{
         match $expr.await {
-            Ok(data) => axum::Json(
-                $crate::response::ApiResponse::success(data, $ok_msg),
-            ),
+            Ok(data) => axum::Json($crate::response::ApiResponse::success(data, $ok_msg)),
             Err(e) => {
                 tracing::error!("{}: {}", $ok_msg, e);
                 axum::Json($crate::response::ApiResponse::error(500, &e.to_string()))

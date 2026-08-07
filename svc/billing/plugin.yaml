@@ -1,14 +1,17 @@
+author: TOPEMS Team
+category: Finance
 code: billing
 name: 计费服务
-version: 1.0.0
 description: 计费服务 - 账单管理、费用核算、支付处理
+version: 1.0.0
+icon: payments
 plugin_type: service
-
+dependencies: []
+deployment: {}
 runtime:
   port: 8085
   health_endpoint: /health
   base_path: /api/billing
-
 permissions:
   - code: billing:read
     name: 查看账单
@@ -22,5 +25,3 @@ permissions:
   - code: billing:admin
     name: 计费管理
     description: 计费规则和配置管理
-
-dependencies: []

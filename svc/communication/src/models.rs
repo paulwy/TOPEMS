@@ -1,3 +1,5 @@
+#![allow(dead_code)] // serde/utoipa 序列化需要，运行期未直接引用
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -11,7 +13,6 @@ pub struct SendNotificationRequest {
     pub notification_type: Option<String>,
     pub priority: Option<i32>,
     pub data: Option<serde_json::Value>,
-    #[allow(dead_code)]
     pub send_email: Option<bool>,
 }
 
@@ -23,7 +24,6 @@ pub struct BroadcastNotificationRequest {
     pub notification_type: Option<String>,
     pub priority: Option<i32>,
     pub data: Option<serde_json::Value>,
-    #[allow(dead_code)]
     pub send_email: Option<bool>,
 }
 
@@ -36,7 +36,6 @@ pub struct NotificationQuery {
 }
 
 #[derive(Debug, Serialize)]
-#[allow(dead_code)]
 pub struct Notification {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -103,7 +102,6 @@ pub struct EmailTemplate {
     pub subject_template: String,
     pub body_template: String,
     pub description: Option<String>,
-    #[allow(dead_code)]
     pub created_at: String,
     pub updated_at: String,
 }

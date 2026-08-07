@@ -16,7 +16,7 @@ use crate::models::{
     CreateReturnItemRequest, CreateReturnRequest, Return, ReturnActionRequest, ReturnItem,
     ReturnQuery, UpdateReturnRequest,
 };
-use crate::modules::audit::log_audit_event;
+use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::event::{EventType, ReturnCompletedPayload, ReturnProcessedPayload};
@@ -272,16 +272,18 @@ async fn create_return(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "return".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "return".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -429,16 +431,18 @@ async fn update_return(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "return".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "return".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -520,16 +524,18 @@ async fn delete_return(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "return".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "return".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -605,7 +611,7 @@ async fn approve_return(
 
     match result {
         Ok(return_record) => {
-            tracing::info!(
+            tracing::debug!(
                 "退换货 {} 审批通过，操作备注: {:?}",
                 return_record.return_no,
                 req.comment
@@ -687,7 +693,7 @@ async fn reject_return(
 
     match result {
         Ok(return_record) => {
-            tracing::info!(
+            tracing::debug!(
                 "退换货 {} 已拒绝，操作备注: {:?}",
                 return_record.return_no,
                 req.comment
@@ -770,7 +776,7 @@ async fn receive_return(
 
     match result {
         Ok(return_record) => {
-            tracing::info!(
+            tracing::debug!(
                 "退换货 {} 已确认收货，操作备注: {:?}",
                 return_record.return_no,
                 req.comment
@@ -857,7 +863,7 @@ async fn complete_return(
 
     match result {
         Ok(return_record) => {
-            tracing::info!(
+            tracing::debug!(
                 "退换货 {} 已完成，操作备注: {:?}",
                 return_record.return_no,
                 req.comment
@@ -1023,7 +1029,7 @@ async fn cancel_return(
 
     match result {
         Ok(return_record) => {
-            tracing::info!(
+            tracing::debug!(
                 "退换货 {} 已取消，操作备注: {:?}",
                 return_record.return_no,
                 req.comment
@@ -1197,7 +1203,7 @@ pub async fn sync_return_to_finance(
         tracing::warn!("创建退款对账记录失败（不阻塞主流程）: {}", e);
     }
 
-    tracing::info!(
+    tracing::debug!(
         "退换货 {} 已同步至财务对账（recon_id={}）",
         return_record.return_no,
         recon_id
@@ -1235,7 +1241,7 @@ pub async fn sync_return_to_finance(
     });
     match erp_client.create_voucher(&voucher_payload).await {
         Ok(_) => {
-            tracing::info!(
+            tracing::debug!(
                 "退换货 {} 已生成退款凭证（voucher_no={}）",
                 return_record.return_no,
                 voucher_no
@@ -1282,7 +1288,7 @@ pub async fn sync_return_to_inventory(
     let warehouse_id = match return_record.warehouse_id {
         Some(w) => w,
         None => {
-            tracing::info!(
+            tracing::debug!(
                 "退换货 {} 未指定 warehouse_id，跳过库存联动",
                 return_record.return_no
             );
@@ -1396,7 +1402,7 @@ pub async fn sync_return_to_inventory(
         }
     }
 
-    tracing::info!(
+    tracing::debug!(
         "退换货 {} 库存联动完成（{} 个明细，路径=wms_api）",
         return_record.return_no,
         items_count

@@ -206,7 +206,7 @@ pub async fn list_hazards(
         }
     }
 
-    tracing::info!("Listing hazards");
+    tracing::debug!("Listing hazards");
     let hazards = Vec::<Hazard>::new();
 
     if let Ok(value) = serde_json::to_value(&hazards) {
@@ -223,7 +223,7 @@ pub async fn create_hazard(
     Json(req): Json<CreateHazardRequest>,
 ) -> Json<ApiResponse<Hazard>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating hazard: {:?}", req);
+    tracing::debug!("Creating hazard: {:?}", req);
 
     let hazard_id = uuid::Uuid::new_v4();
     let hazard_no = format!("HZ-{}", hazard_id.to_string()[..8].to_uppercase());
@@ -332,7 +332,7 @@ pub async fn get_hazard(
         }
     }
 
-    tracing::info!("Getting hazard: {}", id);
+    tracing::debug!("Getting hazard: {}", id);
     let detail = HazardDetail {
         hazard: Hazard {
             id: id.clone(),
@@ -388,7 +388,7 @@ pub async fn update_hazard(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Hazard>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating hazard {}: {:?}", id, req);
+    tracing::debug!("Updating hazard {}: {:?}", id, req);
 
     let cache_key = hazard_cache_key(tenant_id, &id);
     state.hazard_cache.remove(&cache_key);
@@ -427,7 +427,7 @@ pub async fn delete_hazard(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting hazard: {}", id);
+    tracing::debug!("Deleting hazard: {}", id);
 
     let cache_key = hazard_cache_key(tenant_id, &id);
     state.hazard_cache.remove(&cache_key);
@@ -445,7 +445,7 @@ pub async fn start_rectification(
     Json(req): Json<CreateRectificationRequest>,
 ) -> Json<ApiResponse<Rectification>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Starting rectification for hazard {}: {:?}", id, req);
+    tracing::debug!("Starting rectification for hazard {}: {:?}", id, req);
     Json(ApiResponse::success(
         Rectification {
             id: uuid::Uuid::new_v4().to_string(),
@@ -474,7 +474,7 @@ pub async fn update_rectification(
     Json(req): Json<UpdateRectificationRequest>,
 ) -> Json<ApiResponse<Rectification>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating rectification {}: {:?}", id, req);
+    tracing::debug!("Updating rectification {}: {:?}", id, req);
     let status = req
         .status
         .or(req.progress.and_then(|p| {
@@ -549,7 +549,7 @@ pub async fn verify_hazard(
     Json(req): Json<CreateVerificationRequest>,
 ) -> Json<ApiResponse<Verification>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Verifying hazard {}: {:?}", id, req);
+    tracing::debug!("Verifying hazard {}: {:?}", id, req);
     Json(ApiResponse::success(
         Verification {
             id: uuid::Uuid::new_v4().to_string(),

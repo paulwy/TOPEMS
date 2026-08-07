@@ -15,14 +15,14 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
-use topems_shared::service_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
-    ServiceConfig,
-};
 use topems_shared::service_client::{
     api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
 };
-use topems_shared::{FieldEncryptionService, KeyManager, NotificationServiceClient};
+use topems_shared::{LocalInMemoryCache as InMemoryCache, NotificationServiceClient};
+use topems_shared_bootstrap::{
+    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
+    ServiceConfig,
+};
 
 lazy_static::lazy_static! {
     pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").expect("Failed to register asset_count gauge - check for duplicate metric registrations");
@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
     });
 
     // 初始化加密服务
-    let encryption_service = init_encryption_service();
+    let encryption_service = topems_shared::init_encryption_from_env();
     tracing::info!("🔐 字段加密服务初始化成功");
 
     // 通知服务客户端
@@ -113,7 +113,7 @@ async fn main() -> Result<()> {
         auth_state: ctx.auth_state.clone(),
         metrics: ctx.metrics.clone(),
         start_time: ctx.start_time,
-        dict_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(600))),
+        dict_cache: Arc::new(InMemoryCache::new(Duration::from_secs(600))),
         notification_client,
         hrm_client,
         encryption: Arc::new(encryption_service),
@@ -202,31 +202,4 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .await?;
     tracing::info!("[erp] erp_master_data_refs 表已就绪（AC-5 本地主数据引用）");
     Ok(())
-}
-
-fn init_encryption_service() -> FieldEncryptionService {
-    let master_key = env::var("ENCRYPTION_MASTER_KEY").unwrap_or_else(|_| {
-        tracing::warn!(
-            "ENCRYPTION_MASTER_KEY not set, using insecure default - MUST be changed in production"
-        );
-        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string()
-    });
-    let key_bytes = hex::decode(&master_key).unwrap_or_else(|e| {
-        tracing::warn!(
-            "Failed to decode ENCRYPTION_MASTER_KEY as hex ({}), using fallback key",
-            e
-        );
-        vec![0x42; 32]
-    });
-    let mut key_array = [0u8; 32];
-    let source = if key_bytes.len() >= 32 {
-        &key_bytes[..32]
-    } else {
-        tracing::warn!("ENCRYPTION_MASTER_KEY too short, padding with zeros");
-        key_array[..key_bytes.len()].copy_from_slice(&key_bytes);
-        return FieldEncryptionService::new(KeyManager::new(&key_array));
-    };
-    key_array.copy_from_slice(source);
-    let key_manager = KeyManager::new(&key_array);
-    FieldEncryptionService::new(key_manager)
 }

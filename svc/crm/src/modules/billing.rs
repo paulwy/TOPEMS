@@ -10,7 +10,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::middleware::tenant::get_tenant_id;
 use crate::models::{BillingQueryParams, BillingRecord, CreateBillingRequest};
-use crate::modules::audit::log_audit_event;
+use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse};
@@ -236,16 +236,18 @@ async fn create_billing_record(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "billing_record".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "billing_record".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -382,16 +384,18 @@ async fn update_billing_record(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "billing_record".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "billing_record".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -448,16 +452,18 @@ async fn delete_billing_record(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "billing_record".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "billing_record".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -527,7 +533,7 @@ async fn send_billing_notification(
 
     match result {
         Ok(Some(record)) => {
-            tracing::info!(
+            tracing::debug!(
                 "发送账单通知: 客户={}, 发票号={}, 金额={}",
                 record.customer_name,
                 record.invoice_no,

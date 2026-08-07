@@ -61,7 +61,7 @@ pub async fn list_records(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentRecord>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing environment records");
+    tracing::debug!("Listing environment records");
     Json(ApiResponse::success(
         Vec::<EnvironmentRecord>::new(),
         "获取环境记录列表成功",
@@ -75,7 +75,7 @@ pub async fn create_record(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<EnvironmentRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating environment record: {:?}", req);
+    tracing::debug!("Creating environment record: {:?}", req);
     Json(ApiResponse::success(
         EnvironmentRecord {
             id: uuid::Uuid::new_v4().to_string(),
