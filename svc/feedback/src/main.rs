@@ -1,74 +1,56 @@
+//! TOPEMS Feedback Service
+//!
+//! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
+
 use axum::{routing::get, Router};
-use sqlx::postgres::PgPoolOptions;
-use std::net::SocketAddr;
-use topems_shared::{auth_middleware, create_cors_layer, init_telemetry, AuthState};
+use topems_shared::get_api_info_handler;
+use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 mod handlers;
 
 #[tokio::main]
-async fn main() {
-    let _telemetry_guard = init_telemetry("topems-feedback");
-
-    tracing::info!("🚀 TOPEMS Feedback Service starting...");
-
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        std::process::exit(1);
-    });
-
-    let pool = match PgPoolOptions::new()
-        .max_connections(20)
-        .acquire_timeout(std::time::Duration::from_secs(30))
-        .connect(&database_url)
-        .await
-    {
-        Ok(p) => {
-            tracing::info!("Database connection successful");
-            p
-        }
-        Err(e) => {
-            tracing::error!("Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
-        }
+async fn main() -> anyhow::Result<()> {
+    let config = ServiceConfig {
+        name: "topems-feedback",
+        port: 8087,
+        port_env_var: Some("FEEDBACK_PORT"),
+        max_db_connections: 10,
+        enable_events: false,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/feedback",
+        legacy_prefixes: &["/api/v1/feedback"],
     };
 
-    handlers::init_feedback_tables(&pool)
+    let ctx = bootstrap_service(&config).await?;
+    tracing::info!("🚀 TOPEMS Feedback Service starting...");
+
+    handlers::init_feedback_tables(&ctx.db)
         .await
         .expect("Failed to init feedback database");
 
-    let cors = create_cors_layer();
-    let auth_state = AuthState::from_env();
+    // ── public_routes（无状态） ──────────────────────────────────────
+    let public_routes = Router::new()
+        .route(
+            "/",
+            get(|| async { "TOPEMS Feedback Service API\n\n- /health - Health check\n" }),
+        )
+        .route("/api", get(|| get_api_info_handler("topems-feedback")))
+        .route("/api/info", get(|| get_api_info_handler("topems-feedback")))
+        .route("/health", get(|| async { "OK" }));
 
-    let protected_routes = handlers::feedback_routes().layer(axum::middleware::from_fn_with_state(
-        auth_state.clone(),
-        auth_middleware,
-    ));
+    // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
+    let protected_routes = handlers::feedback_routes().with_state(ctx.db.clone());
 
-    let app = Router::new()
-        .nest("/api/feedback", protected_routes)
-        .route("/health", get(|| async { "OK" }))
-        .layer(cors)
-        .with_state(pool);
+    // ── 组装 Application ─────────────────────────────────────────────
+    let app = build_application(&ctx, &config, public_routes, protected_routes, None);
 
-    let port = std::env::var("FEEDBACK_PORT")
-        .or_else(|_| std::env::var("SERVER_PORT"))
-        .or_else(|_| std::env::var("PORT"))
-        .unwrap_or_else(|_| "8087".to_string())
-        .parse()
-        .unwrap_or(8087);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ Feedback Service is running at http://{}", addr);
-    tracing::info!("📋 API prefix: /api/feedback/*");
+    tracing::info!(
+        "✅ Feedback Service is running at http://0.0.0.0:{} (prefix: {})",
+        app.port,
+        config.api_prefix
+    );
 
-    let listener = match tokio::net::TcpListener::bind(&addr).await {
-        Ok(l) => l,
-        Err(e) => {
-            tracing::error!("Failed to bind to {}: {}", addr, e);
-            return;
-        }
-    };
-
-    if let Err(e) = axum::serve(listener, app.into_make_service()).await {
-        tracing::error!("Server error: {}", e);
-    }
+    run(app).await?;
+    Ok(())
 }

@@ -22,22 +22,17 @@ mod services;
 
 mod shared;
 
-use std::net::SocketAddr;
 use std::sync::Arc;
 
 use axum::{extract::State, routing::get, Json, Router};
-use axum_prometheus::PrometheusMetricLayer;
-
-use topems_shared::service_client::create_workflow_client;
-use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
-    rate_limit_middleware, register_routes_with_legacy_alias, rls_middleware, simple_health_check,
-    telemetry_middleware, ApiResponse, AuthState, RateLimitConfig, RateLimitMiddleware,
-    ServiceHealth, SimpleHealthConfig,
-};
 use utoipa::OpenApi;
 
-pub use shared::*;
+use topems_shared::service_client::create_workflow_client;
+use topems_shared::{simple_health_check, ApiResponse, ServiceHealth, SimpleHealthConfig};
+use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
+
+use shared::cache::InMemoryCache;
+use shared::AppState;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -63,88 +58,57 @@ struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    _ = dotenv::dotenv();
-
-    let _telemetry_guard = init_telemetry("topems-ehs");
-
-    tracing::info!("🚀 TOPEMS EHS Service starting...");
-
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        std::process::exit(1);
-    });
-
-    let pool = match sqlx::postgres::PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&database_url)
-        .await
-    {
-        Ok(p) => {
-            tracing::info!("Database connection successful");
-            p
-        }
-        Err(e) => {
-            tracing::error!("Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
-        }
+    let config = ServiceConfig {
+        name: "topems-ehs",
+        port: 8052,
+        port_env_var: Some("EHS_PORT"),
+        max_db_connections: 10,
+        enable_events: true,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/ehs",
+        legacy_prefixes: &["/api/v1/ehs"],
     };
 
-    if let Err(e) = models::init_database(&pool).await {
+    let ctx = bootstrap_service(&config).await?;
+
+    if let Err(e) = models::init_database(&ctx.db).await {
         tracing::warn!("EHS database init warning: {}", e);
     }
-
-    let event_publisher = match topems_shared::event::EventPublisher::new("topems-ehs") {
-        Ok(publisher) => {
-            tracing::info!("📢 事件发布服务初始化成功");
-            Some(std::sync::Arc::new(publisher))
-        }
-        Err(e) => {
-            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
-            None
-        }
-    };
-
     if let Err(e) =
-        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await
     {
         tracing::warn!("⚠️ EHS 事件订阅者启动失败: {}", e);
     }
-
-    let auth_state = AuthState::from_env();
-    let health_config = SimpleHealthConfig::new("topems-ehs").with_db(pool.clone());
 
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8000".to_string());
     let workflow_client = create_workflow_client().expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
-    let hazard_cache = Arc::new(shared::cache::InMemoryCache::new(
+    let hazard_cache = Arc::new(InMemoryCache::<serde_json::Value>::new(
         std::time::Duration::from_secs(300),
     ));
-    let training_cache = Arc::new(shared::cache::InMemoryCache::new(
+    let training_cache = Arc::new(InMemoryCache::<serde_json::Value>::new(
         std::time::Duration::from_secs(120),
     ));
-    let dict_cache = Arc::new(shared::cache::InMemoryCache::new(
+    let dict_cache = Arc::new(InMemoryCache::<String>::new(
         std::time::Duration::from_secs(600),
     ));
-
     tracing::info!("💾 内存缓存初始化完成（隐患/培训/字典）");
 
-    let state = AppState {
-        auth_state,
-        pool,
-        health_config,
-        event_publisher,
+    let api_state = AppState {
+        auth_state: ctx.auth_state.clone(),
+        pool: ctx.db.clone(),
+        health_config: SimpleHealthConfig::new("topems-ehs").with_db(ctx.db.clone()),
+        event_publisher: ctx.event_publisher.clone(),
         workflow_client,
         hazard_cache,
         training_cache,
         dict_cache,
     };
 
-    let cors = create_cors_layer();
-
-    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
-
+    // Public routes（stateful：/health + /api/plugins/*）
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
@@ -156,76 +120,37 @@ async fn main() -> anyhow::Result<()> {
             "/api/plugins/health",
             get(modules::ehs_plugin::plugin_health_check),
         )
-        .route("/api", get(|| get_api_info_handler("ehs-service")))
-        .route("/api/info", get(|| get_api_info_handler("ehs-service")))
-        .route(
-            "/metrics",
-            get(move || async move { metric_handle.render() }),
-        );
+        .with_state(api_state.clone());
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    });
-
+    // Protected routes（先 merge 业务路由，然后 tenant_middleware → build_application 再加 auth/rls/rate_limit）
     let protected_routes = Router::new()
         .merge(modules::create_api_routes())
         .layer(axum::middleware::from_fn(
             middleware::tenant::tenant_middleware,
         ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.pool.clone(),
-            rls_middleware,
-        ))
-        .layer(rate_limit_layer);
+        .with_state(api_state.clone());
 
-    let app = register_routes_with_legacy_alias(
-        Router::new().merge(public_routes),
-        "/api/ehs",
-        &["/api/v1/ehs"],
+    let openapi_json = serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_default();
+    let mut app = build_application(
+        &ctx,
+        &config,
+        public_routes,
         protected_routes,
-    )
-    .route("/api/health/detailed", get(detailed_health))
-    .route(
-        "/api-docs/openapi.json",
-        get(|| async {
-            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
-                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
-                "{}".to_string()
-            })
-        }),
-    )
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(cors)
-    .layer(prometheus_layer)
-    .with_state(state);
+        Some(openapi_json),
+    );
 
-    let port = std::env::var("EHS_PORT")
-        .unwrap_or_else(|_| "8052".to_string())
-        .parse()
-        .unwrap_or(8052);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ EHS Service is running at http://{}", addr);
+    // stateful /api/health/detailed（build_application 内 public_routes 不传 state，补在最外层 merge）
+    let stateful_detailed = Router::new()
+        .route("/api/health/detailed", get(detailed_health))
+        .with_state(api_state);
+    app.router = Router::new().merge(stateful_detailed).merge(app.router);
 
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         modules::ehs_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app.into_make_service()).await?;
-
+    run(app).await?;
     Ok(())
 }
 

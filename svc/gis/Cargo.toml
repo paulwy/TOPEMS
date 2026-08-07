@@ -28,6 +28,7 @@ mime_guess.workspace = true
 utoipa.workspace = true
 reqwest = { workspace = true, features = ["json"] }
 futures-util.workspace = true
+topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 
 [dev-dependencies]
 tokio-test.workspace = true

@@ -1,36 +1,60 @@
+//! TOPEMS-RD 科研研发管理系统
+//!
+//! V2 shared-bootstrap 模板：bootstrap_service + build_application + stateful_public 外层嵌套
+//!
+//! 复杂度：⭐⭐⭐（复杂）
+//! - 自定义 modules::ApiState（带 Config / SystemMetrics / start_time / auth_state）
+//! - stateful_public：/health + /health/detailed（带 IAM HTTP / DB 双重健康检查
+//! - 配置 Config::load() + rs_plugin 自动注册
+
+use anyhow::Result;
+use axum::{routing::get, Json, Router};
+use prometheus::{default_registry, Gauge};
+use serde::Serialize;
+use topems_shared::service_bootstrap::{
+    bootstrap_service, build_application, check_iam_health, run, Application, ServiceConfig,
+};
+use topems_shared::{config::Config, ApiResponse, DependencyHealth, HealthStatus, ServiceHealth};
+use utoipa::OpenApi;
+
 mod cache;
 mod event_handlers;
 mod middleware;
 mod models;
-mod modules;
+pub mod modules;
 mod repositories;
 mod services;
 mod shared;
 
-use axum::{routing::get, Json, Router};
-use axum_prometheus::PrometheusMetricLayer;
-use prometheus::{default_registry, Gauge};
-use serde::Serialize;
-use std::env;
-use std::sync::Arc;
-use std::time::Instant;
-
-use topems_shared::{
-    auth_middleware, check_http_health, config::enhanced::DatabaseConfig, create_api_info_router,
-    create_cors_layer, create_database_pool, init_telemetry, rate_limit_middleware,
-    register_routes_with_legacy_alias, rls_middleware, telemetry_middleware, ApiResponse,
-    AuthState, Config, DependencyHealth, HealthStatus, RateLimitConfig, RateLimitMiddleware,
-    ServiceHealth, SystemMetrics,
-};
-use utoipa::OpenApi;
+use modules::ApiState;
 
 #[tokio::main]
-async fn main() -> topems_shared::Result<()> {
+async fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
 
-    let _telemetry_guard = init_telemetry("topems-rd");
+    let config_app: Config = Config::load()
+        .await
+        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    tracing::info!("Configuration loaded, environment: {}", config_app.env());
 
-    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    // ── ServiceConfig ──────────────────────────────────────────────
+    let config = ServiceConfig {
+        name: "topems-rd",
+        port: 8053,
+        port_env_var: Some("RD_PORT"),
+        max_db_connections: 10,
+        enable_events: true,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/rd",
+        // 兼容 V1 三层前缀：主路径 /api/rd + legacy /api/v1/rd + /api/core/rd/v1
+        legacy_prefixes: &["/api/v1/rd", "/api/core/rd/v1"],
+    };
+
+    let ctx = bootstrap_service(&config).await?;
+    tracing::info!("🚀 TOPEMS-RD 科研研发管理系统启动...");
+
+    // ── 自定义 Prometheus Gauge ─────────────────────────────────────
     let custom_gauge = Gauge::new(
         "topems_rd_custom_metric",
         "This is a custom metric for TOPEMS-RD",
@@ -50,69 +74,32 @@ async fn main() -> topems_shared::Result<()> {
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    let config = Config::load().await?;
-    let db_config = DatabaseConfig {
-        url: env::var("DATABASE_URL").map_err(|_| {
-            tracing::error!("DATABASE_URL environment variable is required");
-            topems_shared::TopemsError::Validation(
-                "DATABASE_URL environment variable is required".to_string(),
-            )
-        })?,
-        max_connections: 10,
-        min_connections: Some(2),
-        connect_timeout: Some(30),
-        idle_timeout: Some(60),
-        max_lifetime: Some(1800),
-        test_interval: Some(60),
-        enable_connection_reuse: Some(true),
-    };
-    tracing::info!("Configuration loaded, environment: {}", config.env());
-
-    let pool = create_database_pool(&db_config).await?;
-    tracing::info!("🔗 数据库连接成功");
-
-    if let Err(e) = init_db(&pool).await {
+    // ── 数据库初始化 ───────────────────────────────────────────────
+    if let Err(e) = init_db(&ctx.db).await {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let event_publisher = match topems_shared::event::EventPublisher::new("topems-rd") {
-        Ok(publisher) => {
-            tracing::info!("📢 事件发布服务初始化成功");
-            Some(Arc::new(publisher))
-        }
-        Err(e) => {
-            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
-            None
-        }
-    };
-
+    // ── 事件订阅者（失败不阻塞启动） ────────────────────────────────
     if let Err(e) =
-        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await
     {
         tracing::warn!("⚠️ RD 事件订阅者启动失败: {}", e);
     }
 
-    let start_time = Instant::now();
-    let metrics = Arc::new(SystemMetrics::new());
-    let auth_state = AuthState::from_env();
-
-    let api_state = modules::ApiState {
-        db: pool.clone(),
-        auth_state: auth_state.clone(),
-        config: config.clone(),
-        metrics: metrics.clone(),
-        start_time,
-        event_publisher,
+    // ── 构建自定义 modules::ApiState ─────────────────────────────────────
+    let api_state = ApiState {
+        db: ctx.db.clone(),
+        auth_state: ctx.auth_state.clone(),
+        config: config_app.clone(),
+        metrics: ctx.metrics.clone(),
+        start_time: ctx.start_time,
+        event_publisher: ctx.event_publisher.clone(),
     };
 
-    let public_routes: Router<modules::ApiState> = Router::new()
-        .route("/health", get(health_check))
-        .route("/health/detailed", get(health_check_detailed))
+    // ── public_routes（无状态：/api-docs + plugins） ───────────────
+    // 注：标准 /health /metrics 被 stateful_public 覆盖（因为 rd 有自定义健康检查）
+    let public_routes = Router::new()
         .route("/api-docs/openapi.json", get(serve_openapi_json))
-        .route(
-            "/metrics",
-            get(move || async move { metric_handle.render() }),
-        )
         .route(
             "/api/plugins/info",
             get(modules::rs_plugin::get_plugin_info),
@@ -122,64 +109,47 @@ async fn main() -> topems_shared::Result<()> {
             get(modules::rs_plugin::plugin_health_check),
         );
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    });
+    // ── protected_routes（业务路由 + State<ApiState>） ────────────────────
+    // auth / rls / rate_limit 中间件由 build_application 在 protected 层自动叠加
+    let protected_routes = modules::create_routes().with_state(api_state.clone());
 
-    let protected_routes = modules::create_routes()
-        .layer(axum::middleware::from_fn_with_state(
-            auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            api_state.db.clone(),
-            rls_middleware,
-        ))
-        .layer(rate_limit_layer)
+    // ── OpenAPI JSON ─────────────────────────────────────────────────
+    let openapi_json = Some(
+        serde_json::to_string_pretty(&modules::openapi::ApiDoc::openapi())
+            .unwrap_or_else(|_| "{}".to_string()),
+    );
+
+    // ── 组装 Application（build_application 返回 Router<()>） ────────
+    let app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
+
+    // ── stateful_public（需要 ApiState 的自定义公共路由） ─────────────
+    // 外层嵌套：health_check + health_check_detailed 使用自定义 DB/IAM 双重健康检查逻辑
+    let stateful_public = Router::new()
+        .route("/health", get(health_check))
+        .route("/health/detailed", get(health_check_detailed))
         .with_state(api_state.clone());
 
-    let app = register_routes_with_legacy_alias(
-        Router::new().merge(public_routes.with_state(api_state.clone())),
-        "/api/core/rd/v1",
-        &["/api/v1/rd", "/api/rd"],
-        protected_routes,
-    )
-    .merge(create_api_info_router("topems-rd"))
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(prometheus_layer)
-    .layer(create_cors_layer());
+    // ── 最终 Application 合并 ───────────────────────────────────────
+    let final_app = Application {
+        router: Router::new().merge(stateful_public).merge(app.router),
+        port: app.port,
+        name: app.name,
+    };
 
-    let core_url = env::var("CORE_URL").ok();
+    // ── 启动时自动注册到统一核心 ──────────────────────────────────────
+    let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         modules::rs_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let port = env::var("RD_PORT")
-        .or_else(|_| env::var("SERVER_PORT"))
-        .or_else(|_| env::var("PORT"))
-        .unwrap_or_else(|_| "8053".to_string());
-    let addr = format!("0.0.0.0:{}", port);
-
-    tracing::info!("🚀 TOPEMS-RD 科研研发管理系统启动中...");
-    tracing::info!("📦 Port: {}", port);
-    tracing::info!("🔒 认证保护已启用");
-
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
-
+    run(final_app).await?;
     Ok(())
 }
 
+// ── 自定义公共 handler（V1 保留，带 ApiState 依赖） ──────────────────────────
+
 async fn health_check(
-    axum::extract::State(state): axum::extract::State<modules::ApiState>,
+    axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<String>> {
     let database_health = check_database_health(&state.db).await;
     let iam_health = check_iam_health().await;
@@ -206,7 +176,7 @@ async fn health_check(
 }
 
 async fn health_check_detailed(
-    axum::extract::State(state): axum::extract::State<modules::ApiState>,
+    axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<ServiceHealth>> {
     let dependencies = vec![
         check_database_health(&state.db).await,
@@ -256,7 +226,7 @@ struct RdServiceMetrics {
 
 #[allow(dead_code)]
 async fn get_metrics(
-    axum::extract::State(state): axum::extract::State<modules::ApiState>,
+    axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<RdServiceMetrics>> {
     let metrics = RdServiceMetrics {
         service_name: "topems-rd".to_string(),
@@ -290,39 +260,10 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
     }
 }
 
-async fn check_iam_health() -> DependencyHealth {
-    let iam_url =
-        std::env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let health_url = format!("{}/health", iam_url);
-
-    match check_http_health(&health_url).await {
-        Ok(status) => {
-            let message = match status {
-                HealthStatus::Healthy => "IAM 服务正常",
-                HealthStatus::Degraded => "IAM 服务响应异常",
-                HealthStatus::Unhealthy => "IAM 服务不可用",
-            };
-            DependencyHealth {
-                name: "iam-service".to_string(),
-                status,
-                message: message.to_string(),
-            }
-        }
-        Err(e) => {
-            tracing::warn!("IAM 服务健康检查失败: {}", e);
-            DependencyHealth {
-                name: "iam-service".to_string(),
-                status: HealthStatus::Degraded,
-                message: format!("IAM 服务连接异常: {}", e),
-            }
-        }
-    }
-}
-
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
     axum::Json(modules::openapi::ApiDoc::openapi())
 }
 
-async fn init_db(_pool: &sqlx::PgPool) -> topems_shared::Result<()> {
+async fn init_db(_pool: &sqlx::PgPool) -> anyhow::Result<()> {
     Ok(())
 }

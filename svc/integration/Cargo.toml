@@ -23,4 +23,6 @@ tower.workspace = true
 reqwest.workspace = true
 futures.workspace = true
 topems-shared = { path = "../../lib" }
+topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 utoipa.workspace = true
+axum-prometheus.workspace = true

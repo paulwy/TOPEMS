@@ -4,19 +4,19 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
-use std::env;
 use std::sync::Arc;
 use std::time::Instant;
 use tower_cookies::CookieManagerLayer;
 
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
+use topems_shared::auth::auth_middleware;
 use topems_shared::{
-    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias,
-    request_context_middleware, rls_middleware, telemetry_middleware, ApiResponse, RateLimitConfig,
-    RateLimitMiddleware, ServiceHealth,
+    create_api_info_router, create_cors_layer, rate_limit_middleware,
+    register_routes_with_legacy_alias, request_context_middleware, rls_middleware,
+    telemetry_middleware, ApiResponse, RateLimitConfig, RateLimitMiddleware, ServiceHealth,
 };
+use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 use utoipa::OpenApi;
 
 mod models;
@@ -74,11 +74,21 @@ fn get_uptime() -> u64 {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    dotenv::dotenv().ok();
-
-    let _telemetry_guard = init_telemetry("topems-portal");
+    let config = ServiceConfig {
+        name: "topems-portal",
+        port: 8063,
+        port_env_var: Some("PORTAL_PORT"),
+        max_db_connections: 20,
+        enable_events: true,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/core/portal/v1",
+        legacy_prefixes: &["/api/portal", "/api/v1/portal"],
+    };
+    let ctx = bootstrap_service(&config).await?;
     START_TIME.get_or_init(Instant::now);
 
+    // 自定义 Prometheus Gauge
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
     let custom_gauge = Gauge::new(
         "topems_portal_custom_metric",
@@ -99,44 +109,13 @@ async fn main() -> anyhow::Result<()> {
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    let database_url = env::var("DATABASE_URL").map_err(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        anyhow::anyhow!("DATABASE_URL environment variable is required")
-    })?;
-
-    let pool = match sqlx::postgres::PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
-        .await
-    {
-        Ok(p) => {
-            tracing::info!("🔗 数据库连接成功");
-            p
-        }
-        Err(e) => {
-            tracing::error!("数据库连接失败: {}", e);
-            panic!("无法连接到数据库: {}", e);
-        }
-    };
-
-    let event_publisher = match topems_shared::event::EventPublisher::new("topems-portal") {
-        Ok(publisher) => {
-            tracing::info!("📢 事件发布服务初始化成功");
-            Some(Arc::new(publisher))
-        }
-        Err(e) => {
-            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
-            None
-        }
-    };
-
     if let Err(e) =
-        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await
     {
         tracing::warn!("⚠️ PORTAL 事件订阅者启动失败: {}", e);
     }
 
-    let app_state = AppState::new(pool.clone(), event_publisher).await;
+    let app_state = AppState::new(ctx.db.clone(), ctx.event_publisher.clone()).await;
 
     // V33.0 Portal BFF Phase 3: GraphQL 聚合层
     let graphql_schema = modules::graphql_schema::build_schema(app_state.clone());
@@ -3140,25 +3119,24 @@ async fn main() -> anyhow::Result<()> {
     .layer(CookieManagerLayer::new())
     .layer(prometheus_layer);
 
-    let port = env::var("PORTAL_PORT")
-        .or_else(|_| env::var("SERVER_PORT"))
-        .unwrap_or_else(|_| "8063".to_string());
-    let addr = format!("0.0.0.0:{}", port);
+    let app = app.with_state(app_state.clone());
 
-    tracing::info!("🚀 TOPEMS-PORTAL 统一门户系统启动中...");
-    tracing::info!("📦 端口: {}", port);
-    tracing::info!("🔒 认证保护已启用");
-
-    let core_url = env::var("CORE_URL").ok();
+    let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app.with_state(app_state.clone())).await?;
+    let app = Application {
+        router: app,
+        port: resolve_port(&config),
+        name: config.name,
+    };
+    run(app).await?;
 
     Ok(())
 }
+
+use topems_shared::build_health_response;
 
 async fn health_check() -> ServiceHealth {
     build_health_response("topems-portal", true)

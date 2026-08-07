@@ -23,18 +23,16 @@ mod shared;
 pub mod middleware;
 pub mod modules;
 
-use std::net::SocketAddr;
-
 use axum_prometheus::PrometheusMetricLayer;
 use reqwest::Client;
 
-use topems_shared::init_telemetry;
 use topems_shared::{
-    create_cors_layer, AuditLoggerConfig, AuditLoggerMiddleware, AuthState, BodyLimitConfig,
+    create_cors_layer, AuditLoggerConfig, AuditLoggerMiddleware, BodyLimitConfig,
     BodyLimitMiddleware, CompressionConfig, CompressionMiddleware, FieldEncryptionService,
     KeyManager, SecurityHeadersConfig, SecurityHeadersLayer, SimpleHealthConfig, SystemMetrics,
     TelemetryExt,
 };
+use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 use utoipa::{Modify, OpenApi};
 
 pub use shared::*;
@@ -101,17 +99,6 @@ impl Modify for ApiDoc {
 // ==================== 主入口 ====================
 
 /// Initialize the optional field-encryption service for sensitive settings.
-///
-/// The encryption key is read from the first available of these environment
-/// variables (in priority order):
-/// - `TOPEMS_FIELD_ENCRYPTION_KEY` (documented by the settings module)
-/// - `SETTINGS_ENCRYPTION_KEY`
-/// - `ENCRYPTION_KEY` (shared with other services such as `hrm`)
-///
-/// The value may be either a base64-encoded 32-byte key (optionally prefixed
-/// with `base64:`) or an arbitrary passphrase that is run through SHA-256 to
-/// derive a 32-byte key. When no key is configured the service returns `None`
-/// and secrets are stored as plain text for backwards compatibility.
 fn init_field_encryption() -> Option<std::sync::Arc<FieldEncryptionService>> {
     let raw_key = [
         "TOPEMS_FIELD_ENCRYPTION_KEY",
@@ -135,7 +122,6 @@ fn init_field_encryption() -> Option<std::sync::Arc<FieldEncryptionService>> {
     let key_b64 = if let Some(stripped) = raw_key.strip_prefix("base64:") {
         stripped.to_string()
     } else {
-        // Treat as a passphrase and derive a 32-byte key via SHA-256.
         use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(raw_key.as_bytes());
@@ -158,40 +144,26 @@ fn init_field_encryption() -> Option<std::sync::Arc<FieldEncryptionService>> {
 }
 
 #[tokio::main]
-async fn main() {
-    let _telemetry_guard = init_telemetry("topems-unified-core");
+async fn main() -> anyhow::Result<()> {
+    let config = ServiceConfig {
+        name: "topems-unified-core",
+        port: 8000,
+        port_env_var: Some("CORE_PORT"),
+        max_db_connections: 20,
+        enable_events: false,
+        enable_rls: false,
+        enable_request_context: false,
+        api_prefix: "/api/core",
+        legacy_prefixes: &[],
+    };
 
-    tracing::info!("🚀 TOPEMS Unified Core Platform starting...");
+    let ctx = bootstrap_service(&config).await?;
+
     tracing::info!(
         "📦 Contains: IAM + Flow + File + Communication + Tenant + Billing + Plugin + Sync"
     );
 
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        std::process::exit(1);
-    });
-
-    let pool = match sqlx::postgres::PgPoolOptions::new()
-        .max_connections(20)
-        .acquire_timeout(std::time::Duration::from_secs(30))
-        .idle_timeout(std::time::Duration::from_secs(300))
-        .max_lifetime(std::time::Duration::from_secs(1800))
-        .connect(&database_url)
-        .await
-    {
-        Ok(p) => {
-            tracing::info!("Database connection successful");
-            p
-        }
-        Err(e) => {
-            tracing::error!("Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
-        }
-    };
-
     // Initialize databases for all modules
-    // 所有 init_database 均应设计为幂等（CREATE TABLE IF NOT EXISTS + ON CONFLICT DO NOTHING）。
-    // 现有数据库已有历史数据时，某模块 init 失败不应阻断服务启动，降级为 warn + 继续。
     async fn try_init<F, Fut>(name: &str, f: F)
     where
         F: FnOnce() -> Fut,
@@ -207,31 +179,29 @@ async fn main() {
         }
     }
 
-    try_init("iam", || modules::iam::init_database(&pool)).await;
-    try_init("flow", || modules::flow::init_database(&pool)).await;
-    try_init("file", || modules::file::init_database(&pool)).await;
-    try_init("tenant", || modules::tenant::init_database(&pool)).await;
-    try_init("plugin", || modules::plugin::init_database(&pool)).await;
-    try_init("migration", || modules::migration::init_database(&pool)).await;
-    try_init("dict", || modules::dict::init_database(&pool)).await;
+    try_init("iam", || modules::iam::init_database(&ctx.db)).await;
+    try_init("flow", || modules::flow::init_database(&ctx.db)).await;
+    try_init("file", || modules::file::init_database(&ctx.db)).await;
+    try_init("tenant", || modules::tenant::init_database(&ctx.db)).await;
+    try_init("plugin", || modules::plugin::init_database(&ctx.db)).await;
+    try_init("migration", || modules::migration::init_database(&ctx.db)).await;
+    try_init("dict", || modules::dict::init_database(&ctx.db)).await;
     try_init("master", || {
-        modules::master::handlers::init_mdm_tables(&pool)
+        modules::master::handlers::init_mdm_tables(&ctx.db)
     })
     .await;
-    try_init("menu", || modules::menu::init_database(&pool)).await;
-    try_init("help", || modules::help::init_database(&pool)).await;
-    try_init("login_log", || modules::login_log::init_database(&pool)).await;
-    try_init("doc", || modules::doc::services::init_database(&pool)).await;
+    try_init("menu", || modules::menu::init_database(&ctx.db)).await;
+    try_init("help", || modules::help::init_database(&ctx.db)).await;
+    try_init("login_log", || modules::login_log::init_database(&ctx.db)).await;
+    try_init("doc", || modules::doc::services::init_database(&ctx.db)).await;
 
-    // 初始化系统基础字典数据（同样降级为 warn，阻断仅当关键依赖缺失）
-    if let Err(e) = modules::dict::seed::seed_dict_data(&pool).await {
+    if let Err(e) = modules::dict::seed::seed_dict_data(&ctx.db).await {
         tracing::warn!("seed_dict_data skipped: {}", e);
     }
 
-    let auth_state = AuthState::from_env();
-    let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(pool.clone());
+    let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(ctx.db.clone());
     let ws_state = std::sync::Arc::new(modules::communication::ws::WsState::new(
-        std::sync::Arc::new(auth_state.clone()),
+        std::sync::Arc::new(ctx.auth_state.clone()),
     ));
     let http_client = Client::new();
 
@@ -261,7 +231,7 @@ async fn main() {
         .add_skip_path("/api/core/help");
     let audit_logger_mw = std::sync::Arc::new(AuditLoggerMiddleware::new(
         audit_logger_config,
-        pool.clone(),
+        ctx.db.clone(),
     ));
 
     let input_validation_config = middleware::input_validation::InputValidationConfig::default()
@@ -270,16 +240,13 @@ async fn main() {
         .add_skip_path("/api/info")
         .add_skip_path("/api/core/health");
 
-    // Clone pool for background tasks before it is moved into AppState
-    let pool_for_heartbeat = pool.clone();
-
+    let pool_for_heartbeat = ctx.db.clone();
     let metrics = std::sync::Arc::new(SystemMetrics::new());
-
     let encryption = init_field_encryption();
 
     let state = AppState {
-        auth_state,
-        pool,
+        auth_state: ctx.auth_state.clone(),
+        pool: ctx.db.clone(),
         health_config,
         ws_state: ws_state.clone(),
         http_client,
@@ -325,7 +292,6 @@ async fn main() {
             loop {
                 interval.tick().await;
 
-                // Mark plugins with stale heartbeats (>90s) as offline
                 let result = sqlx::query(
                     r#"
                     UPDATE core.core_plugin_instances
@@ -347,7 +313,6 @@ async fn main() {
                     }
                 }
 
-                // Also mark plugins that never sent a heartbeat but were registered >2 min ago
                 let result = sqlx::query(
                     r#"
                     UPDATE core.core_plugin_instances
@@ -372,13 +337,10 @@ async fn main() {
         });
     }
 
+    // Build the full application router (routes::create_routes 保留自定义中间件全栈)
     let cors = create_cors_layer();
-
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
-    // Build the full application router (public + protected routes with all
-    // permission middleware layers). The returned router still needs the
-    // outermost layers (telemetry, CORS, prometheus) and the final state.
     let app = routes::create_routes(&state, move || metric_handle.render())
         .with_telemetry()
         .route(
@@ -394,23 +356,14 @@ async fn main() {
         .layer(prometheus_layer)
         .with_state(state);
 
-    let port = std::env::var("CORE_PORT")
-        .unwrap_or_else(|_| "8000".to_string())
-        .parse()
-        .unwrap_or(8000);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ Unified Core Platform is running at http://{}", addr);
-    tracing::info!("📋 API prefix: /api/core/*");
-
-    let listener = match tokio::net::TcpListener::bind(&addr).await {
-        Ok(l) => l,
-        Err(e) => {
-            tracing::error!("Failed to bind to {}: {}", addr, e);
-            return;
-        }
+    let app = Application {
+        router: app,
+        port: resolve_port(&config),
+        name: config.name,
     };
 
-    if let Err(e) = axum::serve(listener, app.into_make_service()).await {
-        tracing::error!("Server error: {}", e);
-    }
+    tracing::info!("📋 API prefix: /api/core/*");
+
+    run(app).await?;
+    Ok(())
 }

@@ -21,21 +21,11 @@ mod modules;
 mod services;
 mod shared;
 
-use std::net::SocketAddr;
-use std::sync::Arc;
-
 use axum::{extract::State, routing::get, Json, Router};
-use axum_prometheus::PrometheusMetricLayer;
-
-use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
-    rate_limit_middleware, register_routes_with_legacy_alias, rls_middleware, simple_health_check,
-    telemetry_middleware, ApiResponse, AuthState, RateLimitConfig, RateLimitMiddleware,
-    ServiceHealth, SimpleHealthConfig,
-};
 use utoipa::OpenApi;
 
-// ==================== 应用状态 ====================
+use topems_shared::{simple_health_check, ApiResponse, ServiceHealth, SimpleHealthConfig};
+use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 pub use shared::AppState;
 
@@ -63,71 +53,39 @@ struct ApiDoc;
 // ==================== 主入口 ====================
 
 #[tokio::main]
-async fn main() {
-    _ = dotenv::dotenv();
-
-    let _telemetry_guard = init_telemetry("topems-pdm");
-
-    tracing::info!("🚀 TOPEMS PDM Service starting...");
-
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        std::process::exit(1);
-    });
-
-    let pool = match sqlx::postgres::PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&database_url)
-        .await
-    {
-        Ok(p) => {
-            tracing::info!("Database connection successful");
-            p
-        }
-        Err(e) => {
-            tracing::error!("Failed to connect to database: {}", e);
-            std::process::exit(1);
-        }
+async fn main() -> anyhow::Result<()> {
+    let config = ServiceConfig {
+        name: "topems-pdm",
+        port: 8031,
+        port_env_var: Some("PDM_PORT"),
+        max_db_connections: 10,
+        enable_events: true,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/pdm",
+        legacy_prefixes: &["/api/v1/pdm"],
     };
 
-    if let Err(e) = models::init_database(&pool).await {
+    let ctx = bootstrap_service(&config).await?;
+
+    if let Err(e) = models::init_database(&ctx.db).await {
         tracing::warn!("PDM database init warning: {}", e);
     }
-
-    if let Err(e) = init_db(&pool).await {
+    if let Err(e) = init_db(&ctx.db).await {
         tracing::warn!("PDM AC-5 ref 表初始化警告: {}", e);
     }
-
-    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
         tracing::warn!("⚠️ PDM 事件订阅者启动失败: {}", e);
     }
 
-    let event_publisher = match topems_shared::event::EventPublisher::new("topems-pdm") {
-        Ok(publisher) => {
-            tracing::info!("📢 事件发布服务初始化成功");
-            Some(std::sync::Arc::new(publisher))
-        }
-        Err(e) => {
-            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
-            None
-        }
+    let api_state = AppState {
+        auth_state: ctx.auth_state.clone(),
+        pool: ctx.db.clone(),
+        health_config: SimpleHealthConfig::new("topems-pdm").with_db(ctx.db.clone()),
+        event_publisher: ctx.event_publisher.clone(),
     };
 
-    let auth_state = AuthState::from_env();
-    let health_config = SimpleHealthConfig::new("topems-pdm").with_db(pool.clone());
-
-    let state = AppState {
-        auth_state,
-        pool,
-        health_config,
-        event_publisher,
-    };
-
-    let cors = create_cors_layer();
-
-    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
-
-    // Public routes (no auth required)
+    // Public routes（stateful：/health + /api/health/detailed + /api/plugins/*）
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
@@ -139,84 +97,28 @@ async fn main() {
             "/api/plugins/health",
             get(modules::pdm_plugin::plugin_health_check),
         )
-        .route("/api", get(|| get_api_info_handler("pdm-service")))
-        .route("/api/info", get(|| get_api_info_handler("pdm-service")))
         .route("/api/health/detailed", get(detailed_health))
-        .route(
-            "/metrics",
-            get(move || async move { metric_handle.render() }),
-        );
+        .with_state(api_state.clone());
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    });
-
-    // Protected routes (auth required)
+    // Protected routes（先 merge 业务路由 + tenant_middleware → build_application 再加 auth/rls/rate_limit）
     let protected_routes = Router::new()
         .merge(modules::create_api_routes())
         .layer(axum::middleware::from_fn(
             middleware::tenant::tenant_middleware,
         ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.pool.clone(),
-            rls_middleware,
-        ))
-        .layer(rate_limit_layer);
+        .with_state(api_state.clone());
 
-    let app = register_routes_with_legacy_alias(
-        Router::new().merge(public_routes),
-        "/api/pdm",
-        &["/api/v1/pdm"],
+    let openapi_json = serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_default();
+    let app = build_application(
+        &ctx,
+        &config,
+        public_routes,
         protected_routes,
-    )
-    .route(
-        "/api-docs/openapi.json",
-        get(|| async {
-            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
-                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
-                "{}".to_string()
-            })
-        }),
-    )
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(cors)
-    .layer(prometheus_layer)
-    .with_state(state);
+        Some(openapi_json),
+    );
 
-    let port = std::env::var("PDM_PORT")
-        .or_else(|_| std::env::var("SERVER_PORT"))
-        .or_else(|_| std::env::var("PORT"))
-        .unwrap_or_else(|_| "8031".to_string())
-        .parse()
-        .unwrap_or(8031);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ PDM Service is running at http://{}", addr);
-
-    let listener = tokio::net::TcpListener::bind(&addr)
-        .await
-        .unwrap_or_else(|e| {
-            tracing::error!("Failed to bind to {}: {}", addr, e);
-            std::process::exit(1);
-        });
-
-    axum::serve(listener, app.into_make_service())
-        .await
-        .unwrap_or_else(|e| {
-            tracing::error!("Server error: {}", e);
-            std::process::exit(1);
-        });
+    run(app).await?;
+    Ok(())
 }
 
 // ==================== 公共处理函数 ====================
@@ -258,7 +160,6 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
 
 async fn init_db(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
     // V32.0 AC-5: 本地主数据引用表，用于跨服务 master_data_id 关联
-    // 消费端通过 master_data_id 查找本地业务记录，而非依赖业务编码
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS pdm_master_data_refs (
