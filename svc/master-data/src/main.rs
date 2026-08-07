@@ -76,6 +76,11 @@ async fn main() -> anyhow::Result<()> {
         app.port
     );
 
+    let core_url = std::env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        modules::master_plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
+
     run(app).await?;
     Ok(())
 }

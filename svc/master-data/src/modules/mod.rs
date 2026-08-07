@@ -12,6 +12,7 @@ pub mod disaster_v56;
 pub mod governance_v58;
 pub mod knowledge_v53;
 pub mod lineage_v52;
+pub mod master_plugin;
 pub mod metadata_v60;
 pub mod quality_v51;
 pub mod schema_registry;

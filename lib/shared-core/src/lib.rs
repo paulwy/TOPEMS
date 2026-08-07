@@ -10,6 +10,7 @@ pub mod api;
 pub mod api_security;
 pub mod api_version;
 pub mod cache;
+pub mod common_types;
 pub mod compression;
 pub mod config;
 pub mod cors;
@@ -51,6 +52,7 @@ pub use config::{
 };
 pub use cors::create_cors_layer;
 pub use crud::*;
+pub use common_types::{ApprovalStatus, ResourceType};
 pub use error::{Result, TopemsError};
 pub use feature_flag::{
     FeatureCondition, FeatureContext, FeatureFlag, FeatureFlagService, FeatureState,
@@ -70,7 +72,7 @@ pub use logging::{
     request_context_middleware, JsonEventFormatter, LogAggregator, LogEntry, LogFormat, LogQuery,
     LogStats, RequestContext, RequestContextExt, TraceContext,
 };
-pub use response::{api_error, api_success, ApiResponse, PaginatedResponse, PaginationParams};
+pub use response::{api_error, api_success, ApiResponse, ListResponse, PaginatedResponse, PaginationParams};
 pub use service_config::{
     global_registry, DeploymentType, ServiceConfigRegistry, ServiceDefinition, ServiceGroup,
     ValidationIssue, ValidationSeverity,
