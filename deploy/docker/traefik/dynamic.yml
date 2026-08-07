@@ -176,7 +176,7 @@ http:
       priority: 100
 
     router-analytics:
-      rule: "PathPrefix(`/api/analytics`)"
+      rule: "PathPrefix(`/api/bi`)"
       entryPoints:
         - web
       service: svc-analytics
@@ -370,7 +370,7 @@ http:
     strip-prefix-ehs:         { stripPrefix: { prefixes: ["/api/ehs"], forceSlash: false } }
     strip-prefix-rd:          { stripPrefix: { prefixes: ["/api/rd"], forceSlash: false } }
     strip-prefix-bi:          { stripPrefix: { prefixes: ["/api/bi"], forceSlash: false } }
-    strip-prefix-analytics:   { stripPrefix: { prefixes: ["/api/analytics"], forceSlash: false } }
+    strip-prefix-analytics:   { stripPrefix: { prefixes: ["/api/bi"], forceSlash: false } }
     strip-prefix-report:      { stripPrefix: { prefixes: ["/api/report"], forceSlash: false } }
     strip-prefix-portal:      { stripPrefix: { prefixes: ["/api/portal"], forceSlash: false } }
     strip-prefix-ai:          { stripPrefix: { prefixes: ["/api/ai"], forceSlash: false } }
