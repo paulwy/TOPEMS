@@ -105,8 +105,8 @@ async fn main() -> Result<()> {
         enable_events: true,
         enable_rls: true,
         enable_request_context: true,
-        api_prefix: "/api/core/mobile/v1",
-        legacy_prefixes: &["/api/v1/mobile", "/api/mobile"],
+        api_prefix: "/api/mobile",
+        legacy_prefixes: &["/api/v1/mobile", "/api/core/mobile/v1"],
     };
     let ctx = bootstrap_service(&config).await?;
 

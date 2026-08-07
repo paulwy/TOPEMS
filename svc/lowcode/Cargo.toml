@@ -8,7 +8,6 @@ description = "TOPEMS-Lowcode 低代码平台服务（占位模板，后端功�
 [dependencies]
 axum.workspace = true
 tokio.workspace = true
-tower.workspace = true
 tower-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true

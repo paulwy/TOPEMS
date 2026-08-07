@@ -1,5 +1,6 @@
 // middleware/tenant.rs
 // 多租户中间件 - 提供租户上下文隔离
+#![allow(dead_code)] // serde/utoipa 序列化需要，运行期未直接引用
 
 use axum::{extract::FromRequestParts, http::request::Parts, Extension};
 use sqlx::PgPool;
@@ -116,7 +117,6 @@ impl TenantDataAccess {
     }
 
     /// 仓储位置 - 按租户筛选
-    #[allow(dead_code)]
     pub async fn list_warehouse_locations(
         &self,
     ) -> Result<Vec<crate::models::WarehouseLocation>, sqlx::Error> {
@@ -129,7 +129,6 @@ impl TenantDataAccess {
     }
 
     /// 管道 - 按租户筛选
-    #[allow(dead_code)]
     pub async fn list_pipelines(&self) -> Result<Vec<crate::models::Pipeline>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::Pipeline>(
             "SELECT * FROM pipelines WHERE tenant_id = $1 ORDER BY created_at DESC",
@@ -140,7 +139,6 @@ impl TenantDataAccess {
     }
 
     /// 取证记录 - 按租户筛选
-    #[allow(dead_code)]
     pub async fn list_evidence_records(
         &self,
     ) -> Result<Vec<crate::models::EvidenceRecord>, sqlx::Error> {
@@ -153,7 +151,6 @@ impl TenantDataAccess {
     }
 
     /// 轨迹记录 - 按租户筛选
-    #[allow(dead_code)]
     pub async fn list_track_records(&self) -> Result<Vec<crate::models::TrackRecord>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::TrackRecord>(
             "SELECT * FROM track_records WHERE tenant_id = $1 ORDER BY start_time DESC",
@@ -164,7 +161,6 @@ impl TenantDataAccess {
     }
 
     /// 设备轨迹 - 按租户和设备ID筛选
-    #[allow(dead_code)]
     pub async fn get_device_track(
         &self,
         device_id: Uuid,

@@ -79,7 +79,7 @@ pub fn init_telemetry(service_name: &str) -> TelemetryGuard {
                     .build()
             }
             Err(e) => {
-                eprintln!(
+                tracing::error!(
                     "Failed to create OTLP exporter, falling back to stdout: {}",
                     e
                 );
@@ -132,7 +132,7 @@ pub fn init_telemetry(service_name: &str) -> TelemetryGuard {
         .with(otel_layer)
         .try_init()
         .unwrap_or_else(|e| {
-            eprintln!("Failed to initialize tracing subscriber: {}", e);
+            tracing::error!("Failed to initialize tracing subscriber: {}", e);
         });
 
     tracing::info!(

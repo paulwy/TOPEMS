@@ -404,7 +404,7 @@ pub async fn batch_approve(
                 Err(e) => {
                     failed_tasks.push(TaskFailure {
                         task_id: task_id_str.clone(),
-                        error: format!("{}", e),
+                        error: e.to_string(),
                     });
                 }
             }
@@ -448,7 +448,7 @@ pub async fn batch_complete(
                 Err(e) => {
                     failed_tasks.push(TaskFailure {
                         task_id: task_id_str.clone(),
-                        error: format!("{}", e),
+                        error: e.to_string(),
                     });
                 }
             }
@@ -492,7 +492,7 @@ pub async fn batch_delegate(
                 Err(e) => {
                     failed_tasks.push(TaskFailure {
                         task_id: task_id_str.clone(),
-                        error: format!("{}", e),
+                        error: e.to_string(),
                     });
                 }
             }

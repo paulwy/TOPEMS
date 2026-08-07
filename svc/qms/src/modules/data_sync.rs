@@ -234,7 +234,7 @@ pub async fn sync_inspection_to_lims(
         .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
     let lims_url =
         std::env::var("LIMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8051".to_string());
-    tracing::info!(
+    tracing::debug!(
         "Syncing inspection {} to LIMS at {}",
         req.inspection_id,
         lims_url
@@ -334,7 +334,7 @@ pub async fn sync_issue_to_ehs(
 
     let ehs_url =
         std::env::var("EHS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8052".to_string());
-    tracing::info!("Syncing issue {} to EHS at {}", req.issue_id, ehs_url);
+    tracing::debug!("Syncing issue {} to EHS at {}", req.issue_id, ehs_url);
 
     let target_hazard_id = uuid::Uuid::new_v4().to_string();
     let status = "completed";

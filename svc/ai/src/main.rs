@@ -1,3 +1,5 @@
+#![allow(dead_code)] // serde/utoipa 序列化需要，运行期未直接引用
+
 // TOPEMS-AI Backend - with PostgreSQL/pgvector persistence and PDF support
 // =============================================================================
 
@@ -24,9 +26,7 @@ use services::{
     QAService, RecommendationService, VectorService,
 };
 use topems_shared::ai_client::{AIModelConfig, AIProviderType};
-use topems_shared::service_bootstrap::{
-    bootstrap_service, resolve_port, run, Application, ServiceConfig,
-};
+use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -38,8 +38,8 @@ async fn main() -> anyhow::Result<()> {
         port_env_var: Some("AI_PORT"),
         max_db_connections: 10,
         enable_events: true,
-        api_prefix: "/api/core/ai/v1",
-        legacy_prefixes: &["/api/v1/ai", "/api/ai"],
+        api_prefix: "/api/ai",
+        legacy_prefixes: &["/api/v1/ai", "/api/core/ai/v1"],
         ..Default::default()
     };
 

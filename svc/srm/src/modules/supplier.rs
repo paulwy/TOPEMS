@@ -368,7 +368,7 @@ async fn create_supplier(
                             e
                         );
                     } else {
-                        tracing::info!(
+                        tracing::debug!(
                             "[srm] SrmSupplierRegistered 事件发布成功 - supplier_id={}",
                             supplier_id
                         );
@@ -396,7 +396,7 @@ async fn create_supplier(
                             e
                         );
                     } else {
-                        tracing::info!(
+                        tracing::debug!(
                             "[srm] SrmSupplierCreated 事件发布成功 - supplier_id={}",
                             supplier_id
                         );
@@ -591,7 +591,7 @@ async fn update_supplier(
                             e
                         );
                     } else {
-                        tracing::info!(
+                        tracing::debug!(
                             "[srm] SrmSupplierUpdated 事件发布成功 - supplier_id={}",
                             supplier_id
                         );
@@ -969,7 +969,7 @@ async fn start_supplier_approval(
     let supplier_no = supplier_ref.supplier_no.clone();
     let supplier_name = supplier_ref.name.clone();
 
-    tracing::info!(
+    tracing::debug!(
         "Starting approval for supplier {}: workflow_id={}",
         id,
         req.workflow_id
@@ -1034,7 +1034,7 @@ async fn start_supplier_approval(
                         e
                     );
                 } else {
-                    tracing::info!(
+                    tracing::debug!(
                         "[srm] SrmSupplierStatusChanged 事件发布成功 - supplier_id={}",
                         supplier_id
                     );
@@ -1139,7 +1139,7 @@ async fn approve_supplier(
                         e
                     );
                 } else {
-                    tracing::info!(
+                    tracing::debug!(
                         "[srm] SrmSupplierStatusChanged 事件发布成功 - supplier_id={}",
                         supplier_id
                     );
@@ -1242,7 +1242,7 @@ async fn reject_supplier(
                         e
                     );
                 } else {
-                    tracing::info!(
+                    tracing::debug!(
                         "[srm] SrmSupplierStatusChanged 事件发布成功 - supplier_id={}",
                         supplier_id
                     );

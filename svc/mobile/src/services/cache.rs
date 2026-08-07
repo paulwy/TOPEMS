@@ -4,6 +4,8 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::time::{Duration, Instant};
 
+const DURATION_1H_SECS: u64 = 60 * 60;
+
 struct CacheEntry<V> {
     value: V,
     expires_at: Option<Instant>,
@@ -45,7 +47,7 @@ impl MobileCacheService {
             scan_cache: Arc::new(RwLock::new(HashMap::new())),
             device_cache: Arc::new(RwLock::new(HashMap::new())),
             offline_queue: Arc::new(RwLock::new(Vec::new())),
-            default_ttl: 3600,
+            default_ttl: DURATION_1H_SECS,
         }
     }
 

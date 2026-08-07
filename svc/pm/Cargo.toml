@@ -8,11 +8,10 @@ description = "TOPEMS-PM 统一项目管理服务"
 [dependencies]
 axum.workspace = true
 tokio.workspace = true
-tower.workspace = true
 tower-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "chrono", "uuid", "rust_decimal"] }
+sqlx.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 tracing.workspace = true
@@ -21,6 +20,7 @@ dotenv.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 topems-shared = { path = "../../lib" }
+topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 topems-shared-service-client = { path = "../../lib/shared-service-client" }
 utoipa.workspace = true
 futures.workspace = true

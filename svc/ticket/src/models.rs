@@ -1,3 +1,5 @@
+#![allow(dead_code)] // serde/utoipa 序列化需要，运行期未直接引用
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -51,7 +53,6 @@ impl std::str::FromStr for TicketStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 #[serde(rename_all = "snake_case")]
-#[allow(dead_code)]
 pub enum TicketSeverity {
     Low,
     Medium,

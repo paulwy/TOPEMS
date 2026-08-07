@@ -111,8 +111,8 @@ pub mod cross_service {
             workflow.get_my_pending_tasks(1, 10),
         )?;
 
-        println!("员工数: {}", employees.len());
-        println!("科目数: {}", accounts.len());
+        tracing::info!("员工数: {}", employees.len());
+        tracing::info!("科目数: {}", accounts.len());
         Ok(())
     }
 }

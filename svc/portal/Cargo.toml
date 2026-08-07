@@ -8,7 +8,6 @@ description = "TOPEMS-PORTAL 统一门户系统"
 [dependencies]
 axum.workspace = true
 tokio.workspace = true
-tower.workspace = true
 tower-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -30,7 +29,7 @@ utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 tower-cookies.workspace = true
-sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "postgres", "uuid"] }
+sqlx.workspace = true
 sha2 = "0.10"
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 

@@ -252,7 +252,7 @@ async fn test_notif_005_send_notification() {
         &client,
         &token,
         "POST",
-        "/api/core/comm/notify/send",
+        "/api/communication/notify/send",
         Some(json!({
             "title": format!("测试通知_{}", timestamp),
             "content": "这是一条自动化测试通知",
@@ -292,7 +292,7 @@ async fn test_notif_006_broadcast_notification() {
         &client,
         &token,
         "POST",
-        "/api/core/comm/notify/broadcast",
+        "/api/communication/notify/broadcast",
         Some(json!({
             "title": format!("广播通知_{}", timestamp),
             "content": "这是一条广播通知",

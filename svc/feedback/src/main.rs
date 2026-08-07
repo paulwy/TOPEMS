@@ -31,13 +31,11 @@ async fn main() -> anyhow::Result<()> {
         .await
         .expect("Failed to init feedback database");
 
-    // ── public_routes（无状态） ──────────────────────────────────────
-    let public_routes = Router::new()
-        .route(
-            "/",
-            get(|| async { "TOPEMS Feedback Service API\n\n- /health - Health check\n" }),
-        )
-        .route("/health", get(|| async { "OK" }));
+    // ── public_routes（无状态，/health 由 build_application 自动提供标准实现） ──
+    let public_routes = Router::new().route(
+        "/",
+        get(|| async { "TOPEMS Feedback Service API\n\n- /health - Health check\n" }),
+    );
 
     // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
     let protected_routes = handlers::feedback_routes().with_state(ctx.db.clone());

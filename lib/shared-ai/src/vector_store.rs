@@ -47,7 +47,7 @@ fn chrono_now() -> String {
     let duration = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default();
-    format!("{}", duration.as_secs())
+    duration.as_secs().to_string()
 }
 
 /// 搜索结果

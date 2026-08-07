@@ -35,10 +35,10 @@
 //!   （feedback / search / ticket / lowcode / communication / billing / master-data / hrm / finance / wms）
 //! - **B. stateful + build_application（11 个服务）**：自定义 AppState（cache/tenant_middleware/6+服务客户端），
 //!   先把自定义 state 注入 `protected_routes.with_state(app_state)`，再调用 `build_application`
-//!   （qms / ehs / pdm / lims / erp / crm / srm / scm / mes / ai / pm / rd + mobile = 13，原统计 11）
-//! - **C. Application 重建（5 个服务）**：有 WebSocket/GraphQL/Cookie/自定义全栈中间件/后台任务，
+//!   （qms / ehs / pdm / lims / erp / crm / srm / scm / mes / pm / rd）
+//! - **C. Application 重建（7 个服务）**：有 WebSocket/GraphQL/Cookie/自定义全栈中间件/后台任务，
 //!   跳过 `build_application`，用 `Application { router, port, name }` + `run(app)` 启动
-//!   （analytics / unified-core / integration / gis / portal）
+//!   （analytics / unified-core / integration / gis / portal / ai / mobile）
 //!
 //! ## 公开 API 总览
 //!
@@ -54,6 +54,8 @@
 //!
 //! **警告**：V1 遗留的 `BootstrapConfig / AppState / ServiceBootstrap` 结构已被 Pattern B/C 取代，
 //! 仅保留向后兼容引用。新项目请使用 `ServiceConfig → bootstrap_service → build_application → run` 三段式。
+
+pub mod audit;
 
 use anyhow::Result;
 use axum::{extract::State, routing::get, Router};
@@ -311,8 +313,7 @@ impl ServiceBootstrap {
             .parse::<u32>()
             .unwrap_or(self.config.database.max_connections);
 
-        let search_path =
-            env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
+        let search_path = env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
 
         let pool = PgPoolOptions::new()
             .max_connections(max_connections)

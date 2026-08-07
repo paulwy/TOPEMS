@@ -23,7 +23,7 @@ impl ServiceRegistry {
         }
     }
 
-    /// 当前服务清单（26 个独立部署服务 + 1 个 unified-core）
+    /// 当前服务清单（28 个独立部署服务（含 unified-core））
     /// 虚拟服务（iam/doc/flow/file/monitor）由 unified-core 内部模块提供，
     /// 共用端口 8000，通过 URL 路径区分，不再作为独立条目列出。
     ///

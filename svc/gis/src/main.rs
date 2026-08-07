@@ -79,8 +79,8 @@ async fn main() -> Result<()> {
         enable_events: false,
         enable_rls: false,
         enable_request_context: false,
-        api_prefix: "/api/core/gis/v1",
-        legacy_prefixes: &["/api/v1/gis", "/api/gis"],
+        api_prefix: "/api/gis",
+        legacy_prefixes: &["/api/v1/gis", "/api/core/gis/v1"],
     };
     let ctx = bootstrap_service(&config).await?;
 

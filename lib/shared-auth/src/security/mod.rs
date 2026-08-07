@@ -10,8 +10,8 @@ pub use audit_logger::{
 pub use body_limit::{body_limit_middleware, BodyLimitConfig, BodyLimitMiddleware};
 pub use encryption::{
     decrypt_optional_string, decrypt_string_value, encrypt_optional_string, encrypt_string,
-    DataMasking, Encryptable, EncryptedField, EncryptionError, EncryptionResult,
-    FieldEncryptionService, KeyManager, SearchableEncryption,
+    init_encryption_from_env, DataMasking, Encryptable, EncryptedField, EncryptionError,
+    EncryptionResult, FieldEncryptionService, KeyManager, SearchableEncryption,
 };
 pub use rate_limiter::{
     rate_limit_middleware, RateLimitConfig, RateLimitMiddleware, RateLimitStore,

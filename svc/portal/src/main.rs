@@ -84,8 +84,8 @@ async fn main() -> anyhow::Result<()> {
         enable_events: true,
         enable_rls: true,
         enable_request_context: true,
-        api_prefix: "/api/core/portal/v1",
-        legacy_prefixes: &["/api/portal", "/api/v1/portal"],
+        api_prefix: "/api/portal",
+        legacy_prefixes: &["/api/v1/portal", "/api/core/portal/v1"],
     };
     let ctx = bootstrap_service(&config).await?;
     START_TIME.get_or_init(Instant::now);

@@ -77,7 +77,7 @@ impl MdmEventService {
             tracing::warn!("[scm-mdm] 供应商事件 RabbitMQ 发布失败: {}", e);
         }
 
-        tracing::info!(
+        tracing::debug!(
             "[scm-mdm] 供应商主数据事件发布成功 - action={:?}, supplier_id={}, master_data_id={}",
             action,
             supplier_id,

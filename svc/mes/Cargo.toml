@@ -19,6 +19,7 @@ tower-http.workspace = true
 thiserror.workspace = true
 sqlx.workspace = true
 topems-shared = { path = "../../lib" }
+topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
@@ -29,5 +30,4 @@ futures-util.workspace = true
 utoipa.workspace = true
 
 [dev-dependencies]
-tower = "0.5"
 rust_decimal = "1.35"

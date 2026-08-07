@@ -25,7 +25,6 @@ impl std::fmt::Display for ProjectRole {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)]
 pub enum ProjectPermission {
     Read,
     Update,

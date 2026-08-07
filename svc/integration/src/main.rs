@@ -90,16 +90,27 @@ async fn main() -> anyhow::Result<()> {
     // 业务路由（内部已完成 with_state + auth/rls/rate_limit/cors/telemetry/nest/legacy）
     let business_router = routes::create_routes(app_state);
 
-    // 补 Prometheus layer + /metrics 路由
+    // 补 Prometheus layer + /metrics 路由 + /health 健康检查路由
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
-    let metrics_router = Router::new().route(
-        "/metrics",
-        get(move || async move { metric_handle.render() }),
-    );
+    let metrics_health_router = Router::new()
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        )
+        .route(
+            "/health",
+            get(|| async {
+                axum::Json(serde_json::json!({
+                    "status": "healthy",
+                    "service": "topems-integration",
+                    "timestamp": chrono::Utc::now().to_rfc3339(),
+                }))
+            }),
+        );
 
     let final_router = Router::new()
         .merge(business_router)
-        .merge(metrics_router)
+        .merge(metrics_health_router)
         .layer(prometheus_layer);
 
     let app = Application {

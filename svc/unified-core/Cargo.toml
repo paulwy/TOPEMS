@@ -24,9 +24,7 @@ utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
-tower = { workspace = true }
-tower-cookies = { workspace = true }
-tower-util = { workspace = true }
+
 rust_decimal = { workspace = true, features = ["db-postgres"] }
 futures-util.workspace = true
 bcrypt.workspace = true

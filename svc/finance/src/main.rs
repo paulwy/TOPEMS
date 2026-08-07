@@ -14,11 +14,11 @@ use utoipa::OpenApi;
 use crate::models::*;
 use crate::modules::*;
 use crate::shared::AppState;
-use topems_shared::service_bootstrap::{
+use topems_shared::service_client::create_workflow_client;
+use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
-use topems_shared::service_client::create_workflow_client;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -171,12 +171,13 @@ async fn home() -> &'static str {
 #[cfg(test)]
 mod openapi_extract_tests {
     use super::*;
+    use tracing;
 
     #[test]
     fn extract_openapi_spec() {
         let spec = ApiDoc::openapi();
         let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
         std::fs::write("/tmp/topems-finance-openapi.json", json).expect("Failed to write spec");
-        println!("OpenAPI spec written to /tmp/topems-finance-openapi.json");
+        tracing::info!("OpenAPI spec written to /tmp/topems-finance-openapi.json");
     }
 }

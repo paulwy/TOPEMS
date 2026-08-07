@@ -54,7 +54,7 @@ impl PmEventHandlers {
     }
 
     async fn handle_employee_changed(&self, event: Event) -> HandlerResult {
-        tracing::info!(
+        tracing::debug!(
             "[pm] 员工变更事件 - event_type={:?}, trace_id={:?}",
             event.event_type,
             event.trace_id
@@ -70,7 +70,7 @@ impl PmEventHandlers {
                     .map_err(|e| format!("解析员工创建事件 payload 失败: {}", e))?;
                 employee_id = payload.employee_id;
                 employee_name = Some(payload.name);
-                tracing::info!(
+                tracing::debug!(
                     "[pm] 员工创建: {} ({})，刷新相关项目成员缓存",
                     employee_name.as_deref().unwrap_or(""),
                     employee_id
@@ -83,7 +83,7 @@ impl PmEventHandlers {
                 employee_id = payload.employee_id;
                 employee_name = None;
                 let _ = employee_name;
-                tracing::info!(
+                tracing::debug!(
                     "[pm] 员工更新: {}，更新字段: {:?}，刷新相关项目成员缓存",
                     employee_id,
                     payload.updated_fields
@@ -100,7 +100,7 @@ impl PmEventHandlers {
         .await
         .unwrap_or(0);
 
-        tracing::info!(
+        tracing::debug!(
             "[pm] 员工 {} 参与了 {} 个项目，项目成员关联已同步",
             employee_id,
             member_count
@@ -110,7 +110,7 @@ impl PmEventHandlers {
     }
 
     async fn handle_workflow_result(&self, event: Event) -> HandlerResult {
-        tracing::info!(
+        tracing::debug!(
             "[pm] 审批结果事件 - event_type={:?}, trace_id={:?}",
             event.event_type,
             event.trace_id
@@ -147,13 +147,13 @@ impl PmEventHandlers {
         let business_type = match business_type {
             Some(bt) => bt,
             None => {
-                tracing::info!("[pm] 审批事件无 business_type，跳过");
+                tracing::debug!("[pm] 审批事件无 business_type，跳过");
                 return Ok(());
             }
         };
 
         if business_type != "project_approval" && business_type != "pm_project_approval" {
-            tracing::info!(
+            tracing::debug!(
                 "[pm] 非项目审批事件 (business_type={})，跳过",
                 business_type
             );
@@ -204,7 +204,7 @@ impl PmEventHandlers {
                         operator
                     );
                 } else {
-                    tracing::info!("[pm] 项目 {} 无待处理审批，或审批已处理", project_id);
+                    tracing::debug!("[pm] 项目 {} 无待处理审批，或审批已处理", project_id);
                 }
             }
             Err(e) => {
@@ -217,7 +217,7 @@ impl PmEventHandlers {
     }
 
     async fn handle_rd_project_created(&self, event: Event) -> HandlerResult {
-        tracing::info!(
+        tracing::debug!(
             "[pm] RD 项目创建事件 - event_type={:?}, trace_id={:?}",
             event.event_type,
             event.trace_id
@@ -227,7 +227,7 @@ impl PmEventHandlers {
             .parse_payload()
             .map_err(|e| format!("解析 RD 项目创建事件 payload 失败: {}", e))?;
 
-        tracing::info!(
+        tracing::debug!(
             "[pm] RD 项目创建: {} ({})，负责人: {:?}",
             payload.project_name,
             payload.project_id,

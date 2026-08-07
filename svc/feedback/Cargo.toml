@@ -7,7 +7,7 @@ description = "TOPEMS Feedback Service - 客户反馈管理"
 [dependencies]
 axum = { workspace = true }
 chrono = { workspace = true }
-sqlx = { workspace = true, features = ["runtime-tokio", "postgres", "uuid", "chrono", "json"] }
+sqlx.workspace = true
 uuid = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
