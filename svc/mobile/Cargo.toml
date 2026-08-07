@@ -29,6 +29,9 @@ topems-shared = { path = "../../lib" }
 
 # OpenAPI 文档
 utoipa.workspace = true
+topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+axum-prometheus.workspace = true
+prometheus.workspace = true
 
 [dev-dependencies]
 tokio-test.workspace = true

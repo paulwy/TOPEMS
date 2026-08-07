@@ -1,13 +1,15 @@
 //! TOPEMS Lowcode 低代码平台（占位模板）
 //!
+//! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
+//!
 //! 状态：后端尚未立项，仅保留启动骨架以便与前端端口/路由/服务发现对齐。
 //! 端口：8088（LOWCODE_PORT）
 //! 路径前缀：/api/lowcode/*
 //! 所有 handler 当前返回 501 Not Implemented。
 
 use axum::{http::StatusCode, response::IntoResponse, routing::get, Json, Router};
-use std::net::SocketAddr;
-use topems_shared::{create_cors_layer, init_telemetry};
+use topems_shared::get_api_info_handler;
+use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
@@ -21,16 +23,6 @@ use utoipa::OpenApi;
 )]
 struct ApiDoc;
 
-/// 健康检查
-#[utoipa::path(
-    get,
-    path = "/health",
-    responses((status = 200, description = "服务健康"))
-)]
-async fn health() -> &'static str {
-    "OK"
-}
-
 /// 501 Not Implemented 通用占位响应
 fn not_implemented(feature: &str) -> impl IntoResponse {
     (
@@ -41,6 +33,15 @@ fn not_implemented(feature: &str) -> impl IntoResponse {
             "status": "reserved"
         })),
     )
+}
+
+#[utoipa::path(
+    get,
+    path = "/health",
+    responses((status = 200, description = "服务健康"))
+)]
+async fn health() -> &'static str {
+    "OK"
 }
 
 #[utoipa::path(
@@ -62,38 +63,55 @@ async fn get_designer_schema() -> impl IntoResponse {
 }
 
 #[tokio::main]
-async fn main() {
-    let _telemetry_guard = init_telemetry("topems-lowcode");
+async fn main() -> anyhow::Result<()> {
+    let config = ServiceConfig {
+        name: "topems-lowcode",
+        port: 8088,
+        port_env_var: Some("LOWCODE_PORT"),
+        max_db_connections: 3,
+        enable_events: false,
+        enable_rls: false,
+        enable_request_context: true,
+        api_prefix: "/api/lowcode",
+        legacy_prefixes: &["/api/v1/lowcode"],
+    };
 
-    tracing::info!("🧩 TOPEMS Lowcode Service starting (reserved, port 8088)...");
+    let ctx = bootstrap_service(&config).await?;
+    tracing::info!("🧩 TOPEMS Lowcode Service starting (reserved, V2 shared-bootstrap)...");
 
-    let cors = create_cors_layer();
-
+    // ── public_routes（无状态） ──────────────────────────────────────
     let app_routes = Router::new()
         .route("/apps", get(list_apps))
         .route("/designer/schema", get(get_designer_schema));
 
-    // 注册主路径 + legacy /api/v1 兼容别名
-    let core_routes = topems_shared::register_routes_with_legacy_alias(
-        Router::new(),
-        "/api/lowcode",
-        &["/api/v1/lowcode"],
-        app_routes,
+    // lowcode 为占位服务：业务路由无需 auth/rls，放入 public_routes
+    let public_routes = Router::new()
+        .merge(app_routes)
+        .route(
+            "/",
+            get(|| async {
+                "TOPEMS Lowcode Service (reserved) — V2 shared-bootstrap template\n"
+            }),
+        )
+        .route("/api", get(|| get_api_info_handler("topems-lowcode")))
+        .route("/api/info", get(|| get_api_info_handler("topems-lowcode")))
+        .route("/health", get(health));
+
+    // ── protected_routes（空：当前尚未立项） ─────────────────────────
+    let protected_routes = Router::new();
+
+    // ── OpenAPI JSON ─────────────────────────────────────────────────
+    let openapi_json =
+        Some(serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|_| "{}".to_string()));
+
+    // ── 组装 Application ─────────────────────────────────────────────
+    let app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
+
+    tracing::info!(
+        "🧩 Lowcode reserved skeleton (V2) listening on port {}",
+        app.port
     );
 
-    let app = Router::new()
-        .merge(core_routes)
-        .route("/health", get(health))
-        .route("/openapi.json", get(|| async { Json(ApiDoc::openapi()) }))
-        .layer(cors);
-
-    let port: u16 = std::env::var("LOWCODE_PORT")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(8088);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-
-    tracing::info!("🧩 Lowcode reserved skeleton listening on {addr}");
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    run(app).await?;
+    Ok(())
 }

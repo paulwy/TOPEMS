@@ -1,35 +1,47 @@
+//! TOPEMS-PM 统一项目管理系统
+//!
+//! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
+
+use anyhow::Result;
+use axum::{routing::get, Router};
+use prometheus::{default_registry, Gauge};
+use topems_shared::service_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
+use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
+use topems_shared_service_client::TypedServiceClient;
+use utoipa::OpenApi;
+
 mod event_handlers;
 pub mod models;
 pub mod modules;
 pub mod services;
 pub mod shared;
 
-use axum::{routing::get, Router};
-use axum_prometheus::PrometheusMetricLayer;
 use modules::pm_plugin;
-use prometheus::{default_registry, Gauge};
-use std::env;
-use std::sync::Arc;
-use topems_shared::{
-    api_version::wrap_group2_router, api_version::RouteCompatConfig, auth_middleware,
-    build_health_response, create_api_info_router, create_cors_layer, create_database_pool,
-    init_telemetry, rls_middleware, telemetry_middleware, test_database_connection, AuthState,
-    DatabaseConfig, EventPublisher, Result, ServiceHealth,
-};
-use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
-use topems_shared_service_client::TypedServiceClient;
-use utoipa::OpenApi;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    let _telemetry_guard = init_telemetry("topems-pm");
-
     // 设置search_path环境变量（供lib使用）
     std::env::set_var("SEARCH_PATH", "pm, shared, public");
 
-    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    // ── ServiceConfig ──────────────────────────────────────────────
+    let config = ServiceConfig {
+        name: "topems-pm",
+        port: 8023,
+        port_env_var: Some("PM_PORT"),
+        max_db_connections: 10,
+        enable_events: true,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/pm",
+        legacy_prefixes: &["/api/v1/pm"],
+    };
+
+    let ctx = bootstrap_service(&config).await?;
+    tracing::info!("🚀 TOPEMS-PM 统一项目管理系统启动...");
+
+    // ── 自定义 Prometheus Gauge ───────────────────────────────────────
     let custom_gauge = Gauge::new(
         "topems_pm_custom_metric",
         "This is a custom metric for TOPEMS-PM",
@@ -49,50 +61,19 @@ async fn main() -> Result<()> {
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    let db_config = DatabaseConfig {
-        url: env::var("DATABASE_URL").map_err(|_| {
-            tracing::error!("DATABASE_URL environment variable is required");
-            topems_shared::TopemsError::Validation(
-                "DATABASE_URL environment variable is required".to_string(),
-            )
-        })?,
-        max_connections: 10,
-        min_connections: Some(2),
-        connect_timeout: Some(30),
-        idle_timeout: Some(60),
-        max_lifetime: Some(1800),
-        test_interval: Some(60),
-        enable_connection_reuse: Some(true),
-    };
-
-    let pool = create_database_pool(&db_config).await?;
-    test_database_connection(&pool).await?;
-
-    if let Err(e) = init_db(&pool).await {
+    // ── 数据库初始化 ────────────────────────────────────────────────
+    if let Err(e) = init_db(&ctx.db).await {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let event_publisher = match EventPublisher::new("topems-pm") {
-        Ok(publisher) => {
-            tracing::info!("📢 事件发布服务初始化成功");
-            Some(Arc::new(publisher))
-        }
-        Err(e) => {
-            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
-            None
-        }
-    };
-
+    // ── 事件订阅者（失败不阻塞启动） ──────────────────────────────────
     if let Err(e) =
-        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await
     {
         tracing::warn!("⚠️ PM 事件订阅者启动失败: {}", e);
     }
 
-    let cors = create_cors_layer();
-
-    let auth_state = AuthState::from_env();
-
+    // ── 工作流服务客户端 ──────────────────────────────────────────────
     let workflow_client =
         TypedServiceClient::<WorkflowApi>::from_env_default().expect("工作流服务客户端初始化失败");
     tracing::info!(
@@ -100,68 +81,45 @@ async fn main() -> Result<()> {
         std::env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".into())
     );
 
+    // ── public_routes（无状态：openapi + plugins） ────────────────────
+    // 注：/health、/metrics、/api /api/info 等标准路由由 build_application 内置提供
     let public_routes = Router::new()
-        .route("/health", get(health_check))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
-        .route(
-            "/metrics",
-            get(move || async move { metric_handle.render() }),
-        )
         .route("/api/plugins/info", get(pm_plugin::get_plugin_info))
         .route("/api/plugins/health", get(pm_plugin::plugin_health_check));
 
+    // ── protected_routes（业务路由：create_routes 直接调用） ─────────
+    // 注：auth / rls / rate_limit 三层中间件由 build_application 自动给 protected 层叠加，
+    // 这里保持 modules::create_routes 的 Router 裸返回即可
     let protected_routes = modules::create_routes(
-        pool.clone(),
-        event_publisher.clone(),
+        ctx.db.clone(),
+        ctx.event_publisher.clone(),
         workflow_client.clone(),
-    )
-    .layer(axum::middleware::from_fn_with_state(
-        auth_state.clone(),
-        auth_middleware,
-    ))
-    .layer(axum::middleware::from_fn_with_state(
-        pool.clone(),
-        rls_middleware,
-    ));
+    );
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/pm", protected_routes)
-        .merge(create_api_info_router("topems-pm"))
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(prometheus_layer)
-        .layer(cors);
+    // ── OpenAPI JSON ─────────────────────────────────────────────────
+    let openapi_json = Some(
+        serde_json::to_string_pretty(&modules::openapi::ApiDoc::openapi())
+            .unwrap_or_else(|_| "{}".to_string()),
+    );
 
-    let cfg = RouteCompatConfig::new("pm", "/api/pm", &[]);
-    let app = wrap_group2_router(app, cfg);
+    // ── 组装 Application ───────────────────────────────────────────
+    let app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
 
-    let port = std::env::var("PM_PORT").unwrap_or_else(|_| "8023".to_string());
-    let addr = format!("0.0.0.0:{}", port);
-
-    tracing::info!("🚀 TOPEMS-PM 统一项目管理系统启动中...");
-    tracing::info!("📦 Port: {}", port);
-    tracing::info!("🔒 认证保护已启用");
-
-    // 启动时自动注册到统一核心
+    // ── 启动时自动注册到统一核心 ──────────────────────────────────────
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         pm_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
-
+    run(app).await?;
     Ok(())
-}
-
-async fn health_check() -> ServiceHealth {
-    build_health_response("topems-pm", true)
 }
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
     axum::Json(modules::openapi::ApiDoc::openapi())
 }
 
-async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
+async fn init_db(_pool: &sqlx::PgPool) -> topems_shared::Result<()> {
     Ok(())
 }

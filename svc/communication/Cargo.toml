@@ -27,3 +27,5 @@ lazy_static = "1"
 futures-util.workspace = true
 
 topems-shared = { path = "../../lib" }
+topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+anyhow.workspace = true

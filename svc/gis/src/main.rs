@@ -19,16 +19,14 @@ use axum::{
 };
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
-use std::env;
+use std::sync::Arc;
 use utoipa::OpenApi;
 
-use std::sync::Arc;
-
 use topems_shared::{
-    auth::Claims, create_api_info_router, create_cors_layer, init_telemetry, rate_limit_middleware,
-    register_routes_with_legacy_alias, telemetry_middleware, ApiResponse, AuthState,
-    DependencyHealth, HealthStatus, RateLimitConfig, RateLimitMiddleware, ServiceHealth,
+    auth::Claims, create_api_info_router, create_cors_layer, telemetry_middleware, ApiResponse,
+    AuthState,
 };
+use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 
 mod db;
 mod event_handlers;
@@ -44,7 +42,7 @@ use db::schema::init_tables;
 struct AppState {
     pool: sqlx::PgPool,
     auth_state: AuthState,
-    ws_manager: std::sync::Arc<modules::websocket::WebSocketManager>,
+    ws_manager: Arc<modules::websocket::WebSocketManager>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -59,114 +57,9 @@ impl FromRef<AppState> for sqlx::PgPool {
     }
 }
 
-impl FromRef<AppState> for std::sync::Arc<modules::websocket::WebSocketManager> {
+impl FromRef<AppState> for Arc<modules::websocket::WebSocketManager> {
     fn from_ref(state: &AppState) -> Self {
         state.ws_manager.clone()
-    }
-}
-
-async fn health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {
-    let database_health = check_database_health(&state.pool).await;
-    let iam_health = check_iam_health().await;
-
-    let overall_status = if database_health.status == HealthStatus::Healthy
-        && iam_health.status == HealthStatus::Healthy
-    {
-        HealthStatus::Healthy
-    } else if database_health.status == HealthStatus::Unhealthy
-        || iam_health.status == HealthStatus::Unhealthy
-    {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let status_str = match overall_status {
-        HealthStatus::Healthy => "healthy".to_string(),
-        HealthStatus::Degraded => "degraded".to_string(),
-        HealthStatus::Unhealthy => "unhealthy".to_string(),
-    };
-
-    Json(ApiResponse::success(status_str, "健康检查"))
-}
-
-async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<ServiceHealth>> {
-    let dependencies = vec![
-        check_database_health(&state.pool).await,
-        check_iam_health().await,
-    ];
-
-    let all_healthy = dependencies
-        .iter()
-        .all(|d| d.status == HealthStatus::Healthy);
-    let any_unhealthy = dependencies
-        .iter()
-        .any(|d| d.status == HealthStatus::Unhealthy);
-
-    let overall_status = if all_healthy {
-        HealthStatus::Healthy
-    } else if any_unhealthy {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let message = match overall_status {
-        HealthStatus::Healthy => "所有服务运行正常",
-        HealthStatus::Degraded => "部分服务存在问题",
-        HealthStatus::Unhealthy => "存在关键服务故障",
-    };
-
-    let health =
-        ServiceHealth::healthy_with_message("topems-gis", message).with_dependencies(dependencies);
-
-    Json(ApiResponse::success(health, "详细健康检查"))
-}
-
-async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1").execute(pool).await {
-        Ok(_) => DependencyHealth {
-            name: "database".to_string(),
-            status: HealthStatus::Healthy,
-            message: "数据库连接正常".to_string(),
-        },
-        Err(e) => {
-            tracing::error!("数据库健康检查失败: {}", e);
-            DependencyHealth {
-                name: "database".to_string(),
-                status: HealthStatus::Unhealthy,
-                message: format!("数据库连接失败: {}", e),
-            }
-        }
-    }
-}
-
-async fn check_iam_health() -> DependencyHealth {
-    let iam_url =
-        std::env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let health_url = format!("{}/health", iam_url);
-
-    match topems_shared::check_http_health(&health_url).await {
-        Ok(status) => {
-            let message = match status {
-                HealthStatus::Healthy => "IAM 服务正常",
-                HealthStatus::Degraded => "IAM 服务响应异常",
-                HealthStatus::Unhealthy => "IAM 服务不可用",
-            };
-            DependencyHealth {
-                name: "iam-service".to_string(),
-                status,
-                message: message.to_string(),
-            }
-        }
-        Err(e) => {
-            tracing::warn!("IAM 服务健康检查失败: {}", e);
-            DependencyHealth {
-                name: "iam-service".to_string(),
-                status: HealthStatus::Degraded,
-                message: format!("IAM 服务连接异常: {}", e),
-            }
-        }
     }
 }
 
@@ -176,10 +69,20 @@ async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenv::dotenv().ok();
+    let config = ServiceConfig {
+        name: "topems-gis",
+        port: 8071,
+        port_env_var: Some("GIS_PORT"),
+        max_db_connections: 20,
+        enable_events: false,
+        enable_rls: false,
+        enable_request_context: false,
+        api_prefix: "/api/core/gis/v1",
+        legacy_prefixes: &["/api/v1/gis", "/api/gis"],
+    };
+    let ctx = bootstrap_service(&config).await?;
 
-    let _telemetry_guard = init_telemetry("topems-gis");
-
+    // 自定义 Prometheus Gauge
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
     let custom_gauge = Gauge::new(
         "topems_gis_custom_metric",
@@ -187,34 +90,25 @@ async fn main() -> Result<()> {
     )
     .unwrap_or_else(|e| {
         tracing::error!("Failed to create Prometheus gauge: {}", e);
-        panic!("Prometheus gauge creation failed - check for duplicate metric registrations")
+        panic!("Prometheus gauge creation failed")
     });
     default_registry()
         .register(Box::new(custom_gauge.clone()))
         .unwrap_or_else(|e| {
             tracing::error!("Failed to register Prometheus gauge: {}", e);
-            panic!(
-                "Prometheus gauge registration failed - check for duplicate metric registrations"
-            )
+            panic!("Prometheus gauge registration failed")
         });
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    let database_url = env::var("DATABASE_URL").map_err(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        anyhow::anyhow!("DATABASE_URL must be set in environment variables")
-    })?;
-    let pool = sqlx::PgPool::connect(&database_url).await?;
-    tracing::info!("✅ 连接到 PostgreSQL 数据库成功");
-
-    init_tables(&pool).await?;
+    // GIS 专属初始化：建表 + 事件订阅 + WebSocket Manager
+    init_tables(&ctx.db).await?;
     tracing::info!("✅ 数据库表初始化成功");
 
-    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
         tracing::warn!("⚠️ GIS 事件订阅者启动失败: {}", e);
     }
 
-    let auth_state = AuthState::from_env();
     let ws_config = modules::websocket::WebSocketConfig::from_env();
     tracing::info!(
         "🔌 WebSocket 配置: max_connections={}, idle_timeout={}s",
@@ -222,13 +116,14 @@ async fn main() -> Result<()> {
         ws_config.idle_timeout_secs
     );
     let state = AppState {
-        pool: pool.clone(),
-        auth_state: auth_state.clone(),
-        ws_manager: std::sync::Arc::new(modules::websocket::WebSocketManager::new(ws_config)),
+        pool: ctx.db.clone(),
+        auth_state: ctx.auth_state.clone(),
+        ws_manager: Arc::new(modules::websocket::WebSocketManager::new(ws_config)),
     };
 
     let cors = create_cors_layer();
 
+    // System routes (public, with app_state)
     let system_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/plugins/info", get(modules::gis_plugin::get_info))
@@ -244,6 +139,7 @@ async fn main() -> Result<()> {
         )
         .with_state(state.clone());
 
+    // Public business routes (no auth)
     let public_business_routes = Router::new()
         .route("/statistics", get(modules::stats::get_statistics))
         .route(
@@ -364,14 +260,15 @@ async fn main() -> Result<()> {
             "/devices/{device_code}/report",
             axum::routing::post(modules::device::report_device_location),
         )
+        // WebSocket public endpoints
         .route("/ws/gis/map", get(modules::websocket::websocket_handler))
         .route(
             "/ws/gis/device/{device_code}",
             get(modules::websocket::websocket_device_handler),
         )
-        // 兼容遗留路径（v7.7 前使用 /ws/gis，v7.8 起统一为 /ws/gis/map）
         .route("/ws/gis", get(modules::websocket::websocket_handler));
 
+    // Protected API (auth + rate limit)
     let protected_api = Router::new()
         .route(
             "/factory-maps",
@@ -571,10 +468,11 @@ async fn main() -> Result<()> {
             axum::routing::get(modules::device::get_device_history),
         )
         .layer(axum::middleware::from_fn_with_state(
-            auth_state,
+            state.auth_state.clone(),
             topems_shared::auth_middleware,
         ));
 
+    use topems_shared::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
     let rate_limit_config = RateLimitConfig::new(200, 60)
         .with_by_user_id(false)
         .with_by_ip(true);
@@ -587,42 +485,99 @@ async fn main() -> Result<()> {
         }
     }));
 
+    use topems_shared::api_version::register_routes_with_legacy_alias;
+
     let gis_routes = public_business_routes.merge(protected_api);
 
     let app = register_routes_with_legacy_alias(
         system_routes,
-        "/api/core/gis/v1",
-        &["/api/v1/gis", "/api/gis"],
+        config.api_prefix,
+        config.legacy_prefixes,
         gis_routes,
     )
     .merge(create_api_info_router("topems-gis"))
-    .with_state(state)
+    .with_state(state.clone())
     .layer(axum::middleware::from_fn(telemetry_middleware))
     .layer(prometheus_layer)
     .layer(cors);
 
-    let port = env::var("GIS_PORT")
-        .or_else(|_| env::var("SERVER_PORT"))
-        .or_else(|_| env::var("PORT"))
-        .unwrap_or_else(|_| "8071".to_string());
-    let addr = format!("0.0.0.0:{}", port);
-
-    tracing::info!("🚀 TOPEMS-GIS 厂区空间数字化系统启动中...");
-    tracing::info!("📦 端口: {}", port);
-    tracing::info!("🔒 认证保护已启用");
-
-    let core_url = env::var("CORE_URL").ok();
+    // 启动时自动注册到统一核心
+    let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         modules::gis_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
+    let app = Application {
+        router: app,
+        port: resolve_port(&config),
+        name: config.name,
+    };
+    run(app).await?;
 
     Ok(())
 }
 
 use crate::models::DeviceLocation;
+use topems_shared::{HealthStatus, ServiceHealth};
+use topems_shared_bootstrap::{check_database_health, check_iam_health};
+
+async fn health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {
+    let database_health = check_database_health(&state.pool).await;
+    let iam_health = check_iam_health().await;
+
+    let overall_status = if database_health.status == HealthStatus::Healthy
+        && iam_health.status == HealthStatus::Healthy
+    {
+        HealthStatus::Healthy
+    } else if database_health.status == HealthStatus::Unhealthy
+        || iam_health.status == HealthStatus::Unhealthy
+    {
+        HealthStatus::Unhealthy
+    } else {
+        HealthStatus::Degraded
+    };
+
+    let status_str = match overall_status {
+        HealthStatus::Healthy => "healthy".to_string(),
+        HealthStatus::Degraded => "degraded".to_string(),
+        HealthStatus::Unhealthy => "unhealthy".to_string(),
+    };
+
+    Json(ApiResponse::success(status_str, "健康检查"))
+}
+
+async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<ServiceHealth>> {
+    let dependencies = vec![
+        check_database_health(&state.pool).await,
+        check_iam_health().await,
+    ];
+
+    let all_healthy = dependencies
+        .iter()
+        .all(|d| d.status == HealthStatus::Healthy);
+    let any_unhealthy = dependencies
+        .iter()
+        .any(|d| d.status == HealthStatus::Unhealthy);
+
+    let overall_status = if all_healthy {
+        HealthStatus::Healthy
+    } else if any_unhealthy {
+        HealthStatus::Unhealthy
+    } else {
+        HealthStatus::Degraded
+    };
+
+    let message = match overall_status {
+        HealthStatus::Healthy => "所有服务运行正常",
+        HealthStatus::Degraded => "部分服务存在问题",
+        HealthStatus::Unhealthy => "存在关键服务故障",
+    };
+
+    let health =
+        ServiceHealth::healthy_with_message("topems-gis", message).with_dependencies(dependencies);
+
+    Json(ApiResponse::success(health, "详细健康检查"))
+}
 
 async fn list_device_locations_by_map(
     State(pool): State<sqlx::PgPool>,

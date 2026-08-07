@@ -1,83 +1,58 @@
+//! TOPEMS Search Service
+//!
+//! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
+
 use axum::{routing::get, Router};
-use sqlx::postgres::PgPoolOptions;
-use std::net::SocketAddr;
-use topems_shared::{
-    auth_middleware, create_cors_layer, init_telemetry, register_routes_with_legacy_alias,
-    AuthState,
-};
+use topems_shared::get_api_info_handler;
+use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 mod handlers;
 mod models;
 
 #[tokio::main]
-async fn main() {
-    let _telemetry_guard = init_telemetry("topems-search");
+async fn main() -> anyhow::Result<()> {
+    let config = ServiceConfig {
+        name: "topems-search",
+        port: 8082,
+        port_env_var: Some("SEARCH_PORT"),
+        max_db_connections: 10,
+        enable_events: false,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/search",
+        legacy_prefixes: &["/api/v1/search"],
+    };
 
+    let ctx = bootstrap_service(&config).await?;
     tracing::info!("🚀 TOPEMS Search Service starting...");
 
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        std::process::exit(1);
-    });
+    // ── public_routes（无状态） ──────────────────────────────────────
+    let public_routes = Router::new()
+        .route(
+            "/",
+            get(|| async {
+                "TOPEMS Search Service API\n\nFull-text search service\n- /health - Health check\n"
+            }),
+        )
+        .route("/api", get(|| get_api_info_handler("topems-search")))
+        .route("/api/info", get(|| get_api_info_handler("topems-search")))
+        .route("/health", get(handlers::health_handler));
 
-    let pool = match PgPoolOptions::new()
-        .max_connections(20)
-        .acquire_timeout(std::time::Duration::from_secs(30))
-        .connect(&database_url)
-        .await
-    {
-        Ok(p) => {
-            tracing::info!("Database connection successful");
-            p
-        }
-        Err(e) => {
-            tracing::error!("Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
-        }
-    };
-
-    let auth_state = AuthState::from_env();
-    let cors = create_cors_layer();
-
+    // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
     let protected_routes = Router::new()
         .route("/", get(handlers::search_handler))
-        .layer(axum::middleware::from_fn_with_state(
-            auth_state.clone(),
-            auth_middleware,
-        ));
+        .with_state(ctx.db.clone());
 
-    let api_routes = register_routes_with_legacy_alias(
-        Router::new(),
-        "/api/search",
-        &["/api/v1/search"],
-        protected_routes,
+    // ── 组装 Application ─────────────────────────────────────────────
+    let app = build_application(&ctx, &config, public_routes, protected_routes, None);
+
+    tracing::info!(
+        "✅ Search Service is running at http://0.0.0.0:{} (prefix: {}, legacy: {:?})",
+        app.port,
+        config.api_prefix,
+        config.legacy_prefixes
     );
 
-    let app = Router::new()
-        .merge(api_routes)
-        .route("/health", get(handlers::health_handler))
-        .layer(cors)
-        .with_state(pool);
-
-    let port = std::env::var("SEARCH_PORT")
-        .or_else(|_| std::env::var("SERVER_PORT"))
-        .or_else(|_| std::env::var("PORT"))
-        .unwrap_or_else(|_| "8082".to_string())
-        .parse()
-        .unwrap_or(8082);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ Search Service is running at http://{}", addr);
-    tracing::info!("📋 API prefix: /api/search/*");
-
-    let listener = match tokio::net::TcpListener::bind(&addr).await {
-        Ok(l) => l,
-        Err(e) => {
-            tracing::error!("Failed to bind to {}: {}", addr, e);
-            return;
-        }
-    };
-
-    if let Err(e) = axum::serve(listener, app.into_make_service()).await {
-        tracing::error!("Server error: {}", e);
-    }
+    run(app).await?;
+    Ok(())
 }

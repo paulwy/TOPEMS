@@ -32,6 +32,7 @@ prometheus.workspace = true
 tower-cookies.workspace = true
 sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "postgres", "uuid"] }
 sha2 = "0.10"
+topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 
 [dev-dependencies]
 tokio-test.workspace = true

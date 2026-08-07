@@ -21,7 +21,6 @@ mod shared;
 pub mod models;
 pub mod modules;
 
-use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 mod event_handlers;
@@ -32,14 +31,10 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use axum_prometheus::PrometheusMetricLayer;
 use utoipa::OpenApi;
 
-use topems_shared::{
-    auth_middleware, create_cors_layer, create_database_pool, get_api_info_handler, init_telemetry,
-    rls_middleware, simple_health_check, telemetry_middleware, wrap_group2_router, ApiResponse,
-    AuthState, DatabaseConfig, RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
-};
+use topems_shared::{simple_health_check, ApiResponse, ServiceHealth, SimpleHealthConfig};
+use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 pub use shared::*;
 
@@ -47,72 +42,38 @@ pub use shared::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    _ = dotenv::dotenv();
-
-    let _telemetry_guard = init_telemetry("topems-lims");
-
-    tracing::info!("🚀 TOPEMS LIMS Service starting...");
-
-    let db_config = DatabaseConfig {
-        url: std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-            tracing::error!("DATABASE_URL environment variable is required");
-            std::process::exit(1);
-        }),
-        max_connections: 20,
-        min_connections: Some(5),
-        connect_timeout: Some(30),
-        idle_timeout: Some(300),
-        max_lifetime: Some(1800),
-        test_interval: Some(60),
-        enable_connection_reuse: Some(true),
+    let config = ServiceConfig {
+        name: "topems-lims",
+        port: 8051,
+        port_env_var: Some("LIMS_PORT"),
+        max_db_connections: 20,
+        enable_events: true,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/lims",
+        legacy_prefixes: &[],
     };
 
-    let pool = match create_database_pool(&db_config).await {
-        Ok(p) => {
-            tracing::info!("Database connection successful");
-            p
-        }
-        Err(e) => {
-            tracing::error!("Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
-        }
-    };
+    let ctx = bootstrap_service(&config).await?;
 
-    if let Err(e) = models::init_database(&pool).await {
+    if let Err(e) = models::init_database(&ctx.db).await {
         tracing::warn!("LIMS module database init warning: {}", e);
     }
 
-    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
         tracing::warn!("⚠️ LIMS 事件订阅者启动失败: {}", e);
     }
 
-    let auth_state = AuthState::from_env();
-    let health_config = SimpleHealthConfig::new("topems-lims").with_db(pool.clone());
-
-    let event_publisher = match topems_shared::event::EventPublisher::new("topems-lims") {
-        Ok(publisher) => {
-            tracing::info!("📢 事件发布服务初始化成功");
-            Some(Arc::new(publisher))
-        }
-        Err(e) => {
-            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
-            None
-        }
-    };
-
-    let state = AppState {
-        auth_state,
-        pool,
-        health_config,
-        event_publisher,
+    let api_state = AppState {
+        auth_state: ctx.auth_state.clone(),
+        pool: ctx.db.clone(),
+        health_config: SimpleHealthConfig::new("topems-lims").with_db(ctx.db.clone()),
+        event_publisher: ctx.event_publisher.clone(),
         test_method_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(3600))),
         instrument_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(1800))),
     };
 
-    let cors = create_cors_layer();
-
-    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
-
+    // Public routes（stateful：/health + /api/plugins/*）
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
@@ -124,13 +85,9 @@ async fn main() -> anyhow::Result<()> {
             "/api/plugins/health",
             get(modules::lims_plugin::plugin_health_check),
         )
-        .route("/api", get(|| get_api_info_handler("lims-service")))
-        .route("/api/info", get(|| get_api_info_handler("lims-service")))
-        .route(
-            "/metrics",
-            get(move || async move { metric_handle.render() }),
-        );
+        .with_state(api_state.clone());
 
+    // Protected routes（先 merge 业务路由 + tenant_middleware → build_application 再加 auth/rls/rate_limit）
     let protected_routes = Router::new()
         .merge(modules::create_api_routes())
         // Frontend aligned routes (LIMS module)
@@ -260,50 +217,28 @@ async fn main() -> anyhow::Result<()> {
             "/lims/sync/reagent-to-ehs",
             post(modules::data_sync::sync_reagent_to_ehs),
         )
-        // Health & Metrics
         .route("/api/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn(
             middleware::tenant::tenant_middleware,
         ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.pool.clone(),
-            rls_middleware,
-        ));
+        .with_state(api_state.clone());
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/lims", protected_routes)
-        .route(
-            "/api-docs/openapi.json",
-            get(|| async move { axum::Json(openapi::LimsApiDoc::openapi()) }),
-        )
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(cors)
-        .layer(prometheus_layer)
-        .with_state(state);
-
-    let cfg = RouteCompatConfig::new("lims", "/api/lims", &[]);
-    let app = wrap_group2_router(app, cfg);
-
-    let port = std::env::var("LIMS_PORT")
-        .unwrap_or_else(|_| "8051".to_string())
-        .parse()
-        .unwrap_or(8051);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ LIMS Service is running at http://{}", addr);
+    let openapi_json =
+        serde_json::to_string_pretty(&openapi::LimsApiDoc::openapi()).unwrap_or_default();
+    let app = build_application(
+        &ctx,
+        &config,
+        public_routes,
+        protected_routes,
+        Some(openapi_json),
+    );
 
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         modules::lims_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app.into_make_service()).await?;
-
+    run(app).await?;
     Ok(())
 }
 

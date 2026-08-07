@@ -17,3 +17,5 @@ tokio = { workspace = true }
 dotenv = "0.15"
 
 topems-shared = { path = "../../lib" }
+topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+anyhow.workspace = true

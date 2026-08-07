@@ -20,19 +20,14 @@ mod shared;
 
 pub mod modules;
 
-use std::net::SocketAddr;
-
 use axum::{extract::State, routing::get, Json, Router};
-use axum_prometheus::PrometheusMetricLayer;
-use sqlx::PgPool;
 use utoipa::OpenApi;
 
 use topems_shared::service_client::{create_workflow_client, WorkflowServiceClient};
 use topems_shared::{
-    auth_middleware, create_cors_layer, event::EventPublisher, get_api_info_handler,
-    init_telemetry, rls_middleware, simple_health_check, telemetry_middleware, wrap_group2_router,
-    ApiResponse, AuthState, RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
+    simple_health_check, ApiResponse, AuthState, EventPublisher, ServiceHealth, SimpleHealthConfig,
 };
+use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 pub use shared::*;
 
@@ -41,7 +36,7 @@ pub use shared::*;
 #[derive(Clone)]
 pub struct AppState {
     pub auth_state: AuthState,
-    pub pool: PgPool,
+    pub pool: sqlx::PgPool,
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<std::sync::Arc<EventPublisher>>,
     pub workflow_client: WorkflowServiceClient,
@@ -63,116 +58,59 @@ impl axum::extract::FromRef<AppState> for WorkflowServiceClient {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    _ = dotenv::dotenv();
-
-    let _telemetry_guard = init_telemetry("topems-qms");
-
-    tracing::info!("🚀 TOPEMS QMS Service starting...");
-
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        std::process::exit(1);
-    });
-
-    let pool = match sqlx::postgres::PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&database_url)
-        .await
-    {
-        Ok(p) => {
-            tracing::info!("Database connection successful");
-            p
-        }
-        Err(e) => {
-            tracing::error!("Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
-        }
+    let config = ServiceConfig {
+        name: "topems-qms",
+        port: 8050,
+        port_env_var: Some("QMS_PORT"),
+        max_db_connections: 10,
+        enable_events: true,
+        enable_rls: true,
+        enable_request_context: true,
+        api_prefix: "/api/qms",
+        legacy_prefixes: &[],
     };
 
-    // Initialize database for QMS module
-    if let Err(e) = modules::init_database(&pool).await {
+    let ctx = bootstrap_service(&config).await?;
+
+    // QMS 模块 DB 初始化
+    if let Err(e) = modules::init_database(&ctx.db).await {
         tracing::warn!("QMS module database init warning: {}", e);
     }
-
-    let auth_state = AuthState::from_env();
-    let health_config = SimpleHealthConfig::new("topems-qms").with_db(pool.clone());
-
-    let event_publisher = match EventPublisher::new("topems-qms") {
-        Ok(publisher) => {
-            tracing::info!("📢 事件发布服务初始化成功");
-            Some(std::sync::Arc::new(publisher))
-        }
-        Err(e) => {
-            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
-            None
-        }
-    };
 
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8000".to_string());
     let workflow_client = create_workflow_client().expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
-    let state = AppState {
-        auth_state,
-        pool,
-        health_config,
-        event_publisher,
+    let api_state = AppState {
+        auth_state: ctx.auth_state.clone(),
+        pool: ctx.db.clone(),
+        health_config: SimpleHealthConfig::new("topems-qms").with_db(ctx.db.clone()),
+        event_publisher: ctx.event_publisher.clone(),
         workflow_client,
     };
 
-    let cors = create_cors_layer();
-
-    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
-
-    // Public routes (no auth required)
+    // Public routes（需 AppState）
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api", get(|| get_api_info_handler("qms-service")))
-        .route("/api/info", get(|| get_api_info_handler("qms-service")))
-        .route(
-            "/metrics",
-            get(move || async move { metric_handle.render() }),
-        );
+        .with_state(api_state.clone());
 
-    // Protected routes (auth required)
+    // Protected routes（QMS create_routes 返回 Router<AppState>，最后 with_state 擦除类型）
     let protected_routes = Router::new()
         .merge(modules::create_routes())
-        // Health & Metrics
         .route("/api/health/detailed", get(detailed_health))
-        .layer(axum::middleware::from_fn_with_state(
-            state.auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.pool.clone(),
-            rls_middleware,
-        ));
+        .with_state(api_state.clone());
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/qms", protected_routes)
-        .route(
-            "/api-docs/openapi.json",
-            get(|| async move { axum::Json(openapi::QmsApiDoc::openapi()) }),
-        )
-        .layer(cors)
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(prometheus_layer)
-        .with_state(state);
-
-    let cfg = RouteCompatConfig::new("qms", "/api/qms", &[]);
-    let app = wrap_group2_router(app, cfg);
-
-    let port = std::env::var("QMS_PORT")
-        .or_else(|_| std::env::var("SERVER_PORT"))
-        .or_else(|_| std::env::var("PORT"))
-        .unwrap_or_else(|_| "8050".to_string())
-        .parse()
-        .unwrap_or(8050);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ QMS Service is running at http://{}", addr);
+    let openapi_json =
+        serde_json::to_string_pretty(&openapi::QmsApiDoc::openapi()).unwrap_or_default();
+    let app = build_application(
+        &ctx,
+        &config,
+        public_routes,
+        protected_routes,
+        Some(openapi_json),
+    );
 
     // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();
@@ -180,9 +118,7 @@ async fn main() -> anyhow::Result<()> {
         modules::qms_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app.into_make_service()).await?;
-
+    run(app).await?;
     Ok(())
 }
 
