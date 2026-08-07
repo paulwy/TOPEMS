@@ -333,7 +333,7 @@ async fn create_ticket_for_reconciliation(
     match req.send().await {
         Ok(resp) => {
             if resp.status().is_success() {
-                tracing::info!("对账差异工单自动创建成功: session_id={}", report.session_id);
+                tracing::debug!("对账差异工单自动创建成功: session_id={}", report.session_id);
                 Ok(())
             } else {
                 let text = resp.text().await.unwrap_or_default();

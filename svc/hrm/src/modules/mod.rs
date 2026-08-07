@@ -1,11 +1,11 @@
 use crate::models::{Department, Employee};
-use crate::utils::InMemoryCache;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared::{
-    AuthState, CacheService, EventPublisher, FieldEncryptionService, SystemMetrics,
+    AuthState, CacheService, EventPublisher, FieldEncryptionService,
+    LocalInMemoryCache as InMemoryCache, SystemMetrics,
 };
 
 pub mod attendance;

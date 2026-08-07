@@ -1,17 +1,18 @@
-code: qms
-name: QMS
-version: 1.0.0
-description: TOPEMS-QMS
-author: TOPEMS
+author: TOPEMS Team
 category: Quality
+code: qms
+name: 质量管理体系
+description: QMS 质量管理体系系统，包含质量计划、来料检验（IQC）、过程检验（IPQC）、成品检验（FQC）、不合格品管理、纠正预防措施（CAPA）、质量追溯、供应商质量管理等模块
+version: 1.0.0
+icon: task_alt
 plugin_type: business
-
-runtime:
-  port: 8050
-  health_endpoint: /health
-  base_path: /api/qa
-
 dependencies:
   - unified-core
   - erp
   - mes
+runtime:
+  port: 8050
+  health_endpoint: /health
+  base_path: /api/qms
+deployment: {}
+permissions: {}

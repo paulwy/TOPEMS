@@ -463,10 +463,11 @@ pub async fn delete_dict_type(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let _ = sqlx::query("DELETE FROM erp.dict_items WHERE dict_type_id = $1")
+    sqlx::query("DELETE FROM erp.dict_items WHERE dict_type_id = $1")
         .bind(id)
         .execute(&state.db)
-        .await;
+        .await
+        .unwrap_or_else(|e| tracing::warn!("删除字典条目失败，继续删除字典类型: {}", e));
 
     let result = sqlx::query("DELETE FROM erp.dict_types WHERE id = $1")
         .bind(id)

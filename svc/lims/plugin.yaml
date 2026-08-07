@@ -1,16 +1,16 @@
-code: lims
-name: LIMS
-version: 1.0.0
-description: TOPEMS-LIMS
 author: TOPEMS
 category: Quality
+code: lims
+name: 实验室信息管理
+description: LIMS 实验室信息管理系统，包含样品管理、检测任务管理、仪器管理、试剂管理、标准曲线、检测报告、质量控制、数据追溯等模块
+version: 1.0.0
 plugin_type: business
-
-runtime:
-  port: 8051
-  health_endpoint: /health
-  base_path: /api/qa
-
 dependencies:
   - unified-core
   - qms
+runtime:
+  port: 8051
+  health_endpoint: /health
+  base_path: /api/lims
+deployment: {}
+permissions: {}

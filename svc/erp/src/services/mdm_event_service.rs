@@ -12,6 +12,7 @@ use topems_shared::event::{
 pub struct MdmEventService;
 
 impl MdmEventService {
+    /// Construct a new default instance. Prefer [`Default::default`] where semantically clear.
     pub fn new() -> Self {
         Self
     }

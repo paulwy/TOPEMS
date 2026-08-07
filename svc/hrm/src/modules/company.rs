@@ -13,15 +13,7 @@ use crate::models::{Company, CreateCompanyRequest, UpdateCompanyRequest};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse};
-
-#[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-}
+use topems_shared::{api_error, ApiResponse, PaginationParams};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -220,7 +212,7 @@ async fn create_company(
             )
             .await;
 
-            tracing::info!("创建公司成功: {}", company.name);
+            tracing::debug!("创建公司成功: {}", company.name);
             Json(ApiResponse::success(company, "公司创建成功"))
         }
         Err(e) => {
@@ -373,7 +365,7 @@ async fn update_company(
             )
             .await;
 
-            tracing::info!("更新公司成功: {}", company.name);
+            tracing::debug!("更新公司成功: {}", company.name);
             Json(ApiResponse::success(company, "公司更新成功"))
         }
         Err(e) => {
@@ -442,7 +434,7 @@ async fn delete_company(
                     )
                     .await;
 
-                    tracing::info!("删除公司成功: {}", company.name);
+                    tracing::debug!("删除公司成功: {}", company.name);
                     Json(ApiResponse::success(company.id.to_string(), "公司删除成功"))
                 }
                 Err(e) => {

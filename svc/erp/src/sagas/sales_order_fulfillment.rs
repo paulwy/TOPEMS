@@ -19,6 +19,7 @@ use topems_shared::saga::{SagaInstance, SagaOrchestrator, SagaResult, SagaStepDe
 pub struct SalesOrderFulfillmentSaga;
 
 impl SalesOrderFulfillmentSaga {
+    /// Construct a new default instance. Prefer [`Default::default`] where semantically clear.
     pub fn new() -> Self {
         Self
     }

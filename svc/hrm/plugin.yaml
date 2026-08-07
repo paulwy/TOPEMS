@@ -1,14 +1,15 @@
+author: TOPEMS
+category: Business
 code: hrm
 name: 人力资源管理
-version: 0.1.0
 description: HRM 人力资源管理系统，包含员工管理、部门管理、考勤管理、薪酬管理、招聘管理、培训管理、绩效管理等模块
+version: 1.0.0
 plugin_type: business
-
+dependencies: []
 deployment:
   type: standalone
   port: 8020
   base_path: /api/hrm
-
 permissions:
   - code: hrm:read
     name: 查看员工
@@ -74,5 +75,3 @@ permissions:
     name: 管理绩效
     resource_type: performance
     action: write
-
-dependencies: []

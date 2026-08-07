@@ -1,13 +1,16 @@
-code: "portal"
-name: "企业门户"
-version: "1.0.0"
-description: "Portal 企业门户 - 首页、公告、快捷入口"
-category: "System"
-plugin_type: "system"
+author: TOPEMS
+category: System
+code: portal
+name: 企业门户
+description: Portal 企业门户 - 首页、公告、快捷入口
+version: 1.0.0
+plugin_type: system
+dependencies: []
 deployment:
   port: 8063
-  base_path: "/api/portal"
+  base_path: /api/portal
+runtime: {}
 permissions:
-  - code: "announcement"
-  - code: "shortcut"
-  - code: "widget"
+  - code: announcement
+  - code: shortcut
+  - code: widget

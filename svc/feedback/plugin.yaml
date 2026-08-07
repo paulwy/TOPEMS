@@ -1,14 +1,16 @@
+author: TOPEMS
+category: Collaboration
 code: feedback
 name: 反馈服务
-version: 1.0.0
 description: 反馈服务 - 用户反馈收集、处理、回复管理
+version: 1.0.0
 plugin_type: service
-
+dependencies: []
+deployment: {}
 runtime:
   port: 8087
   health_endpoint: /health
   base_path: /api/feedback
-
 permissions:
   - code: feedback:read
     name: 查看反馈
@@ -22,5 +24,3 @@ permissions:
   - code: feedback:admin
     name: 反馈管理
     description: 反馈分类和配置管理
-
-dependencies: []

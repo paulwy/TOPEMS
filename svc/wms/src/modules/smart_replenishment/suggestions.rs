@@ -295,7 +295,7 @@ pub async fn compute_replenishment(
     // 供应商信息保持 NULL（原跨 schema JOIN scm.supplier_products 已移除，因该表不存在）
     // 用户在 UI 确认补货建议时可手动选择供应商
     if let Ok(items) = &insert_result {
-        tracing::info!(
+        tracing::debug!(
             "补货计算完成，生成 {} 条建议（supplier 字段留空，由用户手动选择）",
             items.len()
         );

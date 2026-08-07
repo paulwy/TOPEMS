@@ -106,9 +106,14 @@ pub async fn list_materials(
         }
     };
 
-    let total = match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM materials")
-        .fetch_one(&state.db)
-        .await
+    let total = match sqlx::query_scalar::<_, i64>(
+        r#"SELECT COUNT(*) FROM materials WHERE (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR category = $3)"#
+    )
+    .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
+    .bind(status_filter.as_deref().unwrap_or(""))
+    .bind(category_filter.as_deref().unwrap_or(""))
+    .fetch_one(&state.db)
+    .await
     {
         Ok(t) => t,
         Err(e) => {

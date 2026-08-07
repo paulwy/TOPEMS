@@ -1,14 +1,16 @@
+author: TOPEMS
+category: Collaboration
 code: ticket
 name: 工单服务
-version: 1.0.0
 description: 工单服务 - 工单创建、分配、处理、关闭全流程管理
+version: 1.0.0
 plugin_type: service
-
+dependencies: []
+deployment: {}
 runtime:
   port: 8086
   health_endpoint: /health
   base_path: /api/ticket
-
 permissions:
   - code: ticket:read
     name: 查看工单
@@ -25,5 +27,3 @@ permissions:
   - code: ticket:admin
     name: 工单管理
     description: 工单类型和配置管理
-
-dependencies: []

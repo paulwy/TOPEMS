@@ -11,15 +11,7 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-
-#[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-}
+use topems_shared::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
 
 #[derive(Debug, Clone, Deserialize, Serialize, sqlx::FromRow)]
 pub struct WavePick {

@@ -1,14 +1,16 @@
+author: TOPEMS
+category: System
 code: lowcode
 name: 低代码平台
-version: 0.1.0
 description: 低代码平台服务（后端占位，待立项实现）- 页面设计、表单设计、工作流编排、数据模型
+version: 1.0.0
 plugin_type: service
-
+dependencies: []
+deployment: {}
 runtime:
   port: 8088
   health_endpoint: /health
   base_path: /api/lowcode
-
 permissions:
   - code: lowcode:read
     name: 查看低代码
@@ -19,5 +21,3 @@ permissions:
   - code: lowcode:admin
     name: 低代码管理
     description: 低代码平台配置和发布管理
-
-dependencies: [unified-core]
