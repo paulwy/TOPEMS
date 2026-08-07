@@ -3,9 +3,12 @@
 //! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
 
 use anyhow::Result;
-use axum::{routing::get, Router};
+use axum::routing::get;
 use prometheus::{default_registry, Gauge};
-use topems_shared::service_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
+use topems_shared::service_bootstrap::{
+    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
+    ServiceConfig,
+};
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 use topems_shared_service_client::TypedServiceClient;
 use utoipa::OpenApi;
@@ -23,7 +26,7 @@ async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
     // 设置search_path环境变量（供lib使用）
-    std::env::set_var("SEARCH_PATH", "pm, shared, public");
+    std::env::set_var("SEARCH_PATH", "pm, public, shared");
 
     // ── ServiceConfig ──────────────────────────────────────────────
     let config = ServiceConfig {
@@ -81,10 +84,9 @@ async fn main() -> Result<()> {
         std::env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".into())
     );
 
-    // ── public_routes（无状态：openapi + plugins） ────────────────────
-    // 注：/health、/metrics、/api /api/info 等标准路由由 build_application 内置提供
-    let public_routes = Router::new()
-        .route("/api-docs/openapi.json", get(serve_openapi_json))
+    // ── public_routes（无状态：health + plugins） ────────────────────
+    let health_state = create_health_state(&ctx, &config);
+    let public_routes = create_standard_health_routes(health_state)
         .route("/api/plugins/info", get(pm_plugin::get_plugin_info))
         .route("/api/plugins/health", get(pm_plugin::plugin_health_check));
 
@@ -114,10 +116,6 @@ async fn main() -> Result<()> {
 
     run(app).await?;
     Ok(())
-}
-
-async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(modules::openapi::ApiDoc::openapi())
 }
 
 async fn init_db(_pool: &sqlx::PgPool) -> topems_shared::Result<()> {

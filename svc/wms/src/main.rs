@@ -35,7 +35,7 @@ use shared::cache::InMemoryCache;
 #[tokio::main]
 async fn main() -> Result<()> {
     // 设置search_path环境变量（供lib使用）
-    std::env::set_var("SEARCH_PATH", "wms, shared, public");
+    std::env::set_var("SEARCH_PATH", "wms, public, shared");
 
     let config = ServiceConfig {
         name: "topems-wms",

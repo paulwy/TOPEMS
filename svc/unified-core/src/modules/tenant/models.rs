@@ -1,6 +1,6 @@
 //! Tenant data models
 
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -83,7 +83,7 @@ pub struct Tenant {
 
     #[serde(rename = "license_expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub license_expires_at: Option<DateTime<Utc>>,
+    pub license_expires_at: Option<NaiveDateTime>,
 
     // Database config (for independent mode)
     #[serde(rename = "database_host")]
@@ -120,22 +120,22 @@ pub struct Tenant {
 
     #[serde(rename = "trial_expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub trial_expires_at: Option<DateTime<Utc>>,
+    pub trial_expires_at: Option<NaiveDateTime>,
 
     // Metadata
     #[serde(rename = "created_at")]
-    pub created_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
 
     #[serde(rename = "updated_at")]
-    pub updated_at: DateTime<Utc>,
+    pub updated_at: NaiveDateTime,
 
     #[serde(rename = "activated_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub activated_at: Option<DateTime<Utc>>,
+    pub activated_at: Option<NaiveDateTime>,
 
     #[serde(rename = "suspended_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub suspended_at: Option<DateTime<Utc>>,
+    pub suspended_at: Option<NaiveDateTime>,
 }
 
 fn default_plan() -> String {
@@ -165,7 +165,7 @@ pub struct TenantUsage {
     pub plugin_cost_cents: Option<i64>,
     pub total_cost_cents: Option<i64>,
 
-    pub created_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
 }
 
 /// Tenant module (activated plugin/feature)
@@ -185,10 +185,10 @@ pub struct TenantModule {
     #[serde(rename = "is_active")]
     pub is_active: bool,
     #[serde(rename = "activated_at")]
-    pub activated_at: DateTime<Utc>,
+    pub activated_at: NaiveDateTime,
     #[serde(rename = "expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub expires_at: Option<DateTime<Utc>>,
+    pub expires_at: Option<NaiveDateTime>,
 }
 
 fn default_module_tier() -> String {
@@ -208,10 +208,10 @@ pub struct CreateTenantRequest {
     pub license_type: String,
     #[serde(rename = "license_expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub license_expires_at: Option<DateTime<Utc>>,
+    pub license_expires_at: Option<NaiveDateTime>,
     #[serde(rename = "trial_expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub trial_expires_at: Option<DateTime<Utc>>,
+    pub trial_expires_at: Option<NaiveDateTime>,
 }
 
 /// Request to update tenant
@@ -279,10 +279,10 @@ pub struct TenantUser {
     pub role: String,
     pub status: String,
     #[serde(rename = "created_at")]
-    pub created_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
     #[serde(rename = "last_login")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub last_login: Option<DateTime<Utc>>,
+    pub last_login: Option<NaiveDateTime>,
 }
 
 /// Tenant stats response
@@ -314,7 +314,7 @@ pub struct UsageMetrics {
     #[serde(rename = "api_requests_today")]
     pub api_requests_today: i64,
     #[serde(rename = "updated_at")]
-    pub updated_at: DateTime<Utc>,
+    pub updated_at: NaiveDateTime,
 }
 
 /// Tenant billing info
@@ -338,14 +338,13 @@ pub struct TenantInvoice {
     pub currency: String,
     pub status: String,
     #[serde(rename = "period_start")]
-    pub period_start: DateTime<Utc>,
+    pub period_start: NaiveDateTime,
     #[serde(rename = "period_end")]
-    pub period_end: DateTime<Utc>,
+    pub period_end: NaiveDateTime,
     #[serde(rename = "created_at")]
-    pub created_at: DateTime<Utc>,
-    #[serde(rename = "paid_at")]
+    pub created_at: NaiveDateTime,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub paid_at: Option<DateTime<Utc>>,
+    pub paid_at: Option<NaiveDateTime>,
 }
 
 /// Tenant context

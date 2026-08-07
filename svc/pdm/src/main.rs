@@ -54,6 +54,8 @@ struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    std::env::set_var("SEARCH_PATH", "pdm, public");
+
     let config = ServiceConfig {
         name: "topems-pdm",
         port: 8031,

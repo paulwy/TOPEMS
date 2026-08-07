@@ -34,8 +34,6 @@ async fn main() -> anyhow::Result<()> {
                 "TOPEMS Search Service API\n\nFull-text search service\n- /health - Health check\n"
             }),
         )
-        .route("/api", get(|| get_api_info_handler("topems-search")))
-        .route("/api/info", get(|| get_api_info_handler("topems-search")))
         .route("/health", get(handlers::health_handler));
 
     // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────

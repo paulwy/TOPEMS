@@ -30,7 +30,7 @@ use topems_shared::service_bootstrap::{
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "ai_service, shared, public");
+    std::env::set_var("SEARCH_PATH", "ai_service, public, shared");
 
     let config = ServiceConfig {
         name: "topems-ai",

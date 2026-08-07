@@ -44,7 +44,7 @@ use modules::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    env::set_var("SEARCH_PATH", "srm, shared, public");
+    env::set_var("SEARCH_PATH", "srm, public, shared");
 
     let config = ServiceConfig {
         name: "topems-srm",

@@ -83,6 +83,8 @@ struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    std::env::set_var("SEARCH_PATH", "mes, public");
+
     let config = ServiceConfig {
         name: "topems-mes",
         port: 8030,

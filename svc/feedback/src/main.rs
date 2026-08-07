@@ -10,6 +10,8 @@ mod handlers;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    std::env::set_var("SEARCH_PATH", "public");
+
     let config = ServiceConfig {
         name: "topems-feedback",
         port: 8087,
@@ -35,8 +37,6 @@ async fn main() -> anyhow::Result<()> {
             "/",
             get(|| async { "TOPEMS Feedback Service API\n\n- /health - Health check\n" }),
         )
-        .route("/api", get(|| get_api_info_handler("topems-feedback")))
-        .route("/api/info", get(|| get_api_info_handler("topems-feedback")))
         .route("/health", get(|| async { "OK" }));
 
     // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────

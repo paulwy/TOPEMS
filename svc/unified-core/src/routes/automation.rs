@@ -80,9 +80,9 @@ pub fn automation_routes(_state: &AppState) -> Router<AppState> {
         .route("/automation/designer/schema", get(get_designer_schema))
         .route("/automation/rules", get(list_rules))
         .route("/automation/rules", post(create_rule))
-        .route("/automation/rules/:id", get(get_rule))
-        .route("/automation/rules/:id", put(update_rule))
-        .route("/automation/rules/:id", delete(delete_rule))
+        .route("/automation/rules/{id}", get(get_rule))
+        .route("/automation/rules/{id}", put(update_rule))
+        .route("/automation/rules/{id}", delete(delete_rule))
         .route("/automation/runs", get(list_runs))
         .route("/automation/variables", get(list_variables))
 }

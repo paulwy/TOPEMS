@@ -37,7 +37,7 @@ use modules::ApiState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    env::set_var("SEARCH_PATH", "crm, shared, public");
+    env::set_var("SEARCH_PATH", "crm, public, shared");
 
     let config = ServiceConfig {
         name: "topems-crm",

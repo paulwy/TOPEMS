@@ -6,9 +6,7 @@ use std::sync::Arc;
 use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
-use topems_shared::{
-    get_api_info_handler, simple_health_check, ApiResponse, ServiceHealth, SimpleHealthConfig,
-};
+use topems_shared::{simple_health_check, ApiResponse, ServiceHealth, SimpleHealthConfig};
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
@@ -20,6 +18,8 @@ pub mod modules;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    std::env::set_var("SEARCH_PATH", "public");
+
     let config = ServiceConfig {
         name: "topems-master-data",
         port: 8090,
@@ -45,13 +45,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // 无状态公共路由（/、/api、/api/info）—— 交给 build_application 的顶层 Router<()>
-    let public_routes = Router::new()
-        .route("/", get(home))
-        .route("/api", get(|| get_api_info_handler("master-data-service")))
-        .route(
-            "/api/info",
-            get(|| get_api_info_handler("master-data-service")),
-        );
+    let public_routes = Router::new().route("/", get(home));
 
     // 业务路由（modules）+ /health/detailed —— 需要 State<AppState>，先 with_state
     let protected_routes = Router::new()

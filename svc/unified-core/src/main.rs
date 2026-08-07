@@ -145,6 +145,9 @@ fn init_field_encryption() -> Option<std::sync::Arc<FieldEncryptionService>> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // 确保 core 服务使用 public schema 来访问 core_* 表
+    std::env::set_var("SEARCH_PATH", "public");
+
     let config = ServiceConfig {
         name: "topems-unified-core",
         port: 8000,

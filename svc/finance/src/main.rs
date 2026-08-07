@@ -90,6 +90,8 @@ struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    std::env::set_var("SEARCH_PATH", "finance, public");
+
     let config = ServiceConfig {
         name: "topems-finance",
         port: 8011,

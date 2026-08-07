@@ -69,6 +69,8 @@ async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    std::env::set_var("SEARCH_PATH", "gis, public");
+
     let config = ServiceConfig {
         name: "topems-gis",
         port: 8071,

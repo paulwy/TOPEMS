@@ -30,9 +30,7 @@ use axum::{
 };
 use utoipa::OpenApi;
 
-use topems_shared::{
-    get_api_info_handler, simple_health_check, ApiResponse, ServiceHealth, SimpleHealthConfig,
-};
+use topems_shared::{simple_health_check, ApiResponse, ServiceHealth, SimpleHealthConfig};
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
@@ -64,6 +62,8 @@ struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    std::env::set_var("SEARCH_PATH", "analytics, public");
+
     let config = ServiceConfig {
         name: "topems-analytics",
         port: 8060,
@@ -102,17 +102,10 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // ── public_routes（无状态路由：不需要 State<AppState>） ──────────
-    let public_routes = Router::new()
-        .route("/", get(home))
-        .route("/api", get(|| get_api_info_handler("topems-analytics")))
-        .route(
-            "/api/info",
-            get(|| get_api_info_handler("topems-analytics")),
-        )
-        .route(
-            "/api/plugins/info",
-            get(modules::bi::plugin::get_plugin_info),
-        );
+    let public_routes = Router::new().route("/", get(home)).route(
+        "/api/plugins/info",
+        get(modules::bi::plugin::get_plugin_info),
+    );
 
     // ── protected_routes（业务路由：需要 State<AppState>） ────────────
     // 中间件层（auth / rls / rate_limit）由 build_application 统一处理
