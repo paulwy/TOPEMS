@@ -1,6 +1,9 @@
-# TOPEMS 服务配置
+# TOPEMS 服务配置 (v6.2 / V66.2)
 # 与 plugin-architecture-design.md 保持严格一致
-# 版本: v6.1
+# V66.2 Shared Bootstrap V2 覆盖率：28/28 = 100%
+#   bootstrap_mode: A = 标准 build_application（10 个）
+#                   B = stateful + build_application（13 个）
+#                   C = Application { router, port, name } 重建（5 个）
 
 # ================================================
 # 端口分配规则 (Port Allocation Rules)
@@ -30,6 +33,7 @@ service_groups:
       env_var: CORE_PORT
       description: 统一核心服务 (IAM + Doc + Flow + File + Communication + Monitor)
       status: implemented
+      bootstrap_mode: C  # Shared Bootstrap V2 Pattern: Application { router, port, name } 自建（WS/后台任务/自定义中间件）
       dependencies: []
       service_dir: unified-core
 
@@ -40,6 +44,7 @@ service_groups:
       env_var: ERP_PORT
       description: 企业资源计划
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（自定义 AppState）
       dependencies: [unified-core]
 
     - name: finance
@@ -47,6 +52,7 @@ service_groups:
       env_var: FINANCE_PORT
       description: 财务管理服务
       status: implemented
+      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
       dependencies: [unified-core, erp]
       service_dir: finance
 
@@ -55,6 +61,7 @@ service_groups:
       env_var: AI_PORT
       description: AI智能服务
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（Embedding/Ollama 客户端 state）
       dependencies: [unified-core]
       service_dir: ai
 
@@ -65,6 +72,7 @@ service_groups:
       env_var: HRM_PORT
       description: 人力资源管理
       status: implemented
+      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
       dependencies: [unified-core]
 
     - name: pm
@@ -72,6 +80,7 @@ service_groups:
       env_var: PM_PORT
       description: 项目管理服务
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（自定义 state）
       dependencies: [unified-core]
 
     - name: crm
@@ -79,6 +88,7 @@ service_groups:
       env_var: CRM_PORT
       description: 客户关系管理
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（缓存/租户 state）
       dependencies: [unified-core]
 
   # 生产制造服务 (8030-8039)
@@ -88,6 +98,7 @@ service_groups:
       env_var: MES_PORT
       description: 生产执行系统
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（MES/MRP state）
       dependencies: [unified-core]
       service_dir: mes
 
@@ -96,6 +107,7 @@ service_groups:
       env_var: PDM_PORT
       description: 产品数据管理
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（BOM/工艺 state）
       dependencies: [unified-core, mes]
       service_dir: pdm
 
@@ -106,6 +118,7 @@ service_groups:
       env_var: SCM_PORT
       description: 供应链管理
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（SCM 状态）
       dependencies: [unified-core]
 
     - name: wms
@@ -113,6 +126,7 @@ service_groups:
       env_var: WMS_PORT
       description: 仓储管理
       status: implemented
+      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
       dependencies: [unified-core, scm]
 
     - name: srm
@@ -120,6 +134,7 @@ service_groups:
       env_var: SRM_PORT
       description: 供应商管理
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（VSR/询比价 state）
       dependencies: [unified-core, scm]
 
   # 质量/研发服务 (8050-8059)
@@ -129,6 +144,7 @@ service_groups:
       env_var: QMS_PORT
       description: 质量管理
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（检验/偏差 state）
       dependencies: [unified-core, erp, mes]
       service_dir: qms
 
@@ -137,6 +153,7 @@ service_groups:
       env_var: LIMS_PORT
       description: 实验室信息管理
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（样品/数据 state）
       dependencies: [unified-core, qms]
       service_dir: lims
 
@@ -145,6 +162,7 @@ service_groups:
       env_var: EHS_PORT
       description: 环境健康安全
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（危化/事件 state）
       dependencies: [unified-core, mes, qms]
       service_dir: ehs
 
@@ -153,6 +171,7 @@ service_groups:
       env_var: RD_PORT
       description: 研发管理
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（PLM/实验 state）
       dependencies: [unified-core, pm, mes]
 
   # 数据分析/门户服务 (8060-8069)
@@ -163,6 +182,7 @@ service_groups:
       env_var: BI_PORT
       description: 商业智能（含原 report 报表功能）
       status: implemented
+      bootstrap_mode: C  # Shared Bootstrap V2 Pattern: Application 重建（自定义 Prometheus/调度器 state）
       dependencies: [unified-core]
       service_dir: analytics
 
@@ -171,6 +191,7 @@ service_groups:
       env_var: PORTAL_PORT
       description: 企业门户
       status: implemented
+      bootstrap_mode: C  # Shared Bootstrap V2 Pattern: Application 重建（GraphQL WS + CookieManager + 事件总线模拟器）
       dependencies: [unified-core]
 
   # 基础设施服务 (8070-8079)
@@ -180,6 +201,7 @@ service_groups:
       env_var: MOBILE_PORT
       description: 移动服务
       status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（8字段 AppState + 6 服务客户端）
       dependencies: [unified-core]
 
     - name: gis
@@ -187,6 +209,7 @@ service_groups:
       env_var: GIS_PORT
       description: 地理信息服务
       status: implemented
+      bootstrap_mode: C  # Shared Bootstrap V2 Pattern: Application 重建（WebSocket Manager + 自定义 Prometheus Gauge）
       dependencies: [unified-core, mes]
 
     - name: integration
@@ -194,6 +217,7 @@ service_groups:
       env_var: INTEGRATION_PORT
       description: 集成服务
       status: implemented
+      bootstrap_mode: C  # Shared Bootstrap V2 Pattern: Application 重建（Webhook/Scheduler 后台任务）
       dependencies: [unified-core]
 
   # 主数据服务 (8090)
@@ -203,6 +227,7 @@ service_groups:
       env_var: MASTER_DATA_PORT
       description: 主数据管理服务
       status: implemented
+      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
       dependencies: [unified-core]
       service_dir: master-data
 
@@ -213,6 +238,7 @@ service_groups:
       env_var: COMMUNICATION_PORT
       description: 通讯服务（邮件/通知/IM，从 unified-core 外迁）
       status: implemented
+      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
       dependencies: [unified-core]
       service_dir: communication
 
@@ -221,6 +247,7 @@ service_groups:
       env_var: BILLING_PORT
       description: 计费服务
       status: implemented
+      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
       dependencies: [unified-core]
       service_dir: billing
 
@@ -229,6 +256,7 @@ service_groups:
       env_var: TICKET_PORT
       description: 工单服务
       status: implemented
+      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
       dependencies: [unified-core]
       service_dir: ticket
 
@@ -237,6 +265,7 @@ service_groups:
       env_var: FEEDBACK_PORT
       description: 反馈服务
       status: implemented
+      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
       dependencies: [unified-core]
       service_dir: feedback
 
@@ -245,6 +274,7 @@ service_groups:
       env_var: SEARCH_PORT
       description: 搜索服务（全文搜索）
       status: implemented
+      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
       dependencies: [unified-core]
       service_dir: search
 
@@ -253,6 +283,7 @@ service_groups:
       env_var: LOWCODE_PORT
       description: 低代码平台（占位，后端尚未立项）
       status: reserved
+      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（占位后端模板已迁移 V2）
       dependencies: [unified-core]
       service_dir: lowcode
 

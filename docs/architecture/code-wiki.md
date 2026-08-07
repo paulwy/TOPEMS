@@ -332,21 +332,46 @@ unified-core 中间件栈 (从外层到内层):
 | **向量存储** | [lib/src/vector_store.rs](file:///Users/xingzhai/TOPEMS/lib/src/vector_store.rs) | Redis 向量搜索 |
 | **AI 客户端** | [lib/src/ai_client/](file:///Users/xingzhai/TOPEMS/lib/src/ai_client/) | Ollama / Embedding 客户端 |
 | **Saga** | [lib/src/saga/](file:///Users/xingzhai/TOPEMS/lib/src/saga/) | 分布式 Saga 编排 |
+| **🆕 Shared Bootstrap（V2 三段式，28/28 = 100%）** | [lib/shared-bootstrap/src/lib.rs](file:///Users/air/TOPEMS/lib/shared-bootstrap/src/lib.rs) | `ServiceConfig → bootstrap_service → build_application → run` 四 API 统一启动模板；三种复杂度模式 A/B/C；auth/rls/rate-limit/CORS/Prometheus 零差异 |
 
-### 3.5 服务启动流程
+### 3.5 服务启动流程（V66.2 V2 统一模板，28/28 服务 100%）
 
-以 unified-core 为例:
+> **注意**：原 V1 10 步手工模板（dotenv → init_telemetry → PgPoolOptions::new → `.layer(AuthLayer)`…）已于 V66.1~V66.2 期间在 5 个批次迁移中全部淘汰，代码已移除。现在所有 28 个服务均使用统一的 Shared Bootstrap V2 三段式：
 
-1. **加载环境变量**: `.env` 文件
-2. **初始化遥测**: `init_service_telemetry!("topems-unified-core")`
-3. **创建数据库连接池**: SQLx `PgPool`
-4. **初始化各模块数据表**: 调用 `modules::{iam,flow,file,...}::init_database()`
-5. **初始化种子数据**: 数据字典 `dict::seed::seed_dict_data()`
-6. **构建应用状态** `AppState`: 认证状态、连接池、中间件实例、WS 状态等
-7. **启动后台任务**: WebSocket 清理、Redis→WebSocket 事件桥、插件心跳检测
-8. **创建路由**: `routes::create_routes()` 注册公共路由、核心路由、旧版兼容路由
-9. **挂载全局 Layer**: CORS、Prometheus、Telemetry
-10. **绑定端口并启动**: `axum::serve`
+```rust,ignore
+// Step 1: 单一真相源 — 端口/env/DB/开关/前缀一次声明
+let config = ServiceConfig {
+    name: "topems-xxx",
+    port: 80xx,
+    port_env_var: Some("XXX_PORT"),
+    max_db_connections: 20,
+    enable_events: true,
+    enable_rls: true,
+    enable_request_context: true,
+    api_prefix: "/api/core/xxx/v1",
+    legacy_prefixes: &["/api/v1/xxx", "/api/xxx"],
+};
+// Step 2: bootstrap_service 统一完成 telemetry + DB + AuthState + Events
+let ctx = bootstrap_service(&config).await?;
+// Step 3: build_application 自动装配 7 层中间件 → Application
+let app = build_application(&ctx, &config, public_routes, protected_routes, Some(openapi_json));
+run(app).await?;
+```
+
+#### 三种复杂度模式（覆盖全部 28 服务）
+
+| 模式 | 内部组装 | 典型 state | 服务数 | 代表服务 |
+|------|---------|-----------|-------|---------|
+| **A. 标准 build_application** | `public + private → build_application` | PgPool + AuthState | 10 | feedback, search, ticket, lowcode, communication, billing, master-data, hrm, finance, wms |
+| **B. stateful + build_application** | `protected_routes.with_state(app_state)` 前置，再 `build_application` | 自定义 AppState（cache/tenant_middleware/6+服务客户端） | 13 | qms, ehs, pdm, lims, erp, crm, srm, scm, mes, ai, pm, rd, **mobile** |
+| **C. Application 重建** | 跳过 `build_application`，手工 `Application { router, port, name }` | WebSocket / GraphQL / Cookie / 自定义中间件栈 / 后台任务 | 5 | analytics, unified-core, integration, **gis**, **portal** |
+
+#### 新服务接入步骤
+
+1. `Cargo.toml` 添加 `topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }`
+2. 评估复杂度选 A / B / C（含 WS/GraphQL/Cookie 必选 C；含 AppState 必选 B）
+3. 复制对应样板（`mobile` 是 B 模板；`gis` 是 C 模板；`communication` 是 A 模板）
+4. `cargo check -p topems-xxx` 验证
 
 ### 3.6 插件化架构 (V13.0+)
 

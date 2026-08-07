@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # ============================================================================
-# TOPEMS 端口同步脚本 (P32-2)
+# TOPEMS 端口同步脚本 (P32-2 / V66.2)
+# V66.2 Shared Bootstrap V2 (28/28 = 100%) 端口单一信源
+#   所有服务 main.rs 通过 ServiceConfig + port_env_var 解析对应 *_PORT 变量，
+#   与 config/ports.env 保持严格一致。任何端口变更都应在此文件中修改
+#   后运行 bash scripts/sync-ports.sh 自动广播。
 # 从 config/ports.env（单一信源）生成下游配置文件：
 #   1. scripts/services.conf      - 服务启动配置（topems.sh 使用）
 #   2. deploy/docker/.env          - Docker Compose 端口变量（自动加载）

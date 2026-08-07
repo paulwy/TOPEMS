@@ -1,8 +1,20 @@
 # TOPEMS 系统架构设计
 
+> **架构版本**: V66.2（2026-08-07）· **Shared Bootstrap V2**: 28/28 服务 100% · 健康评分 100/100
+
 ## 概述
 
 TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一的身份认证、流程自动化、文件管理、协同通讯等功能。系统采用 Rust 后端 + React 前端的现代化技术栈，支持企业级部署和扩展。
+
+### 架构里程碑（V66.2）
+
+V66.2 完成 **Shared Bootstrap V2 五批次迁移专项（28/28 = 100%）**，所有业务服务的 main.rs 启动代码统一为三段式模板：
+
+```
+ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → build_application (7层中间件自动装配) → run
+```
+
+三种复杂度模式（A/B/C）覆盖全部服务：无状态标准 10 个 + 自定义 state 13 个 + 自建 Application 5 个。
 
 平台采用 **插件化架构** 和 **微前端** 设计理念，支持按需加载业务模块，具备高度的可扩展性和灵活性。
 
@@ -101,40 +113,50 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 服务配置表
+## 服务配置表（V66.2，28/28 服务 Shared Bootstrap V2 100%）
 
-| 服务 | 端口 | 业务域 | 说明 | API 前缀 | 状态 |
-|------|------|--------|------|----------|------|
-| **核心服务** | | | | | |
-| unified-core | 8000 | Core | 含 IAM/Doc/Flow/File/Communication/Monitor | /api/core/iam/, /api/core/doc/... | ✅ 核心 |
-| **经营管理 (8010-8019)** | | | | | |
-| erp | 8010 | ERP | 企业资源计划 | /api/erp/ | 🔶 部分实现 |
-| ai | 8013 | ERP | AI 智能服务 | /api/ai/ | 🔶 部分实现 |
-| **协同办公 (8020-8029)** | | | | | |
-| hrm | 8020 | Collab | 人力资源管理 | /api/hrm/ | ✅ 已实现 |
-| pm | 8023 | Collab | 项目管理 | /api/pm/ | 🔶 部分实现 |
-| crm | 8029 | Collab | 客户关系管理 | /api/crm/ | 🔶 部分实现 |
-| **生产制造 (8030-8039)** | | | | | |
-| mes | 8030 | Mfg | 生产执行系统 | /api/mes/ | 📋 规划中 |
-| pdm | 8031 | Mfg | 产品数据管理 | /api/pdm/ | 🔶 部分实现 |
-| **供应链 (8040-8049)** | | | | | |
-| scm | 8040 | SCM | 供应链管理 | /api/scm/ | 📋 规划中 |
-| wms | 8041 | SCM | 仓储管理 | /api/wms/ | 🔶 部分实现 |
-| srm | 8042 | SCM | 供应商管理 | /api/srm/ | 🔶 部分实现 |
-| **质量/研发 (8050-8059)** | | | | | |
-| qms | 8050 | QA/R&D | 质量管理 | /api/qms/ | ✅ 已实现 |
-| lims | 8051 | QA/R&D | 实验室信息管理 | /api/lims/ | ✅ 已实现 |
-| ehs | 8052 | QA/R&D | 环境健康安全 | /api/ehs/ | ✅ 已实现 |
-| rd | 8053 | QA/R&D | 研发管理 | /api/rd/ | ✅ 已实现 |
-| **数据分析 (8060-8069)** | | | | | |
-| bi | 8060 | BI | 商业智能（含报表服务） | /api/bi/, /api/report/ | ✅ 已实现 |
-| portal | 8063 | BI | 企业门户 | /api/portal/ | 📋 规划中 |
-| **基础设施 (8070-8079)** | | | | | |
-| mobile | 8070 | Infra | 移动服务 | /api/mobile/ | 📋 规划中 |
-| gis | 8071 | Infra | 地理信息服务 | /api/gis/ | 📋 规划中 |
-| integration | 8072 | Infra | 集成服务 | /api/integration/ | 🔶 部分实现 |
+| 服务 | 端口 | 业务域 | 说明 | API 前缀 | 状态 | **V2 模式** |
+|------|------|--------|------|----------|------|-------------|
+| **核心服务** | | | | | | |
+| unified-core | 8000 | Core | 含 IAM/Doc/Flow/File/Communication/Monitor | /api/core/iam/, /api/core/doc/... | ✅ 核心 | **C**（Application 重建） |
+| **经营管理 (8010-8019)** | | | | | | |
+| erp | 8010 | ERP | 企业资源计划 | /api/erp/ | ✅ 已实现 | **B**（stateful + build_application） |
+| finance | 8011 | ERP | 财务管理服务 | /api/finance/ | ✅ 已实现 | **A**（标准 build_application） |
+| ai | 8013 | ERP | AI 智能服务 | /api/ai/ | ✅ 已实现 | **B** |
+| **协同办公 (8020-8029)** | | | | | | |
+| hrm | 8020 | Collab | 人力资源管理 | /api/hrm/ | ✅ 已实现 | **A** |
+| pm | 8023 | Collab | 项目管理 | /api/pm/ | ✅ 已实现 | **B** |
+| crm | 8029 | Collab | 客户关系管理 | /api/crm/ | ✅ 已实现 | **B** |
+| **生产制造 (8030-8039)** | | | | | | |
+| mes | 8030 | Mfg | 生产执行系统 | /api/mes/ | ✅ 已实现 | **B** |
+| pdm | 8031 | Mfg | 产品数据管理 | /api/pdm/ | ✅ 已实现 | **B** |
+| **供应链 (8040-8049)** | | | | | | |
+| scm | 8040 | SCM | 供应链管理 | /api/scm/ | ✅ 已实现 | **B** |
+| wms | 8041 | SCM | 仓储管理 | /api/wms/ | ✅ 已实现 | **A** |
+| srm | 8042 | SCM | 供应商管理 | /api/srm/ | ✅ 已实现 | **B** |
+| **质量/研发 (8050-8059)** | | | | | | |
+| qms | 8050 | QA/R&D | 质量管理 | /api/qms/ | ✅ 已实现 | **B** |
+| lims | 8051 | QA/R&D | 实验室信息管理 | /api/lims/ | ✅ 已实现 | **B** |
+| ehs | 8052 | QA/R&D | 环境健康安全 | /api/ehs/ | ✅ 已实现 | **B** |
+| rd | 8053 | QA/R&D | 研发管理 | /api/rd/ | ✅ 已实现 | **B** |
+| **数据分析 (8060-8069)** | | | | | | |
+| bi (analytics) | 8060 | BI | 商业智能（含报表服务） | /api/bi/, /api/report/ | ✅ 已实现 | **C**（自定义 Prometheus） |
+| portal | 8063 | BI | 企业门户（GraphQL/WS/事件总线模拟器） | /api/portal/ | ✅ 已实现 | **C**（GraphQL + CookieManager） |
+| **基础设施 (8070-8079)** | | | | | | |
+| mobile | 8070 | Infra | 移动服务（6+ 服务客户端） | /api/mobile/ | ✅ 已实现 | **B**（8字段 AppState） |
+| gis | 8071 | Infra | 地理信息服务（WebSocket 图层推送） | /api/gis/ | ✅ 已实现 | **C**（WebSocket Manager） |
+| integration | 8072 | Infra | 集成服务（Webhook/Scheduler） | /api/integration/ | ✅ 已实现 | **C**（后台调度器） |
+| **主数据 & 扩展服务 (8082-8090)** | | | | | | |
+| search | 8082 | Extension | 全文搜索服务 | /api/search/ | ✅ 已实现 | **A** |
+| communication | 8084 | Extension | 通讯服务（邮件/通知/IM） | /api/comm/ | ✅ 已实现 | **A** |
+| billing | 8085 | Extension | 计费服务 | /api/billing/ | ✅ 已实现 | **A** |
+| ticket | 8086 | Extension | 工单服务 | /api/ticket/ | ✅ 已实现 | **A** |
+| feedback | 8087 | Extension | 反馈服务 | /api/feedback/ | ✅ 已实现 | **A** |
+| lowcode | 8088 | Extension | 低代码引擎（占位） | /api/lowcode/ | ✅ 已实现 | **A** |
+| master-data | 8090 | MasterData | 主数据管理 | /api/master-data/ | ✅ 已实现 | **A** |
 
 > **状态说明**: ✅ 已实现 | 🔶 部分实现 | 📋 规划中
+> **V2 模式说明**: **A** = 标准 `build_application`（10 个）· **B** = stateful + build_application（13 个）· **C** = `Application { router, port, name }` 自建（5 个）· 合计 28/28 = 100%
 
 ## 核心服务详解
 
@@ -166,6 +188,10 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
 | **ConsulServiceRegistrar** | **Consul 服务注册（V13.0）** | `lib/src/service_discovery.rs` |
 | **SmartServiceClient** | **智能服务客户端（Consul + 回退，V13.0）** | `lib/src/service_discovery.rs` |
 | **PluginHeartbeatMonitor** | **插件心跳超时检测后台任务（V13.0）** | `svc/unified-core/src/main.rs` |
+| **🆕 Shared Bootstrap V2（V66.2 核心基础设施）** | **服务启动标准化框架 · ServiceConfig + bootstrap_service + build_application + run · 28/28 = 100%** | `lib/shared-bootstrap/src/lib.rs` |
+| **V2-Mode-A Standard** | 标准 `build_application`（10 个）：PgPool + AuthState | 10 服务 |
+| **V2-Mode-B Stateful** | 自定义 state 注入 `build_application`（13 个）：cache/tenant/6+ 客户端 | 13 服务 |
+| **V2-Mode-C Custom** | `Application { router, port, name }` 重建（5 个）：WS/GraphQL/Cookie/后台任务 | 5 服务 |
 
 ### 插件化架构 (V13.0)
 
