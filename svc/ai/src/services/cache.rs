@@ -8,6 +8,10 @@
 use moka::future::Cache;
 use std::time::Duration;
 
+const DURATION_1H_SECS: u64 = 60 * 60;
+const DURATION_5M_SECS: u64 = 5 * 60;
+const DURATION_30M_SECS: u64 = 30 * 60;
+
 /// AI 服务缓存
 pub struct AiCacheService {
     // 文档缓存
@@ -33,21 +37,21 @@ impl AiCacheService {
         Self {
             document_cache: Cache::builder()
                 .max_capacity(500)
-                .time_to_live(Duration::from_secs(3600))
+                .time_to_live(Duration::from_secs(DURATION_1H_SECS))
                 .build(),
             vector_cache: Cache::builder()
                 .max_capacity(1000)
-                .time_to_live(Duration::from_secs(3600))
+                .time_to_live(Duration::from_secs(DURATION_1H_SECS))
                 .build(),
             search_cache: Cache::builder()
                 .max_capacity(200)
-                .time_to_live(Duration::from_secs(300))
+                .time_to_live(Duration::from_secs(DURATION_5M_SECS))
                 .build(),
             qa_cache: Cache::builder()
                 .max_capacity(100)
-                .time_to_live(Duration::from_secs(1800))
+                .time_to_live(Duration::from_secs(DURATION_30M_SECS))
                 .build(),
-            default_ttl: 3600,
+            default_ttl: DURATION_1H_SECS,
         }
     }
 
@@ -63,11 +67,11 @@ impl AiCacheService {
                 .build(),
             search_cache: Cache::builder()
                 .max_capacity(200)
-                .time_to_live(Duration::from_secs(300))
+                .time_to_live(Duration::from_secs(DURATION_5M_SECS))
                 .build(),
             qa_cache: Cache::builder()
                 .max_capacity(100)
-                .time_to_live(Duration::from_secs(1800))
+                .time_to_live(Duration::from_secs(DURATION_30M_SECS))
                 .build(),
             default_ttl: ttl_seconds,
         }

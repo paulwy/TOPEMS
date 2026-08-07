@@ -224,7 +224,7 @@ pub async fn sync_hazard_to_qms(
 
     let qms_url =
         std::env::var("QMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
-    tracing::info!("Syncing hazard {} to QMS at {}", req.hazard_id, qms_url);
+    tracing::debug!("Syncing hazard {} to QMS at {}", req.hazard_id, qms_url);
 
     let target_issue_id = uuid::Uuid::new_v4().to_string();
     let status = "completed";
@@ -319,7 +319,7 @@ pub async fn sync_accident_to_lims(
 
     let lims_url =
         std::env::var("LIMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8051".to_string());
-    tracing::info!(
+    tracing::debug!(
         "Syncing accident {} to LIMS at {}",
         req.accident_id,
         lims_url
@@ -449,7 +449,7 @@ pub struct SyncConfig {
 pub async fn list_sync_configs(
     State(_state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<SyncConfig>> {
-    tracing::info!("Getting sync configs");
+    tracing::debug!("Getting sync configs");
     let qms_url =
         std::env::var("QMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
     let lims_url =
@@ -473,7 +473,7 @@ pub async fn update_sync_configs(
     State(_state): State<crate::shared::AppState>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<SyncConfig>> {
-    tracing::info!("Updating sync configs: {:?}", req);
+    tracing::debug!("Updating sync configs: {:?}", req);
     let qms_url =
         std::env::var("QMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
     let lims_url =
@@ -517,7 +517,7 @@ pub async fn batch_retry_sync(
     State(_state): State<crate::shared::AppState>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("Batch retry sync: {:?}", req);
+    tracing::debug!("Batch retry sync: {:?}", req);
     Json(ApiResponse::success(
         serde_json::json!({
             "success": true,

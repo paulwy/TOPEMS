@@ -14,7 +14,7 @@ use crate::middleware::tenant::get_tenant_id;
 use crate::models::{
     AddTagToCustomerRequest, CreateTagRequest, CustomerWithTags, Tag, UpdateTagRequest,
 };
-use crate::modules::audit::log_audit_event;
+use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse};
@@ -174,16 +174,18 @@ async fn create_tag(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "tag".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "tag".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -303,16 +305,18 @@ async fn update_tag(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "tag".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "tag".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -368,16 +372,18 @@ async fn delete_tag(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "tag".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "tag".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -478,16 +484,20 @@ async fn add_tag_to_customer(
 
     log_audit_event(
         &state.db,
-        "add_tag".to_string(),
-        "customer_tag".to_string(),
-        None,
-        None,
-        Some(customer_id.to_string()),
-        Some(tag_id.to_string()),
-        Some(serde_json::json!({ "customer_id": customer_id, "tag_id": tag_id })),
-        None,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "add_tag".to_string(),
+            entity_type: "customer_tag".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: Some(customer_id.to_string()),
+            user_name: Some(tag_id.to_string()),
+            request_details: Some(
+                serde_json::json!({ "customer_id": customer_id, "tag_id": tag_id }),
+            ),
+            response_details: None,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -541,16 +551,18 @@ async fn remove_tag_from_customer(
 
     log_audit_event(
         &state.db,
-        "remove_tag".to_string(),
-        "customer_tag".to_string(),
-        None,
-        None,
-        Some(customer_id.to_string()),
-        Some(tag_id.to_string()),
-        None,
-        None,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "remove_tag".to_string(),
+            entity_type: "customer_tag".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: Some(customer_id.to_string()),
+            user_name: Some(tag_id.to_string()),
+            request_details: None,
+            response_details: None,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

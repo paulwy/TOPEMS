@@ -215,7 +215,7 @@ pub async fn list_accidents(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Accident>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing accidents");
+    tracing::debug!("Listing accidents");
     Json(ApiResponse::success(
         Vec::<Accident>::new(),
         "获取事故列表成功",
@@ -229,7 +229,7 @@ pub async fn report_accident(
     Json(req): Json<CreateAccidentRequest>,
 ) -> Json<ApiResponse<Accident>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Reporting accident: {:?}", req);
+    tracing::debug!("Reporting accident: {:?}", req);
     Json(ApiResponse::success(
         Accident {
             id: uuid::Uuid::new_v4().to_string(),
@@ -263,7 +263,7 @@ pub async fn get_accident(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<AccidentDetail>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting accident: {}", id);
+    tracing::debug!("Getting accident: {}", id);
     Json(ApiResponse::success(
         AccidentDetail {
             accident: Accident {
@@ -328,7 +328,7 @@ pub async fn update_accident(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Accident>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating accident {}: {:?}", id, req);
+    tracing::debug!("Updating accident {}: {:?}", id, req);
     Json(ApiResponse::success(
         Accident {
             id,
@@ -359,7 +359,7 @@ pub async fn delete_accident(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting accident: {}", id);
+    tracing::debug!("Deleting accident: {}", id);
     Json(ApiResponse::success((), "事故删除成功"))
 }
 
@@ -371,7 +371,7 @@ pub async fn start_investigation(
     Json(req): Json<CreateInvestigationRequest>,
 ) -> Json<ApiResponse<Investigation>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Starting investigation for accident {}: {:?}", id, req);
+    tracing::debug!("Starting investigation for accident {}: {:?}", id, req);
     Json(ApiResponse::success(
         Investigation {
             id: uuid::Uuid::new_v4().to_string(),
@@ -400,7 +400,7 @@ pub async fn update_investigation(
     Json(req): Json<UpdateInvestigationRequest>,
 ) -> Json<ApiResponse<Investigation>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating investigation {}: {:?}", id, req);
+    tracing::debug!("Updating investigation {}: {:?}", id, req);
     let status = req.status.unwrap_or("in_progress".to_string());
     let completed_at = if status == "completed" {
         Some(chrono::Utc::now().to_rfc3339())
@@ -481,7 +481,7 @@ pub async fn create_treatment(
     Json(req): Json<CreateTreatmentRequest>,
 ) -> Json<ApiResponse<Treatment>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating treatment for accident {}: {:?}", id, req);
+    tracing::debug!("Creating treatment for accident {}: {:?}", id, req);
     let actions = req
         .actions
         .into_iter()
@@ -524,7 +524,7 @@ pub async fn update_treatment_action(
     Json(req): Json<UpdateTreatmentActionRequest>,
 ) -> Json<ApiResponse<TreatmentAction>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!(
+    tracing::debug!(
         "Updating treatment action {} for accident {}: {:?}",
         action_id,
         accident_id,
@@ -600,7 +600,7 @@ pub async fn create_review(
     Json(req): Json<CreateReviewRequest>,
 ) -> Json<ApiResponse<Review>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating review for accident {}: {:?}", id, req);
+    tracing::debug!("Creating review for accident {}: {:?}", id, req);
     Json(ApiResponse::success(
         Review {
             id: uuid::Uuid::new_v4().to_string(),

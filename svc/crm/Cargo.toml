@@ -8,11 +8,10 @@ description = "TOPEMS-CRM 客户关系管理系统"
 [dependencies]
 axum.workspace = true
 tokio.workspace = true
-tower.workspace = true
 tower-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "chrono", "json", "rust_decimal"] }
+sqlx.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 tracing.workspace = true
@@ -21,13 +20,13 @@ dotenv.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 topems-shared = { path = "../../lib" }
+topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 rust_decimal = { version = "1.35", features = ["serde"] }
 rand = "0.8"
 reqwest.workspace = true
-hex = "0.4"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full", "test-util"] }

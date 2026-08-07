@@ -11,10 +11,10 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateInteractionRequest, Interaction, UpdateInteractionRequest};
-use crate::modules::audit::log_audit_event;
+use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse};
+use topems_shared::{api_error, ApiResponse, ListResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct InteractionPaginationParams {
@@ -54,7 +54,7 @@ async fn list_interactions(
     Extension(claims): Extension<Claims>,
     Query(params): Query<InteractionPaginationParams>,
     headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> Json<ApiResponse<ListResponse<Interaction>>> {
     match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -116,12 +116,7 @@ async fn list_interactions(
             let total = count_result.unwrap_or(0);
 
             Json(ApiResponse::success(
-                serde_json::json!({
-                    "items": interactions,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
+                ListResponse::with_pagination(interactions, total, page, page_size),
                 "获取交互记录列表成功",
             ))
         }
@@ -201,16 +196,18 @@ async fn create_interaction(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "interaction".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "interaction".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -344,16 +341,18 @@ async fn update_interaction(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "interaction".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "interaction".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -409,16 +408,18 @@ async fn delete_interaction(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "interaction".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "interaction".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -476,16 +477,18 @@ async fn batch_delete_interactions(
 
     log_audit_event(
         &state.db,
-        "batch_delete".to_string(),
-        "interaction".to_string(),
-        None,
-        serde_json::to_value(&req.ids).ok(),
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "batch_delete".to_string(),
+            entity_type: "interaction".to_string(),
+            entity_id: None,
+            entity_ids: serde_json::to_value(&req.ids).ok(),
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

@@ -12,7 +12,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateSalesForecastRequest, SalesForecast, SalesForecastQueryParams};
-use crate::modules::audit::log_audit_event;
+use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse};
@@ -211,16 +211,18 @@ async fn create_sales_forecast(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "sales_forecast".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "sales_forecast".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -390,16 +392,18 @@ async fn update_sales_forecast(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "sales_forecast".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "sales_forecast".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -456,16 +460,18 @@ async fn delete_sales_forecast(
 
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "sales_forecast".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "sales_forecast".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;

@@ -84,7 +84,7 @@ pub async fn list_risks(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Risk>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing risks");
+    tracing::debug!("Listing risks");
     Json(ApiResponse::success(Vec::<Risk>::new(), "获取风险列表成功"))
 }
 
@@ -95,7 +95,7 @@ pub async fn create_risk(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating risk: {:?}", req);
+    tracing::debug!("Creating risk: {:?}", req);
     Json(ApiResponse::success(
         Risk {
             id: uuid::Uuid::new_v4().to_string(),
@@ -126,7 +126,7 @@ pub async fn get_risk(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Risk>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting risk: {}", id);
+    tracing::debug!("Getting risk: {}", id);
     Json(ApiResponse::success(
         Risk {
             id,
@@ -155,7 +155,7 @@ pub async fn update_risk(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating risk {}: {:?}", id, req);
+    tracing::debug!("Updating risk {}: {:?}", id, req);
     Json(ApiResponse::success(
         Risk {
             id,
@@ -184,7 +184,7 @@ pub async fn assess_risk(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Assessing risk {}: {:?}", id, req);
+    tracing::debug!("Assessing risk {}: {:?}", id, req);
     Json(ApiResponse::success(
         Risk {
             id,
@@ -212,7 +212,7 @@ pub async fn delete_risk(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting risk: {}", id);
+    tracing::debug!("Deleting risk: {}", id);
     Json(ApiResponse::success((), "风险删除成功"))
 }
 
@@ -223,7 +223,7 @@ pub async fn list_control_measures(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<RiskControlMeasure>>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing control measures for risk: {}", id);
+    tracing::debug!("Listing control measures for risk: {}", id);
     Json(ApiResponse::success(
         vec![
             RiskControlMeasure {
@@ -261,7 +261,7 @@ pub async fn create_control_measure(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<RiskControlMeasure>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating control measure for risk {}: {:?}", id, req);
+    tracing::debug!("Creating control measure for risk {}: {:?}", id, req);
     Json(ApiResponse::success(
         RiskControlMeasure {
             id: uuid::Uuid::new_v4().to_string(),
@@ -296,7 +296,7 @@ pub async fn update_control_measure(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<RiskControlMeasure>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!(
+    tracing::debug!(
         "Updating control measure {} for risk {}: {:?}",
         measure_id,
         id,
@@ -339,6 +339,6 @@ pub async fn delete_control_measure(
     axum::extract::Path((_id, measure_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting control measure: {}", measure_id);
+    tracing::debug!("Deleting control measure: {}", measure_id);
     Json(ApiResponse::success((), "控制措施删除成功"))
 }

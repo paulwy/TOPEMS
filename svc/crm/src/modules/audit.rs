@@ -14,6 +14,21 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse};
 
+/// 审计日志参数包装（消除 clippy::too_many_arguments 告警）
+#[derive(Debug, Clone)]
+pub struct AuditEventParams {
+    pub action: String,
+    pub entity_type: String,
+    pub entity_id: Option<Uuid>,
+    pub entity_ids: Option<serde_json::Value>,
+    pub user_id: Option<String>,
+    pub user_name: Option<String>,
+    pub request_details: Option<serde_json::Value>,
+    pub response_details: Option<serde_json::Value>,
+    pub status: String,
+    pub error_message: Option<String>,
+}
+
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/audit-logs", get(list_audit_logs))
@@ -146,20 +161,19 @@ async fn get_audit_log(
     }
 }
 
-pub async fn log_audit_event(
-    db: &PgPool,
-    action: String,
-    entity_type: String,
-    entity_id: Option<Uuid>,
-    entity_ids: Option<serde_json::Value>,
-    user_id: Option<String>,
-    user_name: Option<String>,
-    request_details: Option<serde_json::Value>,
-    response_details: Option<serde_json::Value>,
-    status: String,
-    error_message: Option<String>,
-    headers: &HeaderMap,
-) {
+pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &HeaderMap) {
+    let AuditEventParams {
+        action,
+        entity_type,
+        entity_id,
+        entity_ids,
+        user_id,
+        user_name,
+        request_details,
+        response_details,
+        status,
+        error_message,
+    } = params;
     let ip_address = headers
         .get("x-forwarded-for")
         .and_then(|h| h.to_str().ok())

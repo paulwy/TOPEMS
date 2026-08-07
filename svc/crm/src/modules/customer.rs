@@ -11,13 +11,13 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
-use crate::modules::audit::log_audit_event;
+use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::event::MasterDataAction;
 use topems_shared::service_client::CreateInstanceRequest;
-use topems_shared::{api_error, ApiResponse};
+use topems_shared::{api_error, ApiResponse, ListResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct CustomerPaginationParams {
@@ -80,7 +80,7 @@ async fn list_customers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerPaginationParams>,
     headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> Json<ApiResponse<ListResponse<Customer>>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -150,12 +150,7 @@ async fn list_customers(
             }
 
             Json(ApiResponse::success(
-                serde_json::json!({
-                    "items": customers,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
+                ListResponse::with_pagination(customers, total, page, page_size),
                 "获取客户列表成功",
             ))
         }
@@ -278,16 +273,18 @@ async fn create_customer(
 
     log_audit_event(
         &state.db,
-        "create".to_string(),
-        "customer".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -520,16 +517,18 @@ async fn update_customer(
 
     log_audit_event(
         &state.db,
-        "update".to_string(),
-        "customer".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        request_data,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -616,16 +615,18 @@ async fn delete_customer(
     let status_str_clone = status_str.clone();
     log_audit_event(
         &state.db,
-        "delete".to_string(),
-        "customer".to_string(),
-        Some(id),
-        None,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -705,16 +706,18 @@ async fn batch_delete_customers(
     let entity_ids = serde_json::to_value(&req.ids).ok();
     log_audit_event(
         &state.db,
-        "batch_delete".to_string(),
-        "customer".to_string(),
-        None,
-        entity_ids,
-        None,
-        None,
-        None,
-        response_data,
-        status_str,
-        error_msg,
+        AuditEventParams {
+            action: "batch_delete".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: None,
+            entity_ids: entity_ids,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
         &headers,
     )
     .await;
@@ -800,19 +803,21 @@ async fn start_customer_approval(
 
     log_audit_event(
         &state.db,
-        "start_approval".to_string(),
-        "customer".to_string(),
-        Some(id),
-        None,
-        Some(claims.sub.clone()),
-        None,
-        None,
-        Some(serde_json::json!({
-            "workflow_id": req.workflow_id.to_string(),
-            "comment": req.comment,
-        })),
-        "success".to_string(),
-        None,
+        AuditEventParams {
+            action: "start_approval".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: None,
+            request_details: None,
+            response_details: Some(serde_json::json!({
+                "workflow_id": req.workflow_id.to_string(),
+                "comment": req.comment,
+            })),
+            status: "success".to_string(),
+            error_message: None,
+        },
         &headers,
     )
     .await;
@@ -866,18 +871,20 @@ async fn approve_customer(
 
     log_audit_event(
         &state.db,
-        "approve".to_string(),
-        "customer".to_string(),
-        Some(id),
-        None,
-        Some(claims.sub.clone()),
-        None,
-        None,
-        Some(serde_json::json!({
-            "status": "approved",
-        })),
-        "success".to_string(),
-        None,
+        AuditEventParams {
+            action: "approve".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: None,
+            request_details: None,
+            response_details: Some(serde_json::json!({
+                "status": "approved",
+            })),
+            status: "success".to_string(),
+            error_message: None,
+        },
         &headers,
     )
     .await;
@@ -930,18 +937,20 @@ async fn reject_customer(
 
     log_audit_event(
         &state.db,
-        "reject".to_string(),
-        "customer".to_string(),
-        Some(id),
-        None,
-        Some(claims.sub.clone()),
-        None,
-        None,
-        Some(serde_json::json!({
-            "status": "rejected",
-        })),
-        "success".to_string(),
-        None,
+        AuditEventParams {
+            action: "reject".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: None,
+            request_details: None,
+            response_details: Some(serde_json::json!({
+                "status": "rejected",
+            })),
+            status: "success".to_string(),
+            error_message: None,
+        },
         &headers,
     )
     .await;

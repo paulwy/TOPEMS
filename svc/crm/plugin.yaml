@@ -1,14 +1,15 @@
+author: TOPEMS
+category: Business
 code: crm
 name: 客户关系管理
-version: 0.1.0
 description: CRM 客户关系管理系统，包含客户管理、联系人管理、销售机会管理、销售预测、计费管理等模块
+version: 1.0.0
 plugin_type: business
-
+dependencies: []
 deployment:
   type: standalone
   port: 8029
   base_path: /api/crm
-
 permissions:
   - code: crm:read
     name: 查看客户
@@ -50,5 +51,3 @@ permissions:
     name: 管理计费
     resource_type: billing
     action: write
-
-dependencies: []

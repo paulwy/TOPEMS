@@ -1,14 +1,15 @@
+author: TOPEMS
+category: System
 code: bi
 name: 商业智能
-version: 1.0.0
 description: BI 商业智能系统，包含数据分析、仪表盘、数据源、可视化、报表等模块
-plugin_type: business
-
+version: 1.0.0
+plugin_type: system
+dependencies: []
 deployment:
   type: standalone
   port: 8060
   base_path: /api/bi
-
 permissions:
   - code: bi:read
     name: 查看分析
@@ -50,5 +51,3 @@ permissions:
     name: 管理组件
     resource_type: widget
     action: write
-
-dependencies: []

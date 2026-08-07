@@ -197,7 +197,7 @@ pub async fn list_plans(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EmergencyPlan>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing emergency plans");
+    tracing::debug!("Listing emergency plans");
     Json(ApiResponse::success(
         Vec::<EmergencyPlan>::new(),
         "获取应急预案列表成功",
@@ -211,7 +211,7 @@ pub async fn create_plan(
     Json(req): Json<CreatePlanRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating emergency plan: {:?}", req);
+    tracing::debug!("Creating emergency plan: {:?}", req);
     Json(ApiResponse::success(
         EmergencyPlan {
             id: uuid::Uuid::new_v4().to_string(),
@@ -251,7 +251,7 @@ pub async fn get_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<PlanDetail>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting emergency plan: {}", id);
+    tracing::debug!("Getting emergency plan: {}", id);
     Json(ApiResponse::success(
         PlanDetail {
             plan: EmergencyPlan {
@@ -359,7 +359,7 @@ pub async fn update_plan(
     Json(req): Json<UpdatePlanRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating emergency plan {}: {:?}", id, req);
+    tracing::debug!("Updating emergency plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         EmergencyPlan {
             id,
@@ -396,7 +396,7 @@ pub async fn delete_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting emergency plan: {}", id);
+    tracing::debug!("Deleting emergency plan: {}", id);
     Json(ApiResponse::success((), "应急预案删除成功"))
 }
 
@@ -407,7 +407,7 @@ pub async fn list_plan_supplies(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanSupply>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing supplies for plan: {}", id);
+    tracing::debug!("Listing supplies for plan: {}", id);
     Json(ApiResponse::success(
         Vec::<PlanSupply>::new(),
         "获取应急物资清单成功",
@@ -422,7 +422,7 @@ pub async fn add_plan_supply(
     Json(req): Json<CreateSupplyRequest>,
 ) -> Json<ApiResponse<PlanSupply>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Adding supply to plan {}: {:?}", id, req);
+    tracing::debug!("Adding supply to plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         PlanSupply {
             id: uuid::Uuid::new_v4().to_string(),
@@ -449,7 +449,7 @@ pub async fn delete_plan_supply(
     axum::extract::Path((_plan_id, supply_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting supply: {}", supply_id);
+    tracing::debug!("Deleting supply: {}", supply_id);
     Json(ApiResponse::success((), "应急物资删除成功"))
 }
 
@@ -499,7 +499,7 @@ pub async fn approve_plan(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<PlanApproval>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Approving plan {}: {:?}", id, req);
+    tracing::debug!("Approving plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         PlanApproval {
             id: uuid::Uuid::new_v4().to_string(),
@@ -524,7 +524,7 @@ pub async fn list_plan_versions(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanVersion>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing versions for plan: {}", id);
+    tracing::debug!("Listing versions for plan: {}", id);
     Json(ApiResponse::success(
         Vec::<PlanVersion>::new(),
         "获取预案版本列表成功",
@@ -539,7 +539,7 @@ pub async fn create_new_version(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PlanVersion>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating new version for plan {}: {:?}", id, req);
+    tracing::debug!("Creating new version for plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         PlanVersion {
             id: uuid::Uuid::new_v4().to_string(),
@@ -565,7 +565,7 @@ pub async fn list_plan_categories(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing plan categories");
+    tracing::debug!("Listing plan categories");
     let categories = vec![
         serde_json::json!({ "code": "fire", "name": "火灾", "icon": "flame" }),
         serde_json::json!({ "code": "leak", "name": "泄漏", "icon": "droplet" }),

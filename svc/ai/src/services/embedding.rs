@@ -9,6 +9,7 @@ use crate::models::{
 use std::fs;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tracing;
 use uuid::Uuid;
 use walkdir::WalkDir;
 
@@ -18,7 +19,7 @@ pub async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
 
     if !path.exists() {
         if let Err(e) = fs::create_dir_all(dir) {
-            eprintln!("Failed to create documents directory: {}", e);
+            tracing::warn!(error = %e, "Failed to create documents directory");
         }
         return docs;
     }

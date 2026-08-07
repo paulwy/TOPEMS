@@ -18,12 +18,11 @@ use std::sync::Arc;
 use std::time::Duration;
 use utoipa::OpenApi;
 
-use topems_shared::service_bootstrap::{
+use topems_shared::service_client::{create_erp_client, create_wms_client, create_workflow_client};
+use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
-use topems_shared::service_client::{create_erp_client, create_wms_client, create_workflow_client};
-use topems_shared::{FieldEncryptionService, KeyManager};
 
 mod middleware;
 mod models;
@@ -60,7 +59,7 @@ async fn main() -> Result<()> {
         tracing::warn!("⚠️ CRM 事件订阅者启动失败: {}", e);
     }
 
-    let encryption_service = init_encryption_service();
+    let encryption_service = topems_shared::init_encryption_from_env();
     tracing::info!("🔐 字段加密服务初始化成功");
 
     // 初始化 ERP / WMS 服务客户端（失败不阻塞启动，相关联动功能会优雅降级）
@@ -169,15 +168,4 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .await?;
     tracing::info!("[crm] crm_master_data_refs 表已就绪（AC-5 本地主数据引用）");
     Ok(())
-}
-
-fn init_encryption_service() -> FieldEncryptionService {
-    let master_key = env::var("ENCRYPTION_MASTER_KEY").unwrap_or_else(|_| {
-        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string()
-    });
-    let key_bytes = hex::decode(&master_key).unwrap_or_else(|_| vec![0x42; 32]);
-    let mut key_array = [0u8; 32];
-    key_array.copy_from_slice(&key_bytes[..32]);
-    let key_manager = KeyManager::new(&key_array);
-    FieldEncryptionService::new(key_manager)
 }

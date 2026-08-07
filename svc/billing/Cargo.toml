@@ -8,11 +8,10 @@ description = "TOPEMS-Billing 计费管理服务"
 [dependencies]
 axum.workspace = true
 tokio.workspace = true
-tower.workspace = true
 tower-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "chrono", "uuid"] }
+sqlx.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 tracing.workspace = true
@@ -25,9 +24,6 @@ topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
-
-[dev-dependencies]
-tokio-test.workspace = true
 
 [[bin]]
 name = "topems-billing"

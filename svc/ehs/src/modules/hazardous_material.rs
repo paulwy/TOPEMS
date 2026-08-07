@@ -290,7 +290,7 @@ pub async fn list_materials(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardousMaterial>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing hazardous materials");
+    tracing::debug!("Listing hazardous materials");
     Json(ApiResponse::success(
         Vec::<HazardousMaterial>::new(),
         "获取危险品列表成功",
@@ -304,7 +304,7 @@ pub async fn create_material(
     Json(req): Json<CreateMaterialRequest>,
 ) -> Json<ApiResponse<HazardousMaterial>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating hazardous material: {:?}", req);
+    tracing::debug!("Creating hazardous material: {:?}", req);
     Json(ApiResponse::success(
         HazardousMaterial {
             id: uuid::Uuid::new_v4().to_string(),
@@ -348,7 +348,7 @@ pub async fn get_material(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MaterialDetail>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting hazardous material: {}", id);
+    tracing::debug!("Getting hazardous material: {}", id);
     Json(ApiResponse::success(
         MaterialDetail {
             material: HazardousMaterial {
@@ -458,7 +458,7 @@ pub async fn update_material(
     Json(req): Json<UpdateMaterialRequest>,
 ) -> Json<ApiResponse<HazardousMaterial>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating hazardous material {}: {:?}", id, req);
+    tracing::debug!("Updating hazardous material {}: {:?}", id, req);
     Json(ApiResponse::success(
         HazardousMaterial {
             id,
@@ -499,7 +499,7 @@ pub async fn delete_material(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting hazardous material: {}", id);
+    tracing::debug!("Deleting hazardous material: {}", id);
     Json(ApiResponse::success((), "危险品删除成功"))
 }
 
@@ -510,7 +510,7 @@ pub async fn list_material_stocks(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<MaterialStock>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing stocks for material: {}", id);
+    tracing::debug!("Listing stocks for material: {}", id);
     Json(ApiResponse::success(
         Vec::<MaterialStock>::new(),
         "获取库存列表成功",
@@ -523,7 +523,7 @@ pub async fn list_stock_records(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<StockRecord>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing stock records");
+    tracing::debug!("Listing stock records");
     Json(ApiResponse::success(
         Vec::<StockRecord>::new(),
         "获取出入库记录列表成功",
@@ -537,7 +537,7 @@ pub async fn create_stock_in(
     Json(req): Json<CreateStockRecordRequest>,
 ) -> Json<ApiResponse<StockRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating stock in record: {:?}", req);
+    tracing::debug!("Creating stock in record: {:?}", req);
     Json(ApiResponse::success(
         StockRecord {
             id: uuid::Uuid::new_v4().to_string(),
@@ -573,7 +573,7 @@ pub async fn create_stock_out(
     Json(req): Json<CreateStockRecordRequest>,
 ) -> Json<ApiResponse<StockRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating stock out record: {:?}", req);
+    tracing::debug!("Creating stock out record: {:?}", req);
     Json(ApiResponse::success(
         StockRecord {
             id: uuid::Uuid::new_v4().to_string(),
@@ -609,7 +609,7 @@ pub async fn get_stock_record(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<StockRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting stock record: {}", id);
+    tracing::debug!("Getting stock record: {}", id);
     Json(ApiResponse::success(
         StockRecord {
             id,
@@ -642,7 +642,7 @@ pub async fn get_material_msds(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MsdsData>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting MSDS for material: {}", id);
+    tracing::debug!("Getting MSDS for material: {}", id);
     Json(ApiResponse::success(
         MsdsData {
             id: "msds-001".to_string(),
@@ -682,7 +682,7 @@ pub async fn update_material_msds(
     Json(req): Json<UpdateMsdsRequest>,
 ) -> Json<ApiResponse<MsdsData>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating MSDS for material {}: {:?}", id, req);
+    tracing::debug!("Updating MSDS for material {}: {:?}", id, req);
     Json(ApiResponse::success(
         MsdsData {
             id: "msds-001".to_string(),
@@ -718,7 +718,7 @@ pub async fn get_material_statistics(
     headers: HeaderMap,
 ) -> Json<ApiResponse<MaterialStatistics>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting material statistics");
+    tracing::debug!("Getting material statistics");
     Json(ApiResponse::success(
         MaterialStatistics {
             total_materials: 45,
@@ -759,7 +759,7 @@ pub async fn list_material_categories(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing material categories");
+    tracing::debug!("Listing material categories");
     let categories = vec![
         serde_json::json!({ "code": "flammable", "name": "易燃" }),
         serde_json::json!({ "code": "explosive", "name": "易爆" }),

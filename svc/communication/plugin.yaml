@@ -1,14 +1,17 @@
+author: TOPEMS Team
+category: Collaboration
 code: communication
 name: 通信服务
-version: 1.0.0
 description: 通信服务 - 站内通知、即时消息、邮件发送
+version: 1.0.0
+icon: groups
 plugin_type: service
-
+dependencies: []
+deployment: {}
 runtime:
   port: 8084
   health_endpoint: /health
   base_path: /api/communication
-
 permissions:
   - code: communication:notification:read
     name: 查看通知
@@ -28,5 +31,3 @@ permissions:
   - code: communication:mail:write
     name: 发送邮件
     description: 发送邮件
-
-dependencies: []

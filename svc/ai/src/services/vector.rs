@@ -521,7 +521,6 @@ pub struct SaveChunkRequest {
 }
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub struct SaveVectorRequest {
     pub document_id: Uuid,
     pub chunk_id: Uuid,

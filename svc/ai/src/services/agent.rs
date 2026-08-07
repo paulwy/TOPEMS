@@ -421,7 +421,7 @@ impl AgentService {
         }
 
         if numbers.len() == 1 {
-            Ok(format!("{}", numbers[0]))
+            Ok(numbers[0].to_string())
         } else {
             Err("表达式错误".to_string())
         }

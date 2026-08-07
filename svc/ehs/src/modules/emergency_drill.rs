@@ -276,7 +276,7 @@ pub async fn list_drill_plans(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DrillPlan>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing drill plans");
+    tracing::debug!("Listing drill plans");
     Json(ApiResponse::success(
         Vec::<DrillPlan>::new(),
         "获取演练计划列表成功",
@@ -290,7 +290,7 @@ pub async fn create_drill_plan(
     Json(req): Json<CreateDrillPlanRequest>,
 ) -> Json<ApiResponse<DrillPlan>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating drill plan: {:?}", req);
+    tracing::debug!("Creating drill plan: {:?}", req);
     Json(ApiResponse::success(
         DrillPlan {
             id: uuid::Uuid::new_v4().to_string(),
@@ -325,7 +325,7 @@ pub async fn get_drill_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DrillPlan>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting drill plan: {}", id);
+    tracing::debug!("Getting drill plan: {}", id);
     Json(ApiResponse::success(
         DrillPlan {
             id,
@@ -358,7 +358,7 @@ pub async fn update_drill_plan(
     Json(req): Json<UpdateDrillPlanRequest>,
 ) -> Json<ApiResponse<DrillPlan>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating drill plan {}: {:?}", id, req);
+    tracing::debug!("Updating drill plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillPlan {
             id,
@@ -392,7 +392,7 @@ pub async fn delete_drill_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting drill plan: {}", id);
+    tracing::debug!("Deleting drill plan: {}", id);
     Json(ApiResponse::success((), "演练计划删除成功"))
 }
 
@@ -402,7 +402,7 @@ pub async fn list_drill_records(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DrillRecord>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing drill records");
+    tracing::debug!("Listing drill records");
     Json(ApiResponse::success(
         Vec::<DrillRecord>::new(),
         "获取演练记录列表成功",
@@ -416,7 +416,7 @@ pub async fn create_drill_record(
     Json(req): Json<CreateDrillRecordRequest>,
 ) -> Json<ApiResponse<DrillRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating drill record: {:?}", req);
+    tracing::debug!("Creating drill record: {:?}", req);
     Json(ApiResponse::success(
         DrillRecord {
             id: uuid::Uuid::new_v4().to_string(),
@@ -455,7 +455,7 @@ pub async fn get_drill_record(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DrillDetail>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting drill record: {}", id);
+    tracing::debug!("Getting drill record: {}", id);
     Json(ApiResponse::success(
         DrillDetail {
             record: DrillRecord {
@@ -529,7 +529,7 @@ pub async fn update_drill_record(
     Json(req): Json<UpdateDrillRecordRequest>,
 ) -> Json<ApiResponse<DrillRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating drill record {}: {:?}", id, req);
+    tracing::debug!("Updating drill record {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillRecord {
             id,
@@ -567,7 +567,7 @@ pub async fn delete_drill_record(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Deleting drill record: {}", id);
+    tracing::debug!("Deleting drill record: {}", id);
     Json(ApiResponse::success((), "演练记录删除成功"))
 }
 
@@ -579,7 +579,7 @@ pub async fn create_drill_evaluation(
     Json(req): Json<CreateEvaluationRequest>,
 ) -> Json<ApiResponse<DrillEvaluation>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating drill evaluation for {}: {:?}", id, req);
+    tracing::debug!("Creating drill evaluation for {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillEvaluation {
             id: uuid::Uuid::new_v4().to_string(),
@@ -608,7 +608,7 @@ pub async fn list_drill_problems(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<DrillProblem>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing drill problems for: {}", id);
+    tracing::debug!("Listing drill problems for: {}", id);
     Json(ApiResponse::success(
         Vec::<DrillProblem>::new(),
         "获取问题列表成功",
@@ -623,7 +623,7 @@ pub async fn create_drill_problem(
     Json(req): Json<CreateDrillProblemRequest>,
 ) -> Json<ApiResponse<DrillProblem>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Creating drill problem for {}: {:?}", id, req);
+    tracing::debug!("Creating drill problem for {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillProblem {
             id: uuid::Uuid::new_v4().to_string(),
@@ -655,7 +655,7 @@ pub async fn update_drill_problem(
     Json(req): Json<UpdateDrillProblemRequest>,
 ) -> Json<ApiResponse<DrillProblem>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Updating drill problem {}: {:?}", problem_id, req);
+    tracing::debug!("Updating drill problem {}: {:?}", problem_id, req);
     let status = req
         .status
         .clone()
@@ -702,7 +702,7 @@ pub async fn get_drill_statistics(
     headers: HeaderMap,
 ) -> Json<ApiResponse<DrillStatistics>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Getting drill statistics");
+    tracing::debug!("Getting drill statistics");
     Json(ApiResponse::success(
         DrillStatistics {
             total_drills: 12,
@@ -739,7 +739,7 @@ pub async fn list_drill_types(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let _tenant_id = get_tenant_id(&claims, &headers);
-    tracing::info!("Listing drill types");
+    tracing::debug!("Listing drill types");
     let types = vec![
         serde_json::json!({ "code": "fire", "name": "火灾演练" }),
         serde_json::json!({ "code": "leak", "name": "泄漏演练" }),
