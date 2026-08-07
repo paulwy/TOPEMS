@@ -97,9 +97,14 @@ pub async fn list_suppliers(
         }
     };
 
-    let total = match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM suppliers")
-        .fetch_one(&state.db)
-        .await
+    let total = match sqlx::query_scalar::<_, i64>(
+        r#"SELECT COUNT(*) FROM suppliers WHERE (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR supplier_type = $3)"#
+    )
+    .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
+    .bind(status_filter.as_deref().unwrap_or(""))
+    .bind(supplier_type_filter.as_deref().unwrap_or(""))
+    .fetch_one(&state.db)
+    .await
     {
         Ok(t) => t,
         Err(e) => {

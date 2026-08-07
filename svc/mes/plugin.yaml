@@ -1,16 +1,17 @@
+author: TOPEMS Team
+category: Manufacturing
 code: mes
 name: 生产执行系统
-version: 1.0.0
 description: MES 生产执行系统，包含生产工单、生产工艺、生产记录、设备管理、工位管理等模块
-author: TOPEMS
-category: Manufacturing
+version: 1.0.0
+icon: precision_manufacturing
 plugin_type: business
-
+dependencies: []
+deployment: {}
 runtime:
   port: 8030
   health_endpoint: /health
-  base_path: /api/mfg
-
+  base_path: /api/mes
 permissions:
   - code: mes:read
     name: 查看生产工单

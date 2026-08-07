@@ -1,56 +1,57 @@
-code: "mobile"
-name: "移动端服务"
-version: "1.0.0"
-description: "Mobile 移动端服务 - 离线同步、扫码、设备管理"
-category: "System"
-plugin_type: "system"
-
+author: TOPEMS
+category: System
+code: mobile
+name: 移动端服务
+description: Mobile 移动端服务 - 离线同步、扫码、设备管理
+version: 1.0.0
+plugin_type: system
+dependencies: []
 deployment:
   port: 8070
   base_path: /api/mobile
-
+runtime: {}
 permissions:
-  - code: "mobile:write"
-    name: "注册设备"
-    resource_type: "device"
-    action: "write"
-  - code: "mobile:write"
-    name: "管理设备"
-    resource_type: "device"
-    action: "write"
-  - code: "mobile:write"
-    name: "离线同步"
-    resource_type: "offline"
-    action: "write"
-  - code: "mobile:read"
-    name: "查看离线数据"
-    resource_type: "offline"
-    action: "read"
-  - code: "mobile:write"
-    name: "扫码"
-    resource_type: "scan"
-    action: "write"
-  - code: "mobile:write"
-    name: "二维码扫描"
-    resource_type: "scan"
-    action: "write"
-  - code: "mobile:write"
-    name: "图像识别"
-    resource_type: "scan"
-    action: "write"
-  - code: "mobile:read"
-    name: "查看通知"
-    resource_type: "notification"
-    action: "read"
-  - code: "mobile:write"
-    name: "管理通知"
-    resource_type: "notification"
-    action: "write"
-  - code: "mobile:read"
-    name: "查看任务"
-    resource_type: "task"
-    action: "read"
-  - code: "mobile:write"
-    name: "管理任务"
-    resource_type: "task"
-    action: "write"
+  - code: mobile:write
+    name: 注册设备
+    resource_type: device
+    action: write
+  - code: mobile:write
+    name: 管理设备
+    resource_type: device
+    action: write
+  - code: mobile:write
+    name: 离线同步
+    resource_type: offline
+    action: write
+  - code: mobile:read
+    name: 查看离线数据
+    resource_type: offline
+    action: read
+  - code: mobile:write
+    name: 扫码
+    resource_type: scan
+    action: write
+  - code: mobile:write
+    name: 二维码扫描
+    resource_type: scan
+    action: write
+  - code: mobile:write
+    name: 图像识别
+    resource_type: scan
+    action: write
+  - code: mobile:read
+    name: 查看通知
+    resource_type: notification
+    action: read
+  - code: mobile:write
+    name: 管理通知
+    resource_type: notification
+    action: write
+  - code: mobile:read
+    name: 查看任务
+    resource_type: task
+    action: read
+  - code: mobile:write
+    name: 管理任务
+    resource_type: task
+    action: write

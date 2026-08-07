@@ -15,7 +15,7 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse};
+use topems_shared::{api_error, ApiResponse, ListResponse};
 
 fn inventory_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     serde_json::json!({
@@ -97,7 +97,7 @@ pub async fn list_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InventoryPaginationParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> Json<ApiResponse<ListResponse<serde_json::Value>>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -156,12 +156,7 @@ pub async fn list_inventory(
                 items.iter().map(inventory_row_to_json).collect();
 
             Json(ApiResponse::success(
-                serde_json::json!({
-                    "items": items_json,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
+                ListResponse::with_pagination(items_json, total, page, page_size),
                 "获取库存列表成功",
             ))
         }

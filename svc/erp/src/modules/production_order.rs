@@ -169,7 +169,7 @@ pub async fn create_production_order(
 
     match result {
         Ok(order) => {
-            tracing::info!("[ERP] Created production order: {}", order_no);
+            tracing::debug!("[ERP] Created production order: {}", order_no);
             Json(ApiResponse::success(order, "生产订单创建成功"))
         }
         Err(e) => {
@@ -450,7 +450,7 @@ pub async fn receive_mes_progress(
 
     match result {
         Ok(Some(order)) => {
-            tracing::info!(
+            tracing::debug!(
                 "[ERP] Received MES progress update for order: {}",
                 order.order_no
             );

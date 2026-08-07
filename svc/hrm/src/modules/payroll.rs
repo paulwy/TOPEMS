@@ -848,7 +848,7 @@ async fn generate_payroll_voucher(
                 .await;
             }
 
-            tracing::info!(
+            tracing::debug!(
                 "[HRM] Generated payroll voucher {} for payroll run {}",
                 voucher_number,
                 id

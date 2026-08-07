@@ -1637,7 +1637,7 @@ pub async fn auto_audit_scheduler(pool: PgPool) {
             match AutoAuditEngine::run_audit(&pool, tenant_id, None).await {
                 Ok(findings) => {
                     if !findings.is_empty() {
-                        tracing::info!(
+                        tracing::debug!(
                             "[audit_v52] 租户 {} 自动审计完成，发现 {} 条异常",
                             tenant_id,
                             findings.len()

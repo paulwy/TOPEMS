@@ -1,14 +1,16 @@
+author: TOPEMS
+category: Business
 code: scm
 name: 供应链管理
-version: 1.0.0
 description: SCM 供应链管理系统，包含供应商管理、采购订单管理、采购供应商评价等模块
+version: 1.0.0
 plugin_type: business
-
+dependencies: []
 deployment:
   type: standalone
   port: 8040
   base_path: /api/scm
-
+runtime: {}
 permissions:
   # 供应商管理
   - code: scm:read
@@ -23,7 +25,6 @@ permissions:
     name: 删除供应商
     resource_type: supplier
     action: delete
-
   # 采购订单
   - code: scm:read
     name: 查看采购订单
@@ -37,7 +38,6 @@ permissions:
     name: 审批采购订单
     resource_type: purchase_order
     action: approve
-
   # 采购明细
   - code: scm:read
     name: 查看采购明细
@@ -47,7 +47,6 @@ permissions:
     name: 管理采购明细
     resource_type: purchase_item
     action: write
-
   # 供应商评价
   - code: scm:read
     name: 查看供应商评价
@@ -57,5 +56,3 @@ permissions:
     name: 管理供应商评价
     resource_type: supplier_evaluation
     action: write
-
-dependencies: []

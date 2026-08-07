@@ -1,16 +1,16 @@
-code: pdm
-name: PDM
-version: 1.0.0
-description: TOPEMS-PDM
 author: TOPEMS
-category: Manufacturing
+category: Quality
+code: pdm
+name: 产品数据管理
+description: PDM 产品数据管理系统，包含产品结构管理、物料清单（BOM）管理、工艺路线管理、图文档管理、版本管理、变更管理、分类编码等模块
+version: 1.0.0
 plugin_type: business
-
-runtime:
-  port: 8031
-  health_endpoint: /health
-  base_path: /api/mfg
-
 dependencies:
   - unified-core
   - mes
+runtime:
+  port: 8031
+  health_endpoint: /health
+  base_path: /api/pdm
+deployment: {}
+permissions: {}

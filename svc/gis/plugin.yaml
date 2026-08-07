@@ -1,9 +1,12 @@
-code: "gis"
-name: "地理信息服务"
-version: "1.0.0"
+author: TOPEMS
+category: IoT
+code: gis
+name: 地理信息服务
 description: "GIS 地理信息服务 - 位置服务、轨迹追踪、地理围栏"
-category: "IoT"
-plugin_type: "business"
+version: 1.0.0
+plugin_type: business
+dependencies: []
+deployment: {}
 port: 8071
 base_path: /api/gis
 permissions:

@@ -11,15 +11,7 @@ use super::ApiState;
 use crate::models::material::{CreateSalesOrderRequest, SalesOrder, UpdateSalesOrderRequest};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
-
-#[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub pagesize: Option<i64>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-}
+use topems_shared::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -45,7 +37,7 @@ pub async fn list_sales_orders(
     }
 
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).min(100);
+    let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
@@ -86,9 +78,13 @@ pub async fn list_sales_orders(
         }
     };
 
-    let total = match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM sales_orders")
-        .fetch_one(&state.db)
-        .await
+    let total = match sqlx::query_scalar::<_, i64>(
+        r#"SELECT COUNT(*) FROM sales_orders WHERE (order_no ILIKE $1 OR customer_name ILIKE $1) AND ($2 = '' OR status = $2)"#
+    )
+    .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
+    .bind(status_filter.as_deref().unwrap_or(""))
+    .fetch_one(&state.db)
+    .await
     {
         Ok(t) => t,
         Err(e) => {

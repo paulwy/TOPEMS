@@ -130,7 +130,7 @@ pub struct LeaveRequestQueryParams {
 /// 确保 leave_requests 表存在（幂等操作）
 /// 表结构在 handler 中用 CREATE TABLE IF NOT EXISTS 创建，不依赖迁移文件
 async fn ensure_table(state: &ApiState) {
-    let _ = sqlx::query(
+    sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS leave_requests (
             id              UUID PRIMARY KEY,
@@ -154,7 +154,8 @@ async fn ensure_table(state: &ApiState) {
         "#,
     )
     .execute(&state.db)
-    .await;
+    .await
+    .unwrap_or_else(|e| tracing::warn!("创建 leave_requests 表失败（可能已存在）: {}", e));
 }
 
 /// 从 Claims 提取 tenant_id

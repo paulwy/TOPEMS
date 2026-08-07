@@ -52,7 +52,6 @@ pub struct PerformanceMetrics {
 pub struct ReportQuery {
     pub start_date: Option<String>,
     pub end_date: Option<String>,
-    #[allow(dead_code)]
     pub project_type: Option<String>,
 }
 

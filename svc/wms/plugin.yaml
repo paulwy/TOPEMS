@@ -1,14 +1,16 @@
+author: TOPEMS
+category: Manufacturing
 code: wms
 name: 仓储管理
-version: 1.0.0
 description: WMS 仓储管理系统，包含仓库管理、库存管理、入库管理、出库管理、库位管理、库存盘点、库存调拨等模块
+version: 1.0.0
 plugin_type: business
-
+dependencies: []
 deployment:
   type: standalone
   port: 8041
   base_path: /api/wms
-
+runtime: {}
 permissions:
   # 仓库管理
   - code: wms:read
@@ -19,7 +21,6 @@ permissions:
     name: 管理仓库
     resource_type: warehouse
     action: write
-
   # 库位管理
   - code: wms:read
     name: 查看库位
@@ -29,7 +30,6 @@ permissions:
     name: 管理库位
     resource_type: location
     action: write
-
   # 库存管理
   - code: wms:read
     name: 查看库存
@@ -39,7 +39,6 @@ permissions:
     name: 管理库存
     resource_type: inventory
     action: write
-
   # 入库管理
   - code: wms:read
     name: 查看入库单
@@ -53,7 +52,6 @@ permissions:
     name: 审批入库单
     resource_type: inbound_order
     action: approve
-
   # 出库管理
   - code: wms:read
     name: 查看出库单
@@ -67,7 +65,6 @@ permissions:
     name: 审批出库单
     resource_type: outbound_order
     action: approve
-
   # 库存盘点
   - code: wms:read
     name: 查看盘点
@@ -77,7 +74,6 @@ permissions:
     name: 管理盘点
     resource_type: stock_take
     action: write
-
   # 库存调拨
   - code: wms:read
     name: 查看调拨
@@ -91,5 +87,3 @@ permissions:
     name: 审批调拨
     resource_type: transfer
     action: approve
-
-dependencies: []

@@ -1,19 +1,17 @@
-# TOPEMS AI Service Plugin Configuration
+author: TOPEMS Team
+category: AI
 code: ai
 name: AI 智能服务
-version: 1.0.0
 description: AI 智能服务 - 向量数据库、文档分析、QA问答、智能生成
-author: TOPEMS
-category: AI
+version: 1.0.0
+icon: auto_awesome
 plugin_type: ai
-
-# Runtime configuration
+dependencies: []
+deployment: {}
 runtime:
   port: 8013
   health_endpoint: /health
   base_path: /api/ai
-
-# Permissions required by this plugin
 permissions:
   - code: ai:search
     name: AI 搜索

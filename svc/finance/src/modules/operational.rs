@@ -16,15 +16,7 @@ use sqlx::Row;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared::{auth::Claims, ApiResponse, PaginatedResponse};
-
-#[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-}
+use topems_shared::{auth::Claims, ApiResponse, PaginatedResponse, PaginationParams};
 
 // ==================== 费用报销（Expenses）====================
 

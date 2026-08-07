@@ -1,87 +1,90 @@
-code: "unified-core"
-name: "统一核心服务"
-version: "1.0.0"
-description: "TOPEMS 统一核心平台（Unified Core）：承载 IAM 认证授权、Flow 工作流引擎、File 文件存储、Doc 文档管理、Tenant 租户管理、Audit 审计日志、Monitor 系统监控等虚拟服务模块，共用 8000 端口通过 URL 路径区分"
-
+author: TOPEMS Team
+category: System
+code: unified-core
+name: 统一核心服务
+description: TOPEMS 统一核心平台（Unified Core）：承载 IAM 认证授权、Flow 工作流引擎、File 文件存储、Doc 文档管理、Tenant 租户管理、Audit 审计日志、Monitor 系统监控等虚拟服务模块，共用 8000 端口通过 URL 路径区分
+version: 1.0.0
+icon: admin_panel_settings
+plugin_type: system
+dependencies: []
 deployment:
   type: standalone
   port: 8000
   base_path: /api/core
-
 permissions:
-  #  # IAM 权限
-  - code: "iam:user:read"
-    name: "查看用户"
+  # IAM 权限
+  - code: iam:user:read
+    name: 查看用户
     resource_type: user
     action: read
-  - code: "iam:user:write"
-    name: "管理用户"
+  - code: iam:user:write
+    name: 管理用户
     resource_type: user
     action: write
-  - code: "iam:role:read"
-    name: "查看角色"
+  - code: iam:role:read
+    name: 查看角色
     resource_type: role
     action: read
-  - code: "iam:role:write"
-    name: "管理角色"
+  - code: iam:role:write
+    name: 管理角色
     resource_type: role
     action: write
   # Workflow 权限（保留历史 code 兼容）
-  - code: "workflow:read"
-    name: "查看工作流"
+  - code: workflow:read
+    name: 查看工作流
     resource_type: workflow
     action: read
-  - code: "workflow:write"
-    name: "管理工作流"
+  - code: workflow:write
+    name: 管理工作流
     resource_type: workflow
     action: write
-  - code: "workflow:approve"
-    name: "审批工作流"
+  - code: workflow:approve
+    name: 审批工作流
     resource_type: workflow
     action: approve
-  - code: "instance:read"
-    name: "查看流程实例"
+  - code: instance:read
+    name: 查看流程实例
     resource_type: instance
     action: read
-  - code: "instance:write"
-    name: "管理流程实例"
+  - code: instance:write
+    name: 管理流程实例
     resource_type: instance
     action: write
-  - code: "approval"
-    name: "审批任务"
+  - code: approval
+    name: 审批任务
     resource_type: approval
     action: execute
-  - code: "statistics"
-    name: "工作流统计"
+  - code: statistics
+    name: 工作流统计
     resource_type: statistics
     action: read
   # 文件/文档
-  - code: "file:read"
-    name: "查看文件"
+  - code: file:read
+    name: 查看文件
     resource_type: file
     action: read
-  - code: "file:write"
-    name: "管理文件"
+  - code: file:write
+    name: 管理文件
     resource_type: file
     action: write
-  - code: "doc:read"
-    name: "查看文档"
+  - code: doc:read
+    name: 查看文档
     resource_type: document
     action: read
-  - code: "doc:write"
-    name: "管理文档"
+  - code: doc:write
+    name: 管理文档
     resource_type: document
     action: write
   # 租户与监控
-  - code: "tenant:read"
-    name: "查看租户"
+  - code: tenant:read
+    name: 查看租户
     resource_type: tenant
     action: read
-  - code: "tenant:write"
-    name: "管理租户"
+  - code: tenant:write
+    name: 管理租户
     resource_type: tenant
     action: write
-  - code: "monitor:read"
-    name: "查看监控"
+  - code: monitor:read
+    name: 查看监控
     resource_type: monitor
     action: read

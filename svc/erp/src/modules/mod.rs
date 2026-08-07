@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use crate::models;
-use crate::utils::InMemoryCache;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
@@ -10,8 +9,8 @@ use topems_shared::service_client::{
     api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
 };
 use topems_shared::{
-    event::EventPublisher, AuthState, FieldEncryptionService, NotificationServiceClient,
-    SystemMetrics,
+    event::EventPublisher, AuthState, FieldEncryptionService, LocalInMemoryCache as InMemoryCache,
+    NotificationServiceClient, SystemMetrics,
 };
 
 pub mod addressbook;

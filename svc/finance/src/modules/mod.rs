@@ -1,3 +1,5 @@
+// 2026-08-07: 部分报表和模型 struct 仅 serde 使用，保留 crate 级 allow
+#![allow(dead_code)]
 mod audit_v52;
 mod compliance_v51;
 mod cqrs_routes;
@@ -40,7 +42,6 @@ use topems_shared::{ApiResponse, Claims};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct AccountQueryParams {
-    #[allow(dead_code)]
     parent_id: Option<Uuid>,
 }
 
@@ -63,11 +64,8 @@ pub struct LedgerQueryParams {
 pub struct AccountBalanceQueryParams {
     account_ids: Option<Vec<Uuid>>,
     period: String,
-    #[allow(dead_code)]
     company_id: Option<String>,
-    #[allow(dead_code)]
     department_id: Option<String>,
-    #[allow(dead_code)]
     project_id: Option<String>,
 }
 
@@ -1169,7 +1167,7 @@ async fn submit_approval(
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("[finance] 收到审批提交请求: {:?}", req);
+    tracing::debug!("[finance] 收到审批提交请求: {:?}", req);
     Json(ApiResponse::success(
         serde_json::json!({"success": true, "message": "审批已提交"}),
         "审批已提交",
@@ -1181,7 +1179,7 @@ async fn approve_approval(
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("[finance] 收到审批通过请求: {:?}", req);
+    tracing::debug!("[finance] 收到审批通过请求: {:?}", req);
     Json(ApiResponse::success(
         serde_json::json!({"success": true, "message": "审批已通过"}),
         "审批已通过",
@@ -1193,7 +1191,7 @@ async fn reject_approval(
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("[finance] 收到审批驳回请求: {:?}", req);
+    tracing::debug!("[finance] 收到审批驳回请求: {:?}", req);
     Json(ApiResponse::success(
         serde_json::json!({"success": true, "message": "审批已驳回"}),
         "审批已驳回",
@@ -1205,7 +1203,7 @@ async fn cancel_approval(
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("[finance] 收到审批取消请求: {:?}", req);
+    tracing::debug!("[finance] 收到审批取消请求: {:?}", req);
     Json(ApiResponse::success(
         serde_json::json!({"success": true, "message": "审批已取消"}),
         "审批已取消",
@@ -2263,7 +2261,6 @@ pub struct ReceivableQueryParams {
     pub customer_id: Option<String>,
 }
 
-#[allow(dead_code)]
 async fn list_receivables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2286,7 +2283,6 @@ async fn list_receivables_handler(
     }
 }
 
-#[allow(dead_code)]
 async fn get_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2300,7 +2296,6 @@ async fn get_receivable_handler(
     }
 }
 
-#[allow(dead_code)]
 async fn create_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2315,7 +2310,6 @@ async fn create_receivable_handler(
     }
 }
 
-#[allow(dead_code)]
 async fn update_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2333,7 +2327,6 @@ async fn update_receivable_handler(
     }
 }
 
-#[allow(dead_code)]
 async fn delete_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2391,7 +2384,6 @@ pub struct PayableQueryParams {
     pub supplier_id: Option<String>,
 }
 
-#[allow(dead_code)]
 async fn list_payables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2414,7 +2406,6 @@ async fn list_payables_handler(
     }
 }
 
-#[allow(dead_code)]
 async fn get_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2428,7 +2419,6 @@ async fn get_payable_handler(
     }
 }
 
-#[allow(dead_code)]
 async fn create_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2443,7 +2433,6 @@ async fn create_payable_handler(
     }
 }
 
-#[allow(dead_code)]
 async fn update_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2458,7 +2447,6 @@ async fn update_payable_handler(
     }
 }
 
-#[allow(dead_code)]
 async fn delete_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

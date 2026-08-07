@@ -10,7 +10,7 @@ use crate::services::employee_service::EmployeeService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::{
     api_error, event::EventType, event::HrmEmployeeCreatedPayload, event::MasterDataAction,
-    ApiResponse, Claims,
+    ApiResponse, Claims, ListResponse,
 };
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
@@ -97,7 +97,7 @@ async fn list_employees(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Query(params): axum::extract::Query<EmployeePaginationParams>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> Json<ApiResponse<ListResponse<Employee>>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
     }
