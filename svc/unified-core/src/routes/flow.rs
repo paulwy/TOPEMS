@@ -88,6 +88,10 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
             "/records/{approval_id}",
             get(modules::flow::record::get_record),
         )
+        .route(
+            "/statistics",
+            get(modules::flow::statistics::get_statistics),
+        )
         .route("/settings", get(modules::flow::setting::list_settings))
         .route("/settings/{id}", get(modules::flow::setting::get_setting))
         .route(

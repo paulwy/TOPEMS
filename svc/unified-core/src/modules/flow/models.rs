@@ -303,6 +303,29 @@ pub struct StatisticsResponse {
     pub avg_approval_time: f64,
     pub approval_rate: f64,
     pub rejection_rate: f64,
+    #[serde(default)]
+    pub workflow_stats: Vec<WorkflowStat>,
+    #[serde(default)]
+    pub monthly_data: Vec<MonthlyData>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = WorkflowStat)]
+pub struct WorkflowStat {
+    pub workflow_id: String,
+    pub workflow_name: String,
+    pub instance_count: i64,
+    pub completion_rate: f64,
+    pub avg_duration: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = MonthlyData)]
+pub struct MonthlyData {
+    pub month: String,
+    pub instances_started: i64,
+    pub instances_completed: i64,
+    pub approvals_processed: i64,
 }
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]

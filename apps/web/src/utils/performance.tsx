@@ -2,6 +2,8 @@ import React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { logger } from './logger';
 
+const lazyComponentModules = import.meta.glob('../components/*.tsx');
+
 export interface PerformanceMetrics {
   lcp: number;
   fid: number;
@@ -255,19 +257,25 @@ export function lazyLoadComponents(): void {
         const el = entry.target as HTMLElement;
         const componentName = el.dataset.lazyComponent;
         if (componentName) {
-          import(`@/components/${componentName}`)
-            .then((module) => {
-              const Component = module.default;
-              if (Component) {
-                const container = document.createElement('div');
-                const root = ReactDOM.createRoot(container);
-                root.render(<Component />);
-                el.replaceWith(container.firstChild || container);
-              }
-            })
-            .catch((error) => {
-              logger.error(`Failed to load component ${componentName}:`, error);
-            });
+          const moduleKey = `../components/${componentName}.tsx`;
+          const loader = lazyComponentModules[moduleKey];
+          if (loader) {
+            (loader() as Promise<{ default?: React.ComponentType }>)
+              .then((module) => {
+                const Component = module.default;
+                if (Component) {
+                  const container = document.createElement('div');
+                  const root = ReactDOM.createRoot(container);
+                  root.render(<Component />);
+                  el.replaceWith(container.firstChild || container);
+                }
+              })
+              .catch((error) => {
+                logger.error(`Failed to load component ${componentName}:`, error);
+              });
+          } else {
+            logger.warn(`Lazy component not found: ${componentName}`);
+          }
         }
         observer.unobserve(el);
       }

@@ -6,6 +6,7 @@ pub mod instance;
 pub mod models;
 pub mod record;
 pub mod setting;
+pub mod statistics;
 pub mod task;
 pub mod template;
 pub mod workflow;

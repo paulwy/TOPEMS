@@ -2263,6 +2263,7 @@ pub struct ReceivableQueryParams {
     pub customer_id: Option<String>,
 }
 
+#[allow(dead_code)]
 async fn list_receivables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2285,6 +2286,7 @@ async fn list_receivables_handler(
     }
 }
 
+#[allow(dead_code)]
 async fn get_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2298,6 +2300,7 @@ async fn get_receivable_handler(
     }
 }
 
+#[allow(dead_code)]
 async fn create_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2312,6 +2315,7 @@ async fn create_receivable_handler(
     }
 }
 
+#[allow(dead_code)]
 async fn update_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2329,6 +2333,7 @@ async fn update_receivable_handler(
     }
 }
 
+#[allow(dead_code)]
 async fn delete_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2386,6 +2391,7 @@ pub struct PayableQueryParams {
     pub supplier_id: Option<String>,
 }
 
+#[allow(dead_code)]
 async fn list_payables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2408,6 +2414,7 @@ async fn list_payables_handler(
     }
 }
 
+#[allow(dead_code)]
 async fn get_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2421,6 +2428,7 @@ async fn get_payable_handler(
     }
 }
 
+#[allow(dead_code)]
 async fn create_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2435,6 +2443,7 @@ async fn create_payable_handler(
     }
 }
 
+#[allow(dead_code)]
 async fn update_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2449,6 +2458,7 @@ async fn update_payable_handler(
     }
 }
 
+#[allow(dead_code)]
 async fn delete_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
