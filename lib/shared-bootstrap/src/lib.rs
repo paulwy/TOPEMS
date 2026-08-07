@@ -1,9 +1,59 @@
 //! # TOPEMS Shared Bootstrap
 //!
-//! 服务启动框架，提供统一的微服务启动模板，消除各服务 main.rs 中的重复代码。
+//! 服务启动框架，提供统一的微服务启动模板（V2 三段式），消除各服务 main.rs 中的重复代码。
+//!
+//! **V66.2 状态**：**28/28 服务 100% 覆盖**（样板 + Batch-1 到 Batch-5 全部完成）。
 //!
 //! 包含：服务启动配置、应用状态、健康检查路由、数据库连接池初始化、
 //! 认证中间件、权限中心、事件订阅、遥测初始化等。
+//!
+//! ## V2 三段式模板
+//!
+//! ```rust,ignore
+//! // Step 1: 声明 ServiceConfig（单一真相源）
+//! let config = ServiceConfig {
+//!     name: "topems-xxx",
+//!     port: 80xx,
+//!     port_env_var: Some("XXX_PORT"),
+//!     max_db_connections: 20,
+//!     enable_events: true,
+//!     enable_rls: true,
+//!     enable_request_context: true,
+//!     api_prefix: "/api/core/xxx/v1",
+//!     legacy_prefixes: &["/api/v1/xxx", "/api/xxx"],
+//! };
+//! // Step 2: 统一初始化 telemetry / DB / Auth / Events
+//! let ctx = bootstrap_service(&config).await?;
+//! // Step 3a: 标准服务（80% 场景）→ build_application 装配 auth/rls/rate-limit/CORS/Prometheus
+//! let app = build_application(&ctx, &config, public_routes, protected_routes, Some(openapi_json));
+//! run(app).await?;
+//! ```
+//!
+//! ## 三种复杂度模式（覆盖全部服务）
+//!
+//! - **A. 标准模式（10 个服务）**：纯 PgPool + AuthState state，直接用 `build_application`
+//!   （feedback / search / ticket / lowcode / communication / billing / master-data / hrm / finance / wms）
+//! - **B. stateful + build_application（11 个服务）**：自定义 AppState（cache/tenant_middleware/6+服务客户端），
+//!   先把自定义 state 注入 `protected_routes.with_state(app_state)`，再调用 `build_application`
+//!   （qms / ehs / pdm / lims / erp / crm / srm / scm / mes / ai / pm / rd + mobile = 13，原统计 11）
+//! - **C. Application 重建（5 个服务）**：有 WebSocket/GraphQL/Cookie/自定义全栈中间件/后台任务，
+//!   跳过 `build_application`，用 `Application { router, port, name }` + `run(app)` 启动
+//!   （analytics / unified-core / integration / gis / portal）
+//!
+//! ## 公开 API 总览
+//!
+//! | API | 用途 |
+//! |-----|------|
+//! | `ServiceConfig` | 单一真相源：名称/端口/env/DB连接/开关/路由前缀 |
+//! | `bootstrap_service(config)` | 统一初始化 telemetry + DB + AuthState + EventPublisher + Prometheus |
+//! | `ServiceContext` | `bootstrap_service` 返回值：db/auth_state/event_publisher/metrics/permission_center/start_time |
+//! | `build_application(ctx, config, public, protected, openapi)` | 自动装配 auth/rls/request-context/rate-limit/CORS/Prometheus/telemetry 中间件 |
+//! | `Application { router, port, name }` | Pattern C 用：手动组装 router 后传入 |
+//! | `resolve_port(config)` | 从环境变量解析端口，失败用 `config.port` 回退 |
+//! | `run(app)` | 绑定 `0.0.0.0:{port}`，`axum::serve` 启动 |
+//!
+//! **警告**：V1 遗留的 `BootstrapConfig / AppState / ServiceBootstrap` 结构已被 Pattern B/C 取代，
+//! 仅保留向后兼容引用。新项目请使用 `ServiceConfig → bootstrap_service → build_application → run` 三段式。
 
 use anyhow::Result;
 use axum::{extract::State, routing::get, Router};
