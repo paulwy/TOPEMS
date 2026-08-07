@@ -2,8 +2,8 @@
 # 与 plugin-architecture-design.md 保持严格一致
 # V66.2 Shared Bootstrap V2 覆盖率：28/28 = 100%
 #   bootstrap_mode: A = 标准 build_application（10 个）
-#                   B = stateful + build_application（13 个）
-#                   C = Application { router, port, name } 重建（5 个）
+#                   B = stateful + build_application（11 个）
+#                   C = Application { router, port, name } 重建（7 个）
 
 # ================================================
 # 端口分配规则 (Port Allocation Rules)
@@ -61,7 +61,7 @@ service_groups:
       env_var: AI_PORT
       description: AI智能服务
       status: implemented
-      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（Embedding/Ollama 客户端 state）
+      bootstrap_mode: C  # Shared Bootstrap V2 Pattern: Application 重建（Embedding/Ollama 客户端 state + 自定义 WS/后台任务）
       dependencies: [unified-core]
       service_dir: ai
 
@@ -201,7 +201,7 @@ service_groups:
       env_var: MOBILE_PORT
       description: 移动服务
       status: implemented
-      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（8字段 AppState + 6 服务客户端）
+      bootstrap_mode: C  # Shared Bootstrap V2 Pattern: Application 重建（8字段 AppState + 6 服务客户端 + 自定义全栈中间件）
       dependencies: [unified-core]
 
     - name: gis
@@ -361,16 +361,6 @@ special_ports:
 module_groups:
   core:
     - iam
-
-  erp:
-    - erp
-    - finance
-    - ai
-
-  collaboration:
-    - hrm
-    - pm
-    - crm
 
   manufacturing:
     - mes

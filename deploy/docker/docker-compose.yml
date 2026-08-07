@@ -4,6 +4,16 @@
 
 version: '3.8'
 
+x-common-env: &common-env
+  DATABASE_URL: postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+  CORE_URL: http://unified-core:8000
+  CONSUL_URL: http://consul:8500
+
+x-common-env-full: &common-env-full
+  <<: *common-env
+  REDIS_URL: redis://redis:6379
+  RABBITMQ_URL: amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
+
 volumes:
   postgres_data:
   redis_data:
@@ -217,12 +227,8 @@ services:
       dockerfile: Dockerfile
     container_name: topems-erp
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - ERP_PORT=8010
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - REDIS_URL=redis://redis:6379
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
+      <<: *common-env-full
+      ERP_PORT: "8010"
     ports:
       - "${ERP_PORT:-8010}:8010"
     volumes:
@@ -255,12 +261,8 @@ services:
       dockerfile: Dockerfile
     container_name: topems-hrm
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - HRM_PORT=8020
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - REDIS_URL=redis://redis:6379
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
+      <<: *common-env-full
+      HRM_PORT: "8020"
     ports:
       - "${HRM_PORT:-8020}:8020"
     volumes:
@@ -290,12 +292,8 @@ services:
       dockerfile: Dockerfile
     container_name: topems-pm
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - PM_PORT=8023
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - REDIS_URL=redis://redis:6379
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
+      <<: *common-env-full
+      PM_PORT: "8023"
     ports:
       - "${PM_PORT:-8023}:8023"
     volumes:
@@ -325,12 +323,8 @@ services:
       dockerfile: Dockerfile
     container_name: topems-crm
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - CRM_PORT=8029
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - REDIS_URL=redis://redis:6379
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
+      <<: *common-env-full
+      CRM_PORT: "8029"
     ports:
       - "${CRM_PORT:-8029}:8029"
     volumes:
@@ -363,11 +357,9 @@ services:
       dockerfile: svc/mes/Dockerfile
     container_name: topems-mes
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - MES_PORT=8030
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
+      <<: *common-env
+      MES_PORT: "8030"
+      RUST_LOG: info,service_discovery=info
     ports:
       - "${MES_PORT:-8030}:8030"
     networks:
@@ -380,11 +372,11 @@ services:
       unified-core:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8030/health"]
-      interval: 30s
-      timeout: 3s
+      test: ["CMD", "curl", "-f", "http://localhost:8030/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     restart: unless-stopped
 
   pdm:
@@ -393,12 +385,10 @@ services:
       dockerfile: svc/pdm/Dockerfile
     container_name: topems-pdm
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - PDM_PORT=8031
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - MES_URL=http://mes:8030
-      - RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
+      <<: *common-env
+      PDM_PORT: "8031"
+      MES_URL: http://mes:8030
+      RUST_LOG: info,service_discovery=info
     ports:
       - "${PDM_PORT:-8031}:8031"
     networks:
@@ -409,11 +399,11 @@ services:
       mes:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8031/health"]
-      interval: 30s
-      timeout: 3s
+      test: ["CMD", "curl", "-f", "http://localhost:8031/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     restart: unless-stopped
 
   # ================================================
@@ -425,11 +415,9 @@ services:
       dockerfile: Dockerfile
     container_name: topems-scm
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - SCM_PORT=8040
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - ERP_URL=http://erp:8010
+      <<: *common-env
+      SCM_PORT: "8040"
+      ERP_URL: http://erp:8010
     ports:
       - "${SCM_PORT:-8040}:8040"
     volumes:
@@ -459,11 +447,9 @@ services:
       dockerfile: Dockerfile
     container_name: topems-wms
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - WMS_PORT=8041
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - SCM_URL=http://scm:8040
+      <<: *common-env
+      WMS_PORT: "8041"
+      SCM_URL: http://scm:8040
     ports:
       - "${WMS_PORT:-8041}:8041"
     volumes:
@@ -493,11 +479,9 @@ services:
       dockerfile: Dockerfile
     container_name: topems-srm
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - SRM_PORT=8042
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - SCM_URL=http://scm:8040
+      <<: *common-env
+      SRM_PORT: "8042"
+      SCM_URL: http://scm:8040
     ports:
       - "${SRM_PORT:-8042}:8042"
     volumes:
@@ -530,15 +514,13 @@ services:
       dockerfile: svc/qms/Dockerfile
     container_name: topems-qms
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - QMS_PORT=8050
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - CONSUL_ENABLED=${CONSUL_ENABLED:-false}
-      - PLUGIN_REGISTRATION_TOKEN=${PLUGIN_REGISTRATION_TOKEN:-}
-      - ERP_URL=http://erp:8010
-      - MES_URL=http://mes:8030
-      - RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
+      <<: *common-env
+      QMS_PORT: "8050"
+      CONSUL_ENABLED: ${CONSUL_ENABLED:-false}
+      PLUGIN_REGISTRATION_TOKEN: ${PLUGIN_REGISTRATION_TOKEN:-}
+      ERP_URL: http://erp:8010
+      MES_URL: http://mes:8030
+      RUST_LOG: info,service_discovery=info
     ports:
       - "${QMS_PORT:-8050}:8050"
     networks:
@@ -551,11 +533,11 @@ services:
       unified-core:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8050/health"]
-      interval: 30s
-      timeout: 3s
+      test: ["CMD", "curl", "-f", "http://localhost:8050/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     restart: unless-stopped
 
   lims:
@@ -564,12 +546,10 @@ services:
       dockerfile: svc/lims/Dockerfile
     container_name: topems-lims
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - LIMS_PORT=8051
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - QMS_URL=http://qms:8050
-      - RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
+      <<: *common-env
+      LIMS_PORT: "8051"
+      QMS_URL: http://qms:8050
+      RUST_LOG: info,service_discovery=info
     ports:
       - "${LIMS_PORT:-8051}:8051"
     networks:
@@ -582,11 +562,11 @@ services:
       qms:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8051/health"]
-      interval: 30s
-      timeout: 3s
+      test: ["CMD", "curl", "-f", "http://localhost:8051/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     restart: unless-stopped
 
   ehs:
@@ -595,13 +575,11 @@ services:
       dockerfile: svc/ehs/Dockerfile
     container_name: topems-ehs
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
-      - EHS_PORT=8052
-      - CORE_URL=http://unified-core:8000
-      - CONSUL_URL=http://consul:8500
-      - MES_URL=http://mes:8030
-      - QMS_URL=http://qms:8050
-      - RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
+      <<: *common-env
+      EHS_PORT: "8052"
+      MES_URL: http://mes:8030
+      QMS_URL: http://qms:8050
+      RUST_LOG: info,service_discovery=info
     ports:
       - "${EHS_PORT:-8052}:8052"
     networks:
@@ -616,11 +594,11 @@ services:
       qms:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8052/health"]
-      interval: 30s
-      timeout: 3s
+      test: ["CMD", "curl", "-f", "http://localhost:8052/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     restart: unless-stopped
 
   rd:
@@ -673,7 +651,7 @@ services:
       - BI_PORT=8060
       - CORE_URL=http://unified-core:8000
       - CONSUL_URL=http://consul:8500
-      - RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
+      - RUST_LOG=info,service_discovery=info
     ports:
       - "${BI_PORT:-8060}:8060"
     networks:
@@ -686,11 +664,11 @@ services:
       unified-core:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8060/health"]
-      interval: 30s
-      timeout: 3s
+      test: ["CMD", "curl", "-f", "http://localhost:8060/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     restart: unless-stopped
 
   # monitor 服务已整合到 unified-core/modules/monitor (2026-07)
@@ -952,8 +930,6 @@ services:
         condition: service_healthy
       finance:
         condition: service_healthy
-      report:
-        condition: service_healthy
       portal:
         condition: service_healthy
       ai:
@@ -1019,8 +995,6 @@ services:
       bi:
         condition: service_healthy
       finance:
-        condition: service_healthy
-      report:
         condition: service_healthy
       portal:
         condition: service_healthy

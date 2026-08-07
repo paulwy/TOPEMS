@@ -87,7 +87,7 @@ DEFAULT_SERVICES=(
     "ehs|/api/ehs|svc-ehs|ehs:8052"
     "rd|/api/rd|svc-rd|rd:8053"
     "bi|/api/bi|svc-bi|bi:8060"
-    "analytics|/api/analytics|svc-analytics|bi:8060"
+    "analytics|/api/bi|svc-analytics|bi:8060"
     "report|/api/report|svc-report|bi:8060"
     "portal|/api/portal|svc-portal|portal:8063"
     "ai|/api/ai|svc-ai|ai:8013"

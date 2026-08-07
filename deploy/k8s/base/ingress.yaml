@@ -170,7 +170,7 @@ spec:
             port:
               number: 8000
       # Analytics API（与 BI 共端口）
-      - path: /api/analytics(/|$)(.*)
+      - path: /api/bi(/|$)(.*)
         pathType: Prefix
         backend:
           service:

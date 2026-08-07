@@ -43,7 +43,7 @@
 - 🎨 **现代化** - 优雅的 UI 设计
 - 🔒 **安全** - 企业级安全保障
 - 🌐 **PWA 支持** - 离线访问，快速启动
-- 🎯 **微服务架构** - 30+个独立服务，灵活扩展
+- 🎯 **微服务架构** - 28个独立服务，灵活扩展
 - 🔄 **统一架构** - 统一的认证保护和架构规范化
 - 🏗️ **Cargo Workspace** - 增量编译，共享依赖缓存
 - 🤖 **AI 增强** - Ollama 本地 LLM + 向量搜索（pgvector）
@@ -380,6 +380,7 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 | ticket | 8086 | svc/ticket | 工单服务 |
 | feedback | 8087 | svc/feedback | 反馈服务 |
 | master-data | 8090 | svc/master-data | 主数据管理 |
+| lowcode | 8088 | svc/lowcode | 低代码平台 |
 
 ### 前端端口
 
