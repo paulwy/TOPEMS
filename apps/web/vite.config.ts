@@ -694,6 +694,18 @@ export default defineConfig({
       //   3. 未找到的导出名（backtick 包着，如 `act`）
       // 因此直接用 "warning.message + warning.id" 串联后做关键字宽松匹配即可。
       onwarn(warning: any, warn: any) {
+        // Suppress INEFFECTIVE_DYNAMIC_IMPORT warnings from lazyLoadComponents.
+        // Components in src/components/ are glob-imported by performance.tsx for
+        // lazy-loading via data-lazy-component, but many are also statically
+        // imported by other modules. The dynamic import still works correctly;
+        // it just won't create separate chunks for dual-imported modules.
+        if (warning.code === 'INEFFECTIVE_DYNAMIC_IMPORT') {
+          const message = typeof warning.message === 'string' ? warning.message : '';
+          if (message.includes('src/utils/performance.tsx')) {
+            return;
+          }
+        }
+
         if (warning.code === 'IMPORT_IS_UNDEFINED') {
           const id = typeof warning.id === 'string' ? warning.id : '';
           const message = typeof warning.message === 'string' ? warning.message : '';
@@ -726,66 +738,12 @@ export default defineConfig({
         warn(warning);
       },
       output: {
-        // NOTE: manualChunks is skipped for module-federation / hybrid modes
-        // because MF wraps shared imports with async init helpers, and
-        // grouping those into a single chunk creates circular async deps
-        // that can cause the application to silently hang.
-        // (see the "Ignoring output.manualChunks" MF warning)
-        //
-        // V65.1.3: 已评估，确认 MF 模式下不补 manualChunks。
-        // - static 模式：下面的 vendor 分包策略已完整覆盖 three/leaflet/xlsx/recharts
-        // - MF/hybrid 模式：远程模块（topems_core 等）通过 federation shared 机制
-        //   单独加载，大型依赖走 shared singleton，不存在首屏打包全量风险
-        // - 强行加 manualChunks 会触发 "circular async deps → silent hang"
-        //   这是 MF runtime 的设计限制，不是配置 bug
-        manualChunks:
-          DEPLOYMENT_MODE === 'static'
-            ? (id: string) => {
-                if (id.includes('node_modules')) {
-                  // React 核心
-                  if (id.includes('react') || id.includes('scheduler')) return 'vendor';
-                  // MUI 组件库
-                  if (id.includes('@mui') || id.includes('@emotion')) return 'mui';
-                  // 图标库
-                  if (id.includes('lucide-react') || id.includes('@heroicons') || id.includes('react-icons')) return 'icons';
-                  // 图表库（大型，单独分包）
-                  if (id.includes('recharts')) return 'charts';
-                  if (id.includes('echarts')) return 'echarts';
-                  // 地图库（大型，单独分包）
-                  if (id.includes('leaflet') || id.includes('react-leaflet')) return 'maps';
-                  // Excel 处理库（大型，单独分包）
-                  if (id.includes('xlsx') || id.includes('exceljs')) return 'excel';
-                  // 国际化
-                  if (id.includes('i18next') || id.includes('react-i18next')) return 'i18n';
-                  // 表单库
-                  if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) return 'forms';
-                  // 3D 渲染库（大型，单独分包）
-                  if (id.includes('three') || id.includes('@react-three')) return 'three';
-                  // 数据获取和状态管理
-                  if (id.includes('@tanstack/react-query') || id.includes('zustand')) return 'vendor';
-                  // 日期处理（使用 dayjs，轻量）
-                  if (id.includes('dayjs')) return 'vendor';
-                  // HTTP 客户端
-                  if (id.includes('axios')) return 'vendor';
-                  // 动画库
-                  if (id.includes('framer-motion')) return 'vendor';
-                  // 工具库（大型，单独分包）
-                  if (id.includes('lodash')) return 'lodash';
-                  // 旧日期库（如存在，单独分包以便后续替换）
-                  if (id.includes('moment')) return 'moment';
-                  // 表格库（大型）
-                  if (id.includes('@tanstack/react-table')) return 'tables';
-                  // 数学计算库（大型）
-                  if (id.includes('mathjs') || id.includes('decimal.js')) return 'math';
-                  // Markdown 渲染
-                  if (id.includes('react-markdown') || id.includes('remark') || id.includes('rehype')) return 'markdown';
-                  // 富文本编辑器
-                  if (id.includes('@tiptap') || id.includes('prosemirror')) return 'editor';
-                  return 'vendor-misc';
-                }
-                return undefined;
-              }
-            : undefined,
+        // NOTE: manualChunks intentionally omitted because the MF plugin
+        // (loaded unconditionally) wraps shared imports with async init helpers.
+        // Grouping those into a single chunk creates circular async deps that
+        // can cause the application to silently hang.
+        // Vite default chunking + code-splitting via dynamic imports handles
+        // vendor chunking adequately for both static and MF/hybrid modes.
       },
       plugins: [
         visualizer({
