@@ -62,12 +62,13 @@ pub struct MasterDataApiDoc;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tracing;
 
     #[test]
     fn extract_openapi_spec() {
         let spec = MasterDataApiDoc::openapi();
         let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
         std::fs::write("/tmp/topems-master-data-openapi.json", json).expect("Failed to write spec");
-        println!("OpenAPI spec written to /tmp/topems-master-data-openapi.json");
+        tracing::info!("OpenAPI spec written to /tmp/topems-master-data-openapi.json");
     }
 }

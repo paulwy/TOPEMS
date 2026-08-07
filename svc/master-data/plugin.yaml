@@ -1,14 +1,16 @@
+author: TOPEMS
+category: System
 code: master-data
 name: 主数据管理
-version: 1.0.0
 description: Master Data 主数据管理服务，包含数据质量闭环、自动修复、数据治理 AI
+version: 1.0.0
 plugin_type: business
-
+dependencies: []
 deployment:
   type: standalone
   port: 8090
   base_path: /api/master-data
-
+runtime: {}
 permissions:
   - code: master-data:quality:read
     name: 查看质量检查
@@ -42,6 +44,3 @@ permissions:
     name: 查看质量仪表盘
     resource_type: dashboard
     action: read
-
-dependencies:
-  - unified-core

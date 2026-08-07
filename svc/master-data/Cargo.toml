@@ -26,7 +26,6 @@ prometheus.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
 rand = "0.8"
-dashmap = { workspace = true }
 
 [dev-dependencies]
 tokio-test.workspace = true

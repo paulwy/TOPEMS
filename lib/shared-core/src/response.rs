@@ -83,6 +83,7 @@ where
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PaginationParams {
     pub page: Option<i64>,
+    #[serde(alias = "pagesize")]
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub status: Option<String>,
@@ -97,6 +98,10 @@ impl PaginationParams {
 
     pub fn limit(&self) -> i64 {
         self.page_size.unwrap_or(20).min(100)
+    }
+
+    pub fn pagesize(&self) -> Option<i64> {
+        self.page_size
     }
 }
 
@@ -127,4 +132,56 @@ impl<T> PaginatedResponse<T> {
             total_pages,
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ListResponse<T> {
+    pub items: Vec<T>,
+    pub total: i64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub page: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub page_size: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub total_pages: Option<i64>,
+}
+
+impl<T> ListResponse<T> {
+    pub fn new(items: Vec<T>, total: i64) -> Self {
+        Self { items, total, page: None, page_size: None, total_pages: None }
+    }
+
+    pub fn with_pagination(items: Vec<T>, total: i64, page: i64, page_size: i64) -> Self {
+        let total_pages = if total == 0 { 0 } else { (total - 1) / page_size.max(1) + 1 };
+        Self { items, total, page: Some(page), page_size: Some(page_size), total_pages: Some(total_pages) }
+    }
+
+    pub fn from_parts(data: Vec<T>, count: i64) -> Self {
+        Self::new(data, count)
+    }
+}
+
+#[macro_export]
+macro_rules! list_resp {
+    ($vec:expr, $total:expr) => { $crate::response::ListResponse::new($vec, $total) };
+    ($vec:expr, $total:expr, $page:expr, $page_size:expr) => { $crate::response::ListResponse::with_pagination($vec, $total, $page, $page_size) };
+}
+
+/// V67.1 P0-10: 统一 handler 错误处理宏
+/// 替代 357 处重复的 `match ... { Ok(data) => Json(ApiResponse::success(...)), Err(e) => Json(ApiResponse::error(500, &e.to_string())) }`
+/// 用法: `handle_result!(service.create(req), "创建成功")`
+#[macro_export]
+macro_rules! handle_result {
+    ($expr:expr, $ok_msg:expr) => {{
+        match $expr.await {
+            Ok(data) => axum::Json(
+                $crate::response::ApiResponse::success(data, $ok_msg),
+            ),
+            Err(e) => {
+                tracing::error!("{}: {}", $ok_msg, e);
+                axum::Json($crate::response::ApiResponse::error(500, &e.to_string()))
+            }
+        }
+    }};
 }
