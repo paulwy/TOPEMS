@@ -141,10 +141,7 @@ impl NotificationSvcClient {
     pub async fn mark_as_read(&self, id: &str) -> ServiceClientResult<Notification> {
         self.base_client
             .put(
-                &format!(
-                    "/api/communication/notification/notifications/{}",
-                    id
-                ),
+                &format!("/api/communication/notification/notifications/{}", id),
                 &(),
             )
             .await
@@ -164,10 +161,7 @@ impl NotificationSvcClient {
         req: &CreateNotificationRequest,
     ) -> ServiceClientResult<Notification> {
         self.base_client
-            .post(
-                "/api/communication/notification/notifications",
-                req,
-            )
+            .post("/api/communication/notification/notifications", req)
             .await
     }
 
@@ -182,9 +176,7 @@ impl NotificationSvcClient {
 
     pub async fn get_stats(&self) -> ServiceClientResult<NotificationStats> {
         self.base_client
-            .get(
-                "/api/communication/notification/notifications/stats/me",
-            )
+            .get("/api/communication/notification/notifications/stats/me")
             .await
     }
 }

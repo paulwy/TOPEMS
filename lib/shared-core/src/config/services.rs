@@ -51,7 +51,8 @@ impl ServiceRegistry {
             ServiceConfig {
                 name: "topems-communication".to_string(),
                 display_name: "通讯服务".to_string(),
-                description: "邮件/通知/IM/站内消息（原 unified-core communication 模块外迁）".to_string(),
+                description: "邮件/通知/IM/站内消息（原 unified-core communication 模块外迁）"
+                    .to_string(),
                 port: 8084,
                 health_endpoint: "/health".to_string(),
                 api_prefix: "/api/communication".to_string(),
@@ -319,15 +320,15 @@ impl ServiceRegistry {
 
     pub fn get_port_ranges(&self) -> Vec<(u16, u16)> {
         vec![
-            (8000, 8009),   // 核心
-            (8082, 8088),   // 扩展服务（search/communication/billing/ticket/feedback/lowcode）
-            (8010, 8029),   // 经营 + 协同办公
-            (8030, 8039),   // 生产制造
-            (8040, 8049),   // 供应链
-            (8050, 8059),   // 质量/研发
-            (8060, 8069),   // 数据分析/门户
-            (8070, 8079),   // 基础设施
-            (8090, 8099),   // 主数据
+            (8000, 8009), // 核心
+            (8082, 8088), // 扩展服务（search/communication/billing/ticket/feedback/lowcode）
+            (8010, 8029), // 经营 + 协同办公
+            (8030, 8039), // 生产制造
+            (8040, 8049), // 供应链
+            (8050, 8059), // 质量/研发
+            (8060, 8069), // 数据分析/门户
+            (8070, 8079), // 基础设施
+            (8090, 8099), // 主数据
         ]
     }
 }
@@ -379,7 +380,8 @@ pub fn get_default_port(service_name: &str) -> u16 {
         // 主数据（V66.1：删除 mdm 别名，统一使用 master-data / topems-master-data）
         "master-data" | "topems-master-data" => 8090,
         // 虚拟服务（统一归 core）
-        "iam" | "workflow" | "flow" | "file" | "doc" | "monitor" | "tenant" | "plugin" | "automation" | "migration" | "master" => 8000,
+        "iam" | "workflow" | "flow" | "file" | "doc" | "monitor" | "tenant" | "plugin"
+        | "automation" | "migration" | "master" => 8000,
         // 兼容旧名
         "notification" | "mail" | "im" => 8084, // 外迁到 communication
         _ => 8080,
