@@ -2,7 +2,7 @@ use axum::{routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 use std::env;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {
@@ -108,8 +108,8 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
 }
 
-pub async fn plugin_health_check() -> Json<topems_shared::ServiceHealth> {
-    Json(topems_shared::build_health_response("topems-pm", true))
+pub async fn plugin_health_check() -> Json<topems_shared_core::health::ServiceHealth> {
+    Json(topems_shared_core::health::build_health_response("topems-pm", true))
 }
 
 pub fn create_routes() -> Router {

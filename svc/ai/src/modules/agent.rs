@@ -3,7 +3,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<crate::shared::AppState> {
     Router::new()

@@ -12,7 +12,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::AuditLog;
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()

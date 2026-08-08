@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::env;
 
 use crate::ApiState;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 /// 插件信息
 #[derive(Debug, Clone, Serialize, Deserialize)]

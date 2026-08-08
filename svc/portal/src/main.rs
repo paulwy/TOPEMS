@@ -10,12 +10,10 @@ use tower_cookies::CookieManagerLayer;
 
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
-use topems_shared::auth::auth_middleware;
-use topems_shared::{
-    create_api_info_router, create_cors_layer, rate_limit_middleware,
-    register_routes_with_legacy_alias, request_context_middleware, rls_middleware,
-    telemetry_middleware, ApiResponse, RateLimitConfig, RateLimitMiddleware, ServiceHealth,
-};
+use topems_shared_auth::auth::auth_middleware;
+use topems_shared_core::cors::create_cors_layer;
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::health::ServiceHealth;
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 use utoipa::OpenApi;
 
@@ -3170,7 +3168,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-use topems_shared::build_health_response;
+use topems_shared_core::health::build_health_response;
 
 async fn health_check() -> ServiceHealth {
     build_health_response("topems-portal", true)

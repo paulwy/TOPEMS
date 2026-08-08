@@ -6,6 +6,7 @@ authors.workspace = true
 description = "TOPEMS Search Service - 全局搜索服务"
 
 [dependencies]
+topems-shared = { path = "../../lib" }
 axum.workspace = true
 chrono.workspace = true
 sqlx.workspace = true
@@ -17,6 +18,10 @@ tracing-subscriber.workspace = true
 tokio.workspace = true
 dotenv.workspace = true
 
-topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-db = { workspace = true }
+topems-shared-service-client = { workspace = true }
+topems-shared-event = { workspace = true }
+topems-shared-auth = { workspace = true }
+topems-shared-core = { workspace = true }
 anyhow.workspace = true

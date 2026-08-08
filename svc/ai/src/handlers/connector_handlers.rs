@@ -7,7 +7,7 @@ use crate::models::{
 use axum::extract::Query;
 use axum::Json;
 use std::time::{SystemTime, UNIX_EPOCH};
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 pub async fn list_connectors() -> Json<ApiResponse<Vec<DataConnector>>> {

@@ -2,8 +2,8 @@ use axum::{
     extract::{Extension, Multipart, Path, State},
     Json,
 };
-use topems_shared::auth::Claims;
-use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::modules::models::*;
@@ -119,7 +119,7 @@ impl DocumentApi {
                         "processed_by": claims.sub.clone(),
                     });
                     tokio::spawn(async move {
-                        let payload = topems_shared::event::AiDocumentProcessedPayload {
+                        let payload = topems_shared_event::event::AiDocumentProcessedPayload {
                             process_id,
                             document_id: Some(document_id),
                             document_name: Some(document_name.clone()),
@@ -129,7 +129,7 @@ impl DocumentApi {
                         };
                         if let Err(e) = publisher
                             .publish_event(
-                                topems_shared::event::EventType::AiDocumentProcessed,
+                                topems_shared_event::event::EventType::AiDocumentProcessed,
                                 payload,
                             )
                             .await
@@ -414,7 +414,7 @@ impl DocumentApi {
     /// POST /api/documents/vectorize-from-file - 从 File 服务向量化文档
     pub async fn vectorize_from_file(
         State(state): State<AppState>,
-        Extension(claims): Extension<topems_shared::auth::Claims>,
+        Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<VectorizeFromFileRequest>,
     ) -> Json<ApiResponse<VectorizeFromFileResponse>> {
         let tenant_id = crate::modules::qa::get_tenant_id(&claims);
@@ -443,7 +443,7 @@ impl DocumentApi {
     pub async fn summarize(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
-        Extension(claims): Extension<topems_shared::auth::Claims>,
+        Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<SummarizeDocumentRequest>,
     ) -> Json<ApiResponse<SummarizeDocumentResponse>> {
         let tenant_id = crate::modules::qa::get_tenant_id(&claims);
@@ -467,7 +467,7 @@ impl DocumentApi {
     pub async fn extract_key_points(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
-        Extension(claims): Extension<topems_shared::auth::Claims>,
+        Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<ExtractKeyPointsRequest>,
     ) -> Json<ApiResponse<ExtractKeyPointsResponse>> {
         let tenant_id = crate::modules::qa::get_tenant_id(&claims);
@@ -490,7 +490,7 @@ impl DocumentApi {
     /// POST /api/documents/qa - 文档问答
     pub async fn document_qa(
         State(state): State<AppState>,
-        Extension(claims): Extension<topems_shared::auth::Claims>,
+        Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<DocumentQAQuestionRequest>,
     ) -> Json<ApiResponse<DocumentQAAnswerResponse>> {
         let tenant_id = crate::modules::qa::get_tenant_id(&claims);

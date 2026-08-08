@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Json};
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::services::recommendation::{RecommendationRequest, RecommendationResponse, UserProfile};
@@ -72,7 +72,7 @@ impl RecommendationApi {
 
     pub async fn recommend_documents(
         State(state): State<AppState>,
-        Extension(claims): Extension<topems_shared::auth::Claims>,
+        Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<serde_json::Value>,
     ) -> Json<ApiResponse<RecommendationResponse>> {
         let tenant_id = crate::modules::qa::get_tenant_id(&claims);
@@ -92,7 +92,7 @@ impl RecommendationApi {
 
     pub async fn recommend_opportunities(
         State(state): State<AppState>,
-        Extension(claims): Extension<topems_shared::auth::Claims>,
+        Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<serde_json::Value>,
     ) -> Json<ApiResponse<RecommendationResponse>> {
         let tenant_id = crate::modules::qa::get_tenant_id(&claims);
@@ -112,7 +112,7 @@ impl RecommendationApi {
 
     pub async fn recommend_knowledge(
         State(state): State<AppState>,
-        Extension(claims): Extension<topems_shared::auth::Claims>,
+        Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<serde_json::Value>,
     ) -> Json<ApiResponse<RecommendationResponse>> {
         let tenant_id = crate::modules::qa::get_tenant_id(&claims);

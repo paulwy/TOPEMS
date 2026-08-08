@@ -4,7 +4,8 @@
 use crate::shared::AppState;
 use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
-use topems_shared::{ApiResponse, ServiceHealth};
+use topems_shared_core::health::ServiceHealth;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {
@@ -133,7 +134,7 @@ pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ServiceH
         Err(_) => false,
     };
 
-    Json(topems_shared::build_health_response(
+    Json(topems_shared_core::health::build_health_response(
         "topems-mobile",
         db_status,
     ))

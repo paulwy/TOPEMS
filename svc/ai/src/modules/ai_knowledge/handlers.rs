@@ -11,8 +11,11 @@ use axum::{
     Json,
 };
 use serde_json::json;
-use topems_shared::auth::Claims;
-use topems_shared::{api_error, api_success, ApiResponse, UnifiedAIClient};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::api_error;
+use topems_shared_core::response::api_success;
+use topems_shared_core::response::ApiResponse;
+use topems_shared_ai::ai_client::UnifiedAIClient;
 use uuid::Uuid;
 
 use crate::shared::AppState;

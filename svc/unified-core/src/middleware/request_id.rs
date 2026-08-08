@@ -2,7 +2,7 @@ use axum::{
     http::{HeaderName, HeaderValue, Request},
     response::Response,
 };
-use topems_shared::generate_request_id;
+use topems_shared_core::logging::generate_request_id;
 
 pub const X_REQUEST_ID: &str = "x-request-id";
 

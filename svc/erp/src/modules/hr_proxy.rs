@@ -20,8 +20,8 @@ use axum::Json;
 use serde_json::Value;
 
 use super::ApiState;
-use topems_shared::auth::Claims;
-use topems_shared::service_client::{api::hrm_api::HrmApi, TypedServiceClient};
+use topems_shared_auth::auth::Claims;
+use topems_shared_service_client::service_client::{api::hrm_api::HrmApi, TypedServiceClient};
 
 // ==================== 内部辅助函数 ====================
 

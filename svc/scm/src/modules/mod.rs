@@ -2,7 +2,9 @@ use crate::shared::cache::InMemoryCache;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
-use topems_shared::{event::EventPublisher, redis::RedisCacheService, AuthState};
+use topems_shared_auth::auth::AuthState;
+use topems_shared_event::event::EventPublisher;
+use topems_shared_event::redis::RedisCacheService;
 
 pub mod audit;
 pub mod data_sync;

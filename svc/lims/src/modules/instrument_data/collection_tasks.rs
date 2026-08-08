@@ -1,7 +1,7 @@
 use axum::{extract::State, Json};
 use sqlx::types::Uuid;
 use sqlx::Row;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use super::models::{
     CollectionTask, CollectionTaskQuery, CreateCollectionTaskRequest, InstrumentData,

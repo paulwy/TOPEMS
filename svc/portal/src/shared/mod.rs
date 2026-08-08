@@ -2,18 +2,19 @@ use axum::extract::FromRef;
 use reqwest::Client;
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared::{
-    cache::CacheManager,
-    config::CacheConfig,
-    event::EventPublisher,
-    service_client::{
-        api::crm_api::CrmApi, api::finance_api::FinanceApi, api::hrm_api::HrmApi,
-        api::iam_api::IamApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
-        create_erp_client, create_monitor_client, create_workflow_client, ErpServiceClient,
-        MonitorServiceClient, TypedServiceClient, WorkflowServiceClient,
-    },
-    AuthState, LocalServiceRegistry, PortalServiceAggregator,
+use topems_shared_event::cache::CacheManager;
+use topems_shared_core::config::CacheConfig;
+use topems_shared_event::event::EventPublisher;
+use topems_shared_service_client::service_client::{
+    create_erp_client, create_monitor_client, create_workflow_client, ErpServiceClient,
+    MonitorServiceClient, TypedServiceClient, WorkflowServiceClient,
 };
+use topems_shared_service_client::service_client::api::{
+    crm_api::CrmApi, finance_api::FinanceApi, hrm_api::HrmApi,
+    iam_api::IamApi, mes_api::MesApi, notification_api::NotificationApi,
+};
+use topems_shared_auth::auth::AuthState;
+use topems_shared_event::service_discovery::{LocalServiceRegistry, PortalServiceAggregator};
 
 #[derive(Clone)]
 pub struct AppState {

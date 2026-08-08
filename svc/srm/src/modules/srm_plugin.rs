@@ -2,7 +2,8 @@ use axum::{routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 use std::env;
 
-use topems_shared::{build_health_response, ApiResponse, ServiceHealth};
+use topems_shared_core::health::{build_health_response, ServiceHealth};
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {

@@ -5,7 +5,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Json, Response},
 };
-use topems_shared::api_error;
+use topems_shared_core::response::api_error;
 
 #[derive(Debug, Clone)]
 pub struct InputValidationConfig {

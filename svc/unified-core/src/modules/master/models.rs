@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use topems_shared::event::MasterDataDomain;
+use topems_shared_event::event::MasterDataDomain;
 
 /// 主数据引用表（核心表）
 ///
@@ -346,7 +346,7 @@ pub struct ReconciliationLog {
 pub const APPROVAL_REQUIRED_DOMAINS: &[&str] = &["account_subject"];
 
 /// 审批状态 — 统一使用 shared-core 通用枚举（6 变体：Pending/Approved/Rejected/InProgress/Cancelled/Expired）
-pub use topems_shared::common_types::ApprovalStatus;
+pub use topems_shared_core::common_types::ApprovalStatus;
 
 /// 主数据变更审批请求
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]

@@ -8,7 +8,7 @@
 use std::sync::Arc;
 
 use regex::Regex;
-use topems_shared::{AIClientError, UnifiedAIClient};
+use topems_shared_ai::ai_client::UnifiedAIClient;
 
 /// 文档处理错误
 #[derive(Debug)]

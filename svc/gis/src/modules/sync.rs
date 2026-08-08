@@ -6,7 +6,7 @@ use axum::{extract::State, Json};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 // ==================== 请求结构 ====================

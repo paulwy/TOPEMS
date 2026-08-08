@@ -7,11 +7,11 @@
 //! 运行命令:
 //! cargo test -p topems-ehs --test event_flow_integration -- --test-threads=1
 
-use topems_shared::event::{
+use topems_shared_event::event::{
     Event, EventPublisher, EventType, HrmEmployeeCreatedPayload,
     LimsInspectionAbnormalDetectedPayload, QmsCorrectiveActionCreatedPayload,
 };
-use topems_shared::test_helpers::redis_pubsub::{self, ActiveSubscription};
+use topems_shared_event::test_helpers::redis_pubsub::{self, ActiveSubscription};
 use uuid::Uuid;
 
 // =====================================================================

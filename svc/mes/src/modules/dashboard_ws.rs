@@ -12,7 +12,7 @@ use tokio::sync::RwLock;
 use tokio::time::{interval, Duration};
 use uuid::Uuid;
 
-use topems_shared::{verify_jwt_token, AuthState};
+use topems_shared_auth::auth::{verify_jwt_token, AuthState};
 
 #[derive(Debug, Deserialize)]
 pub struct WsQueryParams {

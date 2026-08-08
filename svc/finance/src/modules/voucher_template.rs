@@ -17,7 +17,8 @@ use crate::services::finance::voucher_generation::{
 use crate::services::finance::voucher_template::CreateVoucherTemplateRequest;
 use crate::services::FinanceService;
 use crate::shared::AppState;
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 fn get_tenant_id(claims: &Claims) -> Uuid {
     claims

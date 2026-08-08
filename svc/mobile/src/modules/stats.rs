@@ -8,7 +8,8 @@ use serde::Serialize;
 use sqlx::{PgPool, Row};
 
 use super::auth_utils::extract_user_id_from_token;
-use topems_shared::{ApiResponse, AuthState};
+use topems_shared_auth::auth::AuthState;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct DashboardStats {

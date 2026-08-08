@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::mes_erp_sync;
 use crate::models::{get_tenant_id, AppState, CreateMesErpSyncRequest, MesErpSync};
@@ -163,7 +163,7 @@ pub async fn sync_mes_erp(
 
 pub async fn sync_erp_order_to_mes(
     State(state): State<AppState>,
-    Extension(claims): Extension<topems_shared::auth::Claims>,
+    Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<SyncErpToMesRequest>,
 ) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
     let tenant_id = get_tenant_id(&claims);
@@ -192,7 +192,7 @@ pub async fn sync_erp_order_to_mes(
 
 pub async fn sync_mes_progress_to_erp(
     State(state): State<AppState>,
-    Extension(claims): Extension<topems_shared::auth::Claims>,
+    Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<SyncMesToErpRequest>,
 ) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
     let tenant_id = get_tenant_id(&claims);

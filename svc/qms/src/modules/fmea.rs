@@ -9,7 +9,8 @@ use bigdecimal::ToPrimitive;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow};
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct FmeaQuery {

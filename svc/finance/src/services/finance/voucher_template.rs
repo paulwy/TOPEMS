@@ -5,7 +5,7 @@ use sqlx::Row;
 use uuid::Uuid;
 
 use super::FinanceService;
-use topems_shared::error::TopemsError;
+use topems_shared_core::error::TopemsError;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
 pub struct VoucherTemplate {

@@ -8,7 +8,7 @@ use axum::{
     http::HeaderMap,
     Json,
 };
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::{
     models::{Alert, LogEntry, MonitoringMetrics, MonitoringService as MonitoringServiceModel},
@@ -17,9 +17,9 @@ use crate::{
 };
 
 fn build_client(
-    base: &topems_shared::service_client::MonitorServiceClient,
+    base: &topems_shared_service_client::service_client::MonitorServiceClient,
     headers: &HeaderMap,
-) -> topems_shared::service_client::MonitorServiceClient {
+) -> topems_shared_service_client::service_client::MonitorServiceClient {
     let client = base.clone();
     if let Some(token) = extract_bearer_token(headers) {
         client.with_auth_token(token)

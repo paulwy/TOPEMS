@@ -4,7 +4,7 @@ use axum::{
     Json, Router,
 };
 use sqlx::PgPool;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub async fn search_locations(
     State(pool): State<PgPool>,

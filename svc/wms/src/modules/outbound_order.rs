@@ -13,11 +13,9 @@ use crate::models::{CreateOutboundOrderRequest, OutboundOrder, UpdateOutboundOrd
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared::auth::Claims;
-use topems_shared::{
-    api_error, event::EventType, event::WmsInventoryItemShippedPayload, ApiResponse,
-    PaginationParams,
-};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_event::event::{EventType, WmsInventoryItemShippedPayload};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OutboundOrderItemRequest {

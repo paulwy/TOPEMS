@@ -3,7 +3,7 @@ use serde_json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone)]
 pub struct TenantContext {
@@ -65,7 +65,7 @@ pub async fn tenant_middleware(
     req: axum::http::Request<axum::body::Body>,
     next: axum::middleware::Next,
 ) -> axum::response::Response {
-    let claims = match req.extensions().get::<topems_shared::Claims>() {
+    let claims = match req.extensions().get::<topems_shared_auth::auth::Claims>() {
         Some(c) => c,
         None => {
             let body = serde_json::to_string(&ApiResponse::<()>::error(401, "缺少认证信息"))

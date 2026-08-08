@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use super::models::*;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(

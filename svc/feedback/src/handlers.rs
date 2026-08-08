@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Feedback {

@@ -2,8 +2,8 @@ use rust_decimal::Decimal;
 use uuid::Uuid;
 
 use super::super::super::models::*;
-use topems_shared::error::TopemsError;
-use topems_shared::service_client::CreateInstanceRequest;
+use topems_shared_core::error::TopemsError;
+use topems_shared_service_client::service_client::CreateInstanceRequest;
 
 use super::FinanceService;
 

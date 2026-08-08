@@ -118,6 +118,6 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn init_db(_pool: &sqlx::PgPool) -> topems_shared::Result<()> {
+async fn init_db(_pool: &sqlx::PgPool) -> topems_shared_core::error::Result<()> {
     Ok(())
 }

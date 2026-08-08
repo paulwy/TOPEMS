@@ -1,11 +1,11 @@
 // Mobile 服务权限定义
 use sqlx::PgPool;
-use topems_shared::auth::Claims;
-use topems_shared::permission::{
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::permission::{
     check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
     PermissionAction,
 };
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MobilePermission {

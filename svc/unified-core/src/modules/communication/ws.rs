@@ -13,7 +13,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
 use tokio::time::interval;
-use topems_shared::auth::{verify_jwt_token, verify_message_signature, AuthState};
+use topems_shared_auth::auth::{verify_jwt_token, verify_message_signature, AuthState};
 use tracing::{error, info, warn};
 
 /// WebSocket 连接状态

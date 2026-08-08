@@ -1,5 +1,5 @@
 use axum::http::HeaderMap;
-use topems_shared::verify_jwt_token;
+use topems_shared_auth::auth::verify_jwt_token;
 
 pub fn extract_user_id_from_token(headers: &HeaderMap, secret: &str) -> Result<String, ()> {
     let auth_header = headers.get("Authorization").and_then(|h| h.to_str().ok());

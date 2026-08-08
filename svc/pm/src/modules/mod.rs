@@ -23,7 +23,7 @@ pub mod statistics;
 
 use axum::Router;
 use std::sync::Arc;
-use topems_shared::event::EventPublisher;
+use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 use topems_shared_service_client::TypedServiceClient;
 

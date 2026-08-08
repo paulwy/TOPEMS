@@ -19,8 +19,8 @@ use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
 use crate::services::project_permission::{
     check_project_owner, check_project_permission, ProjectPermission,
 };
-use topems_shared::auth::Claims;
-use topems_shared::response::ApiResponse;
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims
@@ -282,7 +282,7 @@ async fn create_project(
                 let pleader = project.leader.clone();
                 let pcreated_at = project.created_at;
                 tokio::spawn(async move {
-                    let payload = topems_shared::event::RdProjectCreatedPayload {
+                    let payload = topems_shared_event::event::RdProjectCreatedPayload {
                         project_id: pid,
                         project_name: pname,
                         project_code: Some(pcode),
@@ -291,7 +291,7 @@ async fn create_project(
                         created_at: Some(pcreated_at),
                     };
                     if let Err(e) = publisher
-                        .publish_event(topems_shared::event::EventType::RdProjectCreated, payload)
+                        .publish_event(topems_shared_event::event::EventType::RdProjectCreated, payload)
                         .await
                     {
                         tracing::warn!(

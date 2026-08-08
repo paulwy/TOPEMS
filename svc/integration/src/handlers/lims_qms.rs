@@ -3,7 +3,7 @@ use axum::Json;
 use chrono::Utc;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::models::{AppState, CreateLimsQmsSyncRequest, LimsQmsSync};
 

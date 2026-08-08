@@ -11,7 +11,7 @@ use axum::Router;
 
 use crate::modules::settlement_center::handlers;
 use crate::shared::AppState;
-use topems_shared::middleware::permission::require_permission;
+use topems_shared_auth::middleware::permission::require_permission;
 
 pub fn create_routes() -> Router<AppState> {
     // ===== 读取类路由（需要 settlement:read 权限）=====

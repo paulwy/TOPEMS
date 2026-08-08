@@ -16,7 +16,8 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::time::Duration;
-use topems_shared::{auth::Claims, ApiResponse};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 use crate::{shared::AppState, utils::user_context::extract_bearer_token};
 
@@ -263,7 +264,7 @@ async fn fetch_user_count(state: &AppState) -> u64 {
 }
 
 async fn fetch_service_counts(state: &AppState) -> (u64, u64) {
-    use topems_shared::ServiceRegistryStatus;
+    use topems_shared_event::service_discovery::ServiceRegistryStatus;
     let services = state.service_registry.list_all().await;
     let total = services.len() as u64;
     let healthy = services

@@ -1,5 +1,5 @@
 use sqlx::PgPool;
-use topems_shared::event::{
+use topems_shared_event::event::{
     Event, EventResult, EventSubscriber, EventType, MasterDataAction, MasterDataDomain,
     MasterDataEvent, ProductionOrderCreatedPayload, PurchaseOrderCreatedPayload,
     ScmShipmentReceivedPayload,

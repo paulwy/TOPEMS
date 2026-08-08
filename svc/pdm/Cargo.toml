@@ -6,6 +6,7 @@ authors.workspace = true
 description = "TOPEMS-PDM"
 
 [dependencies]
+topems-shared = { path = "../../lib" }
 axum.workspace = true
 tokio.workspace = true
 serde.workspace = true
@@ -18,8 +19,10 @@ tracing-subscriber.workspace = true
 tower-http.workspace = true
 thiserror.workspace = true
 sqlx.workspace = true
-topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-core = { workspace = true }
+topems-shared-auth = { workspace = true }
+topems-shared-event = { workspace = true }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true

@@ -7,12 +7,13 @@ use axum::{
     Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared::service_client::CreateInstanceRequest;
+use topems_shared_service_client::service_client::CreateInstanceRequest;
 
 fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
     claims
@@ -286,7 +287,7 @@ pub async fn create_hazard(
         let hdescription = req.description.clone();
         let hreported_by = req.reported_by.clone();
         tokio::spawn(async move {
-            let payload = topems_shared::event::EhsHazardReportedPayload {
+            let payload = topems_shared_event::event::EhsHazardReportedPayload {
                 hazard_id: hid,
                 hazard_no: hno,
                 title: htitle,
@@ -297,7 +298,7 @@ pub async fn create_hazard(
                 reported_by: hreported_by,
             };
             if let Err(e) = publisher
-                .publish_event(topems_shared::event::EventType::EhsHazardReported, payload)
+                .publish_event(topems_shared_event::event::EventType::EhsHazardReported, payload)
                 .await
             {
                 tracing::warn!(

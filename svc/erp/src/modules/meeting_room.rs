@@ -15,7 +15,9 @@ use crate::models::{
 };
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+use topems_shared_core::response::api_error;
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::response::PaginatedResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct RoomQueryParams {

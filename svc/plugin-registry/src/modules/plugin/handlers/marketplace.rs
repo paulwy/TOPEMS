@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 
 /// Get marketplace summary
 pub async fn get_marketplace_summary(

@@ -3,12 +3,12 @@
 //! 权限检查模块，用于验证用户对MES资源的访问权限
 
 use sqlx::PgPool;
-use topems_shared::auth::Claims;
-use topems_shared::permission::{
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::permission::{
     check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
     PermissionAction,
 };
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MesPermission {

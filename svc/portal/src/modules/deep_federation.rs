@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
 

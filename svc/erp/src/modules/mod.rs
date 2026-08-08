@@ -5,13 +5,12 @@ use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::service_client::{
+use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
 };
-use topems_shared::{
-    event::EventPublisher, AuthState, FieldEncryptionService, LocalInMemoryCache as InMemoryCache,
-    NotificationServiceClient, SystemMetrics,
-};
+use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::security::encryption::FieldEncryptionService;
+use topems_shared_core::health::SystemMetrics;
 
 pub mod addressbook;
 pub mod announcement;

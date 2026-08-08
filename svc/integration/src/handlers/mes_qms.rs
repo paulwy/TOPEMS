@@ -3,14 +3,14 @@ use axum::Json;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::mes_qms_integration;
 use crate::models::{get_tenant_id, AppState};
 
 pub async fn list_mes_qms_sync_api(
     State(state): State<AppState>,
-    Extension(claims): Extension<topems_shared::auth::Claims>,
+    Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Query(query): Query<HashMap<String, String>>,
 ) -> Json<ApiResponse<Vec<mes_qms_integration::MesQmsSync>>> {
     let tenant_id = get_tenant_id(&claims);
@@ -83,7 +83,7 @@ pub async fn get_mes_qms_stats_api(
 
 pub async fn trigger_qms_inspection_api(
     State(state): State<AppState>,
-    Extension(claims): Extension<topems_shared::auth::Claims>,
+    Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<mes_qms_integration::TriggerInspectionRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
     let tenant_id = get_tenant_id(&claims);
@@ -112,7 +112,7 @@ pub async fn trigger_qms_inspection_api(
 
 pub async fn sync_quality_result_api(
     State(state): State<AppState>,
-    Extension(claims): Extension<topems_shared::auth::Claims>,
+    Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<mes_qms_integration::SyncQualityResultRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
     let tenant_id = get_tenant_id(&claims);
@@ -141,7 +141,7 @@ pub async fn sync_quality_result_api(
 
 pub async fn sync_trace_chain_api(
     State(state): State<AppState>,
-    Extension(claims): Extension<topems_shared::auth::Claims>,
+    Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<mes_qms_integration::TraceChainSyncRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
     let tenant_id = get_tenant_id(&claims);
@@ -170,7 +170,7 @@ pub async fn sync_trace_chain_api(
 
 pub async fn defect_handling_api(
     State(state): State<AppState>,
-    Extension(claims): Extension<topems_shared::auth::Claims>,
+    Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<mes_qms_integration::DefectHandlingRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
     let tenant_id = get_tenant_id(&claims);

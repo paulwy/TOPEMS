@@ -13,8 +13,8 @@ use crate::models::{
     InteractionStats, OpportunityStats, SalesForecast, StageCount, TypeCount,
 };
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared::auth::Claims;
-use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::{api_error, ApiResponse};
 
 use super::ApiState;
 
@@ -226,10 +226,10 @@ async fn get_customer_details(
 
             Json(ApiResponse::success(details, "获取客户详情成功"))
         }
-        Ok(None) => Json(topems_shared::api_error(404, "客户不存在")),
+        Ok(None) => Json(api_error(404, "客户不存在")),
         Err(e) => {
             tracing::error!("获取客户详情失败: {}", e);
-            Json(topems_shared::api_error(500, "获取客户详情失败"))
+            Json(api_error(500, "获取客户详情失败"))
         }
     }
 }

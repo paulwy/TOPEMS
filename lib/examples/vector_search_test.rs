@@ -5,7 +5,7 @@
 use anyhow::Result;
 use topems_shared::{
     embedding::{create_embedding_service, EmbeddingConfig},
-    ollama::OllamaConfig,
+    OllamaConfig,
 };
 
 #[tokio::main]

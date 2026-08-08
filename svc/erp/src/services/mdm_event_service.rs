@@ -3,7 +3,7 @@
 use serde_json::json;
 use uuid::Uuid;
 
-use topems_shared::event::{
+use topems_shared_event::event::{
     generate_master_data_id, MasterDataAction, MasterDataDomain, MasterDataEvent,
 };
 

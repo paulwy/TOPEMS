@@ -12,7 +12,7 @@ use sqlx::Row;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 fn validate_date_format(date_str: &str) -> bool {
     if date_str.len() < 10 {

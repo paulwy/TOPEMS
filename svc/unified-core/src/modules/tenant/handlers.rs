@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use super::models::*;
 use crate::{AppState, CoreResponse};
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 
 /// List all tenants with pagination and filtering (super admin only)
 pub async fn list_tenants(

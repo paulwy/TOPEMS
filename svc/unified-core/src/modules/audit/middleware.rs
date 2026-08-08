@@ -11,7 +11,7 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 use crate::middleware::request_id::RequestId;

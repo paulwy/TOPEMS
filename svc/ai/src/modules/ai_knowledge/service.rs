@@ -9,7 +9,7 @@
 use std::sync::Arc;
 
 use sqlx::PgPool;
-use topems_shared::{create_client, AIModelConfig, AIProviderType, UnifiedAIClient};
+use topems_shared_ai::ai_client::UnifiedAIClient;
 use uuid::Uuid;
 
 use super::document_processor::{

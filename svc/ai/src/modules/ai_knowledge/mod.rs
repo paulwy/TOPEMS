@@ -40,7 +40,7 @@ use axum::Router;
 use sqlx::PgPool;
 
 use crate::shared::AppState;
-use topems_shared::middleware::permission::require_permission;
+use topems_shared_auth::middleware::permission::require_permission;
 
 /// 初始化 AI 知识库数据库表（幂等）
 ///

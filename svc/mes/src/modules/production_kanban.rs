@@ -9,11 +9,11 @@ use sqlx::{
     types::{BigDecimal, Uuid},
     Row,
 };
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -264,7 +264,7 @@ pub async fn get_dashboard(
             pr.operator_id  AS operator
         FROM work_stations ws
         LEFT JOIN LATERAL (
-            SELECT *
+            SELECT order_id, operator_id
             FROM production_records
             WHERE work_station_id = ws.id AND status = 'in_progress'
             ORDER BY start_time DESC
@@ -522,7 +522,7 @@ pub async fn get_workstation_status(
             pr.operator_id  AS operator
         FROM work_stations ws
         LEFT JOIN LATERAL (
-            SELECT *
+            SELECT order_id, operator_id
             FROM production_records
             WHERE work_station_id = ws.id AND status = 'in_progress'
             ORDER BY start_time DESC

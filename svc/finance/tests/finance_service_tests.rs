@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use topems_finance::models::*;
 use topems_finance::services::FinanceService;
-use topems_shared::service_client::WorkflowServiceClient;
+use topems_shared_service_client::service_client::WorkflowServiceClient;
 
 async fn create_test_pool() -> PgPool {
     let database_url = std::env::var("DATABASE_URL")

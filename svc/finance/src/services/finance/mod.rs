@@ -1,6 +1,6 @@
 use sqlx::postgres::PgPool;
 
-use topems_shared::service_client::WorkflowServiceClient;
+use topems_shared_service_client::service_client::WorkflowServiceClient;
 
 pub struct FinanceService {
     db_pool: PgPool,

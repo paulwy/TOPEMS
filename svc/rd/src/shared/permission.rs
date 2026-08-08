@@ -1,12 +1,12 @@
 #![allow(dead_code)] // Reserved: 权限共享模块预留扩展，待 RBAC 完整接入后启用
 
 use sqlx::PgPool;
-use topems_shared::auth::Claims;
-use topems_shared::permission::{
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::permission::{
     check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
     PermissionAction,
 };
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub enum RsPermission {
     ExperimentView,

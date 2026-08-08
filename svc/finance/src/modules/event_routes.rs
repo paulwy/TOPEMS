@@ -17,7 +17,7 @@ use crate::domain::event_publisher::PublishedEvent;
 use crate::domain::events::FinanceDomainEvent;
 use crate::domain::saga::{SagaInstance, SagaStats, SagaStatus};
 use crate::shared::AppState;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 // =============================================================================
 // 响应模型

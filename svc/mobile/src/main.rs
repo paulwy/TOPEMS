@@ -16,16 +16,13 @@ use std::sync::Arc;
 use utoipa::OpenApi;
 use uuid::Uuid;
 
-use topems_shared::service_client::{
+use topems_shared_service_client::service_client::{
     api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
     api::qms_api::QmsApi, create_wms_client, TypedServiceClient, WmsServiceClient,
 };
-use topems_shared::{
-    auth_middleware, create_api_info_router, create_cors_layer, create_workflow_client,
-    rate_limit_middleware, register_routes_with_legacy_alias, request_context_middleware,
-    rls_middleware, telemetry_middleware, ApiResponse, RateLimitConfig, RateLimitMiddleware,
-    WorkflowServiceClient,
-};
+use topems_shared_core::cors::create_cors_layer;
+use topems_shared_core::response::ApiResponse;
+use topems_shared_service_client::service_client::WorkflowServiceClient;
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 
 const DEFAULT_WMS_URL: &str = "http://localhost:8041";
@@ -563,7 +560,8 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-use topems_shared::{build_health_response, ServiceHealth};
+use topems_shared_core::health::build_health_response;
+use topems_shared_core::health::ServiceHealth;
 
 async fn health_check() -> ServiceHealth {
     build_health_response("topems-mobile", true)

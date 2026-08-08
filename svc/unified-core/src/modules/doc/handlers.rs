@@ -8,7 +8,8 @@ use uuid::Uuid;
 use super::models::*;
 use super::services::{DocumentService, FolderService, TemplateService};
 use crate::AppState;
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 fn get_tenant_id(claims: &Claims) -> Uuid {
     claims

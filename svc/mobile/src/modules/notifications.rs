@@ -10,8 +10,9 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
-use topems_shared::service_client::{api::notification_api::NotificationApi, TypedServiceClient};
-use topems_shared::{ApiResponse, AuthState};
+use topems_shared_service_client::service_client::{api::notification_api::NotificationApi, TypedServiceClient};
+use topems_shared_auth::auth::AuthState;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct NotificationListParams {

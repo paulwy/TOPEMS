@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::models::*;
-use topems_shared::error::TopemsError;
+use topems_shared_core::error::TopemsError;
 
 pub struct ReconciliationService {
     db_pool: PgPool,

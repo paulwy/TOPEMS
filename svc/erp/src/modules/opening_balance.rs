@@ -11,7 +11,9 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::finance::AccountingSubject;
 use crate::modules::audit::{log_audit_event, AuditEventParams};
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+use topems_shared_core::response::api_error;
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::response::PaginatedResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct OpeningBalance {

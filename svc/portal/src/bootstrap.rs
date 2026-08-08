@@ -22,7 +22,7 @@ use std::time::Instant;
 /// - `custom_gauge`     ：自定义 Gauge 指标，保留引用供后续业务上报
 pub struct BootstrapOutcome {
     pub config: ServiceConfig,
-    pub ctx: topems_shared::service_bootstrap::ServiceContext,
+    pub ctx: topems_shared_bootstrap::ServiceContext,
     pub prometheus_layer: PrometheusMetricLayer<'static>,
     pub metric_handle: PrometheusHandle,
     pub custom_gauge: Gauge,

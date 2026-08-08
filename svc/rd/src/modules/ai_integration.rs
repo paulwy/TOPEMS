@@ -12,7 +12,7 @@ use std::env;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 const DEFAULT_AI_SERVICE_URL: &str = "http://localhost:8013";
 

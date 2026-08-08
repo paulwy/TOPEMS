@@ -1,6 +1,6 @@
 #[tokio::test]
 async fn test_get_summary_analytics_response() {
-    let result = analytics_service::modules::bi::analytics::get_summary_analytics().await;
+    let result = topems_analytics::modules::bi::analytics::get_summary_analytics().await;
 
     let json = result.0;
     assert_eq!(json["code"], 0);
@@ -17,7 +17,7 @@ async fn test_get_summary_analytics_response() {
 
 #[tokio::test]
 async fn test_get_module_analytics_development() {
-    let result = analytics_service::modules::bi::analytics::get_module_analytics(
+    let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("development".to_string()),
     )
     .await;
@@ -36,7 +36,7 @@ async fn test_get_module_analytics_development() {
 
 #[tokio::test]
 async fn test_get_module_analytics_quality() {
-    let result = analytics_service::modules::bi::analytics::get_module_analytics(
+    let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("quality".to_string()),
     )
     .await;
@@ -55,7 +55,7 @@ async fn test_get_module_analytics_quality() {
 
 #[tokio::test]
 async fn test_get_module_analytics_production() {
-    let result = analytics_service::modules::bi::analytics::get_module_analytics(
+    let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("production".to_string()),
     )
     .await;
@@ -72,7 +72,7 @@ async fn test_get_module_analytics_production() {
 
 #[tokio::test]
 async fn test_get_module_analytics_laboratory() {
-    let result = analytics_service::modules::bi::analytics::get_module_analytics(
+    let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("laboratory".to_string()),
     )
     .await;
@@ -89,7 +89,7 @@ async fn test_get_module_analytics_laboratory() {
 
 #[tokio::test]
 async fn test_get_module_analytics_ehs() {
-    let result = analytics_service::modules::bi::analytics::get_module_analytics(
+    let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("ehs".to_string()),
     )
     .await;
@@ -106,7 +106,7 @@ async fn test_get_module_analytics_ehs() {
 
 #[tokio::test]
 async fn test_get_module_analytics_srm() {
-    let result = analytics_service::modules::bi::analytics::get_module_analytics(
+    let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("srm".to_string()),
     )
     .await;
@@ -123,7 +123,7 @@ async fn test_get_module_analytics_srm() {
 
 #[tokio::test]
 async fn test_get_module_analytics_invalid_module() {
-    let result = analytics_service::modules::bi::analytics::get_module_analytics(
+    let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("invalid_module".to_string()),
     )
     .await;
@@ -136,7 +136,7 @@ async fn test_get_module_analytics_invalid_module() {
 
 #[tokio::test]
 async fn test_get_analytics_overview() {
-    let result = analytics_service::modules::bi::analytics::get_analytics_overview().await;
+    let result = topems_analytics::modules::bi::analytics::get_analytics_overview().await;
 
     let json = result.0;
     assert_eq!(json["code"], 0);
@@ -151,7 +151,7 @@ async fn test_get_analytics_overview() {
 
 #[tokio::test]
 async fn test_get_analytics_report() {
-    let result = analytics_service::modules::bi::analytics::get_analytics_report().await;
+    let result = topems_analytics::modules::bi::analytics::get_analytics_report().await;
 
     let json = result.0;
     assert_eq!(json["code"], 0);
@@ -177,7 +177,7 @@ async fn test_get_analytics_report() {
 
 #[tokio::test]
 async fn test_get_rs_summary() {
-    let result = analytics_service::modules::bi::analytics::get_rs_summary().await;
+    let result = topems_analytics::modules::bi::analytics::get_rs_summary().await;
 
     let json = result.0;
     assert_eq!(json["code"], 0);
@@ -192,7 +192,7 @@ async fn test_get_rs_summary() {
 
 #[tokio::test]
 async fn test_get_lims_summary() {
-    let result = analytics_service::modules::bi::analytics::get_lims_summary().await;
+    let result = topems_analytics::modules::bi::analytics::get_lims_summary().await;
 
     let json = result.0;
     assert_eq!(json["code"], 0);
@@ -206,7 +206,7 @@ async fn test_get_lims_summary() {
 
 #[tokio::test]
 async fn test_get_qms_summary() {
-    let result = analytics_service::modules::bi::analytics::get_qms_summary().await;
+    let result = topems_analytics::modules::bi::analytics::get_qms_summary().await;
 
     let json = result.0;
     assert_eq!(json["code"], 0);
@@ -220,7 +220,7 @@ async fn test_get_qms_summary() {
 
 #[tokio::test]
 async fn test_get_pdm_summary() {
-    let result = analytics_service::modules::bi::analytics::get_pdm_summary().await;
+    let result = topems_analytics::modules::bi::analytics::get_pdm_summary().await;
 
     let json = result.0;
     assert_eq!(json["code"], 0);
@@ -233,7 +233,7 @@ async fn test_get_pdm_summary() {
 
 #[tokio::test]
 async fn test_get_ehs_risk_distribution() {
-    let result = analytics_service::modules::bi::analytics::get_ehs_risk_distribution().await;
+    let result = topems_analytics::modules::bi::analytics::get_ehs_risk_distribution().await;
 
     let json = result.0;
     assert_eq!(json["code"], 0);
@@ -247,7 +247,7 @@ async fn test_get_ehs_risk_distribution() {
 
 #[tokio::test]
 async fn test_get_srm_supplier_ranking() {
-    let result = analytics_service::modules::bi::analytics::get_srm_supplier_ranking().await;
+    let result = topems_analytics::modules::bi::analytics::get_srm_supplier_ranking().await;
 
     let json = result.0;
     assert_eq!(json["code"], 0);

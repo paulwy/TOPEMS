@@ -1,7 +1,7 @@
 use axum::routing::get;
 use axum::Router;
 
-use topems_shared::auth_middleware;
+use topems_shared_auth::auth::auth_middleware;
 
 use crate::handlers;
 use crate::modules;

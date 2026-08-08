@@ -6,8 +6,9 @@ use uuid::Uuid;
 
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::AppState;
-use topems_shared::event::{EventType, MasterDataAction, PdmMaterialCreatedPayload};
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_event::event::{EventType, MasterDataAction, PdmMaterialCreatedPayload};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims

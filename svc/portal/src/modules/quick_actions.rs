@@ -3,7 +3,8 @@ use axum::{
     http::HeaderMap,
 };
 use sqlx::{PgPool, Row};
-use topems_shared::{auth::Claims, ApiResponse};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::api::iam_api::IamApi;
 use topems_shared_service_client::TypedServiceClient;
 

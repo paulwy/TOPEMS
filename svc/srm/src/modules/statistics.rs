@@ -4,7 +4,8 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::Supplier;
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 pub struct AppState {
     pub db: PgPool,

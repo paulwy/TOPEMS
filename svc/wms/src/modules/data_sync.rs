@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::models::OutboundOrder;
 use crate::modules::ApiState;
-use topems_shared::{api_error, ApiResponse};
+use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OutboundToShippingRequest {

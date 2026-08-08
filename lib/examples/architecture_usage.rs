@@ -11,7 +11,7 @@ use topems_shared::service_client::*;
 use topems_shared::*;
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() {
     println!("=== TOPEMS 架构改进示例 ===\n");
 
     // 1. 服务发现示例
@@ -31,12 +31,12 @@ async fn main() -> Result<()> {
 
     // 2. 创建 HRM 服务客户端
     println!("2. 服务客户端示例");
-    let _hrm_client = create_hrm_client()?;
+    let _hrm_client = create_hrm_client().unwrap();
     println!("   HRM 客户端创建成功\n");
 
     // 3. 事件发布示例
     println!("3. 事件发布示例");
-    let publisher = EventPublisher::new("example-service")?;
+    let publisher = EventPublisher::new("example-service").unwrap();
 
     // 发布 HRM 员工创建事件
     publisher
@@ -46,9 +46,9 @@ async fn main() -> Result<()> {
             "zhangsan@example.com",
             Some(uuid::Uuid::new_v4()),
         )
-        .await?;
+        .await
+        .unwrap();
     println!("   员工创建事件已发布\n");
 
     println!("=== 示例完成 ===");
-    Ok(())
 }

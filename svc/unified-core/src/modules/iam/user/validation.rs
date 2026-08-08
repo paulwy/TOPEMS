@@ -6,7 +6,7 @@ use axum::{
     Json,
 };
 use serde::Deserialize;
-use topems_shared::Claims;
+use topems_shared_auth::auth::Claims;
 
 use super::models::is_valid_email;
 

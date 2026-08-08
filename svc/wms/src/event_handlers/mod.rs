@@ -10,7 +10,7 @@
 
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
-use topems_shared::event::{
+use topems_shared_event::event::{
     EventPublisher, EventResult, EventSubscriber, EventType, WmsInventoryItemReceivedPayload,
     WmsInventoryItemShippedPayload, WmsInventoryLowStockPayload,
     WmsWarehouseTransferCompletedPayload,

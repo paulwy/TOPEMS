@@ -6,7 +6,9 @@ use axum::{
 use serde::Deserialize;
 use uuid::Uuid;
 
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+use topems_shared_core::response::api_error;
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::response::PaginatedResponse;
 
 use super::models::{CreateWorkflowRequest, UpdateWorkflowRequest, Workflow};
 

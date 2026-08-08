@@ -9,7 +9,7 @@ use sqlx::{FromRow, Row};
 use uuid::Uuid;
 
 use crate::modules::ApiState;
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 pub struct ResearchCost {

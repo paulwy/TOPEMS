@@ -5,7 +5,7 @@
 
 use crate::modules;
 use crate::shared::AppState;
-use topems_shared::service_bootstrap::ServiceContext;
+use topems_shared_bootstrap::ServiceContext;
 
 /// 构建 AppState（V79 标准化入口）。
 ///

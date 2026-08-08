@@ -13,7 +13,8 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
-use topems_shared::{ApiResponse, PaginatedResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;

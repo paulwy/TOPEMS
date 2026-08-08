@@ -4,7 +4,7 @@ use chrono::Utc;
 use sqlx::Row;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::conversion_rules::{
     get_rule_executions, insert_conversion_rule, list_conversion_rules, ConversionExecution,

@@ -1,6 +1,6 @@
 use axum::http::HeaderMap;
 use sqlx::PgPool;
-use topems_shared::Claims;
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 use crate::models::*;

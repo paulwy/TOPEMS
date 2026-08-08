@@ -6,6 +6,7 @@ authors.workspace = true
 description = "TOPEMS-Billing 计费管理服务"
 
 [dependencies]
+topems-shared = { path = "../../lib" }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -19,8 +20,12 @@ tracing-subscriber.workspace = true
 dotenv.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
-topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-db = { workspace = true }
+topems-shared-service-client = { workspace = true }
+topems-shared-event = { workspace = true }
+topems-shared-auth = { workspace = true }
+topems-shared-core = { workspace = true }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true

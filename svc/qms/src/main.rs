@@ -23,11 +23,13 @@ pub mod modules;
 use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
-use topems_shared::service_client::{create_workflow_client, WorkflowServiceClient};
-use topems_shared::{
-    event::EventPublisher, simple_health_check, ApiResponse, AuthState, ServiceHealth,
-    SimpleHealthConfig,
-};
+use topems_shared_service_client::service_client::{create_workflow_client, WorkflowServiceClient};
+use topems_shared_event::event::EventPublisher;
+use topems_shared_core::health::simple_health_check;
+use topems_shared_core::response::ApiResponse;
+use topems_shared_auth::auth::AuthState;
+use topems_shared_core::health::ServiceHealth;
+use topems_shared_core::config::CacheConfig as SimpleHealthConfig;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 pub use shared::*;

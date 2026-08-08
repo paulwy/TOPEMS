@@ -6,7 +6,7 @@ use axum::{extract::FromRequestParts, http::request::Parts, Extension};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 /// 租户上下文结构
 #[derive(Debug, Clone)]

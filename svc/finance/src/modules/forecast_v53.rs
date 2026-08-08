@@ -29,7 +29,8 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 // ==================== 辅助函数 ====================
 

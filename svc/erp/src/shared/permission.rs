@@ -1,12 +1,12 @@
 #![allow(dead_code)]
 
 use sqlx::PgPool;
-use topems_shared::auth::Claims;
-use topems_shared::permission::{
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::permission::{
     check_module_permission, check_resource_permission, ModuleCode,
     ModulePermission as SharedModulePermission, PermissionAction,
 };
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]

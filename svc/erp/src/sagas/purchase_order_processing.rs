@@ -13,7 +13,7 @@
 use tracing::info;
 use uuid::Uuid;
 
-use topems_shared::saga::{SagaInstance, SagaOrchestrator, SagaResult, SagaStepDefinition};
+use topems_shared_event::saga::{SagaInstance, SagaOrchestrator, SagaResult, SagaStepDefinition};
 
 /// 采购订单处理 Saga
 pub struct PurchaseOrderProcessingSaga;

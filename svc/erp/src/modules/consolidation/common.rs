@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use uuid::Uuid;
 
-use topems_shared::service_client::{api::finance_api::FinanceApi, TypedServiceClient};
+use topems_shared_service_client::service_client::{api::finance_api::FinanceApi, TypedServiceClient};
 
 /// 调用 Finance Core 审批接口（使用共享 TypedServiceClient<FinanceApi>）
 pub async fn call_finance_core_approval(

@@ -19,7 +19,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 
 use crate::AppState;
 

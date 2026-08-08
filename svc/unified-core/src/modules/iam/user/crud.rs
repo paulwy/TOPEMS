@@ -6,7 +6,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use topems_shared::Claims;
+use topems_shared_auth::auth::Claims;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -84,7 +84,7 @@ pub async fn list_users(
                     };
 
                     let permissions = if u.is_superuser {
-                        topems_shared::auth::get_permissions()
+                        topems_shared_auth::auth::get_permissions()
                             .iter()
                             .map(|p| p.id.clone())
                             .collect()
@@ -465,7 +465,7 @@ pub async fn get_user(
             };
 
             let permissions = if u.is_superuser {
-                topems_shared::auth::get_permissions()
+                topems_shared_auth::auth::get_permissions()
                     .iter()
                     .map(|p| p.id.clone())
                     .collect()

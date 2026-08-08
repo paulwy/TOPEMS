@@ -6,11 +6,11 @@ use sqlx::{
     Row,
 };
 use std::str::FromStr;
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use super::{big_decimal_to_f64, datetime_to_string};
 
@@ -301,14 +301,14 @@ pub async fn get_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
-                qualified_quantity: big_decimal_to_f64(Some(r.qualified_quantity)),
-                unqualified_quantity: big_decimal_to_f64(Some(r.unqualified_quantity)),
+                inspection_type: r.inspection_type.unwrap_or_default(),
+                quantity: big_decimal_to_f64(r.quantity),
+                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
@@ -419,14 +419,14 @@ pub async fn create_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
-                qualified_quantity: big_decimal_to_f64(Some(r.qualified_quantity)),
-                unqualified_quantity: big_decimal_to_f64(Some(r.unqualified_quantity)),
+                inspection_type: r.inspection_type.unwrap_or_default(),
+                quantity: big_decimal_to_f64(r.quantity),
+                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
@@ -527,14 +527,14 @@ pub async fn update_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
-                qualified_quantity: big_decimal_to_f64(Some(r.qualified_quantity)),
-                unqualified_quantity: big_decimal_to_f64(Some(r.unqualified_quantity)),
+                inspection_type: r.inspection_type.unwrap_or_default(),
+                quantity: big_decimal_to_f64(r.quantity),
+                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),

@@ -6,7 +6,7 @@ use axum::{
     Json,
 };
 use serde::Serialize;
-use topems_shared::Claims;
+use topems_shared_auth::auth::Claims;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
