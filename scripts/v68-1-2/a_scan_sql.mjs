@@ -44,7 +44,7 @@ function procSql(p) {
       if (bc) { if (ch === "*" && n === "/") { bc = false; i++; } continue; }
       if (inDol) { if (ch === "$" && buf.slice(i,i+3) === "$$") { inDol = false; i += 2; } continue; }
       if (inStr) { if (esc){esc=false;continue;} if (ch === "\\") { esc=true; continue; } if (ch === inStr) inStr = null; continue; }
-      if (ch === "/" && n === "/") { lc = true; i++; continue; }
+      if ((ch === "-" && n === "-") || (ch === "/" && n === "/")) { lc = true; i++; continue; }
       if (ch === "/" && n === "*") { bc = true; i++; continue; }
       if (ch === "$" && buf.slice(i,i+3) === "$$") { inDol = true; i += 2; continue; }
       if (ch === "'" || ch === '"' || ch === "`") { inStr = ch; continue; }
@@ -57,7 +57,7 @@ function procSql(p) {
   }
 
   for (const sRaw of stmts) {
-    const s = sRaw.trim();
+    const s = sRaw.replace(/^--[^\n]*\n/gm, '').trim();
     if (!s) continue;
     const h = s.match(/^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:([\w]+)\.)?([\w]+)\s*\(/i);
     if (!h) continue;
