@@ -63,7 +63,7 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
                     key={field.fieldId}
                     variant='body2'
                   >
-                    {row[field.fieldName] || '-'}
+                    {(row[field.fieldName] as React.ReactNode) || '-'}
                   </Typography>
                 ))}
               </Box>
@@ -125,7 +125,7 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
                 variant='caption'
                 sx={{ mb: 1, color: 'grey.600' }}
               >
-                {row[xField.fieldName]}
+                {row[xField.fieldName] as React.ReactNode}
               </Typography>
               <Box
                 sx={{
@@ -138,9 +138,9 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
                 }}
               >
                 {yFields.map((yField, yIdx) => {
-                  const value = row[yField.fieldName] || 0;
-                  const maxValue = Math.max(...previewData.map((r) => r[yField.fieldName] || 0), 1);
-                  const height = (value / maxValue) * 100;
+                  const value = (row[yField.fieldName] as number) || 0;
+                  const maxValue = Math.max(...previewData.map((r) => (r[yField.fieldName] as number) || 0), 1);
+                  const height = (value as number) / maxValue * 100;
                   return (
                     <Box
                       key={yIdx}
@@ -217,7 +217,7 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
                     variant='body2'
                     sx={{ fontWeight: 500 }}
                   >
-                    {row[field.fieldName] || '-'}
+                    {(row[field.fieldName] as React.ReactNode) || '-'}
                   </Typography>
                 </Box>
               ))}

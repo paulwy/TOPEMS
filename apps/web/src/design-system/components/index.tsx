@@ -807,7 +807,7 @@ export function V51Table<T extends Record<string, unknown>>({
                         {col.render
                           ? col.render(col.accessor ? row[col.accessor] : null, row)
                           : col.accessor
-                            ? row[col.accessor]
+                            ? row[col.accessor] as React.ReactNode
                             : null}
                       </TableCell>
                     ))}

@@ -113,7 +113,7 @@ const NotificationArchivePage: React.FC = () => {
   };
 
   const handleViewDetail = useCallback((row: Record<string, unknown>) => {
-    setSelectedNotification(row as ArchivedNotification);
+    setSelectedNotification(row as unknown as ArchivedNotification);
   }, []);
 
   const customRowActions = [
