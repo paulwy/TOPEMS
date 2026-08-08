@@ -133,7 +133,7 @@ const widgetToCanvasComponent = (widget: Widget): CanvasComponent => ({
 });
 
 const canvasComponentToWidgetData = (comp: CanvasComponent): Partial<Widget> => ({
-  name: comp.config.title || comp.type,
+  name: (comp.config.title as string) || comp.type,
   widget_type: comp.type,
   config: comp.config,
   position: {
@@ -609,7 +609,7 @@ const BIVisualizationPage = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           {getComponentIcon(comp.type)}
                           <Typography variant='caption'>
-                            {comp.config.title || comp.type}
+                            {(comp.config.title as string) || comp.type}
                           </Typography>
                         </Box>
                         <IconButton

@@ -314,7 +314,7 @@ const BIAnalyticsPage = () => {
   }, [overviewQuery]);
 
   const getModuleStats = (moduleId: string): Record<string, string | number> => {
-    const data = modulesData[moduleId];
+    const data = modulesData[moduleId] as Record<string, any>;
     if (!data) {
       const fallbackStats: Record<string, Record<string, string | number>> = {
         development: { 项目总数: 120, 进行中: 45, 完成率: '85%' },
@@ -365,7 +365,7 @@ const BIAnalyticsPage = () => {
   };
 
   const getModuleTrend = (moduleId: string): 'up' | 'down' | 'stable' => {
-    const data = modulesData[moduleId];
+    const data = modulesData[moduleId] as Record<string, any>;
     if (!data) {
       const fallbackTrends: Record<string, 'up' | 'down' | 'stable'> = {
         development: 'up',
