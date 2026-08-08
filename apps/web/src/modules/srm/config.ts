@@ -57,7 +57,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['srm:supplier:read', 'srm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: SRM_PATHS.supplierDetail,
@@ -82,7 +82,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['srm:category:read', 'srm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: SRM_PATHS.product,
@@ -96,7 +96,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['srm:product:read', 'srm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: SRM_PATHS.contract,
@@ -215,7 +215,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['srm:portal:read', 'srm:read'],
       action: 'read',
       template: 'dashboard',
-      group: 'business',
+      group: 'master',
     },
     {
       path: SRM_PATHS.quotation,
@@ -262,7 +262,7 @@ export const srmNavConfig: ModuleNavConfig = {
       path: SRM_PATHS.supplier,
       permission: 'srm:supplier:read',
       order: 1,
-      group: 'business',
+      group: 'master',
       showInTabs: true,
       description: '供应商信息管理',
     },
@@ -273,7 +273,7 @@ export const srmNavConfig: ModuleNavConfig = {
       path: SRM_PATHS.category,
       permission: 'srm:category:read',
       order: 2,
-      group: 'business',
+      group: 'master',
       description: '供应商品类管理',
     },
     {
@@ -283,7 +283,7 @@ export const srmNavConfig: ModuleNavConfig = {
       path: SRM_PATHS.product,
       permission: 'srm:product:read',
       order: 3,
-      group: 'business',
+      group: 'master',
       description: '供应商产品管理',
     },
     {
@@ -385,7 +385,7 @@ export const srmNavConfig: ModuleNavConfig = {
       path: SRM_PATHS.portal,
       permission: 'srm:portal:read',
       order: 7,
-      group: 'business',
+      group: 'master',
       description: '供应商自助门户',
     },
   ],

@@ -43,7 +43,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       code: 'asset-categories',
       title: '资产分类',
       template: 'list',
-      group: 'setting',
+      group: 'master',
       requiredPermissions: ['asset:category:read'],
       action: 'read',
     },

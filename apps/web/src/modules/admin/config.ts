@@ -67,7 +67,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:tenant:read', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'setting',
+      group: 'master',
     },
     {
       path: ADMIN_PATHS.tenantDetail,
@@ -103,7 +103,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:tenant:read', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'setting',
+      group: 'master',
     },
 
     // ========== 账号管理 ==========
@@ -119,7 +119,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:account:read', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: ADMIN_PATHS.bankAccount,
@@ -133,7 +133,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:bank:read', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
 
     // ========== 系统配置 ==========
@@ -207,7 +207,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:database:read', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: ADMIN_PATHS.migration,
@@ -221,7 +221,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['system:migration', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'setting',
     },
     {
       path: ADMIN_PATHS.configDebug,
@@ -232,7 +232,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:debug:read', 'admin:read'],
       action: 'read',
       template: 'settings',
-      group: 'business',
+      group: 'setting',
     },
 
     // ========== 监控审计 ==========
@@ -348,7 +348,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.tenant,
       permission: 'admin:tenant:read',
       order: 1,
-      group: 'business',
+      group: 'master',
       showInTabs: true,
       description: '多租户管理',
     },
@@ -359,7 +359,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.tenantBilling,
       permission: 'admin:tenant:read',
       order: 2,
-      group: 'business',
+      group: 'master',
       description: '租户计费管理',
     },
     {
@@ -369,7 +369,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.account,
       permission: 'admin:account:read',
       order: 13,
-      group: 'business',
+      group: 'master',
       description: '账号信息管理',
     },
     {
@@ -379,7 +379,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.bankAccount,
       permission: 'admin:bank:read',
       order: 14,
-      group: 'business',
+      group: 'master',
       description: '银行账号管理',
     },
     {
@@ -430,7 +430,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.database,
       permission: 'admin:database:read',
       order: 24,
-      group: 'business',
+      group: 'master',
       showInSidebar: false,
       description: '数据库表结构',
     },
@@ -441,7 +441,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.migration,
       permission: 'admin:migration:read',
       order: 25,
-      group: 'business',
+      group: 'setting',
       showInSidebar: false,
       description: '数据迁移管理',
     },
@@ -452,7 +452,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.configDebug,
       permission: 'admin:debug:read',
       order: 26,
-      group: 'business',
+      group: 'setting',
       showInSidebar: false,
       description: '系统配置调试',
     },

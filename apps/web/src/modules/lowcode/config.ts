@@ -29,7 +29,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
       code: 'lowcode-apps',
       title: '应用管理',
       template: 'list',
-      group: 'business',
+      group: 'master',
       requiredPermissions: ['lowcode:read'],
       action: 'read',
     },
@@ -81,7 +81,7 @@ export const lowcodeNavConfig: ModuleNavConfig = {
   suite: 'platform',
   order: 90,
   navItems: [
-    { code: 'lowcode-apps', label: '应用管理', path: LOWCODE_PATHS.apps, group: 'business', showInSidebar: true },
+    { code: 'lowcode-apps', label: '应用管理', path: LOWCODE_PATHS.apps, group: 'master', showInSidebar: true },
     { code: 'lowcode-forms', label: '表单设计', path: LOWCODE_PATHS.forms, group: 'process', showInSidebar: true },
     { code: 'lowcode-pages', label: '页面设计', path: LOWCODE_PATHS.pages, group: 'process', showInSidebar: true },
     {

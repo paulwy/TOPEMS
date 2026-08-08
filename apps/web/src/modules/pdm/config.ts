@@ -46,7 +46,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:product:read', 'pdm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: PDM_PATHS.material,
@@ -57,7 +57,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:material:read', 'pdm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: PDM_PATHS.bom,
@@ -68,7 +68,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:bom:read', 'pdm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: PDM_PATHS.pdmBom,
@@ -79,7 +79,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:bom:read', 'pdm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: PDM_PATHS.document,
@@ -90,7 +90,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:document:read', 'pdm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: PDM_PATHS.version,
@@ -123,7 +123,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:project:read', 'pdm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: PDM_PATHS.productConfig,
@@ -137,7 +137,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:product:read', 'pdm:read'],
       action: 'read',
       template: 'form',
-      group: 'business',
+      group: 'master',
     },
     {
       path: PDM_PATHS.formula,
@@ -148,7 +148,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:formula:read', 'pdm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: PDM_PATHS.process,
@@ -159,7 +159,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:process:read', 'pdm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: PDM_PATHS.batch,
@@ -170,7 +170,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:batch:read', 'pdm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: PDM_PATHS.step,
@@ -181,7 +181,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:step:read', 'pdm:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: PDM_PATHS.stats,
@@ -217,7 +217,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['pdm:product_category:read', 'pdm:read'],
       action: 'read',
       template: 'tree',
-      group: 'business',
+      group: 'master',
     },
   ],
 };
@@ -253,7 +253,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.product,
       permission: 'pdm:product:read',
       order: 1,
-      group: 'business',
+      group: 'master',
       showInTabs: true,
       description: '产品信息管理',
     },
@@ -264,7 +264,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.material,
       permission: 'pdm:material:read',
       order: 2,
-      group: 'business',
+      group: 'master',
       showInTabs: true,
       description: '物料信息管理',
     },
@@ -275,7 +275,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.bom,
       permission: 'pdm:bom:read',
       order: 3,
-      group: 'business',
+      group: 'master',
       showInTabs: true,
       description: '物料清单管理',
     },
@@ -286,7 +286,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.pdmBom,
       permission: 'pdm:bom:read',
       order: 4,
-      group: 'business',
+      group: 'master',
       description: 'PDM物料清单',
     },
     {
@@ -296,7 +296,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.document,
       permission: 'pdm:document:read',
       order: 5,
-      group: 'business',
+      group: 'master',
       showInTabs: true,
       description: '产品文档管理',
     },
@@ -328,7 +328,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.project,
       permission: 'pdm:project:read',
       order: 6,
-      group: 'business',
+      group: 'master',
       description: 'PDM项目管理',
     },
     {
@@ -338,7 +338,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.productConfig,
       permission: 'pdm:product:read',
       order: 7,
-      group: 'business',
+      group: 'master',
       description: '产品配置管理',
     },
     {
@@ -348,7 +348,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.formula,
       permission: 'pdm:formula:read',
       order: 8,
-      group: 'business',
+      group: 'master',
       description: '配方数据管理',
     },
     {
@@ -358,7 +358,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.process,
       permission: 'pdm:process:read',
       order: 9,
-      group: 'business',
+      group: 'master',
       description: '工艺流程管理',
     },
     {
@@ -368,7 +368,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.batch,
       permission: 'pdm:batch:read',
       order: 10,
-      group: 'business',
+      group: 'master',
       description: '批次数据管理',
     },
     {
@@ -378,7 +378,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.step,
       permission: 'pdm:step:read',
       order: 11,
-      group: 'business',
+      group: 'master',
       description: '工艺步骤管理',
     },
     {
@@ -398,7 +398,7 @@ export const pdmNavConfig: ModuleNavConfig = {
       path: PDM_PATHS.productCategory,
       permission: 'pdm:product_category:read',
       order: 12,
-      group: 'business',
+      group: 'master',
       description: '产品类别树形管理',
     },
   ],
