@@ -4,7 +4,7 @@ use axum::{
 };
 use uuid::Uuid;
 
-use crate::AppState;
+use crate::shared::AppState;
 use topems_shared::{api_error, api_success, ApiResponse};
 
 use super::models::{
@@ -50,7 +50,7 @@ pub async fn list_dict_types(
     .bind(category.clone())
     .bind(status.clone())
     .bind(search.clone())
-    .fetch_one(&state.pool)
+    .fetch_one(&state.db)
     .await
     {
         Ok(v) => v,
@@ -76,7 +76,7 @@ pub async fn list_dict_types(
         .bind(search)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&state.db)
         .await
     {
         Ok(v) => v,
@@ -105,7 +105,7 @@ pub async fn get_dict_type(
 
     let dict_type: Option<DictType> = match sqlx::query_as(&sql)
         .bind(id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(v) => v,
@@ -144,7 +144,7 @@ pub async fn create_dict_type(
         .bind(req.name)
         .bind(req.category.unwrap_or_else(|| "general".to_string()))
         .bind(req.description)
-        .fetch_one(&state.pool)
+        .fetch_one(&state.db)
         .await
     {
         Ok(v) => v,
@@ -183,7 +183,7 @@ pub async fn update_dict_type(
         .bind(req.status)
         .bind(chrono::Utc::now())
         .bind(id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(v) => v,
@@ -205,7 +205,7 @@ pub async fn delete_dict_type(
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(r#"DELETE FROM core_dict_types WHERE id = $1"#)
         .bind(id)
-        .execute(&state.pool)
+        .execute(&state.db)
         .await;
 
     match result {
@@ -241,7 +241,7 @@ pub async fn list_dict_items(
     .bind(dict_type_id)
     .bind(status.clone())
     .bind(search.clone())
-    .fetch_one(&state.pool)
+    .fetch_one(&state.db)
     .await
     {
         Ok(v) => v,
@@ -267,7 +267,7 @@ pub async fn list_dict_items(
         .bind(search)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&state.db)
         .await
     {
         Ok(v) => v,
@@ -296,7 +296,7 @@ pub async fn get_dict_item(
 
     let dict_item: Option<DictItem> = match sqlx::query_as(&sql)
         .bind(id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(v) => v,
@@ -338,7 +338,7 @@ pub async fn create_dict_item(
         .bind(req.sort_order.unwrap_or(0))
         .bind(req.parent_id)
         .bind(req.extra_data)
-        .fetch_one(&state.pool)
+        .fetch_one(&state.db)
         .await
     {
         Ok(v) => v,
@@ -381,7 +381,7 @@ pub async fn update_dict_item(
         .bind(req.status)
         .bind(chrono::Utc::now())
         .bind(id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&state.db)
         .await
     {
         Ok(v) => v,
@@ -403,7 +403,7 @@ pub async fn delete_dict_item(
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(r#"DELETE FROM core_dict_items WHERE id = $1"#)
         .bind(id)
-        .execute(&state.pool)
+        .execute(&state.db)
         .await;
 
     match result {
@@ -424,7 +424,7 @@ pub async fn batch_create_dict_items(
         return Json(api_error(400, "字典项列表不能为空"));
     }
 
-    let mut tx = match state.pool.begin().await {
+    let mut tx = match state.db.begin().await {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
@@ -483,7 +483,7 @@ pub async fn export_dict_items(
 
     let items: Vec<DictItem> = match sqlx::query_as(&sql)
         .bind(dict_type_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&state.db)
         .await
     {
         Ok(v) => v,
