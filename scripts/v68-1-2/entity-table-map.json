@@ -1,15 +1,15 @@
 {
   "adminMigration|migration|services": {
     "_comment": "file=apps/web/src/schemas/admin/migration.ts  entity=adminMigration  modu=migration  resource=services",
-    "tableKey": null
+    "tableKey": "core_migration_history"
   },
   "adminTenant|admin|tenants": {
     "_comment": "file=apps/web/src/schemas/admin/tenant.ts  entity=adminTenant  modu=admin  resource=tenants",
-    "tableKey": null
+    "tableKey": "core_tenants"
   },
   "admin_account|finance|accounts": {
     "_comment": "file=apps/web/src/schemas/admin/account.ts  entity=admin_account  modu=finance  resource=accounts",
-    "tableKey": null
+    "tableKey": "core_finance_accounts"
   },
   "admin_bank_account|erp|bankAccounts": {
     "_comment": "file=apps/web/src/schemas/admin/bankAccount.ts  entity=admin_bank_account  modu=erp  resource=bankAccounts",
@@ -17,7 +17,7 @@
   },
   "admin_plugin|plugin|plugins": {
     "_comment": "file=apps/web/src/schemas/admin/plugin.ts  entity=admin_plugin  modu=plugin  resource=plugins",
-    "tableKey": null
+    "tableKey": "core_plugins"
   },
   "announcement|erp|announcements": {
     "_comment": "file=apps/web/src/schemas/erp/announcement.ts  entity=announcement  modu=erp  resource=announcements",
@@ -45,11 +45,11 @@
   },
   "bi_data_source|bi|dataSources": {
     "_comment": "file=apps/web/src/schemas/bi/dataSource.ts  entity=bi_data_source  modu=bi  resource=dataSources",
-    "tableKey": null
+    "tableKey": "analytics_datasources"
   },
   "bi_report|bi|reports": {
     "_comment": "file=apps/web/src/schemas/bi/report.ts  entity=bi_report  modu=bi  resource=reports",
-    "tableKey": null
+    "tableKey": "analytics_reports"
   },
   "contact|crm|contacts": {
     "_comment": "file=apps/web/src/schemas/crm/contact.ts  entity=contact  modu=crm  resource=contacts",
@@ -81,19 +81,19 @@
   },
   "deliveryAppointment|scm|deliveryAppointments": {
     "_comment": "file=apps/web/src/schemas/scm/deliveryAppointment.ts  entity=deliveryAppointment  modu=scm  resource=deliveryAppointments",
-    "tableKey": null
+    "tableKey": "scm_supplier_delivery_appointments"
   },
   "dict-item|system|dict-items": {
     "_comment": "file=apps/web/src/schemas/admin/dictionary.ts  entity=dict-item  modu=system  resource=dict-items",
-    "tableKey": null
+    "tableKey": "core_dict_items"
   },
   "dict-type|system|dict-types": {
     "_comment": "file=apps/web/src/schemas/admin/dictionary.ts  entity=dict-type  modu=system  resource=dict-types",
-    "tableKey": null
+    "tableKey": "core_dict_types"
   },
   "document|doc|documents": {
     "_comment": "file=apps/web/src/schemas/doc/document.tsx  entity=document  modu=doc  resource=documents",
-    "tableKey": null
+    "tableKey": "core_files"
   },
   "ehsAccident|ehs|accidents": {
     "_comment": "file=apps/web/src/schemas/ehs/accident.ts  entity=ehsAccident  modu=ehs  resource=accidents",
@@ -213,7 +213,7 @@
   },
   "finance_accounting_subject|finance|accountingSubjects": {
     "_comment": "file=apps/web/src/schemas/finance/accountingSubject.ts  entity=finance_accounting_subject  modu=finance  resource=accountingSubjects",
-    "tableKey": null
+    "tableKey": "core_finance_accounts"
   },
   "finance_approval_config|finance|approval-configs": {
     "_comment": "file=apps/web/src/schemas/finance/approvalConfig.ts  entity=finance_approval_config  modu=finance  resource=approval-configs",
@@ -221,7 +221,7 @@
   },
   "finance_asset|finance|accounts": {
     "_comment": "file=apps/web/src/schemas/finance/asset.ts  entity=finance_asset  modu=finance  resource=accounts",
-    "tableKey": null
+    "tableKey": "core_finance_accounts"
   },
   "finance_budget|erp|budgets": {
     "_comment": "file=apps/web/src/schemas/finance/budget.ts  entity=finance_budget  modu=erp  resource=budgets",
@@ -229,7 +229,7 @@
   },
   "finance_cost|finance|accounts": {
     "_comment": "file=apps/web/src/schemas/finance/cost.ts  entity=finance_cost  modu=finance  resource=accounts",
-    "tableKey": null
+    "tableKey": "core_finance_accounts"
   },
   "finance_fixed_asset|erp|fixedAssets": {
     "_comment": "file=apps/web/src/schemas/finance/fixedAsset.ts  entity=finance_fixed_asset  modu=erp  resource=fixedAssets",
@@ -237,7 +237,7 @@
   },
   "finance_ledger|finance|accounts": {
     "_comment": "file=apps/web/src/schemas/finance/ledger.ts  entity=finance_ledger  modu=finance  resource=accounts",
-    "tableKey": null
+    "tableKey": "core_finance_ledger"
   },
   "finance_opening_balance|finance|opening-balances": {
     "_comment": "file=apps/web/src/schemas/finance/openingBalance.ts  entity=finance_opening_balance  modu=finance  resource=opening-balances",
@@ -249,11 +249,11 @@
   },
   "finance_voucher|finance|vouchers": {
     "_comment": "file=apps/web/src/schemas/finance/voucher.ts  entity=finance_voucher  modu=finance  resource=vouchers",
-    "tableKey": null
+    "tableKey": "core_finance_vouchers"
   },
   "hrm_attendance|hrm|attendance": {
     "_comment": "file=apps/web/src/schemas/hrm/attendance.ts  entity=hrm_attendance  modu=hrm  resource=attendance",
-    "tableKey": null
+    "tableKey": "mobile_attendance"
   },
   "hrm_company|hrm|companies": {
     "_comment": "file=apps/web/src/schemas/hrm/company.ts  entity=hrm_company  modu=hrm  resource=companies",
@@ -273,7 +273,7 @@
   },
   "hrm_leave|hrm|leaveRequests": {
     "_comment": "file=apps/web/src/schemas/hrm/leave.ts  entity=hrm_leave  modu=hrm  resource=leaveRequests",
-    "tableKey": null
+    "tableKey": "mobile_leave_applications"
   },
   "hrm_org_unit|hrm|organizations": {
     "_comment": "file=apps/web/src/schemas/hrm/organization.ts  entity=hrm_org_unit  modu=hrm  resource=organizations",
@@ -289,7 +289,7 @@
   },
   "hrm_position|hrm|positions": {
     "_comment": "file=apps/web/src/schemas/hrm/position.ts  entity=hrm_position  modu=hrm  resource=positions",
-    "tableKey": null
+    "tableKey": "iam_positions"
   },
   "hrm_recruitment|hrm|jobOpenings": {
     "_comment": "file=apps/web/src/schemas/hrm/recruitment.ts  entity=hrm_recruitment  modu=hrm  resource=jobOpenings",
@@ -321,7 +321,7 @@
   },
   "integration_mes_erp_sync|integration|mesErpSyncs": {
     "_comment": "file=apps/web/src/schemas/integration/mesErp.tsx  entity=integration_mes_erp_sync  modu=integration  resource=mesErpSyncs",
-    "tableKey": null
+    "tableKey": "mes_erp_sync"
   },
   "integration_wms_scm_sync|integration|wmsScmSyncs": {
     "_comment": "file=apps/web/src/schemas/integration/wmsScm.tsx  entity=integration_wms_scm_sync  modu=integration  resource=wmsScmSyncs",
@@ -349,11 +349,11 @@
   },
   "limsInstrument|lims|instruments": {
     "_comment": "file=apps/web/src/schemas/lims/instrument.tsx  entity=limsInstrument  modu=lims  resource=instruments",
-    "tableKey": null
+    "tableKey": "qa_lab_instruments"
   },
   "limsProcess|lims|processes": {
     "_comment": "file=apps/web/src/schemas/lims/process.ts  entity=limsProcess  modu=lims  resource=processes",
-    "tableKey": null
+    "tableKey": "qa_lab_processes"
   },
   "limsPtPlan|lims|ptPlans": {
     "_comment": "file=apps/web/src/schemas/lims/ptPlan.ts  entity=limsPtPlan  modu=lims  resource=ptPlans",
@@ -361,11 +361,11 @@
   },
   "limsSample|lims|samples": {
     "_comment": "file=apps/web/src/schemas/lims/sample.ts  entity=limsSample  modu=lims  resource=samples",
-    "tableKey": null
+    "tableKey": "qa_lab_samples"
   },
   "limsTask|lims|tasks": {
     "_comment": "file=apps/web/src/schemas/lims/task.ts  entity=limsTask  modu=lims  resource=tasks",
-    "tableKey": null
+    "tableKey": "qa_lab_tasks"
   },
   "limsUncertaintyProject|lims|uncertaintyProjects": {
     "_comment": "file=apps/web/src/schemas/lims/uncertainty.ts  entity=limsUncertaintyProject  modu=lims  resource=uncertaintyProjects",
@@ -441,7 +441,7 @@
   },
   "mobile_notification|mobile|notifications": {
     "_comment": "file=apps/web/src/schemas/mobile/notification.tsx  entity=mobile_notification  modu=mobile  resource=notifications",
-    "tableKey": null
+    "tableKey": "core_notifications"
   },
   "monitor_alert_rule|monitor|alertRules": {
     "_comment": "file=apps/web/src/schemas/monitor/alertRule.ts  entity=monitor_alert_rule  modu=monitor  resource=alertRules",
@@ -461,15 +461,15 @@
   },
   "mrpSuggestion|scm|mrpSuggestions": {
     "_comment": "file=apps/web/src/schemas/scm/mrpSuggestion.ts  entity=mrpSuggestion  modu=scm  resource=mrpSuggestions",
-    "tableKey": null
+    "tableKey": "scm_mrp_suggestions"
   },
   "notification_template|notification|notification-templates": {
     "_comment": "file=apps/web/src/schemas/notification/template.tsx  entity=notification_template  modu=notification  resource=notification-templates",
-    "tableKey": null
+    "tableKey": "core_notification_templates"
   },
   "notification|notification|notifications": {
     "_comment": "file=apps/web/src/schemas/notification/notification.tsx  entity=notification  modu=notification  resource=notifications",
-    "tableKey": null
+    "tableKey": "core_notifications"
   },
   "office_supply|erp|officeSupplies": {
     "_comment": "file=apps/web/src/schemas/erp/officeSupplies.ts  entity=office_supply  modu=erp  resource=officeSupplies",
@@ -541,7 +541,7 @@
   },
   "permission|iam|permissions": {
     "_comment": "file=apps/web/src/schemas/iam/permission.ts  entity=permission  modu=iam  resource=permissions",
-    "tableKey": null
+    "tableKey": "core_permissions"
   },
   "pm_contract|pm|contracts": {
     "_comment": "file=apps/web/src/schemas/pm/contract.ts  entity=pm_contract  modu=pm  resource=contracts",
@@ -569,7 +569,7 @@
   },
   "purchaseContract|scm|purchaseContracts": {
     "_comment": "file=apps/web/src/schemas/scm/purchaseContract.ts  entity=purchaseContract  modu=scm  resource=purchaseContracts",
-    "tableKey": null
+    "tableKey": "scm_purchase_contracts"
   },
   "purchaseItem|scm|purchaseItems": {
     "_comment": "file=apps/web/src/schemas/scm/purchaseItem.ts  entity=purchaseItem  modu=scm  resource=purchaseItems",
@@ -585,7 +585,7 @@
   },
   "purchaseRequisition|scm|purchaseRequisitions": {
     "_comment": "file=apps/web/src/schemas/scm/purchaseRequisition.ts  entity=purchaseRequisition  modu=scm  resource=purchaseRequisitions",
-    "tableKey": null
+    "tableKey": "scm_purchase_requisitions"
   },
   "qmsQualityStandard|qms|standards": {
     "_comment": "file=apps/web/src/schemas/qms/standard.ts  entity=qmsQualityStandard  modu=qms  resource=standards",
@@ -597,7 +597,7 @@
   },
   "quality_check|qms|inspection": {
     "_comment": "file=apps/web/src/schemas/qms/inspection.ts  entity=quality_check  modu=qms  resource=inspection",
-    "tableKey": null
+    "tableKey": "qa_lab_records"
   },
   "quality_cost|qms|qualityCosts": {
     "_comment": "file=apps/web/src/schemas/qms/qualityCost.ts  entity=quality_cost  modu=qms  resource=qualityCosts",
@@ -665,15 +665,15 @@
   },
   "reagent|lims|reagents": {
     "_comment": "file=apps/web/src/schemas/lims/reagent.ts  entity=reagent  modu=lims  resource=reagents",
-    "tableKey": null
+    "tableKey": "qa_lab_reagents"
   },
   "report_subscription|report|subscriptions": {
     "_comment": "file=apps/web/src/schemas/report/subscription.tsx  entity=report_subscription  modu=report  resource=subscriptions",
-    "tableKey": null
+    "tableKey": "analytics_report_subscriptions"
   },
   "report|report|reports": {
     "_comment": "file=apps/web/src/schemas/report/report.ts  entity=report  modu=report  resource=reports",
-    "tableKey": null
+    "tableKey": "analytics_reports"
   },
   "return|crm|returns": {
     "_comment": "file=apps/web/src/schemas/crm/return.ts  entity=return  modu=crm  resource=returns",
@@ -681,7 +681,7 @@
   },
   "role|iam|roles": {
     "_comment": "file=apps/web/src/schemas/iam/role.ts  entity=role  modu=iam  resource=roles",
-    "tableKey": null
+    "tableKey": "core_roles"
   },
   "salesOrder|erp|salesOrders": {
     "_comment": "file=apps/web/src/schemas/erp/salesOrder.ts  entity=salesOrder  modu=erp  resource=salesOrders",
@@ -721,7 +721,7 @@
   },
   "supplierAdmission|scm|supplierAdmissions": {
     "_comment": "file=apps/web/src/schemas/scm/supplierAdmission.ts  entity=supplierAdmission  modu=scm  resource=supplierAdmissions",
-    "tableKey": null
+    "tableKey": "scm_supplier_admissions"
   },
   "supplier_contract|srm|contracts": {
     "_comment": "file=apps/web/src/schemas/srm/contract.ts  entity=supplier_contract  modu=srm  resource=contracts",
@@ -749,15 +749,15 @@
   },
   "tenantInvoice|admin|invoices": {
     "_comment": "file=apps/web/src/schemas/admin/tenantInvoice.ts  entity=tenantInvoice  modu=admin  resource=invoices",
-    "tableKey": null
+    "tableKey": "core_billing_invoices"
   },
   "tenantUser|admin|tenantUsers": {
     "_comment": "file=apps/web/src/schemas/admin/tenantUser.ts  entity=tenantUser  modu=admin  resource=tenantUsers",
-    "tableKey": null
+    "tableKey": "core_tenant_users"
   },
   "tenant_invoice|tenant|invoices": {
     "_comment": "file=apps/web/src/schemas/admin/tenantInvoice.tsx  entity=tenant_invoice  modu=tenant  resource=invoices",
-    "tableKey": null
+    "tableKey": "core_billing_invoices"
   },
   "test_method|lims|testMethods": {
     "_comment": "file=apps/web/src/schemas/lims/testMethod.ts  entity=test_method  modu=lims  resource=testMethods",
@@ -769,7 +769,7 @@
   },
   "user|iam|users": {
     "_comment": "file=apps/web/src/schemas/iam/user.ts  entity=user  modu=iam  resource=users",
-    "tableKey": null
+    "tableKey": "core_users"
   },
   "vehicleRequest|erp|vehicleRequests": {
     "_comment": "file=apps/web/src/schemas/erp/vehicleRequest.ts  entity=vehicleRequest  modu=erp  resource=vehicleRequests",
@@ -789,7 +789,7 @@
   },
   "wms_batch|wms|batches": {
     "_comment": "file=apps/web/src/schemas/wms/batch.ts  entity=wms_batch  modu=wms  resource=batches",
-    "tableKey": null
+    "tableKey": "wms_batches"
   },
   "wms_inbound_order|wms|inbound-orders": {
     "_comment": "file=apps/web/src/schemas/wms/inbound.ts  entity=wms_inbound_order  modu=wms  resource=inbound-orders",
@@ -805,19 +805,19 @@
   },
   "wms_replenishment_order|wms|smartReplenishment": {
     "_comment": "file=apps/web/src/schemas/wms/replenishment.ts  entity=wms_replenishment_order  modu=wms  resource=smartReplenishment",
-    "tableKey": null
+    "tableKey": "wms_replenishment_orders"
   },
   "wms_replenishment_suggestion|wms|smartReplenishment": {
     "_comment": "file=apps/web/src/schemas/wms/suggestion.ts  entity=wms_replenishment_suggestion  modu=wms  resource=smartReplenishment",
-    "tableKey": null
+    "tableKey": "wms_replenishment_suggestions"
   },
   "wms_serial_number|wms|serialNumbers": {
     "_comment": "file=apps/web/src/schemas/wms/serialNumber.ts  entity=wms_serial_number  modu=wms  resource=serialNumbers",
-    "tableKey": null
+    "tableKey": "wms_serial_numbers"
   },
   "wms_stock_take|wms|stockTakes": {
     "_comment": "file=apps/web/src/schemas/wms/stockTake.ts  entity=wms_stock_take  modu=wms  resource=stockTakes",
-    "tableKey": null
+    "tableKey": "stocktake_tasks"
   },
   "wms_supplier|scm|suppliers": {
     "_comment": "file=apps/web/src/schemas/wms/supplier.ts  entity=wms_supplier  modu=scm  resource=suppliers",
@@ -825,19 +825,19 @@
   },
   "wms_transfer|wms|transfers": {
     "_comment": "file=apps/web/src/schemas/wms/transfer.ts  entity=wms_transfer  modu=wms  resource=transfers",
-    "tableKey": null
+    "tableKey": "wms_transfer_orders"
   },
   "workflow-approval|workflow|approvalTasks": {
     "_comment": "file=apps/web/src/schemas/workflow/approval.ts  entity=workflow-approval  modu=workflow  resource=approvalTasks",
-    "tableKey": null
+    "tableKey": "core_workflow_tasks"
   },
   "workflow-definition|workflow|workflows": {
     "_comment": "file=apps/web/src/schemas/workflow/definition.ts  entity=workflow-definition  modu=workflow  resource=workflows",
-    "tableKey": null
+    "tableKey": "core_workflows"
   },
   "workflow-instance|workflow|instances": {
     "_comment": "file=apps/web/src/schemas/workflow/instance.ts  entity=workflow-instance  modu=workflow  resource=instances",
-    "tableKey": null
+    "tableKey": "core_workflow_instances"
   },
   "workflow-monitor|workflow|monitor": {
     "_comment": "file=apps/web/src/schemas/workflow/monitor.ts  entity=workflow-monitor  modu=workflow  resource=monitor",
@@ -845,7 +845,7 @@
   },
   "workflow-template|workflow|workflows": {
     "_comment": "file=apps/web/src/schemas/workflow/template.ts  entity=workflow-template  modu=workflow  resource=workflows",
-    "tableKey": null
+    "tableKey": "core_workflows"
   },
   "workstation|mes|workstations": {
     "_comment": "file=apps/web/src/schemas/mes/workstation.ts  entity=workstation  modu=mes  resource=workstations",
