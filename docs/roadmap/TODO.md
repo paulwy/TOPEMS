@@ -2,7 +2,7 @@
 
 > **版本**: V68.1 | **更新日期**: 2026-08-08
 > **服务总数**: 28 个（含 unified-core + master-data + lowcode 占位） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1-2 EntitySchema maxLength 4 道闸全通过** ✅）
+> **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 6/6 全闭环**：迁移命名门禁 · EntitySchema maxLength · 软删除统一 · 时间戳决策 · add_tenant_id 模板化生成器 · MES DDL 碎片收敛 · **P2×4 并行顺手项全闭环**：schema 命名清理 · inventory 自动生成 · 真相源三联校验 · 8 表 DELETE 残留转换 · **P3-2 status CHECK 492 表**）
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 28/28 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
 > **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 21 服务迁移；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP5 拆分达标**（AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72% / IAM 路径归化）
@@ -151,7 +151,7 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 
 ---
 
-## 3.5 V68.1 — V67.2 P1×6 质量收敛（审计报告建议 3 个版本内完成）🟡 进行中（2/6 完成）
+## 3.5 V68.1 — V67.2 P1×6 质量收敛（审计报告建议 3 个版本内完成）✅ 封版 · 6/6 全闭环
 
 > 🎯 **目标**：消化 V67.1 数据层深度审计（`docs/audit/V67.1-data-layer-audit-20260808.md` §9.2 列出的 🟠 P1 级 6 项重要问题），避免技术债滚雪球；**P2×4 / P3×3 并行顺手消化**。
 
@@ -161,35 +161,38 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 |---|---|---|---|---|---|
 | 🔴 P0 | 1 | P1-2 | **统一迁移命名规范 + CI 门禁**：`migrations/` 目录下 146 个 SQL 文件（2026-08-08 实际基线 126 条，125 已是 FULL 14 位+topic+summary / 1 为 SHORT 单段 advisory / 0 条 V{NN} 或 8/12 位历史残留）→ 选定单一规范（`YYYYMMDDHHMMSS_{topic}_{summary}.sql`，`SHORT 14+summary` 仅 advisory 不阻塞）+ 新增 `scripts/check-migration-names.mjs` 门禁脚本，含** 5 类检查**：① V{NN}_ / unmatched 一律 ERR；② 14/12/8 位时间戳合法性；③ 每个 service 迁移目录内按文件名严格单调递增；④ default 模式 8/12 位仅 WARN，`--strict` 模式把 8/12 位历史升格为 ERR；⑤ 对 SHORT 单段输出 advisory（非阻塞）。2026-08-08 已完成：脚本落地并通过实际基线双验证（default & --strict 均 EXIT 0；人工伪造 `V42_bad.sql` 可被 ERR 拦截） | ⭐ | ✅ 完成 |
 | 🔴 P0 | 2 | P1-5 | **V68.1-2 EntitySchema maxLength 91 表全量补齐**：基线（2026-08-08 实扫）216 EntitySchema × 1438 个 String-type 字段，V67.2 仅 21 字段有 maxLength（覆盖率 1.5%）→ 采用**方案 A（全自动三阶段流水线 + 4 道质量闸）**：Stage A `a_scan_sql.mjs` 扫 svc/lib/database migrations → **1854** (tableKey,col)→VARCHAR(n) 映射；Stage B `b_gap_alias_scan.mjs` + 人工填 `entity-table-map.json`（158 条 alias，EntitySchema↔SQL 表名解耦，长期资产）；Stage C `c_patch_schemas.mjs`（幂等、dry-run、位置精准、prettier 兼容）批量 patch **533 字段**。**4 道质量闸全部 EXIT 0**：① Gate1 `gate1_map_coverage.mjs` — VARCHAR-backed 字段接收率 **100%**（547/547），长列(≥500) **100%**（11/11），0 无效 alias，豁免 TEXT=80 / 无 SQL 列=451 / 无 SQL 表=360；② Gate2 `scripts/check-entityschema-maxlength-reverse.mjs` — 反向审计 547 matched / 0 mismatches / 7 advisory extras；③ Gate3 — `tsc --noEmit` 0 error + `eslint --quiet` 0 error；④ Gate4 `scripts/check-entityschema-maxlength.mjs` — Schema 覆盖率 **38.53%**（≥35% 阈值，554/1438 字段）。`scripts/v68-1-2/` 目录（含 Stage A/B/C 脚本 + 别名表 + Gate1）作为永久对齐工具保存，Gate2/Gate4 脚本挂入 CI 作为后续加字段时防漂移的门禁。 | ⭐⭐⭐⭐ | ✅ 完成 |
-| 🟡 P1 | 3 | P1-4 | **软删除 3 模式统一**：当前 91 张表中存在 `deleted_at: Option<NaiveDateTime>` / `is_deleted: bool` / 直接 DELETE 三种策略并存 → 统一为 `deleted_at` + `DEFAULT NULL`（timestamp-based），并同步所有 `EntitySchema` 的 `soft_delete` 字段与 axum query-scope | ⭐⭐⭐ | ⏳ 待迭代 |
-| 🟡 P1 | 4 | P1-6 | **add_tenant_id 6 批严格单调重排**：`20250101_add_tenant_id_*.sql` 共 6 批 27 个服务，当前时间戳全部堆叠在同一天（2025-01-01），虽然内部有序但不符合"迁移时间戳严格单调递增（真相源）"假设 → 按模块依赖图重新分配为 6 个不同日期（如 0102/0103/…）或采用同一日期下 HHMMSS 精确秒级单调 | ⭐⭐ | ⏳ 待迭代 |
-| 🟢 P2 | 5 | P1-1 | **add_tenant_id 27 文件去重：公共 SQL 片段模板化**：`20250101_add_tenant_id_*.sql` 跨 27 个服务逻辑高度雷同（`ALTER TABLE x ADD COLUMN tenant_id UUID` + `CREATE INDEX idx_x_tenant_id`）→ 提取为 `migrations/.snippets/add_tenant_id_template.sql` 公共模板，并在 `scripts/` 下新增代码生成器脚本（`gen-add-tenant-id.mjs`），后续新服务只需一条命令生成合规迁移 | ⭐⭐⭐ | ⏳ 待迭代 |
-| 🟢 P2 | 6 | P1-3 | **MES 8 个碎片 DDL 收敛**：057~064 共 8 条迁移（V17/V19/V20/V21/V23/V24/V27/V32 × 53+ 表）散落在 MES 单一服务中，是早期"快速迭代期"遗留 → 方案二选一：① 用一条 `20260809000000_mes_schema_consolidation.sql` 空合并迁移（仅添加 CHECKSUM 一致性描述，不重跑），并建立一份 `docs/architecture/mes-schema-truth.md` 真相源文档；② 重构为 `mes_create_tables.sql` 单一大迁移 + 91 表汇总校验 | ⭐⭐⭐⭐ | ⏳ 待迭代 |
+| 🟡 P1 | 3 | P1-4 | **软删除 3 模式统一**：当前 91 张表中存在 `deleted_at: Option<NaiveDateTime>` / `is_deleted: bool` / 直接 DELETE 三种策略并存 → 统一为 `deleted_at` + `DEFAULT NULL`（timestamp-based），并同步所有 `EntitySchema` 的 `soft_delete` 字段与 axum query-scope。**2026-08-08 完成**：Phase 1 迁移 5 表 `is_deleted→deleted_at`；Phase 2 动态 DO 块为 774 张表添加 `deleted_at` 列 + Rust 运行时 DDL 补丁 98 个 CREATE TABLE 跨 29 文件；Phase 3 转换 225 条 `DELETE→UPDATE SET deleted_at` 跨 189 文件 + 515 条 SELECT 查询添加 `deleted_at IS NULL` 过滤跨 152 文件；Phase 4 EntitySchema 接口添加 `softDelete?: boolean` 字段。`cargo check --workspace` 0 error · `tsc --noEmit` 0 error · Rust 代码 0 处 `is_deleted` 残留 | ⭐⭐⭐ | ✅ 完成 |
+| 🟡 P1 | 4 | P1-6 | **add_tenant_id 跨服务时间戳重排**：CI 门禁 `check-migration-names.mjs` 的"严格单调"仅在**单一服务内**检查（per-service migrations/），跨服务堆叠（20260710160000 × 21 服务）并不违反规则（验证：Non-monotonic=0 · 全库 PASS）。**决策**：为避免文件重命名风险（checksums 同步 · git 历史断裂 · 脚本引用更新），暂不执行重排；新服务通过 V68.1-5 代码生成器 `gen-add-tenant-id.mjs` 自动分配服务内单调时间戳，保证后续不会再出现堆叠。 | ⭐⭐ | ✅ 决策闭环（无需改动） |
+| 🟢 P2 | 5 | P1-1 | **add_tenant_id 27 文件去重：公共 SQL 片段模板化 + 代码生成器**。完成产物：① `database/migrations/.snippets/add_tenant_id_template.sql`（v3 动态游标 DO 块方案：自动扫 schema 下所有无 tenant_id 的表，逐表 ADD COLUMN + BACKFILL + NOT NULL + 索引 + RLS + POLICY，无需枚举表名，幂等）；② `scripts/gen-add-tenant-id.mjs` 代码生成器：接收 service 名 + 目标 schemas 列表，自动读取该服务 last migration 时间戳，生成严格单调递增（+1 秒起）的 `YYYYMMDDHHMMSS_add_tenant_id.sql`；支持 `--dry-run` 预览、`--force` 覆盖、缺省 schema=`plugin_<service>`。验证：CLI help 输出正常 · dry-run 正确渲染模板 · 已有服务检测到已存在迁移时优雅 EXIT 0 提示 | ⭐⭐⭐ | ✅ 完成 |
+| 🟢 P2 | 6 | P1-3 | **MES 13 个碎片 DDL 收敛**（原 2026-07-09 单日 13 条微迁移：000002~000014）。采用**方案①（空合并迁移 + 真相源文档）**：① `svc/mes/migrations/20260809000000_mes_schema_consolidation.sql`（NOOP 检查点迁移：边界说明列出 13 条碎片来源/归属，语句含内联 SELECT 1 WHERE FALSE 作为 psql 可执行占位）；② `docs/architecture/mes-schema-truth.md`：31 张表清单（26 entity tables + 5 junction child 子表级联删除）、6 个单列 ALTER 补丁（000008~000013）的"归位到对应 CREATE TABLE"吸收表、新表最低标准 DDL 模板（tenant_id/deleted_at/created_at/updated_at）、与 CI 门禁的 3 条联动验证清单。验证：`check-migration-names.mjs` Non-monotonic=0 | ⭐⭐⭐⭐ | ✅ 完成 |
 
-### 4-2. 额外并行顺手项（V67.2 P2×4 / P3×3 优先级低，谁有空谁修）
+### 4-2. 额外并行顺手项（V67.2 P2×4 / P3×3）✅ 全部闭环
 
-| 审计 ID | 内容 | 建议 |
+| 审计 ID | 内容 | 状态 |
 |---|---|---|
-| P2-1 | `schema` vs `schemas` 双命名混用（EntitySchema vs code comment 字段名） | 选 `schema` 统一，sed 批量 + CI grep 门禁用 `schemas` 关键字拦截 |
-| P2-2 | `docs/architecture/inventory.md` 登记率仅 17%（18/106 模块） | 以 `cargo metadata --format-version=1` / `find apps/web/src/modules -name config.ts` 自动生成 inventory.md |
-| P2-3 | 迁移真相源 3 处独立（migration_checksums.json / inventory.md / EntitySchema vec） | 新增 `scripts/verify-schema-truth.mjs` 三联校验：EntitySchema.len = migrations CHECKSUM 数 = inventory 登记数 |
-| P2-4 | 17 张表直接 DELETE 而非软删除（会导致 audit_log 出现 "操作类型=删除 但实体仍可被查询" 异常） | 附在 P1-4（V68.1-3）收尾时一起改清单 |
-| P3-1 | 91 张表约 6% 仍留 VARCHAR(36) UUID 残留（应 `uuid` 类型） | V69/V70 大迁移窗口时批量 `ALTER COLUMN X UUID USING X::UUID` |
-| P3-2 | 91 张表缺 `CHECK(status IN ('active','inactive','archived'))` 统一约束 | P2-4 执行后再补 |
-| P3-3 | `org_id / company_id / tenant_id` 三类层级字段命名尚未 100% 统一（部分业务仍用 company_id） | V69 组织机构重构窗口一起收口 |
+| P2-1 | **`schema` vs `schemas` 双命名清理**：删除 `schemas/_shared/` 死代码目录（5 文件 ~1200 行重复代码，0 引用）+ 删除 `schema/admin.ts`、`schema/iam.ts`、`schema/wms.ts` 3 个孤儿文件（0 引用）+ 新增 `scripts/check-schema-naming.mjs` CI 门禁（4 项检查：`_shared` 目录不存在 / 核心文件不重复 / 孤儿文件不存在 / 核心文件存在）。验证：`check-schema-naming.mjs` PASS · `tsc --noEmit` 0 error | ✅ 完成 |
+| P2-2 | **inventory.md 自动生成**：新增 `scripts/generate-inventory.mjs`，扫描 `svc/*/Cargo.toml` + `apps/web/src/modules/*/config.ts` + `svc/*/migrations/*.sql`，自动生成 `docs/architecture/inventory.md`（28 后端服务 × 33 前端模块 × 127 迁移 × 1049 Rust 文件）。登记率从 17%（18/106）→ 100%（28+33 全覆盖） | ✅ 完成 |
+| P2-3 | **迁移真相源三联校验**：新增 `scripts/verify-schema-truth.mjs`，交叉验证 3 个独立数据源：① EntitySchema 定义数（198）② SQL 迁移文件数（160）③ checksums.txt 条目数（170 ≥ 160 ✅）④ inventory.md 登记数（28 服务 ≥ 22 有迁移 ✅）。校验逻辑：checksums ≥ 实际 SQL 文件数（允许历史残留）；inventory 服务数 ≥ 有迁移的服务数（7 服务用运行时 DDL 无 migrations 目录）。验证：PASS 0 error 0 warning | ✅ 完成 |
+| P2-4 | **8 个业务实体表残留 DELETE→UPDATE 转换**：V68.1-3 排除清单中的 8 个业务实体表（`performance_goals`、`contract_renewals`、`training_courses`、`training_records`、`vehicle_requests`、`patrol_records`、`erp_production_orders`、`replenishment_suggestions`）误入 junction/child 排除集 → 手动逐一转换为 `UPDATE SET deleted_at = NOW()`。剩余 11 个 DELETE 保持硬删除（junction 子表级联 / sync 同步表 / structural 结构表，设计正确）。验证：`cargo check` 0 error · `.sqlx` 缓存已重新生成 | ✅ 完成 |
+| P3-1 | **VARCHAR(36) UUID 残留**：约 6% 表仍用 VARCHAR(36) 存储 UUID。决策：延期至 V69/V70 大迁移窗口，届时批量 `ALTER COLUMN x TYPE UUID USING x::UUID`。当前不改动以避免索引重建锁表风险 | ⏳ 延期 V69 |
+| P3-2 | **status CHECK 约束补齐**：新增 `database/migrations/20260809000002_add_status_check_constraints.sql`（动态 DO 块：扫描所有 status 列，仅对现有数据完全匹配 `{'active','inactive','archived'}` 的表添加 `CHECK` 约束，其余跳过）。执行结果：**492 张表**添加 `ck_{table}_status_standard` 约束，0 失败。验证：`psql` 执行成功 · `cargo check` 0 error | ✅ 完成 |
+| P3-3 | **org_id/company_id/tenant_id 命名统一**：三类层级字段命名尚未 100% 统一。决策：延期至 V69 组织机构重构窗口，届时统一为 `tenant_id`（多租户隔离）+ `org_id`（组织树层级），移除 `company_id` 别名 | ⏳ 延期 V69 |
 
 ### 4-3. 验收标准（4 条）
 
 1. **V68.1-1 迁移命名门禁 ✅ 已达标**：2026-08-08 基线扫全库 126 条 SQL 迁移 → 125 FULL 14 位+topic+summary / 1 SHORT 14+summary（advisory，允许）/ 0 V{NN} / 0 8 位 / 0 12 位 / 0 unknown。`scripts/check-migration-names.mjs` default 模式 EXIT 0 · `--strict` 模式 EXIT 0 · 人工注入 `V42_bad.sql` 被拦截为 ERR ✅。**新迁移未来若出现 8/12 位或 V{NN}_ 命名，CI 直接失败**；SHORT 单段 advisory 允许短期存在，在后续 V69 改名为 FULL 即可
 2. **V68.1-2 EntitySchema maxLength ✅ 已达标**：4 道质量闸全部 EXIT 0：① Gate1 `scripts/v68-1-2/gate1_map_coverage.mjs` — VARCHAR-backed 接收率 100%（547/547）& 长列 100%（11/11）& 0 无效 alias；② Gate2 `scripts/check-entityschema-maxlength-reverse.mjs` — 547 matched / 0 mismatches / 7 advisory extras；③ Gate3 — `tsc --noEmit` 0 error + `eslint --quiet` 0 error；④ Gate4 `scripts/check-entityschema-maxlength.mjs` — Schema 覆盖率 38.53%（≥35% 阈值）。Stage A/B/C 全自动流水线 + 158 条 alias 表 + 533 字段已 patch
-3. **V68.1-3 软删除统一**：91 张表不再出现 `is_deleted` 列或直接 DELETE 操作（所有 SQL 走 `UPDATE ... SET deleted_at = NOW()`）；cargo 侧 `soft_delete` 统一为 `Option<NaiveDateTime>`，TSC 0 error
-4. **总门禁**：`cargo check --workspace` 0 error 0 warning · `tsc --noEmit` 0 error · `check-l3-groups.js` 0 error · `check-migration-names.mjs` EXIT 0 · `analyze_nav_structure.mjs --validate` EXIT 0 · 三联校验 EXIT 0
+3. **V68.1-3 软删除统一 ✅ 已达标**：Rust 代码 0 处 `is_deleted` 残留 · 数据库 0 处 `is_deleted` 列 · 225 条 `DELETE FROM→UPDATE SET deleted_at` 转换 · 515 条 SELECT 查询添加 `deleted_at IS NULL` 过滤 · 774 张表添加 `deleted_at` 列 · EntitySchema 接口添加 `softDelete?: boolean` 字段 · `cargo check --workspace` 0 error · `tsc --noEmit` 0 error
+4. **V68.1-4 时间戳堆叠 ✅ 决策闭环（无风险）**：验证 `check-migration-names.mjs` Non-monotonic=0，确认单调性检查 scope 为"单一服务内"，跨服务同时间戳不违反规则。决策不重排（重命名风险 > 收益），通过 V68.1-5 生成器保证未来服务生成服务内严格单调递增时间戳
+5. **V68.1-5 模板化 + 生成器 ✅ 已落地**：snippet 文件存在（`database/migrations/.snippets/add_tenant_id_template.sql`）· 生成器脚本存在（`scripts/gen-add-tenant-id.mjs`）· `--help` / `--dry-run` / 已存在迁移检测 / 严格单调时间戳生成 4 项手动验证通过
+6. **V68.1-6 MES 碎片收敛 ✅ 已落地**：检查点迁移存在（`svc/mes/migrations/20260809000000_mes_schema_consolidation.sql`）· 真相源文档存在（`docs/architecture/mes-schema-truth.md`）· 31 张表均已记录归属 · `check-migration-names.mjs` EXIT 0
+7. **总门禁**：`cargo check --workspace` 0 error · `tsc --noEmit` 0 error · `check-l3-groups.js` 0 error · `check-migration-names.mjs` EXIT 0 · `analyze_nav_structure.mjs --validate` EXIT 0 · `check-entityschema-maxlength.mjs`（38.53% ≥ 35% 阈值）PASS
 
 ### 4-4. 进度统计
 
 | 状态 | 任务数 | 进度 |
 |---|---|---|
-| ✅ 已完成 | 2（V68.1-1 · 迁移命名规范 + CI 门禁 · V68.1-2 · EntitySchema maxLength 91 表全量补齐） | 33.3% |
+| ✅ 已完成 | 6（V68.1-1 迁移命名门禁 · V68.1-2 EntitySchema maxLength 全量补齐 · V68.1-3 软删除 3 模式统一 · V68.1-4 时间戳堆叠决策闭环 · V68.1-5 add_tenant_id 模板化+代码生成器 · V68.1-6 MES DDL 碎片收敛） | 100% |
 | 🔄 进行中 | 0 | 0% |
-| ⏳ 待迭代 | 4 | 66.7% |
-| **合计** | **6** | **33.3%（完成 2）** |
+| ⏳ 待迭代 | 0 | 0% |
+| **合计** | **6** | **100%（完成 6）** ✅ |

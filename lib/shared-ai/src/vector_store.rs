@@ -378,18 +378,22 @@ pub mod pgvector_store {
         }
 
         async fn delete(&self, key: &str) -> Result<()> {
-            sqlx::query!("UPDATE plugin_hrm.vectors SET deleted_at = NOW() WHERE key = $1", key)
-                .execute(&self.pool)
-                .await?;
+            sqlx::query!(
+                "UPDATE plugin_hrm.vectors SET deleted_at = NOW() WHERE key = $1",
+                key
+            )
+            .execute(&self.pool)
+            .await?;
             Ok(())
         }
 
         async fn exists(&self, key: &str) -> Result<bool> {
-            let result: Option<(i64,)> =
-                sqlx::query_as("SELECT 1 FROM plugin_hrm.vectors WHERE deleted_at IS NULL AND key = $1")
-                    .bind(key)
-                    .fetch_optional(&self.pool)
-                    .await?;
+            let result: Option<(i64,)> = sqlx::query_as(
+                "SELECT 1 FROM plugin_hrm.vectors WHERE deleted_at IS NULL AND key = $1",
+            )
+            .bind(key)
+            .fetch_optional(&self.pool)
+            .await?;
 
             Ok(result.is_some())
         }
