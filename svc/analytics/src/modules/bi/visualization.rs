@@ -57,6 +57,7 @@ pub async fn create_visualization(
         _ => ChartType::Line,
     };
 
+    #[allow(deprecated)]
     let chart_query = ChartQuery {
         chart_type,
         data_source: req.data_source,
@@ -65,6 +66,7 @@ pub async fn create_visualization(
         title: req.title,
         x_axis_label: req.x_axis_label,
         y_axis_label: req.y_axis_label,
+        columns: vec![],
     };
 
     match chart_service.generate_chart(chart_query).await {

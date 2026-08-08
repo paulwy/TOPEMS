@@ -524,6 +524,7 @@ pub async fn get_widget_data(
                 .map(|s| s.to_string());
 
             let chart_service = ChartService::new(state.pool.clone());
+            #[allow(deprecated)]
             let chart_query = ChartQuery {
                 chart_type,
                 data_source,
@@ -532,6 +533,7 @@ pub async fn get_widget_data(
                 title: Some(row.name.clone()),
                 x_axis_label,
                 y_axis_label,
+                columns: vec![],
             };
 
             let payload = match chart_service.generate_chart(chart_query).await {
@@ -639,6 +641,7 @@ pub async fn get_widget_data_realtime(
                 .unwrap_or("")
                 .to_string();
 
+            #[allow(deprecated)]
             let chart_query = ChartQuery {
                 chart_type,
                 data_source,
@@ -657,6 +660,7 @@ pub async fn get_widget_data_realtime(
                     .and_then(|c| c.get("y_axis"))
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
+                columns: vec![],
             };
 
             match chart_service.generate_chart(chart_query).await {
