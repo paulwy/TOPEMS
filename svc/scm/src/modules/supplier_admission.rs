@@ -50,7 +50,7 @@ pub async fn list_admissions(
     let offset = (page - 1) * page_size;
 
     let admissions = sqlx::query_as::<_, SupplierAdmission>(
-        "SELECT * FROM scm.supplier_admissions WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        "SELECT id, tenant_id, supplier_id, supplier_name, admission_type, status, review_result, reviewed_by, reviewed_at, created_by, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     )
     .bind(page_size)
     .bind(offset)
@@ -148,7 +148,7 @@ pub async fn get_admission(
     };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        "SELECT * FROM scm.supplier_admissions WHERE id = $1 AND deleted_at IS NULL",
+        "SELECT id, tenant_id, supplier_id, supplier_name, admission_type, status, review_result, reviewed_by, reviewed_at, created_by, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(admission_id)
     .fetch_one(&state.db)

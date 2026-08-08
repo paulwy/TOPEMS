@@ -37,7 +37,7 @@ async fn get_benefits(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectBenefit>>> {
     let result = sqlx::query_as::<_, ProjectBenefit>(
-        "SELECT * FROM pm.project_benefits WHERE project_id = $1 ORDER BY period_type ASC, period_date ASC"
+        "id, project_id, period_type, period_date, planned_cost, actual_cost, planned_progress, actual_progress, planned_value, actual_value, created_at, updated_at FROM pm.project_benefits WHERE project_id = $1 ORDER BY period_type ASC, period_date ASC"
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -66,7 +66,7 @@ async fn get_analysis(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let benefits_result = sqlx::query_as::<_, ProjectBenefit>(
-        "SELECT * FROM pm.project_benefits WHERE project_id = $1",
+        "id, project_id, period_type, period_date, planned_cost, actual_cost, planned_progress, actual_progress, planned_value, actual_value, created_at, updated_at FROM pm.project_benefits WHERE project_id = $1",
     )
     .bind(project_id)
     .fetch_all(&pool)

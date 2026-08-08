@@ -36,7 +36,7 @@ pub async fn get_conversion_rule_api(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ConversionRule>> {
     match sqlx::query_as::<_, ConversionRule>(
-        "SELECT * FROM conversion_rules WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM conversion_rules WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -220,7 +220,7 @@ pub async fn execute_conversion_rule_api(
     Json(req): Json<ExecuteConversionRequest>,
 ) -> Json<ApiResponse<ExecuteConversionResponse>> {
     let rule = match sqlx::query_as::<_, ConversionRule>(
-        "SELECT * FROM conversion_rules WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM conversion_rules WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)

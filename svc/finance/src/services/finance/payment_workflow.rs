@@ -22,7 +22,7 @@ impl FinanceService {
         );
 
         let payment = sqlx::query_as::<_, Payment>(
-            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
+            "id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -191,7 +191,7 @@ impl FinanceService {
         );
 
         let payment = sqlx::query_as::<_, Payment>(
-            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
+            "id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -377,7 +377,7 @@ impl FinanceService {
         );
 
         let payment = sqlx::query_as::<_, Payment>(
-            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
+            "id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -509,7 +509,7 @@ impl FinanceService {
         executed_by: &str,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment = sqlx::query_as::<_, Payment>(
-            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
+            "id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -545,7 +545,7 @@ impl FinanceService {
         write_off_by: &str,
     ) -> Result<PaymentResponse, TopemsError> {
         let item: PaymentItem = sqlx::query_as::<_, PaymentItem>(
-            "SELECT * FROM core_finance_payment_items WHERE tenant_id = $1 AND id = $2",
+            "id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(item_id)

@@ -41,7 +41,7 @@ async fn list_milestones(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectMilestone>>> {
     let result = sqlx::query_as::<_, ProjectMilestone>(
-        "SELECT * FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC",
+        "id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -121,7 +121,7 @@ async fn get_milestone(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
     let result = sqlx::query_as::<_, ProjectMilestone>(
-        "SELECT * FROM pm.project_milestones WHERE project_id = $1 AND id = $2",
+        "id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 AND id = $2",
     )
     .bind(project_id)
     .bind(id)

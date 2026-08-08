@@ -119,7 +119,7 @@ async fn list_projects(
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).clamp(1, 1000);
 
-    let result = sqlx::query_as::<_, Project>("SELECT * FROM pm.projects ORDER BY created_at DESC")
+    let result = sqlx::query_as::<_, Project>("id, name, code, description, project_type, status, leader, start_date, end_date, budget, progress, priority, risk_level, project_config, benefit_target, risk_response, tenant_id, created_at, updated_at FROM pm.projects ORDER BY created_at DESC")
         .fetch_all(&state.pool)
         .await;
 
@@ -272,7 +272,7 @@ async fn get_project(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Project>> {
     let result = sqlx::query_as::<_, Project>(
-        "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
+        "id, name, code, description, project_type, status, leader, start_date, end_date, budget, progress, priority, risk_level, project_config, benefit_target, risk_response, tenant_id, created_at, updated_at FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.pool)
@@ -403,7 +403,7 @@ async fn get_project_dashboard(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDashboardResponse>> {
     let project_result = sqlx::query_as::<_, Project>(
-        "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
+        "id, name, code, description, project_type, status, leader, start_date, end_date, budget, progress, priority, risk_level, project_config, benefit_target, risk_response, tenant_id, created_at, updated_at FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.pool)
@@ -419,7 +419,7 @@ async fn get_project_dashboard(
     };
 
     let phases_result = sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(
-        "SELECT * FROM pm.project_phases WHERE project_id = $1",
+        "SELECT id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1",
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -450,7 +450,7 @@ async fn get_project_dashboard(
     });
 
     let members_result = sqlx::query_as::<_, crate::models::project_member::ProjectMember>(
-        "SELECT * FROM pm.project_members WHERE project_id = $1",
+        "SELECT id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1",
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -519,7 +519,7 @@ async fn get_project_gantt(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectGanttResponse>> {
     let phases_result = sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(
-        "SELECT * FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC",
+        "SELECT id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC",
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -547,7 +547,7 @@ async fn get_project_gantt(
 
     let milestones_result =
         sqlx::query_as::<_, crate::models::project_milestone::ProjectMilestone>(
-            "SELECT * FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC",
+            "SELECT id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC",
         )
         .bind(id)
         .fetch_all(&state.pool)

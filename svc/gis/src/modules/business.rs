@@ -35,14 +35,14 @@ pub async fn list_business_locations(
 
     let query = if let Some(ref bt) = business_type {
         sqlx::query_as::<_, BusinessLocation>(
-            "SELECT * FROM business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            "id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         )
         .bind(bt)
         .bind(page_size)
         .bind(offset)
     } else {
         sqlx::query_as::<_, BusinessLocation>(
-            "SELECT * FROM business_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+            "id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM business_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2",
         )
         .bind(page_size)
         .bind(offset)
@@ -112,7 +112,7 @@ pub async fn get_business_location(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<BusinessLocation>> {
     match sqlx::query_as::<_, BusinessLocation>(
-        "SELECT * FROM business_locations WHERE deleted_at IS NULL AND id = $1",
+        "id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM business_locations WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&pool)
@@ -189,7 +189,7 @@ pub async fn list_business_locations_by_type(
     Path(business_type): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, BusinessLocation>(
-        "SELECT * FROM business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC",
+        "id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC",
     )
     .bind(business_type)
     .fetch_all(&pool)

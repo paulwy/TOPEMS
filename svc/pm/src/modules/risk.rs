@@ -32,7 +32,7 @@ async fn get_project_risks(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectRisk>>> {
     let risks = sqlx::query_as::<_, ProjectRisk>(
-        "SELECT * FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC",
+        "id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -54,7 +54,7 @@ async fn get_risk(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectRisk>> {
-    let risk = sqlx::query_as::<_, ProjectRisk>("SELECT * FROM pm.project_risks WHERE id = $1")
+    let risk = sqlx::query_as::<_, ProjectRisk>("id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await;
@@ -185,7 +185,7 @@ async fn get_risk_events(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<RiskEvent>>> {
     let events = sqlx::query_as::<_, RiskEvent>(
-        "SELECT * FROM plugin_pm.risk_events WHERE risk_id = $1 ORDER BY occurred_at DESC",
+        "SELECT id, risk_id, event_type, event_description, occurred_at, reported_by, created_at FROM plugin_pm.risk_events WHERE risk_id = $1 ORDER BY occurred_at DESC",
     )
     .bind(id)
     .fetch_all(&pool)

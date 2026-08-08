@@ -101,7 +101,7 @@ pub async fn install_plugin(
 
     // Get plugin
     let plugin: Option<Plugin> =
-        sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1 AND is_published = true")
+        sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1 AND is_published = true")
             .bind(&plugin_code)
             .fetch_optional(&state.pool)
             .await
@@ -216,7 +216,7 @@ pub async fn uninstall_plugin(
     }
 
     // Get plugin info
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -491,7 +491,7 @@ pub async fn get_available_plugins(
     let where_clause = where_clauses.join(" AND ");
 
     let plugins: Vec<Plugin> = sqlx::query_as(&format!(
-        "SELECT * FROM core.core_plugins WHERE {} ORDER BY is_featured DESC, install_count DESC LIMIT 50",
+        "SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE {} ORDER BY is_featured DESC, install_count DESC LIMIT 50",
         where_clause
     ))
     .fetch_all(&state.pool)
@@ -502,7 +502,7 @@ pub async fn get_available_plugins(
 
     for plugin in plugins {
         let tenant_plugin: Option<TenantPlugin> = sqlx::query_as(
-            "SELECT * FROM core.core_tenant_plugins WHERE deleted_at IS NULL AND tenant_id = $1 AND plugin_id = $2",
+            "SELECT id, tenant_id, plugin_id, is_enabled, config, created_at, updated_at FROM core.core_tenant_plugins WHERE deleted_at IS NULL AND tenant_id = $1 AND plugin_id = $2",
         )
         .bind(tenant_id)
         .bind(plugin.id)
@@ -589,7 +589,7 @@ pub async fn upload_plugin_version(
     );
 
     // Get plugin id
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await

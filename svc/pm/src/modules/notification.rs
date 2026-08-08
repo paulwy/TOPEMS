@@ -34,7 +34,7 @@ async fn get_project_notifications(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Notification>>> {
     let notifications = sqlx::query_as::<_, Notification>(
-        "SELECT * FROM plugin_pm.notifications WHERE project_id = $1 ORDER BY created_at DESC",
+        "id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at FROM plugin_pm.notifications WHERE project_id = $1 ORDER BY created_at DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -94,7 +94,7 @@ async fn get_project_settings(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<NotificationSetting>>> {
     let settings = sqlx::query_as::<_, NotificationSetting>(
-        "SELECT * FROM plugin_pm.notification_settings WHERE project_id = $1",
+        "SELECT id, project_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at FROM plugin_pm.notification_settings WHERE project_id = $1",
     )
     .bind(project_id)
     .fetch_all(&pool)

@@ -51,7 +51,7 @@ impl FinanceService {
         };
 
         let mut sql = format!(
-            "SELECT * FROM {} WHERE tenant_id = $1 AND status = 'unpaid'",
+            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM {} WHERE tenant_id = $1 AND status = 'unpaid'",
             table
         );
 

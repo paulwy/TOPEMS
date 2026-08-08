@@ -94,7 +94,7 @@ pub async fn register_device(
 
 /// 获取设备列表
 pub async fn list_devices(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, Device>("SELECT * FROM gis.devices ORDER BY created_at DESC")
+    match sqlx::query_as::<_, Device>("id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices ORDER BY created_at DESC")
         .fetch_all(&pool)
         .await
     {
@@ -115,7 +115,7 @@ pub async fn get_device(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Device>> {
     match sqlx::query_as::<_, Device>(
-        "SELECT * FROM gis.devices WHERE deleted_at IS NULL AND id = $1",
+        "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&pool)
@@ -200,7 +200,7 @@ pub async fn update_device_location(
         return e;
     }
 
-    match sqlx::query_as::<_, Device>("SELECT * FROM gis.devices WHERE deleted_at IS NULL AND id = $1")
+    match sqlx::query_as::<_, Device>("id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -253,13 +253,13 @@ pub async fn get_device_tracking(
 ) -> Json<ApiResponse<serde_json::Value>> {
     // Build query based on time range
     let sql = if query.start_time.is_some() && query.end_time.is_some() {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 AND recorded_at <= $3 ORDER BY recorded_at DESC LIMIT $4"
+        "id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 AND recorded_at <= $3 ORDER BY recorded_at DESC LIMIT $4"
     } else if query.start_time.is_some() {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 ORDER BY recorded_at DESC LIMIT $3"
+        "id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 ORDER BY recorded_at DESC LIMIT $3"
     } else if query.end_time.is_some() {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 AND recorded_at <= $2 ORDER BY recorded_at DESC LIMIT $3"
+        "id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 AND recorded_at <= $2 ORDER BY recorded_at DESC LIMIT $3"
     } else {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at DESC LIMIT $2"
+        "id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at DESC LIMIT $2"
     };
 
     let limit = query.limit.unwrap_or(100);
@@ -350,9 +350,9 @@ pub async fn get_device_history(
     let limit = query.limit.unwrap_or(50);
 
     let sql = if query.start_time.is_some() && query.end_time.is_some() {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 AND recorded_at <= $3 ORDER BY recorded_at DESC LIMIT $4"
+        "id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 AND recorded_at <= $3 ORDER BY recorded_at DESC LIMIT $4"
     } else {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at DESC LIMIT $2"
+        "id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at DESC LIMIT $2"
     };
 
     match if query.start_time.is_some() && query.end_time.is_some() {
@@ -403,7 +403,7 @@ pub async fn report_device_location(
     Json(payload): Json<UpdateDeviceLocation>,
 ) -> Json<ApiResponse<DeviceLocationRecord>> {
     match sqlx::query_as::<_, Device>(
-        "SELECT * FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1",
+        "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1",
     )
     .bind(&device_code)
     .fetch_one(&pool)

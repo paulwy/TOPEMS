@@ -62,7 +62,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 async fn list_contracts(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Contract>>> {
     let contracts =
-        sqlx::query_as::<_, Contract>("SELECT * FROM pm.contracts ORDER BY created_at DESC")
+        sqlx::query_as::<_, Contract>("id, project_id, contract_no, contract_name, contract_type, party_a, party_b, amount, currency, sign_date, start_date, end_date, status, tax_rate, description, created_by, created_at, updated_at FROM pm.contracts ORDER BY created_at DESC")
             .fetch_all(&pool)
             .await;
 
@@ -82,7 +82,7 @@ async fn get_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Contract>> {
-    let contract = sqlx::query_as::<_, Contract>("SELECT * FROM pm.contracts WHERE id = $1")
+    let contract = sqlx::query_as::<_, Contract>("id, project_id, contract_no, contract_name, contract_type, party_a, party_b, amount, currency, sign_date, start_date, end_date, status, tax_rate, description, created_by, created_at, updated_at FROM pm.contracts WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await;
@@ -311,7 +311,7 @@ async fn list_contract_milestones(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ContractMilestone>>> {
     let milestones = sqlx::query_as::<_, ContractMilestone>(
-        "SELECT * FROM pm.contract_milestones WHERE contract_id = $1 ORDER BY target_date",
+        "SELECT id, contract_id, project_milestone_id, name, description, target_date, payment_amount, payment_percentage, status, created_at FROM pm.contract_milestones WHERE contract_id = $1 ORDER BY target_date",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -442,7 +442,7 @@ async fn list_payment_schedule(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ContractPaymentSchedule>>> {
     let payments = sqlx::query_as::<_, ContractPaymentSchedule>(
-        "SELECT * FROM pm.contract_payment_schedule WHERE deleted_at IS NULL AND contract_id = $1 ORDER BY payment_number",
+        "SELECT id, contract_id, payment_number, payment_name, payment_percent, payment_amount, due_date, actual_payment_date, status, created_at FROM pm.contract_payment_schedule WHERE deleted_at IS NULL AND contract_id = $1 ORDER BY payment_number",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -567,7 +567,7 @@ async fn delete_payment_schedule(
 
 async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<ContractTemplate>>> {
     let templates = sqlx::query_as::<_, ContractTemplate>(
-        "SELECT * FROM pm.contract_templates WHERE is_active = true ORDER BY name",
+        "id, name, contract_type, description, content, is_active, created_by, created_at, updated_at FROM pm.contract_templates WHERE is_active = true ORDER BY name",
     )
     .fetch_all(&pool)
     .await;
@@ -589,7 +589,7 @@ async fn get_template(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ContractTemplate>> {
     let template =
-        sqlx::query_as::<_, ContractTemplate>("SELECT * FROM pm.contract_templates WHERE id = $1")
+        sqlx::query_as::<_, ContractTemplate>("id, name, contract_type, description, content, is_active, created_by, created_at, updated_at FROM pm.contract_templates WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -713,7 +713,7 @@ async fn get_project_contracts(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Contract>>> {
     let contracts = sqlx::query_as::<_, Contract>(
-        "SELECT * FROM pm.contracts WHERE project_id = $1 ORDER BY created_at DESC",
+        "id, project_id, contract_no, contract_name, contract_type, party_a, party_b, amount, currency, sign_date, start_date, end_date, status, tax_rate, description, created_by, created_at, updated_at FROM pm.contracts WHERE project_id = $1 ORDER BY created_at DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)

@@ -46,7 +46,7 @@ async fn get_project_documents(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectDocument>>> {
     let documents = sqlx::query_as::<_, ProjectDocument>(
-        "SELECT * FROM pm.project_documents WHERE project_id = $1 ORDER BY created_at DESC",
+        "id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, uploaded_by, created_at, updated_at FROM pm.project_documents WHERE project_id = $1 ORDER BY created_at DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -69,7 +69,7 @@ async fn get_document(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDocument>> {
     let document =
-        sqlx::query_as::<_, ProjectDocument>("SELECT * FROM pm.project_documents WHERE id = $1")
+        sqlx::query_as::<_, ProjectDocument>("id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, uploaded_by, created_at, updated_at FROM pm.project_documents WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -201,7 +201,7 @@ async fn get_document_versions(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<DocumentVersion>>> {
     let versions = sqlx::query_as::<_, DocumentVersion>(
-        "SELECT * FROM plugin_pm.document_versions WHERE document_id = $1 ORDER BY version DESC",
+        "SELECT id, document_id, version, file_path, file_hash, change_note, created_by, created_at FROM plugin_pm.document_versions WHERE document_id = $1 ORDER BY version DESC",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -225,7 +225,7 @@ async fn create_document_version(
     Json(req): Json<CreateDocumentVersionRequest>,
 ) -> Json<ApiResponse<DocumentVersion>> {
     let doc_result =
-        sqlx::query_as::<_, ProjectDocument>("SELECT * FROM pm.project_documents WHERE id = $1")
+        sqlx::query_as::<_, ProjectDocument>("id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, uploaded_by, created_at, updated_at FROM pm.project_documents WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -295,7 +295,7 @@ async fn get_project_folders(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<DocumentFolder>>> {
     let folders = sqlx::query_as::<_, DocumentFolder>(
-        "SELECT * FROM plugin_pm.document_folders WHERE project_id = $1 ORDER BY folder_name",
+        "SELECT id, project_id, folder_name, parent_id, description, created_by, created_at, updated_at FROM plugin_pm.document_folders WHERE project_id = $1 ORDER BY folder_name",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -318,7 +318,7 @@ async fn get_folder(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DocumentFolder>> {
     let folder = sqlx::query_as::<_, DocumentFolder>(
-        "SELECT * FROM plugin_pm.document_folders WHERE id = $1",
+        "SELECT id, project_id, folder_name, parent_id, description, created_by, created_at, updated_at FROM plugin_pm.document_folders WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&pool)

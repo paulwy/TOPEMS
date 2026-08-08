@@ -40,7 +40,7 @@ async fn get_project_quality_checks(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<QualityCheck>>> {
     let checks = sqlx::query_as::<_, QualityCheck>(
-        "SELECT * FROM plugin_pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC",
+        "id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, check_date, checked_by, result, notes, created_at, updated_at FROM plugin_pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -63,7 +63,7 @@ async fn get_quality_check(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<QualityCheck>> {
     let check =
-        sqlx::query_as::<_, QualityCheck>("SELECT * FROM plugin_pm.quality_checks WHERE id = $1")
+        sqlx::query_as::<_, QualityCheck>("id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, check_date, checked_by, result, notes, created_at, updated_at FROM plugin_pm.quality_checks WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -181,7 +181,7 @@ async fn get_project_defects(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Defect>>> {
     let defects = sqlx::query_as::<_, Defect>(
-        "SELECT * FROM plugin_pm.defects WHERE deleted_at IS NULL AND project_id = $1 ORDER BY severity DESC, priority DESC",
+        "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM plugin_pm.defects WHERE deleted_at IS NULL AND project_id = $1 ORDER BY severity DESC, priority DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -201,7 +201,7 @@ async fn get_project_defects(
 
 async fn get_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Defect>> {
     let defect = sqlx::query_as::<_, Defect>(
-        "SELECT * FROM plugin_pm.defects WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM plugin_pm.defects WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&pool)

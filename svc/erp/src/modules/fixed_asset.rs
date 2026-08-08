@@ -529,7 +529,7 @@ pub async fn depreciate_assets(
         Some(ref ids) => {
             let placeholders = ids.iter().map(|_| "$1").collect::<Vec<_>>().join(",");
             sqlx::query_as::<_, FixedAsset>(&format!(
-                "SELECT * FROM fixed_assets WHERE deleted_at IS NULL AND id IN ({}) AND status = 'active'",
+                "SELECT id, tenant_id, asset_code, asset_name, asset_category, specification, unit, quantity, price, location, manager, purchase_date, warranty_expiry, status, description, created_at, updated_at FROM fixed_assets WHERE deleted_at IS NULL AND id IN ({}) AND status = 'active'",
                 placeholders
             ))
             .bind(ids)
@@ -538,7 +538,7 @@ pub async fn depreciate_assets(
         }
         None => {
             sqlx::query_as::<_, FixedAsset>(
-                "SELECT * FROM fixed_assets WHERE deleted_at IS NULL AND status = 'active'",
+                "SELECT id, tenant_id, asset_code, asset_name, asset_category, specification, unit, quantity, price, location, manager, purchase_date, warranty_expiry, status, description, created_at, updated_at FROM fixed_assets WHERE deleted_at IS NULL AND status = 'active'",
             )
             .fetch_all(&state.db)
             .await

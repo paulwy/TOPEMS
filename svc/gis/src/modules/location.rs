@@ -89,7 +89,7 @@ pub async fn create_location(
 /// 获取位置列表
 pub async fn list_locations(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, Location>(
-        "SELECT * FROM plugin_gis.locations ORDER BY created_at DESC",
+        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM plugin_gis.locations ORDER BY created_at DESC",
     )
     .fetch_all(&pool)
     .await
@@ -111,7 +111,7 @@ pub async fn get_location(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Location>> {
     match sqlx::query_as::<_, Location>(
-        "SELECT * FROM plugin_gis.locations WHERE deleted_at IS NULL AND id = $1",
+        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM plugin_gis.locations WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&pool)
@@ -194,9 +194,9 @@ pub async fn search_locations(
     let search_pattern = format!("%{}%", payload.query);
 
     let query = if payload.location_type.is_some() {
-        "SELECT * FROM plugin_gis.locations WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND location_type = $2 ORDER BY created_at DESC"
+        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM plugin_gis.locations WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND location_type = $2 ORDER BY created_at DESC"
     } else {
-        "SELECT * FROM plugin_gis.locations WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC"
+        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM plugin_gis.locations WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC"
     };
 
     match if payload.location_type.is_some() {
@@ -230,7 +230,7 @@ pub async fn nearby_locations(
 ) -> Json<ApiResponse<serde_json::Value>> {
     // Get all locations and filter by distance
     match sqlx::query_as::<_, Location>(
-        "SELECT * FROM plugin_gis.locations WHERE deleted_at IS NULL AND status = 'active'",
+        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM plugin_gis.locations WHERE deleted_at IS NULL AND status = 'active'",
     )
     .fetch_all(&pool)
     .await

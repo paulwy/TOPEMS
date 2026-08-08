@@ -196,7 +196,7 @@ impl TicketSlaService {
     async fn match_policy(&self, ticket: &Ticket) -> Result<Option<TicketSlaPolicy>, sqlx::Error> {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
-            SELECT * FROM core_ticket_sla_policies
+            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM core_ticket_sla_policies
             WHERE deleted_at IS NULL AND tenant_id = $1
               AND is_active = true
               AND (ticket_type IS NULL OR ticket_type = $2)
@@ -225,7 +225,7 @@ impl TicketSlaService {
     ) -> Result<Vec<SlaEscalationEvent>, sqlx::Error> {
         let events = sqlx::query_as::<_, SlaEscalationEvent>(
             r#"
-            SELECT * FROM core_ticket_sla_escalations
+            SELECT id, tenant_id, policy_id, level, role, notify_method, delay_min, created_at, updated_at FROM core_ticket_sla_escalations
             WHERE ticket_id = $1 AND tenant_id = $2
             ORDER BY level ASC, created_at ASC
             "#,
@@ -345,7 +345,7 @@ impl TicketSlaService {
 
         let event = sqlx::query_as::<_, SlaEscalationEvent>(
             r#"
-            SELECT * FROM core_ticket_sla_escalations WHERE id = $1
+            SELECT id, tenant_id, policy_id, level, role, notify_method, delay_min, created_at, updated_at FROM core_ticket_sla_escalations WHERE id = $1
             "#,
         )
         .bind(event_id)
@@ -421,7 +421,7 @@ impl TicketSlaService {
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
-            SELECT * FROM core_ticket_sla_policies
+            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM core_ticket_sla_policies
             WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
             "#,
         )
@@ -439,7 +439,7 @@ impl TicketSlaService {
     ) -> Result<Vec<TicketSlaPolicy>, sqlx::Error> {
         let policies = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
-            SELECT * FROM core_ticket_sla_policies
+            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM core_ticket_sla_policies
             WHERE deleted_at IS NULL AND tenant_id = $1
             ORDER BY is_default DESC, created_at DESC
             "#,

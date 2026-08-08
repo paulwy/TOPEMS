@@ -47,7 +47,7 @@ async fn get_project_plans(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptancePlan>>> {
     let plans = sqlx::query_as::<_, AcceptancePlan>(
-        "SELECT * FROM plugin_pm.acceptance_plans WHERE project_id = $1 ORDER BY expected_date",
+        "SELECT id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_at, updated_at FROM plugin_pm.acceptance_plans WHERE project_id = $1 ORDER BY expected_date",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -70,7 +70,7 @@ async fn get_plan(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AcceptancePlan>> {
     let plan = sqlx::query_as::<_, AcceptancePlan>(
-        "SELECT * FROM plugin_pm.acceptance_plans WHERE id = $1",
+        "SELECT id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_at, updated_at FROM plugin_pm.acceptance_plans WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&pool)
@@ -183,7 +183,7 @@ async fn get_plan_items(
     Path(plan_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptanceItem>>> {
     let items = sqlx::query_as::<_, AcceptanceItem>(
-        "SELECT * FROM plugin_pm.acceptance_items WHERE plan_id = $1 ORDER BY created_at",
+        "SELECT id, plan_id, item_code, item_name, item_description, required_standard, actual_result, is_passed, created_at FROM plugin_pm.acceptance_items WHERE plan_id = $1 ORDER BY created_at",
     )
     .bind(plan_id)
     .fetch_all(&pool)
@@ -303,7 +303,7 @@ async fn get_project_records(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptanceRecord>>> {
     let records = sqlx::query_as::<_, AcceptanceRecord>(
-        "SELECT * FROM plugin_pm.acceptance_records WHERE project_id = $1 ORDER BY acceptance_date DESC",
+        "id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_at, updated_at FROM plugin_pm.acceptance_records WHERE project_id = $1 ORDER BY acceptance_date DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -326,7 +326,7 @@ async fn get_record(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
     let record = sqlx::query_as::<_, AcceptanceRecord>(
-        "SELECT * FROM plugin_pm.acceptance_records WHERE id = $1",
+        "id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_at, updated_at FROM plugin_pm.acceptance_records WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&pool)
@@ -354,7 +354,7 @@ async fn create_record(
     Json(req): Json<CreateAcceptanceRecordRequest>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
     let plan = sqlx::query_as::<_, AcceptancePlan>(
-        "SELECT * FROM plugin_pm.acceptance_plans WHERE id = $1",
+        "SELECT id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_at, updated_at FROM plugin_pm.acceptance_plans WHERE id = $1",
     )
     .bind(plan_id)
     .fetch_one(&pool)

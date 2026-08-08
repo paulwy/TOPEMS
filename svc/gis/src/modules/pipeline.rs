@@ -31,7 +31,7 @@ pub async fn list_pipelines(
     let offset = (page - 1) * page_size;
 
     match sqlx::query_as::<_, Pipeline>(
-        "SELECT * FROM pipelines ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM pipelines ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     )
     .bind(page_size)
     .bind(offset)
@@ -93,7 +93,7 @@ pub async fn get_pipeline(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Pipeline>> {
     match sqlx::query_as::<_, Pipeline>(
-        "SELECT * FROM pipelines WHERE deleted_at IS NULL AND id = $1",
+        "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM pipelines WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&pool)
@@ -168,7 +168,7 @@ pub async fn list_pipelines_by_map(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, Pipeline>(
-        "SELECT * FROM pipelines WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC",
+        "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM pipelines WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC",
     )
     .bind(map_id)
     .fetch_all(&pool)

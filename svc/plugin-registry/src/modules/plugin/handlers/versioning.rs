@@ -84,7 +84,7 @@ pub async fn check_plugin_updates(
 ) -> Json<CoreResponse<UpgradeCheckResult>> {
     tracing::info!("[Plugin] Checking updates for plugin: {}", plugin_code);
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -98,7 +98,7 @@ pub async fn check_plugin_updates(
     let current_version = plugin.version.clone();
 
     let latest_version: Option<PluginVersion> = sqlx::query_as(
-        "SELECT * FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
+        "SELECT id, plugin_id, version, changelog, download_url, is_latest, is_active, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
     )
     .bind(plugin.id)
     .fetch_optional(&state.pool)
@@ -160,7 +160,7 @@ pub async fn rollback_plugin_version(
         target_version
     );
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -174,7 +174,7 @@ pub async fn rollback_plugin_version(
     let current_version = plugin.version.clone();
 
     let target_version_info: Option<PluginVersion> = sqlx::query_as(
-        "SELECT * FROM core.core_plugin_versions WHERE plugin_id = $1 AND version = $2",
+        "SELECT id, plugin_id, version, changelog, download_url, is_latest, is_active, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND version = $2",
     )
     .bind(plugin.id)
     .bind(&target_version)
@@ -227,7 +227,7 @@ pub async fn check_all_updates(
     tracing::info!("[Plugin] Checking updates for all plugins");
 
     let plugins: Vec<Plugin> =
-        sqlx::query_as("SELECT * FROM core.core_plugins WHERE is_published = true")
+        sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE is_published = true")
             .fetch_all(&state.pool)
             .await
             .unwrap_or_default();
@@ -238,7 +238,7 @@ pub async fn check_all_updates(
         let current_version = plugin.version.clone();
 
         let latest_version: Option<PluginVersion> = sqlx::query_as(
-            "SELECT * FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
+            "SELECT id, plugin_id, version, changelog, download_url, is_latest, is_active, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
         )
         .bind(plugin.id)
         .fetch_optional(&state.pool)

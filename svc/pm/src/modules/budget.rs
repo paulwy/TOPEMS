@@ -39,7 +39,7 @@ async fn get_project_budgets(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Budget>>> {
     let budgets = sqlx::query_as::<_, Budget>(
-        "SELECT * FROM plugin_pm.budgets WHERE project_id = $1 ORDER BY version DESC",
+        "id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM plugin_pm.budgets WHERE project_id = $1 ORDER BY version DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -58,7 +58,7 @@ async fn get_project_budgets(
 }
 
 async fn get_budget(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Budget>> {
-    let budget = sqlx::query_as::<_, Budget>("SELECT * FROM plugin_pm.budgets WHERE id = $1")
+    let budget = sqlx::query_as::<_, Budget>("id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM plugin_pm.budgets WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await;
@@ -214,7 +214,7 @@ async fn get_budget_items(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<BudgetItem>>> {
     let items = sqlx::query_as::<_, BudgetItem>(
-        "SELECT * FROM plugin_pm.budget_items WHERE budget_id = $1",
+        "SELECT id, budget_id, item_code, item_name, category, subcategory, budget_amount, allocated_amount, spent_amount, remaining_amount, created_at FROM plugin_pm.budget_items WHERE budget_id = $1",
     )
     .bind(id)
     .fetch_all(&pool)

@@ -40,7 +40,7 @@ impl FinanceService {
         let period_name = format!("{:04}{:02}", year, month);
 
         let existing: Option<Period> = sqlx::query_as(
-            "SELECT * FROM core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3",
+            "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3",
         )
         .bind(tenant_id)
         .bind(year)

@@ -943,7 +943,7 @@ pub async fn get_alert_rule(
     }
 
     let result =
-        sqlx::query("SELECT * FROM wms.inventory_alert_rules WHERE deleted_at IS NULL AND id = $1")
+        sqlx::query("SELECT id, tenant_id, warehouse_id, item_id, item_code, alert_type, threshold_min, threshold_max, unit, is_active, created_at, updated_at FROM wms.inventory_alert_rules WHERE deleted_at IS NULL AND id = $1")
             .bind(id)
             .fetch_optional(&state.db)
             .await;
@@ -1145,7 +1145,7 @@ pub async fn list_alert_records(
 
     let result = sqlx::query(
         r#"
-        SELECT * FROM wms.inventory_alert_records
+        SELECT id, tenant_id, rule_id, warehouse_id, item_id, item_code, alert_type, alert_level, current_quantity, threshold_quantity, status, created_at FROM wms.inventory_alert_records
         WHERE ($1::text IS NULL OR alert_type = $1)
           AND ($2::text IS NULL OR severity = $2)
           AND ($3::text IS NULL OR status = $3)
@@ -1232,7 +1232,7 @@ pub async fn get_alert_record(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("SELECT * FROM wms.inventory_alert_records WHERE id = $1")
+    let result = sqlx::query("SELECT id, tenant_id, rule_id, warehouse_id, item_id, item_code, alert_type, alert_level, current_quantity, threshold_quantity, status, created_at FROM wms.inventory_alert_records WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.db)
         .await;

@@ -239,7 +239,7 @@ pub async fn download_offline_data(
     // 下载设备数据
     if payload.include_devices {
         match sqlx::query_as::<_, DeviceLocation>(
-            "SELECT * FROM plugin_gis.device_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
+            "id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM plugin_gis.device_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(ctx.tenant_id)
         .fetch_all(&pool)
@@ -257,7 +257,7 @@ pub async fn download_offline_data(
 
     // 下载轨迹数据
     if payload.include_tracks {
-        let mut query = "SELECT * FROM plugin_gis.track_records WHERE tenant_id = $1".to_string();
+        let mut query = "id, tenant_id, device_id, device_name, start_time, end_time, total_distance, created_at FROM plugin_gis.track_records WHERE tenant_id = $1".to_string();
 
         if payload.track_date_from.is_some() {
             query.push_str(" AND start_time >= $2");
@@ -284,7 +284,7 @@ pub async fn download_offline_data(
         if !tracks.is_empty() {
             let track_ids: Vec<Uuid> = tracks.iter().map(|t| t.id).collect();
             match sqlx::query_as::<_, TrackPosition>(
-                "SELECT * FROM plugin_gis.track_positions WHERE track_id = ANY($1) ORDER BY timestamp ASC",
+                "id, track_id, position, altitude, speed, heading, accuracy, battery_level, timestamp, created_at FROM plugin_gis.track_positions WHERE track_id = ANY($1) ORDER BY timestamp ASC",
             )
             .bind(&track_ids)
             .fetch_all(&pool)
@@ -304,7 +304,7 @@ pub async fn download_offline_data(
     // 下载取证数据
     if payload.include_evidence {
         match sqlx::query_as::<_, EvidenceRecord>(
-            "SELECT * FROM plugin_gis.evidence_records WHERE tenant_id = $1 ORDER BY recorded_at DESC",
+            "id, tenant_id, title, evidence_type, position, file_url, thumbnail_url, duration, file_size, file_hash, recorded_by, recorded_at, tags, description, metadata, created_at, updated_at FROM plugin_gis.evidence_records WHERE tenant_id = $1 ORDER BY recorded_at DESC",
         )
         .bind(ctx.tenant_id)
         .fetch_all(&pool)

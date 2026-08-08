@@ -70,7 +70,7 @@ impl ReconciliationService {
         session_id: Uuid,
     ) -> Result<ReconciliationSession, TopemsError> {
         let session = sqlx::query_as::<_, ReconciliationSession>(
-            "SELECT * FROM core_finance_reconciliation_sessions WHERE id = $1 AND tenant_id = $2",
+            "id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM core_finance_reconciliation_sessions WHERE id = $1 AND tenant_id = $2",
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -90,7 +90,7 @@ impl ReconciliationService {
         page_size: i64,
     ) -> Result<(Vec<ReconciliationSession>, i64), TopemsError> {
         let mut query =
-            String::from("SELECT * FROM core_finance_reconciliation_sessions WHERE tenant_id = $1");
+            String::from("SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM core_finance_reconciliation_sessions WHERE tenant_id = $1");
         let mut count_query = String::from(
             "SELECT COUNT(*) FROM core_finance_reconciliation_sessions WHERE tenant_id = $1",
         );
@@ -430,7 +430,7 @@ impl ReconciliationService {
         match_status: Option<MatchStatus>,
     ) -> Result<Vec<ReconciliationItem>, TopemsError> {
         let mut query = String::from(
-            "SELECT * FROM core_finance_reconciliation_items WHERE session_id = $1 AND tenant_id = $2",
+            "SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM core_finance_reconciliation_items WHERE session_id = $1 AND tenant_id = $2",
         );
 
         if let Some(st) = &source_type {
@@ -506,7 +506,7 @@ impl ReconciliationService {
     ) -> Result<Vec<ReconciliationItem>, TopemsError> {
         let items = sqlx::query_as::<_, ReconciliationItem>(
             r#"
-            SELECT * FROM core_finance_reconciliation_items
+            SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM core_finance_reconciliation_items
             WHERE session_id = $1 AND tenant_id = $2 AND source_type = $3 AND match_status = 'unmatched'
             ORDER BY amount, transaction_date
             "#,

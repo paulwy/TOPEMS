@@ -51,7 +51,7 @@ pub async fn list_contracts(
     let offset = (page - 1) * page_size;
 
     let contracts = sqlx::query_as::<_, PurchaseContract>(
-        "SELECT * FROM scm.purchase_contracts WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        "SELECT id, tenant_id, contract_no, contract_name, supplier_id, supplier_name, contract_type, amount, currency, start_date, end_date, status, sign_date, created_by, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     )
     .bind(page_size)
     .bind(offset)
@@ -169,7 +169,7 @@ pub async fn get_contract(
     };
 
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        "SELECT * FROM scm.purchase_contracts WHERE id = $1 AND deleted_at IS NULL",
+        "SELECT id, tenant_id, contract_no, contract_name, supplier_id, supplier_name, contract_type, amount, currency, start_date, end_date, status, sign_date, created_by, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(contract_id)
     .fetch_one(&state.db)
@@ -178,7 +178,7 @@ pub async fn get_contract(
     match contract {
         Ok(contract) => {
             let items = sqlx::query_as::<_, PurchaseContractItem>(
-                "SELECT * FROM scm.purchase_contract_items WHERE contract_id = $1 ORDER BY line_number",
+                "SELECT id, tenant_id, contract_id, item_code, item_name, specification, quantity, unit, unit_price, total_amount, tax_rate, delivery_date, status, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 ORDER BY line_number",
             )
             .bind(contract_id)
             .fetch_all(&state.db)

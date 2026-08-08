@@ -288,7 +288,7 @@ impl MigrationServiceLayer {
 
         let latest_migration: Option<MigrationHistory> = sqlx::query_as(
             r#"
-            SELECT * FROM core_migration_history
+            SELECT id, migration_name, executed_at, duration_ms, status, description FROM core_migration_history
             WHERE plugin_name = $1 AND success = true
             ORDER BY applied_at DESC LIMIT 1
             "#,

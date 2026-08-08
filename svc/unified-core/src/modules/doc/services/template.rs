@@ -14,7 +14,7 @@ impl TemplateService {
 
     pub async fn list_templates(&self, tenant_id: Uuid) -> Result<Vec<Template>> {
         sqlx::query_as::<_, Template>(
-            r#"SELECT * FROM core_doc_templates WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY name"#,
+            r#"SELECT id, tenant_id, name, description, template_type, content, is_active, created_by, created_at, updated_at, deleted_at FROM core_doc_templates WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY name"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -27,7 +27,7 @@ impl TemplateService {
         template_id: Uuid,
     ) -> Result<Option<Template>> {
         sqlx::query_as::<_, Template>(
-            r#"SELECT * FROM core_doc_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"#,
+            r#"SELECT id, tenant_id, name, description, template_type, content, is_active, created_by, created_at, updated_at, deleted_at FROM core_doc_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(template_id)

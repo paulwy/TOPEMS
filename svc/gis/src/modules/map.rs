@@ -104,7 +104,7 @@ pub async fn create_map(
 
 /// 获取地图列表
 pub async fn list_maps(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, Map>("SELECT * FROM maps ORDER BY created_at DESC")
+    match sqlx::query_as::<_, Map>("id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM maps ORDER BY created_at DESC")
         .fetch_all(&pool)
         .await
     {
@@ -121,7 +121,7 @@ pub async fn list_maps(State(pool): State<PgPool>) -> Json<ApiResponse<serde_jso
 
 /// 获取地图详情
 pub async fn get_map(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Map>> {
-    match sqlx::query_as::<_, Map>("SELECT * FROM maps WHERE deleted_at IS NULL AND id = $1")
+    match sqlx::query_as::<_, Map>("id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM maps WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -202,7 +202,7 @@ pub async fn list_map_layers(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, MapLayer>(
-        "SELECT * FROM map_layers WHERE map_id = $1 ORDER BY z_index DESC, created_at DESC",
+        "id, tenant_id, map_id, name, layer_type, source_type, source_url, source_data, style_config, opacity, visible, z_index, min_zoom, max_zoom, properties, created_at, updated_at FROM map_layers WHERE map_id = $1 ORDER BY z_index DESC, created_at DESC",
     )
     .bind(map_id)
     .fetch_all(&pool)

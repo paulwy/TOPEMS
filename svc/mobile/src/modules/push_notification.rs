@@ -340,7 +340,7 @@ pub async fn get_notification_list(
     let offset = (page - 1) * size;
 
     let query =
-        sqlx::query("SELECT * FROM push_notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+        sqlx::query("SELECT id, user_id, title, body, notification_type, read_at, created_at FROM push_notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2")
             .bind(size)
             .bind(offset);
 
@@ -511,7 +511,7 @@ pub async fn get_notification_by_id(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let row = match sqlx::query("SELECT * FROM push_notifications WHERE id = $1")
+    let row = match sqlx::query("SELECT id, user_id, title, body, notification_type, read_at, created_at FROM push_notifications WHERE id = $1")
         .bind(id)
         .fetch_optional(&pool)
         .await

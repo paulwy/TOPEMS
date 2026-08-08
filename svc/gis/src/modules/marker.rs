@@ -26,7 +26,7 @@ pub struct CreateMapMarker {
 }
 
 pub async fn list_map_markers(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, MapMarker>("SELECT * FROM map_markers ORDER BY created_at DESC")
+    match sqlx::query_as::<_, MapMarker>("id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM map_markers ORDER BY created_at DESC")
         .fetch_all(&pool)
         .await
     {
@@ -82,7 +82,7 @@ pub async fn get_map_marker(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MapMarker>> {
-    match sqlx::query_as::<_, MapMarker>("SELECT * FROM map_markers WHERE id = $1")
+    match sqlx::query_as::<_, MapMarker>("id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM map_markers WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await

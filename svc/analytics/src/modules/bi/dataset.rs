@@ -100,7 +100,7 @@ async fn list_datasets(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let query = "SELECT * FROM analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) ORDER BY created_at DESC LIMIT $4 OFFSET $5";
+    let query = "SELECT id, tenant_id, name, description, source_type, datasource_id, query_config, status, is_active, created_at, updated_at, deleted_at FROM analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) ORDER BY created_at DESC LIMIT $4 OFFSET $5";
     let result = sqlx::query_as::<_, Dataset>(query)
         .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
         .bind(params.status.as_deref())
@@ -138,7 +138,7 @@ async fn get_dataset(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     let result = sqlx::query_as::<_, Dataset>(
-        "SELECT * FROM analytics_datasets WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, tenant_id, name, description, source_type, datasource_id, query_config, status, is_active, created_at, updated_at, deleted_at FROM analytics_datasets WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -355,7 +355,7 @@ async fn get_dataset_preview(
     let _limit = params.limit.unwrap_or(10);
 
     let dataset = sqlx::query_as::<_, Dataset>(
-        "SELECT * FROM analytics_datasets WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, tenant_id, name, description, source_type, datasource_id, query_config, status, is_active, created_at, updated_at, deleted_at FROM analytics_datasets WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
