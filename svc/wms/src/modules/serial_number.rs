@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use sqlx::Row;
 use uuid::Uuid;
 
 use crate::models::{
@@ -64,10 +65,10 @@ pub async fn list_serial_numbers(
     let result = sqlx::query_as::<_, SerialNumber>(
         r#"
         SELECT * FROM wms.serial_numbers
-        WHERE deleted_at IS NULL AND ($1::text IS NULL OR warehouse_id = $1)
+        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1)
           AND ($2::text IS NULL OR sku ILIKE $2)
           AND ($3::text IS NULL OR serial_no ILIKE $3)
-          AND ($4::text IS NULL OR supplier_id = $4)
+          AND ($4::uuid IS NULL OR supplier_id = $4)
           AND ($5::text IS NULL OR batch_no ILIKE $5)
           AND ($6::text IS NULL OR quality_status = $6)
           AND ($7::text IS NULL OR status = $7)
@@ -92,10 +93,10 @@ pub async fn list_serial_numbers(
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM wms.serial_numbers
-                WHERE deleted_at IS NULL AND ($1::text IS NULL OR warehouse_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1)
                   AND ($2::text IS NULL OR sku ILIKE $2)
                   AND ($3::text IS NULL OR serial_no ILIKE $3)
-                  AND ($4::text IS NULL OR supplier_id = $4)
+                  AND ($4::uuid IS NULL OR supplier_id = $4)
                   AND ($5::text IS NULL OR batch_no ILIKE $5)
                   AND ($6::text IS NULL OR quality_status = $6)
                   AND ($7::text IS NULL OR status = $7)
@@ -449,11 +450,14 @@ pub async fn get_serial_number_statistics(
         Err(e) => return e,
     }
 
-    let warehouse_id = params.get("warehouse_id").and_then(|v| v.as_str());
+    let warehouse_id = params
+        .get("warehouse_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
-        SELECT 
+        SELECT
             COUNT(*) as total_serials,
             SUM(CASE WHEN status = 'in_stock' THEN 1 ELSE 0 END) as in_stock_count,
             SUM(CASE WHEN status = 'out_stock' THEN 1 ELSE 0 END) as out_stock_count,
@@ -462,19 +466,21 @@ pub async fn get_serial_number_statistics(
         FROM wms.serial_numbers
         WHERE warehouse_id = $1 OR $1 IS NULL
         "#,
-        warehouse_id
     )
+    .bind(warehouse_id)
     .fetch_one(&state.db)
     .await;
 
     match result {
         Ok(row) => {
             let statistics = SerialNumberStatistics {
-                total_serials: row.total_serials.unwrap_or(0),
-                in_stock_count: row.in_stock_count.unwrap_or(0),
-                out_stock_count: row.out_stock_count.unwrap_or(0),
-                quality_pending_count: row.quality_pending_count.unwrap_or(0),
-                warranty_expiring_soon_count: row.warranty_expiring_soon_count.unwrap_or(0),
+                total_serials: row.try_get::<i64, _>("total_serials").unwrap_or(0),
+                in_stock_count: row.try_get::<i64, _>("in_stock_count").unwrap_or(0),
+                out_stock_count: row.try_get::<i64, _>("out_stock_count").unwrap_or(0),
+                quality_pending_count: row.try_get::<i64, _>("quality_pending_count").unwrap_or(0),
+                warranty_expiring_soon_count: row
+                    .try_get::<i64, _>("warranty_expiring_soon_count")
+                    .unwrap_or(0),
             };
             Json(ApiResponse::success(statistics, "获取序列号统计成功"))
         }
@@ -504,7 +510,7 @@ pub async fn transfer_location(
     let to_location_id = data
         .get("to_location_id")
         .and_then(|v| v.as_str())
-        .unwrap_or("");
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let result = sqlx::query_as::<_, SerialNumber>(
         r#"
