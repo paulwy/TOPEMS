@@ -33,6 +33,7 @@ topems-shared-db = { workspace = true }
 topems-shared-service-client = { workspace = true }
 topems-shared-auth = { workspace = true }
 topems-shared-core = { workspace = true }
+topems-shared-observability = { workspace = true }
 
 [[bin]]
 name = "topems-gis"

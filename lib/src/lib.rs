@@ -1,14 +1,16 @@
 // =============================================================================
-// topems_shared 门面 Crate — A4.3 最终清理
+// topems_shared 门面 Crate — A4.3 闭环完成
 // =============================================================================
 //
-// 本文件遵循 V68.1 / A4 实施计划。A4.3 阶段删除原 DEPRECATED 区的 deprecated 标记，
-// 但保留高频使用的 re-export 以确保服务平滑迁移。
+// V70-2 里程碑：所有 29 服务已完成去门面化迁移，直接依赖子 crate。
+// 本文件仅保留 KEEP 区（≤30 条）高频、跨服务通用的 re-export。
+// - AI Form Assistant 内部模块通过 pub mod 暴露，非子 crate re-export。
+// - 扩展 trait（AuditContextExt）继续在此处提供兼容。
 //
-// - **KEEP 区**：核心保留项（原 KEEP + 高频 DEPRECATED 迁移项）
-// - **COMPAT 区**：仍在迁移中的服务引用，后续版本将逐步删除
-//
-// 最终目标：所有服务直接依赖子 crate，消除门面层。
+// 子 crate 清单（服务直接依赖，不经本门面）：
+//   topems-shared-auth, topems-shared-bootstrap, topems-shared-core,
+//   topems-shared-db, topems-shared-event, topems-shared-observability,
+//   topems-shared-service-client
 // =============================================================================
 
 // =============================================================================
@@ -71,35 +73,6 @@ pub use topems_shared_db::database::{
 };
 // --- AI Form Assistant（门面 crate 内部模块，非子 crate re-export）---
 pub mod form_assistant;
-
-// =============================================================================
-// COMPAT — 高频使用的 re-export（服务迁移中，后续版本删除）
-// =============================================================================
-
-// =============================================================================
-// COMPAT — 迁移兜底兼容层（V70-2 Step 1 保留仅 11 服务 × 12 符号，Step 2 整体清理）
-// =============================================================================
-// --- 模块级（crm/mes × event / crm × service_client / lib自引用 × observability+audit+rls+api_security）---
-pub use topems_shared_event::event;
-pub use topems_shared_service_client::service_client;
-pub use topems_shared_observability::observability;
-pub use topems_shared_db::audit_soft_delete;
-pub use topems_shared_db::rls;
-pub use topems_shared_core::api_security;
-
-// --- 条目级（23条USE集合中仅 COMPAT 才有的符号，KEEP 区已覆盖的全部删除）---
-// rd: SimpleHealthConfig + SystemMetrics; mobile/4服务: build_health_response;
-pub use topems_shared_core::health::{build_health_response, SimpleHealthConfig, SystemMetrics};
-// hrm: api_error;
-pub use topems_shared_core::response::api_error;
-// rd: Config; CacheConfig 在 KEEP L29 config 模块级已覆盖, 但条目级仍保持对称保留;
-pub use topems_shared_core::config::{CacheConfig, Config};
-// hrm: DataMasking/EncryptionResult/FieldEncryptionService (security::* 一次性覆盖);
-pub use topems_shared_auth::security::*;
-// hrm: CacheService (redis::* 中仅此条目级被 USE 引用);
-pub use topems_shared_event::redis::CacheService;
-// gis/integration: telemetry_middleware;
-pub use topems_shared_observability::telemetry::telemetry_middleware;
 
 // =============================================================================
 // 扩展 trait
