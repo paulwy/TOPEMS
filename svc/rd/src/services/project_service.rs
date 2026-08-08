@@ -3,6 +3,7 @@
 // 后续复杂业务逻辑（多仓库协作、事务编排）将汇聚于此。
 #![allow(dead_code)]
 
+use anyhow::Result;
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 

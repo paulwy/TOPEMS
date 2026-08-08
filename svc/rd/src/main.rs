@@ -12,12 +12,14 @@
 use axum::{routing::get, Json, Router};
 use prometheus::{default_registry, Gauge};
 use serde::Serialize;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::health::HealthStatus;
-use topems_shared_core::health::ServiceHealth;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, check_iam_health, run, Application, ServiceConfig,
 };
+use topems_shared_core::config::Config;
+use topems_shared_core::health::DependencyHealth;
+use topems_shared_core::health::HealthStatus;
+use topems_shared_core::health::ServiceHealth;
+use topems_shared_core::response::ApiResponse;
 use utoipa::OpenApi;
 
 mod cache;
