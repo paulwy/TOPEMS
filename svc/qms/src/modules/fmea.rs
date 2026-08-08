@@ -182,16 +182,16 @@ pub async fn list_fmea_analyses(
     let offset = (page - 1) * page_size;
 
     let analyses = match (query.status.as_ref(), query.product_id.as_ref()) {
-        (Some(st), Some(pid)) => sqlx::query_as::<_, FmeaAnalysis>(r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_fmea_analyses WHERE tenant_id = $1 AND status = $2 AND product_id::TEXT = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#).bind(tenant_id).bind(st).bind(pid).bind(page_size).bind(offset)
+        (Some(st), Some(pid)) => sqlx::query_as::<_, FmeaAnalysis>(r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_fmea_analyses WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 AND product_id::TEXT = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#).bind(tenant_id).bind(st).bind(pid).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(st), None) => sqlx::query_as::<_, FmeaAnalysis>(r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_fmea_analyses WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(st).bind(page_size).bind(offset)
+        (Some(st), None) => sqlx::query_as::<_, FmeaAnalysis>(r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_fmea_analyses WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(pid)) => sqlx::query_as::<_, FmeaAnalysis>(r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_fmea_analyses WHERE tenant_id = $1 AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(pid).bind(page_size).bind(offset)
+        (None, Some(pid)) => sqlx::query_as::<_, FmeaAnalysis>(r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_fmea_analyses WHERE deleted_at IS NULL AND tenant_id = $1 AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(pid).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as::<_, FmeaAnalysis>(r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_fmea_analyses WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(tenant_id).bind(page_size).bind(offset)
+        (None, None) => sqlx::query_as::<_, FmeaAnalysis>(r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_fmea_analyses WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(tenant_id).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -251,7 +251,7 @@ pub async fn get_fmea_analysis(
         Err(_) => return Json(ApiResponse::error(400, "无效的FMEA分析ID")),
     };
 
-    let fmea = sqlx::query_as::<_, FmeaAnalysis>(r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_fmea_analyses WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let fmea = sqlx::query_as::<_, FmeaAnalysis>(r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_fmea_analyses WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -302,11 +302,13 @@ pub async fn delete_fmea_analysis(
         Err(_) => return Json(ApiResponse::error(400, "无效的FMEA分析ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_fmea_analyses WHERE id = $1 AND tenant_id = $2"#)
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE qa_fmea_analyses SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "FMEA分析删除成功")),

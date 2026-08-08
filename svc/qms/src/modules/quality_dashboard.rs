@@ -343,13 +343,13 @@ pub async fn list_alert_rules(
     let offset = (page - 1) * page_size;
 
     let rules = match (query.alert_type.as_ref(), query.status.as_ref()) {
-        (Some(at), Some(st)) => sqlx::query_as::<_, AlertRule>(r#"SELECT id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_alert_rules WHERE alert_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(at).bind(st).bind(page_size).bind(offset)
+        (Some(at), Some(st)) => sqlx::query_as::<_, AlertRule>(r#"SELECT id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_alert_rules WHERE deleted_at IS NULL AND alert_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(at).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(at), None) => sqlx::query_as::<_, AlertRule>(r#"SELECT id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_alert_rules WHERE alert_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(at).bind(page_size).bind(offset)
+        (Some(at), None) => sqlx::query_as::<_, AlertRule>(r#"SELECT id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_alert_rules WHERE deleted_at IS NULL AND alert_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(at).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(st)) => sqlx::query_as::<_, AlertRule>(r#"SELECT id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_alert_rules WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
+        (None, Some(st)) => sqlx::query_as::<_, AlertRule>(r#"SELECT id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_alert_rules WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
         (None, None) => sqlx::query_as::<_, AlertRule>(r#"SELECT id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_alert_rules ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
@@ -392,7 +392,7 @@ pub async fn get_alert_rule(
         Err(_) => return Json(ApiResponse::error(400, "无效的预警规则ID")),
     };
 
-    let rule = sqlx::query_as::<_, AlertRule>(r#"SELECT id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_alert_rules WHERE id = $1"#).bind(id)
+    let rule = sqlx::query_as::<_, AlertRule>(r#"SELECT id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT FROM qa_alert_rules WHERE deleted_at IS NULL AND id = $1"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
@@ -437,7 +437,7 @@ pub async fn delete_alert_rule(
         Err(_) => return Json(ApiResponse::error(400, "无效的预警规则ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_alert_rules WHERE id = $1"#)
+    let result = sqlx::query(r#"UPDATE qa_alert_rules SET deleted_at = NOW() WHERE id = $1"#)
         .bind(id)
         .execute(&state.pool)
         .await;

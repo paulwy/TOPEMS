@@ -75,7 +75,7 @@ async fn list_contracts(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_hrm.contracts
-                WHERE ($1::uuid IS NULL OR employee_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR contract_type = $3)
                 "#,
@@ -143,7 +143,7 @@ async fn list_expiring_contracts(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_hrm.contracts
-                WHERE end_date IS NOT NULL
+                WHERE deleted_at IS NULL AND end_date IS NOT NULL
                   AND end_date <= $1
                   AND status = 'active'
                 "#,
@@ -444,7 +444,7 @@ async fn delete_contract(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM plugin_hrm.contracts WHERE id = $1")
+    let result = sqlx::query("UPDATE plugin_hrm.contracts SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -694,7 +694,7 @@ async fn delete_renewal(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
-        "DELETE FROM plugin_hrm.contract_renewals WHERE id = $1 AND status = 'pending'",
+        "UPDATE plugin_hrm.contract_renewals SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
     )
     .bind(id)
     .execute(&state.db)

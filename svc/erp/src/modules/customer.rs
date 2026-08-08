@@ -91,7 +91,7 @@ pub async fn list_customers(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM customers WHERE (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR customer_type = $3)"#
+        r#"SELECT COUNT(*) FROM customers WHERE deleted_at IS NULL AND (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR customer_type = $3)"#
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -122,7 +122,7 @@ pub async fn get_customer(
     }
 
     let result = sqlx::query_as::<_, Customer>(
-        "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at FROM customers WHERE id = $1",
+        "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at FROM customers WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -228,7 +228,7 @@ pub async fn delete_customer(
         return e;
     }
 
-    let result = sqlx::query("DELETE FROM customers WHERE id = $1")
+    let result = sqlx::query("UPDATE customers SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

@@ -64,7 +64,7 @@ pub async fn list_serial_numbers(
     let result = sqlx::query_as::<_, SerialNumber>(
         r#"
         SELECT * FROM wms.serial_numbers
-        WHERE ($1::text IS NULL OR warehouse_id = $1)
+        WHERE deleted_at IS NULL AND ($1::text IS NULL OR warehouse_id = $1)
           AND ($2::text IS NULL OR sku ILIKE $2)
           AND ($3::text IS NULL OR serial_no ILIKE $3)
           AND ($4::text IS NULL OR supplier_id = $4)
@@ -92,7 +92,7 @@ pub async fn list_serial_numbers(
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM wms.serial_numbers
-                WHERE ($1::text IS NULL OR warehouse_id = $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR warehouse_id = $1)
                   AND ($2::text IS NULL OR sku ILIKE $2)
                   AND ($3::text IS NULL OR serial_no ILIKE $3)
                   AND ($4::text IS NULL OR supplier_id = $4)
@@ -260,11 +260,12 @@ pub async fn get_serial_number(
         Err(_) => return Json(api_error(400, "无效的序列号ID")),
     };
 
-    let result =
-        sqlx::query_as::<_, SerialNumber>("SELECT * FROM wms.serial_numbers WHERE id = $1")
-            .bind(serial_id)
-            .fetch_optional(&state.db)
-            .await;
+    let result = sqlx::query_as::<_, SerialNumber>(
+        "SELECT * FROM wms.serial_numbers WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(serial_id)
+    .fetch_optional(&state.db)
+    .await;
 
     match result {
         Ok(Some(serial)) => Json(ApiResponse::success(serial, "获取序列号成功")),
@@ -286,11 +287,12 @@ pub async fn get_by_serial_no(
         Err(e) => return e,
     }
 
-    let result =
-        sqlx::query_as::<_, SerialNumber>("SELECT * FROM wms.serial_numbers WHERE serial_no = $1")
-            .bind(serial_no)
-            .fetch_optional(&state.db)
-            .await;
+    let result = sqlx::query_as::<_, SerialNumber>(
+        "SELECT * FROM wms.serial_numbers WHERE deleted_at IS NULL AND serial_no = $1",
+    )
+    .bind(serial_no)
+    .fetch_optional(&state.db)
+    .await;
 
     match result {
         Ok(Some(serial)) => Json(ApiResponse::success(serial, "获取序列号成功")),
@@ -313,7 +315,7 @@ pub async fn get_by_batch(
     }
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        "SELECT * FROM wms.serial_numbers WHERE batch_no = $1 ORDER BY created_at DESC",
+        "SELECT * FROM wms.serial_numbers WHERE deleted_at IS NULL AND batch_no = $1 ORDER BY created_at DESC",
     )
     .bind(batch_no)
     .fetch_all(&state.db)
@@ -420,7 +422,7 @@ pub async fn delete_serial_number(
         Err(_) => return Json(api_error(400, "无效的序列号ID")),
     };
 
-    let result = sqlx::query("DELETE FROM wms.serial_numbers WHERE id = $1")
+    let result = sqlx::query("UPDATE wms.serial_numbers SET deleted_at = NOW() WHERE id = $1")
         .bind(serial_id)
         .execute(&state.db)
         .await;

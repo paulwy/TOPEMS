@@ -1,0 +1,42 @@
+-- ================================================================================
+-- MES Schema Consolidation (idempotent — NOOP, metadata-only)
+-- Timestamp: 20260809000000
+-- Purpose: Close the "20260709 fast-iteration fragmentation" gap in MES migrations
+--          by establishing THIS file as the formal merge boundary and checkpoint.
+--
+-- Context (see docs/architecture/mes-schema-truth.md):
+--   Before 2026-07-09, MES DDL had 2 migrations (schema + quality).
+--   On   2026-07-09, 13 micro-migrations landed on a single day during active
+--   prototyping, creating an unreadable fragmentation pattern (000002~000014).
+--   After 2026-07-10, tenant_id migration took the count to 16.
+--
+-- What this file does:
+--   * Empty (no DDL) — all 16 prior migrations are already applied in production & dev DBs
+--   * Establishes a semantic checkpoint: "all MES DDL before 2026-08-09 is consolidated"
+--   * New MES tables MUST use fresh YYYYMMDDHHMMSS timestamps with add_tenant_id applied
+--     via scripts/gen-add-tenant-id.mjs v3 template
+--
+-- Boundary contents (13 micro-migrations absorbed conceptually into this checkpoint):
+--   000002 add_missing_tables              — process_flows, process_routes, process_flow_steps
+--   000003 add_work_orders_and_teams       — teams, team_members, workstations
+--   000004 add_equipment_tables            — equipment_maintenance_records
+--   000005 add_missing_tables_and_columns  — wip columns + production_records table
+--   000006 add_more_tables                 — material_issues / material_returns headers
+--   000007 add_quality_tables              — quality_patrols + items
+--   000008 fix_missing_columns             — stocktake_tasks, inventory_checks columns
+--   000009 add_missing_columns             — quality_inspections.sampling_plan
+--   000010 add_quality_columns             — quality_standards.control_plan_ref
+--   000011 add_effective_date              — quality_standards.effective_date
+--   000012 add_result_column               — quality_inspections.result
+--   000013 add_findings_column             — quality_patrol_items.findings
+--   000014 add_work_order_tables           — work_reports, work_order_operations, bom_items
+--
+-- Status: NOOP — only serves as a truth anchor and CI monotonic checkpoint.
+-- ================================================================================
+
+-- Placeholder: this migration intentionally contains no DDL.
+-- Its existence provides:
+--   (a) a monotonic timestamp checkpoint 2026-08-09 that post-dates all 13 fragments,
+--   (b) a CI / migration ordering sanity marker,
+--   (c) a hook for future backfill or reconciliation if needed.
+SELECT 1 WHERE FALSE;  -- zero-row, zero-side-effect SELECT; keeps file a valid SQL runnable by psql

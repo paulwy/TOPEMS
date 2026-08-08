@@ -107,7 +107,7 @@ pub async fn list_materials(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM materials WHERE (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR category = $3)"#
+        r#"SELECT COUNT(*) FROM materials WHERE deleted_at IS NULL AND (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR category = $3)"#
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -138,7 +138,7 @@ pub async fn get_material(
     }
 
     let result = sqlx::query_as::<_, Material>(
-        "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, created_at, updated_at FROM materials WHERE id = $1",
+        "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, created_at, updated_at FROM materials WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -251,7 +251,7 @@ pub async fn delete_material(
         return e;
     }
 
-    let result = sqlx::query("DELETE FROM materials WHERE id = $1")
+    let result = sqlx::query("UPDATE materials SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

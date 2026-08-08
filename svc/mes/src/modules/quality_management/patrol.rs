@@ -468,7 +468,7 @@ pub async fn delete_patrol(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM quality_patrols WHERE id = $1
+        UPDATE quality_patrols SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )
@@ -710,7 +710,7 @@ pub async fn delete_patrol_item(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM quality_patrol_items WHERE id = $1
+        UPDATE quality_patrol_items SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )

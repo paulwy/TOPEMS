@@ -152,7 +152,7 @@ async fn list_reviews(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_hrm.performance_reviews
-                WHERE ($1::uuid IS NULL OR employee_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR $2 = '' OR review_period ILIKE '%' || $2 || '%')
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -264,7 +264,7 @@ async fn get_review(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PerformanceReview>> {
     let result = sqlx::query_as::<_, PerformanceReview>(
-        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM plugin_hrm.performance_reviews WHERE id = $1"
+        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM plugin_hrm.performance_reviews WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -343,7 +343,7 @@ async fn delete_review(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
-        "DELETE FROM plugin_hrm.performance_reviews WHERE id = $1 AND status = 'draft'",
+        "UPDATE plugin_hrm.performance_reviews SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'",
     )
     .bind(id)
     .execute(&state.db)
@@ -683,10 +683,11 @@ async fn delete_goal(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM plugin_hrm.performance_goals WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE plugin_hrm.performance_goals SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -739,7 +740,7 @@ async fn get_employee_reviews(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PerformanceReview>(
-        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM plugin_hrm.performance_reviews WHERE employee_id = $1 ORDER BY created_at DESC"
+        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM plugin_hrm.performance_reviews WHERE deleted_at IS NULL AND employee_id = $1 ORDER BY created_at DESC"
     )
     .bind(id)
     .fetch_all(&state.db)

@@ -371,6 +371,9 @@ export interface EntitySchema<T = Record<string, unknown>> {
 
   /** 是否只读模式（禁用所有编辑操作） */
   readonly?: boolean;
+
+  /** 是否启用软删除（deleted_at TIMESTAMP）。启用后 delete 操作变为 UPDATE SET deleted_at = NOW() */
+  softDelete?: boolean;
 }
 
 // ============ 转换工具 ============

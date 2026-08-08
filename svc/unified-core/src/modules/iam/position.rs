@@ -119,7 +119,7 @@ pub async fn get_position(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     let row = sqlx::query(
-        r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE id = $1"#,
+        r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE deleted_at IS NULL AND id = $1"#,
     )
     .bind(id)
     .fetch_optional(&state.pool)
@@ -177,12 +177,13 @@ pub async fn update_position(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePositionRequest>,
 ) -> Json<serde_json::Value> {
-    let exists = sqlx::query(r#"SELECT id FROM iam.positions WHERE id = $1"#)
-        .bind(id)
-        .fetch_optional(&state.pool)
-        .await
-        .ok()
-        .flatten();
+    let exists =
+        sqlx::query(r#"SELECT id FROM iam.positions WHERE deleted_at IS NULL AND id = $1"#)
+            .bind(id)
+            .fetch_optional(&state.pool)
+            .await
+            .ok()
+            .flatten();
 
     if exists.is_none() {
         return Json(serde_json::json!({
@@ -259,7 +260,7 @@ pub async fn delete_position(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let result = sqlx::query(r#"DELETE FROM iam.positions WHERE id = $1"#)
+    let result = sqlx::query(r#"UPDATE iam.positions SET deleted_at = NOW() WHERE id = $1"#)
         .bind(id)
         .execute(&state.pool)
         .await;

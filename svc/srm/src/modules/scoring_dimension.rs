@@ -208,7 +208,7 @@ async fn create_dimension(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.scoring_dimensions WHERE code = $1 AND tenant_id = $2",
+        "SELECT COUNT(*) FROM plugin_srm.scoring_dimensions WHERE deleted_at IS NULL AND code = $1 AND tenant_id = $2",
     )
     .bind(&req.code)
     .bind(tenant_id)
@@ -276,7 +276,7 @@ async fn update_dimension(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, ScoringDimension>(
-        "SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at FROM plugin_srm.scoring_dimensions WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at FROM plugin_srm.scoring_dimensions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -309,7 +309,7 @@ async fn update_dimension(
 
         if code != &existing.code {
             let exists = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM plugin_srm.scoring_dimensions WHERE code = $1 AND id != $2 AND tenant_id = $3",
+                "SELECT COUNT(*) FROM plugin_srm.scoring_dimensions WHERE deleted_at IS NULL AND code = $1 AND id != $2 AND tenant_id = $3",
             )
             .bind(code)
             .bind(id)
@@ -402,7 +402,7 @@ async fn delete_dimension(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result =
-        sqlx::query("DELETE FROM plugin_srm.scoring_dimensions WHERE id = $1 AND tenant_id = $2")
+        sqlx::query("UPDATE plugin_srm.scoring_dimensions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(tenant_id)
             .execute(&state.db)

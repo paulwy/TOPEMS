@@ -182,10 +182,11 @@ pub async fn compute_replenishment(
         }
     };
 
-    let clear_result =
-        sqlx::query("DELETE FROM wms.replenishment_suggestions WHERE status = 'draft'")
-            .execute(&mut *tx)
-            .await;
+    let clear_result = sqlx::query(
+        "UPDATE wms.replenishment_suggestions SET deleted_at = NOW() WHERE status = 'draft'",
+    )
+    .execute(&mut *tx)
+    .await;
 
     if let Err(e) = clear_result {
         tracing::error!("清理草稿建议失败: {}", e);

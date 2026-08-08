@@ -84,7 +84,7 @@ pub async fn list_login_logs(
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_login_logs
-           WHERE tenant_id = $1
+           WHERE deleted_at IS NULL AND tenant_id = $1
              AND ($2::text IS NULL OR username ILIKE $2)
              AND ($3::text IS NULL OR status = $3)
              AND ($4::uuid IS NULL OR user_id = $4)
@@ -199,11 +199,13 @@ pub async fn delete_login_log(
 ) -> Json<ApiResponse<bool>> {
     let tenant_id = Uuid::nil();
 
-    let result = sqlx::query(r#"DELETE FROM core_login_logs WHERE id = $1 AND tenant_id = $2"#)
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE core_login_logs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(api_success(true)),
@@ -243,7 +245,7 @@ pub async fn batch_delete_login_logs(
         .join(", ");
 
     let sql = format!(
-        r#"DELETE FROM core_login_logs WHERE tenant_id = $1 AND id IN ({})"#,
+        r#"UPDATE core_login_logs SET deleted_at = NOW() WHERE tenant_id = $1 AND id IN ({})"#,
         placeholders
     );
 

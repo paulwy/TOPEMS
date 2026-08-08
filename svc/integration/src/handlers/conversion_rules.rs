@@ -35,10 +35,12 @@ pub async fn get_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ConversionRule>> {
-    match sqlx::query_as::<_, ConversionRule>("SELECT * FROM conversion_rules WHERE id = $1")
-        .bind(id)
-        .fetch_one(&state.pool)
-        .await
+    match sqlx::query_as::<_, ConversionRule>(
+        "SELECT * FROM conversion_rules WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await
     {
         Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule found")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
@@ -168,7 +170,7 @@ pub async fn delete_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("DELETE FROM conversion_rules WHERE id = $1")
+    match sqlx::query("UPDATE conversion_rules SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await
@@ -217,24 +219,25 @@ pub async fn execute_conversion_rule_api(
     Path(id): Path<Uuid>,
     Json(req): Json<ExecuteConversionRequest>,
 ) -> Json<ApiResponse<ExecuteConversionResponse>> {
-    let rule =
-        match sqlx::query_as::<_, ConversionRule>("SELECT * FROM conversion_rules WHERE id = $1")
-            .bind(id)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(r) => r,
-            Err(sqlx::Error::RowNotFound) => {
-                return Json(ApiResponse::error(404, "Conversion rule not found"))
-            }
-            Err(e) => {
-                tracing::error!("Failed to fetch rule: {}", e);
-                return Json(ApiResponse::error(
-                    500,
-                    &format!("Failed to fetch rule: {}", e),
-                ));
-            }
-        };
+    let rule = match sqlx::query_as::<_, ConversionRule>(
+        "SELECT * FROM conversion_rules WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(r) => r,
+        Err(sqlx::Error::RowNotFound) => {
+            return Json(ApiResponse::error(404, "Conversion rule not found"))
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch rule: {}", e);
+            return Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch rule: {}", e),
+            ));
+        }
+    };
 
     if !rule.is_enabled {
         return Json(ApiResponse::error(400, "Conversion rule is not enabled"));

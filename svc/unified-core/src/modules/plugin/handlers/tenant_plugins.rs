@@ -126,7 +126,7 @@ pub async fn install_plugin(
                 r#"SELECT EXISTS(
                     SELECT 1 FROM core.core_tenant_plugins tp
                     JOIN core.core_plugins p ON tp.plugin_id = p.id
-                    WHERE tp.tenant_id = $1 AND p.code = $2 AND tp.is_active = true
+                    WHERE deleted_at IS NULL AND tp.tenant_id = $1 AND p.code = $2 AND tp.is_active = true
                 )"#,
             )
             .bind(tenant_id)
@@ -295,7 +295,7 @@ pub async fn uninstall_plugin(
             // Data in plugin's own schema will be retained for potential reinstallation
             let result = sqlx::query(
                 r#"
-                DELETE FROM core.core_tenant_plugins
+                UPDATE core.core_tenant_plugins SET deleted_at = NOW()
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )
@@ -354,10 +354,10 @@ pub async fn uninstall_plugin(
             };
 
             // First, notify the plugin to clean up its own data (via internal API)
-            // Then delete from tenant_plugins
+            // Then UPDATE tenant_plugins SET deleted_at = NOW()
             let result = sqlx::query(
                 r#"
-                DELETE FROM core.core_tenant_plugins
+                UPDATE core.core_tenant_plugins SET deleted_at = NOW()
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )
@@ -502,7 +502,7 @@ pub async fn get_available_plugins(
 
     for plugin in plugins {
         let tenant_plugin: Option<TenantPlugin> = sqlx::query_as(
-            "SELECT * FROM core.core_tenant_plugins WHERE tenant_id = $1 AND plugin_id = $2",
+            "SELECT * FROM core.core_tenant_plugins WHERE deleted_at IS NULL AND tenant_id = $1 AND plugin_id = $2",
         )
         .bind(tenant_id)
         .bind(plugin.id)

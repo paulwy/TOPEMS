@@ -574,7 +574,7 @@ pub async fn delete_inspection(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM quality_inspections WHERE id = $1
+        UPDATE quality_inspections SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )

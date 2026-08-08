@@ -74,7 +74,7 @@ async fn list_billing_records(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_crm.billing_records
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::uuid IS NULL OR customer_id = $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -271,7 +271,7 @@ async fn update_billing_record(
 
     let existing = sqlx::query_as::<_, BillingRecord>(
         r#"
-        SELECT id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at FROM plugin_crm.billing_records WHERE id = $1 AND tenant_id = $2
+        SELECT id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at FROM plugin_crm.billing_records WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -416,12 +416,13 @@ async fn delete_billing_record(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result =
-        sqlx::query("DELETE FROM plugin_crm.billing_records WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(
+        "UPDATE plugin_crm.billing_records SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -524,7 +525,7 @@ async fn send_billing_notification(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, BillingRecord>(
-        "SELECT customer_name, invoice_no, amount FROM plugin_crm.billing_records WHERE id = $1 AND tenant_id = $2",
+        "SELECT customer_name, invoice_no, amount FROM plugin_crm.billing_records WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)

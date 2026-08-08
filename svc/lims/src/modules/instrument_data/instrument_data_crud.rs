@@ -286,7 +286,7 @@ pub async fn delete_instrument_data(
         Err(_) => return Json(ApiResponse::error(400, "无效的数据ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lims_instrument_data WHERE id = $1")
+    let result = sqlx::query("UPDATE qa_lims_instrument_data SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;

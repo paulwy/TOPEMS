@@ -473,7 +473,7 @@ pub async fn delete_equipment(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM equipment
+        UPDATE equipment SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,
@@ -778,7 +778,7 @@ pub async fn create_maintenance(
     };
 
     let equipment_name = sqlx::query_scalar!(
-        "SELECT name FROM equipment WHERE id = $1",
+        "SELECT name FROM equipment WHERE deleted_at IS NULL AND id = $1",
         result.equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -787,7 +787,7 @@ pub async fn create_maintenance(
     .flatten();
 
     let equipment_no = sqlx::query_scalar!(
-        "SELECT equipment_no FROM equipment WHERE id = $1",
+        "SELECT equipment_no FROM equipment WHERE deleted_at IS NULL AND id = $1",
         result.equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -859,7 +859,7 @@ pub async fn update_maintenance_status(
     };
 
     let equipment_name = sqlx::query_scalar!(
-        "SELECT name FROM equipment WHERE id = $1",
+        "SELECT name FROM equipment WHERE deleted_at IS NULL AND id = $1",
         result.equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -868,7 +868,7 @@ pub async fn update_maintenance_status(
     .flatten();
 
     let equipment_no = sqlx::query_scalar!(
-        "SELECT equipment_no FROM equipment WHERE id = $1",
+        "SELECT equipment_no FROM equipment WHERE deleted_at IS NULL AND id = $1",
         result.equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -1061,7 +1061,7 @@ pub async fn create_inspection(
     };
 
     let equipment_info = sqlx::query!(
-        r#"SELECT equipment_no, name FROM equipment WHERE id = $1"#,
+        r#"SELECT equipment_no, name FROM equipment WHERE deleted_at IS NULL AND id = $1"#,
         equipment_uuid,
     )
     .fetch_optional(&state.pool)

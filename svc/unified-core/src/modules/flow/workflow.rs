@@ -39,7 +39,7 @@ pub async fn list_workflows(
     } else {
         match sqlx::query_scalar(
             r#"SELECT COUNT(*) FROM core_workflows 
-               WHERE (name ILIKE $1 OR description ILIKE $1 OR $1 = '')
+               WHERE deleted_at IS NULL AND (name ILIKE $1 OR description ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')"#,
         )
         .bind(format!("%{}%", search.clone()))
@@ -104,7 +104,7 @@ pub async fn get_workflow(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Workflow>> {
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+        "SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -191,7 +191,7 @@ pub async fn delete_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM core_workflows WHERE id = $1")
+    let result = sqlx::query("UPDATE core_workflows SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;

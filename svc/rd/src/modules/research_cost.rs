@@ -157,7 +157,8 @@ async fn list_costs(
 }
 
 async fn count_costs(state: &sqlx::PgPool, params: &PaginationParams) -> i64 {
-    let mut query = String::from("SELECT COUNT(*) FROM rs.research_costs WHERE 1=1");
+    let mut query =
+        String::from("SELECT COUNT(*) FROM rs.research_costs WHERE deleted_at IS NULL AND 1=1");
 
     if let Some(_project_id) = params.project_id {
         query.push_str(" AND project_id = $1");
@@ -365,7 +366,7 @@ async fn delete_cost(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM rs.research_costs WHERE id = $1")
+    let result = sqlx::query("UPDATE rs.research_costs SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

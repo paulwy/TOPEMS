@@ -30,7 +30,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
-            last_login_at TIMESTAMP
+            last_login_at TIMESTAMP,
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -46,7 +47,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             description TEXT,
             tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

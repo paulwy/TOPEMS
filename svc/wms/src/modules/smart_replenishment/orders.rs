@@ -40,11 +40,12 @@ pub async fn list_orders(
 
     match result {
         Ok(items) => {
-            let total =
-                sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM wms.replenishment_orders")
-                    .fetch_one(&state.db)
-                    .await
-                    .unwrap_or(0);
+            let total = sqlx::query_scalar::<_, i64>(
+                "SELECT COUNT(*) FROM wms.replenishment_orders WHERE deleted_at IS NULL",
+            )
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
             let items_json: Vec<serde_json::Value> = items.iter().map(|row| serde_json::json!({
                 "id": row.try_get::<Uuid, _>("id").ok(),
@@ -290,10 +291,11 @@ pub async fn delete_order(
         .execute(&state.db)
         .await;
 
-    let result = sqlx::query("DELETE FROM wms.replenishment_orders WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE wms.replenishment_orders SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

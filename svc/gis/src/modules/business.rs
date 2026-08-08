@@ -35,7 +35,7 @@ pub async fn list_business_locations(
 
     let query = if let Some(ref bt) = business_type {
         sqlx::query_as::<_, BusinessLocation>(
-            "SELECT * FROM business_locations WHERE business_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            "SELECT * FROM business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         )
         .bind(bt)
         .bind(page_size)
@@ -51,10 +51,10 @@ pub async fn list_business_locations(
     match query.fetch_all(&pool).await {
         Ok(locations) => {
             let total_query = if let Some(ref bt) = business_type {
-                sqlx::query("SELECT COUNT(*) FROM business_locations WHERE business_type = $1")
+                sqlx::query("SELECT COUNT(*) FROM business_locations WHERE deleted_at IS NULL AND business_type = $1")
                     .bind(bt)
             } else {
-                sqlx::query("SELECT COUNT(*) FROM business_locations")
+                sqlx::query("SELECT COUNT(*) FROM business_locations WHERE deleted_at IS NULL")
             };
             let total: i64 = total_query
                 .fetch_one(&pool)
@@ -111,10 +111,12 @@ pub async fn get_business_location(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<BusinessLocation>> {
-    match sqlx::query_as::<_, BusinessLocation>("SELECT * FROM business_locations WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await
+    match sqlx::query_as::<_, BusinessLocation>(
+        "SELECT * FROM business_locations WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(location) => Json(ApiResponse::success(location, "获取业务位置成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "业务位置未找到")),
@@ -166,7 +168,7 @@ pub async fn delete_business_location(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::BusinessLocationWrite).await {
         return e;
     }
-    match sqlx::query("DELETE FROM business_locations WHERE id = $1")
+    match sqlx::query("UPDATE business_locations SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await
@@ -187,7 +189,7 @@ pub async fn list_business_locations_by_type(
     Path(business_type): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, BusinessLocation>(
-        "SELECT * FROM business_locations WHERE business_type = $1 ORDER BY created_at DESC",
+        "SELECT * FROM business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC",
     )
     .bind(business_type)
     .fetch_all(&pool)

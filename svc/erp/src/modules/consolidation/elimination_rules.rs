@@ -31,7 +31,7 @@ pub async fn list_elimination_rules(
     let result = sqlx::query_as::<_, EliminationRule>(
         r#"
         SELECT * FROM plugin_erp.elimination_rules
-        WHERE scope_id = $1
+        WHERE deleted_at IS NULL AND scope_id = $1
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY priority ASC, created_at DESC
@@ -51,7 +51,7 @@ pub async fn list_elimination_rules(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_erp.elimination_rules
-                WHERE scope_id = $1
+                WHERE deleted_at IS NULL AND scope_id = $1
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -80,7 +80,7 @@ pub async fn get_elimination_rule(
     Path(rule_id): Path<Uuid>,
 ) -> Json<ApiResponse<EliminationRule>> {
     match sqlx::query_as::<_, EliminationRule>(
-        "SELECT * FROM plugin_erp.elimination_rules WHERE id = $1",
+        "SELECT * FROM plugin_erp.elimination_rules WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(rule_id)
     .fetch_optional(&state.db)
@@ -210,7 +210,7 @@ pub async fn delete_elimination_rule(
     Path(rule_id): Path<Uuid>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("DELETE FROM plugin_erp.elimination_rules WHERE id = $1")
+    match sqlx::query("UPDATE plugin_erp.elimination_rules SET deleted_at = NOW() WHERE id = $1")
         .bind(rule_id)
         .execute(&state.db)
         .await
@@ -241,7 +241,7 @@ pub async fn export_elimination_worksheet(
     Path(scope_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let rules = match sqlx::query_as::<_, EliminationRule>(
-        "SELECT * FROM plugin_erp.elimination_rules WHERE scope_id = $1 ORDER BY priority ASC",
+        "SELECT * FROM plugin_erp.elimination_rules WHERE deleted_at IS NULL AND scope_id = $1 ORDER BY priority ASC",
     )
     .bind(scope_id)
     .fetch_all(&state.db)

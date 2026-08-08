@@ -69,7 +69,7 @@ impl EmployeeService {
                 let total = sqlx::query_scalar::<_, i64>(
                     r#"
                     SELECT COUNT(*) FROM hrm.employees AS e
-                    WHERE e.tenant_id = $5
+                    WHERE deleted_at IS NULL AND e.tenant_id = $5
                       AND ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_number ILIKE $1)
                       AND ($2::text IS NULL OR e.status = $2)
                       AND ($3::uuid IS NULL OR e.department_id = $3)
@@ -146,7 +146,7 @@ impl EmployeeService {
         }
 
         let exists = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM hrm.employees WHERE employee_number = $1 AND tenant_id = $2)",
+            "SELECT EXISTS(SELECT 1 FROM hrm.employees WHERE deleted_at IS NULL AND employee_number = $1 AND tenant_id = $2)",
         )
         .bind(&req.employee_number)
         .bind(self.tenant_id)
@@ -447,11 +447,13 @@ impl EmployeeService {
     }
 
     pub async fn delete_employee(&self, id: &Uuid) -> ApiResponse<String> {
-        let result = sqlx::query("DELETE FROM hrm.employees WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(self.tenant_id)
-            .execute(&self.db)
-            .await;
+        let result = sqlx::query(
+            "UPDATE hrm.employees SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(id)
+        .bind(self.tenant_id)
+        .execute(&self.db)
+        .await;
 
         match result {
             Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "员工删除成功"),

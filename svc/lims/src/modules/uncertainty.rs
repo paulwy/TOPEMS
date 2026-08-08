@@ -400,7 +400,7 @@ pub async fn get_project(
     };
 
     let row = sqlx::query(
-        "SELECT id, project_no, project_name, method_id, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty, coverage_factor, confidence_level, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_uncertainty_projects WHERE id = $1"
+        "SELECT id, project_no, project_name, method_id, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty, coverage_factor, confidence_level, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -532,10 +532,11 @@ pub async fn delete_project(
         Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lims_uncertainty_projects WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE qa_lims_uncertainty_projects SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "不确定度评定项目删除成功")),
@@ -721,10 +722,11 @@ pub async fn delete_source(
         Err(_) => return Json(ApiResponse::error(400, "无效的来源ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lims_uncertainty_sources WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE qa_lims_uncertainty_sources SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "不确定度来源删除成功")),
@@ -806,11 +808,12 @@ pub async fn create_component(
         Err(_) => return Json(ApiResponse::error(400, "无效的来源ID")),
     };
 
-    let source_row =
-        sqlx::query("SELECT source_name FROM qa_lims_uncertainty_sources WHERE id = $1")
-            .bind(source_id)
-            .fetch_optional(&state.pool)
-            .await;
+    let source_row = sqlx::query(
+        "SELECT source_name FROM qa_lims_uncertainty_sources WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(source_id)
+    .fetch_optional(&state.pool)
+    .await;
 
     let source_name: Option<String> = match source_row {
         Ok(Some(row)) => Some(row.get("source_name")),
@@ -954,10 +957,11 @@ pub async fn delete_component(
         Err(_) => return Json(ApiResponse::error(400, "无效的分量ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lims_uncertainty_components WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE qa_lims_uncertainty_components SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "不确定度分量删除成功")),
@@ -1158,7 +1162,7 @@ pub async fn calculate_combined(
     };
 
     let rows = sqlx::query(
-        "SELECT standard_uncertainty, sensitivity_coefficient, degrees_freedom FROM qa_lims_uncertainty_components WHERE project_id = $1"
+        "SELECT standard_uncertainty, sensitivity_coefficient, degrees_freedom FROM qa_lims_uncertainty_components WHERE deleted_at IS NULL AND project_id = $1"
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -1203,7 +1207,7 @@ pub async fn calculate_combined(
     };
 
     let project_row =
-        sqlx::query("SELECT coverage_factor FROM qa_lims_uncertainty_projects WHERE id = $1")
+        sqlx::query("SELECT coverage_factor FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1")
             .bind(id)
             .fetch_optional(&state.pool)
             .await;
@@ -1249,7 +1253,7 @@ pub async fn generate_report(
     };
 
     let project_row = sqlx::query(
-        "SELECT id, project_no, project_name, method_id, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty, coverage_factor, confidence_level, notes, created_at::TEXT FROM qa_lims_uncertainty_projects WHERE id = $1"
+        "SELECT id, project_no, project_name, method_id, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty, coverage_factor, confidence_level, notes, created_at::TEXT FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.pool)
@@ -1283,7 +1287,7 @@ pub async fn generate_report(
     };
 
     let source_rows = sqlx::query(
-        "SELECT id, source_name, source_type, description, distribution_type, sensitivity_coefficient, sort_order FROM qa_lims_uncertainty_sources WHERE project_id = $1 ORDER BY sort_order ASC"
+        "SELECT id, source_name, source_type, description, distribution_type, sensitivity_coefficient, sort_order FROM qa_lims_uncertainty_sources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY sort_order ASC"
     )
     .bind(id)
     .fetch_all(&state.pool)

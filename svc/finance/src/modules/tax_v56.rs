@@ -379,7 +379,8 @@ pub async fn init_tax_v56_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             description VARCHAR(500) NOT NULL,
             taxable_amount DOUBLE PRECISION NOT NULL DEFAULT 0,
             tax_rate DOUBLE PRECISION NOT NULL DEFAULT 0,
-            tax_amount DOUBLE PRECISION NOT NULL DEFAULT 0
+            tax_amount DOUBLE PRECISION NOT NULL DEFAULT 0,
+                deleted_at TIMESTAMP
         )",
         "CREATE INDEX IF NOT EXISTS idx_v56_tax_lines_tenant ON finance_v56_tax_lines(tenant_id)",
         "CREATE INDEX IF NOT EXISTS idx_v56_tax_lines_form ON finance_v56_tax_lines(form_id)",
@@ -657,7 +658,7 @@ impl AutoTaxFiler {
         form_id: Uuid,
         req: AmendTaxFormRequest,
     ) -> Result<TaxFormWithLines, sqlx::Error> {
-        sqlx::query("DELETE FROM finance_v56_tax_lines WHERE form_id = $1 AND tenant_id = $2")
+        sqlx::query("UPDATE finance_v56_tax_lines SET deleted_at = NOW() WHERE form_id = $1 AND tenant_id = $2")
             .bind(form_id)
             .bind(tenant_id)
             .execute(pool)
@@ -801,7 +802,7 @@ impl AutoTaxFiler {
         form_id: Uuid,
     ) -> Result<Vec<TaxLine>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, form_id, line_no, description, taxable_amount, tax_rate, tax_amount FROM finance_v56_tax_lines WHERE form_id = $1 AND tenant_id = $2 ORDER BY line_no",
+            "SELECT id, form_id, line_no, description, taxable_amount, tax_rate, tax_amount FROM finance_v56_tax_lines WHERE deleted_at IS NULL AND form_id = $1 AND tenant_id = $2 ORDER BY line_no",
         )
         .bind(form_id)
         .bind(tenant_id)

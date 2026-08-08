@@ -35,7 +35,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             auto_refresh_enabled BOOLEAN DEFAULT FALSE,
             auto_refresh_interval INTEGER,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -56,7 +57,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             query_config JSONB,
             cache_ttl_seconds INTEGER DEFAULT 60,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -85,7 +87,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             connection_config JSONB,
             query_template TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -201,7 +204,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             shared_with TEXT[] DEFAULT '{}',
             permission VARCHAR(16) NOT NULL DEFAULT 'view',
             expires_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT NOW()
+            created_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -249,7 +253,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             owner_id VARCHAR(64) NOT NULL,
             is_public BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -268,7 +273,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             measures JSONB DEFAULT '[]',
             owner_id VARCHAR(64) NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -311,7 +317,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             is_active BOOLEAN DEFAULT TRUE,
             created_by VARCHAR(64) NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -410,7 +417,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             last_run_at TIMESTAMP,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -470,7 +478,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             last_refreshed_at TIMESTAMP,
             owner_id VARCHAR(64) NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

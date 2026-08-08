@@ -204,7 +204,7 @@ pub async fn list_inspections(
     let total: Option<i64> = match sqlx::query_scalar(
         r#"
         SELECT COUNT(*) as total FROM qa_quality_inspections
-        WHERE tenant_id = $1
+        WHERE deleted_at IS NULL AND tenant_id = $1
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR inspection_type = $3)
           AND ($4::text IS NULL OR inspection_no ILIKE $4 OR product_name ILIKE $4 OR inspector ILIKE $4 OR assignee ILIKE $4)
@@ -336,7 +336,7 @@ pub async fn get_inspection(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let inspection = sqlx::query_as::<_, Inspection>(r#"SELECT id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_inspections WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let inspection = sqlx::query_as::<_, Inspection>(r#"SELECT id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -396,12 +396,13 @@ pub async fn delete_inspection(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let result =
-        sqlx::query(r#"DELETE FROM qa_quality_inspections WHERE id = $1 AND tenant_id = $2"#)
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        r#"UPDATE qa_quality_inspections SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "质量检查删除成功")),
@@ -426,7 +427,7 @@ pub async fn assign_inspection(
     };
 
     let current = sqlx::query(
-        r#"SELECT status FROM qa_quality_inspections WHERE id = $1 AND tenant_id = $2"#,
+        r#"SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
     )
     .bind(id)
     .bind(tenant_id)
@@ -479,7 +480,7 @@ pub async fn submit_result(
     };
 
     let current = sqlx::query(
-        r#"SELECT status FROM qa_quality_inspections WHERE id = $1 AND tenant_id = $2"#,
+        r#"SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
     )
     .bind(id)
     .bind(tenant_id)
@@ -550,7 +551,7 @@ pub async fn audit_inspection(
     };
 
     let current = sqlx::query(
-        r#"SELECT status FROM qa_quality_inspections WHERE id = $1 AND tenant_id = $2"#,
+        r#"SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
     )
     .bind(id)
     .bind(tenant_id)
@@ -614,7 +615,7 @@ pub async fn rework_inspection(
     };
 
     let current = sqlx::query(
-        r#"SELECT status FROM qa_quality_inspections WHERE id = $1 AND tenant_id = $2"#,
+        r#"SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
     )
     .bind(id)
     .bind(tenant_id)

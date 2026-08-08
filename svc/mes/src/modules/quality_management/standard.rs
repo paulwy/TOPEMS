@@ -623,7 +623,7 @@ pub async fn update_standard(
     if let Some(standard_values) = &body.standard_values {
         let delete_result = sqlx::query!(
             r#"
-            DELETE FROM quality_standard_values WHERE standard_id = $1
+            UPDATE quality_standard_values SET deleted_at = NOW() WHERE standard_id = $1
             "#,
             uuid,
         )
@@ -760,7 +760,7 @@ pub async fn delete_standard(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM quality_standards WHERE id = $1
+        UPDATE quality_standards SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )

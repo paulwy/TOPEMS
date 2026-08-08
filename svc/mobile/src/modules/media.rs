@@ -285,7 +285,7 @@ pub async fn delete_media(
     };
 
     let result = sqlx::query(
-        "DELETE FROM media_files WHERE id = $1 AND file_type = $2 AND uploaded_by = $3",
+        "UPDATE media_files SET deleted_at = NOW() WHERE id = $1 AND file_type = $2 AND uploaded_by = $3",
     )
     .bind(id)
     .bind(&file_type)

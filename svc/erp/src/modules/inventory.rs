@@ -75,7 +75,7 @@ pub async fn list_inventory(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM inventory WHERE (material_code ILIKE $1 OR material_name ILIKE $1 OR location_code ILIKE $1) AND ($2 = '' OR status = $2)"#
+        r#"SELECT COUNT(*) FROM inventory WHERE deleted_at IS NULL AND (material_code ILIKE $1 OR material_name ILIKE $1 OR location_code ILIKE $1) AND ($2 = '' OR status = $2)"#
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -105,7 +105,7 @@ pub async fn get_inventory(
     }
 
     let result = sqlx::query_as::<_, Inventory>(
-        "SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at FROM inventory WHERE id = $1",
+        "SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at FROM inventory WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -219,7 +219,7 @@ pub async fn delete_inventory(
         return e;
     }
 
-    let result = sqlx::query("DELETE FROM inventory WHERE id = $1")
+    let result = sqlx::query("UPDATE inventory SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

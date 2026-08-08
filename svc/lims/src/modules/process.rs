@@ -93,7 +93,7 @@ pub async fn get_process(
     };
 
     let row = sqlx::query(
-        "SELECT id, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT FROM qa_lab_processes WHERE id = $1",
+        "SELECT id, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT FROM qa_lab_processes WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(uuid)
     .fetch_one(&state.pool)
@@ -227,7 +227,7 @@ pub async fn delete_process(
         Err(_) => return Json(ApiResponse::error(400, "Invalid process ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lab_processes WHERE id = $1")
+    let result = sqlx::query("UPDATE qa_lab_processes SET deleted_at = NOW() WHERE id = $1")
         .bind(uuid)
         .execute(&state.pool)
         .await;

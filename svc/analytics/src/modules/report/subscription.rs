@@ -289,7 +289,7 @@ pub async fn delete_subscription(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM report_subscriptions
+        UPDATE report_subscriptions SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,

@@ -253,21 +253,21 @@ pub async fn list_plans(
     let offset = (page - 1) * page_size;
 
     let sql = match (query.status.as_ref(), query.year.as_ref(), query.plan_name.as_ref(), query.provider.as_ref()) {
-        (Some(_), Some(_), Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE status = $1 AND plan_year = $2 AND plan_name LIKE $3 AND provider LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
-        (Some(_), Some(_), Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE status = $1 AND plan_year = $2 AND plan_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), Some(_), None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE status = $1 AND plan_year = $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), Some(_), None, None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE status = $1 AND plan_year = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None, Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE status = $1 AND plan_name LIKE $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None, Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE status = $1 AND plan_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None, None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE status = $1 AND provider LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None, None, None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, Some(_), Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE plan_year = $1 AND plan_name LIKE $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (None, Some(_), Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE plan_year = $1 AND plan_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_), None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE plan_year = $1 AND provider LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_), None, None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE plan_year = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, None, Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE plan_name LIKE $1 AND provider LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None, Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE plan_name LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, None, None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE provider LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_), Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_year = $2 AND plan_name LIKE $3 AND provider LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
+        (Some(_), Some(_), Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_year = $2 AND plan_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), Some(_), None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_year = $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), Some(_), None, None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_year = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (Some(_), None, Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_name LIKE $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (Some(_), None, None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND provider LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (Some(_), None, None, None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, Some(_), Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_year = $1 AND plan_name LIKE $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (None, Some(_), Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_year = $1 AND plan_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_), None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_year = $1 AND provider LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_), None, None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_year = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, None, Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_name LIKE $1 AND provider LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_name LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, None, None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND provider LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         (None, None, None, None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     };
 
@@ -496,7 +496,7 @@ pub async fn get_plan(
     };
 
     let row = sqlx::query(
-        "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE id = $1"
+        "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -628,7 +628,7 @@ pub async fn delete_plan(
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lims_pt_plans WHERE id = $1")
+    let result = sqlx::query("UPDATE qa_lims_pt_plans SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -651,10 +651,12 @@ pub async fn receive_sample(
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
     };
 
-    let plan_row = sqlx::query("SELECT plan_no, plan_name FROM qa_lims_pt_plans WHERE id = $1")
-        .bind(plan_id)
-        .fetch_optional(&state.pool)
-        .await;
+    let plan_row = sqlx::query(
+        "SELECT plan_no, plan_name FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(plan_id)
+    .fetch_optional(&state.pool)
+    .await;
 
     let (plan_no, plan_name) = match plan_row {
         Ok(Some(row)) => (
@@ -789,10 +791,11 @@ pub async fn submit_result(
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
 
-    let plan_row = sqlx::query("SELECT plan_no FROM qa_lims_pt_plans WHERE id = $1")
-        .bind(plan_id)
-        .fetch_optional(&state.pool)
-        .await;
+    let plan_row =
+        sqlx::query("SELECT plan_no FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND id = $1")
+            .bind(plan_id)
+            .fetch_optional(&state.pool)
+            .await;
 
     let plan_no = match plan_row {
         Ok(Some(row)) => row.get::<String, _>("plan_no"),
@@ -1200,10 +1203,11 @@ pub async fn create_corrective_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的评价ID")),
     };
 
-    let plan_row = sqlx::query("SELECT plan_no FROM qa_lims_pt_plans WHERE id = $1")
-        .bind(plan_id)
-        .fetch_optional(&state.pool)
-        .await;
+    let plan_row =
+        sqlx::query("SELECT plan_no FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND id = $1")
+            .bind(plan_id)
+            .fetch_optional(&state.pool)
+            .await;
 
     let plan_no = match plan_row {
         Ok(Some(row)) => row.get::<String, _>("plan_no"),

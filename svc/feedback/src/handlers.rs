@@ -120,7 +120,8 @@ pub async fn list_feedbacks(
         r#"SELECT id, user_id, type as type_, title, description, screenshots, satisfaction, status, response, responded_by, responded_at, created_at, updated_at
            FROM core_feedbacks"#,
     );
-    let mut count_query = String::from("SELECT COUNT(*) FROM core_feedbacks");
+    let mut count_query =
+        String::from("SELECT COUNT(*) FROM core_feedbacks WHERE deleted_at IS NULL");
     let mut conditions = Vec::new();
 
     let mut args = Vec::new();
@@ -218,11 +219,12 @@ pub async fn delete_feedback(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    let feedback =
-        sqlx::query_as::<_, FeedbackOwnerId>(r#"SELECT user_id FROM core_feedbacks WHERE id = $1"#)
-            .bind(id)
-            .fetch_optional(&pool)
-            .await;
+    let feedback = sqlx::query_as::<_, FeedbackOwnerId>(
+        r#"SELECT user_id FROM core_feedbacks WHERE deleted_at IS NULL AND id = $1"#,
+    )
+    .bind(id)
+    .fetch_optional(&pool)
+    .await;
 
     match feedback {
         Ok(Some(feedback)) => {
@@ -230,10 +232,11 @@ pub async fn delete_feedback(
                 return Json(ApiResponse::error(403, "无权限删除反馈"));
             }
 
-            let result = sqlx::query(r#"DELETE FROM core_feedbacks WHERE id = $1"#)
-                .bind(id)
-                .execute(&pool)
-                .await;
+            let result =
+                sqlx::query(r#"UPDATE core_feedbacks SET deleted_at = NOW() WHERE id = $1"#)
+                    .bind(id)
+                    .execute(&pool)
+                    .await;
 
             match result {
                 Ok(_) => Json(ApiResponse::success(true, "删除反馈成功")),
@@ -267,7 +270,8 @@ pub async fn init_feedback_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             responded_by VARCHAR(255),
             responded_at TIMESTAMPTZ,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

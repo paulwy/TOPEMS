@@ -50,7 +50,7 @@ pub async fn list_reports(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_erp.consolidation_reports
-                WHERE ($1::uuid IS NULL OR scope_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR scope_id = $1)
                   AND ($2::text IS NULL OR report_type = $2)
                   AND ($3::text IS NULL OR period >= $3)
                   AND ($4::text IS NULL OR period <= $4)
@@ -278,7 +278,7 @@ pub async fn submit_report(
     let _ = username;
 
     let report_result = sqlx::query_as::<_, ConsolidationReport>(
-        "SELECT * FROM plugin_erp.consolidation_reports WHERE id = $1",
+        "SELECT * FROM plugin_erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(report_id)
     .fetch_optional(&state.db)
@@ -348,7 +348,7 @@ pub async fn approve_report(
     let _ = username;
 
     let report_result = sqlx::query_as::<_, ConsolidationReport>(
-        "SELECT * FROM plugin_erp.consolidation_reports WHERE id = $1",
+        "SELECT * FROM plugin_erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(report_id)
     .fetch_optional(&state.db)
@@ -445,10 +445,12 @@ pub async fn delete_report(
     Path(report_id): Path<Uuid>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("DELETE FROM plugin_erp.consolidation_reports WHERE id = $1")
-        .bind(report_id)
-        .execute(&state.db)
-        .await
+    match sqlx::query(
+        "UPDATE plugin_erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1",
+    )
+    .bind(report_id)
+    .execute(&state.db)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() == 0 {

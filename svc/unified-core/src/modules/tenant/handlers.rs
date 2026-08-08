@@ -25,7 +25,7 @@ pub async fn list_tenants(
     let tenants: Vec<Tenant> = match (params.search, params.status, params.plan) {
         (Some(s), Some(st), Some(p)) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND status = $2 AND plan = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND status = $2 AND plan = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(format!("%{}%", s))
             .bind(st)
@@ -38,7 +38,7 @@ pub async fn list_tenants(
         }
         (Some(s), Some(st), None) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(format!("%{}%", s))
             .bind(st)
@@ -50,7 +50,7 @@ pub async fn list_tenants(
         }
         (Some(s), None, Some(p)) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(format!("%{}%", s))
             .bind(p)
@@ -62,7 +62,7 @@ pub async fn list_tenants(
         }
         (None, Some(st), Some(p)) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE status = $1 AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND status = $1 AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(st)
             .bind(p)
@@ -74,7 +74,7 @@ pub async fn list_tenants(
         }
         (Some(s), None, None) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(format!("%{}%", s))
             .bind(page_size)
@@ -85,7 +85,7 @@ pub async fn list_tenants(
         }
         (None, Some(st), None) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(st)
             .bind(page_size)
@@ -96,7 +96,7 @@ pub async fn list_tenants(
         }
         (None, None, Some(p)) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE plan = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND plan = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(p)
             .bind(page_size)
@@ -118,13 +118,13 @@ pub async fn list_tenants(
     };
 
     let total: i64 = if let Some(s) = search {
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_tenants WHERE name ILIKE $1 OR code ILIKE $1")
+        sqlx::query_scalar("SELECT COUNT(*) FROM core_tenants WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1")
             .bind(format!("%{}%", s))
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0)
     } else {
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_tenants")
+        sqlx::query_scalar("SELECT COUNT(*) FROM core_tenants WHERE deleted_at IS NULL")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0)
@@ -147,7 +147,7 @@ pub async fn get_tenant(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant: {}", id);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -166,7 +166,7 @@ pub async fn get_tenant_by_code(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant by code: {}", code);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE code = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND code = $1")
         .bind(&code)
         .fetch_optional(&state.pool)
         .await
@@ -604,7 +604,7 @@ pub async fn get_tenant_quota(
 ) -> Json<CoreResponse<TenantQuotaResponse>> {
     tracing::info!("[Tenant] Getting quota for tenant: {}", id);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -761,7 +761,7 @@ pub async fn delete_tenant(
 ) -> Json<CoreResponse<String>> {
     tracing::info!("[Tenant] Deleting tenant: {}", id);
 
-    let result = sqlx::query("DELETE FROM core_tenants WHERE id = $1")
+    let result = sqlx::query("UPDATE core_tenants SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -789,7 +789,7 @@ pub async fn get_tenant_users(
     let users: Vec<TenantUser> = match (params.search, params.role, params.status) {
         (Some(s), Some(r), Some(st)) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 AND role = $3 AND status = $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1 AND email ILIKE $2 AND role = $3 AND status = $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -803,7 +803,7 @@ pub async fn get_tenant_users(
         }
         (Some(s), Some(r), None) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 AND role = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1 AND email ILIKE $2 AND role = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -816,7 +816,7 @@ pub async fn get_tenant_users(
         }
         (Some(s), None, Some(st)) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1 AND email ILIKE $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -829,7 +829,7 @@ pub async fn get_tenant_users(
         }
         (None, Some(r), Some(st)) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND role = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1 AND role = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(tenant_id)
             .bind(r)
@@ -842,7 +842,7 @@ pub async fn get_tenant_users(
         }
         (Some(s), None, None) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1 AND email ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -854,7 +854,7 @@ pub async fn get_tenant_users(
         }
         (None, Some(r), None) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND role = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1 AND role = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(tenant_id)
             .bind(r)
@@ -866,7 +866,7 @@ pub async fn get_tenant_users(
         }
         (None, None, Some(st)) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(tenant_id)
             .bind(st)
@@ -878,7 +878,7 @@ pub async fn get_tenant_users(
         }
         (None, None, None) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(tenant_id)
             .bind(page_size)
@@ -889,12 +889,13 @@ pub async fn get_tenant_users(
         }
     };
 
-    let total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1")
-            .bind(tenant_id)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let response = ListTenantUsersResponse {
         items: users,
@@ -968,11 +969,13 @@ pub async fn remove_member(
         tenant_id
     );
 
-    let result = sqlx::query("DELETE FROM core_tenant_users WHERE tenant_id = $1 AND user_id = $2")
-        .bind(tenant_id)
-        .bind(user_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        "UPDATE core_tenant_users SET deleted_at = NOW() WHERE tenant_id = $1 AND user_id = $2",
+    )
+    .bind(tenant_id)
+    .bind(user_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -1023,15 +1026,16 @@ pub async fn get_tenant_stats(
 ) -> Json<CoreResponse<TenantStats>> {
     tracing::info!("[Tenant] Getting stats for tenant: {}", id);
 
-    let total_users: i32 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1")
-            .bind(id)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let total_users: i32 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1",
+    )
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let active_users: i32 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1 AND status = 'active'",
+        "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'active'",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -1081,12 +1085,13 @@ pub async fn get_usage_metrics(
 ) -> Json<CoreResponse<UsageMetrics>> {
     tracing::info!("[Tenant] Getting usage metrics for tenant: {}", id);
 
-    let users_count: i32 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1")
-            .bind(id)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let users_count: i32 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND tenant_id = $1",
+    )
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let storage_used_gb: f64 = sqlx::query_scalar(
         r#"
@@ -1130,7 +1135,7 @@ pub async fn get_billing_info(
 ) -> Json<CoreResponse<TenantBillingInfo>> {
     tracing::info!("[Tenant] Getting billing info for tenant: {}", id);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -1191,7 +1196,7 @@ pub async fn get_current_tenant_context(
     } else {
         // Look up user's first active tenant membership
         match sqlx::query_scalar::<_, Uuid>(
-            "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' ORDER BY created_at DESC LIMIT 1",
+            "SELECT tenant_id FROM core_tenant_users WHERE deleted_at IS NULL AND user_id = $1 AND status = 'active' ORDER BY created_at DESC LIMIT 1",
         )
         .bind(user_id)
         .fetch_optional(&state.pool)
@@ -1237,7 +1242,7 @@ pub async fn get_my_tenants(
     let tenants: Vec<Tenant> = sqlx::query_as(
         "SELECT t.* FROM core_tenants t
          INNER JOIN core_tenant_users tu ON t.id = tu.tenant_id
-         WHERE tu.user_id = $1 AND tu.status = 'active' AND tenant_id = $2 
+         WHERE deleted_at IS NULL AND tu.user_id = $1 AND tu.status = 'active' AND tenant_id = $2 
          ORDER BY t.created_at DESC",
     )
     .bind(user_id)
@@ -1288,7 +1293,7 @@ pub async fn switch_tenant(
     // 验证用户是否属于该租户
     let tenant_member: Option<(Uuid, String)> = sqlx::query_as(
         "SELECT tenant_id, role FROM core_tenant_users
-         WHERE tenant_id = $1 AND user_id = $2 AND status = 'active'",
+         WHERE deleted_at IS NULL AND tenant_id = $1 AND user_id = $2 AND status = 'active'",
     )
     .bind(tenant_id)
     .bind(user_id)
@@ -1302,7 +1307,7 @@ pub async fn switch_tenant(
     };
 
     // 获取租户信息
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(tenant_id)
         .fetch_optional(&state.pool)
         .await
@@ -1360,7 +1365,7 @@ pub async fn get_tenant_by_slug(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant by slug: {}", slug);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE code = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND code = $1")
         .bind(&slug)
         .fetch_optional(&state.pool)
         .await

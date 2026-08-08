@@ -463,15 +463,16 @@ pub async fn delete_dict_type(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = sqlx::query("DELETE FROM erp.dict_items WHERE dict_type_id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await
+    if let Err(e) =
+        sqlx::query("UPDATE erp.dict_items SET deleted_at = NOW() WHERE dict_type_id = $1")
+            .bind(id)
+            .execute(&state.db)
+            .await
     {
         tracing::warn!("删除字典条目失败，继续删除字典类型: {}", e);
     }
 
-    let result = sqlx::query("DELETE FROM erp.dict_types WHERE id = $1")
+    let result = sqlx::query("UPDATE erp.dict_types SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -560,7 +561,7 @@ pub async fn list_dict_items(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM erp.dict_items
-                WHERE dict_type_id = $1
+                WHERE deleted_at IS NULL AND dict_type_id = $1
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                 "#,
             )
@@ -687,7 +688,7 @@ pub async fn update_dict_item(
     Json(req): Json<UpdateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
     let existing = sqlx::query_as::<_, DictItem>(
-        "SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at FROM erp.dict_items WHERE id = $1",
+        "SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at FROM erp.dict_items WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -778,7 +779,7 @@ pub async fn delete_dict_item(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM erp.dict_items WHERE id = $1")
+    let result = sqlx::query("UPDATE erp.dict_items SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

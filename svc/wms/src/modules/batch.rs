@@ -49,7 +49,7 @@ pub async fn list_batches(
     let result = sqlx::query_as::<_, Batch>(
         r#"
         SELECT * FROM wms.batches
-        WHERE ($1::text IS NULL OR warehouse_id = $1)
+        WHERE deleted_at IS NULL AND ($1::text IS NULL OR warehouse_id = $1)
           AND ($2::text IS NULL OR sku ILIKE $2)
           AND ($3::text IS NULL OR batch_no ILIKE $3)
           AND ($4::text IS NULL OR supplier_id = $4)
@@ -75,7 +75,7 @@ pub async fn list_batches(
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM wms.batches
-                WHERE ($1::text IS NULL OR warehouse_id = $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR warehouse_id = $1)
                   AND ($2::text IS NULL OR sku ILIKE $2)
                   AND ($3::text IS NULL OR batch_no ILIKE $3)
                   AND ($4::text IS NULL OR supplier_id = $4)
@@ -182,10 +182,12 @@ pub async fn get_batch(
         Err(_) => return Json(api_error(400, "无效的批次ID")),
     };
 
-    let result = sqlx::query_as::<_, Batch>("SELECT * FROM wms.batches WHERE id = $1")
-        .bind(batch_id)
-        .fetch_optional(&state.db)
-        .await;
+    let result = sqlx::query_as::<_, Batch>(
+        "SELECT * FROM wms.batches WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(batch_id)
+    .fetch_optional(&state.db)
+    .await;
 
     match result {
         Ok(Some(batch)) => Json(ApiResponse::success(batch, "获取批次成功")),
@@ -287,7 +289,7 @@ pub async fn delete_batch(
         Err(_) => return Json(api_error(400, "无效的批次ID")),
     };
 
-    let result = sqlx::query("DELETE FROM wms.batches WHERE id = $1")
+    let result = sqlx::query("UPDATE wms.batches SET deleted_at = NOW() WHERE id = $1")
         .bind(batch_id)
         .execute(&state.db)
         .await;
@@ -372,7 +374,7 @@ pub async fn get_expiring_soon(
     let result = sqlx::query_as::<_, Batch>(
         r#"
         SELECT * FROM wms.batches
-        WHERE remaining_days <= $1 AND remaining_days > 0
+        WHERE deleted_at IS NULL AND remaining_days <= $1 AND remaining_days > 0
           AND (warehouse_id = $2 OR $2 IS NULL)
         ORDER BY remaining_days ASC
         "#,
@@ -406,7 +408,7 @@ pub async fn get_expired(
     let result = sqlx::query_as::<_, Batch>(
         r#"
         SELECT * FROM wms.batches
-        WHERE remaining_days <= 0
+        WHERE deleted_at IS NULL AND remaining_days <= 0
           AND (warehouse_id = $1 OR $1 IS NULL)
         ORDER BY remaining_days ASC
         "#,

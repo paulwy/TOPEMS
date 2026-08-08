@@ -87,7 +87,7 @@ async fn list_customer_scores(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_crm.customer_scores
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::uuid IS NULL OR customer_id = $2)
                   AND ($3::text IS NULL OR score_level = $3)
                 "#,
@@ -187,7 +187,7 @@ async fn create_customer_score(
         .unwrap_or_else(|| calculate_score_level(score));
 
     let last_score = sqlx::query_scalar::<_, Option<i32>>(
-        "SELECT score FROM plugin_crm.customer_scores WHERE customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC LIMIT 1",
+        "SELECT score FROM plugin_crm.customer_scores WHERE deleted_at IS NULL AND customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC LIMIT 1",
     )
     .bind(&req.customer_id)
     .bind(tenant_id)
@@ -283,7 +283,7 @@ async fn update_customer_score(
 
     let existing = sqlx::query_as::<_, CustomerScore>(
         r#"
-        SELECT id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at FROM plugin_crm.customer_scores WHERE id = $1 AND tenant_id = $2
+        SELECT id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at FROM plugin_crm.customer_scores WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -377,12 +377,13 @@ async fn delete_customer_score(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result =
-        sqlx::query("DELETE FROM plugin_crm.customer_scores WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(
+        "UPDATE plugin_crm.customer_scores SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -519,7 +520,7 @@ async fn batch_calculate(
             let score_level = calculate_score_level(score);
 
             let last_score = sqlx::query_scalar::<_, Option<i32>>(
-                "SELECT score FROM plugin_crm.customer_scores WHERE customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC LIMIT 1",
+                "SELECT score FROM plugin_crm.customer_scores WHERE deleted_at IS NULL AND customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC LIMIT 1",
             )
             .bind(customer_id)
             .bind(tenant_id)

@@ -116,7 +116,7 @@ pub async fn list_opening_balances(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM opening_balances ob
-                WHERE ($1::uuid IS NULL OR ob.company_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR ob.company_id = $1)
                   AND ($2::text IS NULL OR ob.period = $2)
                   AND ($3::text IS NULL OR ob.subject_code = $3)
                 "#,
@@ -259,7 +259,7 @@ pub async fn update_opening_balance(
     Json(req): Json<UpdateOpeningBalanceRequest>,
 ) -> Json<ApiResponse<OpeningBalance>> {
     let existing = sqlx::query_as::<_, OpeningBalance>(
-        "SELECT id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at FROM opening_balances WHERE id = $1",
+        "SELECT id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at FROM opening_balances WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -339,7 +339,7 @@ pub async fn delete_opening_balance(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM opening_balances WHERE id = $1")
+    let result = sqlx::query("UPDATE opening_balances SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

@@ -259,7 +259,7 @@ pub async fn get_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let action = sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, tenant_id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let action = sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, tenant_id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -360,12 +360,13 @@ pub async fn delete_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let result =
-        sqlx::query(r#"DELETE FROM qa_corrective_actions WHERE id = $1 AND tenant_id = $2"#)
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        r#"UPDATE qa_corrective_actions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "整改措施删除成功")),

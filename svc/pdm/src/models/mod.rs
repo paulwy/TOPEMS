@@ -14,7 +14,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             version VARCHAR(32),
             status VARCHAR(32) DEFAULT 'active',
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -32,7 +33,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             unit VARCHAR(32),
             status VARCHAR(32) DEFAULT 'active',
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -76,7 +78,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             approved_at TIMESTAMP,
             effective_date TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -115,7 +118,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'active',
             created_by VARCHAR(128) NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -181,7 +185,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'active',
             created_by VARCHAR(128),
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -220,7 +225,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'draft',
             created_by VARCHAR(128),
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -247,7 +253,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'active',
             created_by VARCHAR(128),
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -331,7 +338,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             unit VARCHAR(32),
             status VARCHAR(32) DEFAULT 'active',
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -356,7 +364,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             standard_time DECIMAL(10,2),
             equipment_requirement VARCHAR(256),
             quality_check VARCHAR(256),
-            status VARCHAR(32) DEFAULT 'active'
+            status VARCHAR(32) DEFAULT 'active',
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -381,7 +390,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             formula_items JSONB DEFAULT '[]',
             status VARCHAR(32) DEFAULT 'active',
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -409,7 +419,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'pending',
             notes TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

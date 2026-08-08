@@ -152,7 +152,7 @@ async fn list_payroll_runs(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_hrm.payroll_runs
-                WHERE ($1::text IS NULL OR $1 = '' OR pay_period ILIKE '%' || $1 || '%')
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR $1 = '' OR pay_period ILIKE '%' || $1 || '%')
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )
@@ -256,7 +256,7 @@ async fn get_payroll_run(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PayrollRun>(
-        "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM plugin_hrm.payroll_runs WHERE id = $1"
+        "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM plugin_hrm.payroll_runs WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -299,11 +299,12 @@ async fn delete_payroll_run(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result =
-        sqlx::query("DELETE FROM plugin_hrm.payroll_runs WHERE id = $1 AND status = 'draft'")
-            .bind(id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(
+        "UPDATE plugin_hrm.payroll_runs SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -681,7 +682,7 @@ async fn generate_payroll_voucher(
 ) -> Json<ApiResponse<PayrollVoucherResponse>> {
     // 获取薪资发放记录
     let payroll_run: Option<PayrollRun> = sqlx::query_as(
-        "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM plugin_hrm.payroll_runs WHERE id = $1"
+        "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM plugin_hrm.payroll_runs WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)

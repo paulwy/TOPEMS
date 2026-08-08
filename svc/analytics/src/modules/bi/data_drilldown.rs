@@ -296,7 +296,7 @@ pub async fn delete_drilldown_path(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM analytics_drilldown_paths
+        UPDATE analytics_drilldown_paths SET deleted_at = NOW()
         WHERE id = $1
         RETURNING id
         "#,

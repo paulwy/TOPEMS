@@ -147,7 +147,7 @@ async fn list_patents(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.patents
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR patent_number ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR patent_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR project_id = $3)
                 "#,
@@ -286,7 +286,7 @@ async fn update_patent(
     Json(req): Json<UpdatePatentRequest>,
 ) -> Json<ApiResponse<Patent>> {
     let existing_result = sqlx::query(
-        "SELECT id, name, patent_number, application_date, grant_date, status, type, inventors, assignee, description, abstract, created_by, created_at, updated_at FROM rs.patents WHERE id = $1",
+        "SELECT id, name, patent_number, application_date, grant_date, status, type, inventors, assignee, description, abstract, created_by, created_at, updated_at FROM rs.patents WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -348,7 +348,7 @@ async fn delete_patent(
     State(state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM rs.patents WHERE id = $1")
+    let result = sqlx::query("UPDATE rs.patents SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

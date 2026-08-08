@@ -234,7 +234,7 @@ pub async fn uninstall_plugin_simple(
             // Tier 2: Uninstall - remove from tenant_plugins but keep data
             let result = sqlx::query(
                 r#"
-                DELETE FROM core.core_tenant_plugins
+                UPDATE core.core_tenant_plugins SET deleted_at = NOW()
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )
@@ -293,7 +293,7 @@ pub async fn uninstall_plugin_simple(
 
             let result = sqlx::query(
                 r#"
-                DELETE FROM core.core_tenant_plugins
+                UPDATE core.core_tenant_plugins SET deleted_at = NOW()
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )

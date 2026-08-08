@@ -181,7 +181,7 @@ async fn get_project_defects(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Defect>>> {
     let defects = sqlx::query_as::<_, Defect>(
-        "SELECT * FROM plugin_pm.defects WHERE project_id = $1 ORDER BY severity DESC, priority DESC",
+        "SELECT * FROM plugin_pm.defects WHERE deleted_at IS NULL AND project_id = $1 ORDER BY severity DESC, priority DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -200,10 +200,12 @@ async fn get_project_defects(
 }
 
 async fn get_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Defect>> {
-    let defect = sqlx::query_as::<_, Defect>("SELECT * FROM plugin_pm.defects WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await;
+    let defect = sqlx::query_as::<_, Defect>(
+        "SELECT * FROM plugin_pm.defects WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await;
 
     match defect {
         Ok(d) => Json(ApiResponse::success(d, "获取缺陷详情成功")),
@@ -310,7 +312,7 @@ async fn update_defect(
 }
 
 async fn delete_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM plugin_pm.defects WHERE id = $1")
+    let result = sqlx::query("UPDATE plugin_pm.defects SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;

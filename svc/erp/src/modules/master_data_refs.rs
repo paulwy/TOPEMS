@@ -2938,7 +2938,8 @@ pub async fn list_pending_destruction(
 //     config JSONB NOT NULL DEFAULT '{}',    -- 规则配置（正则/min/max/默认值/引用表等）
 //     is_active BOOLEAN NOT NULL DEFAULT TRUE,
 //     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-//     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+//     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+//     deleted_at TIMESTAMP
 // );
 // CREATE TABLE IF NOT EXISTS erp_master_data_quality_reports (
 //     id UUID PRIMARY KEY,
@@ -3346,7 +3347,7 @@ pub async fn get_quality_rule(
     };
 
     let sql = format!(
-        "SELECT {} FROM erp_master_data_quality_rules WHERE id = $1",
+        "SELECT {} FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND id = $1",
         QUALITY_RULE_COLUMNS
     );
     match sqlx::query(&sql).bind(rid).fetch_optional(&state.db).await {
@@ -3378,7 +3379,7 @@ pub async fn update_quality_rule(
 
     // 先查询现有规则
     let sql_select = format!(
-        "SELECT {} FROM erp_master_data_quality_rules WHERE id = $1",
+        "SELECT {} FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND id = $1",
         QUALITY_RULE_COLUMNS
     );
     let existing = match sqlx::query(&sql_select)
@@ -3462,10 +3463,11 @@ pub async fn delete_quality_rule(
         Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
     };
 
-    let result = sqlx::query("DELETE FROM erp_master_data_quality_rules WHERE id = $1")
-        .bind(rid)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE erp_master_data_quality_rules SET deleted_at = NOW() WHERE id = $1")
+            .bind(rid)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(res) => {
@@ -3645,7 +3647,7 @@ async fn load_quality_rules(
     rule_ids: Option<&[uuid::Uuid]>,
 ) -> Vec<QualityRule> {
     let sql_base = format!(
-        "SELECT {} FROM erp_master_data_quality_rules",
+        "SELECT {} FROM erp_master_data_quality_rules WHERE deleted_at IS NULL",
         QUALITY_RULE_COLUMNS
     );
 
@@ -4142,7 +4144,7 @@ pub async fn get_governance_dashboard(
             .unwrap_or(0);
 
     let quality_rules_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp_master_data_quality_rules WHERE is_active = TRUE",
+        "SELECT COUNT(*) FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND is_active = TRUE",
     )
     .fetch_one(db)
     .await

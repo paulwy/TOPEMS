@@ -125,7 +125,7 @@ async fn list_customers(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.customers
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::text IS NULL OR customer_type = $4)
@@ -576,11 +576,12 @@ async fn delete_customer(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query("DELETE FROM crm.customers WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE crm.customers SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -672,11 +673,13 @@ async fn batch_delete_customers(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query("DELETE FROM crm.customers WHERE id = ANY($1) AND tenant_id = $2")
-        .bind(&req.ids)
-        .bind(tenant_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "UPDATE crm.customers SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2",
+    )
+    .bind(&req.ids)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) => (

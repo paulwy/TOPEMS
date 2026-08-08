@@ -39,7 +39,7 @@ pub async fn list_pipelines(
     .await
     {
         Ok(pipelines) => {
-            let total: i64 = sqlx::query("SELECT COUNT(*) FROM pipelines")
+            let total: i64 = sqlx::query("SELECT COUNT(*) FROM pipelines WHERE deleted_at IS NULL")
                 .fetch_one(&pool)
                 .await
                 .map(|row| row.get::<i64, _>(0))
@@ -92,10 +92,12 @@ pub async fn get_pipeline(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Pipeline>> {
-    match sqlx::query_as::<_, Pipeline>("SELECT * FROM pipelines WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await
+    match sqlx::query_as::<_, Pipeline>(
+        "SELECT * FROM pipelines WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(pipeline) => Json(ApiResponse::success(pipeline, "获取管道成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "管道未找到")),
@@ -145,7 +147,7 @@ pub async fn delete_pipeline(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::PipelineWrite).await {
         return e;
     }
-    match sqlx::query("DELETE FROM pipelines WHERE id = $1")
+    match sqlx::query("UPDATE pipelines SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await
@@ -166,7 +168,7 @@ pub async fn list_pipelines_by_map(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, Pipeline>(
-        "SELECT * FROM pipelines WHERE map_id = $1 ORDER BY created_at DESC",
+        "SELECT * FROM pipelines WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC",
     )
     .bind(map_id)
     .fetch_all(&pool)

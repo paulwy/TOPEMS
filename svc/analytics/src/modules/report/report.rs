@@ -307,7 +307,7 @@ pub async fn delete_report(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM reports
+        UPDATE reports SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,

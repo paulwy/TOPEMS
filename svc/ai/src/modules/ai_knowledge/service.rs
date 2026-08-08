@@ -170,7 +170,7 @@ pub async fn delete_knowledge_base(
     kb_id: Uuid,
 ) -> Result<bool, sqlx::Error> {
     let result = sqlx::query(
-        r#"DELETE FROM core.knowledge_bases
+        r#"UPDATE core.knowledge_bases SET deleted_at = NOW()
            WHERE id = $1 AND tenant_id = $2"#,
     )
     .bind(kb_id)
@@ -386,7 +386,7 @@ pub async fn update_document(
 
     if content_changed {
         let _ = sqlx::query(
-            r#"DELETE FROM core.knowledge_chunks
+            r#"UPDATE core.knowledge_chunks SET deleted_at = NOW()
                WHERE document_id = $1 AND tenant_id = $2"#,
         )
         .bind(document_id)
@@ -454,7 +454,7 @@ pub async fn delete_document(
     };
 
     let result = sqlx::query(
-        r#"DELETE FROM core.knowledge_documents
+        r#"UPDATE core.knowledge_documents SET deleted_at = NOW()
            WHERE id = $1 AND tenant_id = $2"#,
     )
     .bind(document_id)
@@ -571,7 +571,7 @@ pub async fn process_document(
 
     // 5. 删除旧分块（重新处理场景）
     let _ = sqlx::query(
-        r#"DELETE FROM core.knowledge_chunks
+        r#"UPDATE core.knowledge_chunks SET deleted_at = NOW()
            WHERE document_id = $1 AND tenant_id = $2"#,
     )
     .bind(document_id)

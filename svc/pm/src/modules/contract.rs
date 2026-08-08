@@ -201,7 +201,7 @@ async fn delete_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM pm.contracts WHERE id = $1")
+    let result = sqlx::query("UPDATE pm.contracts SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;
@@ -442,7 +442,7 @@ async fn list_payment_schedule(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ContractPaymentSchedule>>> {
     let payments = sqlx::query_as::<_, ContractPaymentSchedule>(
-        "SELECT * FROM pm.contract_payment_schedule WHERE contract_id = $1 ORDER BY payment_number",
+        "SELECT * FROM pm.contract_payment_schedule WHERE deleted_at IS NULL AND contract_id = $1 ORDER BY payment_number",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -543,7 +543,7 @@ async fn delete_payment_schedule(
     Path((id, payment_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<()>> {
     let result =
-        sqlx::query("DELETE FROM pm.contract_payment_schedule WHERE id = $1 AND contract_id = $2")
+        sqlx::query("UPDATE pm.contract_payment_schedule SET deleted_at = NOW() WHERE id = $1 AND contract_id = $2")
             .bind(payment_id)
             .bind(id)
             .execute(&pool)

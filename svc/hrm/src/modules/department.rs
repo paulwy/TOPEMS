@@ -88,7 +88,7 @@ async fn list_departments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM hrm.departments
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR company_id = $3)
                 "#,
@@ -245,7 +245,7 @@ async fn update_department(
     Json(req): Json<UpdateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
     let existing = sqlx::query_as::<_, Department>(
-        "SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE id = $1",
+        "SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -338,7 +338,7 @@ async fn delete_department(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM hrm.departments WHERE id = $1")
+    let result = sqlx::query("UPDATE hrm.departments SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

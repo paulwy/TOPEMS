@@ -398,7 +398,7 @@ async fn delete_company(
 
     match existing {
         Ok(Some(company)) => {
-            let result = sqlx::query("DELETE FROM hrm.companies WHERE id = $1")
+            let result = sqlx::query("UPDATE hrm.companies SET deleted_at = NOW() WHERE id = $1")
                 .bind(id)
                 .execute(&state.db)
                 .await;

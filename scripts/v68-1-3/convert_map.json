@@ -1,0 +1,1352 @@
+[
+  {
+    "file": "svc/ai/src/modules/ai_knowledge/service.rs",
+    "line": 173,
+    "stmt": "r#\"DELETE FROM core.knowledge_bases",
+    "tableKey": "core_knowledge_bases"
+  },
+  {
+    "file": "svc/ai/src/modules/ai_knowledge/service.rs",
+    "line": 389,
+    "stmt": "r#\"DELETE FROM core.knowledge_chunks",
+    "tableKey": "core_knowledge_chunks"
+  },
+  {
+    "file": "svc/ai/src/modules/ai_knowledge/service.rs",
+    "line": 574,
+    "stmt": "r#\"DELETE FROM core.knowledge_chunks",
+    "tableKey": "core_knowledge_chunks"
+  },
+  {
+    "file": "svc/ai/src/modules/ai_knowledge/service.rs",
+    "line": 457,
+    "stmt": "r#\"DELETE FROM core.knowledge_documents",
+    "tableKey": "core_knowledge_documents"
+  },
+  {
+    "file": "svc/ai/src/services/vector.rs",
+    "line": 165,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_ai.documents WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "plugin_ai_documents"
+  },
+  {
+    "file": "svc/ai/src/services/vector.rs",
+    "line": 492,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_ai.document_chunks WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "plugin_ai_document_chunks"
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/comparison_analysis.rs",
+    "line": 457,
+    "stmt": "DELETE FROM analytics_comparison_analyses",
+    "tableKey": "analytics_comparison_analyses"
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/dashboard/crud.rs",
+    "line": 223,
+    "stmt": "DELETE FROM analytics_dashboards",
+    "tableKey": "analytics_dashboards"
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/dashboard/share.rs",
+    "line": 171,
+    "stmt": "DELETE FROM analytics_dashboard_shares",
+    "tableKey": "analytics_dashboard_shares"
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/data_drilldown.rs",
+    "line": 299,
+    "stmt": "DELETE FROM analytics_drilldown_paths",
+    "tableKey": "analytics_drilldown_paths"
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/dataset.rs",
+    "line": 257,
+    "stmt": "let result = sqlx::query(\"DELETE FROM analytics_datasets WHERE id = $1\")",
+    "tableKey": "analytics_datasets"
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/datasource.rs",
+    "line": 583,
+    "stmt": "DELETE FROM analytics_datasources",
+    "tableKey": "analytics_datasources"
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/row_level_permission.rs",
+    "line": 346,
+    "stmt": "DELETE FROM analytics_row_level_permissions",
+    "tableKey": "analytics_row_level_permissions"
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/self_service_report.rs",
+    "line": 302,
+    "stmt": "DELETE FROM analytics_self_service_reports",
+    "tableKey": "analytics_self_service_reports"
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/widget.rs",
+    "line": 426,
+    "stmt": "DELETE FROM analytics_widgets",
+    "tableKey": "analytics_widgets"
+  },
+  {
+    "file": "svc/analytics/src/modules/report/report.rs",
+    "line": 310,
+    "stmt": "DELETE FROM reports",
+    "tableKey": "reports"
+  },
+  {
+    "file": "svc/analytics/src/modules/report/schedule.rs",
+    "line": 323,
+    "stmt": "DELETE FROM report_schedules",
+    "tableKey": "report_schedules"
+  },
+  {
+    "file": "svc/analytics/src/modules/report/subscription.rs",
+    "line": 292,
+    "stmt": "DELETE FROM report_subscriptions",
+    "tableKey": "report_subscriptions"
+  },
+  {
+    "file": "svc/analytics/src/modules/report/template.rs",
+    "line": 339,
+    "stmt": "DELETE FROM report_templates",
+    "tableKey": "report_templates"
+  },
+  {
+    "file": "svc/communication/src/notification.rs",
+    "line": 578,
+    "stmt": "let result = sqlx::query(\"DELETE FROM core_notifications WHERE id = $1 AND user_id = $2\")",
+    "tableKey": "core_notifications"
+  },
+  {
+    "file": "svc/communication/src/notification.rs",
+    "line": 626,
+    "stmt": "let result = sqlx::query(\"DELETE FROM core_notifications WHERE user_id = $1\")",
+    "tableKey": "core_notifications"
+  },
+  {
+    "file": "svc/communication/src/notification.rs",
+    "line": 898,
+    "stmt": "let result = sqlx::query(\"DELETE FROM core_notifications WHERE user_id = $1 AND id = ANY($2)\")",
+    "tableKey": "core_notifications"
+  },
+  {
+    "file": "svc/crm/src/modules/aftersales.rs",
+    "line": 492,
+    "stmt": "let result = sqlx::query(\"DELETE FROM crm.returns WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "crm_returns"
+  },
+  {
+    "file": "svc/crm/src/modules/billing.rs",
+    "line": 420,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_crm.billing_records WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "plugin_crm_billing_records"
+  },
+  {
+    "file": "svc/crm/src/modules/customer_scoring.rs",
+    "line": 381,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_crm.customer_scores WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "plugin_crm_customer_scores"
+  },
+  {
+    "file": "svc/crm/src/modules/customer_segmentation.rs",
+    "line": 223,
+    "stmt": "let result = sqlx::query(\"DELETE FROM plugin_crm.customer_segments WHERE id = $1\")",
+    "tableKey": "plugin_crm_customer_segments"
+  },
+  {
+    "file": "svc/crm/src/modules/sales_forecast.rs",
+    "line": 428,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_crm.sales_forecasts WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "plugin_crm_sales_forecasts"
+  },
+  {
+    "file": "svc/erp/src/modules/announcement.rs",
+    "line": 304,
+    "stmt": "let result = sqlx::query(\"DELETE FROM announcements WHERE id = $1\")",
+    "tableKey": "announcements"
+  },
+  {
+    "file": "svc/erp/src/modules/asset.rs",
+    "line": 386,
+    "stmt": "let result = sqlx::query(\"DELETE FROM assets WHERE id = $1\")",
+    "tableKey": "assets"
+  },
+  {
+    "file": "svc/erp/src/modules/consolidation/company_relations.rs",
+    "line": 175,
+    "stmt": "match sqlx::query(\"DELETE FROM plugin_erp.company_relations WHERE id = $1\")",
+    "tableKey": "plugin_erp_company_relations"
+  },
+  {
+    "file": "svc/erp/src/modules/consolidation/elimination_rules.rs",
+    "line": 213,
+    "stmt": "match sqlx::query(\"DELETE FROM plugin_erp.elimination_rules WHERE id = $1\")",
+    "tableKey": "plugin_erp_elimination_rules"
+  },
+  {
+    "file": "svc/erp/src/modules/consolidation/reports.rs",
+    "line": 448,
+    "stmt": "match sqlx::query(\"DELETE FROM plugin_erp.consolidation_reports WHERE id = $1\")",
+    "tableKey": "plugin_erp_consolidation_reports"
+  },
+  {
+    "file": "svc/erp/src/modules/consolidation/scope_companies.rs",
+    "line": 134,
+    "stmt": "match sqlx::query(\"DELETE FROM plugin_erp.consolidation_scope_companies WHERE id = $1\")",
+    "tableKey": "plugin_erp_consolidation_scope_companies"
+  },
+  {
+    "file": "svc/erp/src/modules/consolidation/scopes.rs",
+    "line": 184,
+    "stmt": "match sqlx::query(\"DELETE FROM plugin_erp.consolidation_scopes WHERE id = $1\")",
+    "tableKey": "plugin_erp_consolidation_scopes"
+  },
+  {
+    "file": "svc/erp/src/modules/fixed_asset.rs",
+    "line": 451,
+    "stmt": "let result = sqlx::query(\"DELETE FROM fixed_assets WHERE id = $1\")",
+    "tableKey": "fixed_assets"
+  },
+  {
+    "file": "svc/erp/src/modules/leave_request.rs",
+    "line": 532,
+    "stmt": "let result = sqlx::query(\"DELETE FROM leave_requests WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "leave_requests"
+  },
+  {
+    "file": "svc/hrm/src/modules/leave.rs",
+    "line": 293,
+    "stmt": "let result = sqlx::query(\"DELETE FROM leave_requests WHERE id = $1 AND status = 'pending'\")",
+    "tableKey": "leave_requests"
+  },
+  {
+    "file": "svc/erp/src/modules/master_data_refs.rs",
+    "line": 3465,
+    "stmt": "let result = sqlx::query(\"DELETE FROM erp_master_data_quality_rules WHERE id = $1\")",
+    "tableKey": "erp_master_data_quality_rules"
+  },
+  {
+    "file": "svc/erp/src/modules/meeting_room.rs",
+    "line": 290,
+    "stmt": "let result = sqlx::query(\"DELETE FROM meeting_rooms WHERE id = $1\")",
+    "tableKey": "meeting_rooms"
+  },
+  {
+    "file": "svc/erp/src/modules/meeting_room.rs",
+    "line": 624,
+    "stmt": "let result = sqlx::query(\"DELETE FROM meeting_bookings WHERE id = $1\")",
+    "tableKey": "meeting_bookings"
+  },
+  {
+    "file": "svc/erp/src/modules/office_supplies.rs",
+    "line": 293,
+    "stmt": "let result = sqlx::query(\"DELETE FROM office_supplies WHERE id = $1\")",
+    "tableKey": "office_supplies"
+  },
+  {
+    "file": "svc/erp/src/modules/opening_balance.rs",
+    "line": 342,
+    "stmt": "let result = sqlx::query(\"DELETE FROM opening_balances WHERE id = $1\")",
+    "tableKey": "opening_balances"
+  },
+  {
+    "file": "svc/erp/src/modules/vehicles.rs",
+    "line": 312,
+    "stmt": "let result = sqlx::query(\"DELETE FROM vehicles WHERE id = $1\")",
+    "tableKey": "vehicles"
+  },
+  {
+    "file": "svc/feedback/src/handlers.rs",
+    "line": 233,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM core_feedbacks WHERE id = $1\"#)",
+    "tableKey": "core_feedbacks"
+  },
+  {
+    "file": "svc/finance/src/modules/audit_v52.rs",
+    "line": 454,
+    "stmt": "sqlx::query(\"DELETE FROM finance_audit_rules_v52 WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "finance_audit_rules_v52"
+  },
+  {
+    "file": "svc/finance/src/modules/compliance_v51.rs",
+    "line": 584,
+    "stmt": "sqlx::query(\"DELETE FROM finance_control_points WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "finance_control_points"
+  },
+  {
+    "file": "svc/finance/src/modules/operational.rs",
+    "line": 260,
+    "stmt": "let result = sqlx::query(\"DELETE FROM expenses WHERE id = $1\")",
+    "tableKey": "expenses"
+  },
+  {
+    "file": "svc/finance/src/modules/operational.rs",
+    "line": 729,
+    "stmt": "let result = sqlx::query(\"DELETE FROM receivables WHERE id = $1\")",
+    "tableKey": "receivables"
+  },
+  {
+    "file": "svc/finance/src/modules/operational.rs",
+    "line": 964,
+    "stmt": "let result = sqlx::query(\"DELETE FROM payables WHERE id = $1\")",
+    "tableKey": "payables"
+  },
+  {
+    "file": "svc/finance/src/modules/reports_v57.rs",
+    "line": 560,
+    "stmt": "sqlx::query(\"DELETE FROM finance_v57_generated_reports WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "finance_v57_generated_reports"
+  },
+  {
+    "file": "svc/finance/src/modules/tax_v56.rs",
+    "line": 660,
+    "stmt": "sqlx::query(\"DELETE FROM finance_v56_tax_lines WHERE form_id = $1 AND tenant_id = $2\")",
+    "tableKey": "finance_v56_tax_lines"
+  },
+  {
+    "file": "svc/finance/src/services/finance/approval_configs.rs",
+    "line": 234,
+    "stmt": "\"DELETE FROM core_finance_payment_approval_config WHERE tenant_id = $1 AND id = $2\",",
+    "tableKey": "core_finance_payment_approval_config"
+  },
+  {
+    "file": "svc/finance/src/services/finance/collection.rs",
+    "line": 217,
+    "stmt": "sqlx::query(\"DELETE FROM erp_collection_records WHERE tenant_id = $1 AND id = $2\")",
+    "tableKey": "erp_collection_records"
+  },
+  {
+    "file": "svc/finance/src/services/finance/payment.rs",
+    "line": 412,
+    "stmt": "sqlx::query(\"DELETE FROM core_finance_payments WHERE id = $1\")",
+    "tableKey": "core_finance_payments"
+  },
+  {
+    "file": "svc/finance/src/services/finance/payment_record.rs",
+    "line": 213,
+    "stmt": "sqlx::query(\"DELETE FROM erp_payment_records WHERE tenant_id = $1 AND id = $2\")",
+    "tableKey": "erp_payment_records"
+  },
+  {
+    "file": "svc/finance/src/services/finance/voucher.rs",
+    "line": 697,
+    "stmt": "sqlx::query(\"DELETE FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2\")",
+    "tableKey": "core_finance_vouchers"
+  },
+  {
+    "file": "svc/finance/src/services/finance/voucher.rs",
+    "line": 726,
+    "stmt": "sqlx::query(\"DELETE FROM core_finance_ledger WHERE tenant_id = $1 AND voucher_id = $2\")",
+    "tableKey": "core_finance_ledger"
+  },
+  {
+    "file": "svc/finance/src/services/finance/voucher_generation.rs",
+    "line": 230,
+    "stmt": "\"DELETE FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2\",",
+    "tableKey": "finance_voucher_generation_rules"
+  },
+  {
+    "file": "svc/finance/src/services/finance/voucher_template.rs",
+    "line": 376,
+    "stmt": "sqlx::query(\"DELETE FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2\")",
+    "tableKey": "finance_voucher_templates"
+  },
+  {
+    "file": "svc/gis/src/modules/business.rs",
+    "line": 169,
+    "stmt": "match sqlx::query(\"DELETE FROM business_locations WHERE id = $1\")",
+    "tableKey": "business_locations"
+  },
+  {
+    "file": "svc/gis/src/modules/geodata.rs",
+    "line": 243,
+    "stmt": "match sqlx::query(\"DELETE FROM plugin_gis.geodata WHERE id = $1\")",
+    "tableKey": "plugin_gis_geodata"
+  },
+  {
+    "file": "svc/gis/src/modules/location.rs",
+    "line": 171,
+    "stmt": "match sqlx::query(\"DELETE FROM plugin_gis.locations WHERE id = $1\")",
+    "tableKey": "plugin_gis_locations"
+  },
+  {
+    "file": "svc/gis/src/modules/map.rs",
+    "line": 183,
+    "stmt": "match sqlx::query(\"DELETE FROM maps WHERE id = $1\")",
+    "tableKey": "maps"
+  },
+  {
+    "file": "svc/gis/src/modules/pipeline.rs",
+    "line": 148,
+    "stmt": "match sqlx::query(\"DELETE FROM pipelines WHERE id = $1\")",
+    "tableKey": "pipelines"
+  },
+  {
+    "file": "svc/gis/src/modules/warehouse.rs",
+    "line": 162,
+    "stmt": "match sqlx::query(\"DELETE FROM warehouse_locations WHERE id = $1\")",
+    "tableKey": "warehouse_locations"
+  },
+  {
+    "file": "svc/hrm/src/modules/attendance.rs",
+    "line": 413,
+    "stmt": "let result = sqlx::query(\"DELETE FROM plugin_hrm.attendance_records WHERE id = $1\")",
+    "tableKey": "plugin_hrm_attendance_records"
+  },
+  {
+    "file": "svc/hrm/src/modules/contract.rs",
+    "line": 447,
+    "stmt": "let result = sqlx::query(\"DELETE FROM plugin_hrm.contracts WHERE id = $1\")",
+    "tableKey": "plugin_hrm_contracts"
+  },
+  {
+    "file": "svc/hrm/src/modules/payroll.rs",
+    "line": 303,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_hrm.payroll_runs WHERE id = $1 AND status = 'draft'\")",
+    "tableKey": "plugin_hrm_payroll_runs"
+  },
+  {
+    "file": "svc/hrm/src/modules/performance.rs",
+    "line": 346,
+    "stmt": "\"DELETE FROM plugin_hrm.performance_reviews WHERE id = $1 AND status = 'draft'\",",
+    "tableKey": "plugin_hrm_performance_reviews"
+  },
+  {
+    "file": "svc/hrm/src/modules/recruitment.rs",
+    "line": 405,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_hrm.job_openings WHERE id = $1 AND status = 'draft'\")",
+    "tableKey": "plugin_hrm_job_openings"
+  },
+  {
+    "file": "svc/hrm/src/modules/recruitment.rs",
+    "line": 736,
+    "stmt": "let result = sqlx::query(\"DELETE FROM plugin_hrm.candidates WHERE id = $1\")",
+    "tableKey": "plugin_hrm_candidates"
+  },
+  {
+    "file": "svc/hrm/src/modules/recruitment.rs",
+    "line": 961,
+    "stmt": "let result = sqlx::query(\"DELETE FROM plugin_hrm.interviews WHERE id = $1\")",
+    "tableKey": "plugin_hrm_interviews"
+  },
+  {
+    "file": "svc/hrm/src/modules/training.rs",
+    "line": 244,
+    "stmt": "let result = sqlx::query(\"DELETE FROM plugin_hrm.training_plans WHERE id = $1\")",
+    "tableKey": "plugin_hrm_training_plans"
+  },
+  {
+    "file": "svc/integration/src/handlers/conversion_rules.rs",
+    "line": 171,
+    "stmt": "match sqlx::query(\"DELETE FROM conversion_rules WHERE id = $1\")",
+    "tableKey": "conversion_rules"
+  },
+  {
+    "file": "svc/lims/src/modules/inspection_record.rs",
+    "line": 206,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lab_records WHERE id = $1\")",
+    "tableKey": "qa_lab_records"
+  },
+  {
+    "file": "svc/lims/src/modules/inspection_task.rs",
+    "line": 385,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lab_tasks WHERE id = $1\")",
+    "tableKey": "qa_lab_tasks"
+  },
+  {
+    "file": "svc/lims/src/modules/instrument.rs",
+    "line": 344,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lab_instruments WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "qa_lab_instruments"
+  },
+  {
+    "file": "svc/lims/src/modules/instrument_data/collection_tasks.rs",
+    "line": 446,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lims_collection_tasks WHERE id = $1\")",
+    "tableKey": "qa_lims_collection_tasks"
+  },
+  {
+    "file": "svc/lims/src/modules/instrument_data/instrument_data_crud.rs",
+    "line": 289,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lims_instrument_data WHERE id = $1\")",
+    "tableKey": "qa_lims_instrument_data"
+  },
+  {
+    "file": "svc/lims/src/modules/instrument_data/parse_rules.rs",
+    "line": 274,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lims_parse_rules WHERE id = $1\")",
+    "tableKey": "qa_lims_parse_rules"
+  },
+  {
+    "file": "svc/lims/src/modules/process.rs",
+    "line": 230,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lab_processes WHERE id = $1\")",
+    "tableKey": "qa_lab_processes"
+  },
+  {
+    "file": "svc/lims/src/modules/proficiency_testing.rs",
+    "line": 631,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lims_pt_plans WHERE id = $1\")",
+    "tableKey": "qa_lims_pt_plans"
+  },
+  {
+    "file": "svc/lims/src/modules/reagent.rs",
+    "line": 297,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lab_reagents WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "qa_lab_reagents"
+  },
+  {
+    "file": "svc/lims/src/modules/sample.rs",
+    "line": 340,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "qa_lab_samples"
+  },
+  {
+    "file": "svc/lims/src/modules/sample_barcode.rs",
+    "line": 477,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lims_sample_barcodes WHERE id = $1\")",
+    "tableKey": "qa_lims_sample_barcodes"
+  },
+  {
+    "file": "svc/lims/src/modules/sample_barcode.rs",
+    "line": 859,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lims_rfid_tags WHERE id = $1\")",
+    "tableKey": "qa_lims_rfid_tags"
+  },
+  {
+    "file": "svc/lims/src/modules/test_method.rs",
+    "line": 623,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lims_test_methods WHERE id = $1\")",
+    "tableKey": "qa_lims_test_methods"
+  },
+  {
+    "file": "svc/lims/src/modules/test_method.rs",
+    "line": 791,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lims_method_categories WHERE id = $1\")",
+    "tableKey": "qa_lims_method_categories"
+  },
+  {
+    "file": "svc/lims/src/modules/uncertainty.rs",
+    "line": 535,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lims_uncertainty_projects WHERE id = $1\")",
+    "tableKey": "qa_lims_uncertainty_projects"
+  },
+  {
+    "file": "svc/lims/src/modules/uncertainty.rs",
+    "line": 724,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lims_uncertainty_sources WHERE id = $1\")",
+    "tableKey": "qa_lims_uncertainty_sources"
+  },
+  {
+    "file": "svc/lims/src/modules/uncertainty.rs",
+    "line": 957,
+    "stmt": "let result = sqlx::query(\"DELETE FROM qa_lims_uncertainty_components WHERE id = $1\")",
+    "tableKey": "qa_lims_uncertainty_components"
+  },
+  {
+    "file": "svc/mes/src/modules/equipment.rs",
+    "line": 476,
+    "stmt": "DELETE FROM equipment",
+    "tableKey": "equipment"
+  },
+  {
+    "file": "svc/mes/src/modules/equipment_oee.rs",
+    "line": 722,
+    "stmt": "let result = sqlx::query!(r#\"DELETE FROM equipment_oee WHERE id = $1\"#, id,)",
+    "tableKey": "equipment_oee"
+  },
+  {
+    "file": "svc/mes/src/modules/material_bom/bom_handlers.rs",
+    "line": 494,
+    "stmt": "DELETE FROM material_boms",
+    "tableKey": "material_boms"
+  },
+  {
+    "file": "svc/mes/src/modules/material_bom/issue_handlers.rs",
+    "line": 452,
+    "stmt": "\"DELETE FROM material_issues WHERE id = $1 AND status = 'pending'\",",
+    "tableKey": "material_issues"
+  },
+  {
+    "file": "svc/mes/src/modules/material_bom/return_handlers.rs",
+    "line": 445,
+    "stmt": "\"DELETE FROM material_returns WHERE id = $1 AND status = 'pending'\",",
+    "tableKey": "material_returns"
+  },
+  {
+    "file": "svc/mes/src/modules/process_flow.rs",
+    "line": 556,
+    "stmt": "DELETE FROM process_flows WHERE id = $1",
+    "tableKey": "process_flows"
+  },
+  {
+    "file": "svc/mes/src/modules/process_route.rs",
+    "line": 480,
+    "stmt": "DELETE FROM process_routes WHERE id = $1",
+    "tableKey": "process_routes"
+  },
+  {
+    "file": "svc/mes/src/modules/production_order.rs",
+    "line": 799,
+    "stmt": "DELETE FROM production_orders",
+    "tableKey": "production_orders"
+  },
+  {
+    "file": "svc/mes/src/modules/production_process.rs",
+    "line": 427,
+    "stmt": "DELETE FROM production_processes",
+    "tableKey": "production_processes"
+  },
+  {
+    "file": "svc/mes/src/modules/production_record.rs",
+    "line": 480,
+    "stmt": "DELETE FROM production_records",
+    "tableKey": "production_records"
+  },
+  {
+    "file": "svc/mes/src/modules/production_scheduling.rs",
+    "line": 664,
+    "stmt": "DELETE FROM production_schedules",
+    "tableKey": "production_schedules"
+  },
+  {
+    "file": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 577,
+    "stmt": "DELETE FROM quality_inspections WHERE id = $1",
+    "tableKey": "quality_inspections"
+  },
+  {
+    "file": "svc/mes/src/modules/quality_management/patrol.rs",
+    "line": 471,
+    "stmt": "DELETE FROM quality_patrols WHERE id = $1",
+    "tableKey": "quality_patrols"
+  },
+  {
+    "file": "svc/mes/src/modules/quality_management/patrol.rs",
+    "line": 713,
+    "stmt": "DELETE FROM quality_patrol_items WHERE id = $1",
+    "tableKey": "quality_patrol_items"
+  },
+  {
+    "file": "svc/mes/src/modules/quality_management/standard.rs",
+    "line": 626,
+    "stmt": "DELETE FROM quality_standard_values WHERE standard_id = $1",
+    "tableKey": "quality_standard_values"
+  },
+  {
+    "file": "svc/mes/src/modules/quality_management/standard.rs",
+    "line": 763,
+    "stmt": "DELETE FROM quality_standards WHERE id = $1",
+    "tableKey": "quality_standards"
+  },
+  {
+    "file": "svc/mes/src/modules/team.rs",
+    "line": 528,
+    "stmt": "DELETE FROM teams",
+    "tableKey": "teams"
+  },
+  {
+    "file": "svc/mes/src/modules/wip.rs",
+    "line": 582,
+    "stmt": "DELETE FROM wips",
+    "tableKey": "wips"
+  },
+  {
+    "file": "svc/mes/src/modules/work_order.rs",
+    "line": 689,
+    "stmt": "DELETE FROM work_orders",
+    "tableKey": "work_orders"
+  },
+  {
+    "file": "svc/mes/src/modules/work_report.rs",
+    "line": 775,
+    "stmt": "DELETE FROM work_reports WHERE id = $1",
+    "tableKey": "work_reports"
+  },
+  {
+    "file": "svc/mes/src/modules/work_station.rs",
+    "line": 488,
+    "stmt": "DELETE FROM work_stations",
+    "tableKey": "work_stations"
+  },
+  {
+    "file": "svc/mobile/src/modules/media.rs",
+    "line": 288,
+    "stmt": "\"DELETE FROM media_files WHERE id = $1 AND file_type = $2 AND uploaded_by = $3\",",
+    "tableKey": "media_files"
+  },
+  {
+    "file": "svc/pdm/src/modules/change_notice.rs",
+    "line": 370,
+    "stmt": "let result = sqlx::query(\"DELETE FROM pdm_change_notices WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "pdm_change_notices"
+  },
+  {
+    "file": "svc/pdm/src/modules/configuration.rs",
+    "line": 302,
+    "stmt": "let result = sqlx::query(\"DELETE FROM pdm_configurations WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "pdm_configurations"
+  },
+  {
+    "file": "svc/pdm/src/modules/document.rs",
+    "line": 355,
+    "stmt": "let result = sqlx::query(\"DELETE FROM pdm_documents WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "pdm_documents"
+  },
+  {
+    "file": "svc/pdm/src/modules/material.rs",
+    "line": 378,
+    "stmt": "let result = sqlx::query(\"DELETE FROM pdm_materials WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "pdm_materials"
+  },
+  {
+    "file": "svc/pdm/src/modules/product.rs",
+    "line": 261,
+    "stmt": "let result = sqlx::query(\"DELETE FROM pdm_products WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "pdm_products"
+  },
+  {
+    "file": "svc/pdm/src/modules/production_batch.rs",
+    "line": 294,
+    "stmt": "let result = sqlx::query(\"DELETE FROM pdm_production_batches WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "pdm_production_batches"
+  },
+  {
+    "file": "svc/pdm/src/modules/production_formula.rs",
+    "line": 282,
+    "stmt": "sqlx::query(\"DELETE FROM pdm_production_formulas WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "pdm_production_formulas"
+  },
+  {
+    "file": "svc/pdm/src/modules/production_process.rs",
+    "line": 278,
+    "stmt": "sqlx::query(\"DELETE FROM pdm_production_processes WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "pdm_production_processes"
+  },
+  {
+    "file": "svc/pdm/src/modules/production_step.rs",
+    "line": 265,
+    "stmt": "let result = sqlx::query(\"DELETE FROM pdm_production_steps WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "pdm_production_steps"
+  },
+  {
+    "file": "svc/pdm/src/modules/version.rs",
+    "line": 292,
+    "stmt": "let result = sqlx::query(\"DELETE FROM pdm_versions WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "pdm_versions"
+  },
+  {
+    "file": "svc/pdm/src/modules/workflow.rs",
+    "line": 276,
+    "stmt": "let result = sqlx::query(\"DELETE FROM pdm_workflows WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "pdm_workflows"
+  },
+  {
+    "file": "svc/pm/src/modules/contract.rs",
+    "line": 204,
+    "stmt": "let result = sqlx::query(\"DELETE FROM pm.contracts WHERE id = $1\")",
+    "tableKey": "pm_contracts"
+  },
+  {
+    "file": "svc/pm/src/modules/contract.rs",
+    "line": 546,
+    "stmt": "sqlx::query(\"DELETE FROM pm.contract_payment_schedule WHERE id = $1 AND contract_id = $2\")",
+    "tableKey": "pm_contract_payment_schedule"
+  },
+  {
+    "file": "svc/pm/src/modules/project.rs",
+    "line": 372,
+    "stmt": "let result = sqlx::query(\"DELETE FROM pm.projects WHERE id = $1\")",
+    "tableKey": "pm_projects"
+  },
+  {
+    "file": "svc/pm/src/modules/project_resource.rs",
+    "line": 218,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_pm.project_resources WHERE project_id = $1 AND id = $2\")",
+    "tableKey": "plugin_pm_project_resources"
+  },
+  {
+    "file": "svc/pm/src/modules/quality.rs",
+    "line": 313,
+    "stmt": "let result = sqlx::query(\"DELETE FROM plugin_pm.defects WHERE id = $1\")",
+    "tableKey": "plugin_pm_defects"
+  },
+  {
+    "file": "svc/qms/src/modules/apqp.rs",
+    "line": 513,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM qa_apqp_projects WHERE id = $1\"#)",
+    "tableKey": "qa_apqp_projects"
+  },
+  {
+    "file": "svc/qms/src/modules/corrective_action.rs",
+    "line": 364,
+    "stmt": "sqlx::query(r#\"DELETE FROM qa_corrective_actions WHERE id = $1 AND tenant_id = $2\"#)",
+    "tableKey": "qa_corrective_actions"
+  },
+  {
+    "file": "svc/qms/src/modules/eight_d.rs",
+    "line": 332,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM qa_eightd_reports WHERE id = $1 AND tenant_id = $2\"#)",
+    "tableKey": "qa_eightd_reports"
+  },
+  {
+    "file": "svc/qms/src/modules/fmea.rs",
+    "line": 305,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM qa_fmea_analyses WHERE id = $1 AND tenant_id = $2\"#)",
+    "tableKey": "qa_fmea_analyses"
+  },
+  {
+    "file": "svc/qms/src/modules/quality_cost.rs",
+    "line": 308,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM qa_quality_costs WHERE id = $1 AND tenant_id = $2\"#)",
+    "tableKey": "qa_quality_costs"
+  },
+  {
+    "file": "svc/qms/src/modules/quality_dashboard.rs",
+    "line": 440,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM qa_alert_rules WHERE id = $1\"#)",
+    "tableKey": "qa_alert_rules"
+  },
+  {
+    "file": "svc/qms/src/modules/quality_inspection.rs",
+    "line": 400,
+    "stmt": "sqlx::query(r#\"DELETE FROM qa_quality_inspections WHERE id = $1 AND tenant_id = $2\"#)",
+    "tableKey": "qa_quality_inspections"
+  },
+  {
+    "file": "svc/qms/src/modules/quality_issue.rs",
+    "line": 301,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM qa_quality_issues WHERE id = $1 AND tenant_id = $2\"#)",
+    "tableKey": "qa_quality_issues"
+  },
+  {
+    "file": "svc/qms/src/modules/quality_standard.rs",
+    "line": 308,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM qa_standards WHERE id = $1 AND tenant_id = $2\"#)",
+    "tableKey": "qa_standards"
+  },
+  {
+    "file": "svc/qms/src/modules/spc.rs",
+    "line": 383,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM qa_spc_charts WHERE id = $1 AND tenant_id = $2\"#)",
+    "tableKey": "qa_spc_charts"
+  },
+  {
+    "file": "svc/rd/src/modules/experiment.rs",
+    "line": 378,
+    "stmt": "let result = sqlx::query(\"DELETE FROM rs.experiments WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "rs_experiments"
+  },
+  {
+    "file": "svc/rd/src/modules/formula.rs",
+    "line": 380,
+    "stmt": "let result = sqlx::query(\"DELETE FROM rs.formulas WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "rs_formulas"
+  },
+  {
+    "file": "svc/rd/src/modules/material.rs",
+    "line": 417,
+    "stmt": "let result = sqlx::query(\"DELETE FROM rs.material_tests WHERE id = $1\")",
+    "tableKey": "rs_material_tests"
+  },
+  {
+    "file": "svc/rd/src/modules/patent.rs",
+    "line": 351,
+    "stmt": "let result = sqlx::query(\"DELETE FROM rs.patents WHERE id = $1\")",
+    "tableKey": "rs_patents"
+  },
+  {
+    "file": "svc/rd/src/modules/research_cost.rs",
+    "line": 368,
+    "stmt": "let result = sqlx::query(\"DELETE FROM rs.research_costs WHERE id = $1\")",
+    "tableKey": "rs_research_costs"
+  },
+  {
+    "file": "svc/rd/src/repositories/project_repository.rs",
+    "line": 197,
+    "stmt": "DELETE FROM rs.projects WHERE id = $1",
+    "tableKey": "rs_projects"
+  },
+  {
+    "file": "svc/rd/src/repositories/project_repository.rs",
+    "line": 256,
+    "stmt": "DELETE FROM rs.projects WHERE id = ANY($1)",
+    "tableKey": "rs_projects"
+  },
+  {
+    "file": "svc/scm/src/modules/mrp.rs",
+    "line": 233,
+    "stmt": "let clear_result = sqlx::query(\"DELETE FROM scm.mrp_suggestions WHERE status = 'draft'\")",
+    "tableKey": "scm_mrp_suggestions"
+  },
+  {
+    "file": "svc/scm/src/modules/purchase_order.rs",
+    "line": 302,
+    "stmt": "let result = sqlx::query(\"DELETE FROM scm.purchase_orders WHERE id = $1\")",
+    "tableKey": "scm_purchase_orders"
+  },
+  {
+    "file": "svc/scm/src/modules/supplier.rs",
+    "line": 486,
+    "stmt": "let result = sqlx::query(\"DELETE FROM scm.suppliers WHERE id = $1\")",
+    "tableKey": "scm_suppliers"
+  },
+  {
+    "file": "svc/scm/src/modules/supplier_delivery_appointment.rs",
+    "line": 448,
+    "stmt": "let result = sqlx::query(\"DELETE FROM scm.supplier_delivery_appointments WHERE id = $1\")",
+    "tableKey": "scm_supplier_delivery_appointments"
+  },
+  {
+    "file": "svc/scm/src/modules/supplier_evaluation.rs",
+    "line": 347,
+    "stmt": "let result = sqlx::query(\"DELETE FROM scm.supplier_evaluations WHERE id = $1\")",
+    "tableKey": "scm_supplier_evaluations"
+  },
+  {
+    "file": "svc/srm/src/modules/bidding.rs",
+    "line": 287,
+    "stmt": "let result = sqlx::query(\"DELETE FROM plugin_srm.biddings WHERE id = $1\")",
+    "tableKey": "plugin_srm_biddings"
+  },
+  {
+    "file": "svc/srm/src/modules/inquiry.rs",
+    "line": 258,
+    "stmt": "let result = sqlx::query(\"DELETE FROM plugin_srm.inquiries WHERE id = $1\")",
+    "tableKey": "plugin_srm_inquiries"
+  },
+  {
+    "file": "svc/srm/src/modules/purchase_order.rs",
+    "line": 415,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_srm.purchase_orders WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "plugin_srm_purchase_orders"
+  },
+  {
+    "file": "svc/srm/src/modules/quotation.rs",
+    "line": 273,
+    "stmt": "let result = sqlx::query(\"DELETE FROM plugin_srm.quotations WHERE id = $1\")",
+    "tableKey": "plugin_srm_quotations"
+  },
+  {
+    "file": "svc/srm/src/modules/scoring_dimension.rs",
+    "line": 405,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_srm.scoring_dimensions WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "plugin_srm_scoring_dimensions"
+  },
+  {
+    "file": "svc/srm/src/modules/supplier_category.rs",
+    "line": 467,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_srm.supplier_categories WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "plugin_srm_supplier_categories"
+  },
+  {
+    "file": "svc/srm/src/modules/supplier_contract.rs",
+    "line": 491,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_srm.supplier_contracts WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "plugin_srm_supplier_contracts"
+  },
+  {
+    "file": "svc/srm/src/modules/supplier_evaluation.rs",
+    "line": 567,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_srm.supplier_evaluations WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "plugin_srm_supplier_evaluations"
+  },
+  {
+    "file": "svc/srm/src/modules/supplier_product.rs",
+    "line": 476,
+    "stmt": "sqlx::query(\"DELETE FROM plugin_srm.supplier_products WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "plugin_srm_supplier_products"
+  },
+  {
+    "file": "svc/ticket/src/sla_service.rs",
+    "line": 524,
+    "stmt": "DELETE FROM core_ticket_sla_policies",
+    "tableKey": "core_ticket_sla_policies"
+  },
+  {
+    "file": "svc/unified-core/src/middleware/versioning.rs",
+    "line": 692,
+    "stmt": "let result = sqlx::query(\"DELETE FROM core_api_version_configs WHERE version = $1\")",
+    "tableKey": "core_api_version_configs"
+  },
+  {
+    "file": "svc/unified-core/src/modules/backup/service.rs",
+    "line": 206,
+    "stmt": "sqlx::query(r#\"DELETE FROM core_backup_records WHERE id = $1\"#)",
+    "tableKey": "core_backup_records"
+  },
+  {
+    "file": "svc/unified-core/src/modules/dict/handlers.rs",
+    "line": 206,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM core_dict_types WHERE id = $1\"#)",
+    "tableKey": "core_dict_types"
+  },
+  {
+    "file": "svc/unified-core/src/modules/dict/handlers.rs",
+    "line": 404,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM core_dict_items WHERE id = $1\"#)",
+    "tableKey": "core_dict_items"
+  },
+  {
+    "file": "svc/unified-core/src/modules/doc/services/document.rs",
+    "line": 96,
+    "stmt": "sqlx::query(r#\"DELETE FROM core_doc_documents WHERE tenant_id = $1 AND id = $2\"#)",
+    "tableKey": "core_doc_documents"
+  },
+  {
+    "file": "svc/unified-core/src/modules/doc/services/folder.rs",
+    "line": 90,
+    "stmt": "sqlx::query(r#\"DELETE FROM core_doc_folders WHERE tenant_id = $1 AND id = $2\"#)",
+    "tableKey": "core_doc_folders"
+  },
+  {
+    "file": "svc/unified-core/src/modules/doc/services/template.rs",
+    "line": 104,
+    "stmt": "sqlx::query(r#\"DELETE FROM core_doc_templates WHERE tenant_id = $1 AND id = $2\"#)",
+    "tableKey": "core_doc_templates"
+  },
+  {
+    "file": "svc/unified-core/src/modules/flow/workflow.rs",
+    "line": 194,
+    "stmt": "let result = sqlx::query(\"DELETE FROM core_workflows WHERE id = $1\")",
+    "tableKey": "core_workflows"
+  },
+  {
+    "file": "svc/unified-core/src/modules/iam/position.rs",
+    "line": 262,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM iam.positions WHERE id = $1\"#)",
+    "tableKey": "iam_positions"
+  },
+  {
+    "file": "svc/unified-core/src/modules/iam/role.rs",
+    "line": 513,
+    "stmt": "if let Err(e) = sqlx::query(\"DELETE FROM core_roles WHERE id = $1\")",
+    "tableKey": "core_roles"
+  },
+  {
+    "file": "svc/unified-core/src/modules/iam/user/batch.rs",
+    "line": 205,
+    "stmt": "let result = sqlx::query(\"DELETE FROM core_users WHERE id = $1\")",
+    "tableKey": "core_users"
+  },
+  {
+    "file": "svc/unified-core/src/modules/iam/user/crud.rs",
+    "line": 792,
+    "stmt": "let delete_result = sqlx::query(\"DELETE FROM core_users WHERE id = $1\")",
+    "tableKey": "core_users"
+  },
+  {
+    "file": "svc/unified-core/src/modules/login_log/handlers.rs",
+    "line": 202,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM core_login_logs WHERE id = $1 AND tenant_id = $2\"#)",
+    "tableKey": "core_login_logs"
+  },
+  {
+    "file": "svc/unified-core/src/modules/login_log/handlers.rs",
+    "line": 246,
+    "stmt": "r#\"DELETE FROM core_login_logs WHERE tenant_id = $1 AND id IN ({})\"#,",
+    "tableKey": "core_login_logs"
+  },
+  {
+    "file": "svc/unified-core/src/modules/menu/handlers.rs",
+    "line": 191,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM core_menu_groups WHERE id = $1\"#)",
+    "tableKey": "core_menu_groups"
+  },
+  {
+    "file": "svc/unified-core/src/modules/menu/handlers.rs",
+    "line": 395,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM core_menus WHERE id = $1\"#)",
+    "tableKey": "core_menus"
+  },
+  {
+    "file": "svc/unified-core/src/modules/plugin/handlers/simple_api.rs",
+    "line": 237,
+    "stmt": "DELETE FROM core.core_tenant_plugins",
+    "tableKey": "core_core_tenant_plugins"
+  },
+  {
+    "file": "svc/unified-core/src/modules/plugin/handlers/simple_api.rs",
+    "line": 296,
+    "stmt": "DELETE FROM core.core_tenant_plugins",
+    "tableKey": "core_core_tenant_plugins"
+  },
+  {
+    "file": "svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs",
+    "line": 298,
+    "stmt": "DELETE FROM core.core_tenant_plugins",
+    "tableKey": "core_core_tenant_plugins"
+  },
+  {
+    "file": "svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs",
+    "line": 360,
+    "stmt": "DELETE FROM core.core_tenant_plugins",
+    "tableKey": "core_core_tenant_plugins"
+  },
+  {
+    "file": "svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs",
+    "line": 357,
+    "stmt": "// Then delete from tenant_plugins",
+    "tableKey": "tenant_plugins"
+  },
+  {
+    "file": "svc/unified-core/src/modules/settings/api_keys.rs",
+    "line": 201,
+    "stmt": "sqlx::query(\"DELETE FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2\")",
+    "tableKey": "core_tenant_settings"
+  },
+  {
+    "file": "svc/unified-core/src/modules/tenant/handlers.rs",
+    "line": 764,
+    "stmt": "let result = sqlx::query(\"DELETE FROM core_tenants WHERE id = $1\")",
+    "tableKey": "core_tenants"
+  },
+  {
+    "file": "svc/unified-core/src/modules/tenant/handlers.rs",
+    "line": 971,
+    "stmt": "let result = sqlx::query(\"DELETE FROM core_tenant_users WHERE tenant_id = $1 AND user_id = $2\")",
+    "tableKey": "core_tenant_users"
+  },
+  {
+    "file": "svc/wms/src/modules/batch.rs",
+    "line": 290,
+    "stmt": "let result = sqlx::query(\"DELETE FROM wms.batches WHERE id = $1\")",
+    "tableKey": "wms_batches"
+  },
+  {
+    "file": "svc/wms/src/modules/serial_number.rs",
+    "line": 423,
+    "stmt": "let result = sqlx::query(\"DELETE FROM wms.serial_numbers WHERE id = $1\")",
+    "tableKey": "wms_serial_numbers"
+  },
+  {
+    "file": "svc/wms/src/modules/smart_replenishment/orders.rs",
+    "line": 293,
+    "stmt": "let result = sqlx::query(\"DELETE FROM wms.replenishment_orders WHERE id = $1\")",
+    "tableKey": "wms_replenishment_orders"
+  },
+  {
+    "file": "svc/wms/src/modules/smart_replenishment/rules.rs",
+    "line": 348,
+    "stmt": "let result = sqlx::query(\"DELETE FROM wms.replenishment_rules WHERE id = $1\")",
+    "tableKey": "wms_replenishment_rules"
+  },
+  {
+    "file": "svc/wms/src/modules/transfer.rs",
+    "line": 343,
+    "stmt": "let result = sqlx::query(\"DELETE FROM transfers WHERE id = $1\")",
+    "tableKey": "transfers"
+  },
+  {
+    "file": "svc/wms/src/modules/transfer_order.rs",
+    "line": 363,
+    "stmt": "let result = sqlx::query(\"DELETE FROM wms.transfer_orders WHERE id = $1\")",
+    "tableKey": "wms_transfer_orders"
+  },
+  {
+    "file": "lib/shared-ai/src/vector_store.rs",
+    "line": 381,
+    "stmt": "sqlx::query!(\"DELETE FROM plugin_hrm.vectors WHERE key = $1\", key)",
+    "tableKey": "plugin_hrm_vectors"
+  },
+  {
+    "file": "svc/communication/src/notification.rs",
+    "line": 1614,
+    "stmt": "let result = sqlx::query(\"DELETE FROM core_notification_templates WHERE id = $1\")",
+    "tableKey": "core_notification_templates"
+  },
+  {
+    "file": "svc/crm/src/modules/contact.rs",
+    "line": 387,
+    "stmt": "let result = sqlx::query(\"DELETE FROM crm.contacts WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "crm_contacts"
+  },
+  {
+    "file": "svc/crm/src/modules/contact.rs",
+    "line": 458,
+    "stmt": "let result = sqlx::query(\"DELETE FROM crm.contacts WHERE id = ANY($1) AND tenant_id = $2\")",
+    "tableKey": "crm_contacts"
+  },
+  {
+    "file": "svc/crm/src/modules/customer.rs",
+    "line": 579,
+    "stmt": "let result = sqlx::query(\"DELETE FROM crm.customers WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "crm_customers"
+  },
+  {
+    "file": "svc/crm/src/modules/customer.rs",
+    "line": 675,
+    "stmt": "let result = sqlx::query(\"DELETE FROM crm.customers WHERE id = ANY($1) AND tenant_id = $2\")",
+    "tableKey": "crm_customers"
+  },
+  {
+    "file": "svc/crm/src/modules/interaction.rs",
+    "line": 376,
+    "stmt": "let result = sqlx::query(\"DELETE FROM crm.interactions WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "crm_interactions"
+  },
+  {
+    "file": "svc/crm/src/modules/interaction.rs",
+    "line": 447,
+    "stmt": "let result = sqlx::query(\"DELETE FROM crm.interactions WHERE id = ANY($1) AND tenant_id = $2\")",
+    "tableKey": "crm_interactions"
+  },
+  {
+    "file": "svc/crm/src/modules/opportunity.rs",
+    "line": 435,
+    "stmt": "let result = sqlx::query(\"DELETE FROM crm.opportunities WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "crm_opportunities"
+  },
+  {
+    "file": "svc/crm/src/modules/opportunity.rs",
+    "line": 506,
+    "stmt": "let result = sqlx::query(\"DELETE FROM crm.opportunities WHERE id = ANY($1) AND tenant_id = $2\")",
+    "tableKey": "crm_opportunities"
+  },
+  {
+    "file": "svc/crm/src/modules/tag.rs",
+    "line": 340,
+    "stmt": "let result = sqlx::query(\"DELETE FROM crm.tags WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "crm_tags"
+  },
+  {
+    "file": "svc/erp/src/modules/customer.rs",
+    "line": 231,
+    "stmt": "let result = sqlx::query(\"DELETE FROM customers WHERE id = $1\")",
+    "tableKey": "customers"
+  },
+  {
+    "file": "svc/erp/src/modules/dict.rs",
+    "line": 466,
+    "stmt": "if let Err(e) = sqlx::query(\"DELETE FROM erp.dict_items WHERE dict_type_id = $1\")",
+    "tableKey": "erp_dict_items"
+  },
+  {
+    "file": "svc/erp/src/modules/dict.rs",
+    "line": 781,
+    "stmt": "let result = sqlx::query(\"DELETE FROM erp.dict_items WHERE id = $1\")",
+    "tableKey": "erp_dict_items"
+  },
+  {
+    "file": "svc/erp/src/modules/dict.rs",
+    "line": 474,
+    "stmt": "let result = sqlx::query(\"DELETE FROM erp.dict_types WHERE id = $1\")",
+    "tableKey": "erp_dict_types"
+  },
+  {
+    "file": "svc/erp/src/modules/inventory.rs",
+    "line": 222,
+    "stmt": "let result = sqlx::query(\"DELETE FROM inventory WHERE id = $1\")",
+    "tableKey": "inventory"
+  },
+  {
+    "file": "svc/erp/src/modules/material.rs",
+    "line": 254,
+    "stmt": "let result = sqlx::query(\"DELETE FROM materials WHERE id = $1\")",
+    "tableKey": "materials"
+  },
+  {
+    "file": "svc/erp/src/modules/purchase_order.rs",
+    "line": 244,
+    "stmt": "let result = sqlx::query(\"DELETE FROM purchase_orders WHERE id = $1\")",
+    "tableKey": "purchase_orders"
+  },
+  {
+    "file": "svc/erp/src/modules/sales_order.rs",
+    "line": 226,
+    "stmt": "let result = sqlx::query(\"DELETE FROM sales_orders WHERE id = $1\")",
+    "tableKey": "sales_orders"
+  },
+  {
+    "file": "svc/erp/src/modules/supplier.rs",
+    "line": 236,
+    "stmt": "let result = sqlx::query(\"DELETE FROM suppliers WHERE id = $1\")",
+    "tableKey": "suppliers"
+  },
+  {
+    "file": "svc/finance/src/services/finance/payable.rs",
+    "line": 201,
+    "stmt": "let result = sqlx::query(\"DELETE FROM erp_payables WHERE tenant_id = $1 AND id = $2\")",
+    "tableKey": "erp_payables"
+  },
+  {
+    "file": "svc/finance/src/services/finance/receivable.rs",
+    "line": 201,
+    "stmt": "let result = sqlx::query(\"DELETE FROM erp_receivables WHERE tenant_id = $1 AND id = $2\")",
+    "tableKey": "erp_receivables"
+  },
+  {
+    "file": "svc/gis/src/modules/device.rs",
+    "line": 173,
+    "stmt": "match sqlx::query(\"DELETE FROM gis.devices WHERE id = $1\")",
+    "tableKey": "gis_devices"
+  },
+  {
+    "file": "svc/gis/src/services/tenant_service.rs",
+    "line": 102,
+    "stmt": "let result = sqlx::query(\"DELETE FROM gis.factory_maps WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "gis_factory_maps"
+  },
+  {
+    "file": "svc/hrm/src/modules/company.rs",
+    "line": 401,
+    "stmt": "let result = sqlx::query(\"DELETE FROM hrm.companies WHERE id = $1\")",
+    "tableKey": "hrm_companies"
+  },
+  {
+    "file": "svc/hrm/src/modules/department.rs",
+    "line": 341,
+    "stmt": "let result = sqlx::query(\"DELETE FROM hrm.departments WHERE id = $1\")",
+    "tableKey": "hrm_departments"
+  },
+  {
+    "file": "svc/hrm/src/modules/position.rs",
+    "line": 306,
+    "stmt": "let result = sqlx::query(\"DELETE FROM hrm.positions WHERE id = $1\")",
+    "tableKey": "hrm_positions"
+  },
+  {
+    "file": "svc/hrm/src/services/employee_service.rs",
+    "line": 450,
+    "stmt": "let result = sqlx::query(\"DELETE FROM hrm.employees WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "hrm_employees"
+  },
+  {
+    "file": "svc/mobile/src/modules/task.rs",
+    "line": 386,
+    "stmt": "\"DELETE FROM mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL)\",",
+    "tableKey": "mobile_tasks"
+  },
+  {
+    "file": "svc/rd/src/modules/project.rs",
+    "line": 525,
+    "stmt": "let result = sqlx::query(\"DELETE FROM projects WHERE id = $1 AND tenant_id = $2\")",
+    "tableKey": "projects"
+  },
+  {
+    "file": "svc/rd/src/modules/project.rs",
+    "line": 744,
+    "stmt": "let result = sqlx::query(r#\"DELETE FROM projects WHERE id = ANY($1) AND tenant_id = $2\"#)",
+    "tableKey": "projects"
+  },
+  {
+    "file": "svc/wms/src/modules/inventory_alert.rs",
+    "line": 1083,
+    "stmt": "let result = sqlx::query(\"DELETE FROM wms.inventory_alert_rules WHERE id = $1\")",
+    "tableKey": "wms_inventory_alert_rules"
+  },
+  {
+    "file": "svc/wms/src/modules/location.rs",
+    "line": 366,
+    "stmt": "let result = sqlx::query(\"DELETE FROM wms.locations WHERE id = $1\")",
+    "tableKey": "wms_locations"
+  },
+  {
+    "file": "svc/wms/src/modules/location.rs",
+    "line": 598,
+    "stmt": "let result = sqlx::query(\"DELETE FROM wms.locations WHERE id = ANY($1)\")",
+    "tableKey": "wms_locations"
+  }
+]

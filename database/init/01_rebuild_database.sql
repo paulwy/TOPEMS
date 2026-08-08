@@ -351,7 +351,7 @@ CREATE TABLE unified_core.documents (
     updated_by UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    is_deleted BOOLEAN DEFAULT FALSE
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 COMMENT ON TABLE unified_core.documents IS '文档表';

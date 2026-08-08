@@ -491,7 +491,7 @@ pub async fn delete_material_bom(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM material_boms
+        UPDATE material_boms SET deleted_at = NOW()
         WHERE id = $1 AND status = 'draft'
         "#,
         id,

@@ -271,7 +271,7 @@ pub async fn delete_production_order(
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
         r#"
-        DELETE FROM erp_production_orders
+        UPDATE erp_production_orders SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'cancelled')
         "#,
     )

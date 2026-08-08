@@ -148,7 +148,7 @@ impl FinanceService {
         payment_id: Uuid,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment: Payment =
-            sqlx::query_as("SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -195,13 +195,13 @@ impl FinanceService {
         let offset = (page - 1) * page_size;
 
         let total: (i64,) =
-            sqlx::query_as("SELECT COUNT(*) FROM core_finance_payments WHERE tenant_id = $1")
+            sqlx::query_as("SELECT COUNT(*) FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1")
                 .bind(tenant_id)
                 .fetch_one(&self.db_pool)
                 .await?;
 
         let payments: Vec<Payment> = sqlx::query_as(
-            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            "SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         )
         .bind(tenant_id)
         .bind(page_size)
@@ -242,7 +242,7 @@ impl FinanceService {
         payment_id: Uuid,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment: Payment =
-            sqlx::query_as("SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -287,7 +287,7 @@ impl FinanceService {
         updated_by: &str,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment: Payment =
-            sqlx::query_as("SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -396,7 +396,7 @@ impl FinanceService {
         payment_id: Uuid,
     ) -> Result<(), TopemsError> {
         let payment: Payment =
-            sqlx::query_as("SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -409,7 +409,7 @@ impl FinanceService {
             ));
         }
 
-        sqlx::query("DELETE FROM core_finance_payments WHERE id = $1")
+        sqlx::query("UPDATE core_finance_payments SET deleted_at = NOW() WHERE id = $1")
             .bind(payment_id)
             .execute(&self.db_pool)
             .await?;
@@ -423,7 +423,7 @@ impl FinanceService {
         let prefix = format!("FK{}", date_str);
 
         let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM core_finance_payments WHERE tenant_id = $1 AND payment_no LIKE $2",
+            "SELECT COUNT(*) FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND payment_no LIKE $2",
         )
         .bind(tenant_id)
         .bind(format!("{}%", prefix))
@@ -447,7 +447,9 @@ impl FinanceService {
             req.end_date.as_deref().unwrap_or("None")
         );
 
-        let mut query = "SELECT * FROM core_finance_payments WHERE tenant_id = $1".to_string();
+        let mut query =
+            "SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1"
+                .to_string();
 
         if let Some(status) = req.status {
             if !status.is_empty() {

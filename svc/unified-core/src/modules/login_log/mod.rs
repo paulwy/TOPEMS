@@ -21,7 +21,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) NOT NULL,
             error_message TEXT,
             login_time TIMESTAMP NOT NULL DEFAULT NOW(),
-            created_at TIMESTAMP DEFAULT NOW()
+            created_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

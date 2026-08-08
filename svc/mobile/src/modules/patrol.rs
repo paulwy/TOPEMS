@@ -273,11 +273,13 @@ pub async fn delete_patrol_record(
         }
     };
 
-    let result = sqlx::query("DELETE FROM patrol_records WHERE id = $1 AND checked_by = $2")
-        .bind(id)
-        .bind(&user_id)
-        .execute(&pool)
-        .await;
+    let result = sqlx::query(
+        "UPDATE patrol_records SET deleted_at = NOW() WHERE id = $1 AND checked_by = $2",
+    )
+    .bind(id)
+    .bind(&user_id)
+    .execute(&pool)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => (

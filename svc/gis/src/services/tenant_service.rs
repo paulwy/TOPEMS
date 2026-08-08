@@ -21,7 +21,7 @@ impl TenantService {
 
     pub async fn list_factory_maps(&self) -> Result<Vec<FactoryMap>, sqlx::Error> {
         sqlx::query_as::<_, FactoryMap>(
-            "SELECT * FROM gis.factory_maps WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 100",
+            "SELECT * FROM gis.factory_maps WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT 100",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -57,7 +57,7 @@ impl TenantService {
 
     pub async fn get_factory_map(&self, id: Uuid) -> Result<Option<FactoryMap>, sqlx::Error> {
         sqlx::query_as::<_, FactoryMap>(
-            "SELECT * FROM gis.factory_maps WHERE id = $1 AND tenant_id = $2",
+            "SELECT * FROM gis.factory_maps WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(self.tenant_id)
@@ -99,11 +99,13 @@ impl TenantService {
     }
 
     pub async fn delete_factory_map(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM gis.factory_maps WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(self.tenant_id)
-            .execute(&self.pool)
-            .await?;
+        let result = sqlx::query(
+            "UPDATE gis.factory_maps SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(id)
+        .bind(self.tenant_id)
+        .execute(&self.pool)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 

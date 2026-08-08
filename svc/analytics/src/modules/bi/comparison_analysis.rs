@@ -454,7 +454,7 @@ pub async fn delete_comparison(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM analytics_comparison_analyses
+        UPDATE analytics_comparison_analyses SET deleted_at = NOW()
         WHERE id = $1
         RETURNING id
         "#,

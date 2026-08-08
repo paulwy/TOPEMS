@@ -119,7 +119,7 @@ async fn list_positions(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM hrm.positions
-                WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR department_id = $2)
                   AND ($3::uuid IS NULL OR company_id = $3)
                   AND ($4::text IS NULL OR status = $4)
@@ -231,7 +231,7 @@ async fn get_position(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Position>> {
     let result = sqlx::query_as::<_, Position>(
-        "SELECT id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE id = $1"
+        "SELECT id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -303,7 +303,7 @@ async fn delete_position(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM hrm.positions WHERE id = $1")
+    let result = sqlx::query("UPDATE hrm.positions SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

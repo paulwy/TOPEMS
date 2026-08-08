@@ -15,8 +15,11 @@ impl FinanceService {
     ) -> Result<Value, TopemsError> {
         let offset = (page - 1) * page_size;
 
-        let mut sql = "SELECT * FROM erp_payables WHERE tenant_id = $1".to_string();
-        let mut count_sql = "SELECT COUNT(*) FROM erp_payables WHERE tenant_id = $1".to_string();
+        let mut sql =
+            "SELECT * FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1".to_string();
+        let mut count_sql =
+            "SELECT COUNT(*) FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1"
+                .to_string();
 
         let mut cond = Vec::new();
         if status.is_some() {
@@ -96,12 +99,14 @@ impl FinanceService {
         tenant_id: Uuid,
         payable_id: Uuid,
     ) -> Result<Value, TopemsError> {
-        let row = sqlx::query("SELECT * FROM erp_payables WHERE tenant_id = $1 AND id = $2")
-            .bind(tenant_id)
-            .bind(payable_id)
-            .fetch_optional(&self.db_pool)
-            .await?
-            .ok_or_else(|| TopemsError::NotFound("应付账款不存在".to_string()))?;
+        let row = sqlx::query(
+            "SELECT * FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(payable_id)
+        .fetch_optional(&self.db_pool)
+        .await?
+        .ok_or_else(|| TopemsError::NotFound("应付账款不存在".to_string()))?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let supplier_name: Option<String> = sqlx::Row::try_get(&row, "supplier_name").ok();
@@ -198,11 +203,13 @@ impl FinanceService {
         tenant_id: Uuid,
         payable_id: Uuid,
     ) -> Result<(), TopemsError> {
-        let result = sqlx::query("DELETE FROM erp_payables WHERE tenant_id = $1 AND id = $2")
-            .bind(tenant_id)
-            .bind(payable_id)
-            .execute(&self.db_pool)
-            .await?;
+        let result = sqlx::query(
+            "UPDATE erp_payables SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(payable_id)
+        .execute(&self.db_pool)
+        .await?;
 
         if result.rows_affected() == 0 {
             return Err(TopemsError::NotFound("应付账款不存在".to_string()));

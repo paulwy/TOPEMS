@@ -32,7 +32,7 @@ pub async fn list_warehouse_locations(
 
     let query = if !search.is_empty() {
         sqlx::query_as::<_, WarehouseLocation>(
-            "SELECT * FROM warehouse_locations WHERE warehouse_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            "SELECT * FROM warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         )
         .bind(format!("%{}%", search))
         .bind(page_size)
@@ -49,11 +49,11 @@ pub async fn list_warehouse_locations(
         Ok(locations) => {
             let total_query = if !search.is_empty() {
                 sqlx::query(
-                    "SELECT COUNT(*) FROM warehouse_locations WHERE warehouse_name ILIKE $1",
+                    "SELECT COUNT(*) FROM warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1",
                 )
                 .bind(format!("%{}%", search))
             } else {
-                sqlx::query("SELECT COUNT(*) FROM warehouse_locations")
+                sqlx::query("SELECT COUNT(*) FROM warehouse_locations WHERE deleted_at IS NULL")
             };
             let total: i64 = total_query
                 .fetch_one(&pool)
@@ -107,10 +107,12 @@ pub async fn get_warehouse_location(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WarehouseLocation>> {
-    match sqlx::query_as::<_, WarehouseLocation>("SELECT * FROM warehouse_locations WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await
+    match sqlx::query_as::<_, WarehouseLocation>(
+        "SELECT * FROM warehouse_locations WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(location) => Json(ApiResponse::success(location, "获取仓库位置成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "仓库位置未找到")),
@@ -159,7 +161,7 @@ pub async fn delete_warehouse_location(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::WarehouseLocationWrite).await {
         return e;
     }
-    match sqlx::query("DELETE FROM warehouse_locations WHERE id = $1")
+    match sqlx::query("UPDATE warehouse_locations SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await
@@ -180,7 +182,7 @@ pub async fn list_warehouse_locations_by_map(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, WarehouseLocation>(
-        "SELECT * FROM warehouse_locations WHERE map_id = $1 ORDER BY created_at DESC",
+        "SELECT * FROM warehouse_locations WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC",
     )
     .bind(map_id)
     .fetch_all(&pool)

@@ -152,13 +152,13 @@ pub async fn list_barcodes(
     let offset = (page - 1) * page_size;
 
     let sql = match (query.barcode_type.as_ref(), query.status.as_ref(), query.sample_no.as_ref()) {
-        (Some(_), Some(_), Some(_)) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE barcode_type = $1 AND status = $2 AND sample_no LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), Some(_), None) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE barcode_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None, Some(_)) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE barcode_type = $1 AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None, None) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE barcode_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, Some(_), Some(_)) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE status = $1 AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_), None) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, None, Some(_)) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE sample_no LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_), Some(_)) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND barcode_type = $1 AND status = $2 AND sample_no LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), Some(_), None) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND barcode_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (Some(_), None, Some(_)) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND barcode_type = $1 AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (Some(_), None, None) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND barcode_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, Some(_), Some(_)) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND status = $1 AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_), None) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, None, Some(_)) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND sample_no LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         (None, None, None) => "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     };
 
@@ -342,7 +342,7 @@ pub async fn get_barcode(
     };
 
     let row = sqlx::query(
-        "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE id = $1"
+        "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -474,7 +474,7 @@ pub async fn delete_barcode(
         Err(_) => return Json(ApiResponse::error(400, "无效的条码ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lims_sample_barcodes WHERE id = $1")
+    let result = sqlx::query("UPDATE qa_lims_sample_barcodes SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -498,7 +498,7 @@ pub async fn scan_barcode(
     }
 
     let barcode_row = sqlx::query(
-        "SELECT id, sample_id, sample_no FROM qa_lims_sample_barcodes WHERE barcode = $1",
+        "SELECT id, sample_id, sample_no FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND barcode = $1",
     )
     .bind(&req.barcode)
     .fetch_optional(&state.pool)
@@ -638,9 +638,9 @@ pub async fn list_rfid_tags(
     let offset = (page - 1) * page_size;
 
     let sql = match (query.status.as_ref(), query.tag_id.as_ref()) {
-        (Some(_), Some(_)) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_rfid_tags WHERE status = $1 AND tag_id LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_rfid_tags WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, Some(_)) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_rfid_tags WHERE tag_id LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_)) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_rfid_tags WHERE deleted_at IS NULL AND status = $1 AND tag_id LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (Some(_), None) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_rfid_tags WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, Some(_)) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_rfid_tags WHERE deleted_at IS NULL AND tag_id LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         (None, None) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_rfid_tags ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     };
 
@@ -856,7 +856,7 @@ pub async fn delete_rfid_tag(
         Err(_) => return Json(ApiResponse::error(400, "无效的RFID标签ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lims_rfid_tags WHERE id = $1")
+    let result = sqlx::query("UPDATE qa_lims_rfid_tags SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -875,7 +875,7 @@ pub async fn trace_sample_by_barcode(
     axum::extract::Path(barcode): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let barcode_row = sqlx::query(
-        "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, status FROM qa_lims_sample_barcodes WHERE barcode = $1"
+        "SELECT id, barcode, barcode_type, sample_id, sample_no, rfid_tag, status FROM qa_lims_sample_barcodes WHERE deleted_at IS NULL AND barcode = $1"
     )
     .bind(&barcode)
     .fetch_optional(&state.pool)

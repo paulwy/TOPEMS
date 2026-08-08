@@ -82,7 +82,7 @@ impl FinanceService {
         status: Option<String>,
     ) -> Result<Vec<VoucherGenerationRule>, TopemsError> {
         let mut query =
-            "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1".to_string();
+            "SELECT * FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1".to_string();
 
         if source_type.is_some() {
             query.push_str(" AND source_type = $2");
@@ -111,7 +111,7 @@ impl FinanceService {
         rule_id: Uuid,
     ) -> Result<VoucherGenerationRule, TopemsError> {
         let rule: VoucherGenerationRule = sqlx::query_as(
-            "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2",
+            "SELECT * FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -164,7 +164,7 @@ impl FinanceService {
         req: UpdateGenerationRuleRequest,
     ) -> Result<VoucherGenerationRule, TopemsError> {
         let existing: VoucherGenerationRule = sqlx::query_as(
-            "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2",
+            "SELECT * FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -215,7 +215,7 @@ impl FinanceService {
         rule_id: Uuid,
     ) -> Result<(), TopemsError> {
         let existing = sqlx::query_as::<_, VoucherGenerationRule>(
-            "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2",
+            "SELECT * FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -227,7 +227,7 @@ impl FinanceService {
         }
 
         sqlx::query(
-            "DELETE FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2",
+            "UPDATE finance_voucher_generation_rules SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(rule_id)

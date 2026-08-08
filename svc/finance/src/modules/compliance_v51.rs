@@ -316,7 +316,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             is_active BOOLEAN NOT NULL DEFAULT TRUE,
             created_by VARCHAR(100) NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )"#,
     )
     .execute(pool)
@@ -581,11 +582,13 @@ impl ControlPoint {
     }
 
     pub async fn delete(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM finance_control_points WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .execute(pool)
-            .await?;
+        sqlx::query(
+            "UPDATE finance_control_points SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .execute(pool)
+        .await?;
         Ok(())
     }
 }

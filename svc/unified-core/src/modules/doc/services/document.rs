@@ -14,7 +14,7 @@ impl DocumentService {
 
     pub async fn list_documents(&self, tenant_id: Uuid) -> Result<Vec<Document>> {
         sqlx::query_as::<_, Document>(
-            r#"SELECT * FROM core_doc_documents WHERE tenant_id = $1 ORDER BY created_at DESC"#,
+            r#"SELECT * FROM core_doc_documents WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -27,7 +27,7 @@ impl DocumentService {
         document_id: Uuid,
     ) -> Result<Option<Document>> {
         sqlx::query_as::<_, Document>(
-            r#"SELECT * FROM core_doc_documents WHERE tenant_id = $1 AND id = $2"#,
+            r#"SELECT * FROM core_doc_documents WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(document_id)
@@ -92,12 +92,13 @@ impl DocumentService {
     }
 
     pub async fn delete_document(&self, tenant_id: Uuid, document_id: Uuid) -> Result<bool> {
-        let result =
-            sqlx::query(r#"DELETE FROM core_doc_documents WHERE tenant_id = $1 AND id = $2"#)
-                .bind(tenant_id)
-                .bind(document_id)
-                .execute(&self.pool)
-                .await?;
+        let result = sqlx::query(
+            r#"UPDATE core_doc_documents SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"#,
+        )
+        .bind(tenant_id)
+        .bind(document_id)
+        .execute(&self.pool)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 }
@@ -127,7 +128,8 @@ pub async fn init_database(pool: &PgPool) -> Result<()> {
             archived_by VARCHAR(100),
             created_by VARCHAR(100),
             created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

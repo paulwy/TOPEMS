@@ -168,7 +168,7 @@ pub async fn delete_share_link(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM analytics_dashboard_shares
+        UPDATE analytics_dashboard_shares SET deleted_at = NOW()
         WHERE id = $1
         RETURNING id
         "#,

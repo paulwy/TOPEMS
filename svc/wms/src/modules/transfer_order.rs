@@ -52,7 +52,7 @@ pub async fn list_transfers(
     let result = sqlx::query_as::<_, TransferOrder>(
         r#"
         SELECT * FROM wms.transfer_orders
-        WHERE ($1::text IS NULL OR transfer_type = $1)
+        WHERE deleted_at IS NULL AND ($1::text IS NULL OR transfer_type = $1)
           AND ($2::text IS NULL OR from_warehouse_id = $2)
           AND ($3::text IS NULL OR to_warehouse_id = $3)
           AND ($4::text IS NULL OR status = $4)
@@ -74,7 +74,7 @@ pub async fn list_transfers(
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM wms.transfer_orders
-                WHERE ($1::text IS NULL OR transfer_type = $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR transfer_type = $1)
                   AND ($2::text IS NULL OR from_warehouse_id = $2)
                   AND ($3::text IS NULL OR to_warehouse_id = $3)
                   AND ($4::text IS NULL OR status = $4)
@@ -221,11 +221,12 @@ pub async fn get_transfer(
         Err(_) => return Json(api_error(400, "无效的调拨单ID")),
     };
 
-    let result =
-        sqlx::query_as::<_, TransferOrder>("SELECT * FROM wms.transfer_orders WHERE id = $1")
-            .bind(transfer_id)
-            .fetch_optional(&state.db)
-            .await;
+    let result = sqlx::query_as::<_, TransferOrder>(
+        "SELECT * FROM wms.transfer_orders WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(transfer_id)
+    .fetch_optional(&state.db)
+    .await;
 
     match result {
         Ok(Some(transfer)) => Json(ApiResponse::success(transfer, "获取调拨单成功")),
@@ -360,7 +361,7 @@ pub async fn delete_transfer(
         return Json(api_error(500, "删除调拨单失败"));
     }
 
-    let result = sqlx::query("DELETE FROM wms.transfer_orders WHERE id = $1")
+    let result = sqlx::query("UPDATE wms.transfer_orders SET deleted_at = NOW() WHERE id = $1")
         .bind(transfer_id)
         .execute(&state.db)
         .await;

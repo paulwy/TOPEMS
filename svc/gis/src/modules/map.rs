@@ -121,7 +121,7 @@ pub async fn list_maps(State(pool): State<PgPool>) -> Json<ApiResponse<serde_jso
 
 /// 获取地图详情
 pub async fn get_map(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Map>> {
-    match sqlx::query_as::<_, Map>("SELECT * FROM maps WHERE id = $1")
+    match sqlx::query_as::<_, Map>("SELECT * FROM maps WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -180,7 +180,7 @@ pub async fn delete_map(
         return e;
     }
 
-    match sqlx::query("DELETE FROM maps WHERE id = $1")
+    match sqlx::query("UPDATE maps SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await

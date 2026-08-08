@@ -401,11 +401,12 @@ async fn delete_job_opening(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result =
-        sqlx::query("DELETE FROM plugin_hrm.job_openings WHERE id = $1 AND status = 'draft'")
-            .bind(id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(
+        "UPDATE plugin_hrm.job_openings SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -733,7 +734,7 @@ async fn delete_candidate(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM plugin_hrm.candidates WHERE id = $1")
+    let result = sqlx::query("UPDATE plugin_hrm.candidates SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -817,7 +818,7 @@ async fn list_interviews(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_hrm.interviews
-                WHERE ($1::uuid IS NULL OR candidate_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR candidate_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )
@@ -889,7 +890,7 @@ async fn get_interview(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Interview>> {
     let result = sqlx::query_as::<_, Interview>(
-        "SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at FROM plugin_hrm.interviews WHERE id = $1"
+        "SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at FROM plugin_hrm.interviews WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -958,7 +959,7 @@ async fn delete_interview(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM plugin_hrm.interviews WHERE id = $1")
+    let result = sqlx::query("UPDATE plugin_hrm.interviews SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

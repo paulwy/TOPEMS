@@ -796,7 +796,7 @@ pub async fn delete_production_order(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM production_orders
+        UPDATE production_orders SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'cancelled')
         "#,
         id,

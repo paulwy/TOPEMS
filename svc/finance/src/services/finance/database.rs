@@ -60,7 +60,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), TopemsError> {
             approved_by VARCHAR(100),
             posted_by VARCHAR(100),
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                deleted_at TIMESTAMP
         )",
         "CREATE INDEX IF NOT EXISTS idx_voucher_tenant_id ON core_finance_vouchers(tenant_id)",
         "CREATE INDEX IF NOT EXISTS idx_voucher_period ON core_finance_vouchers(period)",
@@ -95,7 +96,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), TopemsError> {
             debit NUMERIC(18,4) NOT NULL DEFAULT 0,
             credit NUMERIC(18,4) NOT NULL DEFAULT 0,
             balance NUMERIC(18,4) NOT NULL DEFAULT 0,
-            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                deleted_at TIMESTAMP
         )",
         "CREATE INDEX IF NOT EXISTS idx_ledger_tenant_id ON core_finance_ledger(tenant_id)",
         "CREATE INDEX IF NOT EXISTS idx_ledger_account_id ON core_finance_ledger(account_id)",

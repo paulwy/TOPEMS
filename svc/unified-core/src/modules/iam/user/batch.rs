@@ -50,37 +50,38 @@ pub async fn get_effective_permissions(
         }
     };
 
-    let is_superuser: bool =
-        match sqlx::query_scalar("SELECT is_superuser FROM core_users WHERE id = $1")
-            .bind(user_uuid)
-            .fetch_optional(&state.pool)
-            .await
-        {
-            Ok(Some(v)) => v,
-            Ok(None) => {
-                return (
-                    StatusCode::NOT_FOUND,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": "用户不存在",
-                        "data": null,
-                        "code": 404
-                    })),
-                );
-            }
-            Err(e) => {
-                tracing::error!("Failed to query user: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询用户失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
-                );
-            }
-        };
+    let is_superuser: bool = match sqlx::query_scalar(
+        "SELECT is_superuser FROM core_users WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(user_uuid)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(v)) => v,
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": "用户不存在",
+                    "data": null,
+                    "code": 404
+                })),
+            );
+        }
+        Err(e) => {
+            tracing::error!("Failed to query user: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("查询用户失败: {}", e),
+                    "data": null,
+                    "code": 500
+                })),
+            );
+        }
+    };
 
     let role_permissions: Vec<EffectivePermissionRow> = if is_superuser {
         sqlx::query_as::<_, EffectivePermissionRow>(
@@ -202,7 +203,7 @@ pub async fn batch_delete_users(
             }
         };
 
-        let result = sqlx::query("DELETE FROM core_users WHERE id = $1")
+        let result = sqlx::query("UPDATE core_users SET deleted_at = NOW() WHERE id = $1")
             .bind(user_uuid)
             .execute(&state.pool)
             .await;

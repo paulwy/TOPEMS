@@ -31,7 +31,7 @@ pub async fn list_groups(
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_menu_groups
-           WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
+           WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
              AND ($2::text IS NULL OR status = $2)"#,
     )
     .bind(search.clone())
@@ -48,7 +48,7 @@ pub async fn list_groups(
 
     let sql = format!(
         r#"SELECT {} FROM core_menu_groups
-           WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
+           WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
              AND ($2::text IS NULL OR status = $2)
            ORDER BY sort_order ASC, created_at DESC
            LIMIT $3 OFFSET $4"#,
@@ -83,7 +83,7 @@ pub async fn get_group(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MenuGroup>> {
     let sql = format!(
-        r#"SELECT {} FROM core_menu_groups WHERE id = $1"#,
+        r#"SELECT {} FROM core_menu_groups WHERE deleted_at IS NULL AND id = $1"#,
         MENU_GROUP_COLUMNS
     );
 
@@ -188,7 +188,7 @@ pub async fn delete_group(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(r#"DELETE FROM core_menu_groups WHERE id = $1"#)
+    let result = sqlx::query(r#"UPDATE core_menu_groups SET deleted_at = NOW() WHERE id = $1"#)
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -218,7 +218,7 @@ pub async fn list_menus(
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_menus
-           WHERE ($1::uuid IS NULL OR group_id = $1)
+           WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR group_id = $1)
              AND ($2::uuid IS NULL OR parent_id = $2)
              AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%' OR code ILIKE '%' || $3 || '%')
              AND ($4::text IS NULL OR status = $4)"#,
@@ -239,7 +239,7 @@ pub async fn list_menus(
 
     let sql = format!(
         r#"SELECT {} FROM core_menus
-           WHERE ($1::uuid IS NULL OR group_id = $1)
+           WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR group_id = $1)
              AND ($2::uuid IS NULL OR parent_id = $2)
              AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%' OR code ILIKE '%' || $3 || '%')
              AND ($4::text IS NULL OR status = $4)
@@ -277,7 +277,10 @@ pub async fn get_menu(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Menu>> {
-    let sql = format!(r#"SELECT {} FROM core_menus WHERE id = $1"#, MENU_COLUMNS);
+    let sql = format!(
+        r#"SELECT {} FROM core_menus WHERE deleted_at IS NULL AND id = $1"#,
+        MENU_COLUMNS
+    );
 
     let menu: Option<Menu> = match sqlx::query_as(&sql)
         .bind(id)
@@ -392,7 +395,7 @@ pub async fn delete_menu(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(r#"DELETE FROM core_menus WHERE id = $1"#)
+    let result = sqlx::query(r#"UPDATE core_menus SET deleted_at = NOW() WHERE id = $1"#)
         .bind(id)
         .execute(&state.pool)
         .await;

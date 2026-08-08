@@ -102,7 +102,7 @@ async fn list_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR project_id = $4)
@@ -276,7 +276,7 @@ async fn update_experiment(
 ) -> Json<ApiResponse<Experiment>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -375,11 +375,13 @@ async fn delete_experiment(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    let result = sqlx::query("DELETE FROM rs.experiments WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "UPDATE rs.experiments SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -555,7 +557,7 @@ async fn list_lab_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND phase = 'lab'
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -625,7 +627,7 @@ async fn list_pilot_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND phase = 'pilot'
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -695,7 +697,7 @@ async fn list_scaleup_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND phase = 'scaleup'
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -735,7 +737,7 @@ async fn advance_phase(
 ) -> Json<ApiResponse<Experiment>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, tenant_id, phase, status FROM rs.experiments WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, phase, status FROM rs.experiments WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)

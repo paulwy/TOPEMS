@@ -336,7 +336,7 @@ pub async fn delete_template(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM report_templates
+        UPDATE report_templates SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,

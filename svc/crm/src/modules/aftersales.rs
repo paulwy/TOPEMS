@@ -56,7 +56,7 @@ async fn generate_return_no(state: &ApiState, tenant_id: Uuid) -> String {
     let seq: i64 = sqlx::query_scalar(
         r#"
         SELECT COUNT(*) FROM crm.returns
-        WHERE tenant_id = $1 AND return_no LIKE $2
+        WHERE deleted_at IS NULL AND tenant_id = $1 AND return_no LIKE $2
         "#,
     )
     .bind(tenant_id)
@@ -157,7 +157,7 @@ async fn list_returns(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.returns
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR return_type = $3)
                   AND ($4::uuid IS NULL OR customer_id = $4)
@@ -489,11 +489,12 @@ async fn delete_return(
         return Json(api_error(400, "仅 pending/cancelled 状态的退换单可删除"));
     }
 
-    let result = sqlx::query("DELETE FROM crm.returns WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE crm.returns SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -1100,13 +1101,14 @@ async fn add_return_item(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     // 校验退换单存在
-    let exists: Option<Uuid> =
-        sqlx::query_scalar("SELECT id FROM crm.returns WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .fetch_optional(&state.db)
-            .await
-            .unwrap_or(None);
+    let exists: Option<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
 
     if exists.is_none() {
         return Json(api_error(404, "退换货不存在"));
@@ -1426,14 +1428,15 @@ async fn get_return_finance_status(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     // 校验退换单存在且属于租户
-    let exists: Option<Uuid> =
-        sqlx::query_scalar("SELECT id FROM crm.returns WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .fetch_optional(&state.db)
-            .await
-            .ok()
-            .flatten();
+    let exists: Option<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await
+    .ok()
+    .flatten();
 
     if exists.is_none() {
         return Json(api_error(404, "退换货不存在"));
@@ -1498,14 +1501,15 @@ async fn get_return_inventory_status(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     // 校验退换单存在且属于租户
-    let exists: Option<Uuid> =
-        sqlx::query_scalar("SELECT id FROM crm.returns WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .fetch_optional(&state.db)
-            .await
-            .ok()
-            .flatten();
+    let exists: Option<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await
+    .ok()
+    .flatten();
 
     if exists.is_none() {
         return Json(api_error(404, "退换货不存在"));

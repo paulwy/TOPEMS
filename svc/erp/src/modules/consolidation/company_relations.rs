@@ -22,7 +22,7 @@ pub async fn list_company_relations(
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
         SELECT * FROM plugin_erp.company_relations
-        WHERE ($1::uuid IS NULL OR parent_company_id = $1 OR child_company_id = $1)
+        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR parent_company_id = $1 OR child_company_id = $1)
           AND ($2::text IS NULL OR relation_type = $2)
           AND status = 'active'
         ORDER BY effective_date DESC
@@ -46,7 +46,7 @@ pub async fn get_company_tree(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<CompanyTreeNode>>> {
     let relations: Vec<CompanyRelation> = sqlx::query_as::<_, CompanyRelation>(
-        "SELECT * FROM plugin_erp.company_relations WHERE status = 'active'",
+        "SELECT * FROM plugin_erp.company_relations WHERE deleted_at IS NULL AND status = 'active'",
     )
     .fetch_all(&state.db)
     .await
@@ -172,7 +172,7 @@ pub async fn delete_company_relation(
     Path(relation_id): Path<Uuid>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("DELETE FROM plugin_erp.company_relations WHERE id = $1")
+    match sqlx::query("UPDATE plugin_erp.company_relations SET deleted_at = NOW() WHERE id = $1")
         .bind(relation_id)
         .execute(&state.db)
         .await

@@ -206,7 +206,7 @@ pub async fn get_today_production_output(
     };
 
     let output = sqlx::query(
-        "SELECT COALESCE(SUM(good_quantity), 0) as output FROM plugin_mobile.work_reports WHERE operator = $1 AND created_at >= CURRENT_DATE",
+        "SELECT COALESCE(SUM(good_quantity), 0) as output FROM plugin_mobile.work_reports WHERE deleted_at IS NULL AND operator = $1 AND created_at >= CURRENT_DATE",
     )
     .bind(&operator)
     .fetch_one(&state.pool)
@@ -772,7 +772,7 @@ pub async fn delete_work_report(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM work_reports WHERE id = $1
+        UPDATE work_reports SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )

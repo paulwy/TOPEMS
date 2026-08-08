@@ -27,7 +27,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_by UUID NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
-            published_at TIMESTAMP
+            published_at TIMESTAMP,
+                deleted_at TIMESTAMP
         )
         "#,
     )

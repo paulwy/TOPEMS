@@ -18,7 +18,7 @@ pub async fn trigger_collection(
     };
 
     let task_row = sqlx::query(
-        "SELECT id, task_no, task_name, instrument_id, protocol FROM qa_lims_collection_tasks WHERE id = $1",
+        "SELECT id, task_no, task_name, instrument_id, protocol FROM qa_lims_collection_tasks WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(task_id)
     .fetch_optional(&state.pool)
@@ -443,10 +443,11 @@ pub async fn delete_collection_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lims_collection_tasks WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE qa_lims_collection_tasks SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "采集任务删除成功")),

@@ -71,7 +71,7 @@ pub async fn list_api_keys(
     let pattern = format!("{}%", API_KEY_PREFIX);
 
     let result = sqlx::query(
-        "SELECT setting_key, setting_value, updated_at FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key LIKE $2 ORDER BY updated_at DESC",
+        "SELECT setting_key, setting_value, updated_at FROM core_tenant_settings WHERE deleted_at IS NULL AND tenant_id = $1 AND setting_key LIKE $2 ORDER BY updated_at DESC",
     )
     .bind(tenant_id)
     .bind(&pattern)
@@ -198,7 +198,7 @@ pub async fn delete_api_key(
     let key = setting_key(&id);
 
     let result =
-        sqlx::query("DELETE FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2")
+        sqlx::query("UPDATE core_tenant_settings SET deleted_at = NOW() WHERE tenant_id = $1 AND setting_key = $2")
             .bind(tenant_id)
             .bind(&key)
             .execute(&state.pool)

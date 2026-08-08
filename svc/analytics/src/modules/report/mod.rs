@@ -40,7 +40,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             output_format VARCHAR(32) DEFAULT 'pdf',
             is_active BOOLEAN DEFAULT TRUE,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -68,7 +69,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             run_count INTEGER DEFAULT 0,
             error_message TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -117,7 +119,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             email VARCHAR(256),
             frequency VARCHAR(32) NOT NULL,
             enabled BOOLEAN DEFAULT TRUE,
-            created_at TIMESTAMP DEFAULT NOW()
+            created_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -138,7 +141,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'draft',
             last_run_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

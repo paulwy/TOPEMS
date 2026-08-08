@@ -112,7 +112,7 @@ async fn list_purchase_orders(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_srm.purchase_orders
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR po_no ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR supplier_id = $4)
@@ -190,7 +190,7 @@ async fn create_purchase_order(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE po_no = $1 AND tenant_id = $2",
+        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE deleted_at IS NULL AND po_no = $1 AND tenant_id = $2",
     )
     .bind(&req.po_no)
     .bind(tenant_id)
@@ -305,7 +305,7 @@ async fn update_purchase_order(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
-        "SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at FROM plugin_srm.purchase_orders WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at FROM plugin_srm.purchase_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -411,12 +411,13 @@ async fn delete_purchase_order(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result =
-        sqlx::query("DELETE FROM plugin_srm.purchase_orders WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(
+        "UPDATE plugin_srm.purchase_orders SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "采购订单删除成功")),

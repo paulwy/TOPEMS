@@ -343,7 +343,7 @@ pub async fn delete_permission_rule(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM analytics_row_level_permissions
+        UPDATE analytics_row_level_permissions SET deleted_at = NOW()
         WHERE id = $1
         RETURNING id
         "#,

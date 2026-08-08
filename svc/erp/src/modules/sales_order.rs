@@ -78,7 +78,7 @@ pub async fn list_sales_orders(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM sales_orders WHERE (order_no ILIKE $1 OR customer_name ILIKE $1) AND ($2 = '' OR status = $2)"#
+        r#"SELECT COUNT(*) FROM sales_orders WHERE deleted_at IS NULL AND (order_no ILIKE $1 OR customer_name ILIKE $1) AND ($2 = '' OR status = $2)"#
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -108,7 +108,7 @@ pub async fn get_sales_order(
     }
 
     let result = sqlx::query_as::<_, SalesOrder>(
-        "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM sales_orders WHERE id = $1",
+        "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM sales_orders WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -223,7 +223,7 @@ pub async fn delete_sales_order(
         return e;
     }
 
-    let result = sqlx::query("DELETE FROM sales_orders WHERE id = $1")
+    let result = sqlx::query("UPDATE sales_orders SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

@@ -193,7 +193,7 @@ pub async fn get_task(
     };
 
     let row = sqlx::query(
-        "SELECT id, task_no, sample_id, sample_no, test_items, status, assigned_to, instrument_id, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT FROM qa_lab_tasks WHERE id = $1"
+        "SELECT id, task_no, sample_id, sample_no, test_items, status, assigned_to, instrument_id, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT FROM qa_lab_tasks WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -382,7 +382,7 @@ pub async fn delete_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lab_tasks WHERE id = $1")
+    let result = sqlx::query("UPDATE qa_lab_tasks SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;

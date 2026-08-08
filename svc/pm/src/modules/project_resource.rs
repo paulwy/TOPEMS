@@ -41,7 +41,7 @@ async fn list_resources(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectResource>>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        "SELECT * FROM plugin_pm.project_resources WHERE project_id = $1 ORDER BY resource_type ASC",
+        "SELECT * FROM plugin_pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -127,7 +127,7 @@ async fn get_resource(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectResource>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        "SELECT * FROM plugin_pm.project_resources WHERE project_id = $1 AND id = $2",
+        "SELECT * FROM plugin_pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2",
     )
     .bind(project_id)
     .bind(id)
@@ -215,7 +215,7 @@ async fn remove_resource(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
     let result =
-        sqlx::query("DELETE FROM plugin_pm.project_resources WHERE project_id = $1 AND id = $2")
+        sqlx::query("UPDATE plugin_pm.project_resources SET deleted_at = NOW() WHERE project_id = $1 AND id = $2")
             .bind(project_id)
             .bind(id)
             .execute(&pool)

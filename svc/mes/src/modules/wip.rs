@@ -579,7 +579,7 @@ pub async fn delete_wip(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM wips
+        UPDATE wips SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('completed', 'cancelled')
         "#,
         id,
@@ -627,7 +627,7 @@ pub async fn transfer_wip(
     };
 
     let wip = sqlx::query!(
-        r#"SELECT quantity, status FROM wips WHERE id = $1"#,
+        r#"SELECT quantity, status FROM wips WHERE deleted_at IS NULL AND id = $1"#,
         req.wip_id
     )
     .fetch_optional(&mut *tx)

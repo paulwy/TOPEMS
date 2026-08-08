@@ -59,7 +59,8 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             properties JSONB,
             status VARCHAR(50) NOT NULL DEFAULT 'active',
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -79,7 +80,8 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             usage_rate DOUBLE PRECISION,
             status VARCHAR(50) NOT NULL DEFAULT 'active',
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -125,7 +127,8 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             external_id UUID,
             external_type VARCHAR(100),
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -173,7 +176,8 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(50) NOT NULL DEFAULT 'active',
             created_by UUID,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -305,7 +309,8 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(50) NOT NULL DEFAULT 'active',
             registered_by UUID,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

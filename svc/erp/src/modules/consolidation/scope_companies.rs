@@ -21,7 +21,7 @@ pub async fn list_scope_companies(
     match sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
         SELECT * FROM plugin_erp.consolidation_scope_companies
-        WHERE scope_id = $1
+        WHERE deleted_at IS NULL AND scope_id = $1
         ORDER BY is_parent DESC, company_name ASC
         "#,
     )
@@ -131,10 +131,12 @@ pub async fn remove_scope_company(
     Path(company_id): Path<Uuid>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("DELETE FROM plugin_erp.consolidation_scope_companies WHERE id = $1")
-        .bind(company_id)
-        .execute(&state.db)
-        .await
+    match sqlx::query(
+        "UPDATE plugin_erp.consolidation_scope_companies SET deleted_at = NOW() WHERE id = $1",
+    )
+    .bind(company_id)
+    .execute(&state.db)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() == 0 {

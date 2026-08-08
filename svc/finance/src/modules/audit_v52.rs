@@ -338,7 +338,7 @@ impl AutoAuditEngine {
         is_active: Option<bool>,
     ) -> Result<Vec<AuditRule>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE tenant_id = $1",
+            "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1",
         );
 
         if category.is_some() {
@@ -451,7 +451,7 @@ impl AutoAuditEngine {
     }
 
     pub async fn delete_rule(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM finance_audit_rules_v52 WHERE id = $1 AND tenant_id = $2")
+        sqlx::query("UPDATE finance_audit_rules_v52 SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(tenant_id)
             .execute(pool)
@@ -465,7 +465,7 @@ impl AutoAuditEngine {
         tenant_id: Uuid,
     ) -> Result<AuditRule, sqlx::Error> {
         sqlx::query_as::<_, AuditRule>(
-            "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE id = $1 AND tenant_id = $2",
+            "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(tenant_id)
@@ -480,7 +480,7 @@ impl AutoAuditEngine {
     ) -> Result<Vec<AuditFinding>, sqlx::Error> {
         let rules = if let Some(ids) = rule_ids {
             sqlx::query_as::<_, AuditRule>(
-                "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE tenant_id = $1 AND id = ANY($2) AND is_active = TRUE",
+                "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND id = ANY($2) AND is_active = TRUE",
             )
             .bind(tenant_id)
             .bind(ids)
@@ -488,7 +488,7 @@ impl AutoAuditEngine {
             .await?
         } else {
             sqlx::query_as::<_, AuditRule>(
-                "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE tenant_id = $1 AND is_active = TRUE",
+                "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE",
             )
             .bind(tenant_id)
             .fetch_all(pool)
@@ -1627,7 +1627,7 @@ pub async fn auto_audit_scheduler(pool: PgPool) {
         interval.tick().await;
 
         let tenants = sqlx::query_scalar::<_, Uuid>(
-            "SELECT DISTINCT tenant_id FROM finance_audit_rules_v52 WHERE is_active = TRUE",
+            "SELECT DISTINCT tenant_id FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND is_active = TRUE",
         )
         .fetch_all(&pool)
         .await

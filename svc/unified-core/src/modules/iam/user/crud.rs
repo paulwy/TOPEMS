@@ -46,9 +46,10 @@ pub async fn list_users(
     let page_size = params.page_size.unwrap_or(20);
     let offset = (page - 1) * page_size;
 
-    let total_result = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users")
-        .fetch_one(&state.pool)
-        .await;
+    let total_result =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL")
+            .fetch_one(&state.pool)
+            .await;
 
     let total = match total_result {
         Ok(t) => t,
@@ -242,26 +243,27 @@ pub async fn create_user(
         );
     }
 
-    let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE username = $1")
-            .bind(username)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(count) => count,
-            Err(e) => {
-                tracing::error!("Failed to check username: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询用户失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
-                );
-            }
-        };
+    let existing_user_count: i64 = match sqlx::query_scalar(
+        "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND username = $1",
+    )
+    .bind(username)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(count) => count,
+        Err(e) => {
+            tracing::error!("Failed to check username: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("查询用户失败: {}", e),
+                    "data": null,
+                    "code": 500
+                })),
+            );
+        }
+    };
 
     if existing_user_count > 0 {
         tracing::warn!("Create user failed: username already exists");
@@ -276,26 +278,27 @@ pub async fn create_user(
         );
     }
 
-    let existing_email_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE email = $1")
-            .bind(email)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(count) => count,
-            Err(e) => {
-                tracing::error!("Failed to check email: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询邮箱失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
-                );
-            }
-        };
+    let existing_email_count: i64 = match sqlx::query_scalar(
+        "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND email = $1",
+    )
+    .bind(email)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(count) => count,
+        Err(e) => {
+            tracing::error!("Failed to check email: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("查询邮箱失败: {}", e),
+                    "data": null,
+                    "code": 500
+                })),
+            );
+        }
+    };
 
     if existing_email_count > 0 {
         tracing::warn!("Create user failed: email already exists");
@@ -443,7 +446,7 @@ pub async fn get_user(
     };
 
     let user: Option<UserRow> = sqlx::query_as(
-        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE id = $1",
+        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_id)
     .fetch_optional(&state.pool)
@@ -542,26 +545,27 @@ pub async fn update_user(
         }
     };
 
-    let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE id = $1::UUID")
-            .bind(&id)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(count) => count,
-            Err(e) => {
-                tracing::error!("Database query failed: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询用户失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
-                );
-            }
-        };
+    let existing_user_count: i64 = match sqlx::query_scalar(
+        "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND id = $1::UUID",
+    )
+    .bind(&id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(count) => count,
+        Err(e) => {
+            tracing::error!("Database query failed: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("查询用户失败: {}", e),
+                    "data": null,
+                    "code": 500
+                })),
+            );
+        }
+    };
 
     if existing_user_count == 0 {
         return (
@@ -577,7 +581,7 @@ pub async fn update_user(
 
     if let Some(username) = payload.get("username").and_then(|v| v.as_str()) {
         let existing_count: i64 = match sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_users WHERE username = $1 AND id != $2",
+            "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND username = $1 AND id != $2",
         )
         .bind(username)
         .bind(user_id)
@@ -614,7 +618,7 @@ pub async fn update_user(
 
     if let Some(email) = payload.get("email").and_then(|v| v.as_str()) {
         let existing_email_count: i64 = match sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_users WHERE email = $1 AND id != $2",
+            "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND email = $1 AND id != $2",
         )
         .bind(email)
         .bind(user_id)
@@ -756,26 +760,27 @@ pub async fn delete_user(
         );
     }
 
-    let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE id = $1::UUID")
-            .bind(&id)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(count) => count,
-            Err(e) => {
-                tracing::error!("Database query failed: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询用户失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
-                );
-            }
-        };
+    let existing_user_count: i64 = match sqlx::query_scalar(
+        "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND id = $1::UUID",
+    )
+    .bind(&id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(count) => count,
+        Err(e) => {
+            tracing::error!("Database query failed: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("查询用户失败: {}", e),
+                    "data": null,
+                    "code": 500
+                })),
+            );
+        }
+    };
 
     if existing_user_count == 0 {
         return (
@@ -789,7 +794,7 @@ pub async fn delete_user(
         );
     }
 
-    let delete_result = sqlx::query("DELETE FROM core_users WHERE id = $1")
+    let delete_result = sqlx::query("UPDATE core_users SET deleted_at = NOW() WHERE id = $1")
         .bind(user_id)
         .execute(&state.pool)
         .await;

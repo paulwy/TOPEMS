@@ -142,7 +142,7 @@ pub async fn list_change_notices(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_change_notices
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR ecn_no ILIKE $2 OR title ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::text IS NULL OR change_type = $4)
@@ -367,11 +367,13 @@ pub async fn delete_change_notice(
 ) -> Json<ApiResponse<bool>> {
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query("DELETE FROM pdm_change_notices WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        "UPDATE pdm_change_notices SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "变更通知删除成功")),

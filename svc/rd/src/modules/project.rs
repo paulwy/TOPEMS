@@ -135,7 +135,7 @@ async fn list_projects(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM projects
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -401,7 +401,7 @@ async fn update_project(
     }
 
     let existing = sqlx::query_as::<_, Project>(
-        "SELECT id, tenant_id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at, project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id FROM projects WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at, project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id FROM projects WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -522,11 +522,12 @@ async fn delete_project(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM projects WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE projects SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -741,11 +742,13 @@ async fn batch_delete_projects(
         return Json(ApiResponse::error(400, "未提供要删除的项目 ID"));
     }
 
-    let result = sqlx::query(r#"DELETE FROM projects WHERE id = ANY($1) AND tenant_id = $2"#)
-        .bind(&req.ids)
-        .bind(tenant_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE projects SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2"#,
+    )
+    .bind(&req.ids)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) => {

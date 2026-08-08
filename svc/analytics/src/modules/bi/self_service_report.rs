@@ -299,7 +299,7 @@ pub async fn delete_report(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM analytics_self_service_reports
+        UPDATE analytics_self_service_reports SET deleted_at = NOW()
         WHERE id = $1
         RETURNING id
         "#,
