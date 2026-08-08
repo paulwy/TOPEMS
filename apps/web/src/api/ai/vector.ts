@@ -6,13 +6,13 @@ export const vectorApi = {
     query: string;
     collection?: string;
     top_k?: number;
-    filters?: Record<string, any>;
+    filters?: Record<string, unknown>;
   }): Promise<
     ApiResponse<{
       results: Array<{
         id: string;
         content: string;
-        metadata: Record<string, any>;
+        metadata: Record<string, unknown>;
         similarity: number;
         document_title?: string;
       }>;
