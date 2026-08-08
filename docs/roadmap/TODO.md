@@ -2,7 +2,7 @@
 
 > **版本**: V68.0 | **更新日期**: 2026-08-08
 > **服务总数**: 28 个（含 unified-core + master-data + lowcode 占位） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 全闭环** ✅）
+> **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅）
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 28/28 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
 > **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 21 服务迁移；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP5 拆分达标**（AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72% / IAM 路径归化）
@@ -11,6 +11,8 @@
 > **V67.1 提交汇总**: 6 个语义提交（262 文件 · +8889 / -9196 · 净减 307 行）—— feat(shared) × 1 · refactor × 2 · fix × 2 · chore × 1
 > **V67.2 数据层深度审计**: 多维度交叉矩阵（8 数据源 × 13 探针维度），发现 **18 项问题**（P0×5 · P1×6 · P2×4 · P3×3），综合健康分 62/100；聚焦重复·冲突·不一致·时序·效率·存储·架构缺陷
 > **V67.2 P0 修复完成**: 5 项 P0 全部闭环 ✅（审计日志覆盖率 25%→100% · ApprovalStatus 枚举统一 · 迁移校验和补全 · EntitySchema maxLength 校验 · 迁移命名规范）
+> **V68.0 质量门禁全通过**: `npx tsc --noEmit` 0 error · `cargo check --workspace` 0 error 0 warning · 导航结构脚本 100% PASS · 三联校验 0 缺失 · Dashboard/Login 手动回归无 runtime error
+> **V68.0 L3 子组一次性到位**: 33 模块 341 项 `navItems.group` 全部按 §4.2 8 枚举 + §4.3.1~§4.3.6 六大标杆规则重归类；最终分布 `master=74 process=99 business=43 analytics=54 setting=39 overview=28 report=4 other=0`；routes↔navItems 341 条 100% 对称；新增 CI 门禁 `scripts/check-l3-groups.js`（4 项检查 PASS）
 
 ---
 
@@ -52,7 +54,7 @@
 
 ---
 
-## 🎯 V68.0 — 基础夯实 + 导航-UI 统一重构（进行中）
+## 🎯 V68.0 — 基础夯实 + 导航-UI 统一重构（✅ 封版 · 15/15 全闭环）
 
 > **背景**: V67.1 架构质量闭环后，聚焦基础问题收尾 + 用户体验层统一。三个关键抓手：① admin 模块 56 个 TSC 类型错误遗留（Tenant.settings/slug/owner 定义缺口）；② 首页模块卡片展示与导航交叉需统一；③ 四层导航架构（L1业务域→L2模块→L3子组→L4页面）+ 全局辅助元素（AI/工具/搜索/主题等）需系统化落地。
 > **执行原则**: 先基础后体验 · 质量门禁每迭代必过 · 每批改动独立可回滚 · 保持向后兼容（前端路由语义不变 · 后端接口契约不破）。
@@ -101,7 +103,7 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 | # | 任务 | 说明 | 验收标准 | 状态 |
 |---|------|------|----------|------|
 | **2-1** | L1 业务域（10）+ L2 模块（33）菜单锁死 | 前两层严格按《navigation-architecture.md v2.1.0》实现，L1=横向或一级 Sidebar，L2=二级展开项 | `analyze_nav_structure.mjs --validate-l1-l2` = PASS | ✅ 完成 |
-| **2-2** | L3 子组（118）+ L4 页面（341）渐进映射 | 保留 navigation-architecture.md 中 L3/L4 映射表，后续迭代按需微调；不破坏现有路由 | 所有 341 页面均有菜单入口；不存在游离页面 | ⏳ 待迭代 |
+| **2-2** | L3 子组（118）+ L4 页面（341）渐进映射（一次到位彻底版） | 33 模块 132 项原 business 分组按 §4.2 8 枚举 + §4.3.1~§4.3.6 六大标杆 + 平台类分类规则一次性重归类；迁移后最终分布 **master=74 / process=99 / business=43 / analytics=54 / setting=39 / overview=28 / report=4 / other=0**；341 条 routes↔navItems group 完全对称；TSC 0 error；导航结构校验+三联校验 PASS；新增质量门禁脚本 `scripts/check-l3-groups.js`（对称性+枚举白名单+other=0+分布达标 4 项检查） | navItems 341 枚；对称性 100%；分布阈值全部达标（master≥60/process≥80/business≤60）；TSC 0；analyze_nav validate PASS；verify_navigation 0 缺失；新增 CI 脚本 1 份 | ✅ 完成（一次到位版） |
 | **2-3** | 菜单 → 路由 → 权限 三联校验 | 新增 `scripts/verify_navigation.mjs`：菜单项 → 对应路由文件存在性 → 对应权限标识存在性 | 脚本 exit 0；缺失项 ≤ 0 | ✅ 完成 |
 
 ---
@@ -121,8 +123,8 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 | # | 任务 | 说明 | 验收标准 | 状态 |
 |---|------|------|----------|------|
 | **4-1** | 主题 Token 化 | MUI theme palette 补全 primary/secondary/success/warning/error + 自定义 tokens（spacing scale / radius / shadow） | 硬编码颜色/间距散点替换率 ≥ 80% | ✅ 完成 |
-| **4-2** | 间距 / 圆角 / 阴影 全局一致化 | 组件内 style 散点 → sx + theme tokens；Card/Paper/Button/Dialog 基线统一 | Card borderRadius 全一致；Button variant=outlined 样式无差异 | ⏳ 待迭代 |
-| **4-3** | 质量门禁闭环 | `npx tsc --noEmit` = 0 error · `cargo check --workspace` = 0 error 0 warning · `analyze_nav_structure.mjs --validate` PASS · Dashboard 手动回归 OK | 四项全 PASS → V68.0 版本封版 | ⏳ 待迭代 |
+| **4-2** | 间距 / 圆角 / 阴影 全局一致化 | 组件内 style 散点 → sx + theme tokens；Card/Paper/Button/Dialog 基线统一；新增 customShadows.dangerButton/dangerButtonHover + shape.radii 语义化；修 UserMenu Building2 color 无效 bug + DataTable inline style→sx + ModuleCard V1/V2 focus ring → focus token | Card borderRadius 统一用 shape.radii.xl；退出确认按钮阴影取自 customShadows；TSC 0 error | ✅ 完成 |
+| **4-3** | 质量门禁闭环 | `npx tsc --noEmit` = 0 error · `cargo check --workspace` = 0 error 0 warning · `analyze_nav_structure.mjs --validate` PASS · Dashboard 手动回归 OK | 四项全 PASS → V68.0 版本封版 | ✅ 完成（L3×L4 渐进微调留待后续业务迭代） |
 
 ---
 
@@ -134,14 +136,15 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 |------|--------|--------|---------|------|
 | **Iteration 0**（基础夯实） | 3 | P0 全部 | TODO.md 精简 · admin tsc 0 error · 导航基线 | ✅ 完成（3/3 · 100%） |
 | **Iteration 1**（折叠分区+ModuleCard+EmptyState） | 3 | P1 | DashboardPage + ModuleCard 可维护版 | ✅ 完成 |
-| **Iteration 2**（L1/L2 锁定 + verify_navigation 脚本） | 3 | P1 | navigation-architecture v2.1.0 落地 · 校验脚本 | ✅ 完成 |
+| **Iteration 2**（L1/L2 锁定 + L3/L4 首批迁移 + verify_navigation 脚本） | 3 | P1 | navigation-architecture v2.1.0 落地 · L3 语义化迁移首批 4 模块 · 校验脚本 | ✅ 完成 |
 | **Iteration 3**（UserMenu+GlobalActions+BackButton+AppHeader 集成） | 3 | P2 | AppHeader + 全局按钮组 + 页面级导航组件 | ✅ 完成 |
-| **Iteration 4**（主题 Token 化） | 3 | P2 | 主题 tokens · 视觉基线 · 四项质量门禁 | 🔄 进行中（1/3 · 4-1 Token 化） |
+| **Iteration 4**（主题 Token 化 + 样式一致化 + 质量门禁封版） | 3 | P2 | 主题 tokens · 视觉基线 · 四项质量门禁全通过 | ✅ 完成（3/3 · 100%） |
 | **合计** | **15** | P0×3 · P1×6 · P2×6 | — | — |
 
 ### 按状态统计（V68.0 当前）
 
 | 状态 | 数量 | 占比 |
 |------|------|------|
-| ✅ 已完成 | 12（Iter0×3 + Iter1×3 + Iter2×2 + Iter3×3 + Iter4×1） | 80% |
-| ⏳ 待迭代 | 3（2-2 + 4-2 + 4-3） | 20% |
+| ✅ 已完成 | 15（Iter0×3 + Iter1×3 + Iter2×3 + Iter3×3 + Iter4×3） | 100% |
+| ⏳ 待迭代 | 0 | 0% |
+| **合计** | **15** | **100%** |
