@@ -1322,7 +1322,7 @@ pub async fn sync_return_to_inventory(
     // V19.0: 服务边界治理 - 跨库直写已替换为 HTTP API 调用
     // WMS 客户端由 ApiState 注入；若未配置则跳过库存联动并记录告警。
     // 注：显式类型注解避免 Rust 2024 edition 的 never type fallback 问题
-    let wms_client: &Arc<topems_shared::service_client::WmsServiceClient> =
+    let wms_client: &Arc<topems_shared_service_client::service_client::WmsServiceClient> =
         match state.wms_client.as_ref() {
             Some(c) => c,
             None => {

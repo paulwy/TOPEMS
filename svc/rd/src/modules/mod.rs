@@ -2,8 +2,9 @@ use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::SystemMetrics;
-use topems_shared::{AuthState, Config};
+use topems_shared::AuthState;
+use topems_shared_core::config::Config;
+use topems_shared_core::health::SystemMetrics;
 use topems_shared_event::event::EventPublisher;
 
 pub mod ai_integration;

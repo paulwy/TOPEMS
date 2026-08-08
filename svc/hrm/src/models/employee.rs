@@ -5,7 +5,7 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use topems_shared::{DataMasking, EncryptionResult, FieldEncryptionService};
+use topems_shared_auth::security::{DataMasking, EncryptionResult, FieldEncryptionService};
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 #[schema(example = json!({
