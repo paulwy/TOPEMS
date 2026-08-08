@@ -9,23 +9,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
-use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
-
-#[allow(dead_code)]
-fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4)
-}
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
