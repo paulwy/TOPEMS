@@ -2,7 +2,7 @@ pub mod permission;
 
 use axum::extract::FromRef;
 use std::sync::Arc;
-use topems_shared_auth::auth::AuthState;
+use topems_shared::AuthState;
 use topems_shared_event::event::EventPublisher;
 
 #[derive(Clone)]

@@ -16,31 +16,20 @@ use std::sync::Arc;
 use utoipa::OpenApi;
 use uuid::Uuid;
 
-use topems_shared::telemetry_middleware;
-use topems_shared_auth::auth::auth_middleware;
+use topems_shared::{
+    auth_middleware, create_api_info_router, create_cors_layer, register_routes_with_legacy_alias,
+    ApiResponse,
+};
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
-use topems_shared_core::api_version::{create_api_info_router, register_routes_with_legacy_alias};
-use topems_shared_core::cors::create_cors_layer;
 use topems_shared_core::logging::request_context_middleware;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_db::rls::rls_middleware;
+use topems_shared_observability::telemetry::telemetry_middleware;
 use topems_shared_service_client::service_client::{
     api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
     api::qms_api::QmsApi, create_wms_client, create_workflow_client, TypedServiceClient,
     WmsServiceClient, WorkflowServiceClient,
 };
-
-const DEFAULT_WMS_URL: &str = "http://localhost:8041";
-const DEFAULT_MES_URL: &str = "http://localhost:8030";
-const DEFAULT_QMS_URL: &str = "http://localhost:8050";
-const DEFAULT_HRM_URL: &str = "http://localhost:8020";
-const DEFAULT_WORKFLOW_URL: &str = "http://localhost:8000";
-const DEFAULT_NOTIFICATION_URL: &str = "http://localhost:8000";
-
-fn fallback_url(env_key: &str, default: &str) -> String {
-    std::env::var(env_key).unwrap_or_else(|_| default.to_string())
-}
 
 use db::repository::*;
 use models::*;
@@ -151,8 +140,7 @@ async fn main() -> Result<()> {
                 "⚠️ WMS服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            WmsServiceClient::new(fallback_url("TOPEMS_WMS_URL", DEFAULT_WMS_URL))
-                .expect("fallback WMS URL is valid")
+            WmsServiceClient::new("http://localhost:8041").expect("hardcoded fallback URL is valid")
         }
     };
 
@@ -166,8 +154,8 @@ async fn main() -> Result<()> {
                 "⚠️ MES API服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(MesApi, fallback_url("TOPEMS_MES_URL", DEFAULT_MES_URL))
-                .expect("fallback MES URL is valid")
+            TypedServiceClient::new(MesApi, "http://localhost:8030")
+                .expect("hardcoded fallback URL is valid")
         }
     };
 
@@ -181,8 +169,8 @@ async fn main() -> Result<()> {
                 "⚠️ QMS API服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(QmsApi, fallback_url("TOPEMS_QMS_URL", DEFAULT_QMS_URL))
-                .expect("fallback QMS URL is valid")
+            TypedServiceClient::new(QmsApi, "http://localhost:8050")
+                .expect("hardcoded fallback URL is valid")
         }
     };
 
@@ -196,8 +184,8 @@ async fn main() -> Result<()> {
                 "⚠️ HRM服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(HrmApi, fallback_url("TOPEMS_HRM_URL", DEFAULT_HRM_URL))
-                .expect("fallback HRM URL is valid")
+            TypedServiceClient::new(HrmApi, "http://localhost:8020")
+                .expect("hardcoded fallback URL is valid")
         }
     };
 
@@ -211,8 +199,8 @@ async fn main() -> Result<()> {
                 "⚠️ Workflow服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            WorkflowServiceClient::new(fallback_url("TOPEMS_WORKFLOW_URL", DEFAULT_WORKFLOW_URL))
-                .expect("fallback Workflow URL is valid")
+            WorkflowServiceClient::new("http://localhost:8000")
+                .expect("hardcoded fallback URL is valid")
         }
     };
 
@@ -226,11 +214,8 @@ async fn main() -> Result<()> {
                 "⚠️ Notification服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(
-                NotificationApi,
-                fallback_url("TOPEMS_NOTIFICATION_URL", DEFAULT_NOTIFICATION_URL),
-            )
-            .expect("fallback Notification URL is valid")
+            TypedServiceClient::new(NotificationApi, "http://localhost:8000")
+                .expect("hardcoded fallback URL is valid")
         }
     };
 
@@ -566,8 +551,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-use topems_shared_core::health::build_health_response;
-use topems_shared_core::health::ServiceHealth;
+use topems_shared_core::health::{build_health_response, ServiceHealth};
 
 async fn health_check() -> ServiceHealth {
     build_health_response("topems-mobile", true)

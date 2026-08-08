@@ -4,9 +4,7 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use topems_shared_auth::security::encryption::{
-    DataMasking, EncryptionResult, FieldEncryptionService,
-};
+use topems_shared_auth::security::{DataMasking, EncryptionResult, FieldEncryptionService};
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Customer {
@@ -121,7 +119,7 @@ pub struct UpdateCustomerRequest {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use topems_shared_auth::security::encryption::KeyManager;
+    use topems_shared_auth::security::KeyManager;
 
     fn test_encryption_service() -> FieldEncryptionService {
         let key = [0x42u8; 32];

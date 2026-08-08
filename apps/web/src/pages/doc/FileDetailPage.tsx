@@ -228,6 +228,7 @@ const DocsFileDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={file?.name || '文件详情'}
         backHref={DOC_PATHS.documents}
         loading={loading}
         error={errorMessage}

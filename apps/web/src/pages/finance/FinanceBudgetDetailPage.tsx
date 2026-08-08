@@ -580,6 +580,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={budget?.name || budget?.code || budget?.id || '预算详情'}
         backHref={FINANCE_PATHS.budget}
         loading={loading}
         error={errorMessage}

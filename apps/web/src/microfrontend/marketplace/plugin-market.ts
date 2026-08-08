@@ -412,7 +412,7 @@ const PRESET_PLUGINS: Plugin[] = [
     category: PluginCategory.DEVTOOL,
     tags: ['导出', 'Excel', 'PDF', 'CSV'],
     dependencies: [],
-    permissions: ['file:write'],
+    permissions: ['file:dashboard:write'],
     versions: [
       {
         version: '2.2.0',

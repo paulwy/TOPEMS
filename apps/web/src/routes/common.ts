@@ -16,14 +16,14 @@ export const commonRoutes: RouteConfig[] = [
   {
     path: EHS_PATHS.accident,
     element: EhsAccidentPage,
-    requiredPermissions: ['ehs:read'],
+    requiredPermissions: ['ehs:dashboard:read'],
     module: 'ehs',
     action: 'read',
   },
   {
     path: DOC_PATHS.documents,
     element: DocumentsPage,
-    requiredPermissions: ['doc:read'],
+    requiredPermissions: ['doc:dashboard:read'],
     module: 'doc',
     action: 'read',
   },

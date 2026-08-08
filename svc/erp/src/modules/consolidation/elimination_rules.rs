@@ -6,9 +6,8 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
-use topems_shared_core::response::api_error;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::PaginatedResponse;
+use topems_shared::ApiResponse;
+use topems_shared_core::response::{api_error, PaginatedResponse};
 
 use super::common::PaginationParams;
 use super::ApiState;
@@ -32,7 +31,7 @@ pub async fn list_elimination_rules(
 
     let result = sqlx::query_as::<_, EliminationRule>(
         r#"
-        SELECT id, tenant_id, rule_name, rule_type, scope_id, source_company_id, target_company_id, account_code, direction, amount, priority, status, is_active, created_at, updated_at FROM plugin_erp.elimination_rules
+        SELECT * FROM plugin_erp.elimination_rules
         WHERE deleted_at IS NULL AND scope_id = $1
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -82,7 +81,7 @@ pub async fn get_elimination_rule(
     Path(rule_id): Path<Uuid>,
 ) -> Json<ApiResponse<EliminationRule>> {
     match sqlx::query_as::<_, EliminationRule>(
-        "SELECT id, tenant_id, rule_name, rule_type, scope_id, source_company_id, target_company_id, account_code, direction, amount, priority, status, is_active, created_at, updated_at FROM plugin_erp.elimination_rules WHERE deleted_at IS NULL AND id = $1",
+        "SELECT * FROM plugin_erp.elimination_rules WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(rule_id)
     .fetch_optional(&state.db)
@@ -243,7 +242,7 @@ pub async fn export_elimination_worksheet(
     Path(scope_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let rules = match sqlx::query_as::<_, EliminationRule>(
-        "SELECT id, tenant_id, rule_name, rule_type, scope_id, source_company_id, target_company_id, account_code, direction, amount, priority, status, is_active, created_at, updated_at FROM plugin_erp.elimination_rules WHERE deleted_at IS NULL AND scope_id = $1 ORDER BY priority ASC",
+        "SELECT * FROM plugin_erp.elimination_rules WHERE deleted_at IS NULL AND scope_id = $1 ORDER BY priority ASC",
     )
     .bind(scope_id)
     .fetch_all(&state.db)
@@ -257,7 +256,7 @@ pub async fn export_elimination_worksheet(
     };
 
     let transactions = match sqlx::query_as::<_, InternalTransaction>(
-        "SELECT id, tenant_id, transaction_no, source_company_id, target_company_id, transaction_type, amount, currency, transaction_date, status, description, created_at, updated_at FROM plugin_erp.internal_transactions ORDER BY transaction_date DESC",
+        "SELECT * FROM plugin_erp.internal_transactions ORDER BY transaction_date DESC",
     )
     .fetch_all(&state.db)
     .await

@@ -89,11 +89,11 @@ export const PERMISSION_GROUPS: Record<string, PermissionGroup> = {
 
 export const PERMISSIONS: Record<ModuleCode, Record<PermissionAction, string>> = {
   [MODULES.IAM]: {
-    read: 'iam:read',
-    write: 'iam:write',
-    delete: 'iam:delete',
-    approve: 'iam:approve',
-    admin: 'iam:admin',
+    read: 'iam:dashboard:read',
+    write: 'iam:dashboard:write',
+    delete: 'iam:dashboard:delete',
+    approve: 'iam:dashboard:approve',
+    admin: 'iam:dashboard:admin',
   },
   [MODULES.HRM]: {
     read: 'hrm:read',
@@ -103,18 +103,18 @@ export const PERMISSIONS: Record<ModuleCode, Record<PermissionAction, string>> =
     admin: 'hrm:admin',
   },
   [MODULES.ERP]: {
-    read: 'erp:read',
-    write: 'erp:write',
-    delete: 'erp:delete',
-    approve: 'erp:approve',
-    admin: 'erp:admin',
+    read: 'erp:dashboard:read',
+    write: 'erp:dashboard:write',
+    delete: 'erp:dashboard:delete',
+    approve: 'erp:dashboard:approve',
+    admin: 'erp:dashboard:admin',
   },
   [MODULES.PM]: {
-    read: 'pm:read',
-    write: 'pm:write',
-    delete: 'pm:delete',
-    approve: 'pm:approve',
-    admin: 'pm:admin',
+    read: 'pm:dashboard:read',
+    write: 'pm:dashboard:write',
+    delete: 'pm:dashboard:delete',
+    approve: 'pm:dashboard:approve',
+    admin: 'pm:dashboard:admin',
   },
   [MODULES.RS]: {
     read: 'rs:read',
@@ -131,41 +131,41 @@ export const PERMISSIONS: Record<ModuleCode, Record<PermissionAction, string>> =
     admin: 'scm:admin',
   },
   [MODULES.CRM]: {
-    read: 'crm:read',
-    write: 'crm:write',
-    delete: 'crm:delete',
-    approve: 'crm:approve',
-    admin: 'crm:admin',
+    read: 'crm:dashboard:read',
+    write: 'crm:dashboard:write',
+    delete: 'crm:dashboard:delete',
+    approve: 'crm:dashboard:approve',
+    admin: 'crm:dashboard:admin',
   },
   [MODULES.AI]: {
-    read: 'ai:read',
-    write: 'ai:write',
-    delete: 'ai:delete',
-    approve: 'ai:approve',
-    admin: 'ai:admin',
+    read: 'ai:dashboard:read',
+    write: 'ai:dashboard:write',
+    delete: 'ai:dashboard:delete',
+    approve: 'ai:dashboard:approve',
+    admin: 'ai:dashboard:admin',
   },
   [MODULES.GIS]: {
-    read: 'gis:read',
-    write: 'gis:write',
-    delete: 'gis:delete',
-    approve: 'gis:approve',
-    admin: 'gis:admin',
+    read: 'gis:dashboard:read',
+    write: 'gis:dashboard:write',
+    delete: 'gis:dashboard:delete',
+    approve: 'gis:dashboard:approve',
+    admin: 'gis:dashboard:admin',
   },
   // QMS 质量管理
   [MODULES.QMS]: {
-    read: 'qms:read',
-    write: 'qms:write',
-    delete: 'qms:delete',
-    approve: 'qms:approve',
-    admin: 'qms:admin',
+    read: 'qms:dashboard:read',
+    write: 'qms:dashboard:write',
+    delete: 'qms:dashboard:delete',
+    approve: 'qms:dashboard:approve',
+    admin: 'qms:dashboard:admin',
   },
   // EHS 环境健康安全
   [MODULES.EHS]: {
-    read: 'ehs:read',
-    write: 'ehs:write',
-    delete: 'ehs:delete',
-    approve: 'ehs:approve',
-    admin: 'ehs:admin',
+    read: 'ehs:dashboard:read',
+    write: 'ehs:dashboard:write',
+    delete: 'ehs:dashboard:delete',
+    approve: 'ehs:dashboard:approve',
+    admin: 'ehs:dashboard:admin',
   },
   // MES 制造执行
   [MODULES.MES]: {
@@ -184,32 +184,32 @@ export const PERMISSIONS: Record<ModuleCode, Record<PermissionAction, string>> =
     admin: 'wms:admin',
   },
   [MODULES.WORKFLOW]: {
-    read: 'workflow:read',
-    write: 'workflow:write',
-    delete: 'workflow:delete',
-    approve: 'workflow:approve',
-    admin: 'workflow:admin',
+    read: 'workflow:dashboard:read',
+    write: 'workflow:dashboard:write',
+    delete: 'workflow:dashboard:delete',
+    approve: 'workflow:dashboard:approve',
+    admin: 'workflow:dashboard:admin',
   },
   [MODULES.DOC]: {
-    read: 'doc:read',
-    write: 'doc:write',
-    delete: 'doc:delete',
-    approve: 'doc:approve',
-    admin: 'doc:admin',
+    read: 'doc:dashboard:read',
+    write: 'doc:dashboard:write',
+    delete: 'doc:dashboard:delete',
+    approve: 'doc:dashboard:approve',
+    admin: 'doc:dashboard:admin',
   },
   [MODULES.FILE]: {
-    read: 'file:read',
-    write: 'file:write',
-    delete: 'file:delete',
-    approve: 'file:approve',
-    admin: 'file:admin',
+    read: 'file:dashboard:read',
+    write: 'file:dashboard:write',
+    delete: 'file:dashboard:delete',
+    approve: 'file:dashboard:approve',
+    admin: 'file:dashboard:admin',
   },
   [MODULES.NOTIFICATION]: {
-    read: 'notification:read',
-    write: 'notification:write',
-    delete: 'notification:delete',
-    approve: 'notification:approve',
-    admin: 'notification:admin',
+    read: 'notification:dashboard:read',
+    write: 'notification:dashboard:write',
+    delete: 'notification:dashboard:delete',
+    approve: 'notification:dashboard:approve',
+    admin: 'notification:dashboard:admin',
   },
   [MODULES.IM]: {
     read: 'im:read',
@@ -219,19 +219,19 @@ export const PERMISSIONS: Record<ModuleCode, Record<PermissionAction, string>> =
     admin: 'im:admin',
   },
   [MODULES.INTEGRATION]: {
-    read: 'integration:read',
-    write: 'integration:write',
-    delete: 'integration:delete',
-    approve: 'integration:approve',
-    admin: 'integration:admin',
+    read: 'integration:dashboard:read',
+    write: 'integration:dashboard:write',
+    delete: 'integration:dashboard:delete',
+    approve: 'integration:dashboard:approve',
+    admin: 'integration:dashboard:admin',
   },
   // SYSTEM 系统设置
   [MODULES.SYSTEM]: {
-    read: 'system:read',
-    write: 'system:write',
-    delete: 'system:delete',
-    approve: 'system:approve',
-    admin: 'system:admin',
+    read: 'system:dashboard:read',
+    write: 'system:dashboard:write',
+    delete: 'system:dashboard:delete',
+    approve: 'system:dashboard:approve',
+    admin: 'system:dashboard:admin',
   },
 };
 
@@ -364,11 +364,11 @@ export const hasPermission = (userPermissions: string[], requiredPermission: str
       if (userPermissions.includes(iamPermission)) {
         return true;
       }
-      if (userPermissions.includes('iam:admin')) {
+      if (userPermissions.includes('iam:dashboard:admin')) {
         return true;
       }
       // admin:admin 也等价于 iam:admin
-      if (userPermissions.includes('admin:admin')) {
+      if (userPermissions.includes('admin:dashboard:admin')) {
         return true;
       }
     }
@@ -379,7 +379,7 @@ export const hasPermission = (userPermissions: string[], requiredPermission: str
     }
 
     // 检查 iam:admin 是否等价于 admin:admin
-    if (module === 'admin' && userPermissions.includes('iam:admin')) {
+    if (module === 'admin' && userPermissions.includes('iam:dashboard:admin')) {
       return true;
     }
 

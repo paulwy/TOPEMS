@@ -495,6 +495,7 @@ const FlowInstanceDetailPage: React.FC = () => {
       <DetailPageTemplate
         title='实例详情'
         subtitle={details?.instance.id}
+        detailItemName={details?.instance?.name || details?.instance?.id || '实例详情'}
         loading={loading}
         error={error}
         backHref={WORKFLOW_PATHS.instances}

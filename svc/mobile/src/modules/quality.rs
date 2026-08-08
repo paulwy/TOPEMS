@@ -1,7 +1,7 @@
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 
-use topems_shared_core::response::ApiResponse;
+use topems_shared::ApiResponse;
 use topems_shared_service_client::service_client::{api::qms_api::QmsApi, TypedServiceClient};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

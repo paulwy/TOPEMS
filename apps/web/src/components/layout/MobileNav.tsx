@@ -394,6 +394,16 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             <IconButton
               size='small'
               onClick={() => {
+                try {
+                  window.localStorage.setItem(
+                    'ai-copilot-context',
+                    JSON.stringify({
+                      pathname: typeof window !== 'undefined' ? location.pathname : '/',
+                      moduleCode: 'shared',
+                      breadcrumbs: ['首页'],
+                    })
+                  );
+                } catch {}
                 navigate(AI_PATHS.root);
                 onClose();
               }}

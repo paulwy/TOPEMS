@@ -40,7 +40,7 @@ import {
   Wallet,
   FileEdit,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAIContext } from '../../hooks';
 import { AIToolsPanel } from './AIToolsPanel';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
@@ -91,6 +91,7 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export const FloatingAIHelper: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const { recommendations, quickCommands: _contextQuickCommands } = useAIContext();
 
@@ -493,7 +494,19 @@ export const FloatingAIHelper: React.FC = () => {
                       icon={<BarChart3 style={{ width: 14, height: 14 }} />}
                       label='文本分析'
                       size='small'
-                      onClick={() => navigate(AI_PATHS.root)}
+                      onClick={() => {
+                        try {
+                          window.localStorage.setItem(
+                            'ai-copilot-context',
+                            JSON.stringify({
+                              pathname: typeof window !== 'undefined' ? location.pathname : '/',
+                              moduleCode: 'shared',
+                              breadcrumbs: ['首页'],
+                            })
+                          );
+                        } catch {}
+                        navigate(AI_PATHS.root);
+                      }}
                     />
                     <Chip
                       icon={<FileText style={{ width: 14, height: 14 }} />}
@@ -722,7 +735,19 @@ export const FloatingAIHelper: React.FC = () => {
               <Button
                 size='small'
                 endIcon={<ChevronRight style={{ width: 16, height: 16 }} />}
-                onClick={() => navigate(AI_PATHS.root)}
+                onClick={() => {
+                  try {
+                    window.localStorage.setItem(
+                      'ai-copilot-context',
+                      JSON.stringify({
+                        pathname: typeof window !== 'undefined' ? location.pathname : '/',
+                        moduleCode: 'shared',
+                        breadcrumbs: ['首页'],
+                      })
+                    );
+                  } catch {}
+                  navigate(AI_PATHS.root);
+                }}
               >
                 打开完整AI助手
               </Button>

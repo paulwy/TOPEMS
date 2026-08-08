@@ -4,6 +4,7 @@ import type { ModuleNavConfig } from '@/lib/navigation/types';
 
 export const OA_PATHS = {
   root: '/oa',
+  dashboard: '/oa/dashboard',
   documents: '/oa/documents',
   announcements: '/oa/announcements',
   meetings: '/oa/meetings',
@@ -20,8 +21,19 @@ export const oaModuleConfig: RouteModuleConfig = {
   status: 'online',
   order: 92,
   description: '企业办公自动化系统',
-  permission: 'oa:read',
+  permission: 'oa:documents:read',
   routes: [
+    {
+      path: OA_PATHS.dashboard,
+      element: lazyWithRetry(() => import('@/pages/oa/DashboardPage'), 'DashboardPage'),
+      module: 'oa',
+      title: '办公自动化概览',
+      code: 'oa-dashboard',
+      requiredPermissions: ['oa:dashboard:read'],
+      action: 'read',
+      template: 'dashboard',
+      group: 'overview',
+    },
     {
       path: OA_PATHS.documents,
       element: lazyWithRetry(
@@ -30,7 +42,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       ),
       module: 'oa',
       code: 'oa-documents',
-      title: '公文管理',
+      title: '公文列表',
       template: 'list',
       group: 'business',
       requiredPermissions: ['oa:document:read'],
@@ -55,7 +67,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       ),
       module: 'oa',
       code: 'oa-meetings',
-      title: '会议管理',
+      title: '会议流程',
       template: 'form',
       group: 'process',
       requiredPermissions: ['oa:meeting:read'],
@@ -69,7 +81,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       ),
       module: 'oa',
       code: 'oa-vehicles',
-      title: '车辆管理',
+      title: '车辆列表',
       template: 'list',
       group: 'business',
       requiredPermissions: ['oa:vehicle:read'],
@@ -88,8 +100,19 @@ export const oaNavConfig: ModuleNavConfig = {
   order: 92,
   navItems: [
     {
+      code: 'oa-dashboard',
+      label: '办公自动化概览',
+      icon: 'LayoutDashboard',
+      path: OA_PATHS.dashboard,
+      permission: 'oa:dashboard:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: '办公自动化数据概览',
+    },
+    {
       code: 'oa-documents',
-      label: '公文管理',
+      label: '公文列表',
       path: OA_PATHS.documents,
       group: 'business',
       showInSidebar: true,
@@ -103,14 +126,14 @@ export const oaNavConfig: ModuleNavConfig = {
     },
     {
       code: 'oa-meetings',
-      label: '会议管理',
+      label: '会议流程',
       path: OA_PATHS.meetings,
       group: 'process',
       showInSidebar: true,
     },
     {
       code: 'oa-vehicles',
-      label: '车辆管理',
+      label: '车辆列表',
       path: OA_PATHS.vehicles,
       group: 'business',
       showInSidebar: true,

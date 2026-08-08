@@ -275,6 +275,7 @@ const PmContractCreatePage: React.FC = () => {
       <FormPageTemplate
         title=''
         subtitle=''
+        backHref={PM_PATHS.contracts}
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: '项目管理', href: PM_PATHS.root },

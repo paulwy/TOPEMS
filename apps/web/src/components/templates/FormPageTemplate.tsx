@@ -296,6 +296,13 @@ export interface FormPageTemplateProps extends Omit<BoxProps, 'onSubmit'> {
     canDelete?: boolean;
     canViewHistory?: boolean;
   };
+
+  /** 返回兜底路由 */
+  backHref?: string;
+  /** 返回回调 */
+  onBack?: () => void;
+  /** 详情对象名，用于面包屑末端（表单页一般不需要，但可兼容） */
+  detailItemName?: string;
 }
 
 // ============ 工具函数 ============
@@ -411,6 +418,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   showProgress = false,
   mode = 'edit',
   permissions = { canEdit: true, canDelete: false, canViewHistory: false },
+  backHref,
+  onBack,
+  detailItemName,
   ...props
 }) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -1411,6 +1421,15 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           breadcrumbs={breadcrumbs}
           autoBreadcrumbs={autoBreadcrumbs}
           loading={loading}
+          backButton={
+            backHref || onBack
+              ? {
+                  href: backHref,
+                  onClick: onBack,
+                }
+              : undefined
+          }
+          detailItemName={detailItemName}
         >
           {headerContent}
         </PageHeader>

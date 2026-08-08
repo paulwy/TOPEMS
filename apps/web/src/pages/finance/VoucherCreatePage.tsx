@@ -611,6 +611,7 @@ const VoucherCreatePage: React.FC = () => {
     <PageContainer backButton={{ href: FINANCE_PATHS.vouchers }}>
       <FormPageTemplate
         title=''
+        backHref={FINANCE_PATHS.vouchers}
         sections={sections}
         onSubmit={handleSubmit}
         onCancel={handleCancel}

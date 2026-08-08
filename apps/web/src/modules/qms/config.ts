@@ -31,17 +31,17 @@ export const qmsModuleConfig: RouteModuleConfig = {
   status: 'online',
   order: 9,
   description: '检验计划、质检任务、不合格品、质量改进',
-  permission: 'qms:read',
+  permission: 'qms:dashboard:read',
   routes: [
     {
       path: QMS_PATHS.dashboard,
       element: lazyWithRetry(() => import('@/pages/qms/QmsDashboardPage'), 'QmsDashboardPage'),
       module: 'qms',
       code: 'qms-dashboard',
-      title: '仪表盘',
+      title: '质量管理概览',
       template: 'dashboard',
       group: 'overview',
-      requiredPermissions: ['qms:read'],
+      requiredPermissions: ['qms:dashboard:read'],
       action: 'read',
     },
     {
@@ -52,7 +52,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '质检任务',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['qms:inspection:read', 'qms:read'],
+      requiredPermissions: ['qms:inspection:read', 'qms:dashboard:read'],
       action: 'read',
     },
     {
@@ -66,7 +66,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '质量控制',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['qms:quality_control:read', 'qms:read'],
+      requiredPermissions: ['qms:quality_control:read', 'qms:dashboard:read'],
       action: 'read',
     },
     {
@@ -80,7 +80,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '不合格品',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['qms:nonconformance:read', 'qms:read'],
+      requiredPermissions: ['qms:nonconformance:read', 'qms:dashboard:read'],
       action: 'read',
     },
     {
@@ -91,10 +91,10 @@ export const qmsModuleConfig: RouteModuleConfig = {
       ),
       module: 'qms',
       code: 'qms-audit-management',
-      title: '审核管理',
+      title: '审核配置',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['qms:audit:read', 'qms:read'],
+      requiredPermissions: ['qms:audit:read', 'qms:dashboard:read'],
       action: 'read',
     },
     {
@@ -108,7 +108,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '质量标准',
       template: 'list',
       group: 'master',
-      requiredPermissions: ['qms:standard:read', 'qms:read'],
+      requiredPermissions: ['qms:standard:read', 'qms:dashboard:read'],
       action: 'read',
     },
     {
@@ -122,7 +122,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '标准详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['qms:standard:read', 'qms:read'],
+      requiredPermissions: ['qms:standard:read', 'qms:dashboard:read'],
       action: 'read',
     },
     {
@@ -130,10 +130,10 @@ export const qmsModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/qms/QmsApqpPage'), 'QmsApqpPage'),
       module: 'qms',
       code: 'qms-apqp',
-      title: 'APQP管理',
+      title: 'APQP流程',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['qms:apqp:read', 'qms:read'],
+      requiredPermissions: ['qms:apqp:read', 'qms:dashboard:read'],
       action: 'read',
     },
     {
@@ -144,7 +144,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: 'FMEA分析',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['qms:fmea:read', 'qms:read'],
+      requiredPermissions: ['qms:fmea:read', 'qms:dashboard:read'],
       action: 'read',
     },
     {
@@ -155,7 +155,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: 'SPC统计',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['qms:spc:read', 'qms:read'],
+      requiredPermissions: ['qms:spc:read', 'qms:dashboard:read'],
       action: 'read',
     },
     {
@@ -166,7 +166,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '8D报告',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['qms:eightd:read', 'qms:read'],
+      requiredPermissions: ['qms:eightd:read', 'qms:dashboard:read'],
       action: 'read',
     },
     {
@@ -177,7 +177,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '质量成本',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['qms:quality_cost:read', 'qms:read'],
+      requiredPermissions: ['qms:quality_cost:read', 'qms:dashboard:read'],
       action: 'read',
     },
   ],
@@ -189,7 +189,7 @@ export const qmsNavConfig: ModuleNavConfig = {
   name: '质量管理',
   icon: 'Shield',
   path: QMS_PATHS.root,
-  permission: 'qms:read',
+  permission: 'qms:dashboard:read',
   source: 'core',
   suite: 'quality',
   status: 'online',
@@ -198,10 +198,10 @@ export const qmsNavConfig: ModuleNavConfig = {
   navItems: [
     {
       code: 'qms-dashboard',
-      label: '仪表盘',
+      label: '质量管理概览',
       icon: 'LayoutDashboard',
       path: QMS_PATHS.dashboard,
-      permission: 'qms:read',
+      permission: 'qms:dashboard:read',
       order: 0,
       group: 'overview',
       showInTabs: true,
@@ -250,7 +250,7 @@ export const qmsNavConfig: ModuleNavConfig = {
     },
     {
       code: 'qms-audit-management',
-      label: '审核管理',
+      label: '审核配置',
       icon: 'SearchCheck',
       path: QMS_PATHS.auditManagement,
       permission: 'qms:audit:read',
@@ -260,7 +260,7 @@ export const qmsNavConfig: ModuleNavConfig = {
     },
     {
       code: 'qms-apqp',
-      label: 'APQP管理',
+      label: 'APQP流程',
       icon: 'BookOpen',
       path: QMS_PATHS.apqp,
       permission: 'qms:apqp:read',

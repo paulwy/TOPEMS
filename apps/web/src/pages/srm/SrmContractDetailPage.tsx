@@ -222,6 +222,7 @@ const SrmContractDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={contract?.title || contract?.contractNo || contract?.id || '合同详情'}
         backHref={SRM_PATHS.contract}
         loading={loading}
         error={error || undefined}

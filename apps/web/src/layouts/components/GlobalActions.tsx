@@ -1,10 +1,8 @@
 import React from 'react';
 import { Stack, Tooltip, IconButton } from '@mui/material';
-import { Search, Sparkles, Briefcase, Sun, Moon, HelpCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useThemeMode } from '@/hooks/useThemeMode';
+import { Search, Sparkles, Briefcase } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
-import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { AI_PATHS } from '@/modules/ai/config';
 
 export interface GlobalActionsProps {
@@ -13,7 +11,7 @@ export interface GlobalActionsProps {
 
 export const GlobalActions: React.FC<GlobalActionsProps> = ({ onSearchClick }) => {
   const navigate = useNavigate();
-  const { isDark, toggleMode } = useThemeMode();
+  const location = useLocation();
 
   const buttonSx = {
     width: 36,
@@ -41,7 +39,19 @@ export const GlobalActions: React.FC<GlobalActionsProps> = ({ onSearchClick }) =
         <IconButton
           size='small'
           aria-label='AI'
-          onClick={() => navigate(AI_PATHS.root)}
+          onClick={() => {
+            try {
+              window.localStorage.setItem(
+                'ai-copilot-context',
+                JSON.stringify({
+                  pathname: typeof window !== 'undefined' ? location.pathname : '/',
+                  moduleCode: 'shared',
+                  breadcrumbs: ['首页'],
+                })
+              );
+            } catch {}
+            navigate(AI_PATHS.root);
+          }}
           sx={{ ...buttonSx, color: 'primary.main' }}
         >
           <Sparkles style={{ width: 18, height: 18 }} />
@@ -56,32 +66,6 @@ export const GlobalActions: React.FC<GlobalActionsProps> = ({ onSearchClick }) =
           sx={buttonSx}
         >
           <Briefcase style={{ width: 18, height: 18 }} />
-        </IconButton>
-      </Tooltip>
-
-      <Tooltip title={isDark ? '切换到浅色模式' : '切换到深色模式'}>
-        <IconButton
-          size='small'
-          aria-label={isDark ? '切换到浅色模式' : '切换到深色模式'}
-          onClick={toggleMode}
-          sx={buttonSx}
-        >
-          {isDark ? (
-            <Sun style={{ width: 18, height: 18 }} />
-          ) : (
-            <Moon style={{ width: 18, height: 18 }} />
-          )}
-        </IconButton>
-      </Tooltip>
-
-      <Tooltip title='帮助中心'>
-        <IconButton
-          size='small'
-          aria-label='帮助中心'
-          onClick={() => navigate(DASHBOARD_PATHS.helpCenter)}
-          sx={buttonSx}
-        >
-          <HelpCircle style={{ width: 18, height: 18 }} />
         </IconButton>
       </Tooltip>
     </Stack>

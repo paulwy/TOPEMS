@@ -246,6 +246,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
       <FormPageTemplate
         title=''
         subtitle=''
+        backHref={HRM_PATHS.employees}
         breadcrumbs={[
           { label: t('hrm.hrm_employee_create_page.home'), href: '/dashboard' },
           { label: t('hrm.hrm_employee_create_page.text_40fb54'), href: '/hrm' },

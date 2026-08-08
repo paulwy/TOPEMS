@@ -224,6 +224,7 @@ const TransferPage: React.FC = () => {
       <FormPageTemplate
         title=''
         subtitle=''
+        backHref={ASSET_PATHS.transfers}
         breadcrumbs={[
           { label: t('asset.transfer_page.home'), href: '/dashboard' },
           { label: t('asset.transfer_page.text_b1a8be'), href: ASSET_PATHS.root },

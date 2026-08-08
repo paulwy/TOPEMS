@@ -369,6 +369,7 @@ const EquipmentDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={equipment?.name || equipment?.asset_number || equipment?.id || '设备详情'}
         backHref={MES_PATHS.equipment}
         loading={loading}
         error={errorMessage}

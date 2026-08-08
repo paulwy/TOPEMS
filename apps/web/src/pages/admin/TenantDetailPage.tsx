@@ -736,6 +736,7 @@ const TenantDetailPage: React.FC = () => {
       <DetailPageTemplate
         title={tenant.name}
         subtitle={tenant.slug}
+        detailItemName={tenant?.name || tenant?.slug || '租户详情'}
         loading={loading}
         backHref={ADMIN_PATHS.tenant}
         infoCard={infoCard}

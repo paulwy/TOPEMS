@@ -37,24 +37,7 @@ use uuid::Uuid;
 use crate::models::*;
 use crate::services::FinanceService;
 use crate::shared::AppState;
-
-const ALLOWED_TABLES: &[&str] = &[
-    "vouchers",
-    "payments",
-    "receivables",
-    "payables",
-    "approval_workflows",
-];
-
-fn validate_table(table: &str) -> Result<&str, &'static str> {
-    if ALLOWED_TABLES.contains(&table) {
-        Ok(table)
-    } else {
-        Err("Invalid table name")
-    }
-}
-use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 use topems_shared_event::event::{EventType, FinancePaymentMadePayload};
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -124,10 +107,6 @@ async fn count_table_with_tenant_and_status(
     tenant_id: Uuid,
     status: &str,
 ) -> i64 {
-    let table = match validate_table(table) {
-        Ok(t) => t,
-        Err(_) => return 0,
-    };
     match sqlx::query_scalar(&format!(
         "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND status = $2",
         table
@@ -143,10 +122,6 @@ async fn count_table_with_tenant_and_status(
 }
 
 async fn sum_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
-    let table = match validate_table(table) {
-        Ok(t) => t,
-        Err(_) => return 0,
-    };
     match sqlx::query_scalar(&format!(
         "SELECT COALESCE(SUM(amount), 0) FROM {} WHERE tenant_id = $1",
         table
@@ -161,10 +136,6 @@ async fn sum_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid
 }
 
 async fn sum_overdue_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
-    let table = match validate_table(table) {
-        Ok(t) => t,
-        Err(_) => return 0,
-    };
     match sqlx::query_scalar(&format!("SELECT COALESCE(SUM(amount), 0) FROM {} WHERE tenant_id = $1 AND due_date < NOW() AND status = 'unpaid'", table))
         .bind(tenant_id)
         .fetch_one(pool)
@@ -1568,7 +1539,7 @@ async fn match_template_handler(
         None => return Json(ApiResponse::error(400, "source_type 为必填")),
     };
     let rule: Option<crate::services::finance::voucher_generation::VoucherGenerationRule> = match sqlx::query_as(
-        "SELECT id, tenant_id, name, description, source_type, source_module, template_id, trigger_condition, mapping_config, priority, status, created_by, created_at, updated_at FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1",
+        "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1",
     )
     .bind(tenant_id)
     .bind(&source_type)
@@ -1761,7 +1732,7 @@ async fn update_template_entry_handler(
         return Json(ApiResponse::error(404, "模板分录不存在"));
     }
     let existing: crate::services::finance::voucher_template::VoucherTemplateLine =
-        match sqlx::query_as("SELECT id, template_id, account_id, account_code, account_name, description, debit_amount, credit_amount, sort_order, created_at FROM finance_voucher_template_lines WHERE id = $1")
+        match sqlx::query_as("SELECT * FROM finance_voucher_template_lines WHERE id = $1")
             .bind(entry_id)
             .fetch_one(&state.pool)
             .await
@@ -1868,7 +1839,7 @@ async fn reorder_template_entries_handler(
         Vec<crate::services::finance::voucher_template::VoucherTemplateLine>,
         sqlx::Error,
     > = sqlx::query_as(
-        "SELECT id, template_id, account_id, account_code, account_name, description, debit_amount, credit_amount, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at",
+        "SELECT * FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at",
     )
     .bind(template_id)
     .fetch_all(&state.pool)
@@ -2113,7 +2084,7 @@ async fn toggle_generation_rule_handler(
                 crate::services::finance::voucher_generation::VoucherGenerationRule,
                 sqlx::Error,
             > = sqlx::query_as(
-                "SELECT id, tenant_id, name, description, source_type, source_module, template_id, trigger_condition, mapping_config, priority, status, created_by, created_at, updated_at FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2",
+                "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2",
             )
             .bind(tenant_id)
             .bind(rule_id)

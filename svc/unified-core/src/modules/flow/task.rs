@@ -8,9 +8,8 @@ use utoipa::ToSchema;
 
 use uuid::Uuid;
 
-use topems_shared_core::response::api_error;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::PaginatedResponse;
+use topems_shared::ApiResponse;
+use topems_shared_core::response::{api_error, PaginatedResponse};
 
 use super::models::{
     TaskActionRequest, TaskBatchRequest, TaskBatchResult, TaskFailure, TaskStats, WorkflowTask,

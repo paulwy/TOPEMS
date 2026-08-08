@@ -4,6 +4,7 @@ import type { ModuleNavConfig } from '@/lib/navigation/types';
 
 export const LOWCODE_PATHS = {
   root: '/lowcode',
+  dashboard: '/lowcode/dashboard',
   apps: '/lowcode/apps',
   forms: '/lowcode/forms',
   pages: '/lowcode/pages',
@@ -20,17 +21,28 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
   status: 'online',
   order: 90,
   description: '低代码应用构建平台',
-  permission: 'lowcode:read',
+  permission: 'lowcode:apps:read',
   routes: [
+    {
+      path: LOWCODE_PATHS.dashboard,
+      element: lazyWithRetry(() => import('@/pages/lowcode/DashboardPage'), 'DashboardPage'),
+      module: 'lowcode',
+      title: '低代码平台概览',
+      code: 'lowcode-dashboard',
+      requiredPermissions: ['lowcode:dashboard:read'],
+      action: 'read',
+      template: 'dashboard',
+      group: 'overview',
+    },
     {
       path: LOWCODE_PATHS.apps,
       element: lazyWithRetry(() => import('@/pages/lowcode/AppListPage'), 'AppListPage'),
       module: 'lowcode',
       code: 'lowcode-apps',
-      title: '应用管理',
+      title: '应用档案',
       template: 'list',
       group: 'master',
-      requiredPermissions: ['lowcode:read'],
+      requiredPermissions: ['lowcode:apps:read'],
       action: 'read',
     },
     {
@@ -82,8 +94,19 @@ export const lowcodeNavConfig: ModuleNavConfig = {
   order: 90,
   navItems: [
     {
+      code: 'lowcode-dashboard',
+      label: '低代码平台概览',
+      icon: 'LayoutDashboard',
+      path: LOWCODE_PATHS.dashboard,
+      permission: 'lowcode:dashboard:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: '低代码平台数据概览',
+    },
+    {
       code: 'lowcode-apps',
-      label: '应用管理',
+      label: '应用档案',
       path: LOWCODE_PATHS.apps,
       group: 'master',
       showInSidebar: true,

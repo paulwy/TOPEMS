@@ -26,7 +26,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
   status: 'online',
   order: 5,
   description: '告警管理、指标监控、系统日志、健康检查',
-  permission: 'monitor:read',
+  permission: 'monitor:dashboard:read',
   routes: [
     {
       path: MONITOR_PATHS.dashboard,
@@ -39,7 +39,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '监控仪表盘',
       template: 'dashboard',
       group: 'overview',
-      requiredPermissions: ['monitor:read'],
+      requiredPermissions: ['monitor:dashboard:read'],
       action: 'read',
     },
     {
@@ -53,7 +53,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '告警中心',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['monitor:alert:read', 'monitor:read'],
+      requiredPermissions: ['monitor:alert:read', 'monitor:dashboard:read'],
       action: 'read',
     },
     {
@@ -67,7 +67,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '告警历史',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['monitor:alert:read', 'monitor:read'],
+      requiredPermissions: ['monitor:alert:read', 'monitor:dashboard:read'],
       action: 'read',
     },
     {
@@ -81,7 +81,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '告警规则',
       template: 'list',
       group: 'setting',
-      requiredPermissions: ['monitor:rule:read', 'monitor:read'],
+      requiredPermissions: ['monitor:rule:read', 'monitor:dashboard:read'],
       action: 'read',
     },
     {
@@ -95,7 +95,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '指标监控',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['monitor:metric:read', 'monitor:read'],
+      requiredPermissions: ['monitor:metric:read', 'monitor:dashboard:read'],
       action: 'read',
     },
     {
@@ -106,7 +106,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '系统日志',
       template: 'list',
       group: 'analytics',
-      requiredPermissions: ['monitor:log:read', 'monitor:read'],
+      requiredPermissions: ['monitor:log:read', 'monitor:dashboard:read'],
       action: 'read',
     },
     {
@@ -120,7 +120,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '监控设置',
       template: 'settings',
       group: 'setting',
-      requiredPermissions: ['monitor:admin'],
+      requiredPermissions: ['monitor:dashboard:admin'],
       action: 'admin',
     },
   ],
@@ -132,7 +132,7 @@ export const monitorNavConfig: ModuleNavConfig = {
   name: '系统监控',
   icon: 'Activity',
   path: MONITOR_PATHS.root,
-  permission: 'monitor:read',
+  permission: 'monitor:dashboard:read',
   source: 'core',
   suite: 'platform',
   status: 'online',
@@ -141,10 +141,10 @@ export const monitorNavConfig: ModuleNavConfig = {
   navItems: [
     {
       code: 'monitor-dashboard',
-      label: '仪表盘',
+      label: '系统监控概览',
       icon: 'LayoutDashboard',
       path: MONITOR_PATHS.dashboard,
-      permission: 'monitor:read',
+      permission: 'monitor:dashboard:read',
       order: 0,
       group: 'overview',
       showInTabs: true,
@@ -208,7 +208,7 @@ export const monitorNavConfig: ModuleNavConfig = {
       label: '监控设置',
       icon: 'Settings',
       path: MONITOR_PATHS.settings,
-      permission: 'monitor:admin',
+      permission: 'monitor:dashboard:admin',
       order: 1,
       group: 'setting',
       description: '监控设置',

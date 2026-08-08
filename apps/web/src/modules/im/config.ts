@@ -6,6 +6,7 @@ import type { ModuleNavConfig } from '@/lib/navigation/types';
 // 组件中应引用 IM_PATHS.xxx，而非硬编码字符串
 export const IM_PATHS = {
   root: '/im',
+  dashboard: '/im/dashboard',
   mail: '/im/mail',
 } as const;
 
@@ -21,15 +22,26 @@ export const imModuleConfig: RouteModuleConfig = {
   frontendOnly: true,
   order: 22,
   description: '邮件管理、即时通讯',
-  permission: 'im:read',
+  permission: 'im:mail:read',
   routes: [
+    {
+      path: IM_PATHS.dashboard,
+      element: lazyWithRetry(() => import('@/pages/im/DashboardPage'), 'DashboardPage'),
+      module: 'im',
+      title: '即时通讯概览',
+      code: 'im-dashboard',
+      requiredPermissions: ['im:dashboard:read'],
+      action: 'read',
+      template: 'dashboard',
+      group: 'overview',
+    },
     {
       path: IM_PATHS.mail,
       element: lazyWithRetry(() => import('@/pages/im/MailPage'), 'MailPage'),
       module: 'im',
-      title: '邮件管理',
+      title: '邮件列表',
       code: 'im-mail',
-      requiredPermissions: ['im:mail:read', 'im:read'],
+      requiredPermissions: ['im:mail:read', 'im:mail:read'],
       action: 'read',
       template: 'list',
       group: 'business',
@@ -43,7 +55,7 @@ export const imNavConfig: ModuleNavConfig = {
   name: '即时通讯',
   icon: 'MessageSquare',
   path: IM_PATHS.root,
-  permission: 'im:read',
+  permission: 'im:mail:read',
   source: 'plugin',
   suite: 'collaboration',
   status: 'online',
@@ -51,8 +63,19 @@ export const imNavConfig: ModuleNavConfig = {
   description: '邮件管理、即时通讯',
   navItems: [
     {
+      code: 'im-dashboard',
+      label: '即时通讯概览',
+      icon: 'LayoutDashboard',
+      path: IM_PATHS.dashboard,
+      permission: 'im:dashboard:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: '即时通讯数据概览',
+    },
+    {
       code: 'im-mail',
-      label: '邮件管理',
+      label: '邮件列表',
       icon: 'Mail',
       path: IM_PATHS.mail,
       permission: 'im:mail:read',

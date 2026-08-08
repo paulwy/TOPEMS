@@ -33,6 +33,7 @@ import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { AUTH_PATHS } from '@/routes/auth';
 import GlobalSearchBar from '../GlobalSearchBar';
+import { ThemeSelector } from '../ThemeSelector';
 import { GlobalActions, UserMenu } from '@/layouts/components';
 
 export interface AppHeaderProps {
@@ -505,6 +506,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   查看全部通知
                 </MenuItem>
               </Menu>
+              <ThemeSelector showMenu={true} />
               <Divider
                 orientation='vertical'
                 flexItem
@@ -514,6 +516,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 user={user}
                 onProfileClick={() => navigate(DASHBOARD_PATHS.profile)}
                 onAccountSettingsClick={() => navigate(DASHBOARD_PATHS.profile)}
+                onHelpCenterClick={() => navigate(DASHBOARD_PATHS.helpCenter)}
                 onLogout={() => {
                   logout();
                   navigate(AUTH_PATHS.login);

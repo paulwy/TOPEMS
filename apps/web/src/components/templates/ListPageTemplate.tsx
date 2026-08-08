@@ -3817,19 +3817,61 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                     </Menu>
                   </div>
                 )}
-                {/* 自定义操作按钮 */}
-                {(effectiveActions || []).map((action, index) => (
-                  <Button
-                    key={index}
-                    variant={action.variant || 'contained'}
-                    size='small'
-                    startIcon={action.icon}
-                    onClick={action.onClick}
-                    sx={{ whiteSpace: 'nowrap' }}
-                  >
-                    {action.label}
-                  </Button>
-                ))}
+                {/* 自定义操作按钮（移动端溢出处理） */}
+                {(() => {
+                  const actions = effectiveActions || [];
+                  const visibleActions = isMobile ? actions.slice(0, 2) : actions;
+                  const hiddenActions = isMobile ? actions.slice(2) : [];
+                  const [mobileMenuEl, setMobileMenuEl] = React.useState<HTMLElement | null>(null);
+                  return (
+                    <>
+                      {visibleActions.map((action, index) => (
+                        <Button
+                          key={index}
+                          variant={action.variant || 'contained'}
+                          size='small'
+                          startIcon={!isMobile ? action.icon : undefined}
+                          onClick={action.onClick}
+                          sx={{ whiteSpace: 'nowrap' }}
+                        >
+                          {!isMobile ? action.label : (action.label && action.label.length > 4 ? action.label.slice(0, 4) : action.label)}
+                        </Button>
+                      ))}
+                      {hiddenActions.length > 0 && (
+                        <>
+                          <Tooltip title='更多操作'>
+                            <IconButton
+                              size='small'
+                              aria-label='更多'
+                              onClick={(e) => setMobileMenuEl(e.currentTarget)}
+                            >
+                              <MoreHorizontal style={{ width: 20, height: 20 }} />
+                            </IconButton>
+                          </Tooltip>
+                          <Menu
+                            anchorEl={mobileMenuEl}
+                            open={Boolean(mobileMenuEl)}
+                            onClose={() => setMobileMenuEl(null)}
+                            sx={{ '& .MuiMenu-paper': { minWidth: 180 } }}
+                          >
+                            {hiddenActions.map((action, idx) => (
+                              <MenuItem
+                                key={idx}
+                                onClick={() => {
+                                  setMobileMenuEl(null);
+                                  action.onClick?.();
+                                }}
+                              >
+                                {action.icon && <ListItemIcon>{action.icon}</ListItemIcon>}
+                                <ListItemText>{action.label}</ListItemText>
+                              </MenuItem>
+                            ))}
+                          </Menu>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
                 {/* 批量操作按钮 */}
                 {hasBatchActions && selectedIds.size > 0 && (
                   <div>

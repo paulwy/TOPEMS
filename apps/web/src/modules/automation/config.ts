@@ -29,7 +29,7 @@ export const automationModuleConfig: RouteModuleConfig = {
   status: 'online',
   order: 70,
   description: '自动化编排：触发器 → 工作流 / 集成 / 低代码 动作的统一编排中心',
-  permission: 'automation:read',
+  permission: 'automation:dashboard:read',
   routes: [
     {
       path: AUTOMATION_PATHS.dashboard,
@@ -42,7 +42,7 @@ export const automationModuleConfig: RouteModuleConfig = {
       title: '自动化总览',
       template: 'dashboard',
       group: 'overview',
-      requiredPermissions: ['automation:read'],
+      requiredPermissions: ['automation:dashboard:read'],
       action: 'read',
     },
     {
@@ -110,7 +110,7 @@ export const automationNavConfig: ModuleNavConfig = {
   name: '自动化',
   icon: 'Zap',
   path: AUTOMATION_PATHS.root,
-  permission: 'automation:read',
+  permission: 'automation:dashboard:read',
   source: 'core',
   suite: 'platform',
   status: 'online',
@@ -122,7 +122,7 @@ export const automationNavConfig: ModuleNavConfig = {
       label: '自动化总览',
       icon: 'LayoutDashboard',
       path: AUTOMATION_PATHS.dashboard,
-      permission: 'automation:read',
+      permission: 'automation:dashboard:read',
       order: 0,
       group: 'overview',
       showInTabs: true,

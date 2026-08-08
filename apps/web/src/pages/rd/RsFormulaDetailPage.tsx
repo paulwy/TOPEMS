@@ -323,6 +323,8 @@ const RsFormulaDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        backHref={RD_PATHS.formula}
+        detailItemName={formula?.name || formula?.code || '配方详情'}
         infoCard={infoCard}
         sections={sections}
         sidebar={sidebar}

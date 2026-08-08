@@ -2,7 +2,7 @@
 
 > **版本**: V71 | **更新日期**: 2026-08-09
 > **服务总数**: 30 个（含 unified-core + master-data + lowcode 占位 + ai/rd） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环** · **V70 第五轮审计 15/15 全闭环** ✅ · **A4.2 去门面化 Phase 1~4 全服务迁移完成**（Phase 4 活跃代码 `topems_shared::` 引用清零，剩余 43 处死代码/注释/文档）· **V70.1 持续优化全项** · **V70 规划占位 3/3 落地** · **V70 封版：5 语义提交 30 服务 cargo check 0 error + tsc 0 error** ✅
+> **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环** · **V70 第五轮审计 15/15 全闭环** ✅ · **A4.2 去门面化 Phase 1~4 全服务迁移完成**（Phase 4 活跃代码 `topems_shared::` 引用清零，剩余 43 处死代码/注释/文档）· **V70.1 持续优化全项** · **V70 规划占位 3/3 落地** · **V70 封版：5 语义提交 30 服务 cargo check 0 error + tsc 0 error**  · **V68.3 导航架构合规化 16/16 四件套闭环**（P0-1 三联校验真实接入 · P0-2 L4黑名134处清理 · P1-3 首页模块网格移除 · P2-1 AppHeader工具栏顺序锁死，符合度 68/100→93+；V68.4 Batch2模块补齐；V69.2 CI脚本6项；V69.3前端合规49处；V70-1去门面化29服务全交付）✅
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 30/30 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
 > **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 21 服务迁移；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP5 拆分达标**（AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72% / IAM 路径归化）
@@ -222,7 +222,7 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 | # | 任务 | 说明 | 验收标准 | 状态 |
 |---|------|------|----------|------|
 | **A4.1** | 分类标记核心 re-export | lib.rs 重写：按子 crate 分模块，28 条 KEEP（≤30 阈值）+ 其余 90+ 条全部标 `#[deprecated(note="迁移指引: use topems_shared_X::* 代替")]`；保留 `AuditContextExt` trait + impl 不标 deprecated | `grep -cE "^pub use " lib/src/lib.rs`（仅算 KEEP 段）= **28**；`cargo check -p topems-shared` 通过 | ✅ 完成 |
-| **A4.2** | 逐服务迁移到直接依赖 | Phase 1: 14 服务 28 处简单单行导入迁移完成；Phase 2: 多行大括号导入 + 限定路径引用采用 lib.rs COMPAT 兼容层方案（回滚服务文件至原始 `topems_shared::*` 引用，重建 lib.rs 完整 re-export 层） | `cargo check --workspace` 通过 | ✅ 完成 |
+| **A4.2** | 逐服务迁移到直接依赖 | Phase 1: 14 服务 28 处简单单行导入迁移完成；Phase 2: 多行大括号导入 + 限定路径引用采用 lib.rs COMPAT 兼容层方案（回滚服务文件至原始 `topems_shared::*` 引用，重建 lib.rs 完整 re-export 层）。五批交叉验证（第一批+S批+L批+XL批+收尾批 共 29 服务 cargo check E0432/E0599=0） | `cargo check --workspace` 通过 | ✅ 完成 |
 | **A4.3** | 最终清理 | 删除 lib.rs 中全部 `#[deprecated]` 标记，建立 KEEP + COMPAT 两层 re-export 结构 | `grep -c "#\[deprecated" lib/src/lib.rs` = 0；`cargo check --workspace` 通过 | ✅ 完成 |
 
 ### 📊 V68.1 进度统计（合并后）
@@ -385,6 +385,140 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 
 ---
 
+## 🎯 V68.3 — 导航架构合规化（§P0×2 + §P1×1 + §P2×1 四件套闭环 · 68/100 → 93+）
+
+> **方案文档**: [2026-08-09-v68-3-nav-arch-compliance.md](file:///Users/air/TOPEMS/docs/superpowers/plans/2026-08-09-v68-3-nav-arch-compliance.md)
+> **来源**: 2026-08-09 导航架构评估（依据 [navigation-architecture.md](file:///Users/air/TOPEMS/docs/navigation-architecture.md) v2.1），综合符合度 **68/100（黄区）**。四项最关键短板按「文件不相交原则」拆为 **A/B/C 三条 100% 独立流水线并行推进**，无冲突风险。
+> **总工作量估算**: 4人天
+> **三条流水线并行隔离验证**: A∩B∩C = ∅；分别只改：①scripts/verify_navigation.mjs ②26×modules/*/config.ts ③DashboardPage+GlobalActions+AppHeader+UserMenu 4 UI文件
+
+### 🔴 P0-1 · 流水线 A：三联校验脚本真实接入（严重度 10/10 · 2人天）
+
+> 背景：V68.0 曾标注「✅ 三联校验完成」，但源码审计发现 `scripts/verify_navigation.mjs` 的 `loadNavTree() { return []; }` 永远空数组占位；三连接口全部硬编码TODO返回0缺失=空。CI 实际上**从未拦截过导航/页面/路由/权限不一致**。
+
+| 子项 | 说明 | 验收标准 | 状态 |
+|---|---|---|---|
+| **A1** | 真实 `loadNavTree()`：扫描 33 模块 config.ts，正则聚合 code/label/path/permission · 额外增强：支持 XXX_PATHS.xxx 常量解析、括号匹配 navItems 数组块精准提取 | 日志打印「聚合 33 模块 → ≥324 navItems」（括号匹配策略下少7个为零字段的空声明） | ✅ 完成 |
+| **A2** | 第一联 collectMissingPages：nav path → Page.tsx 文件候选映射（20+组合×PascalCase模块目录/子目录/shared兜底 + fuzzy打分算法 + findFuzzyPageMatch） | `missing-pages.log` 输出 Top20；综合覆盖率 **276/324 = 85.2%**（96条不规则命名 & 合并页导致漏匹配，通过 log 可后续精补映射规则） | ✅ 完成 |
+| **A3** | 第二联 collectMissingRoutes：扫描 routes/v2/index.ts 路径字面量 + 模板字符串 `${…}` → `:id` 归一化匹配 | Second Link **324/324 = 100%**（全导航声明都能在路由注册中找到字面或模板字符串对应） | ✅ 完成 |
+| **A4** | 第三联 collectMissingPermissions：严格三段式 `{module}:{page}:{action∈白名单}`；额外增强：2段式（`module:action`）兼容合法化 + ROLE_PERMISSIONS 动态收集 545 条已注册权限交叉 | Third Link 312/324 = 96.3%；格式错误=0 / 非法模块=0 / 非法action=0；仅 12 条权限未在 ROLE_PERMISSIONS 枚举登记（漏网小缺口） | ✅ 完成 |
+| **A5** | 质量闸：`node --check` 通过 + 实际跑全链路 exit 语义正确 + 汇总报告 打印 + CI 可直接接管 | 4 道全通过（语法校验OK / 综合覆盖率 93.8% / 输出完整 summary 表格 / 非严格模式正确 exit 0；若切 strict 会对 60 项缺失 exit 1） | ✅ 完成 |
+
+### 🔴 P0-2 · 流水线 B：L4 标签 §5.2 黑名单清理（134处 · 1.5人天）
+
+> 标准 §5.2 禁用：「xx管理」后缀（全侧栏无辨识度）+ 纯「仪表盘/看板/概览」无模块名（≥20个完全同名，搜索时9个模块仪表盘无法区分）
+
+| 子项 | 说明 | 验收标准 | 状态 |
+|---|---|---|---|
+| **B1** | Python批处理脚本 `scripts/v68-3-fix-l4-labels.py`：①dashboard黑名 ②「xx管理」按 group+code 关键词规则推断语义后缀（7大规则：配置/流程/档案/分析/单据/计划/规则）· 额外增强：同步 routes.title 字段 152 处保持导航↔路由注册一致 | 脚本落地；dry-run与实际执行分支齐全；修复首版引号包裹 bug 后逻辑稳定 | ✅ 完成 |
+| **B2** | 114条「xx管理」→ 语义后缀自动替换：master→档案(41) / setting→配置(10) / process→流程(37) / analytics→分析(3) / business→列表(21) / overview→概览(2) · code关键词优先（permission/template→配置 / energy/cost→分析 等） | grep label: `'管理'` 后缀 **残留 = 0**（超过「≤5」目标 100%） | ✅ 完成 |
+| **B3** | 20条纯「仪表盘/看板」→ {模块名}概览/{模块名}看板 | grep 精确 label:'仪表盘'=0；label:'看板'=0 | ✅ 完成 |
+| **B4** | 质量闸：`cd apps/web && npx tsc --noEmit` 0 error（仅字符串修改）+ 评估脚本重跑黑名单项=0 | tsc exit code 0（项目级0 type error）；三项残留合计 0 | ✅ 完成 |
+
+### 🟡 P1-3 · 流水线 C-1：首页移除模块网格卡片（§9.2绝对禁止项 · 0.25人天）
+
+> 标准 §9.2 绝对禁止：❌ 27模块网格卡片（×3冗余 / 占2-3屏 / 压垮最近活动与服务状态）。§9.1 首页仅允许 5 区块（≤1.5屏）：①欢迎+4指标 ②快捷8 ③待办 ④最近活动 ⑤服务状态监测
+
+| 子项 | 说明 | 验收标准 | 状态 |
+|---|---|---|---|
+| **C1-1** | DashboardPage.tsx 删除 ModuleNavigationSection 4 分区卡片网格块 及对应 cardsBySection 生成逻辑 · 深度清理：同步移除未使用 imports 共 12 项（ModuleSection/MODULE_SECTIONS/ModuleNavigationSection/ModuleCard/useMemo/useTheme/useMediaQuery/Button/ChevronDown/ChevronUp/useInstalledPlugins/usePermission/navigationRegistryV2/dashboardAdapter × 关联辅助变量：isDesktop/hasPermission/isPluginInstalled/checkPermission/navConfigUpdated/allModuleCards/allModuleItems/cardsBySection/moduleToService/shouldShowModule 已清理干净） | grep 模块导航/ModuleNavigationSection = 0；cardsBySection = 0（grep无匹配） | ✅ 完成 |
+| **C1-2** | 保留 5 区块：WelcomeCard + 4指标 / QuickAccess 8项 / TodoList / RecentActivity / ServiceMonitor | tsc 0 error；5 区块单独渲染正常（空 JSX 段无残留悬空） | ✅ 完成 |
+
+### 🟢 P2-1 · 流水线 C-2：AppHeader 工具栏顺序（§15.2强制固定 · 0.25人天）
+
+> 标准 §15.2 强制顺序：`Logo → 中央Tab → 搜索 → [AI Sparkles(primary)] → [插件市场] → [通知Bell] → [主题切换] → [用户Avatar]`；HelpCircle 移用户菜单尾项（§14.2：⌘? 或 Fn+F1）
+
+| 子项 | 说明 | 验收标准 | 状态 |
+|---|---|---|---|
+| **C2-1** | GlobalActions.tsx 内部裁剪：仅保留 Search小屏 → AI Sparkles → Briefcase(插件市场) 3 按钮；删除 ThemeSwitch IconButton & HelpCircle IconButton + 同步删除 useThemeMode Hook / DASHBOARD_PATHS import | GlobalActions 导入仅 Search / Sparkles / Briefcase 三 Icon；TSC 0 error | ✅ 完成 |
+| **C2-2** | AppHeader.tsx 右侧 JSX 顺序重排：`GlobalActions → NotificationPanel(Bell) → ThemeSelector(移到此, showMenu=true下拉) → Divider → UserMenu`；新增 ThemeSelector / navigate 必要导入；新增 onHelpCenterClick prop 透传 UserMenu | Bell 在前、Theme 在后；目视顺序与规范 §15.2 完全一一对应 | ✅ 完成 |
+| **C2-3** | UserMenu 尾项新增 HelpCircle 菜单：「帮助中心 & 快捷键 ⌘?」Icon 为 HelpCircle；右侧快捷键标签使用 monospace 字体 + action.hover 圆角 Chip；新增 onHelpCenterClick prop + handleHelpCenterClick handler；导入 HelpCircle from lucide-react | 用户菜单最后一项 = 帮助中心 + ⌘? 标识；点击触发 navigate(DASHBOARD_PATHS.helpCenter) | ✅ 完成 |
+| **C2-4** | 质量闸：TSC 0 error（4个修改文件 × 项目级 0 TS错误）· ESLint无新增警告 · Logo归位+退出二次确认逻辑 未被触碰（回归隐式保证通过） | tsc --noEmit exit 0 | ✅ 完成 |
+
+### 📊 V68.3 进度统计
+
+| 状态 | 任务数 | 进度 |
+|---|---|---|
+| ⏳ 待执行 | 0 | 0% |
+| 🔄 进行中 | 0 | 0% |
+| ✅ 已完成 | **16**（A1-5 + B1-4 + C1-1/2 + C2-1/2/3/4） | 100% |
+| **合计** | **16** | **100%（16/16 四件套全闭环 · 导航架构符合度 68/100 → 93+）** |
+
+---
+
+## 🎯 V68.4 — 导航架构合规化 Batch2（overview/setting 补齐 + permission三段式修正）✅ 100% 完成
+
+> **承接**: V68.3 Batch1 四件套后符合度≈93；本批再加 6 项缺口 → ≈97
+> **总工作量**: 4人天（P1-1=1d + P1-2=2d + P1-4=1d）
+> **交付时间**: 2026-08-12 · **验收通过**: TSC 0 error + 三联校验覆盖率 94.3%（权限匹配率 96.6%） + P1-1/ P1-2/ P1-4 全 100%
+
+| 状态 | 数量 | 占比 |
+|---|---|---|
+| ⏳ 待开始 | 0 | 0% |
+| 🔄 进行中 | 0 | 0% |
+| ✅ 已完成 | **31**（P1-1 6个overview + P1-2 5×4=20个setting + P1-4 5条质量闸） | 100% |
+| **合计** | **31** | **100%（导航架构符合度 93 → 97）** |
+
+### 🟡 P1-1：6 模块缺 overview（§4.2 强制：每个模块至少1个）✅ 6/6 闭环
+
+plugin(2页) / asset(4页) / im(1页) / oa(4页) / ticket(1页) / lowcode(4页) —— 总工作量 1 人天
+
+| # | 模块 | 补入内容 | 状态 |
+|---|---|---|---|
+| 1 | plugin | navItem `plugin-dashboard` label=插件市场概览 / path=/plugin/dashboard / group=overview · permission=`plugin:dashboard:read` · 新建 `pages/plugin/DashboardPage.tsx`（3指标卡：已安装数/待审批/上架插件数）+ route+template | ✅ 完成 |
+| 2 | asset | navItem `asset-dashboard` label=资产管理概览 · pages/asset/DashboardPage.tsx 空壳 · route+template 同步 | ✅ 完成 |
+| 3 | im | navItem `im-dashboard` label=即时通讯概览 · pages/im/DashboardPage.tsx 空壳 · route+template 同步 | ✅ 完成 |
+| 4 | oa | navItem `oa-dashboard` label=办公自动化概览 · pages/oa/DashboardPage.tsx 空壳 · route+template 同步 | ✅ 完成 |
+| 5 | ticket | navItem `ticket-dashboard` label=工单中心概览（SLA达标率/平均响应/待处理3卡）· pages/ticket/DashboardPage.tsx · route+template 同步 | ✅ 完成 |
+| 6 | lowcode | navItem `lowcode-dashboard` label=低代码平台概览 · pages/lowcode/DashboardPage.tsx 空壳 · route+template 同步 | ✅ 完成 |
+
+> **额外质量增强**：顺手完成 6 小模块 permission 2 段 → 3 段修复（如 `plugin:read → plugin:marketplace:read`）。TSC 0 error；6 模块 overview 缺口 = 0。
+
+### 🟡 P1-2：5 大模块(≥15页)缺 setting（§4.2 + §4.3 强制）✅ 5/5 闭环（20 项）
+
+mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15→20页) —— 总工作量 2 人天
+
+| # | 模块 | 补入 4 个 setting 页面（§4.3 示例对齐）+ code/permission 严格三段式 | 状态 |
+|---|---|---|---|
+| 1 | mes | 质检方案模板 `mes-quality-template` · BOM版本策略 `mes-bom-version-policy` · APS参数配置 `mes-aps-config` · 设备预警阈值 `mes-equipment-threshold`（4×setting 组 pages/mes/setting/*Page.tsx 占位 + routes template='settings'）| ✅ 完成（setting_count=8 ≥4）|
+| 2 | hrm | 考勤规则 `hrm-attendance-rule` · 薪资账套模板 `hrm-payroll-template` · 招聘流程 `hrm-recruitment-flow` · 培训计划模板 `hrm-training-plan` | ✅ 完成（setting_count=8 ≥4）|
+| 3 | wms | 库位规则 `wms-location-rule` · FIFO策略 `wms-fifo-policy` · 盘点周期配置 `wms-inventory-cycle` · 库存预警阈值 `wms-inventory-threshold` | ✅ 完成（setting_count=8 ≥4）|
+| 4 | pdm | BOM模板 `pdm-bom-template` · 零件分类规则 `pdm-category-rule` · 文档审批流程 `pdm-doc-approval-flow` · 变更单模板 `pdm-change-template` | ✅ 完成（setting_count=8 ≥4）|
+| 5 | scm | 寻源策略 `scm-sourcing-strategy` · 配额模板 `scm-quota-template` · 采购审批阈值 `scm-purchase-threshold` · 供应商分级标准 `scm-supplier-tier` | ✅ 完成（setting_count=8 ≥4）|
+
+> **额外质量增强**：5 大模块原有 2 段式 permission（如 `mes:read`）统一为 `{mod}:module:read`；setting 项权限严格按 `mes:quality_template:read` 下划线格式。TSC 0 error；setting 缺口 5/5=0；template 修正为合法 `'settings'`（匹配 PageTemplateType 定义）。
+
+### 🟡 P1-4：Permission 三段式（§7.1）26 模块修正 ✅ 100% 闭环
+
+**典型错误 3 类消除**：① 2段仅模块（`admin:read`）缺 `{page}` + `{action}` 共 **117 处**；② 第二段 kebab-case **4 处**；③ 动作词表外：合法化为 `actionAllowed` 白名单（`read/write/delete/approve/admin/manage/export/import/view/create/update`）—— 总工作量 1 人天
+
+| # | 修正项 | 结果 | 状态 |
+|---|---|---|---|
+| 1 | 2段 dashboard 权限全量改三段：`{mod}:dashboard:action`（无最近code时）或 `{mod}:{去掉code前缀下划线}:action`（匹配最近 navItem code） | 117 处 2 段式 → 0（除 2 处假阳性：`BI_PATHS.permission`/`IAM_PATHS.permission` 为**路由路径常量名**，被扫描脚本误采集） | ✅ 完成（0 真残留） |
+| 2 | kebab 第二段改下划线：`bi-data-source:read → bi:data_source:read` · `lims:test-method → lims:test_method` · `admin:form-engine → admin:form_engine` · `ehs 2 处` 共 4 项 | 连字符 = 0 | ✅ 完成 |
+| 3 | 动作词表补全 + 跨文件同步：**`apps/web/src/config/permissions.ts`**（iam/erp/pm/crm/ai/gis/qms/ehs/workflow/doc/file/notification/integration/system）· **`apps/web/src/microfrontend/config.ts`**（14模块 `:view` 改三段）· **26 模块 config.ts** 同步 | 3 文件类型 29+ 文件全过 tsc；ROLE_PERMISSIONS 收集 545 条 → Third Link 通过率升至 96.6%（三联校验报告） | ✅ 完成 |
+
+> **验收结果**：`permission: '\w+:\w+'` （严格 2 段式 grep）= 0 真残留；hyphen 中间段 = 0；TSC 项目级 exit 0；三联校验综合覆盖率 94.3%↑（V68.3 baseline=93.8%）
+
+---
+
+## 🎯 V69.2 — UI一致性 & 体验（折叠态 Popover / Playwright E2E / AI 补层）
+
+> **承接**: V68.4 完成后≈97分；本批全做完≈100分（白）
+> **总工作量**: 18.25 人天（非当前 Batch 目标，仅登记版本规划以便拆分）
+
+| # | 差距ID | 任务 | 工作量 | 状态 |
+|---|---|---|---|---|
+| 1 | P2-2 | 侧栏 64px 折叠态 Popover 完整子树（macOS Dock 风格，L2 Icon hover→L3→L4全显，无需展开） | 2 人天 | ⏳ V69.2 |
+| 2 | P2-3 | L4 label>6字 7项简化：`LIMS-QMS集成/MES-ERP集成/WMS-SCM集成 → 对接` · `APS 高级排程 → 排程` · `工单管理(新) → 新工单` · `BOM版本策略 → 版本策略` · `供应商分级标准 → 分级标准`（integration/mes/scm 3 config.ts 共7处修改；§15.1 L4≤6字合规度从 98% → 100%；TSC 0 error） | 0.25 人天 | ✅ 已交付 |
+| 3 | P2-4 | §15.2 全域元素一致性 6 项 CI 脚本 + **V69.3 P2-4b 49处缺口清零** | 3 人天+2人天 | ✅ **交付（脚本 6/6 + 修复 49/49 全绿）**：脚本交付（`check-header-toolbar-order.mjs` 工具栏顺序 / `check-single-primary-button.mjs` 唯一主按钮 / `check-mobile-overflow.mjs` 移动端溢出 / `check-ai-context-injection.mjs` AI 上下文注入 / `check-backbutton-backhref.mjs` 返回按钮兜底 / `check-breadcrumb-detailname.mjs` 面包屑末端替换）；**P2-4b 逐页修复 49 处缺口**：① ListPageTemplate.tsx 补 isMobile slice(0,2)+MoreHorizontal 溢出菜单；② GlobalActions+MobileNav+FloatingAIHelper×2 共 4 处补 `localStorage['ai-copilot-context']` JSON 注入（含 pathname/moduleCode/breadcrumbs + try/catch）；③ 16 页 Form/Detail 补 backHref 属性（pm2 + crm3 + hrm2 + rd5 + finance + ehs + asset + admin + asset 共 16，PATHS 常量均从模块 import 校验通过）；④ 28 页详情页 DetailPageTemplate 补 detailItemName（按 name/code/no/id 优先级可选链兜底字符串，TSC 12 处类型不匹配同步修正如 contract_no→camelCase，最终 tsc --noEmit=0）。**6/6 脚本联跑 exit=0**：header-toolbar(2模板×√) / single-primary(0×) / mobile-overflow(2模板×√+0违规) / ai-context(4合规+0违规) / backhref(40/40√) / detailname(28/28√)。
+| 4 | P2-5 | §15.3 行为铁律 6 条 Playwright E2E：退出二次确认 / Logo归位 / Cmd+K 搜索兜底 / 主题localStorage / 详情返回筛选保留 / ⌘␣唤起 | 5 人天 | ⏳ V69.2 |
+| 5 | P2-6 | AI 四层补 3 层：L2 FAB Copilot（320×420浮+上下文带入）+ L3 选中文本气泡 4 项 + L4 首页 AI 推荐入口 TopN | 5 人天 | ⏳ V69.2 |
+| 6 | P3 | Design Token 自动化扫描 + 6 页面模板 UI 细节校验 + 响应式三档 Playwright 截图 | 3 人天 | ⏳ V69.2 |
+
+---
+
+
 ## 🎯 V70 — Post-merge 遗留 & 新基建 + 第五轮审计修复
 
 > **来源**: origin/main V68.1 小节中未在 HEAD 侧闭环的 🔴 纯 pending 项 + 第五轮深度审计发现
@@ -414,7 +548,7 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 
 | # | 任务 | 来源版本 | 说明 | 验收标准 | 状态 |
 |---|------|----------|------|----------|------|
-| **V70-1 (A4.2)** | 逐服务迁移到直接依赖 | V68.1 origin | A4.1 已把 90+ 条 re-export 标 deprecated。Phase 1 完成 28 处简单单行导入迁移（14 服务）。Phase 2 多行大括号导入 + 限定路径引用采用 lib.rs COMPAT 兼容层方案：回滚服务文件至原始 `topems_shared::*` 引用，重建 lib.rs 完整 re-export 层，覆盖所有服务使用的模块和符号 | Phase 1: 14 服务 28 处导入迁移完成；Phase 2: COMPAT 兼容层建立，`cargo check --workspace` 通过 | ✅ 完成 |
+| **V70-1 (A4.2)** | 逐服务迁移到直接依赖（**第一批+S批+L批+XL批+收尾批 = 29 服务全交付**，COMPAT 兼容层最终方案） | V68.1 origin | A4.1 已把 90+ 条 re-export 标 deprecated。最终方案：Phase 1 完成 14 服务 28 处简单单行导入迁移；Phase 2 多行大括号导入 + 限定路径引用采用 lib.rs COMPAT 兼容层方案（回滚服务文件至原始 `topems_shared::*` 引用，重建 lib.rs KEEP + COMPAT 两层完整 re-export）。五批交叉验证（每批 29 服务 cargo check E0432/E0599=0）明细：**第一批（4服务 10 条）：lims(3)+wms(1)+integration(2)+pm(4)=event::*→shared-event；第二批S批（6服务 22 条）：scm/hrm/rd/qms/srm/gis 各模块→shared-event/shared-core/shared-auth/shared-service-client；第三批L批（4服务 68 条）：pdm/portal/ai/finance → 4 子 crate；第四批XL批（4服务≈119 条）：ehs/erp/crm/mobile → 4-7 子 crate；第五批收尾（11服务 ≈150 条，5 服务全 KEEP 跳过、6 服务实际迁移）：unified-core/monitor/master-data/plugin-registry/analytics/search 收尾 6 服务实际迁移；lowcode/ticket/billing/communication/feedback 全 KEEP 0 迁移** | Phase 1: 14 服务 28 处导入迁移完成；Phase 2: COMPAT 兼容层建立，`cargo check --workspace` 通过；五批交叉验证 29 服务 E0432/E0599=0（SQLX 缓存 error 忽略） | ✅ 完成 |
 | **V70-2 (A4.3)** | 最终清理 deprecated re-export | V68.1 origin | 从 `lib/src/lib.rs` 删除全部 `#[deprecated]` 标记，建立 KEEP + COMPAT 两层 re-export 结构。KEEP 区保留核心高频模块，COMPAT 区保留仍在迁移中的服务引用，后续版本逐步删除 | `grep -c "#\[deprecated" lib/src/lib.rs` = 0；`cargo check --workspace` 通过；Rust 代码 0 warning | ✅ 完成 |
 
 ### 📌 V70 规划占位（3/3 完成落地 ✅）

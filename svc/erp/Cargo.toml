@@ -6,7 +6,6 @@ authors.workspace = true
 description = "TOPEMS-ERP 企业资源计划系统"
 
 [dependencies]
-topems-shared = { path = "../../lib" }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -21,12 +20,12 @@ dotenv.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 reqwest = { workspace = true, features = ["blocking"] }
+topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
-topems-shared-db = { workspace = true }
-topems-shared-service-client = { workspace = true }
-topems-shared-event = { workspace = true }
-topems-shared-auth = { workspace = true }
-topems-shared-core = { workspace = true }
+topems-shared-event = { path = "../../lib/shared-event" }
+topems-shared-service-client = { path = "../../lib/shared-service-client" }
+topems-shared-core = { path = "../../lib/shared-core" }
+topems-shared-auth = { path = "../../lib/shared-auth" }
 utoipa.workspace = true
 lazy_static.workspace = true
 regex.workspace = true
@@ -39,8 +38,6 @@ hex = "0.4"
 async-trait.workspace = true
 
 [dev-dependencies]
-tower = { workspace = true }
-axum = { workspace = true }
 tokio-test.workspace = true
 
 [lib]

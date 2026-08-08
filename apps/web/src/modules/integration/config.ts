@@ -29,7 +29,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
   status: 'online',
   order: 6,
   description: '系统集成、数据同步、API管理',
-  permission: 'integration:read',
+  permission: 'integration:dashboard:read',
   routes: [
     {
       path: INTEGRATION_PATHS.dashboard,
@@ -42,7 +42,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: '集成概览',
       template: 'dashboard',
       group: 'overview',
-      requiredPermissions: ['integration:read'],
+      requiredPermissions: ['integration:dashboard:read'],
       action: 'read',
     },
     {
@@ -53,10 +53,10 @@ export const integrationModuleConfig: RouteModuleConfig = {
       ),
       module: 'integration',
       code: 'integration-connections',
-      title: '连接管理',
+      title: '连接档案',
       template: 'list',
       group: 'master',
-      requiredPermissions: ['integration:connection:read', 'integration:read'],
+      requiredPermissions: ['integration:connection:read', 'integration:dashboard:read'],
       action: 'read',
     },
     {
@@ -70,7 +70,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: '数据映射',
       template: 'list',
       group: 'master',
-      requiredPermissions: ['integration:mapping:read', 'integration:read'],
+      requiredPermissions: ['integration:mapping:read', 'integration:dashboard:read'],
       action: 'read',
     },
     {
@@ -84,7 +84,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: '事件日志',
       template: 'list',
       group: 'analytics',
-      requiredPermissions: ['integration:event:read', 'integration:read'],
+      requiredPermissions: ['integration:event:read', 'integration:dashboard:read'],
       action: 'read',
     },
     {
@@ -98,7 +98,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: 'ERP集成',
       template: 'detail',
       group: 'process',
-      requiredPermissions: ['integration:erp:read', 'integration:read'],
+      requiredPermissions: ['integration:erp:read', 'integration:dashboard:read'],
       action: 'read',
     },
     {
@@ -112,7 +112,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: 'LIMS-QMS集成',
       template: 'detail',
       group: 'process',
-      requiredPermissions: ['integration:lims:read', 'integration:read'],
+      requiredPermissions: ['integration:lims:read', 'integration:dashboard:read'],
       action: 'read',
     },
     {
@@ -126,7 +126,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: 'MES-ERP集成',
       template: 'detail',
       group: 'process',
-      requiredPermissions: ['integration:mes:read', 'integration:read'],
+      requiredPermissions: ['integration:mes:read', 'integration:dashboard:read'],
       action: 'read',
     },
     {
@@ -140,7 +140,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: 'WMS-SCM集成',
       template: 'detail',
       group: 'process',
-      requiredPermissions: ['integration:wms:read', 'integration:read'],
+      requiredPermissions: ['integration:wms:read', 'integration:dashboard:read'],
       action: 'read',
     },
     {
@@ -154,7 +154,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: '集成设置',
       template: 'settings',
       group: 'setting',
-      requiredPermissions: ['integration:admin'],
+      requiredPermissions: ['integration:dashboard:admin'],
       action: 'admin',
     },
   ],
@@ -166,7 +166,7 @@ export const integrationNavConfig: ModuleNavConfig = {
   name: '集成平台',
   icon: 'Plug',
   path: INTEGRATION_PATHS.root,
-  permission: 'integration:read',
+  permission: 'integration:dashboard:read',
   source: 'core',
   suite: 'platform',
   status: 'online',
@@ -178,7 +178,7 @@ export const integrationNavConfig: ModuleNavConfig = {
       label: '集成概览',
       icon: 'LayoutDashboard',
       path: INTEGRATION_PATHS.dashboard,
-      permission: 'integration:read',
+      permission: 'integration:dashboard:read',
       order: 0,
       group: 'overview',
       showInTabs: true,
@@ -186,7 +186,7 @@ export const integrationNavConfig: ModuleNavConfig = {
     },
     {
       code: 'integration-connections',
-      label: '连接管理',
+      label: '连接档案',
       icon: 'Plug',
       path: INTEGRATION_PATHS.connections,
       permission: 'integration:connection:read',
@@ -228,7 +228,7 @@ export const integrationNavConfig: ModuleNavConfig = {
     },
     {
       code: 'integration-lims-qms',
-      label: 'LIMS-QMS集成',
+      label: '对接',
       icon: 'FlaskConical',
       path: INTEGRATION_PATHS.limsQms,
       permission: 'integration:lims:read',
@@ -238,7 +238,7 @@ export const integrationNavConfig: ModuleNavConfig = {
     },
     {
       code: 'integration-mes-erp',
-      label: 'MES-ERP集成',
+      label: '对接',
       icon: 'Factory',
       path: INTEGRATION_PATHS.mesErp,
       permission: 'integration:mes:read',
@@ -248,7 +248,7 @@ export const integrationNavConfig: ModuleNavConfig = {
     },
     {
       code: 'integration-wms-scm',
-      label: 'WMS-SCM集成',
+      label: '对接',
       icon: 'Warehouse',
       path: INTEGRATION_PATHS.wmsScm,
       permission: 'integration:wms:read',
@@ -261,7 +261,7 @@ export const integrationNavConfig: ModuleNavConfig = {
       label: '集成设置',
       icon: 'Settings',
       path: INTEGRATION_PATHS.settings,
-      permission: 'integration:admin',
+      permission: 'integration:dashboard:admin',
       order: 1,
       group: 'setting',
       description: '集成设置',

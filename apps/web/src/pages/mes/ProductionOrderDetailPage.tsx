@@ -546,6 +546,7 @@ const ProductionOrderDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={order?.product_name || order?.order_number || order?.id || '工单详情'}
         backHref={MES_PATHS.productionOrders}
         loading={loading}
         error={errorMessage}

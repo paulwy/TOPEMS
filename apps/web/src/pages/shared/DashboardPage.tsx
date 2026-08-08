@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
@@ -16,9 +16,6 @@ import {
   ListItemIcon,
   ListItemText,
   Checkbox,
-  Button,
-  useTheme,
-  useMediaQuery,
 } from '@mui/material';
 import {
   User,
@@ -29,8 +26,6 @@ import {
   GitBranch,
   FileText,
   Folder,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import { docApi } from '@/api/doc';
 import { workflowApi } from '@/api/workflow';
@@ -43,31 +38,22 @@ import { biApi } from '@/api/bi';
 import { scmApi } from '@/api/scm';
 // V34.0: BFF GraphQL 聚合 API
 import { getDashboard, completeTodoGql, subscribeServiceHealth } from '@/api/bff';
-import { useInstalledPlugins } from '../../context/PluginContext';
-import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/hooks/useAuth';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { MetricCard } from '@/components/bi/MetricCard';
 import {
   DashboardQuickActions,
   defaultQuickActions,
-  ModuleCard,
-  type ModuleItem,
   ServiceStatusMonitor,
   RecentActivities,
   type ActivityItem,
   DashboardSection,
   QuickAccessSection,
   TodoListSection,
-  ModuleNavigationSection,
   ServiceMonitorSection,
   RecentActivitySection,
-  MODULE_SECTIONS,
-  ModuleSection,
 } from '@/components/dashboard';
 import { PageContainer, EmptyState } from '@/components/common';
-import { navigationRegistryV2 } from '@/lib/navigation/NavigationRegistryV2';
-import { convertModuleCardsToModuleItems } from '@/lib/navigation/dashboardAdapter';
 
 interface DashboardPageProps {
   onLogout?: () => void;
@@ -99,11 +85,8 @@ interface AuditLog {
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
-  const { user, logout: authLogout, isAuthenticated, hasPermission } = useAuth();
+  const { user, logout: authLogout, isAuthenticated } = useAuth();
   const { serviceStatuses, refresh: refreshServiceStatuses } = useServiceStatus();
-  const { isPluginInstalled } = useInstalledPlugins();
   const queryClient = useQueryClient();
 
   const [todoTab, setTodoTab] = useState(0);
@@ -386,56 +369,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     }
   }, [activitiesQuery.isError, activitiesQuery.error, logLvl]);
 
-  const moduleToService: Record<string, string> = {
-    rs: 'rs',
-    lims: 'lims',
-    doc: 'doc',
-    ai: 'ai',
-    workflow: 'flow',
-    iam: 'iam',
-    qms: 'qms',
-    ehs: 'ehs',
-    srm: 'srm',
-    pdm: 'pdm',
-    crm: 'crm',
-    mes: 'mes',
-    mail: 'mail',
-    mobile: 'mobile',
-    hrm: 'hrm',
-    erp: 'erp',
-    gis: 'gis',
-    pm: 'pm',
-    bi: 'bi',
-    integration: 'integration',
-    notification: 'notification',
-    portal: 'portal',
-    scm: 'scm',
-    wms: 'wms',
-    im: 'im',
-    report: 'report',
-    contract: 'hrm',
-  };
-
-  const shouldShowModule = useCallback(
-    (module: { permission?: string | null; module?: string | null }): boolean => {
-      // 1. 检查权限
-      const hasAccess =
-        !module.permission || (user?.is_superuser ? true : hasPermission(module.permission));
-      if (!hasAccess) return false;
-
-      // 2. 如果没有指定 module，默认显示（如通讯录、帮助中心等）
-      if (!module.module) return true;
-
-      // 3. 检查插件是否已安装
-      if (!isPluginInstalled(module.module)) return false;
-
-      // 4. 检查服务是否在线
-      const serviceKey = moduleToService[module.module];
-      return serviceStatuses[serviceKey];
-    },
-    [hasPermission, user?.is_superuser, moduleToService, serviceStatuses, isPluginInstalled]
-  );
-
   useEffect(() => {
     if (!isAuthenticated) {
       navigate(AUTH_PATHS.login);
@@ -472,42 +405,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     },
     [navigate]
   );
-
-  const { checkPermission } = usePermission();
-
-  const [navConfigUpdated, setNavConfigUpdated] = useState(0);
-
-  useEffect(() => {
-    const handler = () => {
-      setNavConfigUpdated((prev) => prev + 1);
-    };
-    navigationRegistryV2.emitter.on('navigationUpdated', handler);
-    return () => {
-      navigationRegistryV2.emitter.off('navigationUpdated', handler);
-    };
-  }, []);
-
-  const allModuleCards = useMemo(() => {
-    return navigationRegistryV2.getModuleCards(checkPermission);
-  }, [checkPermission, navConfigUpdated]);
-
-  const allModuleItems = useMemo((): ModuleItem[] => {
-    return convertModuleCardsToModuleItems(allModuleCards).filter((module) =>
-      shouldShowModule(module)
-    );
-  }, [allModuleCards, shouldShowModule]);
-
-  const cardsBySection = useMemo(() => {
-    const byKey = new Map<string, ModuleItem>();
-    allModuleItems.forEach((c) => {
-      const key = c.module || c.title.toLowerCase().replace(/\s+/g, '');
-      byKey.set(key, c);
-    });
-    return MODULE_SECTIONS.map((section) => ({
-      ...section,
-      cards: section.moduleKeys.map((k) => byKey.get(k)).filter((c): c is ModuleItem => !!c),
-    }));
-  }, [allModuleItems]);
 
   // V34.0: BFF Mutation — 完成待办（必须在所有 early return 之前调用 hooks）
   const handleTodoToggle = useCallback(
@@ -751,25 +648,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             )}
           </List>
         </TodoListSection>
-
-        {/* 模块导航 4 分区 */}
-        {cardsBySection.every((s) => s.cards.length === 0) ? (
-          <EmptyState
-            height={320}
-            title='暂无可用模块'
-            description='当前没有可访问的功能模块，请联系管理员开通权限'
-          />
-        ) : (
-          cardsBySection.map((section) => (
-            <ModuleSection
-              key={section.key}
-              title={section.title}
-              cards={section.cards}
-              collapsedLimit={section.collapsedLimit}
-              onCardClick={(card) => navigate(card.path)}
-            />
-          ))
-        )}
 
         {/* 服务状态监测分区 */}
         <ServiceMonitorSection

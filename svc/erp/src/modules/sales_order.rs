@@ -9,8 +9,9 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::material::{CreateSalesOrderRequest, SalesOrder, UpdateSalesOrderRequest};
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
+use topems_shared::auth::Claims;
+use topems_shared::ApiResponse;
+use topems_shared_core::response::{api_error, PaginatedResponse, PaginationParams};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()

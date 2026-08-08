@@ -11,12 +11,11 @@ use axum::http::{Request, StatusCode};
 use axum::response::Response;
 use axum::Json;
 
-use topems_shared_auth::security::audit_logger::audit_logger_middleware;
-use topems_shared_auth::security::body_limit::body_limit_middleware;
-use topems_shared_auth::security::security_headers::security_headers_middleware;
-use topems_shared_core::health::simple_health_check;
-use topems_shared_core::health::ServiceHealth;
-use topems_shared_core::response::ApiResponse;
+use topems_shared::ApiResponse;
+use topems_shared_auth::security::{
+    audit_logger_middleware, body_limit_middleware, security_headers_middleware,
+};
+use topems_shared_core::health::{simple_health_check, ServiceHealth};
 
 use crate::middleware;
 use crate::AppState;
@@ -131,7 +130,7 @@ pub(crate) async fn health(State(state): State<AppState>) -> ServiceHealth {
 }
 
 pub(crate) async fn plugin_health_check() -> Json<ServiceHealth> {
-    Json(topems_shared_core::health::build_health_response(
+    Json(topems_shared::build_health_response(
         "topems-workflow",
         true,
     ))

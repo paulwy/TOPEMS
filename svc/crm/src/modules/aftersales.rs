@@ -18,8 +18,9 @@ use crate::models::{
 };
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared::auth::Claims;
+use topems_shared::ApiResponse;
+use topems_shared_core::response::api_error;
 use topems_shared_event::event::{EventType, ReturnCompletedPayload, ReturnProcessedPayload};
 
 pub fn create_routes() -> Router<ApiState> {
@@ -1321,7 +1322,7 @@ pub async fn sync_return_to_inventory(
     // V19.0: 服务边界治理 - 跨库直写已替换为 HTTP API 调用
     // WMS 客户端由 ApiState 注入；若未配置则跳过库存联动并记录告警。
     // 注：显式类型注解避免 Rust 2024 edition 的 never type fallback 问题
-    let wms_client: &Arc<topems_shared_service_client::service_client::WmsServiceClient> =
+    let wms_client: &Arc<topems_shared::service_client::WmsServiceClient> =
         match state.wms_client.as_ref() {
             Some(c) => c,
             None => {

@@ -243,6 +243,7 @@ const SrmSupplierDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={supplier?.name || supplier?.id || '供应商详情'}
         backHref={SRM_PATHS.supplier}
         loading={loading}
         error={error || undefined}

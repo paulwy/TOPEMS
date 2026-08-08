@@ -15,22 +15,22 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
+use topems_shared::LocalInMemoryCache as InMemoryCache;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
-use topems_shared_core::cache::InMemoryCache;
 use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
 };
 
 lazy_static::lazy_static! {
-    pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").expect("Failed to register asset_count gauge");
-    pub static ref VOUCHER_COUNT: IntGauge = register_int_gauge!("topems_erp_voucher_count", "Total number of vouchers in ERP system").expect("Failed to register voucher_count gauge");
-    pub static ref FINANCIAL_TRANSACTION_COUNT: IntCounter = register_int_counter!("topems_erp_financial_transactions_total", "Total number of financial transactions").expect("Failed to register financial_transactions counter");
-    pub static ref ACTIVE_USERS: IntGauge = register_int_gauge!("topems_erp_active_users", "Number of active users in the last hour").expect("Failed to register active_users gauge");
-    pub static ref API_REQUESTS_TOTAL: IntCounter = register_int_counter!("topems_erp_api_requests_total", "Total number of API requests").expect("Failed to register api_requests counter");
+    pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").expect("Failed to register asset_count gauge - check for duplicate metric registrations");
+    pub static ref VOUCHER_COUNT: IntGauge = register_int_gauge!("topems_erp_voucher_count", "Total number of vouchers in ERP system").expect("Failed to register voucher_count gauge - check for duplicate metric registrations");
+    pub static ref FINANCIAL_TRANSACTION_COUNT: IntCounter = register_int_counter!("topems_erp_financial_transactions_total", "Total number of financial transactions").expect("Failed to register financial_transactions counter - check for duplicate metric registrations");
+    pub static ref ACTIVE_USERS: IntGauge = register_int_gauge!("topems_erp_active_users", "Number of active users in the last hour").expect("Failed to register active_users gauge - check for duplicate metric registrations");
+    pub static ref API_REQUESTS_TOTAL: IntCounter = register_int_counter!("topems_erp_api_requests_total", "Total number of API requests").expect("Failed to register api_requests counter - check for duplicate metric registrations");
 }
 
 #[tokio::main]
@@ -71,7 +71,7 @@ async fn main() -> Result<()> {
     });
 
     // 初始化加密服务
-    let encryption_service = topems_shared_auth::security::init_encryption_from_env();
+    let encryption_service = topems_shared::init_encryption_from_env();
     tracing::info!("🔐 字段加密服务初始化成功");
 
     // 通知服务客户端

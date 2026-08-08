@@ -119,7 +119,10 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {menuItems
-              .filter((item) => !item.adminOnly || user?.is_superuser || hasPermission('iam:admin'))
+              .filter(
+                (item) =>
+                  !item.adminOnly || user?.is_superuser || hasPermission('iam:dashboard:admin')
+              )
               .map((item) => {
                 const Icon = item.icon;
                 return (

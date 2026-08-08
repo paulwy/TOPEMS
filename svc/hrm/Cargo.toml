@@ -6,7 +6,6 @@ authors.workspace = true
 description = "TOPEMS-HRM 人力资源管理系统"
 
 [dependencies]
-topems-shared = { path = "../../lib" }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -20,12 +19,10 @@ tracing-subscriber.workspace = true
 dotenv.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
+topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
-topems-shared-db = { workspace = true }
-topems-shared-service-client = { workspace = true }
-topems-shared-event = { workspace = true }
-topems-shared-auth = { workspace = true }
-topems-shared-core = { workspace = true }
+topems-shared-event = { path = "../../lib/shared-event" }
+topems-shared-auth = { path = "../../lib/shared-auth" }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
@@ -35,8 +32,6 @@ reqwest.workspace = true
 rand.workspace = true
 
 [dev-dependencies]
-tower = { workspace = true }
-axum = { workspace = true }
 tokio-test.workspace = true
 reqwest = { version = "0.12", features = ["json"] }
 

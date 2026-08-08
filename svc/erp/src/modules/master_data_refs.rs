@@ -25,7 +25,7 @@
 use axum::http::StatusCode;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
-use topems_shared_core::response::ApiResponse;
+use topems_shared::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 use super::ApiState;
@@ -2357,7 +2357,7 @@ pub async fn archive_master_data_ref(
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(
-        r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE master_data_id = $1"#,
+        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
     )
     .bind(&master_data_id)
     .fetch_optional(&state.db)
@@ -2407,7 +2407,7 @@ pub async fn archive_master_data_ref(
                     .await;
 
                     let updated = sqlx::query_as::<_, MasterDataRow>(
-                        r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE master_data_id = $1"#,
+                        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
                     )
                     .bind(&master_data_id)
                     .fetch_one(&state.db)
@@ -2444,7 +2444,7 @@ pub async fn restore_master_data_ref(
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(
-        r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE master_data_id = $1"#,
+        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
     )
     .bind(&master_data_id)
     .fetch_optional(&state.db)
@@ -2488,7 +2488,7 @@ pub async fn restore_master_data_ref(
                     .await;
 
                     let updated = sqlx::query_as::<_, MasterDataRow>(
-                        r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE master_data_id = $1"#,
+                        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
                     )
                     .bind(&master_data_id)
                     .fetch_one(&state.db)
@@ -2528,7 +2528,7 @@ pub async fn schedule_destruction(
         .unwrap_or_else(|| now + chrono::Duration::days(30));
 
     let row = sqlx::query_as::<_, MasterDataRow>(
-        r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE master_data_id = $1"#,
+        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
     )
     .bind(&master_data_id)
     .fetch_optional(&state.db)
@@ -2575,7 +2575,7 @@ pub async fn schedule_destruction(
                     .await;
 
                     let updated = sqlx::query_as::<_, MasterDataRow>(
-                        r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE master_data_id = $1"#,
+                        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
                     )
                     .bind(&master_data_id)
                     .fetch_one(&state.db)
@@ -2611,7 +2611,7 @@ pub async fn cancel_destruction(
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(
-        r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE master_data_id = $1"#,
+        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
     )
     .bind(&master_data_id)
     .fetch_optional(&state.db)
@@ -2658,7 +2658,7 @@ pub async fn cancel_destruction(
                     .await;
 
                     let updated = sqlx::query_as::<_, MasterDataRow>(
-                        r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE master_data_id = $1"#,
+                        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
                     )
                     .bind(&master_data_id)
                     .fetch_one(&state.db)
@@ -2695,7 +2695,7 @@ pub async fn destroy_master_data_ref(
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(
-        r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE master_data_id = $1"#,
+        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
     )
     .bind(&master_data_id)
     .fetch_optional(&state.db)
@@ -2742,7 +2742,7 @@ pub async fn destroy_master_data_ref(
                     .await;
 
                     let updated = sqlx::query_as::<_, MasterDataRow>(
-                        r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE master_data_id = $1"#,
+                        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
                     )
                     .bind(&master_data_id)
                     .fetch_one(&state.db)
@@ -2779,7 +2779,7 @@ pub async fn list_archived(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut sql = String::from("SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE status = 'archived'");
+    let mut sql = String::from("SELECT * FROM erp_master_data_refs WHERE status = 'archived'");
     let mut binds: Vec<String> = Vec::new();
     let mut param_idx = 1;
 
@@ -2857,7 +2857,7 @@ pub async fn list_pending_destruction(
     let offset = (page - 1) * page_size;
 
     let mut sql =
-        String::from("SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE status = 'pending_destruction'");
+        String::from("SELECT * FROM erp_master_data_refs WHERE status = 'pending_destruction'");
     let mut binds: Vec<String> = Vec::new();
     let mut param_idx = 1;
 
@@ -3693,14 +3693,14 @@ async fn load_quality_rules(
 async fn load_records_for_quality(pool: &sqlx::PgPool, domain: Option<&str>) -> Vec<MasterDataRef> {
     let rows = if let Some(d) = domain {
         sqlx::query_as::<_, MasterDataRow>(
-            r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE status != 'destroyed' AND domain = $1"#,
+            r#"SELECT * FROM erp_master_data_refs WHERE status != 'destroyed' AND domain = $1"#,
         )
         .bind(d)
         .fetch_all(pool)
         .await
     } else {
         sqlx::query_as::<_, MasterDataRow>(
-            r#"SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM erp_master_data_refs WHERE status != 'destroyed'"#,
+            r#"SELECT * FROM erp_master_data_refs WHERE status != 'destroyed'"#,
         )
         .fetch_all(pool)
         .await

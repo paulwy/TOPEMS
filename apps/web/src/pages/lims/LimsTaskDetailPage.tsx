@@ -450,6 +450,7 @@ const LimsTaskDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={task?.task_no || task?.sample_name || task?.id || '任务详情'}
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'LIMS', href: LIMS_PATHS.root },

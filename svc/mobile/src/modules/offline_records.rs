@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared::ApiResponse;
+use topems_shared_core::response::api_error;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MobileSyncRequest {

@@ -10,8 +10,9 @@ use sqlx::Row;
 use super::ApiState;
 use crate::models::opportunity::Opportunity;
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared::auth::Claims;
+use topems_shared::ApiResponse;
+use topems_shared_core::response::api_error;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunnelStage {

@@ -11,8 +11,9 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::AuditLog;
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared::auth::Claims;
+use topems_shared::ApiResponse;
+use topems_shared_core::response::api_error;
 
 /// 审计日志参数包装（消除 clippy::too_many_arguments 告警）
 #[derive(Debug, Clone)]

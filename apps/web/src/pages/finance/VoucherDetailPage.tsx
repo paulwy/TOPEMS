@@ -751,6 +751,7 @@ const VoucherDetailPage: React.FC = () => {
     <DetailPageTemplate
       title={voucherNumber}
       subtitle={`期间: ${voucher.period}`}
+      detailItemName={voucher?.voucher_no || voucher?.voucher_number || voucher?.id || '凭证详情'}
       breadcrumbs={[
         { label: t('finance.voucher_detail_page.home'), href: '/dashboard' },
         { label: t('finance.voucher_detail_page.text_b8fe8d'), href: '/finance' },

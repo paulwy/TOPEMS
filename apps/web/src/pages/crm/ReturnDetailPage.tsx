@@ -636,6 +636,8 @@ const ReturnDetailPage: React.FC = () => {
 
         <DetailPageTemplate
           title={record?.return_no || ''}
+          detailItemName={record?.return_no || record?.id || '退货详情'}
+          backHref={CRM_PATHS.returns}
           loading={loading}
           error={returnQuery.isError ? t('crm.returnDetail.error_load') : undefined}
           sections={sections}

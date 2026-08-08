@@ -6,8 +6,6 @@ authors.workspace = true
 description = "TOPEMS AI Knowledge Base Service"
 
 [dependencies]
-topems-shared = { path = "../../lib" }
-topems-shared-ai = { path = "../../lib/shared-ai" }
 axum.workspace = true
 tokio.workspace = true
 serde.workspace = true
@@ -21,13 +19,13 @@ tracing-subscriber.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
+topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
-topems-shared-db = { workspace = true }
-topems-shared-service-client = { workspace = true }
-topems-shared-event = { workspace = true }
-topems-shared-auth = { workspace = true }
-topems-shared-core = { workspace = true }
-topems-shared-observability = { workspace = true }
+topems-shared-event = { path = "../../lib/shared-event" }
+topems-shared-core = { path = "../../lib/shared-core" }
+topems-shared-auth = { path = "../../lib/shared-auth" }
+topems-shared-ai = { path = "../../lib/shared-ai" }
+topems-shared-observability = { path = "../../lib/shared-observability" }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 walkdir.workspace = true

@@ -8,7 +8,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared_core::response::ApiResponse;
+use topems_shared::ApiResponse;
 use topems_shared_event::event::{EventPublisher, EventType, PmProjectCreatedPayload};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -119,7 +119,7 @@ async fn list_projects(
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).clamp(1, 1000);
 
-    let result = sqlx::query_as::<_, Project>("id, name, code, description, project_type, status, leader, start_date, end_date, budget, progress, priority, risk_level, project_config, benefit_target, risk_response, tenant_id, created_at, updated_at FROM pm.projects ORDER BY created_at DESC")
+    let result = sqlx::query_as::<_, Project>("SELECT * FROM pm.projects ORDER BY created_at DESC")
         .fetch_all(&state.pool)
         .await;
 
@@ -272,7 +272,7 @@ async fn get_project(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Project>> {
     let result = sqlx::query_as::<_, Project>(
-        "id, name, code, description, project_type, status, leader, start_date, end_date, budget, progress, priority, risk_level, project_config, benefit_target, risk_response, tenant_id, created_at, updated_at FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
+        "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.pool)
@@ -403,7 +403,7 @@ async fn get_project_dashboard(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDashboardResponse>> {
     let project_result = sqlx::query_as::<_, Project>(
-        "id, name, code, description, project_type, status, leader, start_date, end_date, budget, progress, priority, risk_level, project_config, benefit_target, risk_response, tenant_id, created_at, updated_at FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
+        "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.pool)
@@ -419,7 +419,7 @@ async fn get_project_dashboard(
     };
 
     let phases_result = sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(
-        "SELECT id, project_id, name, description, phase_number AS sequence_number, start_date, end_date, progress, status, predecessor_id AS predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1",
+        "SELECT * FROM pm.project_phases WHERE project_id = $1",
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -450,7 +450,7 @@ async fn get_project_dashboard(
     });
 
     let members_result = sqlx::query_as::<_, crate::models::project_member::ProjectMember>(
-        "SELECT id, project_id, employee_id AS user_id, role, responsibility AS responsibilities, join_date AS start_date, leave_date AS end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1",
+        "SELECT * FROM pm.project_members WHERE project_id = $1",
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -519,7 +519,7 @@ async fn get_project_gantt(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectGanttResponse>> {
     let phases_result = sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(
-        "SELECT id, project_id, name, description, phase_number AS sequence_number, start_date, end_date, progress, status, predecessor_id AS predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 ORDER BY phase_number ASC",
+        "SELECT * FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC",
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -547,7 +547,7 @@ async fn get_project_gantt(
 
     let milestones_result =
         sqlx::query_as::<_, crate::models::project_milestone::ProjectMilestone>(
-            "SELECT id, project_id, name, description, target_date AS date, status, phase_id, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 ORDER BY target_date ASC",
+            "SELECT * FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC",
         )
         .bind(id)
         .fetch_all(&state.pool)

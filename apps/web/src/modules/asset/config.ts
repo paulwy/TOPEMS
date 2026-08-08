@@ -4,6 +4,7 @@ import type { ModuleNavConfig } from '@/lib/navigation/types';
 
 export const ASSET_PATHS = {
   root: '/asset',
+  dashboard: '/asset/dashboard',
   list: '/asset/list',
   categories: '/asset/categories',
   depreciation: '/asset/depreciation',
@@ -20,8 +21,19 @@ export const assetModuleConfig: RouteModuleConfig = {
   status: 'online',
   order: 91,
   description: '企业固定资产管理',
-  permission: 'asset:read',
+  permission: 'asset:list:read',
   routes: [
+    {
+      path: ASSET_PATHS.dashboard,
+      element: lazyWithRetry(() => import('@/pages/asset/DashboardPage'), 'DashboardPage'),
+      module: 'asset',
+      title: '资产管理概览',
+      code: 'asset-dashboard',
+      requiredPermissions: ['asset:dashboard:read'],
+      action: 'read',
+      template: 'dashboard',
+      group: 'overview',
+    },
     {
       path: ASSET_PATHS.list,
       element: lazyWithRetry(() => import('@/pages/asset/AssetListPage'), 'AssetListPage'),
@@ -30,7 +42,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       title: '资产列表',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['asset:read'],
+      requiredPermissions: ['asset:list:read'],
       action: 'read',
     },
     {
@@ -52,7 +64,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/asset/DepreciationPage'), 'DepreciationPage'),
       module: 'asset',
       code: 'asset-depreciation',
-      title: '折旧管理',
+      title: '折旧分析',
       template: 'form',
       group: 'analytics',
       requiredPermissions: ['asset:depreciation:read'],
@@ -82,6 +94,17 @@ export const assetNavConfig: ModuleNavConfig = {
   order: 91,
   navItems: [
     {
+      code: 'asset-dashboard',
+      label: '资产管理概览',
+      icon: 'LayoutDashboard',
+      path: ASSET_PATHS.dashboard,
+      permission: 'asset:dashboard:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: '资产管理数据概览',
+    },
+    {
       code: 'asset-list',
       label: '资产列表',
       path: ASSET_PATHS.list,
@@ -97,7 +120,7 @@ export const assetNavConfig: ModuleNavConfig = {
     },
     {
       code: 'asset-depreciation',
-      label: '折旧管理',
+      label: '折旧分析',
       path: ASSET_PATHS.depreciation,
       group: 'analytics',
       showInSidebar: true,

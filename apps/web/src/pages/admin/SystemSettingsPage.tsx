@@ -14,6 +14,7 @@ import type {
   FieldDependency,
 } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
+import { ADMIN_PATHS } from '@/modules/admin/config';
 
 // ============ Mock 数据 ============
 const mockSettings = {
@@ -375,6 +376,7 @@ export default function SystemSettingsPage() {
           <FormPageTemplate
             title=''
             subtitle=''
+            backHref={ADMIN_PATHS.system}
             sections={sections}
             defaultValues={defaultValues}
             dependencies={dependencies}

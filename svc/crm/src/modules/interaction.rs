@@ -13,8 +13,9 @@ use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateInteractionRequest, Interaction, UpdateInteractionRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, ListResponse};
+use topems_shared::auth::Claims;
+use topems_shared::{ApiResponse, ListResponse};
+use topems_shared_core::response::api_error;
 
 #[derive(Debug, Deserialize)]
 pub struct InteractionPaginationParams {
