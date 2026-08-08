@@ -458,18 +458,18 @@ impl EntityBatchCache {
 
     fn get(&self, service: &str, entity_type: &str, id: &str) -> Option<serde_json::Value> {
         let key = Self::cache_key(service, entity_type, id);
-        let cache = self.cache.lock().unwrap();
+        let cache = self.cache.lock().unwrap_or_else(|e| e.into_inner());
         cache.get(&key).cloned()
     }
 
     fn insert(&self, service: &str, entity_type: &str, id: &str, value: serde_json::Value) {
         let key = Self::cache_key(service, entity_type, id);
-        let mut cache = self.cache.lock().unwrap();
+        let mut cache = self.cache.lock().unwrap_or_else(|e| e.into_inner());
         cache.insert(key, value);
     }
 
     fn clear(&self) {
-        let mut cache = self.cache.lock().unwrap();
+        let mut cache = self.cache.lock().unwrap_or_else(|e| e.into_inner());
         cache.clear();
     }
 }
@@ -554,14 +554,14 @@ fn query_plan_cache() -> &'static Mutex<LruCache<String, QueryPlan>> {
 
 /// V40.0: 获取缓存的查询计划
 pub fn get_cached_query_plan(query_hash: &str) -> Option<serde_json::Value> {
-    let mut cache = query_plan_cache().lock().unwrap();
+    let mut cache = query_plan_cache().lock().unwrap_or_else(|e| e.into_inner());
     let key = query_hash.to_string();
     cache.get(&key).map(|p| p.plan.clone())
 }
 
 /// V40.0: 缓存查询计划
 pub fn cache_query_plan(query_hash: &str, plan: serde_json::Value) {
-    let mut cache = query_plan_cache().lock().unwrap();
+    let mut cache = query_plan_cache().lock().unwrap_or_else(|e| e.into_inner());
     cache.put(
         query_hash.to_string(),
         QueryPlan {
@@ -634,38 +634,52 @@ fn federation_stats_internal() -> &'static Mutex<FederationStatsInternal> {
 }
 
 pub fn record_federation_request() {
-    let mut stats = federation_stats_internal().lock().unwrap();
+    let mut stats = federation_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     stats.total_requests += 1;
 }
 
 pub fn record_cache_hit() {
-    let mut stats = federation_stats_internal().lock().unwrap();
+    let mut stats = federation_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     stats.cache_hits += 1;
 }
 
 pub fn record_cache_miss() {
-    let mut stats = federation_stats_internal().lock().unwrap();
+    let mut stats = federation_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     stats.cache_misses += 1;
 }
 
 pub fn record_resolution_time(ms: u64) {
-    let mut stats = federation_stats_internal().lock().unwrap();
+    let mut stats = federation_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     stats.total_resolution_time_ms += ms;
     stats.resolution_count += 1;
 }
 
 pub fn record_entities_resolved(count: u64) {
-    let mut stats = federation_stats_internal().lock().unwrap();
+    let mut stats = federation_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     stats.entities_resolved += count;
 }
 
 pub fn record_cross_service_join() {
-    let mut stats = federation_stats_internal().lock().unwrap();
+    let mut stats = federation_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     stats.cross_service_joins += 1;
 }
 
 pub fn get_federation_stats() -> FederationStatsGql {
-    let stats = federation_stats_internal().lock().unwrap();
+    let stats = federation_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let avg_resolution_time_ms = if stats.resolution_count > 0 {
         stats.total_resolution_time_ms / stats.resolution_count
     } else {
@@ -2226,10 +2240,14 @@ impl QueryRoot {
         let plan_start = std::time::Instant::now();
         let plan = FederationV3Planner::build_plan_v3(&query, &vars);
         let plan_duration = plan_start.elapsed().as_millis() as u64;
-        let mut stats = federation_v3_stats_internal().lock().unwrap();
+        let mut stats = federation_v3_stats_internal()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         stats.plan_count += 1;
         stats.total_plan_time_ms += plan_duration;
-        let mut plan_cache = federation_v3_plan_cache().lock().unwrap();
+        let mut plan_cache = federation_v3_plan_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         plan_cache.put(plan.query_hash.clone(), plan.clone());
         Ok(plan_to_gql(&plan))
     }
@@ -2253,7 +2271,9 @@ impl QueryRoot {
         }
 
         let plan = {
-            let mut plan_cache = federation_v3_plan_cache().lock().unwrap();
+            let mut plan_cache = federation_v3_plan_cache()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             match plan_cache.get(&query_hash) {
                 Some(p) => p.clone(),
                 None => {
@@ -2415,7 +2435,9 @@ impl QueryRoot {
 
     /// V45.0: 边缘节点列表
     async fn edge_nodes(&self, _ctx: &Context<'_>) -> async_graphql::Result<Vec<EdgeNodeGql>> {
-        let state = edge_compute_state().lock().unwrap();
+        let state = edge_compute_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(state
             .nodes
             .iter()
@@ -2437,7 +2459,9 @@ impl QueryRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<Vec<EdgeFunctionGql>> {
-        let state = edge_compute_state().lock().unwrap();
+        let state = edge_compute_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(state
             .functions
             .iter()
@@ -2510,7 +2534,7 @@ impl QueryRoot {
         _ctx: &Context<'_>,
         service: String,
     ) -> async_graphql::Result<Vec<SchemaRegistryEntryGql>> {
-        let registry = schema_registry().lock().unwrap();
+        let registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
         Ok(registry.list_versions(&service))
     }
 
@@ -2520,7 +2544,9 @@ impl QueryRoot {
         _ctx: &Context<'_>,
         service: String,
     ) -> async_graphql::Result<Vec<SchemaVersionGql>> {
-        let manager = schema_version_manager().lock().unwrap();
+        let manager = schema_version_manager()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(manager.list_versions(&service))
     }
 
@@ -2531,7 +2557,9 @@ impl QueryRoot {
         service: String,
         version: String,
     ) -> async_graphql::Result<Option<SchemaVersionGql>> {
-        let manager = schema_version_manager().lock().unwrap();
+        let manager = schema_version_manager()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(manager.get_version(&service, &version))
     }
 
@@ -2543,7 +2571,9 @@ impl QueryRoot {
         from_version: String,
         to_version: String,
     ) -> async_graphql::Result<Option<VersionDiffGql>> {
-        let manager = schema_version_manager().lock().unwrap();
+        let manager = schema_version_manager()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(manager.diff(&service, &from_version, &to_version))
     }
 
@@ -2553,7 +2583,9 @@ impl QueryRoot {
         _ctx: &Context<'_>,
         service: String,
     ) -> async_graphql::Result<Vec<ContractTestGql>> {
-        let runner = contract_test_runner().lock().unwrap();
+        let runner = contract_test_runner()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(runner
             .tests
             .values()
@@ -2569,7 +2601,9 @@ impl QueryRoot {
         test_id: String,
         limit: Option<usize>,
     ) -> async_graphql::Result<Vec<ContractTestResultGql>> {
-        let runner = contract_test_runner().lock().unwrap();
+        let runner = contract_test_runner()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(runner.get_results(&test_id, limit.unwrap_or(50)))
     }
 
@@ -2581,7 +2615,7 @@ impl QueryRoot {
         from_version: String,
         to_version: String,
     ) -> async_graphql::Result<Vec<SchemaChangeGql>> {
-        let registry = schema_registry().lock().unwrap();
+        let registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
         if let Some(diff) = registry.diff_versions(&service, &from_version, &to_version) {
             Ok(diff.breaking_changes)
         } else {
@@ -3457,10 +3491,12 @@ impl MutationRoot {
         sdl: String,
     ) -> async_graphql::Result<String> {
         let entry = {
-            let mut registry = schema_registry().lock().unwrap();
+            let mut registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
             registry.register(&service, &version, &sdl, "user")
         };
-        let mut manager = schema_version_manager().lock().unwrap();
+        let mut manager = schema_version_manager()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         manager.publish(&service, &version, "", &sdl);
         Ok(entry.version)
     }
@@ -3472,7 +3508,7 @@ impl MutationRoot {
         service: String,
         version: String,
     ) -> async_graphql::Result<bool> {
-        let mut registry = schema_registry().lock().unwrap();
+        let mut registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
         Ok(registry.deprecate(&service, &version))
     }
 
@@ -3483,7 +3519,7 @@ impl MutationRoot {
         service: String,
         version: String,
     ) -> async_graphql::Result<bool> {
-        let mut registry = schema_registry().lock().unwrap();
+        let mut registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
         Ok(registry.retire(&service, &version))
     }
 
@@ -3493,7 +3529,9 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: ContractTestInput,
     ) -> async_graphql::Result<String> {
-        let mut runner = contract_test_runner().lock().unwrap();
+        let mut runner = contract_test_runner()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(runner.add_test(input))
     }
 
@@ -3504,7 +3542,9 @@ impl MutationRoot {
         id: String,
         input: ContractTestInput,
     ) -> async_graphql::Result<bool> {
-        let mut runner = contract_test_runner().lock().unwrap();
+        let mut runner = contract_test_runner()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(runner.update_test(&id, input))
     }
 
@@ -3514,7 +3554,9 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         id: String,
     ) -> async_graphql::Result<bool> {
-        let mut runner = contract_test_runner().lock().unwrap();
+        let mut runner = contract_test_runner()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(runner.remove_test(&id))
     }
 
@@ -3524,7 +3566,9 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         id: String,
     ) -> async_graphql::Result<ContractTestResultGql> {
-        let mut runner = contract_test_runner().lock().unwrap();
+        let mut runner = contract_test_runner()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         runner
             .run_test(&id)
             .ok_or_else(|| async_graphql::Error::new(format!("Contract test '{}' not found", id)))
@@ -3536,7 +3580,9 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         service: Option<String>,
     ) -> async_graphql::Result<u32> {
-        let mut runner = contract_test_runner().lock().unwrap();
+        let mut runner = contract_test_runner()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(runner.run_all(service.as_deref()))
     }
 
@@ -3549,13 +3595,15 @@ impl MutationRoot {
         changelog: String,
     ) -> async_graphql::Result<String> {
         let sdl = {
-            let registry = schema_registry().lock().unwrap();
+            let registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
             registry
                 .get_version(&service, &version)
                 .map(|v| v.sdl)
                 .unwrap_or_default()
         };
-        let mut manager = schema_version_manager().lock().unwrap();
+        let mut manager = schema_version_manager()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(manager.publish(&service, &version, &changelog, &sdl))
     }
 
@@ -3566,7 +3614,9 @@ impl MutationRoot {
         service: String,
         version: String,
     ) -> async_graphql::Result<bool> {
-        let mut manager = schema_version_manager().lock().unwrap();
+        let mut manager = schema_version_manager()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(manager.promote(&service, &version))
     }
 
@@ -3577,7 +3627,9 @@ impl MutationRoot {
         service: String,
         to_version: String,
     ) -> async_graphql::Result<bool> {
-        let mut manager = schema_version_manager().lock().unwrap();
+        let mut manager = schema_version_manager()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Ok(manager.rollback(&service, &to_version))
     }
 
@@ -3619,7 +3671,9 @@ impl MutationRoot {
             config.recovery_timeout_sec,
             config.half_open_max_requests,
         );
-        let mut mgr = circuit_breaker_manager().lock().unwrap();
+        let mut mgr = circuit_breaker_manager()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         mgr.get_state(&service)
             .ok_or_else(|| async_graphql::Error::new("Circuit breaker state not found"))
     }
@@ -3648,7 +3702,9 @@ impl MutationRoot {
             config.fallback_ttl_sec,
             config.max_degradation_duration_sec,
         );
-        let mgr = circuit_breaker_manager().lock().unwrap();
+        let mgr = circuit_breaker_manager()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         mgr.get_degradation_config(&service)
             .ok_or_else(|| async_graphql::Error::new("Degradation config not found"))
     }
@@ -3663,7 +3719,9 @@ impl MutationRoot {
     ) -> async_graphql::Result<InstanceHealthGql> {
         register_service_instance(&service, &instance_id, &url);
         mark_instance_healthy(&service, &instance_id);
-        let router = load_aware_router().lock().unwrap();
+        let router = load_aware_router()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let healths = router.get_instance_healths(&service);
         healths
             .into_iter()
@@ -4909,7 +4967,7 @@ static QUERY_WHITELIST: RwLock<Option<HashSet<String>>> = RwLock::new(None);
 
 /// 启用查询白名单，注入预注册的查询哈希列表
 pub fn enable_query_whitelist(hashes: Vec<String>) {
-    let mut wl = QUERY_WHITELIST.write().unwrap();
+    let mut wl = QUERY_WHITELIST.write().unwrap_or_else(|e| e.into_inner());
     *wl = Some(hashes.into_iter().collect());
     tracing::info!(
         "[graphql] V39.0 查询白名单已启用，共 {} 个查询哈希",
@@ -4920,7 +4978,7 @@ pub fn enable_query_whitelist(hashes: Vec<String>) {
 /// 检查指定哈希是否在白名单中
 /// 白名单未启用时（None 状态）允许所有查询
 pub fn is_query_allowed(hash: &str) -> bool {
-    let wl = QUERY_WHITELIST.read().unwrap();
+    let wl = QUERY_WHITELIST.read().unwrap_or_else(|e| e.into_inner());
     match &*wl {
         None => true,
         Some(set) => set.contains(hash),
@@ -4929,12 +4987,15 @@ pub fn is_query_allowed(hash: &str) -> bool {
 
 /// 检查白名单是否已启用
 pub fn is_whitelist_enabled() -> bool {
-    QUERY_WHITELIST.read().unwrap().is_some()
+    QUERY_WHITELIST
+        .read()
+        .unwrap_or_else(|e| e.into_inner())
+        .is_some()
 }
 
 /// 添加单个查询哈希到白名单（需先启用白名单）
 pub fn add_to_whitelist(hash: String) {
-    let mut wl = QUERY_WHITELIST.write().unwrap();
+    let mut wl = QUERY_WHITELIST.write().unwrap_or_else(|e| e.into_inner());
     if let Some(set) = &mut *wl {
         set.insert(hash);
     }
@@ -4942,13 +5003,13 @@ pub fn add_to_whitelist(hash: String) {
 
 /// 获取白名单中的查询哈希数量
 pub fn get_whitelist_size() -> usize {
-    let wl = QUERY_WHITELIST.read().unwrap();
+    let wl = QUERY_WHITELIST.read().unwrap_or_else(|e| e.into_inner());
     wl.as_ref().map(|s| s.len()).unwrap_or(0)
 }
 
 /// 获取白名单前 N 个哈希预览（用于状态展示）
 pub fn get_whitelist_preview(limit: usize) -> Vec<String> {
-    let wl = QUERY_WHITELIST.read().unwrap();
+    let wl = QUERY_WHITELIST.read().unwrap_or_else(|e| e.into_inner());
     match &*wl {
         None => Vec::new(),
         Some(set) => set.iter().take(limit).cloned().collect(),
@@ -5132,7 +5193,7 @@ pub fn record_query_audit(log: QueryAuditLog) {
     let query_hash = log.query_hash.clone();
     let user_id = log.user_id.clone();
 
-    let mut logs = QUERY_AUDIT_LOGS.write().unwrap();
+    let mut logs = QUERY_AUDIT_LOGS.write().unwrap_or_else(|e| e.into_inner());
     if logs.len() >= MAX_AUDIT_LOGS {
         logs.remove(0);
     }
@@ -5162,13 +5223,16 @@ pub fn record_query_audit(log: QueryAuditLog) {
 
 /// 获取最近的查询审计日志（按时间倒序）
 pub fn get_query_audit_logs(limit: usize) -> Vec<QueryAuditLog> {
-    let logs = QUERY_AUDIT_LOGS.read().unwrap();
+    let logs = QUERY_AUDIT_LOGS.read().unwrap_or_else(|e| e.into_inner());
     logs.iter().rev().take(limit).cloned().collect()
 }
 
 /// 获取审计日志当前条数
 pub fn get_audit_log_count() -> usize {
-    QUERY_AUDIT_LOGS.read().unwrap().len()
+    QUERY_AUDIT_LOGS
+        .read()
+        .unwrap_or_else(|e| e.into_inner())
+        .len()
 }
 
 // ==================== V39.0: 自定义 APQ 扩展占位 ====================
@@ -5428,7 +5492,7 @@ impl MultiLevelCache {
 
     fn get(&self, key: &str) -> Option<CacheEntry> {
         let now = Utc::now();
-        let mut l1 = self.l1.lock().unwrap();
+        let mut l1 = self.l1.lock().unwrap_or_else(|e| e.into_inner());
         if let Some(entry) = l1.get(&key.to_string()) {
             if entry.expires_at > now {
                 let mut entry = entry.clone();
@@ -5444,7 +5508,7 @@ impl MultiLevelCache {
         }
         drop(l1);
 
-        let mut l2 = self.l2.lock().unwrap();
+        let mut l2 = self.l2.lock().unwrap_or_else(|e| e.into_inner());
         if let Some(entry) = l2.get(&key.to_string()) {
             if entry.expires_at > now {
                 let mut entry = entry.clone();
@@ -5453,7 +5517,7 @@ impl MultiLevelCache {
                 l2.put(key.to_string(), entry.clone());
                 record_l2_hit();
 
-                let mut l1 = self.l1.lock().unwrap();
+                let mut l1 = self.l1.lock().unwrap_or_else(|e| e.into_inner());
                 if l1.len() >= 500 {
                     if let Some(oldest) = l1.order.pop_back() {
                         if let Some(old_entry) = l1.map.remove(&oldest) {
@@ -5487,16 +5551,16 @@ impl MultiLevelCache {
             size_bytes,
         };
 
-        let mut l1 = self.l1.lock().unwrap();
+        let mut l1 = self.l1.lock().unwrap_or_else(|e| e.into_inner());
         if l1.len() >= 500 {
             if let Some(oldest) = l1.order.pop_back() {
                 if let Some(old_entry) = l1.map.remove(&oldest) {
                     drop(l1);
-                    let mut l2 = self.l2.lock().unwrap();
+                    let mut l2 = self.l2.lock().unwrap_or_else(|e| e.into_inner());
                     l2.put(oldest, old_entry);
                     record_mlc_eviction();
                     drop(l2);
-                    l1 = self.l1.lock().unwrap();
+                    l1 = self.l1.lock().unwrap_or_else(|e| e.into_inner());
                 }
             }
         }
@@ -5505,7 +5569,7 @@ impl MultiLevelCache {
 
     fn invalidate_pattern(&self, pattern: &str) -> usize {
         let mut count = 0;
-        let mut l1 = self.l1.lock().unwrap();
+        let mut l1 = self.l1.lock().unwrap_or_else(|e| e.into_inner());
         let l1_keys: Vec<String> = l1
             .map
             .keys()
@@ -5519,7 +5583,7 @@ impl MultiLevelCache {
         }
         drop(l1);
 
-        let mut l2 = self.l2.lock().unwrap();
+        let mut l2 = self.l2.lock().unwrap_or_else(|e| e.into_inner());
         let l2_keys: Vec<String> = l2
             .map
             .keys()
@@ -5535,31 +5599,31 @@ impl MultiLevelCache {
     }
 
     fn clear(&self) {
-        let mut l1 = self.l1.lock().unwrap();
+        let mut l1 = self.l1.lock().unwrap_or_else(|e| e.into_inner());
         l1.map.clear();
         l1.order.clear();
         drop(l1);
-        let mut l2 = self.l2.lock().unwrap();
+        let mut l2 = self.l2.lock().unwrap_or_else(|e| e.into_inner());
         l2.map.clear();
         l2.order.clear();
     }
 
     fn l1_size(&self) -> usize {
-        self.l1.lock().unwrap().len()
+        self.l1.lock().unwrap_or_else(|e| e.into_inner()).len()
     }
 
     fn l2_size(&self) -> usize {
-        self.l2.lock().unwrap().len()
+        self.l2.lock().unwrap_or_else(|e| e.into_inner()).len()
     }
 
     fn top_hot_queries(&self, limit: usize) -> Vec<HotQueryEntry> {
         let mut all = Vec::new();
-        let l1 = self.l1.lock().unwrap();
+        let l1 = self.l1.lock().unwrap_or_else(|e| e.into_inner());
         for entry in l1.map.values() {
             all.push(entry.clone());
         }
         drop(l1);
-        let l2 = self.l2.lock().unwrap();
+        let l2 = self.l2.lock().unwrap_or_else(|e| e.into_inner());
         for entry in l2.map.values() {
             all.push(entry.clone());
         }
@@ -5622,29 +5686,39 @@ fn cache_stats_internal() -> &'static Mutex<CacheStatsInternal> {
 }
 
 fn record_l1_hit() {
-    let mut s = cache_stats_internal().lock().unwrap();
+    let mut s = cache_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.l1_hits += 1;
     s.total_requests += 1;
 }
 
 fn record_l2_hit() {
-    let mut s = cache_stats_internal().lock().unwrap();
+    let mut s = cache_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.l2_hits += 1;
     s.total_requests += 1;
 }
 
 fn record_mlc_miss() {
-    let mut s = cache_stats_internal().lock().unwrap();
+    let mut s = cache_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.total_requests += 1;
 }
 
 fn record_mlc_eviction() {
-    let mut s = cache_stats_internal().lock().unwrap();
+    let mut s = cache_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.evictions += 1;
 }
 
 fn record_ttl_sample(ttl: u64) {
-    let mut s = cache_stats_internal().lock().unwrap();
+    let mut s = cache_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.total_ttl_seconds += ttl;
     s.ttl_sample_count += 1;
 }
@@ -5684,7 +5758,7 @@ fn adaptive_ttl_seconds(base_tier: CacheTier, hit_count: u64) -> u64 {
         CacheTier::MediumLived => 300,
         CacheTier::LongLived => 3600,
     };
-    let strategy = cache_strategy().read().unwrap();
+    let strategy = cache_strategy().read().unwrap_or_else(|e| e.into_inner());
     if strategy.adaptive_ttl && hit_count > 0 {
         let multiplier = 1.0 + (hit_count as f64).log10() * strategy.ttl_multiplier * 0.3;
         let max_multiplier = 5.0;
@@ -5900,7 +5974,7 @@ fn access_patterns() -> &'static Mutex<Vec<AccessPattern>> {
 
 /// V41.0: 记录查询访问（用于模式学习）
 pub fn record_query_access(query_name: &str) {
-    let mut patterns = access_patterns().lock().unwrap();
+    let mut patterns = access_patterns().lock().unwrap_or_else(|e| e.into_inner());
     if patterns.is_empty() {
         patterns.push(AccessPattern {
             query_sequence: vec![query_name.to_string()],
@@ -6009,7 +6083,9 @@ pub struct CacheOptimizationSuggestionGql {
 
 /// V41.0: 获取缓存统计
 pub fn get_cache_stats() -> CacheStatsV41Gql {
-    let stats = cache_stats_internal().lock().unwrap();
+    let stats = cache_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let cache = multi_level_cache();
     let total_hits = stats.l1_hits + stats.l2_hits;
     let hit_rate = if stats.total_requests > 0 {
@@ -6196,7 +6272,7 @@ pub fn record_security_event(
     query_hash: Option<String>,
     details: String,
 ) {
-    let mut events = security_events().lock().unwrap();
+    let mut events = security_events().lock().unwrap_or_else(|e| e.into_inner());
     if events.len() >= MAX_SECURITY_EVENTS {
         events.pop_front();
     }
@@ -6222,13 +6298,16 @@ pub fn record_security_event(
 
 /// V40.0: 获取最近的安全事件（按时间倒序）
 pub fn get_security_events(limit: usize) -> Vec<SecurityEvent> {
-    let events = security_events().lock().unwrap();
+    let events = security_events().lock().unwrap_or_else(|e| e.into_inner());
     events.iter().rev().take(limit).cloned().collect()
 }
 
 /// V40.0: 获取安全事件总数
 pub fn get_security_event_count() -> usize {
-    security_events().lock().unwrap().len()
+    security_events()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .len()
 }
 
 /// V40.0: 验证查询深度
@@ -6305,7 +6384,7 @@ const RATE_LIMIT_WINDOW: std::time::Duration = std::time::Duration::from_secs(60
 ///
 /// 超过限制时返回错误并记录安全事件
 pub fn check_rate_limit(ip: &str) -> Result<(), String> {
-    let mut limiter = rate_limiter().lock().unwrap();
+    let mut limiter = rate_limiter().lock().unwrap_or_else(|e| e.into_inner());
     let entry = limiter.entry(ip.to_string()).or_insert(RateLimitEntry {
         count: 0,
         window_start: std::time::Instant::now(),
@@ -6353,27 +6432,44 @@ fn ip_blacklist() -> &'static RwLock<HashSet<String>> {
 
 /// V40.0: 检查 IP 是否在黑名单中
 pub fn is_ip_blacklisted(ip: &str) -> bool {
-    ip_blacklist().read().unwrap().contains(ip)
+    ip_blacklist()
+        .read()
+        .unwrap_or_else(|e| e.into_inner())
+        .contains(ip)
 }
 
 /// V40.0: 添加 IP 到黑名单
 pub fn add_to_ip_blacklist(ip: String) {
-    ip_blacklist().write().unwrap().insert(ip);
+    ip_blacklist()
+        .write()
+        .unwrap_or_else(|e| e.into_inner())
+        .insert(ip);
 }
 
 /// V40.0: 从黑名单移除 IP
 pub fn remove_from_ip_blacklist(ip: &str) {
-    ip_blacklist().write().unwrap().remove(ip);
+    ip_blacklist()
+        .write()
+        .unwrap_or_else(|e| e.into_inner())
+        .remove(ip);
 }
 
 /// V40.0: 获取黑名单列表
 pub fn get_ip_blacklist() -> Vec<String> {
-    ip_blacklist().read().unwrap().iter().cloned().collect()
+    ip_blacklist()
+        .read()
+        .unwrap_or_else(|e| e.into_inner())
+        .iter()
+        .cloned()
+        .collect()
 }
 
 /// V40.0: 获取黑名单大小
 pub fn get_ip_blacklist_size() -> usize {
-    ip_blacklist().read().unwrap().len()
+    ip_blacklist()
+        .read()
+        .unwrap_or_else(|e| e.into_inner())
+        .len()
 }
 
 /// V40.0: 检查 IP 黑名单，若在黑名单中则记录安全事件并返回错误
@@ -6411,7 +6507,7 @@ pub struct SecurityStats {
 
 /// V40.0: 获取安全统计
 pub fn get_security_stats() -> SecurityStats {
-    let events = security_events().lock().unwrap();
+    let events = security_events().lock().unwrap_or_else(|e| e.into_inner());
     let mut depth_count = 0;
     let mut complexity_count = 0;
     let mut rate_count = 0;
@@ -6628,7 +6724,9 @@ pub fn record_discovered_query(
     duration_ms: u64,
     source_ip: Option<&str>,
 ) {
-    let mut queries = discovered_queries().lock().unwrap();
+    let mut queries = discovered_queries()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let now = Utc::now();
 
     if let Some(query) = queries.get_mut(query_hash) {
@@ -6644,7 +6742,9 @@ pub fn record_discovered_query(
         }
 
         if query.status == DiscoveryStatus::New {
-            let policy = auto_approval_policy().read().unwrap();
+            let policy = auto_approval_policy()
+                .read()
+                .unwrap_or_else(|e| e.into_inner());
             if policy.enabled
                 && query.call_count >= policy.min_calls_for_auto
                 && query.max_depth <= policy.max_depth_for_auto
@@ -6696,7 +6796,9 @@ pub fn record_discovered_query(
 
 /// V41.0: 获取发现的查询列表
 pub fn get_discovered_queries(status: Option<DiscoveryStatus>) -> Vec<DiscoveredQueryGql> {
-    let queries = discovered_queries().lock().unwrap();
+    let queries = discovered_queries()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     queries
         .values()
         .filter(|q| status.map(|s| q.status == s).unwrap_or(true))
@@ -6720,7 +6822,9 @@ pub fn get_discovered_queries(status: Option<DiscoveryStatus>) -> Vec<Discovered
 
 /// V41.0: 审批通过发现的查询
 pub fn approve_discovered_query(hash: &str, reviewer: Option<&str>) -> bool {
-    let mut queries = discovered_queries().lock().unwrap();
+    let mut queries = discovered_queries()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(query) = queries.get_mut(hash) {
         query.status = DiscoveryStatus::Approved;
         query.reviewer = reviewer.map(|s| s.to_string());
@@ -6735,7 +6839,9 @@ pub fn approve_discovered_query(hash: &str, reviewer: Option<&str>) -> bool {
 
 /// V41.0: 拒绝发现的查询
 pub fn reject_discovered_query(hash: &str, reviewer: Option<&str>) -> bool {
-    let mut queries = discovered_queries().lock().unwrap();
+    let mut queries = discovered_queries()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(query) = queries.get_mut(hash) {
         query.status = DiscoveryStatus::Rejected;
         query.reviewer = reviewer.map(|s| s.to_string());
@@ -6748,7 +6854,9 @@ pub fn reject_discovered_query(hash: &str, reviewer: Option<&str>) -> bool {
 
 /// V41.0: 获取自动审批策略
 pub fn get_auto_approval_policy() -> AutoApprovalPolicyGql {
-    let policy = auto_approval_policy().read().unwrap();
+    let policy = auto_approval_policy()
+        .read()
+        .unwrap_or_else(|e| e.into_inner());
     AutoApprovalPolicyGql {
         enabled: policy.enabled,
         min_calls_for_auto: policy.min_calls_for_auto as i32,
@@ -6761,7 +6869,9 @@ pub fn get_auto_approval_policy() -> AutoApprovalPolicyGql {
 
 /// V41.0: 更新自动审批策略
 pub fn update_auto_approval_policy(input: AutoApprovalPolicyInput) -> bool {
-    let mut policy = auto_approval_policy().write().unwrap();
+    let mut policy = auto_approval_policy()
+        .write()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(v) = input.enabled {
         policy.enabled = v;
     }
@@ -6786,12 +6896,16 @@ pub fn update_auto_approval_policy(input: AutoApprovalPolicyInput) -> bool {
 /// V41.0: 手动触发自动审批扫描
 pub fn run_auto_approval_scan() -> u64 {
     let mut approved_count = 0u64;
-    let policy = auto_approval_policy().read().unwrap();
+    let policy = auto_approval_policy()
+        .read()
+        .unwrap_or_else(|e| e.into_inner());
     if !policy.enabled {
         return 0;
     }
 
-    let mut queries = discovered_queries().lock().unwrap();
+    let mut queries = discovered_queries()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let now = Utc::now();
 
     for query in queries.values_mut() {
@@ -6817,7 +6931,9 @@ pub fn run_auto_approval_scan() -> u64 {
 
 /// V41.0: 获取白名单健康度
 pub fn get_whitelist_health() -> WhitelistHealthGql {
-    let queries = discovered_queries().lock().unwrap();
+    let queries = discovered_queries()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let whitelist_size = get_whitelist_size();
     let total = queries.len();
     let approved = queries
@@ -7428,26 +7544,28 @@ fn service_registry() -> &'static RwLock<Vec<ServiceMetadata>> {
 
 /// V42.0: 注册服务元数据
 pub fn register_service(metadata: ServiceMetadata) {
-    let mut registry = service_registry().write().unwrap();
+    let mut registry = service_registry()
+        .write()
+        .unwrap_or_else(|e| e.into_inner());
     registry.retain(|s| s.name != metadata.name);
     registry.push(metadata);
 }
 
 /// V42.0: 按名称获取服务
 pub fn get_service(name: &str) -> Option<ServiceMetadata> {
-    let registry = service_registry().read().unwrap();
+    let registry = service_registry().read().unwrap_or_else(|e| e.into_inner());
     registry.iter().find(|s| s.name == name).cloned()
 }
 
 /// V42.0: 列出所有已注册服务
 pub fn list_services() -> Vec<ServiceMetadata> {
-    let registry = service_registry().read().unwrap();
+    let registry = service_registry().read().unwrap_or_else(|e| e.into_inner());
     registry.clone()
 }
 
 /// V42.0: 按实体名获取实体元数据
 pub fn get_entity_metadata(entity_name: &str) -> Option<EntityMetadata> {
-    let registry = service_registry().read().unwrap();
+    let registry = service_registry().read().unwrap_or_else(|e| e.into_inner());
     for service in registry.iter() {
         if let Some(entity) = service.entities.iter().find(|e| e.name == entity_name) {
             return Some(entity.clone());
@@ -7458,7 +7576,9 @@ pub fn get_entity_metadata(entity_name: &str) -> Option<EntityMetadata> {
 
 /// V42.0: 预初始化 5 个服务（erp/crm/hrm/finance/mes）的元数据
 pub fn init_service_registry() {
-    let mut registry = service_registry().write().unwrap();
+    let mut registry = service_registry()
+        .write()
+        .unwrap_or_else(|e| e.into_inner());
     if !registry.is_empty() {
         return;
     }
@@ -8446,49 +8566,67 @@ fn federation_v2_stats_internal() -> &'static Mutex<FederationV2StatsInternal> {
 }
 
 fn record_federation_v2_request() {
-    let mut s = federation_v2_stats_internal().lock().unwrap();
+    let mut s = federation_v2_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.total_queries += 1;
 }
 
 fn record_federation_v2_total_steps(count: u64) {
-    let mut s = federation_v2_stats_internal().lock().unwrap();
+    let mut s = federation_v2_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.total_steps += count;
 }
 
 fn record_federation_v2_parallel_steps(count: u64) {
-    let mut s = federation_v2_stats_internal().lock().unwrap();
+    let mut s = federation_v2_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.parallel_steps += count;
 }
 
 fn record_federation_v2_batch_resolutions() {
-    let mut s = federation_v2_stats_internal().lock().unwrap();
+    let mut s = federation_v2_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.batch_resolutions += 1;
 }
 
 fn record_federation_v2_cache_hit() {
-    let mut s = federation_v2_stats_internal().lock().unwrap();
+    let mut s = federation_v2_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.cache_hits += 1;
 }
 
 fn record_federation_v2_cache_miss() {
-    let mut s = federation_v2_stats_internal().lock().unwrap();
+    let mut s = federation_v2_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.cache_misses += 1;
 }
 
 fn record_federation_v2_plan_time(ms: u64) {
-    let mut s = federation_v2_stats_internal().lock().unwrap();
+    let mut s = federation_v2_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.total_plan_time_ms += ms;
     s.plan_count += 1;
 }
 
 fn record_federation_v2_execute_time(ms: u64) {
-    let mut s = federation_v2_stats_internal().lock().unwrap();
+    let mut s = federation_v2_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.total_execute_time_ms += ms;
     s.execute_count += 1;
 }
 
 fn record_federation_v2_plan_cache_hit() {
-    let mut s = federation_v2_stats_internal().lock().unwrap();
+    let mut s = federation_v2_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.plan_cache_hits += 1;
 }
 
@@ -8497,13 +8635,17 @@ fn record_federation_v2_plan_cache_miss() {
 }
 
 fn record_federation_v2_auto_resolver() {
-    let mut s = federation_v2_stats_internal().lock().unwrap();
+    let mut s = federation_v2_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     s.auto_resolvers_used += 1;
 }
 
 pub fn get_federation_v2_stats() -> FederationV2StatsGql {
-    let s = federation_v2_stats_internal().lock().unwrap();
-    let registry = service_registry().read().unwrap();
+    let s = federation_v2_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let registry = service_registry().read().unwrap_or_else(|e| e.into_inner());
     let entities_registered: usize = registry.iter().map(|s| s.entities.len()).sum();
     let avg_plan_time_ms = if s.plan_count > 0 {
         s.total_plan_time_ms as f64 / s.plan_count as f64
@@ -9370,7 +9512,9 @@ impl FederationV3Planner {
 
 /// V44.0: 检查熔断器状态
 pub fn check_circuit_breaker(service: &str) -> bool {
-    let breakers = federation_v3_circuit_breakers().lock().unwrap();
+    let breakers = federation_v3_circuit_breakers()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(cb) = breakers.get(service) {
         match cb.state {
             CircuitBreakerState::Closed => true,
@@ -9389,7 +9533,9 @@ pub fn check_circuit_breaker(service: &str) -> bool {
 
 /// V44.0: 记录成功
 pub fn record_circuit_success(service: &str) {
-    let mut breakers = federation_v3_circuit_breakers().lock().unwrap();
+    let mut breakers = federation_v3_circuit_breakers()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(cb) = breakers.get_mut(service) {
         let now = Utc::now();
         match cb.state {
@@ -9412,8 +9558,12 @@ pub fn record_circuit_success(service: &str) {
 
 /// V44.0: 记录失败
 pub fn record_circuit_failure(service: &str) {
-    let mut breakers = federation_v3_circuit_breakers().lock().unwrap();
-    let mut stats = federation_v3_stats_internal().lock().unwrap();
+    let mut breakers = federation_v3_circuit_breakers()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let mut stats = federation_v3_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(cb) = breakers.get_mut(service) {
         let now = Utc::now();
         cb.failure_count += 1;
@@ -9440,7 +9590,9 @@ pub fn record_circuit_failure(service: &str) {
 
 /// V44.0: 重置熔断器
 pub fn reset_circuit_breaker(service: &str) -> bool {
-    let mut breakers = federation_v3_circuit_breakers().lock().unwrap();
+    let mut breakers = federation_v3_circuit_breakers()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(cb) = breakers.get_mut(service) {
         let now = Utc::now();
         cb.state = CircuitBreakerState::Closed;
@@ -9455,7 +9607,9 @@ pub fn reset_circuit_breaker(service: &str) -> bool {
 
 /// V44.0: 设置熔断器配置
 pub fn set_circuit_breaker_config(service: &str, config: CircuitBreakerConfigInputGql) -> bool {
-    let mut breakers = federation_v3_circuit_breakers().lock().unwrap();
+    let mut breakers = federation_v3_circuit_breakers()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(cb) = breakers.get_mut(service) {
         cb.config = CircuitBreakerConfig {
             failure_threshold: config.failure_threshold as u64,
@@ -9477,11 +9631,15 @@ pub struct FederatedCacheManager;
 impl FederatedCacheManager {
     pub fn get_query_cache(query_hash: &str, variables_hash: &str) -> Option<serde_json::Value> {
         let key = format!("{}:{}", query_hash, variables_hash);
-        let mut cache = federation_v3_query_cache().lock().unwrap();
+        let mut cache = federation_v3_query_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let now = Utc::now();
         if let Some(entry) = cache.get(&key) {
             if entry.expires_at > now {
-                let mut stats = federation_v3_stats_internal().lock().unwrap();
+                let mut stats = federation_v3_stats_internal()
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner());
                 stats.cache_hits += 1;
                 return Some(entry.result.clone());
             }
@@ -9499,7 +9657,9 @@ impl FederatedCacheManager {
         let key = format!("{}:{}", query_hash, variables_hash);
         let now = Utc::now();
         let expires = now + chrono::Duration::milliseconds(ttl_ms as i64);
-        let mut cache = federation_v3_query_cache().lock().unwrap();
+        let mut cache = federation_v3_query_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(existing) = cache.get(&key) {
             let hit_count = existing.hit_count + 1;
             cache.put(
@@ -9526,12 +9686,16 @@ impl FederatedCacheManager {
                 },
             );
         }
-        let mut stats = federation_v3_stats_internal().lock().unwrap();
+        let mut stats = federation_v3_stats_internal()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         stats.cache_misses += 1;
     }
 
     pub fn invalidate_query_cache(query_hash: &str) -> bool {
-        let mut cache = federation_v3_query_cache().lock().unwrap();
+        let mut cache = federation_v3_query_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let keys: Vec<String> = cache
             .keys()
             .into_iter()
@@ -9552,7 +9716,9 @@ impl FederatedCacheManager {
         entity_id: &str,
     ) -> Option<serde_json::Value> {
         let key = format!("{}:{}:{}", service, entity_type, entity_id);
-        let mut cache = federation_v3_entity_cache().lock().unwrap();
+        let mut cache = federation_v3_entity_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         cache.get(&key).map(|e| e.data.clone())
     }
 
@@ -9564,7 +9730,9 @@ impl FederatedCacheManager {
     ) {
         let key = format!("{}:{}:{}", service, entity_type, entity_id);
         let now = Utc::now();
-        let mut cache = federation_v3_entity_cache().lock().unwrap();
+        let mut cache = federation_v3_entity_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let version = cache.get(&key).map(|e| e.version + 1).unwrap_or(1);
         cache.put(
             key,
@@ -9581,13 +9749,19 @@ impl FederatedCacheManager {
 
     pub fn invalidate_entity_cache(service: &str, entity_type: &str, entity_id: &str) -> bool {
         let key = format!("{}:{}:{}", service, entity_type, entity_id);
-        let mut cache = federation_v3_entity_cache().lock().unwrap();
+        let mut cache = federation_v3_entity_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         cache.remove(&key).is_some()
     }
 
     pub fn clear_all_cache() -> bool {
-        let mut query_cache = federation_v3_query_cache().lock().unwrap();
-        let mut entity_cache = federation_v3_entity_cache().lock().unwrap();
+        let mut query_cache = federation_v3_query_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let mut entity_cache = federation_v3_entity_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         query_cache.clear();
         entity_cache.clear();
         true
@@ -9686,7 +9860,9 @@ impl FederationV3Executor {
             created_at: Utc::now(),
         });
 
-        let mut stats = federation_v3_stats_internal().lock().unwrap();
+        let mut stats = federation_v3_stats_internal()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         stats.total_queries += 1;
         stats.total_latency_ms += total_time;
         stats.latencies.push(total_time);
@@ -9714,7 +9890,9 @@ impl FederationV3Executor {
         };
 
         if !check_circuit_breaker(svc) {
-            let mut stats = federation_v3_stats_internal().lock().unwrap();
+            let mut stats = federation_v3_stats_internal()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             stats.fallback_uses += 1;
             return (
                 serde_json::json!({"error": "circuit breaker open", "service": svc}),
@@ -9747,7 +9925,9 @@ impl FederationV3Executor {
                 }
                 Err(e) => {
                     record_circuit_failure(svc);
-                    let mut stats = federation_v3_stats_internal().lock().unwrap();
+                    let mut stats = federation_v3_stats_internal()
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner());
                     stats.fallback_uses += 1;
                     serde_json::json!({"error": e})
                 }
@@ -9759,7 +9939,9 @@ impl FederationV3Executor {
                 }
                 Err(e) => {
                     record_circuit_failure(svc);
-                    let mut stats = federation_v3_stats_internal().lock().unwrap();
+                    let mut stats = federation_v3_stats_internal()
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner());
                     stats.fallback_uses += 1;
                     serde_json::json!({"error": e})
                 }
@@ -9767,7 +9949,9 @@ impl FederationV3Executor {
         };
 
         let latency = start.elapsed().as_millis() as u64;
-        let mut stats = federation_v3_stats_internal().lock().unwrap();
+        let mut stats = federation_v3_stats_internal()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(svc_stats) = stats.service_stats.get_mut(svc) {
             if result.get("error").is_some() {
                 svc_stats.record_failure(latency);
@@ -9780,7 +9964,9 @@ impl FederationV3Executor {
     }
 
     fn record_trace(trace: PlanExecutionTrace) {
-        let mut traces = federation_v3_traces().lock().unwrap();
+        let mut traces = federation_v3_traces()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         traces.push_front(trace);
         if traces.len() > 100 {
             traces.pop_back();
@@ -9798,8 +9984,12 @@ fn v3_variables_hash(variables: &serde_json::Value) -> String {
 }
 
 pub fn get_federation_v3_stats() -> FederationV3StatsGql {
-    let stats = federation_v3_stats_internal().lock().unwrap();
-    let breakers = federation_v3_circuit_breakers().lock().unwrap();
+    let stats = federation_v3_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let breakers = federation_v3_circuit_breakers()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
 
     let avg_latency_ms = if stats.total_queries > 0 {
         stats.total_latency_ms as f64 / stats.total_queries as f64
@@ -9865,7 +10055,9 @@ pub fn get_federation_v3_stats() -> FederationV3StatsGql {
 }
 
 pub fn get_all_circuit_breakers() -> Vec<CircuitBreakerStateGqlSimple> {
-    let breakers = federation_v3_circuit_breakers().lock().unwrap();
+    let breakers = federation_v3_circuit_breakers()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     breakers
         .iter()
         .map(|(name, cb)| CircuitBreakerStateGqlSimple {
@@ -9882,7 +10074,9 @@ pub fn get_all_circuit_breakers() -> Vec<CircuitBreakerStateGqlSimple> {
 }
 
 pub fn get_v3_traces(limit: usize) -> Vec<PlanExecutionTraceGql> {
-    let traces = federation_v3_traces().lock().unwrap();
+    let traces = federation_v3_traces()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     traces
         .iter()
         .take(limit)
@@ -9914,9 +10108,15 @@ pub fn get_v3_traces(limit: usize) -> Vec<PlanExecutionTraceGql> {
 }
 
 pub fn get_v3_cache_stats() -> FederationCacheStatsGql {
-    let stats = federation_v3_stats_internal().lock().unwrap();
-    let query_cache = federation_v3_query_cache().lock().unwrap();
-    let entity_cache = federation_v3_entity_cache().lock().unwrap();
+    let stats = federation_v3_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let query_cache = federation_v3_query_cache()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let entity_cache = federation_v3_entity_cache()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
 
     let total_cache = stats.cache_hits + stats.cache_misses;
     let hit_rate = if total_cache > 0 {
@@ -10105,8 +10305,13 @@ impl FieldPermissionChecker {
         field_name: &str,
         roles: &[UserRole],
     ) -> PermissionResult {
-        let rules = field_permissions().read().unwrap();
-        let config = security_config().read().unwrap().clone();
+        let rules = field_permissions()
+            .read()
+            .unwrap_or_else(|e| e.into_inner());
+        let config = security_config()
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone();
 
         if let Some(entity_rules) = rules.get(entity_type) {
             if let Some(rule) = entity_rules.iter().find(|r| r.field_name == field_name) {
@@ -10182,7 +10387,9 @@ impl Default for FieldPermissionChecker {
 
 /// V42.0: 设置字段权限（覆盖同 entity_type + field_name 的规则）
 pub fn set_field_permission(permission: FieldPermission) {
-    let mut rules = field_permissions().write().unwrap();
+    let mut rules = field_permissions()
+        .write()
+        .unwrap_or_else(|e| e.into_inner());
     let entry = rules.entry(permission.entity_type.clone()).or_default();
     entry.retain(|r| r.field_name != permission.field_name);
     entry.push(permission);
@@ -10190,7 +10397,9 @@ pub fn set_field_permission(permission: FieldPermission) {
 
 /// V42.0: 移除字段权限
 pub fn remove_field_permission(entity_type: &str, field_name: &str) -> bool {
-    let mut rules = field_permissions().write().unwrap();
+    let mut rules = field_permissions()
+        .write()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(entry) = rules.get_mut(entity_type) {
         let before = entry.len();
         entry.retain(|r| r.field_name != field_name);
@@ -10201,7 +10410,9 @@ pub fn remove_field_permission(entity_type: &str, field_name: &str) -> bool {
 
 /// V42.0: 获取字段权限规则列表（可按 entity_type 过滤）
 pub fn get_field_permissions(entity_type: Option<&str>) -> Vec<FieldPermission> {
-    let rules = field_permissions().read().unwrap();
+    let rules = field_permissions()
+        .read()
+        .unwrap_or_else(|e| e.into_inner());
     match entity_type {
         Some(et) => rules.get(et).cloned().unwrap_or_default(),
         None => rules.values().flatten().cloned().collect(),
@@ -10210,7 +10421,9 @@ pub fn get_field_permissions(entity_type: Option<&str>) -> Vec<FieldPermission> 
 
 /// V42.0: 预定义字段权限规则
 pub fn init_field_permissions() {
-    let mut rules = field_permissions().write().unwrap();
+    let mut rules = field_permissions()
+        .write()
+        .unwrap_or_else(|e| e.into_inner());
     // 仅在为空时初始化，避免重复添加
     if !rules.is_empty() {
         return;
@@ -10335,11 +10548,14 @@ pub fn apply_masking(
     value: &serde_json::Value,
     roles: &[UserRole],
 ) -> serde_json::Value {
-    let config = security_config().read().unwrap().clone();
+    let config = security_config()
+        .read()
+        .unwrap_or_else(|e| e.into_inner())
+        .clone();
     if !config.data_masking_enabled {
         return value.clone();
     }
-    let rules = masking_rules().read().unwrap();
+    let rules = masking_rules().read().unwrap_or_else(|e| e.into_inner());
     let rule = match rules.get(entity_type) {
         Some(entry) => entry.iter().find(|r| r.field_name == field_name),
         None => None,
@@ -10431,7 +10647,7 @@ pub fn mask_value(value: &serde_json::Value, mask_type: &MaskType) -> serde_json
 
 /// V42.0: 设置掩码规则（覆盖同 entity_type + field_name 的规则）
 pub fn set_masking_rule(rule: MaskingRule) {
-    let mut rules = masking_rules().write().unwrap();
+    let mut rules = masking_rules().write().unwrap_or_else(|e| e.into_inner());
     let entry = rules.entry(rule.entity_type.clone()).or_default();
     entry.retain(|r| r.field_name != rule.field_name);
     entry.push(rule);
@@ -10439,7 +10655,7 @@ pub fn set_masking_rule(rule: MaskingRule) {
 
 /// V42.0: 移除掩码规则
 pub fn remove_masking_rule(entity_type: &str, field_name: &str) -> bool {
-    let mut rules = masking_rules().write().unwrap();
+    let mut rules = masking_rules().write().unwrap_or_else(|e| e.into_inner());
     if let Some(entry) = rules.get_mut(entity_type) {
         let before = entry.len();
         entry.retain(|r| r.field_name != field_name);
@@ -10450,7 +10666,7 @@ pub fn remove_masking_rule(entity_type: &str, field_name: &str) -> bool {
 
 /// V42.0: 获取掩码规则列表（可按 entity_type 过滤）
 pub fn get_masking_rules(entity_type: Option<&str>) -> Vec<MaskingRule> {
-    let rules = masking_rules().read().unwrap();
+    let rules = masking_rules().read().unwrap_or_else(|e| e.into_inner());
     match entity_type {
         Some(et) => rules.get(et).cloned().unwrap_or_default(),
         None => rules.values().flatten().cloned().collect(),
@@ -10459,7 +10675,7 @@ pub fn get_masking_rules(entity_type: Option<&str>) -> Vec<MaskingRule> {
 
 /// V42.0: 预定义掩码规则
 pub fn init_masking_rules() {
-    let mut rules = masking_rules().write().unwrap();
+    let mut rules = masking_rules().write().unwrap_or_else(|e| e.into_inner());
     if !rules.is_empty() {
         return;
     }
@@ -10577,7 +10793,9 @@ fn data_change_audits_store() -> &'static Mutex<VecDeque<DataChangeAudit>> {
 
 /// V42.0: 记录字段访问审计
 pub fn record_field_access(audit: FieldAccessAudit) {
-    let mut store = field_access_audits_store().lock().unwrap();
+    let mut store = field_access_audits_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if store.len() >= MAX_AUDIT_RECORDS {
         store.pop_front();
     }
@@ -10586,7 +10804,9 @@ pub fn record_field_access(audit: FieldAccessAudit) {
 
 /// V42.0: 记录数据变更审计
 pub fn record_data_change(audit: DataChangeAudit) {
-    let mut store = data_change_audits_store().lock().unwrap();
+    let mut store = data_change_audits_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if store.len() >= MAX_AUDIT_RECORDS {
         store.pop_front();
     }
@@ -10595,7 +10815,9 @@ pub fn record_data_change(audit: DataChangeAudit) {
 
 /// V42.0: 获取字段访问审计（按时间倒序，可按 entity_type 过滤）
 pub fn get_field_access_audits(limit: usize, entity_type: Option<&str>) -> Vec<FieldAccessAudit> {
-    let store = field_access_audits_store().lock().unwrap();
+    let store = field_access_audits_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     store
         .iter()
         .rev()
@@ -10607,7 +10829,9 @@ pub fn get_field_access_audits(limit: usize, entity_type: Option<&str>) -> Vec<F
 
 /// V42.0: 获取数据变更审计（按时间倒序，可按 entity_type 过滤）
 pub fn get_data_change_audits(limit: usize, entity_type: Option<&str>) -> Vec<DataChangeAudit> {
-    let store = data_change_audits_store().lock().unwrap();
+    let store = data_change_audits_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     store
         .iter()
         .rev()
@@ -10619,12 +10843,18 @@ pub fn get_data_change_audits(limit: usize, entity_type: Option<&str>) -> Vec<Da
 
 /// V42.0: 字段访问审计总数
 pub fn get_field_access_audit_count() -> usize {
-    field_access_audits_store().lock().unwrap().len()
+    field_access_audits_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .len()
 }
 
 /// V42.0: 数据变更审计总数
 pub fn get_data_change_audit_count() -> usize {
-    data_change_audits_store().lock().unwrap().len()
+    data_change_audits_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .len()
 }
 
 /// V42.0: 检查字段访问权限并记录审计（供解析器在查询执行前调用）
@@ -10637,7 +10867,10 @@ pub fn check_and_record_field_access(
     ip: Option<&str>,
     query_hash: Option<&str>,
 ) -> PermissionResult {
-    let config = security_config().read().unwrap().clone();
+    let config = security_config()
+        .read()
+        .unwrap_or_else(|e| e.into_inner())
+        .clone();
     let checker = FieldPermissionChecker::new();
     let result = checker.check(entity_type, field_name, user_roles);
 
@@ -10655,7 +10888,7 @@ pub fn check_and_record_field_access(
             result,
             PermissionResult::Allowed | PermissionResult::Conditional(_)
         ) {
-            let rules = masking_rules().read().unwrap();
+            let rules = masking_rules().read().unwrap_or_else(|e| e.into_inner());
             if let Some(entry) = rules.get(entity_type) {
                 if let Some(rule) = entry.iter().find(|r| r.field_name == field_name) {
                     let role_names: Vec<&str> = user_roles.iter().map(|r| r.as_str()).collect();
@@ -10700,13 +10933,15 @@ pub fn check_and_record_field_access(
 
 /// V42.0: 判断字段是否为敏感字段（有权限规则或掩码规则即视为敏感）
 fn is_sensitive_field(entity_type: &str, field_name: &str) -> bool {
-    let perm_rules = field_permissions().read().unwrap();
+    let perm_rules = field_permissions()
+        .read()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(entry) = perm_rules.get(entity_type) {
         if entry.iter().any(|r| r.field_name == field_name) {
             return true;
         }
     }
-    let mask_rules = masking_rules().read().unwrap();
+    let mask_rules = masking_rules().read().unwrap_or_else(|e| e.into_inner());
     if let Some(entry) = mask_rules.get(entity_type) {
         if entry.iter().any(|r| r.field_name == field_name) {
             return true;
@@ -10745,12 +10980,15 @@ fn security_config() -> &'static RwLock<SecurityConfig> {
 
 /// V42.0: 获取安全配置
 pub fn get_security_config() -> SecurityConfig {
-    security_config().read().unwrap().clone()
+    security_config()
+        .read()
+        .unwrap_or_else(|e| e.into_inner())
+        .clone()
 }
 
 /// V42.0: 更新安全配置
 pub fn update_security_config(config: SecurityConfig) -> SecurityConfig {
-    let mut current = security_config().write().unwrap();
+    let mut current = security_config().write().unwrap_or_else(|e| e.into_inner());
     *current = config;
     current.clone()
 }
@@ -11505,36 +11743,48 @@ pub fn analyze_and_store_query(query_hash: &str, query: &str) {
     let health = calculate_query_health_score(query_hash, query);
 
     {
-        let mut store = optimization_suggestions_store().lock().unwrap();
+        let mut store = optimization_suggestions_store()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         store.insert(query_hash.to_string(), suggestions);
     }
     {
-        let mut store = health_scores_store().lock().unwrap();
+        let mut store = health_scores_store()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         store.insert(query_hash.to_string(), health);
     }
 }
 
 /// V43.0: 获取指定查询的优化建议
 pub fn get_query_optimization_suggestions(query_hash: &str) -> Vec<QueryOptimizationSuggestionGql> {
-    let store = optimization_suggestions_store().lock().unwrap();
+    let store = optimization_suggestions_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     store.get(query_hash).cloned().unwrap_or_default()
 }
 
 /// V43.0: 获取指定查询的健康度
 pub fn get_query_health_score(query_hash: &str) -> Option<QueryHealthScoreGql> {
-    let store = health_scores_store().lock().unwrap();
+    let store = health_scores_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     store.get(query_hash).cloned()
 }
 
 /// V43.0: 获取所有优化建议
 pub fn get_all_optimization_suggestions() -> Vec<QueryOptimizationSuggestionGql> {
-    let store = optimization_suggestions_store().lock().unwrap();
+    let store = optimization_suggestions_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     store.values().flatten().cloned().collect()
 }
 
 /// V43.0: 应用优化建议
 pub fn apply_optimization_suggestion(query_hash: &str, suggestion_id: &str) -> bool {
-    let mut store = optimization_suggestions_store().lock().unwrap();
+    let mut store = optimization_suggestions_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(suggestions) = store.get_mut(query_hash) {
         suggestions.retain(|s| s.id != suggestion_id);
         return true;
@@ -12116,14 +12366,18 @@ fn nl2graphql_stats_internal() -> &'static Mutex<Nl2GraphqlStatsInternal> {
 
 /// V43.0: 记录 NL2GraphQL 查询
 pub fn record_nl2graphql_query(confidence: f64) {
-    let mut stats = nl2graphql_stats_internal().lock().unwrap();
+    let mut stats = nl2graphql_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     stats.total_queries += 1;
     stats.total_confidence += confidence;
 }
 
 /// V43.0: 获取 NL2GraphQL 统计
 fn get_nl2graphql_stats() -> (u64, f64) {
-    let stats = nl2graphql_stats_internal().lock().unwrap();
+    let stats = nl2graphql_stats_internal()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let avg = if stats.total_queries > 0 {
         stats.total_confidence / stats.total_queries as f64
     } else {
@@ -12391,14 +12645,18 @@ fn cache_recommendations_store() -> &'static Mutex<Option<CacheRecommendationRep
 pub fn generate_cache_recommendations() -> u32 {
     let report = CacheRecommendationEngine::analyze();
     let count = report.recommended_changes as u32;
-    let mut store = cache_recommendations_store().lock().unwrap();
+    let mut store = cache_recommendations_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     *store = Some(report);
     count
 }
 
 /// V43.0: 获取缓存推荐报告
 pub fn get_cache_recommendations() -> CacheRecommendationReportGql {
-    let store = cache_recommendations_store().lock().unwrap();
+    let store = cache_recommendations_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     store
         .clone()
         .unwrap_or_else(|| CacheRecommendationEngine::analyze())
@@ -12406,7 +12664,9 @@ pub fn get_cache_recommendations() -> CacheRecommendationReportGql {
 
 /// V43.0: 接受缓存推荐
 pub fn accept_cache_recommendation(query_hash: &str) -> bool {
-    let mut store = cache_recommendations_store().lock().unwrap();
+    let mut store = cache_recommendations_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(ref mut report) = *store {
         if let Some(pos) = report
             .recommendations
@@ -12426,7 +12686,9 @@ pub fn accept_cache_recommendation(query_hash: &str) -> bool {
 /// V43.0: 获取 AI 优化统计
 pub fn get_ai_optimization_stats() -> AiOptimizationStatsGql {
     let suggestions = get_all_optimization_suggestions();
-    let health_scores = health_scores_store().lock().unwrap();
+    let health_scores = health_scores_store()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let (nl_queries, nl_confidence_avg) = get_nl2graphql_stats();
     let cache_report = get_cache_recommendations();
 
@@ -12701,7 +12963,9 @@ fn subscription_sessions() -> &'static Mutex<HashMap<String, SubscriptionSession
 
 /// 注册订阅会话
 pub fn register_session(session: SubscriptionSession) {
-    let mut sessions = subscription_sessions().lock().unwrap();
+    let mut sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     sessions.insert(session.session_id.clone(), session);
     tracing::debug!(
         "[subscription] 会话已注册，当前活跃会话: {}",
@@ -12711,7 +12975,9 @@ pub fn register_session(session: SubscriptionSession) {
 
 /// 移除订阅会话
 pub fn remove_session(session_id: &str) -> Option<SubscriptionSession> {
-    let mut sessions = subscription_sessions().lock().unwrap();
+    let mut sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let removed = sessions.remove(session_id);
     tracing::debug!(
         "[subscription] 会话已移除，当前活跃会话: {}",
@@ -12722,31 +12988,41 @@ pub fn remove_session(session_id: &str) -> Option<SubscriptionSession> {
 
 /// 获取订阅会话
 pub fn get_session(session_id: &str) -> Option<SubscriptionSession> {
-    let sessions = subscription_sessions().lock().unwrap();
+    let sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     sessions.get(session_id).cloned()
 }
 
 /// 列出所有订阅会话
 pub fn list_sessions() -> Vec<SubscriptionSession> {
-    let sessions = subscription_sessions().lock().unwrap();
+    let sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     sessions.values().cloned().collect()
 }
 
 /// 获取总订阅数
 pub fn get_total_subscriptions() -> usize {
-    let sessions = subscription_sessions().lock().unwrap();
+    let sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     sessions.values().map(|s| s.subscriptions.len()).sum()
 }
 
 /// 获取活跃连接数
 pub fn get_active_connections() -> usize {
-    let sessions = subscription_sessions().lock().unwrap();
+    let sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     sessions.len()
 }
 
 /// 向会话添加订阅
 pub fn add_subscription_to_session(session_id: &str, info: SubscriptionInfo) {
-    let mut sessions = subscription_sessions().lock().unwrap();
+    let mut sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(session) = sessions.get_mut(session_id) {
         session.subscriptions.insert(info.id.clone(), info);
         session.last_active = Utc::now();
@@ -12755,7 +13031,9 @@ pub fn add_subscription_to_session(session_id: &str, info: SubscriptionInfo) {
 
 /// 从会话移除订阅
 pub fn remove_subscription_from_session(session_id: &str, subscription_id: &str) -> bool {
-    let mut sessions = subscription_sessions().lock().unwrap();
+    let mut sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(session) = sessions.get_mut(session_id) {
         let removed = session.subscriptions.remove(subscription_id).is_some();
         session.last_active = Utc::now();
@@ -12767,7 +13045,9 @@ pub fn remove_subscription_from_session(session_id: &str, subscription_id: &str)
 
 /// 更新会话最后活跃时间
 pub fn touch_session(session_id: &str) {
-    let mut sessions = subscription_sessions().lock().unwrap();
+    let mut sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(session) = sessions.get_mut(session_id) {
         session.last_active = Utc::now();
     }
@@ -12775,7 +13055,9 @@ pub fn touch_session(session_id: &str) {
 
 /// 记录订阅收到事件
 pub fn record_subscription_event(session_id: &str, subscription_id: &str) {
-    let mut sessions = subscription_sessions().lock().unwrap();
+    let mut sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(session) = sessions.get_mut(session_id) {
         if let Some(sub) = session.subscriptions.get_mut(subscription_id) {
             sub.events_received += 1;
@@ -12787,7 +13069,9 @@ pub fn record_subscription_event(session_id: &str, subscription_id: &str) {
 
 /// 取消指定订阅（跨会话搜索）
 pub fn cancel_subscription_by_id(subscription_id: &str) -> bool {
-    let mut sessions = subscription_sessions().lock().unwrap();
+    let mut sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     for session in sessions.values_mut() {
         if session.subscriptions.remove(subscription_id).is_some() {
             return true;
@@ -12798,7 +13082,9 @@ pub fn cancel_subscription_by_id(subscription_id: &str) -> bool {
 
 /// 取消指定连接的所有订阅
 pub fn cancel_all_subscriptions_by_connection(connection_id: &str) -> u64 {
-    let mut sessions = subscription_sessions().lock().unwrap();
+    let mut sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let mut count = 0u64;
     for session in sessions.values_mut() {
         if session.connection_id == connection_id {
@@ -12848,7 +13134,7 @@ pub fn push_buffered_event(channel: SubscriptionChannel, payload: serde_json::Va
         timestamp: Utc::now(),
     };
 
-    let mut buf = event_buffer().lock().unwrap();
+    let mut buf = event_buffer().lock().unwrap_or_else(|e| e.into_inner());
     if buf.len() >= EVENT_BUFFER_CAPACITY {
         buf.pop_front();
     }
@@ -12861,7 +13147,7 @@ pub fn get_buffered_events_since(
     channel: SubscriptionChannel,
     since: Option<&DateTime<Utc>>,
 ) -> Vec<BufferedEvent> {
-    let buf = event_buffer().lock().unwrap();
+    let buf = event_buffer().lock().unwrap_or_else(|e| e.into_inner());
     buf.iter()
         .filter(|e| e.channel == channel)
         .filter(|e| match since {
@@ -12874,7 +13160,7 @@ pub fn get_buffered_events_since(
 
 /// 获取缓冲事件数量
 pub fn get_buffered_event_count() -> usize {
-    let buf = event_buffer().lock().unwrap();
+    let buf = event_buffer().lock().unwrap_or_else(|e| e.into_inner());
     buf.len()
 }
 
@@ -12916,7 +13202,7 @@ pub fn record_event_published(_channel: SubscriptionChannel) {
     TOTAL_EVENTS_PUBLISHED.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
 
     let now = Utc::now();
-    let mut timestamps = event_timestamps().lock().unwrap();
+    let mut timestamps = event_timestamps().lock().unwrap_or_else(|e| e.into_inner());
     timestamps.push_back(now);
     // 只保留最近 60 秒的时间戳
     let cutoff = now - chrono::Duration::seconds(60);
@@ -12927,7 +13213,7 @@ pub fn record_event_published(_channel: SubscriptionChannel) {
 
 /// 计算每秒事件数（过去 60 秒滑动窗口）
 pub fn get_events_per_second() -> f64 {
-    let timestamps = event_timestamps().lock().unwrap();
+    let timestamps = event_timestamps().lock().unwrap_or_else(|e| e.into_inner());
     if timestamps.len() < 2 {
         return 0.0;
     }
@@ -12940,7 +13226,9 @@ pub fn get_events_per_second() -> f64 {
 
 /// 按频道统计订阅数
 pub fn get_channel_stats() -> Vec<ChannelStat> {
-    let sessions = subscription_sessions().lock().unwrap();
+    let sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let mut channel_counts: HashMap<SubscriptionChannel, u64> = HashMap::new();
 
     for session in sessions.values() {
@@ -12975,7 +13263,9 @@ fn channel_name(channel: SubscriptionChannel) -> String {
 
 /// 获取完整订阅统计
 pub fn get_subscription_stats() -> SubscriptionStats {
-    let sessions = subscription_sessions().lock().unwrap();
+    let sessions = subscription_sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let total_subscriptions: usize = sessions.values().map(|s| s.subscriptions.len()).sum();
 
     let mut channel_counts: HashMap<SubscriptionChannel, u64> = HashMap::new();
@@ -13381,7 +13671,7 @@ pub fn start_trace(
         user_id,
         client_info,
     };
-    let mut traces_lock = traces().lock().unwrap();
+    let mut traces_lock = traces().lock().unwrap_or_else(|e| e.into_inner());
     if traces_lock.len() >= MAX_TRACES {
         traces_lock.pop_front();
     }
@@ -13399,7 +13689,7 @@ pub fn start_span(
     attributes: Option<serde_json::Value>,
 ) -> Option<String> {
     let span_id = generate_span_id();
-    let mut traces_lock = traces().lock().unwrap();
+    let mut traces_lock = traces().lock().unwrap_or_else(|e| e.into_inner());
     if let Some(trace) = traces_lock.iter_mut().find(|t| t.trace_id == trace_id) {
         let span = QuerySpan {
             span_id: span_id.clone(),
@@ -13423,7 +13713,7 @@ pub fn start_span(
 
 /// V44.0: 结束一个 Span
 pub fn end_span(trace_id: &str, span_id: &str, error: Option<String>) {
-    let mut traces_lock = traces().lock().unwrap();
+    let mut traces_lock = traces().lock().unwrap_or_else(|e| e.into_inner());
     if let Some(trace) = traces_lock.iter_mut().find(|t| t.trace_id == trace_id) {
         if let Some(span) = trace.spans.iter_mut().find(|s| s.span_id == span_id) {
             let end = Utc::now();
@@ -13442,7 +13732,7 @@ pub fn end_span(trace_id: &str, span_id: &str, error: Option<String>) {
 
 /// V44.0: 结束追踪
 pub fn end_trace(trace_id: &str, error: Option<String>) {
-    let mut traces_lock = traces().lock().unwrap();
+    let mut traces_lock = traces().lock().unwrap_or_else(|e| e.into_inner());
     if let Some(trace) = traces_lock.iter_mut().find(|t| t.trace_id == trace_id) {
         let end = Utc::now();
         trace.end_time = Some(end);
@@ -13459,7 +13749,7 @@ pub fn end_trace(trace_id: &str, error: Option<String>) {
 
 /// V44.0: 获取单个追踪
 pub fn get_trace(trace_id: &str) -> Option<QueryTraceGql> {
-    let traces_lock = traces().lock().unwrap();
+    let traces_lock = traces().lock().unwrap_or_else(|e| e.into_inner());
     traces_lock
         .iter()
         .find(|t| t.trace_id == trace_id)
@@ -13473,7 +13763,7 @@ pub fn list_traces(
     status: Option<String>,
     limit: Option<usize>,
 ) -> Vec<QueryTraceGql> {
-    let traces_lock = traces().lock().unwrap();
+    let traces_lock = traces().lock().unwrap_or_else(|e| e.into_inner());
     let limit = limit.unwrap_or(100);
     traces_lock
         .iter()
@@ -13644,7 +13934,9 @@ pub fn record_query_metric(
     cache_hit: bool,
     service: Option<String>,
 ) {
-    let mut state = metrics_collector().lock().unwrap();
+    let mut state = metrics_collector()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     state.total_queries += 1;
     if !success {
         state.total_errors += 1;
@@ -13705,31 +13997,41 @@ pub fn record_query_metric(
 
 /// V44.0: 记录错误
 pub fn record_error_metric() {
-    let mut state = metrics_collector().lock().unwrap();
+    let mut state = metrics_collector()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     state.total_errors += 1;
 }
 
 /// V44.0: 记录缓存命中
 pub fn record_cache_hit_metric() {
-    let mut state = metrics_collector().lock().unwrap();
+    let mut state = metrics_collector()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     state.total_cache_hits += 1;
 }
 
 /// V44.0: 记录缓存未命中
 pub fn record_cache_miss_metric() {
-    let mut state = metrics_collector().lock().unwrap();
+    let mut state = metrics_collector()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     state.total_cache_misses += 1;
 }
 
 /// V44.0: 设置活跃订阅数
 pub fn set_active_subscriptions(count: u64) {
-    let mut state = metrics_collector().lock().unwrap();
+    let mut state = metrics_collector()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     state.active_subscriptions = count;
 }
 
 /// V44.0: 设置 WS 连接数
 pub fn set_ws_connections(count: u64) {
-    let mut state = metrics_collector().lock().unwrap();
+    let mut state = metrics_collector()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     state.ws_connections = count;
 }
 
@@ -13745,7 +14047,9 @@ fn percentile(sorted: &[f64], p: f64) -> f64 {
 
 /// V44.0: 获取指定窗口的指标
 pub fn get_metrics(window: MetricsWindow) -> GraphqlMetricsGql {
-    let state = metrics_collector().lock().unwrap();
+    let state = metrics_collector()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let now = Utc::now();
     let window_duration = chrono::Duration::seconds(window.duration_seconds());
     let window_start = now - window_duration;
@@ -13890,7 +14194,9 @@ pub fn get_metrics(window: MetricsWindow) -> GraphqlMetricsGql {
 
 /// V44.0: 重置指标
 pub fn reset_metrics() {
-    let mut state = metrics_collector().lock().unwrap();
+    let mut state = metrics_collector()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     state.query_records.clear();
     state.total_queries = 0;
     state.total_errors = 0;
@@ -14112,14 +14418,14 @@ pub fn add_alert_rule(input: AlertRuleInput) -> String {
         last_triggered: None,
         triggered_at: None,
     };
-    let mut state = alert_manager().lock().unwrap();
+    let mut state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
     state.rules.push(rule);
     id
 }
 
 /// V44.0: 更新告警规则
 pub fn update_alert_rule(id: &str, input: AlertRuleInput) -> bool {
-    let mut state = alert_manager().lock().unwrap();
+    let mut state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
     if let Some(rule) = state.rules.iter_mut().find(|r| r.id == id) {
         rule.name = input.name;
         rule.alert_type = input.alert_type;
@@ -14137,7 +14443,7 @@ pub fn update_alert_rule(id: &str, input: AlertRuleInput) -> bool {
 
 /// V44.0: 删除告警规则
 pub fn delete_alert_rule(id: &str) -> bool {
-    let mut state = alert_manager().lock().unwrap();
+    let mut state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
     let before = state.rules.len();
     state.rules.retain(|r| r.id != id);
     state.rules.len() < before
@@ -14166,7 +14472,7 @@ fn trigger_alert_internal(
         resolved_at: None,
         labels,
     };
-    let mut state = alert_manager().lock().unwrap();
+    let mut state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
     if state.alerts.len() >= MAX_ALERTS {
         state.alerts.pop_front();
     }
@@ -14205,7 +14511,7 @@ pub fn test_alert(alert_type: AlertType, level: AlertLevel) -> String {
 
 /// V44.0: 确认告警
 pub fn acknowledge_alert(id: &str) -> bool {
-    let mut state = alert_manager().lock().unwrap();
+    let mut state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
     if let Some(alert) = state.alerts.iter_mut().find(|a| a.id == id) {
         alert.acknowledged = true;
         true
@@ -14216,7 +14522,7 @@ pub fn acknowledge_alert(id: &str) -> bool {
 
 /// V44.0: 解决告警
 pub fn resolve_alert(id: &str) -> bool {
-    let mut state = alert_manager().lock().unwrap();
+    let mut state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
     if let Some(alert) = state.alerts.iter_mut().find(|a| a.id == id) {
         alert.resolved = true;
         alert.resolved_at = Some(Utc::now());
@@ -14232,7 +14538,7 @@ pub fn get_alerts(
     level: Option<AlertLevel>,
     limit: Option<usize>,
 ) -> Vec<GraphqlAlertGql> {
-    let state = alert_manager().lock().unwrap();
+    let state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
     let limit = limit.unwrap_or(100);
     state
         .alerts
@@ -14273,7 +14579,7 @@ pub fn get_alerts(
 
 /// V44.0: 获取活跃告警
 pub fn get_active_alerts() -> Vec<GraphqlAlertGql> {
-    let state = alert_manager().lock().unwrap();
+    let state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
     state
         .alerts
         .iter()
@@ -14285,14 +14591,14 @@ pub fn get_active_alerts() -> Vec<GraphqlAlertGql> {
 
 /// V44.0: 获取告警规则列表
 pub fn get_alert_rules() -> Vec<AlertRuleGql> {
-    let state = alert_manager().lock().unwrap();
+    let state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
     state.rules.iter().map(|r| r.to_gql()).collect()
 }
 
 /// V44.0: 检查告警规则
 pub fn check_alerts() {
     let rules_to_check = {
-        let state = alert_manager().lock().unwrap();
+        let state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
         state.rules.clone()
     };
 
@@ -14319,7 +14625,7 @@ pub fn check_alerts() {
 
         if should_trigger {
             let now = Utc::now();
-            let mut state = alert_manager().lock().unwrap();
+            let mut state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
             if let Some(rule_mut) = state.rules.iter_mut().find(|r| r.id == rule.id) {
                 if rule_mut.triggered_at.is_none() {
                     rule_mut.triggered_at = Some(now);
@@ -14360,14 +14666,14 @@ pub fn check_alerts() {
                 }
             }
         } else {
-            let mut state = alert_manager().lock().unwrap();
+            let mut state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
             if let Some(rule_mut) = state.rules.iter_mut().find(|r| r.id == rule.id) {
                 rule_mut.triggered_at = None;
             }
         }
     }
 
-    let mut state = alert_manager().lock().unwrap();
+    let mut state = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
     state.last_check = Some(Utc::now());
 }
 
@@ -14425,8 +14731,8 @@ pub struct ErrorRateTrendGql {
 /// V44.0: 获取监控仪表盘概览
 pub fn get_monitoring_dashboard() -> MonitoringDashboardStatsGql {
     let metrics = get_metrics(MetricsWindow::FiveMinutes);
-    let traces = traces().lock().unwrap();
-    let alerts = alert_manager().lock().unwrap();
+    let traces = traces().lock().unwrap_or_else(|e| e.into_inner());
+    let alerts = alert_manager().lock().unwrap_or_else(|e| e.into_inner());
     let active_alerts = alerts.alerts.iter().filter(|a| !a.resolved).count() as u64;
     let fed_stats = get_federation_stats();
 
@@ -14462,7 +14768,9 @@ pub fn get_monitoring_dashboard() -> MonitoringDashboardStatsGql {
 
 /// V44.0: 获取查询延迟分布
 pub fn get_query_latency_distribution(window: MetricsWindow) -> QueryLatencyDistributionGql {
-    let metrics_collector_state = metrics_collector().lock().unwrap();
+    let metrics_collector_state = metrics_collector()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let now = Utc::now();
     let window_duration = chrono::Duration::seconds(window.duration_seconds());
     let window_start = now - window_duration;
@@ -14502,7 +14810,9 @@ pub fn get_query_latency_distribution(window: MetricsWindow) -> QueryLatencyDist
 /// V44.0: 获取慢查询 Top N
 pub fn get_top_slow_queries(limit: Option<usize>, window: MetricsWindow) -> Vec<TopSlowQueryGql> {
     let limit = limit.unwrap_or(10);
-    let metrics_collector_state = metrics_collector().lock().unwrap();
+    let metrics_collector_state = metrics_collector()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let now = Utc::now();
     let window_duration = chrono::Duration::seconds(window.duration_seconds());
     let window_start = now - window_duration;
@@ -14564,7 +14874,9 @@ pub fn get_error_rate_trend(
     interval_seconds: Option<i64>,
 ) -> ErrorRateTrendGql {
     let interval = interval_seconds.unwrap_or(60);
-    let metrics_collector_state = metrics_collector().lock().unwrap();
+    let metrics_collector_state = metrics_collector()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let now = Utc::now();
     let window_duration = chrono::Duration::seconds(window.duration_seconds());
     let window_start = now - window_duration;
@@ -15655,10 +15967,14 @@ fn governance_stats() -> &'static Mutex<GovernanceStatsInternal> {
 
 /// V45.0: 获取治理统计
 pub fn get_schema_governance_stats() -> SchemaGovernanceStatsGql {
-    let registry = schema_registry().lock().unwrap();
-    let runner = contract_test_runner().lock().unwrap();
-    let manager = schema_version_manager().lock().unwrap();
-    let gov_stats = governance_stats().lock().unwrap();
+    let registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
+    let runner = contract_test_runner()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let manager = schema_version_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let gov_stats = governance_stats().lock().unwrap_or_else(|e| e.into_inner());
 
     let (_total_services_vm, total_versions, active_schemas) = manager.get_stats();
     let (total_tests, passing_tests, failing_tests) = runner.get_stats();
@@ -15677,9 +15993,13 @@ pub fn get_schema_governance_stats() -> SchemaGovernanceStatsGql {
 
 /// V45.0: 获取各服务治理信息
 pub fn get_service_governance_info() -> Vec<ServiceGovernanceInfoGql> {
-    let registry = schema_registry().lock().unwrap();
-    let runner = contract_test_runner().lock().unwrap();
-    let _manager = schema_version_manager().lock().unwrap();
+    let registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
+    let runner = contract_test_runner()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let _manager = schema_version_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
 
     let services: HashSet<String> = registry.entries.keys().cloned().collect();
 
@@ -15893,8 +16213,10 @@ type Query {
 
     // 注册到 Schema 注册表 + 版本管理器
     {
-        let mut registry = schema_registry().lock().unwrap();
-        let mut manager = schema_version_manager().lock().unwrap();
+        let mut registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
+        let mut manager = schema_version_manager()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
 
         // 如果已初始化则跳过
         if registry.entries.len() >= 5 {
@@ -15915,7 +16237,9 @@ type Query {
 
     // 预置默认契约测试
     {
-        let mut runner = contract_test_runner().lock().unwrap();
+        let mut runner = contract_test_runner()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if !runner.tests.is_empty() {
             return;
         }
@@ -15997,7 +16321,7 @@ type Query {
 
     // 更新治理统计扫描时间
     {
-        let mut gov = governance_stats().lock().unwrap();
+        let mut gov = governance_stats().lock().unwrap_or_else(|e| e.into_inner());
         gov.last_scan = Utc::now().to_rfc3339();
     }
 }
@@ -16251,7 +16575,9 @@ pub struct EdgeComputeManager;
 
 impl EdgeComputeManager {
     pub(crate) fn register_node(node: EdgeNodeData) {
-        let mut state = edge_compute_state().lock().unwrap();
+        let mut state = edge_compute_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(existing) = state.nodes.iter_mut().find(|n| n.id == node.id) {
             *existing = node;
         } else {
@@ -16260,7 +16586,9 @@ impl EdgeComputeManager {
     }
 
     pub(crate) fn select_optimal_node(region: Option<&str>) -> Option<EdgeNodeData> {
-        let state = edge_compute_state().lock().unwrap();
+        let state = edge_compute_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let config = state.config.clone();
         let candidates: Vec<EdgeNodeData> = state
             .nodes
@@ -16301,7 +16629,9 @@ impl EdgeComputeManager {
         route_pattern: &str,
         cache_ttl_ms: i64,
     ) -> String {
-        let mut state = edge_compute_state().lock().unwrap();
+        let mut state = edge_compute_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let id = format!("fn-{}", name);
         if let Some(existing) = state.functions.iter_mut().find(|f| f.name == name) {
             existing.handler = handler.into();
@@ -16343,7 +16673,9 @@ impl EdgeComputeManager {
         let node_latency = node.as_ref().map(|n| n.latency_ms).unwrap_or(0);
 
         let state_funcs = {
-            let state = edge_compute_state().lock().unwrap();
+            let state = edge_compute_state()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             state
                 .functions
                 .iter()
@@ -16365,7 +16697,9 @@ impl EdgeComputeManager {
         };
 
         let elapsed_ms = start.elapsed().as_millis() as u64 + node_latency as u64;
-        let mut state = edge_compute_state().lock().unwrap();
+        let mut state = edge_compute_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.total_executions += 1;
         state.total_latency_ms += elapsed_ms;
         *state
@@ -16444,7 +16778,9 @@ impl EdgeComputeManager {
     }
 
     pub fn get_stats() -> EdgeComputeStatsGql {
-        let state = edge_compute_state().lock().unwrap();
+        let state = edge_compute_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let healthy = state.nodes.iter().filter(|n| n.health).count();
         let avg_latency = if state.total_executions > 0 {
             state.total_latency_ms as f64 / state.total_executions as f64
@@ -16655,7 +16991,7 @@ pub struct CdnCacheManager;
 
 impl CdnCacheManager {
     pub fn get(key: &str) -> Option<serde_json::Value> {
-        let mut state = cdn_cache_state().lock().unwrap();
+        let mut state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         // L1 内存
         if let Some(entry) = CdnCacheState::get_from_layer(&mut state.l1_memory, key) {
             state.hits += 1;
@@ -16689,7 +17025,13 @@ impl CdnCacheManager {
         ttl_ms: Option<i64>,
     ) {
         let now = Utc::now();
-        let ttl = ttl_ms.unwrap_or_else(|| cdn_cache_state().lock().unwrap().config.default_ttl_ms);
+        let ttl = ttl_ms.unwrap_or_else(|| {
+            cdn_cache_state()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .config
+                .default_ttl_ms
+        });
         let expires = now + chrono::Duration::milliseconds(ttl);
         let value_str = serde_json::to_string(value).unwrap_or_default();
         let size_bytes = key.len() + value_str.len();
@@ -16710,12 +17052,12 @@ impl CdnCacheManager {
             size_bytes,
             tags,
         };
-        let mut state = cdn_cache_state().lock().unwrap();
+        let mut state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         state.l1_memory.put(key.to_string(), entry);
     }
 
     pub fn invalidate(key: &str) -> bool {
-        let mut state = cdn_cache_state().lock().unwrap();
+        let mut state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         let in_l1 = state.l1_memory.map.remove(key).is_some();
         state.l1_memory.order.retain(|k| k != key);
         let in_l2 = state.l2_edge.map.remove(key).is_some();
@@ -16726,7 +17068,7 @@ impl CdnCacheManager {
     }
 
     pub fn invalidate_by_tag(tags: &[String]) -> u32 {
-        let mut state = cdn_cache_state().lock().unwrap();
+        let mut state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         let mut count = 0u32;
         count += Self::invalidate_tag_from_cache(&mut state.l1_memory, tags);
         count += Self::invalidate_tag_from_cache(&mut state.l2_edge, tags);
@@ -16759,7 +17101,7 @@ impl CdnCacheManager {
             let key = format!("query:{}", hash);
             // 检查是否已缓存
             let exists = {
-                let state = cdn_cache_state().lock().unwrap();
+                let state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
                 state.l1_memory.map.contains_key(&key)
                     || state.l2_edge.map.contains_key(&key)
                     || state.l3_origin.map.contains_key(&key)
@@ -16779,7 +17121,7 @@ impl CdnCacheManager {
                 );
                 warmed += 1;
             }
-            let mut state = cdn_cache_state().lock().unwrap();
+            let mut state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
             state.warm_count += 1;
         }
         warmed
@@ -16802,14 +17144,14 @@ impl CdnCacheManager {
                 Some(30_000),
             );
             prefetched += 1;
-            let mut state = cdn_cache_state().lock().unwrap();
+            let mut state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
             state.prefetch_count += 1;
         }
         prefetched
     }
 
     pub fn purge_all() -> bool {
-        let mut state = cdn_cache_state().lock().unwrap();
+        let mut state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         state.l1_memory.map.clear();
         state.l1_memory.order.clear();
         state.l2_edge.map.clear();
@@ -16820,7 +17162,7 @@ impl CdnCacheManager {
     }
 
     pub fn get_entries(tags: Option<&[String]>, limit: usize) -> Vec<CdnCacheEntryGql> {
-        let state = cdn_cache_state().lock().unwrap();
+        let state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         let mut entries: Vec<CdnCacheEntryGql> = Vec::new();
         for cache in [&state.l1_memory, &state.l2_edge, &state.l3_origin] {
             for (key, e) in &cache.map {
@@ -16851,7 +17193,7 @@ impl CdnCacheManager {
     }
 
     pub fn get_stats() -> CdnStatsGql {
-        let state = cdn_cache_state().lock().unwrap();
+        let state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         let total = state.hits + state.misses;
         let hit_rate = if total > 0 {
             state.hits as f64 / total as f64
@@ -16913,7 +17255,7 @@ impl CdnCacheManager {
     }
 
     pub fn get_layers() -> Vec<CdnCacheLayerGql> {
-        let state = cdn_cache_state().lock().unwrap();
+        let state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         let total = state.hits + state.misses;
         let hit_rate = if total > 0 {
             state.hits as f64 / total as f64
@@ -16946,7 +17288,7 @@ impl CdnCacheManager {
     }
 
     pub fn get_config() -> CdnCacheConfigGql {
-        let state = cdn_cache_state().lock().unwrap();
+        let state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         CdnCacheConfigGql {
             default_ttl_ms: state.config.default_ttl_ms,
             max_age_public: state.config.max_age_public,
@@ -17122,12 +17464,12 @@ pub struct StreamingResponseManager;
 
 impl StreamingResponseManager {
     pub(crate) fn register_deferred(query_hash: &str, fields: Vec<DeferredFieldData>) {
-        let mut state = stream_state().lock().unwrap();
+        let mut state = stream_state().lock().unwrap_or_else(|e| e.into_inner());
         state.deferred_fields.insert(query_hash.to_string(), fields);
     }
 
     pub fn get_deferred_fields(query_hash: Option<&str>) -> Vec<DeferredFieldGql> {
-        let state = stream_state().lock().unwrap();
+        let state = stream_state().lock().unwrap_or_else(|e| e.into_inner());
         let mut result = Vec::new();
         if let Some(hash) = query_hash {
             if let Some(fields) = state.deferred_fields.get(hash) {
@@ -17156,7 +17498,7 @@ impl StreamingResponseManager {
     }
 
     pub fn chunk_response(query_hash: &str, data: &serde_json::Value) -> Vec<StreamChunkGql> {
-        let mut state = stream_state().lock().unwrap();
+        let mut state = stream_state().lock().unwrap_or_else(|e| e.into_inner());
         let session_id = format!("stream-{}-{}", query_hash, state.total_streams);
         let _ = session_id;
 
@@ -17204,7 +17546,7 @@ impl StreamingResponseManager {
         }
 
         // 标记会话为已完成
-        let mut state = stream_state().lock().unwrap();
+        let mut state = stream_state().lock().unwrap_or_else(|e| e.into_inner());
         if let Some(s) = state.sessions.last_mut() {
             s.active = false;
             let duration = Utc::now().signed_duration_since(s.started_at);
@@ -17215,7 +17557,7 @@ impl StreamingResponseManager {
     }
 
     pub fn get_stats() -> StreamStatsGql {
-        let state = stream_state().lock().unwrap();
+        let state = stream_state().lock().unwrap_or_else(|e| e.into_inner());
         let active = state.sessions.iter().filter(|s| s.active).count();
         let avg_chunks = if state.total_streams > 0 {
             state.total_chunks as f64 / state.total_streams as f64
@@ -17237,7 +17579,7 @@ impl StreamingResponseManager {
     }
 
     pub fn get_config() -> StreamConfigGql {
-        let state = stream_state().lock().unwrap();
+        let state = stream_state().lock().unwrap_or_else(|e| e.into_inner());
         StreamConfigGql {
             enabled: state.config.enabled,
             chunk_size: state.config.chunk_size,
@@ -17247,7 +17589,7 @@ impl StreamingResponseManager {
     }
 
     pub fn update_config(input: StreamConfigInput) -> bool {
-        let mut state = stream_state().lock().unwrap();
+        let mut state = stream_state().lock().unwrap_or_else(|e| e.into_inner());
         if let Some(enabled) = input.enabled {
             state.config.enabled = enabled;
         }
@@ -17455,7 +17797,9 @@ impl FederatedQueryCacheV2 {
     }
 
     pub fn get(key: &str) -> Option<FederatedCacheEntryGql> {
-        let mut state = federated_cache_v2_state().lock().unwrap();
+        let mut state = federated_cache_v2_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let now = Utc::now();
 
         let memory_entry = state.memory_cache.get(key).cloned();
@@ -17507,7 +17851,9 @@ impl FederatedQueryCacheV2 {
         partial: bool,
         partial_fields: Vec<String>,
     ) {
-        let mut state = federated_cache_v2_state().lock().unwrap();
+        let mut state = federated_cache_v2_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let now = Utc::now();
         let ttl = ttl_seconds.unwrap_or(state.config.default_ttl_seconds);
         let expires_at = now + chrono::Duration::seconds(ttl as i64);
@@ -17545,7 +17891,9 @@ impl FederatedQueryCacheV2 {
     }
 
     pub fn invalidate(key: &str) -> bool {
-        let mut state = federated_cache_v2_state().lock().unwrap();
+        let mut state = federated_cache_v2_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let mut removed = false;
         if state.memory_cache.remove(key).is_some() {
             removed = true;
@@ -17564,7 +17912,9 @@ impl FederatedQueryCacheV2 {
     }
 
     pub fn invalidate_by_query_hash(query_hash: &str) -> i64 {
-        let mut state = federated_cache_v2_state().lock().unwrap();
+        let mut state = federated_cache_v2_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let mut count = 0i64;
 
         let memory_keys: Vec<String> = state
@@ -17609,7 +17959,9 @@ impl FederatedQueryCacheV2 {
     }
 
     pub fn get_stats() -> CacheStatsV2Gql {
-        let state = federated_cache_v2_state().lock().unwrap();
+        let state = federated_cache_v2_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let total = state.total_hits + state.total_misses;
         let hit_rate = if total > 0 {
             state.total_hits as f64 / total as f64
@@ -17663,7 +18015,9 @@ impl FederatedQueryCacheV2 {
     }
 
     pub fn update_config(input: FederatedCacheConfigInput) -> bool {
-        let mut state = federated_cache_v2_state().lock().unwrap();
+        let mut state = federated_cache_v2_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(v) = input.memory_capacity {
             state.config.memory_capacity = v.max(0) as u64;
         }
@@ -17891,7 +18245,9 @@ pub struct PrefetchEngine;
 
 impl PrefetchEngine {
     pub fn predict(trigger_query: &str, user_id: Option<&str>) -> Vec<PrefetchPredictionGql> {
-        let state = prefetch_engine_state().lock().unwrap();
+        let state = prefetch_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let mut predictions = Vec::new();
 
         for rule in &state.rules {
@@ -17968,7 +18324,9 @@ impl PrefetchEngine {
     }
 
     pub fn record_query(query_hash: &str, user_id: Option<&str>) {
-        let mut state = prefetch_engine_state().lock().unwrap();
+        let mut state = prefetch_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(uid) = user_id {
             let pattern = state
                 .user_patterns
@@ -17987,7 +18345,9 @@ impl PrefetchEngine {
     }
 
     pub fn record_prefetch_result(rule_id: &str, hit: bool, savings_ms: u64) {
-        let mut state = prefetch_engine_state().lock().unwrap();
+        let mut state = prefetch_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.total_prefetches += 1;
         if hit {
             state.hit_count += 1;
@@ -18004,7 +18364,9 @@ impl PrefetchEngine {
     }
 
     pub fn list_rules() -> Vec<PrefetchRuleGql> {
-        let state = prefetch_engine_state().lock().unwrap();
+        let state = prefetch_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .rules
             .iter()
@@ -18024,7 +18386,9 @@ impl PrefetchEngine {
     }
 
     pub fn add_rule(input: PrefetchRuleInput) -> PrefetchRuleGql {
-        let mut state = prefetch_engine_state().lock().unwrap();
+        let mut state = prefetch_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let id = format!("rule_{}", uuid_simple());
         let rule = PrefetchRuleData {
             id: id.clone(),
@@ -18055,7 +18419,9 @@ impl PrefetchEngine {
     }
 
     pub fn toggle_rule(rule_id: &str, enabled: bool) -> bool {
-        let mut state = prefetch_engine_state().lock().unwrap();
+        let mut state = prefetch_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(rule) = state.rules.iter_mut().find(|r| r.id == rule_id) {
             rule.enabled = enabled;
             true
@@ -18065,14 +18431,18 @@ impl PrefetchEngine {
     }
 
     pub fn remove_rule(rule_id: &str) -> bool {
-        let mut state = prefetch_engine_state().lock().unwrap();
+        let mut state = prefetch_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let before = state.rules.len();
         state.rules.retain(|r| r.id != rule_id);
         state.rules.len() < before
     }
 
     pub fn get_stats() -> PrefetchStatsGql {
-        let state = prefetch_engine_state().lock().unwrap();
+        let state = prefetch_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let total = state.hit_count + state.miss_count;
         let hit_rate = if total > 0 {
             state.hit_count as f64 / total as f64
@@ -18352,12 +18722,16 @@ pub struct EdgeFunctionOrchestrator;
 
 impl EdgeFunctionOrchestrator {
     pub fn list_functions() -> Vec<EdgeOrchFunctionGql> {
-        let state = edge_orchestrator_state().lock().unwrap();
+        let state = edge_orchestrator_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.functions.iter().map(Self::fn_to_gql).collect()
     }
 
     pub fn get_function(id: &str) -> Option<EdgeOrchFunctionGql> {
-        let state = edge_orchestrator_state().lock().unwrap();
+        let state = edge_orchestrator_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .functions
             .iter()
@@ -18366,7 +18740,9 @@ impl EdgeFunctionOrchestrator {
     }
 
     pub fn register_function(input: EdgeOrchFunctionInput) -> EdgeOrchFunctionGql {
-        let mut state = edge_orchestrator_state().lock().unwrap();
+        let mut state = edge_orchestrator_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let id = format!("fn_{}", uuid_simple());
         let now = Utc::now();
         let func = EdgeOrchFunctionData {
@@ -18388,7 +18764,9 @@ impl EdgeFunctionOrchestrator {
     }
 
     pub fn toggle_function(id: &str, enabled: bool) -> bool {
-        let mut state = edge_orchestrator_state().lock().unwrap();
+        let mut state = edge_orchestrator_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(f) = state.functions.iter_mut().find(|f| f.id == id) {
             f.enabled = enabled;
             true
@@ -18398,19 +18776,25 @@ impl EdgeFunctionOrchestrator {
     }
 
     pub fn remove_function(id: &str) -> bool {
-        let mut state = edge_orchestrator_state().lock().unwrap();
+        let mut state = edge_orchestrator_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let before = state.functions.len();
         state.functions.retain(|f| f.id != id);
         state.functions.len() < before
     }
 
     pub fn list_nodes() -> Vec<EdgeOrchNodeGql> {
-        let state = edge_orchestrator_state().lock().unwrap();
+        let state = edge_orchestrator_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.nodes.iter().map(Self::node_to_gql).collect()
     }
 
     pub fn create_execution_plan(input: EdgeExecutionPlanInput) -> EdgeExecutionPlanGql {
-        let mut state = edge_orchestrator_state().lock().unwrap();
+        let mut state = edge_orchestrator_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let plan_id = format!("plan_{}", uuid_simple());
         let now = Utc::now();
 
@@ -18437,7 +18821,9 @@ impl EdgeFunctionOrchestrator {
     }
 
     pub fn execute_plan(plan_id: &str) -> EdgeExecutionStatusGql {
-        let mut state = edge_orchestrator_state().lock().unwrap();
+        let mut state = edge_orchestrator_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(plan) = state.plans.iter_mut().find(|p| p.plan_id == plan_id) {
             plan.status = EdgeExecutionStatusGql::Running;
             plan.started_at = Some(Utc::now());
@@ -18448,7 +18834,9 @@ impl EdgeFunctionOrchestrator {
     }
 
     pub fn get_plan(plan_id: &str) -> Option<EdgeExecutionPlanGql> {
-        let state = edge_orchestrator_state().lock().unwrap();
+        let state = edge_orchestrator_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .plans
             .iter()
@@ -18457,7 +18845,9 @@ impl EdgeFunctionOrchestrator {
     }
 
     pub fn list_plans() -> Vec<EdgeExecutionPlanGql> {
-        let state = edge_orchestrator_state().lock().unwrap();
+        let state = edge_orchestrator_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .plans
             .iter()
@@ -18703,7 +19093,9 @@ impl DeprecationManager {
         type_filter: Option<String>,
         severity: Option<String>,
     ) -> Vec<DeprecatedFieldGql> {
-        let state = deprecation_manager_state().lock().unwrap();
+        let state = deprecation_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .deprecated_fields
             .iter()
@@ -18736,7 +19128,9 @@ impl DeprecationManager {
     }
 
     pub fn get_field(field_path: &str) -> Option<DeprecatedFieldGql> {
-        let state = deprecation_manager_state().lock().unwrap();
+        let state = deprecation_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .deprecated_fields
             .iter()
@@ -18756,7 +19150,9 @@ impl DeprecationManager {
     }
 
     pub fn add_deprecated_field(input: DeprecatedFieldInput) -> DeprecatedFieldGql {
-        let mut state = deprecation_manager_state().lock().unwrap();
+        let mut state = deprecation_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let parts: Vec<&str> = input.field_path.split('.').collect();
         let (type_name, field_name) = if parts.len() >= 2 {
             (parts[0].to_string(), parts[1].to_string())
@@ -18795,7 +19191,9 @@ impl DeprecationManager {
     }
 
     pub fn record_usage(field_path: &str) -> bool {
-        let mut state = deprecation_manager_state().lock().unwrap();
+        let mut state = deprecation_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let auto_notify = state.policy.auto_notify_enabled;
         let threshold = state.policy.notification_threshold_usage;
         if let Some(f) = state
@@ -18816,7 +19214,9 @@ impl DeprecationManager {
     }
 
     pub fn get_stats() -> DeprecationStatsGql {
-        let state = deprecation_manager_state().lock().unwrap();
+        let state = deprecation_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let total = state.deprecated_fields.len();
         let with_replacement = state
             .deprecated_fields
@@ -18854,7 +19254,9 @@ impl DeprecationManager {
     }
 
     pub fn get_policy() -> DeprecationPolicyGql {
-        let state = deprecation_manager_state().lock().unwrap();
+        let state = deprecation_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         DeprecationPolicyGql {
             min_deprecation_period_days: state.policy.min_deprecation_period_days as i32,
             notification_threshold_usage: state.policy.notification_threshold_usage as i64,
@@ -18865,7 +19267,9 @@ impl DeprecationManager {
     }
 
     pub fn update_policy(input: DeprecationPolicyInput) -> bool {
-        let mut state = deprecation_manager_state().lock().unwrap();
+        let mut state = deprecation_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(v) = input.min_deprecation_period_days {
             state.policy.min_deprecation_period_days = v.max(0) as u32;
         }
@@ -19085,7 +19489,9 @@ pub struct MigrationToolkit;
 
 impl MigrationToolkit {
     pub fn compare_schemas(old_version: &str, new_version: &str) -> SchemaDiffGql {
-        let state = migration_toolkit_state().lock().unwrap();
+        let state = migration_toolkit_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(diff) = state
             .diffs
             .iter()
@@ -19108,7 +19514,9 @@ impl MigrationToolkit {
     }
 
     pub fn list_diffs() -> Vec<SchemaDiffGql> {
-        let state = migration_toolkit_state().lock().unwrap();
+        let state = migration_toolkit_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.diffs.iter().map(|d| Self::diff_to_gql(d)).collect()
     }
 
@@ -19139,7 +19547,9 @@ impl MigrationToolkit {
     }
 
     pub fn generate_migration_script(from_version: &str, to_version: &str) -> MigrationScriptGql {
-        let state = migration_toolkit_state().lock().unwrap();
+        let state = migration_toolkit_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(s) = state
             .scripts
             .iter()
@@ -19164,7 +19574,9 @@ impl MigrationToolkit {
     }
 
     pub fn list_scripts() -> Vec<MigrationScriptGql> {
-        let state = migration_toolkit_state().lock().unwrap();
+        let state = migration_toolkit_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .scripts
             .iter()
@@ -19173,7 +19585,9 @@ impl MigrationToolkit {
     }
 
     pub fn check_compatibility(old_version: &str, new_version: &str) -> CompatibilityCheckGql {
-        let state = migration_toolkit_state().lock().unwrap();
+        let state = migration_toolkit_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let diff = state
             .diffs
             .iter()
@@ -19477,7 +19891,9 @@ pub struct DeploymentManager;
 
 impl DeploymentManager {
     pub fn get_config() -> DeploymentConfigGql {
-        let state = deployment_manager_state().lock().unwrap();
+        let state = deployment_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let c = &state.config;
         DeploymentConfigGql {
             version: c.version.clone(),
@@ -19499,7 +19915,9 @@ impl DeploymentManager {
     }
 
     pub fn update_config(input: DeploymentConfigInput) -> bool {
-        let mut state = deployment_manager_state().lock().unwrap();
+        let mut state = deployment_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.config.version = input.version;
         if let Some(v) = input.previous_version {
             state.config.previous_version = v;
@@ -19540,7 +19958,9 @@ impl DeploymentManager {
     }
 
     pub fn start_deployment(version: &str) -> DeploymentRecordGql {
-        let mut state = deployment_manager_state().lock().unwrap();
+        let mut state = deployment_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let now = Utc::now();
         let previous = state.config.version.clone();
         let deployment_id = format!("deploy_{}", uuid_simple());
@@ -19565,7 +19985,9 @@ impl DeploymentManager {
     }
 
     pub fn promote_canary(deployment_id: &str) -> DeploymentStatusGql {
-        let mut state = deployment_manager_state().lock().unwrap();
+        let mut state = deployment_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let steps = state.config.canary.steps.clone();
         if let Some(d) = state
             .deployments
@@ -19596,7 +20018,9 @@ impl DeploymentManager {
     }
 
     pub fn rollback(deployment_id: &str, reason: Option<String>) -> bool {
-        let mut state = deployment_manager_state().lock().unwrap();
+        let mut state = deployment_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let rollback_enabled = state.config.rollback_enabled;
         if let Some(d) = state
             .deployments
@@ -19617,7 +20041,9 @@ impl DeploymentManager {
     }
 
     pub fn get_deployment(deployment_id: &str) -> Option<DeploymentRecordGql> {
-        let state = deployment_manager_state().lock().unwrap();
+        let state = deployment_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .deployments
             .iter()
@@ -19626,7 +20052,9 @@ impl DeploymentManager {
     }
 
     pub fn list_deployments() -> Vec<DeploymentRecordGql> {
-        let state = deployment_manager_state().lock().unwrap();
+        let state = deployment_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .deployments
             .iter()
@@ -19635,7 +20063,9 @@ impl DeploymentManager {
     }
 
     pub fn record_traffic_sample(deployment_id: &str, errors: u64, total: u64, avg_latency: f64) {
-        let mut state = deployment_manager_state().lock().unwrap();
+        let mut state = deployment_manager_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let auto_rollback = state.config.canary.auto_rollback;
         let max_error_rate = state.config.canary.max_error_rate;
         let max_latency_ms = state.config.canary.max_latency_ms;
@@ -20007,7 +20437,9 @@ impl DistributedExecutionEngine {
         query: &str,
         variables: &serde_json::Value,
     ) -> DistV4ExecutionPlanGql {
-        let mut state = distributed_execution_engine_state().lock().unwrap();
+        let mut state = distributed_execution_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let lower = query.to_lowercase();
         let mut tasks: Vec<DistV4TaskData> = Vec::new();
         let mut task_counter = 0u32;
@@ -20096,7 +20528,9 @@ impl DistributedExecutionEngine {
 
     /// 执行分布式计划
     pub fn execute_distributed(plan_id: &str) -> DistV4ExecutionTraceGql {
-        let mut state = distributed_execution_engine_state().lock().unwrap();
+        let mut state = distributed_execution_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let plan_data = match state.plans.iter().find(|p| p.plan_id == plan_id).cloned() {
             Some(p) => p,
             None => {
@@ -20195,7 +20629,9 @@ impl DistributedExecutionEngine {
 
     /// 选择最优执行节点（基于负载/延迟/容量）
     pub fn select_node(target_service: &str) -> String {
-        let state = distributed_execution_engine_state().lock().unwrap();
+        let state = distributed_execution_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Self::select_node_internal(&state, target_service)
     }
 
@@ -20229,7 +20665,9 @@ impl DistributedExecutionEngine {
 
     /// 节点故障处理（重试/降级/迁移）
     pub fn handle_node_failure(node_id: &str) -> String {
-        let mut state = distributed_execution_engine_state().lock().unwrap();
+        let mut state = distributed_execution_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(node) = state.nodes.iter_mut().find(|n| n.node_id == node_id) {
             node.health = NodeHealthV4::Unreachable;
             node.current_load = 0;
@@ -20240,7 +20678,9 @@ impl DistributedExecutionEngine {
 
     /// 获取执行追踪
     pub fn get_execution_trace(plan_id: &str) -> Option<DistV4ExecutionTraceGql> {
-        let state = distributed_execution_engine_state().lock().unwrap();
+        let state = distributed_execution_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .traces
             .iter()
@@ -20250,7 +20690,9 @@ impl DistributedExecutionEngine {
 
     /// 获取分布式执行统计
     pub fn get_stats() -> DistV4ExecutionStatsGql {
-        let state = distributed_execution_engine_state().lock().unwrap();
+        let state = distributed_execution_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let s = &state.stats;
         let avg_execution_time_ms = if s.total_plans > 0 {
             s.total_execution_time_ms as f64 / s.total_plans as f64
@@ -20273,7 +20715,9 @@ impl DistributedExecutionEngine {
 
     /// 列出所有分布式执行节点
     pub fn list_nodes() -> Vec<DistV4ExecutionNodeGql> {
-        let state = distributed_execution_engine_state().lock().unwrap();
+        let state = distributed_execution_engine_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.nodes.iter().map(Self::node_to_gql).collect()
     }
 
@@ -20590,7 +21034,9 @@ impl AdaptiveQueryOptimizer {
 
     /// 自适应优化查询（基于历史执行数据）
     pub fn optimize_query(query: &str) -> (String, Vec<AdaptiveOptSuggestionGql>) {
-        let mut state = adaptive_query_optimizer_state().lock().unwrap();
+        let mut state = adaptive_query_optimizer_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let query_hash = Self::query_hash(query);
         let lower = query.to_lowercase();
         let field_count = lower.matches(',').count() + 1;
@@ -20652,7 +21098,9 @@ impl AdaptiveQueryOptimizer {
         latency_ms: u64,
         cost: f64,
     ) {
-        let mut state = adaptive_query_optimizer_state().lock().unwrap();
+        let mut state = adaptive_query_optimizer_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let query_hash = Self::query_hash(query);
         let now = Utc::now();
         let var_keys: Vec<String> = variables
@@ -20691,7 +21139,9 @@ impl AdaptiveQueryOptimizer {
 
     /// 应用优化规则
     pub fn apply_rule(query: &str, rule_id: &str) -> Option<(String, AdaptiveOptSuggestionGql)> {
-        let mut state = adaptive_query_optimizer_state().lock().unwrap();
+        let mut state = adaptive_query_optimizer_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let rule = state.rules.iter().find(|r| r.rule_id == rule_id)?.clone();
         if !rule.enabled || !state.level.allows(rule.level) {
             return None;
@@ -20731,7 +21181,9 @@ impl AdaptiveQueryOptimizer {
 
     /// 获取查询性能画像
     pub fn get_query_profile(query: &str) -> Option<AdaptiveQueryProfileGql> {
-        let state = adaptive_query_optimizer_state().lock().unwrap();
+        let state = adaptive_query_optimizer_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let query_hash = Self::query_hash(query);
         state
             .profiles
@@ -20756,7 +21208,9 @@ impl AdaptiveQueryOptimizer {
 
     /// 获取优化统计
     pub fn get_optimization_stats() -> AdaptiveOptStatsGql {
-        let state = adaptive_query_optimizer_state().lock().unwrap();
+        let state = adaptive_query_optimizer_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let s = &state.stats;
         let avg_benefit = if s.rules_applied > 0 {
             s.total_benefit / s.rules_applied as f64
@@ -20780,7 +21234,9 @@ impl AdaptiveQueryOptimizer {
 
     /// 列出所有优化规则
     pub fn list_rules() -> Vec<AdaptiveOptRuleGql> {
-        let state = adaptive_query_optimizer_state().lock().unwrap();
+        let state = adaptive_query_optimizer_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .rules
             .iter()
@@ -20798,21 +21254,27 @@ impl AdaptiveQueryOptimizer {
 
     /// 设置优化级别
     pub fn set_optimization_level(level: OptimizationLevel) -> bool {
-        let mut state = adaptive_query_optimizer_state().lock().unwrap();
+        let mut state = adaptive_query_optimizer_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.level = level;
         true
     }
 
     /// 设置优化级别（字符串入参）
     pub fn set_optimization_level_str(level: &str) -> String {
-        let mut state = adaptive_query_optimizer_state().lock().unwrap();
+        let mut state = adaptive_query_optimizer_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.level = OptimizationLevel::from_str(level);
         state.level.as_str().to_string()
     }
 
     /// 获取当前优化级别
     pub fn get_optimization_level() -> String {
-        let state = adaptive_query_optimizer_state().lock().unwrap();
+        let state = adaptive_query_optimizer_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.level.as_str().to_string()
     }
 }
@@ -21041,7 +21503,9 @@ impl MultiClusterRouter {
         version: &str,
         services: Vec<String>,
     ) -> MultiClusterInfoGql {
-        let mut state = multi_cluster_router_state().lock().unwrap();
+        let mut state = multi_cluster_router_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let now = Utc::now();
         let cluster = ClusterInfoData {
             cluster_id: cluster_id.to_string(),
@@ -21069,7 +21533,9 @@ impl MultiClusterRouter {
 
     /// 注销集群
     pub fn deregister_cluster(cluster_id: &str) -> bool {
-        let mut state = multi_cluster_router_state().lock().unwrap();
+        let mut state = multi_cluster_router_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let before = state.clusters.len();
         state.clusters.retain(|c| c.cluster_id != cluster_id);
         state.clusters.len() < before
@@ -21077,7 +21543,9 @@ impl MultiClusterRouter {
 
     /// 跨集群路由查询（基于数据位置/延迟/负载）
     pub fn route_query(query: &str) -> MultiClusterRoutingDecisionGql {
-        let state = multi_cluster_router_state().lock().unwrap();
+        let state = multi_cluster_router_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let query_id = format!("rq_{}", uuid_simple());
         let lower = query.to_lowercase();
         let policy = state.policy;
@@ -21158,7 +21626,9 @@ impl MultiClusterRouter {
 
     /// 跨集群联邦查询
     pub fn federate_query(query: &str, target_clusters: Vec<String>) -> CrossClusterQueryGql {
-        let mut state = multi_cluster_router_state().lock().unwrap();
+        let mut state = multi_cluster_router_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let query_id = format!("fcq_{}", uuid_simple());
         let fan_out = target_clusters.len() as u32;
         let estimated_time_ms = state
@@ -21188,7 +21658,9 @@ impl MultiClusterRouter {
 
     /// 同步集群间 Schema
     pub fn sync_schema() -> i32 {
-        let mut state = multi_cluster_router_state().lock().unwrap();
+        let mut state = multi_cluster_router_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let active_count = state
             .clusters
             .iter()
@@ -21200,7 +21672,9 @@ impl MultiClusterRouter {
 
     /// 集群健康检查
     pub fn health_check(cluster_id: &str) -> Option<MultiClusterInfoGql> {
-        let mut state = multi_cluster_router_state().lock().unwrap();
+        let mut state = multi_cluster_router_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let now = Utc::now();
         if let Some(c) = state
             .clusters
@@ -21225,7 +21699,9 @@ impl MultiClusterRouter {
 
     /// 获取集群统计
     pub fn get_cluster_stats() -> MultiClusterStatsGql {
-        let state = multi_cluster_router_state().lock().unwrap();
+        let state = multi_cluster_router_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let s = &state.stats;
         let active = state
             .clusters
@@ -21263,7 +21739,9 @@ impl MultiClusterRouter {
 
     /// 重新平衡流量
     pub fn rebalance_traffic() -> Vec<String> {
-        let mut state = multi_cluster_router_state().lock().unwrap();
+        let mut state = multi_cluster_router_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let now = Utc::now();
         state.stats.last_rebalance = Some(now);
         let mut changes: Vec<String> = Vec::new();
@@ -21283,14 +21761,18 @@ impl MultiClusterRouter {
 
     /// 设置路由策略
     pub fn set_routing_policy(policy: &str) -> String {
-        let mut state = multi_cluster_router_state().lock().unwrap();
+        let mut state = multi_cluster_router_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.policy = RoutingPolicyV4::from_str(policy);
         state.policy.as_str().to_string()
     }
 
     /// 列出所有集群
     pub fn list_clusters() -> Vec<MultiClusterInfoGql> {
-        let state = multi_cluster_router_state().lock().unwrap();
+        let state = multi_cluster_router_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.clusters.iter().map(Self::cluster_to_gql).collect()
     }
 
@@ -21472,7 +21954,9 @@ pub struct RealtimeStreamManager;
 impl RealtimeStreamManager {
     /// 注册数据流（entity_type → stream 配置）
     pub fn register_stream(entity_type: &str, config: RealtimeStreamConfigGql) -> bool {
-        let mut state = realtime_stream_state().lock().unwrap();
+        let mut state = realtime_stream_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let data = RealtimeStreamConfigData {
             buffer_size: config.buffer_size as u64,
             flush_interval_ms: config.flush_interval_ms as u64,
@@ -21497,7 +21981,9 @@ impl RealtimeStreamManager {
         old_values: serde_json::Value,
         new_values: serde_json::Value,
     ) -> Option<RealtimeStreamUpdateGql> {
-        let mut state = realtime_stream_state().lock().unwrap();
+        let mut state = realtime_stream_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if !state.streams.contains_key(entity_type) {
             return None;
         }
@@ -21534,7 +22020,9 @@ impl RealtimeStreamManager {
         since_sequence: i64,
         limit: Option<u32>,
     ) -> Vec<RealtimeStreamUpdateGql> {
-        let state = realtime_stream_state().lock().unwrap();
+        let state = realtime_stream_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let limit = limit.unwrap_or(100) as usize;
         state
             .updates
@@ -21551,7 +22039,9 @@ impl RealtimeStreamManager {
 
     /// 获取流统计信息
     pub fn get_stream_stats(entity_type: &str) -> Option<RealtimeStreamStatsGql> {
-        let state = realtime_stream_state().lock().unwrap();
+        let state = realtime_stream_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let buffered = state
             .updates
             .get(entity_type)
@@ -21580,7 +22070,9 @@ impl RealtimeStreamManager {
 
     /// 创建快照（用于新客户端初始化）
     pub fn create_snapshot(entity_type: &str, data: serde_json::Value) -> StreamSnapshotGql {
-        let mut state = realtime_stream_state().lock().unwrap();
+        let mut state = realtime_stream_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let seq = state.sequences.get(entity_type).copied().unwrap_or(0);
         let snapshot = StreamSnapshotData {
             snapshot_id: uuid_simple(),
@@ -21600,7 +22092,9 @@ impl RealtimeStreamManager {
 
     /// 获取快照（snapshot_id 为 None 时返回最新快照）
     pub fn get_snapshot(entity_type: &str, snapshot_id: Option<&str>) -> Option<StreamSnapshotGql> {
-        let state = realtime_stream_state().lock().unwrap();
+        let state = realtime_stream_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let snapshots = state.snapshots.get(entity_type)?;
         if let Some(id) = snapshot_id {
             snapshots
@@ -21614,7 +22108,9 @@ impl RealtimeStreamManager {
 
     /// 压缩流（清理旧数据，保留最新快照）
     pub fn compact_stream(entity_type: &str) -> bool {
-        let mut state = realtime_stream_state().lock().unwrap();
+        let mut state = realtime_stream_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(queue) = state.updates.get_mut(entity_type) {
             queue.clear();
         }
@@ -21630,7 +22126,9 @@ impl RealtimeStreamManager {
 
     /// 获取当前流全局配置
     pub fn get_config() -> RealtimeStreamConfigGql {
-        let state = realtime_stream_state().lock().unwrap();
+        let state = realtime_stream_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         RealtimeStreamConfigGql {
             buffer_size: state.config.buffer_size as i64,
             flush_interval_ms: state.config.flush_interval_ms as i64,
@@ -21771,7 +22269,9 @@ impl IncrementalUpdateEngine {
         old_values: serde_json::Value,
         new_values: serde_json::Value,
     ) -> IncrementalUpdateGql {
-        let mut state = incremental_update_state().lock().unwrap();
+        let mut state = incremental_update_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.total_updates += 1;
         let version = base_version + 1;
         let delta = Self::diff_values(&old_values, &new_values);
@@ -21798,7 +22298,9 @@ impl IncrementalUpdateEngine {
         update_id: &str,
         base: serde_json::Value,
     ) -> Option<serde_json::Value> {
-        let mut state = incremental_update_state().lock().unwrap();
+        let mut state = incremental_update_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let idx = state.updates.iter().position(|u| {
             u.update_id == update_id && u.entity_type == entity_type && u.entity_id == entity_id
         })?;
@@ -21819,7 +22321,9 @@ impl IncrementalUpdateEngine {
         base: serde_json::Value,
         since_version: i64,
     ) -> serde_json::Value {
-        let mut state = incremental_update_state().lock().unwrap();
+        let mut state = incremental_update_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let mut current = base;
         let mut applied_count: u64 = 0;
         for i in 0..state.updates.len() {
@@ -21863,7 +22367,9 @@ impl IncrementalUpdateEngine {
         entity_id: &str,
         client_version: i64,
     ) -> ReconcileResultGql {
-        let mut state = incremental_update_state().lock().unwrap();
+        let mut state = incremental_update_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.last_reconcile_at = Some(Utc::now());
         let server_version = state
             .updates
@@ -21895,7 +22401,9 @@ impl IncrementalUpdateEngine {
         entity_id: &str,
         since_version: i64,
     ) -> Vec<IncrementalUpdateGql> {
-        let state = incremental_update_state().lock().unwrap();
+        let state = incremental_update_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .updates
             .iter()
@@ -21911,7 +22419,9 @@ impl IncrementalUpdateEngine {
 
     /// 获取增量更新统计
     pub fn get_stats() -> IncrementalStatsGql {
-        let state = incremental_update_state().lock().unwrap();
+        let state = incremental_update_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let pending = state.updates.iter().filter(|u| !u.applied).count() as i64;
         IncrementalStatsGql {
             total_updates: state.total_updates as i64,
@@ -22092,7 +22602,7 @@ pub struct StateSyncManager;
 impl StateSyncManager {
     /// 启动同步会话
     pub fn start_sync(client_id: &str, last_sync_version: i64) -> SyncSessionGql {
-        let mut state = state_sync_state().lock().unwrap();
+        let mut state = state_sync_state().lock().unwrap_or_else(|e| e.into_inner());
         let now = Utc::now();
         let session = SyncSessionData {
             session_id: uuid_simple(),
@@ -22112,7 +22622,7 @@ impl StateSyncManager {
 
     /// 获取同步状态
     pub fn get_sync_state(session_id: &str) -> Option<SyncSessionGql> {
-        let state = state_sync_state().lock().unwrap();
+        let state = state_sync_state().lock().unwrap_or_else(|e| e.into_inner());
         state
             .sessions
             .iter()
@@ -22125,7 +22635,7 @@ impl StateSyncManager {
         conflict_id: &str,
         strategy: ConflictResolutionStrategyGql,
     ) -> Option<SyncConflictGql> {
-        let mut state = state_sync_state().lock().unwrap();
+        let mut state = state_sync_state().lock().unwrap_or_else(|e| e.into_inner());
         let conflict = state
             .conflicts
             .iter_mut()
@@ -22137,7 +22647,7 @@ impl StateSyncManager {
 
     /// 获取同步历史（可按 client_id 过滤）
     pub fn get_sync_history(client_id: Option<&str>, limit: Option<u32>) -> Vec<SyncSessionGql> {
-        let state = state_sync_state().lock().unwrap();
+        let state = state_sync_state().lock().unwrap_or_else(|e| e.into_inner());
         let limit = limit.unwrap_or(50) as usize;
         state
             .sessions
@@ -22151,14 +22661,14 @@ impl StateSyncManager {
 
     /// 注册需要同步的实体类型
     pub fn register_entity(entity_type: &str) -> bool {
-        let mut state = state_sync_state().lock().unwrap();
+        let mut state = state_sync_state().lock().unwrap_or_else(|e| e.into_inner());
         state.registered_entities.insert(entity_type.to_string());
         true
     }
 
     /// 获取同步统计
     pub fn get_sync_stats() -> SyncStatsGql {
-        let state = state_sync_state().lock().unwrap();
+        let state = state_sync_state().lock().unwrap_or_else(|e| e.into_inner());
         let active = state
             .sessions
             .iter()
@@ -22184,7 +22694,7 @@ impl StateSyncManager {
         server_version: i64,
         conflict_fields: Vec<String>,
     ) -> SyncConflictGql {
-        let mut state = state_sync_state().lock().unwrap();
+        let mut state = state_sync_state().lock().unwrap_or_else(|e| e.into_inner());
         let conflict = SyncConflictData {
             conflict_id: uuid_simple(),
             entity_type: entity_type.to_string(),
@@ -22621,7 +23131,7 @@ impl ZeroTrustGateway {
             assessed_at: now,
         };
         let gql = ctx.to_gql();
-        let mut state = zero_trust_state().lock().unwrap();
+        let mut state = zero_trust_state().lock().unwrap_or_else(|e| e.into_inner());
         state.contexts.insert(client_id.to_string(), ctx);
         state.total_assessments += 1;
         state.total_risk_score += risk.total_score as u64;
@@ -22725,7 +23235,7 @@ impl ZeroTrustGateway {
 
     /// 评估零信任策略（返回是否放行 + 缺失项列表）
     pub fn evaluate_policy(policy_id: &str, client_id: &str) -> (bool, Vec<String>) {
-        let mut state = zero_trust_state().lock().unwrap();
+        let mut state = zero_trust_state().lock().unwrap_or_else(|e| e.into_inner());
         let policy = match state.policies.get(policy_id) {
             Some(p) => p.clone(),
             None => {
@@ -22771,7 +23281,7 @@ impl ZeroTrustGateway {
     ) -> Option<TrustContextGql> {
         // 持有锁期间只访问 contexts 字段：补齐验证因子并重算风险
         let gql = {
-            let mut state = zero_trust_state().lock().unwrap();
+            let mut state = zero_trust_state().lock().unwrap_or_else(|e| e.into_inner());
             let ctx = state.contexts.get_mut(client_id)?;
             for f in &factors {
                 if !ctx.verification_factors.contains(f) {
@@ -22786,7 +23296,7 @@ impl ZeroTrustGateway {
         };
         // 释放 contexts 借用后再累加验证挑战计数（避免对 MutexGuard 重复可变借用）
         {
-            let mut state = zero_trust_state().lock().unwrap();
+            let mut state = zero_trust_state().lock().unwrap_or_else(|e| e.into_inner());
             state.verification_challenges += 1;
         }
         Some(gql)
@@ -22809,20 +23319,20 @@ impl ZeroTrustGateway {
             resource_patterns,
         };
         let gql = policy.to_gql();
-        let mut state = zero_trust_state().lock().unwrap();
+        let mut state = zero_trust_state().lock().unwrap_or_else(|e| e.into_inner());
         state.policies.insert(gql.policy_id.clone(), policy);
         gql
     }
 
     /// 获取信任上下文
     pub fn get_trust_context(client_id: &str) -> Option<TrustContextGql> {
-        let state = zero_trust_state().lock().unwrap();
+        let state = zero_trust_state().lock().unwrap_or_else(|e| e.into_inner());
         state.contexts.get(client_id).map(|c| c.to_gql())
     }
 
     /// 撤销信任（移除信任上下文，后续请求需重新评估）
     pub fn revoke_trust(client_id: &str) -> bool {
-        let mut state = zero_trust_state().lock().unwrap();
+        let mut state = zero_trust_state().lock().unwrap_or_else(|e| e.into_inner());
         let existed = state.contexts.remove(client_id).is_some();
         if existed {
             state.blocked_requests += 1;
@@ -22832,7 +23342,7 @@ impl ZeroTrustGateway {
 
     /// 获取零信任统计
     pub fn get_stats() -> ZeroTrustStatsGql {
-        let state = zero_trust_state().lock().unwrap();
+        let state = zero_trust_state().lock().unwrap_or_else(|e| e.into_inner());
         let avg = if state.total_assessments > 0 {
             state.total_risk_score as f64 / state.total_assessments as f64
         } else {
@@ -23081,7 +23591,9 @@ impl RequestSignatureV2 {
         body: &str,
         algorithm: Option<SignatureAlgorithmGql>,
     ) -> Option<SignedRequestGql> {
-        let mut state = request_signature_state().lock().unwrap();
+        let mut state = request_signature_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let key = state.keys.get_mut(key_id)?;
         if key.revoked {
             return None;
@@ -23108,7 +23620,9 @@ impl RequestSignatureV2 {
     /// 验证签名（时间窗口 + nonce 防重放 + 哈希匹配 + 签名匹配）
     pub fn verify_signature(req: &SignedRequestGql, body: &str) -> Result<(), RejectionReasonGql> {
         let started = Utc::now().timestamp_millis();
-        let mut state = request_signature_state().lock().unwrap();
+        let mut state = request_signature_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
 
         // 1. 缺失签名
         if req.signature.is_empty() {
@@ -23216,7 +23730,9 @@ impl RequestSignatureV2 {
 
     /// 验证 nonce 唯一性（true = 首次出现并记录；false = 重放）
     pub fn validate_nonce(nonce: &str) -> bool {
-        let mut state = request_signature_state().lock().unwrap();
+        let mut state = request_signature_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         Self::validate_nonce_inner(&mut state, nonce)
     }
 
@@ -23237,7 +23753,9 @@ impl RequestSignatureV2 {
         new_algorithm: Option<SignatureAlgorithmGql>,
         new_secret: Option<&str>,
     ) -> Option<KeyInfoGql> {
-        let mut state = request_signature_state().lock().unwrap();
+        let mut state = request_signature_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let old = state.keys.get_mut(old_key_id)?;
         let algo = new_algorithm.unwrap_or(old.algorithm);
         let secret = new_secret
@@ -23267,13 +23785,17 @@ impl RequestSignatureV2 {
 
     /// 获取密钥信息
     pub fn get_key_info(key_id: &str) -> Option<KeyInfoGql> {
-        let state = request_signature_state().lock().unwrap();
+        let state = request_signature_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.keys.get(key_id).map(|k| k.to_gql())
     }
 
     /// 吊销密钥
     pub fn revoke_key(key_id: &str) -> bool {
-        let mut state = request_signature_state().lock().unwrap();
+        let mut state = request_signature_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(k) = state.keys.get_mut(key_id) {
             if k.revoked {
                 return false;
@@ -23287,13 +23809,17 @@ impl RequestSignatureV2 {
 
     /// 获取当前签名配置
     pub fn get_config() -> SignatureConfigGql {
-        let state = request_signature_state().lock().unwrap();
+        let state = request_signature_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.config.to_gql()
     }
 
     /// 获取签名统计
     pub fn get_stats() -> SignatureStatsGql {
-        let state = request_signature_state().lock().unwrap();
+        let state = request_signature_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let total = state.total_verified + state.total_rejected;
         let avg = if total > 0 {
             state.total_verify_time_ms as f64 / total as f64
@@ -23630,7 +24156,9 @@ const V48_AUDIT_LOG_MAX: usize = 2000;
 
 /// V48.0: 写入审计日志（环形缓冲）
 fn v48_push_audit(log: PermissionAuditLog) {
-    let mut state = data_permission_state().lock().unwrap();
+    let mut state = data_permission_state()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     state.audit_logs.push_back(log);
     while state.audit_logs.len() > V48_AUDIT_LOG_MAX {
         state.audit_logs.pop_front();
@@ -23688,7 +24216,9 @@ impl DataLevelPermissions {
         let audit_principal = format!("{}:{}", principal_type.as_str(), principal_id);
         let audit_resource = format!("{}:{}", resource_type, resource_id.unwrap_or("*"));
         {
-            let mut state = data_permission_state().lock().unwrap();
+            let mut state = data_permission_state()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             state.permissions.insert(perm.permission_id.clone(), perm);
         }
         v48_push_audit(PermissionAuditLog {
@@ -23705,7 +24235,9 @@ impl DataLevelPermissions {
     /// 撤销权限
     pub fn revoke_permission(permission_id: &str) -> bool {
         let removed = {
-            let mut state = data_permission_state().lock().unwrap();
+            let mut state = data_permission_state()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             state.permissions.remove(permission_id)
         };
         if let Some(p) = removed {
@@ -23736,7 +24268,9 @@ impl DataLevelPermissions {
         required_level: PermissionLevelGql,
     ) -> bool {
         let allowed = {
-            let state = data_permission_state().lock().unwrap();
+            let state = data_permission_state()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             state
                 .permissions
                 .values()
@@ -23771,7 +24305,9 @@ impl DataLevelPermissions {
         resource_type: Option<&str>,
         limit: Option<u32>,
     ) -> Vec<DataPermissionGql> {
-        let state = data_permission_state().lock().unwrap();
+        let state = data_permission_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let limit = limit.unwrap_or(100) as usize;
         state
             .permissions
@@ -23800,7 +24336,9 @@ impl DataLevelPermissions {
         principal_id: &str,
     ) -> Vec<serde_json::Value> {
         let condition_sets: Vec<Vec<PermissionCondition>> = {
-            let state = data_permission_state().lock().unwrap();
+            let state = data_permission_state()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             state
                 .permissions
                 .values()
@@ -23832,7 +24370,9 @@ impl DataLevelPermissions {
         principal_levels: &[PermissionLevelGql],
     ) -> serde_json::Value {
         let field_rules: Vec<(String, Vec<PermissionLevelGql>, MaskStrategyGql)> = {
-            let state = data_permission_state().lock().unwrap();
+            let state = data_permission_state()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             state
                 .permissions
                 .values()
@@ -23867,7 +24407,9 @@ impl DataLevelPermissions {
             }
         }
         if masked_count > 0 {
-            let mut state = data_permission_state().lock().unwrap();
+            let mut state = data_permission_state()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             state.masked_field_count += masked_count;
         }
         row
@@ -23879,7 +24421,9 @@ impl DataLevelPermissions {
         resource_id: Option<&str>,
         principal_specs: &[(PrincipalTypeGql, &str)],
     ) -> Vec<DataPermissionGql> {
-        let state = data_permission_state().lock().unwrap();
+        let state = data_permission_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let mut matching: Vec<&DataPermission> = state
             .permissions
             .values()
@@ -23902,7 +24446,9 @@ impl DataLevelPermissions {
 
     /// 获取权限审计日志（按时间倒序）
     pub fn get_audit_logs(limit: Option<u32>) -> Vec<PermissionAuditLogGql> {
-        let state = data_permission_state().lock().unwrap();
+        let state = data_permission_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let limit = limit.unwrap_or(100) as usize;
         state
             .audit_logs
@@ -23915,7 +24461,9 @@ impl DataLevelPermissions {
 
     /// 获取数据权限统计
     pub fn get_stats() -> DataPermissionStatsGql {
-        let state = data_permission_state().lock().unwrap();
+        let state = data_permission_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let mut by_principal: HashMap<PrincipalTypeGql, u64> = HashMap::new();
         let mut by_level: HashMap<PermissionLevelGql, u64> = HashMap::new();
         for p in state.permissions.values() {
@@ -24371,7 +24919,9 @@ impl SemanticCacheEngine {
 
     /// 查找语义相似的缓存条目（模糊匹配）
     pub fn find_similar_cached(query: &str) -> Vec<SemanticCacheEntryGql> {
-        let state = semantic_cache_state().lock().unwrap();
+        let state = semantic_cache_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let sig = Self::compute_signature(query);
         let now = Utc::now();
         let threshold = state.config.similarity_threshold;
@@ -24408,7 +24958,9 @@ impl SemanticCacheEngine {
     /// 获取缓存（精确匹配 + 模糊匹配回退）
     pub fn get_cached(query: &str) -> Option<SemanticCacheEntryGql> {
         let start = std::time::Instant::now();
-        let mut state = semantic_cache_state().lock().unwrap();
+        let mut state = semantic_cache_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.total_lookup_time_ms += start.elapsed().as_secs_f64() * 1000.0;
         let normalized = Self::normalize_query(query);
         let mut hasher = Sha256::new();
@@ -24465,7 +25017,9 @@ impl SemanticCacheEngine {
 
     /// 设置缓存
     pub fn set_cached(query: &str, result: &str, tags: Vec<String>) -> SemanticCacheEntryGql {
-        let mut state = semantic_cache_state().lock().unwrap();
+        let mut state = semantic_cache_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let normalized = Self::normalize_query(query);
         let mut hasher = Sha256::new();
         hasher.update(normalized.as_bytes());
@@ -24507,7 +25061,9 @@ impl SemanticCacheEngine {
 
     /// 失效缓存（支持按 tag 批量失效，或按 query_hash 精确失效）
     pub fn invalidate(tag: Option<&str>, query_hash: Option<&str>) -> i64 {
-        let mut state = semantic_cache_state().lock().unwrap();
+        let mut state = semantic_cache_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let before = state.entries.len();
         state.entries.retain(|e| {
             if let Some(h) = query_hash {
@@ -24527,7 +25083,9 @@ impl SemanticCacheEngine {
 
     /// 获取缓存统计
     pub fn get_cache_stats() -> SemanticCacheStatsGql {
-        let state = semantic_cache_state().lock().unwrap();
+        let state = semantic_cache_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let total = state.hit_count + state.miss_count;
         let hit_rate = if total > 0 {
             state.hit_count as f64 / total as f64
@@ -24557,13 +25115,17 @@ impl SemanticCacheEngine {
 
     /// 获取当前配置
     pub fn get_config() -> SemanticCacheConfigGql {
-        let state = semantic_cache_state().lock().unwrap();
+        let state = semantic_cache_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.config.clone()
     }
 
     /// 更新配置
     pub fn update_config(config: SemanticCacheConfigGql) -> SemanticCacheConfigGql {
-        let mut state = semantic_cache_state().lock().unwrap();
+        let mut state = semantic_cache_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.config = config.clone();
         config
     }
@@ -24572,14 +25134,18 @@ impl SemanticCacheEngine {
     pub fn add_invalidation_rule(
         rule: SemanticCacheInvalidationRuleGql,
     ) -> SemanticCacheInvalidationRuleGql {
-        let mut state = semantic_cache_state().lock().unwrap();
+        let mut state = semantic_cache_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.rules.push(rule.clone());
         rule
     }
 
     /// 获取所有失效规则
     pub fn get_invalidation_rules() -> Vec<SemanticCacheInvalidationRuleGql> {
-        let state = semantic_cache_state().lock().unwrap();
+        let state = semantic_cache_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.rules.clone()
     }
 
@@ -24705,7 +25271,9 @@ pub struct QueryResultCompressor;
 impl QueryResultCompressor {
     /// 压缩查询结果
     pub fn compress_result(data: &str) -> CompressedResultGql {
-        let mut state = query_result_compressor_state().lock().unwrap();
+        let mut state = query_result_compressor_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let original_size = data.len() as i64;
         let profile = Self::profile_data(data);
         let algorithm = if state.config.algorithm != CompressionAlgorithmGql::None {
@@ -24951,7 +25519,9 @@ impl QueryResultCompressor {
 
     /// 获取压缩统计
     pub fn get_compression_stats() -> CompressionStatsGql {
-        let state = query_result_compressor_state().lock().unwrap();
+        let state = query_result_compressor_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let avg_ratio = if state.stats_total_original_bytes > 0 {
             state.stats_total_compressed_bytes as f64 / state.stats_total_original_bytes as f64
         } else {
@@ -24973,13 +25543,17 @@ impl QueryResultCompressor {
 
     /// 获取配置
     pub fn get_config() -> CompressionConfigGql {
-        let state = query_result_compressor_state().lock().unwrap();
+        let state = query_result_compressor_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.config.clone()
     }
 
     /// 更新配置
     pub fn update_config(config: CompressionConfigGql) -> CompressionConfigGql {
-        let mut state = query_result_compressor_state().lock().unwrap();
+        let mut state = query_result_compressor_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.config = config.clone();
         config
     }
@@ -25112,20 +25686,26 @@ pub struct OfflineFirstEngine;
 impl OfflineFirstEngine {
     /// 注册离线策略（按查询/变更类型）
     pub fn register_policy(key: &str, policy: OfflinePolicyGql) -> OfflinePolicyGql {
-        let mut state = offline_first_state().lock().unwrap();
+        let mut state = offline_first_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.policies.insert(key.to_string(), policy.clone());
         policy
     }
 
     /// 获取策略
     pub fn get_policy(key: &str) -> Option<OfflinePolicyGql> {
-        let state = offline_first_state().lock().unwrap();
+        let state = offline_first_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.policies.get(key).cloned()
     }
 
     /// 将变更加入离线队列
     pub fn queue_mutation(operation: &str, variables: &str) -> OfflineMutationGql {
-        let mut state = offline_first_state().lock().unwrap();
+        let mut state = offline_first_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let now = Utc::now();
         let mutation = OfflineMutationData {
             mutation_id: uuid_simple(),
@@ -25145,7 +25725,9 @@ impl OfflineFirstEngine {
     /// 同步离线变更到服务端
     pub fn sync_mutations() -> i64 {
         let start = std::time::Instant::now();
-        let mut state = offline_first_state().lock().unwrap();
+        let mut state = offline_first_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.total_sync_time_ms += start.elapsed().as_secs_f64() * 1000.0;
         state.sync_count += 1;
         let mut synced_count = 0i64;
@@ -25164,7 +25746,9 @@ impl OfflineFirstEngine {
 
     /// 获取待同步的变更
     pub fn get_pending_mutations() -> Vec<OfflineMutationGql> {
-        let state = offline_first_state().lock().unwrap();
+        let state = offline_first_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .mutations
             .iter()
@@ -25180,7 +25764,9 @@ impl OfflineFirstEngine {
         mutation_id: &str,
         strategy: OfflineConflictResolutionStrategyGql,
     ) -> Option<OfflineMutationGql> {
-        let mut state = offline_first_state().lock().unwrap();
+        let mut state = offline_first_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let m = state
             .mutations
             .iter_mut()
@@ -25205,7 +25791,9 @@ impl OfflineFirstEngine {
 
     /// 获取离线统计
     pub fn get_offline_stats() -> OfflineStatsGql {
-        let state = offline_first_state().lock().unwrap();
+        let state = offline_first_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let pending = state
             .mutations
             .iter()
@@ -25245,7 +25833,9 @@ impl OfflineFirstEngine {
 
     /// 预取数据供离线使用
     pub fn prefetch_for_offline(key: &str, data: &str) -> bool {
-        let mut state = offline_first_state().lock().unwrap();
+        let mut state = offline_first_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state
             .prefetch_cache
             .insert(key.to_string(), data.to_string());
@@ -25254,7 +25844,9 @@ impl OfflineFirstEngine {
 
     /// 获取预取的数据
     pub fn get_prefetched(key: &str) -> Option<String> {
-        let state = offline_first_state().lock().unwrap();
+        let state = offline_first_state()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         state.prefetch_cache.get(key).cloned()
     }
 

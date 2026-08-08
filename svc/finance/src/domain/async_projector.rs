@@ -67,7 +67,7 @@ impl AsyncProjector {
     }
 
     async fn get_last_progress(&self, view_name: &str) -> Result<ProjectionProgress, String> {
-        let result = sqlx::query("SELECT * FROM cqrs_projection_progress WHERE view_name = $1")
+        let result = sqlx::query("SELECT id, view_name, last_processed_id, last_processed_at, status, error_message FROM cqrs_projection_progress WHERE view_name = $1")
             .bind(view_name)
             .fetch_optional(&self.pool)
             .await

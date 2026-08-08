@@ -64,7 +64,7 @@ impl TenantDataAccess {
         &self,
     ) -> Result<Vec<crate::models::DeviceLocation>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::DeviceLocation>(
-            "SELECT * FROM device_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
+            "id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM device_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -77,7 +77,7 @@ impl TenantDataAccess {
         id: Uuid,
     ) -> Result<Option<crate::models::DeviceLocation>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::DeviceLocation>(
-            "SELECT * FROM device_locations WHERE id = $1 AND tenant_id = $2",
+            "id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM device_locations WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(self.tenant_id)
@@ -121,7 +121,7 @@ impl TenantDataAccess {
         &self,
     ) -> Result<Vec<crate::models::WarehouseLocation>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::WarehouseLocation>(
-            "SELECT * FROM warehouse_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
+            "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM warehouse_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -131,7 +131,7 @@ impl TenantDataAccess {
     /// 管道 - 按租户筛选
     pub async fn list_pipelines(&self) -> Result<Vec<crate::models::Pipeline>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::Pipeline>(
-            "SELECT * FROM pipelines WHERE tenant_id = $1 ORDER BY created_at DESC",
+            "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM pipelines WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -143,7 +143,7 @@ impl TenantDataAccess {
         &self,
     ) -> Result<Vec<crate::models::EvidenceRecord>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::EvidenceRecord>(
-            "SELECT * FROM evidence_records WHERE tenant_id = $1 ORDER BY recorded_at DESC",
+            "id, tenant_id, title, evidence_type, position, file_url, thumbnail_url, duration, file_size, file_hash, recorded_by, recorded_at, tags, description, metadata, created_at, updated_at FROM evidence_records WHERE tenant_id = $1 ORDER BY recorded_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -153,7 +153,7 @@ impl TenantDataAccess {
     /// 轨迹记录 - 按租户筛选
     pub async fn list_track_records(&self) -> Result<Vec<crate::models::TrackRecord>, sqlx::Error> {
         sqlx::query_as::<_, crate::models::TrackRecord>(
-            "SELECT * FROM track_records WHERE tenant_id = $1 ORDER BY start_time DESC",
+            "id, tenant_id, device_id, device_name, start_time, end_time, total_distance, created_at FROM track_records WHERE tenant_id = $1 ORDER BY start_time DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
