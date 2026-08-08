@@ -18,24 +18,28 @@ export const companySchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'short_name',
       label: '公司简称',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'registration_number',
       label: '注册号',
       type: 'text',
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'tax_number',
       label: '税号',
       type: 'text',
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'address',
@@ -48,18 +52,21 @@ export const companySchema: EntitySchema = {
       label: '联系电话',
       type: 'text',
       listWidth: 130,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'email',
       label: '邮箱',
       type: 'text',
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'website',
       label: '网站',
       type: 'text',
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'status',
@@ -76,6 +83,7 @@ export const companySchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'created_at',

@@ -21,6 +21,7 @@ export const materialReturnSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'order_number',
@@ -104,6 +105,7 @@ export const materialReturnSchema: EntitySchema = {
           sx: { backgroundColor: s.bg, color: s.color, fontWeight: 500 },
         });
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'work_station_id',

@@ -22,6 +22,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
         const v = row.case_no as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'employee_name',
@@ -30,6 +31,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'employee_id',
@@ -37,6 +39,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'department',
@@ -47,6 +50,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
         const v = row.department as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'hazard_factor',
@@ -88,6 +92,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
         const v = row.disease_name as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'disease_type',
@@ -95,6 +100,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'severity',
@@ -120,6 +126,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
         };
         return map[v] || v || '-';
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
@@ -148,6 +155,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
         };
         return map[v] || v || '-';
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'diagnosis_hospital',

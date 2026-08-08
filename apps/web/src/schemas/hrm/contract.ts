@@ -33,6 +33,7 @@ export const contractSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 128,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'employee_id',
@@ -57,30 +58,35 @@ export const contractSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'party_a_name',
       label: '甲方名称',
       type: 'text',
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'party_a_contact',
       label: '甲方联系方式',
       type: 'text',
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'party_b_name',
       label: '乙方名称',
       type: 'text',
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'party_b_contact',
       label: '乙方联系方式',
       type: 'text',
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'start_date',
@@ -130,6 +136,7 @@ export const contractSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'contract_file_path',

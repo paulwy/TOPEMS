@@ -30,6 +30,7 @@ export const supplierAdmissionSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'supplier_name',
@@ -38,12 +39,14 @@ export const supplierAdmissionSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'short_name',
       label: '简称',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'supplier_category',
@@ -62,30 +65,35 @@ export const supplierAdmissionSchema: EntitySchema = {
         ],
       },
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'contact_person',
       label: '联系人',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'contact_phone',
       label: '联系电话',
       type: 'text',
       listWidth: 130,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'contact_email',
       label: '联系邮箱',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'applicant',
       label: '申请人',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'address',
@@ -99,30 +107,35 @@ export const supplierAdmissionSchema: EntitySchema = {
       label: '营业执照号',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'tax_registration',
       label: '税务登记号',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'organization_code',
       label: '组织机构代码',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'legal_representative',
       label: '法定代表人',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'registered_capital',
       label: '注册资本',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'established_date',
@@ -168,6 +181,7 @@ export const supplierAdmissionSchema: EntitySchema = {
           variant: 'outlined',
         });
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'status',
@@ -188,6 +202,7 @@ export const supplierAdmissionSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'application_date',

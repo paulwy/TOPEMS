@@ -58,6 +58,7 @@ export const inventorySchema: EntitySchema = {
       sortable: true,
       listWidth: 120,
       placeholder: i18n.t('schema:erp.inventory.material_code.placeholder'),
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'material_name',
@@ -67,6 +68,7 @@ export const inventorySchema: EntitySchema = {
       sortable: true,
       listWidth: 160,
       placeholder: i18n.t('schema:erp.inventory.material_name.placeholder'),
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'material_id',
@@ -88,6 +90,7 @@ export const inventorySchema: EntitySchema = {
       type: 'text',
       listWidth: 80,
       placeholder: i18n.t('schema:erp.inventory.unit.placeholder'),
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'warehouse_name',
@@ -111,6 +114,7 @@ export const inventorySchema: EntitySchema = {
         ],
       },
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'warehouse_id',

@@ -147,6 +147,7 @@ export const hazardousMaterialSchema: EntitySchema = {
       sortable: true,
       listWidth: 150,
       renderCell: renderNameCell,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'category',
@@ -168,6 +169,7 @@ export const hazardousMaterialSchema: EntitySchema = {
       listWidth: 100,
       align: 'center',
       renderCell: renderCategoryCell,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'cas_no',
@@ -175,6 +177,7 @@ export const hazardousMaterialSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       renderCell: renderCasNoCell,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'quantity',
@@ -201,6 +204,7 @@ export const hazardousMaterialSchema: EntitySchema = {
         ],
       },
       showInList: false,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'storage_location',
@@ -209,6 +213,7 @@ export const hazardousMaterialSchema: EntitySchema = {
       required: true,
       listWidth: 140,
       renderCell: renderStorageLocationCell,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'danger_level',

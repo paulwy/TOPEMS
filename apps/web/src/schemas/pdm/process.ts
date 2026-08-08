@@ -19,6 +19,7 @@ export const processSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'name',
@@ -27,6 +28,7 @@ export const processSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 200,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'version',
@@ -34,6 +36,7 @@ export const processSchema: EntitySchema = {
       type: 'text',
       defaultValue: '1.0',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
@@ -48,6 +51,7 @@ export const processSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',

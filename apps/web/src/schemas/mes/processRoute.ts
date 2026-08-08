@@ -19,6 +19,7 @@ export const processRouteSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'name',
@@ -27,6 +28,7 @@ export const processRouteSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'version',
@@ -76,6 +78,7 @@ export const processRouteSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',

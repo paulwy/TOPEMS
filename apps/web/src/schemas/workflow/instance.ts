@@ -169,6 +169,7 @@ export const workflowInstanceSchema: EntitySchema = {
           color: statusConfig?.color || 'default',
         });
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'started_at',

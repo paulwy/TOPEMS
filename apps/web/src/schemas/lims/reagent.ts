@@ -54,12 +54,14 @@ export const reagentSchema: EntitySchema = {
       label: '规格',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'unit',
       label: '单位',
       type: 'text',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'quantity',
@@ -78,6 +80,7 @@ export const reagentSchema: EntitySchema = {
       label: '批号',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'received_date',
@@ -102,6 +105,7 @@ export const reagentSchema: EntitySchema = {
       label: '存放位置',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'status',
@@ -118,6 +122,7 @@ export const reagentSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'description',

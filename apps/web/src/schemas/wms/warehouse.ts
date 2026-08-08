@@ -45,6 +45,7 @@ export const warehouseSchema: EntitySchema = {
       type: 'text',
       listWidth: 100,
       tableEditable: true,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'phone',
@@ -67,6 +68,7 @@ export const warehouseSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
   ],
 

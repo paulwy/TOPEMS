@@ -19,6 +19,7 @@ export const accidentSchema: EntitySchema = {
       required: true,
       readonlyOnEdit: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'title',
@@ -26,6 +27,7 @@ export const accidentSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'category',
@@ -66,6 +68,7 @@ export const accidentSchema: EntitySchema = {
       label: '事故地点',
       type: 'text',
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'department_id',
@@ -113,6 +116,7 @@ export const accidentSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',

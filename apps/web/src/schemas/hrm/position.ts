@@ -32,6 +32,7 @@ export const positionSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'code',
@@ -39,6 +40,7 @@ export const positionSchema: EntitySchema = {
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'department_id',
@@ -84,6 +86,7 @@ export const positionSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'description',

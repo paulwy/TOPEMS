@@ -58,6 +58,7 @@ export const bomItemSchema: EntitySchema = {
       },
       listWidth: 80,
       align: 'center',
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'unit_price',

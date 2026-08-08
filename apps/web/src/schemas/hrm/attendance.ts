@@ -84,6 +84,7 @@ export const attendanceSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'attendance_status',

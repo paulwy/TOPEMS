@@ -19,6 +19,7 @@ export const productionProcessSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'code',
@@ -68,6 +69,7 @@ export const productionProcessSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',

@@ -23,6 +23,7 @@ export const sampleSchema: EntitySchema = {
       sortable: true,
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) => String(row.sample_no || row.id || '-'),
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'name',
@@ -57,6 +58,7 @@ export const sampleSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'received_date',
@@ -69,12 +71,14 @@ export const sampleSchema: EntitySchema = {
       label: '样品类型',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'source',
       label: '来源',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'quantity',
@@ -87,6 +91,7 @@ export const sampleSchema: EntitySchema = {
       label: '单位',
       type: 'text',
       listWidth: 70,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'location',

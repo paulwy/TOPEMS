@@ -111,6 +111,7 @@ export const tenantUserSchema: EntitySchema = {
       required: true,
       listWidth: 200,
       renderCell: renderMemberCell,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'role',
@@ -129,6 +130,7 @@ export const tenantUserSchema: EntitySchema = {
       },
       listWidth: 120,
       renderCell: renderRoleCell,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
@@ -145,6 +147,7 @@ export const tenantUserSchema: EntitySchema = {
       },
       listWidth: 100,
       renderCell: renderStatusCell,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'created_at',

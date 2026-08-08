@@ -123,6 +123,7 @@ export const productionRecordSchema: EntitySchema = {
           sx: { backgroundColor: s.bg, color: s.color, fontWeight: 500 },
         });
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'notes',

@@ -16,6 +16,7 @@ export const processFlowSchema: EntitySchema = {
       readonlyOnEdit: true,
       listWidth: 140,
       sortable: true,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'name',
@@ -24,6 +25,7 @@ export const processFlowSchema: EntitySchema = {
       required: true,
       listWidth: 180,
       sortable: true,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'production_line',
@@ -31,6 +33,7 @@ export const processFlowSchema: EntitySchema = {
       type: 'text',
       listWidth: 140,
       sortable: true,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'capacity',
@@ -56,6 +59,7 @@ export const processFlowSchema: EntitySchema = {
           { value: '套/小时', label: '套/小时' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'version',
@@ -63,6 +67,7 @@ export const processFlowSchema: EntitySchema = {
       type: 'text',
       listWidth: 80,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
@@ -77,6 +82,7 @@ export const processFlowSchema: EntitySchema = {
           { value: 'draft', label: '草稿' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',

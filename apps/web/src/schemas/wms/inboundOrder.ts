@@ -26,6 +26,7 @@ export const inboundOrderSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'order_type',
@@ -50,6 +51,7 @@ export const inboundOrderSchema: EntitySchema = {
         };
         return map[row.order_type as string] || String(row.order_type || '-');
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'warehouse_id',
@@ -67,6 +69,7 @@ export const inboundOrderSchema: EntitySchema = {
       name: 'supplier_name',
       label: '供应商',
       type: 'text',
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'expected_date',
@@ -97,6 +100,7 @@ export const inboundOrderSchema: EntitySchema = {
           { value: 'cancelled', label: '已取消' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
   ],
 

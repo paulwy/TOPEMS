@@ -43,6 +43,7 @@ export const environmentMonitorSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'location',
@@ -75,6 +76,7 @@ export const environmentMonitorSchema: EntitySchema = {
         const v = row.standard_value as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'unit',
@@ -86,6 +88,7 @@ export const environmentMonitorSchema: EntitySchema = {
         const v = row.unit as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'warning_threshold',
@@ -123,6 +126,7 @@ export const environmentMonitorSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',

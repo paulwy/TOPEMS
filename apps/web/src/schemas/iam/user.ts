@@ -98,12 +98,14 @@ export const userSchema: EntitySchema = {
           )
         );
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'full_name',
       label: '姓名',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'email',
@@ -111,6 +113,7 @@ export const userSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'password',

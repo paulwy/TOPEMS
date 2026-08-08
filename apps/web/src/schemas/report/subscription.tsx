@@ -46,6 +46,7 @@ export const subscriptionSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'email',

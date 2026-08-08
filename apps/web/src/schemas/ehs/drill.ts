@@ -57,6 +57,7 @@ export const drillSchema: EntitySchema = {
         const v = row.location as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'participants',
@@ -107,6 +108,7 @@ export const drillSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
   ],
 

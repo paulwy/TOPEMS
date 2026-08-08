@@ -17,6 +17,7 @@ export const qualitySchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'order_number',
@@ -24,6 +25,7 @@ export const qualitySchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 130,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'product_code',
@@ -31,6 +33,7 @@ export const qualitySchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'product_name',
@@ -38,12 +41,14 @@ export const qualitySchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'process_name',
       label: '工序',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'inspection_type',
@@ -61,6 +66,7 @@ export const qualitySchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'quantity',
@@ -97,6 +103,7 @@ export const qualitySchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'inspection_time',
@@ -123,12 +130,14 @@ export const qualitySchema: EntitySchema = {
         ],
       },
       listWidth: 90,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'result',
       label: '检验结果',
       type: 'textarea',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'memo',

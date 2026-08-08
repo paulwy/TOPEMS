@@ -58,6 +58,7 @@ export const resourceSchema: EntitySchema = {
       defaultValue: 'server',
       options: { type: 'static', options: RESOURCE_TYPE_OPTIONS },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'resource_service',
@@ -90,6 +91,7 @@ export const resourceSchema: EntitySchema = {
       defaultValue: 'available',
       options: { type: 'static', options: STATUS_OPTIONS },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'start_date',

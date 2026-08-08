@@ -97,6 +97,7 @@ export const tenantInvoiceSchema: EntitySchema = {
       },
       listWidth: 100,
       renderCell: renderStatusCell,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'paid_at',

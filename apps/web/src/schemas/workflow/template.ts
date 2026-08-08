@@ -49,6 +49,7 @@ export const workflowTemplateSchema: EntitySchema = {
       required: true,
       sortable: true,
       placeholder: '请输入模板名称',
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'type',

@@ -19,6 +19,7 @@ export const batchSchema: EntitySchema = {
       sortable: true,
       listWidth: 140,
       readonlyOnEdit: true,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'sku',
@@ -28,6 +29,7 @@ export const batchSchema: EntitySchema = {
       sortable: true,
       listWidth: 120,
       readonlyOnEdit: true,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'material_name',
@@ -37,6 +39,7 @@ export const batchSchema: EntitySchema = {
       sortable: true,
       listWidth: 160,
       readonlyOnEdit: true,
+      validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'specification',
@@ -49,6 +52,7 @@ export const batchSchema: EntitySchema = {
       label: '单位',
       type: 'text',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'quantity',
@@ -76,6 +80,7 @@ export const batchSchema: EntitySchema = {
         type: 'dynamic',
         resolver: 'warehouse',
       },
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'location_id',
@@ -86,6 +91,7 @@ export const batchSchema: EntitySchema = {
         type: 'dynamic',
         resolver: 'location',
       },
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'supplier_id',
@@ -96,6 +102,7 @@ export const batchSchema: EntitySchema = {
         type: 'dynamic',
         resolver: 'supplier',
       },
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'production_date',
@@ -132,6 +139,7 @@ export const batchSchema: EntitySchema = {
           { value: 'unqualified', label: '不合格' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'status',
@@ -150,6 +158,7 @@ export const batchSchema: EntitySchema = {
           { value: 'scrapped', label: '报废' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'shelf_life_days',

@@ -82,6 +82,7 @@ export const tenantSchema: EntitySchema = {
       sortable: true,
       listWidth: 180,
       placeholder: i18n.t('schema:admin.tenant.name.placeholder'),
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'slug',
@@ -107,6 +108,7 @@ export const tenantSchema: EntitySchema = {
       },
       listWidth: 100,
       renderCell: renderTenantStatusCell,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'plan',
@@ -124,6 +126,7 @@ export const tenantSchema: EntitySchema = {
       },
       listWidth: 100,
       renderCell: renderTenantPlanCell,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'max_users',

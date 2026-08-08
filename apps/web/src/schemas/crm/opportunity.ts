@@ -59,6 +59,7 @@ export const opportunitySchema: EntitySchema = {
         ],
       },
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'priority',
@@ -73,6 +74,7 @@ export const opportunitySchema: EntitySchema = {
         ],
       },
       showInList: false,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'amount',
@@ -113,6 +115,7 @@ export const opportunitySchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'description',

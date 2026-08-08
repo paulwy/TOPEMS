@@ -19,6 +19,7 @@ export const batchSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'product_name',
@@ -27,6 +28,7 @@ export const batchSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'plannedQuantity',
@@ -49,6 +51,7 @@ export const batchSchema: EntitySchema = {
         ],
       },
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'actual_quantity',
@@ -83,6 +86,7 @@ export const batchSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'operator',

@@ -20,6 +20,7 @@ export const materialRequirementSchema: EntitySchema = {
       readonly: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'order_number',
@@ -27,6 +28,7 @@ export const materialRequirementSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'product_code',
@@ -34,6 +36,7 @@ export const materialRequirementSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'product_name',
@@ -42,6 +45,7 @@ export const materialRequirementSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'material_code',
@@ -50,6 +54,7 @@ export const materialRequirementSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'material_name',
@@ -58,6 +63,7 @@ export const materialRequirementSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'specification',
@@ -65,12 +71,14 @@ export const materialRequirementSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'unit',
       label: '单位',
       type: 'text',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'required_quantity',
@@ -133,6 +141,7 @@ export const materialRequirementSchema: EntitySchema = {
           sx: { backgroundColor: p.bg, color: p.color, fontWeight: 500 },
         });
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
@@ -169,12 +178,14 @@ export const materialRequirementSchema: EntitySchema = {
           sx: { backgroundColor: s.bg, color: s.color, fontWeight: 500 },
         });
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'source_type',
       label: '来源类型',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'remark',

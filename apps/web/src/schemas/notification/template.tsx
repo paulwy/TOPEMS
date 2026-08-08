@@ -110,6 +110,7 @@ export const notificationTemplateSchema: EntitySchema = {
           </Box>
         );
       },
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'notification_type',
@@ -145,6 +146,7 @@ export const notificationTemplateSchema: EntitySchema = {
           />
         );
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'status',
@@ -204,6 +206,7 @@ export const notificationTemplateSchema: EntitySchema = {
       label: '标题模板',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'content_template',

@@ -44,6 +44,7 @@ export const leaveSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'start_date',
@@ -82,6 +83,7 @@ export const leaveSchema: EntitySchema = {
       },
       listWidth: 100,
       showInForm: false,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'reason',

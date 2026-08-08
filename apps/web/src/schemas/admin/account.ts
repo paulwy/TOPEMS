@@ -122,6 +122,7 @@ export const accountSchema: EntitySchema = {
           { style: { fontFamily: 'monospace', fontSize: '0.875rem' } },
           String(row.code || '')
         ),
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'name',
@@ -135,6 +136,7 @@ export const accountSchema: EntitySchema = {
         const isDetail = row.is_detail === true;
         return React.createElement('span', { style: { fontWeight: isDetail ? 400 : 500 } }, name);
       },
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'type',

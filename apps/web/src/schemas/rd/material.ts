@@ -57,6 +57,7 @@ export const materialSchema: EntitySchema = {
           String(row.code ?? '')
         );
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'name',
@@ -65,6 +66,7 @@ export const materialSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 200,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'category',
@@ -76,6 +78,7 @@ export const materialSchema: EntitySchema = {
         if (!val) return '-';
         return React.createElement(Chip, { label: val, size: 'small', variant: 'outlined' });
       },
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'stock_quantity',
@@ -89,6 +92,7 @@ export const materialSchema: EntitySchema = {
       label: '单位',
       type: 'text',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'status',
@@ -111,6 +115,7 @@ export const materialSchema: EntitySchema = {
         const color = STATUS_COLOR_MAP[status] || 'default';
         return React.createElement(Chip, { label, size: 'small', color });
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'specification',
@@ -118,6 +123,7 @@ export const materialSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'supplier',

@@ -37,6 +37,7 @@ export const projectSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'name',
@@ -45,6 +46,7 @@ export const projectSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 200,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'project_type',
@@ -70,12 +72,14 @@ export const projectSchema: EntitySchema = {
           variant: 'outlined',
         });
       },
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'leader',
       label: '负责人',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'status',
@@ -93,6 +97,7 @@ export const projectSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'progress',

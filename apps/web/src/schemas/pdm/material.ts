@@ -19,6 +19,7 @@ export const materialSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'name',
@@ -27,6 +28,7 @@ export const materialSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'category',
@@ -45,12 +47,14 @@ export const materialSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'specification',
       label: '规格',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'unit',
@@ -58,6 +62,7 @@ export const materialSchema: EntitySchema = {
       type: 'text',
       defaultValue: 'kg',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'unit_price',
@@ -88,6 +93,7 @@ export const materialSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'inventory_quantity',

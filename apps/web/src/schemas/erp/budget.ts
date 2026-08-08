@@ -71,6 +71,7 @@ export const budgetSchema: EntitySchema = {
       },
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'department_id',
@@ -85,6 +86,7 @@ export const budgetSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       placeholder: i18n.t('schema:erp.budget.fiscal_year.placeholder'),
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'total_budget',
@@ -136,6 +138,7 @@ export const budgetSchema: EntitySchema = {
       },
       listWidth: 100,
       renderCell: renderBudgetStatusCell,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'created_at',
@@ -212,6 +215,7 @@ export const expenseSchema: EntitySchema = {
       sortable: true,
       listWidth: 140,
       placeholder: '请输入费用编号',
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'expense_type',
@@ -221,6 +225,7 @@ export const expenseSchema: EntitySchema = {
       sortable: true,
       listWidth: 120,
       placeholder: '请输入费用类型',
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'applicant_name',
@@ -229,6 +234,7 @@ export const expenseSchema: EntitySchema = {
       listWidth: 100,
       showInList: false,
       placeholder: '请输入申请人',
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'department_id',
@@ -279,6 +285,7 @@ export const expenseSchema: EntitySchema = {
       },
       listWidth: 100,
       renderCell: renderBudgetStatusCell,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'approver_id',

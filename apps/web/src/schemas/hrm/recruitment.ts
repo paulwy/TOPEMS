@@ -18,6 +18,7 @@ export const recruitmentSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'code',
@@ -53,6 +54,7 @@ export const recruitmentSchema: EntitySchema = {
       label: '工作地点',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'salary_min',
@@ -82,6 +84,7 @@ export const recruitmentSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'publish_date',

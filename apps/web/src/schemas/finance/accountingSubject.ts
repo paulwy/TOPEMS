@@ -19,6 +19,7 @@ export const accountingSubjectSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'name',
@@ -27,6 +28,7 @@ export const accountingSubjectSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'category',
@@ -44,6 +46,7 @@ export const accountingSubjectSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'level',
@@ -68,6 +71,7 @@ export const accountingSubjectSchema: EntitySchema = {
       type: 'text',
       listWidth: 140,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'is_cash_flow',
@@ -98,6 +102,7 @@ export const accountingSubjectSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'description',

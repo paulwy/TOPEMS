@@ -91,6 +91,7 @@ export const workflowDefinitionSchema: EntitySchema = {
       required: true,
       sortable: true,
       placeholder: '请输入流程名称',
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'code',
@@ -127,6 +128,7 @@ export const workflowDefinitionSchema: EntitySchema = {
         type: 'static',
         options: statusOptions,
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',

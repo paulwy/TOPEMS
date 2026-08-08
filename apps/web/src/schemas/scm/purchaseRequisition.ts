@@ -73,6 +73,7 @@ export const purchaseRequisitionSchema: EntitySchema & SchemaExtensions = {
       type: 'text',
       required: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'requester',
@@ -107,6 +108,7 @@ export const purchaseRequisitionSchema: EntitySchema & SchemaExtensions = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'status',
@@ -125,6 +127,7 @@ export const purchaseRequisitionSchema: EntitySchema & SchemaExtensions = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
   ],
 
