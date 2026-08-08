@@ -1,7 +1,7 @@
 # TOPEMS 项目短板逐一分析与优化报告
 
 > **版本**: v1.0 | **日期**: 2026-07-24 | **范围**: 全栈架构、安全、工程效能、产品完整度、增值运营
-> **配套文档**: [CODE_WIKI.md §11](file:///Users/xingzhai/TOPEMS/docs/CODE_WIKI.md) 项目评估与优化方案
+> **配套文档**: [CODE_WIKI.md §11](file:///Users/air/TOPEMS/docs/CODE_WIKI.md) 项目评估与优化方案
 
 ---
 
@@ -99,7 +99,7 @@
 
 #### 问题
 
-[svc/analytics/src/modules/bi/chart_service.rs#L103](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103) 与 [multidimensional_analysis.rs#L332](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332) 直接将用户可控参数拼入 SQL：
+[svc/analytics/src/modules/bi/chart_service.rs#L103](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103) 与 [multidimensional_analysis.rs#L332](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332) 直接将用户可控参数拼入 SQL：
 
 ```rust
 query: format!("SELECT {} FROM {}", x_column, data_source),  // chart_service.rs:103
@@ -160,7 +160,7 @@ let query = format!("SELECT {} FROM analytics_data LIMIT 100", select_clause); /
 
 #### 问题
 
-[lib/src/auth.rs#L69-L96](file:///Users/xingzhai/TOPEMS/lib/src/auth.rs#L69-L96) 存在两重风险：
+[lib/src/auth.rs#L69-L96](file:///Users/air/TOPEMS/lib/src/auth.rs#L69-L96) 存在两重风险：
 
 1. **HS256 对称密钥**：所有 20+ 服务共享同一 `JWT_SECRET`，任一服务泄露密钥即可伪造任意租户/用户 token，跨服务横向移动无障碍。
 2. **默认密钥回退**：未设置 `JWT_SECRET` 环境变量时回退到硬编码 `topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256`，生产环境漏配即等于无认证。
@@ -206,7 +206,7 @@ let default_jwt_secret = "topems-jwt-secret-key-must-be-at-least-32-characters-l
 
 #### 步骤
 
-1. **【1 天 止血】** 修改 [auth.rs](file:///Users/xingzhai/TOPEMS/lib/src/auth.rs)：`PROFILE=prod` 时移除默认密钥，校验 `JWT_SECRET` 长度≥32，否则 `panic!`。
+1. **【1 天 止血】** 修改 [auth.rs](file:///Users/air/TOPEMS/lib/src/auth.rs)：`PROFILE=prod` 时移除默认密钥，校验 `JWT_SECRET` 长度≥32，否则 `panic!`。
 2. **【1 天 密钥生成】** 生成 RSA 密钥对（2048 位），私钥存入 K8s Secret / Vault，公钥分发至所有服务环境变量。
 3. **【2 天 签发改造】** IAM 服务 `encode` 切换 `Algorithm::RS256` + `EncodingKey::from_rsa_pem`，header 增加 `kid`。
 4. **【1 天 验签改造】** `lib/src/auth.rs` 的 `decode` 支持 `Validation { algorithms: [RS256, HS256], .. }` 过渡期双验。
@@ -226,7 +226,7 @@ let default_jwt_secret = "topems-jwt-secret-key-must-be-at-least-32-characters-l
 
 #### 问题
 
-[svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23)：
+[svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23)：
 
 ```rust
 let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
@@ -252,7 +252,7 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 - **零信任架构**：默认拒绝，显式授权。
 - K8s 生态：Sidecar 注册需 mTLS，插件注册同理应有强身份校验。
-- 已有 `tenant_plugins` 表（[svc/unified-core/src/modules/plugin/tenant_plugins.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/tenant_plugins.rs)）可复用为白名单存储。
+- 已有 `tenant_plugins` 表（[svc/unified-core/src/modules/plugin/tenant_plugins.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/tenant_plugins.rs)）可复用为白名单存储。
 
 #### 可行性
 
@@ -344,7 +344,7 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 #### 问题
 
-[svc/unified-core/src/main.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/main.rs) 承载 IAM、Flow、File、Communication、Notification、Mail、IM、Tenant、Plugin、Master、Ticket、Search、Dict、Audit 等 14+ 子系统。虽然已外迁部分业务模块，但核心仍过重：
+[svc/unified-core/src/main.rs](file:///Users/air/TOPEMS/svc/unified-core/src/main.rs) 承载 IAM、Flow、File、Communication、Notification、Mail、IM、Tenant、Plugin、Master、Ticket、Search、Dict、Audit 等 14+ 子系统。虽然已外迁部分业务模块，但核心仍过重：
 
 - **单点故障**：unified-core 宕机 → 认证、插件注册、导航、工单全部失效。
 - **编译耦合**：任一模块改动触发整个 unified-core 重编译（3-5 分钟）。
@@ -462,7 +462,7 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 #### 问题
 
-[lib/src/lib.rs](file:///Users/xingzhai/TOPEMS/lib/src/lib.rs) 导出 40+ 模块（auth/database/cache/response/schema/rls/tenant/permission/middleware/service_config/service_discovery/service_client/event/telemetry/monitoring/health/encryption/ai_client/embedding/vector_store...）。任何共享库修改触发所有 20+ 服务全量重编译（本地 8-12 分钟，CI 更久）。
+[lib/src/lib.rs](file:///Users/air/TOPEMS/lib/src/lib.rs) 导出 40+ 模块（auth/database/cache/response/schema/rls/tenant/permission/middleware/service_config/service_discovery/service_client/event/telemetry/monitoring/health/encryption/ai_client/embedding/vector_store...）。任何共享库修改触发所有 20+ 服务全量重编译（本地 8-12 分钟，CI 更久）。
 
 #### 思路
 
@@ -716,9 +716,9 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 | 问题 | 修复 | 证据 |
 |------|------|------|
-| Portal BFF 未代理 SLA 路径 | 已注册全部 SLA 代理路由 | [svc/portal/src/main.rs#L341-L370](file:///Users/xingzhai/TOPEMS/svc/portal/src/main.rs#L341-L370) |
-| SLA 代理 handler 缺失 | 已实现全部 handler | [svc/portal/src/modules/tickets.rs#L248-L400](file:///Users/xingzhai/TOPEMS/svc/portal/src/modules/tickets.rs#L248-L400) |
-| 升级计算未对齐工作时间 | `check_and_escalate` 已复用 `calculate_due_time` | [sla_service.rs#L283-L291](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L283-L291) |
+| Portal BFF 未代理 SLA 路径 | 已注册全部 SLA 代理路由 | [svc/portal/src/main.rs#L341-L370](file:///Users/air/TOPEMS/svc/portal/src/main.rs#L341-L370) |
+| SLA 代理 handler 缺失 | 已实现全部 handler | [svc/portal/src/modules/tickets.rs#L248-L400](file:///Users/air/TOPEMS/svc/portal/src/modules/tickets.rs#L248-L400) |
+| 升级计算未对齐工作时间 | `check_and_escalate` 已复用 `calculate_due_time` | [sla_service.rs#L283-L291](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L283-L291) |
 
 #### 遗留建议
 
@@ -843,15 +843,15 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 | 短板 | 关键代码位置 |
 |------|------------|
-| BI SQL 注入 | [chart_service.rs#L103](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103), [multidimensional_analysis.rs#L332](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332) |
-| JWT HS256 | [auth.rs#L69-L96](file:///Users/xingzhai/TOPEMS/lib/src/auth.rs#L69-L96) |
-| 插件 token 放行 | [runtime.rs#L14-L23](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23) |
-| 路由遗留债务 | [routes/mod.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/routes/mod.rs) `register_routes_with_legacy_alias` |
-| unified-core 职责 | [main.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/main.rs) |
-| 共享库膨胀 | [lib/src/lib.rs](file:///Users/xingzhai/TOPEMS/lib/src/lib.rs) |
-| 前后端类型 | [packages/shared-types](file:///Users/xingzhai/TOPEMS/packages/shared-types), [utoipa](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/main.rs) |
-| Vite Proxy | [vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts) |
-| SLA（已修复） | [sla_service.rs#L283-L291](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L283-L291), [portal main.rs#L341-L370](file:///Users/xingzhai/TOPEMS/svc/portal/src/main.rs#L341-L370) |
+| BI SQL 注入 | [chart_service.rs#L103](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103), [multidimensional_analysis.rs#L332](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332) |
+| JWT HS256 | [auth.rs#L69-L96](file:///Users/air/TOPEMS/lib/src/auth.rs#L69-L96) |
+| 插件 token 放行 | [runtime.rs#L14-L23](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23) |
+| 路由遗留债务 | [routes/mod.rs](file:///Users/air/TOPEMS/svc/unified-core/src/routes/mod.rs) `register_routes_with_legacy_alias` |
+| unified-core 职责 | [main.rs](file:///Users/air/TOPEMS/svc/unified-core/src/main.rs) |
+| 共享库膨胀 | [lib/src/lib.rs](file:///Users/air/TOPEMS/lib/src/lib.rs) |
+| 前后端类型 | [packages/shared-types](file:///Users/air/TOPEMS/packages/shared-types), [utoipa](file:///Users/air/TOPEMS/svc/unified-core/src/main.rs) |
+| Vite Proxy | [vite.config.ts](file:///Users/air/TOPEMS/apps/web/vite.config.ts) |
+| SLA（已修复） | [sla_service.rs#L283-L291](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L283-L291), [portal main.rs#L341-L370](file:///Users/air/TOPEMS/svc/portal/src/main.rs#L341-L370) |
 
 ---
 

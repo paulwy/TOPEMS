@@ -448,18 +448,18 @@ export type NavGroup =
 
 | # | 类别 | 代表元素 | 代码载体（现有） | 导航职责 |
 |---|---|---|---|---|
-| 01 | **品牌与域归位** | 企业 LOGO / 产品标题 | [AppHeader.tsx#L240-L280](file:///Users/xingzhai/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L240-L280) | 一键回到 L0 首页（跨域兜底锚点） |
-| 02 | **四层主菜单** | L1 业务域 / L2 模块 / L3 子组 / L4 页面 | [AppSidebar.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/layout/AppSidebar.tsx) | 确定性路径导航（文档 §1-§4） |
-| 03 | **全局搜索条（Cmd+K）** | 顶栏输入框 / 快捷键唤起面板 | [GlobalSearchBar](file:///Users/xingzhai/TOPEMS/apps/web/src/components/GlobalSearchBar/index.tsx) + [CommandPalette.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/ui/CommandPalette.tsx) | 模糊/不确定路径搜索（排序 = 收藏×3 / 最近×5 / 完全匹配 / 模糊） |
-| 04 | **面包屑 & 路径标签** | 顶栏下方 / 页头的可点层级链 | [AppHeader.tsx#L838-L920](file:///Users/xingzhai/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L838-L920) + [PageHeader.tsx#L245-L273](file:///Users/xingzhai/TOPEMS/apps/web/src/components/templates/PageHeader.tsx#L245-L273)（pathTabs） | 5 段式可回退路径链（L0→L1→L2→L3→L4），最后一段支持 detailItemName 替换为实体名 |
-| 05 | **中央快捷 Tab** | 首页 / 模块概览 / 数据仪表盘 | [AppHeader.tsx#L185-L353](file:///Users/xingzhai/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L185-L353) | 3 个全局最高频页面水平直跳（非业务域 Tab） |
-| 06 | **AI 辅助快捷入口** | 顶栏 Sparkles 按钮 / 悬浮 Copilot / 页内上下文 | [AppHeader.tsx#L381-L395](file:///Users/xingzhai/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L381-L395) + [v55-copilot-panel.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/ai/copilot/v55-copilot-panel.tsx) | 触发 AI 助手；带当前 URL / 模块 / 选中文字上下文 |
-| 07 | **通知 & 待办** | 顶栏 Bell 徽章 / 悬浮通知中心 | [AppHeader.tsx#L411-L589](file:///Users/xingzhai/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L411-L589) | 非预期类跳转：从通知 → 对应待审批/告警/工单页 |
-| 08 | **主题 & 显示工具** | 切换亮暗模式 / 主色 / 密度 / 字号 / 布局 | [AppHeader.tsx#L590](file:///Users/xingzhai/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L590) + [theme-manager.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/design-system/theme-manager.tsx) | 纯显示偏好切换（非业务跳转），但可影响视觉导航容量 |
-| 09 | **用户菜单 & 个人域** | 头像下拉：个人中心 / 我的收藏 / 退出登录 | [AppHeader.tsx#L591-L824](file:///Users/xingzhai/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L591-L824) | 个人域入口 + 会话终止（退出需二次确认 Dialog） |
-| 10 | **多标签 Tabs 栏** | 页头下方：首页 + 访问过的页面 | [ModuleTabs.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/layout/ModuleTabs.tsx) | 近期工作上下文切换（首页不可关） |
-| 11 | **页面级返回 & 操作** | 返回上一级 / 返回列表 / 刷新 / 保存 / 关闭 | [BackButton.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/common/BackButton.tsx) / @topems/shared-components + [PageHeader.tsx#L524-L529](file:///Users/xingzhai/TOPEMS/apps/web/src/components/templates/PageHeader.tsx#L524-L529) | 页面内微观导航（下一章详细） |
-| 12 | **悬浮辅助（FAB / 浮动工具）** | 首页快速入口 + DevTools 悬浮 | [DashboardQuickActions.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/dashboard/DashboardQuickActions.tsx) + [MicroFrontendDevTools.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/dev-tools/MicroFrontendDevTools.tsx) | 角色高频动作一键触发；未来包含：一键创建、语音输入、帮助气泡、AI 摘要、AI 生单 |
+| 01 | **品牌与域归位** | 企业 LOGO / 产品标题 | [AppHeader.tsx#L240-L280](file:///Users/air/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L240-L280) | 一键回到 L0 首页（跨域兜底锚点） |
+| 02 | **四层主菜单** | L1 业务域 / L2 模块 / L3 子组 / L4 页面 | [AppSidebar.tsx](file:///Users/air/TOPEMS/apps/web/src/components/layout/AppSidebar.tsx) | 确定性路径导航（文档 §1-§4） |
+| 03 | **全局搜索条（Cmd+K）** | 顶栏输入框 / 快捷键唤起面板 | [GlobalSearchBar](file:///Users/air/TOPEMS/apps/web/src/components/GlobalSearchBar/index.tsx) + [CommandPalette.tsx](file:///Users/air/TOPEMS/apps/web/src/components/ui/CommandPalette.tsx) | 模糊/不确定路径搜索（排序 = 收藏×3 / 最近×5 / 完全匹配 / 模糊） |
+| 04 | **面包屑 & 路径标签** | 顶栏下方 / 页头的可点层级链 | [AppHeader.tsx#L838-L920](file:///Users/air/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L838-L920) + [PageHeader.tsx#L245-L273](file:///Users/air/TOPEMS/apps/web/src/components/templates/PageHeader.tsx#L245-L273)（pathTabs） | 5 段式可回退路径链（L0→L1→L2→L3→L4），最后一段支持 detailItemName 替换为实体名 |
+| 05 | **中央快捷 Tab** | 首页 / 模块概览 / 数据仪表盘 | [AppHeader.tsx#L185-L353](file:///Users/air/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L185-L353) | 3 个全局最高频页面水平直跳（非业务域 Tab） |
+| 06 | **AI 辅助快捷入口** | 顶栏 Sparkles 按钮 / 悬浮 Copilot / 页内上下文 | [AppHeader.tsx#L381-L395](file:///Users/air/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L381-L395) + [v55-copilot-panel.tsx](file:///Users/air/TOPEMS/apps/web/src/ai/copilot/v55-copilot-panel.tsx) | 触发 AI 助手；带当前 URL / 模块 / 选中文字上下文 |
+| 07 | **通知 & 待办** | 顶栏 Bell 徽章 / 悬浮通知中心 | [AppHeader.tsx#L411-L589](file:///Users/air/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L411-L589) | 非预期类跳转：从通知 → 对应待审批/告警/工单页 |
+| 08 | **主题 & 显示工具** | 切换亮暗模式 / 主色 / 密度 / 字号 / 布局 | [AppHeader.tsx#L590](file:///Users/air/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L590) + [theme-manager.tsx](file:///Users/air/TOPEMS/apps/web/src/design-system/theme-manager.tsx) | 纯显示偏好切换（非业务跳转），但可影响视觉导航容量 |
+| 09 | **用户菜单 & 个人域** | 头像下拉：个人中心 / 我的收藏 / 退出登录 | [AppHeader.tsx#L591-L824](file:///Users/air/TOPEMS/apps/web/src/components/layout/AppHeader.tsx#L591-L824) | 个人域入口 + 会话终止（退出需二次确认 Dialog） |
+| 10 | **多标签 Tabs 栏** | 页头下方：首页 + 访问过的页面 | [ModuleTabs.tsx](file:///Users/air/TOPEMS/apps/web/src/components/layout/ModuleTabs.tsx) | 近期工作上下文切换（首页不可关） |
+| 11 | **页面级返回 & 操作** | 返回上一级 / 返回列表 / 刷新 / 保存 / 关闭 | [BackButton.tsx](file:///Users/air/TOPEMS/apps/web/src/components/common/BackButton.tsx) / @topems/shared-components + [PageHeader.tsx#L524-L529](file:///Users/air/TOPEMS/apps/web/src/components/templates/PageHeader.tsx#L524-L529) | 页面内微观导航（下一章详细） |
+| 12 | **悬浮辅助（FAB / 浮动工具）** | 首页快速入口 + DevTools 悬浮 | [DashboardQuickActions.tsx](file:///Users/air/TOPEMS/apps/web/src/components/dashboard/DashboardQuickActions.tsx) + [MicroFrontendDevTools.tsx](file:///Users/air/TOPEMS/apps/web/src/dev-tools/MicroFrontendDevTools.tsx) | 角色高频动作一键触发；未来包含：一键创建、语音输入、帮助气泡、AI 摘要、AI 生单 |
 
 ### 12.2 每类元素的 5 项强制标准（违反 = PR 不通过）
 
@@ -482,7 +482,7 @@ export type NavGroup =
 
 ## 13. 页面级导航操作标准（按模板类型）
 
-> 每个页面 `PageHeader.props.backButton`、`actions`、`tabs`、`detailItemName` 都必须遵守本模板。组件实现见 [PageHeader.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/templates/PageHeader.tsx) + [DetailPageTemplate.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/templates/DetailPageTemplate.tsx)。
+> 每个页面 `PageHeader.props.backButton`、`actions`、`tabs`、`detailItemName` 都必须遵守本模板。组件实现见 [PageHeader.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/PageHeader.tsx) + [DetailPageTemplate.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/DetailPageTemplate.tsx)。
 
 ### 13.1 6 大页面模板的导航操作矩阵
 
@@ -757,7 +757,7 @@ font-family: "SF Mono", ui-monospace, Menlo, Consolas, "JetBrains Mono",
 | 模板 | 关键 UI 强制（美观紧凑直观） | 反例（🚫 禁止） |
 |---|---|---|
 | **① ListPageTemplate 列表** | ① 顶部 FilterCard：1 行 4-6 字段（grid auto-cols minmax(220px,1fr)），超出 6 项 → 默认折叠"展开高级筛选"；② 筛选下方 ActionBar：左 `[+ 创建 xxx]（primary）` + 批量选择 Chip + `导入/导出（outlined）` + 右 `列配置齿轮 / 刷新 / 全屏`；③ Table 首列 Checkbox，次列 工单号等宽 mono 字体链接（hover underline + primary 色），末列 操作（最多 3 个 IconButton：`查看/编辑/删除`，更多进 Popover）；④ 分页 Pagination 右下，默认 pageSize=20（紧凑密度）/10 normal/6 comfortable | 筛选项 10+ 全展开 → 视觉污染；ActionBar 放 5 个 primary 按钮；操作列写一堆文字按钮（"查看详情 | 编辑 | 作废 | 复制"）→ 改为 IconButton+Tooltip |
-| **② DetailPageTemplate 详情**（规范文件见 [DetailPageTemplate.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/templates/DetailPageTemplate.tsx)） | ① 顶部 InfoCard：左 Avatar/Logo 64×64 + 中间 2 行（首行 = 标题 + Status Chip + LastSync Chip，次行 = 工单号等宽 mono + 所属分组 + 创建时间）+ 右 PageHeader actions（编辑/分享/打印/下载/更多…/删除 error）；② 8+4 栅格：主 8 栏按 Section 分组（基本信息 / 任职信息 / 薪酬…），每个 Section 内部用 `2 栏标签：值 grid`（紧凑模式可 3 栏），label 右对齐 neutral.600 + value 左对齐 neutral.900-500；③ 侧 4 栏 2 张卡：关联记录卡（最新 5 条链接）+ 操作日志卡（最近 8 条 timeline） | 详情页一整屏只有"20 行字段从上往下堆叠"无分组；8+4 比例乱搞（6+6 浪费空间；9+3 侧栏放不下） |
+| **② DetailPageTemplate 详情**（规范文件见 [DetailPageTemplate.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/DetailPageTemplate.tsx)） | ① 顶部 InfoCard：左 Avatar/Logo 64×64 + 中间 2 行（首行 = 标题 + Status Chip + LastSync Chip，次行 = 工单号等宽 mono + 所属分组 + 创建时间）+ 右 PageHeader actions（编辑/分享/打印/下载/更多…/删除 error）；② 8+4 栅格：主 8 栏按 Section 分组（基本信息 / 任职信息 / 薪酬…），每个 Section 内部用 `2 栏标签：值 grid`（紧凑模式可 3 栏），label 右对齐 neutral.600 + value 左对齐 neutral.900-500；③ 侧 4 栏 2 张卡：关联记录卡（最新 5 条链接）+ 操作日志卡（最近 8 条 timeline） | 详情页一整屏只有"20 行字段从上往下堆叠"无分组；8+4 比例乱搞（6+6 浪费空间；9+3 侧栏放不下） |
 | **③ FormPageTemplate 表单** | ① 顶 sticky 保存状态条：`未保存/自动保存 14:23/3 处校验失败` Chip；② 表单 2 栏 grid（标签：输入框 = 160px：flex-1，标签右对齐；移动端切换为 1 栏 + 标签在输入框上方）；③ 必填 `*` 号放在标签左侧而非输入框内；④ 校验失败输入框 = 3px error 色左边框（非整圈难看红边框） + 12px caption 红色 HelperText 下方提示；⑤ 底部 sticky footer 同 §13.1 ③：取消 / 存草稿 / 保存并关闭（唯一 primary） | 整个表单从上往下单栏纵向铺到底；必填 * 放输入框右下角看不清楚；校验失败只 Toast 不标字段 |
 | **④ WizardPageTemplate 向导** | ① Stepper = 图标圆形（完成=success+勾 / 进行=primary+step序号 / 未来=neutral.300+灰图标）+ 横线连接（完成段 success / 进行段 primary / 未来段 neutral.200）+ step名称（14-500）；② 每步内容上方必须有 "帮助说明侧边 Drawer 开关（`HelpCircle` iconbutton）"，抽屉宽 320px，展示当前步骤的业务规则；③ 底部 sticky：上一步 / 下一步（校验通过才能点）/ 完成 / 跳过（text 灰）；④ 进度文字右上：`已完成 2/5 · 预计剩余 8 分钟`（AI 估算或配置） | Stepper 用数字列表（"1. 基本信息 2. 详细配置 3. …"）无视觉进度感；下一步按钮永远 enabled 不管校验 |
 | **⑤ SettingsPageTemplate 设置** | ① 左垂直 Tabs 宽 220-240px，2 级 Overline 分组（基本 / 权限 / 集成 / 通知 / 外观 / 高级 / 危险区），"危险区"底部+红色 Chip + Section 间 1px divider；② 右表单区：每个设置项 Card 独立（一个设置页 ≈ 多张 Card 垂直堆叠），每个 Card 底部"保存本组配置"按钮 + "重置本组为默认"（outlined-warning）；③ 顶部固定："未保存 3 项变更"蓝色 Banner（脏数据才能看见）+ "保存全部"（primary）；④ 保存后 Toast："已保存，将在下一次登录后生效"如果是全局设置 | 所有设置项挤在一张表里；危险操作（"删除所有数据"）和"修改品牌色"混在一起没有视觉警示 |
