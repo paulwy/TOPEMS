@@ -10,8 +10,8 @@ import globals from 'globals';
 export default ts.config(
   {
     ignores: [
-      'dist/**',
-      'node_modules/**',
+      '**/dist/**',
+      '**/node_modules/**',
       '.trae-cn/**',
       '.uploads/**',
       '**/*.cjs',
