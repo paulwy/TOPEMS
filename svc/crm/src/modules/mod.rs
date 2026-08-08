@@ -4,9 +4,9 @@ use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::AuthState;
-use topems_shared::FieldEncryptionService;
-use topems_shared::SystemMetrics;
+use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::security::encryption::FieldEncryptionService;
+use topems_shared_core::health::SystemMetrics;
 
 pub mod aftersales;
 pub mod audit;
@@ -33,10 +33,10 @@ pub struct ApiState {
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
     pub encryption: Arc<FieldEncryptionService>,
-    pub event_publisher: Option<Arc<topems_shared::event::publisher::EventPublisher>>,
-    pub erp_client: Option<Arc<topems_shared::service_client::ErpServiceClient>>,
-    pub wms_client: Option<Arc<topems_shared::service_client::WmsServiceClient>>,
-    pub workflow_client: topems_shared::service_client::WorkflowServiceClient,
+    pub event_publisher: Option<Arc<topems_shared_event::event::publisher::EventPublisher>>,
+    pub erp_client: Option<Arc<topems_shared_service_client::service_client::ErpServiceClient>>,
+    pub wms_client: Option<Arc<topems_shared_service_client::service_client::WmsServiceClient>>,
+    pub workflow_client: topems_shared_service_client::service_client::WorkflowServiceClient,
     pub customer_cache: Arc<InMemoryCache<Customer>>,
     pub dashboard_cache: Arc<InMemoryCache<serde_json::Value>>,
 }
@@ -53,7 +53,7 @@ impl FromRef<ApiState> for PgPool {
     }
 }
 
-impl FromRef<ApiState> for topems_shared::service_client::WorkflowServiceClient {
+impl FromRef<ApiState> for topems_shared_service_client::service_client::WorkflowServiceClient {
     fn from_ref(state: &ApiState) -> Self {
         state.workflow_client.clone()
     }

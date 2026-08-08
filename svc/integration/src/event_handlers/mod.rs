@@ -1,6 +1,6 @@
 use chrono::Utc;
 use sqlx::PgPool;
-use topems_shared::event::{Event, EventResult, EventSubscriber, EventType};
+use topems_shared_event::event::{Event, EventResult, EventSubscriber, EventType};
 
 type HandlerResult = std::result::Result<(), String>;
 

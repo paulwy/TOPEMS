@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::RwLock;
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 
 use crate::AppState;
 

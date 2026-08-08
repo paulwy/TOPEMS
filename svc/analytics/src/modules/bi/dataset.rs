@@ -10,7 +10,7 @@ use sqlx::Row;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
-use topems_shared::ListResponse;
+use topems_shared_core::response::ListResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct ListDatasetQuery {

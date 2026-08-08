@@ -6,6 +6,10 @@ authors.workspace = true
 description = "TOPEMS Unified Core Platform - IAM + Doc + Flow + File + Communication + Tenant + Billing + AI"
 
 [dependencies]
+topems-shared = { path = "../../lib" }
+topems-shared-event = { path = "../../lib/shared-event" }
+topems-shared-core = { path = "../../lib/shared-core" }
+topems-shared-auth = { path = "../../lib/shared-auth" }
 axum = { workspace = true, features = ["ws"] }
 tokio.workspace = true
 serde.workspace = true
@@ -18,7 +22,6 @@ tracing-subscriber.workspace = true
 tower-http.workspace = true
 thiserror.workspace = true
 sqlx = { workspace = true, features = ["rust_decimal"] }
-topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 utoipa.workspace = true
 axum-prometheus.workspace = true

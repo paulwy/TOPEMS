@@ -6,6 +6,7 @@ authors.workspace = true
 description = "TOPEMS-Lowcode 低代码平台服务（占位模板，后端功能待立项）"
 
 [dependencies]
+topems-shared = { path = "../../lib" }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -16,7 +17,6 @@ tracing-subscriber.workspace = true
 dotenv.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
-topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 utoipa.workspace = true
 

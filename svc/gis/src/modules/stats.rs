@@ -1,7 +1,7 @@
 use axum::{extract::State, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GisStatistics {

@@ -1,4 +1,4 @@
-use topems_shared::audit::{AuditLogQuery, AuditLogService, CreateAuditLogRequest};
+use topems_shared_db::audit::{AuditLogQuery, AuditLogService, CreateAuditLogRequest};
 use uuid::Uuid;
 
 pub struct MobileAuditService {

@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
 use crate::repositories::project_repository::ProjectRepository;
-use topems_shared::{Result, TopemsError};
+use topems_shared_core::error::TopemsError;
 
 pub struct ProjectService {
     repository: ProjectRepository,

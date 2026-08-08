@@ -4,7 +4,7 @@ use crate::modules::models::{QAHistory, SearchResult};
 use crate::services::db::Database;
 use serde::{Deserialize, Serialize};
 use sqlx::{Executor, Row};
-use topems_shared::ai_client::{
+use topems_shared_ai::ai_client::{
     create_client, AIModelConfig, AIProviderType, ChatMessage, UnifiedAIClient,
 };
 use uuid::Uuid;

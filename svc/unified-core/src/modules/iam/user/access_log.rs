@@ -7,7 +7,7 @@ use axum::{
 };
 use serde::Deserialize;
 use sqlx::Row;
-use topems_shared::Claims;
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 use super::models::record_audit_log;

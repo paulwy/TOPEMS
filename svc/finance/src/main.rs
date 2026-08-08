@@ -14,7 +14,7 @@ use utoipa::OpenApi;
 use crate::models::*;
 use crate::modules::*;
 use crate::shared::AppState;
-use topems_shared::service_client::create_workflow_client;
+use topems_shared_service_client::service_client::create_workflow_client;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,

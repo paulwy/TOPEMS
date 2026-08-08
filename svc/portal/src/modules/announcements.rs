@@ -7,7 +7,7 @@ use axum::{
     extract::{Json, Path, State},
     http::HeaderMap,
 };
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::{
     models::{Announcement, NewAnnouncement},

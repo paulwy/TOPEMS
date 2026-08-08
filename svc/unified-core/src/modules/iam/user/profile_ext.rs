@@ -2,7 +2,7 @@ use crate::AppState;
 use axum::http::StatusCode;
 use axum::Extension;
 use axum::{extract::State, Json};
-use topems_shared::Claims;
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 use super::models::{is_valid_email, record_audit_log, UserResponse, UserRow};
@@ -61,7 +61,7 @@ pub async fn get_my_permissions(
     };
 
     let permission_codes: Vec<String> = if u.is_superuser {
-        topems_shared::auth::get_permissions()
+        topems_shared_auth::auth::get_permissions()
             .iter()
             .map(|p| p.id.clone())
             .collect()
@@ -296,7 +296,7 @@ pub async fn update_current_user(
                         vec!["user".to_string()]
                     };
                     let permissions = if u.is_superuser {
-                        topems_shared::auth::get_permissions()
+                        topems_shared_auth::auth::get_permissions()
                             .iter()
                             .map(|p| p.id.clone())
                             .collect()
@@ -634,7 +634,7 @@ pub async fn update_my_avatar(
                         vec!["user".to_string()]
                     };
                     let permissions = if u.is_superuser {
-                        topems_shared::auth::get_permissions()
+                        topems_shared_auth::auth::get_permissions()
                             .iter()
                             .map(|p| p.id.clone())
                             .collect()

@@ -1,7 +1,8 @@
 use axum::Json;
 use serde::{Deserialize, Serialize};
 
-use topems_shared::{ApiResponse, ServiceHealth};
+use topems_shared_core::health::ServiceHealth;
+use topems_shared_core::response::ApiResponse;
 
 /// 启动时自动注册到统一核心
 pub async fn auto_register_to_core(core_url: Option<&str>) {

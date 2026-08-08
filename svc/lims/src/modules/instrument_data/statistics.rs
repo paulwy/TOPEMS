@@ -1,6 +1,6 @@
 use axum::{extract::State, Json};
 use sqlx::Row;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use super::models::{InstrumentDataStatistics, ProtocolStat};
 

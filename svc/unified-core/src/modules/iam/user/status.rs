@@ -5,7 +5,7 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use topems_shared::Claims;
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 use super::models::record_audit_log;

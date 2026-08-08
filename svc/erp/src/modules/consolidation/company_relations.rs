@@ -6,7 +6,7 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
-use topems_shared::{api_error, ApiResponse};
+use topems_shared_core::response::{api_error, ApiResponse};
 
 use super::common::PaginationParams;
 use super::ApiState;

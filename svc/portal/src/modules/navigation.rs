@@ -2,7 +2,7 @@ use axum::{
     extract::{Json, Path, State},
     Json as AxumJson,
 };
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::{
     models::{NavigationMenu, PinnedApp},
@@ -15,7 +15,7 @@ pub async fn get_navigation_menu(
     let services = state.service_registry.list_all().await;
     let mut menu: Vec<NavigationMenu> = services
         .iter()
-        .filter(|s| s.status == topems_shared::ServiceRegistryStatus::Active)
+        .filter(|s| s.status == topems_shared_event::service_discovery::ServiceRegistryStatus::Active)
         .map(|s| NavigationMenu {
             id: s.code.clone(),
             name: s.name.clone(),
@@ -70,7 +70,7 @@ pub async fn get_pinned_apps(
     let services = state.service_registry.list_all().await;
     let mut apps: Vec<PinnedApp> = services
         .iter()
-        .filter(|s| s.status == topems_shared::ServiceRegistryStatus::Active)
+        .filter(|s| s.status == topems_shared_event::service_discovery::ServiceRegistryStatus::Active)
         .take(5)
         .enumerate()
         .map(|(i, s)| PinnedApp {

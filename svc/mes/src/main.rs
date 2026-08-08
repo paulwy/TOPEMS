@@ -7,7 +7,7 @@ use topems_mes::{modules, AppState};
 use axum::routing::get;
 use utoipa::OpenApi;
 
-use topems_shared::SimpleHealthConfig;
+use topems_shared_core::config::CacheConfig as SimpleHealthConfig;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,

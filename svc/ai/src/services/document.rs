@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::io::{BufReader, Read};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use topems_shared::file_client::FileServiceClient;
+use topems_shared_ai::file_client::FileServiceClient;
 use uuid::Uuid;
 
 const CHUNK_SIZE: usize = 1024;

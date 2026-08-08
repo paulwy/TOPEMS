@@ -13,8 +13,8 @@ use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use crate::models::project_phase::{CreatePhaseRequest, ProjectPhase, UpdatePhaseRequest};
 use crate::services::project_permission::{check_project_permission, ProjectPermission};
 use crate::services::project_progress;
-use topems_shared::auth::Claims;
-use topems_shared::response::ApiResponse;
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
     claims

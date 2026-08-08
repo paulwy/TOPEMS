@@ -4,7 +4,7 @@ use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
-use topems_shared::{Result, TopemsError};
+use topems_shared_core::error::TopemsError;
 
 #[allow(dead_code)]
 pub struct ProjectRepository {

@@ -13,11 +13,11 @@ use sqlx::{
     Row,
 };
 use std::str::FromStr;
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -535,8 +535,8 @@ pub async fn get_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code,
                     sequence: s.sequence,
@@ -634,8 +634,8 @@ pub async fn add_route_step(
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name,
                     process_code,
                     sequence: s.sequence,
@@ -723,8 +723,8 @@ pub async fn update_route_step(
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name,
                     process_code,
                     sequence: s.sequence,
@@ -864,8 +864,8 @@ pub async fn reorder_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code,
                     sequence: s.sequence,

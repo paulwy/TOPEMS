@@ -2,7 +2,7 @@ use serde_json::{json, Value};
 use uuid::Uuid;
 
 use super::FinanceService;
-use topems_shared::error::TopemsError;
+use topems_shared_core::error::TopemsError;
 
 impl FinanceService {
     pub async fn calculate_receivable_aging(&self, tenant_id: Uuid) -> Result<Value, TopemsError> {

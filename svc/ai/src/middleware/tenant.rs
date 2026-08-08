@@ -1,8 +1,8 @@
 use axum::{extract::FromRequestParts, http::request::Parts, Extension};
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]

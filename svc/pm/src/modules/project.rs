@@ -8,8 +8,8 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared::event::{EventPublisher, EventType, PmProjectCreatedPayload};
-use topems_shared::ApiResponse;
+use topems_shared_event::event::{EventPublisher, EventType, PmProjectCreatedPayload};
+use topems_shared_core::response::ApiResponse;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 

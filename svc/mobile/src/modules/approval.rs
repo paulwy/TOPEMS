@@ -11,7 +11,9 @@ use serde_json::json;
 use uuid::Uuid;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
-use topems_shared::{ApiResponse, AuthState, WorkflowServiceClient, WorkflowTask};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_auth::auth::AuthState;
+use topems_shared_service_client::service_client::WorkflowServiceClient;
 
 #[derive(Debug, Deserialize)]
 pub struct ApprovalListParams {

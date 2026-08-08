@@ -1,7 +1,7 @@
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared::event::{
+use topems_shared_event::event::{
     AfterSalesTicketCreatedPayload, EmployeeOnboardedPayload, Event, EventPublisher, EventResult,
     EventSubscriber, EventType, PmProjectCreatedPayload,
 };
@@ -96,7 +96,7 @@ impl PortalEventHandlers {
                     };
                     let published_at = Some(Utc::now());
                     tokio::spawn(async move {
-                        let payload = topems_shared::event::PortalNotificationPublishedPayload {
+                        let payload = topems_shared_event::event::PortalNotificationPublishedPayload {
                             notification_id,
                             title: title_owned,
                             message,

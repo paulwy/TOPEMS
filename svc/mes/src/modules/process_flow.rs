@@ -13,11 +13,11 @@ use sqlx::{
     Row,
 };
 use std::str::FromStr;
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -613,10 +613,10 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     equipment_ids: s
@@ -748,10 +748,10 @@ pub async fn add_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name,
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: s
@@ -876,10 +876,10 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name,
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: s
@@ -1017,10 +1017,10 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     equipment_ids: s

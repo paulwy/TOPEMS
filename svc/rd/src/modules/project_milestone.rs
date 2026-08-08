@@ -14,8 +14,8 @@ use crate::models::project_milestone::{
     CreateMilestoneRequest, ProjectMilestone, UpdateMilestoneRequest,
 };
 use crate::services::project_progress;
-use topems_shared::auth::Claims;
-use topems_shared::response::ApiResponse;
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
     claims

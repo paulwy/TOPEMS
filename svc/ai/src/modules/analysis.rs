@@ -1,6 +1,6 @@
 use axum::{extract::Extension, extract::State, Json};
-use topems_shared::auth::Claims;
-use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::modules::models::*;

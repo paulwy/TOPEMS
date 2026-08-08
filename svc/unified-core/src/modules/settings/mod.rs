@@ -17,7 +17,7 @@ pub mod api_keys;
 pub mod smtp;
 
 use crate::AppState;
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 /// Resolve the caller's tenant UUID, falling back to the nil UUID when the

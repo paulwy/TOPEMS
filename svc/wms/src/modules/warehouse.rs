@@ -6,8 +6,8 @@ use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateWarehouseRequest, UpdateWarehouseRequest, Warehouse};
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
-use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse, PaginationParams};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 
 fn warehouse_cache_key(tenant_id: Uuid, id: Uuid) -> String {
     format!("warehouse:{}:{}", tenant_id, id)

@@ -4,7 +4,7 @@ use axum::{Json, Router};
 
 use crate::middleware::permission::require_permission;
 use crate::AppState;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct SystemConfig {

@@ -6,6 +6,7 @@ authors = ["TOPEMS Team"]
 description = "TOPEMS Supplier Relationship Management System"
 
 [dependencies]
+topems-shared = { path = "../../lib" }
 axum = "0.8"
 tokio = { version = "1", features = ["full"] }
 tower-http = { version = "0.6", features = ["cors", "trace"] }
@@ -19,8 +20,11 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = "0.15"
 anyhow = "1"
 thiserror = "2"
-topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-core = { workspace = true }
+topems-shared-auth = { workspace = true }
+topems-shared-event = { workspace = true }
+topems-shared-service-client = { workspace = true }
 bigdecimal = { version = "0.4", features = ["serde"] }
 axum-prometheus = "0.8"
 prometheus = "0.13"

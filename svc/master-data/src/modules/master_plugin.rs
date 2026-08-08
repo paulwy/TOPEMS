@@ -2,7 +2,7 @@ use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 
 use crate::shared::AppState;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {

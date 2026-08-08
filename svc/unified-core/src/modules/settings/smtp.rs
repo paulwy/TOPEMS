@@ -16,8 +16,8 @@ use lettre::transport::smtp::SmtpTransport;
 use lettre::{Message, Transport};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use topems_shared::auth::Claims;
-use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 const SMTP_CONFIG_KEY: &str = "smtp_config";
 const PASSWORD_MASK: &str = "********";

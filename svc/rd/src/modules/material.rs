@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {

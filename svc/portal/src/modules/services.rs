@@ -1,5 +1,5 @@
 use axum::{extract::State, Json};
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::{
     models::ServiceDto, services::service_registry::ServiceRegistryService, shared::AppState,

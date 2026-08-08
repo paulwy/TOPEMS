@@ -1,1 +1,1 @@
-pub use topems_shared::audit::AuditLog;
+pub use topems_shared_db::audit::AuditLog;

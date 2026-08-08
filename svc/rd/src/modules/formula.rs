@@ -13,8 +13,8 @@ use crate::models::{
     UpdateFormulaRequest,
 };
 use crate::modules::audit::log_audit_event;
-use topems_shared::auth::Claims;
-use topems_shared::response::ApiResponse;
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
     claims

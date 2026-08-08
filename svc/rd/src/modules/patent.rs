@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
 use uuid::Uuid;
 
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {

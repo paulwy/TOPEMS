@@ -1,7 +1,7 @@
 use axum::{extract::Extension, Json};
 use serde::{Deserialize, Serialize};
-use topems_shared::auth::Claims;
-use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct CodeGenerateRequest {

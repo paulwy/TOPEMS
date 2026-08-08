@@ -1,12 +1,12 @@
 // AI 服务权限定义
 use axum::{extract::Request, http::header::AUTHORIZATION, http::StatusCode};
 use sqlx::PgPool;
-use topems_shared::auth::{verify_jwt_token, Claims};
-use topems_shared::permission::{
+use topems_shared_auth::auth::{verify_jwt_token, Claims};
+use topems_shared_auth::permission::{
     check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
     PermissionAction,
 };
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]

@@ -33,7 +33,7 @@ pub fn create_routes(state: AppState) -> Router<AppState> {
 }
 
 pub async fn suggest_fields(
-    ai_client: Arc<topems_shared::UnifiedAIClient>,
+    ai_client: Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
     form_type: &str,
     form_schema: &serde_json::Value,
     current_data: &serde_json::Value,
@@ -48,7 +48,7 @@ pub async fn suggest_fields(
 }
 
 pub async fn enhance_text(
-    ai_client: Arc<topems_shared::UnifiedAIClient>,
+    ai_client: Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
     text: &str,
     enhancement_type: &str,
 ) -> Result<String, String> {
@@ -61,7 +61,7 @@ pub async fn enhance_text(
 }
 
 pub async fn validate_form(
-    ai_client: Arc<topems_shared::UnifiedAIClient>,
+    ai_client: Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
     form_type: &str,
     form_schema: &serde_json::Value,
     current_data: &serde_json::Value,
@@ -75,7 +75,7 @@ pub async fn validate_form(
 }
 
 pub async fn translate_term(
-    ai_client: Arc<topems_shared::UnifiedAIClient>,
+    ai_client: Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
     term: &str,
     form_type: &str,
 ) -> Result<String, String> {
@@ -88,7 +88,7 @@ pub async fn translate_term(
 }
 
 pub async fn assist(
-    ai_client: Arc<topems_shared::UnifiedAIClient>,
+    ai_client: Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
     request: topems_shared::form_assistant::AiFormAssistantRequest,
 ) -> Result<topems_shared::form_assistant::AiFormAssistantResponse, String> {
     let assistant = topems_shared::form_assistant::AiFormAssistantClient::new(ai_client);
@@ -100,7 +100,7 @@ pub async fn assist(
 
 /// 针对特定表单的字段建议（使用 FormConfig 增强）
 pub async fn suggest_fields_for_form(
-    ai_client: Arc<topems_shared::UnifiedAIClient>,
+    ai_client: Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
     form_type: &str,
     form_schema: &serde_json::Value,
     current_data: &serde_json::Value,
@@ -116,7 +116,7 @@ pub async fn suggest_fields_for_form(
 
 /// 针对特定表单的文本增强（使用 FormConfig 与业务域专属提示词）
 pub async fn enhance_text_for_form(
-    ai_client: Arc<topems_shared::UnifiedAIClient>,
+    ai_client: Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
     text: &str,
     enhancement_type: &str,
     form_type: &str,

@@ -1,7 +1,7 @@
 use crate::AppState;
 use axum::Extension;
 use axum::{extract::State, Json};
-use topems_shared::Claims;
+use topems_shared_auth::auth::Claims;
 
 use super::models::{PreferenceRow, UserResponse, UserRow};
 
@@ -267,7 +267,7 @@ pub async fn get_current_user(
             };
 
             let permissions = if u.is_superuser {
-                topems_shared::auth::get_permissions()
+                topems_shared_auth::auth::get_permissions()
                     .iter()
                     .map(|p| p.id.clone())
                     .collect()

@@ -2,7 +2,7 @@
 
 use axum::{extract::State, Json};
 use serde::Deserialize;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::services::multimodal::{
     ImageAnalysisRequest, ImageAnalysisResponse, VideoAnalysisRequest, VideoAnalysisResponse,

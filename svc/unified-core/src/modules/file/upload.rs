@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 use axum::Extension;
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 
 #[derive(Debug, Clone, Serialize)]
 struct FileUploadResponse {

@@ -6,11 +6,13 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
-use topems_shared::service_client::{
+use topems_shared_service_client::service_client::{
     api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
     api::qms_api::QmsApi, TypedServiceClient,
 };
-use topems_shared::{ApiResponse, AuthState, WorkflowServiceClient};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_auth::auth::AuthState;
+use topems_shared_service_client::service_client::WorkflowServiceClient;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
 

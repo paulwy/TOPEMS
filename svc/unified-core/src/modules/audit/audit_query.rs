@@ -19,7 +19,9 @@ use sqlx::Row;
 use uuid::Uuid;
 
 use crate::AppState;
-use topems_shared::{api_error, api_success, ApiResponse};
+use topems_shared_core::response::api_error;
+use topems_shared_core::response::api_success;
+use topems_shared_core::response::ApiResponse;
 
 // ==================== 数据模型 ====================
 

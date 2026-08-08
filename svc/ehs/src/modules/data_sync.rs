@@ -7,7 +7,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
 

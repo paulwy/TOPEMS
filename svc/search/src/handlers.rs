@@ -6,7 +6,9 @@ use axum::{
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
-use topems_shared::{api_error, api_success, ApiResponse};
+use topems_shared_core::response::api_error;
+use topems_shared_core::response::api_success;
+use topems_shared_core::response::ApiResponse;
 
 use crate::models::{SearchRequest, SearchResponse, SearchResult};
 

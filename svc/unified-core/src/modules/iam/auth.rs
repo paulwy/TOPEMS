@@ -7,8 +7,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::modules::audit::record_login_event;
-use topems_shared::auth::Claims;
-use topems_shared::generate_refresh_token;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::auth::generate_refresh_token;
 
 fn send_email_async(
     from: String,

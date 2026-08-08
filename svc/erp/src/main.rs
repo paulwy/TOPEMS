@@ -15,10 +15,11 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
-use topems_shared::service_client::{
+use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
 };
-use topems_shared::{LocalInMemoryCache as InMemoryCache, NotificationServiceClient};
+use topems_shared_core::cache::InMemoryCache;
+use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
@@ -70,7 +71,7 @@ async fn main() -> Result<()> {
     });
 
     // 初始化加密服务
-    let encryption_service = topems_shared::init_encryption_from_env();
+    let encryption_service = topems_shared_auth::security::init_encryption_from_env();
     tracing::info!("🔐 字段加密服务初始化成功");
 
     // 通知服务客户端

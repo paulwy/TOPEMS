@@ -10,7 +10,8 @@ use crate::domain::cqrs::*;
 use crate::domain::event_store::{EventMetadata, EventRecord, EventStore};
 use crate::domain::materialized_view::*;
 use crate::shared::AppState;
-use topems_shared::{ApiResponse, PaginatedResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::response::PaginatedResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct VoucherSummaryQueryParams {

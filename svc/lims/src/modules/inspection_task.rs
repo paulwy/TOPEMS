@@ -5,7 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
 
@@ -338,7 +338,7 @@ pub async fn submit_result(
                 let recorded_by = task.recorded_by.clone().unwrap_or_default();
                 let result_val = task.result.clone().unwrap_or(serde_json::Value::Null);
                 tokio::spawn(async move {
-                    let payload = topems_shared::event::LimsInspectionResultSubmittedPayload {
+                    let payload = topems_shared_event::event::LimsInspectionResultSubmittedPayload {
                         task_id: tid,
                         task_no: tno,
                         sample_id: sid,
@@ -349,7 +349,7 @@ pub async fn submit_result(
                     };
                     if let Err(e) = publisher
                         .publish_event(
-                            topems_shared::event::EventType::LimsInspectionResultSubmitted,
+                            topems_shared_event::event::EventType::LimsInspectionResultSubmitted,
                             payload,
                         )
                         .await

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::AuthState;
+use topems_shared_auth::auth::AuthState;
 
 use crate::mes_erp_sync::MesErpSyncService;
 
@@ -146,7 +146,7 @@ impl FromRef<AppState> for PgPool {
     }
 }
 
-pub fn get_tenant_id(claims: &topems_shared::auth::Claims) -> Uuid {
+pub fn get_tenant_id(claims: &topems_shared_auth::auth::Claims) -> Uuid {
     claims
         .tenant_id
         .as_ref()

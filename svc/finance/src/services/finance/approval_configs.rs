@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use super::super::super::models::*;
-use topems_shared::error::TopemsError;
+use topems_shared_core::error::TopemsError;
 
 use super::FinanceService;
 

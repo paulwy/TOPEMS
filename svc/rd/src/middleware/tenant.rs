@@ -6,7 +6,7 @@ use axum::Extension;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone)]
 pub struct TenantContext {
@@ -64,7 +64,7 @@ impl TenantContext {
     }
 }
 
-pub fn get_tenant_id_from_claims(claims: &topems_shared::auth::Claims) -> Uuid {
+pub fn get_tenant_id_from_claims(claims: &topems_shared_auth::auth::Claims) -> Uuid {
     claims
         .tenant_id
         .as_ref()
@@ -73,7 +73,7 @@ pub fn get_tenant_id_from_claims(claims: &topems_shared::auth::Claims) -> Uuid {
 }
 
 pub fn get_tenant_id_from_claims_and_headers(
-    claims: &topems_shared::auth::Claims,
+    claims: &topems_shared_auth::auth::Claims,
     headers: &axum::http::HeaderMap,
 ) -> Uuid {
     claims

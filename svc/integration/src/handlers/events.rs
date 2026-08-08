@@ -3,7 +3,7 @@ use axum::Json;
 use sqlx::Row;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::models::{AppState, CreateIntegrationEventRequest, IntegrationEvent, SyncStats};
 

@@ -18,7 +18,7 @@
 //! - `PaymentMade` → 自动核销应付账款（V20.1 新增）
 
 use sqlx::{PgPool, Row};
-use topems_shared::event::{
+use topems_shared_event::event::{
     EmployeeOnboardedPayload, Event, EventResult, EventSubscriber, EventType,
     InventoryUpdatedPayload, MasterDataAction, MasterDataDomain, MasterDataEvent,
     OpportunityWonPayload, PaymentMadePayload, PaymentReceivedPayload, PmProjectCompletedPayload,

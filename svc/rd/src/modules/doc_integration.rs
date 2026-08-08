@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DocumentRelation {

@@ -1,6 +1,6 @@
 use crate::AppState;
 use axum::{extract::State, Json};
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use super::models::{MonthlyData, StatisticsResponse, WorkflowStat};
 

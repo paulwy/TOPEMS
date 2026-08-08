@@ -1,7 +1,7 @@
 use chrono::{Datelike, Utc};
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared::event::{
+use topems_shared_event::event::{
     Event, EventPublisher, EventResult, EventSubscriber, EventType, PaymentMadePayload,
     PaymentReceivedPayload, PurchaseOrderApprovedPayload, SalesOrderApprovedPayload,
     SalesOrderCreatedPayload,

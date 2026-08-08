@@ -10,6 +10,7 @@ name = "topems_finance"
 path = "src/lib.rs"
 
 [dependencies]
+topems-shared = { path = "../../lib" }
 axum.workspace = true
 tokio.workspace = true
 serde.workspace = true
@@ -23,8 +24,12 @@ tracing-subscriber.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
-topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-db = { workspace = true }
+topems-shared-service-client = { workspace = true }
+topems-shared-event = { workspace = true }
+topems-shared-auth = { workspace = true }
+topems-shared-core = { workspace = true }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true

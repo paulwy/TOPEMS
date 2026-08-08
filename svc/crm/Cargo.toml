@@ -6,6 +6,7 @@ authors.workspace = true
 description = "TOPEMS-CRM 客户关系管理系统"
 
 [dependencies]
+topems-shared = { path = "../../lib" }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -19,8 +20,12 @@ tracing-subscriber.workspace = true
 dotenv.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
-topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-core = { workspace = true }
+topems-shared-auth = { workspace = true }
+topems-shared-event = { workspace = true }
+topems-shared-service-client = { workspace = true }
+topems-shared-db = { workspace = true }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
@@ -29,6 +34,8 @@ rand = "0.8"
 reqwest.workspace = true
 
 [dev-dependencies]
+tower = { workspace = true }
+axum = { workspace = true }
 tokio = { version = "1", features = ["full", "test-util"] }
 tokio-test.workspace = true
 reqwest = { version = "0.12", features = ["json"] }

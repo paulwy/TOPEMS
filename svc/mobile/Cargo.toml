@@ -6,6 +6,12 @@ authors.workspace = true
 description = "TOPEMS MOBILE - 统一移动工作台"
 
 [dependencies]
+topems-shared = { path = "../../lib" }
+topems-shared-service-client = { path = "../../lib/shared-service-client" }
+topems-shared-db = { path = "../../lib/shared-db" }
+topems-shared-core = { path = "../../lib/shared-core" }
+topems-shared-event = { path = "../../lib/shared-event" }
+topems-shared-auth = { path = "../../lib/shared-auth" }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -24,7 +30,6 @@ bcrypt.workspace = true
 jsonwebtoken.workspace = true
 bytes.workspace = true
 bigdecimal.workspace = true
-topems-shared = { path = "../../lib" }
 
 # OpenAPI 文档
 utoipa.workspace = true

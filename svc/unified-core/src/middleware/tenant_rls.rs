@@ -6,7 +6,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use sqlx::PgPool;
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 
 use crate::AppState;
 

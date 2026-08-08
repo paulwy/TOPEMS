@@ -6,10 +6,14 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared::{
-    AuditLoggerMiddleware, AuthState, BodyLimitMiddleware, CompressionMiddleware,
-    FieldEncryptionService, SecurityHeadersLayer, SimpleHealthConfig, SystemMetrics,
-};
+use topems_shared_auth::security::audit_logger::AuditLoggerMiddleware;
+use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::security::body_limit::BodyLimitMiddleware;
+use topems_shared_core::compression::CompressionMiddleware;
+use topems_shared_auth::security::encryption::FieldEncryptionService;
+use topems_shared_auth::security::security_headers::SecurityHeadersLayer;
+use topems_shared_core::health::SimpleHealthConfig;
+use topems_shared_core::health::SystemMetrics;
 
 use crate::middleware::input_validation::InputValidationConfig;
 use crate::middleware::rate_limit::RateLimitMiddleware;

@@ -1,6 +1,6 @@
 use chrono::Utc;
 use sqlx::PgPool;
-use topems_shared::event::{
+use topems_shared_event::event::{
     EhsHazardReportedPayload, Event, EventResult, EventSubscriber, EventType,
     ScmShipmentReceivedPayload, StockInboundPayload, StockOutboundPayload,
 };

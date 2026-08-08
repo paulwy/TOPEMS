@@ -22,10 +22,9 @@ use prometheus::{default_registry, Gauge};
 use std::sync::Arc;
 use utoipa::OpenApi;
 
-use topems_shared::{
-    auth::Claims, create_api_info_router, create_cors_layer, telemetry_middleware, ApiResponse,
-    AuthState,
-};
+use topems_shared_core::cors::create_cors_layer;
+use topems_shared_core::response::ApiResponse;
+use topems_shared_auth::auth::AuthState;
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 
 mod db;
@@ -471,10 +470,11 @@ async fn main() -> Result<()> {
         )
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
-            topems_shared::auth_middleware,
+            topems_shared_auth::auth::auth_middleware,
         ));
 
-    use topems_shared::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
+    use topems_shared_auth::security::RateLimitConfig;
+use topems_shared_auth::security::RateLimitMiddleware;
     let rate_limit_config = RateLimitConfig::new(200, 60)
         .with_by_user_id(false)
         .with_by_ip(true);
@@ -487,7 +487,7 @@ async fn main() -> Result<()> {
         }
     }));
 
-    use topems_shared::api_version::register_routes_with_legacy_alias;
+    use topems_shared_core::api_version::register_routes_with_legacy_alias;
 
     let gis_routes = public_business_routes.merge(protected_api);
 
@@ -520,7 +520,8 @@ async fn main() -> Result<()> {
 }
 
 use crate::models::DeviceLocation;
-use topems_shared::{HealthStatus, ServiceHealth};
+use topems_shared_core::health::HealthStatus;
+use topems_shared_core::health::ServiceHealth;
 use topems_shared_bootstrap::{check_database_health, check_iam_health};
 
 async fn health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {

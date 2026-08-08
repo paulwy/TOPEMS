@@ -8,7 +8,7 @@ use axum::{
 use bigdecimal::{BigDecimal, ToPrimitive};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Serialize)]
 pub struct QualityOverview {

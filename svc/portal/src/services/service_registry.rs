@@ -1,6 +1,7 @@
 use crate::models::ServiceDto;
 use std::sync::Arc;
-use topems_shared::{PortalServiceAggregator, ServiceRegistryStatus};
+use topems_shared_event::service_discovery::PortalServiceAggregator;
+use topems_shared_event::service_discovery::ServiceRegistryStatus;
 
 pub struct ServiceRegistryService {
     aggregator: Arc<PortalServiceAggregator>,

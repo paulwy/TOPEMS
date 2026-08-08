@@ -3014,7 +3014,7 @@ impl MutationRoot {
         if let Some(publisher) = &state.event_publisher {
             let _ = publisher
                 .publish_event(
-                    topems_shared::event::EventType::HealthCheck,
+                    topems_shared_event::event::EventType::HealthCheck,
                     serde_json::to_value(&event).unwrap_or_default(),
                 )
                 .await;
@@ -3051,7 +3051,7 @@ impl MutationRoot {
         if let Some(publisher) = &state.event_publisher {
             let _ = publisher
                 .publish_event(
-                    topems_shared::event::EventType::PortalNotificationPublished,
+                    topems_shared_event::event::EventType::PortalNotificationPublished,
                     serde_json::to_value(&event).unwrap_or_default(),
                 )
                 .await;
@@ -3089,7 +3089,7 @@ impl MutationRoot {
         if let Some(publisher) = &state.event_publisher {
             let _ = publisher
                 .publish_event(
-                    topems_shared::event::EventType::WorkflowStarted,
+                    topems_shared_event::event::EventType::WorkflowStarted,
                     serde_json::to_value(&event).unwrap_or_default(),
                 )
                 .await;
@@ -3125,7 +3125,7 @@ impl MutationRoot {
         if let Some(publisher) = &state.event_publisher {
             let _ = publisher
                 .publish_event(
-                    topems_shared::event::EventType::SalesOrderApproved,
+                    topems_shared_event::event::EventType::SalesOrderApproved,
                     serde_json::to_value(&event).unwrap_or_default(),
                 )
                 .await;
@@ -5258,7 +5258,7 @@ pub struct ProductionApqExtension;
 /// 通过发布一个 HealthCheck 事件来验证 Redis 连接是否可用。
 /// 如果 Redis 不可用或连接失败，返回 false，调用方应降级为内存广播模式。
 pub async fn try_redis_pubsub() -> bool {
-    let publisher = match topems_shared::event::EventPublisher::new("portal-bff-health-check") {
+    let publisher = match topems_shared_event::event::EventPublisher::new("portal-bff-health-check") {
         Ok(p) => p,
         Err(e) => {
             tracing::debug!("[event-bus] Redis EventPublisher 创建失败: {}", e);
@@ -5268,7 +5268,7 @@ pub async fn try_redis_pubsub() -> bool {
 
     match publisher
         .publish_event(
-            topems_shared::event::EventType::HealthCheck,
+            topems_shared_event::event::EventType::HealthCheck,
             serde_json::json!({"source": "portal-bff", "check": "connectivity"}),
         )
         .await
@@ -5292,7 +5292,7 @@ pub async fn try_redis_pubsub() -> bool {
 /// 订阅 Redis 事件频道，将跨实例事件转发到本地 EventBus。
 /// 如果 Redis EventSubscriber 创建失败，返回 false，调用方应启动演示模拟器。
 pub fn try_start_redis_listener(event_bus: Arc<EventBus>) -> bool {
-    let subscriber = match topems_shared::event::EventSubscriber::new("portal-bff") {
+    let subscriber = match topems_shared_event::event::EventSubscriber::new("portal-bff") {
         Ok(s) => s,
         Err(e) => {
             tracing::warn!("[event-bus] 无法创建 EventSubscriber: {}", e);
@@ -5303,7 +5303,7 @@ pub fn try_start_redis_listener(event_bus: Arc<EventBus>) -> bool {
     // 订阅通知事件 → NotificationReceived 频道
     let eb_notif = event_bus.clone();
     let subscriber = subscriber.subscribe(
-        vec![topems_shared::event::EventType::PortalNotificationPublished],
+        vec![topems_shared_event::event::EventType::PortalNotificationPublished],
         move |event| {
             let eb = eb_notif.clone();
             async move {
@@ -5316,8 +5316,8 @@ pub fn try_start_redis_listener(event_bus: Arc<EventBus>) -> bool {
     let eb_wf = event_bus.clone();
     let subscriber = subscriber.subscribe(
         vec![
-            topems_shared::event::EventType::WorkflowStarted,
-            topems_shared::event::EventType::WorkflowApproved,
+            topems_shared_event::event::EventType::WorkflowStarted,
+            topems_shared_event::event::EventType::WorkflowApproved,
         ],
         move |event| {
             let eb = eb_wf.clone();
@@ -5331,10 +5331,10 @@ pub fn try_start_redis_listener(event_bus: Arc<EventBus>) -> bool {
     let eb_order = event_bus.clone();
     let subscriber = subscriber.subscribe(
         vec![
-            topems_shared::event::EventType::SalesOrderCreated,
-            topems_shared::event::EventType::SalesOrderApproved,
-            topems_shared::event::EventType::PurchaseOrderCreated,
-            topems_shared::event::EventType::PurchaseOrderApproved,
+            topems_shared_event::event::EventType::SalesOrderCreated,
+            topems_shared_event::event::EventType::SalesOrderApproved,
+            topems_shared_event::event::EventType::PurchaseOrderCreated,
+            topems_shared_event::event::EventType::PurchaseOrderApproved,
         ],
         move |event| {
             let eb = eb_order.clone();
@@ -5348,12 +5348,12 @@ pub fn try_start_redis_listener(event_bus: Arc<EventBus>) -> bool {
     let eb_md = event_bus.clone();
     let subscriber = subscriber.subscribe_master_data(
         vec![
-            topems_shared::event::MasterDataDomain::Customer,
-            topems_shared::event::MasterDataDomain::Supplier,
-            topems_shared::event::MasterDataDomain::Material,
-            topems_shared::event::MasterDataDomain::Organization,
-            topems_shared::event::MasterDataDomain::Employee,
-            topems_shared::event::MasterDataDomain::AccountSubject,
+            topems_shared_event::event::MasterDataDomain::Customer,
+            topems_shared_event::event::MasterDataDomain::Supplier,
+            topems_shared_event::event::MasterDataDomain::Material,
+            topems_shared_event::event::MasterDataDomain::Organization,
+            topems_shared_event::event::MasterDataDomain::Employee,
+            topems_shared_event::event::MasterDataDomain::AccountSubject,
         ],
         move |mdm_event| {
             let eb = eb_md.clone();

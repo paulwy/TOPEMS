@@ -6,6 +6,10 @@ authors.workspace = true
 description = "TOPEMS-RD 科研研发管理系统"
 
 [dependencies]
+topems-shared = { path = "../../lib" }
+topems-shared-event = { path = "../../lib/shared-event" }
+topems-shared-core = { path = "../../lib/shared-core" }
+topems-shared-auth = { path = "../../lib/shared-auth" }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -21,7 +25,6 @@ thiserror.workspace = true
 anyhow.workspace = true
 bcrypt.workspace = true
 reqwest.workspace = true
-topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 utoipa.workspace = true
 csv.workspace = true
@@ -33,6 +36,8 @@ axum-prometheus.workspace = true
 jsonwebtoken.workspace = true
 
 [dev-dependencies]
+tower = { workspace = true }
+axum = { workspace = true }
 tokio-test.workspace = true
 
 [[bin]]

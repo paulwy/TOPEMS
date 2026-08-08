@@ -6,7 +6,8 @@ use axum::{
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::{api_error, ApiResponse, Claims};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Clone)]
 pub struct TenantContext {

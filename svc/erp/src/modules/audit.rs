@@ -6,7 +6,7 @@ use axum::{
 };
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use super::ApiState;

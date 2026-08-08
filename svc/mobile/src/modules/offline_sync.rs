@@ -12,7 +12,8 @@ use super::auth_utils::extract_user_id_from_token;
 use crate::db::repository::*;
 use crate::models::{CreateOfflineOperation, OfflineOperation, SyncPolicy, UpdateSyncPolicy};
 use sqlx::Row;
-use topems_shared::{ApiResponse, AuthState};
+use topems_shared_auth::auth::AuthState;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncRequest {

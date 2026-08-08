@@ -1,7 +1,7 @@
 use axum::{extract::State, routing::get, Json, Router};
 use serde::Serialize;
 use sqlx::Row;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
 

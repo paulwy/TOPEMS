@@ -2,7 +2,7 @@ use axum::{extract::FromRequestParts, http::request::Parts, Extension};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone)]
 pub struct TenantContext {

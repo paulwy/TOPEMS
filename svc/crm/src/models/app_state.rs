@@ -1,6 +1,6 @@
 use axum::extract::FromRef;
 use sqlx::postgres::PgPool;
-use topems_shared::AuthState;
+use topems_shared_auth::auth::AuthState;
 
 #[derive(Clone)]
 pub struct AppState {

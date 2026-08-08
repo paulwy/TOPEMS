@@ -7,7 +7,9 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared::{api_error, api_success, ApiResponse};
+use topems_shared_core::response::api_error;
+use topems_shared_core::response::api_success;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Guide {

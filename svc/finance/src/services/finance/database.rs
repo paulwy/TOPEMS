@@ -1,6 +1,6 @@
 use sqlx::postgres::PgPool;
 
-use topems_shared::error::TopemsError;
+use topems_shared_core::error::TopemsError;
 
 pub async fn init_database(pool: &PgPool) -> Result<(), TopemsError> {
     let create_types = r#"

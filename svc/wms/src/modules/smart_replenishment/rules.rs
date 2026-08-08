@@ -10,8 +10,8 @@ use uuid::Uuid;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse, PaginationParams};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 
 use super::models::{CreateReplenishmentRuleRequest, UpdateReplenishmentRuleRequest};
 

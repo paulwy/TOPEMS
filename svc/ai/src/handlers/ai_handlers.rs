@@ -12,7 +12,7 @@ use crate::models::{
 use crate::services::search::vector_search;
 use axum::Json;
 use reqwest::Client;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AIGenerateResponse>> {
     let config = match CONFIG.get() {

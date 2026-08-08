@@ -2,7 +2,8 @@
 
 use axum::extract::FromRef;
 use sqlx::PgPool;
-use topems_shared::{AuthState, SimpleHealthConfig};
+use topems_shared_auth::auth::AuthState;
+use topems_shared_core::health::SimpleHealthConfig;
 
 #[derive(Clone)]
 pub struct AppState {

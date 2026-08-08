@@ -9,8 +9,10 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::material::{CreateMaterialRequest, Material, UpdateMaterialRequest};
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::api_error;
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::response::PaginatedResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {

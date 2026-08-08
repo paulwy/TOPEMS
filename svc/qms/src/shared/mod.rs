@@ -7,9 +7,10 @@ use axum::extract::FromRef;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared::event::EventPublisher;
-use topems_shared::service_client::WorkflowServiceClient;
-use topems_shared::{AuthState, SimpleHealthConfig};
+use topems_shared_event::event::EventPublisher;
+use topems_shared_service_client::service_client::WorkflowServiceClient;
+use topems_shared_auth::auth::AuthState;
+use topems_shared_core::health::SimpleHealthConfig;
 
 #[derive(Clone)]
 pub struct AppState {

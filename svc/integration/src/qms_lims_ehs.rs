@@ -3,7 +3,7 @@ use sqlx::types::Uuid;
 use sqlx::PgPool;
 use tracing::{info, warn};
 
-use topems_shared::event::{
+use topems_shared_event::event::{
     EhsAccidentReportedPayload, EhsHazardReportedPayload, EventType,
     LimsInspectionAbnormalDetectedPayload, LimsReagentAlertPayload, LimsRecordCompletedPayload,
     QmsInspectionCompletedPayload, QmsQualityIssueCreatedPayload,

@@ -5,9 +5,8 @@ use std::time::Instant;
 
 use axum::{extract::State, routing::get, Json, Router};
 
-use topems_shared::{
-    simple_health_check, ApiResponse, ServiceHealth, SimpleHealthConfig, SystemMetrics,
-};
+use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig, SystemMetrics};
+use topems_shared_core::response::ApiResponse;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
