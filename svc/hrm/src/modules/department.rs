@@ -9,9 +9,9 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
-use topems_shared::auth::Claims;
-use topems_shared::event::MasterDataAction;
-use topems_shared::{api_error, ApiResponse};
+use topems_shared_auth::auth::Claims;
+use topems_shared_event::event::MasterDataAction;
+use topems_shared_core::response::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()

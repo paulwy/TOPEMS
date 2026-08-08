@@ -11,7 +11,7 @@
 use tracing::info;
 use uuid::Uuid;
 
-use topems_shared::saga::{SagaInstance, SagaOrchestrator, SagaResult, SagaStepDefinition};
+use topems_shared_event::saga::{SagaInstance, SagaOrchestrator, SagaResult, SagaStepDefinition};
 
 /// 员工入职 Saga
 #[allow(dead_code)]

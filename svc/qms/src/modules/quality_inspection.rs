@@ -8,7 +8,8 @@ use axum::{
 use bigdecimal::BigDecimal;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -79,7 +80,7 @@ pub struct SubmitInspectionResultRequest {
     pub results: Option<Vec<InspectionResultItem>>,
 }
 
-#[derive(Debug, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct InspectionResultItem {
     pub item_name: String,
     pub standard_value: Option<String>,
@@ -717,4 +718,124 @@ pub fn create_routes() -> Router<crate::AppState> {
         .route("/checks/{id}/rework", post(rework_inspection))
         .route("/checks/{id}/results", get(get_inspection_results))
         .route("/checks/{id}/audits", get(get_inspection_audits))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_status_transition_valid_paths() {
+        assert!(validate_status_transition(STATUS_PENDING, STATUS_IN_PROGRESS));
+        assert!(validate_status_transition(STATUS_IN_PROGRESS, STATUS_PENDING_AUDIT));
+        assert!(validate_status_transition(STATUS_PENDING_AUDIT, STATUS_COMPLETED));
+        assert!(validate_status_transition(STATUS_PENDING_AUDIT, STATUS_REJECTED));
+        assert!(validate_status_transition(STATUS_REJECTED, STATUS_IN_PROGRESS));
+    }
+
+    #[test]
+    fn test_validate_status_transition_invalid_paths() {
+        assert!(!validate_status_transition(STATUS_PENDING, STATUS_PENDING_AUDIT));
+        assert!(!validate_status_transition(STATUS_PENDING, STATUS_COMPLETED));
+        assert!(!validate_status_transition(STATUS_PENDING, STATUS_REJECTED));
+        assert!(!validate_status_transition(STATUS_PENDING, STATUS_PENDING));
+
+        assert!(!validate_status_transition(STATUS_IN_PROGRESS, STATUS_PENDING));
+        assert!(!validate_status_transition(STATUS_IN_PROGRESS, STATUS_COMPLETED));
+        assert!(!validate_status_transition(STATUS_IN_PROGRESS, STATUS_REJECTED));
+        assert!(!validate_status_transition(STATUS_IN_PROGRESS, STATUS_IN_PROGRESS));
+
+        assert!(!validate_status_transition(STATUS_PENDING_AUDIT, STATUS_PENDING));
+        assert!(!validate_status_transition(STATUS_PENDING_AUDIT, STATUS_IN_PROGRESS));
+        assert!(!validate_status_transition(STATUS_PENDING_AUDIT, STATUS_PENDING_AUDIT));
+
+        assert!(!validate_status_transition(STATUS_COMPLETED, STATUS_PENDING));
+        assert!(!validate_status_transition(STATUS_COMPLETED, STATUS_IN_PROGRESS));
+        assert!(!validate_status_transition(STATUS_COMPLETED, STATUS_PENDING_AUDIT));
+        assert!(!validate_status_transition(STATUS_COMPLETED, STATUS_COMPLETED));
+
+        assert!(!validate_status_transition(STATUS_REJECTED, STATUS_PENDING));
+        assert!(!validate_status_transition(STATUS_REJECTED, STATUS_PENDING_AUDIT));
+        assert!(!validate_status_transition(STATUS_REJECTED, STATUS_COMPLETED));
+        assert!(!validate_status_transition(STATUS_REJECTED, STATUS_REJECTED));
+    }
+
+    #[test]
+    fn test_get_action_name_valid_transitions() {
+        assert_eq!(
+            get_action_name(STATUS_PENDING, STATUS_IN_PROGRESS),
+            "assign".to_string()
+        );
+        assert_eq!(
+            get_action_name(STATUS_IN_PROGRESS, STATUS_PENDING_AUDIT),
+            "submit".to_string()
+        );
+        assert_eq!(
+            get_action_name(STATUS_PENDING_AUDIT, STATUS_COMPLETED),
+            "approve".to_string()
+        );
+        assert_eq!(
+            get_action_name(STATUS_PENDING_AUDIT, STATUS_REJECTED),
+            "reject".to_string()
+        );
+        assert_eq!(
+            get_action_name(STATUS_REJECTED, STATUS_IN_PROGRESS),
+            "rework".to_string()
+        );
+    }
+
+    #[test]
+    fn test_get_action_name_invalid_returns_unknown() {
+        assert_eq!(
+            get_action_name(STATUS_PENDING, STATUS_COMPLETED),
+            "unknown".to_string()
+        );
+        assert_eq!(
+            get_action_name(STATUS_COMPLETED, STATUS_PENDING),
+            "unknown".to_string()
+        );
+        assert_eq!(
+            get_action_name("invalid_status", STATUS_IN_PROGRESS),
+            "unknown".to_string()
+        );
+        assert_eq!(
+            get_action_name(STATUS_PENDING, "invalid_target"),
+            "unknown".to_string()
+        );
+    }
+
+    #[test]
+    fn test_inspection_result_item_struct() {
+        let item = InspectionResultItem {
+            item_name: "外观检查".to_string(),
+            standard_value: Some("无划痕".to_string()),
+            measured_value: Some("表面有轻微划痕".to_string()),
+            is_qualified: false,
+            remark: Some("需要返工".to_string()),
+        };
+
+        assert_eq!(item.item_name, "外观检查");
+        assert_eq!(item.is_qualified, false);
+        assert!(item.remark.is_some());
+
+        let cloned = item.clone();
+        assert_eq!(cloned.item_name, item.item_name);
+        assert_eq!(cloned.is_qualified, item.is_qualified);
+    }
+
+    #[test]
+    fn test_inspection_result_item_all_none_optionals() {
+        let item = InspectionResultItem {
+            item_name: "尺寸检查".to_string(),
+            standard_value: None,
+            measured_value: None,
+            is_qualified: true,
+            remark: None,
+        };
+
+        assert!(item.standard_value.is_none());
+        assert!(item.measured_value.is_none());
+        assert!(item.remark.is_none());
+        assert!(item.is_qualified);
+    }
 }

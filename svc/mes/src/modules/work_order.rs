@@ -13,12 +13,12 @@ use sqlx::{
     Row,
 };
 use std::str::FromStr;
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 use utoipa::ToSchema;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -1091,5 +1091,138 @@ pub async fn resume_work_order(
             tracing::error!("Failed to resume work order: {}", e);
             Json(ApiResponse::error(500, "恢复工单失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Datelike, NaiveDateTime, Timelike};
+    use std::str::FromStr;
+
+    #[test]
+    fn test_parse_datetime_rfc3339() {
+        let s = "2024-01-15T10:30:00Z";
+        let result = parse_datetime(s);
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.date().year(), 2024);
+        assert_eq!(dt.date().month(), 1);
+        assert_eq!(dt.date().day(), 15);
+    }
+
+    #[test]
+    fn test_parse_datetime_alternative_format() {
+        let s = "2024-01-15 10:30:00";
+        let result = parse_datetime(s);
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.date().year(), 2024);
+        assert_eq!(dt.time().hour(), 10);
+    }
+
+    #[test]
+    fn test_parse_datetime_invalid_returns_none() {
+        assert!(parse_datetime("not-a-date").is_none());
+        assert!(parse_datetime("").is_none());
+        assert!(parse_datetime("2024/13/01").is_none());
+    }
+
+    #[test]
+    fn test_parse_opt_uuid_valid() {
+        let valid_id = Uuid::new_v4();
+        let s = Some(valid_id.to_string());
+        let result = parse_opt_uuid(&s);
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), valid_id);
+    }
+
+    #[test]
+    fn test_parse_opt_uuid_invalid() {
+        let s = Some("not-a-uuid".to_string());
+        assert!(parse_opt_uuid(&s).is_none());
+
+        let none: Option<String> = None;
+        assert!(parse_opt_uuid(&none).is_none());
+    }
+
+    #[test]
+    fn test_parse_opt_datetime_some() {
+        let s = Some("2024-06-20T14:00:00Z".to_string());
+        let result = parse_opt_datetime(&s);
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn test_parse_opt_datetime_none() {
+        let none: Option<String> = None;
+        assert!(parse_opt_datetime(&none).is_none());
+    }
+
+    #[test]
+    fn test_big_decimal_to_f64_some() {
+        let bd = Some(BigDecimal::from_str("123.45").unwrap());
+        let result = big_decimal_to_f64(bd);
+        assert!((result - 123.45).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_big_decimal_to_f64_none() {
+        let result = big_decimal_to_f64(None);
+        assert_eq!(result, 0.0);
+    }
+
+    #[test]
+    fn test_big_decimal_to_f64_integer() {
+        let bd = Some(BigDecimal::from(100));
+        let result = big_decimal_to_f64(bd);
+        assert_eq!(result, 100.0);
+    }
+
+    #[test]
+    fn test_parse_opt_big_decimal_some() {
+        let v = Some(123.45);
+        let result = parse_opt_big_decimal(&v);
+        assert!(result.is_some());
+        let f = result.unwrap().to_string().parse::<f64>().unwrap();
+        assert!((f - 123.45).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_parse_opt_big_decimal_none() {
+        let v: Option<f64> = None;
+        assert!(parse_opt_big_decimal(&v).is_none());
+    }
+
+    #[test]
+    fn test_naive_to_utc_some() {
+        let naive = NaiveDateTime::parse_from_str("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S").ok();
+        let result = naive_to_utc(naive);
+        assert_eq!(result.naive_utc().date().year(), 2024);
+    }
+
+    #[test]
+    fn test_naive_to_utc_none() {
+        let result = naive_to_utc(None);
+        assert!(result <= Utc::now());
+    }
+
+    #[test]
+    fn test_datetime_to_string_returns_nonempty() {
+        let naive = NaiveDateTime::parse_from_str("2024-01-01 12:00:00", "%Y-%m-%d %H:%M:%S").ok();
+        let s = datetime_to_string(naive);
+        assert!(!s.is_empty());
+        assert!(s.contains("2024"));
+    }
+
+    #[test]
+    fn test_opt_datetime_to_string_some_and_none() {
+        let naive = NaiveDateTime::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S").ok();
+        let some_result = opt_datetime_to_string(naive);
+        assert!(some_result.is_some());
+        assert!(some_result.unwrap().contains("2024"));
+
+        let none_result = opt_datetime_to_string(None);
+        assert!(none_result.is_none());
     }
 }

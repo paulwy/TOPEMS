@@ -14,7 +14,7 @@ use crate::models::{
     CreateRenewalRequest, UpdateContractRequest,
 };
 use crate::modules::audit::log_audit_event;
-use topems_shared::{api_error, ApiResponse};
+use topems_shared_core::response::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()

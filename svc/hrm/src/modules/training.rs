@@ -13,7 +13,7 @@ use crate::models::{
     TrainingCourse, TrainingPaginationParams, TrainingPlan, TrainingRecord,
     UpdateTrainingCourseRequest, UpdateTrainingPlanRequest, UpdateTrainingRecordRequest,
 };
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()

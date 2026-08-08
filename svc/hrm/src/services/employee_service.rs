@@ -3,7 +3,8 @@ use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
-use topems_shared::{api_error, ApiResponse, FieldEncryptionService, ListResponse};
+use topems_shared_core::response::{api_error, ApiResponse, ListResponse};
+use topems_shared_auth::security::encryption::FieldEncryptionService;
 
 pub struct EmployeeService {
     db: PgPool,

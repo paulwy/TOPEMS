@@ -1231,3 +1231,264 @@ pub struct DiffStatusCount {
     pub status: String,
     pub count: i32,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_account_type_variants() {
+        let variants = [
+            AccountType::Asset,
+            AccountType::Liability,
+            AccountType::Equity,
+            AccountType::Income,
+            AccountType::Expense,
+            AccountType::Cost,
+        ];
+        for v in &variants {
+            let s = v.to_string();
+            assert!(!s.is_empty());
+        }
+        assert_eq!(AccountType::Asset.to_string(), "asset");
+        assert_eq!(AccountType::Liability.to_string(), "liability");
+        assert_eq!(AccountType::Equity.to_string(), "equity");
+        assert_eq!(AccountType::Income.to_string(), "income");
+        assert_eq!(AccountType::Expense.to_string(), "expense");
+        assert_eq!(AccountType::Cost.to_string(), "cost");
+    }
+
+    #[test]
+    fn test_account_type_serde_roundtrip() {
+        use serde_json;
+        let variants = [
+            AccountType::Asset,
+            AccountType::Liability,
+            AccountType::Equity,
+            AccountType::Income,
+            AccountType::Expense,
+            AccountType::Cost,
+        ];
+        for v in &variants {
+            let json = serde_json::to_string(v).unwrap();
+            let deserialized: AccountType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, &deserialized);
+        }
+    }
+
+    #[test]
+    fn test_account_type_clone_and_eq() {
+        let a = AccountType::Asset;
+        let b = a.clone();
+        assert_eq!(a, b);
+        assert_ne!(AccountType::Asset, AccountType::Liability);
+    }
+
+    #[test]
+    fn test_voucher_status_variants() {
+        let variants = [
+            VoucherStatus::Draft,
+            VoucherStatus::Submitted,
+            VoucherStatus::Approved,
+            VoucherStatus::Posted,
+            VoucherStatus::Reversed,
+            VoucherStatus::Rejected,
+            VoucherStatus::Cancelled,
+        ];
+        for v in &variants {
+            let s = v.to_string();
+            assert!(!s.is_empty());
+        }
+        assert_eq!(VoucherStatus::Draft.to_string(), "draft");
+        assert_eq!(VoucherStatus::Submitted.to_string(), "submitted");
+        assert_eq!(VoucherStatus::Approved.to_string(), "approved");
+        assert_eq!(VoucherStatus::Posted.to_string(), "posted");
+        assert_eq!(VoucherStatus::Reversed.to_string(), "reversed");
+        assert_eq!(VoucherStatus::Rejected.to_string(), "rejected");
+        assert_eq!(VoucherStatus::Cancelled.to_string(), "cancelled");
+    }
+
+    #[test]
+    fn test_voucher_status_serde_roundtrip() {
+        use serde_json;
+        let variants = [
+            VoucherStatus::Draft,
+            VoucherStatus::Submitted,
+            VoucherStatus::Approved,
+            VoucherStatus::Posted,
+            VoucherStatus::Reversed,
+            VoucherStatus::Rejected,
+            VoucherStatus::Cancelled,
+        ];
+        for v in &variants {
+            let json = serde_json::to_string(v).unwrap();
+            let deserialized: VoucherStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, &deserialized);
+        }
+    }
+
+    #[test]
+    fn test_voucher_status_clone_and_eq() {
+        let a = VoucherStatus::Draft;
+        let b = a.clone();
+        assert_eq!(a, b);
+        assert_ne!(VoucherStatus::Draft, VoucherStatus::Posted);
+    }
+
+    #[test]
+    fn test_period_status_variants() {
+        let variants = [
+            PeriodStatus::Open,
+            PeriodStatus::Closing,
+            PeriodStatus::Closed,
+        ];
+        for v in &variants {
+            let s = format!("{:?}", v);
+            assert!(!s.is_empty());
+        }
+        assert_ne!(PeriodStatus::Open, PeriodStatus::Closed);
+        assert_ne!(PeriodStatus::Closing, PeriodStatus::Closed);
+    }
+
+    #[test]
+    fn test_period_status_serde_roundtrip() {
+        use serde_json;
+        let variants = [
+            PeriodStatus::Open,
+            PeriodStatus::Closing,
+            PeriodStatus::Closed,
+        ];
+        for v in &variants {
+            let json = serde_json::to_string(v).unwrap();
+            let deserialized: PeriodStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, &deserialized);
+        }
+    }
+
+    #[test]
+    fn test_voucher_type_variants() {
+        let variants = [
+            VoucherType::General,
+            VoucherType::Payment,
+            VoucherType::Receipt,
+            VoucherType::Transfer,
+        ];
+        for v in &variants {
+            let s = v.to_string();
+            assert!(!s.is_empty());
+        }
+        assert_eq!(VoucherType::General.to_string(), "general");
+        assert_eq!(VoucherType::Payment.to_string(), "payment");
+        assert_eq!(VoucherType::Receipt.to_string(), "receipt");
+        assert_eq!(VoucherType::Transfer.to_string(), "transfer");
+    }
+
+    #[test]
+    fn test_aux_type_variants() {
+        let variants = [
+            AuxType::Project,
+            AuxType::Department,
+            AuxType::Customer,
+            AuxType::Supplier,
+            AuxType::Employee,
+            AuxType::Custom1,
+            AuxType::Custom2,
+            AuxType::Custom3,
+        ];
+        for v in &variants {
+            let s = v.to_string();
+            assert!(!s.is_empty());
+        }
+        assert_eq!(AuxType::Project.to_string(), "project");
+        assert_eq!(AuxType::Department.to_string(), "department");
+        assert_eq!(AuxType::Customer.to_string(), "customer");
+        assert_eq!(AuxType::Supplier.to_string(), "supplier");
+        assert_eq!(AuxType::Employee.to_string(), "employee");
+        assert_eq!(AuxType::Custom1.to_string(), "custom1");
+        assert_eq!(AuxType::Custom2.to_string(), "custom2");
+        assert_eq!(AuxType::Custom3.to_string(), "custom3");
+    }
+
+    #[test]
+    fn test_export_format_variants() {
+        let variants = [
+            ExportFormat::Csv,
+            ExportFormat::Excel,
+            ExportFormat::Json,
+            ExportFormat::Pdf,
+        ];
+        for v in &variants {
+            let s = v.to_string();
+            assert!(!s.is_empty());
+        }
+        assert_eq!(ExportFormat::Csv.to_string(), "csv");
+        assert_eq!(ExportFormat::Excel.to_string(), "xlsx");
+        assert_eq!(ExportFormat::Json.to_string(), "json");
+        assert_eq!(ExportFormat::Pdf.to_string(), "pdf");
+    }
+
+    #[test]
+    fn test_reconciliation_enums() {
+        use serde_json;
+        let types = [
+            ReconciliationType::Bank,
+            ReconciliationType::Receivable,
+            ReconciliationType::Payable,
+        ];
+        for t in &types {
+            assert!(!t.to_string().is_empty());
+            let json = serde_json::to_string(t).unwrap();
+            let d: ReconciliationType = serde_json::from_str(&json).unwrap();
+            assert_eq!(t, &d);
+        }
+
+        let statuses = [
+            ReconciliationStatus::Pending,
+            ReconciliationStatus::Processing,
+            ReconciliationStatus::Completed,
+            ReconciliationStatus::Cancelled,
+        ];
+        for s in &statuses {
+            assert!(!s.to_string().is_empty());
+            let json = serde_json::to_string(s).unwrap();
+            let d: ReconciliationStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(s, &d);
+        }
+
+        let match_statuses = [
+            MatchStatus::Unmatched,
+            MatchStatus::Matched,
+            MatchStatus::Diff,
+            MatchStatus::Manual,
+        ];
+        for m in &match_statuses {
+            assert!(!m.to_string().is_empty());
+            let json = serde_json::to_string(m).unwrap();
+            let d: MatchStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(m, &d);
+        }
+
+        let sources = [ItemSource::Bank, ItemSource::Erp];
+        for s in &sources {
+            assert!(!s.to_string().is_empty());
+            let json = serde_json::to_string(s).unwrap();
+            let d: ItemSource = serde_json::from_str(&json).unwrap();
+            assert_eq!(s, &d);
+        }
+
+        let reasons = [
+            DiffReason::TimeDiff,
+            DiffReason::AmountDiff,
+            DiffReason::Duplicate,
+            DiffReason::Missing,
+            DiffReason::Unknown,
+            DiffReason::Fee,
+            DiffReason::ExchangeRate,
+        ];
+        for r in &reasons {
+            let json = serde_json::to_string(r).unwrap();
+            let d: DiffReason = serde_json::from_str(&json).unwrap();
+            assert_eq!(r, &d);
+        }
+    }
+}

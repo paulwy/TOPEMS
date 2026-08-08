@@ -13,8 +13,8 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
-use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
-use topems_shared::{config::CacheConfig, CacheService, LocalInMemoryCache as InMemoryCache};
+use topems_shared_event::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
+use topems_shared_event::redis::CacheService;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
     let cache = init_cache().await;
     tracing::info!("🗄️ 缓存服务初始化完成");
 
-    let encryption = topems_shared::init_encryption_from_env();
+    let encryption = topems_shared_auth::security::init_encryption_from_env();
     tracing::info!("🔐 字段加密服务初始化完成");
 
     let api_state = ApiState {
@@ -92,7 +92,7 @@ async fn main() -> Result<()> {
 async fn init_cache() -> Arc<dyn CacheService + Send + Sync> {
     match std::env::var("REDIS_URL") {
         Ok(_) => {
-            let redis_config = topems_shared::RedisConfig::default();
+            let redis_config = topems_shared_event::redis::RedisConfig::default();
             match RedisPoolTrait::new(&redis_config).await {
                 Ok(pool) => {
                     tracing::info!("✅ 使用 Redis 缓存");
@@ -101,14 +101,14 @@ async fn init_cache() -> Arc<dyn CacheService + Send + Sync> {
                 Err(e) => {
                     tracing::warn!("⚠️ Redis 连接失败，回退到内存缓存: {}", e);
                     let cache_config = CacheConfig::default();
-                    Arc::new(topems_shared::InMemoryCache::new(cache_config))
+                    Arc::new(topems_shared_event::cache::InMemoryCache::new(cache_config))
                 }
             }
         }
         Err(_) => {
             tracing::info!("⚠️ REDIS_URL 未设置，使用内存缓存");
             let cache_config = CacheConfig::default();
-            Arc::new(topems_shared::InMemoryCache::new(cache_config))
+            Arc::new(topems_shared_event::cache::InMemoryCache::new(cache_config))
         }
     }
 }
