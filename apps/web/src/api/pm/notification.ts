@@ -13,7 +13,7 @@ export const notificationApi = {
     title: string;
     message: string;
     priority?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     due_date?: string;
   }) => {
     return apiClient.pm.post(`/projects/${data.project_id}/notifications`, data);

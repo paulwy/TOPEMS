@@ -62,7 +62,7 @@ export const MOCK_FIELDS: Record<string, DataSourceField[]> = {
   ],
 };
 
-export const MOCK_DATA: Record<string, Record<string, any>[]> = {
+export const MOCK_DATA: Record<string, Record<string, unknown>[]> = {
   orders: [
     {
       order_id: 'ORD001',

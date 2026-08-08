@@ -76,11 +76,11 @@ export const openingBalanceApi = {
 
   async batchImport(
     data: CreateOpeningBalanceRequest[]
-  ): Promise<ApiResponse<Record<string, any>>> {
+  ): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.post('/finance/accounts/opening-balances/batch', data);
   },
 
-  async carryForward(data: CarryForwardRequest): Promise<ApiResponse<Record<string, any>>> {
+  async carryForward(data: CarryForwardRequest): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.post('/finance/accounts/opening-balances/carry-forward', data);
   },
 };

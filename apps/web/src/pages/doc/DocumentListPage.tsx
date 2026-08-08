@@ -67,13 +67,13 @@ export const DocumentListPage: React.FC = () => {
   }, [addNotification, queryClient]);
 
   const handleDownload = useCallback(
-    async (row: any) => {
+    async (row: Record<string, unknown>) => {
       try {
-        const blob = await docApi.download(row.id);
+        const blob = await docApi.download(String(row.id));
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = row.name;
+        a.download = String(row.name);
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -96,10 +96,10 @@ export const DocumentListPage: React.FC = () => {
   );
 
   const handleShare = useCallback(
-    (row: any) => {
+    (row: Record<string, unknown>) => {
       addNotification({
         title: '提示',
-        message: `分享功能开发中 - ${row.name}`,
+        message: `分享功能开发中 - ${String(row.name)}`,
         type: 'info',
       });
     },
@@ -107,10 +107,10 @@ export const DocumentListPage: React.FC = () => {
   );
 
   const handleOpen = useCallback(
-    (row: any) => {
+    (row: Record<string, unknown>) => {
       addNotification({
         title: '打开文档',
-        message: `正在打开"${row.name}"...`,
+        message: `正在打开"${String(row.name)}"...`,
         type: 'info',
       });
     },

@@ -98,8 +98,8 @@ export interface TimelinePageTemplateProps extends BoxProps {
     priorities?: string[];
     tags?: string[];
   };
-  filters?: Record<string, any>;
-  onFilterChange?: (filters: Record<string, any>) => void;
+  filters?: Record<string, unknown>;
+  onFilterChange?: (filters: Record<string, unknown>) => void;
 
   timeRanges?: TimeRange[];
   selectedTimeRange?: string;

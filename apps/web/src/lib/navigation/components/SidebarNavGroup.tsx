@@ -29,7 +29,7 @@ interface SidebarNavGroupProps {
   collapsed?: boolean;
 }
 
-const groupIcons: Record<string, any> = {
+const groupIcons: Record<string, unknown> = {
   overview: LayoutDashboard,
   business: Briefcase,
   process: Workflow,

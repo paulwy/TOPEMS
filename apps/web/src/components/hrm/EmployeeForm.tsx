@@ -36,7 +36,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
   };
 
   const handleApplyCompletion = (completions: Record<string, CompletionItem>) => {
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
     Object.entries(completions).forEach(([field, item]) => {
       updates[field] = item.value;
     });

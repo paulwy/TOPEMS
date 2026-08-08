@@ -50,7 +50,7 @@ export const reportTemplateApi = {
     template_code: string;
     template_name: string;
     report_type: string;
-    content: Record<string, any>;
+    content: Record<string, unknown>;
     created_by?: string;
   }) => {
     return apiClient.pm.post('/report-templates', data);
@@ -60,7 +60,7 @@ export const reportTemplateApi = {
     id: string,
     data: {
       template_name?: string;
-      content?: Record<string, any>;
+      content?: Record<string, unknown>;
     }
   ) => {
     return apiClient.pm.put(`/report-templates/${id}`, data);

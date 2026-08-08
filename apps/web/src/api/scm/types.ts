@@ -762,9 +762,9 @@ export interface AuditLogDetail {
   user_agent?: string;
   request_method?: string;
   request_url?: string;
-  request_params?: Record<string, any>;
-  old_value?: Record<string, any>;
-  new_value?: Record<string, any>;
+  request_params?: Record<string, unknown>;
+  old_value?: Record<string, unknown>;
+  new_value?: Record<string, unknown>;
   status: string;
   error_message?: string;
   created_at: string;

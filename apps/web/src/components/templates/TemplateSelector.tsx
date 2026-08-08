@@ -71,7 +71,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [categories, setCategories] = useState<TemplateCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
-  const [variableValues, setVariableValues] = useState<Record<string, any>>({});
+  const [variableValues, setVariableValues] = useState<Record<string, unknown>>({});
   const [isRendering, setIsRendering] = useState(false);
 
   useEffect(() => {

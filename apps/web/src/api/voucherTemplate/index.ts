@@ -200,7 +200,7 @@ export const voucherTemplateApi = {
     source_type: string;
     company_id?: string;
     amount?: number;
-    extra_data?: Record<string, any>;
+    extra_data?: Record<string, unknown>;
   }) => apiClient.finance.post('/voucher-templates/match', data),
 
   /**

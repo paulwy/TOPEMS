@@ -191,7 +191,7 @@ const NotificationTemplatesPage: React.FC = () => {
     setPreviewData(null);
 
     try {
-      const sampleData: Record<string, any> = {};
+      const sampleData: Record<string, unknown> = {};
       if (template.variables && template.variables.length > 0) {
         template.variables.forEach((v) => {
           sampleData[v] = `{${v}}`;

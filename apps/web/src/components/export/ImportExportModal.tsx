@@ -24,10 +24,10 @@ interface ImportExportModalProps<T> {
   columns: ExportColumn<T>[];
   fileName: string;
   onImportSuccess?: (_data: T[]) => void;
-  transform?: (_raw: Record<string, any>) => T;
+  transform?: (_raw: Record<string, unknown>) => T;
 }
 
-export const ImportExportModal = <T extends Record<string, any>>({
+export const ImportExportModal = <T extends Record<string, unknown>>({
   open,
   onOpenChange,
   data,

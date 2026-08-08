@@ -6,7 +6,7 @@ import type { LayoutConfig, SelectedField } from '../types';
 interface PreviewContentProps {
   layout: LayoutConfig;
   selectedFields: SelectedField[];
-  previewData: Record<string, any>[];
+  previewData: Record<string, unknown>[];
 }
 
 export const PreviewContent: React.FC<PreviewContentProps> = ({

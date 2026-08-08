@@ -89,7 +89,7 @@ function useErpBase<T extends { id?: string }>(
   );
 
   const fetch = useCallback(
-    async (params: Record<string, any> = {}) => {
+    async (params: Record<string, unknown> = {}) => {
       setLoading(true);
       try {
         const response = await api.list({ page, pageSize, ...params });

@@ -10,7 +10,7 @@ export interface ModuleRegistration {
   entryUrl: string;
   type: ModuleType;
   status: ModuleStatus;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   dependencies: string[];
   exposes: string[];
   remotes: string[];

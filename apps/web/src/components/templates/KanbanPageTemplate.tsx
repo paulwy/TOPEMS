@@ -112,8 +112,8 @@ export interface KanbanPageTemplateProps extends BoxProps {
     assignees?: Array<{ id: string; name: string }>;
     tags?: string[];
   };
-  filters?: Record<string, any>;
-  onFilterChange?: (filters: Record<string, any>) => void;
+  filters?: Record<string, unknown>;
+  onFilterChange?: (filters: Record<string, unknown>) => void;
 
   stats?: KanbanStats;
 

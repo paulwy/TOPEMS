@@ -16,13 +16,14 @@ vi.mock('react-i18next', () => ({
     t: (key: string) => key,
     i18n: { language: 'zh-CN', changeLanguage: vi.fn() },
   }),
-  withTranslation: () => (Component: any) => Component,
+  withTranslation: () => (Component: React.ComponentType<Record<string, unknown>>) => Component,
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: any) => React.createElement('div', null, children),
-  BarChart: ({ children }: any) => React.createElement('div', null, children),
+  ResponsiveContainer: ({ children }: Record<string, unknown>) =>
+    React.createElement('div', null, children),
+  BarChart: ({ children }: Record<string, unknown>) => React.createElement('div', null, children),
   Bar: () => null,
   XAxis: () => null,
   YAxis: () => null,
@@ -32,13 +33,15 @@ vi.mock('recharts', () => ({
 }));
 
 vi.mock('@/components/templates', () => ({
-  DashboardTemplate: ({ children }: any) => React.createElement('div', null, children),
+  DashboardTemplate: ({ children }: Record<string, unknown>) =>
+    React.createElement('div', null, children),
 }));
 vi.mock('@/components/export', () => ({
   ExportButton: () => React.createElement('button', null, 'Export'),
 }));
 vi.mock('@/components/common', () => ({
-  PageContainer: ({ children }: any) => React.createElement('div', null, children),
+  PageContainer: ({ children }: Record<string, unknown>) =>
+    React.createElement('div', null, children),
 }));
 vi.mock('@/components/charts/chartTheme', () => ({
   BIChartColors: {
