@@ -223,7 +223,7 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 |---|------|------|----------|------|
 | **A4.1** | 分类标记核心 re-export | lib.rs 重写：按子 crate 分模块，28 条 KEEP（≤30 阈值）+ 其余 90+ 条全部标 `#[deprecated(note="迁移指引: use topems_shared_X::* 代替")]`；保留 `AuditContextExt` trait + impl 不标 deprecated | `grep -cE "^pub use " lib/src/lib.rs`（仅算 KEEP 段）= **28**；`cargo check -p topems-shared` 通过 | ✅ 完成 |
 | **A4.2** | 逐服务迁移到直接依赖 | Phase 1: 14 服务 28 处简单单行导入迁移完成；Phase 2: 多行大括号导入 + 限定路径引用采用 lib.rs COMPAT 兼容层方案（回滚服务文件至原始 `topems_shared::*` 引用，重建 lib.rs 完整 re-export 层）。五批交叉验证（第一批+S批+L批+XL批+收尾批 共 29 服务 cargo check E0432/E0599=0） | `cargo check --workspace` 通过 | ✅ 完成 |
-| **A4.3** | 最终清理 | 删除 lib.rs 中全部 `#[deprecated]` 标记，建立 KEEP + COMPAT 两层 re-export 结构 | `grep -c "#\[deprecated" lib/src/lib.rs` = 0；`cargo check --workspace` 通过 | ✅ 完成 |
+| **A4.3** | 最终清理（V70-2 Step1 + Step2 两步渐进） | **Step1**: lib.rs 中全部 `#[deprecated]` 标记删除，建立 KEEP + COMPAT 两层结构（COMPAT=13条，覆盖 11 服务 × 12 符号）；**Step2**: 5 服务 × 8 处 COMPAT 核心符号改直接子 crate 路径（event/service_client/SystemMetrics/telemetry_middleware）+ 另 5 服务 Cargo.toml 补子 crate 依赖 + 4 服务 × 7 处条目级 COMPAT 符号替换（api_error/DataMasking/redis/Config/SimpleHealthConfig/PaginationParams/EventPublisher）；删除 COMPAT 区全部 13 条；文件头更新为 A4.3 闭环完成态 | `grep -cE "^pub use " lib/src/lib.rs` = **29**（≤30 阈值）；`grep -c COMPAT lib/src/lib.rs` ≤ 2（仅文件头说明）；workspace `cargo check` E0432/E0433/E0425/E0599/E0277 = 0；29 服务全部直接依赖子 crate | ✅ 完成 |
 
 ### 📊 V68.1 进度统计（合并后）
 
