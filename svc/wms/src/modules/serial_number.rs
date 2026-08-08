@@ -64,7 +64,7 @@ pub async fn list_serial_numbers(
 
     let result = sqlx::query_as::<_, SerialNumber>(
         r#"
-        SELECT * FROM wms.serial_numbers
+        SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers
         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1)
           AND ($2::text IS NULL OR sku ILIKE $2)
           AND ($3::text IS NULL OR serial_no ILIKE $3)
@@ -262,7 +262,7 @@ pub async fn get_serial_number(
     };
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        "SELECT * FROM wms.serial_numbers WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(serial_id)
     .fetch_optional(&state.db)
@@ -289,7 +289,7 @@ pub async fn get_by_serial_no(
     }
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        "SELECT * FROM wms.serial_numbers WHERE deleted_at IS NULL AND serial_no = $1",
+        "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND serial_no = $1",
     )
     .bind(serial_no)
     .fetch_optional(&state.db)
@@ -316,7 +316,7 @@ pub async fn get_by_batch(
     }
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        "SELECT * FROM wms.serial_numbers WHERE deleted_at IS NULL AND batch_no = $1 ORDER BY created_at DESC",
+        "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND batch_no = $1 ORDER BY created_at DESC",
     )
     .bind(batch_no)
     .fetch_all(&state.db)

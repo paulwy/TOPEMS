@@ -41,7 +41,7 @@ async fn list_resources(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectResource>>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        "SELECT * FROM plugin_pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC",
+        "id, project_id, resource_type, resource_id, resource_service, role, start_date, end_date, allocation_percent, created_at, updated_at FROM plugin_pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -127,7 +127,7 @@ async fn get_resource(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectResource>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        "SELECT * FROM plugin_pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2",
+        "id, project_id, resource_type, resource_id, resource_service, role, start_date, end_date, allocation_percent, created_at, updated_at FROM plugin_pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2",
     )
     .bind(project_id)
     .bind(id)

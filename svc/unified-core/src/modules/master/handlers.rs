@@ -192,7 +192,7 @@ impl MasterDataService {
         master_data_id: &str,
     ) -> Result<Option<MasterDataRef>, sqlx::Error> {
         let result = sqlx::query_as::<_, MasterDataRef>(
-            "SELECT * FROM core_master_data_refs WHERE master_data_id = $1 AND tenant_id = $2",
+            "SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM core_master_data_refs WHERE master_data_id = $1 AND tenant_id = $2",
         )
         .bind(master_data_id)
         .bind(tenant_id)
@@ -209,7 +209,7 @@ impl MasterDataService {
         code: &str,
     ) -> Result<Option<MasterDataRef>, sqlx::Error> {
         let result = sqlx::query_as::<_, MasterDataRef>(
-            "SELECT * FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2 AND code = $3",
+            "SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2 AND code = $3",
         )
         .bind(tenant_id)
         .bind(domain)
@@ -254,7 +254,7 @@ impl MasterDataService {
             where_clause
         );
         let list_sql = format!(
-            "SELECT * FROM core_master_data_refs WHERE {} ORDER BY updated_at DESC LIMIT {} OFFSET {}",
+            "SELECT id, tenant_id, master_data_id, domain, entity_type, entity_id, status, source_system, last_sync_at, created_at, updated_at FROM core_master_data_refs WHERE {} ORDER BY updated_at DESC LIMIT {} OFFSET {}",
             where_clause, page_size, offset
         );
 

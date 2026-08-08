@@ -46,7 +46,7 @@ async fn get_project_settlements(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Settlement>>> {
     let settlements = sqlx::query_as::<_, Settlement>(
-        "SELECT * FROM plugin_pm.settlements WHERE project_id = $1 ORDER BY settlement_period_end DESC",
+        "id, project_id, settlement_code, settlement_name, settlement_type, status, budget_amount, actual_amount, variance_amount, variance_reason, settlement_date, created_by, created_at, updated_at FROM plugin_pm.settlements WHERE project_id = $1 ORDER BY settlement_period_end DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -69,7 +69,7 @@ async fn get_settlement(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Settlement>> {
     let settlement =
-        sqlx::query_as::<_, Settlement>("SELECT * FROM plugin_pm.settlements WHERE id = $1")
+        sqlx::query_as::<_, Settlement>("id, project_id, settlement_code, settlement_name, settlement_type, status, budget_amount, actual_amount, variance_amount, variance_reason, settlement_date, created_by, created_at, updated_at FROM plugin_pm.settlements WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -203,7 +203,7 @@ async fn get_settlement_items(
     Path(settlement_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<SettlementItem>>> {
     let items = sqlx::query_as::<_, SettlementItem>(
-        "SELECT * FROM plugin_pm.settlement_items WHERE settlement_id = $1 ORDER BY category, item_name",
+        "SELECT id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_reason, description, created_at FROM plugin_pm.settlement_items WHERE settlement_id = $1 ORDER BY category, item_name",
     )
     .bind(settlement_id)
     .fetch_all(&pool)
@@ -339,7 +339,7 @@ async fn get_settlement_adjustments(
     Path(settlement_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<SettlementAdjustment>>> {
     let adjustments = sqlx::query_as::<_, SettlementAdjustment>(
-        "SELECT * FROM plugin_pm.settlement_adjustments WHERE settlement_id = $1 ORDER BY created_at",
+        "SELECT id, settlement_id, adjustment_type, adjustment_code, description, amount, reason, supporting_documents, created_by, created_at FROM plugin_pm.settlement_adjustments WHERE settlement_id = $1 ORDER BY created_at",
     )
     .bind(settlement_id)
     .fetch_all(&pool)

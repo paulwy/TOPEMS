@@ -268,7 +268,7 @@ pub async fn get_scan_by_id(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let row = match sqlx::query("SELECT * FROM barcode_scans WHERE id = $1")
+    let row = match sqlx::query("SELECT id, user_id, barcode, barcode_type, scan_result, scanned_at FROM barcode_scans WHERE id = $1")
         .bind(id)
         .fetch_optional(&pool)
         .await

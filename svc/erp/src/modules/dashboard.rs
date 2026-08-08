@@ -7,6 +7,19 @@ use topems_shared::{auth::Claims, ApiResponse};
 
 use super::ApiState;
 
+const ALLOWED_TABLES: &[&str] = &[
+    "assets",
+    "production_orders",
+    "inventory_items",
+    "suppliers",
+    "customers",
+    "vouchers",
+];
+
+fn validate_table(table: &str) -> Option<&'static str> {
+    ALLOWED_TABLES.iter().find(|&&t| t == table).copied()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErpDashboardStats {
     pub total_assets: i64,
@@ -24,6 +37,9 @@ pub struct ErpDashboardStats {
 }
 
 async fn count_table(pool: &sqlx::PgPool, table: &str) -> i64 {
+    let Some(table) = validate_table(table) else {
+        return 0;
+    };
     match sqlx::query_scalar(&format!(
         "SELECT COUNT(*) FROM {} WHERE deleted_at IS NULL",
         table
@@ -45,6 +61,9 @@ async fn count_table(pool: &sqlx::PgPool, table: &str) -> i64 {
 }
 
 async fn count_table_with_status(pool: &sqlx::PgPool, table: &str, status: &str) -> i64 {
+    let Some(table) = validate_table(table) else {
+        return 0;
+    };
     match sqlx::query_scalar(&format!(
         "SELECT COUNT(*) FROM {} WHERE status = $1 AND deleted_at IS NULL",
         table

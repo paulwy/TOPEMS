@@ -13,7 +13,7 @@ impl FinanceService {
         tenant_id: Uuid,
         params: LedgerQueryParams,
     ) -> Result<Vec<LedgerEntry>, TopemsError> {
-        let mut query = "SELECT * FROM core_finance_ledger WHERE tenant_id = $1".to_string();
+        let mut query = "SELECT id, tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, created_at FROM core_finance_ledger WHERE tenant_id = $1".to_string();
 
         let account_id_provided = params.account_id.is_some();
         let account_code_provided = params.account_code.is_some();

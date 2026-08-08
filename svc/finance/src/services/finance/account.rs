@@ -47,7 +47,7 @@ impl FinanceService {
         account_id: Uuid,
     ) -> Result<Account, TopemsError> {
         let account =
-            sqlx::query_as("SELECT * FROM core_finance_accounts WHERE tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM core_finance_accounts WHERE tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(account_id)
                 .fetch_one(&self.db_pool)
@@ -62,7 +62,7 @@ impl FinanceService {
         code: &str,
     ) -> Result<Account, TopemsError> {
         let account = sqlx::query_as(
-            "SELECT * FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
+            "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
         )
         .bind(tenant_id)
         .bind(code)
@@ -74,7 +74,7 @@ impl FinanceService {
 
     pub async fn list_accounts(&self, tenant_id: Uuid) -> Result<Vec<Account>, TopemsError> {
         let accounts = sqlx::query_as(
-            "SELECT * FROM core_finance_accounts WHERE tenant_id = $1 ORDER BY code",
+            "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM core_finance_accounts WHERE tenant_id = $1 ORDER BY code",
         )
         .bind(tenant_id)
         .fetch_all(&self.db_pool)

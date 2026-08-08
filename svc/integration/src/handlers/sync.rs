@@ -157,7 +157,7 @@ pub async fn get_task(
     match Uuid::parse_str(&task_id) {
         Ok(id) => {
             let row = sqlx::query_as::<_, SyncTaskRow>(
-                "SELECT * FROM core_inter_module_sync WHERE id = $1",
+                "SELECT id, source_module, target_module, sync_type, status, data, created_at, updated_at FROM core_inter_module_sync WHERE id = $1",
             )
             .bind(id)
             .fetch_optional(&state.pool)
@@ -216,7 +216,7 @@ pub async fn update_status(
 pub async fn get_pending(State(state): State<AppState>) -> Json<ApiResponse<Vec<SyncTask>>> {
     match sqlx::query_as::<_, SyncTaskRow>(
         r#"
-        SELECT * FROM core_inter_module_sync
+        SELECT id, source_module, target_module, sync_type, status, data, created_at, updated_at FROM core_inter_module_sync
         WHERE status = 'pending' OR (status = 'failed' AND retry_count < max_retries AND next_retry_at <= NOW())
         ORDER BY created_at ASC
         "#,

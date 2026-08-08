@@ -42,7 +42,7 @@ async fn get_project_reports(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectReport>>> {
     let reports = sqlx::query_as::<_, ProjectReport>(
-        "SELECT * FROM plugin_pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC",
+        "id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM plugin_pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -65,7 +65,7 @@ async fn get_report(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectReport>> {
     let report =
-        sqlx::query_as::<_, ProjectReport>("SELECT * FROM plugin_pm.project_reports WHERE id = $1")
+        sqlx::query_as::<_, ProjectReport>("id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM plugin_pm.project_reports WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -272,7 +272,7 @@ fn generate_summary(data: &serde_json::Value) -> Option<String> {
 
 async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<ReportTemplate>>> {
     let templates = sqlx::query_as::<_, ReportTemplate>(
-        "SELECT * FROM plugin_pm.report_templates WHERE is_active = true ORDER BY template_name",
+        "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM plugin_pm.report_templates WHERE is_active = true ORDER BY template_name",
     )
     .fetch_all(&pool)
     .await;
@@ -294,7 +294,7 @@ async fn get_template(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ReportTemplate>> {
     let template = sqlx::query_as::<_, ReportTemplate>(
-        "SELECT * FROM plugin_pm.report_templates WHERE id = $1",
+        "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM plugin_pm.report_templates WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&pool)

@@ -37,7 +37,7 @@ async fn list_expenses(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectExpense>>> {
     let result = sqlx::query_as::<_, ProjectExpense>(
-        "SELECT * FROM pm.project_expenses WHERE project_id = $1 ORDER BY incurred_date DESC",
+        "id, project_id, phase_id, expense_type, category, subcategory, description, amount, currency, incurred_date, budget_ref_id, status, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 ORDER BY incurred_date DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -131,7 +131,7 @@ async fn get_expense(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectExpense>> {
     let result = sqlx::query_as::<_, ProjectExpense>(
-        "SELECT * FROM pm.project_expenses WHERE project_id = $1 AND id = $2",
+        "id, project_id, phase_id, expense_type, category, subcategory, description, amount, currency, incurred_date, budget_ref_id, status, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND id = $2",
     )
     .bind(project_id)
     .bind(id)

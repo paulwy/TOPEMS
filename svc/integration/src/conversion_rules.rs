@@ -480,7 +480,7 @@ pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Erro
 /// 获取所有转换规则
 pub async fn list_conversion_rules(pool: &PgPool) -> Result<Vec<ConversionRule>, sqlx::Error> {
     sqlx::query_as::<_, ConversionRule>(
-        "SELECT * FROM conversion_rules ORDER BY priority ASC, created_at DESC",
+        "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM conversion_rules ORDER BY priority ASC, created_at DESC",
     )
     .fetch_all(pool)
     .await
@@ -493,7 +493,7 @@ pub async fn get_rule_executions(
     limit: i64,
 ) -> Result<Vec<ConversionExecution>, sqlx::Error> {
     sqlx::query_as::<_, ConversionExecution>(
-        "SELECT * FROM conversion_executions WHERE rule_id = $1 ORDER BY created_at DESC LIMIT $2",
+        "SELECT id, rule_id, source_value, target_value, status, error_message, executed_at FROM conversion_executions WHERE rule_id = $1 ORDER BY created_at DESC LIMIT $2",
     )
     .bind(rule_id)
     .bind(limit)

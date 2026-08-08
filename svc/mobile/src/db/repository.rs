@@ -28,7 +28,7 @@ pub async fn db_get_dashboard_stats(pool: &Pool<Postgres>) -> sqlx::Result<(i64,
 }
 
 pub async fn db_get_patrol_records(pool: &Pool<Postgres>) -> sqlx::Result<Vec<PatrolRecord>> {
-    let rows = sqlx::query("SELECT * FROM patrol_records ORDER BY created_at DESC")
+    let rows = sqlx::query("SELECT id, user_id, patrol_no, location, patrol_type, status, started_at, completed_at, created_at FROM patrol_records ORDER BY created_at DESC")
         .fetch_all(pool)
         .await?;
 
@@ -80,7 +80,7 @@ pub async fn db_create_patrol_record(
 }
 
 pub async fn db_get_scan_records(pool: &Pool<Postgres>) -> sqlx::Result<Vec<ScanRecord>> {
-    let rows = sqlx::query("SELECT * FROM scan_records ORDER BY created_at DESC")
+    let rows = sqlx::query("SELECT id, user_id, scan_type, scan_value, scan_result, status, scanned_at FROM scan_records ORDER BY created_at DESC")
         .fetch_all(pool)
         .await?;
 
@@ -127,7 +127,7 @@ pub async fn db_create_scan_record(
 }
 
 pub async fn db_get_photo_evidence(pool: &Pool<Postgres>) -> sqlx::Result<Vec<PhotoEvidence>> {
-    let rows = sqlx::query("SELECT * FROM photo_evidence ORDER BY created_at DESC")
+    let rows = sqlx::query("SELECT id, user_id, file_path, file_hash, description, latitude, longitude, created_at FROM photo_evidence ORDER BY created_at DESC")
         .fetch_all(pool)
         .await?;
 
@@ -178,7 +178,7 @@ pub async fn db_create_photo_evidence(
 }
 
 pub async fn db_get_audio_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<AudioRecording>> {
-    let rows = sqlx::query("SELECT * FROM audio_recordings ORDER BY created_at DESC")
+    let rows = sqlx::query("SELECT id, user_id, file_path, duration, description, created_at FROM audio_recordings ORDER BY created_at DESC")
         .fetch_all(pool)
         .await?;
 
@@ -231,7 +231,7 @@ pub async fn db_create_audio_recording(
 }
 
 pub async fn db_get_video_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<VideoRecording>> {
-    let rows = sqlx::query("SELECT * FROM video_recordings ORDER BY created_at DESC")
+    let rows = sqlx::query("SELECT id, user_id, file_path, duration, resolution, description, created_at FROM video_recordings ORDER BY created_at DESC")
         .fetch_all(pool)
         .await?;
 
@@ -286,7 +286,7 @@ pub async fn db_create_video_recording(
 }
 
 pub async fn db_get_mobile_tasks(pool: &Pool<Postgres>) -> sqlx::Result<Vec<MobileTask>> {
-    let rows = sqlx::query("SELECT * FROM mobile_tasks ORDER BY created_at DESC")
+    let rows = sqlx::query("SELECT id, user_id, task_no, task_type, title, description, status, priority, assigned_by, due_date, created_at FROM mobile_tasks ORDER BY created_at DESC")
         .fetch_all(pool)
         .await?;
 
@@ -369,7 +369,7 @@ pub async fn db_update_task_status(
         return Ok(None);
     }
 
-    let row = sqlx::query("SELECT * FROM mobile_tasks WHERE id = $1")
+    let row = sqlx::query("SELECT id, user_id, task_no, task_type, title, description, status, priority, assigned_by, due_date, created_at FROM mobile_tasks WHERE id = $1")
         .bind(task_id)
         .fetch_one(pool)
         .await?;
@@ -384,12 +384,12 @@ pub async fn db_get_offline_operations(
 ) -> sqlx::Result<Vec<OfflineOperation>> {
     let query = if let Some(s) = status {
         sqlx::query(
-            "SELECT * FROM offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at ASC",
+            "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at ASC",
         )
         .bind(user_id)
         .bind(s)
     } else {
-        sqlx::query("SELECT * FROM offline_operations WHERE user_id = $1 ORDER BY created_at ASC")
+        sqlx::query("SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM offline_operations WHERE user_id = $1 ORDER BY created_at ASC")
             .bind(user_id)
     };
 
@@ -475,7 +475,7 @@ pub async fn db_get_sync_policy(
     pool: &Pool<Postgres>,
     user_id: Uuid,
 ) -> sqlx::Result<Option<SyncPolicy>> {
-    let row = sqlx::query("SELECT * FROM sync_policies WHERE user_id = $1")
+    let row = sqlx::query("SELECT id, user_id, policy_type, sync_interval, last_sync_at, is_active FROM sync_policies WHERE user_id = $1")
         .bind(user_id)
         .fetch_optional(pool)
         .await?;
@@ -605,9 +605,9 @@ pub async fn db_get_push_devices(
     user_id: Option<Uuid>,
 ) -> sqlx::Result<Vec<PushDevice>> {
     let query = if let Some(uid) = user_id {
-        sqlx::query("SELECT * FROM push_devices WHERE user_id = $1 AND is_active = true").bind(uid)
+        sqlx::query("SELECT id, user_id, device_token, device_type, app_version, is_active, created_at FROM push_devices WHERE user_id = $1 AND is_active = true").bind(uid)
     } else {
-        sqlx::query("SELECT * FROM push_devices WHERE is_active = true")
+        sqlx::query("SELECT id, user_id, device_token, device_type, app_version, is_active, created_at FROM push_devices WHERE is_active = true")
     };
 
     let rows = query.fetch_all(pool).await?;
@@ -685,7 +685,7 @@ pub async fn db_update_push_notification_stats(
 }
 
 pub async fn db_get_push_templates(pool: &Pool<Postgres>) -> sqlx::Result<Vec<PushTemplate>> {
-    let rows = sqlx::query("SELECT * FROM push_templates WHERE is_active = true ORDER BY name")
+    let rows = sqlx::query("SELECT id, name, template_type, title_template, body_template, is_active, created_at FROM push_templates WHERE is_active = true ORDER BY name")
         .fetch_all(pool)
         .await?;
 
@@ -742,12 +742,12 @@ pub async fn db_get_barcode_scans(
 ) -> sqlx::Result<Vec<BarcodeScan>> {
     let query = if let Some(bt) = barcode_type {
         sqlx::query(
-            "SELECT * FROM barcode_scans WHERE user_id = $1 AND barcode_type = $2 ORDER BY scanned_at DESC",
+            "SELECT id, user_id, barcode, barcode_type, scan_result, scanned_at FROM barcode_scans WHERE user_id = $1 AND barcode_type = $2 ORDER BY scanned_at DESC",
         )
         .bind(user_id)
         .bind(bt)
     } else {
-        sqlx::query("SELECT * FROM barcode_scans WHERE user_id = $1 ORDER BY scanned_at DESC")
+        sqlx::query("SELECT id, user_id, barcode, barcode_type, scan_result, scanned_at FROM barcode_scans WHERE user_id = $1 ORDER BY scanned_at DESC")
             .bind(user_id)
     };
 
@@ -804,12 +804,12 @@ pub async fn db_get_photo_uploads(
 ) -> sqlx::Result<Vec<PhotoUpload>> {
     let query = if let Some(s) = status {
         sqlx::query(
-            "SELECT * FROM photo_uploads WHERE user_id = $1 AND upload_status = $2 ORDER BY created_at DESC",
+            "SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM photo_uploads WHERE user_id = $1 AND upload_status = $2 ORDER BY created_at DESC",
         )
         .bind(user_id)
         .bind(s)
     } else {
-        sqlx::query("SELECT * FROM photo_uploads WHERE user_id = $1 ORDER BY created_at DESC")
+        sqlx::query("SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM photo_uploads WHERE user_id = $1 ORDER BY created_at DESC")
             .bind(user_id)
     };
 

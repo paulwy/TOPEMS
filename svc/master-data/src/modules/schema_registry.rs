@@ -123,7 +123,7 @@ pub async fn get_schema(
     Path(id): Path<Uuid>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let schema =
-        sqlx::query_as::<_, SchemaDefinition>("SELECT * FROM schema_registry WHERE id = $1")
+        sqlx::query_as::<_, SchemaDefinition>("id, name, code, schema_type, version, description, definition, is_active, created_by, created_at, updated_at FROM schema_registry WHERE id = $1")
             .bind(id)
             .fetch_optional(&state.db)
             .await
@@ -157,7 +157,7 @@ pub async fn list_schemas(
 
     let schemas = sqlx::query_as::<_, SchemaDefinition>(
         r#"
-        SELECT * FROM schema_registry
+        SELECT id, tenant_id, name, code, schema_type, version, definition, is_active, created_at, updated_at FROM schema_registry
         WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR title ILIKE '%' || $1 || '%')
           AND ($2::bool IS NULL OR is_active = $2)
         ORDER BY created_at DESC
@@ -514,7 +514,7 @@ async fn get_schema_def(
     pool: &PgPool,
     id: Uuid,
 ) -> Result<SchemaDefinition, (StatusCode, Json<Value>)> {
-    sqlx::query_as::<_, SchemaDefinition>("SELECT * FROM schema_registry WHERE id = $1")
+    sqlx::query_as::<_, SchemaDefinition>("id, name, code, schema_type, version, description, definition, is_active, created_by, created_at, updated_at FROM schema_registry WHERE id = $1")
         .bind(id)
         .fetch_optional(pool)
         .await

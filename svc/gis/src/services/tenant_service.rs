@@ -21,7 +21,7 @@ impl TenantService {
 
     pub async fn list_factory_maps(&self) -> Result<Vec<FactoryMap>, sqlx::Error> {
         sqlx::query_as::<_, FactoryMap>(
-            "SELECT * FROM gis.factory_maps WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT 100",
+            "id, tenant_id, name, code, map_type, file_url, bounds, description, created_at, updated_at FROM gis.factory_maps WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT 100",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -57,7 +57,7 @@ impl TenantService {
 
     pub async fn get_factory_map(&self, id: Uuid) -> Result<Option<FactoryMap>, sqlx::Error> {
         sqlx::query_as::<_, FactoryMap>(
-            "SELECT * FROM gis.factory_maps WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+            "id, tenant_id, name, code, map_type, file_url, bounds, description, created_at, updated_at FROM gis.factory_maps WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(self.tenant_id)
@@ -111,7 +111,7 @@ impl TenantService {
 
     pub async fn list_device_locations(&self) -> Result<Vec<DeviceLocation>, sqlx::Error> {
         sqlx::query_as::<_, DeviceLocation>(
-            "SELECT * FROM gis.device_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
+            "id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -120,7 +120,7 @@ impl TenantService {
 
     pub async fn list_pipelines(&self) -> Result<Vec<Pipeline>, sqlx::Error> {
         sqlx::query_as::<_, Pipeline>(
-            "SELECT * FROM gis.pipelines WHERE tenant_id = $1 ORDER BY created_at DESC",
+            "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -129,7 +129,7 @@ impl TenantService {
 
     pub async fn list_warehouse_locations(&self) -> Result<Vec<WarehouseLocation>, sqlx::Error> {
         sqlx::query_as::<_, WarehouseLocation>(
-            "SELECT * FROM gis.warehouse_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
+            "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -138,7 +138,7 @@ impl TenantService {
 
     pub async fn list_locations(&self) -> Result<Vec<Location>, sqlx::Error> {
         sqlx::query_as::<_, Location>(
-            "SELECT * FROM gis.locations WHERE tenant_id = $1 ORDER BY created_at DESC",
+            "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)
@@ -147,7 +147,7 @@ impl TenantService {
 
     pub async fn list_devices(&self) -> Result<Vec<Device>, sqlx::Error> {
         sqlx::query_as::<_, Device>(
-            "SELECT * FROM gis.devices WHERE tenant_id = $1 ORDER BY created_at DESC",
+            "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(self.tenant_id)
         .fetch_all(&self.pool)

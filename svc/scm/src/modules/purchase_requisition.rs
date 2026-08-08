@@ -63,7 +63,7 @@ pub async fn list_requisitions(
     let offset = (page - 1) * page_size;
 
     let requisitions = sqlx::query_as::<_, PurchaseRequisition>(
-        "SELECT * FROM scm.purchase_requisitions WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        "SELECT id, tenant_id, requisition_no, title, description, department_id, requester_id, priority, status, expected_date, total_amount, currency, approval_status, created_by, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     )
     .bind(page_size)
     .bind(offset)
@@ -173,7 +173,7 @@ pub async fn get_requisition(
     };
 
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        "SELECT * FROM scm.purchase_requisitions WHERE id = $1 AND deleted_at IS NULL",
+        "SELECT id, tenant_id, requisition_no, title, description, department_id, requester_id, priority, status, expected_date, total_amount, currency, approval_status, created_by, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(requisition_id)
     .fetch_one(&state.db)

@@ -362,7 +362,7 @@ pub async fn get_photo_by_id(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let row = match sqlx::query("SELECT * FROM photo_uploads WHERE id = $1")
+    let row = match sqlx::query("SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM photo_uploads WHERE id = $1")
         .bind(id)
         .fetch_optional(&pool)
         .await

@@ -45,7 +45,7 @@ pub async fn get_plugin_details(
 ) -> Json<CoreResponse<PluginDetailsResponse>> {
     tracing::info!("[Plugin] Getting plugin details: {}", plugin_code);
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -57,7 +57,7 @@ pub async fn get_plugin_details(
     };
 
     let permissions: Vec<PluginPermission> =
-        sqlx::query_as("SELECT * FROM core.core_plugin_permissions WHERE plugin_code = $1")
+        sqlx::query_as("SELECT id, plugin_code, permission_key, description, is_default, created_at FROM core.core_plugin_permissions WHERE plugin_code = $1")
             .bind(&plugin_code)
             .fetch_all(&state.pool)
             .await
@@ -97,7 +97,7 @@ pub async fn install_plugin_simple(
 
     // Get plugin
     let plugin: Option<Plugin> =
-        sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1 AND is_published = true")
+        sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1 AND is_published = true")
             .bind(&plugin_code)
             .fetch_optional(&state.pool)
             .await
@@ -180,7 +180,7 @@ pub async fn uninstall_plugin_simple(
     }
 
     // Get plugin info
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await

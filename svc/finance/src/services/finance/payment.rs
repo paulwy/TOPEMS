@@ -148,7 +148,7 @@ impl FinanceService {
         payment_id: Uuid,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment: Payment =
-            sqlx::query_as("SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -157,7 +157,7 @@ impl FinanceService {
         let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
 
         let items: Vec<PaymentItem> = sqlx::query_as(
-            "SELECT * FROM core_finance_payment_items WHERE tenant_id = $1 AND payment_id = $2 ORDER BY line_no",
+            "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE tenant_id = $1 AND payment_id = $2 ORDER BY line_no",
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -201,7 +201,7 @@ impl FinanceService {
                 .await?;
 
         let payments: Vec<Payment> = sqlx::query_as(
-            "SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         )
         .bind(tenant_id)
         .bind(page_size)
@@ -242,7 +242,7 @@ impl FinanceService {
         payment_id: Uuid,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment: Payment =
-            sqlx::query_as("SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -251,7 +251,7 @@ impl FinanceService {
         let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
 
         let items: Vec<PaymentItem> = sqlx::query_as(
-            "SELECT * FROM core_finance_payment_items WHERE tenant_id = $1 AND payment_id = $2 ORDER BY line_no",
+            "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE tenant_id = $1 AND payment_id = $2 ORDER BY line_no",
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -287,7 +287,7 @@ impl FinanceService {
         updated_by: &str,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment: Payment =
-            sqlx::query_as("SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -396,7 +396,7 @@ impl FinanceService {
         payment_id: Uuid,
     ) -> Result<(), TopemsError> {
         let payment: Payment =
-            sqlx::query_as("SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -448,7 +448,7 @@ impl FinanceService {
         );
 
         let mut query =
-            "SELECT * FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1"
+            "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1"
                 .to_string();
 
         if let Some(status) = req.status {

@@ -32,7 +32,7 @@ pub async fn list_scopes(
 
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
-        SELECT * FROM plugin_erp.consolidation_scopes
+        SELECT id, tenant_id, scope_name, scope_type, period_start, period_end, status, created_by, created_at, updated_at FROM plugin_erp.consolidation_scopes
         WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -78,7 +78,7 @@ pub async fn get_scope(
     Path(scope_id): Path<Uuid>,
 ) -> Json<ApiResponse<ConsolidationScope>> {
     match sqlx::query_as::<_, ConsolidationScope>(
-        "SELECT * FROM plugin_erp.consolidation_scopes WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, tenant_id, scope_name, scope_type, period_start, period_end, status, created_by, created_at, updated_at FROM plugin_erp.consolidation_scopes WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(scope_id)
     .fetch_optional(&state.db)

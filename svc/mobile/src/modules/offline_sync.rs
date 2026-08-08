@@ -293,7 +293,7 @@ pub async fn get_sync_history(
 
     let query = if let Some(status) = &params.status {
         sqlx::query(
-            "SELECT * FROM offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+            "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
         )
         .bind(user_id)
         .bind(status)
@@ -301,7 +301,7 @@ pub async fn get_sync_history(
         .bind(offset)
     } else {
         sqlx::query(
-            "SELECT * FROM offline_operations WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM offline_operations WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         )
         .bind(user_id)
         .bind(size)

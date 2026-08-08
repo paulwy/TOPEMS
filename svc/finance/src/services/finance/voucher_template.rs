@@ -97,7 +97,7 @@ impl FinanceService {
         status: Option<String>,
     ) -> Result<Vec<VoucherTemplateResponse>, TopemsError> {
         let mut query =
-            "SELECT * FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1"
+            "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1"
                 .to_string();
         let _params: Vec<&(dyn sqlx::Encode<'_, sqlx::Postgres> + Send + Sync)> = Vec::new();
 
@@ -147,7 +147,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
         let template: VoucherTemplate = sqlx::query_as(
-            "SELECT * FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -176,7 +176,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<Vec<VoucherTemplateLine>, TopemsError> {
         let lines: Vec<VoucherTemplateLine> = sqlx::query_as(
-            "SELECT * FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at",
+            "SELECT id, template_id, account_id, account_code, account_name, description, debit_amount, credit_amount, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at",
         )
         .bind(template_id)
         .fetch_all(&self.db_pool)
@@ -265,7 +265,7 @@ impl FinanceService {
         req: UpdateVoucherTemplateRequest,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
         let existing: VoucherTemplate = sqlx::query_as(
-            "SELECT * FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -359,7 +359,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<(), TopemsError> {
         let existing = sqlx::query_as::<_, VoucherTemplate>(
-            "SELECT * FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            "id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -390,7 +390,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
         let template: VoucherTemplate = sqlx::query_as(
-            "SELECT * FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(template_id)

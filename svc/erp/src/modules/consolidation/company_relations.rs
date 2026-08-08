@@ -21,7 +21,7 @@ pub async fn list_company_relations(
 ) -> Json<ApiResponse<Vec<CompanyRelation>>> {
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
-        SELECT * FROM plugin_erp.company_relations
+        SELECT id, tenant_id, parent_company_id, child_company_id, relation_type, ownership_percentage, status, created_at, updated_at FROM plugin_erp.company_relations
         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR parent_company_id = $1 OR child_company_id = $1)
           AND ($2::text IS NULL OR relation_type = $2)
           AND status = 'active'
@@ -46,7 +46,7 @@ pub async fn get_company_tree(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<CompanyTreeNode>>> {
     let relations: Vec<CompanyRelation> = sqlx::query_as::<_, CompanyRelation>(
-        "SELECT * FROM plugin_erp.company_relations WHERE deleted_at IS NULL AND status = 'active'",
+        "SELECT id, tenant_id, parent_company_id, child_company_id, relation_type, ownership_percentage, status, created_at, updated_at FROM plugin_erp.company_relations WHERE deleted_at IS NULL AND status = 'active'",
     )
     .fetch_all(&state.db)
     .await

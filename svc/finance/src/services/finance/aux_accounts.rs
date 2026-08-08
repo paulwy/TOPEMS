@@ -50,7 +50,7 @@ impl FinanceService {
         let accounts = if let Some(t) = aux_type {
             let type_str = t.to_string();
             sqlx::query_as(
-                "SELECT * FROM core_finance_aux_accounts WHERE tenant_id = $1 AND aux_type::text = $2 ORDER BY code",
+                "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM core_finance_aux_accounts WHERE tenant_id = $1 AND aux_type::text = $2 ORDER BY code",
             )
             .bind(tenant_id)
             .bind(type_str)
@@ -58,7 +58,7 @@ impl FinanceService {
             .await?
         } else {
             sqlx::query_as(
-                "SELECT * FROM core_finance_aux_accounts WHERE tenant_id = $1 ORDER BY aux_type, code",
+                "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM core_finance_aux_accounts WHERE tenant_id = $1 ORDER BY aux_type, code",
             )
             .bind(tenant_id)
             .fetch_all(&self.db_pool)
@@ -74,7 +74,7 @@ impl FinanceService {
         aux_id: Uuid,
     ) -> Result<AuxiliaryAccount, TopemsError> {
         let account = sqlx::query_as(
-            "SELECT * FROM core_finance_aux_accounts WHERE tenant_id = $1 AND id = $2",
+            "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM core_finance_aux_accounts WHERE tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(aux_id)

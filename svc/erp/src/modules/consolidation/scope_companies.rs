@@ -20,7 +20,7 @@ pub async fn list_scope_companies(
 ) -> Json<ApiResponse<Vec<ConsolidationScopeCompany>>> {
     match sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
-        SELECT * FROM plugin_erp.consolidation_scope_companies
+        SELECT id, tenant_id, scope_id, company_id, company_role, ownership_percentage, is_included, created_at, updated_at FROM plugin_erp.consolidation_scope_companies
         WHERE deleted_at IS NULL AND scope_id = $1
         ORDER BY is_parent DESC, company_name ASC
         "#,

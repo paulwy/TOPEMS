@@ -16,7 +16,7 @@ impl FinanceService {
         let offset = (page - 1) * page_size;
 
         let mut sql =
-            "SELECT * FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1".to_string();
+            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1".to_string();
         let mut count_sql =
             "SELECT COUNT(*) FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1"
                 .to_string();
@@ -100,7 +100,7 @@ impl FinanceService {
         payable_id: Uuid,
     ) -> Result<Value, TopemsError> {
         let row = sqlx::query(
-            "SELECT * FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(payable_id)

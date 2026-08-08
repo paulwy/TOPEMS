@@ -141,7 +141,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 pub async fn list_plans(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<BillingPlan>>> {
     let plans: Vec<BillingPlan> = sqlx::query_as(
-        "SELECT * FROM core_billing_plans WHERE is_active = true ORDER BY price_cents ASC",
+        "SELECT id, tenant_id, name, description, billing_type, price, currency, duration, is_active, created_at, updated_at FROM core_billing_plans WHERE is_active = true ORDER BY price_cents ASC",
     )
     .fetch_all(&pool)
     .await
@@ -155,7 +155,7 @@ pub async fn get_plan(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<BillingPlan>> {
     let plan: Option<BillingPlan> =
-        sqlx::query_as("SELECT * FROM core_billing_plans WHERE id = $1")
+        sqlx::query_as("SELECT id, tenant_id, name, description, billing_type, price, currency, duration, is_active, created_at, updated_at FROM core_billing_plans WHERE id = $1")
             .bind(id)
             .fetch_optional(&pool)
             .await
@@ -172,7 +172,7 @@ pub async fn get_subscription(
     Path(tenant_id): Path<Uuid>,
 ) -> Json<ApiResponse<Option<(Subscription, BillingPlan)>>> {
     let subscription: Option<Subscription> =
-        sqlx::query_as("SELECT * FROM core_subscriptions WHERE tenant_id = $1")
+        sqlx::query_as("SELECT id, tenant_id, user_id, plan_id, plan_name, status, started_at, expires_at, created_at, updated_at FROM core_subscriptions WHERE tenant_id = $1")
             .bind(tenant_id)
             .fetch_optional(&pool)
             .await
@@ -181,7 +181,7 @@ pub async fn get_subscription(
     match subscription {
         Some(sub) => {
             let plan: Option<BillingPlan> =
-                sqlx::query_as("SELECT * FROM core_billing_plans WHERE id = $1")
+                sqlx::query_as("SELECT id, tenant_id, name, description, billing_type, price, currency, duration, is_active, created_at, updated_at FROM core_billing_plans WHERE id = $1")
                     .bind(sub.plan_id)
                     .fetch_optional(&pool)
                     .await
@@ -296,7 +296,7 @@ pub async fn list_invoices(
     Path(tenant_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Invoice>>> {
     let invoices: Vec<Invoice> = sqlx::query_as(
-        "SELECT * FROM core_billing_invoices WHERE tenant_id = $1 ORDER BY created_at DESC",
+        "SELECT id, tenant_id, invoice_no, user_id, subscription_id, amount, currency, tax_amount, total_amount, status, issued_at, paid_at, created_at FROM core_billing_invoices WHERE tenant_id = $1 ORDER BY created_at DESC",
     )
     .bind(tenant_id)
     .fetch_all(&pool)
@@ -311,7 +311,7 @@ pub async fn get_usage_summary(
     Path(tenant_id): Path<Uuid>,
 ) -> Json<ApiResponse<UsageSummary>> {
     let subscription: Option<Subscription> = sqlx::query_as(
-        "SELECT * FROM core_subscriptions WHERE tenant_id = $1 AND status = 'active'",
+        "SELECT id, tenant_id, user_id, plan_id, plan_name, status, started_at, expires_at, created_at, updated_at FROM core_subscriptions WHERE tenant_id = $1 AND status = 'active'",
     )
     .bind(tenant_id)
     .fetch_optional(&pool)
@@ -320,7 +320,7 @@ pub async fn get_usage_summary(
 
     let (included_users, included_storage, included_api) = if let Some(sub) = &subscription {
         let plan: Option<BillingPlan> =
-            sqlx::query_as("SELECT * FROM core_billing_plans WHERE id = $1")
+            sqlx::query_as("SELECT id, tenant_id, name, description, billing_type, price, currency, duration, is_active, created_at, updated_at FROM core_billing_plans WHERE id = $1")
                 .bind(sub.plan_id)
                 .fetch_optional(&pool)
                 .await

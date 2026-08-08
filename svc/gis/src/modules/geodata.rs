@@ -166,7 +166,7 @@ async fn insert_feature(
 
 /// 获取地理数据列表
 pub async fn list_geodata(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, GeoData>("SELECT * FROM plugin_gis.geodata ORDER BY created_at DESC")
+    match sqlx::query_as::<_, GeoData>("id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM plugin_gis.geodata ORDER BY created_at DESC")
         .fetch_all(&pool)
         .await
     {
@@ -187,7 +187,7 @@ pub async fn get_geodata(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<GeoData>> {
     match sqlx::query_as::<_, GeoData>(
-        "SELECT * FROM plugin_gis.geodata WHERE deleted_at IS NULL AND id = $1",
+        "id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM plugin_gis.geodata WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&pool)
@@ -271,7 +271,7 @@ pub async fn convert_geodata(
 
     // Get source data
     match sqlx::query_as::<_, GeoData>(
-        "SELECT * FROM plugin_gis.geodata WHERE deleted_at IS NULL AND id = $1",
+        "id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM plugin_gis.geodata WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&pool)
@@ -354,7 +354,7 @@ pub async fn list_geofeatures(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, GeoFeature>(
-        "SELECT * FROM plugin_gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC",
+        "id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM plugin_gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC",
     )
     .bind(id)
     .fetch_all(&pool)

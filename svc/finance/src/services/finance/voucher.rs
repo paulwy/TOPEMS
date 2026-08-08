@@ -187,7 +187,7 @@ impl FinanceService {
         posted_by: &str,
     ) -> Result<Voucher, TopemsError> {
         let voucher: Voucher = sqlx::query_as(
-            "SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'approved'",
+            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'approved'",
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -195,7 +195,7 @@ impl FinanceService {
         .await?;
 
         let lines: Vec<VoucherLine> = sqlx::query_as(
-            "SELECT * FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
+            "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
         )
         .bind(voucher.id)
         .fetch_all(&self.db_pool)
@@ -268,14 +268,14 @@ impl FinanceService {
         voucher_id: Uuid,
     ) -> Result<VoucherResponse, TopemsError> {
         let voucher: Voucher =
-            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_one(&self.db_pool)
                 .await?;
 
         let lines: Vec<VoucherLine> = sqlx::query_as(
-            "SELECT * FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
+            "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
         )
         .bind(voucher.id)
         .fetch_all(&self.db_pool)
@@ -302,7 +302,7 @@ impl FinanceService {
         period: Option<String>,
     ) -> Result<Vec<Voucher>, TopemsError> {
         let mut query =
-            "SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1"
+            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1"
                 .to_string();
         let status_provided = status.is_some();
         let period_provided = period.is_some();
@@ -544,7 +544,7 @@ impl FinanceService {
         _updated_by: &str,
     ) -> Result<VoucherResponse, TopemsError> {
         let existing: Voucher =
-            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_one(&self.db_pool)
@@ -617,7 +617,7 @@ impl FinanceService {
             }
 
             let updated: Voucher = sqlx::query_as(
-                "SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+                "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
             )
             .bind(tenant_id)
             .bind(voucher_id)
@@ -650,7 +650,7 @@ impl FinanceService {
             .await?;
 
             let existing_lines: Vec<VoucherLine> = sqlx::query_as(
-                "SELECT * FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
+                "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
             )
             .bind(voucher_id)
             .fetch_all(&self.db_pool)
@@ -678,7 +678,7 @@ impl FinanceService {
         voucher_id: Uuid,
     ) -> Result<(), TopemsError> {
         let existing: Voucher =
-            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_optional(&self.db_pool)
@@ -714,7 +714,7 @@ impl FinanceService {
         voucher_id: Uuid,
     ) -> Result<Voucher, TopemsError> {
         let existing: Voucher =
-            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_optional(&self.db_pool)
@@ -784,7 +784,7 @@ impl FinanceService {
         let mut lines = Vec::new();
         for (i, line) in req.lines.iter().enumerate() {
             let account: Account = sqlx::query_as(
-                "SELECT * FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
+                "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
             )
             .bind(tenant_id)
             .bind(&line.account_code)
@@ -877,7 +877,7 @@ impl FinanceService {
 
         for (i, line) in lines.iter().enumerate() {
             let account: Account = sqlx::query_as(
-                "SELECT * FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
+                "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
             )
             .bind(tenant_id)
             .bind(&line.account_code)
