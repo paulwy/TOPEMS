@@ -1,13 +1,6 @@
 import React from 'react';
 import { Stack, Tooltip, IconButton } from '@mui/material';
-import {
-  Search,
-  Sparkles,
-  Briefcase,
-  Sun,
-  Moon,
-  HelpCircle,
-} from 'lucide-react';
+import { Search, Sparkles, Briefcase, Sun, Moon, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useThemeMode } from '@/hooks/useThemeMode';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
@@ -29,7 +22,10 @@ export const GlobalActions: React.FC<GlobalActionsProps> = ({ onSearchClick }) =
   };
 
   return (
-    <Stack direction='row' spacing={0.25}>
+    <Stack
+      direction='row'
+      spacing={0.25}
+    >
       <Tooltip title='搜索 (⌘K / Ctrl+K)'>
         <IconButton
           size='small'

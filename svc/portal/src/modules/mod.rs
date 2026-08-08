@@ -10,6 +10,8 @@ pub mod federation_gateway;
 pub mod gateway_monitoring;
 pub mod gateway_security;
 pub mod graphql_schema;
+// V68.1 A2.4.2: 帮助中心模块从 unified-core 迁移至门户（Portal BFF 用户服务域）
+pub mod help;
 pub mod intelligent_gateway;
 pub mod monitoring;
 pub mod navigation;

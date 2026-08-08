@@ -81,7 +81,7 @@ export const outboundOrderSchema: EntitySchema = {
         };
         return statusMap[row.status as string] || String(row.status || '-');
       },
-      validation: [{ type: 'maxLength', value: 20 }],
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'remarks',

@@ -584,7 +584,7 @@ pub async fn get_team_members(
         .into_iter()
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
-            team_id: r.team_id.map_or_else(String::new, |u| u.to_string()),
+            team_id: r.team_id.map(|u| u.to_string()).unwrap_or_default(),
             employee_id: r.employee_id.map(|u| u.to_string()).unwrap_or_default(),
             employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
@@ -657,7 +657,7 @@ pub async fn add_team_member(
 
     let member = TeamMemberResponse {
         id: result.id.to_string(),
-        team_id: result.team_id.map_or_else(String::new, |u| u.to_string()),
+        team_id: result.team_id.map(|u| u.to_string()).unwrap_or_default(),
         employee_id: result
             .employee_id
             .map(|u| u.to_string())

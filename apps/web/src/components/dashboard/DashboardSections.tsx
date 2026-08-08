@@ -13,13 +13,44 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ModuleCard, type ModuleItem } from './ModuleCard';
 
 export const MODULE_SECTIONS = [
-  { key: 'core',        title: '核心平台',   collapsedLimit: 6, moduleKeys: ['iam', 'tenant', 'plugin', 'file', 'doc', 'mail', 'notification', 'im', 'workflow', 'audit'] },
-  { key: 'operation',   title: '运营管理',   collapsedLimit: 6, moduleKeys: ['crm', 'srm', 'scm', 'wms', 'erp', 'finance', 'hrm', 'pm'] },
-  { key: 'production',  title: '生产制造',   collapsedLimit: 6, moduleKeys: ['mes', 'pdca', 'qms', 'ehs', 'lims', 'pdm', 'rd'] },
-  { key: 'intelligent', title: '智能与数据', collapsedLimit: 6, moduleKeys: ['ai', 'bi', 'analytics', 'report', 'search', 'portal', 'gis', 'mobile', 'lowcode'] },
+  {
+    key: 'core',
+    title: '核心平台',
+    collapsedLimit: 6,
+    moduleKeys: [
+      'iam',
+      'tenant',
+      'plugin',
+      'file',
+      'doc',
+      'mail',
+      'notification',
+      'im',
+      'workflow',
+      'audit',
+    ],
+  },
+  {
+    key: 'operation',
+    title: '运营管理',
+    collapsedLimit: 6,
+    moduleKeys: ['crm', 'srm', 'scm', 'wms', 'erp', 'finance', 'hrm', 'pm'],
+  },
+  {
+    key: 'production',
+    title: '生产制造',
+    collapsedLimit: 6,
+    moduleKeys: ['mes', 'pdca', 'qms', 'ehs', 'lims', 'pdm', 'rd'],
+  },
+  {
+    key: 'intelligent',
+    title: '智能与数据',
+    collapsedLimit: 6,
+    moduleKeys: ['ai', 'bi', 'analytics', 'report', 'search', 'portal', 'gis', 'mobile', 'lowcode'],
+  },
 ] as const;
 
-export type ModuleSectionKey = typeof MODULE_SECTIONS[number]['key'];
+export type ModuleSectionKey = (typeof MODULE_SECTIONS)[number]['key'];
 
 interface ModuleSectionProps {
   title: string;
@@ -29,7 +60,13 @@ interface ModuleSectionProps {
   size?: 'large' | 'medium' | 'small';
 }
 
-export const ModuleSection: React.FC<ModuleSectionProps> = ({ title, cards, collapsedLimit, onCardClick, size = 'medium' }) => {
+export const ModuleSection: React.FC<ModuleSectionProps> = ({
+  title,
+  cards,
+  collapsedLimit,
+  onCardClick,
+  size = 'medium',
+}) => {
   const [collapsed, setCollapsed] = useState(cards.length > collapsedLimit);
   const shouldCollapse = cards.length > collapsedLimit;
   const visibleCards = collapsed && shouldCollapse ? cards.slice(0, collapsedLimit) : cards;
@@ -39,22 +76,38 @@ export const ModuleSection: React.FC<ModuleSectionProps> = ({ title, cards, coll
   return (
     <Box sx={{ mb: 3 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary' }}>
+        <Typography
+          variant='subtitle1'
+          sx={{ fontWeight: 600, color: 'text.primary' }}
+        >
           {title}
-          <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+          <Typography
+            component='span'
+            variant='caption'
+            color='text.secondary'
+            sx={{ ml: 1 }}
+          >
             {cards.length} 项
           </Typography>
         </Typography>
         {shouldCollapse ? (
           <Tooltip title={collapsed ? '展开全部' : '收起'}>
-            <IconButton size="small" onClick={() => setCollapsed((v) => !v)} aria-label="toggle section">
+            <IconButton
+              size='small'
+              onClick={() => setCollapsed((v) => !v)}
+              aria-label='toggle section'
+            >
               {collapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
             </IconButton>
           </Tooltip>
         ) : null}
       </Box>
 
-      <Collapse in={!collapsed || !shouldCollapse} timeout={220} unmountOnExit={false}>
+      <Collapse
+        in={!collapsed || !shouldCollapse}
+        timeout={220}
+        unmountOnExit={false}
+      >
         <Box
           sx={{
             display: 'grid',
@@ -68,13 +121,22 @@ export const ModuleSection: React.FC<ModuleSectionProps> = ({ title, cards, coll
           }}
         >
           {visibleCards.map((c) => (
-            <ModuleCard key={c.title} item={c} onClick={() => onCardClick?.(c)} size={size} />
+            <ModuleCard
+              key={c.title}
+              item={c}
+              onClick={() => onCardClick?.(c)}
+              size={size}
+            />
           ))}
         </Box>
       </Collapse>
 
       {shouldCollapse && collapsed ? (
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block', textAlign: 'right' }}>
+        <Typography
+          variant='caption'
+          color='text.secondary'
+          sx={{ mt: 0.75, display: 'block', textAlign: 'right' }}
+        >
           已折叠 {cards.length - collapsedLimit} 项，点击 ↑ 展开全部
         </Typography>
       ) : null}

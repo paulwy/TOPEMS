@@ -49,10 +49,10 @@
 
 | 指标 | 上一版声明 | 真实值（2026.08.05） | 偏差说明 |
 |------|-----------|---------------------|---------|
-| 导航模块数 | 32 | **32** | ✅ 一致（[lazy.ts](file:///Users/air/TOPEMS/apps/web/src/lib/navigation/modules/lazy.ts#L6-L39) 精确注册） |
-| 路由模块数 | 32 | **32** | ✅ 一致（[modules/*/config.ts](file:///Users/air/TOPEMS/apps/web/src/modules) 共 32 个独立 config 文件） |
+| 导航模块数 | 32 | **32** | ✅ 一致（[lazy.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/lib/navigation/modules/lazy.ts#L6-L39) 精确注册） |
+| 路由模块数 | 32 | **32** | ✅ 一致（[modules/*/config.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/modules) 共 32 个独立 config 文件） |
 | 前端 API 模块数 | 43（5 个缺失） | **49**（实际 3 个独立缺失 + lowcode 完全空白） | 新增：ticket、tenant、voucherTemplate、system、consolidation、consolidation-contract、crmFinance、financialReport、external-erp、email、feedback、search、dict、master、bff 等 |
-| 后端 API 映射表 | 未实施 | ✅ **已实施** | [moduleMapping.ts](file:///Users/air/TOPEMS/apps/web/src/lib/navigation/moduleMapping.ts) 已包含 28 个模块 + subModules 嵌套 |
+| 后端 API 映射表 | 未实施 | ✅ **已实施** | [moduleMapping.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/lib/navigation/moduleMapping.ts) 已包含 28 个模块 + subModules 嵌套 |
 | 页面总数 | 454 | **520+** | 新增约 66 页：低代码 10 / RD 22 / CRM 19 / Finance 26 / Monitor 11 / ... |
 | 已标准化页面数 | ~296（65%） | **~100**（19%） | 上一版严重高估。真实 418 处匹配分布在 100 个文件，即只有 ~100 页接入了 ListPageTemplate/CrudPage/BffDataTable |
 | 注册图标数 | 150+ 无字母 | 基本到位 | 未深入审计 |
@@ -161,7 +161,7 @@ export const lowcodeAppsApi = {
 #### 1.3 后端服务落点
 
 - **生产形态**：新独立服务 `svc/lowcode`（暂不需要，只定义好路由前缀 `/api/lowcode/*`，等后端团队有排期再落服务）
-- **开发/演示形态**：通过 [vite.config.ts](file:///Users/air/TOPEMS/apps/web/vite.config.ts) 的 proxy 临时指向**任意占位 HTTP 服务**（先 mock 后端返回，前端优先打通）
+- **开发/演示形态**：通过 [vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts) 的 proxy 临时指向**任意占位 HTTP 服务**（先 mock 后端返回，前端优先打通）
 - **moduleMapping 追加**：`lowcode: { service: 'lowcode', module: 'lowcode', apiBasePath: '/api/lowcode' }`
 
 #### 1.4 10 个页面的 API 接入改造
@@ -187,7 +187,7 @@ export const lowcodeAppsApi = {
 
 上一版方案完全漏掉这个模块。自动化 = 工作流（what to run）+ 集成（where to get data）+ 触发（when to run）+ 低代码（UI to present result）的编排层。
 
-**路由与导航**：在 [lazy.ts](file:///Users/air/TOPEMS/apps/web/src/lib/navigation/modules/lazy.ts) 注册第 33 个 automation 模块，插入 order 70（在 workflow 与 integration 之间）：
+**路由与导航**：在 [lazy.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/lib/navigation/modules/lazy.ts) 注册第 33 个 automation 模块，插入 order 70（在 workflow 与 integration 之间）：
 
 | 子路由 | 页面（新建） | 功能 |
 |--------|-------------|------|

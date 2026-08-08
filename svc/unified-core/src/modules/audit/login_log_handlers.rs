@@ -9,7 +9,7 @@ use uuid::Uuid;
 use crate::AppState;
 use topems_shared::{api_error, api_success, ApiResponse};
 
-use super::models::{
+use super::login_log_models::{
     DeleteLoginLogRequest, LoginLog, LoginLogListResponse, LoginLogQuery, RecordLoginRequest,
 };
 

@@ -15,12 +15,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
   const [hasNewNotification, setHasNewNotification] = useState(false);
   const { user, isAuthenticated } = useAuth();
 
-  const {
-    unreadCount,
-    addNotification,
-    fetchNotifications,
-    fetchUnreadCount,
-  } = useNotificationState();
+  const { unreadCount, addNotification, fetchNotifications, fetchUnreadCount } =
+    useNotificationState();
 
   const handleNewNotification = useCallback(
     (notification: Notification) => {
@@ -33,9 +29,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
 
   const userId = user?.id;
 
-  const {
-    isConnected,
-  } = useNotificationWebSocket({
+  const { isConnected } = useNotificationWebSocket({
     userId: isAuthenticated ? (userId ?? '') : '',
     onNotification: handleNewNotification as unknown as (
       notification: Record<string, unknown>

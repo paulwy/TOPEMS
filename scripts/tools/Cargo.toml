@@ -1,0 +1,11 @@
+[package]
+name = "hash_password"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "hash_password"
+path = "hash_password.rs"
+
+[dependencies]
+bcrypt = "0.15"

@@ -376,10 +376,12 @@ pub async fn delete_email(
         }
     }
 
-    match sqlx::query("UPDATE core_emails SET deleted_at = NOW() WHERE id = $1")
-        .bind(email_id)
-        .execute(&pool)
-        .await
+    match sqlx::query(
+        "UPDATE core_emails SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(email_id)
+    .execute(&pool)
+    .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
             "success": true,

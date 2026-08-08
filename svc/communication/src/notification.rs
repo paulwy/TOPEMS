@@ -1313,7 +1313,19 @@ pub async fn run_auto_archive(
         }));
     }
 
-    let count: i64 = sqlx::query_scalar(
+    let archived_count: i64 = sqlx::query_scalar(
+        r#"
+        UPDATE core_notifications
+        SET is_archived = true
+        WHERE created_at < NOW() - INTERVAL '30 days' AND is_archived = false AND deleted_at IS NULL
+        RETURNING COUNT(*)
+        "#,
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
+
+    let deleted_count: i64 = sqlx::query_scalar(
         r#"
         UPDATE core_notifications
         SET deleted_at = NOW()
@@ -1324,6 +1336,8 @@ pub async fn run_auto_archive(
     .fetch_one(&pool)
     .await
     .unwrap_or(0);
+
+    let count: i64 = archived_count + deleted_count;
 
     Json(serde_json::json!({
         "success": true,

@@ -332,7 +332,7 @@ unified-core 中间件栈 (从外层到内层):
 | **向量存储** | [lib/src/vector_store.rs](file:///Users/xingzhai/TOPEMS/lib/src/vector_store.rs) | Redis 向量搜索 |
 | **AI 客户端** | [lib/src/ai_client/](file:///Users/xingzhai/TOPEMS/lib/src/ai_client/) | Ollama / Embedding 客户端 |
 | **Saga** | [lib/src/saga/](file:///Users/xingzhai/TOPEMS/lib/src/saga/) | 分布式 Saga 编排 |
-| **🆕 Shared Bootstrap（V2 三段式，28/28 = 100%）** | [lib/shared-bootstrap/src/lib.rs](file:///Users/air/TOPEMS/lib/shared-bootstrap/src/lib.rs) | `ServiceConfig → bootstrap_service → build_application → run` 四 API 统一启动模板；三种复杂度模式 A/B/C；auth/rls/rate-limit/CORS/Prometheus 零差异 |
+| **🆕 Shared Bootstrap（V2 三段式，28/28 = 100%）** | [lib/shared-bootstrap/src/lib.rs](file:///Users/xingzhai/TOPEMS/lib/shared-bootstrap/src/lib.rs) | `ServiceConfig → bootstrap_service → build_application → run` 四 API 统一启动模板；三种复杂度模式 A/B/C；auth/rls/rate-limit/CORS/Prometheus 零差异 |
 
 ### 3.5 服务启动流程（V66.2 V2 统一模板，28/28 服务 100%）
 

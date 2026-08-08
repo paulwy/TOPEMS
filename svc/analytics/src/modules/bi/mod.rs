@@ -7,12 +7,15 @@ pub mod comparison_analysis;
 pub mod dashboard;
 pub mod data_drilldown;
 pub mod dataset;
+pub mod dataset_whitelist;
 pub mod datasource;
 pub mod multidimensional_analysis;
 pub mod plugin;
 pub mod predictive_analysis;
 pub mod row_level_permission;
 pub mod self_service_report;
+#[cfg(test)]
+mod sql_injection_tests;
 pub mod sync_records;
 pub mod visualization;
 pub mod websocket;

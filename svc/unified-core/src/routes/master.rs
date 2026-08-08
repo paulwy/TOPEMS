@@ -133,65 +133,66 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             require_permission("tenant:write"),
         ));
 
-    let dict_read = Router::new()
-        .route(
-            "/dict/dict-types",
-            get(modules::dict::handlers::list_dict_types),
-        )
-        .route(
-            "/dict/dict-types/{id}",
-            get(modules::dict::handlers::get_dict_type),
-        )
-        .route(
-            "/dict/dict-types/{dict_type_id}/items",
-            get(modules::dict::handlers::list_dict_items),
-        )
-        .route(
-            "/dict/dict-types/{dict_type_id}/items/export",
-            get(modules::dict::handlers::export_dict_items),
-        )
-        .route(
-            "/dict/dict-items/{id}",
-            get(modules::dict::handlers::get_dict_item),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("system:read"),
-        ));
-
-    let dict_write = Router::new()
-        .route(
-            "/dict/dict-types",
-            post(modules::dict::handlers::create_dict_type),
-        )
-        .route(
-            "/dict/dict-types/{id}",
-            put(modules::dict::handlers::update_dict_type),
-        )
-        .route(
-            "/dict/dict-types/{id}",
-            delete(modules::dict::handlers::delete_dict_type),
-        )
-        .route(
-            "/dict/dict-items",
-            post(modules::dict::handlers::create_dict_item),
-        )
-        .route(
-            "/dict/dict-items/batch",
-            post(modules::dict::handlers::batch_create_dict_items),
-        )
-        .route(
-            "/dict/dict-items/{id}",
-            put(modules::dict::handlers::update_dict_item),
-        )
-        .route(
-            "/dict/dict-items/{id}",
-            delete(modules::dict::handlers::delete_dict_item),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("system:write"),
-        ));
+    // V68.1 A2.3: dict 路由迁移到 svc/master-data，后续通过服务发现代理 /dict/* → 主数据服务
+    // let dict_read = Router::new()
+    //     .route(
+    //         "/dict/dict-types",
+    //         get(modules::dict::handlers::list_dict_types),
+    //     )
+    //     .route(
+    //         "/dict/dict-types/{id}",
+    //         get(modules::dict::handlers::get_dict_type),
+    //     )
+    //     .route(
+    //         "/dict/dict-types/{dict_type_id}/items",
+    //         get(modules::dict::handlers::list_dict_items),
+    //     )
+    //     .route(
+    //         "/dict/dict-types/{dict_type_id}/items/export",
+    //         get(modules::dict::handlers::export_dict_items),
+    //     )
+    //     .route(
+    //         "/dict/dict-items/{id}",
+    //         get(modules::dict::handlers::get_dict_item),
+    //     )
+    //     .layer(axum::middleware::from_fn_with_state(
+    //         state.clone(),
+    //         require_permission("system:read"),
+    //     ));
+    //
+    // let dict_write = Router::new()
+    //     .route(
+    //         "/dict/dict-types",
+    //         post(modules::dict::handlers::create_dict_type),
+    //     )
+    //     .route(
+    //         "/dict/dict-types/{id}",
+    //         put(modules::dict::handlers::update_dict_type),
+    //     )
+    //     .route(
+    //         "/dict/dict-types/{id}",
+    //         delete(modules::dict::handlers::delete_dict_type),
+    //     )
+    //     .route(
+    //         "/dict/dict-items",
+    //         post(modules::dict::handlers::create_dict_item),
+    //     )
+    //     .route(
+    //         "/dict/dict-items/batch",
+    //         post(modules::dict::handlers::batch_create_dict_items),
+    //     )
+    //     .route(
+    //         "/dict/dict-items/{id}",
+    //         put(modules::dict::handlers::update_dict_item),
+    //     )
+    //     .route(
+    //         "/dict/dict-items/{id}",
+    //         delete(modules::dict::handlers::delete_dict_item),
+    //     )
+    //     .layer(axum::middleware::from_fn_with_state(
+    //         state.clone(),
+    //         require_permission("system:write"),
+    //     ));
 
     let menu_read = Router::new()
         .route("/menu/groups", get(modules::menu::handlers::list_groups))
@@ -275,8 +276,9 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
 
     tenant_read
         .merge(tenant_write)
-        .merge(dict_read)
-        .merge(dict_write)
+        // V68.1 A2.3: dict 路由合并到 svc/master-data
+        // .merge(dict_read)
+        // .merge(dict_write)
         .merge(menu_read)
         .merge(menu_write)
         .merge(mdm_read)

@@ -119,6 +119,13 @@ async fn main() -> anyhow::Result<()> {
 
     let app_state = AppState::new(ctx.db.clone(), ctx.event_publisher.clone()).await;
 
+    // V68.1 A2.4.2: 帮助中心数据表初始化（FAQ / Guides / Lessons）
+    if let Err(e) = modules::help::init_database(&ctx.db).await {
+        tracing::warn!("help center tables skipped: {}", e);
+    } else {
+        tracing::info!("✅ 帮助中心模块已初始化（Portal BFF）");
+    }
+
     // V33.0 Portal BFF Phase 3: GraphQL 聚合层
     let graphql_schema = modules::graphql_schema::build_schema(app_state.clone());
 
@@ -302,6 +309,31 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/navigation/pinned/reorder",
             put(modules::navigation::reorder_pinned_apps),
+        )
+        // ===== V68.1 A2.4.2: 帮助中心（FAQ + 新手指南） =====
+        .route("/help/faqs", get(modules::help::faq::list_faqs))
+        .route(
+            "/help/faqs/categories",
+            get(modules::help::faq::get_faq_categories),
+        )
+        .route("/help/faqs/{id}", get(modules::help::faq::get_faq))
+        .route("/help/guides", get(modules::help::guide::list_guides))
+        .route(
+            "/help/guides/categories",
+            get(modules::help::guide::get_guide_categories),
+        )
+        .route("/help/guides/{id}", get(modules::help::guide::get_guide))
+        // Help 管理操作（写入操作需要认证；当前 Portal BFF 无细粒度 require_permission，
+        // 后续可基于 Portal 权限体系补充 help:write 守卫）
+        .route("/help/faqs", post(modules::help::faq::create_faq))
+        .route(
+            "/help/faqs/{id}",
+            put(modules::help::faq::update_faq).delete(modules::help::faq::delete_faq),
+        )
+        .route("/help/guides", post(modules::help::guide::create_guide))
+        .route(
+            "/help/guides/{guide_id}/lessons",
+            post(modules::help::guide::add_lesson),
         )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),

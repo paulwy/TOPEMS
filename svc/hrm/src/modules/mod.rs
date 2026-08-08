@@ -4,7 +4,7 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared::{
-    AuthState, CacheService, EventPublisher, FieldEncryptionService,
+    event::EventPublisher, AuthState, CacheService, FieldEncryptionService,
     LocalInMemoryCache as InMemoryCache, SystemMetrics,
 };
 

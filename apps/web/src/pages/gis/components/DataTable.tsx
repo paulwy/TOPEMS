@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable as CommonDataTable } from '@/components/ui/DataTable';
+import { DataTable as CommonDataTable } from '@/components/common/DataTable';
 import { StatusChip } from './StatusChip';
 import type {
   DevicePoint,
@@ -48,7 +48,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
         cell: ({ row }) => <StatusChip status={row.original.status} />,
       },
     ],
-    [t],
+    [t]
   );
 
   const pipelineColumns = useMemo<ColumnDef<Pipeline>[]>(
@@ -91,7 +91,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
         cell: ({ row }) => <StatusChip status={row.original.status} />,
       },
     ],
-    [t],
+    [t]
   );
 
   const storageLocationColumns = useMemo<ColumnDef<StorageLocation>[]>(
@@ -121,7 +121,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
         ),
       },
     ],
-    [t],
+    [t]
   );
 
   const evidenceRecordColumns = useMemo<ColumnDef<EvidenceRecord>[]>(
@@ -148,7 +148,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
           row.original.recorded_at ? new Date(row.original.recorded_at).toLocaleString() : '',
       },
     ],
-    [t],
+    [t]
   );
 
   const factoryMapColumns = useMemo<ColumnDef<FactoryMap>[]>(
@@ -175,7 +175,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
           row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : '',
       },
     ],
-    [t],
+    [t]
   );
 
   const businessLocationColumns = useMemo<ColumnDef<BusinessLocation>[]>(
@@ -206,7 +206,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
         cell: ({ row }) => <StatusChip status={row.original.status} />,
       },
     ],
-    [t],
+    [t]
   );
 
   const columns = useMemo(() => {
@@ -248,7 +248,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
       showCreate={false}
       emptyMessage={t('gis.index.empty_no_data')}
       compact
-      getRowKey={(row) => (row as { id: string }).id}
+      getRowKey={(row: unknown) => (row as { id: string }).id}
     />
   );
 };

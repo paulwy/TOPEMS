@@ -43,7 +43,9 @@
   ],
   "author": "TOPEMS Team",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "react-is": "^19.2.8"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/eslint-plugin-jsx-a11y": "^6",

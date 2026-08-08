@@ -213,7 +213,10 @@ const SrmDashboardPage: React.FC = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: t('srm.order.breadcrumb.home'), href: '/dashboard' }, { label: 'SRM' }]}
+        breadcrumbs={[
+          { label: t('srm.order.breadcrumb.home'), href: '/dashboard' },
+          { label: 'SRM' },
+        ]}
         stats={stats}
         charts={charts}
         loading={loading}

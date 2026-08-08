@@ -30,7 +30,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    // 兼容旧表：确保 deleted_at 列存在
+    // 兼容旧表：确保 deleted_at 列存在（V68.2-3 起 is_deleted 列已移除）
     sqlx::query("ALTER TABLE core_files ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP")
         .execute(pool)
         .await?;

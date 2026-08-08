@@ -81,7 +81,13 @@ export const assetNavConfig: ModuleNavConfig = {
   suite: 'collaboration',
   order: 91,
   navItems: [
-    { code: 'asset-list', label: '资产列表', path: ASSET_PATHS.list, group: 'business', showInSidebar: true },
+    {
+      code: 'asset-list',
+      label: '资产列表',
+      path: ASSET_PATHS.list,
+      group: 'business',
+      showInSidebar: true,
+    },
     {
       code: 'asset-categories',
       label: '资产分类',

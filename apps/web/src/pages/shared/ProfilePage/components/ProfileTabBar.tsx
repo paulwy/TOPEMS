@@ -1,14 +1,5 @@
 import React, { useRef } from 'react';
-import {
-  Card,
-  CardContent,
-  Tabs,
-  Tab,
-  Avatar,
-  IconButton,
-  Box,
-  Typography,
-} from '@mui/material';
+import { Card, CardContent, Tabs, Tab, Avatar, IconButton, Box, Typography } from '@mui/material';
 import { User, Shield, Activity, Bell, Star, Camera, RefreshCw } from 'lucide-react';
 import type { User as UserType } from '@/api/iam';
 
@@ -18,11 +9,7 @@ interface UserCardProps {
   onAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const UserCard: React.FC<UserCardProps> = ({
-  user,
-  avatarUrl,
-  onAvatarUpload,
-}) => {
+const UserCard: React.FC<UserCardProps> = ({ user, avatarUrl, onAvatarUpload }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -47,8 +34,7 @@ const UserCard: React.FC<UserCardProps> = ({
                 fontSize: 36,
               }}
             >
-              {user.full_name?.charAt(0).toUpperCase() ||
-                user.username.charAt(0).toUpperCase()}
+              {user.full_name?.charAt(0).toUpperCase() || user.username.charAt(0).toUpperCase()}
             </Avatar>
             <IconButton
               onClick={() => fileInputRef.current?.click()}
@@ -210,12 +196,19 @@ const ProfileTabBar: React.FC<ProfileTabBarProps> = ({
       }}
     >
       <Box>
-        <UserCard user={user} avatarUrl={avatarUrl} onAvatarUpload={onAvatarUpload} />
+        <UserCard
+          user={user}
+          avatarUrl={avatarUrl}
+          onAvatarUpload={onAvatarUpload}
+        />
       </Box>
       <Box>
         <Card>
           <CardContent sx={{ pb: 0 }}>
-            <TabBar activeTab={activeTab} onTabChange={onTabChange} />
+            <TabBar
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+            />
           </CardContent>
         </Card>
       </Box>

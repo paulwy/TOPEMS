@@ -1003,11 +1003,11 @@ pub async fn list_inspections(
                 .into_iter()
                 .map(|r| InspectionResponse {
                     id: r.id.to_string(),
-                    equipment_id: r.equipment_id.unwrap_or_default().to_string(),
+                    equipment_id: r.equipment_id.map(|u| u.to_string()).unwrap_or_default(),
                     equipment_code: r.equipment_code.unwrap_or_default(),
                     equipment_name: r.equipment_name.unwrap_or_default(),
                     inspector: r.inspector.unwrap_or_default(),
-                    inspection_date: r.inspection_date.map(|d| d.to_string()).unwrap_or_default(),
+                    inspection_date: datetime_to_string(r.inspection_date),
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1019,7 +1019,7 @@ pub async fn list_inspections(
                         .noiselevel
                         .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
                     status: r.status.unwrap_or_else(|| "normal".to_string()),
-                    items: r.items.map(serde_json::Value::String),
+                    items: r.items.and_then(|s| serde_json::from_str(&s).ok()),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
                     created_at: naive_to_utc(Some(r.created_at.unwrap_or_default())).to_rfc3339(),
@@ -1118,11 +1118,11 @@ pub async fn create_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                equipment_id: r.equipment_id.unwrap_or_default().to_string(),
+                equipment_id: r.equipment_id.to_string(),
                 equipment_code: r.equipment_code.unwrap_or_default(),
                 equipment_name: r.equipment_name.unwrap_or_default(),
-                inspector: r.inspector.unwrap_or_default(),
-                inspection_date: r.inspection_date.map(|d| d.to_string()).unwrap_or_default(),
+                inspector: r.inspector,
+                inspection_date: r.inspection_date,
                 location: r.location,
                 temperature: r
                     .temperature
@@ -1134,7 +1134,7 @@ pub async fn create_inspection(
                     .noiselevel
                     .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
                 status: r.status.unwrap_or_else(|| "normal".to_string()),
-                items: r.items.map(serde_json::Value::String),
+                items: r.items,
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
                 created_at: naive_to_utc(Some(r.created_at.unwrap_or_default())).to_rfc3339(),
