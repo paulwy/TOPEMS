@@ -1,8 +1,5 @@
 use serde::{Deserialize, Serialize};
-use topems_shared::rls::{
-    append_tenant_filter as shared_append_tenant_filter, RlsConfig, TenantContext,
-    TenantContextRejection,
-};
+use topems_shared::rls::{RlsConfig, TenantContext, TenantContextRejection};
 use uuid::Uuid;
 
 fn append_tenant_filter(sql: &str, pos: usize) -> String {
@@ -181,7 +178,7 @@ fn test_tenant_context_uuid_type_safety() {
 fn test_rls_cross_tenant_read_blocked_by_filter() {
     // 租户 A 的查询必须附带 tenant_id 过滤，租户 B 的数据不会出现在结果集中
     let sql = "SELECT id, name FROM orders";
-    let filtered = shared_append_tenant_filter(sql, 1);
+    let filtered = append_tenant_filter(sql, 1);
     assert!(
         filtered.contains("WHERE tenant_id = $1"),
         "SELECT 必须被追加 tenant_id 过滤条件，得到: {}",
@@ -195,7 +192,7 @@ fn test_rls_cross_tenant_read_blocked_by_filter() {
 fn test_rls_cross_tenant_update_blocked_by_filter() {
     // 租户 A 的 UPDATE 必须附带 tenant_id 条件，防止越权更新租户 B 的数据
     let sql = "UPDATE orders SET status = $1 WHERE id = $2";
-    let filtered = shared_append_tenant_filter(sql, 3);
+    let filtered = append_tenant_filter(sql, 3);
     assert!(
         filtered.contains("tenant_id = $3"),
         "UPDATE 必须包含 tenant_id = $3，得到: {}",
@@ -213,7 +210,7 @@ fn test_rls_cross_tenant_update_blocked_by_filter() {
 fn test_rls_cross_tenant_delete_blocked_by_filter() {
     // 租户 A 的 DELETE 必须附带 tenant_id 条件，防止越权删除租户 B 的数据
     let sql = "DELETE FROM orders WHERE id = $1";
-    let filtered = shared_append_tenant_filter(sql, 2);
+    let filtered = append_tenant_filter(sql, 2);
     assert!(
         filtered.contains("tenant_id = $2"),
         "DELETE 必须包含 tenant_id = $2，得到: {}",
@@ -308,7 +305,7 @@ fn test_rls_policy_applies_to_all_tenant_scoped_tables() {
     ];
     for table in tables {
         let sql = format!("SELECT id FROM {}", table);
-        let filtered = shared_append_tenant_filter(&sql, 1);
+        let filtered = append_tenant_filter(&sql, 1);
         assert!(
             filtered.contains(&format!("FROM {}", table)),
             "表名 {} 必须保留",

@@ -14,13 +14,11 @@ import {
 
 describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
   describe('分类正确性：Group1 / Group2 服务集合', () => {
-    it('Group1 包含 iam/workflow/file/master/migration/core/help/doc/monitor/automation/plugin/tenant（K8s /api/core/* 转发到 unified-core:8000）', () => {
+    it('Group1 包含 iam/flow/file/migration/core/help/doc/monitor/automation/plugin/tenant（K8s /api/core/* 转发到 unified-core:8000）', () => {
       [
         'iam',
-        'workflow',
-        'flow',
+        'flow', // workflow 已重命名为 flow
         'file',
-        'master',
         'migration',
         'core',
         'help',
@@ -94,8 +92,9 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
       expect(buildApiPath({ service: 'file', path: 'upload' })).toBe('/api/core/file/upload');
     });
     it('workflow/file/master/migration/help/doc 全属于 Group1（/api/core 前缀）；mail/im/notification/comm 外迁到 Group2（/api 前缀，无 core）', () => {
-      expect(buildApiPath({ service: 'workflow', path: '/definitions' })).toBe(
-        '/api/core/workflow/definitions'
+      // workflow 是别名，实际服务为 'flow'（unified-core 虚拟服务）
+      expect(buildApiPath({ service: 'flow', path: '/definitions' })).toBe(
+        '/api/core/flow/definitions'
       );
       expect(buildApiPath({ service: 'file', path: '/upload' })).toBe('/api/core/file/upload');
       // V66.1: mail/im/notification/comm 已外迁到 communication 独立服务（Group2，端口 8084）
@@ -165,9 +164,9 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
         '/api/notification/notifications/unread-count'
       );
     });
-    it('workflow 使用 Group1 前缀', () => {
-      expect(API_PATHS.workflow.definitions).toBe('/api/core/workflow/definitions');
-      expect(API_PATHS.workflow.task('T-1').startsWith('/api/core/workflow/')).toBe(true);
+    it('workflow 使用 Group1 前缀（实际服务名为 flow）', () => {
+      expect(API_PATHS.workflow.definitions).toBe('/api/core/flow/definitions');
+      expect(API_PATHS.workflow.task('T-1').startsWith('/api/core/flow/')).toBe(true);
     });
     it('pm/wms/erp/scm/qms/mes/ai/file 各自 Group 正确', () => {
       expect(API_PATHS.pm.projects).toBe('/api/pm/projects');
@@ -191,7 +190,8 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
       expect(SERVICE_CODES.mes).toBe('mes');
       expect(SERVICE_CODES.crm).toBe('crm');
       expect(SERVICE_CODES.iam).toBe('iam');
-      expect(SERVICE_CODES.workflow).toBe('workflow');
+      // workflow 是别名，实际服务为 'flow'
+      expect(SERVICE_CODES.workflow).toBe('flow');
       expect(SERVICE_CODES.monitor).toBe('monitor');
       expect(SERVICE_CODES.lowcode).toBe('lowcode');
       expect(SERVICE_CODES.oa).toBe('oa');

@@ -23,7 +23,6 @@ fn build_claims(tenant_id: Option<String>, role: &str, is_superuser: bool) -> Cl
         department_id: None,
         position_id: None,
         position_code: None,
-        iss: None,
     }
 }
 
@@ -158,7 +157,6 @@ fn test_claims_tenant_serde_roundtrip() {
         department_id: Some(Uuid::new_v4().to_string()),
         position_id: None,
         position_code: Some("MGR".to_string()),
-        iss: Some("topems".to_string()),
     };
 
     let json = serde_json::to_string(&original).expect("serialize claims to JSON");
@@ -178,7 +176,6 @@ fn test_claims_tenant_serde_roundtrip() {
     assert_eq!(deserialized.is_superuser, original.is_superuser);
     assert_eq!(deserialized.email, original.email);
     assert_eq!(deserialized.department, original.department);
-    assert_eq!(deserialized.iss, original.iss);
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]

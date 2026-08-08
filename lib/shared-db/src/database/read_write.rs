@@ -77,8 +77,8 @@ impl ReadWritePool {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_read_write_pool_creation() {
+    #[tokio::test]
+    async fn test_read_write_pool_creation() {
         // 测试创建读写分离池的基本逻辑
         let config = ReadWriteConfig {
             primary_pool: PgPool::connect_lazy("postgres://test").unwrap(),
