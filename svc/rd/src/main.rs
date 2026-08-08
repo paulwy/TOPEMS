@@ -9,7 +9,6 @@
 //! - stateful_public：/health + /health/detailed（带 IAM HTTP / DB 双重健康检查
 //! - 配置 Config::load() + rs_plugin 自动注册
 
-use anyhow::Result;
 use axum::{routing::get, Json, Router};
 use prometheus::{default_registry, Gauge};
 use serde::Serialize;

@@ -12,6 +12,7 @@ use crate::modules::audit::log_audit_event;
 use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
 
+#[allow(dead_code)]
 fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
     claims
         .tenant_id

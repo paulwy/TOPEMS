@@ -3,7 +3,6 @@
 //! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
 
 use axum::{routing::get, Router};
-use topems_shared::get_api_info_handler;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use utoipa::OpenApi;
 
