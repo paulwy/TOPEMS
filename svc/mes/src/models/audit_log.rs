@@ -2,4 +2,5 @@
 //!
 //! 详见 [topems_shared_bootstrap::audit] 模块
 
+#[allow(unused_imports)]
 pub use topems_shared_bootstrap::audit::{AuditEventParams, AuditLog, ListAuditLogsQuery};

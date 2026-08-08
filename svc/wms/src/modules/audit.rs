@@ -4,7 +4,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use topems_shared::ApiResponse;
 use uuid::Uuid;

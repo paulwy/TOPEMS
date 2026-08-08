@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 pub use topems_shared_bootstrap::audit::{AuditEventParams, AuditLog, ListAuditLogsQuery};
 
 use serde::{Deserialize, Serialize};
