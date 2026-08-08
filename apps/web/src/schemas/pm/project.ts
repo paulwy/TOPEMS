@@ -61,6 +61,7 @@ export const projectSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 200,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'code',
@@ -69,6 +70,7 @@ export const projectSchema: EntitySchema = {
       required: true,
       readonlyOnEdit: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'project_type',
@@ -132,6 +134,7 @@ export const projectSchema: EntitySchema = {
       type: 'text',
       listWidth: 100,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'start_date',

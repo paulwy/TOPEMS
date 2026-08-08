@@ -61,6 +61,7 @@ export const employeeSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'name',
@@ -69,6 +70,7 @@ export const employeeSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'gender',
@@ -99,6 +101,7 @@ export const employeeSchema: EntitySchema = {
       label: '职位',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'joblevel',
@@ -111,12 +114,14 @@ export const employeeSchema: EntitySchema = {
       label: '邮箱',
       type: 'text',
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'phone',
       label: '电话',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'hire_date',

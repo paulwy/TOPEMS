@@ -21,6 +21,7 @@ export const customerSchema: EntitySchema = {
       required: true,
       readonlyOnEdit: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'customer_name',
@@ -28,6 +29,7 @@ export const customerSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'industry',
@@ -72,12 +74,14 @@ export const customerSchema: EntitySchema = {
       label: '电话',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'email',
       label: '邮箱',
       type: 'text',
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'address',

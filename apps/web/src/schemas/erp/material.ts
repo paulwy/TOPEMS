@@ -30,6 +30,7 @@ export const materialSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'material_name',
@@ -38,12 +39,14 @@ export const materialSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'specification',
       label: i18n.t('schema:erp.material.specification.label'),
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'category',
@@ -66,6 +69,7 @@ export const materialSchema: EntitySchema = {
       label: i18n.t('schema:erp.material.unit.label'),
       type: 'text',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'unit_price',
@@ -111,6 +115,7 @@ export const materialSchema: EntitySchema = {
       label: i18n.t('schema:erp.material.barcode.label'),
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'weight',
