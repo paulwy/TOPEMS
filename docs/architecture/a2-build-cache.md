@@ -253,5 +253,5 @@ cargo tarpaulin --workspace \
 - [x] CI 中 `CARGO_INCREMENTAL=0` + `SCCACHE_CACHE_SIZE=50G`（`.github/workflows/ci.yml:53-56`）
 - [x] 5 服务 cache key 按 `Swatinem/rust-cache` + prefix-key + toolchain 前缀配置（§1.1）
 - [x] Phase 1.0 准入：`cargo test -p <crate> --test smoke` 5/5 全绿
-- [ ] `.cargo/config.toml` `[profile.release]` 兜底 codegen-units=16（已补，待 CI 验证）
-- [ ] Phase 1.5（P3）：CI 新增独立 job，5 服务 smoke 并行跑作为 lightweight 准入（先于 lint/test 失败快反）
+- [x] `.cargo/config.toml` `[profile.release]` 兜底 `lto = "thin"` + `codegen-units = 16`（与 workspace Cargo.toml 对齐）
+- [x] Phase 1.5：CI `rust-smoke` 独立 job（`.github/workflows/ci.yml:124-157`），5 服务 `--test smoke` 并行，lint/test 之前快反失败
