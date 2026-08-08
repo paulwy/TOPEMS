@@ -10,7 +10,6 @@ use axum::{
     Router,
 };
 use chrono::Utc;
-use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::Row;
 use uuid::Uuid;
