@@ -263,6 +263,14 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 
 | Phase | 任务 | 范围 | 风险 | 状态 |
 |-------|------|------|------|------|
-| **Phase 1** | 为 12 张 ERP 点号 schema 表补 tenant_id | consolidation_scopes/reports/report_lines · internal_transactions · company_relations · elimination_rules · opening_balances · bank_accounts · fixed_assets · asset_depreciation_records · bank_transactions · consolidation_scope_companies | 中（回填策略） | ⏳ |
+| **Phase 1** | 为 12 张 ERP 点号 schema 表补 tenant_id | consolidation_scopes/reports/report_lines · internal_transactions · company_relations · elimination_rules · opening_balances · bank_accounts · fixed_assets · asset_depreciation_records · bank_transactions · consolidation_scope_companies | 中（回填策略） | ✅ 完成 |
+
+#### Phase 1 详情（2026-08-08 完成）
+
+- **迁移文件**: `svc/erp/migrations/20260810000001_v69_erp_dot_schema_add_tenant_id.sql`
+- **6 步流程**: ① ADD COLUMN UUID DEFAULT gen_random_uuid()（INSERT 安全网）→ ② 从 `public.companies` 回填 company_id 表 → ③ 从父表回填（scope→reports→lines · scope→elimination_rules · bank_accounts→bank_transactions · fixed_assets→depreciation_records）→ ④ gen_random_uuid() 兜底 → ⑤ SET NOT NULL → ⑥ 创建 12 条 tenant_id 索引
+- **Rust 模型适配**: `models/consolidation.rs` 7 个 FromRow 结构体（ConsolidationScope/ScopeCompany/EliminationRule/InternalTransaction/Report/ReportLine/CompanyRelation）补 `tenant_id: uuid::Uuid` 字段，对齐 `SELECT *` / `RETURNING *` 列映射
+- **INSERT 安全**: DEFAULT gen_random_uuid() 确保现有 INSERT 语句（opening_balance.rs / fixed_asset.rs / consolidation handlers）不指定 tenant_id 时仍可成功，未来 handler 更新应从 Claims 传入真实 tenant_id
+- **质量门禁**: cargo check --workspace 0 error · tsc 0 error · check-migration-names PASS · verify-schema-truth PASS · check-schema-naming PASS · checksums 补全 1 条
 | **Phase 2** | A 类 company_id → org_id 重命名 | 9 表 SQL ALTER + Rust 模型适配（HRM 133 处 + finance 40 处 + 共享表） | 中高（HRM 三列冗余 + financial_reports UNIQUE 约束重建） | ⏳ |
 | **Phase 3** | organization_id 语义统一 | HRM/GIS/AI → 合并到 tenant_id · CRM/WMS → 改名 org_id · ERP → 补 tenant_id 后删除 | 高（AI session 配置 · RLS 策略 · 跨服务查询） | ⏳ |
