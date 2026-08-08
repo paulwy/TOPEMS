@@ -4,7 +4,9 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use topems_shared_auth::security::encryption::{DataMasking, EncryptionResult, FieldEncryptionService};
+use topems_shared_auth::security::encryption::{
+    DataMasking, EncryptionResult, FieldEncryptionService,
+};
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Customer {

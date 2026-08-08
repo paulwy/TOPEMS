@@ -15,14 +15,14 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
-use topems_shared_service_client::service_client::{
-    api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
-};
-use topems_shared_core::cache::InMemoryCache;
-use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
+};
+use topems_shared_core::cache::InMemoryCache;
+use topems_shared_service_client::notification::NotificationServiceClient;
+use topems_shared_service_client::service_client::{
+    api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
 };
 
 lazy_static::lazy_static! {

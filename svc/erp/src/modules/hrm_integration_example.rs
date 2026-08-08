@@ -6,8 +6,10 @@
 
 use crate::modules::ApiState;
 use axum::{extract::State, routing::get, Json, Router};
-use topems_shared_service_client::service_client::api::hrm_api::{HrmCompany, HrmDepartment, HrmEmployee};
 use topems_shared_core::response::ApiResponse;
+use topems_shared_service_client::service_client::api::hrm_api::{
+    HrmCompany, HrmDepartment, HrmEmployee,
+};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()

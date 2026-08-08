@@ -15,7 +15,9 @@ pub async fn get_navigation_menu(
     let services = state.service_registry.list_all().await;
     let mut menu: Vec<NavigationMenu> = services
         .iter()
-        .filter(|s| s.status == topems_shared_event::service_discovery::ServiceRegistryStatus::Active)
+        .filter(|s| {
+            s.status == topems_shared_event::service_discovery::ServiceRegistryStatus::Active
+        })
         .map(|s| NavigationMenu {
             id: s.code.clone(),
             name: s.name.clone(),
@@ -70,7 +72,9 @@ pub async fn get_pinned_apps(
     let services = state.service_registry.list_all().await;
     let mut apps: Vec<PinnedApp> = services
         .iter()
-        .filter(|s| s.status == topems_shared_event::service_discovery::ServiceRegistryStatus::Active)
+        .filter(|s| {
+            s.status == topems_shared_event::service_discovery::ServiceRegistryStatus::Active
+        })
         .take(5)
         .enumerate()
         .map(|(i, s)| PinnedApp {

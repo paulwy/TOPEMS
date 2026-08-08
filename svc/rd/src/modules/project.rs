@@ -291,7 +291,10 @@ async fn create_project(
                         created_at: Some(pcreated_at),
                     };
                     if let Err(e) = publisher
-                        .publish_event(topems_shared_event::event::EventType::RdProjectCreated, payload)
+                        .publish_event(
+                            topems_shared_event::event::EventType::RdProjectCreated,
+                            payload,
+                        )
                         .await
                     {
                         tracing::warn!(
