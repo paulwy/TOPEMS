@@ -1,0 +1,961 @@
+{
+  "adminMigration|migration|services": {
+    "_comment": "file=apps/web/src/schemas/admin/migration.ts  entity=adminMigration  modu=migration  resource=services",
+    "tableKey": null
+  },
+  "adminTenant|admin|tenants": {
+    "_comment": "file=apps/web/src/schemas/admin/tenant.ts  entity=adminTenant  modu=admin  resource=tenants",
+    "tableKey": null
+  },
+  "admin_account|finance|accounts": {
+    "_comment": "file=apps/web/src/schemas/admin/account.ts  entity=admin_account  modu=finance  resource=accounts",
+    "tableKey": null
+  },
+  "admin_bank_account|erp|bankAccounts": {
+    "_comment": "file=apps/web/src/schemas/admin/bankAccount.ts  entity=admin_bank_account  modu=erp  resource=bankAccounts",
+    "tableKey": null
+  },
+  "admin_plugin|plugin|plugins": {
+    "_comment": "file=apps/web/src/schemas/admin/plugin.ts  entity=admin_plugin  modu=plugin  resource=plugins",
+    "tableKey": null
+  },
+  "announcement|erp|announcements": {
+    "_comment": "file=apps/web/src/schemas/erp/announcement.ts  entity=announcement  modu=erp  resource=announcements",
+    "tableKey": null
+  },
+  "archivedNotification|notification|archivedNotifications": {
+    "_comment": "file=apps/web/src/schemas/notification/archive.tsx  entity=archivedNotification  modu=notification  resource=archivedNotifications",
+    "tableKey": null
+  },
+  "asset_category|erp|assetCategories": {
+    "_comment": "file=apps/web/src/schemas/erp/assetCategory.ts  entity=asset_category  modu=erp  resource=assetCategories",
+    "tableKey": null
+  },
+  "asset|erp|assets": {
+    "_comment": "file=apps/web/src/schemas/erp/asset.ts  entity=asset  modu=erp  resource=assets",
+    "tableKey": null
+  },
+  "audit_plan|qms|auditPlans": {
+    "_comment": "file=apps/web/src/schemas/qms/audit.ts  entity=audit_plan  modu=qms  resource=auditPlans",
+    "tableKey": null
+  },
+  "bank_account|erp|bankAccounts": {
+    "_comment": "file=apps/web/src/schemas/erp/bankAccount.ts  entity=bank_account  modu=erp  resource=bankAccounts",
+    "tableKey": null
+  },
+  "bi_data_source|bi|dataSources": {
+    "_comment": "file=apps/web/src/schemas/bi/dataSource.ts  entity=bi_data_source  modu=bi  resource=dataSources",
+    "tableKey": null
+  },
+  "bi_report|bi|reports": {
+    "_comment": "file=apps/web/src/schemas/bi/report.ts  entity=bi_report  modu=bi  resource=reports",
+    "tableKey": null
+  },
+  "contact|crm|contacts": {
+    "_comment": "file=apps/web/src/schemas/crm/contact.ts  entity=contact  modu=crm  resource=contacts",
+    "tableKey": null
+  },
+  "crm_billing|crm|billing": {
+    "_comment": "file=apps/web/src/schemas/crm/billing.tsx  entity=crm_billing  modu=crm  resource=billing",
+    "tableKey": null
+  },
+  "crm_customer_scoring|crm|customerScoring": {
+    "_comment": "file=apps/web/src/schemas/crm/customerScoring.ts  entity=crm_customer_scoring  modu=crm  resource=customerScoring",
+    "tableKey": null
+  },
+  "crm_customer_segmentation|crm|customerSegmentation": {
+    "_comment": "file=apps/web/src/schemas/crm/customerSegmentation.ts  entity=crm_customer_segmentation  modu=crm  resource=customerSegmentation",
+    "tableKey": null
+  },
+  "crm_recommendation|crm|customerRecommendation": {
+    "_comment": "file=apps/web/src/schemas/crm/recommendation.ts  entity=crm_recommendation  modu=crm  resource=customerRecommendation",
+    "tableKey": null
+  },
+  "customer|crm|customers": {
+    "_comment": "file=apps/web/src/schemas/crm/customer.ts  entity=customer  modu=crm  resource=customers",
+    "tableKey": null
+  },
+  "customer|erp|customers": {
+    "_comment": "file=apps/web/src/schemas/erp/customer.ts  entity=customer  modu=erp  resource=customers",
+    "tableKey": null
+  },
+  "deliveryAppointment|scm|deliveryAppointments": {
+    "_comment": "file=apps/web/src/schemas/scm/deliveryAppointment.ts  entity=deliveryAppointment  modu=scm  resource=deliveryAppointments",
+    "tableKey": null
+  },
+  "dict-item|system|dict-items": {
+    "_comment": "file=apps/web/src/schemas/admin/dictionary.ts  entity=dict-item  modu=system  resource=dict-items",
+    "tableKey": null
+  },
+  "dict-type|system|dict-types": {
+    "_comment": "file=apps/web/src/schemas/admin/dictionary.ts  entity=dict-type  modu=system  resource=dict-types",
+    "tableKey": null
+  },
+  "document|doc|documents": {
+    "_comment": "file=apps/web/src/schemas/doc/document.tsx  entity=document  modu=doc  resource=documents",
+    "tableKey": null
+  },
+  "ehsAccident|ehs|accidents": {
+    "_comment": "file=apps/web/src/schemas/ehs/accident.ts  entity=ehsAccident  modu=ehs  resource=accidents",
+    "tableKey": null
+  },
+  "ehsDrill|ehs|drills": {
+    "_comment": "file=apps/web/src/schemas/ehs/drill.ts  entity=ehsDrill  modu=ehs  resource=drills",
+    "tableKey": null
+  },
+  "ehsEmergencyDrill|ehs|drills": {
+    "_comment": "file=apps/web/src/schemas/ehs/emergency.ts  entity=ehsEmergencyDrill  modu=ehs  resource=drills",
+    "tableKey": null
+  },
+  "ehsEnvironmentMonitor|ehs|environmentMonitors": {
+    "_comment": "file=apps/web/src/schemas/ehs/environment.ts  entity=ehsEnvironmentMonitor  modu=ehs  resource=environmentMonitors",
+    "tableKey": null
+  },
+  "ehsHazardousMaterial|ehs|hazardousMaterials": {
+    "_comment": "file=apps/web/src/schemas/ehs/hazardousMaterial.ts  entity=ehsHazardousMaterial  modu=ehs  resource=hazardousMaterials",
+    "tableKey": null
+  },
+  "ehsHazard|ehs|hazards": {
+    "_comment": "file=apps/web/src/schemas/ehs/hazard.ts  entity=ehsHazard  modu=ehs  resource=hazards",
+    "tableKey": null
+  },
+  "ehsHealthRecord|ehs|healthRecords": {
+    "_comment": "file=apps/web/src/schemas/ehs/healthManagement.ts  entity=ehsHealthRecord  modu=ehs  resource=healthRecords",
+    "tableKey": null
+  },
+  "ehsIncident|ehs|incidents": {
+    "_comment": "file=apps/web/src/schemas/ehs/incidentReport.ts  entity=ehsIncident  modu=ehs  resource=incidents",
+    "tableKey": null
+  },
+  "ehsInspectionPlan|ehs|inspectionPlans": {
+    "_comment": "file=apps/web/src/schemas/ehs/check.ts  entity=ehsInspectionPlan  modu=ehs  resource=inspectionPlans",
+    "tableKey": null
+  },
+  "ehsInspectionRecord|ehs|inspectionRecords": {
+    "_comment": "file=apps/web/src/schemas/ehs/check.ts  entity=ehsInspectionRecord  modu=ehs  resource=inspectionRecords",
+    "tableKey": null
+  },
+  "ehsOccupationalDiseaseCase|ehs|occupationalDiseases": {
+    "_comment": "file=apps/web/src/schemas/ehs/occupationalDisease.ts  entity=ehsOccupationalDiseaseCase  modu=ehs  resource=occupationalDiseases",
+    "tableKey": null
+  },
+  "ehsPlan|ehs|plans": {
+    "_comment": "file=apps/web/src/schemas/ehs/plan.ts  entity=ehsPlan  modu=ehs  resource=plans",
+    "tableKey": null
+  },
+  "ehsSafetyIssue|ehs|safetyIssues": {
+    "_comment": "file=apps/web/src/schemas/ehs/safetyIssue.ts  entity=ehsSafetyIssue  modu=ehs  resource=safetyIssues",
+    "tableKey": null
+  },
+  "ehsTrainingCertificate|ehs|trainingCertificates": {
+    "_comment": "file=apps/web/src/schemas/ehs/training.ts  entity=ehsTrainingCertificate  modu=ehs  resource=trainingCertificates",
+    "tableKey": null
+  },
+  "ehsTrainingPlan|ehs|trainingPlans": {
+    "_comment": "file=apps/web/src/schemas/ehs/training.ts  entity=ehsTrainingPlan  modu=ehs  resource=trainingPlans",
+    "tableKey": null
+  },
+  "ehsTrainingRecord|ehs|trainingRecords": {
+    "_comment": "file=apps/web/src/schemas/ehs/training.ts  entity=ehsTrainingRecord  modu=ehs  resource=trainingRecords",
+    "tableKey": null
+  },
+  "ehs_assessment|ehs|compliance": {
+    "_comment": "file=apps/web/src/schemas/ehs/compliance.ts  entity=ehs_assessment  modu=ehs  resource=compliance",
+    "tableKey": null
+  },
+  "ehs_permit|ehs|compliance": {
+    "_comment": "file=apps/web/src/schemas/ehs/compliance.ts  entity=ehs_permit  modu=ehs  resource=compliance",
+    "tableKey": null
+  },
+  "ehs_regulation|ehs|compliance": {
+    "_comment": "file=apps/web/src/schemas/ehs/compliance.ts  entity=ehs_regulation  modu=ehs  resource=compliance",
+    "tableKey": null
+  },
+  "erpBudget|erp|budgets": {
+    "_comment": "file=apps/web/src/schemas/erp/budget.ts  entity=erpBudget  modu=erp  resource=budgets",
+    "tableKey": null
+  },
+  "erpExpense|erp|expenses": {
+    "_comment": "file=apps/web/src/schemas/erp/budget.ts  entity=erpExpense  modu=erp  resource=expenses",
+    "tableKey": null
+  },
+  "erpInventory|erp|inventory": {
+    "_comment": "file=apps/web/src/schemas/erp/inventory.ts  entity=erpInventory  modu=erp  resource=inventory",
+    "tableKey": null
+  },
+  "evaluation|scm|evaluations": {
+    "_comment": "file=apps/web/src/schemas/scm/evaluation.ts  entity=evaluation  modu=scm  resource=evaluations",
+    "tableKey": null
+  },
+  "financeExpense|finance|expenses": {
+    "_comment": "file=apps/web/src/schemas/finance/expense.ts  entity=financeExpense  modu=finance  resource=expenses",
+    "tableKey": null
+  },
+  "financeInvoice|finance|invoices": {
+    "_comment": "file=apps/web/src/schemas/finance/invoice.ts  entity=financeInvoice  modu=finance  resource=invoices",
+    "tableKey": null
+  },
+  "financePayable|finance|payables": {
+    "_comment": "file=apps/web/src/schemas/finance/receivablePayable.ts  entity=financePayable  modu=finance  resource=payables",
+    "tableKey": null
+  },
+  "financePayment|finance|payments": {
+    "_comment": "file=apps/web/src/schemas/finance/payment.ts  entity=financePayment  modu=finance  resource=payments",
+    "tableKey": null
+  },
+  "financeReceipt|finance|receipts": {
+    "_comment": "file=apps/web/src/schemas/finance/receipt.ts  entity=financeReceipt  modu=finance  resource=receipts",
+    "tableKey": null
+  },
+  "financeReceivable|finance|receivables": {
+    "_comment": "file=apps/web/src/schemas/finance/receivablePayable.ts  entity=financeReceivable  modu=finance  resource=receivables",
+    "tableKey": null
+  },
+  "finance_accounting_subject|finance|accountingSubjects": {
+    "_comment": "file=apps/web/src/schemas/finance/accountingSubject.ts  entity=finance_accounting_subject  modu=finance  resource=accountingSubjects",
+    "tableKey": null
+  },
+  "finance_approval_config|finance|approval-configs": {
+    "_comment": "file=apps/web/src/schemas/finance/approvalConfig.ts  entity=finance_approval_config  modu=finance  resource=approval-configs",
+    "tableKey": null
+  },
+  "finance_asset|finance|accounts": {
+    "_comment": "file=apps/web/src/schemas/finance/asset.ts  entity=finance_asset  modu=finance  resource=accounts",
+    "tableKey": null
+  },
+  "finance_budget|erp|budgets": {
+    "_comment": "file=apps/web/src/schemas/finance/budget.ts  entity=finance_budget  modu=erp  resource=budgets",
+    "tableKey": null
+  },
+  "finance_cost|finance|accounts": {
+    "_comment": "file=apps/web/src/schemas/finance/cost.ts  entity=finance_cost  modu=finance  resource=accounts",
+    "tableKey": null
+  },
+  "finance_fixed_asset|erp|fixedAssets": {
+    "_comment": "file=apps/web/src/schemas/finance/fixedAsset.ts  entity=finance_fixed_asset  modu=erp  resource=fixedAssets",
+    "tableKey": null
+  },
+  "finance_ledger|finance|accounts": {
+    "_comment": "file=apps/web/src/schemas/finance/ledger.ts  entity=finance_ledger  modu=finance  resource=accounts",
+    "tableKey": null
+  },
+  "finance_opening_balance|finance|opening-balances": {
+    "_comment": "file=apps/web/src/schemas/finance/openingBalance.ts  entity=finance_opening_balance  modu=finance  resource=opening-balances",
+    "tableKey": null
+  },
+  "finance_tax|finance|tax": {
+    "_comment": "file=apps/web/src/schemas/finance/tax.ts  entity=finance_tax  modu=finance  resource=tax",
+    "tableKey": null
+  },
+  "finance_voucher|finance|vouchers": {
+    "_comment": "file=apps/web/src/schemas/finance/voucher.ts  entity=finance_voucher  modu=finance  resource=vouchers",
+    "tableKey": null
+  },
+  "hrm_attendance|hrm|attendance": {
+    "_comment": "file=apps/web/src/schemas/hrm/attendance.ts  entity=hrm_attendance  modu=hrm  resource=attendance",
+    "tableKey": null
+  },
+  "hrm_company|hrm|companies": {
+    "_comment": "file=apps/web/src/schemas/hrm/company.ts  entity=hrm_company  modu=hrm  resource=companies",
+    "tableKey": null
+  },
+  "hrm_contract|hrm|contracts": {
+    "_comment": "file=apps/web/src/schemas/hrm/contract.ts  entity=hrm_contract  modu=hrm  resource=contracts",
+    "tableKey": null
+  },
+  "hrm_department|hrm|departments": {
+    "_comment": "file=apps/web/src/schemas/hrm/department.ts  entity=hrm_department  modu=hrm  resource=departments",
+    "tableKey": null
+  },
+  "hrm_employee|hrm|employees": {
+    "_comment": "file=apps/web/src/schemas/hrm/employee.ts  entity=hrm_employee  modu=hrm  resource=employees",
+    "tableKey": null
+  },
+  "hrm_leave|hrm|leaveRequests": {
+    "_comment": "file=apps/web/src/schemas/hrm/leave.ts  entity=hrm_leave  modu=hrm  resource=leaveRequests",
+    "tableKey": null
+  },
+  "hrm_org_unit|hrm|organizations": {
+    "_comment": "file=apps/web/src/schemas/hrm/organization.ts  entity=hrm_org_unit  modu=hrm  resource=organizations",
+    "tableKey": null
+  },
+  "hrm_payroll|hrm|payroll": {
+    "_comment": "file=apps/web/src/schemas/hrm/payroll.ts  entity=hrm_payroll  modu=hrm  resource=payroll",
+    "tableKey": null
+  },
+  "hrm_performance|hrm|performanceReviews": {
+    "_comment": "file=apps/web/src/schemas/hrm/performance.ts  entity=hrm_performance  modu=hrm  resource=performanceReviews",
+    "tableKey": null
+  },
+  "hrm_position|hrm|positions": {
+    "_comment": "file=apps/web/src/schemas/hrm/position.ts  entity=hrm_position  modu=hrm  resource=positions",
+    "tableKey": null
+  },
+  "hrm_recruitment|hrm|jobOpenings": {
+    "_comment": "file=apps/web/src/schemas/hrm/recruitment.ts  entity=hrm_recruitment  modu=hrm  resource=jobOpenings",
+    "tableKey": null
+  },
+  "hrm_salary_adjustment|hrm|salaryAdjustments": {
+    "_comment": "file=apps/web/src/schemas/hrm/salaryAdjustment.ts  entity=hrm_salary_adjustment  modu=hrm  resource=salaryAdjustments",
+    "tableKey": null
+  },
+  "hrm_training|hrm|trainingPlans": {
+    "_comment": "file=apps/web/src/schemas/hrm/training.ts  entity=hrm_training  modu=hrm  resource=trainingPlans",
+    "tableKey": null
+  },
+  "inbound_order|wms|inboundOrders": {
+    "_comment": "file=apps/web/src/schemas/_shared/types.ts  entity=inbound_order  modu=wms  resource=inboundOrders",
+    "tableKey": null
+  },
+  "integration_connection|integration|connections": {
+    "_comment": "file=apps/web/src/schemas/integration/connection.tsx  entity=integration_connection  modu=integration  resource=connections",
+    "tableKey": null
+  },
+  "integration_lims_qms_sync|integration|limsQmsSyncs": {
+    "_comment": "file=apps/web/src/schemas/integration/limsQms.tsx  entity=integration_lims_qms_sync  modu=integration  resource=limsQmsSyncs",
+    "tableKey": null
+  },
+  "integration_mapping|integration|mappings": {
+    "_comment": "file=apps/web/src/schemas/integration/mapping.tsx  entity=integration_mapping  modu=integration  resource=mappings",
+    "tableKey": null
+  },
+  "integration_mes_erp_sync|integration|mesErpSyncs": {
+    "_comment": "file=apps/web/src/schemas/integration/mesErp.tsx  entity=integration_mes_erp_sync  modu=integration  resource=mesErpSyncs",
+    "tableKey": null
+  },
+  "integration_wms_scm_sync|integration|wmsScmSyncs": {
+    "_comment": "file=apps/web/src/schemas/integration/wmsScm.tsx  entity=integration_wms_scm_sync  modu=integration  resource=wmsScmSyncs",
+    "tableKey": null
+  },
+  "interaction|crm|interactions": {
+    "_comment": "file=apps/web/src/schemas/crm/interaction.ts  entity=interaction  modu=crm  resource=interactions",
+    "tableKey": null
+  },
+  "inventoryTurnover|scm|inventoryTurnover": {
+    "_comment": "file=apps/web/src/schemas/scm/inventoryTurnover.ts  entity=inventoryTurnover  modu=scm  resource=inventoryTurnover",
+    "tableKey": null
+  },
+  "limsBarcode|lims|barcodes": {
+    "_comment": "file=apps/web/src/schemas/lims/barcode.ts  entity=limsBarcode  modu=lims  resource=barcodes",
+    "tableKey": null
+  },
+  "limsInspectionTask|lims|inspection-tasks": {
+    "_comment": "file=apps/web/src/schemas/lims/inspectionTask.ts  entity=limsInspectionTask  modu=lims  resource=inspection-tasks",
+    "tableKey": null
+  },
+  "limsInstrumentMaintenance|lims|maintenance": {
+    "_comment": "file=apps/web/src/schemas/lims/instrumentMaintenance.ts  entity=limsInstrumentMaintenance  modu=lims  resource=maintenance",
+    "tableKey": null
+  },
+  "limsInstrument|lims|instruments": {
+    "_comment": "file=apps/web/src/schemas/lims/instrument.tsx  entity=limsInstrument  modu=lims  resource=instruments",
+    "tableKey": null
+  },
+  "limsProcess|lims|processes": {
+    "_comment": "file=apps/web/src/schemas/lims/process.ts  entity=limsProcess  modu=lims  resource=processes",
+    "tableKey": null
+  },
+  "limsPtPlan|lims|ptPlans": {
+    "_comment": "file=apps/web/src/schemas/lims/ptPlan.ts  entity=limsPtPlan  modu=lims  resource=ptPlans",
+    "tableKey": null
+  },
+  "limsSample|lims|samples": {
+    "_comment": "file=apps/web/src/schemas/lims/sample.ts  entity=limsSample  modu=lims  resource=samples",
+    "tableKey": null
+  },
+  "limsTask|lims|tasks": {
+    "_comment": "file=apps/web/src/schemas/lims/task.ts  entity=limsTask  modu=lims  resource=tasks",
+    "tableKey": null
+  },
+  "limsUncertaintyProject|lims|uncertaintyProjects": {
+    "_comment": "file=apps/web/src/schemas/lims/uncertainty.ts  entity=limsUncertaintyProject  modu=lims  resource=uncertaintyProjects",
+    "tableKey": null
+  },
+  "location|wms|locations": {
+    "_comment": "file=apps/web/src/schemas/wms/location.ts  entity=location  modu=wms  resource=locations",
+    "tableKey": null
+  },
+  "material|erp|materials": {
+    "_comment": "file=apps/web/src/schemas/erp/material.ts  entity=material  modu=erp  resource=materials",
+    "tableKey": null
+  },
+  "meetingRoom|erp|meetingRooms": {
+    "_comment": "file=apps/web/src/schemas/erp/meetingRoom.ts  entity=meetingRoom  modu=erp  resource=meetingRooms",
+    "tableKey": null
+  },
+  "mesProcessRoute|mes|processRoutes": {
+    "_comment": "file=apps/web/src/schemas/mes/processRoute.ts  entity=mesProcessRoute  modu=mes  resource=processRoutes",
+    "tableKey": null
+  },
+  "mes_equipment_oee|mes|equipmentOee": {
+    "_comment": "file=apps/web/src/schemas/mes/equipmentOee.ts  entity=mes_equipment_oee  modu=mes  resource=equipmentOee",
+    "tableKey": null
+  },
+  "mes_equipment|mes|equipment": {
+    "_comment": "file=apps/web/src/schemas/mes/equipment.ts  entity=mes_equipment  modu=mes  resource=equipment",
+    "tableKey": null
+  },
+  "mes_material_bom|mes|boms": {
+    "_comment": "file=apps/web/src/schemas/mes/materialBom.ts  entity=mes_material_bom  modu=mes  resource=boms",
+    "tableKey": null
+  },
+  "mes_material_issue|mes|materialIssues": {
+    "_comment": "file=apps/web/src/schemas/mes/materialIssue.ts  entity=mes_material_issue  modu=mes  resource=materialIssues",
+    "tableKey": null
+  },
+  "mes_material_requirement|mes|materialRequirements": {
+    "_comment": "file=apps/web/src/schemas/mes/materialRequirement.ts  entity=mes_material_requirement  modu=mes  resource=materialRequirements",
+    "tableKey": null
+  },
+  "mes_material_return|mes|materialReturns": {
+    "_comment": "file=apps/web/src/schemas/mes/materialReturn.ts  entity=mes_material_return  modu=mes  resource=materialReturns",
+    "tableKey": null
+  },
+  "mes_production_order|mes|orders": {
+    "_comment": "file=apps/web/src/schemas/mes/productionOrder.ts  entity=mes_production_order  modu=mes  resource=orders",
+    "tableKey": null
+  },
+  "mes_production_record|mes|records": {
+    "_comment": "file=apps/web/src/schemas/mes/productionRecord.ts  entity=mes_production_record  modu=mes  resource=records",
+    "tableKey": null
+  },
+  "mes_production_schedule|mes|schedules": {
+    "_comment": "file=apps/web/src/schemas/mes/productionSchedule.ts  entity=mes_production_schedule  modu=mes  resource=schedules",
+    "tableKey": null
+  },
+  "mes_quality_inspection|mes|quality/inspections": {
+    "_comment": "file=apps/web/src/schemas/mes/quality.ts  entity=mes_quality_inspection  modu=mes  resource=quality/inspections",
+    "tableKey": null
+  },
+  "mes_wip|mes|wip": {
+    "_comment": "file=apps/web/src/schemas/mes/wip.ts  entity=mes_wip  modu=mes  resource=wip",
+    "tableKey": null
+  },
+  "mes_work_order|mes|workOrders": {
+    "_comment": "file=apps/web/src/schemas/mes/workOrder.ts  entity=mes_work_order  modu=mes  resource=workOrders",
+    "tableKey": null
+  },
+  "mes_work_report|mes|workReports": {
+    "_comment": "file=apps/web/src/schemas/mes/workReport.ts  entity=mes_work_report  modu=mes  resource=workReports",
+    "tableKey": null
+  },
+  "mobile_notification|mobile|notifications": {
+    "_comment": "file=apps/web/src/schemas/mobile/notification.tsx  entity=mobile_notification  modu=mobile  resource=notifications",
+    "tableKey": null
+  },
+  "monitor_alert_rule|monitor|alertRules": {
+    "_comment": "file=apps/web/src/schemas/monitor/alertRule.ts  entity=monitor_alert_rule  modu=monitor  resource=alertRules",
+    "tableKey": null
+  },
+  "monitor_notification_channel|monitor|notificationChannels": {
+    "_comment": "file=apps/web/src/schemas/monitor/notificationChannel.tsx  entity=monitor_notification_channel  modu=monitor  resource=notificationChannels",
+    "tableKey": null
+  },
+  "mrpMaterialSummary|scm|mrpMaterialSummary": {
+    "_comment": "file=apps/web/src/schemas/scm/mrpSuggestion.ts  entity=mrpMaterialSummary  modu=scm  resource=mrpMaterialSummary",
+    "tableKey": null
+  },
+  "mrpPlan|scm|mrpPlans": {
+    "_comment": "file=apps/web/src/schemas/scm/mrpPlan.ts  entity=mrpPlan  modu=scm  resource=mrpPlans",
+    "tableKey": null
+  },
+  "mrpSuggestion|scm|mrpSuggestions": {
+    "_comment": "file=apps/web/src/schemas/scm/mrpSuggestion.ts  entity=mrpSuggestion  modu=scm  resource=mrpSuggestions",
+    "tableKey": null
+  },
+  "notification_template|notification|notification-templates": {
+    "_comment": "file=apps/web/src/schemas/notification/template.tsx  entity=notification_template  modu=notification  resource=notification-templates",
+    "tableKey": null
+  },
+  "notification|notification|notifications": {
+    "_comment": "file=apps/web/src/schemas/notification/notification.tsx  entity=notification  modu=notification  resource=notifications",
+    "tableKey": null
+  },
+  "office_supply|erp|officeSupplies": {
+    "_comment": "file=apps/web/src/schemas/erp/officeSupplies.ts  entity=office_supply  modu=erp  resource=officeSupplies",
+    "tableKey": null
+  },
+  "opportunity|crm|opportunities": {
+    "_comment": "file=apps/web/src/schemas/crm/opportunity.ts  entity=opportunity  modu=crm  resource=opportunities",
+    "tableKey": null
+  },
+  "outbound_order|wms|outboundOrders": {
+    "_comment": "file=apps/web/src/schemas/wms/outboundOrder.ts  entity=outbound_order  modu=wms  resource=outboundOrders",
+    "tableKey": null
+  },
+  "pdm_batch|pdm|batches": {
+    "_comment": "file=apps/web/src/schemas/pdm/batch.ts  entity=pdm_batch  modu=pdm  resource=batches",
+    "tableKey": null
+  },
+  "pdm_bom_item|pdm|bomItems": {
+    "_comment": "file=apps/web/src/schemas/pdm/bomItem.ts  entity=pdm_bom_item  modu=pdm  resource=bomItems",
+    "tableKey": null
+  },
+  "pdm_bom|pdm|bomVersions": {
+    "_comment": "file=apps/web/src/schemas/pdm/bom.ts  entity=pdm_bom  modu=pdm  resource=bomVersions",
+    "tableKey": null
+  },
+  "pdm_change|pdm|changeOrders": {
+    "_comment": "file=apps/web/src/schemas/pdm/change.ts  entity=pdm_change  modu=pdm  resource=changeOrders",
+    "tableKey": null
+  },
+  "pdm_document|pdm|documents": {
+    "_comment": "file=apps/web/src/schemas/pdm/document.ts  entity=pdm_document  modu=pdm  resource=documents",
+    "tableKey": null
+  },
+  "pdm_formula|pdm|formulas": {
+    "_comment": "file=apps/web/src/schemas/pdm/formula.ts  entity=pdm_formula  modu=pdm  resource=formulas",
+    "tableKey": null
+  },
+  "pdm_material|pdm|materials": {
+    "_comment": "file=apps/web/src/schemas/pdm/material.ts  entity=pdm_material  modu=pdm  resource=materials",
+    "tableKey": null
+  },
+  "pdm_process|pdm|processes": {
+    "_comment": "file=apps/web/src/schemas/pdm/process.ts  entity=pdm_process  modu=pdm  resource=processes",
+    "tableKey": null
+  },
+  "pdm_product_category|pdm|productCategories": {
+    "_comment": "file=apps/web/src/schemas/pdm/productCategory.ts  entity=pdm_product_category  modu=pdm  resource=productCategories",
+    "tableKey": null
+  },
+  "pdm_product_config|pdm|productConfigs": {
+    "_comment": "file=apps/web/src/schemas/pdm/productConfig.ts  entity=pdm_product_config  modu=pdm  resource=productConfigs",
+    "tableKey": null
+  },
+  "pdm_product|pdm|products": {
+    "_comment": "file=apps/web/src/schemas/pdm/product.ts  entity=pdm_product  modu=pdm  resource=products",
+    "tableKey": null
+  },
+  "pdm_project|pdm|projects": {
+    "_comment": "file=apps/web/src/schemas/pdm/project.ts  entity=pdm_project  modu=pdm  resource=projects",
+    "tableKey": null
+  },
+  "pdm_step|pdm|steps": {
+    "_comment": "file=apps/web/src/schemas/pdm/step.ts  entity=pdm_step  modu=pdm  resource=steps",
+    "tableKey": null
+  },
+  "pdm_version|pdm|versions": {
+    "_comment": "file=apps/web/src/schemas/pdm/version.ts  entity=pdm_version  modu=pdm  resource=versions",
+    "tableKey": null
+  },
+  "permission|iam|permissions": {
+    "_comment": "file=apps/web/src/schemas/iam/permission.ts  entity=permission  modu=iam  resource=permissions",
+    "tableKey": null
+  },
+  "pm_contract|pm|contracts": {
+    "_comment": "file=apps/web/src/schemas/pm/contract.ts  entity=pm_contract  modu=pm  resource=contracts",
+    "tableKey": null
+  },
+  "pm_project|pm|projects": {
+    "_comment": "file=apps/web/src/schemas/pm/project.ts  entity=pm_project  modu=pm  resource=projects",
+    "tableKey": null
+  },
+  "pm_resource|pm|resources": {
+    "_comment": "file=apps/web/src/schemas/pm/resource.ts  entity=pm_resource  modu=pm  resource=resources",
+    "tableKey": null
+  },
+  "priceComparison|scm|priceComparisons": {
+    "_comment": "file=apps/web/src/schemas/scm/priceComparison.ts  entity=priceComparison  modu=scm  resource=priceComparisons",
+    "tableKey": null
+  },
+  "processFlow|mes|processFlows": {
+    "_comment": "file=apps/web/src/schemas/mes/processFlow.ts  entity=processFlow  modu=mes  resource=processFlows",
+    "tableKey": null
+  },
+  "productionProcess|mes|processes": {
+    "_comment": "file=apps/web/src/schemas/mes/productionProcess.ts  entity=productionProcess  modu=mes  resource=processes",
+    "tableKey": null
+  },
+  "purchaseContract|scm|purchaseContracts": {
+    "_comment": "file=apps/web/src/schemas/scm/purchaseContract.ts  entity=purchaseContract  modu=scm  resource=purchaseContracts",
+    "tableKey": null
+  },
+  "purchaseItem|scm|purchaseItems": {
+    "_comment": "file=apps/web/src/schemas/scm/purchaseItem.ts  entity=purchaseItem  modu=scm  resource=purchaseItems",
+    "tableKey": null
+  },
+  "purchaseOrder|erp|purchaseOrders": {
+    "_comment": "file=apps/web/src/schemas/erp/purchaseOrder.ts  entity=purchaseOrder  modu=erp  resource=purchaseOrders",
+    "tableKey": null
+  },
+  "purchaseOrder|scm|purchaseOrders": {
+    "_comment": "file=apps/web/src/schemas/scm/purchaseOrder.ts  entity=purchaseOrder  modu=scm  resource=purchaseOrders",
+    "tableKey": null
+  },
+  "purchaseRequisition|scm|purchaseRequisitions": {
+    "_comment": "file=apps/web/src/schemas/scm/purchaseRequisition.ts  entity=purchaseRequisition  modu=scm  resource=purchaseRequisitions",
+    "tableKey": null
+  },
+  "qmsQualityStandard|qms|standards": {
+    "_comment": "file=apps/web/src/schemas/qms/standard.ts  entity=qmsQualityStandard  modu=qms  resource=standards",
+    "tableKey": null
+  },
+  "qmsStandardRevision|qms|revisions": {
+    "_comment": "file=apps/web/src/schemas/qms/revision.ts  entity=qmsStandardRevision  modu=qms  resource=revisions",
+    "tableKey": null
+  },
+  "quality_check|qms|inspection": {
+    "_comment": "file=apps/web/src/schemas/qms/inspection.ts  entity=quality_check  modu=qms  resource=inspection",
+    "tableKey": null
+  },
+  "quality_cost|qms|qualityCosts": {
+    "_comment": "file=apps/web/src/schemas/qms/qualityCost.ts  entity=quality_cost  modu=qms  resource=qualityCosts",
+    "tableKey": null
+  },
+  "quality_issue|qms|issues": {
+    "_comment": "file=apps/web/src/schemas/qms/nonconformance.ts  entity=quality_issue  modu=qms  resource=issues",
+    "tableKey": null
+  },
+  "rd_bug|rd|bugs": {
+    "_comment": "file=apps/web/src/schemas/rd/bug.ts  entity=rd_bug  modu=rd  resource=bugs",
+    "tableKey": null
+  },
+  "rd_build|rd|builds": {
+    "_comment": "file=apps/web/src/schemas/rd/build.ts  entity=rd_build  modu=rd  resource=builds",
+    "tableKey": null
+  },
+  "rd_code_repo|rd|projects": {
+    "_comment": "file=apps/web/src/schemas/rd/code.ts  entity=rd_code_repo  modu=rd  resource=projects",
+    "tableKey": null
+  },
+  "rd_deploy|rd|deploys": {
+    "_comment": "file=apps/web/src/schemas/rd/deploy.ts  entity=rd_deploy  modu=rd  resource=deploys",
+    "tableKey": null
+  },
+  "rd_doc|rd|docs": {
+    "_comment": "file=apps/web/src/schemas/rd/doc.ts  entity=rd_doc  modu=rd  resource=docs",
+    "tableKey": null
+  },
+  "rd_experiment|rd|experiments": {
+    "_comment": "file=apps/web/src/schemas/rd/experiment.ts  entity=rd_experiment  modu=rd  resource=experiments",
+    "tableKey": null
+  },
+  "rd_formula|rd|formulas": {
+    "_comment": "file=apps/web/src/schemas/rd/formula.ts  entity=rd_formula  modu=rd  resource=formulas",
+    "tableKey": null
+  },
+  "rd_material|rd|materials": {
+    "_comment": "file=apps/web/src/schemas/rd/material.ts  entity=rd_material  modu=rd  resource=materials",
+    "tableKey": null
+  },
+  "rd_milestone|rd|milestones": {
+    "_comment": "file=apps/web/src/schemas/rd/milestone.ts  entity=rd_milestone  modu=rd  resource=milestones",
+    "tableKey": null
+  },
+  "rd_project|rd|projects": {
+    "_comment": "file=apps/web/src/schemas/rd/project.ts  entity=rd_project  modu=rd  resource=projects",
+    "tableKey": null
+  },
+  "rd_release|rd|deploys": {
+    "_comment": "file=apps/web/src/schemas/rd/release.ts  entity=rd_release  modu=rd  resource=deploys",
+    "tableKey": null
+  },
+  "rd_review|rd|builds": {
+    "_comment": "file=apps/web/src/schemas/rd/review.ts  entity=rd_review  modu=rd  resource=builds",
+    "tableKey": null
+  },
+  "rd_setting|rd|settings": {
+    "_comment": "file=apps/web/src/schemas/rd/setting.ts  entity=rd_setting  modu=rd  resource=settings",
+    "tableKey": null
+  },
+  "rd_test_case|rd|tests": {
+    "_comment": "file=apps/web/src/schemas/rd/test.ts  entity=rd_test_case  modu=rd  resource=tests",
+    "tableKey": null
+  },
+  "reagent|lims|reagents": {
+    "_comment": "file=apps/web/src/schemas/lims/reagent.ts  entity=reagent  modu=lims  resource=reagents",
+    "tableKey": null
+  },
+  "report_subscription|report|subscriptions": {
+    "_comment": "file=apps/web/src/schemas/report/subscription.tsx  entity=report_subscription  modu=report  resource=subscriptions",
+    "tableKey": null
+  },
+  "report|report|reports": {
+    "_comment": "file=apps/web/src/schemas/report/report.ts  entity=report  modu=report  resource=reports",
+    "tableKey": null
+  },
+  "return|crm|returns": {
+    "_comment": "file=apps/web/src/schemas/crm/return.ts  entity=return  modu=crm  resource=returns",
+    "tableKey": null
+  },
+  "role|iam|roles": {
+    "_comment": "file=apps/web/src/schemas/iam/role.ts  entity=role  modu=iam  resource=roles",
+    "tableKey": null
+  },
+  "salesOrder|erp|salesOrders": {
+    "_comment": "file=apps/web/src/schemas/erp/salesOrder.ts  entity=salesOrder  modu=erp  resource=salesOrders",
+    "tableKey": null
+  },
+  "scoring_dimension|srm|scoring-dimensions": {
+    "_comment": "file=apps/web/src/schemas/srm/scoringDimension.ts  entity=scoring_dimension  modu=srm  resource=scoring-dimensions",
+    "tableKey": null
+  },
+  "srmFinance|srm|finance": {
+    "_comment": "file=apps/web/src/schemas/srm/finance.ts  entity=srmFinance  modu=srm  resource=finance",
+    "tableKey": null
+  },
+  "srmOrder|srm|purchaseOrders": {
+    "_comment": "file=apps/web/src/schemas/srm/order.ts  entity=srmOrder  modu=srm  resource=purchaseOrders",
+    "tableKey": null
+  },
+  "srm_bidding|srm|biddings": {
+    "_comment": "file=apps/web/src/schemas/srm/bidding.ts  entity=srm_bidding  modu=srm  resource=biddings",
+    "tableKey": null
+  },
+  "srm_category|srm|categories": {
+    "_comment": "file=apps/web/src/schemas/srm/category.ts  entity=srm_category  modu=srm  resource=categories",
+    "tableKey": null
+  },
+  "srm_evaluation|srm|supplier-evaluations": {
+    "_comment": "file=apps/web/src/schemas/srm/evaluation.ts  entity=srm_evaluation  modu=srm  resource=supplier-evaluations",
+    "tableKey": null
+  },
+  "srm_inquiry|srm|inquiries": {
+    "_comment": "file=apps/web/src/schemas/srm/inquiry.ts  entity=srm_inquiry  modu=srm  resource=inquiries",
+    "tableKey": null
+  },
+  "srm_performance|srm|performance/reports": {
+    "_comment": "file=apps/web/src/schemas/srm/performance.ts  entity=srm_performance  modu=srm  resource=performance/reports",
+    "tableKey": null
+  },
+  "supplierAdmission|scm|supplierAdmissions": {
+    "_comment": "file=apps/web/src/schemas/scm/supplierAdmission.ts  entity=supplierAdmission  modu=scm  resource=supplierAdmissions",
+    "tableKey": null
+  },
+  "supplier_contract|srm|contracts": {
+    "_comment": "file=apps/web/src/schemas/srm/contract.ts  entity=supplier_contract  modu=srm  resource=contracts",
+    "tableKey": null
+  },
+  "supplier_product|srm|supplier-products": {
+    "_comment": "file=apps/web/src/schemas/srm/supplierProduct.ts  entity=supplier_product  modu=srm  resource=supplier-products",
+    "tableKey": null
+  },
+  "supplier|erp|suppliers": {
+    "_comment": "file=apps/web/src/schemas/erp/supplier.ts  entity=supplier  modu=erp  resource=suppliers",
+    "tableKey": null
+  },
+  "supplier|scm|suppliers": {
+    "_comment": "file=apps/web/src/schemas/scm/supplier.ts  entity=supplier  modu=scm  resource=suppliers",
+    "tableKey": null
+  },
+  "supplier|srm|suppliers": {
+    "_comment": "file=apps/web/src/schemas/srm/supplier.ts  entity=supplier  modu=srm  resource=suppliers",
+    "tableKey": null
+  },
+  "team|mes|teams": {
+    "_comment": "file=apps/web/src/schemas/mes/team.ts  entity=team  modu=mes  resource=teams",
+    "tableKey": null
+  },
+  "tenantInvoice|admin|invoices": {
+    "_comment": "file=apps/web/src/schemas/admin/tenantInvoice.ts  entity=tenantInvoice  modu=admin  resource=invoices",
+    "tableKey": null
+  },
+  "tenantUser|admin|tenantUsers": {
+    "_comment": "file=apps/web/src/schemas/admin/tenantUser.ts  entity=tenantUser  modu=admin  resource=tenantUsers",
+    "tableKey": null
+  },
+  "tenant_invoice|tenant|invoices": {
+    "_comment": "file=apps/web/src/schemas/admin/tenantInvoice.tsx  entity=tenant_invoice  modu=tenant  resource=invoices",
+    "tableKey": null
+  },
+  "test_method|lims|testMethods": {
+    "_comment": "file=apps/web/src/schemas/lims/testMethod.ts  entity=test_method  modu=lims  resource=testMethods",
+    "tableKey": null
+  },
+  "ticket|ticket|tickets": {
+    "_comment": "file=apps/web/src/schemas/ticket/ticket.ts  entity=ticket  modu=ticket  resource=tickets",
+    "tableKey": null
+  },
+  "user|iam|users": {
+    "_comment": "file=apps/web/src/schemas/iam/user.ts  entity=user  modu=iam  resource=users",
+    "tableKey": null
+  },
+  "vehicleRequest|erp|vehicleRequests": {
+    "_comment": "file=apps/web/src/schemas/erp/vehicleRequest.ts  entity=vehicleRequest  modu=erp  resource=vehicleRequests",
+    "tableKey": null
+  },
+  "vehicle|erp|vehicles": {
+    "_comment": "file=apps/web/src/schemas/erp/vehicle.ts  entity=vehicle  modu=erp  resource=vehicles",
+    "tableKey": null
+  },
+  "warehouse|wms|warehouses": {
+    "_comment": "file=apps/web/src/schemas/wms/warehouse.ts  entity=warehouse  modu=wms  resource=warehouses",
+    "tableKey": null
+  },
+  "wms_area|wms|areas": {
+    "_comment": "file=apps/web/src/schemas/wms/area.ts  entity=wms_area  modu=wms  resource=areas",
+    "tableKey": null
+  },
+  "wms_batch|wms|batches": {
+    "_comment": "file=apps/web/src/schemas/wms/batch.ts  entity=wms_batch  modu=wms  resource=batches",
+    "tableKey": null
+  },
+  "wms_inbound_order|wms|inbound-orders": {
+    "_comment": "file=apps/web/src/schemas/wms/inbound.ts  entity=wms_inbound_order  modu=wms  resource=inbound-orders",
+    "tableKey": null
+  },
+  "wms_inventory|wms|inventory": {
+    "_comment": "file=apps/web/src/schemas/wms/inventory.ts  entity=wms_inventory  modu=wms  resource=inventory",
+    "tableKey": null
+  },
+  "wms_outbound_order|wms|outbound-orders": {
+    "_comment": "file=apps/web/src/schemas/wms/outbound.ts  entity=wms_outbound_order  modu=wms  resource=outbound-orders",
+    "tableKey": null
+  },
+  "wms_replenishment_order|wms|smartReplenishment": {
+    "_comment": "file=apps/web/src/schemas/wms/replenishment.ts  entity=wms_replenishment_order  modu=wms  resource=smartReplenishment",
+    "tableKey": null
+  },
+  "wms_replenishment_suggestion|wms|smartReplenishment": {
+    "_comment": "file=apps/web/src/schemas/wms/suggestion.ts  entity=wms_replenishment_suggestion  modu=wms  resource=smartReplenishment",
+    "tableKey": null
+  },
+  "wms_serial_number|wms|serialNumbers": {
+    "_comment": "file=apps/web/src/schemas/wms/serialNumber.ts  entity=wms_serial_number  modu=wms  resource=serialNumbers",
+    "tableKey": null
+  },
+  "wms_stock_take|wms|stockTakes": {
+    "_comment": "file=apps/web/src/schemas/wms/stockTake.ts  entity=wms_stock_take  modu=wms  resource=stockTakes",
+    "tableKey": null
+  },
+  "wms_supplier|scm|suppliers": {
+    "_comment": "file=apps/web/src/schemas/wms/supplier.ts  entity=wms_supplier  modu=scm  resource=suppliers",
+    "tableKey": null
+  },
+  "wms_transfer|wms|transfers": {
+    "_comment": "file=apps/web/src/schemas/wms/transfer.ts  entity=wms_transfer  modu=wms  resource=transfers",
+    "tableKey": null
+  },
+  "workflow-approval|workflow|approvalTasks": {
+    "_comment": "file=apps/web/src/schemas/workflow/approval.ts  entity=workflow-approval  modu=workflow  resource=approvalTasks",
+    "tableKey": null
+  },
+  "workflow-definition|workflow|workflows": {
+    "_comment": "file=apps/web/src/schemas/workflow/definition.ts  entity=workflow-definition  modu=workflow  resource=workflows",
+    "tableKey": null
+  },
+  "workflow-instance|workflow|instances": {
+    "_comment": "file=apps/web/src/schemas/workflow/instance.ts  entity=workflow-instance  modu=workflow  resource=instances",
+    "tableKey": null
+  },
+  "workflow-monitor|workflow|monitor": {
+    "_comment": "file=apps/web/src/schemas/workflow/monitor.ts  entity=workflow-monitor  modu=workflow  resource=monitor",
+    "tableKey": null
+  },
+  "workflow-template|workflow|workflows": {
+    "_comment": "file=apps/web/src/schemas/workflow/template.ts  entity=workflow-template  modu=workflow  resource=workflows",
+    "tableKey": null
+  },
+  "workstation|mes|workstations": {
+    "_comment": "file=apps/web/src/schemas/mes/workstation.ts  entity=workstation  modu=mes  resource=workstations",
+    "tableKey": null
+  },
+  "_ALL_TABLE_KEYS": [
+    "analytics_comparison_analyses",
+    "analytics_comparison_results",
+    "analytics_dashboard_shares",
+    "analytics_dashboard_templates",
+    "analytics_dashboards",
+    "analytics_datasources",
+    "analytics_drilldown_history",
+    "analytics_drilldown_paths",
+    "analytics_report_executions",
+    "analytics_report_schedules",
+    "analytics_report_subscriptions",
+    "analytics_report_templates",
+    "analytics_reports",
+    "analytics_row_level_permissions",
+    "analytics_self_service_reports",
+    "analytics_sync_records",
+    "analytics_widgets",
+    "core_billing_invoices",
+    "core_billing_plans",
+    "core_chat_members",
+    "core_chat_messages",
+    "core_chat_rooms",
+    "core_dict_items",
+    "core_dict_types",
+    "core_email_queue",
+    "core_email_templates",
+    "core_emails",
+    "core_faqs",
+    "core_file_folders",
+    "core_files",
+    "core_finance_accounts",
+    "core_finance_approval_workflows",
+    "core_finance_aux_accounts",
+    "core_finance_aux_balances",
+    "core_finance_ledger",
+    "core_finance_payment_items",
+    "core_finance_periods",
+    "core_finance_voucher_lines",
+    "core_finance_vouchers",
+    "core_guide_lessons",
+    "core_guide_progress",
+    "core_guides",
+    "core_inter_module_sync",
+    "core_login_logs",
+    "core_menu_groups",
+    "core_menus",
+    "core_migration_history",
+    "core_mobile_offline_records",
+    "core_notification_templates",
+    "core_notifications",
+    "core_permissions",
+    "core_plugin_categories",
+    "core_plugin_instances",
+    "core_plugin_permissions",
+    "core_plugin_pricing",
+    "core_plugin_reviews",
+    "core_plugin_versions",
+    "core_plugins",
+    "core_roles",
+    "core_subscriptions",
+    "core_tenant_modules",
+    "core_tenant_plugins",
+    "core_tenant_settings",
+    "core_tenant_users",
+    "core_tenants",
+    "core_usage_records",
+    "core_users",
+    "core_workflow_instances",
+    "core_workflow_tasks",
+    "core_workflows",
+    "erp_fin_reconciliation_records",
+    "erp_fin_reconciliation_rules",
+    "iam_data_permissions",
+    "iam_permission_audit_logs",
+    "iam_permission_templates",
+    "iam_position_permissions",
+    "iam_positions",
+    "iam_resource_permissions",
+    "mes_erp_sync",
+    "mobile_attendance",
+    "mobile_leave_applications",
+    "mv_receivable_aging",
+    "qa_lab_instruments",
+    "qa_lab_processes",
+    "qa_lab_reagents",
+    "qa_lab_records",
+    "qa_lab_samples",
+    "qa_lab_tasks",
+    "scm_mrp_suggestions",
+    "scm_purchase_contract_items",
+    "scm_purchase_contracts",
+    "scm_purchase_requisitions",
+    "scm_supplier_admission_audit_items",
+    "scm_supplier_admissions",
+    "scm_supplier_delivery_appointments",
+    "stocktake_tasks",
+    "wms_batches",
+    "wms_replenishment_order_items",
+    "wms_replenishment_orders",
+    "wms_replenishment_rules",
+    "wms_replenishment_suggestions",
+    "wms_safety_stock_settings",
+    "wms_serial_numbers",
+    "wms_transfer_order_items",
+    "wms_transfer_orders"
+  ]
+}
