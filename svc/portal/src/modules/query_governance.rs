@@ -581,7 +581,7 @@ impl QueryAuditStore {
     }
 
     fn update_stats(&self, entry: &QueryAuditEntryGql) {
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock().unwrap_or_else(|e| e.into_inner());
         match entry.event_type {
             AuditEventType::QueryExecuted => {
                 stats.total_queries += 1;
@@ -611,7 +611,7 @@ impl QueryAuditStore {
     }
 
     fn get_stats(&self) -> AuditStatsGql {
-        let mut stats = self.stats.lock().unwrap().clone();
+        let mut stats = self.stats.lock().unwrap_or_else(|e| e.into_inner()).clone();
         let mut user_counts: HashMap<String, u64> = HashMap::new();
         let mut query_counts: HashMap<String, (u64, f64)> = HashMap::new();
         for entry in &self.entries {
@@ -755,12 +755,18 @@ impl QueryAuditor {
             risk_level,
             tags: Vec::new(),
         };
-        self.store.lock().unwrap().record(entry.clone());
+        self.store
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .record(entry.clone());
         entry
     }
 
     fn get_stats(&self) -> AuditStatsGql {
-        self.store.lock().unwrap().get_stats()
+        self.store
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get_stats()
     }
 
     fn query(
@@ -769,7 +775,10 @@ impl QueryAuditor {
         page: u32,
         page_size: u32,
     ) -> Vec<QueryAuditEntryGql> {
-        self.store.lock().unwrap().query(&filter, page, page_size)
+        self.store
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .query(&filter, page, page_size)
     }
 }
 
@@ -1101,7 +1110,10 @@ impl EnterpriseGovernance {
     }
 
     fn set_quota(&self, input: QueryQuotaInput) -> QueryQuotaGql {
-        self.quota_tracker.lock().unwrap().set_quota(input)
+        self.quota_tracker
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .set_quota(input)
     }
 
     fn check_quota(&self, entity_type: &str, entity_id: &str) -> Option<(bool, u64)> {
@@ -1126,11 +1138,17 @@ impl EnterpriseGovernance {
     }
 
     fn create_approval_request(&self, input: ApprovalRequestInput) -> QueryApprovalRequestGql {
-        self.approval_workflow.lock().unwrap().create_request(input)
+        self.approval_workflow
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .create_request(input)
     }
 
     fn review_approval(&self, input: ApprovalReviewInput) -> Option<QueryApprovalRequestGql> {
-        self.approval_workflow.lock().unwrap().review(input)
+        self.approval_workflow
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .review(input)
     }
 
     fn get_approval_request(&self, request_id: &str) -> Option<QueryApprovalRequestGql> {
@@ -1141,7 +1159,10 @@ impl EnterpriseGovernance {
     }
 
     fn list_pending_approvals(&self) -> Vec<QueryApprovalRequestGql> {
-        self.approval_workflow.lock().unwrap().list_pending()
+        self.approval_workflow
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .list_pending()
     }
 
     fn is_query_approved(&self, query_hash: &str, user_id: &str) -> bool {
@@ -1152,15 +1173,24 @@ impl EnterpriseGovernance {
     }
 
     fn create_policy(&self, input: GovernancePolicyInput) -> GovernancePolicyGql {
-        self.governance_engine.lock().unwrap().create_policy(input)
+        self.governance_engine
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .create_policy(input)
     }
 
     fn get_policy(&self, policy_id: &str) -> Option<GovernancePolicyGql> {
-        self.governance_engine.lock().unwrap().get_policy(policy_id)
+        self.governance_engine
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get_policy(policy_id)
     }
 
     fn list_policies(&self) -> Vec<GovernancePolicyGql> {
-        self.governance_engine.lock().unwrap().list_policies()
+        self.governance_engine
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .list_policies()
     }
 
     fn set_field_control(&self, input: FieldAccessControlInput) -> FieldAccessControlGql {
@@ -1184,12 +1214,10 @@ impl EnterpriseGovernance {
         user_roles: &[String],
         query_fields: &[String],
     ) -> GovernanceCheckResultGql {
-        self.governance_engine.lock().unwrap().check_governance(
-            query_hash,
-            user_id,
-            user_roles,
-            query_fields,
-        )
+        self.governance_engine
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .check_governance(query_hash, user_id, user_roles, query_fields)
     }
 }
 
@@ -1214,11 +1242,17 @@ pub fn enterprise_governance() -> &'static EnterpriseGovernance {
 // ==================== 公共 API 函数 ====================
 
 pub fn register_persisted_query(input: PersistedQueryInput) -> PersistedQueryGql {
-    persisted_query_manager().lock().unwrap().register(input)
+    persisted_query_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .register(input)
 }
 
 pub fn get_persisted_query(query_hash: &str) -> Option<PersistedQueryGql> {
-    persisted_query_manager().lock().unwrap().get(query_hash)
+    persisted_query_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get(query_hash)
 }
 
 pub fn get_persisted_query_text(query_hash: &str) -> Option<String> {
@@ -1250,7 +1284,10 @@ pub fn update_persisted_query_status(
 }
 
 pub fn delete_persisted_query(query_hash: &str) -> bool {
-    persisted_query_manager().lock().unwrap().delete(query_hash)
+    persisted_query_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .delete(query_hash)
 }
 
 pub fn add_persisted_query_tag(query_hash: &str, tag: &str) -> Option<PersistedQueryGql> {
@@ -1268,7 +1305,10 @@ pub fn remove_persisted_query_tag(query_hash: &str, tag: &str) -> Option<Persist
 }
 
 pub fn search_persisted_queries_by_tag(tag: &str) -> Vec<PersistedQueryGql> {
-    persisted_query_manager().lock().unwrap().search_by_tag(tag)
+    persisted_query_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .search_by_tag(tag)
 }
 
 pub fn record_persisted_query_usage(query_hash: &str, latency_ms: u64) {

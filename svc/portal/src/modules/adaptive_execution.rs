@@ -500,7 +500,7 @@ impl AdaptiveExecutor {
         query: &str,
         strategy: Option<AdaptiveStrategy>,
     ) -> Result<ExecutionProfile, String> {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         if let Some(s) = strategy {
             inner.configure_strategy(s);
         }
@@ -515,17 +515,17 @@ impl AdaptiveExecutor {
     }
 
     pub fn get_execution_profile(&self, query_hash: &str) -> Option<ExecutionProfile> {
-        let inner = self.inner.lock().unwrap();
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.profiles.get(query_hash).cloned()
     }
 
     pub fn configure_strategy(&self, strategy: AdaptiveStrategy) {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.configure_strategy(strategy);
     }
 
     pub fn get_metrics(&self) -> ExecutionMetrics {
-        let inner = self.inner.lock().unwrap();
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.get_metrics()
     }
 }
@@ -706,17 +706,17 @@ impl AIQueryOptimizer {
     }
 
     pub fn optimize(&self, query: &str, apply: Option<Vec<SuggestionType>>) -> OptimizedQueryPlan {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.optimize(query, apply)
     }
 
     pub fn analyze(&self, query: &str) -> Vec<OptimizationSuggestion> {
-        let inner = self.inner.lock().unwrap();
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.get_suggestions(query)
     }
 
     pub fn get_suggestions(&self, query: &str) -> Vec<OptimizationSuggestion> {
-        let inner = self.inner.lock().unwrap();
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.get_suggestions(query)
     }
 
@@ -724,12 +724,12 @@ impl AIQueryOptimizer {
         &self,
         queries: Vec<(String, Option<Vec<SuggestionType>>)>,
     ) -> Vec<OptimizedQueryPlan> {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.batch_optimize(&queries)
     }
 
     pub fn get_history(&self) -> Vec<OptimizedQueryPlan> {
-        let inner = self.inner.lock().unwrap();
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.get_history()
     }
 }
@@ -956,17 +956,17 @@ impl StreamManager {
         config: Option<StreamConfig>,
     ) -> StreamInfo {
         let cfg = config.unwrap_or_default();
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.create_stream(name, topic, cfg)
     }
 
     pub fn get_stream(&self, stream_id: &str) -> Option<StreamInfo> {
-        let inner = self.inner.lock().unwrap();
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.get_stream(stream_id)
     }
 
     pub fn list_streams(&self) -> Vec<StreamInfo> {
-        let inner = self.inner.lock().unwrap();
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.list_streams()
     }
 
@@ -975,7 +975,7 @@ impl StreamManager {
         stream_id: &str,
         subscriber_id: Option<String>,
     ) -> Result<String, String> {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.subscribe(stream_id, subscriber_id)
     }
 
@@ -984,24 +984,24 @@ impl StreamManager {
         stream_id: &str,
         subscriber_id: Option<String>,
     ) -> Result<bool, String> {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.unsubscribe(stream_id, subscriber_id)
     }
 
     pub fn close_stream(&self, stream_id: &str) -> bool {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.close_stream(stream_id)
     }
 
     pub fn get_metrics(&self) -> StreamMetrics {
-        let inner = self.inner.lock().unwrap();
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.get_metrics()
     }
 
     pub fn push_event(&self, stream_id: &str, event_type: &str, payload: Value) -> StreamEvent {
         let stream_id_owned = stream_id.to_string();
         let counter = {
-            let inner = self.inner.lock().unwrap();
+            let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
             inner
                 .sequence_counters
                 .get(&stream_id_owned)
@@ -1018,13 +1018,13 @@ impl StreamManager {
             sequence: counter,
         };
 
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.push_event(&stream_id_owned, event.clone());
         event
     }
 
     pub fn get_events(&self, stream_id: &str, limit: usize) -> Vec<StreamEvent> {
-        let inner = self.inner.lock().unwrap();
+        let inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.get_events(stream_id, limit)
     }
 }

@@ -975,11 +975,17 @@ pub fn load_aware_router() -> &'static Arc<Mutex<LoadAwareRouter>> {
 // ==================== 公共 API 函数 ====================
 
 pub fn get_rate_limiter_statuses() -> Vec<RateLimiterStatusGql> {
-    rate_limiter().lock().unwrap().get_statuses()
+    rate_limiter()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get_statuses()
 }
 
 pub fn get_rate_limiter_configs() -> Vec<RateLimiterConfigGql> {
-    rate_limiter().lock().unwrap().get_configs()
+    rate_limiter()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get_configs()
 }
 
 pub fn configure_rate_limiter(service: &str, max_rps: f64, burst: u64, adaptive: bool) {
@@ -990,7 +996,10 @@ pub fn configure_rate_limiter(service: &str, max_rps: f64, burst: u64, adaptive:
 }
 
 pub fn get_circuit_breaker_states() -> Vec<CircuitBreakerStateGql> {
-    circuit_breaker_manager().lock().unwrap().get_states()
+    circuit_breaker_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get_states()
 }
 
 pub fn configure_circuit_breaker(
@@ -999,16 +1008,22 @@ pub fn configure_circuit_breaker(
     recovery_timeout_sec: u64,
     half_open_max_requests: u64,
 ) {
-    circuit_breaker_manager().lock().unwrap().configure(
-        service,
-        failure_threshold,
-        recovery_timeout_sec,
-        half_open_max_requests,
-    );
+    circuit_breaker_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .configure(
+            service,
+            failure_threshold,
+            recovery_timeout_sec,
+            half_open_max_requests,
+        );
 }
 
 pub fn reset_circuit_breaker(service: &str) {
-    circuit_breaker_manager().lock().unwrap().reset(service);
+    circuit_breaker_manager()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .reset(service);
 }
 
 pub fn circuit_record_failure(service: &str) {
@@ -1052,7 +1067,10 @@ pub fn get_load_metrics(service: &str) -> Vec<LoadMetricsGql> {
 }
 
 pub fn get_all_load_metrics() -> Vec<LoadMetricsGql> {
-    load_aware_router().lock().unwrap().get_all_load_metrics()
+    load_aware_router()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get_all_load_metrics()
 }
 
 pub fn get_instance_healths(service: &str) -> Vec<InstanceHealthGql> {
@@ -1100,24 +1118,33 @@ pub fn update_instance_metrics(
     latency: f64,
     error_rate: f64,
 ) {
-    load_aware_router().lock().unwrap().update_metrics(
-        service,
-        instance_id,
-        cpu,
-        memory,
-        active,
-        queue,
-        latency,
-        error_rate,
-    );
+    load_aware_router()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .update_metrics(
+            service,
+            instance_id,
+            cpu,
+            memory,
+            active,
+            queue,
+            latency,
+            error_rate,
+        );
 }
 
 pub fn make_routing_decision(service: &str) -> RoutingDecisionGql {
-    load_aware_router().lock().unwrap().make_decision(service)
+    load_aware_router()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .make_decision(service)
 }
 
 pub fn get_routing_stats() -> AdaptiveRoutingStatsGql {
-    load_aware_router().lock().unwrap().get_routing_stats()
+    load_aware_router()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get_routing_stats()
 }
 
 pub fn set_routing_rule(
@@ -1126,12 +1153,10 @@ pub fn set_routing_rule(
     target_instance: &str,
     priority: i32,
 ) -> RoutingRuleGql {
-    load_aware_router().lock().unwrap().set_routing_rule(
-        service,
-        condition,
-        target_instance,
-        priority,
-    )
+    load_aware_router()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .set_routing_rule(service, condition, target_instance, priority)
 }
 
 pub fn delete_routing_rule(rule_id: &str) -> bool {
@@ -1150,7 +1175,7 @@ pub fn get_routing_rules(service: Option<&str>) -> Vec<RoutingRuleGql> {
 
 pub fn get_traffic_policy(service: &str) -> TrafficPolicyGql {
     let (rate_config, cb_state, degradation_config, rules, load_score) = {
-        let limiter = rate_limiter().lock().unwrap();
+        let limiter = rate_limiter().lock().unwrap_or_else(|e| e.into_inner());
         let rate_config = limiter
             .get_config(service)
             .map(|c| c.clone())
@@ -1164,7 +1189,9 @@ pub fn get_traffic_policy(service: &str) -> TrafficPolicyGql {
             });
         drop(limiter);
 
-        let mut cb_mgr = circuit_breaker_manager().lock().unwrap();
+        let mut cb_mgr = circuit_breaker_manager()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let cb_state = cb_mgr
             .get_state(service)
             .unwrap_or_else(|| CircuitBreakerStateGql {
@@ -1191,7 +1218,9 @@ pub fn get_traffic_policy(service: &str) -> TrafficPolicyGql {
                 });
         drop(cb_mgr);
 
-        let router = load_aware_router().lock().unwrap();
+        let router = load_aware_router()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let rules = router.get_routing_rules(Some(service));
         let load_score = router.get_service_load_score(service);
         drop(router);
@@ -1225,7 +1254,7 @@ pub fn init_rate_limiting() {
 
     {
         let limiter = rate_limiter();
-        let mut l = limiter.lock().unwrap();
+        let mut l = limiter.lock().unwrap_or_else(|e| e.into_inner());
         for svc in &default_services {
             l.ensure_service(svc);
         }
@@ -1233,7 +1262,7 @@ pub fn init_rate_limiting() {
 
     {
         let cb_mgr = circuit_breaker_manager();
-        let mut cbm = cb_mgr.lock().unwrap();
+        let mut cbm = cb_mgr.lock().unwrap_or_else(|e| e.into_inner());
         for svc in &default_services {
             cbm.ensure_service(svc);
         }
@@ -1241,7 +1270,7 @@ pub fn init_rate_limiting() {
 
     {
         let router = load_aware_router();
-        let mut r = router.lock().unwrap();
+        let mut r = router.lock().unwrap_or_else(|e| e.into_inner());
         let default_instances = vec![
             ("erp", "erp-1", "http://erp-1:8080"),
             ("erp", "erp-2", "http://erp-2:8080"),
@@ -1676,12 +1705,18 @@ impl SchemaStitcher {
     }
 
     pub fn set_merge_strategy(&self, strategy: TypeMergeStrategy) {
-        let mut s = self.merge_strategy.lock().unwrap();
+        let mut s = self
+            .merge_strategy
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         *s = strategy;
     }
 
     pub fn get_merge_strategy(&self) -> TypeMergeStrategy {
-        *self.merge_strategy.lock().unwrap()
+        *self
+            .merge_strategy
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
     }
 
     pub fn add_field_mapping(&mut self, mapping: FieldMappingRuleGql) {
@@ -1985,39 +2020,66 @@ pub(crate) fn intelligent_cache() -> &'static Mutex<IntelligentCache> {
 // ---------- Phase 19 公共 API ----------
 
 pub fn ai_detect_intent(query: &str) -> AiQueryIntent {
-    ai_router().lock().unwrap().detect_intent(query)
+    ai_router()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .detect_intent(query)
 }
 
 pub fn ai_route_query(query: &str) -> AiRoutingDecisionGql {
-    ai_router().lock().unwrap().build_decision(query)
+    ai_router()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .build_decision(query)
 }
 
 pub fn stitch_schema(name: &str) -> StitchedSchemaGql {
-    schema_stitcher().lock().unwrap().stitched_schema(name)
+    schema_stitcher()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .stitched_schema(name)
 }
 
 pub fn stitch_list_sub_schemas() -> Vec<SubSchemaEntryGql> {
-    schema_stitcher().lock().unwrap().sub_schemas_list()
+    schema_stitcher()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .sub_schemas_list()
 }
 
 pub fn stitch_list_field_mappings() -> Vec<FieldMappingRuleGql> {
-    schema_stitcher().lock().unwrap().field_mappings_list()
+    schema_stitcher()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .field_mappings_list()
 }
 
 pub fn cache_stats() -> CacheStatsGql {
-    intelligent_cache().lock().unwrap().stats()
+    intelligent_cache()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .stats()
 }
 
 pub fn cache_get_entry(key: &str) -> Option<CacheEntryGql> {
-    intelligent_cache().lock().unwrap().get_entry(key)
+    intelligent_cache()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get_entry(key)
 }
 
 pub fn cache_list_entries(pattern: Option<&str>) -> Vec<CacheEntryGql> {
-    intelligent_cache().lock().unwrap().list_entries(pattern)
+    intelligent_cache()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .list_entries(pattern)
 }
 
 pub fn cache_list_policies() -> Vec<CachePolicyGql> {
-    intelligent_cache().lock().unwrap().list_policies()
+    intelligent_cache()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .list_policies()
 }
 
 pub fn register_sub_schema(entry: SubSchemaEntryInput) -> async_graphql::Result<SubSchemaEntryGql> {
@@ -2030,7 +2092,10 @@ pub fn register_sub_schema(entry: SubSchemaEntryInput) -> async_graphql::Result<
 }
 
 pub fn remove_sub_schema(service: &str) -> async_graphql::Result<bool> {
-    Ok(schema_stitcher().lock().unwrap().remove_sub_schema(service))
+    Ok(schema_stitcher()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .remove_sub_schema(service))
 }
 
 pub fn set_merge_strategy(strategy: TypeMergeStrategy) -> async_graphql::Result<bool> {
@@ -2049,7 +2114,10 @@ pub fn add_field_mapping(rule: FieldMappingRuleInput) -> async_graphql::Result<b
         target_field: rule.target_field,
         required: rule.required.unwrap_or(false),
     };
-    schema_stitcher().lock().unwrap().add_field_mapping(mapping);
+    schema_stitcher()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .add_field_mapping(mapping);
     Ok(true)
 }
 
@@ -2061,7 +2129,10 @@ pub fn remove_field_mapping(source_type: &str, source_field: &str) -> async_grap
 }
 
 pub fn refresh_stitched_schema(name: &str) -> async_graphql::Result<StitchedSchemaGql> {
-    Ok(schema_stitcher().lock().unwrap().stitched_schema(name))
+    Ok(schema_stitcher()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .stitched_schema(name))
 }
 
 pub fn cache_set(
@@ -2079,34 +2150,52 @@ pub fn cache_set(
         .lock()
         .unwrap()
         .put(key, bytes, pattern, ttl_sec);
-    Ok(intelligent_cache().lock().unwrap().get_entry(key))
+    Ok(intelligent_cache()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get_entry(key))
 }
 
 pub fn cache_delete(key: &str) -> async_graphql::Result<bool> {
-    Ok(intelligent_cache().lock().unwrap().delete(key))
+    Ok(intelligent_cache()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .delete(key))
 }
 
 pub fn cache_clear(pattern: Option<&str>) -> async_graphql::Result<u64> {
     Ok(match pattern {
-        Some(p) => intelligent_cache().lock().unwrap().invalidate_pattern(p),
-        None => intelligent_cache().lock().unwrap().invalidate_pattern("*"),
+        Some(p) => intelligent_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .invalidate_pattern(p),
+        None => intelligent_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .invalidate_pattern("*"),
     })
 }
 
 pub fn cache_set_policy(pattern: &str, policy: CachePolicyInput) -> async_graphql::Result<bool> {
     let consistency = policy.consistency.unwrap_or(ConsistencyLevel::Eventual);
     let invalidation = policy.invalidation.unwrap_or(InvalidationStrategy::TTL);
-    intelligent_cache().lock().unwrap().set_policy(
-        pattern,
-        policy.ttl_sec.unwrap_or(300),
-        consistency,
-        invalidation,
-    );
+    intelligent_cache()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .set_policy(
+            pattern,
+            policy.ttl_sec.unwrap_or(300),
+            consistency,
+            invalidation,
+        );
     Ok(true)
 }
 
 pub fn cache_clear_policies() -> async_graphql::Result<bool> {
-    intelligent_cache().lock().unwrap().clear_policies();
+    intelligent_cache()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .clear_policies();
     Ok(true)
 }
 
@@ -2278,18 +2367,19 @@ impl RateLimitingMutationRoot {
         ttl_sec: Option<u64>,
     ) -> async_graphql::Result<bool> {
         let bytes = value.into_bytes();
-        intelligent_cache().lock().unwrap().put(
-            &key,
-            bytes,
-            pattern.as_deref().unwrap_or("*"),
-            ttl_sec,
-        );
+        intelligent_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .put(&key, bytes, pattern.as_deref().unwrap_or("*"), ttl_sec);
         Ok(true)
     }
 
     /// 删除单个缓存条目
     async fn cache_delete(&self, _ctx: &Context<'_>, key: String) -> async_graphql::Result<bool> {
-        Ok(intelligent_cache().lock().unwrap().delete(&key))
+        Ok(intelligent_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .delete(&key))
     }
 
     /// 按模式批量失效缓存
@@ -2313,12 +2403,10 @@ impl RateLimitingMutationRoot {
         let consistency = policy.consistency.unwrap_or(ConsistencyLevel::Eventual);
         let invalidation = policy.invalidation.unwrap_or(InvalidationStrategy::TTL);
         let ttl = policy.ttl_sec.unwrap_or(300);
-        intelligent_cache().lock().unwrap().set_policy(
-            &policy.key_pattern,
-            ttl,
-            consistency,
-            invalidation,
-        );
+        intelligent_cache()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .set_policy(&policy.key_pattern, ttl, consistency, invalidation);
         Ok(intelligent_cache()
             .lock()
             .unwrap()

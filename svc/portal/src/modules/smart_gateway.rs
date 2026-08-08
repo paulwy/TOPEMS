@@ -405,11 +405,17 @@ impl ProtocolRouter {
     }
 
     pub fn register_protocol(&self, config: ProtocolConfig) {
-        self.inner.lock().unwrap().register_protocol(config);
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .register_protocol(config);
     }
 
     pub fn register_handler(&self, handler: Arc<dyn ProtocolHandler>) {
-        self.inner.lock().unwrap().register_handler(handler);
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .register_handler(handler);
     }
 
     pub fn route_request(
@@ -417,23 +423,38 @@ impl ProtocolRouter {
         protocol: SupportedProtocol,
         request: &str,
     ) -> Result<String, String> {
-        self.inner.lock().unwrap().route_request(protocol, request)
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .route_request(protocol, request)
     }
 
     pub fn list_protocols(&self) -> Vec<ProtocolConfig> {
-        self.inner.lock().unwrap().list_protocols()
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .list_protocols()
     }
 
     pub fn get_protocol_config(&self, protocol: SupportedProtocol) -> Option<ProtocolConfig> {
-        self.inner.lock().unwrap().get_protocol_config(protocol)
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get_protocol_config(protocol)
     }
 
     pub fn enable_protocol(&self, protocol: SupportedProtocol) -> bool {
-        self.inner.lock().unwrap().enable_protocol(protocol)
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .enable_protocol(protocol)
     }
 
     pub fn disable_protocol(&self, protocol: SupportedProtocol) -> bool {
-        self.inner.lock().unwrap().disable_protocol(protocol)
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .disable_protocol(protocol)
     }
 }
 
@@ -598,11 +619,17 @@ impl SmartRouter {
     }
 
     pub fn add_route(&self, route: SmartRoute) -> SmartRoute {
-        self.inner.lock().unwrap().add_route(route)
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .add_route(route)
     }
 
     pub fn remove_route(&self, route_id: &str) -> bool {
-        self.inner.lock().unwrap().remove_route(route_id)
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove_route(route_id)
     }
 
     pub fn match_route(
@@ -618,7 +645,10 @@ impl SmartRouter {
     }
 
     pub fn get_routing_table(&self) -> Vec<SmartRoute> {
-        self.inner.lock().unwrap().get_routing_table()
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get_routing_table()
     }
 
     pub fn update_route_priority(&self, route_id: &str, priority: u32) -> bool {
@@ -629,7 +659,10 @@ impl SmartRouter {
     }
 
     pub fn health_check_routes(&self) -> HashMap<String, bool> {
-        self.inner.lock().unwrap().health_check_routes()
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .health_check_routes()
     }
 
     pub fn discover_service(&self, service_name: &str, instances: Vec<String>) {
@@ -774,27 +807,46 @@ impl AdaptiveDegradationController {
     }
 
     pub fn evaluate_degradation(&self) -> DegradationLevel {
-        self.inner.lock().unwrap().evaluate_degradation()
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .evaluate_degradation()
     }
 
     pub fn set_degradation_level(&self, level: DegradationLevel) {
-        self.inner.lock().unwrap().set_degradation_level(level);
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .set_degradation_level(level);
     }
 
     pub fn get_degradation_status(&self) -> DegradationLevel {
-        self.inner.lock().unwrap().get_degradation_status()
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get_degradation_status()
     }
 
     pub fn configure_policy(&self, policy: DegradationPolicy) {
-        self.inner.lock().unwrap().configure_policy(policy);
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .configure_policy(policy);
     }
 
     pub fn get_policy(&self) -> DegradationPolicy {
-        self.inner.lock().unwrap().get_policy().clone()
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get_policy()
+            .clone()
     }
 
     pub fn record_health_metrics(&self, metrics: HealthMetrics) {
-        self.inner.lock().unwrap().record_health_metrics(metrics);
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .record_health_metrics(metrics);
     }
 
     pub fn get_health_metrics(&self, service_name: &str) -> Option<HealthMetrics> {
@@ -806,7 +858,10 @@ impl AdaptiveDegradationController {
     }
 
     pub fn get_all_health_metrics(&self) -> Vec<HealthMetrics> {
-        self.inner.lock().unwrap().get_all_health_metrics()
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get_all_health_metrics()
     }
 
     pub fn trigger_degradation(&self, level: DegradationLevel, service_name: &str) {
@@ -817,7 +872,10 @@ impl AdaptiveDegradationController {
     }
 
     pub fn recover_service(&self, service_name: &str) {
-        self.inner.lock().unwrap().recover_service(service_name);
+        self.inner
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .recover_service(service_name);
     }
 
     pub fn get_circuit_breaker_state(&self, service_name: &str) -> String {

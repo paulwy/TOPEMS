@@ -86,11 +86,6 @@ pub struct CreateLessonRequest {
     pub sort_order: Option<i32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CompleteLessonRequest {
-    pub lesson_id: Uuid,
-}
-
 pub async fn list_guides(
     State(state): State<AppState>,
     Query(query): Query<GuideQuery>,
