@@ -277,12 +277,24 @@ export const voucherSchema: EntitySchema & {
         try {
           const res = await voucherApi.batchSubmit(ids);
           if (res.code === 0 || res.success) {
-            alert(i18n.t('schema:erp.voucher.batchAction.batchSubmit.success', { defaultValue: '提交成功' }));
+            alert(
+              i18n.t('schema:erp.voucher.batchAction.batchSubmit.success', {
+                defaultValue: '提交成功',
+              })
+            );
           } else {
-            alert(i18n.t('schema:erp.voucher.batchAction.batchSubmit.fail', { defaultValue: res.message || '提交失败' }));
+            alert(
+              i18n.t('schema:erp.voucher.batchAction.batchSubmit.fail', {
+                defaultValue: res.message || '提交失败',
+              })
+            );
           }
         } catch (e: any) {
-          alert(i18n.t('schema:erp.voucher.batchAction.batchSubmit.error', { defaultValue: String(e?.message || '网络错误') }));
+          alert(
+            i18n.t('schema:erp.voucher.batchAction.batchSubmit.error', {
+              defaultValue: String(e?.message || '网络错误'),
+            })
+          );
         }
       },
     },
@@ -298,12 +310,24 @@ export const voucherSchema: EntitySchema & {
         try {
           const res = await voucherApi.batchApprove(ids);
           if (res.code === 0 || res.success) {
-            alert(i18n.t('schema:erp.voucher.batchAction.batchApprove.success', { defaultValue: '审批成功' }));
+            alert(
+              i18n.t('schema:erp.voucher.batchAction.batchApprove.success', {
+                defaultValue: '审批成功',
+              })
+            );
           } else {
-            alert(i18n.t('schema:erp.voucher.batchAction.batchApprove.fail', { defaultValue: res.message || '审批失败' }));
+            alert(
+              i18n.t('schema:erp.voucher.batchAction.batchApprove.fail', {
+                defaultValue: res.message || '审批失败',
+              })
+            );
           }
         } catch (e: any) {
-          alert(i18n.t('schema:erp.voucher.batchAction.batchApprove.error', { defaultValue: String(e?.message || '网络错误') }));
+          alert(
+            i18n.t('schema:erp.voucher.batchAction.batchApprove.error', {
+              defaultValue: String(e?.message || '网络错误'),
+            })
+          );
         }
       },
     },

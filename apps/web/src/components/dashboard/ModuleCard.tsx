@@ -131,10 +131,16 @@ const QuotaProgress: React.FC<{ quota: ModuleCardQuota }> = ({ quota }) => {
           mb: 0.75,
         }}
       >
-        <Typography variant='caption' color='text.secondary'>
+        <Typography
+          variant='caption'
+          color='text.secondary'
+        >
           {quota.label || '配额使用'}
         </Typography>
-        <Typography variant='caption' color='text.secondary'>
+        <Typography
+          variant='caption'
+          color='text.secondary'
+        >
           {quota.used}/{quota.total}
         </Typography>
       </Box>
@@ -343,9 +349,7 @@ export const ModuleCardV2: React.FC<ModuleCardV2Props> = ({ data, onClick }) => 
         </Box>
       )}
 
-      <Box
-        sx={{ display: 'flex', justifyContent: 'flex-end', mt: data.quota ? 0 : 'auto' }}
-      >
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: data.quota ? 0 : 'auto' }}>
         <Button
           size='small'
           endIcon={<ArrowRight size={14} />}

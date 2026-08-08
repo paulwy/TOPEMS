@@ -1,22 +1,7 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  Stack,
-  Paper,
-  Avatar,
-  Chip,
-} from '@mui/material';
+import { Box, Typography, Stack, Paper, Avatar, Chip } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
-import {
-  FileText,
-  CheckCircle2,
-  XCircle,
-  User,
-  Clock,
-  PlayCircle,
-  GitBranch,
-} from 'lucide-react';
+import { FileText, CheckCircle2, XCircle, User, Clock, PlayCircle, GitBranch } from 'lucide-react';
 import type { Approval, ApprovalRecord } from '@/api/workflow';
 import { designTokens } from '@/theme/tokens';
 
@@ -28,7 +13,10 @@ interface ApprovalTimelineProps {
   theme: Theme;
 }
 
-export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: Theme }> = ({ records, theme }) => {
+export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: Theme }> = ({
+  records,
+  theme,
+}) => {
   if (records.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -128,7 +116,11 @@ export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: The
   );
 };
 
-export const TimelineTabContent: React.FC<{ approval: Approval | null; records: ApprovalRecord[]; theme: Theme }> = ({ approval, records, theme }) => {
+export const TimelineTabContent: React.FC<{
+  approval: Approval | null;
+  records: ApprovalRecord[];
+  theme: Theme;
+}> = ({ approval, records, theme }) => {
   return (
     <Box>
       <Typography
@@ -355,8 +347,12 @@ export const TimelineTabContent: React.FC<{ approval: Approval | null; records: 
   );
 };
 
-export const FormDataTabContent: React.FC<{ approval: Approval | null; theme: Theme }> = ({ approval, theme }) => {
-  const formData = (approval as unknown as Record<string, unknown>)?.form_data as Record<string, unknown> | undefined;
+export const FormDataTabContent: React.FC<{ approval: Approval | null; theme: Theme }> = ({
+  approval,
+  theme,
+}) => {
+  const formData = (approval as unknown as Record<string, unknown>)?.form_data as
+    Record<string, unknown> | undefined;
   const hasFormData = formData && Object.keys(formData).length > 0;
 
   return (

@@ -505,9 +505,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     });
     return MODULE_SECTIONS.map((section) => ({
       ...section,
-      cards: section.moduleKeys
-        .map((k) => byKey.get(k))
-        .filter((c): c is ModuleItem => !!c),
+      cards: section.moduleKeys.map((k) => byKey.get(k)).filter((c): c is ModuleItem => !!c),
     }));
   }, [allModuleItems]);
 
@@ -566,8 +564,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         return <ListTodo size={18} />;
     }
   };
-
-
 
   return (
     <PageContainer
@@ -749,9 +745,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               <EmptyState
                 height={180}
                 title={todoTab === 0 ? '暂无待处理事项' : '暂无已完成事项'}
-                description={
-                  todoTab === 0 ? '所有任务已完成，继续保持！' : '还没有完成任何事项'
-                }
+                description={todoTab === 0 ? '所有任务已完成，继续保持！' : '还没有完成任何事项'}
                 sx={{ border: 'none', bgcolor: 'transparent' }}
               />
             )}

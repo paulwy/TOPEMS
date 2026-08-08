@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { IconButton } from '@mui/material';
 import { Home, ListTodo, ScanLine, CheckSquare, User, Barcode } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  MobileLayout,
-  PullToRefresh,
-  MobileSkeleton,
-} from '@/components/mobile';
+import { MobileLayout, PullToRefresh, MobileSkeleton } from '@/components/mobile';
 import { useNotificationStore } from '@/store';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
