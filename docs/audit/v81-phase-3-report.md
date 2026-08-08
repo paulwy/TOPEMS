@@ -94,12 +94,12 @@ V81 Phase 3 并发推进 10 个子任务，聚焦 **TSC 错误减半**（384 →
 
 | Hook | 测试文件 | 用例数 | 状态 |
 |------|---------|--------|------|
-| **useDashboardData** | [shared/hooks/__tests__/useDashboardData.test.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/shared/hooks/__tests__/useDashboardData.test.tsx) | 11 | ✅ |
-| **useOperationAuditLog** | [admin/hooks/__tests__/useOperationAuditLog.test.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/admin/hooks/__tests__/useOperationAuditLog.test.tsx) | 18 | ✅ |
-| **useTemplateManagement** | [report/hooks/__tests__/useTemplateManagement.test.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/report/hooks/__tests__/useTemplateManagement.test.ts) | 17 | ✅ |
-| **useDocumentsPage** | [doc/DocumentsPage/hooks/__tests__/useDocumentsPage.test.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/doc/DocumentsPage/hooks/__tests__/useDocumentsPage.test.ts) | 21 | ✅ |
-| **usePluginManagement** | [admin/hooks/__tests__/usePluginManagement.test.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/admin/hooks/__tests__/usePluginManagement.test.tsx) | 26 | ✅ |
-| **useDictionaryManagement** | [admin/hooks/__tests__/useDictionaryManagement.test.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/admin/hooks/__tests__/useDictionaryManagement.test.ts) | 30 | ✅ |
+| **useDashboardData** | [shared/hooks/__tests__/useDashboardData.test.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/shared/hooks/__tests__/useDashboardData.test.tsx) | 11 | ✅ |
+| **useOperationAuditLog** | [admin/hooks/__tests__/useOperationAuditLog.test.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/admin/hooks/__tests__/useOperationAuditLog.test.tsx) | 18 | ✅ |
+| **useTemplateManagement** | [report/hooks/__tests__/useTemplateManagement.test.ts](file:///Users/air/TOPEMS/apps/web/src/pages/report/hooks/__tests__/useTemplateManagement.test.ts) | 17 | ✅ |
+| **useDocumentsPage** | [doc/DocumentsPage/hooks/__tests__/useDocumentsPage.test.ts](file:///Users/air/TOPEMS/apps/web/src/pages/doc/DocumentsPage/hooks/__tests__/useDocumentsPage.test.ts) | 21 | ✅ |
+| **usePluginManagement** | [admin/hooks/__tests__/usePluginManagement.test.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/admin/hooks/__tests__/usePluginManagement.test.tsx) | 26 | ✅ |
+| **useDictionaryManagement** | [admin/hooks/__tests__/useDictionaryManagement.test.ts](file:///Users/air/TOPEMS/apps/web/src/pages/admin/hooks/__tests__/useDictionaryManagement.test.ts) | 30 | ✅ |
 | **合计** | 6 个文件 | **123 用例** | **全部通过** |
 
 ### 测试覆盖维度
