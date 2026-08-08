@@ -586,7 +586,7 @@ async fn list_device_locations_by_map(
     Path(map_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, DeviceLocation>(
-        "SELECT * FROM device_locations WHERE map_id = $1 ORDER BY created_at DESC",
+        "id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM device_locations WHERE map_id = $1 ORDER BY created_at DESC",
     )
     .bind(map_id)
     .fetch_all(&pool)

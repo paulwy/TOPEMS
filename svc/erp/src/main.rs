@@ -25,11 +25,11 @@ use topems_shared_bootstrap::{
 };
 
 lazy_static::lazy_static! {
-    pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").expect("Failed to register asset_count gauge - check for duplicate metric registrations");
-    pub static ref VOUCHER_COUNT: IntGauge = register_int_gauge!("topems_erp_voucher_count", "Total number of vouchers in ERP system").expect("Failed to register voucher_count gauge - check for duplicate metric registrations");
-    pub static ref FINANCIAL_TRANSACTION_COUNT: IntCounter = register_int_counter!("topems_erp_financial_transactions_total", "Total number of financial transactions").expect("Failed to register financial_transactions counter - check for duplicate metric registrations");
-    pub static ref ACTIVE_USERS: IntGauge = register_int_gauge!("topems_erp_active_users", "Number of active users in the last hour").expect("Failed to register active_users gauge - check for duplicate metric registrations");
-    pub static ref API_REQUESTS_TOTAL: IntCounter = register_int_counter!("topems_erp_api_requests_total", "Total number of API requests").expect("Failed to register api_requests counter - check for duplicate metric registrations");
+    pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").expect("Failed to register asset_count gauge");
+    pub static ref VOUCHER_COUNT: IntGauge = register_int_gauge!("topems_erp_voucher_count", "Total number of vouchers in ERP system").expect("Failed to register voucher_count gauge");
+    pub static ref FINANCIAL_TRANSACTION_COUNT: IntCounter = register_int_counter!("topems_erp_financial_transactions_total", "Total number of financial transactions").expect("Failed to register financial_transactions counter");
+    pub static ref ACTIVE_USERS: IntGauge = register_int_gauge!("topems_erp_active_users", "Number of active users in the last hour").expect("Failed to register active_users gauge");
+    pub static ref API_REQUESTS_TOTAL: IntCounter = register_int_counter!("topems_erp_api_requests_total", "Total number of API requests").expect("Failed to register api_requests counter");
 }
 
 #[tokio::main]

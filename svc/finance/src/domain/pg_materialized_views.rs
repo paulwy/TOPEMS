@@ -54,7 +54,7 @@ impl PgVoucherSummaryView {
 
         let rows = if let Some(s) = &status {
             sqlx::query(
-                "SELECT * FROM mv_voucher_summary WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+                "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
             )
             .bind(s)
             .bind(page_size)
@@ -64,7 +64,7 @@ impl PgVoucherSummaryView {
             .map_err(|e| e.to_string())?
         } else {
             sqlx::query(
-                "SELECT * FROM mv_voucher_summary ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+                "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary ORDER BY created_at DESC LIMIT $1 OFFSET $2",
             )
             .bind(page_size)
             .bind(offset)
@@ -81,7 +81,7 @@ impl PgVoucherSummaryView {
     }
 
     pub async fn get_by_id(&self, id: &str) -> Result<Option<PgVoucherSummary>, String> {
-        let result = sqlx::query("SELECT * FROM mv_voucher_summary WHERE id = $1")
+        let result = sqlx::query("SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE id = $1")
             .bind(id)
             .fetch_optional(&self.pool)
             .await
@@ -94,7 +94,7 @@ impl PgVoucherSummaryView {
     }
 
     pub async fn get_by_no(&self, no: &str) -> Result<Option<PgVoucherSummary>, String> {
-        let result = sqlx::query("SELECT * FROM mv_voucher_summary WHERE voucher_no = $1")
+        let result = sqlx::query("SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE voucher_no = $1")
             .bind(no)
             .fetch_optional(&self.pool)
             .await
@@ -250,7 +250,7 @@ impl PgReceivableAgingView {
 
         let rows = if let Some(s) = &status {
             sqlx::query(
-                "SELECT * FROM mv_receivable_aging WHERE status = $1 ORDER BY updated_at DESC LIMIT $2 OFFSET $3",
+                "SELECT id, receivable_no, customer_id, customer_name, invoice_no, due_date, amount, received_amount, status, days_overdue, created_at, updated_at FROM mv_receivable_aging WHERE status = $1 ORDER BY updated_at DESC LIMIT $2 OFFSET $3",
             )
             .bind(s)
             .bind(page_size)
@@ -260,7 +260,7 @@ impl PgReceivableAgingView {
             .map_err(|e| e.to_string())?
         } else {
             sqlx::query(
-                "SELECT * FROM mv_receivable_aging ORDER BY updated_at DESC LIMIT $1 OFFSET $2",
+                "SELECT id, receivable_no, customer_id, customer_name, invoice_no, due_date, amount, received_amount, status, days_overdue, created_at, updated_at FROM mv_receivable_aging ORDER BY updated_at DESC LIMIT $1 OFFSET $2",
             )
             .bind(page_size)
             .bind(offset)
@@ -277,7 +277,7 @@ impl PgReceivableAgingView {
     }
 
     pub async fn get_by_id(&self, id: &str) -> Result<Option<PgReceivableAging>, String> {
-        let result = sqlx::query("SELECT * FROM mv_receivable_aging WHERE id = $1")
+        let result = sqlx::query("SELECT id, receivable_no, customer_id, customer_name, invoice_no, due_date, amount, received_amount, status, days_overdue, created_at, updated_at FROM mv_receivable_aging WHERE id = $1")
             .bind(id)
             .fetch_optional(&self.pool)
             .await

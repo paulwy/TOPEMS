@@ -154,7 +154,7 @@ impl VersionConfig {
 
     pub async fn load_from_db(&mut self, pool: &PgPool) -> Result<(), sqlx::Error> {
         let configs: Vec<ApiVersionConfigRecord> =
-            sqlx::query_as("SELECT * FROM core_api_version_configs WHERE deleted_at IS NULL")
+            sqlx::query_as("SELECT id, version, api_version, is_default, deprecated_at, description, is_active, created_at, updated_at, deleted_at FROM core_api_version_configs WHERE deleted_at IS NULL")
                 .fetch_all(pool)
                 .await?;
 
@@ -537,7 +537,7 @@ pub async fn list_versions(
 ) -> Json<crate::CoreResponse<Vec<ApiVersionConfigRecord>>> {
     tracing::info!("[Versioning] Listing all API versions");
 
-    let result = sqlx::query_as("SELECT * FROM core_api_version_configs ORDER BY version")
+    let result = sqlx::query_as("SELECT id, version, api_version, is_default, deprecated_at, description, is_active, created_at, updated_at, deleted_at FROM core_api_version_configs ORDER BY version")
         .fetch_all(&state.pool)
         .await;
 
@@ -560,7 +560,7 @@ pub async fn get_version(
     tracing::info!("[Versioning] Getting API version: {}", version);
 
     let result = sqlx::query_as(
-        "SELECT * FROM core_api_version_configs WHERE deleted_at IS NULL AND version = $1",
+        "SELECT id, version, api_version, is_default, deprecated_at, description, is_active, created_at, updated_at, deleted_at FROM core_api_version_configs WHERE deleted_at IS NULL AND version = $1",
     )
     .bind(&version)
     .fetch_optional(&state.pool)
