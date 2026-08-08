@@ -18,6 +18,7 @@ export const inventorySchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'name',
@@ -26,6 +27,7 @@ export const inventorySchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'specification',
@@ -39,6 +41,7 @@ export const inventorySchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'quantity',
@@ -85,6 +88,7 @@ export const inventorySchema: EntitySchema = {
       label: '批次号',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'min_quantity',
