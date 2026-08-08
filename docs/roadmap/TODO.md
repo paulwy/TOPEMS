@@ -1,9 +1,9 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V70 | **更新日期**: 2026-08-09
-> **服务总数**: 28 个（含 unified-core + master-data + lowcode 占位） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环（origin V68.2-2/2-3/2-4/2-5/2-6 双侧工作已对齐）** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环**：Phase 1 ERP 12 表补 tenant_id · Phase 2 company_id → org_id 9 表 · Phase 3 organization_id 语义统一 27 文件 169 处）· **V70 第五轮审计 15 项问题（P0×3 + P1×5 + P2×4 + P3×3），已修复 14/15** ✅（P0×3 全闭环 · P1×5 全闭环 · P2×4 全闭环 · 列名验证修正 15 处运行时风险 · Analytics SQL 注入防护加固 · 全服务 SELECT * 优化 322 处 · unwrap 高风险路径 100% 覆盖）· **A4.2 去门面化 Phase 1+2 完成**（Phase 1: 14 服务 28 处简单单行导入迁移；Phase 2: 多行大括号导入+限定路径引用采用 lib.rs COMPAT 兼容层方案，`cargo check --workspace` 通过）· **A4.3 最终清理完成**（删除 lib.rs 全部 `#[deprecated]` 标记，建立 KEEP+COMPAT 两层 re-export 结构）· **V70.1 持续优化**：修复 MES 生产看板 2 处 `SELECT *` · PDM/SRM 服务去门面化迁移（39 文件）· 限定路径引用清理（5 处）· **全服务去门面化 Phase 3**：SCM/WMS/MES/CRM 四大服务完成去门面化（92 文件）· 12 个服务添加子 crate 依赖 · 333+ 文件批量导入迁移 · 多行大括号导入处理（50 文件）· `cargo check --workspace` 全编译通过 · **A4.2 去门面化最终推进完成**：Phase 4 全服务迁移（16 服务，50+ 文件），处理复杂嵌套引用、事件载荷类型、Saga 类型、服务引导类型、AI 类型、认证函数、限流中间件、服务客户端 API 路径引用等；为 12 个服务添加缺失的子 crate 依赖；**活跃代码 `topems_shared::` 引用清零**（剩余 43 处：ai_form 死代码 40 处 + 注释 4 处 + 文档 1 处）；`cargo check --workspace` 全编译通过 ✅
-> **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 28/28 (100%)** ✅
+> **版本**: V71 | **更新日期**: 2026-08-09
+> **服务总数**: 30 个（含 unified-core + master-data + lowcode 占位 + ai/rd） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
+> **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环** · **V70 第五轮审计 15/15 全闭环** ✅ · **A4.2 去门面化 Phase 1~4 全服务迁移完成**（Phase 4 活跃代码 `topems_shared::` 引用清零，剩余 43 处死代码/注释/文档）· **V70.1 持续优化全项** · **V70 规划占位 3/3 落地** · **V70 封版：5 语义提交 30 服务 cargo check 0 error + tsc 0 error** ✅
+> **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 30/30 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
 > **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 21 服务迁移；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP5 拆分达标**（AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72% / IAM 路径归化）
 > **V67.1 第四轮架构审计**: 四探针并行（前端/后端/系统集成/代码质量），发现 **67 项问题**（P0×10 · P1×25 · P2×20 · P3×12），聚焦效率·性能·节省空间
@@ -14,6 +14,7 @@
 > **V67.3 前端 UI 代码优化**: 原方案 mui/ 重复组件 + TS 80 错误已过时；重新审计发现 9 个死文件（3 stub 占位 + 6 个零引用 re-export）+ 3 处非规范导入路径 + Tailwind 残留检查；**全部 8 项闭环** ✅
 > **V68.0 质量门禁全通过**: `npx tsc --noEmit` 0 error · `cargo check --workspace` 0 error 0 warning · `npx vite build` ✅ · 导航结构脚本 100% PASS · 三联校验 0 缺失 · Dashboard/Login 手动回归无 runtime error
 > **V68.0 L3 子组一次性到位**: 33 模块 341 项 `navItems.group` 全部按 §4.2 8 枚举 + §4.3.1~§4.3.6 六大标杆规则重归类；最终分布 `master=74 process=99 business=43 analytics=54 setting=39 overview=28 report=4 other=0`；routes↔navItems 341 条 100% 对称；新增 CI 门禁 `scripts/check-l3-groups.js`（4 项检查 PASS）
+> **V70 封版汇总**: 5 语义提交（79728689 / 24528597 / de8c70a6 / 665ec85b / fe02b36c）→ push origin main 成功。修复面：前端 TSC 37 处 8 文件 · 去门面化 10 服务 13 文件导入 · RD Result+Config 3 文件 · cargo fmt workspace 风格统一 70 文件 · 清理 35 pycache/tsbuildinfo 编译产物
 
 ---
 
@@ -423,3 +424,52 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 | **1** | A2 瘦身后续：5 独立服务 build cache 优化 + 覆盖率补齐 | ✅ 完成。3 层缓存架构文档；monitor/plugin-registry 修复 SimpleHealthConfig 编译 bug；3 服务 smoke 测试全部通过（Phase 1.0 基线） | [a2-build-cache.md](file:///Users/xingzhai/TOPEMS/docs/architecture/a2-build-cache.md) |
 | **2** | V67.2 审计余留复盘：P2×4 + P3×3 | ✅ 全部闭环（P2-1~P2-4 + P3-1~P3-3 均在 §4-2 完成，status=✅） | [§4-2 V68.1 顺手项](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md#L255-L265) |
 | **3** | CI 性能：8+ 门禁脚本分层分组缓存 | ✅ 完成。`ci-cache-utils.sh` 4 层工具 + 2 个包装脚本（verify-mes-schema-truth / check-entityschema-maxlength）；同 hash 二次执行命中跳过 node 启动 | [ci-cache-utils.sh](file:///Users/xingzhai/TOPEMS/scripts/ci-cache-utils.sh) |
+
+---
+
+## 🎯 V71 — 类型驱动 × 覆盖率推进 × 性能基线（启动版本）
+
+> **版本定位**：V70 质量闭环后，把"类型正确性"、"测试覆盖率"、"构建性能基线"三条主线一次性拉齐。
+> **输入来源**：① V70 A4 去门面化收尾后的统一依赖基盘 → 可稳定做 OpenAPI 类型提取；② A2 §3 Phase 1.0 覆盖率基线（smoke 5/5 全绿）→ 自然推进 Phase 1.5→2.0；③ A2 §4 冷热构建估算无实测数据 → 补齐性能基线；④ 前端侧 1329 API 函数缺乏生成类型约束 → 类型接入推广
+> **预期产物**：OpenAPI 类型聚合 + 类型适配层 + 覆盖率 Phase 1.5 低成本 + 构建性能报告 v1 + Vite 产物体积基线
+
+### 🔴 主题 A — OpenAPI 类型接入推广（P0 核心主线）
+
+| # | 任务 | 说明 | 验收标准 | 状态 |
+|---|------|------|----------|------|
+| **A1** | 服务端 OpenAPI spec 测试提取（Rust test 模式） | 30 服务各新增 `tests/openapi_extract.rs`，在 `#[test]` 中构建 utoipa::OpenApi → 写 JSON 到 `tmp/openapi/<crate>.json`，**无需启动服务即可获取 spec** | 30 服务 `cargo test -p <crate> --test openapi_extract` exit 0；`<crate>.json` 非空且含 `openapi: 3.x` 字段 | ⏳ 待启动 |
+| **A2** | spec 合并 + 类型生成脚本 | `scripts/gen_openapi_types.sh`：30 JSON → `json-file-merge` → 喂 `openapi-typescript` → 输出 `packages/shared-types/src/openapi.gen.ts`（`components/schemas` 聚合 + 各服务路径操作） | 单命令 exit 0；`openapi.gen.ts` ≥ 300 条 Schema 接口 | ⏳ 待启动 |
+| **A3** | 类型适配层（命名差异桥接） | 处理后端 utoipa 命名（驼峰 `isActive`）→ 前端 DB 实际字段（蛇形 `is_active`）的 24 处冲突；`src/openapi-adapter.ts` 提供 `Adapt<T>` 映射工具 + 白名单字段字典 | 适配层 unit test 覆盖 24 冲突字段；TSC 0 error | ⏳ 待启动 |
+| **A4** | 前端 1329 API 函数接入生成类型（分批） | `apps/web/src/api/*` 下 1329 函数：返回值/请求参数分别绑定 `paths.{op}.responses.200 / requestBody.content['application/json']`；先主干服务（unified-core/mes/erp/hrm/qms/scm），再长尾 | 主干 5 服务 800+ API 全绑定；TSC 0 error；类型匹配率 ≥85%（适配器已处理的差异算 PASS） | ⏳ 待启动 |
+
+### 🟡 主题 B — 覆盖率 Phase 1.5→2.0 推进（P1）
+
+| # | 任务 | 说明 | 验收标准 | 状态 |
+|---|------|------|----------|------|
+| **B1** | 低成本高收益测试补齐（纯函数/枚举） | 扫描所有服务 `pub fn` 无 `async` + 无 DB 依赖的纯函数；集中在 shared-* 子 crate：`topems_shared_core::naming` 工具、枚举转换、分页/排序辅助、权限工具等；低成本、高覆盖率收益 | 新增 ≥ 60 个 `#[test]`，`cargo test -p topems-shared-core --lib` 覆盖率贡献 ≥ 3pp | ⏳ 待启动 |
+| **B2** | `--test '*'` 全量测试失败率收敛 | Phase 2.0 准入：失败率 < 1%；目前已知 PM 模块测试因 PG 连接失败跳过，需 CI `SKIP_DB_TESTS=1` 兜底；收集所有 skip 清单 | `cargo test --workspace --test '*'` exit 0；fail/skip 比例 ≤ 1% | ⏳ 待启动 |
+| **B3** | 前端 Vitest 覆盖率基线 | `apps/web` 引入 vitest + `@vitest/coverage-v8`；纯函数工具、导航脚本、类型适配器优先；建立 Phase 1.0 覆盖率数字 | `npx vitest run --coverage` 产出 `coverage-summary.json`；总体覆盖 ≥ 8%（建立基线，不追高） | ⏳ 待启动 |
+
+### 🟡 主题 C — 构建性能基线与缓存实测（P1）
+
+| # | 任务 | 说明 | 验收标准 | 状态 |
+|---|------|------|----------|------|
+| **C1** | 5 独立服务冷热构建时间实测（A2 §4 估算→实测） | monitor / plugin-registry / master-data / portal / unified-core 5 服务：分别测 sccache 清空（冷）→ sccache 命中 60%+（热）；采集 CPU time + wall time | 生成 `docs/benchmarks/build-cache-v71.md`；实测值与 A2 §4 估算偏差 ≤ ±25%；输出表格化报告 | ⏳ 待启动 |
+| **C2** | sccache 命中率月度采集脚本 | `scripts/ci/sccache_stats.sh`：`sccache --show-stats` 解析 JSON → push 到 benchmark 目录；CI 每次 lint/test job 后执行一次；建立命中趋势基线 | 月度 CSV：cache hits / misses / errors / size；趋势图至少 3 条样本点 | ⏳ 待启动 |
+| **C3** | 前端 Vite build 时间+产物体积基线 | `cd apps/web && npx vite build` 采集：rollup 各 chunk 体积、brotli 后总体积、构建耗时、sourcemap 大小 | 写入 `docs/benchmarks/vite-build-v71.md`；brotli ≤ 1.8MB；构建耗时 ≤ 90s（CI runner） | ⏳ 待启动 |
+
+### 🟢 主题 D — 第六轮架构审计启动（P2 准备）
+
+| # | 任务 | 说明 | 验收标准 | 状态 |
+|---|------|------|----------|------|
+| **D1** | 第六轮审计探针设计 | 在 V70 31+31+18+15 四轮探针基础上，新增：①OpenAPI 前后端契约一致性探针（typescript-interface vs utoipa schema diff）；②去门面化后模块依赖有向图（循环依赖探测）；③覆盖率散点探针 | `docs/audit/V71-sixth-round-probe-design.md`；3 个新探针均有 PoC 脚本 | ⏳ 待启动 |
+
+### 📈 V71 任务汇总
+
+| 主题 | 优先级 | 任务数 | 最优先启动顺序 |
+|------|--------|--------|----------------|
+| A（OpenAPI 类型接入推广） | P0×4 | **4** | **A1 → A2 → A3 → A4（主干批次）** |
+| B（覆盖率 Phase 1.5→2.0） | P1×3 | 3 | B1（纯函数低成本）→ B3（前端基线）→ B2（失败率收敛） |
+| C（构建性能基线） | P1×3 | 3 | C3（前端Vite基线，1h落地）→ C1（5服务实测）→ C2（sccache采集脚本） |
+| D（第六轮审计探针设计） | P2×1 | 1 | D1（入口：V71中段再启动） |
+| **合计** | **P0=4 · P1=6 · P2=1** | **11** | **最优先启动：A1 + C3（可并行，互不影响）** |
