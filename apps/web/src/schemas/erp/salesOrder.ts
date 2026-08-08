@@ -29,6 +29,7 @@ export const salesOrderSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'total_amount',
@@ -93,6 +94,7 @@ export const salesOrderSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'remark',

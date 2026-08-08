@@ -27,6 +27,7 @@ export const equipmentSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'type',
@@ -50,12 +51,14 @@ export const equipmentSchema: EntitySchema = {
       label: '型号',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'manufacturer',
       label: '制造商',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'purchase_date',
@@ -68,6 +71,7 @@ export const equipmentSchema: EntitySchema = {
       label: '位置',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'status',
@@ -84,6 +88,7 @@ export const equipmentSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'value',

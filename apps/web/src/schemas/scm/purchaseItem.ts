@@ -39,12 +39,14 @@ export const purchaseItemSchema: EntitySchema = {
       label: '规格',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'unit',
       label: '单位',
       type: 'text',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'quantity',

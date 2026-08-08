@@ -82,6 +82,7 @@ export const employeeSchema: EntitySchema = {
         type: 'static',
         options: GENDER_OPTIONS,
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'department_id',
@@ -149,6 +150,7 @@ export const employeeSchema: EntitySchema = {
         type: 'static',
         options: EDUCATION_OPTIONS,
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'status',
@@ -160,6 +162,7 @@ export const employeeSchema: EntitySchema = {
         options: STATUS_OPTIONS,
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
   ],
 

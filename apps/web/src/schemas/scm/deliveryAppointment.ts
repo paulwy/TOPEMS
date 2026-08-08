@@ -19,6 +19,7 @@ export const deliveryAppointmentSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'supplier_id',
@@ -33,6 +34,7 @@ export const deliveryAppointmentSchema: EntitySchema = {
       label: '供应商',
       type: 'text',
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'purchase_order_id',
@@ -46,6 +48,7 @@ export const deliveryAppointmentSchema: EntitySchema = {
       label: '采购订单号',
       type: 'text',
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'delivery_date',
@@ -81,12 +84,14 @@ export const deliveryAppointmentSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'vehicle_no',
       label: '车牌号',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'driver_name',
@@ -94,6 +99,7 @@ export const deliveryAppointmentSchema: EntitySchema = {
       type: 'text',
       listWidth: 100,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'driver_phone',
@@ -101,12 +107,14 @@ export const deliveryAppointmentSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'destination_warehouse',
       label: '目的仓库',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'expected_arrival_time',
@@ -145,6 +153,7 @@ export const deliveryAppointmentSchema: EntitySchema = {
       type: 'text',
       listWidth: 100,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'status',
@@ -163,6 +172,7 @@ export const deliveryAppointmentSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'remarks',
@@ -176,6 +186,7 @@ export const deliveryAppointmentSchema: EntitySchema = {
       type: 'text',
       showInList: false,
       showInForm: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'approved_at',

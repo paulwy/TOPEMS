@@ -19,6 +19,7 @@ export const fixedAssetSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'asset_name',
@@ -27,6 +28,7 @@ export const fixedAssetSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'asset_category',
@@ -44,6 +46,7 @@ export const fixedAssetSchema: EntitySchema = {
           { value: 'vehicle', label: '运输工具' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'purchase_date',
@@ -108,6 +111,7 @@ export const fixedAssetSchema: EntitySchema = {
           { value: 'sum_of_years', label: '年数总和法' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'expected_life',
@@ -132,6 +136,7 @@ export const fixedAssetSchema: EntitySchema = {
       label: '存放位置',
       type: 'text',
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'department_id',
@@ -159,6 +164,7 @@ export const fixedAssetSchema: EntitySchema = {
           { value: 'retired', label: '已报废' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
   ],
 

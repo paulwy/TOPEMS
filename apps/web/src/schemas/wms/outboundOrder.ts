@@ -23,6 +23,7 @@ export const outboundOrderSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'warehouse_id',
@@ -39,6 +40,7 @@ export const outboundOrderSchema: EntitySchema = {
       name: 'customer_name',
       label: '客户名称',
       type: 'text',
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'order_date',
@@ -79,6 +81,7 @@ export const outboundOrderSchema: EntitySchema = {
         };
         return statusMap[row.status as string] || String(row.status || '-');
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'remarks',

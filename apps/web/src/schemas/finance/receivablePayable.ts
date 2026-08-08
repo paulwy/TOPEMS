@@ -97,6 +97,7 @@ export const receivableSchema: EntitySchema & SchemaExtensions = {
       type: 'text',
       required: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'amount',
@@ -156,6 +157,7 @@ export const receivableSchema: EntitySchema & SchemaExtensions = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
   ],
 
@@ -262,6 +264,7 @@ export const payableSchema: EntitySchema & SchemaExtensions = {
       type: 'text',
       required: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'amount',
@@ -321,6 +324,7 @@ export const payableSchema: EntitySchema & SchemaExtensions = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
   ],
 

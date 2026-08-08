@@ -19,6 +19,7 @@ export const bomSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'name',
@@ -39,12 +40,14 @@ export const bomSchema: EntitySchema = {
       label: '产品',
       type: 'text',
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'product_code',
       label: '产品编码',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'version',
@@ -52,6 +55,7 @@ export const bomSchema: EntitySchema = {
       type: 'text',
       defaultValue: '1.0',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
@@ -68,6 +72,7 @@ export const bomSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'effective_date',

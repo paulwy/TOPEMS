@@ -44,12 +44,14 @@ export const instrumentSchema: EntitySchema = {
       label: '型号',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'manufacturer',
       label: '生产厂家',
       type: 'text',
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'serial_number',
@@ -62,6 +64,7 @@ export const instrumentSchema: EntitySchema = {
       label: '存放位置',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'status',
@@ -78,6 +81,7 @@ export const instrumentSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'purchase_date',
@@ -118,6 +122,7 @@ export const instrumentSchema: EntitySchema = {
       label: '负责人',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'description',

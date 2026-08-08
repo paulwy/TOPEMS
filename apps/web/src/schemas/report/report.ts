@@ -74,6 +74,7 @@ export const reportSchema: EntitySchema = {
           variant: 'outlined',
         });
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'row_count',

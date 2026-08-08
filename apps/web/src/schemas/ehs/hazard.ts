@@ -19,6 +19,7 @@ export const hazardSchema: EntitySchema = {
       readonlyOnEdit: true,
       listWidth: 140,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'name',
@@ -46,6 +47,7 @@ export const hazardSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'severity',
@@ -110,6 +112,7 @@ export const hazardSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'location',
@@ -120,6 +123,7 @@ export const hazardSchema: EntitySchema = {
         const loc = row.location as string | null | undefined;
         return loc || '-';
       },
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'status',
@@ -136,6 +140,7 @@ export const hazardSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',

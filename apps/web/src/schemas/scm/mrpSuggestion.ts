@@ -248,6 +248,7 @@ export const mrpSuggestionSchema: EntitySchema = {
       type: 'text',
       hideInForm: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'status',
@@ -274,6 +275,7 @@ export const mrpSuggestionSchema: EntitySchema = {
           variant: 'outlined',
         });
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
   ],
 

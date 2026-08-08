@@ -46,6 +46,7 @@ export const payrollSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'paid_at',

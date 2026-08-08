@@ -20,6 +20,7 @@ export const orderSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'supplier_id',
@@ -55,6 +56,7 @@ export const orderSchema: EntitySchema = {
       },
       listWidth: 80,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 10 }],
     },
     {
       name: 'status',
@@ -72,6 +74,7 @@ export const orderSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'order_date',

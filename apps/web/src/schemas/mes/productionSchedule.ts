@@ -131,6 +131,7 @@ export const productionScheduleSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'notes',

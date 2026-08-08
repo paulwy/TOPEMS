@@ -24,12 +24,14 @@ export const bankAccountSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'branch_name',
       label: i18n.t('schema:erp.bank_account.branch_name.label'),
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'account_name',
@@ -38,6 +40,7 @@ export const bankAccountSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'account_number',
@@ -45,6 +48,7 @@ export const bankAccountSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'account_type',
@@ -70,6 +74,7 @@ export const bankAccountSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'balance',
@@ -99,6 +104,7 @@ export const bankAccountSchema: EntitySchema = {
         ],
       },
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 3 }],
     },
     {
       name: 'status',
@@ -115,6 +121,7 @@ export const bankAccountSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
   ],
 

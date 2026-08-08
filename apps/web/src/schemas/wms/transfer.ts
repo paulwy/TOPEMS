@@ -34,6 +34,7 @@ export const transferSchema: EntitySchema = {
           { value: 'return', label: '退回复检' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'from_warehouse_id',
@@ -94,6 +95,7 @@ export const transferSchema: EntitySchema = {
           { value: 'low', label: '低' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'status',
@@ -113,6 +115,7 @@ export const transferSchema: EntitySchema = {
           { value: 'cancelled', label: '已取消' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'planned_date',

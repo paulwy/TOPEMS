@@ -32,6 +32,7 @@ export const wipSchema: EntitySchema = {
       label: '产品名称',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'process_name',
@@ -80,12 +81,14 @@ export const wipSchema: EntitySchema = {
       label: '批次号',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'operator',
       label: '操作员',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'status',
@@ -102,6 +105,7 @@ export const wipSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'inbound_time',

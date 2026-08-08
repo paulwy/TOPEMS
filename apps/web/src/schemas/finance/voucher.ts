@@ -45,6 +45,7 @@ export const voucherSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 6 }],
     },
     {
       name: 'attachment_count',

@@ -86,7 +86,10 @@ export const tenantInvoiceSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-    },
+      validation: [
+            { type: 'maxLength', value: 32 },
+      ],
+},
     {
       name: 'paid_at',
       label: i18n.t('schema:admin.tenant_invoice.paid_at.label'),

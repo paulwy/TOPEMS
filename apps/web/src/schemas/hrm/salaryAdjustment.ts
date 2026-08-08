@@ -52,6 +52,7 @@ export const salaryAdjustmentSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'old_salary',
@@ -98,6 +99,7 @@ export const salaryAdjustmentSchema: EntitySchema = {
       },
       listWidth: 100,
       showInForm: false,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'reason',

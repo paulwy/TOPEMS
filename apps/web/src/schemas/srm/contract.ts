@@ -20,6 +20,7 @@ export const contractSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'title',
@@ -28,6 +29,7 @@ export const contractSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 200,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'supplier_id',
@@ -57,6 +59,7 @@ export const contractSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'total_amount',
@@ -90,6 +93,7 @@ export const contractSchema: EntitySchema = {
       },
       listWidth: 80,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 10 }],
     },
     {
       name: 'sign_date',
@@ -127,6 +131,7 @@ export const contractSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'remarks',

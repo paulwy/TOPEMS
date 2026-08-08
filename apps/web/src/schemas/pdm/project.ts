@@ -75,6 +75,7 @@ export const pdmProjectSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'description',
@@ -93,6 +94,7 @@ export const pdmProjectSchema: EntitySchema = {
         type: 'static',
         options: STATUS_OPTIONS,
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'phase',

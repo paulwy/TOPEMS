@@ -617,7 +617,7 @@
   },
   "rd_code_repo|rd|projects": {
     "_comment": "file=apps/web/src/schemas/rd/code.ts  entity=rd_code_repo  modu=rd  resource=projects",
-    "tableKey": null
+    "tableKey": "projects"
   },
   "rd_deploy|rd|deploys": {
     "_comment": "file=apps/web/src/schemas/rd/deploy.ts  entity=rd_deploy  modu=rd  resource=deploys",

@@ -87,6 +87,7 @@ export const teamSchema: EntitySchema = {
           { value: 'inactive', label: '停用' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',

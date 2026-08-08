@@ -186,6 +186,7 @@ export const budgetSchema: EntitySchema = {
           null,
           BUDGET_TYPE_LABELS[String(row.budget_type || '')] || String(row.budget_type || '')
         ),
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'fiscal_year',
@@ -195,6 +196,7 @@ export const budgetSchema: EntitySchema = {
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) =>
         React.createElement('span', null, `${row.fiscal_year ?? ''}年`),
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'total_budget',
@@ -247,6 +249,7 @@ export const budgetSchema: EntitySchema = {
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => renderStatusBadge(row),
+      validation: [{ type: 'maxLength', value: 50 }],
     },
   ],
 

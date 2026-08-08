@@ -135,6 +135,7 @@ export const inspectionSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'result',
@@ -142,6 +143,7 @@ export const inspectionSchema: EntitySchema = {
       type: 'text',
       showInList: false,
       showInDetail: true,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'memo',

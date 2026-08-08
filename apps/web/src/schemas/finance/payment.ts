@@ -28,6 +28,7 @@ export const paymentSchema: EntitySchema = {
       required: true,
       readonlyOnEdit: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'payment_type',

@@ -26,6 +26,7 @@ export const assetSchema: EntitySchema = {
           { style: { fontWeight: 600, color: 'var(--color-success-main, #2e7d32)' } },
           String(row.code || '')
         ),
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'name',
@@ -36,6 +37,7 @@ export const assetSchema: EntitySchema = {
       listWidth: 180,
       renderCell: (row: Record<string, unknown>) =>
         React.createElement('span', { style: { fontWeight: 500 } }, String(row.name || '')),
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'category',

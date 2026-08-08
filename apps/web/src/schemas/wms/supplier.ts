@@ -18,12 +18,14 @@ export const supplierSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'short_name',
       label: '简称',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'contact_name',
@@ -36,12 +38,14 @@ export const supplierSchema: EntitySchema = {
       label: '联系电话',
       type: 'text',
       listWidth: 130,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'email',
       label: '邮箱',
       type: 'text',
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'status',
@@ -57,18 +61,21 @@ export const supplierSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'address',
       label: '地址',
       type: 'textarea',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'bank_account',
       label: '银行账户',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'tax_number',

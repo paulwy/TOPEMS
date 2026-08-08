@@ -208,6 +208,7 @@ export const workflowApprovalSchema: EntitySchema = {
           variant: 'outlined',
         });
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
   ],
 

@@ -81,6 +81,7 @@ export const docSchema: EntitySchema = {
           size: 'small',
           variant: 'outlined',
         }),
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'author',
@@ -88,6 +89,7 @@ export const docSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       hideInForm: true,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'update_time',
@@ -109,6 +111,7 @@ export const docSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'description',

@@ -64,6 +64,7 @@ export const qualityStandardSchema: EntitySchema = {
       sortable: true,
       listWidth: 140,
       placeholder: 'QS-XXXX-XXX',
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'name',
@@ -73,6 +74,7 @@ export const qualityStandardSchema: EntitySchema = {
       sortable: true,
       listWidth: 200,
       placeholder: '请输入标准名称',
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'category',
@@ -88,6 +90,7 @@ export const qualityStandardSchema: EntitySchema = {
       listWidth: 100,
       renderCell: renderVersionCell,
       placeholder: '如 1.0',
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
@@ -106,6 +109,7 @@ export const qualityStandardSchema: EntitySchema = {
       },
       listWidth: 100,
       renderCell: renderStatusCell,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'effective_date',

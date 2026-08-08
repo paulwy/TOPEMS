@@ -19,6 +19,7 @@ export const stockTakeSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'warehouse_id',
@@ -37,6 +38,7 @@ export const stockTakeSchema: EntitySchema = {
       type: 'text',
       listWidth: 140,
       hideInForm: true,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'status',
@@ -53,6 +55,7 @@ export const stockTakeSchema: EntitySchema = {
           { value: 'completed', label: '已完成' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'accuracy_rate',

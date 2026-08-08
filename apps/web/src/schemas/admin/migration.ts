@@ -28,6 +28,7 @@ export const migrationSchema: EntitySchema = {
         const name = String(row.name || '');
         return React.createElement('span', { style: { fontWeight: 500 } }, name);
       },
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'schema',

@@ -77,6 +77,7 @@ export const bankAccountSchema: EntitySchema = {
           { style: { fontFamily: 'monospace', fontSize: '0.875rem' } },
           String(row.account_number || '')
         ),
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'account_name',
@@ -84,6 +85,7 @@ export const bankAccountSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'bank_name',
@@ -91,6 +93,7 @@ export const bankAccountSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'bank_branch',
@@ -161,6 +164,7 @@ export const bankAccountSchema: EntitySchema = {
           label
         );
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'currency',
@@ -184,6 +188,7 @@ export const bankAccountSchema: EntitySchema = {
         const currency = String(row.currency || '');
         return CURRENCY_LABELS[currency] || currency;
       },
+      validation: [{ type: 'maxLength', value: 3 }],
     },
     {
       name: 'balance',
@@ -254,6 +259,7 @@ export const bankAccountSchema: EntitySchema = {
           label
         );
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'is_primary',

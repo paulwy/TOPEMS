@@ -63,6 +63,7 @@ export const materialSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'unit',
@@ -109,6 +110,7 @@ export const materialSchema: EntitySchema = {
         ],
       },
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'barcode',

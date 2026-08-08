@@ -19,6 +19,7 @@ export const serialNumberSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'sku',
@@ -28,6 +29,7 @@ export const serialNumberSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'material_name',
@@ -37,42 +39,49 @@ export const serialNumberSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'specification',
       label: '规格',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'unit',
       label: '单位',
       type: 'text',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'batch_no',
       label: '批次号',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'warehouse_id',
       label: '仓库',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 36 }],
     },
     {
       name: 'location_id',
       label: '库位',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 36 }],
     },
     {
       name: 'supplier_id',
       label: '供应商',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 36 }],
     },
     {
       name: 'production_date',
@@ -101,6 +110,7 @@ export const serialNumberSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'status',
@@ -118,6 +128,7 @@ export const serialNumberSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'warranty_start_date',

@@ -301,8 +301,16 @@ export interface RowActionConfig {
  *   title: 'Inbound Order',
  *   api: { module: 'wms', resource: 'inboundOrders' },
  *   fields: [
- *     { name: 'order_number', label: 'Order Number', type: 'text', required: true, readonlyOnEdit: true },
- *     { name: 'order_type', label: 'Order Type', type: 'select', options: { type: 'static', options: [...] } },
+ *     { name: 'order_number', label: 'Order Number', type: 'text', required: true, readonlyOnEdit: true,
+  validation: [
+    { type: 'maxLength', value: 100 },
+  ],
+},
+ *     { name: 'order_type', label: 'Order Type', type: 'select', options: { type: 'static', options: [...] },
+  validation: [
+    { type: 'maxLength', value: 50 },
+  ],
+},
  *     { name: 'expected_date', label: 'Expected Date', type: 'date' },
  *   ],
  *   list: {

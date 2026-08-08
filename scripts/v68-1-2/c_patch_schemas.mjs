@@ -94,27 +94,35 @@ function resolveVarchar(schema, fieldName){
 }
 
 function patchFieldBody(oldBody, varcharN) {
+  const newItem = `{ type: 'maxLength', value: ${varcharN} }`;
   const vRe = /\bvalidation\s*:\s*(\[[\s\S]*?\])/;
   const vm = oldBody.match(vRe);
   if (vm) {
     const arrSrc = vm[1];
     if (/['"`]maxLength['"`]/.test(arrSrc)) return null;
     const trimmed = arrSrc.slice(1,-1).trim();
+    // Try single-line format first (prettier prefers this for short arrays)
+    if (trimmed.length === 0) {
+      return oldBody.slice(0, vm.index) + `validation: [${newItem}]` + oldBody.slice(vm.index + vm[0].length);
+    }
+    // Existing items — try single-line if combined is short enough
+    const existing = trimmed.endsWith(",") ? trimmed : trimmed + ",";
+    const singleLine = `[${existing} ${newItem}]`;
+    if (singleLine.length <= 80) {
+      return oldBody.slice(0, vm.index) + `validation: ${singleLine}` + oldBody.slice(vm.index + vm[0].length);
+    }
+    // Fall back to multi-line
     const indentGuess = (oldBody.match(/\n(\s+)[\w]/) || ["", "  "])[1];
     const itemIndent = indentGuess + indentGuess;
-    let newArr;
-    if (trimmed.length === 0) {
-      newArr = `[\n${itemIndent}{ type: 'maxLength', value: ${varcharN} },\n${indentGuess}]`;
-    } else {
-      newArr = `[${trimmed.endsWith(",") ? "\n"+itemIndent : trimmed+" ,\n"+itemIndent}{ type: 'maxLength', value: ${varcharN} },\n${indentGuess}]`;
-    }
+    const newArr = `[${trimmed.endsWith(",") ? "\n"+itemIndent : trimmed+" ,\n"+itemIndent}${newItem},\n${indentGuess}]`;
     return oldBody.slice(0, vm.index) + `validation: ${newArr}` + oldBody.slice(vm.index + vm[0].length);
   } else {
+    // No existing validation array — add one (single-line, prettier-friendly)
     const indent = (oldBody.match(/\n(\s+)[\w]/) || ["", "  "])[1];
     const trimmed = oldBody.replace(/\s*$/, "");
     const bodyNoCloseBrace = trimmed.endsWith("}") ? trimmed.slice(0, -1).replace(/,?\s*$/, "") : trimmed;
     const commaFix = bodyNoCloseBrace.trim().length === 0 ? "" : ",";
-    return `${bodyNoCloseBrace}${commaFix}\n${indent}validation: [\n${indent}${indent}{ type: 'maxLength', value: ${varcharN} },\n${indent}],\n}`;
+    return `${bodyNoCloseBrace}${commaFix}\n${indent}validation: [${newItem}],\n}`;
   }
 }
 

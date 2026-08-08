@@ -37,6 +37,7 @@ export const departmentSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'code',
@@ -45,6 +46,7 @@ export const departmentSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'company_id',
@@ -88,6 +90,7 @@ export const departmentSchema: EntitySchema = {
         options: STATUS_OPTIONS,
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
   ],
 

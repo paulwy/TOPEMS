@@ -19,6 +19,7 @@ export const replenishmentSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'warehouse_id',
@@ -95,6 +96,7 @@ export const replenishmentSchema: EntitySchema = {
           { value: 'cancelled', label: '已取消' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'expected_date',

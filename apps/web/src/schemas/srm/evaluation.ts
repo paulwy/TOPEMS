@@ -18,6 +18,7 @@ export const evaluationSchema: EntitySchema = {
       readonly: true,
       sortable: true,
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'supplier_id',
@@ -73,6 +74,7 @@ export const evaluationSchema: EntitySchema = {
       label: '评估人',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'status',
@@ -90,6 +92,7 @@ export const evaluationSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'created_at',

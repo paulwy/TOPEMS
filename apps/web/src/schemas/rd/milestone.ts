@@ -32,6 +32,7 @@ export const milestoneSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 220,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'start_date',
@@ -87,6 +88,7 @@ export const milestoneSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
   ],
 

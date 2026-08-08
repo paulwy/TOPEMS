@@ -83,6 +83,7 @@ export const billingSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'due_date',

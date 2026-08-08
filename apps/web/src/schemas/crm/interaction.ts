@@ -46,6 +46,7 @@ export const interactionSchema: EntitySchema = {
       label: '主题',
       type: 'text',
       listWidth: 200,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'content',
@@ -79,6 +80,7 @@ export const interactionSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'created_at',

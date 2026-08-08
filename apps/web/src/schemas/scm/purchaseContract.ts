@@ -19,6 +19,7 @@ export const purchaseContractSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'supplier_id',
@@ -26,6 +27,7 @@ export const purchaseContractSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'title',
@@ -33,6 +35,7 @@ export const purchaseContractSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'amount',
@@ -78,6 +81,7 @@ export const purchaseContractSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'terms',

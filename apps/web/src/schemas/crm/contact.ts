@@ -21,30 +21,35 @@ export const contactSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'last_name',
       label: '姓',
       type: 'text',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'email',
       label: '邮箱',
       type: 'text',
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'phone',
       label: '电话',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'position',
       label: '职位',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'status',
@@ -59,6 +64,7 @@ export const contactSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'customer_id',

@@ -76,6 +76,7 @@ export const locationSchema: EntitySchema = {
         };
         return typeMap[row.location_type as string] || String(row.location_type || '-');
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'status',
@@ -91,6 +92,7 @@ export const locationSchema: EntitySchema = {
         };
         return statusMap[row.status as string] || String(row.status || '-');
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'capacity',
@@ -114,6 +116,7 @@ export const locationSchema: EntitySchema = {
       label: '通道',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'row',
@@ -156,6 +159,7 @@ export const locationSchema: EntitySchema = {
       label: '条码',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'rfid',

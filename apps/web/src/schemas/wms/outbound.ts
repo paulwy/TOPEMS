@@ -19,6 +19,7 @@ export const outboundOrderSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'order_type',
@@ -37,6 +38,7 @@ export const outboundOrderSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'warehouse_id',
@@ -54,6 +56,7 @@ export const outboundOrderSchema: EntitySchema = {
       label: '客户',
       type: 'text',
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'shipping_address',
@@ -86,6 +89,7 @@ export const outboundOrderSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'total_quantity',

@@ -61,6 +61,7 @@ export const equipmentOeeSchema: EntitySchema = {
       label: '班次',
       type: 'text',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'availability',

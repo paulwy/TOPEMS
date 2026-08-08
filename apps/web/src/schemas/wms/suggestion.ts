@@ -17,6 +17,7 @@ export const suggestionSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'sku',
@@ -30,6 +31,7 @@ export const suggestionSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'warehouse_id',
@@ -92,6 +94,7 @@ export const suggestionSchema: EntitySchema = {
           { value: 'low', label: '低' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'status',
@@ -108,6 +111,7 @@ export const suggestionSchema: EntitySchema = {
           { value: 'converted', label: '已转单' },
         ],
       },
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'supplier_name',
@@ -115,6 +119,7 @@ export const suggestionSchema: EntitySchema = {
       type: 'text',
       listWidth: 140,
       hideInForm: true,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'unit_price',

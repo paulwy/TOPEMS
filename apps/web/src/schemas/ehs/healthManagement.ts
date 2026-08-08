@@ -23,6 +23,7 @@ export const healthManagementSchema: EntitySchema = {
         const v = row.record_no as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'employee_id',
@@ -31,6 +32,7 @@ export const healthManagementSchema: EntitySchema = {
       required: true,
       listWidth: 120,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'employee_name',
@@ -39,6 +41,7 @@ export const healthManagementSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'gender',
@@ -74,6 +77,7 @@ export const healthManagementSchema: EntitySchema = {
         const v = row.department as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'position',
@@ -84,6 +88,7 @@ export const healthManagementSchema: EntitySchema = {
         const v = row.position as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'workplace',

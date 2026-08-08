@@ -66,6 +66,7 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'supplier_id',
@@ -106,6 +107,7 @@ export const purchaseOrderSchema: EntitySchema & SchemaExtensions = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'order_date',

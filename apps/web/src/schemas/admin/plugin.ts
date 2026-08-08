@@ -68,6 +68,7 @@ export const pluginSchema: EntitySchema = {
             : null
         );
       },
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'code',
@@ -76,6 +77,7 @@ export const pluginSchema: EntitySchema = {
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) =>
         React.createElement('code', { style: { fontSize: 12 } }, String(row.code || '')),
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'version',
@@ -108,6 +110,7 @@ export const pluginSchema: EntitySchema = {
             : null
         );
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'plugin_type',
@@ -138,6 +141,7 @@ export const pluginSchema: EntitySchema = {
           PLUGIN_TYPE_LABELS[pluginType] || pluginType
         );
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'runtime_status',

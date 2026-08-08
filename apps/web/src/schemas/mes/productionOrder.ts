@@ -26,12 +26,14 @@ export const productionOrderSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'product_code',
       label: '产品编码',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'quantity',
@@ -111,6 +113,7 @@ export const productionOrderSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
   ],
 

@@ -25,6 +25,7 @@ export const approvalConfigSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 200,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'amountThreshold',

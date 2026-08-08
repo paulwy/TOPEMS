@@ -17,6 +17,7 @@ export const inspectionPlanSchema: EntitySchema = {
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'title',
@@ -25,6 +26,7 @@ export const inspectionPlanSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'inspection_type',
@@ -56,6 +58,7 @@ export const inspectionPlanSchema: EntitySchema = {
         };
         return map[v] || v || '-';
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'frequency',
@@ -85,6 +88,7 @@ export const inspectionPlanSchema: EntitySchema = {
         };
         return map[v] || v || '-';
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'inspector',
@@ -95,6 +99,7 @@ export const inspectionPlanSchema: EntitySchema = {
         const v = row.inspector as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'start_date',
@@ -131,6 +136,7 @@ export const inspectionPlanSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',
@@ -206,6 +212,7 @@ export const inspectionRecordSchema: EntitySchema = {
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'title',
@@ -214,6 +221,7 @@ export const inspectionRecordSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'inspection_type',
@@ -245,6 +253,7 @@ export const inspectionRecordSchema: EntitySchema = {
         };
         return map[v] || v || '-';
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'location',
@@ -255,6 +264,7 @@ export const inspectionRecordSchema: EntitySchema = {
         const v = row.location as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'inspector',
@@ -265,6 +275,7 @@ export const inspectionRecordSchema: EntitySchema = {
         const v = row.inspector as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'inspected_at',
@@ -286,6 +297,7 @@ export const inspectionRecordSchema: EntitySchema = {
         const v = row.result as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
@@ -301,6 +313,7 @@ export const inspectionRecordSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
   ],
 

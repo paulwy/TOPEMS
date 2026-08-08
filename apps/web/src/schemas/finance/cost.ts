@@ -32,6 +32,7 @@ export const costSchema: EntitySchema = {
           { style: { fontWeight: 600, color: 'var(--color-primary-main, #1976d2)' } },
           String(row.code || '')
         ),
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'name',
@@ -42,6 +43,7 @@ export const costSchema: EntitySchema = {
       listWidth: 180,
       renderCell: (row: Record<string, unknown>) =>
         React.createElement('span', { style: { fontWeight: 500 } }, String(row.name || '')),
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'debit_balance',

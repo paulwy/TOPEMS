@@ -31,6 +31,7 @@ export const openingBalanceSchema: EntitySchema = {
           { style: { fontWeight: 600, fontFamily: 'monospace' } },
           String(row.subject_code || '')
         ),
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'subject_name',
@@ -39,6 +40,7 @@ export const openingBalanceSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'period',
@@ -53,6 +55,7 @@ export const openingBalanceSchema: EntitySchema = {
           { style: { fontFamily: 'monospace' } },
           String(row.period || '')
         ),
+      validation: [{ type: 'maxLength', value: 6 }],
     },
     {
       name: 'company_id',

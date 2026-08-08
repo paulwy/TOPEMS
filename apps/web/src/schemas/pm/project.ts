@@ -80,6 +80,7 @@ export const projectSchema: EntitySchema = {
       defaultValue: 'research',
       options: { type: 'static', options: PROJECT_TYPE_OPTIONS },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'status',
@@ -88,6 +89,7 @@ export const projectSchema: EntitySchema = {
       defaultValue: 'draft',
       options: { type: 'static', options: STATUS_OPTIONS },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'progress',

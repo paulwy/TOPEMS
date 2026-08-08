@@ -25,6 +25,7 @@ export const trainingRecordSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'training_type',
@@ -54,6 +55,7 @@ export const trainingRecordSchema: EntitySchema = {
         };
         return map[v] || v || '-';
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'trainer',
@@ -64,6 +66,7 @@ export const trainingRecordSchema: EntitySchema = {
         const v = row.trainer as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'training_date',
@@ -99,6 +102,7 @@ export const trainingRecordSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'content',
@@ -395,6 +399,7 @@ export const trainingPlanSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'training_type',
@@ -413,6 +418,7 @@ export const trainingPlanSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'category',
@@ -440,6 +446,7 @@ export const trainingPlanSchema: EntitySchema = {
         const v = row.trainer as string | null | undefined;
         return v || '-';
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'location',
@@ -508,6 +515,7 @@ export const trainingPlanSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'description',

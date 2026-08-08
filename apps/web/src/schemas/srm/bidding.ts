@@ -42,6 +42,7 @@ export const biddingSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'category',
@@ -146,6 +147,7 @@ export const biddingSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'supplier_count',

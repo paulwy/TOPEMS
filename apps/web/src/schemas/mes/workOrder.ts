@@ -21,6 +21,7 @@ export const workOrderSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'order_number',
@@ -125,6 +126,7 @@ export const workOrderSchema: EntitySchema = {
           sx: { backgroundColor: p.bg, color: p.color, fontWeight: 500 },
         });
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
@@ -142,6 +144,7 @@ export const workOrderSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'remark',

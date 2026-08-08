@@ -35,6 +35,7 @@ export const notificationSchema: EntitySchema = {
       readonly: true,
       sortable: true,
       listWidth: 200,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'content',
@@ -76,6 +77,7 @@ export const notificationSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'read',

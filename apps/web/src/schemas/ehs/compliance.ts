@@ -30,6 +30,7 @@ export const regulationSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'category',
@@ -47,6 +48,7 @@ export const regulationSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'regulation_type',
@@ -65,6 +67,7 @@ export const regulationSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'issuing_authority',
@@ -73,6 +76,7 @@ export const regulationSchema: EntitySchema = {
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) =>
         row.issuing_authority ? String(row.issuing_authority) : '-',
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'issue_date',
@@ -110,6 +114,7 @@ export const regulationSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
   ],
 
@@ -223,6 +228,7 @@ export const assessmentSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'assessment_type',
@@ -275,6 +281,7 @@ export const assessmentSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
   ],
 
@@ -375,6 +382,7 @@ export const permitSchema: EntitySchema = {
       type: 'text',
       readonlyOnEdit: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'title',
@@ -389,6 +397,7 @@ export const permitSchema: EntitySchema = {
       label: '许可证类型',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'permit_category',
@@ -402,6 +411,7 @@ export const permitSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => (row.holder ? String(row.holder) : '-'),
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'expiry_date',
@@ -426,6 +436,7 @@ export const permitSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
   ],
 

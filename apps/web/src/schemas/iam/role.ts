@@ -56,6 +56,7 @@ export const roleSchema: EntitySchema = {
           )
         );
       },
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'description',

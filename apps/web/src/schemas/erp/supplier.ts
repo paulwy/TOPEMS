@@ -44,6 +44,7 @@ export const supplierSchema: EntitySchema = {
       label: i18n.t('schema:erp.supplier.short_name.label'),
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'category',
@@ -62,6 +63,7 @@ export const supplierSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'credit_rating',
@@ -78,6 +80,7 @@ export const supplierSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'status',
@@ -93,18 +96,21 @@ export const supplierSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'contact_person',
       label: i18n.t('schema:erp.supplier.contact_person.label'),
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'contact_phone',
       label: i18n.t('schema:erp.supplier.contact_phone.label'),
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'contact_email',
@@ -117,6 +123,7 @@ export const supplierSchema: EntitySchema = {
       label: i18n.t('schema:erp.supplier.address.label'),
       type: 'textarea',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'country',
@@ -130,12 +137,14 @@ export const supplierSchema: EntitySchema = {
       label: i18n.t('schema:erp.supplier.province.label'),
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'city',
       label: i18n.t('schema:erp.supplier.city.label'),
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'zip_code',
@@ -154,12 +163,14 @@ export const supplierSchema: EntitySchema = {
       label: i18n.t('schema:erp.supplier.bank_name.label'),
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'bank_account',
       label: i18n.t('schema:erp.supplier.bank_account.label'),
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'remark',

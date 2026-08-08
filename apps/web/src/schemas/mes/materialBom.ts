@@ -21,6 +21,7 @@ export const materialBomSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'product_name',
@@ -29,6 +30,7 @@ export const materialBomSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'version',
@@ -36,6 +38,7 @@ export const materialBomSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
@@ -70,6 +73,7 @@ export const materialBomSchema: EntitySchema = {
           sx: { backgroundColor: s.bg, color: s.color, fontWeight: 500 },
         });
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'items_count',

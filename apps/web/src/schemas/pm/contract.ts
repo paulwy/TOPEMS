@@ -58,6 +58,7 @@ export const contractSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 200,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'contractNo',
@@ -66,6 +67,7 @@ export const contractSchema: EntitySchema = {
       required: true,
       readonlyOnEdit: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'contract_type',
@@ -74,18 +76,21 @@ export const contractSchema: EntitySchema = {
       required: true,
       options: { type: 'static', options: CONTRACT_TYPE_OPTIONS },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'party_a',
       label: '甲方',
       type: 'text',
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'party_b',
       label: '乙方',
       type: 'text',
       listWidth: 150,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'amount',
@@ -106,6 +111,7 @@ export const contractSchema: EntitySchema = {
       defaultValue: 'CNY',
       listWidth: 80,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 10 }],
     },
     {
       name: 'sign_date',
@@ -135,6 +141,7 @@ export const contractSchema: EntitySchema = {
       defaultValue: 'draft',
       options: { type: 'static', options: STATUS_OPTIONS },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'created_at',

@@ -17,6 +17,7 @@ export const returnSchema: EntitySchema = {
       required: true,
       readonlyOnEdit: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'customer_id',
@@ -44,6 +45,7 @@ export const returnSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'reason',
@@ -75,6 +77,7 @@ export const returnSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'refund_amount',

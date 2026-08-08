@@ -17,6 +17,7 @@ export const workstationSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'code',
@@ -31,6 +32,7 @@ export const workstationSchema: EntitySchema = {
       label: '位置',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 256 }],
     },
     {
       name: 'capacity',
@@ -59,6 +61,7 @@ export const workstationSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'created_at',

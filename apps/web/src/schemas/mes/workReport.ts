@@ -21,6 +21,7 @@ export const workReportSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
       name: 'order_number',
@@ -42,6 +43,7 @@ export const workReportSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 128 }],
     },
     {
       name: 'team_name',
@@ -142,6 +144,7 @@ export const workReportSchema: EntitySchema = {
           sx: { backgroundColor: s.bg, color: s.color, fontWeight: 500 },
         });
       },
+      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'report_type',

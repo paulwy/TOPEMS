@@ -42,6 +42,7 @@ export const inquirySchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'title',
@@ -50,6 +51,7 @@ export const inquirySchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 180,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'category',
@@ -104,6 +106,7 @@ export const inquirySchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'quotation_count',

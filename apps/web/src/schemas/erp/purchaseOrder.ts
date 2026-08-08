@@ -29,6 +29,7 @@ export const purchaseOrderSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 255 }],
     },
     {
       name: 'total_amount',
@@ -71,6 +72,7 @@ export const purchaseOrderSchema: EntitySchema = {
       },
       listWidth: 100,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 10 }],
     },
     {
       name: 'status',
@@ -95,6 +97,7 @@ export const purchaseOrderSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'remark',
