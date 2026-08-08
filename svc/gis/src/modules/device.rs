@@ -209,13 +209,13 @@ pub async fn update_device_location(
             match sqlx::query_as::<_, DeviceLocationRecord>(
                 r#"
                 INSERT INTO gis.device_location_records 
-                (device_id, organization_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength)
+                (device_id, tenant_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING *
                 "#,
             )
             .bind(id)
-            .bind(device.organization_id)
+            .bind(device.tenant_id)
             .bind(&payload.position)
             .bind(&payload.accuracy)
             .bind(&payload.speed)
@@ -413,13 +413,13 @@ pub async fn report_device_location(
             match sqlx::query_as::<_, DeviceLocationRecord>(
                 r#"
                 INSERT INTO gis.device_location_records 
-                (device_id, organization_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength)
+                (device_id, tenant_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING *
                 "#,
             )
             .bind(device.id)
-            .bind(device.organization_id)
+            .bind(device.tenant_id)
             .bind(&payload.position)
             .bind(&payload.accuracy)
             .bind(&payload.speed)

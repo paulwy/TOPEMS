@@ -34,7 +34,7 @@ pub struct FixedAsset {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Budget {
     pub id: Uuid,
-    pub organization_id: Option<Uuid>,
+    pub tenant_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub budget_type: Option<String>,
     pub fiscal_year: String,

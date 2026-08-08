@@ -2,7 +2,7 @@ import type { ApiResponse } from '../client';
 
 export interface Company {
   id: string;
-  organization_id: string;
+  tenant_id: string;
   name: string;
   code?: string;
   short_name?: string;

@@ -148,7 +148,6 @@ COMMENT ON TABLE public.tenant_plugins IS '租户已安装插件表';
 CREATE TABLE public.companies (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-    organization_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001',
     name VARCHAR(255) NOT NULL,
     short_name VARCHAR(100),
     code VARCHAR(50) UNIQUE,

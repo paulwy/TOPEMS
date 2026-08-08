@@ -109,7 +109,6 @@ pub struct Employee {
     pub name: String,
     pub email: Option<String>,
     pub phone: Option<String>,
-    pub organization_id: Option<String>,
     pub position: Option<String>,
     pub employee_type: Option<String>,
     pub hire_date: Option<NaiveDate>,

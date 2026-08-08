@@ -189,19 +189,19 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
-        let organization_id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let warehouse_code = format!("WH-TEST-{}", &warehouse_id.to_string()[..8]);
 
         let create_result = sqlx::query(
             r#"
             INSERT INTO wms.warehouses (
-                id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, address, manager, created_at, updated_at
+                id, org_id, warehouse_code, warehouse_name, warehouse_type, status, address, manager, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             RETURNING id, warehouse_code, warehouse_name, status
             "#,
         )
         .bind(warehouse_id)
-        .bind(organization_id)
+        .bind(org_id)
         .bind(&warehouse_code)
         .bind("测试仓库")
         .bind("原材料仓库")
@@ -286,18 +286,18 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
-        let organization_id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let warehouse_code = format!("WH-LOC-{}", &warehouse_id.to_string()[..6]);
 
         let _ = sqlx::query(
             r#"
             INSERT INTO wms.warehouses (
-                id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
+                id, org_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             "#,
         )
         .bind(warehouse_id)
-        .bind(organization_id)
+        .bind(org_id)
         .bind(&warehouse_code)
         .bind("测试仓库-库位")
         .bind("原材料仓库")
@@ -311,13 +311,13 @@ mod tests {
         let create_result = sqlx::query(
             r#"
             INSERT INTO wms.locations (
-                id, organization_id, warehouse_id, location_code, location_name, zone, aisle, shelf, level, position, status, created_at, updated_at
+                id, org_id, warehouse_id, location_code, location_name, zone, aisle, shelf, level, position, status, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
             RETURNING id, location_code, location_name, status
             "#,
         )
         .bind(location_id)
-        .bind(organization_id)
+        .bind(org_id)
         .bind(warehouse_id)
         .bind(&location_code)
         .bind(format!("库位-{}", &location_id.to_string()[..6]))
@@ -374,18 +374,18 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
-        let organization_id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let warehouse_code = format!("WH-INV-{}", &warehouse_id.to_string()[..6]);
 
         let _ = sqlx::query(
             r#"
             INSERT INTO wms.warehouses (
-                id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
+                id, org_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             "#,
         )
         .bind(warehouse_id)
-        .bind(organization_id)
+        .bind(org_id)
         .bind(&warehouse_code)
         .bind("测试仓库-库存")
         .bind("原材料仓库")
@@ -398,13 +398,13 @@ mod tests {
         let create_result = sqlx::query(
             r#"
             INSERT INTO wms.inventory (
-                id, organization_id, warehouse_id, material_code, material_name, quantity, available_quantity, unit, quality_status, created_at, updated_at
+                id, org_id, warehouse_id, material_code, material_name, quantity, available_quantity, unit, quality_status, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             RETURNING id, material_code, material_name, quantity, quality_status
             "#,
         )
         .bind(inventory_id)
-        .bind(organization_id)
+        .bind(org_id)
         .bind(warehouse_id)
         .bind("MAT-TEST-001")
         .bind("测试物料")
@@ -451,21 +451,21 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
-        let organization_id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let warehouse_code = format!("WH-TX-{}", &warehouse_id.to_string()[..8]);
 
         let result = sqlx::query(
             r#"
             BEGIN;
             INSERT INTO wms.warehouses (
-                id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
+                id, org_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW());
             INSERT INTO wms.warehouses (id) VALUES ('invalid-uuid');
             COMMIT;
             "#,
         )
         .bind(warehouse_id)
-        .bind(organization_id)
+        .bind(org_id)
         .bind(&warehouse_code)
         .bind("事务测试仓库")
         .bind("原材料仓库")
@@ -495,7 +495,7 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
-        let organization_id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let warehouse_code = format!("WH-TX-SUCCESS-{}", &warehouse_id.to_string()[..8]);
 
         let tx_result = pool.begin().await;
@@ -505,12 +505,12 @@ mod tests {
         let insert_result = sqlx::query(
             r#"
             INSERT INTO wms.warehouses (
-                id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
+                id, org_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             "#,
         )
         .bind(warehouse_id)
-        .bind(organization_id)
+        .bind(org_id)
         .bind(&warehouse_code)
         .bind("事务成功测试仓库")
         .bind("成品仓库")
@@ -555,7 +555,7 @@ mod tests {
         let create_result_1 = sqlx::query(
             r#"
             INSERT INTO wms.warehouses (
-                id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
+                id, org_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             "#,
         )
@@ -573,7 +573,7 @@ mod tests {
         let create_result_2 = sqlx::query(
             r#"
             INSERT INTO wms.warehouses (
-                id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
+                id, org_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             "#,
         )
@@ -598,7 +598,7 @@ mod tests {
         assert_eq!(total_count, Some(2), "应该有2条测试仓库");
 
         let org1_count = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM wms.warehouses WHERE organization_id = $1 AND warehouse_code LIKE 'WH-TENANT%'"#,
+            r#"SELECT COUNT(*) FROM wms.warehouses WHERE org_id = $1 AND warehouse_code LIKE 'WH-TENANT%'"#,
             org_id_1
         )
         .fetch_one(&pool)
@@ -608,7 +608,7 @@ mod tests {
         assert_eq!(org1_count, Some(1), "租户1应该只能看到自己的仓库");
 
         let org2_count = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM wms.warehouses WHERE organization_id = $1 AND warehouse_code LIKE 'WH-TENANT%'"#,
+            r#"SELECT COUNT(*) FROM wms.warehouses WHERE org_id = $1 AND warehouse_code LIKE 'WH-TENANT%'"#,
             org_id_2
         )
         .fetch_one(&pool)
@@ -635,18 +635,18 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
-        let organization_id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let warehouse_code = format!("WH-INBOUND-{}", &warehouse_id.to_string()[..6]);
 
         let _ = sqlx::query(
             r#"
             INSERT INTO wms.warehouses (
-                id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
+                id, org_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             "#,
         )
         .bind(warehouse_id)
-        .bind(organization_id)
+        .bind(org_id)
         .bind(&warehouse_code)
         .bind("测试仓库")
         .bind("原材料仓库")
@@ -660,13 +660,13 @@ mod tests {
         let inbound_result = sqlx::query(
             r#"
             INSERT INTO wms.inbound_orders (
-                id, organization_id, order_number, warehouse_id, order_type, status, supplier_name, expected_arrival_date, created_at, updated_at
+                id, org_id, order_number, warehouse_id, order_type, status, supplier_name, expected_arrival_date, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             RETURNING id, order_number, status
             "#,
         )
         .bind(inbound_id)
-        .bind(organization_id)
+        .bind(org_id)
         .bind(&order_number)
         .bind(warehouse_id)
         .bind("purchase")
@@ -721,18 +721,18 @@ mod tests {
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
-        let organization_id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let warehouse_code = format!("WH-OUTBOUND-{}", &warehouse_id.to_string()[..6]);
 
         let _ = sqlx::query(
             r#"
             INSERT INTO wms.warehouses (
-                id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
+                id, org_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             "#,
         )
         .bind(warehouse_id)
-        .bind(organization_id)
+        .bind(org_id)
         .bind(&warehouse_code)
         .bind("测试仓库-出库")
         .bind("成品仓库")
@@ -746,13 +746,13 @@ mod tests {
         let outbound_result = sqlx::query(
             r#"
             INSERT INTO wms.outbound_orders (
-                id, organization_id, order_number, warehouse_id, order_type, status, customer_name, expected_ship_date, created_at, updated_at
+                id, org_id, order_number, warehouse_id, order_type, status, customer_name, expected_ship_date, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             RETURNING id, order_number, status
             "#,
         )
         .bind(outbound_id)
-        .bind(organization_id)
+        .bind(org_id)
         .bind(&order_number)
         .bind(warehouse_id)
         .bind("sales")

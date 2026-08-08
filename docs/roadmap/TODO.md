@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V69.0 | **更新日期**: 2026-08-08
+> **版本**: V69.1 | **更新日期**: 2026-08-08
 > **服务总数**: 28 个（含 unified-core + master-data + lowcode 占位） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 6/6 全闭环**：迁移命名门禁 · EntitySchema maxLength · 软删除统一 · 时间戳决策 · add_tenant_id 模板化生成器 · MES DDL 碎片收敛 · **P2×4 并行顺手项全闭环**：schema 命名清理 · inventory 自动生成 · 真相源三联校验 · 8 表 DELETE 残留转换 · **P3-2 status CHECK 492 表**）
+> **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 6/6 全闭环** · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环**：Phase 1 ERP 12 表补 tenant_id · Phase 2 company_id → org_id 9 表 · Phase 3 organization_id 语义统一 27 文件 169 处）
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 28/28 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
 > **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 21 服务迁移；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP5 拆分达标**（AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72% / IAM 路径归化）
@@ -174,9 +174,9 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 | P2-2 | **inventory.md 自动生成**：新增 `scripts/generate-inventory.mjs`，扫描 `svc/*/Cargo.toml` + `apps/web/src/modules/*/config.ts` + `svc/*/migrations/*.sql`，自动生成 `docs/architecture/inventory.md`（28 后端服务 × 33 前端模块 × 127 迁移 × 1049 Rust 文件）。登记率从 17%（18/106）→ 100%（28+33 全覆盖） | ✅ 完成 |
 | P2-3 | **迁移真相源三联校验**：新增 `scripts/verify-schema-truth.mjs`，交叉验证 3 个独立数据源：① EntitySchema 定义数（198）② SQL 迁移文件数（160）③ checksums.txt 条目数（170 ≥ 160 ✅）④ inventory.md 登记数（28 服务 ≥ 22 有迁移 ✅）。校验逻辑：checksums ≥ 实际 SQL 文件数（允许历史残留）；inventory 服务数 ≥ 有迁移的服务数（7 服务用运行时 DDL 无 migrations 目录）。验证：PASS 0 error 0 warning | ✅ 完成 |
 | P2-4 | **8 个业务实体表残留 DELETE→UPDATE 转换**：V68.1-3 排除清单中的 8 个业务实体表（`performance_goals`、`contract_renewals`、`training_courses`、`training_records`、`vehicle_requests`、`patrol_records`、`erp_production_orders`、`replenishment_suggestions`）误入 junction/child 排除集 → 手动逐一转换为 `UPDATE SET deleted_at = NOW()`。剩余 11 个 DELETE 保持硬删除（junction 子表级联 / sync 同步表 / structural 结构表，设计正确）。验证：`cargo check` 0 error · `.sqlx` 缓存已重新生成 | ✅ 完成 |
-| P3-1 | **VARCHAR(36) UUID 残留**：约 6% 表仍用 VARCHAR(36) 存储 UUID。决策：延期至 V69/V70 大迁移窗口，届时批量 `ALTER COLUMN x TYPE UUID USING x::UUID`。当前不改动以避免索引重建锁表风险 | ⏳ 延期 V69 |
+| P3-1 | **VARCHAR(36) UUID 残留**：V69.0 完成 12 列 × 6 表 VARCHAR(36) → UUID 迁移（mobile 2 PK + wms 9 FK 类 + unified-core audit_logs 1 普通列）· Rust 模型 String → Uuid 适配 · `cargo check` 0 error | ✅ 完成 |
 | P3-2 | **status CHECK 约束补齐**：新增 `database/migrations/20260809000002_add_status_check_constraints.sql`（动态 DO 块：扫描所有 status 列，仅对现有数据完全匹配 `{'active','inactive','archived'}` 的表添加 `CHECK` 约束，其余跳过）。执行结果：**492 张表**添加 `ck_{table}_status_standard` 约束，0 失败。验证：`psql` 执行成功 · `cargo check` 0 error | ✅ 完成 |
-| P3-3 | **org_id/company_id/tenant_id 命名统一**：三类层级字段命名尚未 100% 统一。决策：延期至 V69 组织机构重构窗口，届时统一为 `tenant_id`（多租户隔离）+ `org_id`（组织树层级），移除 `company_id` 别名 | ⏳ 延期 V69 |
+| P3-3 | **org_id/company_id/tenant_id 命名统一**：三类层级字段命名 100% 统一。Phase 1 为 12 ERP 点号 schema 表补 tenant_id · Phase 2 A 类 company_id → org_id 重命名 9 表 · Phase 3 organization_id 语义统一（CRM/WMS → org_id · HRM/GIS/AI/ERP → tenant_id）。3 迁移 + 27 Rust 文件 169 处 + 1 前端文件 + 2 数据库脚本修复 | ✅ 完成 |
 
 ### 4-3. 验收标准（4 条）
 
@@ -282,4 +282,14 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 - **前端适配**: 11 文件重命名（schemas/hrm/department.ts · api/financialReport/index.ts · api/hrm/types.ts · api/finance/report.ts · hooks/useOrganization.ts · packages/shared-types/finance.ts · FinancialReports.tsx · finance-api.test.ts · EmployeeFormDialog.tsx · HrmCompanyPage.tsx · OrganizationFilter.tsx）
 - **B/C 类保留**: consolidation_scope_companies/internal_transactions/company_relations（B 类合法业务）· opening_balances/bank_accounts（C 类已补 tenant_id）的 company_id 均未改动
 - **质量门禁**: cargo check --workspace 0 error · tsc 0 error · check-migration-names PASS · verify-schema-truth PASS · check-schema-naming PASS · checksums 补全 1 条
-| **Phase 3** | organization_id 语义统一 | HRM/GIS/AI → 合并到 tenant_id · CRM/WMS → 改名 org_id · ERP → 补 tenant_id 后删除 | 高（AI session 配置 · RLS 策略 · 跨服务查询） | ⏳ |
+| **Phase 3** | organization_id 语义统一 | HRM/GIS/AI → 合并到 tenant_id · CRM/WMS → 改名 org_id · ERP → 补 tenant_id 后删除 | 高（AI session 配置 · RLS 策略 · 跨服务查询） | ✅ 完成 |
+
+#### Phase 3 详情（2026-08-08 完成）
+
+- **迁移文件**: `database/migrations/20260810000003_v69_unify_organization_id.sql`
+- **7 步动态 DO 块流程**: ① Part A — CRM/WMS schema `organization_id` → `org_id` RENAME COLUMN（动态游标扫描 information_schema）→ ② Part B — CRM/WMS 索引重命名（organization_id → org_id）→ ③ Part C — 有 tenant_id 的表 DROP organization_id CASCADE（HRM 14 表 + GIS 16 表 + AI 4 表 + SRM 1 表 + ERP consolidation 12 表 + PM/SCM 表）→ ④ Part D — 无 tenant_id 的表 RENAME organization_id → tenant_id（ERP 主 schema 11 表 + HRM 初始化 2 表 + public ERP 5 表）→ ⑤ Part E — 索引重命名（organization_id → tenant_id）→ ⑥ Part F — 重建 hrm.employees UNIQUE 索引为 (employee_number, tenant_id) → ⑦ Part G — 重建 hrm.initialization_status UNIQUE 约束为 (tenant_id, step_name)
+- **安全设计**: 动态 DO 块通过 information_schema 检查 tenant_id 存在性决定 DROP vs RENAME；IF EXISTS / IF NOT EXISTS 全程幂等；末尾验证 DO 块报告残留 organization_id 列数
+- **Rust 适配**: 27 文件 169 处全量清理 — HRM 8 文件 65 处（setup.rs/position.rs/department.rs/company.rs/models×2/services/tests）· WMS 7 文件 47 处（6 模块+tests）· GIS 4 文件 23 处（models/tenant_service/sync/device）· AI 1 文件 12 处（services/db.rs）· ERP 2 文件 5 处（consolidation.rs/openapi.rs）· CRM 2 文件 6 处（event_handlers/tests）· Finance 1 文件 8 处（operational.rs budgets 查询）· SRM 1 文件 2 处（audit_log.rs）· unified-core 1 文件 1 处（master/models.rs）
+- **前端适配**: 1 文件（api/hrm/types.ts Company.organization_id → tenant_id）
+- **数据库脚本修复**: `database/postgres/03_api_performance_indexes.sql` 2 条索引 organization_id → tenant_id · `database/init/01_rebuild_database.sql` public.companies 移除 organization_id 列
+- **质量门禁**: cargo check --workspace 0 error · tsc 0 error · check-migration-names PASS · verify-schema-truth PASS · check-schema-naming PASS · checksums 补全 1 条 · Rust 代码 0 处 organization_id 残留

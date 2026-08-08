@@ -166,7 +166,7 @@ pub async fn create_outbound_order(
 
     let result = sqlx::query_as::<_, OutboundOrder>(
         r#"
-        INSERT INTO wms.outbound_orders (id, organization_id, order_number, order_type, warehouse_id, 
+        INSERT INTO wms.outbound_orders (id, org_id, order_number, order_type, warehouse_id, 
                                         customer_id, order_date, expected_ship_date, total_value, 
                                         status, notes, created_at, updated_at)
         VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'sales', $3, $4, $5, $6, $7, 
@@ -513,7 +513,7 @@ pub async fn create_outbound_order_item(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO wms.outbound_order_items (id, organization_id, order_id, line_number, 
+        INSERT INTO wms.outbound_order_items (id, org_id, order_id, line_number, 
                                               material_code, material_name, material_type, 
                                               specification, batch_number, lot_number, serial_number,
                                               requested_quantity, unit, source_location_id, unit_price, 
@@ -995,7 +995,7 @@ pub async fn ship_outbound_order(
                 quantity = quantity - $1,
                 available_quantity = available_quantity - $1,
                 updated_at = $2
-            WHERE organization_id = '00000000-0000-0000-0000-000000000001'
+            WHERE org_id = '00000000-0000-0000-0000-000000000001'
               AND material_code IN (SELECT material_code FROM wms.outbound_order_items WHERE id = $3)
             AND quantity >= $1
             "#,

@@ -8,7 +8,6 @@ use uuid::Uuid;
 pub struct Department {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub org_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
@@ -22,7 +21,7 @@ pub struct Department {
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateDepartmentRequest {
-    pub organization_id: Option<Uuid>,
+    pub tenant_id: Option<Uuid>,
     pub org_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
@@ -49,14 +48,12 @@ mod tests {
     #[test]
     fn test_department_struct() {
         let id = Uuid::new_v4();
-        let org_id = Uuid::new_v4();
         let created_at = Utc::now();
         let updated_at = Utc::now();
 
         let department = Department {
             id,
             tenant_id: Uuid::new_v4(),
-            organization_id: org_id,
             org_id: None,
             name: "Engineering".to_string(),
             code: Some("ENG".to_string()),
@@ -78,7 +75,7 @@ mod tests {
     fn test_create_department_request() {
         let org_id = Uuid::new_v4();
         let request = CreateDepartmentRequest {
-            organization_id: Some(org_id),
+            tenant_id: Some(org_id),
             org_id: None,
             name: "HR Department".to_string(),
             code: Some("HR".to_string()),

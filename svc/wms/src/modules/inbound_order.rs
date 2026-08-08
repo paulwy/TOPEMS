@@ -185,7 +185,7 @@ pub async fn create_inbound_order(
 
     let result = sqlx::query_as::<_, InboundOrder>(
         r#"
-        INSERT INTO wms.inbound_orders (id, organization_id, order_number, order_type, warehouse_id, 
+        INSERT INTO wms.inbound_orders (id, org_id, order_number, order_type, warehouse_id, 
                                        supplier_id, order_date, expected_arrival_date, total_value, 
                                        status, notes, created_at, updated_at)
         VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'purchase', $3, $4, $5, $6, $7, 
@@ -551,7 +551,7 @@ pub async fn create_inbound_order_item(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO wms.inbound_order_items (id, organization_id, order_id, line_number, 
+        INSERT INTO wms.inbound_order_items (id, org_id, order_id, line_number, 
                                              material_code, material_name, material_type, 
                                              specification, batch_number, lot_number, serial_number,
                                              expected_quantity, unit, location_id, unit_price, 
@@ -879,7 +879,7 @@ pub async fn receive_inbound_order(
         if item.quality_status == "qualified" {
             let _ = sqlx::query(
                 r#"
-                INSERT INTO wms.inventory (organization_id, warehouse_id, location_id, 
+                INSERT INTO wms.inventory (org_id, warehouse_id, location_id, 
                                           material_code, material_name, specification, 
                                           batch_number, quantity, unit, available_quantity,
                                           quality_status, created_at, updated_at)
@@ -889,7 +889,7 @@ pub async fn receive_inbound_order(
                 FROM wms.inbound_order_items io
                 JOIN wms.inbound_orders i ON io.order_id = i.id
                 WHERE io.id = $2
-                ON CONFLICT (organization_id, material_code, batch_number) DO UPDATE SET
+                ON CONFLICT (org_id, material_code, batch_number) DO UPDATE SET
                     quantity = wms.inventory.quantity + $1,
                     available_quantity = wms.inventory.available_quantity + $1,
                     updated_at = NOW()
