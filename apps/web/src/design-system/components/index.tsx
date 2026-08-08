@@ -1240,8 +1240,7 @@ export const V51Tabs: React.FC<V51TabsProps> = ({
             value={tab.id}
             label={tab.label as string}
             disabled={tab.disabled}
-            // @ts-expect-error MUI v9 Tab icon prop 类型与 V51 tab 数据结构存在已知兼容问题
-            icon={tab.icon}
+            icon={(tab.icon as React.ReactElement) || undefined}
             iconPosition='start'
             sx={{
               textTransform: 'none',

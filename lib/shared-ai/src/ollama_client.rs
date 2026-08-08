@@ -308,7 +308,7 @@ mod tests {
     async fn test_ollama_embedder() {
         let client = OllamaClient::new(OllamaConfig::default());
         let healthy = client.health_check().await.unwrap_or(false);
-        
+
         // 如果 Ollama 服务不可用，跳过测试
         if !healthy {
             println!("Ollama service not available, skipping test");
