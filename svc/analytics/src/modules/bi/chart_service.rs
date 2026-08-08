@@ -62,11 +62,21 @@ pub struct ChartSummary {
 pub struct ChartQuery {
     pub chart_type: ChartType,
     pub data_source: String,
+    /// S1.2: 原始用户 SQL 字符串已废弃，未来接入真实数据库查询时严禁直接执行此字符串。
+    /// 请使用结构化字段 `columns` + `execute_query` 内部的 validate_dataset + 参数化查询路径。
+    #[deprecated(
+        note = "Raw SQL string is deprecated; use the `columns` structured field instead. \
+                The raw `query` string will be ignored and never executed directly."
+    )]
     pub query: String,
     pub params: HashMap<String, String>,
     pub title: Option<String>,
     pub x_axis_label: Option<String>,
     pub y_axis_label: Option<String>,
+    /// S1.2: 结构化列信息（[x_column, y_column_1, y_column_2, ...]），
+    /// 配合 validate_dataset 做白名单校验后走参数化查询路径。
+    #[serde(default)]
+    pub columns: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -169,15 +179,20 @@ impl ChartService {
         let mut all_columns = vec![x_column.to_string()];
         all_columns.extend(y_columns.iter().cloned());
         let (table, cols) = validate_dataset(data_source, &all_columns)?;
+        // S1.2: 不再拼接 SQL 字符串到 ChartQuery.query；改用结构化 columns 传递列信息。
+        // table/cols 已由 validate_dataset 做过白名单校验，可安全用于后续参数化路径。
+        #[allow(deprecated)]
         let query = ChartQuery {
             chart_type: ChartType::Line,
             data_source: data_source.to_string(),
-            query: format!("SELECT {} FROM {}", cols[0], table),
+            query: String::new(),
             params: HashMap::new(),
             title,
             x_axis_label: Some(x_column.to_string()),
             y_axis_label: Some(y_columns.join(", ")),
+            columns: all_columns,
         };
+        let _ = (table, cols); // 已验证通过，供未来真实查询参数化使用
         self.generate_chart(query).await
     }
 
@@ -191,15 +206,19 @@ impl ChartService {
         let mut all_columns = vec![x_column.to_string()];
         all_columns.extend(y_columns.iter().cloned());
         let (table, cols) = validate_dataset(data_source, &all_columns)?;
+        // S1.2: 不再拼接 SQL 字符串到 ChartQuery.query；改用结构化 columns 传递列信息。
+        #[allow(deprecated)]
         let query = ChartQuery {
             chart_type: ChartType::Bar,
             data_source: data_source.to_string(),
-            query: format!("SELECT {} FROM {}", cols[0], table),
+            query: String::new(),
             params: HashMap::new(),
             title,
             x_axis_label: Some(x_column.to_string()),
             y_axis_label: Some(y_columns.join(", ")),
+            columns: all_columns,
         };
+        let _ = (table, cols);
         self.generate_chart(query).await
     }
 
@@ -210,16 +229,21 @@ impl ChartService {
         _value_column: &str,
         title: Option<String>,
     ) -> Result<ChartResult, String> {
-        let (table, cols) = validate_dataset(data_source, &[label_column.to_string()])?;
+        let columns = vec![label_column.to_string()];
+        let (table, cols) = validate_dataset(data_source, &columns)?;
+        // S1.2: 不再拼接 SQL 字符串到 ChartQuery.query；改用结构化 columns 传递列信息。
+        #[allow(deprecated)]
         let query = ChartQuery {
             chart_type: ChartType::Pie,
             data_source: data_source.to_string(),
-            query: format!("SELECT {} FROM {}", cols[0], table),
+            query: String::new(),
             params: HashMap::new(),
             title,
             x_axis_label: None,
             y_axis_label: None,
+            columns,
         };
+        let _ = (table, cols);
         self.generate_chart(query).await
     }
 

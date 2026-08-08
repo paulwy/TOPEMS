@@ -1,11 +1,7 @@
 import React from 'react';
 import { Divider, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import type { AutomationNodeType } from '@/api/automation';
-import {
-  NODE_TYPE_BORDER_COLOR,
-  NODE_TYPE_ICON,
-  NODE_TYPE_LABEL,
-} from '../shared';
+import { NODE_TYPE_BORDER_COLOR, NODE_TYPE_ICON, NODE_TYPE_LABEL } from '../shared';
 
 export interface NodeLibraryProps {
   availableNodeTypes: AutomationNodeType[];
@@ -47,11 +43,7 @@ export const NodeLibrary: React.FC<NodeLibraryProps> = ({
                   e.dataTransfer.effectAllowed = 'copy';
                 }}
                 onClick={() =>
-                  onAddNodeAt(
-                    t,
-                    120 + (nodesCount % 6) * 30,
-                    120 + (nodesCount % 6) * 30
-                  )
+                  onAddNodeAt(t, 120 + (nodesCount % 6) * 30, 120 + (nodesCount % 6) * 30)
                 }
                 sx={{
                   p: 1,

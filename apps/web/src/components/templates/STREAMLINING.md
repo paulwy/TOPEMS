@@ -263,7 +263,7 @@ recommendTemplate('settings');// → 'settings'  (扩展，无核心替代)
 ## 八、验证
 
 ```bash
-cd /Users/air/TOPEMS/apps/web && npx tsc --noEmit
+cd /Users/xingzhai/TOPEMS/apps/web && npx tsc --noEmit
 ```
 
 预期输出：**0 errors**（已通过验证）。

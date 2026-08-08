@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, TextField, Button } from '@mui/material';
 import { Save } from 'lucide-react';
 import type { User as UserType } from '@/api/iam';
-import { UseFormReturn } from 'react-hook-form';
+import type { UseFormReturn } from 'react-hook-form';
 
 export interface ProfileFormData {
   full_name: string;
@@ -15,11 +15,7 @@ interface ProfileInfoPanelProps {
   onSubmit: (data: ProfileFormData) => void;
 }
 
-const ProfileInfoPanel: React.FC<ProfileInfoPanelProps> = ({
-  user,
-  profileForm,
-  onSubmit,
-}) => {
+const ProfileInfoPanel: React.FC<ProfileInfoPanelProps> = ({ user, profileForm, onSubmit }) => {
   return (
     <Box
       component='form'

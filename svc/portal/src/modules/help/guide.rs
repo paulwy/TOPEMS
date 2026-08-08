@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::AppState;
+use crate::shared::AppState;
 use topems_shared::{api_error, api_success, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -294,21 +294,4 @@ pub async fn get_guide_categories(State(state): State<AppState>) -> Json<ApiResp
     };
 
     Json(api_success(categories))
-}
-
-pub fn create_guide_routes() -> axum::Router<AppState> {
-    axum::Router::new()
-        .route(
-            "/guides",
-            axum::routing::get(list_guides).post(create_guide),
-        )
-        .route(
-            "/guides/categories",
-            axum::routing::get(get_guide_categories),
-        )
-        .route("/guides/{id}", axum::routing::get(get_guide))
-        .route(
-            "/guides/{guide_id}/lessons",
-            axum::routing::post(add_lesson),
-        )
 }

@@ -4,11 +4,30 @@
 -- Purpose: Close the "20260709 fast-iteration fragmentation" gap in MES migrations
 --          by establishing THIS file as the formal merge boundary and checkpoint.
 --
+-- V68.2-6 MES 碎片 DDL 收敛 · 空合并迁移（NoOp Anchor）
+-- ================================================================================
+--
+-- 背景：svc/mes/migrations 曾出现 5 条 ADD COLUMN 微补丁（0009~0013，共
+-- 10 列，每条 1-4 行）+ 质量管理 0007/0014 两次 "CREATE TABLE IF NOT EXISTS"
+-- 重名尝试，历史上合称为 "MES 8 碎片 DDL"。这些迁移已经写入各环境
+-- schema_migrations.version 锚定，直接删除或重写会破坏新库部署顺序与
+-- sqlx/refly 运行时 checksum，因此不可删除/重写。
+--
 -- Context (see docs/architecture/mes-schema-truth.md):
 --   Before 2026-07-09, MES DDL had 2 migrations (schema + quality).
 --   On   2026-07-09, 13 micro-migrations landed on a single day during active
 --   prototyping, creating an unreadable fragmentation pattern (000002~000014).
 --   After 2026-07-10, tenant_id migration took the count to 16.
+--
+-- 本次收敛方案（风险最小）：
+--   1. 保留 0001~0015 + add_tenant_id 历史迁移一字不动；
+--   2. 本文件作为"收敛锚点"插入迁移顺序末尾（时间戳 2026-08-09），
+--      实际 SQL 体为空，仅做 checksum 标记并声明：MES 43 张表 × 342 列
+--      的全部 schema 已在 docs/architecture/mes-schema-truth.md 中
+--      形成真相源（Canonical Schema Truth）；
+--   3. CI 门禁脚本 scripts/verify-mes-schema-truth.mjs 对每次提交
+--      自动比对： migrations 并集  ←→  真相源 md 列出的表/列清单。
+--      若出现新增/修改迁移但未 --regen 更新真相源，则 FAIL。
 --
 -- What this file does:
 --   * Empty (no DDL) — all 16 prior migrations are already applied in production & dev DBs
@@ -31,12 +50,37 @@
 --   000013 add_findings_column             — quality_patrol_items.findings
 --   000014 add_work_order_tables           — work_reports, work_order_operations, bom_items
 --
+-- 碎片段落说明（V68.2-6 收敛对象）：
+--   历史快速迭代留下了 5 条 1-4 行的 ADD COLUMN "补丁式" 迁移 `20260709000009~000013`，
+--   以及 2 条 `CREATE TABLE IF NOT EXISTS` 尝试与早期迁移重复建表。
+--   由于这些迁移已经在生产 `schema_migrations.version` 锚定，不可直接删除或重写。
+--   本文件 + `scripts/verify-mes-schema-truth.mjs` 提供的"事实真相源 + CI 门禁"收敛策略：
+--   - 保留原迁移不动，风险 = 0
+--   - 在对应 md 中统一呈现 43 张表的完整列清单
+--   - CI 脚本每跑一次会对比 migrations 的 CREATE/ALTER 并集 === md 列出的 table.col.type.nullable 集合
+--
 -- Status: NOOP — only serves as a truth anchor and CI monotonic checkpoint.
--- ================================================================================
-
+--
+-- Canonical Checksum (16, SHA-256 head of table×col ordered canonical)
+--   CHECKSUM_16 : 23cde115bd952fe0
+--   TABLES : 43
+--   COLUMNS : 342
+--
+-- 关联产物：
+--   真相源 ： docs/architecture/mes-schema-truth.md
+--   CI 脚本： scripts/verify-mes-schema-truth.mjs
+--   日常使用：
+--     node scripts/verify-mes-schema-truth.mjs           # CI 校验
+--     node scripts/verify-mes-schema-truth.mjs --regen   # 改迁移后同步真相源
+--
 -- Placeholder: this migration intentionally contains no DDL.
 -- Its existence provides:
 --   (a) a monotonic timestamp checkpoint 2026-08-09 that post-dates all 13 fragments,
 --   (b) a CI / migration ordering sanity marker,
 --   (c) a hook for future backfill or reconciliation if needed.
+--
+-- ⚠️  禁止在本文件里写任何真实 DDL；如确实要补列/补表，请新建独立迁移
+--     并同步  node scripts/verify-mes-schema-truth.mjs --regen 。
+-- ================================================================================
+
 SELECT 1 WHERE FALSE;  -- zero-row, zero-side-effect SELECT; keeps file a valid SQL runnable by psql

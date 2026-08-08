@@ -34,7 +34,7 @@ import {
   TrendingDown,
   Minus,
 } from 'lucide-react';
-import { EmptyState } from '@/components/common';
+import { EmptyState } from '@topems/shared-components';
 
 /**
  * 树形节点类型

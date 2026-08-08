@@ -204,8 +204,8 @@ function Test-Migrations {
 
         if ([string]::IsNullOrEmpty($tableCount) -or $tableCount -eq "0") {
             # 检查迁移文件
-            $migrationDir = Join-Path $ProjectRoot $service.Path "migrations"
-            $srcMigrationDir = Join-Path $ProjectRoot $service.Path "src\db\migrations"
+            $migrationDir = Join-Path (Join-Path $ProjectRoot $service.Path) "migrations"
+            $srcMigrationDir = Join-Path (Join-Path $ProjectRoot $service.Path) "src\db\migrations"
 
             $hasMigrations = $false
             if ((Test-Path $migrationDir) -and (Get-ChildItem $migrationDir -Filter "*.sql" -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0) {
@@ -238,8 +238,8 @@ function Test-Migrations {
 
             # 运行迁移文件
             $migrationDirs = @(
-                (Join-Path $ProjectRoot $service.Path "migrations"),
-                (Join-Path $ProjectRoot $service.Path "src\db\migrations")
+                (Join-Path (Join-Path $ProjectRoot $service.Path) "migrations"),
+                (Join-Path (Join-Path $ProjectRoot $service.Path) "src\db\migrations")
             )
 
             foreach ($dir in $migrationDirs) {
@@ -389,7 +389,7 @@ function Start-CoreServices {
     )
 
     foreach ($service in $coreServices) {
-        Start-ServiceProcess -Name $service.Name -Port ($service.Port ?? 8000)
+        Start-ServiceProcess -Name $service.Name -Port $(if ($service.Port) { $service.Port } else { 8000 })
     }
 }
 
@@ -406,7 +406,7 @@ function Start-ERPServices {
     )
 
     foreach ($service in $erpServices) {
-        Start-ServiceProcess -Name $service.Name -Port ($service.Port ?? 8010)
+        Start-ServiceProcess -Name $service.Name -Port $(if ($service.Port) { $service.Port } else { 8010 })
     }
 }
 
@@ -423,7 +423,7 @@ function Start-PLMServices {
     )
 
     foreach ($service in $plmServices) {
-        Start-ServiceProcess -Name $service.Name -Port ($service.Port ?? 8020)
+        Start-ServiceProcess -Name $service.Name -Port $(if ($service.Port) { $service.Port } else { 8020 })
     }
 }
 
@@ -440,7 +440,7 @@ function Start-MESServices {
     )
 
     foreach ($service in $mesServices) {
-        Start-ServiceProcess -Name $service.Name -Port ($service.Port ?? 8030)
+        Start-ServiceProcess -Name $service.Name -Port $(if ($service.Port) { $service.Port } else { 8030 })
     }
 }
 
@@ -457,7 +457,7 @@ function Start-SCMServices {
     )
 
     foreach ($service in $scmServices) {
-        Start-ServiceProcess -Name $service.Name -Port ($service.Port ?? 8040)
+        Start-ServiceProcess -Name $service.Name -Port $(if ($service.Port) { $service.Port } else { 8040 })
     }
 }
 
@@ -473,7 +473,7 @@ function Start-InfraServices {
     )
 
     foreach ($service in $infraServices) {
-        Start-ServiceProcess -Name $service.Name -Port ($service.Port ?? 8050)
+        Start-ServiceProcess -Name $service.Name -Port $(if ($service.Port) { $service.Port } else { 8050 })
     }
 }
 
@@ -489,7 +489,7 @@ function Start-AnalyticsServices {
     )
 
     foreach ($service in $analyticsServices) {
-        Start-ServiceProcess -Name $service.Name -Port ($service.Port ?? 8060)
+        Start-ServiceProcess -Name $service.Name -Port $(if ($service.Port) { $service.Port } else { 8060 })
     }
 }
 
@@ -506,7 +506,7 @@ function Start-ExtensionServices {
     )
 
     foreach ($service in $extensionServices) {
-        Start-ServiceProcess -Name $service.Name -Port ($service.Port ?? 8070)
+        Start-ServiceProcess -Name $service.Name -Port $(if ($service.Port) { $service.Port } else { 8070 })
     }
 }
 
@@ -657,7 +657,7 @@ function Show-ServiceStatus {
             $currentCategory = $svc.Category
         }
 
-        $port = $svc.Port ?? 8000
+        $port = if ($svc.Port) { $svc.Port } else { 8000 }
         if (Test-PortInUse -Port $port) {
             try {
                 $health = Invoke-WebRequest -Uri "http://localhost:$port/health" -TimeoutSec 2 -ErrorAction Stop

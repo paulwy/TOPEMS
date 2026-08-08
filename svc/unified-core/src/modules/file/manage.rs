@@ -466,35 +466,35 @@ pub async fn delete_file(
     };
 
     // 获取文件信息
-    let row = match sqlx::query(
-        "SELECT uploader_id, path FROM core_files WHERE id = $1 AND deleted_at IS NULL",
-    )
-    .bind(file_id)
-    .fetch_optional(&state.pool)
-    .await
-    {
-        Ok(Some(r)) => r,
-        Ok(None) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "文件不存在",
-                "data": null,
-                "code": 404
-            }));
-        }
-        Err(e) => {
-            tracing::error!("Failed to fetch file: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
-        }
-    };
+    let row =
+        match sqlx::query("SELECT uploader_id, path, deleted_at FROM core_files WHERE id = $1")
+            .bind(file_id)
+            .fetch_optional(&state.pool)
+            .await
+        {
+            Ok(Some(r)) => r,
+            Ok(None) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": "文件不存在",
+                    "data": null,
+                    "code": 404
+                }));
+            }
+            Err(e) => {
+                tracing::error!("Failed to fetch file: {}", e);
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": "内部服务器错误",
+                    "data": null,
+                    "code": 500
+                }));
+            }
+        };
 
     let file_uploader_id: Uuid = row.get("uploader_id");
     let file_path: String = row.get("path");
+    let deleted_at: Option<chrono::NaiveDateTime> = row.get("deleted_at");
 
     if file_uploader_id != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
         return Json(serde_json::json!({
@@ -505,11 +505,22 @@ pub async fn delete_file(
         }));
     }
 
+    if deleted_at.is_some() {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "文件已被删除",
+            "data": null,
+            "code": 400
+        }));
+    }
+
     // 软删除文件
-    match sqlx::query("UPDATE core_files SET deleted_at = NOW() WHERE id = $1")
-        .bind(file_id)
-        .execute(&state.pool)
-        .await
+    match sqlx::query(
+        "UPDATE core_files SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(file_id)
+    .execute(&state.pool)
+    .await
     {
         Ok(r) if r.rows_affected() > 0 => {
             // 如果是管理员或超级管理员，也可以选择物理删除文件

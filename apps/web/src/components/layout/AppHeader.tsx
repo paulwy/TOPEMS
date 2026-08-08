@@ -505,7 +505,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   查看全部通知
                 </MenuItem>
               </Menu>
-              <Divider orientation='vertical' flexItem sx={{ mx: 0.5, my: 1 }} />
+              <Divider
+                orientation='vertical'
+                flexItem
+                sx={{ mx: 0.5, my: 1 }}
+              />
               <UserMenu
                 user={user}
                 onProfileClick={() => navigate(DASHBOARD_PATHS.profile)}

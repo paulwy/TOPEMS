@@ -1,0 +1,32 @@
+[package]
+name = "topems-plugin-registry"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS Plugin Registry Service - Marketplace, Tenant Plugins, Reviews, Runtime (V68.1 A2.2 拆分)"
+
+[dependencies]
+axum = { workspace = true }
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+dotenv.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tower-http.workspace = true
+thiserror.workspace = true
+sqlx.workspace = true
+topems-shared = { path = "../../lib" }
+topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+utoipa.workspace = true
+axum-prometheus.workspace = true
+prometheus.workspace = true
+anyhow.workspace = true
+reqwest.workspace = true
+rust_decimal = { workspace = true, features = ["db-postgres", "serde"] }
+futures-util.workspace = true
+
+[dev-dependencies]
+tokio-test.workspace = true

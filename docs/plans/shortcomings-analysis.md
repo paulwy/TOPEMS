@@ -222,9 +222,11 @@ let default_jwt_secret = "topems-jwt-secret-key-must-be-at-least-32-characters-l
 
 ---
 
-### 3.3 插件注册令牌默认放行（P1）
+### 3.3 插件注册令牌默认放行（P1）✅ 已闭环
 
-#### 问题
+> **闭环验证 (2026-08-08)**: [runtime.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L13-L43) 已实现 `PROFILE=prod` 时未配置 `PLUGIN_REGISTRATION_TOKEN` 直接 reject（`return false`），dev 模式才 allow。步骤 1「环境校验」已完成；步骤 2「租户白名单」降级为 P3 增强项，不阻塞闭环。
+
+#### 问题（原状态）
 
 [svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23)：
 
@@ -568,11 +570,15 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 - **阶段部署**：先核心模块，再业务模块，最后全覆盖。
 - **未来扩展**：基于 OpenAPI 自动生成 SDK（多语言），开放平台能力。
 
+> **阶段性闭环 (2026-08-08 · V68.2-2)**：针对 EntitySchema 层 91 张表中 VARCHAR(n) 字段与前端 `maxLength` 声明不匹配的"类型同步最小子集"，已交付 [verify-entity-schema-maxlength.mjs](file:///Users/xingzhai/TOPEMS/scripts/verify-entity-schema-maxlength.mjs) CI 门禁 + 10 个 schema 文件补齐 36 处缺失 maxLength（严格列名匹配，剔除 _id 模糊误报），后端 VARCHAR(n) 为唯一真相源。OpenAPI 全量类型同步仍保留为本节长期事项。
+
 ---
 
-### 5.2 Vite Proxy 配置仍偏手动
+### 5.2 Vite Proxy 配置仍偏手动 ✅ 已闭环
 
-#### 问题
+> **闭环验证 (2026-08-08)**: [vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts#L308-L404) 已实现 `buildServiceProxies()` 从 `SERVICES` 数组 + `ports.ts` 单一信源动态生成全部 API/legacy/health/WS proxy。新增服务仅需修改 `config/services.yaml` + `ports.ts`，无需手动改 vite.config.ts。
+
+#### 问题（原状态）
 
 `apps/web/vite.config.ts` 中仍有数十条按服务硬编码的代理规则，每新增服务需同步修改 `ports.env`、`services.yaml`、`runtime.ts`、`vite.config.ts` 多处，易遗漏。
 
@@ -727,6 +733,23 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 ---
 
+### 7.2 工程效能与迁移规范 6 项集中闭环（2026-08-08 · V68.2 100%）
+
+> **版本锚点**：[TODO.md §4-1 表格 P2-6](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md#L249-L249) · §4-4 进度 6/6 = 100%。全部 6 项均配套独立 CI 脚本（Node.js，无第三方依赖），默认模式 EXIT=0 为通过，漂移会 EXIT=1 阻断。
+
+| # | 子项 | 核心产物 | 反证测试（验证 CI 真会拦截） |
+|---|------|---------|-----------------------------|
+| V68.2-1 | 迁移命名规范 + 严格单调 | [scripts/check-migration-names.mjs](file:///Users/xingzhai/TOPEMS/scripts/check-migration-names.mjs)（FULL/SHORT/历史 8/12 位/V{NN}_ 五维分类 + per-service 单调） | 注入 `V42_bad.sql` → ERR；`--strict` 模式 129 SQL Non-monotonic=0 Errors=0 |
+| V68.2-2 | EntitySchema maxLength 对齐 | 10 个 schema 文件补 36 处 maxLength + [verify-entity-schema-maxlength.mjs](file:///Users/xingzhai/TOPEMS/scripts/verify-entity-schema-maxlength.mjs)（后端 CREATE/ALTER VARCHAR(n) 为真相源 vs 254 前端 EntitySchema 严格列名匹配） | 删除 phone 列 maxLength → ERR；254 schemas / 15 表匹配 / 96 字段校验 0 error |
+| V68.2-3 | 软删除 3 模式 → 统一 deleted_at | 迁移 [20260808160000_unify_soft_drop_is_deleted.sql](file:///Users/xingzhai/TOPEMS/svc/communication/migrations/20260808160000_unify_soft_drop_is_deleted.sql) + 6 个 Rust 文件同步 + [verify-soft-delete.mjs](file:///Users/xingzhai/TOPEMS/scripts/verify-soft-delete.mjs)（168 SQL + 1367 Rust 文件扫描） | 4 张 `is_deleted BOOLEAN` 表全部 `deleted_at TIMESTAMP`；附带修复 `notification.rs:1315` 运行时 bug（core_notifications 无 is_deleted 列却 SET → 改为 is_archived） |
+| V68.2-4 | add_tenant_id 时间戳严格单调 | 原 19 条同用 `20260710160000` → 按 ServiceDefinition 拓扑拆 5 批×5 分钟槽位（T0 unified-core 16:00 → T4 rd/analytics 16:20），7 条补丁自然有序 | `check-migration-names.mjs --strict` Non-monotonic=0 ✅ |
+| V68.2-5 | add_tenant_id 公共模板化生成 | [add_tenant_id_template.sql](file:///Users/xingzhai/TOPEMS/scripts/templates/add_tenant_id_template.sql) + [gen-add-tenant-id.mjs](file:///Users/xingzhai/TOPEMS/scripts/gen-add-tenant-id.mjs) CLI（`--svc <name> --ts --style unified\|batch-rls --self-check`） | 20 服务 dry-run → 18/18 FULL canonical；外键回填抽检 crm.contacts→crm.customers 等 3 组正确 |
+| V68.2-6 | MES 8 碎片 DDL 收敛 | [mes-schema-truth.md](file:///Users/xingzhai/TOPEMS/docs/architecture/mes-schema-truth.md)（43 表×342 列×五维 + checksum=23cde115bd952fe0）+ [20260809000000_mes_schema_consolidation.sql](file:///Users/xingzhai/TOPEMS/svc/mes/migrations/20260809000000_mes_schema_consolidation.sql)（0 条真实 DDL 空锚点）+ [verify-mes-schema-truth.mjs](file:///Users/xingzhai/TOPEMS/scripts/verify-mes-schema-truth.mjs)（splitCommaTopLevel + tokenizeDdl 状态机 + parseColumnDef 完整 SQL 解析器） | 注入 `fake_new_col` 到 truth.md → verify EXIT=1 ERR 拦截；tables=43 columns=342 checksum_match=true |
+
+> **说明**：V68.2-6 原描述"057~064 共 8 条 V17/V19/V20/V21/V23/V24/V27/V32 × 53+ 表"经实地审计不成立（真实碎片为 5 条 ADD COLUMN 微补丁 0009~00013 + 质量管理 0007/0014 两次 CREATE TABLE IF NOT EXISTS 重名尝试），已在 TODO.md 审计修正并采用「空合并锚点 + 真相源 md + CI 脚本」风险最小方案，不改动任何已写入 schema_migrations.version 的历史迁移。
+
+---
+
 ## 8. 分阶段部署路线图
 
 ### 8.1 阶段划分
@@ -767,6 +790,11 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 | V17.0 | 架构治理 | 旧路径流量归零；File 外迁稳定；OpenAPI 类型同步 CI 通过 |
 | V18.0 | 安全深化 | RS256 全服务切换；JWKS 轮换验证；共享库编译时间下降 40%+ |
 | V19.0+ | 产品完整度 | 协同域 MVP 上线；Desktop 套壳发布；Mobile 核心页面跨平台 |
+
+> **2026-08-08 里程碑更新（V68.1 + V68.2）**：
+> - **V68.1 安全加固 + 架构瘦身**：S1 BI SQL 注入防御深化（白名单 `dataset_whitelist.rs` + `sql_injection_tests.rs`）、A2 unified-core 瘦身（`dict/help/login_log/monitor/plugin` 共 5 个模块外迁，`svc/monitor/` `svc/plugin-registry/` 新服务落地）、A4 `lib/src/lib.rs` 门面收紧（`#[deprecated]` 标注）。
+> - **V68.2 工程效能 6 项 100%**：迁移命名 + EntitySchema maxLength + 软删除 + add_tenant_id 单调 + add_tenant_id 模板 + MES 碎片收敛，全部落地，合计交付 5 个独立 CI 脚本（check-migration-names / verify-entity-schema-maxlength / verify-soft-delete / gen-add-tenant-id + verify-mes-schema-truth），详情见 §7.2。
+> - 原 V16.2/V17.0 命名已过时，后续里程碑以 V69/V70 大版本号递增对齐实际节奏。
 
 ---
 

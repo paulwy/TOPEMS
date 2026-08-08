@@ -128,7 +128,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                 bgcolor: 'action.hover',
               }}
             >
-              <Clock style={{ width: 16, height: 16 }} color='currentColor' />
+              <Clock
+                style={{ width: 16, height: 16 }}
+                color='currentColor'
+              />
               <Typography
                 component='span'
                 sx={{ fontSize: '0.875rem', color: 'text.secondary', fontWeight: 500 }}
@@ -257,7 +260,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
           >
             <AlertTriangle style={{ width: 22, height: 22 }} />
           </Box>
-          <Typography variant='h6' sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600 }}
+          >
             确认退出登录？
           </Typography>
         </DialogTitle>

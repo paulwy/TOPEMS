@@ -17,13 +17,7 @@ import {
   DialogTitle,
   Button,
 } from '@mui/material';
-import {
-  User,
-  Settings,
-  LogOut,
-  Building2,
-  AlertTriangle,
-} from 'lucide-react';
+import { User, Settings, LogOut, Building2, AlertTriangle } from 'lucide-react';
 import type { User as UserType } from '@topems/shared-types';
 
 export const extractInitials = (name: string | null | undefined): string => {
@@ -321,7 +315,11 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           >
             <AlertTriangle style={{ width: 22, height: 22 }} />
           </Box>
-          <Typography variant='h6' component='span' sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='h6'
+            component='span'
+            sx={{ fontWeight: 600 }}
+          >
             确认退出登录？
           </Typography>
         </DialogTitle>

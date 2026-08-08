@@ -63,18 +63,18 @@ export const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
   'master-data',
   // 扩展服务（V66 外迁为独立进程）
   'communication', // 通讯（mail/im/notification/comm 整合），端口 8084
-  'search',        // 全文搜索，端口 8082
-  'billing',       // 计费，端口 8085
-  'ticket',        // 工单，端口 8086
-  'feedback',      // 反馈，端口 8087
-  'lowcode',       // 低代码平台（独立服务，端口 8088）
+  'search', // 全文搜索，端口 8082
+  'billing', // 计费，端口 8085
+  'ticket', // 工单，端口 8086
+  'feedback', // 反馈，端口 8087
+  'lowcode', // 低代码平台（独立服务，端口 8088）
   // 子路径模块（归 Group2）
-  'mail',          // 归 communication 服务，路径 /api/communication/mail
-  'im',            // 归 communication 服务，路径 /api/communication/im
-  'notification',  // 归 communication 服务，路径 /api/communication/notification
-  'comm',          // communication 别名
-  'oa',            // OA（归 erp 服务，但路径独立）
-  'asset',         // 资产（归 erp 服务，但路径独立）
+  'mail', // 归 communication 服务，路径 /api/communication/mail
+  'im', // 归 communication 服务，路径 /api/communication/im
+  'notification', // 归 communication 服务，路径 /api/communication/notification
+  'comm', // communication 别名
+  'oa', // OA（归 erp 服务，但路径独立）
+  'asset', // 资产（归 erp 服务，但路径独立）
 ]);
 
 export const SERVICE_CODES = {
@@ -82,9 +82,9 @@ export const SERVICE_CODES = {
   portal: 'portal',
   workflow: 'flow', // workflow 是别名，实际服务为 'flow'（unified-core 虚拟服务，路径 /api/core/flow）
   notification: 'notification', // 归 communication Group2
-  mail: 'mail',                 // 归 communication Group2
-  im: 'im',                     // 归 communication Group2
-  comm: 'comm',                 // communication 别名 Group2
+  mail: 'mail', // 归 communication Group2
+  im: 'im', // 归 communication Group2
+  comm: 'comm', // communication 别名 Group2
   communication: 'communication',
   file: 'file',
   ai: 'ai',
@@ -114,11 +114,11 @@ export const SERVICE_CODES = {
   finance: 'finance',
   monitor: 'monitor',
   oa: 'oa',
-  search: 'search',         // Group2: 全文搜索（端口 8082）
-  billing: 'billing',       // Group2: 计费（端口 8085）
-  ticket: 'ticket',         // Group2: 工单（端口 8086）
-  feedback: 'feedback',     // Group2: 反馈（端口 8087）
-  lowcode: 'lowcode',       // Group2: 低代码平台（端口 8088）
+  search: 'search', // Group2: 全文搜索（端口 8082）
+  billing: 'billing', // Group2: 计费（端口 8085）
+  ticket: 'ticket', // Group2: 工单（端口 8086）
+  feedback: 'feedback', // Group2: 反馈（端口 8087）
+  lowcode: 'lowcode', // Group2: 低代码平台（端口 8088）
   // V64: unified-core 虚拟模块
   automation: 'automation',
   plugin: 'plugin',

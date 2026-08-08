@@ -18,6 +18,8 @@ pub mod quality_v51;
 pub mod schema_registry;
 pub mod semantic_v57;
 pub mod versioning_v54;
+// V68.1 A2.3: dict 模块从 unified-core 合并到主数据服务
+pub mod dict;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()

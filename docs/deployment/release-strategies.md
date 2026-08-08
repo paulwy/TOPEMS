@@ -42,7 +42,7 @@ kubectl rollout status deployment/topems-api-canary
 
 #### 3. 配置流量切分
 
-编辑 `/Users/air/TOPEMS/config/canary-deployment.yaml`:
+编辑 `/Users/xingzhai/TOPEMS/config/canary-deployment.yaml`:
 
 ```yaml
 canary:
