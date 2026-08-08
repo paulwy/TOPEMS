@@ -27,29 +27,44 @@ TOPEMS 采用三层递进式缓存架构，兼顾跨分支复用、单服务独�
 
 ### 1.1 Layer 1：sccache + Registry 共享
 
-**配置位置**：`.cargo/config.toml:11-14`
+**配置位置**：`.cargo/config.toml:11-18`
 
 ```toml
 [build]
 rustc-wrapper = "sccache"
+
+[registries.crates-io]
+protocol = "sparse"
 ```
 
-**环境变量**（CI 必设）：
+**环境变量**（CI 必设，`.github/workflows/ci.yml:47-60` 已配置）：
 
-| 变量 | 推荐值 | 说明 |
-|------|--------|------|
-| `SCCACHE_DIR` | `~/.cache/sccache` 或共享卷 | sccache 本地缓存目录 |
-| `SCCACHE_CACHE_SIZE` | `50G` | 单实例缓存上限（默认 10G 不足） |
-| `CARGO_REGISTRIES_CRATES_IO_PROTOCOL` | `sparse` | 稀疏注册中心，索引快 5–10× |
+| 变量 | 值 | 说明 |
+|------|----|------|
+| `RUSTC_WRAPPER` | `sccache` | 启用 sccache（与 config.toml 双保险） |
+| `SCCACHE_DIR` | `${{ github.workspace }}/.sccache` | sccache 本地缓存目录（与 rust-cache 同路径） |
+| `SCCACHE_CACHE_SIZE` | `50G` | 单实例缓存上限（默认 10G 对 monorepo 约 1 周即满） |
+| `CARGO_REGISTRIES_CRATES_IO_PROTOCOL` | `sparse` | 稀疏注册中心（`.cargo/config.toml` 已配置，此为兜底） |
+| `CARGO_INCREMENTAL` | `0` | CI **禁用**增量编译（见 §1.3） |
 
-**CI 缓存 key 设计**：
+**CI 缓存落地（推荐方案：`Swatinem/rust-cache` + `mozilla-actions/sccache-action` 组合）**：
+
+TOPEMS CI 已采用业界主流的"动作组合"方案，而非手写 `actions/cache` 管理 sccache 目录：
 
 ```yaml
-- key: sccache-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-  restore-keys:
-    - sccache-${{ runner.os }}-
-  path: ~/.cache/sccache
+# 1. 安装+启动 sccache 服务端（负责 RUSTC_WRAPPER 对接，自动管理缓存生命周期）
+- uses: mozilla-actions/sccache-action@v0.0.9
+
+# 2. rust-cache 统一管理 registry + target/ + sccache dir（按 toolchain 前缀分桶）
+- uses: Swatinem/rust-cache@v2
+  with:
+    # 按 job 类型分桶（lint/test/audit 各自独立 bucket，互不污染）
+    prefix-key: "rust-lint-nightly-2026-07-01"
 ```
+
+**为什么不用手写 `key: sccache-xxx`**：
+- `Swatinem/rust-cache` 已内置 Cargo.lock hash + CARGO_HOME + target/ 的联合缓存，同时兼容 `SCCACHE_DIR` 落在 workspace 内的场景（TOPEMS 设为 `.sccache/`，会被 `rust-cache` 一并保存/恢复）。
+- 对 nightly 工具链敏感的项目，`prefix-key` 附带 toolchain 版本能避免"稳定版 ↔  nightly"之间缓存串桶导致的 ICE。
 
 ### 1.2 Layer 2：Crate 级 target/deps
 
@@ -232,7 +247,11 @@ cargo tarpaulin --workspace \
 - [x] `registries.crates-io.protocol = "sparse"` 已配置
 - [x] `svc/monitor/tests/smoke.rs` 已创建
 - [x] `svc/plugin-registry/tests/smoke.rs` 已创建
-- [x] `svc/master-data/tests/smoke.rs` 已创建（补充，原 tests/ 已有集成测试）
-- [ ] CI 中 `CARGO_INCREMENTAL=0` + `SCCACHE_CACHE_SIZE=50G`
-- [ ] 5 服务 cache key 按 Cargo.lock 粒度配置
-- [ ] Phase 1.0 准入：`cargo test -p <crate> --test smoke` 全绿
+- [x] `svc/master-data/tests/smoke.rs` 已创建
+- [x] `svc/portal/tests/smoke.rs` 已创建（5/5 独立服务补齐）
+- [x] `svc/unified-core/tests/smoke.rs` 已创建（5/5 独立服务补齐）
+- [x] CI 中 `CARGO_INCREMENTAL=0` + `SCCACHE_CACHE_SIZE=50G`（`.github/workflows/ci.yml:53-56`）
+- [x] 5 服务 cache key 按 `Swatinem/rust-cache` + prefix-key + toolchain 前缀配置（§1.1）
+- [x] Phase 1.0 准入：`cargo test -p <crate> --test smoke` 5/5 全绿
+- [ ] `.cargo/config.toml` `[profile.release]` 兜底 codegen-units=16（已补，待 CI 验证）
+- [ ] Phase 1.5（P3）：CI 新增独立 job，5 服务 smoke 并行跑作为 lightweight 准入（先于 lint/test 失败快反）
