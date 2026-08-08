@@ -33,10 +33,11 @@ use topems_shared_auth::security::body_limit::BodyLimitConfig;
 use topems_shared_auth::security::body_limit::BodyLimitMiddleware;
 use topems_shared_core::compression::CompressionConfig;
 use topems_shared_core::compression::CompressionMiddleware;
-use topems_shared_auth::security::encryption::FieldEncryptionService;
-use topems_shared_auth::security::security_headers::SecurityHeadersLayer;
+use topems_shared_auth::security::encryption::{FieldEncryptionService, KeyManager};
+use topems_shared_auth::security::security_headers::{SecurityHeadersConfig, SecurityHeadersLayer};
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::health::SystemMetrics;
+use topems_shared_observability::telemetry::middleware::TelemetryExt;
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 use utoipa::{Modify, OpenApi};
 
