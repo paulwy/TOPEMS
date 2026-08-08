@@ -38,7 +38,7 @@ export interface FlowStep {
 export interface FlowAssistantRequest {
   query: string;
   module?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface FlowAssistantResponse {

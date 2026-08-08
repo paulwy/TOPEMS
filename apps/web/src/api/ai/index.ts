@@ -294,7 +294,7 @@ export const aiApi = {
 
   usePromptTemplate: async (
     id: string,
-    variables: Record<string, any>
+    variables: Record<string, unknown>
   ): Promise<
     ApiResponse<{
       result: string;
