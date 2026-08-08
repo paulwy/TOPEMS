@@ -1,18 +1,7 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  Stack,
-} from '@mui/material';
+import { Box, Typography, Stack } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
-import {
-  User,
-  MessageSquare,
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertCircle,
-} from 'lucide-react';
+import { User, MessageSquare, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import type { Approval } from '@/api/workflow';
 import { designTokens } from '@/theme/tokens';
 import { getChipStatusColor } from '@/utils/status';
@@ -129,9 +118,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
           >
             审批类型
           </Typography>
-          <Typography variant='body2'>
-            {getApprovalTypeText(approval.approval_type)}
-          </Typography>
+          <Typography variant='body2'>{getApprovalTypeText(approval.approval_type)}</Typography>
         </Box>
         <Box>
           <Typography
@@ -156,9 +143,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
           >
             创建时间
           </Typography>
-          <Typography variant='body2'>
-            {new Date(approval.created_at).toLocaleString()}
-          </Typography>
+          <Typography variant='body2'>{new Date(approval.created_at).toLocaleString()}</Typography>
         </Box>
         {approval.approved_by && (
           <>
@@ -179,9 +164,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
                 审批时间
               </Typography>
               <Typography variant='body2'>
-                {approval.approved_at
-                  ? new Date(approval.approved_at).toLocaleString()
-                  : 'N/A'}
+                {approval.approved_at ? new Date(approval.approved_at).toLocaleString() : 'N/A'}
               </Typography>
             </Box>
           </>

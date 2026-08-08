@@ -41,13 +41,13 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
 };
 
 export const LIMS_STATUS_COLOR_MAP: Record<string, StatusColor> = {
-  '待登记': 'grey.100',
-  '待接收': 'warning.light',
-  '已接收': 'primary.light',
-  '待确认': 'secondary.light',
-  '已确认': 'success.lighter',
-  '检测中': 'primary.light',
-  '已完成': 'success.lighter',
+  待登记: 'grey.100',
+  待接收: 'warning.light',
+  已接收: 'primary.light',
+  待确认: 'secondary.light',
+  已确认: 'success.lighter',
+  检测中: 'primary.light',
+  已完成: 'success.lighter',
 };
 
 export const getStatusColor = (
@@ -56,14 +56,16 @@ export const getStatusColor = (
     scope?: 'chip' | 'bg' | 'palette';
     category?: 'workflow' | 'mes' | 'lims' | 'monitor';
     fallback?: StatusColor;
-  },
+  }
 ): StatusColor => {
   const fallback = options?.fallback ?? 'default';
   const category = options?.category;
   const normalized = status?.trim().toLowerCase();
 
   if (category === 'lims') {
-    return (LIMS_STATUS_COLOR_MAP[status] as StatusColor) || STATUS_COLOR_MAP[normalized] || fallback;
+    return (
+      (LIMS_STATUS_COLOR_MAP[status] as StatusColor) || STATUS_COLOR_MAP[normalized] || fallback
+    );
   }
 
   if (category === 'workflow') {
@@ -116,7 +118,7 @@ export const getStatusColor = (
 
 export const getStatusTextColor = (
   status: string,
-  category?: 'workflow' | 'mes' | 'lims' | 'monitor',
+  category?: 'workflow' | 'mes' | 'lims' | 'monitor'
 ): string => {
   const color = getStatusColor(status, { category });
   if (typeof color !== 'string') return 'text.primary';
@@ -132,7 +134,7 @@ export const getStatusTextColor = (
 
 export const getChipStatusColor = (
   status: string,
-  category?: 'workflow' | 'mes',
+  category?: 'workflow' | 'mes'
 ): ChipProps['color'] => {
   return getStatusColor(status, { category, fallback: 'default' }) as ChipProps['color'];
 };

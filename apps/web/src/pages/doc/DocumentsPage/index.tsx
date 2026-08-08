@@ -445,8 +445,8 @@ const DocumentsPage: React.FC = () => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (item) =>
-        item.name.toLowerCase().includes(query) ||
-        item.tags.some((t) => t.toLowerCase().includes(query))
+          item.name.toLowerCase().includes(query) ||
+          item.tags.some((t) => t.toLowerCase().includes(query))
       );
     }
 
@@ -597,11 +597,11 @@ const DocumentsPage: React.FC = () => {
               <Tooltip title='新建文件夹'>
                 <span>
                   <Button
-                  variant='text'
-                  onClick={() => setShowCreateFolderModal(true)}
-                >
-                  <Plus sx={{ width: 20, height: 20 }} />
-                </Button>
+                    variant='text'
+                    onClick={() => setShowCreateFolderModal(true)}
+                  >
+                    <Plus sx={{ width: 20, height: 20 }} />
+                  </Button>
                 </span>
               </Tooltip>
               <Button
@@ -712,7 +712,10 @@ const DocumentsPage: React.FC = () => {
         </Box>
       </Box>
 
-      <UploadDialog uploading={uploading} uploadProgress={uploadProgress} />
+      <UploadDialog
+        uploading={uploading}
+        uploadProgress={uploadProgress}
+      />
 
       <Box
         component='main'

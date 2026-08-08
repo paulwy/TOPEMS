@@ -78,7 +78,8 @@ const ProductionOrderDetailPage: React.FC = () => {
     ? (orderError as Error).message || t('mes.production_order_detail_page.detail')
     : undefined;
 
-  const getOrderStatusColor = (status: string): ChipProps['color'] => getChipStatusColor(status, 'mes');
+  const getOrderStatusColor = (status: string): ChipProps['color'] =>
+    getChipStatusColor(status, 'mes');
 
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {

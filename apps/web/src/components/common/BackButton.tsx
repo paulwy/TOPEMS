@@ -18,7 +18,11 @@ export interface BackButtonProps {
 
 const VARIANT_CONFIG: Record<
   BackButtonVariant,
-  { Icon: React.ComponentType<{ style?: React.CSSProperties }>; defaultLabel: string; defaultAriaLabel: string }
+  {
+    Icon: React.ComponentType<{ style?: React.CSSProperties }>;
+    defaultLabel: string;
+    defaultAriaLabel: string;
+  }
 > = {
   back: {
     Icon: ArrowLeft,

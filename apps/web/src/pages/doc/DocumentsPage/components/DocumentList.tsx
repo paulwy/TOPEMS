@@ -10,16 +10,7 @@ import {
   Chip,
   useTheme,
 } from '@mui/material';
-import {
-  Folder,
-  FileText,
-  Star,
-  History,
-  Trash2,
-  Upload,
-  Eye,
-  Download,
-} from 'lucide-react';
+import { Folder, FileText, Star, History, Trash2, Upload, Eye, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import StatCard from './StatCard';
 import FileCard from './FileCard';
@@ -489,9 +480,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                     ) : (
                       <tr
                         key={item.id}
-                        onClick={() =>
-                          navigate(DOC_PATHS.documentDetail.replace(':id', item.id))
-                        }
+                        onClick={() => navigate(DOC_PATHS.documentDetail.replace(':id', item.id))}
                         style={{ cursor: 'pointer' }}
                       >
                         <td

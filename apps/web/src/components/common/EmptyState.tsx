@@ -35,7 +35,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   const resolvedAction =
     action ??
     (actionLabel ? (
-      <Button variant='contained' color='primary' onClick={onAction} size={compact ? 'small' : 'medium'}>
+      <Button
+        variant='contained'
+        color='primary'
+        onClick={onAction}
+        size={compact ? 'small' : 'medium'}
+      >
         {actionLabel}
       </Button>
     ) : undefined);
@@ -71,11 +76,19 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         }}
       >
         {emoji ? (
-          <Typography variant={compact ? 'h5' : 'h4'} sx={{ lineHeight: 1 }}>
+          <Typography
+            variant={compact ? 'h5' : 'h4'}
+            sx={{ lineHeight: 1 }}
+          >
             {emoji}
           </Typography>
         ) : (
-          icon ?? <Inbox size={compact ? 24 : 32} strokeWidth={1.5} />
+          (icon ?? (
+            <Inbox
+              size={compact ? 24 : 32}
+              strokeWidth={1.5}
+            />
+          ))
         )}
       </Box>
 

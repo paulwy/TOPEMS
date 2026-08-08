@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '@mui/material';
-import {
-  FileText,
-  GitBranch,
-} from 'lucide-react';
+import { FileText, GitBranch } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import type { Approval, ApprovalRecord } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
@@ -16,7 +13,11 @@ import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import ApprovalHeader, { getStatusText } from './components/ApprovalHeader';
-import { RecordsTabContent, TimelineTabContent, FormDataTabContent } from './components/ApprovalTimeline';
+import {
+  RecordsTabContent,
+  TimelineTabContent,
+  FormDataTabContent,
+} from './components/ApprovalTimeline';
 import ApprovalActions, { buildActions, type ActionConfig } from './components/ApprovalActions';
 
 interface ApprovalDetails {
@@ -188,25 +189,46 @@ const FlowApprovalDetailPage: React.FC = () => {
       {
         id: 'info',
         label: '审批信息',
-        content: <ApprovalHeader approval={approval} theme={theme} />,
+        content: (
+          <ApprovalHeader
+            approval={approval}
+            theme={theme}
+          />
+        ),
       },
       {
         id: 'records',
         label: '审批记录',
         badge: records.length,
-        content: <RecordsTabContent records={records} theme={theme} />,
+        content: (
+          <RecordsTabContent
+            records={records}
+            theme={theme}
+          />
+        ),
       },
       {
         id: 'timeline',
         label: '流程时间线',
         icon: <GitBranch size={16} />,
-        content: <TimelineTabContent approval={approval} records={records} theme={theme} />,
+        content: (
+          <TimelineTabContent
+            approval={approval}
+            records={records}
+            theme={theme}
+          />
+        ),
       },
       {
         id: 'formData',
         label: '表单数据',
         icon: <FileText size={16} />,
-        content: <FormDataTabContent approval={approval} theme={theme} />,
+        content: (
+          <FormDataTabContent
+            approval={approval}
+            theme={theme}
+          />
+        ),
       },
     ];
   }, [approval, records, theme]);
@@ -220,9 +242,9 @@ const FlowApprovalDetailPage: React.FC = () => {
         setShowApprovalModal,
         setDelegateTarget,
         setDelegateReason,
-        setShowDelegateModal,
+        setShowDelegateModal
       ),
-    [approval],
+    [approval]
   );
 
   return (

@@ -11,15 +11,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import {
-  Copy as DuplicateIcon,
-  Trash2 as DeleteIcon,
-} from 'lucide-react';
-import {
-  NODE_TYPE_COLOR,
-  NODE_TYPE_LABEL,
-  type DesignerNodeItem,
-} from '../shared';
+import { Copy as DuplicateIcon, Trash2 as DeleteIcon } from 'lucide-react';
+import { NODE_TYPE_COLOR, NODE_TYPE_LABEL, type DesignerNodeItem } from '../shared';
 
 export interface PropertiesPanelProps {
   selectedNode: DesignerNodeItem | null;

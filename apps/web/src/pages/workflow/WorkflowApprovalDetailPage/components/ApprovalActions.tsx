@@ -11,12 +11,7 @@ import {
   Button,
   Stack,
 } from '@mui/material';
-import {
-  CheckCircle,
-  XCircle,
-  Loader2,
-  ArrowRightLeft,
-} from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, ArrowRightLeft } from 'lucide-react';
 import type { Approval } from '@/api/workflow';
 
 export interface ActionConfig {
@@ -45,7 +40,11 @@ interface ApprovalActionsProps {
   delegateLoading: boolean;
   onProcessApproval: () => void;
   onDelegate: () => void;
-  addNotification: (notification: { title: string; message: string; type: 'info' | 'success' | 'error' | 'warning' }) => void;
+  addNotification: (notification: {
+    title: string;
+    message: string;
+    type: 'info' | 'success' | 'error' | 'warning';
+  }) => void;
 }
 
 export const buildActions = (
@@ -55,7 +54,7 @@ export const buildActions = (
   setShowApprovalModal: (show: boolean) => void,
   setDelegateTarget: (target: string) => void,
   setDelegateReason: (reason: string) => void,
-  setShowDelegateModal: (show: boolean) => void,
+  setShowDelegateModal: (show: boolean) => void
 ): ActionConfig[] => {
   if (!approval || approval.status !== 'pending') return [];
 

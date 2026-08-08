@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Chip,
-  IconButton,
-  Paper,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, Chip, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import {
   Network as CanvasModeIcon,
   ZoomIn as ZoomInIcon,
@@ -158,9 +150,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                   p: 1,
                   cursor: 'move',
                   border: isSelected ? 2 : 1,
-                  borderColor: isSelected
-                    ? 'primary.main'
-                    : NODE_TYPE_BORDER_COLOR[node.type],
+                  borderColor: isSelected ? 'primary.main' : NODE_TYPE_BORDER_COLOR[node.type],
                   bgcolor: 'background.paper',
                   zIndex: isSelected ? 2 : 1,
                   userSelect: 'none',

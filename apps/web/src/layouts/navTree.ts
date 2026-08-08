@@ -32,7 +32,10 @@ export interface NavTreeResult {
 
 type PermissionChecker = (permission?: string) => boolean;
 
-const SPECIAL_L1_MODULES: Record<string, Partial<L2NavNode> & { key: string; title: string; path: string }> = {
+const SPECIAL_L1_MODULES: Record<
+  string,
+  Partial<L2NavNode> & { key: string; title: string; path: string }
+> = {
   workbench_dashboard: {
     key: 'workbench_dashboard',
     title: '工作台首页',
@@ -150,8 +153,9 @@ export function useNavTree(checkPermission: PermissionChecker): NavTreeResult {
       l1Bucket[l1.key].sort((a, b) => a.order - b.order);
     });
 
-    const l1Domains: L1NavNode[] = L1_BUSINESS_DOMAINS
-      .filter((l1) => l1Bucket[l1.key] && l1Bucket[l1.key].length > 0)
+    const l1Domains: L1NavNode[] = L1_BUSINESS_DOMAINS.filter(
+      (l1) => l1Bucket[l1.key] && l1Bucket[l1.key].length > 0
+    )
       .sort((a, b) => a.order - b.order)
       .map((l1) => ({
         key: l1.key,

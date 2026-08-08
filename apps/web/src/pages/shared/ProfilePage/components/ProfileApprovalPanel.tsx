@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  CircularProgress,
-  Switch,
-  Chip,
-  useTheme,
-} from '@mui/material';
+import { Box, Typography, Button, CircularProgress, Switch, Chip, useTheme } from '@mui/material';
 import {
   Clock,
   RefreshCw,

@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ALLOWED_GROUPS = new Set(['master','process','business','analytics','setting','overview','report','other']);
-const BASE = '/Users/xingzhai/TOPEMS/apps/web/src/modules';
+const BASE = path.join(__dirname, '..', 'apps', 'web', 'src', 'modules');
 
 let totalRoutes = 0;
 let totalNav = 0;
