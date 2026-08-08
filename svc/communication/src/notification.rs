@@ -1312,8 +1312,8 @@ pub async fn run_auto_archive(
     let count: i64 = sqlx::query_scalar(
         r#"
         UPDATE core_notifications
-        SET is_deleted = true
-        WHERE created_at < NOW() - INTERVAL '30 days' AND is_deleted = false
+        SET is_archived = true
+        WHERE created_at < NOW() - INTERVAL '30 days' AND is_archived = false
         RETURNING COUNT(*)
         "#,
     )
@@ -1341,9 +1341,9 @@ pub async fn list_templates(
 
     let result = sqlx::query(
         r#"
-        SELECT id, name, title_template, content_template, notification_type, description, is_deleted, created_by, created_at, updated_at
+        SELECT id, name, title_template, content_template, notification_type, description, created_by, created_at, updated_at
         FROM core_notification_templates
-        WHERE is_deleted = FALSE
+        WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         "#,
     )

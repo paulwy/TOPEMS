@@ -47,7 +47,7 @@ pub async fn download_file(
 
     // 查询文件信息
     let row = match sqlx::query(
-        "SELECT name, path, mime_type, size, created_by FROM core_files WHERE id = $1 AND is_deleted = FALSE",
+        "SELECT name, path, mime_type, size, created_by FROM core_files WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(file_id)
     .fetch_optional(&state.pool)
@@ -186,7 +186,7 @@ pub async fn preview_file(
 
     // 查询文件信息
     let row = match sqlx::query(
-        "SELECT name, path, mime_type, size, created_by FROM core_files WHERE id = $1 AND is_deleted = FALSE",
+        "SELECT name, path, mime_type, size, created_by FROM core_files WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(file_id)
     .fetch_optional(&state.pool)
@@ -325,7 +325,7 @@ pub async fn get_thumbnail(
 
     // 查询文件信息
     let row = match sqlx::query(
-        "SELECT name, path, mime_type, created_by FROM core_files WHERE id = $1 AND is_deleted = FALSE",
+        "SELECT name, path, mime_type, created_by FROM core_files WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(file_id)
     .fetch_optional(&state.pool)

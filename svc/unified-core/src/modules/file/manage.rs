@@ -24,7 +24,6 @@ struct FileInfo {
     uploader_id: String,
     created_at: String,
     updated_at: String,
-    is_deleted: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -78,11 +77,12 @@ pub async fn list_files(
     };
 
     // 构建查询条件 - 简化版本，避免动态参数问题
-    let base_query = "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, is_deleted 
-         FROM core_files 
-         WHERE is_deleted = FALSE";
+    let base_query =
+        "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at
+         FROM core_files
+         WHERE deleted_at IS NULL";
 
-    let _count_query = "SELECT COUNT(*) FROM core_files WHERE is_deleted = FALSE";
+    let _count_query = "SELECT COUNT(*) FROM core_files WHERE deleted_at IS NULL";
 
     let result = sqlx::query_as::<
         _,
@@ -96,7 +96,6 @@ pub async fn list_files(
             Uuid,
             chrono::NaiveDateTime,
             chrono::NaiveDateTime,
-            bool,
         ),
     >(base_query)
     .fetch_all(&state.pool)
@@ -117,7 +116,6 @@ pub async fn list_files(
                         uploader_id,
                         created_at,
                         updated_at,
-                        is_deleted,
                     )| FileInfo {
                         id: id.to_string(),
                         name,
@@ -128,16 +126,15 @@ pub async fn list_files(
                         uploader_id: uploader_id.to_string(),
                         created_at: created_at.to_string(),
                         updated_at: updated_at.to_string(),
-                        is_deleted,
                     },
                 )
                 .collect();
 
             // 获取总数
             let count_query = if claims.is_superuser || claims.has_permission("file:admin") {
-                "SELECT COUNT(*) FROM core_files WHERE is_deleted = FALSE"
+                "SELECT COUNT(*) FROM core_files WHERE deleted_at IS NULL"
             } else {
-                "SELECT COUNT(*) FROM core_files WHERE is_deleted = FALSE AND uploader_id = $1"
+                "SELECT COUNT(*) FROM core_files WHERE deleted_at IS NULL AND uploader_id = $1"
             };
 
             let total = match sqlx::query_scalar::<_, i64>(count_query)
@@ -215,7 +212,7 @@ pub async fn get_file(
     };
 
     let row = match sqlx::query(
-        "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, is_deleted 
+        "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at
          FROM core_files WHERE id = $1",
     )
     .bind(file_id)
@@ -269,7 +266,6 @@ pub async fn get_file(
         updated_at: row
             .get::<chrono::NaiveDateTime, _>("updated_at")
             .to_string(),
-        is_deleted: row.get::<bool, _>("is_deleted"),
     };
 
     Json(serde_json::json!({
@@ -320,10 +316,12 @@ pub async fn update_file(
     };
 
     // 检查文件是否存在且有权限
-    let row = match sqlx::query("SELECT uploader_id, is_deleted FROM core_files WHERE id = $1")
-        .bind(file_id)
-        .fetch_optional(&state.pool)
-        .await
+    let row = match sqlx::query(
+        "SELECT uploader_id FROM core_files WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(file_id)
+    .fetch_optional(&state.pool)
+    .await
     {
         Ok(Some(r)) => r,
         Ok(None) => {
@@ -469,7 +467,7 @@ pub async fn delete_file(
 
     // 获取文件信息
     let row =
-        match sqlx::query("SELECT uploader_id, path, is_deleted FROM core_files WHERE id = $1")
+        match sqlx::query("SELECT uploader_id, path, deleted_at FROM core_files WHERE id = $1")
             .bind(file_id)
             .fetch_optional(&state.pool)
             .await
@@ -496,7 +494,7 @@ pub async fn delete_file(
 
     let file_uploader_id: Uuid = row.get("uploader_id");
     let file_path: String = row.get("path");
-    let is_deleted: bool = row.get("is_deleted");
+    let deleted_at: Option<chrono::NaiveDateTime> = row.get("deleted_at");
 
     if file_uploader_id != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
         return Json(serde_json::json!({
@@ -507,7 +505,7 @@ pub async fn delete_file(
         }));
     }
 
-    if is_deleted {
+    if deleted_at.is_some() {
         return Json(serde_json::json!({
             "success": false,
             "message": "文件已被删除",
@@ -517,10 +515,12 @@ pub async fn delete_file(
     }
 
     // 软删除文件
-    match sqlx::query("UPDATE core_files SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1")
-        .bind(file_id)
-        .execute(&state.pool)
-        .await
+    match sqlx::query(
+        "UPDATE core_files SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(file_id)
+    .execute(&state.pool)
+    .await
     {
         Ok(r) if r.rows_affected() > 0 => {
             // 如果是管理员或超级管理员，也可以选择物理删除文件
@@ -616,7 +616,7 @@ pub async fn move_file(
 
     // 检查文件权限
     let row = match sqlx::query(
-        "SELECT uploader_id FROM core_files WHERE id = $1 AND is_deleted = FALSE",
+        "SELECT uploader_id FROM core_files WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(file_id)
     .fetch_optional(&state.pool)
@@ -723,7 +723,7 @@ pub async fn copy_file(
     };
 
     // 获取源文件信息
-    let row = match sqlx::query("SELECT name, size, mime_type, path, uploader_id FROM core_files WHERE id = $1 AND is_deleted = FALSE")
+    let row = match sqlx::query("SELECT name, size, mime_type, path, uploader_id FROM core_files WHERE id = $1 AND deleted_at IS NULL")
         .bind(file_id)
         .fetch_optional(&state.pool)
         .await
@@ -906,7 +906,7 @@ pub async fn set_file_permission(
 
     // 检查文件是否存在
     let exists = match sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM core_files WHERE id = $1 AND is_deleted = FALSE)",
+        "SELECT EXISTS(SELECT 1 FROM core_files WHERE id = $1 AND deleted_at IS NULL)",
     )
     .bind(file_id)
     .fetch_one(&state.pool)

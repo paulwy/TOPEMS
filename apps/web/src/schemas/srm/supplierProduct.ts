@@ -27,6 +27,7 @@ export const supplierProductSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'supplier',
@@ -74,6 +75,7 @@ export const supplierProductSchema: EntitySchema = {
       type: 'text',
       defaultValue: '个',
       listWidth: 80,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'status',
