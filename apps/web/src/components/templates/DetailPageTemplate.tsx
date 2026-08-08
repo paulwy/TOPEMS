@@ -95,6 +95,9 @@ export interface DetailPageTemplateProps extends BoxProps {
   /** 模块名称标签（如 "HRM", "CRM"） */
   moduleChip?: string;
 
+  /** 详情对象名，用于面包屑末端展示 */
+  detailItemName?: string;
+
   // 子组件
   headerContent?: React.ReactNode;
   children?: React.ReactNode;
@@ -125,6 +128,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   infoCard,
   moduleGradient,
   moduleChip,
+  detailItemName,
   headerContent,
   children,
   ...props
@@ -432,6 +436,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
           onClick: handleBack,
         }}
         loading={loading}
+        detailItemName={detailItemName}
       >
         {headerContent}
       </PageHeader>

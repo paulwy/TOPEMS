@@ -280,6 +280,7 @@ const RsExperimentCreatePage: React.FC = () => {
       <FormPageTemplate
         title=''
         subtitle=''
+        backHref={RD_PATHS.experiment}
         sections={sections}
         defaultValues={defaultValues}
         loading={loading}

@@ -105,7 +105,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/erp',
     isCore: false,
     preload: 'network',
-    permission: 'erp:view',
+    permission: 'erp:dashboard:view',
     updateStrategy: 'prompt',
   },
   {
@@ -126,7 +126,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/crm',
     isCore: false,
     preload: 'network',
-    permission: 'crm:view',
+    permission: 'crm:dashboard:view',
   },
   {
     name: 'topems_mes',
@@ -166,7 +166,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/srm',
     isCore: false,
     preload: 'lazy',
-    permission: 'srm:view',
+    permission: 'srm:dashboard:view',
   },
   {
     name: 'topems_pm',
@@ -176,7 +176,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/pm',
     isCore: false,
     preload: 'lazy',
-    permission: 'pm:view',
+    permission: 'pm:dashboard:view',
   },
   {
     name: 'topems_finance',
@@ -186,7 +186,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/finance',
     isCore: false,
     preload: 'lazy',
-    permission: 'finance:view',
+    permission: 'finance:dashboard:view',
   },
   {
     name: 'topems_pdm',
@@ -206,7 +206,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/qms',
     isCore: false,
     preload: 'lazy',
-    permission: 'qms:view',
+    permission: 'qms:dashboard:view',
   },
   {
     name: 'topems_lims',
@@ -216,7 +216,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/lims',
     isCore: false,
     preload: 'lazy',
-    permission: 'lims:view',
+    permission: 'lims:dashboard:view',
   },
   {
     name: 'topems_ehs',
@@ -226,7 +226,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/ehs',
     isCore: false,
     preload: 'lazy',
-    permission: 'ehs:view',
+    permission: 'ehs:dashboard:view',
   },
   {
     name: 'topems_bi',
@@ -236,7 +236,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/bi',
     isCore: false,
     preload: 'lazy',
-    permission: 'bi:view',
+    permission: 'bi:dashboard:view',
   },
   {
     name: 'topems_monitor',
@@ -246,7 +246,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/monitor',
     isCore: false,
     preload: 'visible',
-    permission: 'monitor:view',
+    permission: 'monitor:dashboard:view',
   },
   {
     name: 'topems_ai',
@@ -256,7 +256,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/ai',
     isCore: false,
     preload: 'lazy',
-    permission: 'ai:view',
+    permission: 'ai:dashboard:view',
   },
   {
     name: 'topems_gis',
@@ -266,7 +266,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/gis',
     isCore: false,
     preload: 'lazy',
-    permission: 'gis:view',
+    permission: 'gis:dashboard:view',
   },
   {
     name: 'topems_doc',
@@ -276,7 +276,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/doc',
     isCore: false,
     preload: 'lazy',
-    permission: 'doc:view',
+    permission: 'doc:dashboard:view',
   },
 ];
 

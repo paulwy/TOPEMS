@@ -26,19 +26,17 @@ pub mod modules;
 use axum_prometheus::PrometheusMetricLayer;
 use reqwest::Client;
 
-use topems_shared_auth::security::audit_logger::AuditLoggerConfig;
-use topems_shared_auth::security::audit_logger::AuditLoggerMiddleware;
-use topems_shared_auth::security::body_limit::BodyLimitConfig;
-use topems_shared_auth::security::body_limit::BodyLimitMiddleware;
-use topems_shared_auth::security::encryption::{FieldEncryptionService, KeyManager};
-use topems_shared_auth::security::security_headers::{SecurityHeadersConfig, SecurityHeadersLayer};
+use topems_shared::create_cors_layer;
+use topems_shared_auth::security::{
+    AuditLoggerConfig, AuditLoggerMiddleware, BodyLimitConfig, BodyLimitMiddleware,
+    FieldEncryptionService, KeyManager, SecurityHeadersConfig, SecurityHeadersLayer,
+};
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
-use topems_shared_core::compression::CompressionConfig;
-use topems_shared_core::compression::CompressionMiddleware;
-use topems_shared_core::cors::create_cors_layer;
-use topems_shared_core::health::SimpleHealthConfig;
-use topems_shared_core::health::SystemMetrics;
-use topems_shared_observability::telemetry::middleware::TelemetryExt;
+use topems_shared_core::{
+    compression::{CompressionConfig, CompressionMiddleware},
+    health::{SimpleHealthConfig, SystemMetrics},
+};
+use topems_shared_observability::telemetry::TelemetryExt;
 use utoipa::{Modify, OpenApi};
 
 pub use shared::*;

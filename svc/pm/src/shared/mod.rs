@@ -3,7 +3,7 @@ pub mod permission;
 use axum::extract::FromRef;
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared_auth::auth::AuthState;
+use topems_shared::AuthState;
 use topems_shared_event::event::EventPublisher;
 
 // ── 迁移完成（WorkflowServiceClient → TypedServiceClient<WorkflowApi>）──

@@ -32,7 +32,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
   status: 'online',
   order: 2,
   description: '流程设计、实例管理、审批任务、监控统计',
-  permission: 'workflow:read',
+  permission: 'workflow:dashboard:read',
   routes: [
     {
       path: WORKFLOW_PATHS.dashboard,
@@ -42,10 +42,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
       ),
       module: 'workflow',
       code: 'workflow-dashboard',
-      title: '仪表盘',
+      title: '工作流概览',
       template: 'dashboard',
       group: 'overview',
-      requiredPermissions: ['workflow:read'],
+      requiredPermissions: ['workflow:dashboard:read'],
       action: 'read',
     },
     {
@@ -59,7 +59,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '流程定义',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['workflow:definition:read', 'workflow:read'],
+      requiredPermissions: ['workflow:definition:read', 'workflow:dashboard:read'],
       action: 'read',
     },
     {
@@ -73,7 +73,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '流程设计器',
       template: 'form',
       group: 'process',
-      requiredPermissions: ['workflow:definition:write', 'workflow:write'],
+      requiredPermissions: ['workflow:definition:write', 'workflow:dashboard:write'],
       action: 'write',
     },
     {
@@ -87,7 +87,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '版本历史',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['workflow:definition:read', 'workflow:read'],
+      requiredPermissions: ['workflow:definition:read', 'workflow:dashboard:read'],
       action: 'read',
     },
     {
@@ -101,7 +101,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '流程实例',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['workflow:instance:read', 'workflow:read'],
+      requiredPermissions: ['workflow:instance:read', 'workflow:dashboard:read'],
       action: 'read',
     },
     {
@@ -115,7 +115,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '实例详情',
       template: 'detail',
       group: 'process',
-      requiredPermissions: ['workflow:instance:read', 'workflow:read'],
+      requiredPermissions: ['workflow:instance:read', 'workflow:dashboard:read'],
       action: 'read',
     },
     {
@@ -129,7 +129,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '审批任务',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['workflow:approval:read', 'workflow:read'],
+      requiredPermissions: ['workflow:approval:read', 'workflow:dashboard:read'],
       action: 'read',
     },
     {
@@ -143,7 +143,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '审批详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['workflow:approval:read', 'workflow:read'],
+      requiredPermissions: ['workflow:approval:read', 'workflow:dashboard:read'],
       action: 'read',
     },
     {
@@ -157,7 +157,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '通知中心',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['workflow:notification:read', 'workflow:read'],
+      requiredPermissions: ['workflow:notification:read', 'workflow:dashboard:read'],
       action: 'read',
     },
     {
@@ -171,7 +171,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '流程监控',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['workflow:monitor:read', 'workflow:read'],
+      requiredPermissions: ['workflow:monitor:read', 'workflow:dashboard:read'],
       action: 'read',
     },
     {
@@ -185,7 +185,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '统计分析',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['workflow:statistics:read', 'workflow:read'],
+      requiredPermissions: ['workflow:statistics:read', 'workflow:dashboard:read'],
       action: 'read',
     },
     {
@@ -199,7 +199,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '流程模板',
       template: 'list',
       group: 'setting',
-      requiredPermissions: ['workflow:template:read', 'workflow:read'],
+      requiredPermissions: ['workflow:template:read', 'workflow:dashboard:read'],
       action: 'read',
     },
     {
@@ -213,7 +213,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '系统设置',
       template: 'settings',
       group: 'setting',
-      requiredPermissions: ['workflow:admin'],
+      requiredPermissions: ['workflow:dashboard:admin'],
       action: 'admin',
     },
   ],
@@ -225,7 +225,7 @@ export const workflowNavConfig: ModuleNavConfig = {
   name: '工作流',
   icon: 'Workflow',
   path: WORKFLOW_PATHS.root,
-  permission: 'workflow:read',
+  permission: 'workflow:dashboard:read',
   source: 'core',
   suite: 'collaboration',
   status: 'online',
@@ -234,10 +234,10 @@ export const workflowNavConfig: ModuleNavConfig = {
   navItems: [
     {
       code: 'workflow-dashboard',
-      label: '仪表盘',
+      label: '工作流概览',
       icon: 'LayoutDashboard',
       path: WORKFLOW_PATHS.dashboard,
-      permission: 'workflow:read',
+      permission: 'workflow:dashboard:read',
       order: 0,
       group: 'overview',
       showInTabs: true,
@@ -331,7 +331,7 @@ export const workflowNavConfig: ModuleNavConfig = {
       label: '系统设置',
       icon: 'Settings',
       path: WORKFLOW_PATHS.settings,
-      permission: 'workflow:admin',
+      permission: 'workflow:dashboard:admin',
       order: 2,
       group: 'setting',
       description: '工作流系统设置',

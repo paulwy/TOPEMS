@@ -200,6 +200,7 @@ const PmProjectCreatePage: React.FC = () => {
       <FormPageTemplate
         title=''
         subtitle=''
+        backHref={PM_PATHS.projects}
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: '项目管理', href: PM_PATHS.root },

@@ -316,6 +316,7 @@ const NotificationDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={notification?.title || '通知详情'}
         backHref={NOTIFICATION_PATHS.root}
         loading={loading}
         error={errorMessage}

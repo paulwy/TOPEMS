@@ -6,9 +6,8 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
-use topems_shared_core::response::api_error;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::PaginatedResponse;
+use topems_shared::ApiResponse;
+use topems_shared_core::response::{api_error, PaginatedResponse};
 
 use super::common::{call_finance_core_approval, PaginationParams};
 use super::ApiState;
@@ -207,7 +206,7 @@ pub async fn get_report_lines(
     Path(report_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ConsolidationReportLine>>> {
     match sqlx::query_as::<_, ConsolidationReportLine>(
-        "SELECT id, report_id, line_no, item_code, item_name, account_code, description, amount, currency, debit_credit, created_at FROM plugin_erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
+        "SELECT * FROM plugin_erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
     )
     .bind(report_id)
     .fetch_all(&state.db)
@@ -246,7 +245,7 @@ pub async fn export_report(
     };
 
     let lines = match sqlx::query_as::<_, ConsolidationReportLine>(
-        "SELECT id, report_id, line_no, item_code, item_name, account_code, description, amount, currency, debit_credit, created_at FROM plugin_erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
+        "SELECT * FROM plugin_erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
     )
     .bind(report_id)
     .fetch_all(&state.db)
@@ -280,7 +279,7 @@ pub async fn submit_report(
     let _ = username;
 
     let report_result = sqlx::query_as::<_, ConsolidationReport>(
-        "SELECT id, tenant_id, report_no, report_type, period_start, period_end, status, total_assets, total_liabilities, total_equity, revenue, expenses, net_income, created_by, created_at, updated_at FROM plugin_erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
+        "SELECT * FROM plugin_erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(report_id)
     .fetch_optional(&state.db)
@@ -350,7 +349,7 @@ pub async fn approve_report(
     let _ = username;
 
     let report_result = sqlx::query_as::<_, ConsolidationReport>(
-        "SELECT id, tenant_id, report_no, report_type, period_start, period_end, status, total_assets, total_liabilities, total_equity, revenue, expenses, net_income, created_by, created_at, updated_at FROM plugin_erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
+        "SELECT * FROM plugin_erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(report_id)
     .fetch_optional(&state.db)

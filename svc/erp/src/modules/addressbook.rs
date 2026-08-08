@@ -6,7 +6,7 @@ use axum::extract::Query;
 use axum::{extract::State, Json, Router};
 use serde::Deserialize;
 use serde::Serialize;
-use topems_shared_core::response::ApiResponse;
+use topems_shared::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_service_client::service_client::api::hrm_api::{
     HrmCompany, HrmDepartment, HrmEmployee,

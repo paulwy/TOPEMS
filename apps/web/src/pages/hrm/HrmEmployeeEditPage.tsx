@@ -298,6 +298,7 @@ const HrmEmployeeEditPage: React.FC = () => {
       <FormPageTemplate
         title=''
         subtitle=''
+        backHref={HRM_PATHS.employees}
         breadcrumbs={[
           { label: t('hrm.hrm_employee_edit_page.home'), href: '/dashboard' },
           { label: t('hrm.hrm_employee_edit_page.text_40fb54'), href: '/hrm' },

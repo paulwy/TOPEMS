@@ -579,6 +579,7 @@ const LimsSampleDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={sample?.name || sample?.sample_no || sample?.id || '样品详情'}
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'LIMS', href: LIMS_PATHS.root },

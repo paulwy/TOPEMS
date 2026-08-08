@@ -20,6 +20,7 @@ dotenv.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 sqlx.workspace = true
+topems-shared-event = { path = "../../lib/shared-event" }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 csv.workspace = true
@@ -30,7 +31,6 @@ futures-util.workspace = true
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 topems-shared-db = { workspace = true }
 topems-shared-service-client = { workspace = true }
-topems-shared-event = { workspace = true }
 topems-shared-auth = { workspace = true }
 topems-shared-core = { workspace = true }
 

@@ -279,6 +279,7 @@ const RsProjectCreatePage: React.FC = () => {
       <FormPageTemplate
         title=''
         subtitle=''
+        backHref={RD_PATHS.project}
         sections={sections}
         defaultValues={defaultValues}
         loading={loading}

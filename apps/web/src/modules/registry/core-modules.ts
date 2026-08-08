@@ -191,7 +191,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
     remoteEntry: getRemoteEntryUrl('topems_crm', 3003),
     icon: 'Handshake',
     isDefault: true,
-    permissions: ['crm:view'],
+    permissions: ['crm:dashboard:view'],
     routes: [
       {
         path: '/crm/dashboard',
@@ -269,7 +269,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
     remoteEntry: getRemoteEntryUrl('topems_finance', 3004),
     icon: 'Landmark',
     isDefault: true,
-    permissions: ['finance:view'],
+    permissions: ['finance:dashboard:view'],
     routes: [
       {
         path: '/finance/dashboard',
@@ -404,7 +404,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
     remoteEntry: getRemoteEntryUrl('topems_pm', 3005),
     icon: 'Briefcase',
     isDefault: true,
-    permissions: ['pm:view'],
+    permissions: ['pm:dashboard:view'],
     routes: [
       {
         path: '/pm/dashboard',

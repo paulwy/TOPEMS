@@ -208,6 +208,7 @@ const CustomerCreatePage: React.FC = () => {
       <FormPageTemplate
         title=''
         subtitle=''
+        backHref={CRM_PATHS.customers}
         breadcrumbs={[
           { label: t('crm.common.home'), href: '/dashboard' },
           { label: t('crm.customerList.title'), href: CRM_PATHS.root },

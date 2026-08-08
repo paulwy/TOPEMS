@@ -466,6 +466,7 @@ const SupplierDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={supplier?.name || supplier?.short_name || supplier?.id || '供应商详情'}
         loading={loading}
         backHref={SCM_PATHS.suppliers}
         onBack={() => navigate(SCM_PATHS.suppliers)}

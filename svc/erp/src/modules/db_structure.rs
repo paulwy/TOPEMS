@@ -15,9 +15,8 @@ fn escape_sql_identifier(identifier: &str) -> String {
 }
 use crate::models::{ColumnInfo, DbChange, TableInfo};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
-use topems_shared_core::response::api_error;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::PaginatedResponse;
+use topems_shared::ApiResponse;
+use topems_shared_core::response::{api_error, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct TableQueryParams {

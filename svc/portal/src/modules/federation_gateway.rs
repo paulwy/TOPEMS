@@ -18,7 +18,7 @@
 use axum::{extract::Path, extract::Query, Json};
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
-use topems_shared_core::response::ApiResponse;
+use topems_shared::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 // ==================== 数据库表定义 ====================

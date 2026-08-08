@@ -432,6 +432,8 @@ const RsProjectDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        backHref={RD_PATHS.project}
+        detailItemName={project?.name || project?.code || '项目详情'}
         infoCard={infoCard}
         tabs={tabContents}
         defaultTab='phases'

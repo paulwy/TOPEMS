@@ -19,7 +19,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
-use topems_shared_core::response::ApiResponse;
+use topems_shared::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 use crate::shared::AppState;

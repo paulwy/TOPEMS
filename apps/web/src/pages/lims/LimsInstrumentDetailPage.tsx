@@ -491,6 +491,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={instrument?.name || instrument?.code || '仪器详情'}
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'LIMS', href: LIMS_PATHS.root },

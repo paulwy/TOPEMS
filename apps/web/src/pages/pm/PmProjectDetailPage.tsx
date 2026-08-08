@@ -1188,6 +1188,7 @@ const PmProjectDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={project?.name || project?.code || '项目详情'}
         breadcrumbs={[
           { label: t('pm.project_detail.home'), href: '/dashboard' },
           { label: t('pm.project_detail.project_management'), href: PM_PATHS.projects },

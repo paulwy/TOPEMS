@@ -522,6 +522,7 @@ const PmContractDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={contract?.name || contract?.contractNo || '合同详情'}
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: '项目管理', href: PM_PATHS.projects },

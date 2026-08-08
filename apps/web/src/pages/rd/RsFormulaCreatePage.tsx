@@ -392,6 +392,7 @@ const RsFormulaCreatePage: React.FC = () => {
       <FormPageTemplate
         title=''
         subtitle=''
+        backHref={RD_PATHS.formula}
         sections={sections}
         defaultValues={defaultValues}
         loading={loading}

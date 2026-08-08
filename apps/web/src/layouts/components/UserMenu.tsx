@@ -17,7 +17,7 @@ import {
   DialogTitle,
   Button,
 } from '@mui/material';
-import { User, Settings, LogOut, Building2, AlertTriangle } from 'lucide-react';
+import { User, Settings, LogOut, Building2, AlertTriangle, HelpCircle } from 'lucide-react';
 import type { User as UserType } from '@topems/shared-types';
 
 export const extractInitials = (name: string | null | undefined): string => {
@@ -36,6 +36,7 @@ export interface UserMenuProps {
   tenantName?: string;
   onProfileClick?: () => void;
   onAccountSettingsClick?: () => void;
+  onHelpCenterClick?: () => void;
   onLogout?: () => void;
 }
 
@@ -44,6 +45,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
   tenantName,
   onProfileClick,
   onAccountSettingsClick,
+  onHelpCenterClick,
   onLogout,
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -78,6 +80,13 @@ export const UserMenu: React.FC<UserMenuProps> = ({
     handleMenuClose();
     if (onAccountSettingsClick) {
       onAccountSettingsClick();
+    }
+  };
+
+  const handleHelpCenterClick = () => {
+    handleMenuClose();
+    if (onHelpCenterClick) {
+      onHelpCenterClick();
     }
   };
 
@@ -248,6 +257,38 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             <Settings style={{ width: 18, height: 18 }} />
           </ListItemIcon>
           <ListItemText>账号设置</ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={handleHelpCenterClick}
+          sx={{
+            py: 1.25,
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 36 }}>
+            <HelpCircle style={{ width: 18, height: 18 }} />
+          </ListItemIcon>
+          <ListItemText
+            primary={
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant='body2'>帮助中心 & 快捷键</Typography>
+                <Typography
+                  variant='caption'
+                  sx={{
+                    color: 'text.disabled',
+                    fontFamily: 'monospace',
+                    bgcolor: 'action.hover',
+                    px: 0.75,
+                    py: 0.25,
+                    borderRadius: 0.5,
+                    ml: 2,
+                  }}
+                >
+                  ⌘?
+                </Typography>
+              </Box>
+            }
+          />
         </MenuItem>
 
         <Divider sx={{ my: 0.5 }} />

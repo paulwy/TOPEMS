@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared_auth::auth::AuthState;
+use topems_shared::AuthState;
 use topems_shared_core::health::SystemMetrics;
 
 #[derive(Clone)]

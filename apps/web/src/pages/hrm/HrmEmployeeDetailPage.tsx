@@ -326,6 +326,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={employee?.name || employee?.employee_no || employee?.id || '员工详情'}
         backHref={HRM_PATHS.employees}
         loading={loading}
         error={errorMessage}

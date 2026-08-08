@@ -637,6 +637,8 @@ const EhsHazardDetailPage: React.FC = () => {
     >
       <DetailPageTemplate
         title=''
+        detailItemName={hazard?.name || hazard?.id || '隐患详情'}
+        backHref={EHS_PATHS.hazard}
         loading={loading}
         error={errorMessage}
         onEdit={() => setShowEditModal(true)}

@@ -255,6 +255,7 @@ const FlowApprovalDetailPage: React.FC = () => {
       <DetailPageTemplate
         title='审批详情'
         subtitle={approval?.task_name}
+        detailItemName={approval?.task_name || approval?.id || '审批详情'}
         loading={loading}
         error={error}
         backHref={WORKFLOW_PATHS.approvals}

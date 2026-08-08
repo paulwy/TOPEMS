@@ -61,7 +61,7 @@ async fn main() -> Result<()> {
         tracing::warn!("⚠️ CRM 事件订阅者启动失败: {}", e);
     }
 
-    let encryption_service = topems_shared_auth::security::init_encryption_from_env();
+    let encryption_service = topems_shared::init_encryption_from_env();
     tracing::info!("🔐 字段加密服务初始化成功");
 
     // 初始化 ERP / WMS 服务客户端（失败不阻塞启动，相关联动功能会优雅降级）

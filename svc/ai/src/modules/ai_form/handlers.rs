@@ -3,10 +3,9 @@ use axum::Json;
 use std::sync::Arc;
 
 use crate::shared::AppState;
-use topems_shared_core::response::api_error;
-use topems_shared_core::response::api_success;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_ai::ai_client::UnifiedAIClient;
+use topems_shared::ApiResponse;
+use topems_shared_ai::ai_client::{create_client, AIModelConfig, AIProviderType, UnifiedAIClient};
+use topems_shared_core::response::{api_error, api_success};
 
 use super::models::{
     AiFormAssistRequest, AiFormConfigResponse, AiFormEnhanceForFormRequest, AiFormEnhanceRequest,

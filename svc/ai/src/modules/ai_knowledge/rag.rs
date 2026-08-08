@@ -8,7 +8,7 @@
 use std::sync::Arc;
 
 use sqlx::PgPool;
-use topems_shared_ai::ai_client::UnifiedAIClient;
+use topems_shared_ai::ai_client::{ChatMessage, UnifiedAIClient};
 use uuid::Uuid;
 
 use super::document_processor::{generate_embedding, vector_to_pgvector_string, ProcessorError};

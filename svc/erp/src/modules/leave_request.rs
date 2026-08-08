@@ -15,10 +15,9 @@ use crate::models::{
 };
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
-use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::api_error;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::PaginatedResponse;
+use topems_shared::auth::Claims;
+use topems_shared::ApiResponse;
+use topems_shared_core::response::{api_error, PaginatedResponse};
 
 // ============ 纯函数 ============
 

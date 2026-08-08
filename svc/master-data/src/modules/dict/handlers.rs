@@ -5,9 +5,8 @@ use axum::{
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_core::response::api_error;
-use topems_shared_core::response::api_success;
-use topems_shared_core::response::ApiResponse;
+use topems_shared::ApiResponse;
+use topems_shared_core::response::{api_error, api_success};
 
 use super::models::{
     BatchCreateDictItemsRequest, CreateDictItemRequest, CreateDictTypeRequest, DictItem,

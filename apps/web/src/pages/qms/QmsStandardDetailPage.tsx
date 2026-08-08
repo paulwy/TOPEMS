@@ -267,6 +267,7 @@ const QmsStandardDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
+        detailItemName={standard?.title || standard?.name || standard?.code || '质量标准详情'}
         backHref={QMS_PATHS.root}
         onBack={() => navigate(QMS_PATHS.root)}
         onEdit={() => setShowEditModal(true)}
