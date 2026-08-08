@@ -5,6 +5,7 @@ use sqlx::FromRow;
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ConsolidationScope {
     pub id: uuid::Uuid,
+    pub tenant_id: uuid::Uuid,
     pub organization_id: uuid::Uuid,
     pub code: String,
     pub name: String,
@@ -36,6 +37,7 @@ pub struct UpdateConsolidationScopeRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ConsolidationScopeCompany {
     pub id: uuid::Uuid,
+    pub tenant_id: uuid::Uuid,
     pub scope_id: uuid::Uuid,
     pub company_id: uuid::Uuid,
     pub company_code: Option<String>,
@@ -75,6 +77,7 @@ pub struct UpdateScopeCompanyRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct EliminationRule {
     pub id: uuid::Uuid,
+    pub tenant_id: uuid::Uuid,
     pub scope_id: uuid::Uuid,
     pub code: String,
     pub name: String,
@@ -124,6 +127,7 @@ pub struct UpdateEliminationRuleRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct InternalTransaction {
     pub id: uuid::Uuid,
+    pub tenant_id: uuid::Uuid,
     pub organization_id: uuid::Uuid,
     pub transaction_no: String,
     pub transaction_date: chrono::NaiveDate,
@@ -173,6 +177,7 @@ pub struct RuleEliminationResult {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ConsolidationReport {
     pub id: uuid::Uuid,
+    pub tenant_id: uuid::Uuid,
     pub organization_id: uuid::Uuid,
     pub report_no: String,
     pub report_type: String,
@@ -216,6 +221,7 @@ pub struct GenerateConsolidationReportRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ConsolidationReportLine {
     pub id: uuid::Uuid,
+    pub tenant_id: uuid::Uuid,
     pub report_id: uuid::Uuid,
     pub line_no: i32,
     pub item_code: Option<String>,
@@ -233,6 +239,7 @@ pub struct ConsolidationReportLine {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct CompanyRelation {
     pub id: uuid::Uuid,
+    pub tenant_id: uuid::Uuid,
     pub organization_id: uuid::Uuid,
     pub parent_company_id: uuid::Uuid,
     pub parent_company_name: Option<String>,
