@@ -6,7 +6,7 @@ use sqlx::Row;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::modules::login_log::handlers::record_login_event;
+use crate::modules::audit::record_login_event;
 use topems_shared::auth::Claims;
 use topems_shared::generate_refresh_token;
 
