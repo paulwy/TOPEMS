@@ -22,6 +22,8 @@ thiserror.workspace = true
 topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 topems-shared-event = { path = "../../lib/shared-event" }
+topems-shared-db = { path = "../../lib/shared-db" }
+
 topems-shared-service-client = { path = "../../lib/shared-service-client" }
 topems-shared-core = { path = "../../lib/shared-core" }
 topems-shared-auth = { path = "../../lib/shared-auth" }

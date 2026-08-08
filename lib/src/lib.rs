@@ -69,137 +69,37 @@ pub use topems_shared_db::database::{
     check_pool_health, create_database_pool, test_database_connection, HealthCheckResult,
     ReadWriteConfig, ReadWritePool,
 };
+// --- AI Form Assistant（门面 crate 内部模块，非子 crate re-export）---
+pub mod form_assistant;
 
 // =============================================================================
 // COMPAT — 高频使用的 re-export（服务迁移中，后续版本删除）
 // =============================================================================
 
-// --- Event 模块 ---
-pub use topems_shared_event::cache;
-pub use topems_shared_event::cluster;
-pub use topems_shared_event::config_center;
-pub use topems_shared_event::consul;
+// =============================================================================
+// COMPAT — 迁移兜底兼容层（V70-2 Step 1 保留仅 11 服务 × 12 符号，Step 2 整体清理）
+// =============================================================================
+// --- 模块级（crm/mes × event / crm × service_client / lib自引用 × observability+audit+rls+api_security）---
 pub use topems_shared_event::event;
-pub use topems_shared_event::messaging;
-pub use topems_shared_event::redis;
-pub use topems_shared_event::saga;
-pub use topems_shared_event::service_discovery;
-pub use topems_shared_event::test_helpers;
-
-// --- Service Client 模块 ---
-pub use topems_shared_service_client::notification;
-pub use topems_shared_service_client::notification::NotificationServiceClient;
 pub use topems_shared_service_client::service_client;
-
-// --- Observability 模块 ---
-pub use topems_shared_observability::monitoring;
 pub use topems_shared_observability::observability;
-pub use topems_shared_observability::performance;
-pub use topems_shared_observability::telemetry;
-
-// --- AI 模块 ---
-pub use topems_shared_ai::ai_client;
-pub use topems_shared_ai::embedding;
-pub use topems_shared_ai::file_client;
-pub use topems_shared_ai::ollama_client;
-pub use topems_shared_ai::ollama_client::{OllamaClient, OllamaConfig};
-pub use topems_shared_ai::vector_store;
-
-// --- shared-db 扩展模块 ---
 pub use topems_shared_db::audit_soft_delete;
-pub use topems_shared_db::backup;
-pub use topems_shared_db::data_governance;
-pub use topems_shared_db::migration;
-pub use topems_shared_db::query_optimizer;
-pub use topems_shared_db::repository;
 pub use topems_shared_db::rls;
-pub use topems_shared_db::rls::rls_middleware;
-pub use topems_shared_db::storage;
-
-// --- shared-core 扩展模块 ---
-pub use topems_shared_core::api;
 pub use topems_shared_core::api_security;
-pub use topems_shared_core::compression;
-pub use topems_shared_core::crud;
-pub use topems_shared_core::feature_flag;
-#[cfg(feature = "grpc")]
-pub use topems_shared_core::grpc;
-pub use topems_shared_core::hrm;
-pub use topems_shared_core::id;
-pub use topems_shared_core::layers;
-pub use topems_shared_core::metrics;
 
-// --- shared-auth 扩展模块 ---
-pub use topems_shared_auth::permission_center;
-pub use topems_shared_auth::rate_limit;
-
-// --- 高频 item-level re-export ---
-// config::enhanced 模块
-pub use topems_shared_core::config::enhanced::{
-    AIConfig, CacheConfig as EnhancedCacheConfig, DatabaseConfig, JwtConfig, RedisConfig,
-};
-// health 模块
-pub use topems_shared_core::health::{
-    build_health_response, check_http_health, simple_health_check, DependencyHealth,
-    HealthCheckResponse, HealthChecker, HealthState, HealthStatus, ServiceHealth, ServiceMetrics,
-    ServiceMonitor, SimpleHealthConfig, SystemMetrics,
-};
-// response 模块
-pub use topems_shared_core::response::{
-    api_error, api_success, PaginatedResponse, PaginationParams,
-};
-// hrm 模块
-pub use topems_shared_core::hrm::{AppState, PaginatedResult, PaginationQuery};
-// logging 模块
-pub use topems_shared_core::logging::{
-    create_log_filter, generate_request_id, generate_span_id, generate_trace_id,
-    get_current_request_id, get_current_trace_id, init_logging, inject_request_context,
-    request_context_middleware,
-};
-// config 模块
-pub use topems_shared_core::config::get_default_port;
-pub use topems_shared_core::config::CacheConfig;
-pub use topems_shared_core::config::Config;
-// security 模块 (完整 re-export)
+// --- 条目级（23条USE集合中仅 COMPAT 才有的符号，KEEP 区已覆盖的全部删除）---
+// rd: SimpleHealthConfig + SystemMetrics; mobile/4服务: build_health_response;
+pub use topems_shared_core::health::{build_health_response, SimpleHealthConfig, SystemMetrics};
+// hrm: api_error;
+pub use topems_shared_core::response::api_error;
+// rd: Config; CacheConfig 在 KEEP L29 config 模块级已覆盖, 但条目级仍保持对称保留;
+pub use topems_shared_core::config::{CacheConfig, Config};
+// hrm: DataMasking/EncryptionResult/FieldEncryptionService (security::* 一次性覆盖);
 pub use topems_shared_auth::security::*;
-// compression 模块
-pub use topems_shared_core::compression::{CompressionConfig, CompressionMiddleware};
-// service_discovery 模块
-pub use topems_shared_event::service_discovery::{
-    LocalServiceRegistry, PortalServiceAggregator, ServiceRegistryStatus,
-};
-// service_client 模块
-pub use topems_shared_service_client::service_client::{
-    create_generic_client, create_hrm_client, create_iam_client, create_mes_client,
-    create_notification_client, create_workflow_client, BaseServiceClient, Company, Department,
-    Employee, ErpServiceClient, FinanceServiceClient, GenericServiceClient, HrmServiceClient,
-    IamServiceClient, MesServiceClient, MonitorServiceClient, NotificationSvcClient,
-    ServiceClientError, ServiceClientResult, TaskStats, TypedServiceClient, User,
-    WorkflowServiceClient, WorkflowTask,
-};
-// redis 模块
-pub use topems_shared_event::redis::{
-    BloomFilter, CacheKeyGenerator as RedisCacheKeyGenerator, CacheProtectionConfig, CacheService,
-    CacheStatisticsCollector, RedisCacheService, RedisPool, UnifiedCacheManager,
-};
-// cache 模块 (event 版本，实现 CacheService)
-pub use topems_shared_event::cache::InMemoryCache;
-// observability 模块
-pub use topems_shared_observability::monitoring::ServiceStatus;
-pub use topems_shared_observability::telemetry::{telemetry_middleware, TelemetryExt};
-// middleware 模块
-pub use topems_shared_auth::middleware::{
-    department_middleware, require_permission, require_role, require_tenant_status,
-    tenant_middleware,
-};
-// permission_center 模块
-pub use topems_shared_auth::permission_center::PermissionCenterClient;
-// data_governance 模块
-pub use topems_shared_db::data_governance::DataClassification;
-// feature_flag 模块
-pub use topems_shared_core::feature_flag::FeatureFlagService;
-// layers 模块
-pub use topems_shared_core::layers::Layer;
+// hrm: CacheService (redis::* 中仅此条目级被 USE 引用);
+pub use topems_shared_event::redis::CacheService;
+// gis/integration: telemetry_middleware;
+pub use topems_shared_observability::telemetry::telemetry_middleware;
 
 // =============================================================================
 // 扩展 trait

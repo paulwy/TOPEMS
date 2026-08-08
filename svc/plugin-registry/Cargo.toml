@@ -19,6 +19,8 @@ tower-http.workspace = true
 thiserror.workspace = true
 sqlx.workspace = true
 topems-shared = { path = "../../lib" }
+topems-shared-auth = { path = "../../lib/shared-auth" }
+
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 topems-shared-core = { path = "../../lib/shared-core" }
 utoipa.workspace = true
