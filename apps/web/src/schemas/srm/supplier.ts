@@ -24,6 +24,7 @@ export const supplierSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'name',
@@ -32,6 +33,7 @@ export const supplierSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'legal_name',
@@ -39,6 +41,7 @@ export const supplierSchema: EntitySchema = {
       type: 'text',
       listWidth: 160,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'category',
@@ -80,6 +83,7 @@ export const supplierSchema: EntitySchema = {
       type: 'text',
       listWidth: 140,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'address',
@@ -87,18 +91,21 @@ export const supplierSchema: EntitySchema = {
       type: 'textarea',
       listWidth: 200,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'contact_person',
       label: '联系人',
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'phone',
       label: '电话',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'email',
@@ -106,6 +113,7 @@ export const supplierSchema: EntitySchema = {
       type: 'text',
       listWidth: 160,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'website',
@@ -113,6 +121,7 @@ export const supplierSchema: EntitySchema = {
       type: 'text',
       listWidth: 160,
       showInList: false,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'credit_rating',

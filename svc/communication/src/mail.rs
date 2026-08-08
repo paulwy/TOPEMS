@@ -376,10 +376,12 @@ pub async fn delete_email(
         }
     }
 
-    match sqlx::query("UPDATE core_emails SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1")
-        .bind(email_id)
-        .execute(&pool)
-        .await
+    match sqlx::query(
+        "UPDATE core_emails SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(email_id)
+    .execute(&pool)
+    .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
             "success": true,
@@ -517,7 +519,7 @@ pub async fn list_templates(
         r#"
         SELECT id, name, subject_template, body_template, description, created_at, updated_at
         FROM core_email_templates
-        WHERE is_deleted = FALSE
+        WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         "#,
     )
@@ -672,7 +674,7 @@ pub async fn get_template(
         r#"
         SELECT id, name, subject_template, body_template, description, created_at, updated_at
         FROM core_email_templates
-        WHERE id = $1 AND is_deleted = FALSE
+        WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(template_id)
@@ -754,7 +756,7 @@ pub async fn update_template(
             body_template = COALESCE($3, body_template),
             description = COALESCE($4, description),
             updated_at = NOW()
-        WHERE id = $5 AND is_deleted = FALSE
+        WHERE id = $5 AND deleted_at IS NULL
         RETURNING id, name, subject_template, body_template, description, created_at, updated_at
         "#,
     )
@@ -833,7 +835,7 @@ pub async fn delete_template(
     };
 
     match sqlx::query(
-        "UPDATE core_email_templates SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1 AND is_deleted = FALSE",
+        "UPDATE core_email_templates SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(template_id)
     .execute(&pool)
@@ -902,7 +904,7 @@ pub async fn send_with_template(
         r#"
         SELECT subject_template, body_template
         FROM core_email_templates
-        WHERE id = $1 AND is_deleted = FALSE
+        WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(template_id)

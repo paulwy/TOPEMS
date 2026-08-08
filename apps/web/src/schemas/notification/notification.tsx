@@ -131,6 +131,7 @@ export const notificationSchema: EntitySchema = {
           </Box>
         );
       },
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'notification_type',

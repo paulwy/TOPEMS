@@ -44,6 +44,7 @@ export const customerSchema: EntitySchema = {
       label: i18n.t('schema:erp.customer.short_name.label'),
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'category',
@@ -114,12 +115,14 @@ export const customerSchema: EntitySchema = {
       label: i18n.t('schema:erp.customer.contact_person.label'),
       type: 'text',
       listWidth: 100,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'contact_phone',
       label: i18n.t('schema:erp.customer.contact_phone.label'),
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'contact_email',
@@ -132,6 +135,7 @@ export const customerSchema: EntitySchema = {
       label: i18n.t('schema:erp.customer.address.label'),
       type: 'textarea',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'country',
@@ -145,12 +149,14 @@ export const customerSchema: EntitySchema = {
       label: i18n.t('schema:erp.customer.province.label'),
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'city',
       label: i18n.t('schema:erp.customer.city.label'),
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'zip_code',

@@ -19,6 +19,7 @@ export const supplierSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
+      validation: [{ type: 'maxLength', value: 50 }],
     },
     {
       name: 'name',
@@ -27,6 +28,7 @@ export const supplierSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      validation: [{ type: 'maxLength', value: 200 }],
     },
     {
       name: 'category',
@@ -88,18 +90,21 @@ export const supplierSchema: EntitySchema = {
       label: '联系电话',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'email',
       label: '邮箱',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'address',
       label: '地址',
       type: 'textarea',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'rating',

@@ -68,6 +68,7 @@ export const customerSchema: EntitySchema = {
       label: '联系人',
       type: 'text',
       listWidth: 120,
+      validation: [{ type: 'maxLength', value: 100 }],
     },
     {
       name: 'phone',
@@ -88,6 +89,7 @@ export const customerSchema: EntitySchema = {
       label: '地址',
       type: 'text',
       showInList: false,
+      validation: [{ type: 'maxLength', value: 500 }],
     },
     {
       name: 'status',
