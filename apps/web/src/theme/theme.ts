@@ -5,13 +5,50 @@ import { designTokens, semanticTokens } from './tokens';
 import { gradients } from './gradients';
 import { injectCyberpunkComponentStyles } from './animations/cyberpunk.css';
 
-// 扩展 Theme 接口以包含 gradients
 declare module '@mui/material/styles' {
   interface Theme {
     gradients: typeof gradients;
+    customShadows: {
+      card: string;
+      dropdown: string;
+      dialog: string;
+      focus: string;
+      dangerButton: string;
+      dangerButtonHover: string;
+    };
   }
   interface ThemeOptions {
     gradients?: typeof gradients;
+    customShadows?: {
+      card?: string;
+      dropdown?: string;
+      dialog?: string;
+      focus?: string;
+      dangerButton?: string;
+      dangerButtonHover?: string;
+    };
+  }
+  interface Shape {
+    radii: {
+      readonly xs: 2;
+      readonly sm: 4;
+      readonly md: 8;
+      readonly lg: 12;
+      readonly xl: 16;
+      readonly '2xl': 24;
+      readonly full: 9999;
+    };
+  }
+  interface ShapeOptions {
+    radii?: {
+      readonly xs?: 2;
+      readonly sm?: 4;
+      readonly md?: 8;
+      readonly lg?: 12;
+      readonly xl?: 16;
+      readonly '2xl'?: 24;
+      readonly full?: 9999;
+    };
   }
 }
 
@@ -138,10 +175,27 @@ export const createCustomTheme = (): Theme => {
     },
     shape: {
       borderRadius: designTokens.borderRadius.md,
+      radii: {
+        xs: 2,
+        sm: 4,
+        md: 8,
+        lg: 12,
+        xl: 16,
+        '2xl': 24,
+        full: 9999,
+      } as const,
     },
     spacing: (factor: number) => `${factor * 8}px`,
     zIndex: designTokens.zIndex,
     shadows: lightShadows as ThemeOptions['shadows'],
+    customShadows: {
+      card: '0 1px 2px 0 rgba(0,0,0,0.04), 0 1px 3px 0 rgba(0,0,0,0.03)',
+      dropdown: '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)',
+      dialog: '0 24px 48px rgba(0,0,0,0.16), 0 8px 16px rgba(0,0,0,0.08)',
+      focus: '0 0 0 3px rgba(59, 130, 246, 0.15)',
+      dangerButton: '0 4px 12px rgba(239, 68, 68, 0.30)',
+      dangerButtonHover: '0 6px 16px rgba(239, 68, 68, 0.40)',
+    },
     transitions: {
       duration: designTokens.transitions.duration,
       easing: designTokens.transitions.easing,

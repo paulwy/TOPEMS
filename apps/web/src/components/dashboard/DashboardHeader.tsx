@@ -1,6 +1,16 @@
 import React from 'react';
-import { Box, Typography, IconButton } from '@mui/material';
-import { Clock, LogOut, Zap } from 'lucide-react';
+import {
+  Box,
+  Typography,
+  IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
+} from '@mui/material';
+import { Clock, LogOut, Zap, AlertTriangle } from 'lucide-react';
 import { NotificationBell } from '../notifications';
 import { ModeToggle } from '../theme/ModeToggle';
 import { useAuth } from '../../hooks/useAuth';
@@ -14,6 +24,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
   const { user } = useAuth();
   const { getRoleName } = useRole();
   const [currentTime, setCurrentTime] = React.useState(new Date());
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = React.useState(false);
 
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -22,13 +33,27 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
     return () => clearInterval(timer);
   }, []);
 
+  const handleLogoutRequest = () => {
+    setLogoutConfirmOpen(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setLogoutConfirmOpen(false);
+    onLogout?.();
+  };
+
+  const handleLogoutCancel = () => {
+    setLogoutConfirmOpen(false);
+  };
+
   return (
     <Box
       component='header'
       sx={{
-        backgroundColor: 'common.white',
+        bgcolor: 'background.paper',
         backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        borderBottom: 1,
+        borderColor: 'divider',
         position: 'sticky',
         top: 0,
         zIndex: 50,
@@ -91,20 +116,22 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2, md: 3 } }}>
             <Box
               sx={{
                 display: { xs: 'none', md: 'flex' },
                 alignItems: 'center',
-                gap: 2,
-                fontSize: '0.875rem',
-                color: 'grey.400',
+                gap: 1,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: 1,
+                bgcolor: 'action.hover',
               }}
             >
-              <Clock style={{ width: 16, height: 16 }} />
+              <Clock style={{ width: 16, height: 16 }} color='currentColor' />
               <Typography
                 component='span'
-                sx={{ fontSize: '0.875rem', color: 'grey.400' }}
+                sx={{ fontSize: '0.875rem', color: 'text.secondary', fontWeight: 500 }}
               >
                 {currentTime.toLocaleTimeString('zh-CN', {
                   hour: '2-digit',
@@ -120,9 +147,11 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 3,
-                pl: 4,
-                borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+                gap: { xs: 0.5, sm: 1.5, md: 2 },
+                pl: { xs: 0, md: 2.5 },
+                ml: { xs: 0, md: 0.5 },
+                borderLeft: { xs: 0, md: 1 },
+                borderColor: 'divider',
               }}
             >
               <Box
@@ -137,31 +166,48 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                   color: 'common.white',
                   fontSize: '0.875rem',
                   fontWeight: 600,
-                  boxShadow: 3,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                 }}
               >
                 {user?.username?.charAt(0).toUpperCase() || 'U'}
               </Box>
-              <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'common.white' }}>
+              <Box sx={{ display: { xs: 'none', sm: 'none', md: 'block' }, minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: 'text.primary',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
                   {user?.full_name || user?.username}
                 </Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: 'grey.400' }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.75rem',
+                    color: 'text.secondary',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
                   {getRoleName()}
                 </Typography>
               </Box>
             </Box>
 
             <IconButton
-              onClick={onLogout}
+              onClick={handleLogoutRequest}
               sx={{
-                p: 2.5,
-                borderRadius: 3,
-                color: 'grey.400',
-                transition: 'all',
+                p: 2,
+                borderRadius: 2,
+                color: 'text.secondary',
+                transition: 'all 0.2s',
                 '&:hover': {
-                  backgroundColor: 'common.white',
-                  color: 'error.light',
+                  bgcolor: 'error.50',
+                  color: 'error.main',
                 },
               }}
               aria-label='退出登录'
@@ -172,6 +218,90 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
           </Box>
         </Box>
       </Box>
+
+      {/* 退出登录确认对话框 */}
+      <Dialog
+        open={logoutConfirmOpen}
+        onClose={handleLogoutCancel}
+        aria-labelledby='dashboard-logout-dialog-title'
+        aria-describedby='dashboard-logout-dialog-description'
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: 3,
+            minWidth: 360,
+            bgcolor: 'background.paper',
+          },
+        }}
+      >
+        <DialogTitle
+          id='dashboard-logout-dialog-title'
+          sx={{
+            pb: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+          }}
+        >
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              bgcolor: 'warning.50',
+              color: 'warning.main',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <AlertTriangle style={{ width: 22, height: 22 }} />
+          </Box>
+          <Typography variant='h6' sx={{ fontWeight: 600 }}>
+            确认退出登录？
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText
+            id='dashboard-logout-dialog-description'
+            sx={{ color: 'text.secondary', pl: 9 }}
+          >
+            退出后需要重新登录才能继续使用系统。您确定要退出吗？
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: 'flex-end', gap: 1 }}>
+          <Button
+            onClick={handleLogoutCancel}
+            variant='outlined'
+            color='inherit'
+            sx={{
+              textTransform: 'none',
+              borderRadius: 1.5,
+              px: 2.5,
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            onClick={handleLogoutConfirm}
+            variant='contained'
+            color='error'
+            autoFocus
+            startIcon={<LogOut style={{ width: 18, height: 18 }} />}
+            sx={{
+              textTransform: 'none',
+              borderRadius: 1.5,
+              px: 3,
+              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+              '&:hover': {
+                boxShadow: '0 6px 16px rgba(239, 68, 68, 0.4)',
+              },
+            }}
+          >
+            确认退出
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -16,6 +16,9 @@ import {
   ListItemIcon,
   ListItemText,
   Checkbox,
+  Button,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   User,
@@ -26,6 +29,8 @@ import {
   GitBranch,
   FileText,
   Folder,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { docApi } from '@/api/doc';
 import { workflowApi } from '@/api/workflow';
@@ -57,8 +62,10 @@ import {
   ModuleNavigationSection,
   ServiceMonitorSection,
   RecentActivitySection,
+  MODULE_SECTIONS,
+  ModuleSection,
 } from '@/components/dashboard';
-import { PageContainer } from '@/components/common';
+import { PageContainer, EmptyState } from '@/components/common';
 import { navigationRegistryV2 } from '@/lib/navigation/NavigationRegistryV2';
 import { convertModuleCardsToModuleItems } from '@/lib/navigation/dashboardAdapter';
 
@@ -92,6 +99,8 @@ interface AuditLog {
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
   const { user, logout: authLogout, isAuthenticated, hasPermission } = useAuth();
   const { serviceStatuses, refresh: refreshServiceStatuses } = useServiceStatus();
   const { isPluginInstalled } = useInstalledPlugins();
@@ -482,33 +491,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     return navigationRegistryV2.getModuleCards(checkPermission);
   }, [checkPermission, navConfigUpdated]);
 
-  const coreModules = useMemo((): ModuleItem[] => {
-    const coreCards = allModuleCards.filter((m) => m.source === 'core');
-    return convertModuleCardsToModuleItems(coreCards).filter((module) => shouldShowModule(module));
-  }, [allModuleCards, shouldShowModule]);
-
-  const systemServicesModules = useMemo((): ModuleItem[] => {
-    const systemModules = ['iam', 'integration', 'report'];
-    const systemCards = allModuleCards.filter(
-      (m) =>
-        systemModules.includes(m.code) ||
-        m.permission?.includes('admin') ||
-        m.permission?.includes('system')
-    );
-    return convertModuleCardsToModuleItems(systemCards).filter((module) =>
+  const allModuleItems = useMemo((): ModuleItem[] => {
+    return convertModuleCardsToModuleItems(allModuleCards).filter((module) =>
       shouldShowModule(module)
     );
   }, [allModuleCards, shouldShowModule]);
 
-  const businessModules = useMemo((): ModuleItem[] => {
-    const systemModules = ['iam', 'integration', 'report'];
-    const businessCards = allModuleCards.filter(
-      (m) => m.source === 'plugin' && !systemModules.includes(m.code)
-    );
-    return convertModuleCardsToModuleItems(businessCards).filter((module) =>
-      shouldShowModule(module)
-    );
-  }, [allModuleCards, shouldShowModule]);
+  const cardsBySection = useMemo(() => {
+    const byKey = new Map<string, ModuleItem>();
+    allModuleItems.forEach((c) => {
+      const key = c.module || c.title.toLowerCase().replace(/\s+/g, '');
+      byKey.set(key, c);
+    });
+    return MODULE_SECTIONS.map((section) => ({
+      ...section,
+      cards: section.moduleKeys
+        .map((k) => byKey.get(k))
+        .filter((c): c is ModuleItem => !!c),
+    }));
+  }, [allModuleItems]);
 
   // V34.0: BFF Mutation — 完成待办（必须在所有 early return 之前调用 hooks）
   const handleTodoToggle = useCallback(
@@ -566,131 +567,129 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     }
   };
 
+
+
   return (
     <PageContainer
       autoTitle={false}
       autoBreadcrumbs={false}
+      sx={{ bgcolor: 'background.default' }}
     >
-      <Box>
-        <Box
-          component='div'
-          sx={{
-            width: '100%',
-          }}
-        >
-          {/* 欢迎标题 */}
-          <Box sx={{ mb: 4 }}>
-            <Typography
-              sx={{
-                fontSize: '1.875rem',
-                fontWeight: 700,
-                color: 'text.primary',
-                mb: 1,
-              }}
-            >
-              👋 欢迎回来，{user?.full_name || user?.username || '用户'}！
-            </Typography>
-            <Typography sx={{ color: 'grey.600' }}>
-              {getGreeting()}，今天有 {pendingTodos.length} 个待处理事项
-            </Typography>
-          </Box>
-
-          {/* 今日概览分区 */}
-          <DashboardSection
-            title='今日概览'
-            sx={{ mb: 4 }}
+      <Box sx={{ width: '100%' }}>
+        {/* 欢迎标题 */}
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            sx={{
+              fontSize: { xs: '1.5rem', md: '1.875rem' },
+              fontWeight: 700,
+              color: 'text.primary',
+              mb: 1,
+            }}
           >
-            <Box
+            👋 欢迎回来，{user?.full_name || user?.username || '用户'}！
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem', md: '1rem' } }}>
+            {getGreeting()}，今天有 {pendingTodos.length} 个待处理事项
+          </Typography>
+        </Box>
+
+        {/* 今日概览分区 */}
+        <DashboardSection
+          title='今日概览'
+          sx={{ mb: 3 }}
+        >
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+              gap: { xs: 2, md: 3 },
+            }}
+          >
+            <MetricCard
+              title='在线服务'
+              value={String(onlineServices)}
+              icon={<Activity size={24} />}
+              color='green'
+              change={onlineServices > 5 ? 10 : -5}
+            />
+            <MetricCard
+              title='文件数量'
+              value={String(stats.fileCount)}
+              icon={<FileText size={24} />}
+              color='purple'
+              change={8}
+            />
+            <MetricCard
+              title='工作流'
+              value={String(stats.workflowCount)}
+              icon={<GitBranch size={24} />}
+              color='orange'
+              change={-3}
+            />
+            <MetricCard
+              title='待处理'
+              value={String(pendingTodos.length)}
+              icon={<Clock size={24} />}
+              color='blue'
+            />
+          </Box>
+        </DashboardSection>
+
+        {/* 快捷入口分区 */}
+        <QuickAccessSection defaultExpanded={true}>
+          <DashboardQuickActions
+            quickActions={defaultQuickActions}
+            serviceStatuses={serviceStatuses}
+            onQuickAccess={handleQuickAccess}
+          />
+        </QuickAccessSection>
+
+        {/* 待办事项分区 */}
+        <TodoListSection>
+          <Box sx={{ mb: 2 }}>
+            <Tabs
+              value={todoTab}
+              onChange={(_, v) => setTodoTab(v)}
               sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
-                gap: 3,
+                minHeight: 36,
+                '& .MuiTabs-indicator': {
+                  bgcolor: 'primary.main',
+                },
               }}
             >
-              <MetricCard
-                title='在线服务'
-                value={String(onlineServices)}
-                icon={<Activity size={24} />}
-                color='green'
-                change={onlineServices > 5 ? 10 : -5}
+              <Tab
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ListTodo size={16} />
+                    <Typography sx={{ fontSize: '0.875rem' }}>待处理</Typography>
+                    <Badge
+                      badgeContent={pendingTodos.length}
+                      color='primary'
+                      sx={{ ml: 1 }}
+                    />
+                  </Box>
+                }
+                sx={{ minHeight: 36, py: 1 }}
               />
-              <MetricCard
-                title='文件数量'
-                value={String(stats.fileCount)}
-                icon={<FileText size={24} />}
-                color='purple'
-                change={8}
+              <Tab
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CheckCircle size={16} />
+                    <Typography sx={{ fontSize: '0.875rem' }}>已完成</Typography>
+                    <Badge
+                      badgeContent={completedTodos.length}
+                      color='success'
+                      sx={{ ml: 1 }}
+                    />
+                  </Box>
+                }
+                sx={{ minHeight: 36, py: 1 }}
               />
-              <MetricCard
-                title='工作流'
-                value={String(stats.workflowCount)}
-                icon={<GitBranch size={24} />}
-                color='orange'
-                change={-3}
-              />
-              <MetricCard
-                title='待处理'
-                value={String(pendingTodos.length)}
-                icon={<Clock size={24} />}
-                color='blue'
-              />
-            </Box>
-          </DashboardSection>
-
-          {/* 快捷入口分区 */}
-          <QuickAccessSection defaultExpanded={true}>
-            <DashboardQuickActions
-              quickActions={defaultQuickActions}
-              serviceStatuses={serviceStatuses}
-              onQuickAccess={handleQuickAccess}
-            />
-          </QuickAccessSection>
-
-          {/* 待办事项分区 */}
-          <TodoListSection>
-            <Box sx={{ mb: 2 }}>
-              <Tabs
-                value={todoTab}
-                onChange={(_, v) => setTodoTab(v)}
-                sx={{
-                  minHeight: 36,
-                  '& .MuiTabs-indicator': {
-                    bgcolor: 'primary.main',
-                  },
-                }}
-              >
-                <Tab
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <ListTodo size={16} />
-                      <Typography sx={{ fontSize: '0.875rem' }}>待处理</Typography>
-                      <Badge
-                        badgeContent={pendingTodos.length}
-                        color='primary'
-                        sx={{ ml: 1 }}
-                      />
-                    </Box>
-                  }
-                  sx={{ minHeight: 36, py: 1 }}
-                />
-                <Tab
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <CheckCircle size={16} />
-                      <Typography sx={{ fontSize: '0.875rem' }}>已完成</Typography>
-                      <Badge
-                        badgeContent={completedTodos.length}
-                        color='success'
-                        sx={{ ml: 1 }}
-                      />
-                    </Box>
-                  }
-                  sx={{ minHeight: 36, py: 1 }}
-                />
-              </Tabs>
-            </Box>
-            <List sx={{ py: 0 }}>
-              {(todoTab === 0 ? pendingTodos : completedTodos).map((todo) => (
+            </Tabs>
+          </Box>
+          <List sx={{ py: 0 }}>
+            {(todoTab === 0 ? pendingTodos : completedTodos).length > 0 ? (
+              (todoTab === 0 ? pendingTodos : completedTodos).map((todo) => (
                 <ListItem
                   key={todo.id}
                   sx={{
@@ -745,113 +744,67 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                     />
                   </ListItemButton>
                 </ListItem>
-              ))}
-            </List>
-          </TodoListSection>
+              ))
+            ) : (
+              <EmptyState
+                height={180}
+                title={todoTab === 0 ? '暂无待处理事项' : '暂无已完成事项'}
+                description={
+                  todoTab === 0 ? '所有任务已完成，继续保持！' : '还没有完成任何事项'
+                }
+                sx={{ border: 'none', bgcolor: 'transparent' }}
+              />
+            )}
+          </List>
+        </TodoListSection>
 
-          {/* 模块导航分区 - 核心功能 */}
-          <ModuleNavigationSection title='🚀 核心功能'>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  md: 'repeat(2, 1fr)',
-                  lg: 'repeat(3, 1fr)',
-                },
-                gap: 3,
-              }}
-            >
-              {coreModules.map((item) => (
-                <ModuleCard
-                  key={item.title}
-                  item={item}
-                  onClick={() => navigate(item.path)}
-                  size='large'
-                />
-              ))}
-            </Box>
-          </ModuleNavigationSection>
-
-          {/* 模块导航分区 - 业务模块 */}
-          <ModuleNavigationSection title='📊 业务模块'>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  md: 'repeat(2, 1fr)',
-                  lg: 'repeat(4, 1fr)',
-                },
-                gap: 3,
-              }}
-            >
-              {businessModules.map((item) => (
-                <ModuleCard
-                  key={item.title}
-                  item={item}
-                  onClick={() => navigate(item.path)}
-                  size='small'
-                />
-              ))}
-            </Box>
-          </ModuleNavigationSection>
-
-          {/* 模块导航分区 - 系统服务 */}
-          {systemServicesModules.length > 0 && (
-            <ModuleNavigationSection title='⚙️ 系统服务'>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    md: 'repeat(2, 1fr)',
-                    lg: 'repeat(4, 1fr)',
-                  },
-                  gap: 3,
-                }}
-              >
-                {systemServicesModules.map((item) => (
-                  <ModuleCard
-                    key={item.title}
-                    item={item}
-                    onClick={() => navigate(item.path)}
-                    size='medium'
-                  />
-                ))}
-              </Box>
-            </ModuleNavigationSection>
-          )}
-
-          {/* 服务状态监测分区 */}
-          <ServiceMonitorSection
-            collapsible={true}
-            defaultExpanded={false}
-          >
-            <ServiceStatusMonitor
-              serviceStatuses={serviceStatuses}
-              onRefresh={refreshServiceStatuses}
+        {/* 模块导航 4 分区 */}
+        {cardsBySection.every((s) => s.cards.length === 0) ? (
+          <EmptyState
+            height={320}
+            title='暂无可用模块'
+            description='当前没有可访问的功能模块，请联系管理员开通权限'
+          />
+        ) : (
+          cardsBySection.map((section) => (
+            <ModuleSection
+              key={section.key}
+              title={section.title}
+              cards={section.cards}
+              collapsedLimit={section.collapsedLimit}
+              onCardClick={(card) => navigate(card.path)}
             />
-          </ServiceMonitorSection>
+          ))
+        )}
 
-          {/* 最近活动分区 */}
-          <RecentActivitySection
-            headerRight={
-              <Typography
-                sx={{
-                  fontSize: '0.875rem',
-                  color: 'primary.main',
-                  cursor: 'pointer',
-                  '&:hover': { color: 'primary.dark' },
-                }}
-              >
-                查看全部
-              </Typography>
-            }
-          >
-            <RecentActivities activities={recentActivities} />
-          </RecentActivitySection>
-        </Box>
+        {/* 服务状态监测分区 */}
+        <ServiceMonitorSection
+          collapsible={true}
+          defaultExpanded={false}
+        >
+          <ServiceStatusMonitor
+            serviceStatuses={serviceStatuses}
+            onRefresh={refreshServiceStatuses}
+          />
+        </ServiceMonitorSection>
+
+        {/* 最近活动分区 */}
+        <RecentActivitySection
+          headerRight={
+            <Typography
+              sx={{
+                fontSize: '0.875rem',
+                color: 'primary.main',
+                cursor: 'pointer',
+                '&:hover': { color: 'primary.dark' },
+              }}
+            >
+              查看全部
+            </Typography>
+          }
+        >
+          <RecentActivities activities={recentActivities} />
+        </RecentActivitySection>
       </Box>
     </PageContainer>
   );

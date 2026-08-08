@@ -78,7 +78,7 @@ export const biModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['bi:data-source:read', 'bi:read'],
       action: 'read',
       template: 'list',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: BI_PATHS.dataset,
@@ -89,7 +89,7 @@ export const biModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['bi:dataset:read', 'bi:read'],
       action: 'read',
       template: 'list',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: BI_PATHS.report,
@@ -133,7 +133,7 @@ export const biModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['bi:admin'],
       action: 'admin',
       template: 'settings',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: BI_PATHS.index,
@@ -144,7 +144,7 @@ export const biModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['bi:index:read', 'bi:read'],
       action: 'read',
       template: 'list',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: BI_PATHS.moduleDetail,
@@ -234,7 +234,7 @@ export const biNavConfig: ModuleNavConfig = {
       path: BI_PATHS.dataSource,
       permission: 'bi:data-source:read',
       order: 1,
-      group: 'settings',
+      group: 'setting',
       description: '数据源管理',
     },
     {
@@ -244,7 +244,7 @@ export const biNavConfig: ModuleNavConfig = {
       path: BI_PATHS.dataset,
       permission: 'bi:dataset:read',
       order: 2,
-      group: 'settings',
+      group: 'setting',
       description: '数据集管理',
     },
     {
@@ -285,7 +285,7 @@ export const biNavConfig: ModuleNavConfig = {
       path: BI_PATHS.permission,
       permission: 'bi:admin',
       order: 3,
-      group: 'settings',
+      group: 'setting',
       description: 'BI权限配置',
     },
     {
@@ -295,7 +295,7 @@ export const biNavConfig: ModuleNavConfig = {
       path: BI_PATHS.index,
       permission: 'bi:index:read',
       order: 4,
-      group: 'settings',
+      group: 'setting',
       description: '指标体系管理',
     },
     {

@@ -19,28 +19,21 @@ import {
   Home,
   Grid3X3,
   BarChart3,
-  ShoppingCart,
   Bell,
-  User,
-  Sparkles,
-  LogOut,
   ChevronRight,
   CheckCheck,
   Trash2,
   Settings,
-  Star,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
-import { PLUGIN_PATHS } from '@/modules/plugin/config';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { AUTH_PATHS } from '@/routes/auth';
-import { AI_PATHS } from '@/modules/ai/config';
 import GlobalSearchBar from '../GlobalSearchBar';
-import { ThemeSelector } from '../ThemeSelector';
+import { GlobalActions, UserMenu } from '@/layouts/components';
 
 export interface AppHeaderProps {
   tabletDrawerOpen?: boolean;
@@ -75,24 +68,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
 
   // 响应式断点：优化计划要求 < 768px 隐藏 Sidebar，使用汉堡菜单
   const isMobileNav = useMediaQuery('(max-width:767px)'); // < 768px 显示汉堡菜单按钮
 
-  const [userMenuAnchorEl, setUserMenuAnchorEl] = useState<HTMLElement | null>(null);
-  const userMenuOpen = Boolean(userMenuAnchorEl);
-
   const [notificationAnchorEl, setNotificationAnchorEl] = useState<HTMLElement | null>(null);
   const notificationOpen = Boolean(notificationAnchorEl);
-
-  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setUserMenuAnchorEl(event.currentTarget);
-  };
-
-  const handleUserMenuClose = () => {
-    setUserMenuAnchorEl(null);
-  };
 
   const handleNotificationOpen = (event: React.MouseEvent<HTMLElement>) => {
     setNotificationAnchorEl(event.currentTarget);
@@ -100,12 +82,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   const handleNotificationClose = () => {
     setNotificationAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate(AUTH_PATHS.login);
-    handleUserMenuClose();
   };
 
   const notifications = [
@@ -349,36 +325,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </Box>
           {rightActions || (
             <>
-              <Tooltip title='AI 助手'>
-                <IconButton
-                  size='small'
-                  aria-label='AI 助手'
-                  onClick={() => navigate(AI_PATHS.root)}
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    '&:hover': { bgcolor: 'action.hover' },
-                    color: 'primary.main',
-                  }}
-                >
-                  <Sparkles style={{ width: 18, height: 18 }} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title='插件市场'>
-                <IconButton
-                  size='small'
-                  aria-label='插件市场'
-                  onClick={() => navigate(PLUGIN_PATHS.marketplace)}
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    '&:hover': { bgcolor: 'action.hover' },
-                    color: 'secondary.main',
-                  }}
-                >
-                  <ShoppingCart style={{ width: 18, height: 18 }} />
-                </IconButton>
-              </Tooltip>
+              <GlobalActions />
               <Tooltip title='通知'>
                 <IconButton
                   size='small'
@@ -558,56 +505,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   查看全部通知
                 </MenuItem>
               </Menu>
-              <ThemeSelector showMenu />
-              <Tooltip title='用户菜单'>
-                <IconButton
-                  size='small'
-                  aria-label='用户菜单'
-                  onClick={handleUserMenuOpen}
-                >
-                  <Avatar
-                    sx={{
-                      width: 34,
-                      height: 34,
-                      fontSize: 14,
-                      background: 'linear-gradient(135deg, primary.main, secondary.main)',
-                    }}
-                  >
-                    陈
-                  </Avatar>
-                </IconButton>
-              </Tooltip>
-              <Menu
-                anchorEl={userMenuAnchorEl}
-                open={userMenuOpen}
-                onClose={handleUserMenuClose}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                sx={{ mt: 1.5 }}
-              >
-                <MenuItem
-                  onClick={() => {
-                    navigate(DASHBOARD_PATHS.profile);
-                    handleUserMenuClose();
-                  }}
-                >
-                  <User style={{ width: 18, height: 18, marginRight: 12 }} />
-                  个人中心
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    navigate(DASHBOARD_PATHS.favorites);
-                    handleUserMenuClose();
-                  }}
-                >
-                  <Star style={{ width: 18, height: 18, marginRight: 12 }} />
-                  我的收藏
-                </MenuItem>
-                <MenuItem onClick={handleLogout}>
-                  <LogOut style={{ width: 18, height: 18, marginRight: 12 }} />
-                  退出登录
-                </MenuItem>
-              </Menu>
+              <Divider orientation='vertical' flexItem sx={{ mx: 0.5, my: 1 }} />
+              <UserMenu
+                user={user}
+                onProfileClick={() => navigate(DASHBOARD_PATHS.profile)}
+                onAccountSettingsClick={() => navigate(DASHBOARD_PATHS.profile)}
+                onLogout={() => {
+                  logout();
+                  navigate(AUTH_PATHS.login);
+                }}
+              />
 
               {MobileNavComponent && onMobileMenuOpen && onMobileMenuClose && (
                 <MobileNavComponent

@@ -1,4 +1,5 @@
 import type { ComponentType, LazyExoticComponent, ReactElement } from 'react';
+import type { ModuleSuite, NavGroup } from '@/lib/navigation/types';
 import { lazyWithRetry } from '../utils';
 
 export { lazyWithRetry };
@@ -38,7 +39,7 @@ export interface RouteConfigV2 {
   action?: 'read' | 'write' | 'update' | 'delete' | 'admin';
   template?: PageTemplateType;
   layout?: LayoutType;
-  group?: string;
+  group?: NavGroup;
   parentPath?: string;
   children?: RouteConfigV2[];
   // P34-4: 模块分层 — 'basic' 默认显示；'advanced' 需 core_tenant_modules 中对应模块处于激活态
@@ -51,16 +52,7 @@ export interface RouteModuleConfig {
   icon: string;
   path: string;
   source: 'core' | 'plugin';
-  suite?:
-    | 'finance'
-    | 'hr'
-    | 'manufacturing'
-    | 'supply'
-    | 'crm'
-    | 'quality'
-    | 'project'
-    | 'gis'
-    | 'enterprise';
+  suite?: ModuleSuite;
   status?: 'online' | 'beta' | 'plan' | 'new';
   frontendOnly?: boolean;
   order?: number;

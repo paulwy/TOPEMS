@@ -1,11 +1,38 @@
-import React, { useState } from 'react';
-import { useTheme } from '@mui/material';
+import React from 'react';
+import {
+  Box,
+  Typography,
+  Chip,
+  Button,
+  LinearProgress,
+  type SxProps,
+  type Theme,
+} from '@mui/material';
+import { ArrowRight } from 'lucide-react';
 import { ModuleStatusBadge, type ModuleStatusValue } from '@topems/shared-components';
 
 type IconComponent = React.ComponentType<{
   className?: string;
   style?: React.CSSProperties;
 }>;
+
+export type ModuleCardStatus = 'active' | 'beta' | 'coming' | 'maintenance';
+
+export interface ModuleCardQuota {
+  used: number;
+  total: number;
+  label?: string;
+}
+
+export interface ModuleCardData {
+  key: string;
+  name: string;
+  icon: IconComponent;
+  description?: string;
+  status?: ModuleCardStatus;
+  quota?: ModuleCardQuota;
+  path: string;
+}
 
 export interface ModuleItem {
   title: string;
@@ -19,189 +46,320 @@ export interface ModuleItem {
   adminOnly?: boolean;
 }
 
+const STATUS_CONFIG: Record<
+  ModuleCardStatus,
+  { color: 'success' | 'info' | 'warning' | 'default'; label: string }
+> = {
+  active: { color: 'success', label: '运行中' },
+  beta: { color: 'info', label: '测试版' },
+  coming: { color: 'warning', label: '即将上线' },
+  maintenance: { color: 'default', label: '维护中' },
+};
+
+const CARD_STYLE: SxProps<Theme> = {
+  bgcolor: 'background.paper',
+  borderRadius: 2,
+  border: 1,
+  borderColor: 'divider',
+  cursor: 'pointer',
+  transition: (theme) =>
+    `border-color ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
+    `box-shadow ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
+    `transform ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}`,
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  minHeight: 180,
+  p: 2.5,
+  '&:hover': {
+    borderColor: 'primary.main',
+    boxShadow: 2,
+    transform: 'translateY(-1px)',
+  },
+  '&:focus-visible': {
+    outline: 'none',
+    boxShadow: (theme) => theme.customShadows.focus,
+  },
+};
+
+const ICON_WRAPPER_STYLE: SxProps<Theme> = {
+  width: 40,
+  height: 40,
+  borderRadius: (theme) => theme.shape.radii.xl,
+  bgcolor: 'primary.main',
+  color: 'primary.contrastText',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+};
+
 interface ModuleCardProps {
   item: ModuleItem;
   onClick: () => void;
   size?: 'large' | 'medium' | 'small';
 }
 
-const colorToGradient: Record<string, string> = {
-  'bg-blue-500': 'linear-gradient(135deg, #3b82f6, #2563eb)',
-  'bg-purple-500': 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-  'bg-green-500': 'linear-gradient(135deg, #22c55e, #16a34a)',
-  'bg-emerald-500': 'linear-gradient(135deg, #22c55e, #16a34a)',
-  'bg-rose-500': 'linear-gradient(135deg, #f43f5e, #e11d48)',
-  'bg-slate-600': 'linear-gradient(135deg, #64748b, #475569)',
-  'bg-violet-500': 'linear-gradient(135deg, #a855f7, #9333ea)',
-  'bg-amber-500': 'linear-gradient(135deg, #f59e0b, #d97706)',
-  'bg-teal-500': 'linear-gradient(135deg, #14b8a6, #0d9488)',
-  'bg-yellow-500': 'linear-gradient(135deg, #eab308, #ca8a04)',
-  'bg-indigo-500': 'linear-gradient(135deg, #60a5fa, #3b82f6)',
-  'bg-cyan-500': 'linear-gradient(135deg, #06b6d4, #0891b2)',
-  'bg-orange-500': 'linear-gradient(135deg, #f97316, #ea580c)',
-  'bg-red-500': 'linear-gradient(135deg, #ef4444, #dc2626)',
-  'bg-sky-500': 'linear-gradient(135deg, #0ea5e9, #0284c7)',
-  'bg-pink-500': 'linear-gradient(135deg, #ec4899, #db2727)',
+interface ModuleCardV2Props {
+  data: ModuleCardData;
+  onClick?: () => void;
+}
+
+const StatusChip: React.FC<{ status: ModuleCardStatus }> = ({ status }) => {
+  const config = STATUS_CONFIG[status];
+  return (
+    <Chip
+      label={config.label}
+      color={config.color}
+      size='small'
+      sx={{ height: 22, '& .MuiChip-label': { px: 1, fontSize: 11, lineHeight: 1.5 } }}
+    />
+  );
 };
 
-const _colorToBgLight: Record<string, string> = {
-  'bg-blue-500': 'primary.light',
-  'bg-purple-500': 'secondary.light',
-  'bg-green-500': 'success.light',
-  'bg-emerald-500': 'success.light',
-  'bg-rose-500': 'white1f2',
-  'bg-slate-600': 'grey.50',
-  'bg-violet-500': '#f5f3ff',
-  'bg-amber-500': 'warning.light',
-  'bg-teal-500': '#f0fdfa',
-  'bg-yellow-500': 'warning.lighter',
-  'bg-indigo-500': '#eef2ff',
-  'bg-cyan-500': '#ecfeff',
-  'bg-orange-500': 'white7ed',
-  'bg-red-500': 'error.light',
-  'bg-sky-500': '#f0f9ff',
-  'bg-pink-500': '#fdf2f8',
+const QuotaProgress: React.FC<{ quota: ModuleCardQuota }> = ({ quota }) => {
+  const pct = quota.total > 0 ? Math.min((quota.used / quota.total) * 100, 100) : 0;
+  const isOverThreshold = pct > 85;
+
+  return (
+    <Box sx={{ width: '100%' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 0.75,
+        }}
+      >
+        <Typography variant='caption' color='text.secondary'>
+          {quota.label || '配额使用'}
+        </Typography>
+        <Typography variant='caption' color='text.secondary'>
+          {quota.used}/{quota.total}
+        </Typography>
+      </Box>
+      <LinearProgress
+        variant='determinate'
+        value={pct}
+        sx={{
+          height: 4,
+          borderRadius: 2,
+          bgcolor: 'grey.200',
+          '& .MuiLinearProgress-bar': {
+            bgcolor: isOverThreshold ? 'error.main' : 'primary.main',
+            borderRadius: 2,
+          },
+        }}
+      />
+    </Box>
+  );
 };
 
 export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'medium' }) => {
-  const theme = useTheme();
-  const [isHovered, setIsHovered] = useState(false);
-  const [isClicked, setIsClicked] = useState(false);
   const Icon = item.icon;
 
   const sizeStyles = {
-    large: { padding: '24px', iconSize: 60, titleSize: 18, descSize: 14 },
-    medium: { padding: '20px', iconSize: 52, titleSize: 16, descSize: 13 },
-    small: { padding: '16px', iconSize: 44, titleSize: 14, descSize: 12 },
+    large: { padding: 3, iconSize: 60, titleSize: '1.125rem', descSize: '0.875rem' },
+    medium: { padding: 2.5, iconSize: 52, titleSize: '1rem', descSize: '0.8125rem' },
+    small: { padding: 2, iconSize: 44, titleSize: '0.875rem', descSize: '0.75rem' },
+  }[size];
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
   };
 
-  const currentSize = sizeStyles[size];
-
   return (
-    <div
+    <Box
       role='button'
       tabIndex={0}
-      onClick={() => {
-        setIsClicked(true);
-        setTimeout(() => setIsClicked(false), 150);
-        onClick();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          setIsClicked(true);
-          setTimeout(() => setIsClicked(false), 150);
-          onClick();
-        }
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
       className='dashboard-module-card'
-      style={{
-        background: 'common.white',
-        borderRadius: '16px',
-        padding: currentSize.padding,
+      sx={{
+        bgcolor: 'background.paper',
+        borderRadius: 2,
+        border: 1,
+        borderColor: 'divider',
         cursor: 'pointer',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        transform: isHovered ? 'translateY(-4px)' : isClicked ? 'scale(0.98)' : 'translateY(0)',
-        boxShadow: isHovered ? '0 20px 40px rgba(0, 0, 0, 0.12)' : '0 4px 6px rgba(0, 0, 0, 0.05)',
-        border: `1px solid ${isHovered ? 'rgba(59, 130, 246, 0.2)' : 'rgba(0,0,0,0.08)'}`,
-        position: 'relative',
-        overflow: 'hidden',
+        transition: (theme) =>
+          `border-color ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
+          `box-shadow ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
+          `transform ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}`,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        p: sizeStyles.padding,
+        '&:hover': {
+          borderColor: 'primary.main',
+          boxShadow: 2,
+          transform: 'translateY(-1px)',
+        },
+        '&:focus-visible': {
+          outline: 'none',
+          boxShadow: (theme) => theme.customShadows.focus,
+        },
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          background:
-            item.status === 'online'
-              ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-              : item.status === 'beta'
-                ? 'linear-gradient(90deg, #f59e0b, #ca8a04)'
-                : 'linear-gradient(90deg, #94a3b8, #64748b)',
-          transition: 'opacity 0.3s ease',
-          opacity: isHovered ? 1 : 0.6,
-        }}
-      />
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-        <div
-          style={{
-            width: currentSize.iconSize,
-            height: currentSize.iconSize,
-            borderRadius: '16px',
-            background: colorToGradient[item.color] || colorToGradient['bg-blue-500'],
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 1.5 }}>
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: (theme) => theme.shape.radii.xl,
+            bgcolor: 'primary.main',
+            color: 'primary.contrastText',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            transform: isHovered ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)',
-            boxShadow: isHovered
-              ? `0 8px 24px ${colorToGradient[item.color] || 'primary.main'}40`
-              : '0 4px 12px rgba(0,0,0,0.15)',
-            animation: item.status === 'online' ? 'glow 2s ease-in-out infinite' : 'none',
           }}
         >
-          <Icon
-            style={{
-              width: currentSize.iconSize * 0.55,
-              height: currentSize.iconSize * 0.55,
-              color: 'common.white',
-              transition: 'transform 0.3s ease',
-              transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-            }}
-          />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '6px',
-            }}
-          >
-            <h3
-              style={{
-                fontSize: currentSize.titleSize,
-                fontWeight: 600,
-                color: isHovered ? theme.palette.primary.dark : '#1e293b',
-                margin: 0,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                transition: 'color 0.2s ease',
-              }}
-            >
-              {item.title}
-            </h3>
-            <ModuleStatusBadge status={item.status} />
-          </div>
-          <p
-            style={{
-              fontSize: currentSize.descSize,
-              color: isHovered ? theme.palette.text.secondary : theme.palette.text.secondary,
-              margin: 0,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              transition: 'color 0.2s ease',
-            }}
-          >
-            {item.description}
-          </p>
-        </div>
-      </div>
-      <style>{`
-        @keyframes glow {
-          0%, 100% { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-          50% { box-shadow: 0 8px 24px ${colorToGradient[item.color] || 'primary.main'}60; }
-        }
-      `}</style>
-    </div>
+          <Icon style={{ width: 22, height: 22 }} />
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'flex-end' }}>
+          <ModuleStatusBadge status={item.status} />
+        </Box>
+      </Box>
+
+      <Typography
+        variant='subtitle2'
+        sx={{
+          fontWeight: 600,
+          fontSize: sizeStyles.titleSize,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          mb: 0.5,
+        }}
+      >
+        {item.title}
+      </Typography>
+
+      <Typography
+        variant='caption'
+        color='text.secondary'
+        sx={{
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          fontSize: sizeStyles.descSize,
+          lineHeight: 1.5,
+          mb: 1.5,
+          flex: 1,
+        }}
+      >
+        {item.description}
+      </Typography>
+
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 'auto' }}>
+        <Button
+          size='small'
+          endIcon={<ArrowRight size={14} />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+          }}
+          sx={{ fontSize: 12, py: 0.5, minHeight: 30 }}
+        >
+          进入
+        </Button>
+      </Box>
+    </Box>
   );
 };
+
+export const ModuleCardV2: React.FC<ModuleCardV2Props> = ({ data, onClick }) => {
+  const Icon = data.icon;
+
+  const handleClick = () => {
+    onClick?.();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick();
+    }
+  };
+
+  return (
+    <Box
+      role='button'
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      className='dashboard-module-card-v2'
+      sx={CARD_STYLE}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 1.5 }}>
+        <Box sx={ICON_WRAPPER_STYLE}>
+          <Icon style={{ width: 22, height: 22 }} />
+        </Box>
+        {data.status && (
+          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+            <StatusChip status={data.status} />
+          </Box>
+        )}
+      </Box>
+
+      <Typography
+        variant='subtitle2'
+        sx={{
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          mb: 0.5,
+        }}
+      >
+        {data.name}
+      </Typography>
+
+      {data.description && (
+        <Typography
+          variant='caption'
+          color='text.secondary'
+          sx={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            lineHeight: 1.5,
+            mb: data.quota ? 1.5 : 1.5,
+            flex: 1,
+          }}
+        >
+          {data.description}
+        </Typography>
+      )}
+
+      {data.quota && (
+        <Box sx={{ mt: 'auto', mb: 1.5 }}>
+          <QuotaProgress quota={data.quota} />
+        </Box>
+      )}
+
+      <Box
+        sx={{ display: 'flex', justifyContent: 'flex-end', mt: data.quota ? 0 : 'auto' }}
+      >
+        <Button
+          size='small'
+          endIcon={<ArrowRight size={14} />}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClick();
+          }}
+          sx={{ fontSize: 12, py: 0.5, minHeight: 30 }}
+        >
+          进入
+        </Button>
+      </Box>
+    </Box>
+  );
+};
+
+export { CARD_STYLE, ICON_WRAPPER_STYLE };

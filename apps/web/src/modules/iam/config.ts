@@ -46,7 +46,7 @@ export const iamModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['iam:user:read', 'iam:read'],
       action: 'read',
       template: 'list',
-      group: 'user',
+      group: 'master',
     },
     {
       path: IAM_PATHS.role,
@@ -57,7 +57,7 @@ export const iamModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['iam:role:read', 'iam:read'],
       action: 'read',
       template: 'list',
-      group: 'permission',
+      group: 'setting',
     },
     {
       path: IAM_PATHS.permission,
@@ -71,7 +71,7 @@ export const iamModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['iam:permission:read', 'iam:read'],
       action: 'read',
       template: 'tree',
-      group: 'permission',
+      group: 'setting',
     },
     {
       path: IAM_PATHS.companyStructure,
@@ -85,7 +85,7 @@ export const iamModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['iam:structure:read', 'iam:read'],
       action: 'read',
       template: 'list',
-      group: 'organization',
+      group: 'master',
     },
   ],
 };

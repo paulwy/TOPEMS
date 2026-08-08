@@ -2,14 +2,38 @@ export type TenantStatus = 'active' | 'suspended' | 'trial' | 'expired';
 
 export type TenantPlan = 'basic' | 'professional' | 'enterprise';
 
-export type TenantRole = 'superadmin' | 'admin' | 'member' | 'guest';
+export type TenantRole = 'superadmin' | 'admin' | 'member' | 'guest' | 'owner';
 
 export type UserStatus = 'active' | 'invited' | 'suspended';
+
+export interface TenantBrandingSettings {
+  primary_color: string;
+  secondary_color: string;
+  custom_domain?: string;
+}
+
+export interface TenantSecuritySettings {
+  sso_enabled: boolean;
+  two_factor_required: boolean;
+  ip_whitelist_enabled: boolean;
+  session_timeout_minutes: number;
+  allowed_ip_ranges?: string[];
+}
+
+export interface TenantSettings {
+  max_users: number;
+  max_storage_gb: number;
+  max_api_requests_per_day: number;
+  branding: TenantBrandingSettings;
+  security: TenantSecuritySettings;
+  features: Record<string, boolean>;
+}
 
 export interface Tenant {
   id: string;
   name: string;
   code: string;
+  slug: string;
   tenant_type: string;
   plan: TenantPlan;
   license_type: string;
@@ -22,6 +46,7 @@ export interface Tenant {
   quota_api_calls?: number;
   quota_plugins?: string[];
   features: Record<string, boolean>;
+  settings: TenantSettings;
   status: TenantStatus;
   trial_expires_at?: string;
   created_at: string;
@@ -76,6 +101,8 @@ export interface UpdateTenantRequest {
   quota_storage_gb?: number;
   quota_api_calls?: number;
   features?: Record<string, boolean>;
+  settings?: Partial<TenantSettings>;
+  slug?: string;
 }
 
 export interface InviteMemberRequest {

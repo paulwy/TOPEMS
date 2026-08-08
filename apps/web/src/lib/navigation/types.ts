@@ -1,41 +1,34 @@
+/**
+ * L3 菜单子组标准枚举（四层模型 v2.0 强制规范）
+ * 顺序 order 与 操作心智一致：概览 → 主数据 → 流程 → 单据 → 分析 → 报表 → 设置 → 其他
+ * 新增模块禁止自定义字符串，必须从下列枚举中取。若业务语义确实不合，先发起 RFC 增补本表。
+ */
 export type NavGroup =
-  | 'overview'
-  | 'business'
-  | 'process'
-  | 'analytics'
-  | 'settings'
-  | 'chat'
-  | 'tools'
-  | 'knowledge'
-  | 'templates'
-  | 'documents'
-  | 'connections'
-  | 'mappings'
-  | 'logs'
-  | 'scenarios'
-  | 'home'
-  | 'attendance'
-  | 'tasks'
-  | 'alerts'
-  | 'metrics'
-  | 'messages'
-  | 'design'
-  | 'runtime'
-  | 'automation'
-  | 'rules';
+  | 'overview'   // (0)  仪表盘/首页     每个模块至少1个
+  | 'master'     // (10) 基础/主数据     物料/设备/客户/员工等档案
+  | 'process'    // (20) 核心业务流程    流程执行/操作流转类页面
+  | 'business'   // (30) 业务单据管理    订单/工单/单据类增删改查
+  | 'analytics'  // (40) 统计分析       看板/统计/SPC/OEE/成本核算
+  | 'report'     // (50) 报表与打印     报告/打印模板/导出报表
+  | 'setting'    // (60) 系统配置/模板   参数/方案/阈值/模板配置
+  | 'other';     // (99) 杂项兜底（尽量不用）
 
 export type ModuleSource = 'core' | 'plugin';
+/**
+ * L1 业务域标准枚举（四层模型 v2.0，共 10 个，禁止随意新增）
+ * 新增模块必须从下表选归属；若确需新增 L1，请按 RFC 流程发起评审。
+ */
 export type ModuleSuite =
-  | 'finance'
-  | 'hr'
-  | 'manufacturing'
-  | 'supply'
-  | 'crm'
-  | 'enterprise'
-  | 'quality'
-  | 'project'
-  | 'gis'
-  | 'erp';
+  | 'enterprise'     // (10) 🏢 企业平台：系统级配置/跨域主数据/BI/报表/插件市场
+  | 'manufacturing'  // (20) 🏭 制造域：MES 生产执行/EHS 安全环保
+  | 'quality'        // (30) 🔬 质量域：QMS 质量管理/LIMS 实验室管理
+  | 'supply'         // (40) 📦 供应链域：SCM 采购/WMS 仓储/SRM 供应商
+  | 'finance'        // (50) 💰 财务域：财务会计/成本/资金/税务
+  | 'hr'             // (60) 👥 人力域：员工/考勤/薪酬/招聘/绩效/培训
+  | 'crm'            // (70) 🤝 客户域：线索/客户/商机/报价/合同/回款
+  | 'project'        // (80) 🗓️ 项目域：PM 项目管理/RD 研发管理
+  | 'collaboration'  // (90) 🧰 工具与协同域：工作流/文档/通知/工单/OA/IM/资产/移动端
+  | 'platform';      // (100) ⚙️ 平台能力域：集成/监控/自动化/低代码/AI/GIS
 export type ModuleStatus = 'online' | 'beta' | 'plan' | 'new';
 
 export interface NavItemConfig {
@@ -89,46 +82,29 @@ export interface ModuleCardConfig {
 }
 
 export const NAV_GROUPS: Record<NavGroup, { label: string; icon: string; order: number }> = {
-  overview: { label: '概览', icon: 'LayoutDashboard', order: 0 },
-  business: { label: '业务管理', icon: 'Briefcase', order: 10 },
-  process: { label: '流程管理', icon: 'Workflow', order: 20 },
-  analytics: { label: '分析报表', icon: 'BarChart3', order: 30 },
-  settings: { label: '基础设置', icon: 'Settings', order: 40 },
-  chat: { label: '对话', icon: 'MessageSquare', order: 5 },
-  tools: { label: '工具', icon: 'Wrench', order: 15 },
-  knowledge: { label: '知识库', icon: 'BookOpen', order: 25 },
-  templates: { label: '模板', icon: 'LayoutTemplate', order: 35 },
-  documents: { label: '文档', icon: 'FileText', order: 15 },
-  connections: { label: '连接', icon: 'Link', order: 5 },
-  mappings: { label: '映射', icon: 'ArrowsLeftRight', order: 10 },
-  logs: { label: '日志', icon: 'FileText', order: 15 },
-  scenarios: { label: '场景', icon: 'Zap', order: 20 },
-  home: { label: '首页', icon: 'Home', order: 0 },
-  attendance: { label: '考勤', icon: 'Calendar', order: 10 },
-  tasks: { label: '任务', icon: 'CheckSquare', order: 20 },
-  alerts: { label: '告警', icon: 'AlertTriangle', order: 5 },
-  metrics: { label: '指标', icon: 'Activity', order: 10 },
-  messages: { label: '消息', icon: 'Bell', order: 5 },
-  design: { label: '设计', icon: 'Palette', order: 5 },
-  runtime: { label: '运行', icon: 'Play', order: 10 },
-  automation: { label: '自动化', icon: 'Zap', order: 20 },
-  rules: { label: '规则', icon: 'ListChecks', order: 25 },
+  overview:  { label: '概览仪表盘', icon: 'LayoutDashboard', order: 0  },
+  master:    { label: '基础主数据', icon: 'Database',        order: 10 },
+  process:   { label: '核心业务流程', icon: 'Workflow',       order: 20 },
+  business:  { label: '业务单据管理', icon: 'Briefcase',      order: 30 },
+  analytics: { label: '统计分析',     icon: 'BarChart3',      order: 40 },
+  report:    { label: '报表与打印',   icon: 'FileSpreadsheet', order: 50 },
+  setting:   { label: '配置与模板',   icon: 'Settings',       order: 60 },
+  other:     { label: '其他',         icon: 'MoreHorizontal', order: 99 },
 };
 
 export const SUITE_GROUPS: Record<
-  ModuleSuite | 'other' | 'platform',
-  { label: string; icon: string; order: number }
+  ModuleSuite | 'other',
+  { label: string; emoji: string; icon: string; order: number }
 > = {
-  platform: { label: '平台中心', icon: 'LayoutDashboard', order: 0 },
-  finance: { label: '财务领域', icon: 'Wallet', order: 10 },
-  hr: { label: '人力领域', icon: 'Users', order: 20 },
-  manufacturing: { label: '制造领域', icon: 'Factory', order: 30 },
-  supply: { label: '供应链领域', icon: 'Truck', order: 40 },
-  crm: { label: '客户领域', icon: 'Users', order: 50 },
-  quality: { label: '质量领域', icon: 'ShieldCheck', order: 60 },
-  project: { label: '项目领域', icon: 'Briefcase', order: 70 },
-  gis: { label: '地理信息', icon: 'Map', order: 80 },
-  enterprise: { label: '企业管理', icon: 'Building2', order: 90 },
-  erp: { label: '资源计划', icon: 'Grid3X3', order: 100 },
-  other: { label: '其他应用', icon: 'MoreHorizontal', order: 999 },
+  enterprise:    { label: '企业平台',     emoji: '🏢', icon: 'Building2',       order: 10 },
+  manufacturing: { label: '制造域',       emoji: '🏭', icon: 'Factory',         order: 20 },
+  quality:       { label: '质量域',       emoji: '🔬', icon: 'ShieldCheck',     order: 30 },
+  supply:        { label: '供应链域',     emoji: '📦', icon: 'Truck',           order: 40 },
+  finance:       { label: '财务域',       emoji: '💰', icon: 'Wallet',          order: 50 },
+  hr:            { label: '人力域',       emoji: '👥', icon: 'Users',           order: 60 },
+  crm:           { label: '客户域',       emoji: '🤝', icon: 'Users',           order: 70 },
+  project:       { label: '项目域',       emoji: '🗓️', icon: 'Briefcase',       order: 80 },
+  collaboration: { label: '工具与协同域', emoji: '🧰', icon: 'MessagesSquare',  order: 90 },
+  platform:      { label: '平台能力域',   emoji: '⚙️', icon: 'LayoutDashboard', order: 100 },
+  other:         { label: '其他应用',     emoji: '❓', icon: 'MoreHorizontal',  order: 999 },
 };

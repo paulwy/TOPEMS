@@ -128,7 +128,7 @@ export const reportModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['report:template:read', 'report:read'],
       action: 'read',
       template: 'list',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: REPORT_PATHS.report,
@@ -228,7 +228,7 @@ export const reportNavConfig: ModuleNavConfig = {
       path: REPORT_PATHS.template,
       permission: 'report:template:read',
       order: 1,
-      group: 'settings',
+      group: 'setting',
       description: '报表模板管理',
     },
     {

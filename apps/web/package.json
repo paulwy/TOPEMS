@@ -45,6 +45,7 @@
     "lint:src:fix": "eslint src/ --fix",
     "lint:a11y": "eslint -c eslint.a11y.config.js src/",
     "check:a11y": "node scripts/ci/check-a11y.cjs",
+    "verify:nav": "node ../../scripts/verify_navigation.mjs --strict",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,md}\"",
     "topems": "bash $(cd ../../ && pwd)/scripts/topems.sh",

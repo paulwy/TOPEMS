@@ -157,14 +157,13 @@ export type { User } from '@topems/shared-types';
 // ===== 统一通知系统 =====
 export { NotificationProvider } from './notification/NotificationProvider';
 
-// [shared] EmptyState - 已提升到 @topems/shared-components
+export { EmptyState, type EmptyStateProps } from './common/EmptyState';
+
 export {
-  EmptyState,
   ListEmptyState,
   SearchEmptyState,
   PermissionEmptyState,
   ErrorEmptyState,
-  type EmptyStateProps,
   type ErrorEmptyStateProps,
 } from '@topems/shared-components';
 

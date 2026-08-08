@@ -4,7 +4,6 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;

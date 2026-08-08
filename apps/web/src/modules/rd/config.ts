@@ -301,7 +301,7 @@ export const rdModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['rd:settings:read', 'rd:read'],
       action: 'read',
       template: 'settings',
-      group: 'settings',
+      group: 'setting',
     },
   ],
 };
@@ -500,7 +500,7 @@ export const rdNavConfig: ModuleNavConfig = {
       path: RD_PATHS.settings,
       permission: 'rd:settings:read',
       order: 1,
-      group: 'settings',
+      group: 'setting',
       description: '研发系统设置',
     },
   ],

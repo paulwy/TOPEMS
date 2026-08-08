@@ -3,7 +3,6 @@ use axum::{
     routing::*,
     Json, Router,
 };
-use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;

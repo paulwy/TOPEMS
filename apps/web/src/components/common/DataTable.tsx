@@ -1024,7 +1024,10 @@ export function DataTable<TData, TValue>({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <span style={{ fontSize: '0.875rem', color: theme.palette.primary.dark }}>
+              <Box
+                component='span'
+                sx={{ fontSize: '0.875rem', color: 'primary.dark' }}
+              >
                 已选择{' '}
                 <Chip
                   label={isSelected.length}
@@ -1033,7 +1036,7 @@ export function DataTable<TData, TValue>({
                   sx={{ mx: 0.5 }}
                 />{' '}
                 条记录
-              </span>
+              </Box>
             </Box>
             {onSelectionChange && (
               <Button
