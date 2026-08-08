@@ -54,7 +54,7 @@ export interface ExtractDocumentRequest {
 export interface ExtractDocumentResponse {
   document_id: string;
   extract_type: string;
-  result: Record<string, any>;
+  result: Record<string, unknown>;
 }
 
 export interface SummarizeDocumentRequest {
@@ -93,7 +93,7 @@ export interface Message {
 export interface ChatRequest {
   query: string;
   conversation_id?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface ChatResponse {
@@ -187,7 +187,7 @@ export interface QAHistoryItem {
   id: string;
   question: string;
   answer: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   sources?: Array<{
     title: string;
     url?: string;
@@ -200,7 +200,7 @@ export interface QAHistoryItem {
 
 export interface AIGenerateRequest {
   template_id?: string;
-  variables: Record<string, any>;
+  variables: Record<string, unknown>;
   outputformat?: 'text' | 'json' | 'markdown';
 }
 
