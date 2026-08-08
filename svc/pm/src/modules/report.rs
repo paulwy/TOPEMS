@@ -149,7 +149,7 @@ async fn generate_report(
         Err(_) => serde_json::json!({}),
     };
 
-    let phases_data = sqlx::query("SELECT name, sequence_number, progress, status FROM plugin_pm.project_phases WHERE project_id = $1 ORDER BY sequence_number")
+    let phases_data = sqlx::query("SELECT name, phase_number, progress, status FROM plugin_pm.project_phases WHERE project_id = $1 ORDER BY phase_number")
         .bind(project_id)
         .fetch_all(&pool)
         .await;
@@ -160,7 +160,7 @@ async fn generate_report(
             .map(|p| {
                 serde_json::json!({
                     "name": p.get::<String, _>("name"),
-                    "sequence_number": p.get::<i32, _>("sequence_number"),
+                    "phase_number": p.get::<i32, _>("phase_number"),
                     "progress": p.get::<i32, _>("progress"),
                     "status": p.get::<String, _>("status")
                 })
@@ -170,7 +170,7 @@ async fn generate_report(
     };
 
     let milestones_data = sqlx::query(
-        "SELECT name, date, status FROM plugin_pm.project_milestones WHERE project_id = $1 ORDER BY date",
+        "SELECT name, target_date, status FROM plugin_pm.project_milestones WHERE project_id = $1 ORDER BY target_date",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -182,7 +182,7 @@ async fn generate_report(
             .map(|m| {
                 serde_json::json!({
                     "name": m.get::<String, _>("name"),
-                    "date": m.get::<DateTime<Utc>, _>("date"),
+                    "target_date": m.get::<DateTime<Utc>, _>("target_date"),
                     "status": m.get::<String, _>("status")
                 })
             })
@@ -191,7 +191,7 @@ async fn generate_report(
     };
 
     let budget_data = sqlx::query(
-        "SELECT total_amount, allocated_amount, spent_amount FROM plugin_pm.budgets WHERE project_id = $1",
+        "SELECT total_budget, used_amount, remaining_amount FROM plugin_pm.budgets WHERE project_id = $1",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -200,9 +200,9 @@ async fn generate_report(
     let budget_info = match budget_data {
         Ok(bs) => serde_json::json!({
             "budgets": bs.into_iter().map(|b| serde_json::json!({
-                "total_amount": b.get::<f64, _>("total_amount"),
-                "allocated_amount": b.get::<f64, _>("allocated_amount"),
-                "spent_amount": b.get::<f64, _>("spent_amount")
+                "total_budget": b.get::<f64, _>("total_budget"),
+                "used_amount": b.get::<f64, _>("used_amount"),
+                "remaining_amount": b.get::<f64, _>("remaining_amount")
             })).collect::<Vec<_>>()
         }),
         Err(_) => serde_json::json!({"budgets": []}),

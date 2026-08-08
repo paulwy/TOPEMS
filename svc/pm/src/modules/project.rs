@@ -419,7 +419,7 @@ async fn get_project_dashboard(
     };
 
     let phases_result = sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(
-        "SELECT id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1",
+        "SELECT id, project_id, name, description, phase_number AS sequence_number, start_date, end_date, progress, status, predecessor_id AS predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1",
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -450,7 +450,7 @@ async fn get_project_dashboard(
     });
 
     let members_result = sqlx::query_as::<_, crate::models::project_member::ProjectMember>(
-        "SELECT id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1",
+        "SELECT id, project_id, employee_id AS user_id, role, responsibility AS responsibilities, join_date AS start_date, leave_date AS end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1",
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -519,7 +519,7 @@ async fn get_project_gantt(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectGanttResponse>> {
     let phases_result = sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(
-        "SELECT id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC",
+        "SELECT id, project_id, name, description, phase_number AS sequence_number, start_date, end_date, progress, status, predecessor_id AS predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 ORDER BY phase_number ASC",
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -547,7 +547,7 @@ async fn get_project_gantt(
 
     let milestones_result =
         sqlx::query_as::<_, crate::models::project_milestone::ProjectMilestone>(
-            "SELECT id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC",
+            "SELECT id, project_id, name, description, target_date AS date, status, phase_id, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 ORDER BY target_date ASC",
         )
         .bind(id)
         .fetch_all(&state.pool)
