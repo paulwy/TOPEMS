@@ -445,8 +445,7 @@ export function RouteDataBoundary({
       key: retryKey,
       fallback: PendingComp ? React.createElement(PendingComp) : null,
     },
-    // @ts-expect-error createElement 第三个参数 children 类型与 RouteDataErrorCatcher FC 签名存在已知不匹配
-    React.createElement(RouteDataErrorCatcher, { onError: (err: Error) => setError(err) }, children)
+    React.createElement(RouteDataErrorCatcher, { onError: (err: Error) => setError(err), children })
   );
 }
 
