@@ -8,7 +8,6 @@
 //! 所有 handler 当前返回 501 Not Implemented。
 
 use axum::{http::StatusCode, response::IntoResponse, routing::get, Json, Router};
-use topems_shared::get_api_info_handler;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use utoipa::OpenApi;
 
