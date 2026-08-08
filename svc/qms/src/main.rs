@@ -25,7 +25,8 @@ use utoipa::OpenApi;
 
 use topems_shared::service_client::{create_workflow_client, WorkflowServiceClient};
 use topems_shared::{
-    simple_health_check, ApiResponse, AuthState, EventPublisher, ServiceHealth, SimpleHealthConfig,
+    event::EventPublisher, simple_health_check, ApiResponse, AuthState, ServiceHealth,
+    SimpleHealthConfig,
 };
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
