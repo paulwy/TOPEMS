@@ -307,8 +307,8 @@ pub async fn get_team(
         Some(r) => {
             let team = TeamResponse {
                 id: r.id.to_string(),
-                team_code: r.team_code,
-                team_name: r.team_name,
+                team_code: r.team_code.unwrap_or_default(),
+                team_name: r.team_name.unwrap_or_default(),
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: if r.work_station_name.is_empty() {
@@ -416,8 +416,8 @@ pub async fn create_team(
 
     let team = TeamResponse {
         id: result.id.to_string(),
-        team_code: result.team_code,
-        team_name: result.team_name,
+        team_code: result.team_code.unwrap_or_default(),
+        team_name: result.team_name.unwrap_or_default(),
         team_type: result.team_type,
         work_station_id: result.work_station_id.map(|u| u.to_string()),
         work_station_name: None,
@@ -493,8 +493,8 @@ pub async fn update_team(
         Some(r) => {
             let team = TeamResponse {
                 id: r.id.to_string(),
-                team_code: r.team_code,
-                team_name: r.team_name,
+                team_code: r.team_code.unwrap_or_default(),
+                team_name: r.team_name.unwrap_or_default(),
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: None,
@@ -584,7 +584,7 @@ pub async fn get_team_members(
         .into_iter()
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
-            team_id: r.team_id.map_or_else(String::new, |u| u.to_string()),
+            team_id: r.team_id.to_string(),
             employee_id: r.employee_id.map(|u| u.to_string()).unwrap_or_default(),
             employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
@@ -657,7 +657,7 @@ pub async fn add_team_member(
 
     let member = TeamMemberResponse {
         id: result.id.to_string(),
-        team_id: result.team_id.map_or_else(String::new, |u| u.to_string()),
+        team_id: result.team_id.to_string(),
         employee_id: result
             .employee_id
             .map(|u| u.to_string())
