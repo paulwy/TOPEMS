@@ -705,7 +705,7 @@ export interface VoucherQueryParams {
 }
 
 export interface ReportQueryParams {
-  company_id: string;
+  org_id: string;
   period: string;
   year?: number;
   month?: number;

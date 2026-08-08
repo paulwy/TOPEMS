@@ -272,5 +272,14 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 - **Rust 模型适配**: `models/consolidation.rs` 7 个 FromRow 结构体（ConsolidationScope/ScopeCompany/EliminationRule/InternalTransaction/Report/ReportLine/CompanyRelation）补 `tenant_id: uuid::Uuid` 字段，对齐 `SELECT *` / `RETURNING *` 列映射
 - **INSERT 安全**: DEFAULT gen_random_uuid() 确保现有 INSERT 语句（opening_balance.rs / fixed_asset.rs / consolidation handlers）不指定 tenant_id 时仍可成功，未来 handler 更新应从 Claims 传入真实 tenant_id
 - **质量门禁**: cargo check --workspace 0 error · tsc 0 error · check-migration-names PASS · verify-schema-truth PASS · check-schema-naming PASS · checksums 补全 1 条
-| **Phase 2** | A 类 company_id → org_id 重命名 | 9 表 SQL ALTER + Rust 模型适配（HRM 133 处 + finance 40 处 + 共享表） | 中高（HRM 三列冗余 + financial_reports UNIQUE 约束重建） | ⏳ |
+| **Phase 2** | A 类 company_id → org_id 重命名 | 9 表 SQL ALTER + Rust 模型适配（HRM 133 处 + finance 40 处 + 共享表） | 中高（HRM 三列冗余 + financial_reports UNIQUE 约束重建） | ✅ 完成 |
+
+#### Phase 2 详情（2026-08-08 完成）
+
+- **迁移文件**: `database/migrations/20260810000002_v69_rename_company_id_to_org_id.sql`
+- **4 步流程**: ① DROP financial_reports UNIQUE 约束 → ② RENAME COLUMN company_id → org_id × 9 表（public.departments/employees · hrm.departments/positions/employees · plugin_erp.assets · plugin_hrm.positions/attendance_records · financial_reports）→ ③ RENAME INDEX × 4 → ④ 重建 financial_reports UNIQUE 约束
+- **Rust 适配**: HRM 9 文件 133 处全量重命名（models + modules + services + tests）· Finance financial_reports.rs 37 处重命名 · unified-core metrics.rs 1 处 mock SQL 字符串 · 清理 HRM setup.rs 未使用的 DEFAULT_COMPANY_ID 常量
+- **前端适配**: 11 文件重命名（schemas/hrm/department.ts · api/financialReport/index.ts · api/hrm/types.ts · api/finance/report.ts · hooks/useOrganization.ts · packages/shared-types/finance.ts · FinancialReports.tsx · finance-api.test.ts · EmployeeFormDialog.tsx · HrmCompanyPage.tsx · OrganizationFilter.tsx）
+- **B/C 类保留**: consolidation_scope_companies/internal_transactions/company_relations（B 类合法业务）· opening_balances/bank_accounts（C 类已补 tenant_id）的 company_id 均未改动
+- **质量门禁**: cargo check --workspace 0 error · tsc 0 error · check-migration-names PASS · verify-schema-truth PASS · check-schema-naming PASS · checksums 补全 1 条
 | **Phase 3** | organization_id 语义统一 | HRM/GIS/AI → 合并到 tenant_id · CRM/WMS → 改名 org_id · ERP → 补 tenant_id 后删除 | 高（AI session 配置 · RLS 策略 · 跨服务查询） | ⏳ |

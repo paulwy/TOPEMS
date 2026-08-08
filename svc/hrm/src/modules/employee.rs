@@ -53,7 +53,7 @@ fn employee_cache_key(id: &Uuid) -> String {
     "search": "张三",
     "status": "active",
     "department_id": "550e8400-e29b-41d4-a716-446655440002",
-    "company_id": "550e8400-e29b-41d4-a716-446655440001"
+    "org_id": "550e8400-e29b-41d4-a716-446655440001"
 }))]
 pub struct EmployeePaginationParams {
     #[schema(example = 1)]
@@ -67,7 +67,7 @@ pub struct EmployeePaginationParams {
     #[schema(example = "550e8400-e29b-41d4-a716-446655440002")]
     pub department_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440001")]
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -114,7 +114,7 @@ async fn list_employees(
             params.search,
             params.status,
             params.department_id,
-            params.company_id,
+            params.org_id,
         )
         .await;
 
@@ -206,7 +206,7 @@ async fn get_employee_details(
     let result = sqlx::query(
         r#"
         SELECT 
-            e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
+            e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
             e.employee_number, e.name, e.gender, e.hire_date,
             e.email, e.phone, e.status,
             e.created_at, e.updated_at,
@@ -215,7 +215,7 @@ async fn get_employee_details(
             p.name as position_name
         FROM hrm.employees e
         LEFT JOIN hrm.departments d ON e.department_id = d.id
-        LEFT JOIN hrm.companies c ON e.company_id = c.id
+        LEFT JOIN hrm.companies c ON e.org_id = c.id
         LEFT JOIN hrm.positions p ON e.position_id = p.id
         WHERE e.id = $1 AND e.tenant_id = $2
         "#,
@@ -230,7 +230,7 @@ async fn get_employee_details(
             use sqlx::Row;
             let details = serde_json::json!({
                 "id": row.get::<uuid::Uuid, _>("id"),
-                "company_id": row.get::<Option<uuid::Uuid>, _>("company_id"),
+                "org_id": row.get::<Option<uuid::Uuid>, _>("org_id"),
                 "company_name": row.get::<Option<String>, _>("company_name"),
                 "department_id": row.get::<Option<uuid::Uuid>, _>("department_id"),
                 "department_name": row.get::<Option<String>, _>("department_name"),
@@ -598,7 +598,7 @@ async fn export_employees(
             }
             sqlx::query_as::<_, Employee>(
                 r#"
-                SELECT e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
+                SELECT e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
                        e.employee_number, e.name, e.gender, e.hire_date,
                        e.email, e.phone, e.id_card_number, e.address,
                        e.birth_date, e.regular_date, e.probation_period,
@@ -622,7 +622,7 @@ async fn export_employees(
         None => {
             sqlx::query_as::<_, Employee>(
                 r#"
-                SELECT e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
+                SELECT e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
                        e.employee_number, e.name, e.gender, e.hire_date,
                        e.email, e.phone, e.id_card_number, e.address,
                        e.birth_date, e.regular_date, e.probation_period,

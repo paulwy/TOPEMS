@@ -17,7 +17,7 @@ use topems_shared::{api_error, ApiResponse, PaginatedResult, PaginationQuery};
 pub struct Position {
     pub id: Uuid,
     pub organization_id: Uuid,
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
@@ -34,7 +34,7 @@ pub struct Position {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreatePositionRequest {
     pub organization_id: Uuid,
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
@@ -47,7 +47,7 @@ pub struct CreatePositionRequest {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdatePositionRequest {
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub name: Option<String>,
     pub code: Option<String>,
@@ -65,7 +65,7 @@ pub struct QueryParams {
     pub pagination: PaginationQuery,
     pub search: Option<String>,
     pub department_id: Option<Uuid>,
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     pub status: Option<String>,
 }
 
@@ -90,16 +90,16 @@ async fn list_positions(
 
     let search = params.search.unwrap_or_default();
     let dept_id = params.department_id;
-    let company_id = params.company_id;
+    let org_id = params.org_id;
     let status_filter = params.status;
 
     let result = sqlx::query_as::<_, Position>(
         r#"
-        SELECT id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
+        SELECT id, organization_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
         FROM hrm.positions
         WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
           AND ($2::uuid IS NULL OR department_id = $2)
-          AND ($3::uuid IS NULL OR company_id = $3)
+          AND ($3::uuid IS NULL OR org_id = $3)
           AND ($4::text IS NULL OR status = $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
@@ -107,7 +107,7 @@ async fn list_positions(
     )
     .bind(&search)
     .bind(dept_id)
-    .bind(company_id)
+    .bind(org_id)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
@@ -121,13 +121,13 @@ async fn list_positions(
                 SELECT COUNT(*) FROM hrm.positions
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR department_id = $2)
-                  AND ($3::uuid IS NULL OR company_id = $3)
+                  AND ($3::uuid IS NULL OR org_id = $3)
                   AND ($4::text IS NULL OR status = $4)
                 "#,
             )
             .bind(&search)
             .bind(dept_id)
-            .bind(company_id)
+            .bind(org_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
             .await;
@@ -163,14 +163,14 @@ async fn create_position(
 
     let result = sqlx::query_as::<_, Position>(
         r#"
-        INSERT INTO hrm.positions (id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at)
+        INSERT INTO hrm.positions (id, organization_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
-        RETURNING id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
+        RETURNING id, organization_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
         "#
     )
     .bind(id)
     .bind(req.organization_id)
-    .bind(req.company_id)
+    .bind(req.org_id)
     .bind(req.department_id)
     .bind(&req.name)
     .bind(&req.code)
@@ -231,7 +231,7 @@ async fn get_position(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Position>> {
     let result = sqlx::query_as::<_, Position>(
-        "SELECT id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id, organization_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -258,7 +258,7 @@ async fn update_position(
         r#"
         UPDATE hrm.positions
         SET
-            company_id = COALESCE($1, company_id),
+            org_id = COALESCE($1, org_id),
             department_id = COALESCE($2, department_id),
             name = COALESCE($3, name),
             code = COALESCE($4, code),
@@ -270,10 +270,10 @@ async fn update_position(
             status = COALESCE($10, status),
             updated_at = $11
         WHERE id = $12
-        RETURNING id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
+        RETURNING id, organization_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
         "#
     )
-    .bind(req.company_id)
+    .bind(req.org_id)
     .bind(req.department_id)
     .bind(&req.name)
     .bind(&req.code)

@@ -33,7 +33,7 @@ pub struct DepartmentPaginationParams {
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub status: Option<String>,
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
 }
 
 #[utoipa::path(
@@ -45,7 +45,7 @@ pub struct DepartmentPaginationParams {
         ("page_size" = Option<i64>, Query, description = "每页数量"),
         ("search" = Option<String>, Query, description = "搜索关键词"),
         ("status" = Option<String>, Query, description = "状态过滤"),
-        ("company_id" = Option<Uuid>, Query, description = "公司ID过滤"),
+        ("org_id" = Option<Uuid>, Query, description = "公司ID过滤"),
     ),
     responses(
         (status = 200, description = "部门列表", body = ApiResponse<serde_json::Value>),
@@ -62,22 +62,22 @@ async fn list_departments(
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-    let company_id_filter = params.company_id;
+    let org_id_filter = params.org_id;
 
     let result = sqlx::query_as::<_, Department>(
         r#"
-        SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        SELECT id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR company_id = $3)
+          AND ($3::uuid IS NULL OR org_id = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
         "#,
     )
     .bind(&search_pattern)
     .bind(&status_filter)
-    .bind(company_id_filter)
+    .bind(org_id_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -90,12 +90,12 @@ async fn list_departments(
                 SELECT COUNT(*) FROM hrm.departments
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR company_id = $3)
+                  AND ($3::uuid IS NULL OR org_id = $3)
                 "#,
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .bind(company_id_filter)
+            .bind(org_id_filter)
             .fetch_one(&state.db)
             .await;
 
@@ -142,14 +142,14 @@ async fn create_department(
     let result = sqlx::query_as::<_, Department>(
         r#"
         INSERT INTO hrm.departments (
-            id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+            id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
-        RETURNING id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        RETURNING id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         "#,
     )
     .bind(id)
     .bind(org_id)
-    .bind(req.company_id)
+    .bind(req.org_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(req.parent_id)
@@ -169,7 +169,7 @@ async fn create_department(
             let dept_name = department.name.clone();
             let parent_id = department.parent_id;
             let manager_id = department.manager_id;
-            let company_id = department.company_id;
+            let org_id = department.org_id;
             let status = department.status.clone();
             tokio::spawn(async move {
                 mdm_service
@@ -184,7 +184,7 @@ async fn create_department(
                         &dept_name,
                         parent_id,
                         manager_id,
-                        company_id,
+                        org_id,
                         &status,
                         MasterDataAction::Created,
                         None,
@@ -220,7 +220,7 @@ async fn get_department(
 ) -> Json<ApiResponse<Department>> {
     let result = sqlx::query_as::<_, Department>(
         r#"
-        SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        SELECT id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments WHERE id = $1
         "#,
     )
@@ -245,7 +245,7 @@ async fn update_department(
     Json(req): Json<UpdateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
     let existing = sqlx::query_as::<_, Department>(
-        "SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -264,8 +264,8 @@ async fn update_department(
     let status = req.status.unwrap_or(existing.status);
     let now = Utc::now();
 
-    // 如果没有提供 company_id，使用 existing 的值
-    let company_id = req.company_id.or(existing.company_id);
+    // 如果没有提供 org_id，使用 existing 的值
+    let org_id = req.org_id.or(existing.org_id);
 
     // 如果没有提供 parent_id，使用 existing 的值
     let parent_id = req.parent_id.or(existing.parent_id);
@@ -273,15 +273,15 @@ async fn update_department(
     let result = sqlx::query_as::<_, Department>(
         r#"
         UPDATE hrm.departments SET
-            organization_id = $2, company_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
+            organization_id = $2, org_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
             description = $8, status = $9, updated_at = $10
         WHERE id = $1
-        RETURNING id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        RETURNING id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         "#,
     )
     .bind(id)
     .bind(existing.organization_id)
-    .bind(company_id)
+    .bind(org_id)
     .bind(&name)
     .bind(&code)
     .bind(parent_id)
@@ -301,7 +301,7 @@ async fn update_department(
             let dept_name = department.name.clone();
             let parent_id = department.parent_id;
             let manager_id = department.manager_id;
-            let company_id = department.company_id;
+            let org_id = department.org_id;
             let status = department.status.clone();
             tokio::spawn(async move {
                 mdm_service
@@ -316,7 +316,7 @@ async fn update_department(
                         &dept_name,
                         parent_id,
                         manager_id,
-                        company_id,
+                        org_id,
                         &status,
                         MasterDataAction::Updated,
                         None,

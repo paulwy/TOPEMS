@@ -23,7 +23,7 @@ export interface ReportSubscription {
   id: string;
   name: string;
   report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
-  company_ids: string[];
+  org_ids: string[];
   periods: string[];
   frequency: 'monthly' | 'quarterly' | 'yearly';
   recipients: {
@@ -50,7 +50,7 @@ export const financialReportApi = {
    * 生成资产负债表
    */
   generateBalanceSheet: (params: {
-    company_id: string;
+    org_id: string;
     period: string; // 期间 YYYY-MM
     compare_period?: string; // 对比期间
     currency_code?: string; // 币种，默认人民币
@@ -60,14 +60,14 @@ export const financialReportApi = {
   /**
    * 获取资产负债表
    */
-  getBalanceSheet: (params: { company_id: string; period: string; currency_code?: string }) =>
+  getBalanceSheet: (params: { org_id: string; period: string; currency_code?: string }) =>
     apiClient.finance.get('/reports/balance-sheet', { params }),
 
   /**
    * 获取资产负债表历史列表
    */
   getBalanceSheetHistory: (params: {
-    company_id: string;
+    org_id: string;
     start_period: string;
     end_period: string;
     currency_code?: string;
@@ -81,7 +81,7 @@ export const financialReportApi = {
    * 生成利润表
    */
   generateIncomeStatement: (params: {
-    company_id: string;
+    org_id: string;
     period: string;
     compare_period?: string;
     currency_code?: string;
@@ -91,14 +91,14 @@ export const financialReportApi = {
   /**
    * 获取利润表
    */
-  getIncomeStatement: (params: { company_id: string; period: string; currency_code?: string }) =>
+  getIncomeStatement: (params: { org_id: string; period: string; currency_code?: string }) =>
     apiClient.finance.get('/reports/income-statement', { params }),
 
   /**
    * 获取利润表历史列表
    */
   getIncomeStatementHistory: (params: {
-    company_id: string;
+    org_id: string;
     start_period: string;
     end_period: string;
     currency_code?: string;
@@ -112,7 +112,7 @@ export const financialReportApi = {
    * 生成现金流量表
    */
   generateCashFlowStatement: (params: {
-    company_id: string;
+    org_id: string;
     period: string;
     compare_period?: string;
     currency_code?: string;
@@ -122,14 +122,14 @@ export const financialReportApi = {
   /**
    * 获取现金流量表
    */
-  getCashFlowStatement: (params: { company_id: string; period: string; currency_code?: string }) =>
+  getCashFlowStatement: (params: { org_id: string; period: string; currency_code?: string }) =>
     apiClient.finance.get('/reports/cash-flow', { params }),
 
   /**
    * 获取现金流量表历史列表
    */
   getCashFlowStatementHistory: (params: {
-    company_id: string;
+    org_id: string;
     start_period: string;
     end_period: string;
     currency_code?: string;
@@ -218,7 +218,7 @@ export const financialReportApi = {
    */
   getReportComparison: (params: {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
-    company_id: string;
+    org_id: string;
     period_from: string;
     period_to: string;
     currency_code?: string;
@@ -229,7 +229,7 @@ export const financialReportApi = {
    */
   getReportTrend: (params: {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
-    company_id: string;
+    org_id: string;
     period_from: string;
     period_to: string;
     account_codes?: string[]; // 指定科目，不指定则全部
@@ -241,7 +241,7 @@ export const financialReportApi = {
    */
   getReportYearOverYear: (params: {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
-    company_id: string;
+    org_id: string;
     current_period: string;
     previous_year_period: string;
     currency_code?: string;
@@ -252,7 +252,7 @@ export const financialReportApi = {
    */
   getReportPeriodOverPeriod: (params: {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
-    company_id: string;
+    org_id: string;
     current_period: string;
     previous_period: string;
     currency_code?: string;
@@ -353,7 +353,7 @@ export const financialReportApi = {
    */
   exportReport: async (params: {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
-    company_id?: string;
+    org_id?: string;
     period: string;
     currency_code?: string;
     format: 'pdf' | 'xlsx' | 'csv';
@@ -369,7 +369,7 @@ export const financialReportApi = {
    */
   batchExportReports: (params: {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
-    company_ids: string[];
+    org_ids: string[];
     periods: string[];
     currency_code?: string;
     format: 'pdf' | 'xlsx';
@@ -416,7 +416,7 @@ export const financialReportApi = {
   createReportSubscription: (data: {
     name: string;
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
-    company_ids: string[];
+    org_ids: string[];
     periods: string[]; // 报表期间，如 ['2024-01', '2024-02']
     frequency: 'monthly' | 'quarterly' | 'yearly';
     recipients: {

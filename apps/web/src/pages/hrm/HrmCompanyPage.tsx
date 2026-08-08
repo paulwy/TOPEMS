@@ -176,8 +176,8 @@ const HrmCompanyPage: React.FC = () => {
 
   const detailViewContent = (row: Record<string, unknown>) => {
     const company = row as unknown as Company;
-    const companyDepts = departments.filter((d) => d.company_id === company.id);
-    const companyEmps = employees.filter((e) => e.company_id === company.id);
+    const companyDepts = departments.filter((d) => d.org_id === company.id);
+    const companyEmps = employees.filter((e) => e.org_id === company.id);
 
     return (
       <Box>

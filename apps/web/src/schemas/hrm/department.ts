@@ -49,7 +49,7 @@ export const departmentSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
-      name: 'company_id',
+      name: 'org_id',
       label: '所属公司',
       type: 'select',
       listWidth: 140,
@@ -58,7 +58,7 @@ export const departmentSchema: EntitySchema = {
         resolver: 'companies',
       },
       renderCell: (row: Record<string, unknown>) => {
-        return (row.company_name as string) || (row.company_id as string) || '-';
+        return (row.company_name as string) || (row.org_id as string) || '-';
       },
     },
     {
@@ -95,7 +95,7 @@ export const departmentSchema: EntitySchema = {
   ],
 
   list: {
-    columns: ['name', 'code', 'company_id', 'parentId', 'description', 'status'],
+    columns: ['name', 'code', 'org_id', 'parentId', 'description', 'status'],
     searchFields: ['name', 'code', 'description'],
     pageSize: 10,
     statusBadge: {
@@ -122,7 +122,7 @@ export const departmentSchema: EntitySchema = {
     },
     {
       title: '组织关系',
-      fields: ['company_id', 'parentId'],
+      fields: ['org_id', 'parentId'],
     },
     {
       title: '其他',
@@ -137,7 +137,7 @@ export const departmentSchema: EntitySchema = {
 
   dynamicOptions: [
     {
-      field: 'company_id',
+      field: 'org_id',
       queryKey: ['hrm', 'companies'],
       loader: async () => {
         const res = await companyApi.list({ pagesize: 100 });

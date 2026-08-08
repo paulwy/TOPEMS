@@ -499,7 +499,7 @@ async fn get_slow_queries(
         SlowQuery {
             id: Uuid::new_v4(),
             tenant_id: tenant_id,
-            query: "SELECT e.*, d.name as dept_name FROM employees e JOIN departments d ON e.dept_id = d.id WHERE d.company_id = ?".to_string(),
+            query: "SELECT e.*, d.name as dept_name FROM employees e JOIN departments d ON e.dept_id = d.id WHERE d.org_id = ?".to_string(),
             duration_ms: 520.8,
             service_name: "topems-hrm".to_string(),
             timestamp: now - chrono::Duration::hours(3),

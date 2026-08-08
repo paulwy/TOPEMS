@@ -57,9 +57,9 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
           >
             <InputLabel>所属公司 *</InputLabel>
             <Select
-              value={(formData as { company_id?: string })?.company_id || ''}
+              value={(formData as { org_id?: string })?.org_id || ''}
               label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_c3846b')}
-              onChange={(e) => onChange('company_id', e.target.value)}
+              onChange={(e) => onChange('org_id', e.target.value)}
               required
             >
               {companies.map((c) => (

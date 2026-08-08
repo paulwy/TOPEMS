@@ -95,7 +95,7 @@ impl MdmEventService {
         name: &str,
         parent_id: Option<Uuid>,
         manager_id: Option<Uuid>,
-        company_id: Option<Uuid>,
+        org_id: Option<Uuid>,
         status: &str,
         action: MasterDataAction,
         changed_fields: Option<Vec<String>>,
@@ -109,7 +109,7 @@ impl MdmEventService {
             "name": name,
             "parent_id": parent_id,
             "manager_id": manager_id,
-            "company_id": company_id,
+            "org_id": org_id,
             "status": status,
         });
 
@@ -163,7 +163,7 @@ impl MdmEventService {
     pub async fn publish_company_event(
         &self,
         tenant_id: Uuid,
-        company_id: Uuid,
+        org_id: Uuid,
         code: &str,
         name: &str,
         status: &str,
@@ -172,7 +172,7 @@ impl MdmEventService {
         let master_data_id = generate_master_data_id(MasterDataDomain::Organization);
 
         let payload = json!({
-            "id": company_id,
+            "id": org_id,
             "master_data_id": master_data_id,
             "code": code,
             "name": name,
@@ -200,9 +200,9 @@ impl MdmEventService {
         }
 
         tracing::info!(
-            "[hrm-mdm] 公司主数据事件发布成功 - action={:?}, company_id={}, master_data_id={}",
+            "[hrm-mdm] 公司主数据事件发布成功 - action={:?}, org_id={}, master_data_id={}",
             action,
-            company_id,
+            org_id,
             master_data_id
         );
     }

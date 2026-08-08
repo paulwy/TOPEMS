@@ -542,37 +542,37 @@ describe('Finance Module API Tests', () => {
   describe('reportApi', () => {
     it('getBalanceSheet should call GET /reports/balance-sheet with params', async () => {
       const { reportApi } = await import('../report');
-      await reportApi.getBalanceSheet({ period: '2024-01', company_id: 'comp-001' });
+      await reportApi.getBalanceSheet({ period: '2024-01', org_id: 'comp-001' });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/reports/balance-sheet', {
-        params: { period: '2024-01', company_id: 'comp-001' },
+        params: { period: '2024-01', org_id: 'comp-001' },
       });
     });
 
     it('getIncomeStatement should call GET /reports/income-statement with params', async () => {
       const { reportApi } = await import('../report');
-      await reportApi.getIncomeStatement({ period: '2024-01', company_id: 'comp-001' });
+      await reportApi.getIncomeStatement({ period: '2024-01', org_id: 'comp-001' });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/reports/income-statement', {
-        params: { period: '2024-01', company_id: 'comp-001' },
+        params: { period: '2024-01', org_id: 'comp-001' },
       });
     });
 
     it('getCashFlowStatement should call GET /reports/cash-flow with params', async () => {
       const { reportApi } = await import('../report');
-      await reportApi.getCashFlowStatement({ period: '2024-01', company_id: 'comp-001' });
+      await reportApi.getCashFlowStatement({ period: '2024-01', org_id: 'comp-001' });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/reports/cash-flow', {
-        params: { period: '2024-01', company_id: 'comp-001' },
+        params: { period: '2024-01', org_id: 'comp-001' },
       });
     });
 
     it('getAccountBalanceReport should call GET /reports/account-balance with params', async () => {
       const { reportApi } = await import('../report');
-      await reportApi.getAccountBalanceReport({ company_id: 'comp-001', period: '2024-01' });
+      await reportApi.getAccountBalanceReport({ org_id: 'comp-001', period: '2024-01' });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/reports/account-balance', {
-        params: { company_id: 'comp-001', period: '2024-01' },
+        params: { org_id: 'comp-001', period: '2024-01' },
       });
     });
 
