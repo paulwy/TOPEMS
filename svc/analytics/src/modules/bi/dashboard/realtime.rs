@@ -95,6 +95,7 @@ pub async fn query_dashboard_realtime_data(
             .unwrap_or("")
             .to_string();
 
+        #[allow(deprecated)]
         let chart_query = ChartQuery {
             chart_type,
             data_source,
@@ -113,6 +114,7 @@ pub async fn query_dashboard_realtime_data(
                 .and_then(|c| c.get("y_axis"))
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string()),
+            columns: vec![],
         };
 
         let payload = match chart_service.generate_chart(chart_query).await {

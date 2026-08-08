@@ -9,6 +9,10 @@ use tracing::info;
 use crate::shared::AppState;
 
 use super::chart_service::quote_identifier;
+use super::dataset_whitelist::validate_columns;
+
+/// 目前多维分析 handler 仅查询 analytics_data 单表（未来切换数据源时传实际表名）。
+const DEFAULT_BI_TABLE: &str = "analytics_data";
 
 /// Validates a list of column names and returns them as quoted identifiers.
 fn validate_identifiers(names: &[String]) -> Result<Vec<String>, String> {
@@ -126,13 +130,26 @@ pub async fn query_cube(
         }
     };
 
-    let sort_by = req.sort_by.unwrap_or_else(|| {
+    let sort_by_raw = req.sort_by.clone().unwrap_or_else(|| {
         req.dimensions
             .first()
             .cloned()
             .unwrap_or_else(|| "id".to_string())
     });
-    let sort_by = match quote_identifier(&sort_by) {
+
+    // S1.3: 第二层白名单校验 — 所有列（SELECT 列 + ORDER BY 列）必须在 bi_datasets 中已注册且 active
+    {
+        let mut whitelist_cols: Vec<String> = select_cols.clone();
+        whitelist_cols.push(sort_by_raw.clone());
+        if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": msg
+            }));
+        }
+    }
+
+    let sort_by = match quote_identifier(&sort_by_raw) {
         Ok(q) => q,
         Err(e) => {
             return Json(serde_json::json!({
@@ -154,12 +171,17 @@ pub async fn query_cube(
     let limit = req.limit.unwrap_or(100);
     let offset = req.offset.unwrap_or(0);
 
+    // S1.1: 使用参数化绑定 LIMIT/OFFSET，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT {} OFFSET {}",
-        select_clause, sort_by, sort_order, limit, offset
+        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT $1 OFFSET $2",
+        select_clause, sort_by, sort_order
     );
 
-    let data_result = sqlx::query(&query).fetch_all(&state.pool).await;
+    let data_result = sqlx::query(&query)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&state.pool)
+        .await;
 
     match data_result {
         Ok(rows) => {
@@ -228,13 +250,26 @@ pub async fn slice_cube(
         }
     };
 
-    let sort_by = req.sort_by.unwrap_or_else(|| {
+    let sort_by_raw = req.sort_by.clone().unwrap_or_else(|| {
         req.dimensions
             .first()
             .cloned()
             .unwrap_or_else(|| "id".to_string())
     });
-    let sort_by = match quote_identifier(&sort_by) {
+
+    // S1.3: 第二层白名单校验 — 所有列（SELECT 列 + ORDER BY 列）必须在 bi_datasets 中已注册且 active
+    {
+        let mut whitelist_cols: Vec<String> = select_cols.clone();
+        whitelist_cols.push(sort_by_raw.clone());
+        if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": msg
+            }));
+        }
+    }
+
+    let sort_by = match quote_identifier(&sort_by_raw) {
         Ok(q) => q,
         Err(e) => {
             return Json(serde_json::json!({
@@ -256,12 +291,17 @@ pub async fn slice_cube(
     let limit = req.limit.unwrap_or(100);
     let offset = req.offset.unwrap_or(0);
 
+    // S1.1: 使用参数化绑定 LIMIT/OFFSET，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT {} OFFSET {}",
-        select_clause, sort_by, sort_order, limit, offset
+        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT $1 OFFSET $2",
+        select_clause, sort_by, sort_order
     );
 
-    let data_result = sqlx::query(&query).fetch_all(&state.pool).await;
+    let data_result = sqlx::query(&query)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&state.pool)
+        .await;
 
     match data_result {
         Ok(rows) => {
@@ -331,13 +371,26 @@ pub async fn dice_cube(
         }
     };
 
-    let sort_by = req.sort_by.unwrap_or_else(|| {
+    let sort_by_raw = req.sort_by.clone().unwrap_or_else(|| {
         req.dimensions
             .first()
             .cloned()
             .unwrap_or_else(|| "id".to_string())
     });
-    let sort_by = match quote_identifier(&sort_by) {
+
+    // S1.3: 第二层白名单校验 — 所有列（SELECT 列 + ORDER BY 列）必须在 bi_datasets 中已注册且 active
+    {
+        let mut whitelist_cols: Vec<String> = select_cols.clone();
+        whitelist_cols.push(sort_by_raw.clone());
+        if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": msg
+            }));
+        }
+    }
+
+    let sort_by = match quote_identifier(&sort_by_raw) {
         Ok(q) => q,
         Err(e) => {
             return Json(serde_json::json!({
@@ -359,12 +412,17 @@ pub async fn dice_cube(
     let limit = req.limit.unwrap_or(100);
     let offset = req.offset.unwrap_or(0);
 
+    // S1.1: 使用参数化绑定 LIMIT/OFFSET，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT {} OFFSET {}",
-        select_clause, sort_by, sort_order, limit, offset
+        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT $1 OFFSET $2",
+        select_clause, sort_by, sort_order
     );
 
-    let data_result = sqlx::query(&query).fetch_all(&state.pool).await;
+    let data_result = sqlx::query(&query)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&state.pool)
+        .await;
 
     match data_result {
         Ok(rows) => {
@@ -432,6 +490,16 @@ pub async fn pivot_table(
             }
         }
     };
+
+    // S1.3: 第二层白名单校验
+    if !all_dims.is_empty() {
+        if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &all_dims).await {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": msg
+            }));
+        }
+    }
 
     let query = format!("SELECT {} FROM analytics_data LIMIT 100", select_clause);
 
@@ -524,12 +592,24 @@ pub async fn rank_data(
         }
     };
 
+    // S1.3: 第二层白名单校验 — dimension + measure 列
+    {
+        let whitelist_cols = vec![req.dimension.clone(), req.measure.clone()];
+        if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": msg
+            }));
+        }
+    }
+
+    // S1.1: 使用参数化绑定 LIMIT，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {}, {} FROM analytics_data ORDER BY {} {} LIMIT {}",
-        dimension, measure, measure, sort_order, top_n
+        "SELECT {}, {} FROM analytics_data ORDER BY {} {} LIMIT $1",
+        dimension, measure, measure, sort_order
     );
 
-    let data_result = sqlx::query(&query).fetch_all(&state.pool).await;
+    let data_result = sqlx::query(&query).bind(top_n).fetch_all(&state.pool).await;
 
     match data_result {
         Ok(rows) => {

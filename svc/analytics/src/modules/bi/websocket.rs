@@ -161,6 +161,7 @@ async fn handle_dashboard_socket(
                 .unwrap_or("")
                 .to_string();
 
+            #[allow(deprecated)]
             let chart_query = ChartQuery {
                 chart_type,
                 data_source,
@@ -179,6 +180,7 @@ async fn handle_dashboard_socket(
                     .and_then(|c| c.get("y_axis"))
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
+                columns: vec![],
             };
 
             match chart_service.generate_chart(chart_query).await {
@@ -323,6 +325,7 @@ async fn refresh_widget_data(state: &AppState, dashboard_id: Uuid) -> Vec<serde_
             .unwrap_or("")
             .to_string();
 
+        #[allow(deprecated)]
         let chart_query = ChartQuery {
             chart_type,
             data_source,
@@ -341,6 +344,7 @@ async fn refresh_widget_data(state: &AppState, dashboard_id: Uuid) -> Vec<serde_
                 .and_then(|c| c.get("y_axis"))
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string()),
+            columns: vec![],
         };
 
         let payload = match chart_service.generate_chart(chart_query).await {
