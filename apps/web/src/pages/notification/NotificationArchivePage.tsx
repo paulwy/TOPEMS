@@ -112,7 +112,7 @@ const NotificationArchivePage: React.FC = () => {
     delete: async () => {},
   };
 
-  const handleViewDetail = useCallback((row: any) => {
+  const handleViewDetail = useCallback((row: Record<string, unknown>) => {
     setSelectedNotification(row as ArchivedNotification);
   }, []);
 
@@ -125,8 +125,8 @@ const NotificationArchivePage: React.FC = () => {
     {
       label: '恢复通知',
       icon: <RotateCcw size={16} />,
-      onClick: (row: any) => {
-        success(`恢复功能开发中 - ${row.title}`);
+      onClick: (row: Record<string, unknown>) => {
+        success(`恢复功能开发中 - ${String(row.title)}`);
       },
     },
   ];

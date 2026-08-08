@@ -60,7 +60,7 @@ interface CanvasComponent {
   y: number;
   width: number;
   height: number;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 }
 
 const componentList: VisualizationComponent[] = [

@@ -265,7 +265,7 @@ const BIAnalyticsPage = () => {
 
   const overviewQuery = useQuery<{
     overview: any;
-    modulesData: Record<string, any>;
+    modulesData: Record<string, unknown>;
   }>({
     queryKey: ['bi-analytics-overview'],
     queryFn: async () => {
@@ -286,7 +286,7 @@ const BIAnalyticsPage = () => {
       });
 
       const results = await Promise.all(modulePromises);
-      const dataMap: Record<string, any> = {};
+      const dataMap: Record<string, unknown> = {};
       results.forEach((r) => {
         dataMap[r.id] = r.data;
       });

@@ -93,7 +93,7 @@ export const settlementAdjustmentApi = {
       description?: string;
       amount: number;
       reason?: string;
-      supporting_documents?: Record<string, any>;
+      supporting_documents?: Record<string, unknown>;
       created_by?: string;
     }
   ) => {

@@ -36,9 +36,9 @@ export const qualityCheckApi = {
       status?: string;
       check_date?: string;
       checked_by?: string;
-      result_details?: Record<string, any>;
-      nonconformities?: Record<string, any>;
-      corrective_actions?: Record<string, any>;
+      result_details?: Record<string, unknown>;
+      nonconformities?: Record<string, unknown>;
+      corrective_actions?: Record<string, unknown>;
       follow_up_date?: string;
     }
   ) => {

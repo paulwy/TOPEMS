@@ -12,11 +12,11 @@ import type { ThemeOptions } from '@mui/material/styles';
  * ```
  *
  * Note: @mui/x-data-grid-pro must be installed for MuiDataGridPro overrides to take effect.
- * The type is Record<string, any> since DataGrid component types are not available
+ * The type is Record<string, unknown> since DataGrid component types are not available
  * until the package is installed.
  */
 
-export const getDataGridTheme = (): Record<string, any> => ({
+export const getDataGridTheme = (): Record<string, unknown> => ({
   MuiDataGrid: {
     styleOverrides: {
       root: {

@@ -11,7 +11,7 @@ import {
   useTheme,
 } from '@mui/material';
 
-interface DrillDownData extends Record<string, any> {
+interface DrillDownData extends Record<string, unknown> {
   id: string;
 }
 

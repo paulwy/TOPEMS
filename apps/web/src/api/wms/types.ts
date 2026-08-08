@@ -755,8 +755,8 @@ export interface SyncRecordItem {
   record_name?: string;
   status: string;
   error_message?: string;
-  source_data?: Record<string, any>;
-  target_data?: Record<string, any>;
+  source_data?: Record<string, unknown>;
+  target_data?: Record<string, unknown>;
   created_at: string;
 }
 
@@ -787,8 +787,8 @@ export interface AuditLog {
   entity_name?: string;
   description: string;
   operation_type: string;
-  before_data?: Record<string, any>;
-  after_data?: Record<string, any>;
+  before_data?: Record<string, unknown>;
+  after_data?: Record<string, unknown>;
   changed_fields?: string[];
   ip_address?: string;
   user_agent?: string;

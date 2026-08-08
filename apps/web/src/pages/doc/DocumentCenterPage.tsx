@@ -53,7 +53,7 @@ const DocumentCenterPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+  const [filterValues, setFilterValues] = useState<Record<string, unknown>>({
     category: '',
   });
   const [currentPage, setCurrentPage] = useState(1);
@@ -230,7 +230,7 @@ const DocumentCenterPage: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const handleFilterChange = (filters: Record<string, any>) => {
+  const handleFilterChange = (filters: Record<string, unknown>) => {
     setFilterValues(filters);
     setCurrentPage(1);
   };

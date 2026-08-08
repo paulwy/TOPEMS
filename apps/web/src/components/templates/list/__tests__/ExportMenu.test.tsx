@@ -9,7 +9,7 @@ import { renderWithProviders } from '@/__tests__/test-utils';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, options?: Record<string, any>) => {
+    t: (key: string, options?: Record<string, unknown>) => {
       const map: Record<string, string> = {
         'components.exportMenu.csvFormat': 'CSV 格式',
         'components.exportMenu.jsonFormat': 'JSON 格式',

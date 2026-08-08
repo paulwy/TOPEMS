@@ -108,7 +108,7 @@ export const voucherApi = {
 
   generateByTemplate: (params: {
     template_id: string;
-    source_data: Record<string, any>;
+    source_data: Record<string, unknown>;
   }): Promise<ApiResponse<Voucher>> => {
     return apiClient.finance.post('/vouchers/generate', params);
   },

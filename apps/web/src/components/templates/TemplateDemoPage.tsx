@@ -369,7 +369,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
   const handleTemplateSelect = (template: Template) => {
     setSelectedTemplate(template);
     setActiveTab(1);
-    const initialVariables: Record<string, any> = {};
+    const initialVariables: Record<string, unknown> = {};
     template.variables?.forEach((varDef: TemplateVariable) => {
       if (varDef.default_value) {
         initialVariables[varDef.key] = varDef.default_value;

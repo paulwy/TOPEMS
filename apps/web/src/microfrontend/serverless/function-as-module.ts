@@ -38,22 +38,22 @@ export interface FunctionDefinition<TInput = any, TOutput = any> {
   rateLimit: number;
   createdAt: number;
   updatedAt: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface InvokeContext<TInput = any> {
   params: TInput;
   headers: Record<string, string>;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   traceId: string;
   userId?: string;
   tenantId?: string;
 }
 
 export interface InvokeOptions {
-  params?: any;
+  params?: unknown;
   headers?: Record<string, string>;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   skipCache?: boolean;
   timeoutMs?: number;
   traceId?: string;

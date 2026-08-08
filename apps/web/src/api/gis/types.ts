@@ -172,7 +172,7 @@ export interface BusinessLocation {
   capacity?: number;
   current_usage?: number;
   status: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   description?: string;
   external_id?: string;
   external_type?: string;
@@ -192,7 +192,7 @@ export interface CreateBusinessLocationRequest {
   capacity?: number;
   current_usage?: number;
   status?: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   description?: string;
   external_id?: string;
   external_type?: string;
@@ -209,7 +209,7 @@ export interface MapMarker {
   size?: number;
   popup_content?: string;
   click_action?: string;
-  action_data?: Record<string, any>;
+  action_data?: Record<string, unknown>;
   visible?: boolean;
   z_index?: number;
   created_at: string;
@@ -226,7 +226,7 @@ export interface CreateMapMarkerRequest {
   size?: number;
   popup_content?: string;
   click_action?: string;
-  action_data?: Record<string, any>;
+  action_data?: Record<string, unknown>;
   visible?: boolean;
   z_index?: number;
 }

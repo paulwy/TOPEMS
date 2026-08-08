@@ -23,7 +23,7 @@ export interface RootCauseResult {
   confidence: number;
   analysisTime: number;
   recommendations: string[];
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface CausalEvent {
@@ -61,7 +61,7 @@ export interface AnalysisContext {
   affectedModules?: string[];
   errorLogs?: string[];
   changeEvents?: string[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface RootCauseAnalyzerConfig {

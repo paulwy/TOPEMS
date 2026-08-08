@@ -24,18 +24,18 @@ interface ListSearchBarProps {
   onSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   globalSearch?: { fields: string[]; placeholder?: string };
   filters?: FilterConfig[];
-  filtersValue?: Record<string, any>;
-  onFilterChange?: (filters: Record<string, any>) => void;
+  filtersValue?: Record<string, unknown>;
+  onFilterChange?: (filters: Record<string, unknown>) => void;
   onRefresh?: () => void;
   quickFilters?: Array<{
     key?: string;
     label: string;
-    filters: Record<string, any>;
+    filters: Record<string, unknown>;
     searchValue?: string;
   }>;
   onQuickFilter?: (quickFilter: {
     key?: string;
-    filters: Record<string, any>;
+    filters: Record<string, unknown>;
     searchValue?: string;
   }) => void;
   /** 当前激活的 quickFilter key（用于高亮显示） */

@@ -19,7 +19,7 @@ export const getStatusLabel = (status: string) => {
   return statusMap[status] || status;
 };
 
-export const formatJson = (obj: Record<string, any> | undefined) => {
+export const formatJson = (obj: Record<string, unknown> | undefined) => {
   if (!obj) return '{}';
   try {
     return JSON.stringify(obj, null, 2);

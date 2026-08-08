@@ -130,7 +130,7 @@ export interface RemoteLoaderProps {
   /** 远程模块导出的组件名（如 './ErpApp'） */
   component: string;
   /** 传递给远程组件的 props */
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
   /** 加载失败回调 */
   onError?: (error: Error) => void;
   /** 自定义加载占位 */

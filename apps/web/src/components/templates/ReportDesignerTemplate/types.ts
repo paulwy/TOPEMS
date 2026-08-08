@@ -31,7 +31,7 @@ export interface DataSourceConfig {
   tableName?: string;
   apiUrl?: string;
   apiMethod?: 'GET' | 'POST';
-  apiParams?: Record<string, any>;
+  apiParams?: Record<string, unknown>;
   file?: File;
   fields: DataSourceField[];
 }

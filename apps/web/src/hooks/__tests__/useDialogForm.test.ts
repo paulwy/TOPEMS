@@ -16,7 +16,7 @@ import { useState, useCallback } from 'react';
  * - close() -> mode=null, data=undefined
  * - isEdit, isView derived flags
  */
-function useDialogForm<T = Record<string, any>>() {
+function useDialogForm<T = Record<string, unknown>>() {
   const [mode, setMode] = useState<'create' | 'edit' | 'view' | null>(null);
   const [data, setData] = useState<T | undefined>(undefined);
   const [isOpen, setIsOpen] = useState(false);

@@ -20,7 +20,7 @@ export interface TemplateVariable {
   default_value?: unknown;
   options?: SelectOption[];
   data_source?: string;
-  validation_rules?: Record<string, any>;
+  validation_rules?: Record<string, unknown>;
   placeholder?: string;
   description?: string;
 }
@@ -90,7 +90,7 @@ export interface PaginationParams {
 }
 
 export interface RenderTemplateRequest {
-  variables: Record<string, any>;
+  variables: Record<string, unknown>;
 }
 
 export interface RenderTemplateResponse {
@@ -150,7 +150,7 @@ export const templateApi = {
 
   async render(
     id: string,
-    variables: Record<string, any>
+    variables: Record<string, unknown>
   ): Promise<ApiResponse<RenderTemplateResponse>> {
     return await apiClient.doc.post(`/templates/${id}/render`, {
       variables,

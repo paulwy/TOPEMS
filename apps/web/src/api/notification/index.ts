@@ -147,7 +147,7 @@ export const getNotifications = async (
   notificationType?: NotificationTypeEnum
 ): Promise<ApiResponse<NotificationListResponse>> => {
   try {
-    const params: Record<string, any> = {
+    const params: Record<string, unknown> = {
       page,
       pagesize: pageSize,
     };
@@ -299,7 +299,7 @@ export const getTemplates = async (
   status?: TemplateStatusEnum,
   search?: string
 ): Promise<ApiResponse<NotificationTemplateListResponse>> => {
-  const params: Record<string, any> = {
+  const params: Record<string, unknown> = {
     page,
     pagesize: pageSize,
   };
@@ -351,7 +351,7 @@ export const deleteTemplate = async (id: string): Promise<ApiResponse<boolean>> 
 
 export const renderTemplate = async (
   id: string,
-  data: Record<string, any>
+  data: Record<string, unknown>
 ): Promise<ApiResponse<{ title: string; content: string }>> => {
   const response = await apiClient.notification.post<{
     title: string;

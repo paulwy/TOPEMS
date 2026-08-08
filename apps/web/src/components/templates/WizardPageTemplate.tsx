@@ -62,7 +62,7 @@ export interface WizardPageTemplateProps extends BoxProps {
   currentStep?: number;
   onStepChange?: (stepIndex: number, stepId: string) => void;
 
-  onComplete?: (data: Record<string, any>) => void;
+  onComplete?: (data: Record<string, unknown>) => void;
   onCancel?: () => void;
   onSkip?: (stepIndex: number) => void;
 

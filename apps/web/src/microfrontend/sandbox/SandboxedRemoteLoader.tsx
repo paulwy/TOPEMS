@@ -52,7 +52,7 @@ export interface SandboxedRemoteLoaderProps {
   /** 远程模块暴露的组件路径，如 './CustomerList' */
   expose: string;
   /** 传递给远程组件的 props */
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
   /** 隔离配置 */
   isolation?: SandboxedRemoteLoaderIsolation;
   /** JS 沙箱细化配置 */

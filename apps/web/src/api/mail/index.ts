@@ -43,7 +43,7 @@ export interface SendEmailRequest {
   body_html?: string;
   priority?: string;
   template_id?: string;
-  template_data?: Record<string, any>;
+  template_data?: Record<string, unknown>;
 }
 
 export interface SendEmailWithTemplateRequest {
@@ -51,7 +51,7 @@ export interface SendEmailWithTemplateRequest {
   to_addresses: string[];
   cc_addresses?: string[];
   bcc_addresses?: string[];
-  template_data: Record<string, any>;
+  template_data: Record<string, unknown>;
   priority?: string;
 }
 
@@ -164,7 +164,7 @@ export const templateApi = {
 
   async render(
     templateCode: string,
-    data: Record<string, any>
+    data: Record<string, unknown>
   ): Promise<ApiResponse<{ subject: string; body: string; body_html?: string }>> {
     return apiClient.mail.post('/templates/render', {
       template_code: templateCode,

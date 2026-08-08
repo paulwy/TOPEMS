@@ -113,7 +113,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
     if (visibleFields.length === 0) return rawData;
 
     return rawData.map((row) => {
-      const newRow: Record<string, any> = {};
+      const newRow: Record<string, unknown> = {};
       visibleFields.forEach((field) => {
         newRow[field.fieldName] = row[field.fieldName];
       });

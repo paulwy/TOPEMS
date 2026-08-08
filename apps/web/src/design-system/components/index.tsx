@@ -587,7 +587,7 @@ export interface V51TableProps<T = Record<string, unknown>> {
   density?: 'compact' | 'default' | 'comfortable';
 }
 
-export function V51Table<T extends Record<string, any>>({
+export function V51Table<T extends Record<string, unknown>>({
   columns,
   data,
   rowKey,
