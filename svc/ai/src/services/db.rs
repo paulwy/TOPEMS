@@ -51,7 +51,7 @@ impl Database {
             r#"
             CREATE TABLE IF NOT EXISTS plugin_ai.documents (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
+                tenant_id UUID NOT NULL DEFAULT gen_random_uuid(),
                 knowledge_base_id UUID,
                 title VARCHAR(500) NOT NULL,
                 file_name VARCHAR(500) NOT NULL,
@@ -77,7 +77,7 @@ impl Database {
         .await?;
 
         // 创建文档表索引
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_organization_id ON plugin_ai.documents(organization_id);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_tenant_id ON plugin_ai.documents(tenant_id);"#)
             .execute(&self.pool)
             .await?;
 
@@ -114,7 +114,7 @@ impl Database {
             r#"
             CREATE TABLE IF NOT EXISTS ai.document_chunks (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
+                tenant_id UUID NOT NULL DEFAULT gen_random_uuid(),
                 document_id UUID NOT NULL REFERENCES plugin_ai.documents(id) ON DELETE CASCADE,
                 knowledge_base_id UUID,
                 chunk_index INTEGER NOT NULL DEFAULT 0,
@@ -135,7 +135,7 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_organization_id ON ai.document_chunks(organization_id);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_tenant_id ON ai.document_chunks(tenant_id);"#)
             .execute(&self.pool)
             .await?;
 
@@ -196,7 +196,7 @@ impl Database {
             r#"
             CREATE TABLE IF NOT EXISTS ai.qa_history (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
+                tenant_id UUID NOT NULL DEFAULT gen_random_uuid(),
                 question TEXT NOT NULL,
                 answer TEXT NOT NULL,
                 context JSONB DEFAULT '{}',
@@ -211,9 +211,11 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_qa_history_organization_id ON ai.qa_history(organization_id);"#)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            r#"CREATE INDEX IF NOT EXISTS idx_qa_history_tenant_id ON ai.qa_history(tenant_id);"#,
+        )
+        .execute(&self.pool)
+        .await?;
 
         sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_qa_history_created_at ON ai.qa_history(created_at DESC);"#)
             .execute(&self.pool)
@@ -236,7 +238,7 @@ impl Database {
             r#"
             CREATE TABLE IF NOT EXISTS ai.analysis_results (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
+                tenant_id UUID NOT NULL DEFAULT gen_random_uuid(),
                 analysis_type VARCHAR(50) NOT NULL,
                 input_text TEXT NOT NULL,
                 result JSONB NOT NULL,
@@ -249,7 +251,7 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_analysis_results_organization_id ON ai.analysis_results(organization_id);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_analysis_results_tenant_id ON ai.analysis_results(tenant_id);"#)
             .execute(&self.pool)
             .await?;
 

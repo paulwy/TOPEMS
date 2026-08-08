@@ -16,7 +16,7 @@ use topems_shared::{api_error, ApiResponse, PaginatedResult, PaginationQuery};
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Position {
     pub id: Uuid,
-    pub organization_id: Uuid,
+    pub tenant_id: Uuid,
     pub org_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub name: String,
@@ -33,7 +33,7 @@ pub struct Position {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreatePositionRequest {
-    pub organization_id: Uuid,
+    pub tenant_id: Uuid,
     pub org_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub name: String,
@@ -95,7 +95,7 @@ async fn list_positions(
 
     let result = sqlx::query_as::<_, Position>(
         r#"
-        SELECT id, organization_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
+        SELECT id, tenant_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
         FROM hrm.positions
         WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
           AND ($2::uuid IS NULL OR department_id = $2)
@@ -163,13 +163,13 @@ async fn create_position(
 
     let result = sqlx::query_as::<_, Position>(
         r#"
-        INSERT INTO hrm.positions (id, organization_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at)
+        INSERT INTO hrm.positions (id, tenant_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
-        RETURNING id, organization_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
+        RETURNING id, tenant_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
         "#
     )
     .bind(id)
-    .bind(req.organization_id)
+    .bind(req.tenant_id)
     .bind(req.org_id)
     .bind(req.department_id)
     .bind(&req.name)
@@ -231,7 +231,7 @@ async fn get_position(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Position>> {
     let result = sqlx::query_as::<_, Position>(
-        "SELECT id, organization_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id, tenant_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -270,7 +270,7 @@ async fn update_position(
             status = COALESCE($10, status),
             updated_at = $11
         WHERE id = $12
-        RETURNING id, organization_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
+        RETURNING id, tenant_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
         "#
     )
     .bind(req.org_id)

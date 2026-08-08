@@ -208,7 +208,7 @@ impl EmployeeService {
         let result = sqlx::query_as::<_, Employee>(
             r#"
             INSERT INTO hrm.employees (
-                id, tenant_id, organization_id, org_id, department_id, position_id,
+                id, tenant_id, org_id, department_id, position_id,
                 employee_number, name, gender, hire_date, email, phone,
                 id_card_number, address,
                 birth_date, regular_date, probation_period, position, joblevel,
@@ -216,9 +216,9 @@ impl EmployeeService {
                 emergency_contact_name, emergency_contact_phone, emergency_relation,
                 hukou_location, remark, employee_type, user_id,
                 status, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                      $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29,
-                      'active', $30, $31)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+                      $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
+                      'active', $29, $30)
             RETURNING id, tenant_id, org_id, department_id, position_id,
                       employee_number, name, gender, hire_date, email, phone,
                       id_card_number, address,
@@ -230,7 +230,6 @@ impl EmployeeService {
             "#,
         )
         .bind(id)
-        .bind(self.tenant_id)
         .bind(self.tenant_id)
         .bind(req.org_id)
         .bind(req.department_id)

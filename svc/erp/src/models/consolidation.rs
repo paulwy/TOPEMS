@@ -6,7 +6,6 @@ use sqlx::FromRow;
 pub struct ConsolidationScope {
     pub id: uuid::Uuid,
     pub tenant_id: uuid::Uuid,
-    pub organization_id: uuid::Uuid,
     pub code: String,
     pub name: String,
     pub description: Option<String>,
@@ -128,7 +127,6 @@ pub struct UpdateEliminationRuleRequest {
 pub struct InternalTransaction {
     pub id: uuid::Uuid,
     pub tenant_id: uuid::Uuid,
-    pub organization_id: uuid::Uuid,
     pub transaction_no: String,
     pub transaction_date: chrono::NaiveDate,
     pub period: String,
@@ -178,7 +176,6 @@ pub struct RuleEliminationResult {
 pub struct ConsolidationReport {
     pub id: uuid::Uuid,
     pub tenant_id: uuid::Uuid,
-    pub organization_id: uuid::Uuid,
     pub report_no: String,
     pub report_type: String,
     pub scope_id: uuid::Uuid,
@@ -240,7 +237,6 @@ pub struct ConsolidationReportLine {
 pub struct CompanyRelation {
     pub id: uuid::Uuid,
     pub tenant_id: uuid::Uuid,
-    pub organization_id: uuid::Uuid,
     pub parent_company_id: uuid::Uuid,
     pub parent_company_name: Option<String>,
     pub child_company_id: uuid::Uuid,

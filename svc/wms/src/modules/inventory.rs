@@ -183,7 +183,7 @@ pub async fn create_inventory(
 
     let result = sqlx::query_as::<_, InventoryItem>(
         r#"
-        INSERT INTO wms.inventory (id, organization_id, warehouse_id, location_id, 
+        INSERT INTO wms.inventory (id, org_id, warehouse_id, location_id, 
                                    material_code, material_name, specification, 
                                    quantity, unit, available_quantity, 
                                    min_quantity, max_quantity, quality_status, created_at, updated_at)

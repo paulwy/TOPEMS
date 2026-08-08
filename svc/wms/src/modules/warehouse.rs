@@ -134,7 +134,7 @@ pub async fn create_warehouse(
 
     let result = sqlx::query_as::<_, Warehouse>(
         r#"
-        INSERT INTO wms.warehouses (id, tenant_id, organization_id, warehouse_name, warehouse_code, address, manager, contact_phone, status, created_at, updated_at)
+        INSERT INTO wms.warehouses (id, tenant_id, org_id, warehouse_name, warehouse_code, address, manager, contact_phone, status, created_at, updated_at)
         VALUES ($1, $2, '00000000-0000-0000-0000-000000000001', $3, $4, $5, $6, $7, 'active', $8, $9)
         RETURNING id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#,

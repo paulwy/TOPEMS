@@ -66,7 +66,7 @@ async fn list_departments(
 
     let result = sqlx::query_as::<_, Department>(
         r#"
-        SELECT id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        SELECT id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -136,15 +136,15 @@ async fn create_department(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    // 如果没有提供 organization_id，使用默认的 organization
-    let org_id = req.organization_id.unwrap_or_else(|| Uuid::nil());
+    // 如果没有提供 tenant_id，使用默认的 organization
+    let org_id = req.tenant_id.unwrap_or_else(|| Uuid::nil());
 
     let result = sqlx::query_as::<_, Department>(
         r#"
         INSERT INTO hrm.departments (
-            id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+            id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
-        RETURNING id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        RETURNING id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -220,7 +220,7 @@ async fn get_department(
 ) -> Json<ApiResponse<Department>> {
     let result = sqlx::query_as::<_, Department>(
         r#"
-        SELECT id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        SELECT id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments WHERE id = $1
         "#,
     )
@@ -245,7 +245,7 @@ async fn update_department(
     Json(req): Json<UpdateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
     let existing = sqlx::query_as::<_, Department>(
-        "SELECT id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -273,14 +273,14 @@ async fn update_department(
     let result = sqlx::query_as::<_, Department>(
         r#"
         UPDATE hrm.departments SET
-            organization_id = $2, org_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
+            tenant_id = $2, org_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
             description = $8, status = $9, updated_at = $10
         WHERE id = $1
-        RETURNING id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        RETURNING id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         "#,
     )
     .bind(id)
-    .bind(existing.organization_id)
+    .bind(existing.tenant_id)
     .bind(org_id)
     .bind(&name)
     .bind(&code)

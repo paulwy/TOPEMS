@@ -61,7 +61,7 @@ async fn list_companies(
 
     let result = sqlx::query_as::<_, Company>(
         r#"
-        SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
+        SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at
         FROM "public"."companies"
         WHERE ($1::text IS NULL OR name ILIKE $1 OR registration_number ILIKE $1 OR contact_email ILIKE $1)
@@ -158,15 +158,15 @@ async fn create_company(
     let result = sqlx::query_as::<_, Company>(
         r#"
         INSERT INTO hrm.companies (
-            id, organization_id, name, short_name, registration_number, tax_number, address,
+            id, tenant_id, name, short_name, registration_number, tax_number, address,
             contact_phone, contact_email, website, description, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
-        RETURNING id, organization_id, name, short_name, registration_number, tax_number, address,
+        RETURNING id, tenant_id, name, short_name, registration_number, tax_number, address,
                   contact_phone, contact_email as email, website, description, status, created_at, updated_at
         "#,
     )
     .bind(id)
-    .bind(req.organization_id)
+    .bind(req.tenant_id)
     .bind(&req.name)
     .bind(&req.short_name)
     .bind(&req.registration_number)
@@ -246,7 +246,7 @@ async fn get_company(
 
     let result = sqlx::query_as::<_, Company>(
         r#"
-        SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
+        SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at
         FROM hrm.companies WHERE id = $1
         "#,
@@ -280,7 +280,7 @@ async fn update_company(
     // 先检查公司是否存在
     let existing = sqlx::query_as::<_, Company>(
         r#"
-        SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
+        SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1
         "#,
     )
@@ -388,7 +388,7 @@ async fn delete_company(
     // 先检查公司是否存在
     let existing = sqlx::query_as::<_, Company>(
         r#"
-        SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
+        SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1
         "#,
     )

@@ -490,7 +490,7 @@ mod shared_schema_integration_tests {
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct SharedCompany {
         id: Uuid,
-        organization_id: Uuid,
+        tenant_id: Uuid,
         name: String,
         status: String,
         created_at: DateTime<Utc>,
@@ -499,7 +499,7 @@ mod shared_schema_integration_tests {
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct SharedDepartment {
         id: Uuid,
-        organization_id: Uuid,
+        tenant_id: Uuid,
         org_id: Option<Uuid>,
         name: String,
         code: String,
@@ -509,7 +509,7 @@ mod shared_schema_integration_tests {
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct SharedEmployee {
         id: Uuid,
-        organization_id: Uuid,
+        tenant_id: Uuid,
         org_id: Option<Uuid>,
         department_id: Option<Uuid>,
         employee_number: String,
@@ -521,7 +521,7 @@ mod shared_schema_integration_tests {
     fn test_shared_company_structure() {
         let company = SharedCompany {
             id: Uuid::new_v4(),
-            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            tenant_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
             name: "TOPEMS科技有限公司".to_string(),
             status: "active".to_string(),
             created_at: Utc::now(),
@@ -535,7 +535,7 @@ mod shared_schema_integration_tests {
     fn test_shared_department_structure() {
         let department = SharedDepartment {
             id: Uuid::new_v4(),
-            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            tenant_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
             org_id: Some(Uuid::new_v4()),
             name: "人力资源部".to_string(),
             code: "HR".to_string(),
@@ -551,7 +551,7 @@ mod shared_schema_integration_tests {
     fn test_shared_employee_structure() {
         let employee = SharedEmployee {
             id: Uuid::new_v4(),
-            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            tenant_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
             org_id: Some(Uuid::new_v4()),
             department_id: Some(Uuid::new_v4()),
             employee_number: "EMP001".to_string(),
@@ -571,7 +571,7 @@ mod shared_schema_integration_tests {
 
         let company = SharedCompany {
             id: org_id,
-            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            tenant_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
             name: "测试公司".to_string(),
             status: "active".to_string(),
             created_at: Utc::now(),
@@ -579,7 +579,7 @@ mod shared_schema_integration_tests {
 
         let department = SharedDepartment {
             id: department_id,
-            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            tenant_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
             org_id: Some(org_id),
             name: "测试部门".to_string(),
             code: "TEST-DEPT".to_string(),
@@ -588,7 +588,7 @@ mod shared_schema_integration_tests {
 
         let employee = SharedEmployee {
             id: Uuid::new_v4(),
-            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            tenant_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
             org_id: Some(org_id),
             department_id: Some(department_id),
             employee_number: "EMP001".to_string(),
@@ -605,7 +605,7 @@ mod shared_schema_integration_tests {
     fn test_shared_entity_serialization() {
         let company = SharedCompany {
             id: Uuid::parse_str("12345678-1234-5678-1234-567812345678").unwrap(),
-            organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+            tenant_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
             name: "序列化测试公司".to_string(),
             status: "active".to_string(),
             created_at: DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")

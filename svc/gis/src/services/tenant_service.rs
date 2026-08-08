@@ -39,8 +39,8 @@ impl TenantService {
     ) -> Result<FactoryMap, sqlx::Error> {
         sqlx::query_as::<_, FactoryMap>(
             r#"
-            INSERT INTO gis.factory_maps (tenant_id, organization_id, name, code, map_type, file_url, bounds, description)
-            VALUES ($1, $1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO gis.factory_maps (tenant_id, name, code, map_type, file_url, bounds, description)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
             "#,
         )

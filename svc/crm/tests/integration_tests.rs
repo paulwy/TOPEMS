@@ -164,7 +164,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, organization_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
+            INSERT INTO crm.customers (id, org_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
@@ -232,7 +232,7 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, organization_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
+            INSERT INTO crm.customers (id, org_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             "#,
         )
@@ -300,7 +300,7 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, organization_id, code, name, customer_type, industry, status, created_at, updated_at)
+            INSERT INTO crm.customers (id, org_id, code, name, customer_type, industry, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
@@ -319,7 +319,7 @@ mod tests {
         let opportunity_id = Uuid::new_v4();
         let result = sqlx::query(
             r#"
-            INSERT INTO crm.opportunities (id, organization_id, customer_id, name, stage, value, probability, status, created_at, updated_at)
+            INSERT INTO crm.opportunities (id, org_id, customer_id, name, stage, value, probability, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )

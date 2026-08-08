@@ -109,7 +109,7 @@ pub async fn batch_upload_positions(
     // 使用批量插入优化性能
     let mut query_builder: sqlx::QueryBuilder<sqlx::Postgres> =
         sqlx::QueryBuilder::new(
-            "INSERT INTO plugin_gis.device_location_records (device_id, organization_id, position, altitude, speed, direction, accuracy, battery_level, recorded_at)"
+            "INSERT INTO plugin_gis.device_location_records (device_id, tenant_id, position, altitude, speed, direction, accuracy, battery_level, recorded_at)"
         );
 
     query_builder.push_values(positions.iter(), |mut b, pos| {
@@ -239,7 +239,7 @@ pub async fn download_offline_data(
     // 下载设备数据
     if payload.include_devices {
         match sqlx::query_as::<_, DeviceLocation>(
-            "SELECT * FROM plugin_gis.device_locations WHERE organization_id = $1 ORDER BY created_at DESC",
+            "SELECT * FROM plugin_gis.device_locations WHERE tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(ctx.tenant_id)
         .fetch_all(&pool)

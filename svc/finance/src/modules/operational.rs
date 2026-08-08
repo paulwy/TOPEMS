@@ -285,7 +285,7 @@ async fn list_budgets(
     let offset = (page - 1) * page_size;
 
     let rows = sqlx::query(
-        r#"SELECT id, organization_id, department_id, budget_type, fiscal_year,
+        r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year,
                   total_budget, used_amount, remaining_amount, usage_rate, status,
                   created_at, updated_at, deleted_at
            FROM budgets WHERE deleted_at IS NULL
@@ -341,17 +341,17 @@ async fn create_budget(
     };
 
     let result = sqlx::query(
-        r#"INSERT INTO budgets (id, organization_id, department_id, budget_type, fiscal_year,
+        r#"INSERT INTO budgets (id, tenant_id, department_id, budget_type, fiscal_year,
                                 total_budget, used_amount, remaining_amount, usage_rate, status,
                                 created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
-           RETURNING id, organization_id, department_id, budget_type, fiscal_year,
+           RETURNING id, tenant_id, department_id, budget_type, fiscal_year,
                      total_budget, used_amount, remaining_amount, usage_rate, status,
                      created_at, updated_at, deleted_at"#,
     )
     .bind(id)
     .bind(
-        req.get("organization_id")
+        req.get("tenant_id")
             .and_then(|v| v.as_str())
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
@@ -389,7 +389,7 @@ async fn get_budget(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Value>> {
     let result = sqlx::query(
-        r#"SELECT id, organization_id, department_id, budget_type, fiscal_year,
+        r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year,
                   total_budget, used_amount, remaining_amount, usage_rate, status,
                   created_at, updated_at, deleted_at
            FROM budgets WHERE id = $1 AND deleted_at IS NULL"#,
@@ -441,7 +441,7 @@ async fn update_budget(
               total_budget = $5, used_amount = $6, remaining_amount = $7, usage_rate = $8,
               status = $9, updated_at = $10
            WHERE id = $1 AND deleted_at IS NULL
-           RETURNING id, organization_id, department_id, budget_type, fiscal_year,
+           RETURNING id, tenant_id, department_id, budget_type, fiscal_year,
                      total_budget, used_amount, remaining_amount, usage_rate, status,
                      created_at, updated_at, deleted_at"#,
     )
@@ -1002,7 +1002,7 @@ fn row_to_expense_json(row: &sqlx::postgres::PgRow) -> Value {
 fn row_to_budget_json(row: &sqlx::postgres::PgRow) -> Value {
     json!({
         "id": row.try_get::<Uuid, _>("id").ok(),
-        "organization_id": row.try_get::<Option<Uuid>, _>("organization_id").ok().flatten(),
+        "tenant_id": row.try_get::<Option<Uuid>, _>("tenant_id").ok().flatten(),
         "department_id": row.try_get::<Option<Uuid>, _>("department_id").ok().flatten(),
         "budget_type": row.try_get::<Option<String>, _>("budget_type").ok().flatten(),
         "fiscal_year": row.try_get::<String, _>("fiscal_year").ok(),

@@ -11,7 +11,6 @@ use uuid::Uuid;
 pub struct FactoryMap {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub name: String,
     pub code: String,
     pub map_type: String,
@@ -26,7 +25,6 @@ pub struct FactoryMap {
 pub struct DeviceLocation {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub map_id: Uuid,
     pub device_name: String,
     pub device_code: String,
@@ -43,7 +41,6 @@ pub struct DeviceLocation {
 pub struct Pipeline {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub map_id: Uuid,
     pub name: String,
     pub code: String,
@@ -59,7 +56,6 @@ pub struct Pipeline {
 pub struct WarehouseLocation {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub map_id: Uuid,
     pub warehouse_name: String,
     pub zone: Option<String>,
@@ -75,7 +71,6 @@ pub struct WarehouseLocation {
 pub struct LocationPhoto {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub map_id: Uuid,
     pub position: serde_json::Value,
     pub photo_url: String,
@@ -105,7 +100,6 @@ pub struct StorageLocation {
 pub struct BusinessLocation {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub business_type: String,
     pub business_name: String,
     pub business_code: Option<String>,
@@ -130,7 +124,6 @@ pub struct BusinessLocation {
 pub struct MapMarker {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub marker_type: String,
     pub name: String,
     pub marker_style: Option<String>,
@@ -154,7 +147,6 @@ pub struct MapMarker {
 pub struct Map {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub name: String,
     pub code: String,
     pub description: Option<String>,
@@ -174,7 +166,6 @@ pub struct Map {
 pub struct MapLayer {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub map_id: Uuid,
     pub name: String,
     pub layer_type: String,
@@ -197,7 +188,6 @@ pub struct MapLayer {
 pub struct GeoData {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub name: String,
     pub data_type: String,
     pub format: String,
@@ -218,7 +208,6 @@ pub struct GeoData {
 pub struct GeoFeature {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub geodata_id: Uuid,
     pub feature_type: String,
     pub geometry: serde_json::Value,
@@ -235,7 +224,6 @@ pub struct GeoFeature {
 pub struct SpatialAnalysis {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub analysis_type: String,
     pub input_data: serde_json::Value,
     pub parameters: Option<serde_json::Value>,
@@ -253,7 +241,6 @@ pub struct SpatialAnalysis {
 pub struct Location {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub name: String,
     pub code: Option<String>,
     pub location_type: String,
@@ -271,7 +258,6 @@ pub struct Location {
 pub struct Device {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub device_code: String,
     pub device_name: String,
     pub device_type: String,
@@ -288,7 +274,6 @@ pub struct Device {
 pub struct DeviceLocationRecord {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub device_id: Uuid,
     pub position: serde_json::Value,
     pub accuracy: Option<f64>,
@@ -306,7 +291,6 @@ pub struct DeviceLocationRecord {
 pub struct AuditLog {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub organization_id: Uuid,
     pub action: String,
     pub resource_type: String,
     pub resource_id: Option<Uuid>,

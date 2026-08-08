@@ -16,7 +16,6 @@ pub struct AuditLog {
     pub changed_at: DateTime<Utc>,
     pub ip_address: Option<String>,
     pub user_agent: Option<String>,
-    pub organization_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -28,5 +27,5 @@ pub struct CreateAuditLogRequest {
     pub new_values: Option<serde_json::Value>,
     pub ip_address: Option<String>,
     pub user_agent: Option<String>,
-    pub organization_id: Option<String>,
+    pub tenant_id: Option<String>,
 }

@@ -19,11 +19,11 @@ CREATE INDEX IF NOT EXISTS idx_employees_number_trgm ON hrm.employees USING gin 
 -- 员工表：状态+创建时间复合索引（用于按状态筛选并按时间排序）
 CREATE INDEX IF NOT EXISTS idx_employees_status_created ON hrm.employees(status, created_at DESC);
 
--- 员工表：组织ID+状态复合索引（多租户优化）
-CREATE INDEX IF NOT EXISTS idx_employees_org_status ON hrm.employees(organization_id, status);
+-- 员工表：租户ID+状态复合索引（多租户优化）
+CREATE INDEX IF NOT EXISTS idx_employees_tenant_status ON hrm.employees(tenant_id, status);
 
--- 员工表：组织ID+部门ID+状态复合索引（多租户+部门筛选优化）
-CREATE INDEX IF NOT EXISTS idx_employees_org_dept_status ON hrm.employees(organization_id, department_id, status);
+-- 员工表：租户ID+部门ID+状态复合索引（多租户+部门筛选优化）
+CREATE INDEX IF NOT EXISTS idx_employees_tenant_dept_status ON hrm.employees(tenant_id, department_id, status);
 
 -- 合同表：员工ID+状态复合索引（查询员工合同）
 CREATE INDEX IF NOT EXISTS idx_contracts_employee_status ON hrm.contracts(employee_id, status);

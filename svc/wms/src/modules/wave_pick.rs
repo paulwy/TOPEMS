@@ -160,7 +160,7 @@ pub async fn create_wave_pick(
 
     let result = sqlx::query_as::<_, WavePick>(
         r#"
-        INSERT INTO wms.wave_picks (id, organization_id, wave_pick_number, wave_pick_type, 
+        INSERT INTO wms.wave_picks (id, org_id, wave_pick_number, wave_pick_type, 
                                     warehouse_id, status, priority, batch_id, remarks,
                                     total_items, picked_items, total_quantity, picked_quantity,
                                     created_at, updated_at)

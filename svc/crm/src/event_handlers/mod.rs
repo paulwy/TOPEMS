@@ -122,7 +122,7 @@ impl CrmEventHandlers {
 
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
-               (id, organization_id, customer_id, interaction_type, subject, content, status, scheduled_at, created_at, updated_at)
+               (id, org_id, customer_id, interaction_type, subject, content, status, scheduled_at, created_at, updated_at)
                VALUES ($1, $2, $3, 'aftersales_ticket', $4, $5, 'in_progress', $6, $7, $7)
                ON CONFLICT DO NOTHING"#,
         )
@@ -189,7 +189,7 @@ impl CrmEventHandlers {
 
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
-               (id, organization_id, customer_id, opportunity_id, interaction_type, subject, content, status, scheduled_at, follow_up_required, follow_up_date, created_at, updated_at)
+               (id, org_id, customer_id, opportunity_id, interaction_type, subject, content, status, scheduled_at, follow_up_required, follow_up_date, created_at, updated_at)
                VALUES ($1, $2, $3, $4, 'follow_up', $5, $6, 'scheduled', $7, TRUE, $8, $9, $9)
                ON CONFLICT DO NOTHING"#,
         )
