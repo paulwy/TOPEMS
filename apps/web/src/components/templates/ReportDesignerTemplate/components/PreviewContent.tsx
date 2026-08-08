@@ -139,8 +139,11 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
               >
                 {yFields.map((yField, yIdx) => {
                   const value = (row[yField.fieldName] as number) || 0;
-                  const maxValue = Math.max(...previewData.map((r) => (r[yField.fieldName] as number) || 0), 1);
-                  const height = (value as number) / maxValue * 100;
+                  const maxValue = Math.max(
+                    ...previewData.map((r) => (r[yField.fieldName] as number) || 0),
+                    1
+                  );
+                  const height = ((value as number) / maxValue) * 100;
                   return (
                     <Box
                       key={yIdx}

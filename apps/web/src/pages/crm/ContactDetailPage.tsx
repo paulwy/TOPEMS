@@ -312,7 +312,11 @@ const ContactDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={(contact?.last_name ? `${contact.last_name}${contact.first_name || ''}` : '') || contact?.id || '联系人详情'}
+        detailItemName={
+          (contact?.last_name ? `${contact.last_name}${contact.first_name || ''}` : '') ||
+          contact?.id ||
+          '联系人详情'
+        }
         backHref={CRM_PATHS.contacts}
         loading={loading}
         error={errorMessage}

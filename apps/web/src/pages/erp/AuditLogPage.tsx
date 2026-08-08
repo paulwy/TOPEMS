@@ -166,7 +166,10 @@ const AuditLogPage: React.FC = () => {
   };
 
   const getTypeChip = (type: string) => {
-    const colorMap: Record<string, 'primary' | 'warning' | 'error' | 'info' | 'success' | 'secondary' | 'default'> = {
+    const colorMap: Record<
+      string,
+      'primary' | 'warning' | 'error' | 'info' | 'success' | 'secondary' | 'default'
+    > = {
       创建: 'primary',
       修改: 'warning',
       删除: 'error',
