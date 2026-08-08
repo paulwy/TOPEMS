@@ -29,7 +29,7 @@ Iteration 0-1（TODO.md 归档）与 Iteration 0-3（导航基线验证）已在
 
 Run:
 ```bash
-cd /Users/xingzhai/TOPEMS/apps/web && npx tsc --noEmit 2>&1 | grep -cE "error TS"
+cd /Users/air/TOPEMS/apps/web && npx tsc --noEmit 2>&1 | grep -cE "error TS"
 ```
 Expected before fix: `56`（包含 `Property 'settings' does not exist on type 'Tenant'`、`Property 'slug' does not exist on type 'Tenant'`、`'owner' does not exist in type 'Record<TenantRole, string>'` 三类）
 
@@ -122,7 +122,7 @@ allowed_ip_ranges: tenant.settings.security.allowed_ip_ranges ?? [],
 
 Run:
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 mkdir -p docs/roadmap/archive
 sed -n '15,3515p' docs/roadmap/TODO.md > docs/roadmap/archive/2026-W32.md
 wc -l docs/roadmap/archive/2026-W32.md   # 期望 3501
@@ -134,11 +134,11 @@ wc -l docs/roadmap/archive/2026-W32.md   # 期望 3501
 
 ```bash
 # 验收 1: 前端 TSC 0 error
-cd /Users/xingzhai/TOPEMS/apps/web && npx tsc --noEmit 2>&1 | grep -cE "error TS"
+cd /Users/air/TOPEMS/apps/web && npx tsc --noEmit 2>&1 | grep -cE "error TS"
 # Expected: 0
 
 # 验收 2: 归档文件存在 + 链接正确
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 test -f docs/roadmap/archive/2026-W32.md && echo "archive OK"
 wc -l < docs/roadmap/TODO.md
 # Expected: ≤ 120
@@ -151,7 +151,7 @@ node scripts/analyze_nav_structure.mjs --validate
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 git add \
   apps/web/src/api/tenant/types.ts \
   apps/web/src/pages/admin/TenantDetailPage.tsx \
@@ -181,7 +181,7 @@ git commit -m "fix(admin): resolve 56 tsc errors in tenant module + chore(docs):
 
 **背景定位（先确认当前文件存在与位置）：**
 ```bash
-cd /Users/xingzhai/TOPEMS/apps/web/src/pages/dashboard
+cd /Users/air/TOPEMS/apps/web/src/pages/dashboard
 ls -la DashboardPage.tsx DashboardSections.tsx components/ModuleCard.tsx
 ```
 
@@ -308,7 +308,7 @@ const cardsBySection = useMemo(() => {
 - [ ] **Step 4: 运行验收**
 
 ```bash
-cd /Users/xingzhai/TOPEMS/apps/web
+cd /Users/air/TOPEMS/apps/web
 npx tsc --noEmit 2>&1 | grep -cE "error TS"
 # Expected: 0
 
@@ -322,7 +322,7 @@ npx tsc --noEmit 2>&1 | grep -cE "error TS"
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 git add \
   apps/web/src/pages/dashboard/DashboardPage.tsx \
   apps/web/src/pages/dashboard/DashboardSections.tsx
@@ -474,7 +474,7 @@ export default ModuleCard;
 - [ ] **Step 3: 运行验收**
 
 ```bash
-cd /Users/xingzhai/TOPEMS/apps/web
+cd /Users/air/TOPEMS/apps/web
 npx tsc --noEmit 2>&1 | grep -cE "error TS"
 # Expected: 0
 
@@ -489,7 +489,7 @@ npx tsc --noEmit 2>&1 | grep -cE "error TS"
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 git add apps/web/src/pages/dashboard/components/ModuleCard.tsx
 git commit -m "feat(ui): rebuild ModuleCard style system (4-slot skeleton + tokens)
 
@@ -608,7 +608,7 @@ import EmptyState from '@/components/common/EmptyState';
 - [ ] **Step 3: 运行验收**
 
 ```bash
-cd /Users/xingzhai/TOPEMS/apps/web
+cd /Users/air/TOPEMS/apps/web
 npx tsc --noEmit 2>&1 | grep -cE "error TS"
 # Expected: 0
 
@@ -624,7 +624,7 @@ npx tsc --noEmit 2>&1 | grep -cE "error TS"
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 git add \
   apps/web/src/components/common/EmptyState.tsx \
   apps/web/src/components/common/index.ts \
@@ -649,7 +649,7 @@ git commit -m "feat(ui): responsive grid solidify + dashboard empty states
 
 **先决条件（必跑一次检查）：**
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 ls -la docs/architecture/navigation-architecture.md 2>/dev/null || echo "设计文档缺失 → 请先创建 v2.1.0"
 node scripts/analyze_nav_structure.mjs --validate-l1-l2 2>&1 | head -50
 ```
@@ -732,7 +732,7 @@ const navTree = useMemo(() => {
 - [ ] **Step 4: 运行验收**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 
 # 结构验证
 node scripts/analyze_nav_structure.mjs --validate-l1-l2
@@ -755,7 +755,7 @@ cd apps/web && npx tsc --noEmit 2>&1 | grep -cE "error TS"
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 git add \
   apps/web/src/layouts/constants.ts \
   apps/web/src/layouts/SidebarLayout.tsx
@@ -855,7 +855,7 @@ if (STRICT && !OK) process.exit(1);
 - [ ] **Step 2: 为脚本添加 shebang 可执行权限 + package.json script**
 
 ```bash
-chmod +x /Users/xingzhai/TOPEMS/scripts/verify_navigation.mjs
+chmod +x /Users/air/TOPEMS/scripts/verify_navigation.mjs
 ```
 
 在 `apps/web/package.json` scripts 块加：
@@ -866,7 +866,7 @@ chmod +x /Users/xingzhai/TOPEMS/scripts/verify_navigation.mjs
 - [ ] **Step 3: 运行验收**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 node scripts/verify_navigation.mjs
 # Expected 初版输出（NAV_TREE 占位前可能 0 页面，接入真实 nav config 后应达 341 L4 页面 + 0 missing）
 
@@ -878,7 +878,7 @@ pnpm -C apps/web verify:nav
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 git add \
   scripts/verify_navigation.mjs \
   apps/web/package.json
@@ -1040,7 +1040,7 @@ import { UserMenu } from './components/UserMenu';
 - [ ] **Step 3: 运行验收**
 
 ```bash
-cd /Users/xingzhai/TOPEMS/apps/web
+cd /Users/air/TOPEMS/apps/web
 npx tsc --noEmit 2>&1 | grep -cE "error TS"
 # Expected: 0
 
@@ -1057,7 +1057,7 @@ npx tsc --noEmit 2>&1 | grep -cE "error TS"
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 git add \
   apps/web/src/layouts/components/UserMenu.tsx \
   apps/web/src/layouts/AppHeader.tsx
@@ -1204,7 +1204,7 @@ AppHeader.tsx Toolbar 右侧 Stack 调整为：
 - [ ] **Step 4: 运行验收**
 
 ```bash
-cd /Users/xingzhai/TOPEMS/apps/web
+cd /Users/air/TOPEMS/apps/web
 npx tsc --noEmit 2>&1 | grep -cE "error TS"
 # Expected: 0
 
@@ -1218,7 +1218,7 @@ npx tsc --noEmit 2>&1 | grep -cE "error TS"
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 git add \
   apps/web/src/layouts/components/GlobalActions.tsx \
   apps/web/src/components/common/BackButton.tsx \
@@ -1332,7 +1332,7 @@ export const darkTheme  = createTheme(sharedOptions('dark'), zhCN);
 - [ ] **Step 3: 运行验收**
 
 ```bash
-cd /Users/xingzhai/TOPEMS/apps/web
+cd /Users/air/TOPEMS/apps/web
 npx tsc --noEmit 2>&1 | grep -cE "error TS"
 # Expected: 0
 
@@ -1349,7 +1349,7 @@ npx tsc --noEmit 2>&1 | grep -cE "error TS"
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 git add apps/web/src/theme/index.ts
 # （如有抽样替换的组件文件也一并 git add）
 git commit -m "feat(theme): MUI tokenization + spacing/radius/shadow baseline
@@ -1405,13 +1405,13 @@ exit 0
 ```
 
 ```bash
-chmod +x /Users/xingzhai/TOPEMS/scripts/v68_quality_gate.sh
+chmod +x /Users/air/TOPEMS/scripts/v68_quality_gate.sh
 ```
 
 - [ ] **Step 2: 运行验收**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 ./scripts/v68_quality_gate.sh
 # Expected output:
 #   1.frontend-tsc ... PASS
@@ -1424,7 +1424,7 @@ cd /Users/xingzhai/TOPEMS
 - [ ] **Step 3: 更新 TODO.md 标记 V68.0 完成并 Commit**
 
 ```bash
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 # 将 TODO.md 中 15 项 ⏳ 待开始 → ✅ 完成；更新「按状态统计」行
 # （请手动编辑 TODO.md 的表格状态列）
 

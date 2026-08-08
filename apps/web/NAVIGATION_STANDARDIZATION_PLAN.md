@@ -11,10 +11,10 @@
 >   - ✅ 批次 0：8 大模块典范页 + CI 审计脚本骨架
 >   - ✅ 批次 1：CRUD 可改造页面迁移（lowcode 10 + automation 5 + gis 1 + mes 3 = 19 页加 PageContainer）
 >   - ✅ 批次 2-5：全量扫描确认其余模块页面已用标准模板（im/plugin/ai/doc/system/report/mobile/shared/admin/pm/workflow/bi 已达标）
->   - ✅ 批次 6：CI 门禁升级（[page-audit.cjs](file:///Users/xingzhai/TOPEMS/scripts/ci/page-audit.cjs) 识别 21 个标准模板，纯页面 422/427 = 99%）
+>   - ✅ 批次 6：CI 门禁升级（[page-audit.cjs](file:///Users/air/TOPEMS/scripts/ci/page-audit.cjs) 识别 21 个标准模板，纯页面 422/427 = 99%）
 >   - **最终结果：纯页面标准化率 99%（422/427），剩余 5 个为 Login/Error/ForgotPassword/PerformanceTest 等特殊功能页**
 > - ✅ 阶段四：API 映射治理收尾完成（plugin API 去 /v1/ 前缀 + apiPath.ts 同步 moduleMapping + 测试修复）
-> - ✅ 阶段五：图标统一收尾完成（iconMapping 注册 170 个图标 + [check-icons.cjs](file:///Users/xingzhai/TOPEMS/scripts/ci/check-icons.cjs) 门禁，0 缺失）
+> - ✅ 阶段五：图标统一收尾完成（iconMapping 注册 170 个图标 + [check-icons.cjs](file:///Users/air/TOPEMS/scripts/ci/check-icons.cjs) 门禁，0 缺失）
 
 ---
 
@@ -24,11 +24,11 @@
 
 | 脚本 | 职责 | 当前结果 |
 |------|------|---------|
-| [page-audit.cjs](file:///Users/xingzhai/TOPEMS/scripts/ci/page-audit.cjs) | 扫描 apps/web/src/pages 标准化率，识别 21 个标准模板（含 PageContainer），支持 `--diff`/`--strict`/`--json` | 纯页面 422/427 = 99% ✅ |
-| [check-icons.cjs](file:///Users/xingzhai/TOPEMS/scripts/ci/check-icons.cjs) | 扫描 modules/*/config.ts + navigation/types.ts 中所有 icon 引用，验证在 iconMapping 注册 | 170 图标 0 缺失 ✅ |
-| [check-nav-route.cjs](file:///Users/xingzhai/TOPEMS/scripts/ci/check-nav-route.cjs) | lazy.ts ↔ routes/v2/index.ts ↔ moduleMapping 三方一致性 | 33 ↔ 33 ↔ 34（rs 是 rd 别名）✅ |
-| [compare-api-modules.cjs](file:///Users/xingzhai/TOPEMS/scripts/ci/compare-api-modules.cjs) | src/api/ 目录 ↔ moduleMapping 模块对齐（双向白名单） | 51 ↔ 34 + 20+3 白名单 ✅ |
-| [check-api-coverage.cjs](file:///Users/xingzhai/TOPEMS/scripts/ci/check-api-coverage.cjs) | lowcode 10 页 + automation 5 页 API 引用覆盖率 | 100% + 100% ✅ |
+| [page-audit.cjs](file:///Users/air/TOPEMS/scripts/ci/page-audit.cjs) | 扫描 apps/web/src/pages 标准化率，识别 21 个标准模板（含 PageContainer），支持 `--diff`/`--strict`/`--json` | 纯页面 422/427 = 99% ✅ |
+| [check-icons.cjs](file:///Users/air/TOPEMS/scripts/ci/check-icons.cjs) | 扫描 modules/*/config.ts + navigation/types.ts 中所有 icon 引用，验证在 iconMapping 注册 | 170 图标 0 缺失 ✅ |
+| [check-nav-route.cjs](file:///Users/air/TOPEMS/scripts/ci/check-nav-route.cjs) | lazy.ts ↔ routes/v2/index.ts ↔ moduleMapping 三方一致性 | 33 ↔ 33 ↔ 34（rs 是 rd 别名）✅ |
+| [compare-api-modules.cjs](file:///Users/air/TOPEMS/scripts/ci/compare-api-modules.cjs) | src/api/ 目录 ↔ moduleMapping 模块对齐（双向白名单） | 51 ↔ 34 + 20+3 白名单 ✅ |
+| [check-api-coverage.cjs](file:///Users/air/TOPEMS/scripts/ci/check-api-coverage.cjs) | lowcode 10 页 + automation 5 页 API 引用覆盖率 | 100% + 100% ✅ |
 
 **白名单机制**：
 - `page-audit.cjs`：CRUD 关键词（Management/List/Table/Crud/Catalog/Inventory/Record）+ 豁免模式（Dashboard/Home/Settings/Config/Designer/Editor/Wizard/Login/Error/404/Profile/Portal/Test 等），非 CRUD 页面不强制标准化
@@ -39,7 +39,7 @@
 **集成方式**：
 - 本地提交门禁：`.husky/pre-commit` 在检测到 `apps/web/src/pages/*.tsx` 变更时调用 `page-audit.cjs --diff --strict`；在检测到 iconMapping/modules/config 变更时调用 `check-icons.cjs --strict`
 - 手动运行：`node scripts/ci/<script>.cjs [--strict|--json|--diff]`
-- GitHub Actions：[.github/workflows/ci.yml](file:///Users/xingzhai/TOPEMS/.github/workflows/ci.yml) 的 `quality-gate` job 在 PR Review Checklist 中要求"New pages use PageContainerV2 and ListPageTemplate/FormPageTemplate"
+- GitHub Actions：[.github/workflows/ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml) 的 `quality-gate` job 在 PR Review Checklist 中要求"New pages use PageContainerV2 and ListPageTemplate/FormPageTemplate"
 
 ---
 

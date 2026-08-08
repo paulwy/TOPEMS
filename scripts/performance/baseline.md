@@ -245,7 +245,7 @@ A regression is flagged when p95 exceeds **1.5×** the baseline value.
 #    (do NOT start services from this script — see run_benchmark.sh)
 
 # 2. Run the benchmark against localhost
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 ./scripts/perf/benchmark.sh localhost dev-token 100
 ```
 

@@ -56,7 +56,7 @@ pg_dump -h localhost -U topems -d topems --data-only -F c -f topems_data_backup_
 
 ```bash
 # 停止所有 TOPEMS 服务
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 
 # 停止 unified-core
 pkill -f "unified-core"
@@ -82,7 +82,7 @@ psql -h localhost -U topems -d topems
 
 ```bash
 # 在项目根目录执行
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 
 # 执行核心重建脚本
 psql -h localhost -U topems -d topems -f database/init/01_rebuild_database.sql
@@ -277,7 +277,7 @@ SELECT * FROM shared.currencies;
 
 ```bash
 # 重启所有服务
-cd /Users/xingzhai/TOPEMS
+cd /Users/air/TOPEMS
 
 # 启动 unified-core
 cd svc/unified-core

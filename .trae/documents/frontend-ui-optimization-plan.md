@@ -20,15 +20,15 @@
 
 | 组件 | mui版本 | common版本 | 建议 |
 |------|---------|------------|------|
-| StatCard | [mui/StatCard.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/mui/StatCard.tsx) | [common/StatCard.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/common/StatCard.tsx) | 保留common/版本，标记mui/为deprecated |
-| DataGrid | [mui/DataGrid.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/mui/DataGrid.tsx) | [common/DataTable.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/common/DataTable.tsx) | DataTable已整合功能，统一使用DataTable |
+| StatCard | [mui/StatCard.tsx](file:///Users/air/TOPEMS/apps/web/src/components/mui/StatCard.tsx) | [common/StatCard.tsx](file:///Users/air/TOPEMS/apps/web/src/components/common/StatCard.tsx) | 保留common/版本，标记mui/为deprecated |
+| DataGrid | [mui/DataGrid.tsx](file:///Users/air/TOPEMS/apps/web/src/components/mui/DataGrid.tsx) | [common/DataTable.tsx](file:///Users/air/TOPEMS/apps/web/src/components/common/DataTable.tsx) | DataTable已整合功能，统一使用DataTable |
 | FilterBar | mui/FilterBar | common/AdvancedFilter | 保留common/AdvancedFilter |
 | EmptyState | mui/EmptyState | templates/EmptyState | 统一使用templates/EmptyState |
 | LoadingState | mui/LoadingState | common/LoadingSpinner | 保留common/LoadingSpinner |
 
 ### 1.2 更新组件导出
 
-修改 [mui/index.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/components/mui/index.ts)，将重复组件标记为deprecated并重新导出common版本：
+修改 [mui/index.ts](file:///Users/air/TOPEMS/apps/web/src/components/mui/index.ts)，将重复组件标记为deprecated并重新导出common版本：
 
 ```typescript
 // 将 StatCard 标记为 deprecated，重新导出 common 版本
@@ -51,15 +51,15 @@ export { default as StatCard } from '@/components/common/StatCard';
 ### 2.2 优先修复高优先级错误
 
 **Critical - 影响构建**:
-- [HrmContractPage.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/hrm/HrmContractPage.tsx) - Chip组件未导入
-- [HrmPositionPage.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/hrm/HrmPositionPage.tsx) - DialogContent未闭合
+- [HrmContractPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/hrm/HrmContractPage.tsx) - Chip组件未导入
+- [HrmPositionPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/hrm/HrmPositionPage.tsx) - DialogContent未闭合
 
 **High - 影响功能**:
-- [pages/hrm/HrmContractDetailPage.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/hrm/HrmContractDetailPage.tsx) - Contract类型缺少属性
-- [pages/bi/BIVisualizationPage.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/bi/BIVisualizationPage.tsx) - WidgetPosition类型缺少width/height
+- [pages/hrm/HrmContractDetailPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/hrm/HrmContractDetailPage.tsx) - Contract类型缺少属性
+- [pages/bi/BIVisualizationPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/bi/BIVisualizationPage.tsx) - WidgetPosition类型缺少width/height
 
 **Medium - 代码质量**:
-- [components/templates/ReportDesignerTemplate.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/templates/ReportDesignerTemplate.tsx) - yFields可能为undefined
+- [components/templates/ReportDesignerTemplate.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/ReportDesignerTemplate.tsx) - yFields可能为undefined
 
 ### 2.3 测试文件错误处理
 
@@ -85,7 +85,7 @@ components/
 
 ### 3.2 统一导出入口
 
-建议创建 [components/index.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/components/index.ts) 作为统一导出入口：
+建议创建 [components/index.ts](file:///Users/air/TOPEMS/apps/web/src/components/index.ts) 作为统一导出入口：
 
 ```typescript
 // 统一导出所有组件
@@ -100,7 +100,7 @@ export * from './mui';
 
 ### 4.1 检查设计规范执行情况
 
-根据 [design-system.md](file:///Users/xingzhai/TOPEMS/docs/guides/ui/design-system.md)：
+根据 [design-system.md](file:///Users/air/TOPEMS/docs/guides/ui/design-system.md)：
 
 - [ ] 所有组件使用MUI的sx prop进行样式定义
 - [ ] 避免使用Tailwind CSS（检查是否有遗留使用）
@@ -109,7 +109,7 @@ export * from './mui';
 
 ### 4.2 统一工具函数导出
 
-当前 [utils/index.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/utils/index.ts) 已导出format/date/string模块，需确认：
+当前 [utils/index.ts](file:///Users/air/TOPEMS/apps/web/src/utils/index.ts) 已导出format/date/string模块，需确认：
 
 - [ ] format.ts 中的函数命名符合规范
 - [ ] 日期格式化使用统一入口
@@ -170,12 +170,12 @@ export * from './mui';
 ## 关键文件清单
 
 ### 需要修改的文件
-- [apps/web/src/components/mui/index.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/components/mui/index.ts) - 更新导出
-- [apps/web/src/components/index.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/components/index.ts) - 新建统一入口
-- [apps/web/src/pages/hrm/HrmContractPage.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/hrm/HrmContractPage.tsx) - 修复导入
-- [apps/web/src/pages/hrm/HrmContractDetailPage.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/hrm/HrmContractDetailPage.tsx) - 类型修复
-- [apps/web/src/pages/bi/BIVisualizationPage.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/bi/BIVisualizationPage.tsx) - 类型修复
-- [apps/web/src/components/templates/ReportDesignerTemplate.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/templates/ReportDesignerTemplate.tsx) - undefined处理
+- [apps/web/src/components/mui/index.ts](file:///Users/air/TOPEMS/apps/web/src/components/mui/index.ts) - 更新导出
+- [apps/web/src/components/index.ts](file:///Users/air/TOPEMS/apps/web/src/components/index.ts) - 新建统一入口
+- [apps/web/src/pages/hrm/HrmContractPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/hrm/HrmContractPage.tsx) - 修复导入
+- [apps/web/src/pages/hrm/HrmContractDetailPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/hrm/HrmContractDetailPage.tsx) - 类型修复
+- [apps/web/src/pages/bi/BIVisualizationPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/bi/BIVisualizationPage.tsx) - 类型修复
+- [apps/web/src/components/templates/ReportDesignerTemplate.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/ReportDesignerTemplate.tsx) - undefined处理
 
 ### 需要删除/标记deprecated的文件
 - `apps/web/src/components/mui/StatCard.tsx`
