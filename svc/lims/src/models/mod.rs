@@ -1,3 +1,5 @@
+pub mod audit_log;
+
 use sqlx::PgPool;
 
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {

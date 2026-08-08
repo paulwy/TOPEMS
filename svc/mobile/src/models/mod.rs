@@ -1,3 +1,5 @@
+pub mod audit_log;
+
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;

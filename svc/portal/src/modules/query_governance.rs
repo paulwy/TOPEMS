@@ -203,11 +203,16 @@ pub struct QueryQuotaInput {
     pub enforcement: Option<bool>,
 }
 
+/// 审批状态 — 与 shared-core ApprovalStatus 对齐（因 async_graphql::Enum 需本地派生）
+/// 变体与 topems_shared::common_types::ApprovalStatus 保持一致
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Enum, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ApprovalStatus {
     Pending,
     Approved,
     Rejected,
+    InProgress,
+    Cancelled,
     Expired,
 }
 

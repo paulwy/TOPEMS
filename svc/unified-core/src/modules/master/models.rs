@@ -346,25 +346,8 @@ pub struct ReconciliationLog {
 /// 需要审批的主数据域
 pub const APPROVAL_REQUIRED_DOMAINS: &[&str] = &["account_subject"];
 
-/// 审批状态
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ApprovalStatus {
-    Pending,
-    Approved,
-    Rejected,
-    Cancelled,
-}
-
-impl std::fmt::Display for ApprovalStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ApprovalStatus::Pending => write!(f, "pending"),
-            ApprovalStatus::Approved => write!(f, "approved"),
-            ApprovalStatus::Rejected => write!(f, "rejected"),
-            ApprovalStatus::Cancelled => write!(f, "cancelled"),
-        }
-    }
-}
+/// 审批状态 — 统一使用 shared-core 通用枚举（6 变体：Pending/Approved/Rejected/InProgress/Cancelled/Expired）
+pub use topems_shared::common_types::ApprovalStatus;
 
 /// 主数据变更审批请求
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]

@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+pub mod audit_log;
+
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};

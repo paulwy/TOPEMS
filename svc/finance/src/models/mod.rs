@@ -1,3 +1,5 @@
+pub mod audit_log;
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};

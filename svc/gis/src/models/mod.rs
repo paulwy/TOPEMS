@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+pub mod audit_log;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
