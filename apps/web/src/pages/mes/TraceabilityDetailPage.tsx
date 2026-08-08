@@ -551,7 +551,11 @@ const TraceabilityDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={batchNo || (traceChain as unknown as Record<string, unknown>)?.identifier?.toString() || '追溯详情'}
+        detailItemName={
+          batchNo ||
+          (traceChain as unknown as Record<string, unknown>)?.identifier?.toString() ||
+          '追溯详情'
+        }
         backHref={MES_PATHS.traceability}
         loading={loading}
         error={errorMessage}

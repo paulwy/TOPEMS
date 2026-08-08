@@ -390,7 +390,9 @@ const HrmContractDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={contract?.contract_name || contract?.contractNo || contract?.id || '合同详情'}
+        detailItemName={
+          contract?.contract_name || contract?.contractNo || contract?.id || '合同详情'
+        }
         backHref={HRM_PATHS.contracts}
         loading={loading}
         error={errorMessage}

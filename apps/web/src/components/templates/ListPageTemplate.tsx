@@ -3834,7 +3834,11 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                           onClick={action.onClick}
                           sx={{ whiteSpace: 'nowrap' }}
                         >
-                          {!isMobile ? action.label : (action.label && action.label.length > 4 ? action.label.slice(0, 4) : action.label)}
+                          {!isMobile
+                            ? action.label
+                            : action.label && action.label.length > 4
+                              ? action.label.slice(0, 4)
+                              : action.label}
                         </Button>
                       ))}
                       {hiddenActions.length > 0 && (

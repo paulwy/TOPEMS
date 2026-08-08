@@ -240,7 +240,9 @@ export function DrillDownPanel({
                         key={column.key}
                         style={{ padding: '12px 16px', color: 'grey.700' }}
                       >
-                        {column.format ? column.format(row[column.key]) : (row[column.key] as React.ReactNode)}
+                        {column.format
+                          ? column.format(row[column.key])
+                          : (row[column.key] as React.ReactNode)}
                       </td>
                     ))}
                   </tr>
