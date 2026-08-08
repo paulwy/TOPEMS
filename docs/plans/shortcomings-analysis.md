@@ -1,7 +1,7 @@
 # TOPEMS 项目短板逐一分析与优化报告
 
 > **版本**: v1.0 | **日期**: 2026-07-24 | **范围**: 全栈架构、安全、工程效能、产品完整度、增值运营
-> **配套文档**: [CODE_WIKI.md §11](file:///Users/xingzhai/TOPEMS/docs/CODE_WIKI.md) 项目评估与优化方案
+> **配套文档**: [CODE_WIKI.md §11](file:///Users/air/TOPEMS/docs/CODE_WIKI.md) 项目评估与优化方案
 
 ---
 
@@ -99,7 +99,7 @@
 
 #### 问题
 
-[svc/analytics/src/modules/bi/chart_service.rs#L103](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103) 与 [multidimensional_analysis.rs#L332](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332) 直接将用户可控参数拼入 SQL：
+[svc/analytics/src/modules/bi/chart_service.rs#L103](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103) 与 [multidimensional_analysis.rs#L332](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332) 直接将用户可控参数拼入 SQL：
 
 ```rust
 query: format!("SELECT {} FROM {}", x_column, data_source),  // chart_service.rs:103
@@ -160,7 +160,7 @@ let query = format!("SELECT {} FROM analytics_data LIMIT 100", select_clause); /
 
 #### 问题
 
-[lib/src/auth.rs#L69-L96](file:///Users/xingzhai/TOPEMS/lib/src/auth.rs#L69-L96) 存在两重风险：
+[lib/src/auth.rs#L69-L96](file:///Users/air/TOPEMS/lib/src/auth.rs#L69-L96) 存在两重风险：
 
 1. **HS256 对称密钥**：所有 20+ 服务共享同一 `JWT_SECRET`，任一服务泄露密钥即可伪造任意租户/用户 token，跨服务横向移动无障碍。
 2. **默认密钥回退**：未设置 `JWT_SECRET` 环境变量时回退到硬编码 `topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256`，生产环境漏配即等于无认证。
@@ -206,7 +206,7 @@ let default_jwt_secret = "topems-jwt-secret-key-must-be-at-least-32-characters-l
 
 #### 步骤
 
-1. **【1 天 止血】** 修改 [auth.rs](file:///Users/xingzhai/TOPEMS/lib/src/auth.rs)：`PROFILE=prod` 时移除默认密钥，校验 `JWT_SECRET` 长度≥32，否则 `panic!`。
+1. **【1 天 止血】** 修改 [auth.rs](file:///Users/air/TOPEMS/lib/src/auth.rs)：`PROFILE=prod` 时移除默认密钥，校验 `JWT_SECRET` 长度≥32，否则 `panic!`。
 2. **【1 天 密钥生成】** 生成 RSA 密钥对（2048 位），私钥存入 K8s Secret / Vault，公钥分发至所有服务环境变量。
 3. **【2 天 签发改造】** IAM 服务 `encode` 切换 `Algorithm::RS256` + `EncodingKey::from_rsa_pem`，header 增加 `kid`。
 4. **【1 天 验签改造】** `lib/src/auth.rs` 的 `decode` 支持 `Validation { algorithms: [RS256, HS256], .. }` 过渡期双验。
@@ -224,11 +224,11 @@ let default_jwt_secret = "topems-jwt-secret-key-must-be-at-least-32-characters-l
 
 ### 3.3 插件注册令牌默认放行（P1）✅ 已闭环
 
-> **闭环验证 (2026-08-08)**: [runtime.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L13-L43) 已实现 `PROFILE=prod` 时未配置 `PLUGIN_REGISTRATION_TOKEN` 直接 reject（`return false`），dev 模式才 allow。步骤 1「环境校验」已完成；步骤 2「租户白名单」降级为 P3 增强项，不阻塞闭环。
+> **闭环验证 (2026-08-08)**: [runtime.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L13-L43) 已实现 `PROFILE=prod` 时未配置 `PLUGIN_REGISTRATION_TOKEN` 直接 reject（`return false`），dev 模式才 allow。步骤 1「环境校验」已完成；步骤 2「租户白名单」降级为 P3 增强项，不阻塞闭环。
 
 #### 问题（原状态）
 
-[svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23)：
+[svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23)：
 
 ```rust
 let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
@@ -254,7 +254,7 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 - **零信任架构**：默认拒绝，显式授权。
 - K8s 生态：Sidecar 注册需 mTLS，插件注册同理应有强身份校验。
-- 已有 `tenant_plugins` 表（[svc/unified-core/src/modules/plugin/tenant_plugins.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/tenant_plugins.rs)）可复用为白名单存储。
+- 已有 `tenant_plugins` 表（[svc/unified-core/src/modules/plugin/tenant_plugins.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/tenant_plugins.rs)）可复用为白名单存储。
 
 #### 可行性
 
@@ -346,7 +346,7 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 #### 问题
 
-[svc/unified-core/src/main.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/main.rs) 承载 IAM、Flow、File、Communication、Notification、Mail、IM、Tenant、Plugin、Master、Ticket、Search、Dict、Audit 等 14+ 子系统。虽然已外迁部分业务模块，但核心仍过重：
+[svc/unified-core/src/main.rs](file:///Users/air/TOPEMS/svc/unified-core/src/main.rs) 承载 IAM、Flow、File、Communication、Notification、Mail、IM、Tenant、Plugin、Master、Ticket、Search、Dict、Audit 等 14+ 子系统。虽然已外迁部分业务模块，但核心仍过重：
 
 - **单点故障**：unified-core 宕机 → 认证、插件注册、导航、工单全部失效。
 - **编译耦合**：任一模块改动触发整个 unified-core 重编译（3-5 分钟）。
@@ -464,7 +464,7 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 #### 问题
 
-[lib/src/lib.rs](file:///Users/xingzhai/TOPEMS/lib/src/lib.rs) 导出 40+ 模块（auth/database/cache/response/schema/rls/tenant/permission/middleware/service_config/service_discovery/service_client/event/telemetry/monitoring/health/encryption/ai_client/embedding/vector_store...）。任何共享库修改触发所有 20+ 服务全量重编译（本地 8-12 分钟，CI 更久）。
+[lib/src/lib.rs](file:///Users/air/TOPEMS/lib/src/lib.rs) 导出 40+ 模块（auth/database/cache/response/schema/rls/tenant/permission/middleware/service_config/service_discovery/service_client/event/telemetry/monitoring/health/encryption/ai_client/embedding/vector_store...）。任何共享库修改触发所有 20+ 服务全量重编译（本地 8-12 分钟，CI 更久）。
 
 #### 思路
 
@@ -570,13 +570,13 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 - **阶段部署**：先核心模块，再业务模块，最后全覆盖。
 - **未来扩展**：基于 OpenAPI 自动生成 SDK（多语言），开放平台能力。
 
-> **阶段性闭环 (2026-08-08 · V68.2-2)**：针对 EntitySchema 层 91 张表中 VARCHAR(n) 字段与前端 `maxLength` 声明不匹配的"类型同步最小子集"，已交付 [verify-entity-schema-maxlength.mjs](file:///Users/xingzhai/TOPEMS/scripts/verify-entity-schema-maxlength.mjs) CI 门禁 + 10 个 schema 文件补齐 36 处缺失 maxLength（严格列名匹配，剔除 _id 模糊误报），后端 VARCHAR(n) 为唯一真相源。OpenAPI 全量类型同步仍保留为本节长期事项。
+> **阶段性闭环 (2026-08-08 · V68.2-2)**：针对 EntitySchema 层 91 张表中 VARCHAR(n) 字段与前端 `maxLength` 声明不匹配的"类型同步最小子集"，已交付 [verify-entity-schema-maxlength.mjs](file:///Users/air/TOPEMS/scripts/verify-entity-schema-maxlength.mjs) CI 门禁 + 10 个 schema 文件补齐 36 处缺失 maxLength（严格列名匹配，剔除 _id 模糊误报），后端 VARCHAR(n) 为唯一真相源。OpenAPI 全量类型同步仍保留为本节长期事项。
 
 ---
 
 ### 5.2 Vite Proxy 配置仍偏手动 ✅ 已闭环
 
-> **闭环验证 (2026-08-08)**: [vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts#L308-L404) 已实现 `buildServiceProxies()` 从 `SERVICES` 数组 + `ports.ts` 单一信源动态生成全部 API/legacy/health/WS proxy。新增服务仅需修改 `config/services.yaml` + `ports.ts`，无需手动改 vite.config.ts。
+> **闭环验证 (2026-08-08)**: [vite.config.ts](file:///Users/air/TOPEMS/apps/web/vite.config.ts#L308-L404) 已实现 `buildServiceProxies()` 从 `SERVICES` 数组 + `ports.ts` 单一信源动态生成全部 API/legacy/health/WS proxy。新增服务仅需修改 `config/services.yaml` + `ports.ts`，无需手动改 vite.config.ts。
 
 #### 问题（原状态）
 
@@ -722,9 +722,9 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 | 问题 | 修复 | 证据 |
 |------|------|------|
-| Portal BFF 未代理 SLA 路径 | 已注册全部 SLA 代理路由 | [svc/portal/src/main.rs#L341-L370](file:///Users/xingzhai/TOPEMS/svc/portal/src/main.rs#L341-L370) |
-| SLA 代理 handler 缺失 | 已实现全部 handler | [svc/portal/src/modules/tickets.rs#L248-L400](file:///Users/xingzhai/TOPEMS/svc/portal/src/modules/tickets.rs#L248-L400) |
-| 升级计算未对齐工作时间 | `check_and_escalate` 已复用 `calculate_due_time` | [sla_service.rs#L283-L291](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L283-L291) |
+| Portal BFF 未代理 SLA 路径 | 已注册全部 SLA 代理路由 | [svc/portal/src/main.rs#L341-L370](file:///Users/air/TOPEMS/svc/portal/src/main.rs#L341-L370) |
+| SLA 代理 handler 缺失 | 已实现全部 handler | [svc/portal/src/modules/tickets.rs#L248-L400](file:///Users/air/TOPEMS/svc/portal/src/modules/tickets.rs#L248-L400) |
+| 升级计算未对齐工作时间 | `check_and_escalate` 已复用 `calculate_due_time` | [sla_service.rs#L283-L291](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L283-L291) |
 
 #### 遗留建议
 
@@ -735,16 +735,16 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 ### 7.2 工程效能与迁移规范 6 项集中闭环（2026-08-08 · V68.2 100%）
 
-> **版本锚点**：[TODO.md §4-1 表格 P2-6](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md#L249-L249) · §4-4 进度 6/6 = 100%。全部 6 项均配套独立 CI 脚本（Node.js，无第三方依赖），默认模式 EXIT=0 为通过，漂移会 EXIT=1 阻断。
+> **版本锚点**：[TODO.md §4-1 表格 P2-6](file:///Users/air/TOPEMS/docs/roadmap/TODO.md#L249-L249) · §4-4 进度 6/6 = 100%。全部 6 项均配套独立 CI 脚本（Node.js，无第三方依赖），默认模式 EXIT=0 为通过，漂移会 EXIT=1 阻断。
 
 | # | 子项 | 核心产物 | 反证测试（验证 CI 真会拦截） |
 |---|------|---------|-----------------------------|
-| V68.2-1 | 迁移命名规范 + 严格单调 | [scripts/check-migration-names.mjs](file:///Users/xingzhai/TOPEMS/scripts/check-migration-names.mjs)（FULL/SHORT/历史 8/12 位/V{NN}_ 五维分类 + per-service 单调） | 注入 `V42_bad.sql` → ERR；`--strict` 模式 129 SQL Non-monotonic=0 Errors=0 |
-| V68.2-2 | EntitySchema maxLength 对齐 | 10 个 schema 文件补 36 处 maxLength + [verify-entity-schema-maxlength.mjs](file:///Users/xingzhai/TOPEMS/scripts/verify-entity-schema-maxlength.mjs)（后端 CREATE/ALTER VARCHAR(n) 为真相源 vs 254 前端 EntitySchema 严格列名匹配） | 删除 phone 列 maxLength → ERR；254 schemas / 15 表匹配 / 96 字段校验 0 error |
-| V68.2-3 | 软删除 3 模式 → 统一 deleted_at | 迁移 [20260808160000_unify_soft_drop_is_deleted.sql](file:///Users/xingzhai/TOPEMS/svc/communication/migrations/20260808160000_unify_soft_drop_is_deleted.sql) + 6 个 Rust 文件同步 + [verify-soft-delete.mjs](file:///Users/xingzhai/TOPEMS/scripts/verify-soft-delete.mjs)（168 SQL + 1367 Rust 文件扫描） | 4 张 `is_deleted BOOLEAN` 表全部 `deleted_at TIMESTAMP`；附带修复 `notification.rs:1315` 运行时 bug（core_notifications 无 is_deleted 列却 SET → 改为 is_archived） |
+| V68.2-1 | 迁移命名规范 + 严格单调 | [scripts/check-migration-names.mjs](file:///Users/air/TOPEMS/scripts/check-migration-names.mjs)（FULL/SHORT/历史 8/12 位/V{NN}_ 五维分类 + per-service 单调） | 注入 `V42_bad.sql` → ERR；`--strict` 模式 129 SQL Non-monotonic=0 Errors=0 |
+| V68.2-2 | EntitySchema maxLength 对齐 | 10 个 schema 文件补 36 处 maxLength + [verify-entity-schema-maxlength.mjs](file:///Users/air/TOPEMS/scripts/verify-entity-schema-maxlength.mjs)（后端 CREATE/ALTER VARCHAR(n) 为真相源 vs 254 前端 EntitySchema 严格列名匹配） | 删除 phone 列 maxLength → ERR；254 schemas / 15 表匹配 / 96 字段校验 0 error |
+| V68.2-3 | 软删除 3 模式 → 统一 deleted_at | 迁移 [20260808160000_unify_soft_drop_is_deleted.sql](file:///Users/air/TOPEMS/svc/communication/migrations/20260808160000_unify_soft_drop_is_deleted.sql) + 6 个 Rust 文件同步 + [verify-soft-delete.mjs](file:///Users/air/TOPEMS/scripts/verify-soft-delete.mjs)（168 SQL + 1367 Rust 文件扫描） | 4 张 `is_deleted BOOLEAN` 表全部 `deleted_at TIMESTAMP`；附带修复 `notification.rs:1315` 运行时 bug（core_notifications 无 is_deleted 列却 SET → 改为 is_archived） |
 | V68.2-4 | add_tenant_id 时间戳严格单调 | 原 19 条同用 `20260710160000` → 按 ServiceDefinition 拓扑拆 5 批×5 分钟槽位（T0 unified-core 16:00 → T4 rd/analytics 16:20），7 条补丁自然有序 | `check-migration-names.mjs --strict` Non-monotonic=0 ✅ |
-| V68.2-5 | add_tenant_id 公共模板化生成 | [add_tenant_id_template.sql](file:///Users/xingzhai/TOPEMS/scripts/templates/add_tenant_id_template.sql) + [gen-add-tenant-id.mjs](file:///Users/xingzhai/TOPEMS/scripts/gen-add-tenant-id.mjs) CLI（`--svc <name> --ts --style unified\|batch-rls --self-check`） | 20 服务 dry-run → 18/18 FULL canonical；外键回填抽检 crm.contacts→crm.customers 等 3 组正确 |
-| V68.2-6 | MES 8 碎片 DDL 收敛 | [mes-schema-truth.md](file:///Users/xingzhai/TOPEMS/docs/architecture/mes-schema-truth.md)（43 表×342 列×五维 + checksum=23cde115bd952fe0）+ [20260809000000_mes_schema_consolidation.sql](file:///Users/xingzhai/TOPEMS/svc/mes/migrations/20260809000000_mes_schema_consolidation.sql)（0 条真实 DDL 空锚点）+ [verify-mes-schema-truth.mjs](file:///Users/xingzhai/TOPEMS/scripts/verify-mes-schema-truth.mjs)（splitCommaTopLevel + tokenizeDdl 状态机 + parseColumnDef 完整 SQL 解析器） | 注入 `fake_new_col` 到 truth.md → verify EXIT=1 ERR 拦截；tables=43 columns=342 checksum_match=true |
+| V68.2-5 | add_tenant_id 公共模板化生成 | [add_tenant_id_template.sql](file:///Users/air/TOPEMS/scripts/templates/add_tenant_id_template.sql) + [gen-add-tenant-id.mjs](file:///Users/air/TOPEMS/scripts/gen-add-tenant-id.mjs) CLI（`--svc <name> --ts --style unified\|batch-rls --self-check`） | 20 服务 dry-run → 18/18 FULL canonical；外键回填抽检 crm.contacts→crm.customers 等 3 组正确 |
+| V68.2-6 | MES 8 碎片 DDL 收敛 | [mes-schema-truth.md](file:///Users/air/TOPEMS/docs/architecture/mes-schema-truth.md)（43 表×342 列×五维 + checksum=23cde115bd952fe0）+ [20260809000000_mes_schema_consolidation.sql](file:///Users/air/TOPEMS/svc/mes/migrations/20260809000000_mes_schema_consolidation.sql)（0 条真实 DDL 空锚点）+ [verify-mes-schema-truth.mjs](file:///Users/air/TOPEMS/scripts/verify-mes-schema-truth.mjs)（splitCommaTopLevel + tokenizeDdl 状态机 + parseColumnDef 完整 SQL 解析器） | 注入 `fake_new_col` 到 truth.md → verify EXIT=1 ERR 拦截；tables=43 columns=342 checksum_match=true |
 
 > **说明**：V68.2-6 原描述"057~064 共 8 条 V17/V19/V20/V21/V23/V24/V27/V32 × 53+ 表"经实地审计不成立（真实碎片为 5 条 ADD COLUMN 微补丁 0009~00013 + 质量管理 0007/0014 两次 CREATE TABLE IF NOT EXISTS 重名尝试），已在 TODO.md 审计修正并采用「空合并锚点 + 真相源 md + CI 脚本」风险最小方案，不改动任何已写入 schema_migrations.version 的历史迁移。
 
@@ -871,15 +871,15 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 
 | 短板 | 关键代码位置 |
 |------|------------|
-| BI SQL 注入 | [chart_service.rs#L103](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103), [multidimensional_analysis.rs#L332](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332) |
-| JWT HS256 | [auth.rs#L69-L96](file:///Users/xingzhai/TOPEMS/lib/src/auth.rs#L69-L96) |
-| 插件 token 放行 | [runtime.rs#L14-L23](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23) |
-| 路由遗留债务 | [routes/mod.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/routes/mod.rs) `register_routes_with_legacy_alias` |
-| unified-core 职责 | [main.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/main.rs) |
-| 共享库膨胀 | [lib/src/lib.rs](file:///Users/xingzhai/TOPEMS/lib/src/lib.rs) |
-| 前后端类型 | [packages/shared-types](file:///Users/xingzhai/TOPEMS/packages/shared-types), [utoipa](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/main.rs) |
-| Vite Proxy | [vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts) |
-| SLA（已修复） | [sla_service.rs#L283-L291](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L283-L291), [portal main.rs#L341-L370](file:///Users/xingzhai/TOPEMS/svc/portal/src/main.rs#L341-L370) |
+| BI SQL 注入 | [chart_service.rs#L103](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103), [multidimensional_analysis.rs#L332](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332) |
+| JWT HS256 | [auth.rs#L69-L96](file:///Users/air/TOPEMS/lib/src/auth.rs#L69-L96) |
+| 插件 token 放行 | [runtime.rs#L14-L23](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23) |
+| 路由遗留债务 | [routes/mod.rs](file:///Users/air/TOPEMS/svc/unified-core/src/routes/mod.rs) `register_routes_with_legacy_alias` |
+| unified-core 职责 | [main.rs](file:///Users/air/TOPEMS/svc/unified-core/src/main.rs) |
+| 共享库膨胀 | [lib/src/lib.rs](file:///Users/air/TOPEMS/lib/src/lib.rs) |
+| 前后端类型 | [packages/shared-types](file:///Users/air/TOPEMS/packages/shared-types), [utoipa](file:///Users/air/TOPEMS/svc/unified-core/src/main.rs) |
+| Vite Proxy | [vite.config.ts](file:///Users/air/TOPEMS/apps/web/vite.config.ts) |
+| SLA（已修复） | [sla_service.rs#L283-L291](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L283-L291), [portal main.rs#L341-L370](file:///Users/air/TOPEMS/svc/portal/src/main.rs#L341-L370) |
 
 ---
 
