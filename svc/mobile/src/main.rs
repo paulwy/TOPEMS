@@ -16,14 +16,20 @@ use std::sync::Arc;
 use utoipa::OpenApi;
 use uuid::Uuid;
 
+use topems_shared::telemetry_middleware;
+use topems_shared_auth::auth::auth_middleware;
+use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
+use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
+use topems_shared_core::api_version::{create_api_info_router, register_routes_with_legacy_alias};
+use topems_shared_core::cors::create_cors_layer;
+use topems_shared_core::logging::request_context_middleware;
+use topems_shared_core::response::ApiResponse;
+use topems_shared_db::rls::rls_middleware;
 use topems_shared_service_client::service_client::{
     api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
-    api::qms_api::QmsApi, create_wms_client, TypedServiceClient, WmsServiceClient,
+    api::qms_api::QmsApi, create_wms_client, create_workflow_client, TypedServiceClient,
+    WmsServiceClient, WorkflowServiceClient,
 };
-use topems_shared_core::cors::create_cors_layer;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_service_client::service_client::WorkflowServiceClient;
-use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 
 const DEFAULT_WMS_URL: &str = "http://localhost:8041";
 const DEFAULT_MES_URL: &str = "http://localhost:8030";
