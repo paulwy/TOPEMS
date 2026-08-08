@@ -217,7 +217,7 @@ export const aiNavConfig: ModuleNavConfig = {
       path: AI_PATHS.assistant,
       permission: 'ai:read',
       order: 2,
-      group: 'analytics',
+      group: 'process',
       showInTabs: true,
       description: '报表、流程、知识库智能助手',
     },

@@ -48,7 +48,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:sample:read', 'lims:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: LIMS_PATHS.sampleDetail,
@@ -73,7 +73,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:sample:write', 'lims:write'],
       action: 'write',
       template: 'form',
-      group: 'business',
+      group: 'process',
     },
     {
       path: LIMS_PATHS.task,
@@ -84,7 +84,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:task:read', 'lims:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'process',
     },
     {
       path: LIMS_PATHS.taskDetail,
@@ -106,7 +106,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:task:read', 'lims:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'process',
     },
     {
       path: LIMS_PATHS.process,
@@ -117,7 +117,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:process:read', 'lims:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'process',
     },
     {
       path: LIMS_PATHS.instrument,
@@ -128,7 +128,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:instrument:read', 'lims:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: LIMS_PATHS.instrumentDetail,
@@ -142,7 +142,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:instrument:read', 'lims:read'],
       action: 'read',
       template: 'detail',
-      group: 'business',
+      group: 'master',
     },
     {
       path: LIMS_PATHS.instrumentData,
@@ -156,7 +156,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:instrument:read', 'lims:read'],
       action: 'read',
       template: 'detail',
-      group: 'business',
+      group: 'master',
     },
     {
       path: LIMS_PATHS.instrumentMaintenance,
@@ -170,7 +170,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:instrument:write', 'lims:write'],
       action: 'write',
       template: 'form',
-      group: 'business',
+      group: 'master',
     },
     {
       path: LIMS_PATHS.reagent,
@@ -181,7 +181,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:reagent:read', 'lims:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'master',
     },
     {
       path: LIMS_PATHS.testMethod,
@@ -292,7 +292,7 @@ export const limsNavConfig: ModuleNavConfig = {
       path: LIMS_PATHS.sample,
       permission: 'lims:sample:read',
       order: 1,
-      group: 'business',
+      group: 'master',
       showInTabs: true,
       description: '样品接收与管理',
     },
@@ -303,7 +303,7 @@ export const limsNavConfig: ModuleNavConfig = {
       path: LIMS_PATHS.sampleReceive,
       permission: 'lims:sample:write',
       order: 2,
-      group: 'business',
+      group: 'process',
       description: '样品接收登记',
     },
     {
@@ -313,7 +313,7 @@ export const limsNavConfig: ModuleNavConfig = {
       path: LIMS_PATHS.task,
       permission: 'lims:task:read',
       order: 3,
-      group: 'business',
+      group: 'process',
       showInTabs: true,
       description: '检验任务管理',
     },
@@ -324,7 +324,7 @@ export const limsNavConfig: ModuleNavConfig = {
       path: LIMS_PATHS.inspectionTask,
       permission: 'lims:task:read',
       order: 4,
-      group: 'business',
+      group: 'process',
       description: '检验任务列表',
     },
     {
@@ -334,7 +334,7 @@ export const limsNavConfig: ModuleNavConfig = {
       path: LIMS_PATHS.process,
       permission: 'lims:process:read',
       order: 5,
-      group: 'business',
+      group: 'process',
       description: '检验流程管理',
     },
     {
@@ -344,7 +344,7 @@ export const limsNavConfig: ModuleNavConfig = {
       path: LIMS_PATHS.instrument,
       permission: 'lims:instrument:read',
       order: 6,
-      group: 'business',
+      group: 'master',
       showInTabs: true,
       description: '仪器设备管理',
     },
@@ -355,7 +355,7 @@ export const limsNavConfig: ModuleNavConfig = {
       path: LIMS_PATHS.instrumentMaintenance,
       permission: 'lims:instrument:write',
       order: 7,
-      group: 'business',
+      group: 'master',
       description: '仪器维护管理',
     },
     {
@@ -365,7 +365,7 @@ export const limsNavConfig: ModuleNavConfig = {
       path: LIMS_PATHS.reagent,
       permission: 'lims:reagent:read',
       order: 8,
-      group: 'business',
+      group: 'master',
       description: '试剂库存管理',
     },
     {

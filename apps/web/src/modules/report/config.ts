@@ -50,7 +50,7 @@ export const reportModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['report:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'report',
     },
     {
       path: REPORT_PATHS.viewer,
@@ -75,7 +75,7 @@ export const reportModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['report:design:write', 'report:write'],
       action: 'write',
       template: 'form',
-      group: 'business',
+      group: 'report',
     },
     {
       path: REPORT_PATHS.builder,
@@ -86,7 +86,7 @@ export const reportModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['report:builder:write', 'report:write'],
       action: 'write',
       template: 'form',
-      group: 'business',
+      group: 'report',
     },
     {
       path: REPORT_PATHS.schedule,
@@ -139,7 +139,7 @@ export const reportModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['report:read'],
       action: 'read',
       template: 'list',
-      group: 'business',
+      group: 'report',
     },
   ],
 };
@@ -175,7 +175,7 @@ export const reportNavConfig: ModuleNavConfig = {
       path: REPORT_PATHS.list,
       permission: 'report:read',
       order: 1,
-      group: 'business',
+      group: 'report',
       showInTabs: true,
       description: '报表列表管理',
     },
@@ -186,7 +186,7 @@ export const reportNavConfig: ModuleNavConfig = {
       path: REPORT_PATHS.design,
       permission: 'report:design:write',
       order: 2,
-      group: 'business',
+      group: 'report',
       description: '自定义报表设计',
     },
     {
@@ -196,7 +196,7 @@ export const reportNavConfig: ModuleNavConfig = {
       path: REPORT_PATHS.builder,
       permission: 'report:builder:write',
       order: 3,
-      group: 'business',
+      group: 'report',
       description: '报表构建器',
     },
     {
@@ -238,7 +238,7 @@ export const reportNavConfig: ModuleNavConfig = {
       path: REPORT_PATHS.report,
       permission: 'report:read',
       order: 4,
-      group: 'business',
+      group: 'report',
       description: '报表查看与管理',
     },
   ],
