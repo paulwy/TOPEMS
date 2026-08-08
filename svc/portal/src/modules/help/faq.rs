@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::AppState;
+use crate::shared::AppState;
 use topems_shared::{api_error, api_success, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -263,16 +263,4 @@ pub async fn get_faq_categories(State(state): State<AppState>) -> Json<ApiRespon
     };
 
     Json(api_success(categories))
-}
-
-pub fn create_faq_routes() -> axum::Router<AppState> {
-    axum::Router::new()
-        .route("/faqs", axum::routing::get(list_faqs).post(create_faq))
-        .route("/faqs/categories", axum::routing::get(get_faq_categories))
-        .route(
-            "/faqs/{id}",
-            axum::routing::get(get_faq)
-                .put(update_faq)
-                .delete(delete_faq),
-        )
 }

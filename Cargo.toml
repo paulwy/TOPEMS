@@ -45,6 +45,8 @@ members = [
     # [主数据管理]
     "svc/master-data",
     # [统一核心模块独立]
+    "svc/monitor",
+    "svc/plugin-registry",
     "svc/billing",
     "svc/ticket",
     "svc/feedback",

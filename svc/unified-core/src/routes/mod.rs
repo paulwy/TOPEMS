@@ -10,15 +10,18 @@ mod automation;
 mod doc;
 mod file;
 mod flow;
-mod help;
+// V68.1 A2.4.2: help 路由已迁移至 svc/portal（/api/portal/help/*），Portal BFF 统一承载用户服务域
+// mod help;
 mod iam;
 mod master;
 mod migration;
-mod monitor;
-mod plugin;
+// V68.1 A2.1: routes/monitor.rs 旧适配层依赖 modules::monitor（已拆到 svc/monitor），这里不再载入
+// mod monitor;
+// V68.1 A2.2: routes/plugin.rs 适配层依赖 modules::plugin（已拆到 svc/plugin-registry 8096），这里不再载入
+// mod plugin;
 mod system;
 
-use axum::routing::{get, post, put};
+use axum::routing::{get, post};
 use axum::Router;
 
 use topems_shared::{
@@ -54,10 +57,11 @@ pub fn create_routes(
             "/api/info",
             get(|| get_api_info_handler("topems-unified-core")),
         )
-        .route(
-            "/api/plugins/info",
-            get(modules::plugin::handlers::list_plugins_with_status),
-        )
+        // V68.1 A2.2: 插件 info 路由已迁移至 svc/plugin-registry:8096，后续通过代理转发
+        // .route(
+        //     "/api/plugins/info",
+        //     get(modules::plugin::handlers::list_plugins_with_status),
+        // )
         .route("/api/plugins/health", get(handlers::plugin_health_check))
         // Monitor public health endpoint (no auth required)
         .route("/api/monitor/health", get(handlers::detailed_health))
@@ -71,19 +75,20 @@ pub fn create_routes(
         .route(
             "/ws/core/im",
             get(modules::communication::ws::websocket_handler),
-        )
-        // Plugin proxy route (no auth required - plugins handle their own auth)
-        .route(
-            "/api/plugins/{plugin_code}/{*path}",
-            get(handlers::plugin_proxy),
         );
+    // V68.1 A2.2: 插件 proxy 路由（原 handlers::plugin_proxy）暂时下线，后续迁移到 plugin-registry
+    // .route(
+    //     "/api/plugins/{plugin_code}/{*path}",
+    //     get(handlers::plugin_proxy),
+    // );
 
     // ===== Core API public routes (dual-rail: /api/core/ + /api/v1/core/) =====
     let core_public_routes = Router::new()
-        .route(
-            "/plugin/navigation-config",
-            get(modules::plugin::handlers::get_navigation_config),
-        )
+        // V68.1 A2.2: navigation-config / register / status / unregister 路由迁移到 svc/plugin-registry
+        // .route(
+        //     "/plugin/navigation-config",
+        //     get(modules::plugin::handlers::get_navigation_config),
+        // )
         // IAM permission metadata (public - for service startup auto-sync)
         .route(
             "/iam/permissions/metadata",
@@ -101,34 +106,37 @@ pub fn create_routes(
         .route(
             "/iam/auth/reset-password",
             post(modules::iam::auth::reset_password),
-        )
-        // Plugin registration routes (no auth required - for service startup auto-registration)
-        .route(
-            "/plugin/dev/plugins/{code}/register",
-            post(modules::plugin::handlers::register_plugin),
-        )
-        .route(
-            "/plugin/dev/plugins/{code}/status",
-            put(modules::plugin::handlers::update_plugin_status),
-        )
-        .route(
-            "/plugin/dev/plugins/{code}/unregister",
-            post(modules::plugin::handlers::unregister_plugin),
         );
+    // V68.1 A2.2: Plugin auto-registration routes 迁移至 svc/plugin-registry (8096)
+    // .route(
+    //     "/plugin/dev/plugins/{code}/register",
+    //     post(modules::plugin::handlers::register_plugin),
+    // )
+    // .route(
+    //     "/plugin/dev/plugins/{code}/status",
+    //     put(modules::plugin::handlers::update_plugin_status),
+    // )
+    // .route(
+    //     "/plugin/dev/plugins/{code}/unregister",
+    //     post(modules::plugin::handlers::unregister_plugin),
+    // );
 
     // ===== Core API protected routes (dual-rail: /api/core/ + /api/v1/core/) =====
     let core_protected_routes = iam::iam_routes(state)
         .nest("/flow", flow::flow_routes(state))
         .merge(file::file_routes(state))
         .merge(master::master_routes(state))
-        .merge(plugin::plugin_routes(state))
-        .merge(help::help_routes(state))
-        .merge(monitor::monitor_routes(state))
+        // V68.1 A2.2: plugin 路由已迁移至 svc/plugin-registry（端口 8096），后续用服务发现/代理
+        // .merge(plugin::plugin_routes(state))
+        // V68.1 A2.4.2: help 路由已迁移至 svc/portal（/api/portal/help/*）
+        // .merge(help::help_routes(state))
+        // V68.1 A2.1: monitor 已拆到 svc/monitor（端口 8095）；后续通过服务发现/代理转发 /api/monitor/* → 8095
+        // .merge(monitor::monitor_routes(state))
         .merge(system::system_routes(state))
         .merge(doc::doc_routes(state))
         // V66.1：Automation 编排虚拟服务（planned 阶段，501 Not Implemented）
         .merge(automation::automation_routes(state))
-        .merge(modules::login_log::create_routes(state.clone()))
+        // V68.1 A2.4.1: login_log 路由已合并到 audit::create_routes（统一 require_permission 层）
         .merge(modules::audit::create_routes(state.clone()))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),

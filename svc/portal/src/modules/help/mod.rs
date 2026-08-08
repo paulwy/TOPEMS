@@ -1,9 +1,6 @@
 pub mod faq;
 pub mod guide;
 
-pub use faq::*;
-pub use guide::*;
-
 use sqlx::PgPool;
 
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {

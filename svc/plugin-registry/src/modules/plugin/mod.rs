@@ -5,7 +5,18 @@
 pub mod handlers;
 pub mod models;
 
+use crate::AppState;
+use axum::Router;
+
 use sqlx::PgPool;
+
+/// V68.1 A2.2：plugin-registry 路由根（后续从 unified-core routes/plugin.rs 完整迁移细分路由 + 权限中间件）
+/// 当前以最小脚手架编译通过为目标，后续按文件逐项 append 细分路由
+pub fn create_routes() -> Router<AppState> {
+    // TODO: 迁移 unified-core/src/routes/plugin.rs 中的 marketplace/tenant/runtime/dev/reviews 路由
+    // TODO: 补齐 require_permission("plugin:read"/"plugin:write") 细粒度鉴权
+    Router::new()
+}
 
 /// Initialize Plugin Marketplace database tables
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {

@@ -186,21 +186,25 @@ async fn main() -> anyhow::Result<()> {
     try_init("flow", || modules::flow::init_database(&ctx.db)).await;
     try_init("file", || modules::file::init_database(&ctx.db)).await;
     try_init("tenant", || modules::tenant::init_database(&ctx.db)).await;
-    try_init("plugin", || modules::plugin::init_database(&ctx.db)).await;
+    // V68.1 A2.2: plugin init 迁移到 svc/plugin-registry main.rs（后续在其 bootstrap 后调用）
+    // try_init("plugin", || modules::plugin::init_database(&ctx.db)).await;
     try_init("migration", || modules::migration::init_database(&ctx.db)).await;
-    try_init("dict", || modules::dict::init_database(&ctx.db)).await;
+    // V68.1 A2.3: dict init/seed 迁移到 svc/master-data（主数据域）
+    // try_init("dict", || modules::dict::init_database(&ctx.db)).await;
     try_init("master", || {
         modules::master::handlers::init_mdm_tables(&ctx.db)
     })
     .await;
     try_init("menu", || modules::menu::init_database(&ctx.db)).await;
-    try_init("help", || modules::help::init_database(&ctx.db)).await;
-    try_init("login_log", || modules::login_log::init_database(&ctx.db)).await;
+    // V68.1 A2.4.2: help 模块已迁移至 svc/portal/src/modules/help/（Portal BFF，8063 端口启动）
+    // V68.1 A2.4.1: login_log init 已合并到 audit::init_database（统一建表）
+    try_init("audit", || modules::audit::init_database(&ctx.db)).await;
     try_init("doc", || modules::doc::services::init_database(&ctx.db)).await;
 
-    if let Err(e) = modules::dict::seed::seed_dict_data(&ctx.db).await {
-        tracing::warn!("seed_dict_data skipped: {}", e);
-    }
+    // V68.1 A2.3: dict seed 合并到 svc/master-data 启动流程
+    // if let Err(e) = modules::dict::seed::seed_dict_data(&ctx.db).await {
+    //     tracing::warn!("seed_dict_data skipped: {}", e);
+    // }
 
     let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(ctx.db.clone());
     let ws_state = std::sync::Arc::new(modules::communication::ws::WsState::new(
@@ -229,9 +233,7 @@ async fn main() -> anyhow::Result<()> {
     let body_limit_config = BodyLimitConfig::default();
     let body_limit_mw = std::sync::Arc::new(BodyLimitMiddleware::new(body_limit_config));
 
-    let audit_logger_config = AuditLoggerConfig::default()
-        .add_skip_path("/api/core/health")
-        .add_skip_path("/api/core/help");
+    let audit_logger_config = AuditLoggerConfig::default().add_skip_path("/api/core/health");
     let audit_logger_mw = std::sync::Arc::new(AuditLoggerMiddleware::new(
         audit_logger_config,
         ctx.db.clone(),
