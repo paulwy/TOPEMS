@@ -726,38 +726,101 @@ mod tests {
 
     #[test]
     fn test_validate_status_transition_valid_paths() {
-        assert!(validate_status_transition(STATUS_PENDING, STATUS_IN_PROGRESS));
-        assert!(validate_status_transition(STATUS_IN_PROGRESS, STATUS_PENDING_AUDIT));
-        assert!(validate_status_transition(STATUS_PENDING_AUDIT, STATUS_COMPLETED));
-        assert!(validate_status_transition(STATUS_PENDING_AUDIT, STATUS_REJECTED));
-        assert!(validate_status_transition(STATUS_REJECTED, STATUS_IN_PROGRESS));
+        assert!(validate_status_transition(
+            STATUS_PENDING,
+            STATUS_IN_PROGRESS
+        ));
+        assert!(validate_status_transition(
+            STATUS_IN_PROGRESS,
+            STATUS_PENDING_AUDIT
+        ));
+        assert!(validate_status_transition(
+            STATUS_PENDING_AUDIT,
+            STATUS_COMPLETED
+        ));
+        assert!(validate_status_transition(
+            STATUS_PENDING_AUDIT,
+            STATUS_REJECTED
+        ));
+        assert!(validate_status_transition(
+            STATUS_REJECTED,
+            STATUS_IN_PROGRESS
+        ));
     }
 
     #[test]
     fn test_validate_status_transition_invalid_paths() {
-        assert!(!validate_status_transition(STATUS_PENDING, STATUS_PENDING_AUDIT));
-        assert!(!validate_status_transition(STATUS_PENDING, STATUS_COMPLETED));
+        assert!(!validate_status_transition(
+            STATUS_PENDING,
+            STATUS_PENDING_AUDIT
+        ));
+        assert!(!validate_status_transition(
+            STATUS_PENDING,
+            STATUS_COMPLETED
+        ));
         assert!(!validate_status_transition(STATUS_PENDING, STATUS_REJECTED));
         assert!(!validate_status_transition(STATUS_PENDING, STATUS_PENDING));
 
-        assert!(!validate_status_transition(STATUS_IN_PROGRESS, STATUS_PENDING));
-        assert!(!validate_status_transition(STATUS_IN_PROGRESS, STATUS_COMPLETED));
-        assert!(!validate_status_transition(STATUS_IN_PROGRESS, STATUS_REJECTED));
-        assert!(!validate_status_transition(STATUS_IN_PROGRESS, STATUS_IN_PROGRESS));
+        assert!(!validate_status_transition(
+            STATUS_IN_PROGRESS,
+            STATUS_PENDING
+        ));
+        assert!(!validate_status_transition(
+            STATUS_IN_PROGRESS,
+            STATUS_COMPLETED
+        ));
+        assert!(!validate_status_transition(
+            STATUS_IN_PROGRESS,
+            STATUS_REJECTED
+        ));
+        assert!(!validate_status_transition(
+            STATUS_IN_PROGRESS,
+            STATUS_IN_PROGRESS
+        ));
 
-        assert!(!validate_status_transition(STATUS_PENDING_AUDIT, STATUS_PENDING));
-        assert!(!validate_status_transition(STATUS_PENDING_AUDIT, STATUS_IN_PROGRESS));
-        assert!(!validate_status_transition(STATUS_PENDING_AUDIT, STATUS_PENDING_AUDIT));
+        assert!(!validate_status_transition(
+            STATUS_PENDING_AUDIT,
+            STATUS_PENDING
+        ));
+        assert!(!validate_status_transition(
+            STATUS_PENDING_AUDIT,
+            STATUS_IN_PROGRESS
+        ));
+        assert!(!validate_status_transition(
+            STATUS_PENDING_AUDIT,
+            STATUS_PENDING_AUDIT
+        ));
 
-        assert!(!validate_status_transition(STATUS_COMPLETED, STATUS_PENDING));
-        assert!(!validate_status_transition(STATUS_COMPLETED, STATUS_IN_PROGRESS));
-        assert!(!validate_status_transition(STATUS_COMPLETED, STATUS_PENDING_AUDIT));
-        assert!(!validate_status_transition(STATUS_COMPLETED, STATUS_COMPLETED));
+        assert!(!validate_status_transition(
+            STATUS_COMPLETED,
+            STATUS_PENDING
+        ));
+        assert!(!validate_status_transition(
+            STATUS_COMPLETED,
+            STATUS_IN_PROGRESS
+        ));
+        assert!(!validate_status_transition(
+            STATUS_COMPLETED,
+            STATUS_PENDING_AUDIT
+        ));
+        assert!(!validate_status_transition(
+            STATUS_COMPLETED,
+            STATUS_COMPLETED
+        ));
 
         assert!(!validate_status_transition(STATUS_REJECTED, STATUS_PENDING));
-        assert!(!validate_status_transition(STATUS_REJECTED, STATUS_PENDING_AUDIT));
-        assert!(!validate_status_transition(STATUS_REJECTED, STATUS_COMPLETED));
-        assert!(!validate_status_transition(STATUS_REJECTED, STATUS_REJECTED));
+        assert!(!validate_status_transition(
+            STATUS_REJECTED,
+            STATUS_PENDING_AUDIT
+        ));
+        assert!(!validate_status_transition(
+            STATUS_REJECTED,
+            STATUS_COMPLETED
+        ));
+        assert!(!validate_status_transition(
+            STATUS_REJECTED,
+            STATUS_REJECTED
+        ));
     }
 
     #[test]

@@ -24,9 +24,9 @@ mod system;
 use axum::routing::{get, post};
 use axum::Router;
 
-use topems_shared_core::api_version::register_routes_with_legacy_alias;
 use topems_shared_auth::auth::auth_middleware;
 use topems_shared_core::api_version::get_api_info_handler;
+use topems_shared_core::api_version::register_routes_with_legacy_alias;
 
 use crate::handlers;
 use crate::middleware;

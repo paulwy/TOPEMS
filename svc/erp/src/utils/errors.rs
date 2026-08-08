@@ -108,8 +108,12 @@ impl From<ErpError> for topems_shared_core::error::TopemsError {
             ErpError::DatabaseError(e) => {
                 topems_shared_core::error::TopemsError::DatabaseQuery(e.to_string())
             }
-            ErpError::NotFound(msg) => topems_shared_core::error::TopemsError::ResourceNotFound(msg),
-            ErpError::BadRequest(msg) => topems_shared_core::error::TopemsError::ValidationFailed(msg),
+            ErpError::NotFound(msg) => {
+                topems_shared_core::error::TopemsError::ResourceNotFound(msg)
+            }
+            ErpError::BadRequest(msg) => {
+                topems_shared_core::error::TopemsError::ValidationFailed(msg)
+            }
             ErpError::Unauthorized => topems_shared_core::error::TopemsError::Unauthorized,
             ErpError::Forbidden => topems_shared_core::error::TopemsError::PermissionDenied {
                 required: "需要权限".to_string(),

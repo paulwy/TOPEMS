@@ -28,11 +28,11 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use prometheus::{default_registry, Gauge};
-use topems_shared_service_client::service_client::create_workflow_client;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
+use topems_shared_service_client::service_client::create_workflow_client;
 
 use modules::{
     create_bid_price_routes, create_category_routes, create_contract_routes,

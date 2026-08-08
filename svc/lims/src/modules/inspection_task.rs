@@ -338,15 +338,16 @@ pub async fn submit_result(
                 let recorded_by = task.recorded_by.clone().unwrap_or_default();
                 let result_val = task.result.clone().unwrap_or(serde_json::Value::Null);
                 tokio::spawn(async move {
-                    let payload = topems_shared_event::event::LimsInspectionResultSubmittedPayload {
-                        task_id: tid,
-                        task_no: tno,
-                        sample_id: sid,
-                        sample_no: sno,
-                        conclusion,
-                        result: result_val,
-                        recorded_by,
-                    };
+                    let payload =
+                        topems_shared_event::event::LimsInspectionResultSubmittedPayload {
+                            task_id: tid,
+                            task_no: tno,
+                            sample_id: sid,
+                            sample_no: sno,
+                            conclusion,
+                            result: result_val,
+                            recorded_by,
+                        };
                     if let Err(e) = publisher
                         .publish_event(
                             topems_shared_event::event::EventType::LimsInspectionResultSubmitted,

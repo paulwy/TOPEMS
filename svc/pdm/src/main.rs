@@ -24,9 +24,9 @@ mod shared;
 use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
+use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_core::response::ApiResponse;
-use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 pub use shared::AppState;
 

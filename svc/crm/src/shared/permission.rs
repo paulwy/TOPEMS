@@ -150,7 +150,11 @@ mod tests {
         ];
         for v in &all {
             let display = format!("{}", v);
-            assert!(!display.is_empty(), "Display for {:?} should not be empty", v);
+            assert!(
+                !display.is_empty(),
+                "Display for {:?} should not be empty",
+                v
+            );
         }
     }
 
@@ -158,7 +162,13 @@ mod tests {
     fn test_crm_permission_partial_ne() {
         assert_ne!(CrmPermission::CustomerRead, CrmPermission::CustomerWrite);
         assert_ne!(CrmPermission::ContactRead, CrmPermission::ContactWrite);
-        assert_ne!(CrmPermission::OpportunityRead, CrmPermission::OpportunityWrite);
-        assert_ne!(CrmPermission::InteractionRead, CrmPermission::InteractionWrite);
+        assert_ne!(
+            CrmPermission::OpportunityRead,
+            CrmPermission::OpportunityWrite
+        );
+        assert_ne!(
+            CrmPermission::InteractionRead,
+            CrmPermission::InteractionWrite
+        );
     }
 }

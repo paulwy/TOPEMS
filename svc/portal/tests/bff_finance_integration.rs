@@ -209,7 +209,7 @@ fn test_forward_headers_collects_all_present() {
 fn test_health_check_response_structure() {
     // 复现 portal health_check 的响应结构
     use topems_shared_core::health::HealthStatus;
-use topems_shared_core::health::ServiceHealth;
+    use topems_shared_core::health::ServiceHealth;
 
     let health = ServiceHealth::healthy("topems-portal");
 

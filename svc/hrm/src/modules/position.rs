@@ -11,8 +11,8 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
-use topems_shared_core::response::{api_error, ApiResponse};
 use topems_shared_core::hrm::{PaginatedResult, PaginationQuery};
+use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Position {

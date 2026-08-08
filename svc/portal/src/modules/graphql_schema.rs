@@ -5258,7 +5258,8 @@ pub struct ProductionApqExtension;
 /// 通过发布一个 HealthCheck 事件来验证 Redis 连接是否可用。
 /// 如果 Redis 不可用或连接失败，返回 false，调用方应降级为内存广播模式。
 pub async fn try_redis_pubsub() -> bool {
-    let publisher = match topems_shared_event::event::EventPublisher::new("portal-bff-health-check") {
+    let publisher = match topems_shared_event::event::EventPublisher::new("portal-bff-health-check")
+    {
         Ok(p) => p,
         Err(e) => {
             tracing::debug!("[event-bus] Redis EventPublisher 创建失败: {}", e);

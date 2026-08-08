@@ -96,13 +96,14 @@ impl PortalEventHandlers {
                     };
                     let published_at = Some(Utc::now());
                     tokio::spawn(async move {
-                        let payload = topems_shared_event::event::PortalNotificationPublishedPayload {
-                            notification_id,
-                            title: title_owned,
-                            message,
-                            target_users,
-                            published_at,
-                        };
+                        let payload =
+                            topems_shared_event::event::PortalNotificationPublishedPayload {
+                                notification_id,
+                                title: title_owned,
+                                message,
+                                target_users,
+                                published_at,
+                            };
                         if let Err(e) = publisher
                             .publish_event(EventType::PortalNotificationPublished, payload)
                             .await

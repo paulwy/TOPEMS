@@ -109,7 +109,10 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 }
 
 pub async fn plugin_health_check() -> Json<topems_shared_core::health::ServiceHealth> {
-    Json(topems_shared_core::health::build_health_response("topems-pm", true))
+    Json(topems_shared_core::health::build_health_response(
+        "topems-pm",
+        true,
+    ))
 }
 
 pub fn create_routes() -> Router {

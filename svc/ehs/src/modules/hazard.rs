@@ -298,7 +298,10 @@ pub async fn create_hazard(
                 reported_by: hreported_by,
             };
             if let Err(e) = publisher
-                .publish_event(topems_shared_event::event::EventType::EhsHazardReported, payload)
+                .publish_event(
+                    topems_shared_event::event::EventType::EhsHazardReported,
+                    payload,
+                )
                 .await
             {
                 tracing::warn!(

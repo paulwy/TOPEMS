@@ -53,9 +53,9 @@ fn validate_table(table: &str) -> Result<&str, &'static str> {
         Err("Invalid table name")
     }
 }
-use topems_shared_event::event::{EventType, FinancePaymentMadePayload};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_event::event::{EventType, FinancePaymentMadePayload};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct AccountQueryParams {

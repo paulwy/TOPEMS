@@ -8,8 +8,10 @@ use axum::{
     http::HeaderMap,
     Json,
 };
-use topems_shared_service_client::service_client::{api::notification_api::NotificationApi, TypedServiceClient};
 use topems_shared_core::response::ApiResponse;
+use topems_shared_service_client::service_client::{
+    api::notification_api::NotificationApi, TypedServiceClient,
+};
 
 use crate::{models::Notification, shared::AppState, utils::user_context::extract_bearer_token};
 
