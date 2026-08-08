@@ -10,7 +10,7 @@ use topems_shared::{DataMasking, EncryptionResult, FieldEncryptionService};
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 #[schema(example = json!({
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "company_id": "550e8400-e29b-41d4-a716-446655440001",
+    "org_id": "550e8400-e29b-41d4-a716-446655440001",
     "department_id": "550e8400-e29b-41d4-a716-446655440002",
     "position_id": "550e8400-e29b-41d4-a716-446655440003",
     "employee_number": "EMP001",
@@ -29,7 +29,7 @@ pub struct Employee {
     #[schema(example = "550e8400-e29b-41d4-a716-446655440000")]
     pub tenant_id: Uuid,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440001")]
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440002")]
     pub department_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440003")]
@@ -213,7 +213,7 @@ impl EmployeeFinance {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 #[schema(example = json!({
-    "company_id": "550e8400-e29b-41d4-a716-446655440001",
+    "org_id": "550e8400-e29b-41d4-a716-446655440001",
     "department_id": "550e8400-e29b-41d4-a716-446655440002",
     "position_id": "550e8400-e29b-41d4-a716-446655440003",
     "employee_number": "EMP001",
@@ -225,7 +225,7 @@ impl EmployeeFinance {
 }))]
 pub struct CreateEmployeeRequest {
     #[schema(example = "550e8400-e29b-41d4-a716-446655440001")]
-    pub company_id: Uuid,
+    pub org_id: Uuid,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440002")]
     pub department_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440003")]
@@ -282,7 +282,7 @@ pub struct CreateEmployeeRequest {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 #[schema(example = json!({
-    "company_id": "550e8400-e29b-41d4-a716-446655440001",
+    "org_id": "550e8400-e29b-41d4-a716-446655440001",
     "department_id": "550e8400-e29b-41d4-a716-446655440004",
     "position_id": "550e8400-e29b-41d4-a716-446655440005",
     "name": "张三",
@@ -294,7 +294,7 @@ pub struct CreateEmployeeRequest {
 }))]
 pub struct UpdateEmployeeRequest {
     #[schema(example = "550e8400-e29b-41d4-a716-446655440001")]
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440004")]
     pub department_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440005")]
@@ -362,14 +362,14 @@ mod tests {
     #[test]
     fn test_employee_struct() {
         let id = Uuid::new_v4();
-        let company_id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let created_at = Utc::now();
         let updated_at = Utc::now();
 
         let employee = Employee {
             id,
             tenant_id: Uuid::new_v4(),
-            company_id: Some(company_id),
+            org_id: Some(org_id),
             department_id: None,
             position_id: None,
             employee_number: "EMP001".to_string(),
@@ -410,9 +410,9 @@ mod tests {
 
     #[test]
     fn test_create_employee_request() {
-        let company_id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let request = CreateEmployeeRequest {
-            company_id,
+            org_id,
             department_id: None,
             position_id: None,
             employee_number: "EMP002".to_string(),
@@ -447,7 +447,7 @@ mod tests {
     #[test]
     fn test_update_employee_request() {
         let request = UpdateEmployeeRequest {
-            company_id: None,
+            org_id: None,
             department_id: None,
             position_id: None,
             name: Some("Jane Updated".to_string()),
@@ -488,7 +488,7 @@ mod tests {
         let mut employee = Employee {
             id,
             tenant_id: Uuid::new_v4(),
-            company_id: None,
+            org_id: None,
             department_id: None,
             position_id: None,
             employee_number: "EMP001".to_string(),
@@ -573,7 +573,7 @@ mod tests {
         let mut employee = Employee {
             id,
             tenant_id: Uuid::new_v4(),
-            company_id: None,
+            org_id: None,
             department_id: None,
             position_id: None,
             employee_number: "EMP001".to_string(),

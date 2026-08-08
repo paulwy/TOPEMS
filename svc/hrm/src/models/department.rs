@@ -9,7 +9,7 @@ pub struct Department {
     pub id: Uuid,
     pub tenant_id: Uuid,
     pub organization_id: Uuid,
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
     pub parent_id: Option<Uuid>,
@@ -23,7 +23,7 @@ pub struct Department {
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateDepartmentRequest {
     pub organization_id: Option<Uuid>,
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
     pub parent_id: Option<Uuid>,
@@ -33,7 +33,7 @@ pub struct CreateDepartmentRequest {
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateDepartmentRequest {
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     pub name: Option<String>,
     pub code: Option<String>,
     pub parent_id: Option<Uuid>,
@@ -57,7 +57,7 @@ mod tests {
             id,
             tenant_id: Uuid::new_v4(),
             organization_id: org_id,
-            company_id: None,
+            org_id: None,
             name: "Engineering".to_string(),
             code: Some("ENG".to_string()),
             parent_id: None,
@@ -79,7 +79,7 @@ mod tests {
         let org_id = Uuid::new_v4();
         let request = CreateDepartmentRequest {
             organization_id: Some(org_id),
-            company_id: None,
+            org_id: None,
             name: "HR Department".to_string(),
             code: Some("HR".to_string()),
             parent_id: None,
@@ -94,7 +94,7 @@ mod tests {
     #[test]
     fn test_update_department_request() {
         let request = UpdateDepartmentRequest {
-            company_id: None,
+            org_id: None,
             name: Some("Updated HR Department".to_string()),
             code: None,
             parent_id: None,

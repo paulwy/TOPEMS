@@ -221,7 +221,7 @@ async fn get_report_item_vouchers(
 #[derive(Debug, Deserialize)]
 pub struct ComparisonQuery {
     pub report_type: Option<String>,
-    pub company_id: Option<String>,
+    pub org_id: Option<String>,
     pub period_from: Option<String>,
     pub period_to: Option<String>,
     pub currency_code: Option<String>,
@@ -277,7 +277,7 @@ async fn get_report_comparison(
 #[derive(Debug, Deserialize)]
 pub struct TrendQuery {
     pub report_type: Option<String>,
-    pub company_id: Option<String>,
+    pub org_id: Option<String>,
     pub period_from: Option<String>,
     pub period_to: Option<String>,
     pub account_codes: Option<String>,
@@ -338,7 +338,7 @@ async fn get_report_trend(
 #[derive(Debug, Deserialize)]
 pub struct YearOverYearQuery {
     pub report_type: Option<String>,
-    pub company_id: Option<String>,
+    pub org_id: Option<String>,
     pub current_period: Option<String>,
     pub previous_year_period: Option<String>,
     pub currency_code: Option<String>,
@@ -395,7 +395,7 @@ async fn get_report_year_over_year(
 #[derive(Debug, Deserialize)]
 pub struct PeriodOverPeriodQuery {
     pub report_type: Option<String>,
-    pub company_id: Option<String>,
+    pub org_id: Option<String>,
     pub current_period: Option<String>,
     pub previous_period: Option<String>,
     pub currency_code: Option<String>,
@@ -823,8 +823,8 @@ async fn batch_export_reports(
         .and_then(|v| v.as_str())
         .unwrap_or("xlsx")
         .to_string();
-    let company_ids: Vec<String> = req
-        .get("company_ids")
+    let org_ids: Vec<String> = req
+        .get("org_ids")
         .and_then(|v| v.as_array())
         .map(|arr| {
             arr.iter()
@@ -843,10 +843,10 @@ async fn batch_export_reports(
         .unwrap_or_default();
 
     let mut tasks: Vec<serde_json::Value> = Vec::new();
-    for cid in &company_ids {
+    for cid in &org_ids {
         for p in &periods {
             tasks.push(serde_json::json!({
-                "company_id": cid,
+                "org_id": cid,
                 "period": p,
                 "report_type": report_type,
                 "format": format,
@@ -924,7 +924,7 @@ async fn get_report_subscriptions(
             "id": format!("00000000-0000-0000-0000-{:012}", i + 1),
             "name": name,
             "report_type": rt,
-            "company_ids": ["00000000-0000-0000-0000-000000000001"],
+            "org_ids": ["00000000-0000-0000-0000-000000000001"],
             "periods": ["2024-01", "2024-02", "2024-03"],
             "frequency": freq,
             "recipients": [{"email": "finance@example.com"}],
@@ -956,8 +956,8 @@ async fn create_report_subscription(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = Uuid::new_v4();
     let now = Utc::now().to_rfc3339();
-    let company_ids: Vec<String> = req
-        .get("company_ids")
+    let org_ids: Vec<String> = req
+        .get("org_ids")
         .and_then(|v| v.as_array())
         .map(|arr| {
             arr.iter()
@@ -983,7 +983,7 @@ async fn create_report_subscription(
             "id": id,
             "name": req.get("name").and_then(|v| v.as_str()).unwrap_or(""),
             "report_type": req.get("report_type").and_then(|v| v.as_str()).unwrap_or("balance_sheet"),
-            "company_ids": company_ids,
+            "org_ids": org_ids,
             "periods": periods,
             "frequency": req.get("frequency").and_then(|v| v.as_str()).unwrap_or("monthly"),
             "recipients": recipients,
@@ -1004,8 +1004,8 @@ async fn update_report_subscription(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let now = Utc::now().to_rfc3339();
-    let company_ids: Vec<String> = req
-        .get("company_ids")
+    let org_ids: Vec<String> = req
+        .get("org_ids")
         .and_then(|v| v.as_array())
         .map(|arr| {
             arr.iter()
@@ -1031,7 +1031,7 @@ async fn update_report_subscription(
             "id": subscription_id,
             "name": req.get("name").and_then(|v| v.as_str()).unwrap_or(""),
             "report_type": req.get("report_type").and_then(|v| v.as_str()).unwrap_or("balance_sheet"),
-            "company_ids": company_ids,
+            "org_ids": org_ids,
             "periods": periods,
             "frequency": req.get("frequency").and_then(|v| v.as_str()).unwrap_or("monthly"),
             "recipients": recipients,
@@ -1122,7 +1122,7 @@ async fn get_subscription_history(
 
 #[derive(Debug, Deserialize)]
 pub struct GenerateReportRequest {
-    pub company_id: Option<String>,
+    pub org_id: Option<String>,
     pub period: String,
     pub compare_period: Option<String>,
     pub currency_code: Option<String>,
@@ -1133,14 +1133,14 @@ pub struct GenerateReportRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct GetReportQuery {
-    pub company_id: Option<String>,
+    pub org_id: Option<String>,
     pub period: String,
     pub currency_code: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct HistoryReportQuery {
-    pub company_id: Option<String>,
+    pub org_id: Option<String>,
     pub start_period: String,
     pub end_period: String,
     pub currency_code: Option<String>,
@@ -1159,11 +1159,11 @@ async fn upsert_report(
 ) -> Result<serde_json::Value, sqlx::Error> {
     let row = sqlx::query(
         r#"
-        INSERT INTO financial_reports (report_type, company_id, tenant_id, period, currency_code, status, approval_status, data, generated_by, generated_at)
+        INSERT INTO financial_reports (report_type, org_id, tenant_id, period, currency_code, status, approval_status, data, generated_by, generated_at)
         VALUES ($1, $2, $2, $3, $4, 'draft', 'draft', $5, $6, NOW())
-        ON CONFLICT (report_type, company_id, period, currency_code)
+        ON CONFLICT (report_type, org_id, period, currency_code)
         DO UPDATE SET data = EXCLUDED.data, generated_by = EXCLUDED.generated_by, generated_at = NOW(), updated_at = NOW()
-        RETURNING id, report_type, company_id, period, currency_code, status, approval_status, data, generated_at
+        RETURNING id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at
         "#,
     )
     .bind(report_type)
@@ -1178,7 +1178,7 @@ async fn upsert_report(
     Ok(serde_json::json!({
         "id": row.get::<Uuid, _>("id"),
         "report_type": row.get::<String, _>("report_type"),
-        "company_id": row.get::<Option<Uuid>, _>("company_id"),
+        "org_id": row.get::<Option<Uuid>, _>("org_id"),
         "period": row.get::<String, _>("period"),
         "currency_code": row.get::<String, _>("currency_code"),
         "status": row.get::<String, _>("status"),
@@ -1196,7 +1196,7 @@ async fn fetch_report(
     currency_code: &str,
 ) -> Result<Option<serde_json::Value>, sqlx::Error> {
     let row = sqlx::query(
-        r#"SELECT id, report_type, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
+        r#"SELECT id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
            WHERE tenant_id = $1 AND report_type = $2 AND period = $3 AND currency_code = $4"#,
     )
@@ -1211,7 +1211,7 @@ async fn fetch_report(
         serde_json::json!({
             "id": r.get::<Uuid, _>("id"),
             "report_type": r.get::<String, _>("report_type"),
-            "company_id": r.get::<Option<Uuid>, _>("company_id"),
+            "org_id": r.get::<Option<Uuid>, _>("org_id"),
             "period": r.get::<String, _>("period"),
             "currency_code": r.get::<String, _>("currency_code"),
             "status": r.get::<String, _>("status"),
@@ -1235,7 +1235,7 @@ async fn fetch_history(
 ) -> Result<(Vec<serde_json::Value>, i64), sqlx::Error> {
     let offset = (page - 1) * page_size;
     let rows = sqlx::query(
-        r#"SELECT id, report_type, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
+        r#"SELECT id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
            WHERE tenant_id = $1 AND report_type = $2 AND period >= $3 AND period <= $4
              AND ($5::text IS NULL OR currency_code = $5)
@@ -1271,7 +1271,7 @@ async fn fetch_history(
             serde_json::json!({
                 "id": r.get::<Uuid, _>("id"),
                 "report_type": r.get::<String, _>("report_type"),
-                "company_id": r.get::<Option<Uuid>, _>("company_id"),
+                "org_id": r.get::<Option<Uuid>, _>("org_id"),
                 "period": r.get::<String, _>("period"),
                 "currency_code": r.get::<String, _>("currency_code"),
                 "status": r.get::<String, _>("status"),
@@ -1714,7 +1714,7 @@ async fn unlock_report(
 #[derive(Debug, Deserialize)]
 pub struct ExportQuery {
     pub report_type: Option<String>,
-    pub company_id: Option<String>,
+    pub org_id: Option<String>,
     pub period: Option<String>,
     pub currency_code: Option<String>,
     pub format: Option<String>,
@@ -1732,16 +1732,13 @@ async fn export_report(
         .unwrap_or_else(|| "balance_sheet".to_string());
     let period = params.period.unwrap_or_default();
     let format = params.format.unwrap_or_else(|| "pdf".to_string());
-    let company_id = params.company_id.unwrap_or_default();
+    let org_id = params.org_id.unwrap_or_default();
     let currency_code = params.currency_code.unwrap_or_else(|| "CNY".to_string());
-    let url = format!(
-        "/exports/{}_{}_{}.{}",
-        report_type, company_id, period, format
-    );
+    let url = format!("/exports/{}_{}_{}.{}", report_type, org_id, period, format);
     Json(ApiResponse::success(
         serde_json::json!({
             "report_type": report_type,
-            "company_id": company_id,
+            "org_id": org_id,
             "period": period,
             "currency_code": currency_code,
             "format": format,

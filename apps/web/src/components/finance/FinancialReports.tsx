@@ -1260,35 +1260,35 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
 // ============================================
 
 interface FinancialReportsViewerProps {
-  companyId: string;
+  orgId: string;
   period: string;
 }
 
-export function FinancialReportsViewer({ companyId, period }: FinancialReportsViewerProps) {
+export function FinancialReportsViewer({ orgId, period }: FinancialReportsViewerProps) {
   const [activeReport, setActiveReport] = useState<'balance' | 'income' | 'cash'>('balance');
 
   const { data: balanceSheet, isLoading: balanceLoading } = useQuery({
-    queryKey: ['balance-sheet', companyId, period],
-    queryFn: () => reportApi.getBalanceSheet({ company_id: companyId, period }),
+    queryKey: ['balance-sheet', orgId, period],
+    queryFn: () => reportApi.getBalanceSheet({ org_id: orgId, period }),
     enabled: activeReport === 'balance',
   });
 
   const { data: incomeStatement, isLoading: incomeLoading } = useQuery({
-    queryKey: ['income-statement', companyId, period],
-    queryFn: () => reportApi.getIncomeStatement({ company_id: companyId, period }),
+    queryKey: ['income-statement', orgId, period],
+    queryFn: () => reportApi.getIncomeStatement({ org_id: orgId, period }),
     enabled: activeReport === 'income',
   });
 
   const { data: cashFlow, isLoading: cashLoading } = useQuery({
-    queryKey: ['cash-flow', companyId, period],
-    queryFn: () => reportApi.getCashFlowStatement({ company_id: companyId, period }),
+    queryKey: ['cash-flow', orgId, period],
+    queryFn: () => reportApi.getCashFlowStatement({ org_id: orgId, period }),
     enabled: activeReport === 'cash',
   });
 
   const handleExport = async () => {
     logger.info('Export report:', activeReport);
     try {
-      const params = { company_id: companyId, period };
+      const params = { org_id: orgId, period };
       let blob: Blob;
       let filename: string;
 

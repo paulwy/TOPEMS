@@ -27,14 +27,14 @@ impl EmployeeService {
         search: Option<String>,
         status: Option<String>,
         department_id: Option<Uuid>,
-        company_id: Option<Uuid>,
+        org_id: Option<Uuid>,
     ) -> ApiResponse<ListResponse<Employee>> {
         let offset = (page - 1) * page_size;
         let search_pattern = search.map(|s| format!("%{}%", s));
 
         let employees = sqlx::query_as::<_, Employee>(
             r#"
-            SELECT e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
+            SELECT e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
                    e.employee_number, e.name, e.gender, e.hire_date, e.email, e.phone,
                    e.id_card_number, e.address,
                    e.birth_date, e.regular_date, e.probation_period,
@@ -49,7 +49,7 @@ impl EmployeeService {
               AND ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_number ILIKE $1)
               AND ($2::text IS NULL OR e.status = $2)
               AND ($3::uuid IS NULL OR e.department_id = $3)
-              AND ($4::uuid IS NULL OR e.company_id = $4)
+              AND ($4::uuid IS NULL OR e.org_id = $4)
             ORDER BY e.created_at DESC
             LIMIT $6 OFFSET $7
             "#,
@@ -57,7 +57,7 @@ impl EmployeeService {
         .bind(&search_pattern)
         .bind(&status)
         .bind(department_id)
-        .bind(company_id)
+        .bind(org_id)
         .bind(self.tenant_id)
         .bind(page_size)
         .bind(offset)
@@ -73,13 +73,13 @@ impl EmployeeService {
                       AND ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_number ILIKE $1)
                       AND ($2::text IS NULL OR e.status = $2)
                       AND ($3::uuid IS NULL OR e.department_id = $3)
-                      AND ($4::uuid IS NULL OR e.company_id = $4)
+                      AND ($4::uuid IS NULL OR e.org_id = $4)
                     "#,
                 )
                 .bind(&search_pattern)
                 .bind(&status)
                 .bind(department_id)
-                .bind(company_id)
+                .bind(org_id)
                 .bind(self.tenant_id)
                 .fetch_one(&self.db)
                 .await
@@ -104,7 +104,7 @@ impl EmployeeService {
     pub async fn get_employee(&self, id: &Uuid) -> ApiResponse<Employee> {
         let result = sqlx::query_as::<_, Employee>(
             r#"
-            SELECT e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
+            SELECT e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
                    e.employee_number, e.name, e.gender, e.hire_date, e.email, e.phone,
                    e.id_card_number, e.address,
                    e.birth_date, e.regular_date, e.probation_period,
@@ -208,7 +208,7 @@ impl EmployeeService {
         let result = sqlx::query_as::<_, Employee>(
             r#"
             INSERT INTO hrm.employees (
-                id, tenant_id, organization_id, company_id, department_id, position_id,
+                id, tenant_id, organization_id, org_id, department_id, position_id,
                 employee_number, name, gender, hire_date, email, phone,
                 id_card_number, address,
                 birth_date, regular_date, probation_period, position, joblevel,
@@ -219,7 +219,7 @@ impl EmployeeService {
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
                       $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29,
                       'active', $30, $31)
-            RETURNING id, tenant_id, company_id, department_id, position_id,
+            RETURNING id, tenant_id, org_id, department_id, position_id,
                       employee_number, name, gender, hire_date, email, phone,
                       id_card_number, address,
                       birth_date, regular_date, probation_period, position, joblevel,
@@ -232,7 +232,7 @@ impl EmployeeService {
         .bind(id)
         .bind(self.tenant_id)
         .bind(self.tenant_id)
-        .bind(req.company_id)
+        .bind(req.org_id)
         .bind(req.department_id)
         .bind(req.position_id)
         .bind(&req.employee_number)
@@ -282,7 +282,7 @@ impl EmployeeService {
     ) -> ApiResponse<Employee> {
         let existing = sqlx::query_as::<_, Employee>(
             r#"
-            SELECT e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
+            SELECT e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
                    e.employee_number, e.name, e.gender, e.hire_date, e.email, e.phone,
                    e.id_card_number, e.address,
                    e.birth_date, e.regular_date, e.probation_period,
@@ -309,7 +309,7 @@ impl EmployeeService {
 
         let _ = existing.decrypt_fields(&self.encryption);
 
-        let company_id = req.company_id.or(existing.company_id);
+        let org_id = req.org_id.or(existing.org_id);
         let department_id = req.department_id.or(existing.department_id);
         let position_id = req.position_id.or(existing.position_id);
         let name = req.name.unwrap_or(existing.name);
@@ -382,7 +382,7 @@ impl EmployeeService {
         let result = sqlx::query_as::<_, Employee>(
             r#"
             UPDATE hrm.employees SET
-                company_id = $3, department_id = $4, position_id = $5,
+                org_id = $3, department_id = $4, position_id = $5,
                 name = $6, gender = $7, hire_date = $8, email = $9, phone = $10,
                 id_card_number = $11, address = $12,
                 birth_date = $13, regular_date = $14, probation_period = $15,
@@ -392,7 +392,7 @@ impl EmployeeService {
                 employee_type = $26, user_id = $27,
                 status = $28, updated_at = $29
             WHERE id = $1 AND tenant_id = $2
-            RETURNING id, tenant_id, company_id, department_id, position_id,
+            RETURNING id, tenant_id, org_id, department_id, position_id,
                       employee_number, name, gender, hire_date, email, phone,
                       id_card_number, address,
                       birth_date, regular_date, probation_period, position, joblevel,
@@ -404,7 +404,7 @@ impl EmployeeService {
         )
         .bind(id)
         .bind(self.tenant_id)
-        .bind(company_id)
+        .bind(org_id)
         .bind(department_id)
         .bind(position_id)
         .bind(&name)

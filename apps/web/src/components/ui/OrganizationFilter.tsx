@@ -4,7 +4,7 @@ import { FormControl, InputLabel, Select, MenuItem, Box, Typography } from '@mui
 import { useOrganization } from '../../hooks/useOrganization';
 
 export interface OrganizationFilterValue {
-  companyId?: string;
+  orgId?: string;
   departmentId?: string;
   employeeId?: string;
 }
@@ -40,8 +40,8 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
   }, [loadCompanies]);
 
   useEffect(() => {
-    if (value.companyId) {
-      loadDepartments(value.companyId);
+    if (value.orgId) {
+      loadDepartments(value.orgId);
       onChangeRef.current({
         ...value,
         departmentId: undefined,
@@ -50,7 +50,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
     } else {
       loadDepartments();
     }
-  }, [value.companyId, loadDepartments]);
+  }, [value.orgId, loadDepartments]);
 
   useEffect(() => {
     if (value.departmentId) {
@@ -62,18 +62,18 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
   }, [value.departmentId, loadEmployees]);
 
   const filteredDepartments = useMemo(() => {
-    if (!value.companyId) return departments;
+    if (!value.orgId) return departments;
     return departments.filter(
-      (dept) => dept.parentId === null || dept.parentId === value.companyId
+      (dept) => dept.parentId === null || dept.parentId === value.orgId
     );
-  }, [departments, value.companyId]);
+  }, [departments, value.orgId]);
 
   const filteredEmployees = useMemo(() => {
     if (!value.departmentId) return employees;
     return employees.filter((emp) => emp.department_id === value.departmentId);
   }, [employees, value.departmentId]);
 
-  const selectedCompany = companies.find((c) => c.id === value.companyId);
+  const selectedCompany = companies.find((c) => c.id === value.orgId);
   const selectedDepartment = departments.find((d) => d.id === value.departmentId);
   const selectedEmployee = employees.find((e) => e.id === value.employeeId);
 
@@ -92,11 +92,11 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
           >
             <InputLabel>选择公司</InputLabel>
             <Select
-              value={value.companyId || 'all'}
+              value={value.orgId || 'all'}
               label='选择公司'
               onChange={(e) =>
                 onChange({
-                  companyId: e.target.value === 'all' ? undefined : e.target.value,
+                  orgId: e.target.value === 'all' ? undefined : e.target.value,
                   departmentId: undefined,
                   employeeId: undefined,
                 })
@@ -122,7 +122,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
           <FormControl
             size='small'
             sx={{ minWidth: 160 }}
-            disabled={disabled || (!value.companyId && companies.length > 0)}
+            disabled={disabled || (!value.orgId && companies.length > 0)}
           >
             <InputLabel>选择部门</InputLabel>
             <Select

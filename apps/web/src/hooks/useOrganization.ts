@@ -21,7 +21,7 @@ export interface UseOrganizationReturn {
   employees: Employee[];
   loading: boolean;
   loadCompanies: () => Promise<void>;
-  loadDepartments: (companyId?: string) => Promise<void>;
+  loadDepartments: (orgId?: string) => Promise<void>;
   loadEmployees: (departmentId?: string) => Promise<void>;
   clearData: () => void;
 }
@@ -69,7 +69,7 @@ export const useOrganization = (): UseOrganizationReturn => {
     }
   }, []);
 
-  const loadDepartments = useCallback(async (companyId?: string) => {
+  const loadDepartments = useCallback(async (orgId?: string) => {
     // 取消之前的请求
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -78,7 +78,7 @@ export const useOrganization = (): UseOrganizationReturn => {
 
     setLoading(true);
     try {
-      const params = companyId ? { company_id: companyId } : undefined;
+      const params = orgId ? { org_id: orgId } : undefined;
       const response = await departmentApi.list(params);
       if (response.code === 200 && response.data) {
         setDepartments(response.data.items || []);

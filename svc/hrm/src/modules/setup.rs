@@ -24,7 +24,7 @@ pub struct InitProgressResponse {
     pub is_completed: bool,
     pub current_step: i32,
     pub steps: Vec<StepStatus>,
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -110,7 +110,6 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 const DEFAULT_ORG_ID: Uuid = Uuid::from_u128(0x00000000000000000000000000000001);
-const DEFAULT_COMPANY_ID: Uuid = Uuid::from_u128(0x00000000000000000000000000000001);
 
 async fn get_init_progress(
     State(state): State<ApiState>,
@@ -163,7 +162,7 @@ async fn get_init_progress(
                     is_completed,
                     current_step,
                     steps: step_statuses,
-                    company_id: company_result.ok().flatten(),
+                    org_id: company_result.ok().flatten(),
                 },
                 "获取初始化进度成功",
             ))
@@ -180,7 +179,6 @@ async fn setup_company_info(
     Json(req): Json<CompanyInfoRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let org_id = DEFAULT_ORG_ID;
-    let company_id = DEFAULT_COMPANY_ID;
     let now = Utc::now();
 
     // 验证必填字段
@@ -207,7 +205,7 @@ async fn setup_company_info(
                    contact_phone, email, website, description, status, created_at, updated_at
         "#,
     )
-    .bind(company_id)
+    .bind(org_id)
     .bind(&req.name)
     .bind(&req.short_name)
     .bind(&req.registration_number)
@@ -245,13 +243,13 @@ async fn setup_company_info(
             )
             .bind(Uuid::new_v4())
             .bind(org_id)
-            .bind(serde_json::json!({ "company_id": company.id, "name": company.name }))
+            .bind(serde_json::json!({ "org_id": company.id, "name": company.name }))
             .bind(now)
             .execute(&state.db)
             .await;
 
             Json(ApiResponse::success(
-                serde_json::json!({ "company_id": company.id, "name": company.name }),
+                serde_json::json!({ "org_id": company.id, "name": company.name }),
                 "公司信息更新成功",
             ))
         }
@@ -286,7 +284,6 @@ async fn setup_departments(
     Json(req): Json<DepartmentsBatchRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let org_id = DEFAULT_ORG_ID;
-    let company_id = DEFAULT_COMPANY_ID;
     let now = Utc::now();
 
     if req.departments.is_empty() {
@@ -311,14 +308,14 @@ async fn setup_departments(
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Department>(
             r#"
-            INSERT INTO hrm.departments (id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
+            INSERT INTO hrm.departments (id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
-            RETURNING id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+            RETURNING id, organization_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
             "#,
         )
         .bind(id)
         .bind(org_id)
-        .bind(company_id)
+        .bind(org_id)
         .bind(&dept.name)
         .bind(&dept.code)
         .bind(dept.parent_id)
@@ -378,7 +375,7 @@ async fn setup_departments(
 pub struct Department {
     pub id: Uuid,
     pub organization_id: Uuid,
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
     pub parent_id: Option<Uuid>,
@@ -394,7 +391,6 @@ async fn setup_positions(
     Json(req): Json<PositionsBatchRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let org_id = DEFAULT_ORG_ID;
-    let company_id = DEFAULT_COMPANY_ID;
     let now = Utc::now();
 
     if req.positions.is_empty() {
@@ -413,14 +409,14 @@ async fn setup_positions(
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Position>(
             r#"
-            INSERT INTO hrm.positions (id, organization_id, company_id, department_id, name, code, level, description, status, created_at, updated_at)
+            INSERT INTO hrm.positions (id, organization_id, org_id, department_id, name, code, level, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
-            RETURNING id, organization_id, company_id, department_id, name, code, level, description, status, created_at, updated_at
+            RETURNING id, organization_id, org_id, department_id, name, code, level, description, status, created_at, updated_at
             "#,
         )
         .bind(id)
         .bind(org_id)
-        .bind(company_id)
+        .bind(org_id)
         .bind(pos.department_id)
         .bind(&pos.name)
         .bind(&pos.code)
@@ -480,7 +476,7 @@ async fn setup_positions(
 pub struct Position {
     pub id: Uuid,
     pub organization_id: Uuid,
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
@@ -496,7 +492,6 @@ async fn setup_admin_user(
     Json(req): Json<AdminUserRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let org_id = DEFAULT_ORG_ID;
-    let company_id = DEFAULT_COMPANY_ID;
     let now = Utc::now();
 
     // 验证必填字段
@@ -521,19 +516,19 @@ async fn setup_admin_user(
     let result = sqlx::query_as::<_, Employee>(
         r#"
         INSERT INTO hrm.employees (
-            id, organization_id, company_id, department_id, position_id,
+            id, organization_id, org_id, department_id, position_id,
             employee_number, name, gender, birth_date, hire_date,
             id_card_number, email, phone,
             emergency_contact_name, emergency_contact_phone, address,
             status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'active', $17, $18)
-        RETURNING id, organization_id, company_id, department_id, position_id,
+        RETURNING id, organization_id, org_id, department_id, position_id,
                   employee_number, name, status, created_at, updated_at
         "#,
     )
     .bind(employee_id)
     .bind(org_id)
-    .bind(company_id)
+    .bind(org_id)
     .bind(req.department_id)
     .bind(req.position_id)
     .bind(&req.employee_number)
@@ -592,7 +587,7 @@ async fn setup_admin_user(
 pub struct Employee {
     pub id: Uuid,
     pub organization_id: Uuid,
-    pub company_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub position_id: Option<Uuid>,
     pub employee_number: String,

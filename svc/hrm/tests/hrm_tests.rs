@@ -500,7 +500,7 @@ mod shared_schema_integration_tests {
     struct SharedDepartment {
         id: Uuid,
         organization_id: Uuid,
-        company_id: Option<Uuid>,
+        org_id: Option<Uuid>,
         name: String,
         code: String,
         status: String,
@@ -510,7 +510,7 @@ mod shared_schema_integration_tests {
     struct SharedEmployee {
         id: Uuid,
         organization_id: Uuid,
-        company_id: Option<Uuid>,
+        org_id: Option<Uuid>,
         department_id: Option<Uuid>,
         employee_number: String,
         name: String,
@@ -536,7 +536,7 @@ mod shared_schema_integration_tests {
         let department = SharedDepartment {
             id: Uuid::new_v4(),
             organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
-            company_id: Some(Uuid::new_v4()),
+            org_id: Some(Uuid::new_v4()),
             name: "人力资源部".to_string(),
             code: "HR".to_string(),
             status: "active".to_string(),
@@ -544,7 +544,7 @@ mod shared_schema_integration_tests {
 
         assert_eq!(department.name, "人力资源部");
         assert_eq!(department.code, "HR");
-        assert!(department.company_id.is_some());
+        assert!(department.org_id.is_some());
     }
 
     #[test]
@@ -552,7 +552,7 @@ mod shared_schema_integration_tests {
         let employee = SharedEmployee {
             id: Uuid::new_v4(),
             organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
-            company_id: Some(Uuid::new_v4()),
+            org_id: Some(Uuid::new_v4()),
             department_id: Some(Uuid::new_v4()),
             employee_number: "EMP001".to_string(),
             name: "张三".to_string(),
@@ -566,11 +566,11 @@ mod shared_schema_integration_tests {
 
     #[test]
     fn test_shared_schema_relationships() {
-        let company_id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
         let department_id = Uuid::new_v4();
 
         let company = SharedCompany {
-            id: company_id,
+            id: org_id,
             organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
             name: "测试公司".to_string(),
             status: "active".to_string(),
@@ -580,7 +580,7 @@ mod shared_schema_integration_tests {
         let department = SharedDepartment {
             id: department_id,
             organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
-            company_id: Some(company_id),
+            org_id: Some(org_id),
             name: "测试部门".to_string(),
             code: "TEST-DEPT".to_string(),
             status: "active".to_string(),
@@ -589,16 +589,16 @@ mod shared_schema_integration_tests {
         let employee = SharedEmployee {
             id: Uuid::new_v4(),
             organization_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
-            company_id: Some(company_id),
+            org_id: Some(org_id),
             department_id: Some(department_id),
             employee_number: "EMP001".to_string(),
             name: "测试员工".to_string(),
             status: "active".to_string(),
         };
 
-        assert_eq!(employee.company_id.unwrap(), company.id);
+        assert_eq!(employee.org_id.unwrap(), company.id);
         assert_eq!(employee.department_id.unwrap(), department.id);
-        assert_eq!(department.company_id.unwrap(), company.id);
+        assert_eq!(department.org_id.unwrap(), company.id);
     }
 
     #[test]

@@ -29,7 +29,7 @@ export const reportApi = {
   },
 
   getAccountBalanceReport: (params: {
-    company_id: string;
+    org_id: string;
     period: string;
     account_ids?: string[];
     level?: number;
@@ -49,7 +49,7 @@ export const reportApi = {
     account_id: string;
     start_period: string;
     end_period: string;
-    company_id?: string;
+    org_id?: string;
     department_id?: string;
     project_id?: string;
     page?: number;
@@ -77,7 +77,7 @@ export const reportApi = {
     dimension_id: string;
     start_period: string;
     end_period: string;
-    company_id?: string;
+    org_id?: string;
   }): Promise<ApiResponse<any>> => {
     return apiClient.finance.get('/reports/dimension-detail', {
       params,

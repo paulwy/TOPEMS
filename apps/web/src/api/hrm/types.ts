@@ -23,7 +23,7 @@ export interface Department {
   name: string;
   code?: string;
   parentId?: string;
-  company_id?: string;
+  org_id?: string;
   description?: string;
   status: string;
   created_at: string;
@@ -58,7 +58,7 @@ export interface Employee {
   employee_type?: string;
   status: string;
   user_id?: string;
-  company_id?: string;
+  org_id?: string;
   position_id?: string;
   created_at: string;
   updated_at: string;
