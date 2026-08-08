@@ -9,6 +9,38 @@ use tracing::{info, warn};
 
 use crate::shared::AppState;
 
+fn validate_table_name(table_name: &str) -> Result<(), String> {
+    if table_name.is_empty() {
+        return Err("Table name cannot be empty".to_string());
+    }
+    if table_name.len() > 63 {
+        return Err(format!(
+            "Table name too long (max 63 chars, got {})",
+            table_name.len()
+        ));
+    }
+    if !table_name
+        .chars()
+        .next()
+        .map_or(false, |c| c.is_ascii_alphabetic() || c == '_')
+    {
+        return Err(format!(
+            "Table name '{}' must start with a letter or underscore",
+            table_name
+        ));
+    }
+    if !table_name
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '_')
+    {
+        return Err(format!(
+            "Table name '{}' contains invalid characters (only letters, digits, underscores allowed)",
+            table_name
+        ));
+    }
+    Ok(())
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreatePermissionRuleRequest {
     pub name: String,
@@ -453,6 +485,14 @@ pub async fn filter_data(
         "Filtering data for user: {} on table: {}",
         req.user_id, req.table_name
     );
+
+    if let Err(e) = validate_table_name(&req.table_name) {
+        warn!("Invalid table name '{}': {}", req.table_name, e);
+        return Json(serde_json::json!({
+            "success": false,
+            "message": format!("Invalid table name: {}", e)
+        }));
+    }
 
     let page = req.page.unwrap_or(1);
     let page_size = req.page_size.unwrap_or(50);
