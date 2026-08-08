@@ -14,7 +14,7 @@
 
 ## A1. 背景与严格度策略
 
-- **审计来源**: [V67.1-data-layer-audit-20260808 §P1-5](file:///Users/xingzhai/TOPEMS/docs/audit/V67.1-data-layer-audit-20260808.md)：EntitySchema 几乎无人填写 `validation.maxLength` → 前端验证缺口导致 P0-4 类截断 bug 大规模发生；建议"写 30 行脚本扫 migration CREATE TABLE 自动对齐"。
+- **审计来源**: [V67.1-data-layer-audit-20260808 §P1-5](file:///Users/air/TOPEMS/docs/audit/V67.1-data-layer-audit-20260808.md)：EntitySchema 几乎无人填写 `validation.maxLength` → 前端验证缺口导致 P0-4 类截断 bug 大规模发生；建议"写 30 行脚本扫 migration CREATE TABLE 自动对齐"。
 - **严格度策略（用户已确认 Option A）**:
   - ✅ **只补 SQL 中明确写 `VARCHAR(n)` 的列**：值完全等于 SQL 中的 n（不 round，不加 buffer）。
   - ❌ **SQL 类型 TEXT**：不补 maxLength（SQL 本就无限长，补了反而和 SQL 语义不一致）。

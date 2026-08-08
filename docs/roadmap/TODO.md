@@ -21,13 +21,13 @@
 
 | 归档文件 | 涵盖版本 | 说明 |
 |----------|---------|------|
-| [archive/2026-W32.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/archive/2026-W32.md) | V62.0 ~ V67.1 | 微服务治理 Phase 1-10 · 架构审计 3 轮 134/134 全闭环 · 低代码平台推广 · 超大页拆分 · 工程效能三层加速 · OpenAPI 类型生成 · 插件自动注册 28/28 (100%) · 统一列表响应 ListResponse<T> 21 服务迁移 |
+| [archive/2026-W32.md](file:///Users/air/TOPEMS/docs/roadmap/archive/2026-W32.md) | V62.0 ~ V67.1 | 微服务治理 Phase 1-10 · 架构审计 3 轮 134/134 全闭环 · 低代码平台推广 · 超大页拆分 · 工程效能三层加速 · OpenAPI 类型生成 · 插件自动注册 28/28 (100%) · 统一列表响应 ListResponse<T> 21 服务迁移 |
 
 ---
 
 ## 🎯 V67.2 — 数据层深度审计 P0 修复（已完成 ✅）
 
-> **审计报告**: [V67.1-data-layer-audit-20260808.md](file:///Users/xingzhai/TOPEMS/docs/audit/V67.1-data-layer-audit-20260808.md)
+> **审计报告**: [V67.1-data-layer-audit-20260808.md](file:///Users/air/TOPEMS/docs/audit/V67.1-data-layer-audit-20260808.md)
 > **审计方法**: 多维度交叉矩阵（8 数据源 × 13 探针维度）| **综合健康分**: 62/100
 > **问题总量**: 18 项（P0×5 · P1×6 · P2×4 · P3×3）| **本批修复**: P0×5 全闭环
 
@@ -39,7 +39,7 @@
 | **P0-2** | ApprovalStatus 枚举 5 处独立定义，变体 3~6 个互不兼容 | unified-core 替换为 `pub use topems_shared::common_types::ApprovalStatus`；portal 对齐补齐 InProgress/Cancelled 变体；lib.rs 导出 common_types | 跨服务 `serde_json::from_str<ApprovalStatus>` 不再 Err；cargo check 0 error | ✅ 完成 |
 | **P0-3** | 迁移校验和与登记清单双失配（checksums 142 vs 实际 151） | 补全 28 条缺失 SHA-256 校验和至 `database/checksums.txt` | `wc -l checksums.txt`（非空行）≥ 实际 SQL 文件数 | ✅ 完成 |
 | **P0-4** | 三元长度不匹配：SQL VARCHAR(n) vs Rust 无限制 vs 前端无校验 | 5 模块 EntitySchema 补 maxLength 校验：HRM(5) + CRM(1) + PM(1) + WMS(1) + ERP(2) = 17 字段 | 表单超长输入前端拦截，不再触发 500 | ✅ 完成 |
-| **P0-5** | 种子时序依赖 012-menu.sql，全局迁移两套命名体系混用 | 新增 [migration-naming-convention.md](file:///Users/xingzhai/TOPEMS/docs/development/migration-naming-convention.md) 规范 `YYYYMMDDHHMMSS_description.sql` + CI 门禁检查（历史文件不重命名避免风险） | 规范文档存在；新增迁移遵循统一格式 | ✅ 完成 |
+| **P0-5** | 种子时序依赖 012-menu.sql，全局迁移两套命名体系混用 | 新增 [migration-naming-convention.md](file:///Users/air/TOPEMS/docs/development/migration-naming-convention.md) 规范 `YYYYMMDDHHMMSS_description.sql` + CI 门禁检查（历史文件不重命名避免风险） | 规范文档存在；新增迁移遵循统一格式 | ✅ 完成 |
 
 ### 📊 V67.2 修复统计
 
@@ -57,7 +57,7 @@
 
 ## 🎯 V67.3 — 前端 UI 代码优化（组件去重 + 导入规范 + 质量门禁）（✅ 8/8 全闭环）
 
-> **方案来源**: [V67.3-frontend-ui-optimization-plan.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/V67.3-frontend-ui-optimization-plan.md)（原方案 `.trae/documents/` → 已正式存档）
+> **方案来源**: [V67.3-frontend-ui-optimization-plan.md](file:///Users/air/TOPEMS/docs/roadmap/V67.3-frontend-ui-optimization-plan.md)（原方案 `.trae/documents/` → 已正式存档）
 > **方案审计结论**: 原方案 P1/P2 已过时（`mui/` 目录不存在 · TSC 0 错误）；P3/P4 仍有价值；经重新审计新增 9 个死文件 + 3 处非规范导入路径项
 > **执行原则**: 只清理零引用/占位符，保留功能实现文件；删除后 TSC 断链修复；导入路径统一到共享组件规范入口
 
@@ -191,8 +191,8 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 
 ## V68.1 — 短板分析推进（安全 + 架构）✅ 主体闭环（S1全完成 · A2代码落地 · A4进行中）
 
-> **方案文档**: [v68.1-implementation-plan.md](file:///Users/xingzhai/TOPEMS/docs/plans/v68.1-implementation-plan.md)
-> **来源**: [shortcomings-analysis.md](file:///Users/xingzhai/TOPEMS/docs/plans/shortcomings-analysis.md) 重新评估后启动
+> **方案文档**: [v68.1-implementation-plan.md](file:///Users/air/TOPEMS/docs/plans/v68.1-implementation-plan.md)
+> **来源**: [shortcomings-analysis.md](file:///Users/air/TOPEMS/docs/plans/shortcomings-analysis.md) 重新评估后启动
 > **已闭环**: S3（插件 token）✅ · E2（Vite Proxy）✅ · S2（JWT 默认密钥）🟡 止血完成降 P2
 > **范围**: S1（BI SQL 注入防御深化）+ A2（unified-core 瘦身）+ A4（topems_shared 去门面化）
 
