@@ -164,6 +164,7 @@ import {
   Brain,
   Scan,
   MessageSquareQuote,
+  MessagesSquare,
   ExternalLink,
   // 保留别名导入（lucideIcons map 中通过别名引用）
   Box as BoxIcon,
@@ -342,6 +343,7 @@ export const lucideIcons: Record<
   Brain,
   Scan,
   MessageSquareQuote,
+  MessagesSquare,
   ExternalLink,
   RefreshCwIcon,
 };

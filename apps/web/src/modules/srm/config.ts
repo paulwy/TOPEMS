@@ -168,7 +168,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['srm:evaluation:read', 'srm:read'],
       action: 'read',
       template: 'list',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: SRM_PATHS.inquiry,
@@ -335,7 +335,7 @@ export const srmNavConfig: ModuleNavConfig = {
       path: SRM_PATHS.scoringDimension,
       permission: 'srm:evaluation:read',
       order: 1,
-      group: 'settings',
+      group: 'setting',
       description: '评分维度配置',
     },
     {

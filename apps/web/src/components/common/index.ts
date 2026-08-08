@@ -123,8 +123,9 @@ export type { DepartmentSelectProps, Department } from './DepartmentSelect';
 // Grid - Grid2 兼容组件
 export { Grid } from './Grid';
 
-// [shared] BackButton - 已提升到 @topems/shared-components
-export { BackButton, type BackButtonProps } from '@topems/shared-components';
+// BackButton - 顶部导航返回/首页/关闭按钮
+export { BackButton } from './BackButton';
+export type { BackButtonProps, BackButtonVariant, BackButtonSize } from './BackButton';
 
 // ===== 统一表单组件 =====
 // [shared] FormField - 已提升到 @topems/shared-components
@@ -152,14 +153,13 @@ export type { AdvancedFilterProps, FilterCondition } from './AdvancedFilter';
 export { default as PageContainer } from './PageContainer';
 export type { PageContainerProps } from './PageContainer';
 
-// [shared] EmptyState - 已提升到 @topems/shared-components
+export { EmptyState, type EmptyStateProps } from './EmptyState';
+
 export {
-  EmptyState,
   ListEmptyState,
   SearchEmptyState,
   PermissionEmptyState,
   ErrorEmptyState,
-  type EmptyStateProps,
   type ErrorEmptyStateProps,
 } from '@topems/shared-components';
 

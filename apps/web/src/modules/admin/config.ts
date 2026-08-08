@@ -67,7 +67,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:tenant:read', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'tenant',
+      group: 'setting',
     },
     {
       path: ADMIN_PATHS.tenantDetail,
@@ -78,7 +78,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:tenant:read', 'admin:read'],
       action: 'read',
       template: 'detail',
-      group: 'tenant',
+      group: 'setting',
     },
     {
       path: ADMIN_PATHS.tenantSettings,
@@ -92,7 +92,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:tenant:write', 'admin:write'],
       action: 'write',
       template: 'form',
-      group: 'tenant',
+      group: 'setting',
     },
     {
       path: ADMIN_PATHS.tenantBilling,
@@ -103,7 +103,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:tenant:read', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'tenant',
+      group: 'setting',
     },
 
     // ========== 账号管理 ==========
@@ -119,7 +119,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:account:read', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'account',
+      group: 'business',
     },
     {
       path: ADMIN_PATHS.bankAccount,
@@ -133,7 +133,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:bank:read', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'account',
+      group: 'business',
     },
 
     // ========== 系统配置 ==========
@@ -149,7 +149,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:dictionary:read', 'admin:read'],
       action: 'read',
       template: 'tree',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: ADMIN_PATHS.system,
@@ -163,7 +163,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:system:read', 'admin:read'],
       action: 'read',
       template: 'settings',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: ADMIN_PATHS.systemSettings,
@@ -177,7 +177,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:system:write', 'admin:write'],
       action: 'write',
       template: 'settings',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: ADMIN_PATHS.plugin,
@@ -191,7 +191,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:plugin:read', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'settings',
+      group: 'setting',
     },
 
     // ========== 运维工具 ==========
@@ -207,7 +207,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:database:read', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'tools',
+      group: 'business',
     },
     {
       path: ADMIN_PATHS.migration,
@@ -221,7 +221,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['system:migration', 'admin:read'],
       action: 'read',
       template: 'list',
-      group: 'tools',
+      group: 'business',
     },
     {
       path: ADMIN_PATHS.configDebug,
@@ -232,7 +232,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:debug:read', 'admin:read'],
       action: 'read',
       template: 'settings',
-      group: 'tools',
+      group: 'business',
     },
 
     // ========== 监控审计 ==========
@@ -259,7 +259,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['admin:system:write', 'admin:write'],
       action: 'write',
       template: 'settings',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: ADMIN_PATHS.monitor,
@@ -389,7 +389,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.dictionary,
       permission: 'admin:dictionary:read',
       order: 20,
-      group: 'settings',
+      group: 'setting',
       description: '系统数据字典',
     },
     {
@@ -399,7 +399,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.system,
       permission: 'admin:system:read',
       order: 21,
-      group: 'settings',
+      group: 'setting',
       showInTabs: true,
       description: '系统基础管理',
     },
@@ -410,7 +410,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.systemSettings,
       permission: 'admin:system:write',
       order: 22,
-      group: 'settings',
+      group: 'setting',
       description: '系统参数设置',
     },
     {
@@ -420,7 +420,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.plugin,
       permission: 'admin:plugin:read',
       order: 23,
-      group: 'settings',
+      group: 'setting',
       description: '系统插件管理',
     },
     {
@@ -430,7 +430,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.database,
       permission: 'admin:database:read',
       order: 24,
-      group: 'tools',
+      group: 'business',
       showInSidebar: false,
       description: '数据库表结构',
     },
@@ -441,7 +441,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.migration,
       permission: 'admin:migration:read',
       order: 25,
-      group: 'tools',
+      group: 'business',
       showInSidebar: false,
       description: '数据迁移管理',
     },
@@ -452,7 +452,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.configDebug,
       permission: 'admin:debug:read',
       order: 26,
-      group: 'tools',
+      group: 'business',
       showInSidebar: false,
       description: '系统配置调试',
     },
@@ -474,7 +474,7 @@ export const adminNavConfig: ModuleNavConfig = {
       path: ADMIN_PATHS.rateLimit,
       permission: 'admin:system:write',
       order: 23,
-      group: 'settings',
+      group: 'setting',
       description: '多维度限流与防重放保护',
     },
     {

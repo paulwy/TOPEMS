@@ -192,7 +192,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:test-method:read', 'lims:read'],
       action: 'read',
       template: 'list',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: LIMS_PATHS.barcode,
@@ -203,7 +203,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['lims:barcode:read', 'lims:read'],
       action: 'read',
       template: 'list',
-      group: 'settings',
+      group: 'setting',
     },
     {
       path: LIMS_PATHS.uncertainty,
@@ -375,7 +375,7 @@ export const limsNavConfig: ModuleNavConfig = {
       path: LIMS_PATHS.testMethod,
       permission: 'lims:test-method:read',
       order: 1,
-      group: 'settings',
+      group: 'setting',
       description: '测试方法管理',
     },
     {
@@ -385,7 +385,7 @@ export const limsNavConfig: ModuleNavConfig = {
       path: LIMS_PATHS.barcode,
       permission: 'lims:barcode:read',
       order: 2,
-      group: 'settings',
+      group: 'setting',
       description: '条码生成与管理',
     },
     {

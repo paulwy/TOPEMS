@@ -580,7 +580,7 @@ export class PluginManager {
           path: '/hrm/attendance',
           icon: 'Calendar',
           order: 30,
-          group: 'attendance',
+          group: 'process',
         },
         {
           code: 'hrm-recruitment',
@@ -596,7 +596,7 @@ export class PluginManager {
           path: '/hrm/settings',
           icon: 'Settings',
           order: 50,
-          group: 'settings',
+          group: 'setting',
         },
       ],
       crm: [
@@ -648,7 +648,7 @@ export class PluginManager {
           path: '/pm/tasks',
           icon: 'CheckSquare',
           order: 20,
-          group: 'tasks',
+          group: 'business',
         },
         {
           code: 'pm-timelines',

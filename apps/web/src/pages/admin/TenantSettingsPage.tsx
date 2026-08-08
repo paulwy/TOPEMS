@@ -48,6 +48,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const roleLabels: Record<TenantRole, string> = {
   owner: '所有者',
+  superadmin: '超级管理员',
   admin: '管理员',
   member: '成员',
   guest: '访客',
@@ -111,7 +112,7 @@ const TenantSettingsPage: React.FC = () => {
         two_factor_required: tenant.settings.security.two_factor_required,
         ip_whitelist_enabled: tenant.settings.security.ip_whitelist_enabled,
         session_timeout_minutes: tenant.settings.security.session_timeout_minutes,
-        allowed_ip_ranges: tenant.settings.security.allowed_ip_ranges,
+        allowed_ip_ranges: tenant.settings.security.allowed_ip_ranges ?? [],
       });
     }
   }, [tenant]);

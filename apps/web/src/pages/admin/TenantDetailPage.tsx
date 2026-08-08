@@ -82,6 +82,7 @@ const planLabels: Record<string, string> = {
 
 const roleLabels: Record<TenantRole, string> = {
   owner: '所有者',
+  superadmin: '超级管理员',
   admin: '管理员',
   member: '成员',
   guest: '访客',
