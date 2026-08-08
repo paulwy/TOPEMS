@@ -1,4 +1,5 @@
 pub mod acceptance;
+pub mod audit_log;
 pub mod budget;
 pub mod contract;
 pub mod document;

@@ -7,6 +7,7 @@ use topems_shared::get_api_info_handler;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 mod handlers;
+mod models;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

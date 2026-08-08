@@ -1,5 +1,7 @@
 #![allow(dead_code)] // serde/utoipa 序列化需要，运行期未直接引用
 
+pub use topems_shared_bootstrap::audit::{AuditEventParams, AuditLog, ListAuditLogsQuery};
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
