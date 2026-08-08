@@ -485,7 +485,7 @@ pub async fn delete_work_station(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM work_stations
+        UPDATE work_stations SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,

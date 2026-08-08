@@ -270,7 +270,7 @@ async fn delete_quotation(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM plugin_srm.quotations WHERE id = $1")
+    let result = sqlx::query("UPDATE plugin_srm.quotations SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

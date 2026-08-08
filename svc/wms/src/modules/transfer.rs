@@ -98,7 +98,7 @@ pub async fn list_transfers(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM transfers
-                WHERE ($1::text IS NULL OR transfer_number ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR transfer_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR from_warehouse_id = $3)
                   AND ($4::uuid IS NULL OR to_warehouse_id = $4)
@@ -248,7 +248,7 @@ pub async fn update_transfer(
 
     let existing = sqlx::query_as::<_, Transfer>(
         r#"
-        SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at FROM transfers WHERE id = $1
+        SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at FROM transfers WHERE deleted_at IS NULL AND id = $1
         "#,
     )
     .bind(id)
@@ -340,7 +340,7 @@ pub async fn delete_transfer(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query("DELETE FROM transfers WHERE id = $1")
+    let result = sqlx::query("UPDATE transfers SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -708,7 +708,7 @@ pub async fn execute_transfer(
 
     let transfer = sqlx::query_as::<_, Transfer>(
         r#"
-        SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at FROM transfers WHERE id = $1
+        SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at FROM transfers WHERE deleted_at IS NULL AND id = $1
         "#,
     )
     .bind(id)

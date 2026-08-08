@@ -21,7 +21,6 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             folder_id UUID,
             uploader_id UUID NOT NULL,
             status VARCHAR(32) DEFAULT 'active',
-            is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
             deleted_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
@@ -31,12 +30,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    // 兼容旧表：确保 is_deleted 列存在
-    sqlx::query(
-        "ALTER TABLE core_files ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE",
-    )
-    .execute(pool)
-    .await?;
+    // 兼容旧表：确保 deleted_at 列存在
     sqlx::query("ALTER TABLE core_files ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP")
         .execute(pool)
         .await?;
@@ -77,7 +71,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_files_uploader ON core_files(uploader_id)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_files_is_deleted ON core_files(is_deleted)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_files_deleted_at ON core_files(deleted_at) WHERE deleted_at IS NULL")
         .execute(pool)
         .await?;
     sqlx::query(

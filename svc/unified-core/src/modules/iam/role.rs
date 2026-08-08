@@ -123,12 +123,13 @@ pub async fn create_role(
     .unwrap_or_default();
 
     // 检查角色名是否已存在
-    let exists: bool =
-        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM core_roles WHERE name = $1)")
-            .bind(&name)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(false);
+    let exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM core_roles WHERE deleted_at IS NULL AND name = $1)",
+    )
+    .bind(&name)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(false);
 
     if exists {
         return Json(serde_json::json!({
@@ -230,7 +231,7 @@ pub async fn get_role(
     };
 
     let role = sqlx::query_as::<_, RoleRow>(
-        "SELECT id, name, description, tenant_id, created_at, updated_at FROM core_roles WHERE id = $1"
+        "SELECT id, name, description, tenant_id, created_at, updated_at FROM core_roles WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(role_uuid)
     .fetch_optional(&state.pool)
@@ -306,11 +307,13 @@ pub async fn update_role(
     };
 
     // 检查角色是否存在
-    let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM core_roles WHERE id = $1)")
-        .bind(role_uuid)
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(false);
+    let exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM core_roles WHERE deleted_at IS NULL AND id = $1)",
+    )
+    .bind(role_uuid)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(false);
 
     if !exists {
         return Json(serde_json::json!({
@@ -460,11 +463,12 @@ pub async fn delete_role(
     };
 
     // 检查是否是系统内置角色（不能删除）
-    let role_name: Option<String> = sqlx::query_scalar("SELECT name FROM core_roles WHERE id = $1")
-        .bind(role_uuid)
-        .fetch_optional(&state.pool)
-        .await
-        .unwrap_or(None);
+    let role_name: Option<String> =
+        sqlx::query_scalar("SELECT name FROM core_roles WHERE deleted_at IS NULL AND id = $1")
+            .bind(role_uuid)
+            .fetch_optional(&state.pool)
+            .await
+            .unwrap_or(None);
 
     if let Some(name) = &role_name {
         if ["superadmin", "admin"].contains(&name.as_str()) {
@@ -510,7 +514,7 @@ pub async fn delete_role(
     }
 
     // 删除角色
-    if let Err(e) = sqlx::query("DELETE FROM core_roles WHERE id = $1")
+    if let Err(e) = sqlx::query("UPDATE core_roles SET deleted_at = NOW() WHERE id = $1")
         .bind(role_uuid)
         .execute(&state.pool)
         .await

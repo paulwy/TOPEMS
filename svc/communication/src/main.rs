@@ -226,7 +226,8 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
             data JSONB,
             created_at TIMESTAMP DEFAULT NOW(),
             read_at TIMESTAMP,
-            is_archived BOOLEAN DEFAULT FALSE
+            is_archived BOOLEAN DEFAULT FALSE,
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -243,7 +244,6 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
             content_template TEXT NOT NULL,
             notification_type VARCHAR(64) DEFAULT 'info',
             description TEXT,
-            is_deleted BOOLEAN DEFAULT FALSE,
             created_by UUID,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
@@ -317,7 +317,6 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
             cc TEXT[],
             bcc TEXT[],
             is_read BOOLEAN DEFAULT FALSE,
-            is_deleted BOOLEAN DEFAULT FALSE,
             sent_at TIMESTAMP,
             read_at TIMESTAMP,
             deleted_at TIMESTAMP,
@@ -337,7 +336,6 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
             subject_template VARCHAR(512) NOT NULL,
             body_template TEXT NOT NULL,
             description TEXT,
-            is_deleted BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
             deleted_at TIMESTAMP

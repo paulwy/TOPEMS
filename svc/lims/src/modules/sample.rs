@@ -84,14 +84,14 @@ pub async fn list_samples(
     let tenant_id = ctx.tenant_id;
 
     let sql = match (query.status.as_ref(), query.sample_no.as_ref(), query.sample_name.as_ref()) {
-        (Some(_), Some(_), Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND status = $2 AND sample_no LIKE $3 AND sample_name LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
-        (Some(_), Some(_), None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND status = $2 AND sample_no LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None, Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND status = $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None, None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_), Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND sample_no LIKE $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (None, Some(_), None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None, Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND sample_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None, None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_), Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 AND sample_no LIKE $3 AND sample_name LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
+        (Some(_), Some(_), None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 AND sample_no LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_), Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND tenant_id = $1 AND sample_no LIKE $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (None, Some(_), None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND tenant_id = $1 AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND tenant_id = $1 AND sample_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
     let mut query_builder = sqlx::query(sql).bind(tenant_id);
@@ -240,7 +240,7 @@ pub async fn get_sample(
     let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2"
+        "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
     )
     .bind(id)
     .bind(tenant_id)
@@ -337,11 +337,13 @@ pub async fn delete_sample(
     };
     let tenant_id = ctx.tenant_id;
 
-    let result = sqlx::query("DELETE FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        "UPDATE qa_lab_samples SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "样品删除成功")),
@@ -461,7 +463,7 @@ pub async fn record_lifecycle_event(
     let tenant_id = ctx.tenant_id;
 
     let sample_row =
-        sqlx::query("SELECT sample_no FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2")
+        sqlx::query("SELECT sample_no FROM qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
             .bind(sample_id)
             .bind(tenant_id)
             .fetch_optional(&state.pool)
@@ -558,7 +560,7 @@ pub async fn transition_sample_stage(
     }
 
     let current_row = sqlx::query(
-        "SELECT sample_no, status FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2",
+        "SELECT sample_no, status FROM qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(sample_uuid)
     .bind(tenant_id)

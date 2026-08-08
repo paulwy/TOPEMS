@@ -120,7 +120,7 @@ pub async fn list_versions(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_versions
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR version_no ILIKE $2 OR target_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::text IS NULL OR target_type = $4)
@@ -289,11 +289,12 @@ pub async fn delete_version(
 ) -> Json<ApiResponse<bool>> {
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query("DELETE FROM pdm_versions WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE pdm_versions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "版本删除成功")),

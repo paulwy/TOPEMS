@@ -580,7 +580,7 @@ pub async fn delete_datasource(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM analytics_datasources
+        UPDATE analytics_datasources SET deleted_at = NOW()
         WHERE id = $1
         RETURNING id
         "#,

@@ -69,7 +69,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             document_count INTEGER NOT NULL DEFAULT 0,
             created_by UUID NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )"#,
     )
     .execute(pool)
@@ -104,7 +105,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             error_message TEXT,
             created_by UUID NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )"#,
     )
     .execute(pool)
@@ -143,7 +145,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             token_count INTEGER,
             embedding vector(1536),
             metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )"#,
     )
     .execute(pool)

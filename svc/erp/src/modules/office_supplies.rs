@@ -68,7 +68,7 @@ pub async fn list_supplies(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM office_supplies
-                WHERE ($1::text IS NULL OR name ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR category = $3)
                 "#,
@@ -199,7 +199,7 @@ pub async fn update_supply(
     Json(req): Json<UpdateOfficeSupplyRequest>,
 ) -> Json<ApiResponse<OfficeSupply>> {
     let existing = sqlx::query_as::<_, OfficeSupply>(
-        "SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at FROM office_supplies WHERE id = $1",
+        "SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at FROM office_supplies WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -290,7 +290,7 @@ pub async fn delete_supply(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM office_supplies WHERE id = $1")
+    let result = sqlx::query("UPDATE office_supplies SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

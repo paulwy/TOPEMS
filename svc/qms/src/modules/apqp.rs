@@ -294,7 +294,7 @@ pub async fn list_apqp_projects(
     let projects = match (query.status.as_ref(), query.product_name.as_ref()) {
         (Some(st), Some(pn)) => {
             sqlx::query_as::<_, ApqpProject>(
-                r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qa_apqp_projects WHERE status = $1 AND product_name ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
+                r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 AND product_name ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
             )
             .bind(st)
             .bind(format!("%{}%", pn))
@@ -305,7 +305,7 @@ pub async fn list_apqp_projects(
         }
         (Some(st), None) => {
             sqlx::query_as::<_, ApqpProject>(
-                r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qa_apqp_projects WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
+                r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
             )
             .bind(st)
             .bind(page_size)
@@ -315,7 +315,7 @@ pub async fn list_apqp_projects(
         }
         (None, Some(pn)) => {
             sqlx::query_as::<_, ApqpProject>(
-                r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qa_apqp_projects WHERE product_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
+                r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qa_apqp_projects WHERE deleted_at IS NULL AND product_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
             )
             .bind(format!("%{}%", pn))
             .bind(page_size)
@@ -432,7 +432,7 @@ pub async fn get_apqp_project(
     };
 
     let project = sqlx::query_as::<_, ApqpProject>(
-        r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qa_apqp_projects WHERE id = $1"#,
+        r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qa_apqp_projects WHERE deleted_at IS NULL AND id = $1"#,
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -510,7 +510,7 @@ pub async fn delete_apqp_project(
         Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_apqp_projects WHERE id = $1"#)
+    let result = sqlx::query(r#"UPDATE qa_apqp_projects SET deleted_at = NOW() WHERE id = $1"#)
         .bind(id)
         .execute(&state.pool)
         .await;

@@ -15,9 +15,12 @@ impl FinanceService {
     ) -> Result<Value, TopemsError> {
         let offset = (page - 1) * page_size;
 
-        let mut sql = "SELECT * FROM erp_payment_records WHERE tenant_id = $1".to_string();
+        let mut sql =
+            "SELECT * FROM erp_payment_records WHERE deleted_at IS NULL AND tenant_id = $1"
+                .to_string();
         let mut count_sql =
-            "SELECT COUNT(*) FROM erp_payment_records WHERE tenant_id = $1".to_string();
+            "SELECT COUNT(*) FROM erp_payment_records WHERE deleted_at IS NULL AND tenant_id = $1"
+                .to_string();
 
         let mut cond = Vec::new();
         if status.is_some() {
@@ -99,7 +102,7 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
     ) -> Result<Value, TopemsError> {
-        let row = sqlx::query("SELECT * FROM erp_payment_records WHERE tenant_id = $1 AND id = $2")
+        let row = sqlx::query("SELECT * FROM erp_payment_records WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
             .bind(tenant_id)
             .bind(payment_id)
             .fetch_optional(&self.db_pool)
@@ -209,12 +212,13 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
     ) -> Result<(), TopemsError> {
-        let result =
-            sqlx::query("DELETE FROM erp_payment_records WHERE tenant_id = $1 AND id = $2")
-                .bind(tenant_id)
-                .bind(payment_id)
-                .execute(&self.db_pool)
-                .await?;
+        let result = sqlx::query(
+            "UPDATE erp_payment_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(payment_id)
+        .execute(&self.db_pool)
+        .await?;
 
         if result.rows_affected() == 0 {
             return Err(TopemsError::NotFound("付款记录不存在".to_string()));

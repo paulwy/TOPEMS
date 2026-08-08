@@ -246,7 +246,7 @@ pub async fn get_quality_cost(
         Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
     };
 
-    let cost = sqlx::query_as::<_, QualityCost>(r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_costs WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let cost = sqlx::query_as::<_, QualityCost>(r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_costs WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -305,11 +305,13 @@ pub async fn delete_quality_cost(
         Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_quality_costs WHERE id = $1 AND tenant_id = $2"#)
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE qa_quality_costs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "质量成本记录删除成功")),

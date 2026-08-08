@@ -477,7 +477,7 @@ pub async fn delete_record(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM production_records
+        UPDATE production_records SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,

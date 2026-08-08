@@ -141,7 +141,7 @@ pub async fn list_documents(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_documents
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -352,11 +352,12 @@ pub async fn delete_document(
 ) -> Json<ApiResponse<bool>> {
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query("DELETE FROM pdm_documents WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE pdm_documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "删除文档成功")),
@@ -384,7 +385,7 @@ pub async fn start_document_approval(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let document_result = sqlx::query_as::<_, Document>(
-        "SELECT id, tenant_id, name, status FROM pdm_documents WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, name, status FROM pdm_documents WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)

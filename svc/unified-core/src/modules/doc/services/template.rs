@@ -14,7 +14,7 @@ impl TemplateService {
 
     pub async fn list_templates(&self, tenant_id: Uuid) -> Result<Vec<Template>> {
         sqlx::query_as::<_, Template>(
-            r#"SELECT * FROM core_doc_templates WHERE tenant_id = $1 ORDER BY name"#,
+            r#"SELECT * FROM core_doc_templates WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY name"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -27,7 +27,7 @@ impl TemplateService {
         template_id: Uuid,
     ) -> Result<Option<Template>> {
         sqlx::query_as::<_, Template>(
-            r#"SELECT * FROM core_doc_templates WHERE tenant_id = $1 AND id = $2"#,
+            r#"SELECT * FROM core_doc_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -100,18 +100,19 @@ impl TemplateService {
     }
 
     pub async fn delete_template(&self, tenant_id: Uuid, template_id: Uuid) -> Result<bool> {
-        let result =
-            sqlx::query(r#"DELETE FROM core_doc_templates WHERE tenant_id = $1 AND id = $2"#)
-                .bind(tenant_id)
-                .bind(template_id)
-                .execute(&self.pool)
-                .await?;
+        let result = sqlx::query(
+            r#"UPDATE core_doc_templates SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"#,
+        )
+        .bind(tenant_id)
+        .bind(template_id)
+        .execute(&self.pool)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
     pub async fn list_categories(&self, tenant_id: Uuid) -> Result<Vec<String>> {
         sqlx::query_scalar::<_, String>(
-            r#"SELECT DISTINCT category FROM core_doc_templates WHERE tenant_id = $1 AND category IS NOT NULL ORDER BY category"#,
+            r#"SELECT DISTINCT category FROM core_doc_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND category IS NOT NULL ORDER BY category"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -135,7 +136,8 @@ pub async fn init_database(pool: &PgPool) -> Result<()> {
             is_default BOOLEAN DEFAULT false,
             created_by VARCHAR(100),
             created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

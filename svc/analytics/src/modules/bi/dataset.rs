@@ -100,7 +100,7 @@ async fn list_datasets(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let query = "SELECT * FROM analytics_datasets WHERE ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) ORDER BY created_at DESC LIMIT $4 OFFSET $5";
+    let query = "SELECT * FROM analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) ORDER BY created_at DESC LIMIT $4 OFFSET $5";
     let result = sqlx::query_as::<_, Dataset>(query)
         .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
         .bind(params.status.as_deref())
@@ -113,7 +113,7 @@ async fn list_datasets(
     match result {
         Ok(datasets) => {
             let total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM analytics_datasets WHERE ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3)",
+                "SELECT COUNT(*) FROM analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3)",
             )
             .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
             .bind(params.status.as_deref())
@@ -137,10 +137,12 @@ async fn get_dataset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let result = sqlx::query_as::<_, Dataset>("SELECT * FROM analytics_datasets WHERE id = $1")
-        .bind(id)
-        .fetch_one(&state.pool)
-        .await;
+    let result = sqlx::query_as::<_, Dataset>(
+        "SELECT * FROM analytics_datasets WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await;
 
     match result {
         Ok(dataset) => Json(serde_json::json!({
@@ -254,7 +256,7 @@ async fn delete_dataset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let result = sqlx::query("DELETE FROM analytics_datasets WHERE id = $1")
+    let result = sqlx::query("UPDATE analytics_datasets SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -352,10 +354,12 @@ async fn get_dataset_preview(
 ) -> Json<serde_json::Value> {
     let _limit = params.limit.unwrap_or(10);
 
-    let dataset = sqlx::query_as::<_, Dataset>("SELECT * FROM analytics_datasets WHERE id = $1")
-        .bind(id)
-        .fetch_one(&state.pool)
-        .await;
+    let dataset = sqlx::query_as::<_, Dataset>(
+        "SELECT * FROM analytics_datasets WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await;
 
     match dataset {
         Ok(dataset) => {

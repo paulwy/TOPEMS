@@ -421,7 +421,8 @@ pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Erro
             stop_on_failure BOOLEAN NOT NULL DEFAULT false,
             created_at TIMESTAMP NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-            CONSTRAINT uq_conversion_rules_tenant_code UNIQUE (tenant_id, code)
+            CONSTRAINT uq_conversion_rules_tenant_code UNIQUE (tenant_id, code),
+                deleted_at TIMESTAMP
         )
         "#,
     )

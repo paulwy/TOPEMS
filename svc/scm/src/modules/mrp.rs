@@ -141,7 +141,7 @@ pub async fn list_suggestions(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM scm.mrp_suggestions
-                WHERE ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )
@@ -230,9 +230,10 @@ pub async fn compute_mrp(
         }
     };
 
-    let clear_result = sqlx::query("DELETE FROM scm.mrp_suggestions WHERE status = 'draft'")
-        .execute(&mut *tx)
-        .await;
+    let clear_result =
+        sqlx::query("UPDATE scm.mrp_suggestions SET deleted_at = NOW() WHERE status = 'draft'")
+            .execute(&mut *tx)
+            .await;
 
     if let Err(e) = clear_result {
         tracing::error!("清理草稿建议失败: {}", e);

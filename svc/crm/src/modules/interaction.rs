@@ -98,7 +98,7 @@ async fn list_interactions(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.interactions
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR subject ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR customer_id = $4)
@@ -265,7 +265,7 @@ async fn update_interaction(
 
     let existing = sqlx::query_as::<_, Interaction>(
         r#"
-        SELECT id, tenant_id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at FROM crm.interactions WHERE id = $1 AND tenant_id = $2
+        SELECT id, tenant_id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at FROM crm.interactions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -373,11 +373,13 @@ async fn delete_interaction(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query("DELETE FROM crm.interactions WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "UPDATE crm.interactions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -444,11 +446,13 @@ async fn batch_delete_interactions(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query("DELETE FROM crm.interactions WHERE id = ANY($1) AND tenant_id = $2")
-        .bind(&req.ids)
-        .bind(tenant_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "UPDATE crm.interactions SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2",
+    )
+    .bind(&req.ids)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) => (

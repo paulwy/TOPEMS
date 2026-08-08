@@ -76,7 +76,7 @@ pub async fn list_evaluations(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM scm.supplier_evaluations
-                WHERE ($1::uuid IS NULL OR supplier_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR supplier_id = $1)
                 "#,
             )
             .bind(params.supplier_id)
@@ -243,7 +243,7 @@ pub async fn update_evaluation(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
-        "SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at FROM scm.supplier_evaluations WHERE id = $1",
+        "SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at FROM scm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -344,10 +344,11 @@ pub async fn delete_evaluation(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query("DELETE FROM scm.supplier_evaluations WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE scm.supplier_evaluations SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

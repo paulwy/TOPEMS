@@ -115,7 +115,7 @@ pub async fn list_processes(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_processes
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR process_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -274,12 +274,13 @@ pub async fn delete_process(
 ) -> Json<ApiResponse<bool>> {
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result =
-        sqlx::query("DELETE FROM pdm_production_processes WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        "UPDATE pdm_production_processes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "工序删除成功")),

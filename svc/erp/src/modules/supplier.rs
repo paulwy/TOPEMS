@@ -98,7 +98,7 @@ pub async fn list_suppliers(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM suppliers WHERE (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR supplier_type = $3)"#
+        r#"SELECT COUNT(*) FROM suppliers WHERE deleted_at IS NULL AND (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR supplier_type = $3)"#
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -129,7 +129,7 @@ pub async fn get_supplier(
     }
 
     let result = sqlx::query_as::<_, Supplier>(
-        "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM suppliers WHERE id = $1",
+        "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM suppliers WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -233,7 +233,7 @@ pub async fn delete_supplier(
         return e;
     }
 
-    let result = sqlx::query("DELETE FROM suppliers WHERE id = $1")
+    let result = sqlx::query("UPDATE suppliers SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

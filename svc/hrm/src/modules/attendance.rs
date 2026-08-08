@@ -198,7 +198,7 @@ async fn list_attendance(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_hrm.attendance_records
-                WHERE ($1::uuid IS NULL OR employee_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR employee_id = $1)
                 "#,
             )
             .bind(emp_filter)
@@ -410,10 +410,11 @@ async fn delete_attendance(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM plugin_hrm.attendance_records WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE plugin_hrm.attendance_records SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

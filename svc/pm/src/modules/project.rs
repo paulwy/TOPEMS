@@ -271,10 +271,12 @@ async fn get_project(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Project>> {
-    let result = sqlx::query_as::<_, Project>("SELECT * FROM pm.projects WHERE id = $1")
-        .bind(id)
-        .fetch_optional(&state.pool)
-        .await;
+    let result = sqlx::query_as::<_, Project>(
+        "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await;
 
     match result {
         Ok(Some(project)) => Json(ApiResponse::success(project, "获取项目成功")),
@@ -369,7 +371,7 @@ async fn delete_project(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pm.projects WHERE id = $1")
+    let result = sqlx::query("UPDATE pm.projects SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -400,10 +402,12 @@ async fn get_project_dashboard(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDashboardResponse>> {
-    let project_result = sqlx::query_as::<_, Project>("SELECT * FROM pm.projects WHERE id = $1")
-        .bind(id)
-        .fetch_optional(&state.pool)
-        .await;
+    let project_result = sqlx::query_as::<_, Project>(
+        "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await;
 
     let project = match project_result {
         Ok(Some(p)) => p,

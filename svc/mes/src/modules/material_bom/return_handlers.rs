@@ -442,7 +442,7 @@ pub async fn delete_material_return(
         .await;
 
     let result = sqlx::query!(
-        "DELETE FROM material_returns WHERE id = $1 AND status = 'pending'",
+        "UPDATE material_returns SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
         id
     )
     .execute(&mut *tx)

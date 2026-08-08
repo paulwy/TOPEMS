@@ -970,7 +970,8 @@ pub async fn init_sla_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             is_default BOOLEAN NOT NULL DEFAULT false,
             is_active BOOLEAN NOT NULL DEFAULT true,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

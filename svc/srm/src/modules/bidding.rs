@@ -86,7 +86,7 @@ async fn list_biddings(
             let count_query = format!(
                 r#"
                 SELECT COUNT(*) FROM plugin_srm.biddings
-                WHERE ($1::text IS NULL OR title ILIKE $1 OR bidding_no ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR title ILIKE $1 OR bidding_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR category = $3)
                 "#,
@@ -130,7 +130,7 @@ async fn create_bidding(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.biddings WHERE bidding_no = $1",
+        "SELECT COUNT(*) FROM plugin_srm.biddings WHERE deleted_at IS NULL AND bidding_no = $1",
     )
     .bind(&req.bidding_no)
     .fetch_one(&state.db)
@@ -284,7 +284,7 @@ async fn delete_bidding(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM plugin_srm.biddings WHERE id = $1")
+    let result = sqlx::query("UPDATE plugin_srm.biddings SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

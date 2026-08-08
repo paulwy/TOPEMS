@@ -66,7 +66,7 @@ pub async fn list_orders(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM scm.purchase_orders
-                WHERE ($1::text IS NULL OR order_number ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR order_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )
@@ -211,7 +211,7 @@ pub async fn update_order(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
-        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE id = $1",
+        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -299,7 +299,7 @@ pub async fn delete_order(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query("DELETE FROM scm.purchase_orders WHERE id = $1")
+    let result = sqlx::query("UPDATE scm.purchase_orders SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -370,7 +370,7 @@ pub async fn approve_order(
     }
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
-        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE id = $1",
+        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -518,7 +518,7 @@ pub async fn reject_order(
     }
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
-        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE id = $1",
+        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)

@@ -112,7 +112,7 @@ impl FinanceService {
         let period_prefix = format!("{:04}{:02}", year, month);
         let count: (i64,) = sqlx::query_as(
             "SELECT COUNT(*) FROM core_finance_vouchers 
-             WHERE tenant_id = $1 AND voucher_type = $2 AND period LIKE $3",
+             WHERE deleted_at IS NULL AND tenant_id = $1 AND voucher_type = $2 AND period LIKE $3",
         )
         .bind(tenant_id)
         .bind(voucher_type)
@@ -187,7 +187,7 @@ impl FinanceService {
         posted_by: &str,
     ) -> Result<Voucher, TopemsError> {
         let voucher: Voucher = sqlx::query_as(
-            "SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2 AND status = 'approved'",
+            "SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'approved'",
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -252,7 +252,7 @@ impl FinanceService {
     ) -> Result<Decimal, TopemsError> {
         let result: (Option<Decimal>,) = sqlx::query_as(
             "SELECT COALESCE(SUM(debit - credit), 0) as balance FROM core_finance_ledger
-             WHERE tenant_id = $1 AND account_id = $2",
+             WHERE deleted_at IS NULL AND tenant_id = $1 AND account_id = $2",
         )
         .bind(tenant_id)
         .bind(account_id)
@@ -268,7 +268,7 @@ impl FinanceService {
         voucher_id: Uuid,
     ) -> Result<VoucherResponse, TopemsError> {
         let voucher: Voucher =
-            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_one(&self.db_pool)
@@ -301,7 +301,9 @@ impl FinanceService {
         status: Option<VoucherStatus>,
         period: Option<String>,
     ) -> Result<Vec<Voucher>, TopemsError> {
-        let mut query = "SELECT * FROM core_finance_vouchers WHERE tenant_id = $1".to_string();
+        let mut query =
+            "SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1"
+                .to_string();
         let status_provided = status.is_some();
         let period_provided = period.is_some();
 
@@ -542,7 +544,7 @@ impl FinanceService {
         _updated_by: &str,
     ) -> Result<VoucherResponse, TopemsError> {
         let existing: Voucher =
-            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_one(&self.db_pool)
@@ -615,7 +617,7 @@ impl FinanceService {
             }
 
             let updated: Voucher = sqlx::query_as(
-                "SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2",
+                "SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
             )
             .bind(tenant_id)
             .bind(voucher_id)
@@ -676,7 +678,7 @@ impl FinanceService {
         voucher_id: Uuid,
     ) -> Result<(), TopemsError> {
         let existing: Voucher =
-            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_optional(&self.db_pool)
@@ -694,11 +696,13 @@ impl FinanceService {
             .execute(&self.db_pool)
             .await?;
 
-        sqlx::query("DELETE FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2")
-            .bind(tenant_id)
-            .bind(voucher_id)
-            .execute(&self.db_pool)
-            .await?;
+        sqlx::query(
+            "UPDATE core_finance_vouchers SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(voucher_id)
+        .execute(&self.db_pool)
+        .await?;
 
         Ok(())
     }
@@ -710,7 +714,7 @@ impl FinanceService {
         voucher_id: Uuid,
     ) -> Result<Voucher, TopemsError> {
         let existing: Voucher =
-            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2")
+            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_optional(&self.db_pool)
@@ -723,7 +727,7 @@ impl FinanceService {
             ));
         }
 
-        sqlx::query("DELETE FROM core_finance_ledger WHERE tenant_id = $1 AND voucher_id = $2")
+        sqlx::query("UPDATE core_finance_ledger SET deleted_at = NOW() WHERE tenant_id = $1 AND voucher_id = $2")
             .bind(tenant_id)
             .bind(voucher_id)
             .execute(&self.db_pool)
@@ -841,7 +845,7 @@ impl FinanceService {
         let period_prefix = format!("{}{:02}", year, month);
 
         let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM core_finance_vouchers WHERE tenant_id = $1 AND voucher_no LIKE $2",
+            "SELECT COUNT(*) FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND voucher_no LIKE $2",
         )
         .bind(tenant_id)
         .bind(format!("{}{}%", prefix, period_prefix))

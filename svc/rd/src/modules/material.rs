@@ -124,7 +124,7 @@ async fn list_material_tests(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.material_tests
-                WHERE ($1::text IS NULL OR material_name ILIKE $1 OR batch_number ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR material_name ILIKE $1 OR batch_number ILIKE $1)
                   AND ($2::uuid IS NULL OR project_id = $2)
                   AND ($3::uuid IS NULL OR experiment_id = $3)
                 "#,
@@ -323,7 +323,7 @@ async fn update_material_test(
     Json(req): Json<UpdateMaterialTestRequest>,
 ) -> Json<ApiResponse<MaterialTest>> {
     let existing = sqlx::query_as::<_, MaterialTest>(
-        "SELECT id, project_id, experiment_id, material_name, supplier, batch_number, test_results, conclusion, tested_by, tested_at, created_at FROM rs.material_tests WHERE id = $1",
+        "SELECT id, project_id, experiment_id, material_name, supplier, batch_number, test_results, conclusion, tested_by, tested_at, created_at FROM rs.material_tests WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -414,7 +414,7 @@ async fn delete_material_test(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM rs.material_tests WHERE id = $1")
+    let result = sqlx::query("UPDATE rs.material_tests SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

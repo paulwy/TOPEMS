@@ -43,7 +43,7 @@ pub async fn list_dict_types(
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_dict_types
-           WHERE ($1::text IS NULL OR category = $1)
+           WHERE deleted_at IS NULL AND ($1::text IS NULL OR category = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')"#,
     )
@@ -62,7 +62,7 @@ pub async fn list_dict_types(
 
     let sql = format!(
         r#"SELECT {} FROM core_dict_types
-           WHERE ($1::text IS NULL OR category = $1)
+           WHERE deleted_at IS NULL AND ($1::text IS NULL OR category = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')
            ORDER BY created_at DESC
@@ -99,7 +99,7 @@ pub async fn get_dict_type(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DictType>> {
     let sql = format!(
-        r#"SELECT {} FROM core_dict_types WHERE id = $1"#,
+        r#"SELECT {} FROM core_dict_types WHERE deleted_at IS NULL AND id = $1"#,
         DICT_TYPE_COLUMNS
     );
 
@@ -203,7 +203,7 @@ pub async fn delete_dict_type(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(r#"DELETE FROM core_dict_types WHERE id = $1"#)
+    let result = sqlx::query(r#"UPDATE core_dict_types SET deleted_at = NOW() WHERE id = $1"#)
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -234,7 +234,7 @@ pub async fn list_dict_items(
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_dict_items
-           WHERE dict_type_id = $1
+           WHERE deleted_at IS NULL AND dict_type_id = $1
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')"#,
     )
@@ -253,7 +253,7 @@ pub async fn list_dict_items(
 
     let sql = format!(
         r#"SELECT {} FROM core_dict_items
-           WHERE dict_type_id = $1
+           WHERE deleted_at IS NULL AND dict_type_id = $1
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')
            ORDER BY sort_order ASC, created_at DESC
@@ -290,7 +290,7 @@ pub async fn get_dict_item(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DictItem>> {
     let sql = format!(
-        r#"SELECT {} FROM core_dict_items WHERE id = $1"#,
+        r#"SELECT {} FROM core_dict_items WHERE deleted_at IS NULL AND id = $1"#,
         DICT_ITEM_COLUMNS
     );
 
@@ -401,7 +401,7 @@ pub async fn delete_dict_item(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(r#"DELETE FROM core_dict_items WHERE id = $1"#)
+    let result = sqlx::query(r#"UPDATE core_dict_items SET deleted_at = NOW() WHERE id = $1"#)
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -476,7 +476,7 @@ pub async fn export_dict_items(
 ) -> String {
     let sql = format!(
         r#"SELECT {} FROM core_dict_items
-           WHERE dict_type_id = $1
+           WHERE deleted_at IS NULL AND dict_type_id = $1
            ORDER BY sort_order ASC, created_at DESC"#,
         DICT_ITEM_COLUMNS
     );

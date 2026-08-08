@@ -186,10 +186,12 @@ pub async fn get_geodata(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<GeoData>> {
-    match sqlx::query_as::<_, GeoData>("SELECT * FROM plugin_gis.geodata WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await
+    match sqlx::query_as::<_, GeoData>(
+        "SELECT * FROM plugin_gis.geodata WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(data) => Json(ApiResponse::success(data, "获取地理数据成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理数据未找到")),
@@ -240,7 +242,7 @@ pub async fn delete_geodata(
         return e;
     }
 
-    match sqlx::query("DELETE FROM plugin_gis.geodata WHERE id = $1")
+    match sqlx::query("UPDATE plugin_gis.geodata SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await
@@ -268,10 +270,12 @@ pub async fn convert_geodata(
     }
 
     // Get source data
-    match sqlx::query_as::<_, GeoData>("SELECT * FROM plugin_gis.geodata WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await
+    match sqlx::query_as::<_, GeoData>(
+        "SELECT * FROM plugin_gis.geodata WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(geodata) => {
             // Perform conversion (simplified - just return GeoJSON for now)

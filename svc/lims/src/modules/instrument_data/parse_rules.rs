@@ -271,7 +271,7 @@ pub async fn delete_parse_rule(
         Err(_) => return Json(ApiResponse::error(400, "无效的规则ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lims_parse_rules WHERE id = $1")
+    let result = sqlx::query("UPDATE qa_lims_parse_rules SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;

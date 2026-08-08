@@ -114,7 +114,7 @@ impl ProjectRepository {
         let total: i64 = sqlx::query_scalar(
             r#"
             SELECT COUNT(*) FROM rs.projects
-            WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+            WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
               AND ($2::text IS NULL OR status = $2)
             "#,
         )
@@ -194,7 +194,7 @@ impl ProjectRepository {
     pub async fn delete(&self, id: Uuid) -> Result<bool> {
         let result = sqlx::query(
             r#"
-            DELETE FROM rs.projects WHERE id = $1
+            UPDATE rs.projects SET deleted_at = NOW() WHERE id = $1
             "#,
         )
         .bind(id)
@@ -253,7 +253,7 @@ impl ProjectRepository {
 
         let result = sqlx::query(
             r#"
-            DELETE FROM rs.projects WHERE id = ANY($1)
+            UPDATE rs.projects SET deleted_at = NOW() WHERE id = ANY($1)
             "#,
         )
         .bind(ids)
@@ -394,7 +394,7 @@ mod tests {
             let total: i64 = sqlx::query_scalar(
                 r#"
                 SELECT COUNT(*) FROM rs.projects
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )

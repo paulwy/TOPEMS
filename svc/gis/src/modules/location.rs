@@ -110,10 +110,12 @@ pub async fn get_location(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Location>> {
-    match sqlx::query_as::<_, Location>("SELECT * FROM plugin_gis.locations WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await
+    match sqlx::query_as::<_, Location>(
+        "SELECT * FROM plugin_gis.locations WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(location) => Json(ApiResponse::success(location, "获取位置成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "位置未找到")),
@@ -168,7 +170,7 @@ pub async fn delete_location(
         return e;
     }
 
-    match sqlx::query("DELETE FROM plugin_gis.locations WHERE id = $1")
+    match sqlx::query("UPDATE plugin_gis.locations SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await
@@ -192,9 +194,9 @@ pub async fn search_locations(
     let search_pattern = format!("%{}%", payload.query);
 
     let query = if payload.location_type.is_some() {
-        "SELECT * FROM plugin_gis.locations WHERE (name ILIKE $1 OR code ILIKE $1) AND location_type = $2 ORDER BY created_at DESC"
+        "SELECT * FROM plugin_gis.locations WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND location_type = $2 ORDER BY created_at DESC"
     } else {
-        "SELECT * FROM plugin_gis.locations WHERE name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC"
+        "SELECT * FROM plugin_gis.locations WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC"
     };
 
     match if payload.location_type.is_some() {
@@ -228,7 +230,7 @@ pub async fn nearby_locations(
 ) -> Json<ApiResponse<serde_json::Value>> {
     // Get all locations and filter by distance
     match sqlx::query_as::<_, Location>(
-        "SELECT * FROM plugin_gis.locations WHERE status = 'active'",
+        "SELECT * FROM plugin_gis.locations WHERE deleted_at IS NULL AND status = 'active'",
     )
     .fetch_all(&pool)
     .await

@@ -477,7 +477,7 @@ pub async fn delete_process_route(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM process_routes WHERE id = $1
+        UPDATE process_routes SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )

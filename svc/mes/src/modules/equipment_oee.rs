@@ -719,9 +719,12 @@ pub async fn delete_oee_record(
         return e;
     }
 
-    let result = sqlx::query!(r#"DELETE FROM equipment_oee WHERE id = $1"#, id,)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query!(
+        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1"#,
+        id,
+    )
+    .execute(&state.pool)
+    .await;
 
     let result = match result {
         Ok(r) => r,

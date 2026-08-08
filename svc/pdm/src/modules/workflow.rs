@@ -273,11 +273,12 @@ pub async fn delete_workflow(
 ) -> Json<ApiResponse<bool>> {
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query("DELETE FROM pdm_workflows WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE pdm_workflows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "工作流删除成功")),
@@ -298,7 +299,7 @@ pub async fn start_workflow(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let workflow_result = sqlx::query_as::<_, WorkflowDefinition>(
-        "SELECT id, tenant_id, name, steps FROM pdm_workflows WHERE id = $1 AND status = 'active' AND tenant_id = $2",
+        "SELECT id, tenant_id, name, steps FROM pdm_workflows WHERE deleted_at IS NULL AND id = $1 AND status = 'active' AND tenant_id = $2",
     )
     .bind(req.workflow_id)
     .bind(tenant_id)
@@ -474,7 +475,7 @@ pub async fn advance_workflow(
     }
 
     let workflow_result = sqlx::query_as::<_, WorkflowDefinition>(
-        "SELECT steps FROM pdm_workflows WHERE id = $1 AND tenant_id = $2",
+        "SELECT steps FROM pdm_workflows WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(instance.workflow_id)
     .bind(tenant_id)

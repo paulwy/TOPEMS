@@ -51,7 +51,7 @@ async fn list_expenses(
             let items: Vec<Value> = rows.iter().map(|r| row_to_expense_json(r)).collect();
             let total: i64 = sqlx::query_scalar(
                 r#"SELECT COUNT(*) FROM expenses
-                   WHERE ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
+                   WHERE deleted_at IS NULL AND ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
                      AND ($2::text IS NULL OR status = $2)"#,
             )
             .bind(&search_pattern)
@@ -257,7 +257,7 @@ async fn delete_expense(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM expenses WHERE id = $1")
+    let result = sqlx::query("UPDATE expenses SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -541,7 +541,7 @@ async fn list_receivables(
             let items: Vec<Value> = rows.iter().map(|r| row_to_receivable_json(r)).collect();
             let total: i64 = sqlx::query_scalar(
                 r#"SELECT COUNT(*) FROM receivables
-                   WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
+                   WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
                      AND ($2::text IS NULL OR status = $2)"#,
             )
             .bind(&search_pattern)
@@ -726,7 +726,7 @@ async fn delete_receivable(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM receivables WHERE id = $1")
+    let result = sqlx::query("UPDATE receivables SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -776,7 +776,7 @@ async fn list_payables(
             let items: Vec<Value> = rows.iter().map(|r| row_to_payable_json(r)).collect();
             let total: i64 = sqlx::query_scalar(
                 r#"SELECT COUNT(*) FROM payables
-                   WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
+                   WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
                      AND ($2::text IS NULL OR status = $2)"#,
             )
             .bind(&search_pattern)
@@ -961,7 +961,7 @@ async fn delete_payable(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM payables WHERE id = $1")
+    let result = sqlx::query("UPDATE payables SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;

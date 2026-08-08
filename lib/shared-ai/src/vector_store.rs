@@ -356,7 +356,7 @@ pub mod pgvector_store {
 
         async fn get(&self, key: &str) -> Result<Option<(Vec<f32>, VectorMetadata)>> {
             let row = sqlx::query!(
-                r#"SELECT embedding::text, metadata FROM plugin_hrm.vectors WHERE key = $1"#,
+                r#"SELECT embedding::text, metadata FROM plugin_hrm.vectors WHERE deleted_at IS NULL AND key = $1"#,
                 key,
             )
             .fetch_optional(&self.pool)
@@ -378,7 +378,7 @@ pub mod pgvector_store {
         }
 
         async fn delete(&self, key: &str) -> Result<()> {
-            sqlx::query!("DELETE FROM plugin_hrm.vectors WHERE key = $1", key)
+            sqlx::query!("UPDATE plugin_hrm.vectors SET deleted_at = NOW() WHERE key = $1", key)
                 .execute(&self.pool)
                 .await?;
             Ok(())
@@ -386,7 +386,7 @@ pub mod pgvector_store {
 
         async fn exists(&self, key: &str) -> Result<bool> {
             let result: Option<(i64,)> =
-                sqlx::query_as("SELECT 1 FROM plugin_hrm.vectors WHERE key = $1")
+                sqlx::query_as("SELECT 1 FROM plugin_hrm.vectors WHERE deleted_at IS NULL AND key = $1")
                     .bind(key)
                     .fetch_optional(&self.pool)
                     .await?;

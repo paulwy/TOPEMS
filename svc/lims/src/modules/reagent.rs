@@ -74,10 +74,10 @@ pub async fn list_reagents(
     let tenant_id = ctx.tenant_id;
 
     let sql = match (query.status.as_ref(), query.name.as_ref()) {
-        (Some(_), Some(_)) => "SELECT id, tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE tenant_id = $1 AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None) => "SELECT id, tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_)) => "SELECT id, tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE tenant_id = $1 AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None) => "SELECT id, tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_)) => "SELECT id, tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None) => "SELECT id, tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_)) => "SELECT id, tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND tenant_id = $1 AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None) => "SELECT id, tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
     let mut query_builder = sqlx::query(sql).bind(tenant_id);
@@ -196,7 +196,7 @@ pub async fn get_reagent(
     let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "SELECT id, tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE id = $1 AND tenant_id = $2"
+        "SELECT id, tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
     )
     .bind(id)
     .bind(tenant_id)
@@ -294,11 +294,13 @@ pub async fn delete_reagent(
     };
     let tenant_id = ctx.tenant_id;
 
-    let result = sqlx::query("DELETE FROM qa_lab_reagents WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        "UPDATE qa_lab_reagents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "试剂删除成功")),

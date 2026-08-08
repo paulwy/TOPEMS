@@ -1,0 +1,2486 @@
+[
+  {
+    "file": "svc/ai/src/modules/ai_knowledge/service.rs",
+    "count": 4,
+    "details": [
+      {
+        "line": 574,
+        "old": "r#\"DELETE FROM core.knowledge_chunks",
+        "new": "r#\"UPDATE core.knowledge_chunks SET deleted_at = NOW()",
+        "table": "core_knowledge_chunks"
+      },
+      {
+        "line": 457,
+        "old": "r#\"DELETE FROM core.knowledge_documents",
+        "new": "r#\"UPDATE core.knowledge_documents SET deleted_at = NOW()",
+        "table": "core_knowledge_documents"
+      },
+      {
+        "line": 389,
+        "old": "r#\"DELETE FROM core.knowledge_chunks",
+        "new": "r#\"UPDATE core.knowledge_chunks SET deleted_at = NOW()",
+        "table": "core_knowledge_chunks"
+      },
+      {
+        "line": 173,
+        "old": "r#\"DELETE FROM core.knowledge_bases",
+        "new": "r#\"UPDATE core.knowledge_bases SET deleted_at = NOW()",
+        "table": "core_knowledge_bases"
+      }
+    ]
+  },
+  {
+    "file": "svc/ai/src/services/vector.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 492,
+        "old": "sqlx::query(\"DELETE FROM plugin_ai.document_chunks WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_ai.document_chunks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "plugin_ai_document_chunks"
+      },
+      {
+        "line": 165,
+        "old": "sqlx::query(\"DELETE FROM plugin_ai.documents WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_ai.documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "plugin_ai_documents"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/comparison_analysis.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 457,
+        "old": "DELETE FROM analytics_comparison_analyses",
+        "new": "UPDATE analytics_comparison_analyses SET deleted_at = NOW()",
+        "table": "analytics_comparison_analyses"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/dashboard/crud.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 223,
+        "old": "DELETE FROM analytics_dashboards",
+        "new": "UPDATE analytics_dashboards SET deleted_at = NOW()",
+        "table": "analytics_dashboards"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/dashboard/share.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 171,
+        "old": "DELETE FROM analytics_dashboard_shares",
+        "new": "UPDATE analytics_dashboard_shares SET deleted_at = NOW()",
+        "table": "analytics_dashboard_shares"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/data_drilldown.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 299,
+        "old": "DELETE FROM analytics_drilldown_paths",
+        "new": "UPDATE analytics_drilldown_paths SET deleted_at = NOW()",
+        "table": "analytics_drilldown_paths"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/dataset.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 257,
+        "old": "let result = sqlx::query(\"DELETE FROM analytics_datasets WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE analytics_datasets SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "analytics_datasets"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/datasource.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 583,
+        "old": "DELETE FROM analytics_datasources",
+        "new": "UPDATE analytics_datasources SET deleted_at = NOW()",
+        "table": "analytics_datasources"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/row_level_permission.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 346,
+        "old": "DELETE FROM analytics_row_level_permissions",
+        "new": "UPDATE analytics_row_level_permissions SET deleted_at = NOW()",
+        "table": "analytics_row_level_permissions"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/self_service_report.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 302,
+        "old": "DELETE FROM analytics_self_service_reports",
+        "new": "UPDATE analytics_self_service_reports SET deleted_at = NOW()",
+        "table": "analytics_self_service_reports"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/bi/widget.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 426,
+        "old": "DELETE FROM analytics_widgets",
+        "new": "UPDATE analytics_widgets SET deleted_at = NOW()",
+        "table": "analytics_widgets"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/report/report.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 310,
+        "old": "DELETE FROM reports",
+        "new": "UPDATE reports SET deleted_at = NOW()",
+        "table": "reports"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/report/schedule.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 323,
+        "old": "DELETE FROM report_schedules",
+        "new": "UPDATE report_schedules SET deleted_at = NOW()",
+        "table": "report_schedules"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/report/subscription.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 292,
+        "old": "DELETE FROM report_subscriptions",
+        "new": "UPDATE report_subscriptions SET deleted_at = NOW()",
+        "table": "report_subscriptions"
+      }
+    ]
+  },
+  {
+    "file": "svc/analytics/src/modules/report/template.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 339,
+        "old": "DELETE FROM report_templates",
+        "new": "UPDATE report_templates SET deleted_at = NOW()",
+        "table": "report_templates"
+      }
+    ]
+  },
+  {
+    "file": "svc/communication/src/notification.rs",
+    "count": 4,
+    "details": [
+      {
+        "line": 1614,
+        "old": "let result = sqlx::query(\"DELETE FROM core_notification_templates WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE core_notification_templates SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "core_notification_templates"
+      },
+      {
+        "line": 898,
+        "old": "let result = sqlx::query(\"DELETE FROM core_notifications WHERE user_id = $1 AND id = ANY($2)\")",
+        "new": "let result = sqlx::query(\"UPDATE core_notifications SET deleted_at = NOW() WHERE user_id = $1 AND id = ANY($2)\")",
+        "table": "core_notifications"
+      },
+      {
+        "line": 626,
+        "old": "let result = sqlx::query(\"DELETE FROM core_notifications WHERE user_id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE core_notifications SET deleted_at = NOW() WHERE user_id = $1\")",
+        "table": "core_notifications"
+      },
+      {
+        "line": 578,
+        "old": "let result = sqlx::query(\"DELETE FROM core_notifications WHERE id = $1 AND user_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE core_notifications SET deleted_at = NOW() WHERE id = $1 AND user_id = $2\")",
+        "table": "core_notifications"
+      }
+    ]
+  },
+  {
+    "file": "svc/crm/src/modules/aftersales.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 492,
+        "old": "let result = sqlx::query(\"DELETE FROM crm.returns WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE crm.returns SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "crm_returns"
+      }
+    ]
+  },
+  {
+    "file": "svc/crm/src/modules/billing.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 420,
+        "old": "sqlx::query(\"DELETE FROM plugin_crm.billing_records WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_crm.billing_records SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "plugin_crm_billing_records"
+      }
+    ]
+  },
+  {
+    "file": "svc/crm/src/modules/customer_scoring.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 381,
+        "old": "sqlx::query(\"DELETE FROM plugin_crm.customer_scores WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_crm.customer_scores SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "plugin_crm_customer_scores"
+      }
+    ]
+  },
+  {
+    "file": "svc/crm/src/modules/customer_segmentation.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 223,
+        "old": "let result = sqlx::query(\"DELETE FROM plugin_crm.customer_segments WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE plugin_crm.customer_segments SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_crm_customer_segments"
+      }
+    ]
+  },
+  {
+    "file": "svc/crm/src/modules/sales_forecast.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 428,
+        "old": "sqlx::query(\"DELETE FROM plugin_crm.sales_forecasts WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_crm.sales_forecasts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "plugin_crm_sales_forecasts"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/announcement.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 304,
+        "old": "let result = sqlx::query(\"DELETE FROM announcements WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE announcements SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "announcements"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/asset.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 386,
+        "old": "let result = sqlx::query(\"DELETE FROM assets WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE assets SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "assets"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/consolidation/company_relations.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 175,
+        "old": "match sqlx::query(\"DELETE FROM plugin_erp.company_relations WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE plugin_erp.company_relations SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_erp_company_relations"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/consolidation/elimination_rules.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 213,
+        "old": "match sqlx::query(\"DELETE FROM plugin_erp.elimination_rules WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE plugin_erp.elimination_rules SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_erp_elimination_rules"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/consolidation/reports.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 448,
+        "old": "match sqlx::query(\"DELETE FROM plugin_erp.consolidation_reports WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE plugin_erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_erp_consolidation_reports"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/consolidation/scope_companies.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 134,
+        "old": "match sqlx::query(\"DELETE FROM plugin_erp.consolidation_scope_companies WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE plugin_erp.consolidation_scope_companies SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_erp_consolidation_scope_companies"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/consolidation/scopes.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 184,
+        "old": "match sqlx::query(\"DELETE FROM plugin_erp.consolidation_scopes WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE plugin_erp.consolidation_scopes SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_erp_consolidation_scopes"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/fixed_asset.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 451,
+        "old": "let result = sqlx::query(\"DELETE FROM fixed_assets WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE fixed_assets SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "fixed_assets"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/leave_request.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 532,
+        "old": "let result = sqlx::query(\"DELETE FROM leave_requests WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE leave_requests SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "leave_requests"
+      }
+    ]
+  },
+  {
+    "file": "svc/hrm/src/modules/leave.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 293,
+        "old": "let result = sqlx::query(\"DELETE FROM leave_requests WHERE id = $1 AND status = 'pending'\")",
+        "new": "let result = sqlx::query(\"UPDATE leave_requests SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'\")",
+        "table": "leave_requests"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/master_data_refs.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 3465,
+        "old": "let result = sqlx::query(\"DELETE FROM erp_master_data_quality_rules WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE erp_master_data_quality_rules SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "erp_master_data_quality_rules"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/meeting_room.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 624,
+        "old": "let result = sqlx::query(\"DELETE FROM meeting_bookings WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE meeting_bookings SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "meeting_bookings"
+      },
+      {
+        "line": 290,
+        "old": "let result = sqlx::query(\"DELETE FROM meeting_rooms WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE meeting_rooms SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "meeting_rooms"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/office_supplies.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 293,
+        "old": "let result = sqlx::query(\"DELETE FROM office_supplies WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE office_supplies SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "office_supplies"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/opening_balance.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 342,
+        "old": "let result = sqlx::query(\"DELETE FROM opening_balances WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE opening_balances SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "opening_balances"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/vehicles.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 312,
+        "old": "let result = sqlx::query(\"DELETE FROM vehicles WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE vehicles SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "vehicles"
+      }
+    ]
+  },
+  {
+    "file": "svc/feedback/src/handlers.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 233,
+        "old": "let result = sqlx::query(r#\"DELETE FROM core_feedbacks WHERE id = $1\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE core_feedbacks SET deleted_at = NOW() WHERE id = $1\"#)",
+        "table": "core_feedbacks"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/modules/audit_v52.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 454,
+        "old": "sqlx::query(\"DELETE FROM finance_audit_rules_v52 WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE finance_audit_rules_v52 SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "finance_audit_rules_v52"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/modules/compliance_v51.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 584,
+        "old": "sqlx::query(\"DELETE FROM finance_control_points WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE finance_control_points SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "finance_control_points"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/modules/operational.rs",
+    "count": 3,
+    "details": [
+      {
+        "line": 964,
+        "old": "let result = sqlx::query(\"DELETE FROM payables WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE payables SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "payables"
+      },
+      {
+        "line": 729,
+        "old": "let result = sqlx::query(\"DELETE FROM receivables WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE receivables SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "receivables"
+      },
+      {
+        "line": 260,
+        "old": "let result = sqlx::query(\"DELETE FROM expenses WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE expenses SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "expenses"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/modules/reports_v57.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 560,
+        "old": "sqlx::query(\"DELETE FROM finance_v57_generated_reports WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE finance_v57_generated_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "finance_v57_generated_reports"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/modules/tax_v56.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 660,
+        "old": "sqlx::query(\"DELETE FROM finance_v56_tax_lines WHERE form_id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE finance_v56_tax_lines SET deleted_at = NOW() WHERE form_id = $1 AND tenant_id = $2\")",
+        "table": "finance_v56_tax_lines"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/services/finance/approval_configs.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 234,
+        "old": "\"DELETE FROM core_finance_payment_approval_config WHERE tenant_id = $1 AND id = $2\",",
+        "new": "\"UPDATE core_finance_payment_approval_config SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2\",",
+        "table": "core_finance_payment_approval_config"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/services/finance/collection.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 217,
+        "old": "sqlx::query(\"DELETE FROM erp_collection_records WHERE tenant_id = $1 AND id = $2\")",
+        "new": "sqlx::query(\"UPDATE erp_collection_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2\")",
+        "table": "erp_collection_records"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/services/finance/payment.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 412,
+        "old": "sqlx::query(\"DELETE FROM core_finance_payments WHERE id = $1\")",
+        "new": "sqlx::query(\"UPDATE core_finance_payments SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "core_finance_payments"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/services/finance/payment_record.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 213,
+        "old": "sqlx::query(\"DELETE FROM erp_payment_records WHERE tenant_id = $1 AND id = $2\")",
+        "new": "sqlx::query(\"UPDATE erp_payment_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2\")",
+        "table": "erp_payment_records"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/services/finance/voucher.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 726,
+        "old": "sqlx::query(\"DELETE FROM core_finance_ledger WHERE tenant_id = $1 AND voucher_id = $2\")",
+        "new": "sqlx::query(\"UPDATE core_finance_ledger SET deleted_at = NOW() WHERE tenant_id = $1 AND voucher_id = $2\")",
+        "table": "core_finance_ledger"
+      },
+      {
+        "line": 697,
+        "old": "sqlx::query(\"DELETE FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2\")",
+        "new": "sqlx::query(\"UPDATE core_finance_vouchers SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2\")",
+        "table": "core_finance_vouchers"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/services/finance/voucher_generation.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 230,
+        "old": "\"DELETE FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2\",",
+        "new": "\"UPDATE finance_voucher_generation_rules SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2\",",
+        "table": "finance_voucher_generation_rules"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/services/finance/voucher_template.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 376,
+        "old": "sqlx::query(\"DELETE FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2\")",
+        "new": "sqlx::query(\"UPDATE finance_voucher_templates SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2\")",
+        "table": "finance_voucher_templates"
+      }
+    ]
+  },
+  {
+    "file": "svc/gis/src/modules/business.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 169,
+        "old": "match sqlx::query(\"DELETE FROM business_locations WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE business_locations SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "business_locations"
+      }
+    ]
+  },
+  {
+    "file": "svc/gis/src/modules/geodata.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 243,
+        "old": "match sqlx::query(\"DELETE FROM plugin_gis.geodata WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE plugin_gis.geodata SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_gis_geodata"
+      }
+    ]
+  },
+  {
+    "file": "svc/gis/src/modules/location.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 171,
+        "old": "match sqlx::query(\"DELETE FROM plugin_gis.locations WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE plugin_gis.locations SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_gis_locations"
+      }
+    ]
+  },
+  {
+    "file": "svc/gis/src/modules/map.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 183,
+        "old": "match sqlx::query(\"DELETE FROM maps WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE maps SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "maps"
+      }
+    ]
+  },
+  {
+    "file": "svc/gis/src/modules/pipeline.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 148,
+        "old": "match sqlx::query(\"DELETE FROM pipelines WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE pipelines SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "pipelines"
+      }
+    ]
+  },
+  {
+    "file": "svc/gis/src/modules/warehouse.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 162,
+        "old": "match sqlx::query(\"DELETE FROM warehouse_locations WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE warehouse_locations SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "warehouse_locations"
+      }
+    ]
+  },
+  {
+    "file": "svc/hrm/src/modules/attendance.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 413,
+        "old": "let result = sqlx::query(\"DELETE FROM plugin_hrm.attendance_records WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE plugin_hrm.attendance_records SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_hrm_attendance_records"
+      }
+    ]
+  },
+  {
+    "file": "svc/hrm/src/modules/contract.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 447,
+        "old": "let result = sqlx::query(\"DELETE FROM plugin_hrm.contracts WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE plugin_hrm.contracts SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_hrm_contracts"
+      }
+    ]
+  },
+  {
+    "file": "svc/hrm/src/modules/payroll.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 303,
+        "old": "sqlx::query(\"DELETE FROM plugin_hrm.payroll_runs WHERE id = $1 AND status = 'draft'\")",
+        "new": "sqlx::query(\"UPDATE plugin_hrm.payroll_runs SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'\")",
+        "table": "plugin_hrm_payroll_runs"
+      }
+    ]
+  },
+  {
+    "file": "svc/hrm/src/modules/performance.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 346,
+        "old": "\"DELETE FROM plugin_hrm.performance_reviews WHERE id = $1 AND status = 'draft'\",",
+        "new": "\"UPDATE plugin_hrm.performance_reviews SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'\",",
+        "table": "plugin_hrm_performance_reviews"
+      }
+    ]
+  },
+  {
+    "file": "svc/hrm/src/modules/recruitment.rs",
+    "count": 3,
+    "details": [
+      {
+        "line": 961,
+        "old": "let result = sqlx::query(\"DELETE FROM plugin_hrm.interviews WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE plugin_hrm.interviews SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_hrm_interviews"
+      },
+      {
+        "line": 736,
+        "old": "let result = sqlx::query(\"DELETE FROM plugin_hrm.candidates WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE plugin_hrm.candidates SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_hrm_candidates"
+      },
+      {
+        "line": 405,
+        "old": "sqlx::query(\"DELETE FROM plugin_hrm.job_openings WHERE id = $1 AND status = 'draft'\")",
+        "new": "sqlx::query(\"UPDATE plugin_hrm.job_openings SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'\")",
+        "table": "plugin_hrm_job_openings"
+      }
+    ]
+  },
+  {
+    "file": "svc/hrm/src/modules/training.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 244,
+        "old": "let result = sqlx::query(\"DELETE FROM plugin_hrm.training_plans WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE plugin_hrm.training_plans SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_hrm_training_plans"
+      }
+    ]
+  },
+  {
+    "file": "svc/integration/src/handlers/conversion_rules.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 171,
+        "old": "match sqlx::query(\"DELETE FROM conversion_rules WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE conversion_rules SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "conversion_rules"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/inspection_record.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 206,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lab_records WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lab_records SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lab_records"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/inspection_task.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 385,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lab_tasks WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lab_tasks SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lab_tasks"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/instrument.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 344,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lab_instruments WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lab_instruments SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "qa_lab_instruments"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/instrument_data/collection_tasks.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 446,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lims_collection_tasks WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lims_collection_tasks SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lims_collection_tasks"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/instrument_data/instrument_data_crud.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 289,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lims_instrument_data WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lims_instrument_data SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lims_instrument_data"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/instrument_data/parse_rules.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 274,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lims_parse_rules WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lims_parse_rules SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lims_parse_rules"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/process.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 230,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lab_processes WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lab_processes SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lab_processes"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/proficiency_testing.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 631,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lims_pt_plans WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lims_pt_plans SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lims_pt_plans"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/reagent.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 297,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lab_reagents WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lab_reagents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "qa_lab_reagents"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/sample.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 340,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lab_samples SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "qa_lab_samples"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/sample_barcode.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 859,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lims_rfid_tags WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lims_rfid_tags SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lims_rfid_tags"
+      },
+      {
+        "line": 477,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lims_sample_barcodes WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lims_sample_barcodes SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lims_sample_barcodes"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/test_method.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 791,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lims_method_categories WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lims_method_categories SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lims_method_categories"
+      },
+      {
+        "line": 623,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lims_test_methods WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lims_test_methods SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lims_test_methods"
+      }
+    ]
+  },
+  {
+    "file": "svc/lims/src/modules/uncertainty.rs",
+    "count": 3,
+    "details": [
+      {
+        "line": 957,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lims_uncertainty_components WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lims_uncertainty_components SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lims_uncertainty_components"
+      },
+      {
+        "line": 724,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lims_uncertainty_sources WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lims_uncertainty_sources SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lims_uncertainty_sources"
+      },
+      {
+        "line": 535,
+        "old": "let result = sqlx::query(\"DELETE FROM qa_lims_uncertainty_projects WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE qa_lims_uncertainty_projects SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "qa_lims_uncertainty_projects"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/equipment.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 476,
+        "old": "DELETE FROM equipment",
+        "new": "UPDATE equipment SET deleted_at = NOW()",
+        "table": "equipment"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/equipment_oee.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 722,
+        "old": "let result = sqlx::query!(r#\"DELETE FROM equipment_oee WHERE id = $1\"#, id,)",
+        "new": "let result = sqlx::query!(r#\"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1\"#, id,)",
+        "table": "equipment_oee"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/material_bom/bom_handlers.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 494,
+        "old": "DELETE FROM material_boms",
+        "new": "UPDATE material_boms SET deleted_at = NOW()",
+        "table": "material_boms"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/material_bom/issue_handlers.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 452,
+        "old": "\"DELETE FROM material_issues WHERE id = $1 AND status = 'pending'\",",
+        "new": "\"UPDATE material_issues SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'\",",
+        "table": "material_issues"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/material_bom/return_handlers.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 445,
+        "old": "\"DELETE FROM material_returns WHERE id = $1 AND status = 'pending'\",",
+        "new": "\"UPDATE material_returns SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'\",",
+        "table": "material_returns"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/process_flow.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 556,
+        "old": "DELETE FROM process_flows WHERE id = $1",
+        "new": "UPDATE process_flows SET deleted_at = NOW() WHERE id = $1",
+        "table": "process_flows"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/process_route.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 480,
+        "old": "DELETE FROM process_routes WHERE id = $1",
+        "new": "UPDATE process_routes SET deleted_at = NOW() WHERE id = $1",
+        "table": "process_routes"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/production_order.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 799,
+        "old": "DELETE FROM production_orders",
+        "new": "UPDATE production_orders SET deleted_at = NOW()",
+        "table": "production_orders"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/production_process.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 427,
+        "old": "DELETE FROM production_processes",
+        "new": "UPDATE production_processes SET deleted_at = NOW()",
+        "table": "production_processes"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/production_record.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 480,
+        "old": "DELETE FROM production_records",
+        "new": "UPDATE production_records SET deleted_at = NOW()",
+        "table": "production_records"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/production_scheduling.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 664,
+        "old": "DELETE FROM production_schedules",
+        "new": "UPDATE production_schedules SET deleted_at = NOW()",
+        "table": "production_schedules"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/quality_management/inspection.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 577,
+        "old": "DELETE FROM quality_inspections WHERE id = $1",
+        "new": "UPDATE quality_inspections SET deleted_at = NOW() WHERE id = $1",
+        "table": "quality_inspections"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/quality_management/patrol.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 713,
+        "old": "DELETE FROM quality_patrol_items WHERE id = $1",
+        "new": "UPDATE quality_patrol_items SET deleted_at = NOW() WHERE id = $1",
+        "table": "quality_patrol_items"
+      },
+      {
+        "line": 471,
+        "old": "DELETE FROM quality_patrols WHERE id = $1",
+        "new": "UPDATE quality_patrols SET deleted_at = NOW() WHERE id = $1",
+        "table": "quality_patrols"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/quality_management/standard.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 763,
+        "old": "DELETE FROM quality_standards WHERE id = $1",
+        "new": "UPDATE quality_standards SET deleted_at = NOW() WHERE id = $1",
+        "table": "quality_standards"
+      },
+      {
+        "line": 626,
+        "old": "DELETE FROM quality_standard_values WHERE standard_id = $1",
+        "new": "UPDATE quality_standard_values SET deleted_at = NOW() WHERE standard_id = $1",
+        "table": "quality_standard_values"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/team.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 528,
+        "old": "DELETE FROM teams",
+        "new": "UPDATE teams SET deleted_at = NOW()",
+        "table": "teams"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/wip.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 582,
+        "old": "DELETE FROM wips",
+        "new": "UPDATE wips SET deleted_at = NOW()",
+        "table": "wips"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/work_order.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 689,
+        "old": "DELETE FROM work_orders",
+        "new": "UPDATE work_orders SET deleted_at = NOW()",
+        "table": "work_orders"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/work_report.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 775,
+        "old": "DELETE FROM work_reports WHERE id = $1",
+        "new": "UPDATE work_reports SET deleted_at = NOW() WHERE id = $1",
+        "table": "work_reports"
+      }
+    ]
+  },
+  {
+    "file": "svc/mes/src/modules/work_station.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 488,
+        "old": "DELETE FROM work_stations",
+        "new": "UPDATE work_stations SET deleted_at = NOW()",
+        "table": "work_stations"
+      }
+    ]
+  },
+  {
+    "file": "svc/mobile/src/modules/media.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 288,
+        "old": "\"DELETE FROM media_files WHERE id = $1 AND file_type = $2 AND uploaded_by = $3\",",
+        "new": "\"UPDATE media_files SET deleted_at = NOW() WHERE id = $1 AND file_type = $2 AND uploaded_by = $3\",",
+        "table": "media_files"
+      }
+    ]
+  },
+  {
+    "file": "svc/pdm/src/modules/change_notice.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 370,
+        "old": "let result = sqlx::query(\"DELETE FROM pdm_change_notices WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE pdm_change_notices SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "pdm_change_notices"
+      }
+    ]
+  },
+  {
+    "file": "svc/pdm/src/modules/configuration.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 302,
+        "old": "let result = sqlx::query(\"DELETE FROM pdm_configurations WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE pdm_configurations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "pdm_configurations"
+      }
+    ]
+  },
+  {
+    "file": "svc/pdm/src/modules/document.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 355,
+        "old": "let result = sqlx::query(\"DELETE FROM pdm_documents WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE pdm_documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "pdm_documents"
+      }
+    ]
+  },
+  {
+    "file": "svc/pdm/src/modules/material.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 378,
+        "old": "let result = sqlx::query(\"DELETE FROM pdm_materials WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE pdm_materials SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "pdm_materials"
+      }
+    ]
+  },
+  {
+    "file": "svc/pdm/src/modules/product.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 261,
+        "old": "let result = sqlx::query(\"DELETE FROM pdm_products WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE pdm_products SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "pdm_products"
+      }
+    ]
+  },
+  {
+    "file": "svc/pdm/src/modules/production_batch.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 294,
+        "old": "let result = sqlx::query(\"DELETE FROM pdm_production_batches WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE pdm_production_batches SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "pdm_production_batches"
+      }
+    ]
+  },
+  {
+    "file": "svc/pdm/src/modules/production_formula.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 282,
+        "old": "sqlx::query(\"DELETE FROM pdm_production_formulas WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE pdm_production_formulas SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "pdm_production_formulas"
+      }
+    ]
+  },
+  {
+    "file": "svc/pdm/src/modules/production_process.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 278,
+        "old": "sqlx::query(\"DELETE FROM pdm_production_processes WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE pdm_production_processes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "pdm_production_processes"
+      }
+    ]
+  },
+  {
+    "file": "svc/pdm/src/modules/production_step.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 265,
+        "old": "let result = sqlx::query(\"DELETE FROM pdm_production_steps WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE pdm_production_steps SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "pdm_production_steps"
+      }
+    ]
+  },
+  {
+    "file": "svc/pdm/src/modules/version.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 292,
+        "old": "let result = sqlx::query(\"DELETE FROM pdm_versions WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE pdm_versions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "pdm_versions"
+      }
+    ]
+  },
+  {
+    "file": "svc/pdm/src/modules/workflow.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 276,
+        "old": "let result = sqlx::query(\"DELETE FROM pdm_workflows WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE pdm_workflows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "pdm_workflows"
+      }
+    ]
+  },
+  {
+    "file": "svc/pm/src/modules/contract.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 546,
+        "old": "sqlx::query(\"DELETE FROM pm.contract_payment_schedule WHERE id = $1 AND contract_id = $2\")",
+        "new": "sqlx::query(\"UPDATE pm.contract_payment_schedule SET deleted_at = NOW() WHERE id = $1 AND contract_id = $2\")",
+        "table": "pm_contract_payment_schedule"
+      },
+      {
+        "line": 204,
+        "old": "let result = sqlx::query(\"DELETE FROM pm.contracts WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE pm.contracts SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "pm_contracts"
+      }
+    ]
+  },
+  {
+    "file": "svc/pm/src/modules/project.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 372,
+        "old": "let result = sqlx::query(\"DELETE FROM pm.projects WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE pm.projects SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "pm_projects"
+      }
+    ]
+  },
+  {
+    "file": "svc/pm/src/modules/project_resource.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 218,
+        "old": "sqlx::query(\"DELETE FROM plugin_pm.project_resources WHERE project_id = $1 AND id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_pm.project_resources SET deleted_at = NOW() WHERE project_id = $1 AND id = $2\")",
+        "table": "plugin_pm_project_resources"
+      }
+    ]
+  },
+  {
+    "file": "svc/pm/src/modules/quality.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 313,
+        "old": "let result = sqlx::query(\"DELETE FROM plugin_pm.defects WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE plugin_pm.defects SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_pm_defects"
+      }
+    ]
+  },
+  {
+    "file": "svc/qms/src/modules/apqp.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 513,
+        "old": "let result = sqlx::query(r#\"DELETE FROM qa_apqp_projects WHERE id = $1\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE qa_apqp_projects SET deleted_at = NOW() WHERE id = $1\"#)",
+        "table": "qa_apqp_projects"
+      }
+    ]
+  },
+  {
+    "file": "svc/qms/src/modules/corrective_action.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 364,
+        "old": "sqlx::query(r#\"DELETE FROM qa_corrective_actions WHERE id = $1 AND tenant_id = $2\"#)",
+        "new": "sqlx::query(r#\"UPDATE qa_corrective_actions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\"#)",
+        "table": "qa_corrective_actions"
+      }
+    ]
+  },
+  {
+    "file": "svc/qms/src/modules/eight_d.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 332,
+        "old": "let result = sqlx::query(r#\"DELETE FROM qa_eightd_reports WHERE id = $1 AND tenant_id = $2\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE qa_eightd_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\"#)",
+        "table": "qa_eightd_reports"
+      }
+    ]
+  },
+  {
+    "file": "svc/qms/src/modules/fmea.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 305,
+        "old": "let result = sqlx::query(r#\"DELETE FROM qa_fmea_analyses WHERE id = $1 AND tenant_id = $2\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE qa_fmea_analyses SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\"#)",
+        "table": "qa_fmea_analyses"
+      }
+    ]
+  },
+  {
+    "file": "svc/qms/src/modules/quality_cost.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 308,
+        "old": "let result = sqlx::query(r#\"DELETE FROM qa_quality_costs WHERE id = $1 AND tenant_id = $2\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE qa_quality_costs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\"#)",
+        "table": "qa_quality_costs"
+      }
+    ]
+  },
+  {
+    "file": "svc/qms/src/modules/quality_dashboard.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 440,
+        "old": "let result = sqlx::query(r#\"DELETE FROM qa_alert_rules WHERE id = $1\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE qa_alert_rules SET deleted_at = NOW() WHERE id = $1\"#)",
+        "table": "qa_alert_rules"
+      }
+    ]
+  },
+  {
+    "file": "svc/qms/src/modules/quality_inspection.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 400,
+        "old": "sqlx::query(r#\"DELETE FROM qa_quality_inspections WHERE id = $1 AND tenant_id = $2\"#)",
+        "new": "sqlx::query(r#\"UPDATE qa_quality_inspections SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\"#)",
+        "table": "qa_quality_inspections"
+      }
+    ]
+  },
+  {
+    "file": "svc/qms/src/modules/quality_issue.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 301,
+        "old": "let result = sqlx::query(r#\"DELETE FROM qa_quality_issues WHERE id = $1 AND tenant_id = $2\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE qa_quality_issues SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\"#)",
+        "table": "qa_quality_issues"
+      }
+    ]
+  },
+  {
+    "file": "svc/qms/src/modules/quality_standard.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 308,
+        "old": "let result = sqlx::query(r#\"DELETE FROM qa_standards WHERE id = $1 AND tenant_id = $2\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE qa_standards SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\"#)",
+        "table": "qa_standards"
+      }
+    ]
+  },
+  {
+    "file": "svc/qms/src/modules/spc.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 383,
+        "old": "let result = sqlx::query(r#\"DELETE FROM qa_spc_charts WHERE id = $1 AND tenant_id = $2\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE qa_spc_charts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\"#)",
+        "table": "qa_spc_charts"
+      }
+    ]
+  },
+  {
+    "file": "svc/rd/src/modules/experiment.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 378,
+        "old": "let result = sqlx::query(\"DELETE FROM rs.experiments WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE rs.experiments SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "rs_experiments"
+      }
+    ]
+  },
+  {
+    "file": "svc/rd/src/modules/formula.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 380,
+        "old": "let result = sqlx::query(\"DELETE FROM rs.formulas WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE rs.formulas SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "rs_formulas"
+      }
+    ]
+  },
+  {
+    "file": "svc/rd/src/modules/material.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 417,
+        "old": "let result = sqlx::query(\"DELETE FROM rs.material_tests WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE rs.material_tests SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "rs_material_tests"
+      }
+    ]
+  },
+  {
+    "file": "svc/rd/src/modules/patent.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 351,
+        "old": "let result = sqlx::query(\"DELETE FROM rs.patents WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE rs.patents SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "rs_patents"
+      }
+    ]
+  },
+  {
+    "file": "svc/rd/src/modules/research_cost.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 368,
+        "old": "let result = sqlx::query(\"DELETE FROM rs.research_costs WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE rs.research_costs SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "rs_research_costs"
+      }
+    ]
+  },
+  {
+    "file": "svc/rd/src/repositories/project_repository.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 256,
+        "old": "DELETE FROM rs.projects WHERE id = ANY($1)",
+        "new": "UPDATE rs.projects SET deleted_at = NOW() WHERE id = ANY($1)",
+        "table": "rs_projects"
+      },
+      {
+        "line": 197,
+        "old": "DELETE FROM rs.projects WHERE id = $1",
+        "new": "UPDATE rs.projects SET deleted_at = NOW() WHERE id = $1",
+        "table": "rs_projects"
+      }
+    ]
+  },
+  {
+    "file": "svc/scm/src/modules/mrp.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 233,
+        "old": "let clear_result = sqlx::query(\"DELETE FROM scm.mrp_suggestions WHERE status = 'draft'\")",
+        "new": "let clear_result = sqlx::query(\"UPDATE scm.mrp_suggestions SET deleted_at = NOW() WHERE status = 'draft'\")",
+        "table": "scm_mrp_suggestions"
+      }
+    ]
+  },
+  {
+    "file": "svc/scm/src/modules/purchase_order.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 302,
+        "old": "let result = sqlx::query(\"DELETE FROM scm.purchase_orders WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE scm.purchase_orders SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "scm_purchase_orders"
+      }
+    ]
+  },
+  {
+    "file": "svc/scm/src/modules/supplier.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 486,
+        "old": "let result = sqlx::query(\"DELETE FROM scm.suppliers WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE scm.suppliers SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "scm_suppliers"
+      }
+    ]
+  },
+  {
+    "file": "svc/scm/src/modules/supplier_delivery_appointment.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 448,
+        "old": "let result = sqlx::query(\"DELETE FROM scm.supplier_delivery_appointments WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE scm.supplier_delivery_appointments SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "scm_supplier_delivery_appointments"
+      }
+    ]
+  },
+  {
+    "file": "svc/scm/src/modules/supplier_evaluation.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 347,
+        "old": "let result = sqlx::query(\"DELETE FROM scm.supplier_evaluations WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE scm.supplier_evaluations SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "scm_supplier_evaluations"
+      }
+    ]
+  },
+  {
+    "file": "svc/srm/src/modules/bidding.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 287,
+        "old": "let result = sqlx::query(\"DELETE FROM plugin_srm.biddings WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE plugin_srm.biddings SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_srm_biddings"
+      }
+    ]
+  },
+  {
+    "file": "svc/srm/src/modules/inquiry.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 258,
+        "old": "let result = sqlx::query(\"DELETE FROM plugin_srm.inquiries WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE plugin_srm.inquiries SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_srm_inquiries"
+      }
+    ]
+  },
+  {
+    "file": "svc/srm/src/modules/purchase_order.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 415,
+        "old": "sqlx::query(\"DELETE FROM plugin_srm.purchase_orders WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_srm.purchase_orders SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "plugin_srm_purchase_orders"
+      }
+    ]
+  },
+  {
+    "file": "svc/srm/src/modules/quotation.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 273,
+        "old": "let result = sqlx::query(\"DELETE FROM plugin_srm.quotations WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE plugin_srm.quotations SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "plugin_srm_quotations"
+      }
+    ]
+  },
+  {
+    "file": "svc/srm/src/modules/scoring_dimension.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 405,
+        "old": "sqlx::query(\"DELETE FROM plugin_srm.scoring_dimensions WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_srm.scoring_dimensions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "plugin_srm_scoring_dimensions"
+      }
+    ]
+  },
+  {
+    "file": "svc/srm/src/modules/supplier_category.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 467,
+        "old": "sqlx::query(\"DELETE FROM plugin_srm.supplier_categories WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_srm.supplier_categories SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "plugin_srm_supplier_categories"
+      }
+    ]
+  },
+  {
+    "file": "svc/srm/src/modules/supplier_contract.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 491,
+        "old": "sqlx::query(\"DELETE FROM plugin_srm.supplier_contracts WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_srm.supplier_contracts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "plugin_srm_supplier_contracts"
+      }
+    ]
+  },
+  {
+    "file": "svc/srm/src/modules/supplier_evaluation.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 567,
+        "old": "sqlx::query(\"DELETE FROM plugin_srm.supplier_evaluations WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_srm.supplier_evaluations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "plugin_srm_supplier_evaluations"
+      }
+    ]
+  },
+  {
+    "file": "svc/srm/src/modules/supplier_product.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 476,
+        "old": "sqlx::query(\"DELETE FROM plugin_srm.supplier_products WHERE id = $1 AND tenant_id = $2\")",
+        "new": "sqlx::query(\"UPDATE plugin_srm.supplier_products SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "plugin_srm_supplier_products"
+      }
+    ]
+  },
+  {
+    "file": "svc/ticket/src/sla_service.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 524,
+        "old": "DELETE FROM core_ticket_sla_policies",
+        "new": "UPDATE core_ticket_sla_policies SET deleted_at = NOW()",
+        "table": "core_ticket_sla_policies"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/middleware/versioning.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 692,
+        "old": "let result = sqlx::query(\"DELETE FROM core_api_version_configs WHERE version = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE core_api_version_configs SET deleted_at = NOW() WHERE version = $1\")",
+        "table": "core_api_version_configs"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/backup/service.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 206,
+        "old": "sqlx::query(r#\"DELETE FROM core_backup_records WHERE id = $1\"#)",
+        "new": "sqlx::query(r#\"UPDATE core_backup_records SET deleted_at = NOW() WHERE id = $1\"#)",
+        "table": "core_backup_records"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/dict/handlers.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 404,
+        "old": "let result = sqlx::query(r#\"DELETE FROM core_dict_items WHERE id = $1\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE core_dict_items SET deleted_at = NOW() WHERE id = $1\"#)",
+        "table": "core_dict_items"
+      },
+      {
+        "line": 206,
+        "old": "let result = sqlx::query(r#\"DELETE FROM core_dict_types WHERE id = $1\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE core_dict_types SET deleted_at = NOW() WHERE id = $1\"#)",
+        "table": "core_dict_types"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/doc/services/document.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 96,
+        "old": "sqlx::query(r#\"DELETE FROM core_doc_documents WHERE tenant_id = $1 AND id = $2\"#)",
+        "new": "sqlx::query(r#\"UPDATE core_doc_documents SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2\"#)",
+        "table": "core_doc_documents"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/doc/services/folder.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 90,
+        "old": "sqlx::query(r#\"DELETE FROM core_doc_folders WHERE tenant_id = $1 AND id = $2\"#)",
+        "new": "sqlx::query(r#\"UPDATE core_doc_folders SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2\"#)",
+        "table": "core_doc_folders"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/doc/services/template.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 104,
+        "old": "sqlx::query(r#\"DELETE FROM core_doc_templates WHERE tenant_id = $1 AND id = $2\"#)",
+        "new": "sqlx::query(r#\"UPDATE core_doc_templates SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2\"#)",
+        "table": "core_doc_templates"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/flow/workflow.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 194,
+        "old": "let result = sqlx::query(\"DELETE FROM core_workflows WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE core_workflows SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "core_workflows"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/iam/position.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 262,
+        "old": "let result = sqlx::query(r#\"DELETE FROM iam.positions WHERE id = $1\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE iam.positions SET deleted_at = NOW() WHERE id = $1\"#)",
+        "table": "iam_positions"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/iam/role.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 513,
+        "old": "if let Err(e) = sqlx::query(\"DELETE FROM core_roles WHERE id = $1\")",
+        "new": "if let Err(e) = sqlx::query(\"UPDATE core_roles SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "core_roles"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/iam/user/batch.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 205,
+        "old": "let result = sqlx::query(\"DELETE FROM core_users WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE core_users SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "core_users"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/iam/user/crud.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 792,
+        "old": "let delete_result = sqlx::query(\"DELETE FROM core_users WHERE id = $1\")",
+        "new": "let delete_result = sqlx::query(\"UPDATE core_users SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "core_users"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/login_log/handlers.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 246,
+        "old": "r#\"DELETE FROM core_login_logs WHERE tenant_id = $1 AND id IN ({})\"#,",
+        "new": "r#\"UPDATE core_login_logs SET deleted_at = NOW() WHERE tenant_id = $1 AND id IN ({})\"#,",
+        "table": "core_login_logs"
+      },
+      {
+        "line": 202,
+        "old": "let result = sqlx::query(r#\"DELETE FROM core_login_logs WHERE id = $1 AND tenant_id = $2\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE core_login_logs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\"#)",
+        "table": "core_login_logs"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/menu/handlers.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 395,
+        "old": "let result = sqlx::query(r#\"DELETE FROM core_menus WHERE id = $1\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE core_menus SET deleted_at = NOW() WHERE id = $1\"#)",
+        "table": "core_menus"
+      },
+      {
+        "line": 191,
+        "old": "let result = sqlx::query(r#\"DELETE FROM core_menu_groups WHERE id = $1\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE core_menu_groups SET deleted_at = NOW() WHERE id = $1\"#)",
+        "table": "core_menu_groups"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/plugin/handlers/simple_api.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 296,
+        "old": "DELETE FROM core.core_tenant_plugins",
+        "new": "UPDATE core.core_tenant_plugins SET deleted_at = NOW()",
+        "table": "core_core_tenant_plugins"
+      },
+      {
+        "line": 237,
+        "old": "DELETE FROM core.core_tenant_plugins",
+        "new": "UPDATE core.core_tenant_plugins SET deleted_at = NOW()",
+        "table": "core_core_tenant_plugins"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs",
+    "count": 3,
+    "details": [
+      {
+        "line": 360,
+        "old": "DELETE FROM core.core_tenant_plugins",
+        "new": "UPDATE core.core_tenant_plugins SET deleted_at = NOW()",
+        "table": "core_core_tenant_plugins"
+      },
+      {
+        "line": 357,
+        "old": "// Then delete from tenant_plugins",
+        "new": "// Then UPDATE tenant_plugins SET deleted_at = NOW()",
+        "table": "tenant_plugins"
+      },
+      {
+        "line": 298,
+        "old": "DELETE FROM core.core_tenant_plugins",
+        "new": "UPDATE core.core_tenant_plugins SET deleted_at = NOW()",
+        "table": "core_core_tenant_plugins"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/settings/api_keys.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 201,
+        "old": "sqlx::query(\"DELETE FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2\")",
+        "new": "sqlx::query(\"UPDATE core_tenant_settings SET deleted_at = NOW() WHERE tenant_id = $1 AND setting_key = $2\")",
+        "table": "core_tenant_settings"
+      }
+    ]
+  },
+  {
+    "file": "svc/unified-core/src/modules/tenant/handlers.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 971,
+        "old": "let result = sqlx::query(\"DELETE FROM core_tenant_users WHERE tenant_id = $1 AND user_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE core_tenant_users SET deleted_at = NOW() WHERE tenant_id = $1 AND user_id = $2\")",
+        "table": "core_tenant_users"
+      },
+      {
+        "line": 764,
+        "old": "let result = sqlx::query(\"DELETE FROM core_tenants WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE core_tenants SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "core_tenants"
+      }
+    ]
+  },
+  {
+    "file": "svc/wms/src/modules/batch.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 290,
+        "old": "let result = sqlx::query(\"DELETE FROM wms.batches WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE wms.batches SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "wms_batches"
+      }
+    ]
+  },
+  {
+    "file": "svc/wms/src/modules/serial_number.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 423,
+        "old": "let result = sqlx::query(\"DELETE FROM wms.serial_numbers WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE wms.serial_numbers SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "wms_serial_numbers"
+      }
+    ]
+  },
+  {
+    "file": "svc/wms/src/modules/smart_replenishment/orders.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 293,
+        "old": "let result = sqlx::query(\"DELETE FROM wms.replenishment_orders WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE wms.replenishment_orders SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "wms_replenishment_orders"
+      }
+    ]
+  },
+  {
+    "file": "svc/wms/src/modules/smart_replenishment/rules.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 348,
+        "old": "let result = sqlx::query(\"DELETE FROM wms.replenishment_rules WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE wms.replenishment_rules SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "wms_replenishment_rules"
+      }
+    ]
+  },
+  {
+    "file": "svc/wms/src/modules/transfer.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 343,
+        "old": "let result = sqlx::query(\"DELETE FROM transfers WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE transfers SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "transfers"
+      }
+    ]
+  },
+  {
+    "file": "svc/wms/src/modules/transfer_order.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 363,
+        "old": "let result = sqlx::query(\"DELETE FROM wms.transfer_orders WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE wms.transfer_orders SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "wms_transfer_orders"
+      }
+    ]
+  },
+  {
+    "file": "lib/shared-ai/src/vector_store.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 381,
+        "old": "sqlx::query!(\"DELETE FROM plugin_hrm.vectors WHERE key = $1\", key)",
+        "new": "sqlx::query!(\"UPDATE plugin_hrm.vectors SET deleted_at = NOW() WHERE key = $1\", key)",
+        "table": "plugin_hrm_vectors"
+      }
+    ]
+  },
+  {
+    "file": "svc/crm/src/modules/contact.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 458,
+        "old": "let result = sqlx::query(\"DELETE FROM crm.contacts WHERE id = ANY($1) AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE crm.contacts SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2\")",
+        "table": "crm_contacts"
+      },
+      {
+        "line": 387,
+        "old": "let result = sqlx::query(\"DELETE FROM crm.contacts WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE crm.contacts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "crm_contacts"
+      }
+    ]
+  },
+  {
+    "file": "svc/crm/src/modules/customer.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 675,
+        "old": "let result = sqlx::query(\"DELETE FROM crm.customers WHERE id = ANY($1) AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE crm.customers SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2\")",
+        "table": "crm_customers"
+      },
+      {
+        "line": 579,
+        "old": "let result = sqlx::query(\"DELETE FROM crm.customers WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE crm.customers SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "crm_customers"
+      }
+    ]
+  },
+  {
+    "file": "svc/crm/src/modules/interaction.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 447,
+        "old": "let result = sqlx::query(\"DELETE FROM crm.interactions WHERE id = ANY($1) AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE crm.interactions SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2\")",
+        "table": "crm_interactions"
+      },
+      {
+        "line": 376,
+        "old": "let result = sqlx::query(\"DELETE FROM crm.interactions WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE crm.interactions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "crm_interactions"
+      }
+    ]
+  },
+  {
+    "file": "svc/crm/src/modules/opportunity.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 506,
+        "old": "let result = sqlx::query(\"DELETE FROM crm.opportunities WHERE id = ANY($1) AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE crm.opportunities SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2\")",
+        "table": "crm_opportunities"
+      },
+      {
+        "line": 435,
+        "old": "let result = sqlx::query(\"DELETE FROM crm.opportunities WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE crm.opportunities SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "crm_opportunities"
+      }
+    ]
+  },
+  {
+    "file": "svc/crm/src/modules/tag.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 340,
+        "old": "let result = sqlx::query(\"DELETE FROM crm.tags WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE crm.tags SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "crm_tags"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/customer.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 231,
+        "old": "let result = sqlx::query(\"DELETE FROM customers WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE customers SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "customers"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/dict.rs",
+    "count": 3,
+    "details": [
+      {
+        "line": 781,
+        "old": "let result = sqlx::query(\"DELETE FROM erp.dict_items WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE erp.dict_items SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "erp_dict_items"
+      },
+      {
+        "line": 474,
+        "old": "let result = sqlx::query(\"DELETE FROM erp.dict_types WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE erp.dict_types SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "erp_dict_types"
+      },
+      {
+        "line": 466,
+        "old": "if let Err(e) = sqlx::query(\"DELETE FROM erp.dict_items WHERE dict_type_id = $1\")",
+        "new": "if let Err(e) = sqlx::query(\"UPDATE erp.dict_items SET deleted_at = NOW() WHERE dict_type_id = $1\")",
+        "table": "erp_dict_items"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/inventory.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 222,
+        "old": "let result = sqlx::query(\"DELETE FROM inventory WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE inventory SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "inventory"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/material.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 254,
+        "old": "let result = sqlx::query(\"DELETE FROM materials WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE materials SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "materials"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/purchase_order.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 244,
+        "old": "let result = sqlx::query(\"DELETE FROM purchase_orders WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE purchase_orders SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "purchase_orders"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/sales_order.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 226,
+        "old": "let result = sqlx::query(\"DELETE FROM sales_orders WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE sales_orders SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "sales_orders"
+      }
+    ]
+  },
+  {
+    "file": "svc/erp/src/modules/supplier.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 236,
+        "old": "let result = sqlx::query(\"DELETE FROM suppliers WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE suppliers SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "suppliers"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/services/finance/payable.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 201,
+        "old": "let result = sqlx::query(\"DELETE FROM erp_payables WHERE tenant_id = $1 AND id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE erp_payables SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2\")",
+        "table": "erp_payables"
+      }
+    ]
+  },
+  {
+    "file": "svc/finance/src/services/finance/receivable.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 201,
+        "old": "let result = sqlx::query(\"DELETE FROM erp_receivables WHERE tenant_id = $1 AND id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE erp_receivables SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2\")",
+        "table": "erp_receivables"
+      }
+    ]
+  },
+  {
+    "file": "svc/gis/src/modules/device.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 173,
+        "old": "match sqlx::query(\"DELETE FROM gis.devices WHERE id = $1\")",
+        "new": "match sqlx::query(\"UPDATE gis.devices SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "gis_devices"
+      }
+    ]
+  },
+  {
+    "file": "svc/gis/src/services/tenant_service.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 102,
+        "old": "let result = sqlx::query(\"DELETE FROM gis.factory_maps WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE gis.factory_maps SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "gis_factory_maps"
+      }
+    ]
+  },
+  {
+    "file": "svc/hrm/src/modules/company.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 401,
+        "old": "let result = sqlx::query(\"DELETE FROM hrm.companies WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE hrm.companies SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "hrm_companies"
+      }
+    ]
+  },
+  {
+    "file": "svc/hrm/src/modules/department.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 341,
+        "old": "let result = sqlx::query(\"DELETE FROM hrm.departments WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE hrm.departments SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "hrm_departments"
+      }
+    ]
+  },
+  {
+    "file": "svc/hrm/src/modules/position.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 306,
+        "old": "let result = sqlx::query(\"DELETE FROM hrm.positions WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE hrm.positions SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "hrm_positions"
+      }
+    ]
+  },
+  {
+    "file": "svc/hrm/src/services/employee_service.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 450,
+        "old": "let result = sqlx::query(\"DELETE FROM hrm.employees WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE hrm.employees SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "hrm_employees"
+      }
+    ]
+  },
+  {
+    "file": "svc/mobile/src/modules/task.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 386,
+        "old": "\"DELETE FROM mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL)\",",
+        "new": "\"UPDATE mobile_tasks SET deleted_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL)\",",
+        "table": "mobile_tasks"
+      }
+    ]
+  },
+  {
+    "file": "svc/rd/src/modules/project.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 744,
+        "old": "let result = sqlx::query(r#\"DELETE FROM projects WHERE id = ANY($1) AND tenant_id = $2\"#)",
+        "new": "let result = sqlx::query(r#\"UPDATE projects SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2\"#)",
+        "table": "projects"
+      },
+      {
+        "line": 525,
+        "old": "let result = sqlx::query(\"DELETE FROM projects WHERE id = $1 AND tenant_id = $2\")",
+        "new": "let result = sqlx::query(\"UPDATE projects SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2\")",
+        "table": "projects"
+      }
+    ]
+  },
+  {
+    "file": "svc/wms/src/modules/inventory_alert.rs",
+    "count": 1,
+    "details": [
+      {
+        "line": 1083,
+        "old": "let result = sqlx::query(\"DELETE FROM wms.inventory_alert_rules WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE wms.inventory_alert_rules SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "wms_inventory_alert_rules"
+      }
+    ]
+  },
+  {
+    "file": "svc/wms/src/modules/location.rs",
+    "count": 2,
+    "details": [
+      {
+        "line": 598,
+        "old": "let result = sqlx::query(\"DELETE FROM wms.locations WHERE id = ANY($1)\")",
+        "new": "let result = sqlx::query(\"UPDATE wms.locations SET deleted_at = NOW() WHERE id = ANY($1)\")",
+        "table": "wms_locations"
+      },
+      {
+        "line": 366,
+        "old": "let result = sqlx::query(\"DELETE FROM wms.locations WHERE id = $1\")",
+        "new": "let result = sqlx::query(\"UPDATE wms.locations SET deleted_at = NOW() WHERE id = $1\")",
+        "table": "wms_locations"
+      }
+    ]
+  }
+]

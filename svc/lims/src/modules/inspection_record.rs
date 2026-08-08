@@ -203,7 +203,7 @@ pub async fn delete_record(
         Err(_) => return Json(ApiResponse::error(400, "无效的记录ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lab_records WHERE id = $1")
+    let result = sqlx::query("UPDATE qa_lab_records SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;

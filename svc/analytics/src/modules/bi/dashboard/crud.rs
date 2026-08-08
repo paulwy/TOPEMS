@@ -220,7 +220,7 @@ pub async fn delete_dashboard(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM analytics_dashboards
+        UPDATE analytics_dashboards SET deleted_at = NOW()
         WHERE id = $1
         RETURNING id
         "#,

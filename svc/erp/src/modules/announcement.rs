@@ -78,7 +78,7 @@ pub async fn list_announcements(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM announcements
-                WHERE ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR priority = $3)
                 "#,
@@ -212,7 +212,7 @@ pub async fn update_announcement(
     Json(req): Json<UpdateAnnouncementRequest>,
 ) -> Json<ApiResponse<Announcement>> {
     let existing = sqlx::query_as::<_, Announcement>(
-        "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM announcements WHERE id = $1",
+        "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM announcements WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -301,7 +301,7 @@ pub async fn delete_announcement(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM announcements WHERE id = $1")
+    let result = sqlx::query("UPDATE announcements SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

@@ -77,7 +77,7 @@ pub async fn list_assets(
             let count_result = sqlx::query_scalar::<_, i64>(
                 "
                 SELECT COUNT(*) FROM assets
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR asset_number ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR asset_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 ",
             )
@@ -383,7 +383,7 @@ pub async fn delete_asset(
         return e;
     }
 
-    let result = sqlx::query("DELETE FROM assets WHERE id = $1")
+    let result = sqlx::query("UPDATE assets SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

@@ -149,7 +149,8 @@ async fn ensure_table(state: &ApiState) {
             rejected_reason TEXT,
             tenant_id       UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
             created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -235,7 +236,7 @@ pub async fn list_leave_requests(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM leave_requests
-                WHERE ($1::text IS NULL OR employee_name ILIKE $1 OR reason ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR employee_name ILIKE $1 OR reason ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR leave_type = $3)
                   AND ($4::uuid IS NULL OR employee_id = $4)
@@ -529,11 +530,13 @@ pub async fn delete_leave_request(
 
     let tenant = tenant_id_from_claims(&claims);
 
-    let result = sqlx::query("DELETE FROM leave_requests WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "UPDATE leave_requests SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

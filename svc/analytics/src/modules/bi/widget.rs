@@ -423,7 +423,7 @@ pub async fn delete_widget(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM analytics_widgets
+        UPDATE analytics_widgets SET deleted_at = NOW()
         WHERE id = $1
         RETURNING id
         "#,

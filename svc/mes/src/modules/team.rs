@@ -525,7 +525,7 @@ pub async fn delete_team(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM teams
+        UPDATE teams SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,

@@ -112,7 +112,7 @@ async fn list_leaves(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM leave_requests
-                WHERE ($1::uuid IS NULL OR employee_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )
@@ -225,7 +225,7 @@ async fn get_leave(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<LeaveRequest>> {
     let result = sqlx::query_as::<_, LeaveRequest>(
-        "SELECT id, employee_id, leave_type, start_date, end_date, days, reason, status, approver_id, approved_at, rejection_reason, created_at, updated_at FROM leave_requests WHERE id = $1"
+        "SELECT id, employee_id, leave_type, start_date, end_date, days, reason, status, approver_id, approved_at, rejection_reason, created_at, updated_at FROM leave_requests WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -290,10 +290,12 @@ async fn delete_leave(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM leave_requests WHERE id = $1 AND status = 'pending'")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "UPDATE leave_requests SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

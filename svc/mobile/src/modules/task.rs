@@ -383,7 +383,7 @@ pub async fn delete_task(
     };
 
     let result = sqlx::query(
-        "DELETE FROM mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL)",
+        "UPDATE mobile_tasks SET deleted_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL)",
     )
     .bind(id)
     .bind(&user_id)

@@ -82,7 +82,7 @@ pub async fn list_vehicles(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM vehicles
-                WHERE ($1::text IS NULL OR plate_number ILIKE $1 OR brand ILIKE $1 OR model ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR plate_number ILIKE $1 OR brand ILIKE $1 OR model ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR vehicle_type = $3)
                 "#,
@@ -214,7 +214,7 @@ pub async fn update_vehicle(
     Json(req): Json<UpdateVehicleRequest>,
 ) -> Json<ApiResponse<Vehicle>> {
     let existing = sqlx::query_as::<_, Vehicle>(
-        "SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at FROM vehicles WHERE id = $1",
+        "SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at FROM vehicles WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -309,7 +309,7 @@ pub async fn delete_vehicle(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM vehicles WHERE id = $1")
+    let result = sqlx::query("UPDATE vehicles SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -428,7 +428,7 @@ pub async fn create_vehicle_request(
     }
 
     let vehicle_result = sqlx::query_as::<_, Vehicle>(
-        "SELECT id, plate_number, status FROM vehicles WHERE id = $1 AND status = 'available'",
+        "SELECT id, plate_number, status FROM vehicles WHERE deleted_at IS NULL AND id = $1 AND status = 'available'",
     )
     .bind(req.vehicle_id)
     .fetch_optional(&state.db)
@@ -642,7 +642,7 @@ pub async fn delete_vehicle_request(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM vehicle_requests WHERE id = $1")
+    let result = sqlx::query("UPDATE vehicle_requests SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

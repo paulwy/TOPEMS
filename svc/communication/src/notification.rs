@@ -223,7 +223,7 @@ pub async fn list_notifications(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM core_notifications
-                WHERE user_id = $1
+                WHERE deleted_at IS NULL AND user_id = $1
                   AND ($2::boolean IS NULL OR is_read = $2)
                   AND ($3::text IS NULL OR notification_type = $3)
                 "#,
@@ -237,7 +237,7 @@ pub async fn list_notifications(
             let total = count_result.unwrap_or(0);
 
             let unread_result = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM core_notifications WHERE user_id = $1 AND is_read = FALSE",
+                "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE",
             )
             .bind(user_id)
             .fetch_one(&pool)
@@ -294,7 +294,7 @@ pub async fn mark_as_read(
 
     // 检查通知是否属于当前用户
     let belongs_to_user = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE id = $1 AND user_id = $2)",
+        "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)",
     )
     .bind(id)
     .bind(user_id)
@@ -431,7 +431,7 @@ pub async fn get_unread_count(
     };
 
     let result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM core_notifications WHERE user_id = $1 AND is_read = FALSE",
+        "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE",
     )
     .bind(user_id)
     .fetch_one(&pool)
@@ -558,7 +558,7 @@ pub async fn delete_notification(
     };
 
     let belongs_to_user = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE id = $1 AND user_id = $2)",
+        "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)",
     )
     .bind(id)
     .bind(user_id)
@@ -575,11 +575,13 @@ pub async fn delete_notification(
         }));
     }
 
-    let result = sqlx::query("DELETE FROM core_notifications WHERE id = $1 AND user_id = $2")
-        .bind(id)
-        .bind(user_id)
-        .execute(&pool)
-        .await;
+    let result = sqlx::query(
+        "UPDATE core_notifications SET deleted_at = NOW() WHERE id = $1 AND user_id = $2",
+    )
+    .bind(id)
+    .bind(user_id)
+    .execute(&pool)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
@@ -623,7 +625,7 @@ pub async fn delete_all_notifications(
         }
     };
 
-    let result = sqlx::query("DELETE FROM core_notifications WHERE user_id = $1")
+    let result = sqlx::query("UPDATE core_notifications SET deleted_at = NOW() WHERE user_id = $1")
         .bind(user_id)
         .execute(&pool)
         .await;
@@ -743,7 +745,7 @@ pub async fn mark_as_unread(
     };
 
     let belongs_to_user = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE id = $1 AND user_id = $2)",
+        "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)",
     )
     .bind(id)
     .bind(user_id)
@@ -895,11 +897,13 @@ pub async fn bulk_delete(
         }));
     }
 
-    let result = sqlx::query("DELETE FROM core_notifications WHERE user_id = $1 AND id = ANY($2)")
-        .bind(user_id)
-        .bind(&payload.notification_ids)
-        .execute(&pool)
-        .await;
+    let result = sqlx::query(
+        "UPDATE core_notifications SET deleted_at = NOW() WHERE user_id = $1 AND id = ANY($2)",
+    )
+    .bind(user_id)
+    .bind(&payload.notification_ids)
+    .execute(&pool)
+    .await;
 
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -968,7 +972,7 @@ pub async fn get_notification_stats(
                 .collect();
 
             let total_result = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM core_notifications WHERE user_id = $1",
+                "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1",
             )
             .bind(user_id)
             .fetch_one(&pool)
@@ -976,7 +980,7 @@ pub async fn get_notification_stats(
             .unwrap_or(0);
 
             let total_unread_result = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM core_notifications WHERE user_id = $1 AND is_read = FALSE",
+                "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE",
             )
             .bind(user_id)
             .fetch_one(&pool)
@@ -1030,7 +1034,7 @@ pub async fn archive_notification(
     };
 
     let belongs_to_user = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE id = $1 AND user_id = $2)",
+        "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)",
     )
     .bind(id)
     .bind(user_id)
@@ -1107,7 +1111,7 @@ pub async fn unarchive_notification(
     };
 
     let belongs_to_user = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE id = $1 AND user_id = $2)",
+        "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)",
     )
     .bind(id)
     .bind(user_id)
@@ -1229,7 +1233,7 @@ pub async fn list_archived_notifications(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM core_notifications
-                WHERE user_id = $1
+                WHERE deleted_at IS NULL AND user_id = $1
                   AND is_archived = TRUE
                   AND ($2::boolean IS NULL OR is_read = $2)
                   AND ($3::text IS NULL OR notification_type = $3)
@@ -1312,8 +1316,8 @@ pub async fn run_auto_archive(
     let count: i64 = sqlx::query_scalar(
         r#"
         UPDATE core_notifications
-        SET is_deleted = true
-        WHERE created_at < NOW() - INTERVAL '30 days' AND is_deleted = false
+        SET deleted_at = NOW()
+        WHERE created_at < NOW() - INTERVAL '30 days' AND deleted_at IS NULL
         RETURNING COUNT(*)
         "#,
     )
@@ -1341,9 +1345,9 @@ pub async fn list_templates(
 
     let result = sqlx::query(
         r#"
-        SELECT id, name, title_template, content_template, notification_type, description, is_deleted, created_by, created_at, updated_at
+        SELECT id, name, title_template, content_template, notification_type, description, created_by, created_at, updated_at
         FROM core_notification_templates
-        WHERE is_deleted = FALSE
+        WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         "#,
     )
@@ -1611,10 +1615,11 @@ pub async fn delete_template(
         }));
     }
 
-    let result = sqlx::query("DELETE FROM core_notification_templates WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE core_notification_templates SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&pool)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({

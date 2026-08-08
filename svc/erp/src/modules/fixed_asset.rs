@@ -141,7 +141,7 @@ pub async fn list_fixed_assets(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM fixed_assets
-                WHERE ($1::text IS NULL OR asset_code ILIKE $1 OR asset_name ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR asset_code ILIKE $1 OR asset_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR asset_type = $3)
                   AND ($4::uuid IS NULL OR department_id = $4)
@@ -448,7 +448,7 @@ pub async fn delete_fixed_asset(
         return e;
     }
 
-    let result = sqlx::query("DELETE FROM fixed_assets WHERE id = $1")
+    let result = sqlx::query("UPDATE fixed_assets SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -529,7 +529,7 @@ pub async fn depreciate_assets(
         Some(ref ids) => {
             let placeholders = ids.iter().map(|_| "$1").collect::<Vec<_>>().join(",");
             sqlx::query_as::<_, FixedAsset>(&format!(
-                "SELECT * FROM fixed_assets WHERE id IN ({}) AND status = 'active'",
+                "SELECT * FROM fixed_assets WHERE deleted_at IS NULL AND id IN ({}) AND status = 'active'",
                 placeholders
             ))
             .bind(ids)
@@ -537,9 +537,11 @@ pub async fn depreciate_assets(
             .await
         }
         None => {
-            sqlx::query_as::<_, FixedAsset>("SELECT * FROM fixed_assets WHERE status = 'active'")
-                .fetch_all(&state.db)
-                .await
+            sqlx::query_as::<_, FixedAsset>(
+                "SELECT * FROM fixed_assets WHERE deleted_at IS NULL AND status = 'active'",
+            )
+            .fetch_all(&state.db)
+            .await
         }
     };
 

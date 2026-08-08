@@ -48,7 +48,8 @@ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
             activated_at TIMESTAMP,
-            suspended_at TIMESTAMP
+            suspended_at TIMESTAMP,
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -121,7 +122,8 @@ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             setting_value TEXT,
             is_public BOOLEAN DEFAULT FALSE,
             updated_at TIMESTAMP DEFAULT NOW(),
-            UNIQUE(tenant_id, setting_key)
+            UNIQUE(tenant_id, setting_key),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -141,7 +143,8 @@ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             created_at TIMESTAMP DEFAULT NOW(),
             last_login TIMESTAMP,
             UNIQUE(tenant_id, user_id),
-            UNIQUE(tenant_id, email)
+            UNIQUE(tenant_id, email),
+                deleted_at TIMESTAMP
         )
         "#,
     )

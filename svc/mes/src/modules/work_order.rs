@@ -686,7 +686,7 @@ pub async fn delete_work_order(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM work_orders
+        UPDATE work_orders SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'cancelled')
         "#,
         uuid,

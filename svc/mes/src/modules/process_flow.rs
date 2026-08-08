@@ -553,7 +553,7 @@ pub async fn delete_process_flow(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM process_flows WHERE id = $1
+        UPDATE process_flows SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )
@@ -1066,7 +1066,7 @@ pub async fn analyze_capacity(
 
     let flow_result = sqlx::query!(
         r#"
-        SELECT id, name, capacity FROM process_flows WHERE id = $1
+        SELECT id, name, capacity FROM process_flows WHERE deleted_at IS NULL AND id = $1
         "#,
         flow_uuid,
     )

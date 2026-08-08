@@ -161,12 +161,13 @@ impl VectorService {
 
     /// 删除文档（级联删除向量）
     pub async fn delete_document(&self, id: Uuid, tenant_id: Uuid) -> Result<bool, sqlx::Error> {
-        let result =
-            sqlx::query("DELETE FROM plugin_ai.documents WHERE id = $1 AND tenant_id = $2")
-                .bind(id)
-                .bind(tenant_id)
-                .execute(self.db.pool())
-                .await?;
+        let result = sqlx::query(
+            "UPDATE plugin_ai.documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .execute(self.db.pool())
+        .await?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -283,13 +284,13 @@ impl VectorService {
             .await?;
 
         let vector_count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM plugin_ai.document_chunks WHERE embedding IS NOT NULL",
+            "SELECT COUNT(*) FROM plugin_ai.document_chunks WHERE deleted_at IS NULL AND embedding IS NOT NULL",
         )
         .fetch_one(self.db.pool())
         .await?;
 
         let dimension: Option<i64> = sqlx::query_scalar(
-            "SELECT vector_dimensions FROM plugin_ai.document_chunks WHERE embedding IS NOT NULL LIMIT 1",
+            "SELECT vector_dimensions FROM plugin_ai.document_chunks WHERE deleted_at IS NULL AND embedding IS NOT NULL LIMIT 1",
         )
         .fetch_optional(self.db.pool())
         .await?;
@@ -489,7 +490,7 @@ impl VectorService {
     /// 删除向量记录
     pub async fn delete_vector(&self, id: Uuid, tenant_id: Uuid) -> Result<bool, sqlx::Error> {
         let result =
-            sqlx::query("DELETE FROM plugin_ai.document_chunks WHERE id = $1 AND tenant_id = $2")
+            sqlx::query("UPDATE plugin_ai.document_chunks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
                 .bind(id)
                 .bind(tenant_id)
                 .execute(self.db.pool())

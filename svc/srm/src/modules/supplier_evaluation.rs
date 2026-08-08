@@ -143,7 +143,7 @@ async fn list_evaluations(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_srm.supplier_evaluations
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR evaluation_no ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR supplier_id = $4)
@@ -228,7 +228,7 @@ async fn create_evaluation(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1 AND evaluation_no = $2",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND evaluation_no = $2",
     )
     .bind(tenant_id)
     .bind(&req.evaluation_no)
@@ -424,7 +424,7 @@ async fn update_evaluation(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
-        "SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM plugin_srm.supplier_evaluations WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM plugin_srm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -564,7 +564,7 @@ async fn delete_evaluation(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result =
-        sqlx::query("DELETE FROM plugin_srm.supplier_evaluations WHERE id = $1 AND tenant_id = $2")
+        sqlx::query("UPDATE plugin_srm.supplier_evaluations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(tenant_id)
             .execute(&state.db)
@@ -851,35 +851,35 @@ async fn get_evaluation_statistics(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let total_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1",
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     let completed_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1 AND status = 'completed'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'completed'",
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     let pending_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1 AND status = 'pending'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'pending'",
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     let avg_score_result = sqlx::query_scalar::<_, f64>(
-        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1 AND status = 'completed' AND overall_score IS NOT NULL"
+        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'completed' AND overall_score IS NOT NULL"
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     let supplier_count_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(DISTINCT supplier_id) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1",
+        "SELECT COUNT(DISTINCT supplier_id) FROM plugin_srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1",
     )
     .bind(tenant_id)
     .fetch_one(&state.db)

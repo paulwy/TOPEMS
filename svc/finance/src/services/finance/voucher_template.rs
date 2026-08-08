@@ -96,7 +96,9 @@ impl FinanceService {
         voucher_type: Option<String>,
         status: Option<String>,
     ) -> Result<Vec<VoucherTemplateResponse>, TopemsError> {
-        let mut query = "SELECT * FROM finance_voucher_templates WHERE tenant_id = $1".to_string();
+        let mut query =
+            "SELECT * FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1"
+                .to_string();
         let _params: Vec<&(dyn sqlx::Encode<'_, sqlx::Postgres> + Send + Sync)> = Vec::new();
 
         if voucher_type.is_some() {
@@ -145,7 +147,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
         let template: VoucherTemplate = sqlx::query_as(
-            "SELECT * FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
+            "SELECT * FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -263,7 +265,7 @@ impl FinanceService {
         req: UpdateVoucherTemplateRequest,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
         let existing: VoucherTemplate = sqlx::query_as(
-            "SELECT * FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
+            "SELECT * FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -357,7 +359,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<(), TopemsError> {
         let existing = sqlx::query_as::<_, VoucherTemplate>(
-            "SELECT * FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
+            "SELECT * FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -373,7 +375,7 @@ impl FinanceService {
             .execute(&self.db_pool)
             .await?;
 
-        sqlx::query("DELETE FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2")
+        sqlx::query("UPDATE finance_voucher_templates SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2")
             .bind(tenant_id)
             .bind(template_id)
             .execute(&self.db_pool)
@@ -388,7 +390,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
         let template: VoucherTemplate = sqlx::query_as(
-            "SELECT * FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
+            "SELECT * FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(template_id)

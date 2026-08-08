@@ -661,7 +661,7 @@ pub async fn delete_production_schedule(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM production_schedules
+        UPDATE production_schedules SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'cancelled')
         "#,
         id,

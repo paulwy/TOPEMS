@@ -14,7 +14,7 @@ impl FolderService {
 
     pub async fn list_folders(&self, tenant_id: Uuid) -> Result<Vec<Folder>> {
         sqlx::query_as::<_, Folder>(
-            r#"SELECT * FROM core_doc_folders WHERE tenant_id = $1 ORDER BY name"#,
+            r#"SELECT * FROM core_doc_folders WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY name"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -23,7 +23,7 @@ impl FolderService {
 
     pub async fn get_folder(&self, tenant_id: Uuid, folder_id: Uuid) -> Result<Option<Folder>> {
         sqlx::query_as::<_, Folder>(
-            r#"SELECT * FROM core_doc_folders WHERE tenant_id = $1 AND id = $2"#,
+            r#"SELECT * FROM core_doc_folders WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(folder_id)
@@ -86,12 +86,13 @@ impl FolderService {
     }
 
     pub async fn delete_folder(&self, tenant_id: Uuid, folder_id: Uuid) -> Result<bool> {
-        let result =
-            sqlx::query(r#"DELETE FROM core_doc_folders WHERE tenant_id = $1 AND id = $2"#)
-                .bind(tenant_id)
-                .bind(folder_id)
-                .execute(&self.pool)
-                .await?;
+        let result = sqlx::query(
+            r#"UPDATE core_doc_folders SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"#,
+        )
+        .bind(tenant_id)
+        .bind(folder_id)
+        .execute(&self.pool)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 }
@@ -109,7 +110,8 @@ pub async fn init_database(pool: &PgPool) -> Result<()> {
             is_enabled BOOLEAN DEFAULT true,
             created_by VARCHAR(100),
             created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

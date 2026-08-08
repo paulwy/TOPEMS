@@ -70,7 +70,7 @@ async fn list_plans(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_hrm.training_plans
-                WHERE ($1::text IS NULL OR status = $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR status = $1)
                 "#,
             )
             .bind(&status_filter)
@@ -241,10 +241,11 @@ async fn delete_plan(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM plugin_hrm.training_plans WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE plugin_hrm.training_plans SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -459,10 +460,11 @@ async fn delete_course(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM plugin_hrm.training_courses WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE plugin_hrm.training_courses SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -703,10 +705,11 @@ async fn delete_record(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM plugin_hrm.training_records WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE plugin_hrm.training_records SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

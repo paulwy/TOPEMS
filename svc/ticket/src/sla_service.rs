@@ -197,7 +197,7 @@ impl TicketSlaService {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT * FROM core_ticket_sla_policies
-            WHERE tenant_id = $1
+            WHERE deleted_at IS NULL AND tenant_id = $1
               AND is_active = true
               AND (ticket_type IS NULL OR ticket_type = $2)
               AND (severity IS NULL OR severity = $3)
@@ -422,7 +422,7 @@ impl TicketSlaService {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT * FROM core_ticket_sla_policies
-            WHERE id = $1 AND tenant_id = $2
+            WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
             "#,
         )
         .bind(policy_id)
@@ -440,7 +440,7 @@ impl TicketSlaService {
         let policies = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT * FROM core_ticket_sla_policies
-            WHERE tenant_id = $1
+            WHERE deleted_at IS NULL AND tenant_id = $1
             ORDER BY is_default DESC, created_at DESC
             "#,
         )
@@ -521,7 +521,7 @@ impl TicketSlaService {
     ) -> Result<bool, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            DELETE FROM core_ticket_sla_policies
+            UPDATE core_ticket_sla_policies SET deleted_at = NOW()
             WHERE id = $1 AND tenant_id = $2 AND is_default = false
             "#,
         )

@@ -242,7 +242,7 @@ pub async fn get_standard(
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let standard = sqlx::query_as::<_, QualityStandard>(r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let standard = sqlx::query_as::<_, QualityStandard>(r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -268,7 +268,7 @@ pub async fn update_standard(
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let current = sqlx::query_as::<_, QualityStandard>(r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let current = sqlx::query_as::<_, QualityStandard>(r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -305,11 +305,13 @@ pub async fn delete_standard(
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query(r#"DELETE FROM qa_standards WHERE id = $1 AND tenant_id = $2"#)
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE qa_standards SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "质量标准删除成功")),
@@ -358,7 +360,7 @@ pub async fn create_revision(
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let current = sqlx::query_as::<_, QualityStandard>(r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let current = sqlx::query_as::<_, QualityStandard>(r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 

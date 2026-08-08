@@ -350,7 +350,8 @@ pub async fn init_reports_v57_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             data JSONB,
             generated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
             status VARCHAR(20) NOT NULL DEFAULT 'pending',
-            format VARCHAR(20) NOT NULL DEFAULT 'json'
+            format VARCHAR(20) NOT NULL DEFAULT 'json',
+                deleted_at TIMESTAMP
         )",
         "CREATE INDEX IF NOT EXISTS idx_v57_gen_reports_tenant ON finance_v57_generated_reports(tenant_id)",
         "CREATE INDEX IF NOT EXISTS idx_v57_gen_reports_template ON finance_v57_generated_reports(template_id)",
@@ -515,7 +516,7 @@ impl AutomatedReportEngine {
         status: Option<String>,
     ) -> Result<Vec<GeneratedReport>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance_v57_generated_reports WHERE tenant_id = $1",
+            "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance_v57_generated_reports WHERE deleted_at IS NULL AND tenant_id = $1",
         );
         if status.is_some() {
             query.push_str(" AND status = $2");
@@ -536,7 +537,7 @@ impl AutomatedReportEngine {
         report_id: Uuid,
     ) -> Result<GeneratedReport, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance_v57_generated_reports WHERE id = $1 AND tenant_id = $2",
+            "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance_v57_generated_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
         )
         .bind(report_id)
         .bind(tenant_id)
@@ -557,7 +558,7 @@ impl AutomatedReportEngine {
         tenant_id: Uuid,
         report_id: Uuid,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM finance_v57_generated_reports WHERE id = $1 AND tenant_id = $2")
+        sqlx::query("UPDATE finance_v57_generated_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(report_id)
             .bind(tenant_id)
             .execute(pool)

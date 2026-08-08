@@ -797,7 +797,7 @@ pub async fn list_alert_rules(
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM wms.inventory_alert_rules
-                WHERE ($1::text IS NULL OR rule_name ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR rule_name ILIKE $1)
                   AND ($2::text IS NULL OR alert_type = $2)
                 "#,
             )
@@ -942,10 +942,11 @@ pub async fn get_alert_rule(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("SELECT * FROM wms.inventory_alert_rules WHERE id = $1")
-        .bind(id)
-        .fetch_optional(&state.db)
-        .await;
+    let result =
+        sqlx::query("SELECT * FROM wms.inventory_alert_rules WHERE deleted_at IS NULL AND id = $1")
+            .bind(id)
+            .fetch_optional(&state.db)
+            .await;
 
     match result {
         Ok(Some(row)) => {
@@ -1080,10 +1081,11 @@ pub async fn delete_alert_rule(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM wms.inventory_alert_rules WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE wms.inventory_alert_rules SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

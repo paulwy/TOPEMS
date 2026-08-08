@@ -17,7 +17,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             received_at TIMESTAMP DEFAULT NOW(),
             expired_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -42,7 +43,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             conclusion VARCHAR(500),
             recorded_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -59,7 +61,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             conclusion VARCHAR(256) NOT NULL,
             recorded_by VARCHAR(64) NOT NULL,
             recorded_at TIMESTAMP DEFAULT NOW(),
-            created_at TIMESTAMP DEFAULT NOW()
+            created_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -79,7 +82,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             last_calibration_at TIMESTAMP,
             next_calibration_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -100,7 +104,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'normal',
             expired_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -117,7 +122,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             steps JSONB,
             status VARCHAR(32) DEFAULT 'active',
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -333,7 +339,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             generated_at TIMESTAMP,
             last_printed_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -371,7 +378,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             assigned_at TIMESTAMP,
             last_read_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -389,7 +397,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             description TEXT,
             status VARCHAR(32) DEFAULT 'active',
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -419,7 +428,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             validated_by VARCHAR(64),
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -486,7 +496,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             contact_phone VARCHAR(32),
             notes TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -616,7 +627,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             confidence_level DECIMAL(10,4) DEFAULT 95.0,
             notes TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -635,7 +647,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             sensitivity_coefficient DECIMAL(18,6),
             sort_order INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -658,7 +671,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             parameters JSONB,
             description TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -773,7 +787,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             parsed_at TIMESTAMP,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -800,7 +815,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             failed_count BIGINT DEFAULT 0,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -822,7 +838,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             description TEXT,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )

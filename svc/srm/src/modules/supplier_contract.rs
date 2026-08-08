@@ -119,7 +119,7 @@ async fn list_contracts(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_srm.supplier_contracts
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR title ILIKE $2 OR contract_no ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR supplier_id = $4)
@@ -202,7 +202,7 @@ async fn create_contract(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE tenant_id = $1 AND contract_no = $2",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE deleted_at IS NULL AND tenant_id = $1 AND contract_no = $2",
     )
     .bind(tenant_id)
     .bind(&req.contract_no)
@@ -350,7 +350,7 @@ async fn update_contract(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, SupplierContract>(
-        "SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM plugin_srm.supplier_contracts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM plugin_srm.supplier_contracts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -488,7 +488,7 @@ async fn delete_contract(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result =
-        sqlx::query("DELETE FROM plugin_srm.supplier_contracts WHERE id = $1 AND tenant_id = $2")
+        sqlx::query("UPDATE plugin_srm.supplier_contracts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(tenant_id)
             .execute(&state.db)
@@ -522,7 +522,7 @@ async fn get_contract_terms(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let contract_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE id = $1 AND tenant_id = $2",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)

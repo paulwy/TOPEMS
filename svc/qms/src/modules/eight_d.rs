@@ -274,7 +274,7 @@ pub async fn get_eightd_report(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(r#"SELECT id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_eightd_reports WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(r#"SELECT id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -329,11 +329,13 @@ pub async fn delete_eightd_report(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_eightd_reports WHERE id = $1 AND tenant_id = $2"#)
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE qa_eightd_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "8D报告删除成功")),

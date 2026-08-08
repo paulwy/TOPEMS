@@ -84,10 +84,10 @@ pub async fn list_instruments(
     let tenant_id = ctx.tenant_id;
 
     let sql = match (query.status.as_ref(), query.name.as_ref()) {
-        (Some(_), Some(_)) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE tenant_id = $1 AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_)) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE tenant_id = $1 AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_)) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_)) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE deleted_at IS NULL AND tenant_id = $1 AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
     let mut query_builder = sqlx::query(sql).bind(tenant_id);
@@ -201,7 +201,7 @@ pub async fn get_instrument(
     let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE id = $1 AND tenant_id = $2"
+        "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
     )
     .bind(id)
     .bind(tenant_id)
@@ -341,11 +341,13 @@ pub async fn delete_instrument(
     };
     let tenant_id = ctx.tenant_id;
 
-    let result = sqlx::query("DELETE FROM qa_lab_instruments WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        "UPDATE qa_lab_instruments SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "仪器删除成功")),
@@ -470,11 +472,12 @@ pub async fn create_calibration_record(
     };
 
     // Get instrument info
-    let instrument_row =
-        sqlx::query("SELECT instrument_no, name FROM qa_lab_instruments WHERE id = $1")
-            .bind(instrument_id)
-            .fetch_optional(&state.pool)
-            .await;
+    let instrument_row = sqlx::query(
+        "SELECT instrument_no, name FROM qa_lab_instruments WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(instrument_id)
+    .fetch_optional(&state.pool)
+    .await;
 
     let (instrument_no, instrument_name) = match instrument_row {
         Ok(Some(row)) => (

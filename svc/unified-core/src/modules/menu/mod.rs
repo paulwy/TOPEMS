@@ -19,7 +19,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            UNIQUE(tenant_id, code)
+            UNIQUE(tenant_id, code),
+                deleted_at TIMESTAMP
         );
         "#,
     )
@@ -42,7 +43,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             permissions JSONB,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            UNIQUE(tenant_id, code)
+            UNIQUE(tenant_id, code),
+                deleted_at TIMESTAMP
         );
         "#,
     )

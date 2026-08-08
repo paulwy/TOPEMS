@@ -116,7 +116,7 @@ pub async fn list_appointments(
             let count_query = format!(
                 r#"
                 SELECT COUNT(*) FROM scm.supplier_delivery_appointments
-                WHERE ($1::text IS NULL OR appointment_no ILIKE $1 OR supplier_name ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR appointment_no ILIKE $1 OR supplier_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR supplier_id = $3)
                   AND ($4::date IS NULL OR delivery_date >= $4)
@@ -280,7 +280,7 @@ pub async fn get_appointment(
     }
 
     let query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let result = sqlx::query_as::<_, SupplierDeliveryAppointment>(&query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -316,7 +316,7 @@ pub async fn update_appointment(
     let request_data = serde_json::to_value(&req).ok();
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -445,10 +445,12 @@ pub async fn delete_appointment(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM scm.supplier_delivery_appointments WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "UPDATE scm.supplier_delivery_appointments SET deleted_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -524,7 +526,7 @@ async fn approve_appointment(
     }
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -633,7 +635,7 @@ async fn reject_appointment(
     }
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -745,7 +747,7 @@ async fn confirm_arrival(
     }
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -853,7 +855,7 @@ async fn complete_appointment(
     }
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -958,7 +960,7 @@ async fn cancel_appointment(
     }
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -1079,7 +1081,7 @@ async fn appointment_stats(
     let upcoming = sqlx::query_scalar::<_, i64>(
         r#"
         SELECT COUNT(*)::bigint FROM scm.supplier_delivery_appointments
-        WHERE delivery_date >= $1 AND status IN ('pending', 'approved')
+        WHERE deleted_at IS NULL AND delivery_date >= $1 AND status IN ('pending', 'approved')
         "#,
     )
     .bind(today)
@@ -1090,7 +1092,7 @@ async fn appointment_stats(
     let overdue = sqlx::query_scalar::<_, i64>(
         r#"
         SELECT COUNT(*)::bigint FROM scm.supplier_delivery_appointments
-        WHERE delivery_date < $1 AND status IN ('pending', 'approved')
+        WHERE deleted_at IS NULL AND delivery_date < $1 AND status IN ('pending', 'approved')
         "#,
     )
     .bind(today)

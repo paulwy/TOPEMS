@@ -76,7 +76,7 @@ pub async fn list_rules(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM wms.replenishment_rules
-                WHERE ($1::text IS NULL OR rule_name ILIKE $1 OR material_code ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR rule_name ILIKE $1 OR material_code ILIKE $1)
                 "#,
             )
             .bind(&search_pattern)
@@ -243,10 +243,11 @@ pub async fn update_rule(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
-    let existing = sqlx::query("SELECT id FROM wms.replenishment_rules WHERE id = $1")
-        .bind(id)
-        .fetch_optional(&state.db)
-        .await;
+    let existing =
+        sqlx::query("SELECT id FROM wms.replenishment_rules WHERE deleted_at IS NULL AND id = $1")
+            .bind(id)
+            .fetch_optional(&state.db)
+            .await;
 
     let _ = match existing {
         Ok(Some(_)) => (),
@@ -345,7 +346,7 @@ pub async fn delete_rule(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query("DELETE FROM wms.replenishment_rules WHERE id = $1")
+    let result = sqlx::query("UPDATE wms.replenishment_rules SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

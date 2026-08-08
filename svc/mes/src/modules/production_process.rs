@@ -424,7 +424,7 @@ pub async fn delete_process(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM production_processes
+        UPDATE production_processes SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,

@@ -73,7 +73,7 @@ pub async fn list_rooms(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM meeting_rooms
-                WHERE ($1::text IS NULL OR name ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )
@@ -200,7 +200,7 @@ pub async fn update_room(
     Json(req): Json<UpdateMeetingRoomRequest>,
 ) -> Json<ApiResponse<MeetingRoom>> {
     let existing = sqlx::query_as::<_, MeetingRoom>(
-        "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM meeting_rooms WHERE id = $1",
+        "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -287,7 +287,7 @@ pub async fn delete_room(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM meeting_rooms WHERE id = $1")
+    let result = sqlx::query("UPDATE meeting_rooms SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -373,7 +373,7 @@ pub async fn list_bookings(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM meeting_bookings
-                WHERE ($1::text IS NULL OR title ILIKE $1 OR room_name ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR title ILIKE $1 OR room_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )
@@ -406,7 +406,7 @@ pub async fn create_booking(
     }
 
     let room_result = sqlx::query_as::<_, MeetingRoom>(
-        "SELECT id, name FROM meeting_rooms WHERE id = $1 AND status = 'available'",
+        "SELECT id, name FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1 AND status = 'available'",
     )
     .bind(req.room_id)
     .fetch_optional(&state.db)
@@ -421,7 +421,7 @@ pub async fn create_booking(
     let overlapping = sqlx::query_scalar::<_, i64>(
         r#"
         SELECT COUNT(*) FROM meeting_bookings
-        WHERE room_id = $1 AND status = 'confirmed'
+        WHERE deleted_at IS NULL AND room_id = $1 AND status = 'confirmed'
           AND ((start_time < $2 AND end_time > $2) OR (start_time < $3 AND end_time > $3))
         "#,
     )
@@ -534,7 +534,7 @@ pub async fn update_booking(
     Json(req): Json<UpdateMeetingBookingRequest>,
 ) -> Json<ApiResponse<MeetingBooking>> {
     let existing = sqlx::query_as::<_, MeetingBooking>(
-        "SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at FROM meeting_bookings WHERE id = $1",
+        "SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at FROM meeting_bookings WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -621,7 +621,7 @@ pub async fn delete_booking(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM meeting_bookings WHERE id = $1")
+    let result = sqlx::query("UPDATE meeting_bookings SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

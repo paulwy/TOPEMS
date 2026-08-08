@@ -114,10 +114,12 @@ pub async fn get_device(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Device>> {
-    match sqlx::query_as::<_, Device>("SELECT * FROM gis.devices WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await
+    match sqlx::query_as::<_, Device>(
+        "SELECT * FROM gis.devices WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(device) => Json(ApiResponse::success(device, "获取设备成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "设备未找到")),
@@ -170,7 +172,7 @@ pub async fn delete_device(
         return e;
     }
 
-    match sqlx::query("DELETE FROM gis.devices WHERE id = $1")
+    match sqlx::query("UPDATE gis.devices SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await
@@ -198,7 +200,7 @@ pub async fn update_device_location(
         return e;
     }
 
-    match sqlx::query_as::<_, Device>("SELECT * FROM gis.devices WHERE id = $1")
+    match sqlx::query_as::<_, Device>("SELECT * FROM gis.devices WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -401,7 +403,7 @@ pub async fn report_device_location(
     Json(payload): Json<UpdateDeviceLocation>,
 ) -> Json<ApiResponse<DeviceLocationRecord>> {
     match sqlx::query_as::<_, Device>(
-        "SELECT * FROM gis.devices WHERE device_code = $1",
+        "SELECT * FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1",
     )
     .bind(&device_code)
     .fetch_one(&pool)

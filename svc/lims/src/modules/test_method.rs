@@ -620,7 +620,7 @@ pub async fn delete_method(
         Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lims_test_methods WHERE id = $1")
+    let result = sqlx::query("UPDATE qa_lims_test_methods SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -644,8 +644,8 @@ pub async fn list_categories(
     axum::extract::Query(query): axum::extract::Query<MethodCategoryQuery>,
 ) -> Json<ApiResponse<Vec<MethodCategory>>> {
     let sql = match query.parent_id.as_ref() {
-        Some(_) => "SELECT id, category_code, category_name, parent_id, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE parent_id = $1 ORDER BY sort_order ASC, created_at DESC",
-        None => "SELECT id, category_code, category_name, parent_id, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE parent_id IS NULL ORDER BY sort_order ASC, created_at DESC",
+        Some(_) => "SELECT id, category_code, category_name, parent_id, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND parent_id = $1 ORDER BY sort_order ASC, created_at DESC",
+        None => "SELECT id, category_code, category_name, parent_id, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND parent_id IS NULL ORDER BY sort_order ASC, created_at DESC",
     };
 
     let mut query_builder = sqlx::query(sql);
@@ -788,10 +788,11 @@ pub async fn delete_category(
         Err(_) => return Json(ApiResponse::error(400, "无效的分类ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_lims_method_categories WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE qa_lims_method_categories SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "方法分类删除成功")),
@@ -858,7 +859,7 @@ pub async fn create_validation(
     };
 
     let method_row = sqlx::query(
-        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE id = $1",
+        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(method_id)
     .fetch_optional(&state.pool)
@@ -999,7 +1000,7 @@ pub async fn create_new_version(
     };
 
     let method_row = sqlx::query(
-        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE id = $1",
+        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.pool)

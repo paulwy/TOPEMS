@@ -105,16 +105,16 @@ pub async fn list_issues(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let issues = match (query.status.as_ref(), query.severity.as_ref()) {
-        (Some(st), Some(sv)) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE tenant_id = $1 AND status = $2 AND severity = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#).bind(tenant_id).bind(st).bind(sv).bind(page_size).bind(offset)
+        (Some(st), Some(sv)) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 AND severity = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#).bind(tenant_id).bind(st).bind(sv).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(st), None) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(st).bind(page_size).bind(offset)
+        (Some(st), None) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(sv)) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE tenant_id = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(sv).bind(page_size).bind(offset)
+        (None, Some(sv)) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE deleted_at IS NULL AND tenant_id = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(sv).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(tenant_id).bind(page_size).bind(offset)
+        (None, None) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(tenant_id).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -221,7 +221,7 @@ pub async fn get_issue(
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let issue = sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let issue = sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -298,11 +298,13 @@ pub async fn delete_issue(
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query(r#"DELETE FROM qa_quality_issues WHERE id = $1 AND tenant_id = $2"#)
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE qa_quality_issues SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "质量问题删除成功")),
@@ -366,7 +368,7 @@ pub async fn start_issue_approval(
         }
     });
 
-    let issue = sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE id = $1 AND tenant_id = $2"#)
+    let issue = sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)
         .bind(issue_id)
         .bind(tenant_id)
         .fetch_one(&state.pool)

@@ -157,7 +157,7 @@ async fn list_opportunities(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.opportunities
-                WHERE tenant_id = $1
+                WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR name ILIKE $2)
                   AND ($3::text IS NULL OR stage = $3)
                   AND ($4::uuid IS NULL OR customer_id = $4)
@@ -326,7 +326,7 @@ async fn update_opportunity(
 
     let existing = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at FROM crm.opportunities WHERE id = $1 AND tenant_id = $2
+        SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -432,11 +432,13 @@ async fn delete_opportunity(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query("DELETE FROM crm.opportunities WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "UPDATE crm.opportunities SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -503,11 +505,13 @@ async fn batch_delete_opportunities(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query("DELETE FROM crm.opportunities WHERE id = ANY($1) AND tenant_id = $2")
-        .bind(&req.ids)
-        .bind(tenant_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "UPDATE crm.opportunities SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2",
+    )
+    .bind(&req.ids)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) => (
@@ -580,7 +584,7 @@ async fn get_sales_funnel(
 
     for (stage, stage_label) in stages {
         let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = $1 AND stage = $2",
+            "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = $2",
         )
         .bind(tenant_id)
         .bind(stage)
@@ -589,7 +593,7 @@ async fn get_sales_funnel(
         .unwrap_or(0);
 
         let total_value: Option<f64> = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE tenant_id = $1 AND stage = $2 AND value IS NOT NULL"
+            "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = $2 AND value IS NOT NULL"
         )
         .bind(tenant_id)
         .bind(stage)
@@ -598,7 +602,7 @@ async fn get_sales_funnel(
         .unwrap_or(Some(0.0));
 
         let avg_probability: Option<f64> = sqlx::query_scalar(
-            "SELECT COALESCE(AVG(probability), 0) FROM crm.opportunities WHERE tenant_id = $1 AND stage = $2 AND probability IS NOT NULL"
+            "SELECT COALESCE(AVG(probability), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = $2 AND probability IS NOT NULL"
         )
         .bind(tenant_id)
         .bind(stage)
@@ -630,15 +634,16 @@ async fn get_opportunity_stats(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let total_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = $1")
-            .bind(tenant_id)
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let total_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let total_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE tenant_id = $1 AND value IS NOT NULL",
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND value IS NOT NULL",
     )
     .bind(tenant_id)
     .fetch_optional(&state.db)
@@ -646,7 +651,7 @@ async fn get_opportunity_stats(
     .unwrap_or(Some(0.0));
 
     let weighted_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value * probability / 100), 0) FROM crm.opportunities WHERE tenant_id = $1 AND value IS NOT NULL AND probability IS NOT NULL"
+        "SELECT COALESCE(SUM(value * probability / 100), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND value IS NOT NULL AND probability IS NOT NULL"
     )
     .bind(tenant_id)
     .fetch_optional(&state.db)
@@ -654,7 +659,7 @@ async fn get_opportunity_stats(
     .unwrap_or(Some(0.0));
 
     let won_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = $1 AND stage = 'closed_won'",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_won'",
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
@@ -662,7 +667,7 @@ async fn get_opportunity_stats(
     .unwrap_or(0);
 
     let won_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE tenant_id = $1 AND stage = 'closed_won' AND value IS NOT NULL"
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_won' AND value IS NOT NULL"
     )
     .bind(tenant_id)
     .fetch_optional(&state.db)
@@ -670,7 +675,7 @@ async fn get_opportunity_stats(
     .unwrap_or(Some(0.0));
 
     let lost_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = $1 AND stage = 'closed_lost'",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_lost'",
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
@@ -678,7 +683,7 @@ async fn get_opportunity_stats(
     .unwrap_or(0);
 
     let lost_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE tenant_id = $1 AND stage = 'closed_lost' AND value IS NOT NULL"
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_lost' AND value IS NOT NULL"
     )
     .bind(tenant_id)
     .fetch_optional(&state.db)

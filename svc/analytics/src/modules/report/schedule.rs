@@ -320,7 +320,7 @@ pub async fn delete_schedule(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM report_schedules
+        UPDATE report_schedules SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,
