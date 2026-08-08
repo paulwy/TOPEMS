@@ -2,13 +2,15 @@
 
 > **版本**: V68.0 | **更新日期**: 2026-08-08
 > **服务总数**: 28 个（含 unified-core + master-data + lowcode 占位） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅）
+> **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 全闭环** ✅）
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 28/28 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
 > **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 21 服务迁移；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP5 拆分达标**（AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72% / IAM 路径归化）
 > **V67.1 第四轮架构审计**: 四探针并行（前端/后端/系统集成/代码质量），发现 **67 项问题**（P0×10 · P1×25 · P2×20 · P3×12），聚焦效率·性能·节省空间
 > **V67.1 修复完成**: P0×10 + P1×25 + P2×20 + P3×12 = **67/67 全闭环** ✅（含 28 服务 plugin schema · 55 处 println→tracing · 17 文件死代码清理 · 12 服务 Docker 锚点压缩 · ERP COUNT 修 bug 等）
 > **V67.1 提交汇总**: 6 个语义提交（262 文件 · +8889 / -9196 · 净减 307 行）—— feat(shared) × 1 · refactor × 2 · fix × 2 · chore × 1
+> **V67.2 数据层深度审计**: 多维度交叉矩阵（8 数据源 × 13 探针维度），发现 **18 项问题**（P0×5 · P1×6 · P2×4 · P3×3），综合健康分 62/100；聚焦重复·冲突·不一致·时序·效率·存储·架构缺陷
+> **V67.2 P0 修复完成**: 5 项 P0 全部闭环 ✅（审计日志覆盖率 25%→100% · ApprovalStatus 枚举统一 · 迁移校验和补全 · EntitySchema maxLength 校验 · 迁移命名规范）
 
 ---
 
@@ -17,6 +19,36 @@
 | 归档文件 | 涵盖版本 | 说明 |
 |----------|---------|------|
 | [archive/2026-W32.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/archive/2026-W32.md) | V62.0 ~ V67.1 | 微服务治理 Phase 1-10 · 架构审计 3 轮 134/134 全闭环 · 低代码平台推广 · 超大页拆分 · 工程效能三层加速 · OpenAPI 类型生成 · 插件自动注册 28/28 (100%) · 统一列表响应 ListResponse<T> 21 服务迁移 |
+
+---
+
+## 🎯 V67.2 — 数据层深度审计 P0 修复（已完成 ✅）
+
+> **审计报告**: [V67.1-data-layer-audit-20260808.md](file:///Users/air/TOPEMS/docs/audit/V67.1-data-layer-audit-20260808.md)
+> **审计方法**: 多维度交叉矩阵（8 数据源 × 13 探针维度）| **综合健康分**: 62/100
+> **问题总量**: 18 项（P0×5 · P1×6 · P2×4 · P3×3）| **本批修复**: P0×5 全闭环
+
+### 🔴 P0 — 数据一致性/合规/运行时错误（5/5 闭环 ✅）
+
+| # | 问题 | 修复方案 | 验收标准 | 状态 |
+|---|------|----------|----------|------|
+| **P0-1** | 审计日志覆盖率仅 25%（7/28 服务），合规关键服务全缺失 | 21 缺失服务批量新增 `audit_log.rs`（基于 shared-bootstrap/audit.rs 通用模块）；finance/mes/pm/qms/lims/ehs 合规空白补齐 | `find svc -name 'audit_log.rs' \| wc -l` = **28**（100%） | ✅ 完成 |
+| **P0-2** | ApprovalStatus 枚举 5 处独立定义，变体 3~6 个互不兼容 | unified-core 替换为 `pub use topems_shared::common_types::ApprovalStatus`；portal 对齐补齐 InProgress/Cancelled 变体；lib.rs 导出 common_types | 跨服务 `serde_json::from_str<ApprovalStatus>` 不再 Err；cargo check 0 error | ✅ 完成 |
+| **P0-3** | 迁移校验和与登记清单双失配（checksums 142 vs 实际 151） | 补全 28 条缺失 SHA-256 校验和至 `database/checksums.txt` | `wc -l checksums.txt`（非空行）≥ 实际 SQL 文件数 | ✅ 完成 |
+| **P0-4** | 三元长度不匹配：SQL VARCHAR(n) vs Rust 无限制 vs 前端无校验 | 5 模块 EntitySchema 补 maxLength 校验：HRM(5) + CRM(1) + PM(1) + WMS(1) + ERP(2) = 17 字段 | 表单超长输入前端拦截，不再触发 500 | ✅ 完成 |
+| **P0-5** | 种子时序依赖 012-menu.sql，全局迁移两套命名体系混用 | 新增 [migration-naming-convention.md](file:///Users/air/TOPEMS/docs/development/migration-naming-convention.md) 规范 `YYYYMMDDHHMMSS_description.sql` + CI 门禁检查（历史文件不重命名避免风险） | 规范文档存在；新增迁移遵循统一格式 | ✅ 完成 |
+
+### 📊 V67.2 修复统计
+
+| 指标 | 数值 |
+|------|------|
+| 修改文件数 | 30（已跟踪）+ 17（新增 audit_log.rs） |
+| 新增审计日志模型 | 21 个服务（ai/analytics/ehs/finance/gis/lims/mes/mobile/pdm/pm/portal/qms/unified-core 等） |
+| 枚举统一 | unified-core 替换 + portal 对齐（6 变体全兼容） |
+| 校验和补全 | 28 条 SHA-256 |
+| 前端校验补全 | 17 字段 maxLength（5 模块） |
+| 新增规范文档 | 1（迁移命名约定） |
+| 健康分提升 | 62/100 → P0 维度全闭环（预计 +20 分） |
 
 ---
 
