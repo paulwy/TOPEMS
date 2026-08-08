@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable as CommonDataTable } from '@/components/ui/DataTable';
+import { DataTable as CommonDataTable } from '@/components/common/DataTable';
 import { StatusChip } from './StatusChip';
 import type {
   DevicePoint,
@@ -248,7 +248,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
       showCreate={false}
       emptyMessage={t('gis.index.empty_no_data')}
       compact
-      getRowKey={(row) => (row as { id: string }).id}
+      getRowKey={(row: unknown) => (row as { id: string }).id}
     />
   );
 };

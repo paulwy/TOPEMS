@@ -22,7 +22,7 @@ import {
   Button,
 } from '@mui/material';
 import { Search, RefreshCw, Download, Calendar } from 'lucide-react';
-import { EmptyState } from '@/components/common';
+import { EmptyState } from '@topems/shared-components';
 
 /**
  * 统计指标卡片类型
