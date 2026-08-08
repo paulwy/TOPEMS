@@ -22,10 +22,12 @@ use prometheus::{default_registry, Gauge};
 use std::sync::Arc;
 use utoipa::OpenApi;
 
+use topems_shared::telemetry_middleware;
+use topems_shared_auth::auth::{AuthState, Claims};
+use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
+use topems_shared_core::api_version::{create_api_info_router, register_routes_with_legacy_alias};
 use topems_shared_core::cors::create_cors_layer;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_auth::auth::AuthState;
-use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 
 mod db;
 mod event_handlers;
@@ -473,8 +475,9 @@ async fn main() -> Result<()> {
             topems_shared_auth::auth::auth_middleware,
         ));
 
-    use topems_shared_auth::security::RateLimitConfig;
-use topems_shared_auth::security::RateLimitMiddleware;
+    use topems_shared_auth::security::{
+        rate_limit_middleware, RateLimitConfig, RateLimitMiddleware,
+    };
     let rate_limit_config = RateLimitConfig::new(200, 60)
         .with_by_user_id(false)
         .with_by_ip(true);
@@ -486,8 +489,6 @@ use topems_shared_auth::security::RateLimitMiddleware;
             async move { rate_limit_middleware(mw, req, next).await }
         }
     }));
-
-    use topems_shared_core::api_version::register_routes_with_legacy_alias;
 
     let gis_routes = public_business_routes.merge(protected_api);
 
@@ -520,9 +521,9 @@ use topems_shared_auth::security::RateLimitMiddleware;
 }
 
 use crate::models::DeviceLocation;
+use topems_shared_bootstrap::{check_database_health, check_iam_health};
 use topems_shared_core::health::HealthStatus;
 use topems_shared_core::health::ServiceHealth;
-use topems_shared_bootstrap::{check_database_health, check_iam_health};
 
 async fn health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {
     let database_health = check_database_health(&state.pool).await;

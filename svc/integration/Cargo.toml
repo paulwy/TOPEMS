@@ -7,6 +7,7 @@ description = "TOPEMS System Integration Service"
 
 [dependencies]
 topems-shared = { path = "../../lib" }
+topems-shared-db = { path = "../../lib/shared-db" }
 topems-shared-event = { path = "../../lib/shared-event" }
 topems-shared-core = { path = "../../lib/shared-core" }
 topems-shared-auth = { path = "../../lib/shared-auth" }

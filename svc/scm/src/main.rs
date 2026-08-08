@@ -22,12 +22,12 @@ use utoipa::OpenApi;
 
 use prometheus::{default_registry, Gauge};
 use topems_scm::shared::cache::InMemoryCache;
-use topems_shared_event::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
-use topems_shared_event::redis::RedisConfig;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     Application, ServiceConfig,
 };
+use topems_shared_core::config::enhanced::RedisConfig;
+use topems_shared_event::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer};
 
 use modules::{scm_plugin, ApiState};

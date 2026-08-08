@@ -15,11 +15,11 @@ use axum::{
     Router,
 };
 use axum_prometheus::{metrics_exporter_prometheus::PrometheusHandle, PrometheusMetricLayer};
+use topems_shared::telemetry_middleware;
 use topems_shared_auth::auth::auth_middleware;
-use topems_shared_auth::security::rate_limiter::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
+use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_core::api_version::{create_api_info_router, register_routes_with_legacy_alias};
 use topems_shared_core::cors::create_cors_layer;
-use topems_shared_observability::telemetry::telemetry_middleware;
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
