@@ -11,7 +11,7 @@ use crate::models::{
     ApproveSalaryAdjustmentRequest, CreateSalaryAdjustmentRequest, RejectSalaryAdjustmentRequest,
     SalaryAdjustment, UpdateSalaryAdjustmentRequest,
 };
-use topems_shared::{api_error, ApiResponse};
+use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct SalaryAdjustmentPaginationParams {

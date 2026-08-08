@@ -9,7 +9,7 @@ use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use crate::models::AuditLog;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::new()

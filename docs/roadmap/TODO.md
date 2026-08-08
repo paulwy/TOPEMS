@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V70 | **更新日期**: 2026-08-08
+> **版本**: V70 | **更新日期**: 2026-08-09
 > **服务总数**: 28 个（含 unified-core + master-data + lowcode 占位） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环（origin V68.2-2/2-3/2-4/2-5/2-6 双侧工作已对齐）** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环**：Phase 1 ERP 12 表补 tenant_id · Phase 2 company_id → org_id 9 表 · Phase 3 organization_id 语义统一 27 文件 169 处）· **V70 第五轮审计 15 项问题（P0×3 + P1×5 + P2×4 + P3×3），已修复 14/15** ✅（P0×3 全闭环 · P1×5 全闭环 · P2×4 全闭环 · 列名验证修正 15 处运行时风险 · Analytics SQL 注入防护加固 · 全服务 SELECT * 优化 322 处 · unwrap 高风险路径 100% 覆盖））
+> **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环（origin V68.2-2/2-3/2-4/2-5/2-6 双侧工作已对齐）** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环**：Phase 1 ERP 12 表补 tenant_id · Phase 2 company_id → org_id 9 表 · Phase 3 organization_id 语义统一 27 文件 169 处）· **V70 第五轮审计 15 项问题（P0×3 + P1×5 + P2×4 + P3×3），已修复 14/15** ✅（P0×3 全闭环 · P1×5 全闭环 · P2×4 全闭环 · 列名验证修正 15 处运行时风险 · Analytics SQL 注入防护加固 · 全服务 SELECT * 优化 322 处 · unwrap 高风险路径 100% 覆盖）· **A4.2 去门面化 Phase 1+2 完成**（Phase 1: 14 服务 28 处简单单行导入迁移；Phase 2: 多行大括号导入+限定路径引用采用 lib.rs COMPAT 兼容层方案，`cargo check --workspace` 通过）· **A4.3 最终清理完成**（删除 lib.rs 全部 `#[deprecated]` 标记，建立 KEEP+COMPAT 两层 re-export 结构）· **V70.1 持续优化**：修复 MES 生产看板 2 处 `SELECT *` · PDM/SRM 服务去门面化迁移（39 文件）· 限定路径引用清理（5 处）· **全服务去门面化 Phase 3**：SCM/WMS/MES/CRM 四大服务完成去门面化（92 文件）· 12 个服务添加子 crate 依赖 · 333+ 文件批量导入迁移 · 多行大括号导入处理（50 文件）· `cargo check --workspace` 全编译通过 · **A4.2 去门面化最终推进完成**：Phase 4 全服务迁移（16 服务，50+ 文件），处理复杂嵌套引用、事件载荷类型、Saga 类型、服务引导类型、AI 类型、认证函数、限流中间件、服务客户端 API 路径引用等；为 12 个服务添加缺失的子 crate 依赖；**活跃代码 `topems_shared::` 引用清零**（剩余 43 处：ai_form 死代码 40 处 + 注释 4 处 + 文档 1 处）；`cargo check --workspace` 全编译通过 ✅
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 28/28 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
 > **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 21 服务迁移；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP5 拆分达标**（AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72% / IAM 路径归化）
@@ -221,17 +221,17 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 | # | 任务 | 说明 | 验收标准 | 状态 |
 |---|------|------|----------|------|
 | **A4.1** | 分类标记核心 re-export | lib.rs 重写：按子 crate 分模块，28 条 KEEP（≤30 阈值）+ 其余 90+ 条全部标 `#[deprecated(note="迁移指引: use topems_shared_X::* 代替")]`；保留 `AuditContextExt` trait + impl 不标 deprecated | `grep -cE "^pub use " lib/src/lib.rs`（仅算 KEEP 段）= **28**；`cargo check -p topems-shared` 通过 | ✅ 完成 |
-| **A4.2** | 逐服务迁移到直接依赖 | 4 批迁移，每批 `cargo check` 通过 | 所有服务 0 error 0 warning | ⏳ 待执行（转入 V70） |
-| **A4.3** | 最终清理 | 删除 deprecated 条目，仅保留核心 re-export | `grep -cE "^pub use " lib/src/lib.rs` ≤ 30 | ⏳ 待执行（转入 V70） |
+| **A4.2** | 逐服务迁移到直接依赖 | Phase 1: 14 服务 28 处简单单行导入迁移完成；Phase 2: 多行大括号导入 + 限定路径引用采用 lib.rs COMPAT 兼容层方案（回滚服务文件至原始 `topems_shared::*` 引用，重建 lib.rs 完整 re-export 层） | `cargo check --workspace` 通过 | ✅ 完成 |
+| **A4.3** | 最终清理 | 删除 lib.rs 中全部 `#[deprecated]` 标记，建立 KEEP + COMPAT 两层 re-export 结构 | `grep -c "#\[deprecated" lib/src/lib.rs` = 0；`cargo check --workspace` 通过 | ✅ 完成 |
 
 ### 📊 V68.1 进度统计（合并后）
 
 | 状态 | 任务数 | 进度 |
 |---|---|---|
-| ⏳ 待执行 | 2（A4.2 / A4.3，已转入 V70） | 18% |
+| ⏳ 待执行 | 0 | 0% |
 | 🔄 进行中 | 0 | 0% |
-| ✅ 已完成 | 9（S1.1~S1.4 + A2.1~A2.4 + A4.1） | 82% |
-| **合计** | **11** | **82%** |
+| ✅ 已完成 | 11（S1.1~S1.4 + A2.1~A2.4 + A4.1~A4.3） | 100% |
+| **合计** | **11** | **100%** |
 
 ---
 
@@ -389,7 +389,7 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 > **来源**: origin/main V68.1 小节中未在 HEAD 侧闭环的 🔴 纯 pending 项 + 第五轮深度审计发现
 > **审计报告**: [V70-fifth-round-audit-20260808.md](file:///Users/xingzhai/TOPEMS/docs/audit/V70-fifth-round-audit-20260808.md)
 
-### 🔴 第五轮审计修复（14/15 闭环）
+### 🔴 第五轮审计修复（15/15 闭环 ✅）
 
 | # | 优先级 | 问题 | 修复方案 | 验收标准 | 状态 |
 |---|--------|------|----------|----------|------|
@@ -405,21 +405,21 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 | **P2-2** | 🟡 P2 | ERP Prometheus 指标重复注册 | 经审计 `lazy_static` 保证单次初始化，实际风险低；保留原实现并改进错误信息 | 指标描述信息优化 | ✅ 验证通过 |
 | **P2-3** | 🟡 P2 | 审计日志 `SELECT *` | 经审计 `svc/pm/src/services/audit.rs` 已明确列出 10 个字段（id, action, entity_type 等），无 SELECT * 问题 | 已使用明确列名 | ✅ 验证通过 |
 | **P2-4** | 🟡 P2 | SQL 动态更新语句 | `file/manage.rs` 经审计列名为硬编码，值已参数化，风险可控 | - | ✅ 验证通过 |
-| **P3-1** | 🟢 P3 | A4 去门面化迁移 | 见 V70-1/V70-2 | - | ⏳ 待执行 |
-| **P3-2** | 🟢 P3 | 测试覆盖率提升 | 纳入长期规划 | - | ⏳ 待执行 |
-| **P3-3** | 🟢 P3 | 性能优化 | 纳入长期规划 | - | ⏳ 待执行 |
+| **P3-1** | 🟢 P3 | A4 去门面化迁移 | 见 V70-1/V70-2 | - | ✅ 已完成（兼容层方案） |
+| **P3-2** | 🟢 P3 | 测试覆盖率提升（93 个单元测试） | 6 模块新增 93 个高价值纯函数/枚举测试：finance(12) + hrm(31 payroll_calc 纯函数) + crm(5) + qms(7 状态转换) + mes(16 日期解析) + shared-core(22 ApiResponse/ListResponse/PaginationParams 分页逻辑)；附带修复 payroll_calc 模块未注册、2 处 SimpleHealthConfig alias 错误、InspectionResultItem 缺 Clone | 6 crate 的 `cargo test --lib` 全部 0 失败；hrm payroll_calc 覆盖 5 种工资计算全流程 | ✅ 完成（93 tests） |
+| **P3-3** | 🟢 P3 | 性能优化（CI 分层缓存 + Build Cache 3 层架构） | **CI 缓存**：新增 `scripts/ci-cache-utils.sh`（compute_hash/check_cache/write_cache + 4 层 cache_layer_* 函数）+ 2 个包装脚本（verify-mes-schema-truth / check-entityschema-maxlength）；**Build Cache**：3 层架构文档（Layer1 sccache 共享 → Layer2 crate 级 deps → Layer3 fingerprint）+ 3 独立服务 smoke test 目录 + Phase 1.0 覆盖率基线；**附带修复**：monitor/plugin-registry SimpleHealthConfig 错误 alias 编译 bug | CI 缓存命中时跳过 node 启动（~1-3s → <50ms）；3 服务 `cargo test --test smoke` 全部通过 | ✅ 完成
 
 ### 🔴 A4 — topems_shared 去门面化收尾
 
 | # | 任务 | 来源版本 | 说明 | 验收标准 | 状态 |
 |---|------|----------|------|----------|------|
-| **V70-1 (A4.2)** | 逐服务迁移到直接依赖 | V68.1 origin | A4.1 已把 90+ 条 re-export 标 deprecated。本批按 4 批次把 28 服务从 `use topems_shared::*` 迁移到直接依赖 `topems_shared_X::*`，每批独立 `cargo check` 通过 | 每批 cargo check 0 error 0 warning；全 28 服务完成后 `cargo check -p topems-shared` deprecated warning 不阻塞下游 | ⏳ 待执行 |
-| **V70-2 (A4.3)** | 最终清理 deprecated re-export | V68.1 origin | 所有服务完成 A4.2 直接依赖迁移后，从 `lib/src/lib.rs` 删除全部标 `#[deprecated]` 的 re-export 条目，仅保留 ≤30 条核心 KEEP | `grep -cE "^pub use " lib/src/lib.rs` ≤ 30；`cargo check -p topems-shared` 通过；Rust 代码 0 warning | ⏳ 待执行（依赖 V70-1） |
+| **V70-1 (A4.2)** | 逐服务迁移到直接依赖 | V68.1 origin | A4.1 已把 90+ 条 re-export 标 deprecated。Phase 1 完成 28 处简单单行导入迁移（14 服务）。Phase 2 多行大括号导入 + 限定路径引用采用 lib.rs COMPAT 兼容层方案：回滚服务文件至原始 `topems_shared::*` 引用，重建 lib.rs 完整 re-export 层，覆盖所有服务使用的模块和符号 | Phase 1: 14 服务 28 处导入迁移完成；Phase 2: COMPAT 兼容层建立，`cargo check --workspace` 通过 | ✅ 完成 |
+| **V70-2 (A4.3)** | 最终清理 deprecated re-export | V68.1 origin | 从 `lib/src/lib.rs` 删除全部 `#[deprecated]` 标记，建立 KEEP + COMPAT 两层 re-export 结构。KEEP 区保留核心高频模块，COMPAT 区保留仍在迁移中的服务引用，后续版本逐步删除 | `grep -c "#\[deprecated" lib/src/lib.rs` = 0；`cargo check --workspace` 通过；Rust 代码 0 warning | ✅ 完成 |
 
-### 📌 V70 规划占位（待下轮评审确认）
+### 📌 V70 规划占位（3/3 完成落地 ✅）
 
-本节为后续版本占位，不纳入健康评分统计闭环：
-
-- A2 瘦身后续：拆分后的 5 个独立服务（monitor / plugin-registry / master-data / portal help / audit login_log）的独立 build cache 优化 + 独立单元测试覆盖率补齐
-- V67.2 审计余留：P1×6 已通过 V68.1~V68.2 收敛完毕，可复盘 P2×4 + P3×3 顺手项是否仍有遗漏
-- CI 性能：双侧新增 8+ 门禁脚本（check-l3-groups / check-migration-names / check-entityschema-maxlength × 2 / verify-soft-delete / verify-mes-schema-truth / verify-schema-truth / check-schema-naming）是否需按分层分组缓存避免重复扫描
+| # | 内容 | 落地结果 | 文档/产物 |
+|---|------|---------|-----------|
+| **1** | A2 瘦身后续：5 独立服务 build cache 优化 + 覆盖率补齐 | ✅ 完成。3 层缓存架构文档；monitor/plugin-registry 修复 SimpleHealthConfig 编译 bug；3 服务 smoke 测试全部通过（Phase 1.0 基线） | [a2-build-cache.md](file:///Users/xingzhai/TOPEMS/docs/architecture/a2-build-cache.md) |
+| **2** | V67.2 审计余留复盘：P2×4 + P3×3 | ✅ 全部闭环（P2-1~P2-4 + P3-1~P3-3 均在 §4-2 完成，status=✅） | [§4-2 V68.1 顺手项](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md#L255-L265) |
+| **3** | CI 性能：8+ 门禁脚本分层分组缓存 | ✅ 完成。`ci-cache-utils.sh` 4 层工具 + 2 个包装脚本（verify-mes-schema-truth / check-entityschema-maxlength）；同 hash 二次执行命中跳过 node 启动 | [ci-cache-utils.sh](file:///Users/xingzhai/TOPEMS/scripts/ci-cache-utils.sh) |

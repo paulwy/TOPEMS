@@ -3,10 +3,12 @@ use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::{
-    event::EventPublisher, AuthState, CacheService, FieldEncryptionService,
-    LocalInMemoryCache as InMemoryCache, SystemMetrics,
-};
+use topems_shared_auth::auth::AuthState;
+use topems_shared_core::cache::InMemoryCache;
+use topems_shared_event::event::publisher::EventPublisher;
+use topems_shared_event::redis::CacheService;
+use topems_shared_auth::security::encryption::FieldEncryptionService;
+use topems_shared_core::health::SystemMetrics;
 
 pub mod attendance;
 pub mod audit;
@@ -19,6 +21,7 @@ pub mod hrm_plugin;
 pub mod leave;
 pub mod openapi;
 pub mod payroll;
+pub mod payroll_calc;
 pub mod performance;
 pub mod position;
 pub mod recruitment;

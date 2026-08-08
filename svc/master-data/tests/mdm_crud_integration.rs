@@ -22,7 +22,8 @@ use topems_master_data::modules::quality_v51::{
     UpdateQualityRuleRequest,
 };
 use topems_master_data::shared::AppState;
-use topems_shared::{AuthState, SystemMetrics};
+use topems_shared_auth::auth::AuthState;
+use topems_shared_core::health::SystemMetrics;
 
 /// 构造测试用 AppState（使用惰性连接的 PgPool，handler 不实际访问数据库）
 fn make_test_state() -> AppState {

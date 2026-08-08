@@ -5,7 +5,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 use super::ApiState;
-use topems_shared::{api_error, ApiResponse};
+use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct InitializationStatus {
