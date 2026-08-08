@@ -160,7 +160,7 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 | 优先级 | V68.1 编号 | 对应审计 | 任务内容 | 工作量 | 状态 |
 |---|---|---|---|---|---|
 | 🔴 P0 | 1 | P1-2 | **统一迁移命名规范 + CI 门禁**：`migrations/` 目录下 146 个 SQL 文件（2026-08-08 实际基线 126 条，125 已是 FULL 14 位+topic+summary / 1 为 SHORT 单段 advisory / 0 条 V{NN} 或 8/12 位历史残留）→ 选定单一规范（`YYYYMMDDHHMMSS_{topic}_{summary}.sql`，`SHORT 14+summary` 仅 advisory 不阻塞）+ 新增 `scripts/check-migration-names.mjs` 门禁脚本，含** 5 类检查**：① V{NN}_ / unmatched 一律 ERR；② 14/12/8 位时间戳合法性；③ 每个 service 迁移目录内按文件名严格单调递增；④ default 模式 8/12 位仅 WARN，`--strict` 模式把 8/12 位历史升格为 ERR；⑤ 对 SHORT 单段输出 advisory（非阻塞）。2026-08-08 已完成：脚本落地并通过实际基线双验证（default & --strict 均 EXIT 0；人工伪造 `V42_bad.sql` 可被 ERR 拦截） | ⭐ | ✅ 完成 |
-| 🔴 P0 | 2 | P1-5 | **EntitySchema 根因修复：20+ VARCHAR 字段补 maxLength**：V67.2 P0-4 仅在 SQL 层加了 CHECK(length ≤ N)，但 EntitySchema 枚举层 91 张表中约 20 个 varchar 字段仍未声明 maxLength → 导致前端表单、导入校验、生成器失去真相源。必须与 `CREATE TABLE` 的 VARCHAR(n) 一一对应 | ⭐⭐ | ⏳ 待迭代 |
+| 🔴 P0 | 2 | P1-5 | **V68.1-2 EntitySchema maxLength 91 表全量补齐**：基线（2026-08-08 实扫）216 EntitySchema（91 主业务表 + 子列表/子弹窗子 Schema）× 1438 个 String-type 字段，V67.2 仅 21 字段有 maxLength（覆盖率 1.5%）→ 需补齐 ≈1417 字段 × ≈200 个 TS/TSX 文件，严格与 migrations 中 `CREATE TABLE` / `ALTER TABLE ADD COLUMN` 对应列的 `VARCHAR(n)` 一一对应（TEXT 字段不补）。采用**方案 A（全自动三阶段流水线 + 4 道质量闸）**：Stage A `a_scan_sql.mjs` 扫 23 service migrations → 445 (tableKey,col)→VARCHAR(n) Map；Stage B `b_gap_alias_scan.mjs` + 人工填 `entity-table-map.json`（180+ 条 alias，EntitySchema↔SQL 表名解耦，长期资产）；Stage C `c_patch_schemas.mjs`（幂等、dry-run、位置精准）批量 patch 源文件。**4 道质量闸（全部 EXIT 0 才算通过）**：① Gate1 `gate1_map_coverage.mjs` — SQL VARCHAR(n) 映射接收覆盖率 ≥ 90% 且 VARCHAR(≥500)长列 100% 命中；② Gate2（长期 CI）`scripts/check-entityschema-maxlength-reverse.mjs --strict` — 反向审计，maxLength 值与 SQL VARCHAR(n) 不匹配必 exit 1，无对应 SQL 列但有 maxLength 必须有 `// no-varchar` 注释豁免；③ Gate3（已有）— `tsc --noEmit` 0 error + `lint:web` 0 error；④ Gate4（长期 CI）`scripts/check-entityschema-maxlength.mjs` — Schema String-type 字段 maxLength 覆盖率 ≥ 98%（允许 `// no-varchar` 豁免不入分母）。完工后 `scripts/v68-1-2/` 目录（含 Stage A/B/C 脚本 + 别名表 + Gate1）作为永久对齐工具保存，两个长期 Gate 脚本挂入 CI 作为后续加字段时防漂移的门禁。 | ⭐⭐⭐⭐ | 🔄 进行中 |
 | 🟡 P1 | 3 | P1-4 | **软删除 3 模式统一**：当前 91 张表中存在 `deleted_at: Option<NaiveDateTime>` / `is_deleted: bool` / 直接 DELETE 三种策略并存 → 统一为 `deleted_at` + `DEFAULT NULL`（timestamp-based），并同步所有 `EntitySchema` 的 `soft_delete` 字段与 axum query-scope | ⭐⭐⭐ | ⏳ 待迭代 |
 | 🟡 P1 | 4 | P1-6 | **add_tenant_id 6 批严格单调重排**：`20250101_add_tenant_id_*.sql` 共 6 批 27 个服务，当前时间戳全部堆叠在同一天（2025-01-01），虽然内部有序但不符合"迁移时间戳严格单调递增（真相源）"假设 → 按模块依赖图重新分配为 6 个不同日期（如 0102/0103/…）或采用同一日期下 HHMMSS 精确秒级单调 | ⭐⭐ | ⏳ 待迭代 |
 | 🟢 P2 | 5 | P1-1 | **add_tenant_id 27 文件去重：公共 SQL 片段模板化**：`20250101_add_tenant_id_*.sql` 跨 27 个服务逻辑高度雷同（`ALTER TABLE x ADD COLUMN tenant_id UUID` + `CREATE INDEX idx_x_tenant_id`）→ 提取为 `migrations/.snippets/add_tenant_id_template.sql` 公共模板，并在 `scripts/` 下新增代码生成器脚本（`gen-add-tenant-id.mjs`），后续新服务只需一条命令生成合规迁移 | ⭐⭐⭐ | ⏳ 待迭代 |
@@ -181,7 +181,7 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 ### 4-3. 验收标准（4 条）
 
 1. **V68.1-1 迁移命名门禁 ✅ 已达标**：2026-08-08 基线扫全库 126 条 SQL 迁移 → 125 FULL 14 位+topic+summary / 1 SHORT 14+summary（advisory，允许）/ 0 V{NN} / 0 8 位 / 0 12 位 / 0 unknown。`scripts/check-migration-names.mjs` default 模式 EXIT 0 · `--strict` 模式 EXIT 0 · 人工注入 `V42_bad.sql` 被拦截为 ERR ✅。**新迁移未来若出现 8/12 位或 V{NN}_ 命名，CI 直接失败**；SHORT 单段 advisory 允许短期存在，在后续 V69 改名为 FULL 即可
-2. **V68.1-2 EntitySchema maxLength**：91 张表 × 所有 VARCHAR 字段，在 `EntitySchema { properties: [{ name, maxLength }] }` 中全部有对应数值；脚本级校验 `scripts/verify-entity-schema-maxlength.mjs` EXIT 0
+2. **V68.1-2 EntitySchema maxLength**：91 张表 × 所有 VARCHAR 字段，在 `EntitySchema { fields: [{ name, validation: [{type:'maxLength', value:N}] }] }` 中全部有对应数值；4 道质量闸必须全部 EXIT 0：① Gate1 `scripts/v68-1-2/gate1_map_coverage.mjs`（SQL 接收率 ≥90% & 长列 100%）；② Gate2 `scripts/check-entityschema-maxlength-reverse.mjs --strict`（0 mismatches + extras 必须有 `// no-varchar` 豁免）；③ Gate4 `scripts/check-entityschema-maxlength.mjs`（Schema 覆盖率 ≥ 98%）；④ Gate3 `tsc --noEmit` 0 error
 3. **V68.1-3 软删除统一**：91 张表不再出现 `is_deleted` 列或直接 DELETE 操作（所有 SQL 走 `UPDATE ... SET deleted_at = NOW()`）；cargo 侧 `soft_delete` 统一为 `Option<NaiveDateTime>`，TSC 0 error
 4. **总门禁**：`cargo check --workspace` 0 error 0 warning · `tsc --noEmit` 0 error · `check-l3-groups.js` 0 error · `check-migration-names.mjs` EXIT 0 · `analyze_nav_structure.mjs --validate` EXIT 0 · 三联校验 EXIT 0
 
@@ -190,6 +190,6 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 | 状态 | 任务数 | 进度 |
 |---|---|---|
 | ✅ 已完成 | 1（V68.1-1 · 迁移命名规范 + CI 门禁） | 16.6% |
-| 🔄 进行中 | 0 | 0% |
-| ⏳ 待迭代 | 5 | 83.4% |
-| **合计** | **6** | **16.6%** |
+| 🔄 进行中 | 1（V68.1-2 · EntitySchema maxLength 91 表全量补齐） | 16.6% |
+| ⏳ 待迭代 | 4 | 66.8% |
+| **合计** | **6** | **33.2%（完成 1 + 进行中 1）** |
