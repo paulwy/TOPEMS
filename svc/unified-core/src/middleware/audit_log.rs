@@ -47,11 +47,7 @@ pub async fn audit_log_middleware(
         .map(|s| s.to_string())
         .unwrap_or_default();
 
-    let user_id = request
-        .extensions()
-        .get::<uuid::Uuid>()
-        .map(|id| id.to_string())
-        .unwrap_or_default();
+    let user_id = request.extensions().get::<uuid::Uuid>().copied();
 
     let response = next.run(request).await;
     let elapsed = start_time.elapsed();
@@ -103,7 +99,11 @@ async fn log_audit_entry(state: &AppState, audit_log: &Value) -> Result<(), sqlx
 
     sqlx::query(query)
         .bind(audit_log["request_id"].as_str().unwrap_or_default())
-        .bind(audit_log["user_id"].as_str().unwrap_or_default())
+        .bind(
+            audit_log["user_id"]
+                .as_str()
+                .and_then(|s| uuid::Uuid::parse_str(s).ok()),
+        )
         .bind(audit_log["method"].as_str().unwrap_or_default())
         .bind(audit_log["path"].as_str().unwrap_or_default())
         .bind(audit_log["query_string"].as_str().unwrap_or_default())
@@ -124,7 +124,7 @@ pub async fn init_audit_logs_table(pool: &sqlx::PgPool) -> Result<(), sqlx::Erro
         CREATE TABLE IF NOT EXISTS audit_logs (
             id BIGSERIAL PRIMARY KEY,
             request_id VARCHAR(64) NOT NULL,
-            user_id VARCHAR(36),
+            user_id UUID,
             method VARCHAR(10) NOT NULL,
             path TEXT NOT NULL,
             query_string TEXT,

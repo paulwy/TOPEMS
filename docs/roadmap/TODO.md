@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V68.1 | **更新日期**: 2026-08-08
+> **版本**: V69.0 | **更新日期**: 2026-08-08
 > **服务总数**: 28 个（含 unified-core + master-data + lowcode 占位） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
 > **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 6/6 全闭环**：迁移命名门禁 · EntitySchema maxLength · 软删除统一 · 时间戳决策 · add_tenant_id 模板化生成器 · MES DDL 碎片收敛 · **P2×4 并行顺手项全闭环**：schema 命名清理 · inventory 自动生成 · 真相源三联校验 · 8 表 DELETE 残留转换 · **P3-2 status CHECK 492 表**）
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 28/28 (100%)** ✅
@@ -196,3 +196,73 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 | 🔄 进行中 | 0 | 0% |
 | ⏳ 待迭代 | 0 | 0% |
 | **合计** | **6** | **100%（完成 6）** ✅ |
+
+---
+
+## 🎯 V69.0 — P3-1 VARCHAR(36) → UUID 迁移（延期项落地）
+
+> **来源**: V67.2 数据层审计 P3-1，原定延期至 V69/V70 大迁移窗口
+> **调研基线**: 2026-08-08 全库扫描，实际范围远小于预估（12 列 × 6 表 × 3 服务）
+
+### 范围清单
+
+| 服务 | 表 | 列 | 角色 | 索引数 | 风险 |
+|------|-----|-----|------|--------|------|
+| mobile | `mobile_attendance` | `id` | PK | 4 | 中低（跨 schema HRM 依赖） |
+| mobile | `mobile_leave_applications` | `id` | PK | 3 | 中低 |
+| wms | `serial_numbers` | `warehouse_id` / `location_id` / `supplier_id` | FK 类列 | 2 | 中 |
+| wms | `transfer_orders` | `from_warehouse_id` / `from_location_id` / `to_warehouse_id` / `to_location_id` | FK 类列 | 2 | 中 |
+| wms | `transfer_order_items` | `from_location_id` / `to_location_id` | FK 类列 | 0 | 低 |
+| unified-core | `audit_logs` | `user_id` | 普通列 | 1 | 中（空串数据质量风险） |
+
+**关键发现**：所有 FK 类列均无实际 FOREIGN KEY 约束（仅逻辑外键），迁移无需 DROP/RECREATE CONSTRAINT。
+
+### 任务拆分
+
+| # | 任务 | 说明 | 验收标准 | 状态 |
+|---|------|------|----------|------|
+| **1** | 数据质量预检 | `UPDATE audit_logs SET user_id = NULL WHERE user_id = ''`；wms 三表无非 UUID 格式历史数据（无实际 FK 约束） | 0 行空串 / 非 UUID 值 | ✅ 完成 |
+| **2** | SQL 迁移脚本 | `ALTER TABLE ... ALTER COLUMN ... TYPE UUID USING ...::UUID` × 12 列（mobile 2 PK + wms 9 FK 类 + audit_logs 1 普通列） | 迁移文件存在 · `check-migration-names.mjs` PASS | ✅ 完成 |
+| **3** | Rust 模型适配 | `wms/models/serial_number.rs`（4 结构体 10 字段）、`wms/models/transfer_order.rs`（5 结构体 12 字段）— `String`→`Uuid`/`Option<Uuid>`；`wms/modules/serial_number.rs` handler — `$1::text`→`$1::uuid` + `sqlx::query!`→`sqlx::query` 动态查询；`wms/modules/transfer_order.rs` handler — 同上 + JSON 值解析为 Uuid；`unified-core/middleware/audit_log.rs` — 运行时 DDL `VARCHAR(36)`→`UUID` + 绑定改为 `Option<Uuid>` | cargo check 0 error | ✅ 完成 |
+| **4** | 前端验证 | EntitySchema `maxLength: 36` 对 UUID（36 字符）仍然正确，无需改动 | tsc 0 error | ✅ 完成 |
+| **5** | 质量门禁 | cargo check 0 error · tsc 0 error · verify-schema-truth PASS · check-migration-names PASS · check-schema-naming PASS · checksums 补全 5 条 | 6 项全 PASS | ✅ 完成 |
+
+---
+
+## 🎯 V69.1 — P3-3 org_id/company_id/tenant_id 命名统一（延期项落地）
+
+> **来源**: V67.2 数据层审计 P3-3，原定延期至 V69 组织机构重构窗口
+> **调研基线**: 2026-08-08 全库扫描，发现 4 种命名变体 + 语义交叉
+
+### 命名变体现状
+
+| 变体 | SQL 出现 | Rust 出现 | 语义 |
+|------|----------|-----------|------|
+| `tenant_id` | 6980 处 / 76 文件 | 极多 | 多租户隔离（主导约定） |
+| `company_id` | 39 处 / 6 文件 | 225 处 / 18 文件 | 混用（A 类冗余 / B 类合法 / C 类唯一隔离） |
+| `organization_id` | 100+ 处 / 15+ 文件 | 169 处 / 27 文件 | 第四变体（HRM/GIS/AI=租户前身，CRM/WMS=组织层级） |
+| `org_id` | 8 处（局部变量） | 59 处（局部变量） | 非列名 |
+
+### company_id 三类分类
+
+| 类别 | 表数 | 处理策略 | 代表表 |
+|------|------|----------|--------|
+| **A 类**（冗余共存） | 9 | `company_id` → `org_id`（或移除） | public.departments/employees · plugin_hrm.* · plugin_erp.assets · financial_reports · hrm.departments/positions/employees |
+| **B 类**（合法业务） | 3 | **保留原名** | erp.consolidation_scope_companies · erp.internal_transactions · erp.company_relations |
+| **C 类**（唯一隔离） | 2 | 先补 `tenant_id`，`company_id` 视业务保留或转 `org_id` | erp.opening_balances · erp.bank_accounts |
+
+### organization_id 语义统一
+
+| 服务 | 当前语义 | 目标 |
+|------|----------|------|
+| hrm / gis / ai | 充当 tenant_id（已被复制为 tenant_id） | 合并到 tenant_id，删除 organization_id |
+| crm / wms | 组织层级 | 改名为 org_id |
+| erp 合并报表 | 充当 tenant_id（未补 tenant_id 列） | 补 tenant_id，删除 organization_id |
+
+### 任务拆分（3 Phase）
+
+| Phase | 任务 | 范围 | 风险 | 状态 |
+|-------|------|------|------|------|
+| **Phase 1** | 为 12 张 ERP 点号 schema 表补 tenant_id | consolidation_scopes/reports/report_lines · internal_transactions · company_relations · elimination_rules · opening_balances · bank_accounts · fixed_assets · asset_depreciation_records · bank_transactions · consolidation_scope_companies | 中（回填策略） | ⏳ |
+| **Phase 2** | A 类 company_id → org_id 重命名 | 9 表 SQL ALTER + Rust 模型适配（HRM 133 处 + finance 40 处 + 共享表） | 中高（HRM 三列冗余 + financial_reports UNIQUE 约束重建） | ⏳ |
+| **Phase 3** | organization_id 语义统一 | HRM/GIS/AI → 合并到 tenant_id · CRM/WMS → 改名 org_id · ERP → 补 tenant_id 后删除 | 高（AI session 配置 · RLS 策略 · 跨服务查询） | ⏳ |

@@ -53,8 +53,8 @@ pub async fn list_transfers(
         r#"
         SELECT * FROM wms.transfer_orders
         WHERE deleted_at IS NULL AND ($1::text IS NULL OR transfer_type = $1)
-          AND ($2::text IS NULL OR from_warehouse_id = $2)
-          AND ($3::text IS NULL OR to_warehouse_id = $3)
+          AND ($2::uuid IS NULL OR from_warehouse_id = $2)
+          AND ($3::uuid IS NULL OR to_warehouse_id = $3)
           AND ($4::text IS NULL OR status = $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
@@ -75,8 +75,8 @@ pub async fn list_transfers(
                 r#"
                 SELECT COUNT(*) FROM wms.transfer_orders
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR transfer_type = $1)
-                  AND ($2::text IS NULL OR from_warehouse_id = $2)
-                  AND ($3::text IS NULL OR to_warehouse_id = $3)
+                  AND ($2::uuid IS NULL OR from_warehouse_id = $2)
+                  AND ($3::uuid IS NULL OR to_warehouse_id = $3)
                   AND ($4::text IS NULL OR status = $4)
                 "#,
             )
@@ -312,10 +312,26 @@ pub async fn update_transfer(
         "#,
     )
     .bind(req.get("transfer_type").and_then(|v| v.as_str()))
-    .bind(req.get("from_warehouse_id").and_then(|v| v.as_str()))
-    .bind(req.get("from_location_id").and_then(|v| v.as_str()))
-    .bind(req.get("to_warehouse_id").and_then(|v| v.as_str()))
-    .bind(req.get("to_location_id").and_then(|v| v.as_str()))
+    .bind(
+        req.get("from_warehouse_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
+    .bind(
+        req.get("from_location_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
+    .bind(
+        req.get("to_warehouse_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
+    .bind(
+        req.get("to_location_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(req.get("planned_date").and_then(|v| v.as_str()))
     .bind(req.get("transporter").and_then(|v| v.as_str()))
     .bind(req.get("tracking_number").and_then(|v| v.as_str()))
@@ -576,9 +592,9 @@ pub async fn complete_transfer(
                 let publisher = publisher.clone();
                 let transfer_id_evt = transfer.id;
                 let transfer_no = transfer.order_number.clone();
-                let from_warehouse_id = Uuid::parse_str(&transfer.from_warehouse_id).ok();
+                let from_warehouse_id = Some(transfer.from_warehouse_id);
                 let from_warehouse_name = transfer.from_warehouse_name.clone();
-                let to_warehouse_id = Uuid::parse_str(&transfer.to_warehouse_id).ok();
+                let to_warehouse_id = Some(transfer.to_warehouse_id);
                 let to_warehouse_name = transfer.to_warehouse_name.clone();
                 let quantity = transfer.total_quantity.unwrap_or(0) as f64;
                 let status = transfer.status.clone();
