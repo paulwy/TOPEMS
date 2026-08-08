@@ -5,7 +5,7 @@ export const recommendationApi = {
   getRecommendations: async (data: {
     user_id?: string;
     scene: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
     limit?: number;
   }): Promise<
     ApiResponse<{
@@ -32,7 +32,7 @@ export const recommendationApi = {
         title: string;
         description?: string;
         relevance_score: number;
-        metadata?: Record<string, any>;
+        metadata?: Record<string, unknown>;
       }>;
     }>
   > => {

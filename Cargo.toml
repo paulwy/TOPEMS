@@ -159,6 +159,22 @@ tower-util = "0.1"
 walkdir = "2"
 moka = { version = "0.12", features = ["future", "sync"] }
 
+# ================================================
+# Shared Library Sub-crates (A4.2 去门面化迁移)
+# ================================================
+# topems-shared 主 crate 及其子 crate，支持服务直接依赖而非经由 topems_shared:: 门面
+# Cargo workspace.dependencies 键名使用连字符版本（crate 名的实际格式）
+# 服务中可使用连字符或下划线引用，Cargo 会自动归一化
+topems-shared = { path = "lib" }
+topems-shared-core = { path = "lib/shared-core" }
+topems-shared-db = { path = "lib/shared-db" }
+topems-shared-auth = { path = "lib/shared-auth" }
+topems-shared-service-client = { path = "lib/shared-service-client" }
+topems-shared-event = { path = "lib/shared-event" }
+topems-shared-observability = { path = "lib/shared-observability" }
+topems-shared-ai = { path = "lib/shared-ai" }
+topems-shared-bootstrap = { path = "lib/shared-bootstrap" }
+
 # GraphQL BFF 聚合层（V33.0 Portal BFF Phase 3）
 async-graphql = { version = "7", features = ["tokio", "chrono", "uuid", "dataloader", "apollo_persisted_queries"] }
 async-graphql-axum = "7"
