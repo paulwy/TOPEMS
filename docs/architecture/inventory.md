@@ -2,7 +2,7 @@
 
 > **Auto-generated**: 2026-08-08
 > **Generator**: `scripts/generate-inventory.mjs`
-> **Backend services**: 28 | **Frontend modules**: 33
+> **Backend services**: 30 | **Frontend modules**: 33
 
 ---
 
@@ -11,12 +11,12 @@
 | # | Directory | Package | Port | Migrations | Rust Files |
 |---|-----------|---------|------|------------|------------|
 | 1 | ai | topems-ai | 8013 | 4 | 50 |
-| 2 | analytics | topems-analytics | 8060 | 3 | 38 |
+| 2 | analytics | topems-analytics | 8060 | 4 | 40 |
 | 3 | billing | topems-billing | 8085 | 0 | 4 |
-| 4 | communication | topems-communication | 8084 | 0 | 5 |
+| 4 | communication | topems-communication | 8084 | 1 | 5 |
 | 5 | crm | topems-crm | 8029 | 3 | 45 |
 | 6 | ehs | topems-ehs | 8052 | 3 | 27 |
-| 7 | erp | topems-erp | 8010 | 15 | 75 |
+| 7 | erp | topems-erp | 8010 | 16 | 75 |
 | 8 | feedback | topems-feedback | 8087 | 0 | 4 |
 | 9 | finance | topems-finance | 8011 | 11 | 75 |
 | 10 | gis | topems-gis | 8071 | 4 | 36 |
@@ -24,22 +24,24 @@
 | 12 | integration | topems-integration | 8072 | 5 | 28 |
 | 13 | lims | topems-lims | 8051 | 3 | 35 |
 | 14 | lowcode | topems-lowcode | 8088 | 0 | 3 |
-| 15 | master-data | topems-master-data | 8090 | 0 | 19 |
+| 15 | master-data | topems-master-data | 8090 | 0 | 23 |
 | 16 | mes | topems-mes | 8030 | 17 | 43 |
 | 17 | mobile | topems-mobile | 8070 | 4 | 39 |
-| 18 | pdm | topems-pdm | 8031 | 1 | 26 |
-| 19 | pm | topems-pm | 8023 | 4 | 54 |
-| 20 | portal | topems-portal | 8063 | 4 | 63 |
-| 21 | qms | topems-qms | 8050 | 2 | 25 |
-| 22 | rd | topems-rd | 8053 | 9 | 40 |
-| 23 | scm | topems-scm | 8040 | 9 | 40 |
-| 24 | search | topems-search | 8082 | 0 | 3 |
-| 25 | srm | topems-srm | 8042 | 7 | 44 |
-| 26 | ticket | topems-ticket | 8086 | 0 | 5 |
-| 27 | unified-core | topems-unified-core | 8000 | 6 | 129 |
-| 28 | wms | topems-wms | 8041 | 10 | 52 |
+| 18 | monitor | topems-monitor | 8095 | 0 | 12 |
+| 19 | pdm | topems-pdm | 8031 | 1 | 26 |
+| 20 | plugin-registry | topems-plugin-registry | 8096 | 0 | 15 |
+| 21 | pm | topems-pm | 8023 | 4 | 54 |
+| 22 | portal | topems-portal | 8063 | 4 | 66 |
+| 23 | qms | topems-qms | 8050 | 2 | 25 |
+| 24 | rd | topems-rd | 8053 | 9 | 40 |
+| 25 | scm | topems-scm | 8040 | 9 | 40 |
+| 26 | search | topems-search | 8082 | 0 | 3 |
+| 27 | srm | topems-srm | 8042 | 7 | 44 |
+| 28 | ticket | topems-ticket | 8086 | 0 | 5 |
+| 29 | unified-core | topems-unified-core | 8000 | 5 | 97 |
+| 30 | wms | topems-wms | 8041 | 10 | 52 |
 
-**Totals**: 28 services · 127 migrations · 1049 Rust source files
+**Totals**: 30 services · 129 migrations · 1053 Rust source files
 
 ---
 

@@ -313,26 +313,26 @@ unified-core 中间件栈 (从外层到内层):
 
 | 模块 | 文件 | 功能描述 |
 |------|------|---------|
-| **认证** | [lib/src/auth.rs](file:///Users/xingzhai/TOPEMS/lib/src/auth.rs) | JWT 生成/验证、认证中间件、Claims、权限检查 |
-| **数据库** | [lib/src/database.rs](file:///Users/xingzhai/TOPEMS/lib/src/database.rs) | PgPool 连接池管理、健康检查、读写分离 |
-| **缓存** | [lib/src/cache.rs](file:///Users/xingzhai/TOPEMS/lib/src/cache.rs) | 内存缓存、多级缓存、缓存预热 |
-| **响应** | [lib/src/response.rs](file:///Users/xingzhai/TOPEMS/lib/src/response.rs) | 统一 API 响应格式 `ApiResponse<T>`、分页响应 |
-| **Schema** | [lib/src/schema.rs](file:///Users/xingzhai/TOPEMS/lib/src/schema.rs) | 多 Schema 表名构建器 (`with_schema`) |
-| **RLS** | [lib/src/rls.rs](file:///Users/xingzhai/TOPEMS/lib/src/rls.rs) | 行级安全中间件 |
-| **权限** | [lib/src/permission.rs](file:///Users/xingzhai/TOPEMS/lib/src/permission.rs) | 模块/资源/数据权限模型 |
-| **租户** | [lib/src/tenant.rs](file:///Users/xingzhai/TOPEMS/lib/src/tenant.rs) | 多租户上下文、租户管理 |
-| **健康检查** | [lib/src/health.rs](file:///Users/xingzhai/TOPEMS/lib/src/health.rs) | 健康检查框架与指标 |
-| **事件** | [lib/src/event/](file:///Users/xingzhai/TOPEMS/lib/src/event/) | Redis/RabbitMQ 事件总线、MasterDataEvent |
-| **配置** | [lib/src/config.rs](file:///Users/xingzhai/TOPEMS/lib/src/config.rs) | 配置加载、端口默认值 |
-| **服务配置** | [lib/src/service_config.rs](file:///Users/xingzhai/TOPEMS/lib/src/service_config.rs) | `ServiceConfigRegistry` 集中化配置 |
-| **服务发现** | [lib/src/service_discovery.rs](file:///Users/xingzhai/TOPEMS/lib/src/service_discovery.rs) | Consul 注册/发现 + `SmartServiceClient` |
-| **服务客户端** | [lib/src/service_client.rs](file:///Users/xingzhai/TOPEMS/lib/src/service_client.rs) | 跨服务 HTTP 客户端工厂 |
-| **遥测** | [lib/src/telemetry.rs](file:///Users/xingzhai/TOPEMS/lib/src/telemetry.rs) | OpenTelemetry 初始化、trace/span 注入 |
-| **存储** | [lib/src/storage.rs](file:///Users/xingzhai/TOPEMS/lib/src/storage.rs) | 文件存储抽象 |
-| **向量存储** | [lib/src/vector_store.rs](file:///Users/xingzhai/TOPEMS/lib/src/vector_store.rs) | Redis 向量搜索 |
-| **AI 客户端** | [lib/src/ai_client/](file:///Users/xingzhai/TOPEMS/lib/src/ai_client/) | Ollama / Embedding 客户端 |
-| **Saga** | [lib/src/saga/](file:///Users/xingzhai/TOPEMS/lib/src/saga/) | 分布式 Saga 编排 |
-| **🆕 Shared Bootstrap（V2 三段式，28/28 = 100%）** | [lib/shared-bootstrap/src/lib.rs](file:///Users/xingzhai/TOPEMS/lib/shared-bootstrap/src/lib.rs) | `ServiceConfig → bootstrap_service → build_application → run` 四 API 统一启动模板；三种复杂度模式 A/B/C；auth/rls/rate-limit/CORS/Prometheus 零差异 |
+| **认证** | [lib/src/auth.rs](file:///Users/air/TOPEMS/lib/src/auth.rs) | JWT 生成/验证、认证中间件、Claims、权限检查 |
+| **数据库** | [lib/src/database.rs](file:///Users/air/TOPEMS/lib/src/database.rs) | PgPool 连接池管理、健康检查、读写分离 |
+| **缓存** | [lib/src/cache.rs](file:///Users/air/TOPEMS/lib/src/cache.rs) | 内存缓存、多级缓存、缓存预热 |
+| **响应** | [lib/src/response.rs](file:///Users/air/TOPEMS/lib/src/response.rs) | 统一 API 响应格式 `ApiResponse<T>`、分页响应 |
+| **Schema** | [lib/src/schema.rs](file:///Users/air/TOPEMS/lib/src/schema.rs) | 多 Schema 表名构建器 (`with_schema`) |
+| **RLS** | [lib/src/rls.rs](file:///Users/air/TOPEMS/lib/src/rls.rs) | 行级安全中间件 |
+| **权限** | [lib/src/permission.rs](file:///Users/air/TOPEMS/lib/src/permission.rs) | 模块/资源/数据权限模型 |
+| **租户** | [lib/src/tenant.rs](file:///Users/air/TOPEMS/lib/src/tenant.rs) | 多租户上下文、租户管理 |
+| **健康检查** | [lib/src/health.rs](file:///Users/air/TOPEMS/lib/src/health.rs) | 健康检查框架与指标 |
+| **事件** | [lib/src/event/](file:///Users/air/TOPEMS/lib/src/event/) | Redis/RabbitMQ 事件总线、MasterDataEvent |
+| **配置** | [lib/src/config.rs](file:///Users/air/TOPEMS/lib/src/config.rs) | 配置加载、端口默认值 |
+| **服务配置** | [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs) | `ServiceConfigRegistry` 集中化配置 |
+| **服务发现** | [lib/src/service_discovery.rs](file:///Users/air/TOPEMS/lib/src/service_discovery.rs) | Consul 注册/发现 + `SmartServiceClient` |
+| **服务客户端** | [lib/src/service_client.rs](file:///Users/air/TOPEMS/lib/src/service_client.rs) | 跨服务 HTTP 客户端工厂 |
+| **遥测** | [lib/src/telemetry.rs](file:///Users/air/TOPEMS/lib/src/telemetry.rs) | OpenTelemetry 初始化、trace/span 注入 |
+| **存储** | [lib/src/storage.rs](file:///Users/air/TOPEMS/lib/src/storage.rs) | 文件存储抽象 |
+| **向量存储** | [lib/src/vector_store.rs](file:///Users/air/TOPEMS/lib/src/vector_store.rs) | Redis 向量搜索 |
+| **AI 客户端** | [lib/src/ai_client/](file:///Users/air/TOPEMS/lib/src/ai_client/) | Ollama / Embedding 客户端 |
+| **Saga** | [lib/src/saga/](file:///Users/air/TOPEMS/lib/src/saga/) | 分布式 Saga 编排 |
+| **🆕 Shared Bootstrap（V2 三段式，28/28 = 100%）** | [lib/shared-bootstrap/src/lib.rs](file:///Users/air/TOPEMS/lib/shared-bootstrap/src/lib.rs) | `ServiceConfig → bootstrap_service → build_application → run` 四 API 统一启动模板；三种复杂度模式 A/B/C；auth/rls/rate-limit/CORS/Prometheus 零差异 |
 
 ### 3.5 服务启动流程（V66.2 V2 统一模板，28/28 服务 100%）
 
@@ -379,13 +379,13 @@ run(app).await?;
 
 | 组件 | 文件路径 | 职责 |
 |------|---------|------|
-| 插件运行时 | [svc/unified-core/src/modules/plugin/handlers/runtime.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs) | 插件注册、安全令牌验证、心跳、导航配置 API |
-| 租户插件管理 | [svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs) | 插件安装/卸载依赖检查（正向 + 反向） |
-| 插件数据模型 | [svc/unified-core/src/modules/plugin/models.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/models.rs) | `RegisterPluginRequest` 含 `dependencies`、`navigation_config` |
-| 心跳检测 | [svc/unified-core/src/main.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/main.rs) | 后台任务每 30 秒扫描，90 秒超时标记 offline |
-| 插件代理 | [svc/unified-core/src/handlers.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/handlers.rs) | `/api/plugins/{plugin_code}/{*path}` 转发到插件 runtime_url |
-| 服务配置 | [lib/src/service_config.rs](file:///Users/xingzhai/TOPEMS/lib/src/service_config.rs) | `ServiceConfigRegistry` 统一管理端口与地址 |
-| 服务发现 | [lib/src/service_discovery.rs](file:///Users/xingzhai/TOPEMS/lib/src/service_discovery.rs) | Consul + 环境变量回退 |
+| 插件运行时 | [svc/unified-core/src/modules/plugin/handlers/runtime.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs) | 插件注册、安全令牌验证、心跳、导航配置 API |
+| 租户插件管理 | [svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs) | 插件安装/卸载依赖检查（正向 + 反向） |
+| 插件数据模型 | [svc/unified-core/src/modules/plugin/models.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/models.rs) | `RegisterPluginRequest` 含 `dependencies`、`navigation_config` |
+| 心跳检测 | [svc/unified-core/src/main.rs](file:///Users/air/TOPEMS/svc/unified-core/src/main.rs) | 后台任务每 30 秒扫描，90 秒超时标记 offline |
+| 插件代理 | [svc/unified-core/src/handlers.rs](file:///Users/air/TOPEMS/svc/unified-core/src/handlers.rs) | `/api/plugins/{plugin_code}/{*path}` 转发到插件 runtime_url |
+| 服务配置 | [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs) | `ServiceConfigRegistry` 统一管理端口与地址 |
+| 服务发现 | [lib/src/service_discovery.rs](file:///Users/air/TOPEMS/lib/src/service_discovery.rs) | Consul + 环境变量回退 |
 
 #### 3.6.2 插件注册安全流程
 
@@ -514,7 +514,7 @@ App.tsx
 #### 4.3.1 动态路由与微前端加载
 
 - 访问模块时按需加载对应路由/远程模块。
-- `REMOTE_MODULES` 在 [apps/web/src/microfrontend/config.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/microfrontend/config.ts) 中定义。
+- `REMOTE_MODULES` 在 [apps/web/src/microfrontend/config.ts](file:///Users/air/TOPEMS/apps/web/src/microfrontend/config.ts) 中定义。
 - `vite.config.ts` 根据 `VITE_DEPLOYMENT_MODE` 决定启用哪些 remote:
   - `static`: 不加载任何 remote，所有模块本地打包。
   - `module-federation` / `hybrid`: 启用 `topems_core` 等 remote。
@@ -536,15 +536,15 @@ Vite Proxy / Nginx
 ```
 
 核心文件:
-- [apps/web/src/api/client.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/client.ts) - `ApiClient` 单例，按服务名维护 Axios 实例
-- [apps/web/src/api/index.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/index.ts) - 统一 barrel export
-- [apps/web/src/hooks/useCrudQueries.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/hooks/useCrudQueries.ts) - 通用 CRUD React Query 封装
+- [apps/web/src/api/client.ts](file:///Users/air/TOPEMS/apps/web/src/api/client.ts) - `ApiClient` 单例，按服务名维护 Axios 实例
+- [apps/web/src/api/index.ts](file:///Users/air/TOPEMS/apps/web/src/api/index.ts) - 统一 barrel export
+- [apps/web/src/hooks/useCrudQueries.ts](file:///Users/air/TOPEMS/apps/web/src/hooks/useCrudQueries.ts) - 通用 CRUD React Query 封装
 
 > **注意**: `@tanstack/react-query` 在 Module Federation shared 中配置为 `singleton: true`，防止多实例。
 
 #### 4.3.3 Vite 代理配置
 
-开发环境代理规则集中在 [apps/web/vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts):
+开发环境代理规则集中在 [apps/web/vite.config.ts](file:///Users/air/TOPEMS/apps/web/vite.config.ts):
 
 - `/api/core/*` → `http://localhost:8000` (unified-core)，无 rewrite
 - `/api/erp/*` → `http://localhost:8010`，无 rewrite
@@ -578,11 +578,11 @@ JWT Token → 解析 permissions → authStore → usePermission → UI 渲染
 
 | Store | 文件 | 管理状态 |
 |-------|------|---------|
-| authStore | [store/authStore.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/store/authStore.ts) | 用户、Token、权限 |
-| uiStore | [store/uiStore.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/store/uiStore.ts) | 侧边栏、对话框、加载 |
-| themeStore | [store/themeStore.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/store/themeStore.ts) | 主题、暗色模式 |
-| notificationStore | [store/notificationStore.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/store/notificationStore.ts) | 通知列表、未读数 |
-| pluginStore | [store/pluginStore.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/store/pluginStore.ts) | 插件列表、安装状态 |
+| authStore | [store/authStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/authStore.ts) | 用户、Token、权限 |
+| uiStore | [store/uiStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/uiStore.ts) | 侧边栏、对话框、加载 |
+| themeStore | [store/themeStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/themeStore.ts) | 主题、暗色模式 |
+| notificationStore | [store/notificationStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/notificationStore.ts) | 通知列表、未读数 |
+| pluginStore | [store/pluginStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/pluginStore.ts) | 插件列表、安装状态 |
 
 ### 4.5 React Query 标准模式
 
@@ -642,7 +642,7 @@ const { data: ticketsData, isLoading } = useQuery({
 | plugin_mobile | Mobile | 移动服务 |
 | plugin_portal | Portal | 企业门户 |
 
-Schema 构建器: [lib/src/schema.rs](file:///Users/xingzhai/TOPEMS/lib/src/schema.rs)
+Schema 构建器: [lib/src/schema.rs](file:///Users/air/TOPEMS/lib/src/schema.rs)
 
 ### 5.3 核心表结构
 
@@ -684,7 +684,7 @@ Schema 构建器: [lib/src/schema.rs](file:///Users/xingzhai/TOPEMS/lib/src/sche
 
 ### 6.1 统一核心服务 (Unified Core)
 
-**端口**: 8000 | **路径**: [svc/unified-core/](file:///Users/xingzhai/TOPEMS/svc/unified-core/)
+**端口**: 8000 | **路径**: [svc/unified-core/](file:///Users/air/TOPEMS/svc/unified-core/)
 
 | 子模块 | 目录 | 功能描述 |
 |--------|------|---------|
@@ -744,7 +744,7 @@ pub struct Claims {
 
 | 结构体 | 文件 | 说明 |
 |--------|------|------|
-| `Ticket` | [svc/unified-core/src/modules/ticket/models.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/ticket/models.rs) | 工单主表 |
+| `Ticket` | [svc/unified-core/src/modules/ticket/models.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/models.rs) | 工单主表 |
 | `TicketStatus` / `TicketSeverity` / `TicketType` | models.rs | 枚举状态、严重级别、类型 |
 | `TicketComment` | models.rs | 工单评论 |
 | `TicketActivity` | models.rs | 操作日志 |
@@ -755,7 +755,7 @@ pub struct Claims {
 
 #### 6.3.3 SLA 计算逻辑
 
-SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs)
+SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs)
 
 关键方法:
 
@@ -777,7 +777,7 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 | medium | 8 小时 | 72 小时 |
 | low | 24 小时 | 168 小时 |
 
-> **实现注意**: `calculate_due_time` 支持仅工作时间、排除周末与自定义营业时段，因此 `sla_due_at` 与 `response_due_at` 会按策略正确递进。但 [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L250-L303) 中的 `check_and_escalate` 目前直接使用 `ticket.created_at + escalation_hours` 计算升级点，未复用工作时间逻辑；当策略开启 `working_hours_only` 或 `weekend_excluded` 时，升级触发点可能与解决截止时间不一致，需要后续对齐。
+> **实现注意**: `calculate_due_time` 支持仅工作时间、排除周末与自定义营业时段，因此 `sla_due_at` 与 `response_due_at` 会按策略正确递进。但 [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L250-L303) 中的 `check_and_escalate` 目前直接使用 `ticket.created_at + escalation_hours` 计算升级点，未复用工作时间逻辑；当策略开启 `working_hours_only` 或 `weekend_excluded` 时，升级触发点可能与解决截止时间不一致，需要后续对齐。
 
 #### 6.3.4 SLA API 端点
 
@@ -803,9 +803,9 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 | GET/POST | `/api/portal/tickets/{id}/comments` | 评论列表/添加 |
 | GET | `/api/portal/tickets/stats` | 工单统计 |
 
-> **缺口**: Portal BFF 当前仅代理了工单基础路径。在 [svc/portal/src/main.rs](file:///Users/xingzhai/TOPEMS/svc/portal/src/main.rs#L325-L337) 中只注册了 `/tickets`、`/tickets/{id}`、`/tickets/{id}/comments`、`/tickets/stats`，对应的 [svc/portal/src/modules/tickets.rs](file:///Users/xingzhai/TOPEMS/svc/portal/src/modules/tickets.rs) 也只实现了这些路径的转发。
+> **缺口**: Portal BFF 当前仅代理了工单基础路径。在 [svc/portal/src/main.rs](file:///Users/air/TOPEMS/svc/portal/src/main.rs#L325-L337) 中只注册了 `/tickets`、`/tickets/{id}`、`/tickets/{id}/comments`、`/tickets/stats`，对应的 [svc/portal/src/modules/tickets.rs](file:///Users/air/TOPEMS/svc/portal/src/modules/tickets.rs) 也只实现了这些路径的转发。
 >
-> 因此 [apps/web/src/api/ticket/index.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/ticket/index.ts) 中的 `getTicketSla`、`triggerSlaEscalation`、`getSlaStats`、`listSlaPolicies`、`getSlaPolicy`、`createSlaPolicy`、`updateSlaPolicy`、`deleteSlaPolicy` 都会返回 **404**。需要新增以下 Portal 代理并注册进 `protected_routes`：
+> 因此 [apps/web/src/api/ticket/index.ts](file:///Users/air/TOPEMS/apps/web/src/api/ticket/index.ts) 中的 `getTicketSla`、`triggerSlaEscalation`、`getSlaStats`、`listSlaPolicies`、`getSlaPolicy`、`createSlaPolicy`、`updateSlaPolicy`、`deleteSlaPolicy` 都会返回 **404**。需要新增以下 Portal 代理并注册进 `protected_routes`：
 >
 > | 方法 | Portal 路径 | 转发目标 |
 > |------|-------------|----------|
@@ -818,7 +818,7 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 
 #### 6.3.5 前端 SLA 展示
 
-页面: [apps/web/src/pages/ticket/TicketCenterPage.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/ticket/TicketCenterPage.tsx)
+页面: [apps/web/src/pages/ticket/TicketCenterPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/ticket/TicketCenterPage.tsx)
 
 - 列表新增 **SLA 列**，根据 `sla_due_at` 显示剩余时间或已超时时间，颜色区分 `error`/`warning`/`default`。
 - 详情对话框调用 `ticketApi.getTicketSla(id)` 展示:
@@ -879,7 +879,7 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 
 #### 7.1.1 认证模块
 
-**文件**: [lib/src/auth.rs](file:///Users/xingzhai/TOPEMS/lib/src/auth.rs)
+**文件**: [lib/src/auth.rs](file:///Users/air/TOPEMS/lib/src/auth.rs)
 
 | 函数/结构体 | 签名 | 说明 |
 |------------|------|------|
@@ -892,7 +892,7 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 
 #### 7.1.2 数据库与连接池
 
-**文件**: [lib/src/database.rs](file:///Users/xingzhai/TOPEMS/lib/src/database.rs)
+**文件**: [lib/src/database.rs](file:///Users/air/TOPEMS/lib/src/database.rs)
 
 | 函数 | 签名 | 说明 |
 |------|------|------|
@@ -902,7 +902,7 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 
 #### 7.1.3 响应与分页
 
-**文件**: [lib/src/response.rs](file:///Users/xingzhai/TOPEMS/lib/src/response.rs)
+**文件**: [lib/src/response.rs](file:///Users/air/TOPEMS/lib/src/response.rs)
 
 | 结构体/函数 | 说明 |
 |------------|------|
@@ -915,13 +915,13 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 
 | 文件 | 函数/结构体 | 说明 |
 |------|------------|------|
-| [lib/src/rls.rs](file:///Users/xingzhai/TOPEMS/lib/src/rls.rs) | `rls_middleware` | 行级安全中间件 |
-| [lib/src/tenant.rs](file:///Users/xingzhai/TOPEMS/lib/src/tenant.rs) | `TenantContext`, `TenantManager` | 租户上下文与管理 |
-| [svc/unified-core/src/middleware/tenant_rls.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/middleware/tenant_rls.rs) | `tenant_rls_middleware` | unified-core 租户注入 |
+| [lib/src/rls.rs](file:///Users/air/TOPEMS/lib/src/rls.rs) | `rls_middleware` | 行级安全中间件 |
+| [lib/src/tenant.rs](file:///Users/air/TOPEMS/lib/src/tenant.rs) | `TenantContext`, `TenantManager` | 租户上下文与管理 |
+| [svc/unified-core/src/middleware/tenant_rls.rs](file:///Users/air/TOPEMS/svc/unified-core/src/middleware/tenant_rls.rs) | `tenant_rls_middleware` | unified-core 租户注入 |
 
 #### 7.1.5 插件架构
 
-**文件**: [svc/unified-core/src/modules/plugin/handlers/runtime.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs)
+**文件**: [svc/unified-core/src/modules/plugin/handlers/runtime.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs)
 
 | 函数 | 说明 |
 |------|------|
@@ -930,7 +930,7 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 | `heartbeat` | 心跳更新 |
 | `get_navigation_config` | 返回聚合导航配置 |
 
-**文件**: [svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs)
+**文件**: [svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs)
 
 | 函数 | 说明 |
 |------|------|
@@ -939,7 +939,7 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 
 #### 7.1.6 SLA 服务
 
-**文件**: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs)
+**文件**: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs)
 
 | 函数 | 说明 |
 |------|------|
@@ -953,15 +953,15 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 
 | 文件 | 结构体/函数 | 说明 |
 |------|------------|------|
-| [lib/src/service_discovery.rs](file:///Users/xingzhai/TOPEMS/lib/src/service_discovery.rs) | `SmartServiceClient`, `ConsulDiscoveryClient`, `ConsulServiceRegistrar` | 服务发现与注册 |
-| [lib/src/service_config.rs](file:///Users/xingzhai/TOPEMS/lib/src/service_config.rs) | `ServiceConfigRegistry`, `ServiceDefinition` | 集中化服务配置 |
-| [lib/src/service_client.rs](file:///Users/xingzhai/TOPEMS/lib/src/service_client.rs) | `create_*_client`, `BaseServiceClient` | 跨服务调用客户端 |
+| [lib/src/service_discovery.rs](file:///Users/air/TOPEMS/lib/src/service_discovery.rs) | `SmartServiceClient`, `ConsulDiscoveryClient`, `ConsulServiceRegistrar` | 服务发现与注册 |
+| [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs) | `ServiceConfigRegistry`, `ServiceDefinition` | 集中化服务配置 |
+| [lib/src/service_client.rs](file:///Users/air/TOPEMS/lib/src/service_client.rs) | `create_*_client`, `BaseServiceClient` | 跨服务调用客户端 |
 
 ### 7.2 前端核心 (TypeScript)
 
 #### 7.2.1 API 客户端
 
-**文件**: [apps/web/src/api/client.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/client.ts)
+**文件**: [apps/web/src/api/client.ts](file:///Users/air/TOPEMS/apps/web/src/api/client.ts)
 
 | 类型/函数 | 说明 |
 |----------|------|
@@ -975,12 +975,12 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 
 | 文件 | Hook/函数 | 说明 |
 |------|----------|------|
-| [apps/web/src/hooks/useAuth.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/hooks/useAuth.tsx) | `useAuth()` | 认证状态与登录/登出 |
-| [apps/web/src/hooks/usePermission.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/hooks/usePermission.ts) | `usePermission()` | 权限检查 |
+| [apps/web/src/hooks/useAuth.tsx](file:///Users/air/TOPEMS/apps/web/src/hooks/useAuth.tsx) | `useAuth()` | 认证状态与登录/登出 |
+| [apps/web/src/hooks/usePermission.ts](file:///Users/air/TOPEMS/apps/web/src/hooks/usePermission.ts) | `usePermission()` | 权限检查 |
 
 #### 7.2.3 CRUD Hook
 
-**文件**: [apps/web/src/hooks/useCrudQueries.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/hooks/useCrudQueries.ts)
+**文件**: [apps/web/src/hooks/useCrudQueries.ts](file:///Users/air/TOPEMS/apps/web/src/hooks/useCrudQueries.ts)
 
 | Hook | 说明 |
 |------|------|
@@ -988,7 +988,7 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 
 #### 7.2.4 工单 API
 
-**文件**: [apps/web/src/api/ticket/index.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/ticket/index.ts)
+**文件**: [apps/web/src/api/ticket/index.ts](file:///Users/air/TOPEMS/apps/web/src/api/ticket/index.ts)
 
 | 函数 | 说明 |
 |------|------|
@@ -1005,7 +1005,7 @@ SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/x
 
 #### 7.3.1 前端运行时配置
 
-**文件**: [apps/web/src/config/runtime.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/config/runtime.ts)
+**文件**: [apps/web/src/config/runtime.ts](file:///Users/air/TOPEMS/apps/web/src/config/runtime.ts)
 
 ```typescript
 interface RuntimeConfig {
@@ -1022,9 +1022,9 @@ interface RuntimeConfig {
 #### 7.3.2 服务端口配置
 
 权威来源:
-- [config/ports.env](file:///Users/xingzhai/TOPEMS/config/ports.env)
-- [config/services.yaml](file:///Users/xingzhai/TOPEMS/config/services.yaml)
-- [lib/src/service_config.rs](file:///Users/xingzhai/TOPEMS/lib/src/service_config.rs)
+- [config/ports.env](file:///Users/air/TOPEMS/config/ports.env)
+- [config/services.yaml](file:///Users/air/TOPEMS/config/services.yaml)
+- [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs)
 
 ---
 
@@ -1032,7 +1032,7 @@ interface RuntimeConfig {
 
 ### 8.1 后端依赖 (Cargo Workspace)
 
-**Workspace 配置**: [Cargo.toml](file:///Users/xingzhai/TOPEMS/Cargo.toml)
+**Workspace 配置**: [Cargo.toml](file:///Users/air/TOPEMS/Cargo.toml)
 
 #### 核心依赖
 
@@ -1073,7 +1073,7 @@ unified-core (核心)
 
 ### 8.2 前端依赖
 
-**根配置**: [package.json](file:///Users/xingzhai/TOPEMS/package.json)
+**根配置**: [package.json](file:///Users/air/TOPEMS/package.json)
 
 #### 核心依赖
 
@@ -1198,7 +1198,7 @@ cargo run
 
 ### 9.3 Docker 部署
 
-**文件**: [docker/docker-compose.yml](file:///Users/xingzhai/TOPEMS/docker/docker-compose.yml)
+**文件**: [docker/docker-compose.yml](file:///Users/air/TOPEMS/docker/docker-compose.yml)
 
 基础设施服务:
 - PostgreSQL
@@ -1223,7 +1223,7 @@ docker compose up -d
 
 ### 9.4 Kubernetes 部署
 
-**配置目录**: [k8s/](file:///Users/xingzhai/TOPEMS/k8s/)
+**配置目录**: [k8s/](file:///Users/air/TOPEMS/k8s/)
 
 ```
 k8s/
@@ -1557,8 +1557,8 @@ pnpm run typecheck               # 类型检查
 
 > **V51.0 已修复**: 两项断点均已闭环，详情见下。
 
-- ~~**Portal BFF 代理缺口**~~: 已在 [svc/portal/src/main.rs#L341-L370](file:///Users/xingzhai/TOPEMS/svc/portal/src/main.rs#L341-L370) 注册 `/tickets/{id}/sla`、`/tickets/sla-stats`、`/sla-policies*` 全部代理路由，handler 实现于 [svc/portal/src/modules/tickets.rs](file:///Users/xingzhai/TOPEMS/svc/portal/src/modules/tickets.rs#L248-L400)。前端 [ticketApi](file:///Users/xingzhai/TOPEMS/apps/web/src/api/ticket/index.ts) 相关调用现已可达。
-- ~~**升级计算未对齐工作时间**~~: [sla_service.rs#L283-L291](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L283-L291) 的 `check_and_escalate` 已复用 `Self::calculate_due_time`，传入 `working_hours_only`/`business_hours_start`/`business_hours_end`/`weekend_excluded`，升级触发点与 SLA 截止时间计算现已一致。
+- ~~**Portal BFF 代理缺口**~~: 已在 [svc/portal/src/main.rs#L341-L370](file:///Users/air/TOPEMS/svc/portal/src/main.rs#L341-L370) 注册 `/tickets/{id}/sla`、`/tickets/sla-stats`、`/sla-policies*` 全部代理路由，handler 实现于 [svc/portal/src/modules/tickets.rs](file:///Users/air/TOPEMS/svc/portal/src/modules/tickets.rs#L248-L400)。前端 [ticketApi](file:///Users/air/TOPEMS/apps/web/src/api/ticket/index.ts) 相关调用现已可达。
+- ~~**升级计算未对齐工作时间**~~: [sla_service.rs#L283-L291](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L283-L291) 的 `check_and_escalate` 已复用 `Self::calculate_due_time`，传入 `working_hours_only`/`business_hours_start`/`business_hours_end`/`weekend_excluded`，升级触发点与 SLA 截止时间计算现已一致。
 
 **遗留建议:**
 - 为 SLA 相关路径补充契约测试与集成测试，避免后端已上线但 BFF 未代理的断点再次发生。
@@ -1566,7 +1566,7 @@ pnpm run typecheck               # 类型检查
 
 #### 11.2.10 BI 模块存在 SQL 注入风险（严重 🔴）
 
-- [svc/analytics/src/modules/bi/chart_service.rs#L103](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103) 与 [multidimensional_analysis.rs#L332](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332) 使用 `format!("SELECT {} FROM {}", x_column, data_source)` 直接拼接用户输入到 SQL，攻击者可通过 `data_source`/`x_column` 参数注入任意 SQL。
+- [svc/analytics/src/modules/bi/chart_service.rs#L103](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103) 与 [multidimensional_analysis.rs#L332](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332) 使用 `format!("SELECT {} FROM {}", x_column, data_source)` 直接拼接用户输入到 SQL，攻击者可通过 `data_source`/`x_column` 参数注入任意 SQL。
 - 当前未对 `data_source`（表名）与 `x_column`（列名）做白名单校验，也未使用参数化查询。
 
 **优化建议:**
@@ -1576,7 +1576,7 @@ pnpm run typecheck               # 类型检查
 
 #### 11.2.11 JWT 使用 HS256 对称密钥与默认密钥风险（高 🟠）
 
-- [lib/src/auth.rs#L69-L96](file:///Users/xingzhai/TOPEMS/lib/src/auth.rs#L69-L96) 所有服务共享同一 `JWT_SECRET`（HS256 对称加密），单点泄露即可伪造任意租户/用户的 token。
+- [lib/src/auth.rs#L69-L96](file:///Users/air/TOPEMS/lib/src/auth.rs#L69-L96) 所有服务共享同一 `JWT_SECRET`（HS256 对称加密），单点泄露即可伪造任意租户/用户的 token。
 - 未设置 `JWT_SECRET` 环境变量时回退到硬编码默认密钥（`topems-jwt-secret-key-...`），生产环境若忘配置将造成严重安全事故。
 
 **优化建议:**
@@ -1586,7 +1586,7 @@ pnpm run typecheck               # 类型检查
 
 #### 11.2.12 插件注册令牌默认放行（中 🟡）
 
-- [svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23) 未配置 `PLUGIN_REGISTRATION_TOKEN` 时允许所有插件注册（开发模式），若生产环境漏配将导致恶意插件注册。
+- [svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23) 未配置 `PLUGIN_REGISTRATION_TOKEN` 时允许所有插件注册（开发模式），若生产环境漏配将导致恶意插件注册。
 
 **优化建议:**
 - 区分 `PROFILE=prod` 时强制要求 `PLUGIN_REGISTRATION_TOKEN`，未配置则启动失败。

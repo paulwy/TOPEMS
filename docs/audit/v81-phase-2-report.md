@@ -36,9 +36,9 @@ V81 Phase 2 聚焦于 **Portal 编译修复**、**TOP7 大 Page 深度拆分**�
 
 | 文件 | 操作 |
 |------|------|
-| [middleware/mod.rs](file:///Users/xingzhai/TOPEMS/svc/portal/src/middleware/mod.rs) | 合并 apply_middleware + 泛型化 |
-| [middleware.rs](file:///Users/xingzhai/TOPEMS/svc/portal/src/middleware.rs) | 删除 |
-| [main.rs](file:///Users/xingzhai/TOPEMS/svc/portal/src/main.rs) | 更新调用方式 |
+| [middleware/mod.rs](file:///Users/air/TOPEMS/svc/portal/src/middleware/mod.rs) | 合并 apply_middleware + 泛型化 |
+| [middleware.rs](file:///Users/air/TOPEMS/svc/portal/src/middleware.rs) | 删除 |
+| [main.rs](file:///Users/air/TOPEMS/svc/portal/src/main.rs) | 更新调用方式 |
 
 ---
 

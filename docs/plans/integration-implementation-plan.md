@@ -3,7 +3,7 @@
 > **版本**: v1.0 | **日期**: 2026-07-24 | **目标**: 4-6 周内完成基本成熟产品上线
 > **首要任务**: 认证闭环 · 登录可用 · 功能提供 · 业务实现
 > **策略**: 多任务并行 · 修复即交付 · 每 Sprint 可演示
-> **配套文档**: [SHORTCOMINGS-ANALYSIS-REPORT.md](file:///Users/xingzhai/TOPEMS/docs/SHORTCOMINGS-ANALYSIS-REPORT.md) · [CODE_WIKI.md](file:///Users/xingzhai/TOPEMS/docs/CODE_WIKI.md)
+> **配套文档**: [SHORTCOMINGS-ANALYSIS-REPORT.md](file:///Users/air/TOPEMS/docs/SHORTCOMINGS-ANALYSIS-REPORT.md) · [CODE_WIKI.md](file:///Users/air/TOPEMS/docs/CODE_WIKI.md)
 
 ---
 
@@ -87,14 +87,14 @@ Week 5-6 | Sprint 3: 上线就绪 + 监控 + E2E
 | 领域 | 现状 | 证据 |
 |------|------|------|
 | 后端业务服务 | 17 个服务全部真实实现，无空骨架 | ERP 434 路由、Portal 439 路由、Finance 393 路由 |
-| 前端业务页面 | 350+ 页面，仅 1 处 mock | 仅 [WorkflowMonitorPage.tsx#L75](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/workflow/WorkflowMonitorPage.tsx#L75) 有 MOCK_DATA |
-| Portal BFF | 36 模块全部真实代理/聚合 | [tickets.rs](file:///Users/xingzhai/TOPEMS/svc/portal/src/modules/tickets.rs)、[dashboard.rs](file:///Users/xingzhai/TOPEMS/svc/portal/src/modules/dashboard.rs) 真实 HTTP 转发 |
-| 登录主流程 | 用户名+密码→JWT→跳转可用 | [auth.rs#L64](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/iam/auth.rs#L64) + [LoginPage.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/shared/LoginPage.tsx) |
-| Token 刷新 | 5 分钟定时刷新可用 | [useAuth.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/hooks/useAuth.tsx) |
-| 路由守卫主体 | ProtectedRoute 覆盖业务路由 | [ProtectedRoute.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/components/auth/ProtectedRoute.tsx) |
-| API 客户端 | 35+ 服务实例、401 智能处理 | [client.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/client.ts) |
-| React Query | 完整 QueryClient + QUERY_KEYS | [reactQuery.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/lib/reactQuery.ts) |
-| 微前端 | 19 远程模块清单 + Federation shared | [microfrontend/config.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/microfrontend/config.ts) |
+| 前端业务页面 | 350+ 页面，仅 1 处 mock | 仅 [WorkflowMonitorPage.tsx#L75](file:///Users/air/TOPEMS/apps/web/src/pages/workflow/WorkflowMonitorPage.tsx#L75) 有 MOCK_DATA |
+| Portal BFF | 36 模块全部真实代理/聚合 | [tickets.rs](file:///Users/air/TOPEMS/svc/portal/src/modules/tickets.rs)、[dashboard.rs](file:///Users/air/TOPEMS/svc/portal/src/modules/dashboard.rs) 真实 HTTP 转发 |
+| 登录主流程 | 用户名+密码→JWT→跳转可用 | [auth.rs#L64](file:///Users/air/TOPEMS/svc/unified-core/src/modules/iam/auth.rs#L64) + [LoginPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/shared/LoginPage.tsx) |
+| Token 刷新 | 5 分钟定时刷新可用 | [useAuth.tsx](file:///Users/air/TOPEMS/apps/web/src/hooks/useAuth.tsx) |
+| 路由守卫主体 | ProtectedRoute 覆盖业务路由 | [ProtectedRoute.tsx](file:///Users/air/TOPEMS/apps/web/src/components/auth/ProtectedRoute.tsx) |
+| API 客户端 | 35+ 服务实例、401 智能处理 | [client.ts](file:///Users/air/TOPEMS/apps/web/src/api/client.ts) |
+| React Query | 完整 QueryClient + QUERY_KEYS | [reactQuery.ts](file:///Users/air/TOPEMS/apps/web/src/lib/reactQuery.ts) |
+| 微前端 | 19 远程模块清单 + Federation shared | [microfrontend/config.ts](file:///Users/air/TOPEMS/apps/web/src/microfrontend/config.ts) |
 
 ### 2.2 阻断上线的缺口（必须修复）
 
@@ -129,7 +129,7 @@ Week 5-6 | Sprint 3: 上线就绪 + 监控 + E2E
 
 #### A1. 修复 BI 模块 SQL 注入（P0，绑定 BI 自助分析上线）
 
-**文件**: [svc/analytics/src/modules/bi/chart_service.rs](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103) · [multidimensional_analysis.rs](file:///Users/xingzhai/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332)
+**文件**: [svc/analytics/src/modules/bi/chart_service.rs](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103) · [multidimensional_analysis.rs](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332)
 
 **改动**:
 1. 新建 `bi_datasets` 元数据表（`id, tenant_id, table_name, allowed_columns JSONB`）
@@ -141,7 +141,7 @@ Week 5-6 | Sprint 3: 上线就绪 + 监控 + E2E
 
 #### A2. 移除 JWT 默认密钥回退（P1 止血，绑定生产部署可用）
 
-**文件**: [lib/src/auth.rs#L94-L117](file:///Users/xingzhai/TOPEMS/lib/src/auth.rs#L94-L117)
+**文件**: [lib/src/auth.rs#L94-L117](file:///Users/air/TOPEMS/lib/src/auth.rs#L94-L117)
 
 **改动**:
 ```rust
@@ -163,7 +163,7 @@ let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
 
 #### A3. 插件注册令牌生产强制校验（P1，绑定插件市场安全基础）
 
-**文件**: [svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23)
+**文件**: [svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23)
 
 **改动**: `PROFILE=prod` 且 `PLUGIN_REGISTRATION_TOKEN` 未配置时返回 `false` 并 `error!`
 
@@ -171,7 +171,7 @@ let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
 
 #### A4. 关闭 DEVELOPMENT_MODE 生产风险（P1，绑定认证安全）
 
-**文件**: [lib/src/auth.rs#L613-L639](file:///Users/xingzhai/TOPEMS/lib/src/auth.rs#L613-L639)
+**文件**: [lib/src/auth.rs#L613-L639](file:///Users/air/TOPEMS/lib/src/auth.rs#L613-L639)
 
 **改动**: `DEVELOPMENT_MODE=true` 仅在 `PROFILE != prod` 时生效；prod 环境强制忽略该环境变量
 
@@ -179,7 +179,7 @@ let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
 
 #### A5. 统一后端 User 模型（P2，绑定认证数据一致性）
 
-**文件**: [svc/unified-core/src/modules/iam/auth.rs#L28-L40](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/iam/auth.rs#L28-L40) · [iam/user/models.rs#L65-L74](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/iam/user/models.rs#L65-L74)
+**文件**: [svc/unified-core/src/modules/iam/auth.rs#L28-L40](file:///Users/air/TOPEMS/svc/unified-core/src/modules/iam/auth.rs#L28-L40) · [iam/user/models.rs#L65-L74](file:///Users/air/TOPEMS/svc/unified-core/src/modules/iam/user/models.rs#L65-L74)
 
 **改动**:
 1. 统一 `UserRow` 字段（`is_active` vs `status` 二选一，推荐 `status` 兼容前端）
@@ -192,7 +192,7 @@ let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
 
 #### B1. 修复忘记密码端点不匹配（P0，绑定密码找回可用）
 
-**文件**: [apps/web/src/api/iam/auth.ts#L57-L63](file:///Users/xingzhai/TOPEMS/apps/web/src/api/iam/auth.ts#L57-L63)
+**文件**: [apps/web/src/api/iam/auth.ts#L57-L63](file:///Users/air/TOPEMS/apps/web/src/api/iam/auth.ts#L57-L63)
 
 **改动**:
 ```typescript
@@ -207,13 +207,13 @@ confirmPasswordReset: (data: { reset_token: string; new_password: string }) =>
     iam.post('/auth/reset-password', data),
 ```
 
-同步修改 [ForgotPasswordPage.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/shared/ForgotPasswordPage.tsx) 中的字段名（`token` → `reset_token`、`new_password` 保持）
+同步修改 [ForgotPasswordPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/shared/ForgotPasswordPage.tsx) 中的字段名（`token` → `reset_token`、`new_password` 保持）
 
 **验收**: 忘记密码 → 收到邮件 → 重置密码 → 用新密码登录成功
 
 #### B2. 启用注册 Tab（P2，绑定用户注册流程）
 
-**文件**: [apps/web/src/pages/shared/LoginPage.tsx#L101-L109](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/shared/LoginPage.tsx#L101-L109)
+**文件**: [apps/web/src/pages/shared/LoginPage.tsx#L101-L109](file:///Users/air/TOPEMS/apps/web/src/pages/shared/LoginPage.tsx#L101-L109)
 
 **改动**:
 ```typescript
@@ -240,7 +240,7 @@ if (isRegister) {
 
 #### B3. 统一认证状态管理（P2，绑定前端状态一致性）
 
-**文件**: [apps/web/src/store/authStore.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/store/authStore.ts) · [hooks/useAuth.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/hooks/useAuth.tsx)
+**文件**: [apps/web/src/store/authStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/authStore.ts) · [hooks/useAuth.tsx](file:///Users/air/TOPEMS/apps/web/src/hooks/useAuth.tsx)
 
 **改动**:
 1. **保留** `hooks/useAuth.tsx`（Context 版，App.tsx 实际使用）
@@ -252,7 +252,7 @@ if (isRegister) {
 
 #### B4. 前端登出调用后端 API（P2，绑定会话安全）
 
-**文件**: [apps/web/src/hooks/useAuth.tsx#L320-L338](file:///Users/xingzhai/TOPEMS/apps/web/src/hooks/useAuth.tsx#L320-L338)
+**文件**: [apps/web/src/hooks/useAuth.tsx#L320-L338](file:///Users/air/TOPEMS/apps/web/src/hooks/useAuth.tsx#L320-L338)
 
 **改动**: `logout` 先调用 `authApi.logout`（吊销 refresh token），再清 localStorage
 
@@ -274,7 +274,7 @@ if (isRegister) {
 
 #### D1. CI 集成 cargo-audit
 
-**文件**: [.github/workflows/ci.yml](file:///Users/xingzhai/TOPEMS/.github/workflows/ci.yml)
+**文件**: [.github/workflows/ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml)
 
 **改动**: 增加 `cargo audit` 步骤，发现 RLSA 失败构建
 
@@ -315,7 +315,7 @@ UNIFIED_CORE_URL=http://localhost:8000
 
 #### A1. 登录注入 tenant_id（P1，绑定多租户登录）
 
-**文件**: [svc/unified-core/src/modules/iam/auth.rs#L236](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/iam/auth.rs#L236)
+**文件**: [svc/unified-core/src/modules/iam/auth.rs#L236](file:///Users/air/TOPEMS/svc/unified-core/src/modules/iam/auth.rs#L236)
 
 **改动**:
 1. 登录 SQL 增加 `tenant_id` 字段查询
@@ -327,7 +327,7 @@ UNIFIED_CORE_URL=http://localhost:8000
 
 #### A2. 实现 /tenant/switch 接口
 
-**文件**: [svc/unified-core/src/routes/iam.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/routes/iam.rs)
+**文件**: [svc/unified-core/src/routes/iam.rs](file:///Users/air/TOPEMS/svc/unified-core/src/routes/iam.rs)
 
 **改动**: 新增 `POST /iam/tenant/switch` 端点，校验用户是否属于目标租户，重新签发带新 `tenant_id` 的 token
 
@@ -353,7 +353,7 @@ interface TenantState {
 
 #### B2. 修复路由守卫漏洞（P1，绑定安全路由全覆盖）
 
-**文件**: [apps/web/src/App.tsx#L351-L358](file:///Users/xingzhai/TOPEMS/apps/web/src/App.tsx#L351-L358) · [L473-L476](file:///Users/xingzhai/TOPEMS/apps/web/src/App.tsx#L473-L476)
+**文件**: [apps/web/src/App.tsx#L351-L358](file:///Users/air/TOPEMS/apps/web/src/App.tsx#L351-L358) · [L473-L476](file:///Users/air/TOPEMS/apps/web/src/App.tsx#L473-L476)
 
 **改动**:
 1. `/performance` 路由用 `ProtectedRoute` 包裹
@@ -364,7 +364,7 @@ interface TenantState {
 
 #### B3. 完善 GuestRoute（P2，绑定登录体验）
 
-**文件**: [apps/web/src/components/auth/ProtectedRoute.tsx#L262-L264](file:///Users/xingzhai/TOPEMS/apps/web/src/components/auth/ProtectedRoute.tsx#L262-L264)
+**文件**: [apps/web/src/components/auth/ProtectedRoute.tsx#L262-L264](file:///Users/air/TOPEMS/apps/web/src/components/auth/ProtectedRoute.tsx#L262-L264)
 
 **改动**: 已登录用户访问 `/login` 自动跳转 `/dashboard`
 
@@ -374,7 +374,7 @@ interface TenantState {
 
 #### C1. 清理 WorkflowMonitorPage mock（P2，绑定工作流异常监控）
 
-**文件**: [apps/web/src/pages/workflow/WorkflowMonitorPage.tsx#L75](file:///Users/xingzhai/TOPEMS/apps/web/src/pages/workflow/WorkflowMonitorPage.tsx#L75)
+**文件**: [apps/web/src/pages/workflow/WorkflowMonitorPage.tsx#L75](file:///Users/air/TOPEMS/apps/web/src/pages/workflow/WorkflowMonitorPage.tsx#L75)
 
 **改动**:
 1. 后端 unified-core 工作流模块增加异常监控 API（若未实现）
@@ -399,7 +399,7 @@ interface TenantState {
 
 #### D1. 认证端到端测试
 
-**文件**: [tests/e2e/](file:///Users/xingzhai/TOPEMS/tests/e2e/)
+**文件**: [tests/e2e/](file:///Users/air/TOPEMS/tests/e2e/)
 
 **改动**: 新增 `auth.e2e.spec.ts` 覆盖：注册→登录→忘记密码→重置→重新登录→登出
 
@@ -417,7 +417,7 @@ interface TenantState {
 
 #### A1. 补全 utoipa 注解
 
-**文件**: [svc/unified-core/src/modules/iam/](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/iam/) · [ticket/](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/ticket/)
+**文件**: [svc/unified-core/src/modules/iam/](file:///Users/air/TOPEMS/svc/unified-core/src/modules/iam/) · [ticket/](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/)
 
 **改动**: 核心模块（IAM/Ticket/Flow）补全 `#[derive(ToSchema)]` 与 `#[utoipa::path]`
 
@@ -438,7 +438,7 @@ interface TenantState {
 
 #### B2. 拆分 App.tsx（P2，绑定维护性）
 
-**文件**: [apps/web/src/App.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/App.tsx)
+**文件**: [apps/web/src/App.tsx](file:///Users/air/TOPEMS/apps/web/src/App.tsx)
 
 **改动**:
 1. 将 L491-L1952 的 `MicroFrontendDevTools` 拆分到 `apps/web/src/dev-tools/MicroFrontendDevTools.tsx`
@@ -451,7 +451,7 @@ interface TenantState {
 
 #### C1. 路由废弃路径下线（P2，绑定 API 治理）
 
-**文件**: [svc/unified-core/src/routes/mod.rs](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/routes/mod.rs) · [apps/web/vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts)
+**文件**: [svc/unified-core/src/routes/mod.rs](file:///Users/air/TOPEMS/svc/unified-core/src/routes/mod.rs) · [apps/web/vite.config.ts](file:///Users/air/TOPEMS/apps/web/vite.config.ts)
 
 **改动**:
 1. 旧路径响应头增加 `Deprecation: true` + `Sunset: 2026-12-31`
@@ -490,7 +490,7 @@ interface TenantState {
 
 #### A1. Prometheus 指标验证
 
-**文件**: [svc/unified-core/](file:///Users/xingzhai/TOPEMS/svc/unified-core/)（monitor 模块）
+**文件**: [svc/unified-core/](file:///Users/air/TOPEMS/svc/unified-core/)（monitor 模块）
 
 **改动**:
 1. 验证各服务 `/metrics` 端点可访问
@@ -509,7 +509,7 @@ interface TenantState {
 
 #### B1. 关键用户旅程 E2E
 
-**文件**: [tests/e2e/](file:///Users/xingzhai/TOPEMS/tests/e2e/)
+**文件**: [tests/e2e/](file:///Users/air/TOPEMS/tests/e2e/)
 
 **改动**: 覆盖以下旅程：
 1. 认证旅程（注册→登录→登出）
@@ -523,7 +523,7 @@ interface TenantState {
 
 #### C1. 一键部署脚本
 
-**文件**: [scripts/deploy.sh](file:///Users/xingzhai/TOPEMS/scripts/)
+**文件**: [scripts/deploy.sh](file:///Users/air/TOPEMS/scripts/)
 
 **改动**: 支持以下命令：
 ```bash
