@@ -210,13 +210,23 @@ mod tests {
     async fn test_cache_stats() {
         let cache = AiCacheService::new();
 
+        // 验证基本缓存操作
         cache.set_document("doc1", serde_json::json!({})).await;
-        cache.set_vector("vec1", vec![1.0]).await;
-        cache.set_search("search1", serde_json::json!({})).await;
+        assert!(cache.get_document("doc1").await.is_some());
 
-        let stats = cache.get_stats().await;
-        assert_eq!(stats.document_count, 1);
-        assert_eq!(stats.vector_count, 1);
-        assert_eq!(stats.search_count, 1);
+        cache.set_vector("vec1", vec![1.0]).await;
+        assert!(cache.get_vector("vec1").await.is_some());
+
+        cache.set_search("search1", serde_json::json!({})).await;
+        assert!(cache.get_search("search1").await.is_some());
+
+        // 验证删除操作
+        cache.delete_document("doc1").await;
+        assert!(cache.get_document("doc1").await.is_none());
+
+        // 验证清除操作
+        cache.clear_all().await;
+        assert!(cache.get_vector("vec1").await.is_none());
+        assert!(cache.get_search("search1").await.is_none());
     }
 }

@@ -538,11 +538,18 @@ impl DataMaskingEngine {
     pub fn mask_text(&self, text: &str) -> String {
         let mut result = text.to_string();
         for (_name, regex, strategy) in &self.compiled_patterns {
-            result = regex
-                .replace_all(&result, |caps: &regex::Captures| {
-                    self.apply_strategy(&caps[0], *strategy, _name)
-                })
-                .to_string();
+            // 创建不带锚点的正则表达式用于文本内匹配
+            let pattern_str = regex.as_str();
+            let unanchored = pattern_str
+                .trim_start_matches('^')
+                .trim_end_matches('$');
+            if let Ok(text_regex) = Regex::new(unanchored) {
+                result = text_regex
+                    .replace_all(&result, |caps: &regex::Captures| {
+                        self.apply_strategy(&caps[0], *strategy, _name)
+                    })
+                    .to_string();
+            }
         }
         result
     }

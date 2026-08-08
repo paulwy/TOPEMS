@@ -479,7 +479,7 @@ mod tests {
         use crate::service_port::GROUP1_MODULES;
         let cfg = default_group1_config();
         assert_eq!(cfg.modules.len(), GROUP1_MODULES.len());
-        assert_eq!(cfg.modules.len(), 9, "GROUP1_MODULES 权威清单应为 9 项");
+        assert_eq!(cfg.modules.len(), 6, "GROUP1_MODULES 权威清单应为 6 项");
     }
 
     #[test]

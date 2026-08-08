@@ -108,6 +108,10 @@ vi.mock('@tanstack/react-query', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (x: string) => x }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
 }));
 
 vi.mock('@/hooks/useAuth', () => ({

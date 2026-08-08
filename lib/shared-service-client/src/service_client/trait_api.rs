@@ -350,6 +350,10 @@ macro_rules! define_service_api {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    // 全局互斥锁用于同步环境变量的访问，避免测试并行时的竞态条件
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     struct FakeApi;
 
@@ -393,6 +397,7 @@ mod tests {
 
     #[test]
     fn test_from_env_fallback() {
+        let _lock = ENV_LOCK.lock().unwrap();
         std::env::remove_var("FAKE_SERVICE_URL");
         let client = TypedServiceClient::from_env(FakeApi).unwrap();
         assert_eq!(client.base_url(), "http://localhost:9999");
@@ -400,6 +405,7 @@ mod tests {
 
     #[test]
     fn test_from_env_override() {
+        let _lock = ENV_LOCK.lock().unwrap();
         std::env::set_var("FAKE_SERVICE_URL", "http://10.0.0.1:7777");
         let client = TypedServiceClient::from_env(FakeApi).unwrap();
         assert_eq!(client.base_url(), "http://10.0.0.1:7777");

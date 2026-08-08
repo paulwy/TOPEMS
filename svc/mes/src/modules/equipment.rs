@@ -1118,11 +1118,11 @@ pub async fn create_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                equipment_id: r.equipment_id.to_string(),
+                equipment_id: r.equipment_id.map(|id| id.to_string()).unwrap_or_default(),
                 equipment_code: r.equipment_code.unwrap_or_default(),
                 equipment_name: r.equipment_name.unwrap_or_default(),
-                inspector: r.inspector,
-                inspection_date: r.inspection_date,
+                inspector: r.inspector.unwrap_or_default(),
+                inspection_date: r.inspection_date.map(|d| d.to_string()).unwrap_or_default(),
                 location: r.location,
                 temperature: r
                     .temperature
@@ -1134,7 +1134,7 @@ pub async fn create_inspection(
                     .noiselevel
                     .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
                 status: r.status.unwrap_or_else(|| "normal".to_string()),
-                items: r.items,
+                items: r.items.and_then(|s| serde_json::from_str(&s).ok()),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
                 created_at: naive_to_utc(Some(r.created_at.unwrap_or_default())).to_rfc3339(),
