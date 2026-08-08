@@ -24,7 +24,7 @@ import {
   Button,
 } from '@mui/material';
 import { Search, RefreshCw, Filter, Plus, ChevronDown, ChevronUp, Grid, List } from 'lucide-react';
-import { EmptyState } from '@/components/common';
+import { EmptyState } from '@topems/shared-components';
 
 /**
  * 统计卡片类型

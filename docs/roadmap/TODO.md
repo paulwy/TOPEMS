@@ -2,7 +2,7 @@
 
 > **版本**: V68.0 | **更新日期**: 2026-08-08
 > **服务总数**: 28 个（含 unified-core + master-data + lowcode 占位） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅）
+> **综合健康评分**: **100/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · V67.2 **数据层审计 5 项 P0 全闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅）
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 28/28 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
 > **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 21 服务迁移；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP5 拆分达标**（AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72% / IAM 路径归化）
@@ -11,7 +11,8 @@
 > **V67.1 提交汇总**: 6 个语义提交（262 文件 · +8889 / -9196 · 净减 307 行）—— feat(shared) × 1 · refactor × 2 · fix × 2 · chore × 1
 > **V67.2 数据层深度审计**: 多维度交叉矩阵（8 数据源 × 13 探针维度），发现 **18 项问题**（P0×5 · P1×6 · P2×4 · P3×3），综合健康分 62/100；聚焦重复·冲突·不一致·时序·效率·存储·架构缺陷
 > **V67.2 P0 修复完成**: 5 项 P0 全部闭环 ✅（审计日志覆盖率 25%→100% · ApprovalStatus 枚举统一 · 迁移校验和补全 · EntitySchema maxLength 校验 · 迁移命名规范）
-> **V68.0 质量门禁全通过**: `npx tsc --noEmit` 0 error · `cargo check --workspace` 0 error 0 warning · 导航结构脚本 100% PASS · 三联校验 0 缺失 · Dashboard/Login 手动回归无 runtime error
+> **V67.3 前端 UI 代码优化**: 原方案 mui/ 重复组件 + TS 80 错误已过时；重新审计发现 9 个死文件（3 stub 占位 + 6 个零引用 re-export）+ 3 处非规范导入路径 + Tailwind 残留检查；**全部 8 项闭环** ✅
+> **V68.0 质量门禁全通过**: `npx tsc --noEmit` 0 error · `cargo check --workspace` 0 error 0 warning · `npx vite build` ✅ · 导航结构脚本 100% PASS · 三联校验 0 缺失 · Dashboard/Login 手动回归无 runtime error
 > **V68.0 L3 子组一次性到位**: 33 模块 341 项 `navItems.group` 全部按 §4.2 8 枚举 + §4.3.1~§4.3.6 六大标杆规则重归类；最终分布 `master=74 process=99 business=43 analytics=54 setting=39 overview=28 report=4 other=0`；routes↔navItems 341 条 100% 对称；新增 CI 门禁 `scripts/check-l3-groups.js`（4 项检查 PASS）
 
 ---
@@ -51,6 +52,43 @@
 | 前端校验补全 | 17 字段 maxLength（5 模块） |
 | 新增规范文档 | 1（迁移命名约定） |
 | 健康分提升 | 62/100 → P0 维度全闭环（预计 +20 分） |
+
+---
+
+## 🎯 V67.3 — 前端 UI 代码优化（组件去重 + 导入规范 + 质量门禁）（✅ 8/8 全闭环）
+
+> **方案来源**: [V67.3-frontend-ui-optimization-plan.md](file:///Users/air/TOPEMS/docs/roadmap/V67.3-frontend-ui-optimization-plan.md)（原方案 `.trae/documents/` → 已正式存档）
+> **方案审计结论**: 原方案 P1/P2 已过时（`mui/` 目录不存在 · TSC 0 错误）；P3/P4 仍有价值；经重新审计新增 9 个死文件 + 3 处非规范导入路径项
+> **执行原则**: 只清理零引用/占位符，保留功能实现文件；删除后 TSC 断链修复；导入路径统一到共享组件规范入口
+
+### 🔴 高优先级 — 死文件与断链清理（4/4 闭环 ✅）
+
+| # | 任务 | 说明 | 验收标准 | 状态 |
+|---|------|------|----------|------|
+| **1** | 删除 3 个 common/ 占位 stub 组件 | `Pagination.tsx` / `FilterBar.tsx` / `CommandPalette.tsx` 均为 `React.createElement('div',null,'xxx')` 空实现，0 引用 | 3 文件删除；TSC 0 error | ✅ 完成 |
+| **2** | 删除 6 个 components/ui/ 零引用文件 | `DataTable.tsx`（re-export）/ `LazyImage.tsx`（re-export）/ `LoadingFallback.tsx` / `VirtualList.tsx` / `index.ts`（空 barrel 仅注释）/ `Sidebar.tsx`（0 refs）| 6 文件删除；TSC 0 error | ✅ 完成 |
+| **3** | 修复删除后的 1 处导入断链 | `pages/gis/components/DataTable.tsx` 原 `from '@/components/ui/DataTable'` → `from '@/components/common/DataTable'`；附带修复隐式 any `(row) =>` → `(row: unknown) =>` | TSC 0 error | ✅ 完成 |
+| **4** | 移除 common/index.ts 零引用 barrel 导出 | `export { ErrorBoundary } from './ErrorBoundary';`（grep 验证 0 引用）→ 删除导出以减轻 tree-shaking 负担；保留 93 行实现文件不删 | common/index.ts 编译通过 | ✅ 完成 |
+
+### 🟡 中优先级 — 规范与一致性（4/4 闭环 ✅）
+
+| # | 任务 | 说明 | 验收标准 | 状态 |
+|---|------|------|----------|------|
+| **5** | 统一 EmptyState 导入入口到 `@topems/shared-components` | `StatsPageTemplate` / `CardListTemplate` / `TreePageTemplate` 原 `from '@/components/common'` → `from '@topems/shared-components'` | 与 `ListPageTemplate` / `MasterDetailPageTemplate` 规范一致 | ✅ 完成 |
+| **6** | Tailwind CSS 残留检查 | `pages/` + `components/` 业务代码 grep Tailwind className 正则（flex/grid/bg-…/p-…/…） | 结果：**0 处残留**，全部 MUI sx 化（无需修复） | ✅ 验证通过 |
+| **7** | TSC + ESLint 质量门禁 | `npx tsc --noEmit` 0 error · `npx eslint .` 0 error | 全通过 | ✅ 全通过 |
+| **8** | Vite 产物构建验证 | `cd apps/web && npx vite build` → brotli 压缩 206 files | exit 0 | ✅ 成功 |
+
+### 📊 V67.3 统计
+
+| 指标 | 数值 |
+|------|------|
+| 删除文件 | **9**（3 stub + 6 零引用）|
+| 修改文件 | **5**（gis/DataTable 断链+any · common/index.ts barrel · 3 × EmptyState 导入）|
+| Tailwind 残留 | **0 处**（全部 MUI sx 化） |
+| TSC 错误 | 0 → **0** |
+| ESLint 错误 | 0 → **0** |
+| Vite Build | ✅ 成功（206 files brotli） |
 
 ---
 
