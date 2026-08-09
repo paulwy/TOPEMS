@@ -132,6 +132,15 @@ impl Default for WidgetCache {
 use once_cell::sync::Lazy;
 pub static WIDGET_CACHE: Lazy<WidgetCache> = Lazy::new(WidgetCache::new);
 
+#[utoipa::path(
+    get,
+    path = "/widget",
+    tag = "Visualization",
+    responses(
+        (status = 200, description = "List of widgets", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing widgets");
 
@@ -237,6 +246,16 @@ pub async fn get_widgets_by_dashboard(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/widget",
+    tag = "Visualization",
+    request_body = serde_json::Value,
+    responses(
+        (status = 201, description = "Widget created", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_widget(
     State(state): State<AppState>,
     Json(req): Json<CreateWidgetRequest>,
@@ -295,6 +314,18 @@ pub async fn create_widget(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/widget/{id}",
+    tag = "Visualization",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Widget ID")
+    ),
+    responses(
+        (status = 200, description = "Widget details", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_widget(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -346,6 +377,19 @@ pub async fn get_widget(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/widget/{id}",
+    tag = "Visualization",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Widget ID")
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "Widget updated", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn update_widget(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -415,6 +459,18 @@ pub async fn update_widget(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/widget/{id}",
+    tag = "Visualization",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Widget ID")
+    ),
+    responses(
+        (status = 200, description = "Widget deleted", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn delete_widget(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

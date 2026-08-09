@@ -13,6 +13,15 @@ use super::models::{
     UpdateDashboardRequest,
 };
 
+#[utoipa::path(
+    get,
+    path = "/dashboard",
+    tag = "Dashboard",
+    responses(
+        (status = 200, description = "List of dashboards", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing dashboards");
 
@@ -60,6 +69,16 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/dashboard",
+    tag = "Dashboard",
+    request_body = CreateDashboardRequest,
+    responses(
+        (status = 201, description = "Dashboard created", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_dashboard(
     State(state): State<AppState>,
     Json(req): Json<CreateDashboardRequest>,
@@ -108,6 +127,18 @@ pub async fn create_dashboard(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/dashboard/{id}",
+    tag = "Dashboard",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Dashboard ID")
+    ),
+    responses(
+        (status = 200, description = "Dashboard details", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_dashboard(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -156,6 +187,19 @@ pub async fn get_dashboard(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/dashboard/{id}",
+    tag = "Dashboard",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Dashboard ID")
+    ),
+    request_body = UpdateDashboardRequest,
+    responses(
+        (status = 200, description = "Dashboard updated", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn update_dashboard(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -212,6 +256,18 @@ pub async fn update_dashboard(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/dashboard/{id}",
+    tag = "Dashboard",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Dashboard ID")
+    ),
+    responses(
+        (status = 200, description = "Dashboard deleted", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn delete_dashboard(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

@@ -69,6 +69,15 @@ pub struct ReportExportQuery {
     pub format: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/report",
+    tag = "Report",
+    responses(
+        (status = 200, description = "List of reports", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing self-service reports");
 
@@ -119,6 +128,16 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/report",
+    tag = "Report",
+    request_body = serde_json::Value,
+    responses(
+        (status = 201, description = "Report created", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_report(
     State(state): State<AppState>,
     Json(req): Json<CreateReportRequest>,
@@ -175,6 +194,18 @@ pub async fn create_report(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/report/{id}",
+    tag = "Report",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Report ID")
+    ),
+    responses(
+        (status = 200, description = "Report details", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_report(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -226,6 +257,19 @@ pub async fn get_report(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/report/{id}",
+    tag = "Report",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Report ID")
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "Report updated", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn update_report(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -291,6 +335,18 @@ pub async fn update_report(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/report/{id}",
+    tag = "Report",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Report ID")
+    ),
+    responses(
+        (status = 200, description = "Report deleted", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn delete_report(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
