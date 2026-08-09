@@ -130,7 +130,7 @@ pub(crate) async fn health(State(state): State<AppState>) -> ServiceHealth {
 }
 
 pub(crate) async fn plugin_health_check() -> Json<ServiceHealth> {
-    Json(topems_shared::build_health_response(
+    Json(topems_shared_core::health::build_health_response(
         "topems-workflow",
         true,
     ))
