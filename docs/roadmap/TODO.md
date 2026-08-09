@@ -691,3 +691,156 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 | 新增 request_body 声明 | — | **~164** (自动化脚本) |
 | cargo check | — | **0 error** ✅ |
 | shared-types TSC | — | **0 error** ✅ |
+
+---
+
+## 🎯 V72.8 — P-04 契约一致性深度修复：Triage 分析（🔄 进行中）
+
+> **来源**: V71 第六轮审计探针 P-04 执行结果 — 2559 个不匹配（471 未使用后端 API + 2559 未文档化前端 API）
+> **前置条件**: V72.6 方法不匹配已清零（27→0）· V72.7 utoipa 签名一致性已清零（869→0）
+> **分析工具**: `scripts/audit/p04_triage.mjs` + `p04_rc4_deep.mjs`（triage 结果 JSON + Markdown 报告）
+
+### 📊 Triage 总览
+
+| 维度 | 数量 | 说明 |
+|------|------|------|
+| OpenAPI 端点总数 | 739 | 459 唯一路径 × 多方法 |
+| 前端 API 调用总数 | 2875 | 388 个 .ts 文件 |
+| 未使用后端 API | 471 | OpenAPI 有定义但前端未调用 |
+| 未文档化前端 API | 2559 | 前端有调用但 OpenAPI 无定义 |
+| 方法不匹配数 | 0 | ✅ V72.6 已清零 |
+
+### 🔴 未使用后端 API 分类（471 → 4 类）
+
+| 类别 | 数量 | 说明 | 处置方案 |
+|------|------|------|----------|
+| **A — 健康/内部端点** | 22 | health/metrics/plugin 端点（预期不被前端调用） | 标记豁免 |
+| **B — AI Stub 函数** | 28 | AI 服务 stub（`_` 前缀 operationId，未实现） | 标记豁免 |
+| **C — CRUD 应补绑定** | 406 | 后端 CRUD 端点已注册但前端未调用 | 按服务优先级补前端绑定 |
+| **D — 废弃/遗留路径** | 15 | `/analytics/dashboard`、`/analytics/report` 等旧别名 | 标记废弃 |
+
+#### Category C — CRUD 端点按服务分布（Top 10）
+
+| 服务 | 数量 | 示例 operationId |
+|------|------|------------------|
+| **ehs** | 129 | ehs_list_plans, list_plan_items, create_plan_item, list_records |
+| **monitor** | 63 | list_alerts, acknowledge_alerts, resolve_alerts, get_alert_statistics |
+| **pdm** | 32 | list_change_notices, create_change_notice, get_change_notice |
+| **pm** | 31 | get_approval, submit_approval, handle_approval_action, get_benefits |
+| **integration** | 22 | list_mes_erp_sync_records, sync_erp_order_to_mes, get_mes_erp_sync_logs |
+| **ai** | 17 | home, agent_run, list_agent_tools, chat, complete |
+| **erp** | 10 | list_assets, erp_list_customers, list_inventory, list_bookings |
+| **gis** | 10 | list_devices, get_device, list_locations, create_location |
+| **lims** | 10 | list_instruments, create_instrument, list_reagents, list_samples |
+| **ticket** | 10 | list_sla_policies_handler, create_ticket_handler, get_stats_handler |
+
+### 🔴 未文档化前端 API 根因分析（2559 → 6 类）
+
+| 根因 | 数量 | 说明 | 修复策略 |
+|------|------|------|----------|
+| **RC1 — 路径前缀不匹配** | 150 | 前端用错误前缀（如 `/api/bi/dashboard` vs OpenAPI `/analytics/dashboard`） | 修复前端路径或 OpenAPI 路径归一化 |
+| **RC4a — 缺少 utoipa 注解** | 1761 | 后端路由存在但无 `#[utoipa::path]` 注解 | **核心工作**：按服务批量补注解 |
+| **RC4b — 管理/系统端点** | 209 | unified-core 管理 API（audit/monitor/system）缺 utoipa | 补 unified-core utoipa 注解 |
+| **RC4c — 查询字符串解析** | 114 | 探针 URL 提取未正确处理 `${queryString}` 模板 | **探针修复**（非真实不匹配） |
+| **RC4d — 完全未注册** | 448 | 后端路由完全不存在或服务无 utoipa | 按服务处置（见下表） |
+| **RC5 — 前端内部路径** | 42 | mock/local/test 路径 | 标记豁免 |
+
+#### RC4a — 缺少 utoipa 注解（按服务 Top 10）
+
+| 服务 | 数量 | 当前 utoipa 注解数 | 缺口 |
+|------|------|-------------------|------|
+| **erp** | 198 | 41 | 157 |
+| **finance** | 151 | 31 | 120 |
+| **bi** | 147 | 3 | 144 |
+| **wms** | 135 | 10 | 125 |
+| **pm** | 130 | 38 | 92 |
+| **scm** | 105 | 13 | 92 |
+| **ehs** | 97 | 179 | （EHS 已覆盖，缺口为前端调用的未注解子路径） |
+| **qms** | 94 | 12 | 82 |
+| **crm** | 91 | 9 | 82 |
+| **lims** | 91 | 0 | 91 |
+
+#### RC4d — 完全未注册路由（按服务）
+
+| 服务 | 数量 | 根因 | 修复方案 |
+|------|------|------|----------|
+| **workflow** | 208 | Flow 服务 0 个 utoipa 注解 | 补 Flow 服务 utoipa 注解 + OpenAPI 注册 |
+| **mes** | 137 | MES 服务 OpenAPI 提取为 0 路径 | 修复 MES OpenAPI 提取 + 补注解 |
+| **core** | 58 | unified-core dict/feedback 模块无 utoipa | 补 unified-core 子模块 utoipa |
+| **doc** | 20 | Doc 模块 0 个 utoipa 注解 | 补 Doc 模块 utoipa 注解 |
+| **file** | 15 | File 模块 0 个 utoipa 注解 | 补 File 模块 utoipa 注解 |
+| **master** | 10 | Master-data 部分路由未注解 | 补 Master-data utoipa 注解 |
+
+### 📈 修复路线图
+
+#### Phase 1: 探针修复 + 豁免标记（预计消除 ~206 个误报）
+
+| 任务 | 数量 | 说明 |
+|------|------|------|
+| 修复探针 URL 提取（RC4c） | 114 | 正确处理 `${queryString}` 模板变量 |
+| 标记 Category A 豁免 | 22 | health/internal 端点 |
+| 标记 Category B 豁免 | 28 | AI stub 函数 |
+| 标记 Category D 废弃 | 15 | legacy analytics 路径 |
+| 标记 RC5 豁免 | 42 | mock/test 路径 |
+
+#### Phase 2: 零 utoipa 服务补齐（预计消除 ~448 个 RC4d）
+
+| 任务 | 服务 | 预计注解数 | 影响前端调用数 |
+|------|------|-----------|---------------|
+| 补 Flow 服务 utoipa | flow | ~30 | 208 |
+| 修复 MES OpenAPI 提取 | mes | ~50 | 137 |
+| 补 Doc 模块 utoipa | unified-core/doc | ~15 | 20 |
+| 补 File 模块 utoipa | unified-core/file | ~10 | 15 |
+| 补 Dict 模块 utoipa | unified-core/dict | ~10 | 10 |
+| 补 Feedback 模块 utoipa | unified-core/feedback | ~5 | 5 |
+
+#### Phase 3: 高缺口服务 utoipa 补齐（预计消除 ~1200 个 RC4a）
+
+| 优先级 | 服务 | 缺口 | 预计注解数 |
+|--------|------|------|-----------|
+| P0 | erp | 157 | ~80 |
+| P0 | bi | 144 | ~40 |
+| P0 | wms | 125 | ~60 |
+| P0 | finance | 120 | ~50 |
+| P1 | pm | 92 | ~40 |
+| P1 | scm | 92 | ~50 |
+| P1 | crm | 82 | ~40 |
+| P1 | lims | 91 | ~50 |
+| P1 | qms | 82 | ~40 |
+| P2 | hrm | 78 | ~30 |
+| P2 | integration | 72 | 已有 39，补 ~30 |
+| P2 | srm | 57 | ~30 |
+| P2 | pdm | 54 | 已有 57，补 ~20 |
+| P2 | 其余 (ai/gis/rd/lowcode/mobile) | ~180 | ~80 |
+
+#### Phase 4: 前端路径修复（预计消除 ~150 个 RC1）
+
+| 任务 | 服务 | 数量 | 说明 |
+|------|------|------|------|
+| BI dashboard/report/widget 路径 | bi | 34 | `/api/bi/dashboard` vs `/analytics/dashboard` |
+| ERP 路径前缀 | erp | 12 | 统一 `/api/erp/` 前缀 |
+| WMS 路径前缀 | wms | 11 | 统一 `/api/wms/` 前缀 |
+| PDM 路径前缀 | pdm | 14 | 统一 `/api/pdm/` 前缀 |
+| 其他服务路径修复 | 多服务 | 79 | 按服务逐个修复 |
+
+#### Phase 5: unified-core 管理端点补齐（预计消除 ~209 个 RC4b）
+
+| 任务 | 模块 | 数量 | 说明 |
+|------|------|------|------|
+| Monitor alerts/rules utoipa | unified-core/monitor | 68 | alerts CRUD + rules CRUD |
+| IAM utoipa | unified-core/iam | 53 | user/role/permission 管理 |
+| System utoipa | unified-core/system | 43 | api-keys/audit-logs/settings |
+| Automation utoipa | unified-core/automation | 26 | rules/runs/variables |
+| Migration utoipa | unified-core/migration | 3 | migration 管理 |
+| ERP 系统 utoipa | erp/system | 16 | audit-logs/announcements/meeting |
+
+### 📊 V72.8 预期效果
+
+| 指标 | 当前 | Phase 1 后 | Phase 2 后 | Phase 3 后 | Phase 4 后 | Phase 5 后 |
+|------|------|-----------|-----------|-----------|-----------|-----------|
+| 未使用后端 API | 471 | 429 (-42) | 429 | 429 | 429 | 429 |
+| 未文档化前端 API | 2559 | 2353 (-206) | 1905 (-448) | 705 (-1200) | 555 (-150) | 346 (-209) |
+| **总不匹配** | **2559** | **2353** | **1905** | **705** | **555** | **346** |
+| CI 严重度 | RED | RED | RED | RED | YELLOW | YELLOW |
+
+> **注**: 剩余 ~346 个不匹配为 Category C（406 CRUD 应补绑定 - 部分被前端路径修复覆盖）+ 残余 RC4d 需逐个确认
