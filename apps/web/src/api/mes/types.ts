@@ -55,29 +55,29 @@ export type GeneratedCreateFromErpRequest = MesTypes.CreateFromErpRequest;
 /** 生成类型 WorkOrderResponse 的字段重映射到手写 WorkOrder 命名 */
 export type AdaptedWorkOrder = Omit<
   MesTypes.WorkOrderResponse,
-  | 'orderNo'
-  | 'plannedQuantity'
-  | 'planStartDate'
-  | 'planEndDate'
-  | 'actualStartDate'
-  | 'actualEndDate'
+  | 'order_no'
+  | 'planned_quantity'
+  | 'plan_start_date'
+  | 'plan_end_date'
+  | 'actual_start_date'
+  | 'actual_end_date'
 > & {
-  order_number?: MesTypes.WorkOrderResponse['orderNo'];
-  quantity?: MesTypes.WorkOrderResponse['plannedQuantity'];
-  planned_start_time?: MesTypes.WorkOrderResponse['planStartDate'];
-  planned_end_time?: MesTypes.WorkOrderResponse['planEndDate'];
-  actual_start_time?: MesTypes.WorkOrderResponse['actualStartDate'];
-  actual_end_time?: MesTypes.WorkOrderResponse['actualEndDate'];
+  order_number?: MesTypes.WorkOrderResponse['order_no'];
+  quantity?: MesTypes.WorkOrderResponse['planned_quantity'];
+  planned_start_time?: MesTypes.WorkOrderResponse['plan_start_date'];
+  planned_end_time?: MesTypes.WorkOrderResponse['plan_end_date'];
+  actual_start_time?: MesTypes.WorkOrderResponse['actual_start_date'];
+  actual_end_time?: MesTypes.WorkOrderResponse['actual_end_date'];
 };
 
 /** 生成类型 ProductionOrderResponse 的字段重映射到手写 ProductionOrder 命名 */
 export type AdaptedProductionOrder = Omit<
   MesTypes.ProductionOrderResponse,
-  'orderNo' | 'plannedStartDate' | 'plannedEndDate'
+  'order_no' | 'planned_start_date' | 'planned_end_date'
 > & {
-  order_number?: MesTypes.ProductionOrderResponse['orderNo'];
-  scheduled_start_date?: MesTypes.ProductionOrderResponse['plannedStartDate'];
-  scheduled_end_date?: MesTypes.ProductionOrderResponse['plannedEndDate'];
+  order_number?: MesTypes.ProductionOrderResponse['order_no'];
+  scheduled_start_date?: MesTypes.ProductionOrderResponse['planned_start_date'];
+  scheduled_end_date?: MesTypes.ProductionOrderResponse['planned_end_date'];
 };
 
 // ============================================================================
@@ -86,47 +86,47 @@ export type AdaptedProductionOrder = Omit<
 
 /**
  * 将生成类型 WorkOrderResponse 转换为手写命名的 AdaptedWorkOrder。
- * 字段映射：orderNo → order_number, plannedQuantity → quantity,
- *           planStartDate → planned_start_time, planEndDate → planned_end_time,
- *           actualStartDate → actual_start_time, actualEndDate → actual_end_time
+ * 字段映射：order_no → order_number, planned_quantity → quantity,
+ *           plan_start_date → planned_start_time, plan_end_date → planned_end_time,
+ *           actual_start_date → actual_start_time, actual_end_date → actual_end_time
  */
 export const adaptWorkOrderFromGenerated = (
   generated: MesTypes.WorkOrderResponse
 ): AdaptedWorkOrder => {
   const {
-    orderNo,
-    plannedQuantity,
-    planStartDate,
-    planEndDate,
-    actualStartDate,
-    actualEndDate,
+    order_no,
+    planned_quantity,
+    plan_start_date,
+    plan_end_date,
+    actual_start_date,
+    actual_end_date,
     ...rest
   } = generated;
   return {
     ...rest,
-    order_number: orderNo,
-    quantity: plannedQuantity,
-    planned_start_time: planStartDate,
-    planned_end_time: planEndDate,
-    actual_start_time: actualStartDate,
-    actual_end_time: actualEndDate,
+    order_number: order_no,
+    quantity: planned_quantity,
+    planned_start_time: plan_start_date,
+    planned_end_time: plan_end_date,
+    actual_start_time: actual_start_date,
+    actual_end_time: actual_end_date,
   };
 };
 
 /**
  * 将生成类型 ProductionOrderResponse 转换为手写命名的 AdaptedProductionOrder。
- * 字段映射：orderNo → order_number, plannedStartDate → scheduled_start_date,
- *           plannedEndDate → scheduled_end_date
+ * 字段映射：order_no → order_number, planned_start_date → scheduled_start_date,
+ *           planned_end_date → scheduled_end_date
  */
 export const adaptProductionOrderFromGenerated = (
   generated: MesTypes.ProductionOrderResponse
 ): AdaptedProductionOrder => {
-  const { orderNo, plannedStartDate, plannedEndDate, ...rest } = generated;
+  const { order_no, planned_start_date, planned_end_date, ...rest } = generated;
   return {
     ...rest,
-    order_number: orderNo,
-    scheduled_start_date: plannedStartDate,
-    scheduled_end_date: plannedEndDate,
+    order_number: order_no,
+    scheduled_start_date: planned_start_date,
+    scheduled_end_date: planned_end_date,
   };
 };
 

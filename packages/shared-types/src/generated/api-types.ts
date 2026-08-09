@@ -173,31 +173,29 @@ export namespace QmsTypes {
 // ============================================================================
 
 export namespace MesTypes {
-  // 工单 — V71.5 待 MES 服务 SQLX 债修复后由 A1 重新生成 spec 解除注释
-  // export type CreateWorkOrderRequest = ApiComponents['schemas']['CreateWorkOrderRequest'];
-  // export type UpdateWorkOrderRequest = ApiComponents['schemas']['UpdateWorkOrderRequest'];
-  // export type WorkOrderResponse = ApiComponents['schemas']['WorkOrderResponse'];
+  // 工单
+  export type CreateWorkOrderRequest = ApiComponents['schemas']['CreateWorkOrderRequest'];
+  export type UpdateWorkOrderRequest = ApiComponents['schemas']['UpdateWorkOrderRequest'];
+  export type WorkOrderResponse = ApiComponents['schemas']['WorkOrderResponse'];
 
-  // 生产报工 — V71.5 待 MES 服务 SQLX 债修复后由 A1 重新生成 spec 解除注释
-  // export type CreateWorkReportRequest = ApiComponents['schemas']['CreateWorkReportRequest'];
-  // export type UpdateWorkReportRequest = ApiComponents['schemas']['UpdateWorkReportRequest'];
-  // export type RejectWorkReportRequest = ApiComponents['schemas']['RejectWorkReportRequest'];
-  // export type WorkReportResponse = ApiComponents['schemas']['WorkReportResponse'];
+  // 生产报工
+  export type CreateWorkReportRequest = ApiComponents['schemas']['CreateWorkReportRequest'];
+  export type UpdateWorkReportRequest = ApiComponents['schemas']['UpdateWorkReportRequest'];
+  export type WorkReportResponse = ApiComponents['schemas']['WorkReportResponse'];
 
-  // 生产订单 — V71.5 待 MES 服务 SQLX 债修复后由 A1 重新生成 spec 解除注释
-  // export type ProductionOrderSource = ApiComponents['schemas']['ProductionOrderSource'];
-  // export type ErpSalesOrderInfo = ApiComponents['schemas']['ErpSalesOrderInfo'];
-  // export type CreateFromErpRequest = ApiComponents['schemas']['CreateFromErpRequest'];
-  // export type CreateProductionOrderRequest = ApiComponents['schemas']['CreateProductionOrderRequest'];
-  // export type UpdateProductionOrderRequest = ApiComponents['schemas']['UpdateProductionOrderRequest'];
-  // export type ProductionOrderResponse = ApiComponents['schemas']['ProductionOrderResponse'];
-  // export type ListProductionOrdersResponse = ApiComponents['schemas']['ListProductionOrdersResponse'];
+  // 生产订单
+  export type ErpSalesOrderInfo = ApiComponents['schemas']['ErpSalesOrderInfo'];
+  export type CreateFromErpRequest = ApiComponents['schemas']['CreateFromErpRequest'];
+  export type CreateProductionOrderRequest = ApiComponents['schemas']['CreateProductionOrderRequest'];
+  export type UpdateProductionOrderRequest = ApiComponents['schemas']['UpdateProductionOrderRequest'];
+  export type ProductionOrderResponse = ApiComponents['schemas']['ProductionOrderResponse'];
 
   // TODO: 待补充模块：equipment, process_flow, process_route, material_bom,
   // material_requirement, production_kanban, production_process, production_record,
   // production_scheduling, quality_management, quality_traceability, team, wip,
   // work_station, aps_scheduling, production_cost, energy_management, anomaly_detection
-  // @差异 手写类型用 order_number，后端用 orderNo；替换时需注意字段映射
+  // @实际差异：后端 schema 使用 snake_case（order_no, plan_start_date, planned_quantity,
+  // actual_start_date, actual_end_date），前端手写类型混用两种命名，映射时需注意
 }
 
 // ============================================================================

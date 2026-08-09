@@ -8,10 +8,10 @@ import type { IamTypes } from '@topems/shared-types';
 //
 // 已知差异：
 // 1. 生成类型字段全可选（openapi-typescript 默认行为）
-// 2. User 字段命名差异：生成类型用 isActive，手写类型用 isactive
+// 2. User 生成类型用 status 字段，手写类型用 isactive（需类型映射：status === 'active' ↔ isactive === true）
 // 3. User 生成类型缺少多租户相关字段（tenant_id/tenants/current_tenant_id）
 // 4. Role 生成类型有 code 字段，手写类型（旧版）暂无
-// 5. Permission 生成类型用 module 字段，手写类型用 category 字段
+// 5. Permission 生成类型：待确认 module/category 字段（当前 schema 中暂未暴露）
 
 export type GeneratedUser = IamTypes.User;
 export type GeneratedRole = IamTypes.Role;
@@ -25,14 +25,17 @@ export type GeneratedPermission = IamTypes.Permission;
 // 注意：生成类型字段全可选，因此适配类型字段也全可选；手写类型仍作为
 // 主类型保留必填字段约束，适配类型用于新代码或与后端对接时。
 
-/** 生成类型 User 的字段重映射：isActive → isactive */
-export type AdaptedUser = Omit<IamTypes.User, 'isActive'> & {
-  isactive?: IamTypes.User['isActive'];
+/**
+ * 生成类型 User 的字段重映射：
+ * - status（string） → isactive（boolean），约定 status === 'active' 为激活
+ */
+export type AdaptedUser = Omit<IamTypes.User, 'status'> & {
+  isactive?: boolean;
 };
 
-/** 生成类型 Permission 的字段重映射：module → category */
-export type AdaptedPermission = Omit<IamTypes.Permission, 'module'> & {
-  category?: IamTypes.Permission['module'];
+/** 生成类型 Permission 的字段重映射（待 schema 补充 module/category 字段后启用） */
+export type AdaptedPermission = IamTypes.Permission & {
+  category?: string;
 };
 
 // ============================================================================
@@ -40,32 +43,32 @@ export type AdaptedPermission = Omit<IamTypes.Permission, 'module'> & {
 // ============================================================================
 
 /**
- * 将生成类型 User（含 isActive）转换为手写命名（含 isactive）。
+ * 将生成类型 User（含 status 字符串）转换为手写命名（含 isactive 布尔值）。
  * 用于从后端响应到前端业务类型的边界转换。
+ * 约定：status === 'active' → isactive === true
  */
 export const adaptUserFromGenerated = (generated: IamTypes.User): AdaptedUser => {
-  // 显式剔除 isActive，映射到 isactive
-  const { isActive, ...rest } = generated;
+  const { status, ...rest } = generated;
   return {
     ...rest,
-    isactive: isActive,
+    isactive: status === 'active',
   };
 };
 
 /**
- * 将生成类型 Permission（含 module）转换为手写命名（含 category）。
+ * 将生成类型 Permission 转换为手写命名（附加 category 可选字段）。
+ * 待后端 schema 补充 module 字段后可做实际映射。
  */
 export const adaptPermissionFromGenerated = (generated: IamTypes.Permission): AdaptedPermission => {
-  const { module, ...rest } = generated;
   return {
-    ...rest,
-    category: module,
+    ...generated,
   };
 };
 
 /**
- * 将手写命名 User（含 isactive）转换为生成类型（含 isActive）。
+ * 将手写命名 User（含 isactive）转换为生成类型（含 status 字符串）。
  * 用于向前端发送请求时，将业务字段名映射回后端字段名。
+ * 约定：isactive === true → status = 'active'，否则 status = 'inactive'
  */
 export const adaptUserToGenerated = (
   user: Pick<AdaptedUser, 'isactive'> & Omit<AdaptedUser, 'isactive'>
@@ -73,7 +76,7 @@ export const adaptUserToGenerated = (
   const { isactive, ...rest } = user;
   return {
     ...rest,
-    isActive: isactive,
+    status: isactive ? 'active' : 'inactive',
   };
 };
 
