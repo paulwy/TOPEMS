@@ -5,6 +5,16 @@ use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::notification::send_notification,
+        crate::notification::list_notifications,
+        crate::notification::get_notifications,
+        crate::notification::get_notification,
+        crate::im::list_rooms,
+        crate::im::create_room,
+        crate::mail::list_emails,
+        crate::mail::send_email,
+    ),
     tags(
         (name = "notification", description = "站内通知消息 API"),
         (name = "email",        description = "邮件发送渠道 API"),

@@ -70,6 +70,16 @@ pub struct UpdateMapLayer {
 }
 
 /// 创建地图
+#[utoipa::path(
+    post,
+    path = "/maps/create",
+    tag = "project",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "创建地图成功", body = serde_json::Value),
+        (status = 500, description = "创建地图失败")
+    )
+)]
 pub async fn create_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -104,6 +114,15 @@ pub async fn create_map(
 }
 
 /// 获取地图列表
+#[utoipa::path(
+    get,
+    path = "/maps",
+    tag = "project",
+    responses(
+        (status = 200, description = "获取地图列表成功", body = serde_json::Value),
+        (status = 500, description = "查询地图失败")
+    )
+)]
 pub async fn list_maps(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, Map>("id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM maps ORDER BY created_at DESC")
         .fetch_all(&pool)
@@ -121,6 +140,19 @@ pub async fn list_maps(State(pool): State<PgPool>) -> Json<ApiResponse<serde_jso
 }
 
 /// 获取地图详情
+#[utoipa::path(
+    get,
+    path = "/maps/{id}",
+    tag = "project",
+    params(
+        ("id" = Uuid, Path, description = "地图ID")
+    ),
+    responses(
+        (status = 200, description = "获取地图成功", body = serde_json::Value),
+        (status = 404, description = "地图未找到"),
+        (status = 500, description = "查询地图失败")
+    )
+)]
 pub async fn get_map(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Map>> {
     match sqlx::query_as::<_, Map>("id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM maps WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
@@ -134,6 +166,20 @@ pub async fn get_map(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<A
 }
 
 /// 更新地图
+#[utoipa::path(
+    put,
+    path = "/maps/{id}",
+    tag = "project",
+    params(
+        ("id" = Uuid, Path, description = "地图ID")
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新地图成功", body = serde_json::Value),
+        (status = 404, description = "地图未找到"),
+        (status = 500, description = "更新地图失败")
+    )
+)]
 pub async fn update_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -172,6 +218,19 @@ pub async fn update_map(
 }
 
 /// 删除地图
+#[utoipa::path(
+    delete,
+    path = "/maps/{id}",
+    tag = "project",
+    params(
+        ("id" = Uuid, Path, description = "地图ID")
+    ),
+    responses(
+        (status = 200, description = "删除地图成功", body = bool),
+        (status = 404, description = "地图未找到"),
+        (status = 500, description = "删除地图失败")
+    )
+)]
 pub async fn delete_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

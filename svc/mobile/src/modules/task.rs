@@ -64,6 +64,16 @@ pub struct UpdateStatusRequest {
     pub status: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/mobile-tasks",
+    tag = "task",
+    responses(
+        (status = 200, description = "获取任务列表成功", body = serde_json::Value),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "查询失败")
+    )
+)]
 pub async fn get_all_tasks(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -102,6 +112,20 @@ pub async fn get_all_tasks(
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/mobile-tasks/{id}",
+    tag = "task",
+    params(
+        ("id" = Uuid, Path, description = "任务ID")
+    ),
+    responses(
+        (status = 200, description = "获取任务成功", body = serde_json::Value),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "任务不存在"),
+        (status = 500, description = "查询失败")
+    )
+)]
 pub async fn get_task(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -144,6 +168,17 @@ pub async fn get_task(
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/mobile-tasks",
+    tag = "task",
+    request_body = serde_json::Value,
+    responses(
+        (status = 201, description = "创建任务成功", body = serde_json::Value),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "创建失败")
+    )
+)]
 pub async fn create_task(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -210,6 +245,21 @@ pub async fn create_task(
     )
 }
 
+#[utoipa::path(
+    put,
+    path = "/mobile-tasks/{id}",
+    tag = "task",
+    params(
+        ("id" = Uuid, Path, description = "任务ID")
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新成功", body = serde_json::Value),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "任务不存在或无权修改"),
+        (status = 500, description = "更新失败")
+    )
+)]
 pub async fn update_task(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -367,6 +417,20 @@ pub async fn update_task_status(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/mobile-tasks/{id}",
+    tag = "task",
+    params(
+        ("id" = Uuid, Path, description = "任务ID")
+    ),
+    responses(
+        (status = 200, description = "删除成功", body = serde_json::Value),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "任务不存在或无权删除"),
+        (status = 500, description = "删除失败")
+    )
+)]
 pub async fn delete_task(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

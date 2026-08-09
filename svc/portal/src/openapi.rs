@@ -2,6 +2,18 @@ use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::modules::services::list_services,
+        crate::modules::todos::get_todos,
+        crate::modules::todos::add_todo,
+        crate::modules::user::get_user_info,
+        crate::modules::dashboard::get_dashboard_stats,
+        crate::modules::search::global_search,
+        crate::modules::announcements::get_announcements,
+        crate::modules::announcements::create_announcement,
+        crate::modules::notifications::get_notifications,
+        crate::modules::navigation::get_navigation_menu,
+    ),
     tags(
         (name = "Portal", description = "门户"),
         (name = "Dashboard", description = "仪表盘"),

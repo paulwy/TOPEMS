@@ -41,6 +41,18 @@ pub struct MobileTask {
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::modules::task::get_all_tasks,
+        crate::modules::task::get_task,
+        crate::modules::task::create_task,
+        crate::modules::task::update_task,
+        crate::modules::task::delete_task,
+        crate::modules::patrol::get_all_patrol_records,
+        crate::modules::patrol::get_patrol_record,
+        crate::modules::patrol::create_patrol_record,
+        crate::modules::scan::scan_barcode,
+        crate::modules::stats::get_dashboard_stats,
+    ),
     components(schemas(PatrolRecord, ScanRecord, MobileTask)),
     tags(
         (name = "patrol", description = "巡检管理 API"),

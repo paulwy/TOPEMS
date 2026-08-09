@@ -199,6 +199,15 @@ fn get_service_name(service_id: &str) -> String {
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/todos",
+    tag = "Todo",
+    responses(
+        (status = 200, description = "List of todos", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_todos(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -337,6 +346,16 @@ fn format_service_name(service_type: &str) -> String {
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/todos",
+    tag = "Todo",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "Todo added", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn add_todo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

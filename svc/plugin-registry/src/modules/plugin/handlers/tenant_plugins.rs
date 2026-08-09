@@ -9,6 +9,18 @@ use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
 
 /// Get tenant's installed plugins
+#[utoipa::path(
+    get,
+    path = "/tenants/{tenant_id}/plugins",
+    tag = "plugin",
+    params(
+        ("tenant_id" = Uuid, Path, description = "Tenant ID"),
+    ),
+    responses(
+        (status = 200, description = "List of tenant plugins", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_tenant_plugins(
     State(state): State<AppState>,
     Path(tenant_id): Path<Uuid>,
@@ -89,6 +101,20 @@ pub async fn list_my_plugins(
 }
 
 /// Install plugin for tenant
+#[utoipa::path(
+    post,
+    path = "/tenants/{tenant_id}/plugins/{plugin_code}",
+    tag = "plugin",
+    params(
+        ("tenant_id" = Uuid, Path, description = "Tenant ID"),
+        ("plugin_code" = String, Path, description = "Plugin code"),
+    ),
+    responses(
+        (status = 200, description = "Plugin installed", body = serde_json::Value),
+        (status = 404, description = "Plugin not found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn install_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,

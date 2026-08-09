@@ -27,6 +27,15 @@ fn format_service_name(notification_type: &str) -> String {
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/notifications",
+    tag = "Portal",
+    responses(
+        (status = 200, description = "List of notifications", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_notifications(
     State(state): State<AppState>,
     headers: HeaderMap,

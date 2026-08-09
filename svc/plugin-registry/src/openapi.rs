@@ -3,6 +3,14 @@ use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::modules::plugin::handlers::marketplace::get_marketplace_summary,
+        crate::modules::plugin::handlers::marketplace::list_categories,
+        crate::modules::plugin::handlers::marketplace::list_plugins,
+        crate::modules::plugin::handlers::marketplace::get_plugin,
+        crate::modules::plugin::handlers::tenant_plugins::list_tenant_plugins,
+        crate::modules::plugin::handlers::tenant_plugins::install_plugin,
+    ),
     tags(
         (name = "plugin",      description = "插件注册/发布 API"),
         (name = "plugin_meta", description = "插件元数据与评级 API"),

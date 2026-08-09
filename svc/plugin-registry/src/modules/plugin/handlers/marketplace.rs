@@ -9,6 +9,15 @@ use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
 
 /// Get marketplace summary
+#[utoipa::path(
+    get,
+    path = "/marketplace/summary",
+    tag = "plugin",
+    responses(
+        (status = 200, description = "Marketplace summary", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_marketplace_summary(
     State(state): State<AppState>,
 ) -> Json<CoreResponse<MarketplaceSummary>> {
@@ -63,6 +72,15 @@ pub async fn get_marketplace_summary(
 }
 
 /// List plugin categories
+#[utoipa::path(
+    get,
+    path = "/marketplace/categories",
+    tag = "plugin",
+    responses(
+        (status = 200, description = "List of plugin categories", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_categories(
     State(state): State<AppState>,
 ) -> Json<CoreResponse<Vec<PluginCategory>>> {
@@ -79,6 +97,23 @@ pub async fn list_categories(
 }
 
 /// List plugins with filters
+#[utoipa::path(
+    get,
+    path = "/marketplace/plugins",
+    tag = "plugin",
+    params(
+        ("page" = Option<u32>, Query, description = "Page number"),
+        ("page_size" = Option<u32>, Query, description = "Items per page"),
+        ("category" = Option<String>, Query, description = "Filter by category"),
+        ("search" = Option<String>, Query, description = "Search query"),
+        ("is_free" = Option<bool>, Query, description = "Filter free plugins"),
+        ("sort_by" = Option<String>, Query, description = "Sort by: popular, rating, recent, name"),
+    ),
+    responses(
+        (status = 200, description = "List of plugins", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_plugins(
     State(state): State<AppState>,
     Query(filters): Query<PluginFilters>,
@@ -153,6 +188,19 @@ pub async fn list_plugins(
 }
 
 /// Get plugin by code
+#[utoipa::path(
+    get,
+    path = "/marketplace/plugins/{code}",
+    tag = "plugin",
+    params(
+        ("code" = String, Path, description = "Plugin code"),
+    ),
+    responses(
+        (status = 200, description = "Plugin detail", body = serde_json::Value),
+        (status = 404, description = "Plugin not found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_plugin(
     State(state): State<AppState>,
     Path(code): Path<String>,

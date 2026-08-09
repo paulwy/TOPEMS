@@ -95,6 +95,17 @@ impl ScanRecord {
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/scan/barcode",
+    tag = "scan",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "条形码扫描成功", body = serde_json::Value),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "扫描失败")
+    )
+)]
 pub async fn scan_barcode(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

@@ -547,6 +547,16 @@ impl TicketService {
 
 // ==================== HTTP Handlers ====================
 
+#[utoipa::path(
+    post,
+    path = "/tickets",
+    tag = "tickets",
+    request_body = CreateTicketRequest,
+    responses(
+        (status = 200, description = "工单创建成功", body = Ticket),
+        (status = 500, description = "创建工单失败")
+    )
+)]
 pub async fn create_ticket_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -563,6 +573,22 @@ pub async fn create_ticket_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/tickets",
+    tag = "tickets",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页条数"),
+        ("status" = Option<String>, Query, description = "状态筛选"),
+        ("severity" = Option<String>, Query, description = "严重程度筛选"),
+        ("ticket_type" = Option<String>, Query, description = "工单类型筛选")
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = TicketListResponse),
+        (status = 500, description = "查询工单失败")
+    )
+)]
 pub async fn list_tickets_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -578,6 +604,18 @@ pub async fn list_tickets_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/tickets/{id}",
+    tag = "tickets",
+    params(
+        ("id" = Uuid, Path, description = "工单ID")
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = Ticket),
+        (status = 404, description = "工单不存在")
+    )
+)]
 pub async fn get_ticket_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -593,6 +631,19 @@ pub async fn get_ticket_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/tickets/{id}",
+    tag = "tickets",
+    params(
+        ("id" = Uuid, Path, description = "工单ID")
+    ),
+    request_body = UpdateTicketRequest,
+    responses(
+        (status = 200, description = "工单更新成功", body = Ticket),
+        (status = 500, description = "更新工单失败")
+    )
+)]
 pub async fn update_ticket_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -610,6 +661,19 @@ pub async fn update_ticket_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/tickets/{id}",
+    tag = "tickets",
+    params(
+        ("id" = Uuid, Path, description = "工单ID")
+    ),
+    responses(
+        (status = 200, description = "工单已取消", body = serde_json::Value),
+        (status = 404, description = "工单不存在或已关闭"),
+        (status = 500, description = "取消工单失败")
+    )
+)]
 pub async fn delete_ticket_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -630,6 +694,20 @@ pub async fn delete_ticket_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/tickets/{id}/comments",
+    tag = "tickets",
+    params(
+        ("id" = Uuid, Path, description = "工单ID")
+    ),
+    request_body = AddCommentRequest,
+    responses(
+        (status = 200, description = "评论已添加", body = TicketComment),
+        (status = 401, description = "Invalid user id"),
+        (status = 500, description = "添加评论失败")
+    )
+)]
 pub async fn add_comment_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -654,6 +732,18 @@ pub async fn add_comment_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/tickets/{id}/comments",
+    tag = "tickets",
+    params(
+        ("id" = Uuid, Path, description = "工单ID")
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = Vec<TicketComment>),
+        (status = 500, description = "查询评论失败")
+    )
+)]
 pub async fn list_comments_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -684,6 +774,15 @@ pub async fn list_activities_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/tickets/stats",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "查询成功", body = TicketStats),
+        (status = 500, description = "查询统计失败")
+    )
+)]
 pub async fn get_stats_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -756,6 +855,16 @@ pub async fn get_sla_stats_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/sla-policies",
+    tag = "sla",
+    request_body = CreateSlaPolicyRequest,
+    responses(
+        (status = 200, description = "SLA策略创建成功", body = TicketSlaPolicy),
+        (status = 500, description = "创建SLA策略失败")
+    )
+)]
 pub async fn create_sla_policy_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -771,6 +880,15 @@ pub async fn create_sla_policy_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/sla-policies",
+    tag = "sla",
+    responses(
+        (status = 200, description = "查询成功", body = Vec<TicketSlaPolicy>),
+        (status = 500, description = "查询SLA策略失败")
+    )
+)]
 pub async fn list_sla_policies_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

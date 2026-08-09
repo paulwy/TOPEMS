@@ -36,6 +36,15 @@ pub struct TaskStats {
     pub overdue_tasks: i64,
 }
 
+#[utoipa::path(
+    get,
+    path = "/stats/dashboard",
+    tag = "task",
+    responses(
+        (status = 200, description = "获取统计数据成功", body = serde_json::Value),
+        (status = 401, description = "未授权")
+    )
+)]
 pub async fn get_dashboard_stats(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,

@@ -64,6 +64,15 @@ lazy_static::lazy_static! {
     static ref EMAIL_QUEUE: DashMap<String, QueuedEmail> = DashMap::new();
 }
 
+#[utoipa::path(
+    get,
+    path = "/mail/emails",
+    tag = "email",
+    responses(
+        (status = 200, description = "List of emails", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_emails(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -133,6 +142,16 @@ pub async fn list_emails(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/mail/emails",
+    tag = "email",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "Email sent", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn send_email(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
