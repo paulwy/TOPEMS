@@ -160,8 +160,8 @@
 
 | 文档 | 说明 |
 |------|------|
-| [TODO 任务清单](roadmap/TODO.md) | **当前任务总览** — 待办、进行中、优先级 |
-| [长期路线图](roadmap/roadmap.md) | 版本规划与长期演进方向 |
+| [TODO 任务清单](roadmap/TODO.md) | **当前真相源** — 版本基线 V71、待办/进度/验收数字、唯一活跃规划文档 |
+| [长期路线图（⚠️已归档 V3.2~V5.6）](roadmap/roadmap.md) | 早期版本历史快照保留（已失配勿用作实施），当前规划请跳转 [roadmap/TODO.md](roadmap/TODO.md) |
 | [历史任务归档](roadmap/todo-archive/) | 已完成版本任务归档 |
 
 ---
