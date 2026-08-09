@@ -684,8 +684,8 @@ pub async fn list_maintenances(
         .map(|r| MaintenanceRecord {
             id: r.id,
             equipment_id: r.equipment_id.unwrap_or_default(),
-            equipment_name: r.equipment_name,
-            equipment_no: r.equipment_no,
+            equipment_name: Some(r.equipment_name),
+            equipment_no: Some(r.equipment_no),
             maintenance_type: r.maintenance_type.clone(),
             description: r.description,
             maintainer: r.maintainer.unwrap_or_default(),
