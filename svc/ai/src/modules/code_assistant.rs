@@ -1,8 +1,8 @@
 use axum::{extract::Extension, Json};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CodeGenerateRequest {

@@ -4,8 +4,8 @@ pub mod audit_log;
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use std::sync::{Arc, Mutex};
+use utoipa::ToSchema;
 
 // AI 生成请求
 #[derive(Debug, Serialize, Deserialize, ToSchema)]

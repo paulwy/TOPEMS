@@ -1486,7 +1486,8 @@ mod tests {
         let all = get_all_module_permissions();
         // 20 modules * 4 actions + 1 workflow:approve = 81
         assert!(all.len() >= 81);
-        let workflow_approve = ModulePermission::new(ModuleCode::Workflow, PermissionAction::Approve);
+        let workflow_approve =
+            ModulePermission::new(ModuleCode::Workflow, PermissionAction::Approve);
         assert!(all.contains(&workflow_approve));
     }
 

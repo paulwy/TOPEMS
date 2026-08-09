@@ -39,7 +39,7 @@ async fn ensure_db_available() -> bool {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_create_account() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -73,7 +73,7 @@ async fn test_create_account() {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_get_account() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -110,7 +110,7 @@ async fn test_get_account() {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_voucher_lifecycle() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -204,7 +204,7 @@ async fn test_voucher_lifecycle() {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_period_management() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -235,7 +235,7 @@ async fn test_period_management() {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_auxiliary_account() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");

@@ -69,13 +69,21 @@ pub fn create_routes(
         )
         .route("/assistant/knowledge/ask", post(ai_handlers::knowledge_ask))
         // 文档处理 API - 使用 DocumentApi 模块
-        .route("/documents", get(DocumentApi::list).post(DocumentApi::create))
+        .route(
+            "/documents",
+            get(DocumentApi::list).post(DocumentApi::create),
+        )
         .route("/documents/upload", post(DocumentApi::upload))
         .route(
             "/documents/vectorize-from-file",
             post(DocumentApi::vectorize_from_file),
         )
-        .route("/documents/{id}", get(DocumentApi::get).put(DocumentApi::update).delete(DocumentApi::delete))
+        .route(
+            "/documents/{id}",
+            get(DocumentApi::get)
+                .put(DocumentApi::update)
+                .delete(DocumentApi::delete),
+        )
         .route("/documents/{id}/process", post(DocumentApi::process))
         .route("/documents/{id}/extract", post(DocumentApi::extract))
         .route("/documents/{id}/summarize", post(DocumentApi::summarize))
