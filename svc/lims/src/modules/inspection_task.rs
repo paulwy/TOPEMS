@@ -6,6 +6,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
@@ -19,7 +20,7 @@ pub fn create_routes() -> Router<AppState> {
         .route("/tasks/{id}/result", post(submit_result))
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct InspectionTask {
     pub id: String,
     pub tenant_id: String,
@@ -40,7 +41,7 @@ pub struct InspectionTask {
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateTaskRequest {
     pub sample_id: String,
     pub test_items: Vec<String>,
@@ -65,6 +66,15 @@ pub struct SubmitResultRequest {
     pub recorded_by: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/lims/tasks",
+    tag = "inspection_task",
+    responses(
+        (status = 200, description = "List of inspection tasks", body = ApiResponse<Vec<InspectionTask>>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_tasks(
     State(state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<Vec<InspectionTask>>> {
@@ -107,6 +117,16 @@ pub async fn list_tasks(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/lims/tasks",
+    tag = "inspection_task",
+    request_body = CreateTaskRequest,
+    responses(
+        (status = 200, description = "Inspection task created", body = ApiResponse<InspectionTask>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_task(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateTaskRequest>,
@@ -183,6 +203,19 @@ pub async fn create_task(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/lims/tasks/{id}",
+    tag = "inspection_task",
+    params(
+        ("id" = String, Path, description = "Task ID"),
+    ),
+    responses(
+        (status = 200, description = "Inspection task detail", body = ApiResponse<InspectionTask>),
+        (status = 404, description = "Task not found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_task(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,

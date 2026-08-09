@@ -139,6 +139,15 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+#[utoipa::path(
+    get,
+    path = "/plans",
+    tag = "plans",
+    responses(
+        (status = 200, description = "Plans retrieved", body = Vec<BillingPlan>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_plans(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<BillingPlan>>> {
     let plans: Vec<BillingPlan> = sqlx::query_as(
         "SELECT id, tenant_id, name, description, billing_type, price, currency, duration, is_active, created_at, updated_at FROM core_billing_plans WHERE is_active = true ORDER BY price_cents ASC",
@@ -150,6 +159,18 @@ pub async fn list_plans(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Bill
     Json(ApiResponse::success(plans, "Plans retrieved"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/plans/{id}",
+    tag = "plans",
+    params(
+        ("id" = Uuid, Path, description = "套餐ID")
+    ),
+    responses(
+        (status = 200, description = "Plan retrieved", body = BillingPlan),
+        (status = 404, description = "Plan not found")
+    )
+)]
 pub async fn get_plan(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -167,6 +188,18 @@ pub async fn get_plan(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/subscriptions/{tenant_id}",
+    tag = "subscriptions",
+    params(
+        ("tenant_id" = Uuid, Path, description = "租户ID")
+    ),
+    responses(
+        (status = 200, description = "Subscription retrieved", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_subscription(
     State(pool): State<PgPool>,
     Path(tenant_id): Path<Uuid>,
@@ -217,6 +250,16 @@ pub async fn get_subscription(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/subscriptions",
+    tag = "subscriptions",
+    request_body = CreateSubscriptionRequest,
+    responses(
+        (status = 200, description = "Subscription created", body = Subscription),
+        (status = 500, description = "Failed to create subscription")
+    )
+)]
 pub async fn create_subscription(
     State(pool): State<PgPool>,
     Json(req): Json<CreateSubscriptionRequest>,
@@ -262,6 +305,19 @@ pub async fn create_subscription(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/subscriptions/{tenant_id}",
+    tag = "subscriptions",
+    params(
+        ("tenant_id" = Uuid, Path, description = "租户ID")
+    ),
+    request_body = CancelSubscriptionRequest,
+    responses(
+        (status = 200, description = "Subscription cancelled", body = Subscription),
+        (status = 404, description = "Subscription not found")
+    )
+)]
 pub async fn cancel_subscription(
     State(pool): State<PgPool>,
     Path(tenant_id): Path<Uuid>,
@@ -291,6 +347,18 @@ pub async fn cancel_subscription(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/invoices/{tenant_id}",
+    tag = "invoices",
+    params(
+        ("tenant_id" = Uuid, Path, description = "租户ID")
+    ),
+    responses(
+        (status = 200, description = "Invoices retrieved", body = Vec<Invoice>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_invoices(
     State(pool): State<PgPool>,
     Path(tenant_id): Path<Uuid>,
@@ -306,6 +374,18 @@ pub async fn list_invoices(
     Json(ApiResponse::success(invoices, "Invoices retrieved"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/usage/{tenant_id}",
+    tag = "usage",
+    params(
+        ("tenant_id" = Uuid, Path, description = "租户ID")
+    ),
+    responses(
+        (status = 200, description = "Usage summary retrieved", body = UsageSummary),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_usage_summary(
     State(pool): State<PgPool>,
     Path(tenant_id): Path<Uuid>,
@@ -404,6 +484,20 @@ pub async fn get_usage_summary(
     Json(ApiResponse::success(summary, "Usage summary retrieved"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/usage/{tenant_id}/{metric_type}",
+    tag = "usage",
+    params(
+        ("tenant_id" = Uuid, Path, description = "租户ID"),
+        ("metric_type" = String, Path, description = "指标类型 (users/storage/api_calls)")
+    ),
+    request_body = i64,
+    responses(
+        (status = 200, description = "Usage recorded", body = UsageRecord),
+        (status = 500, description = "Failed to record usage")
+    )
+)]
 pub async fn record_usage(
     State(pool): State<PgPool>,
     Path((tenant_id, metric_type)): Path<(Uuid, String)>,

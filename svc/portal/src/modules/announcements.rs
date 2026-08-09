@@ -92,6 +92,15 @@ fn map_announcement(a: &serde_json::Value) -> Option<Announcement> {
     })
 }
 
+#[utoipa::path(
+    get,
+    path = "/announcements",
+    tag = "Portal",
+    responses(
+        (status = 200, description = "List of announcements", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_announcements(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -150,6 +159,16 @@ pub async fn get_announcement(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/announcements",
+    tag = "Portal",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "Announcement created", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_announcement(
     State(state): State<AppState>,
     Json(data): Json<NewAnnouncement>,

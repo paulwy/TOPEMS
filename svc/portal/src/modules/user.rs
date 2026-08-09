@@ -15,6 +15,16 @@ use topems_shared_service_client::TypedServiceClient;
 
 use crate::{models::UserInfo, shared::AppState, utils::user_context::extract_bearer_token};
 
+#[utoipa::path(
+    get,
+    path = "/user",
+    tag = "Portal",
+    responses(
+        (status = 200, description = "User info", body = serde_json::Value),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_user_info(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

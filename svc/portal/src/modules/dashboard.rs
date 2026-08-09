@@ -42,6 +42,15 @@ pub struct CacheStatsResponse {
 pub const DASHBOARD_CACHE_KEY: &str = "dashboard:stats:public";
 pub const CACHE_TTL: u64 = 30;
 
+#[utoipa::path(
+    get,
+    path = "/dashboard/stats",
+    tag = "Dashboard",
+    responses(
+        (status = 200, description = "Dashboard statistics", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_dashboard_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

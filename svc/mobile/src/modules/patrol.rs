@@ -48,6 +48,16 @@ pub struct UpdatePatrolRequest {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/patrol-records",
+    tag = "patrol",
+    responses(
+        (status = 200, description = "获取巡逻记录成功", body = serde_json::Value),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "查询失败")
+    )
+)]
 pub async fn get_all_patrol_records(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -86,6 +96,20 @@ pub async fn get_all_patrol_records(
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/patrol-records/{id}",
+    tag = "patrol",
+    params(
+        ("id" = Uuid, Path, description = "巡逻记录ID")
+    ),
+    responses(
+        (status = 200, description = "获取巡逻记录成功", body = serde_json::Value),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "巡逻记录不存在"),
+        (status = 500, description = "查询失败")
+    )
+)]
 pub async fn get_patrol_record(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -128,6 +152,17 @@ pub async fn get_patrol_record(
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/patrol-records",
+    tag = "patrol",
+    request_body = serde_json::Value,
+    responses(
+        (status = 201, description = "创建巡逻记录成功", body = serde_json::Value),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "创建失败")
+    )
+)]
 pub async fn create_patrol_record(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

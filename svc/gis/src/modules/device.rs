@@ -94,6 +94,15 @@ pub async fn register_device(
 }
 
 /// 获取设备列表
+#[utoipa::path(
+    get,
+    path = "/devices",
+    tag = "device",
+    responses(
+        (status = 200, description = "获取设备列表成功", body = serde_json::Value),
+        (status = 500, description = "查询失败")
+    )
+)]
 pub async fn list_devices(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, Device>("id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices ORDER BY created_at DESC")
         .fetch_all(&pool)
@@ -111,6 +120,19 @@ pub async fn list_devices(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
 }
 
 /// 获取设备详情
+#[utoipa::path(
+    get,
+    path = "/devices/{id}",
+    tag = "device",
+    params(
+        ("id" = Uuid, Path, description = "设备ID")
+    ),
+    responses(
+        (status = 200, description = "获取设备成功", body = serde_json::Value),
+        (status = 404, description = "设备未找到"),
+        (status = 500, description = "查询失败")
+    )
+)]
 pub async fn get_device(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,

@@ -247,6 +247,18 @@ pub struct ApiResponse<T> {
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::modules::map::list_maps,
+        crate::modules::map::get_map,
+        crate::modules::map::create_map,
+        crate::modules::map::update_map,
+        crate::modules::map::delete_map,
+        crate::modules::location::list_locations,
+        crate::modules::location::get_location,
+        crate::modules::location::create_location,
+        crate::modules::device::list_devices,
+        crate::modules::device::get_device,
+    ),
     components(
         schemas(
             GisLayer,

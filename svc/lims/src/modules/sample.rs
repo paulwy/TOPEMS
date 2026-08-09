@@ -6,6 +6,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use crate::middleware::tenant::TenantContext;
 use crate::shared::AppState;
@@ -36,7 +37,7 @@ pub struct SampleQuery {
     pub sample_name: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct Sample {
     pub id: String,
     pub tenant_id: String,
@@ -53,7 +54,7 @@ pub struct Sample {
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateSampleRequest {
     pub sample_name: String,
     pub sample_type: Option<String>,
@@ -73,6 +74,22 @@ pub struct UpdateSampleRequest {
     pub expired_at: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/lims/samples",
+    tag = "sample",
+    params(
+        ("page" = Option<i64>, Query, description = "Page number"),
+        ("page_size" = Option<i64>, Query, description = "Items per page"),
+        ("status" = Option<String>, Query, description = "Filter by status"),
+        ("sample_no" = Option<String>, Query, description = "Filter by sample number"),
+        ("sample_name" = Option<String>, Query, description = "Filter by sample name"),
+    ),
+    responses(
+        (status = 200, description = "List of samples", body = ApiResponse<Vec<Sample>>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_samples(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -178,6 +195,16 @@ pub async fn list_samples(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/lims/samples",
+    tag = "sample",
+    request_body = CreateSampleRequest,
+    responses(
+        (status = 200, description = "Sample registered", body = ApiResponse<Sample>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn register_sample(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -228,6 +255,19 @@ pub async fn register_sample(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/lims/samples/{id}",
+    tag = "sample",
+    params(
+        ("id" = String, Path, description = "Sample ID"),
+    ),
+    responses(
+        (status = 200, description = "Sample detail", body = ApiResponse<Sample>),
+        (status = 404, description = "Sample not found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_sample(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,

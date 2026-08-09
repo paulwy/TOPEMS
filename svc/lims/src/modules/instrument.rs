@@ -6,6 +6,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use crate::middleware::tenant::TenantContext;
 use crate::shared::AppState;
@@ -33,7 +34,7 @@ pub struct InstrumentQuery {
     pub name: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct Instrument {
     pub id: String,
     pub tenant_id: String,
@@ -49,7 +50,7 @@ pub struct Instrument {
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateInstrumentRequest {
     pub name: String,
     pub model: Option<String>,
@@ -73,6 +74,21 @@ pub struct CalibrationRequest {
     pub next_calibration_at: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/lims/instruments",
+    tag = "instrument",
+    params(
+        ("page" = Option<i64>, Query, description = "Page number"),
+        ("page_size" = Option<i64>, Query, description = "Items per page"),
+        ("status" = Option<String>, Query, description = "Filter by status"),
+        ("name" = Option<String>, Query, description = "Filter by name"),
+    ),
+    responses(
+        (status = 200, description = "List of instruments", body = ApiResponse<Vec<Instrument>>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_instruments(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -141,6 +157,16 @@ pub async fn list_instruments(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/lims/instruments",
+    tag = "instrument",
+    request_body = CreateInstrumentRequest,
+    responses(
+        (status = 200, description = "Instrument created", body = ApiResponse<Instrument>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_instrument(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,

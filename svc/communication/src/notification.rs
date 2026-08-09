@@ -14,6 +14,17 @@ use crate::models::{
 };
 
 /// 发送通知（管理员或系统使用）
+#[utoipa::path(
+    post,
+    path = "/notify/send",
+    tag = "notification",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "Notification sent", body = serde_json::Value),
+        (status = 403, description = "Forbidden"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn send_notification(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -159,6 +170,20 @@ pub async fn broadcast_notification(
 }
 
 /// 获取当前用户的通知列表
+#[utoipa::path(
+    get,
+    path = "/notify/list",
+    tag = "notification",
+    params(
+        ("page" = Option<u32>, Query, description = "Page number"),
+        ("page_size" = Option<u32>, Query, description = "Items per page"),
+        ("unread_only" = Option<bool>, Query, description = "Filter unread only"),
+    ),
+    responses(
+        (status = 200, description = "List of notifications", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_notifications(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -399,6 +424,20 @@ pub async fn mark_all_as_read(
 }
 
 /// 获取当前用户的通知列表（兼容旧API）
+#[utoipa::path(
+    get,
+    path = "/notification/notifications",
+    tag = "notification",
+    params(
+        ("page" = Option<u32>, Query, description = "Page number"),
+        ("page_size" = Option<u32>, Query, description = "Items per page"),
+        ("unread_only" = Option<bool>, Query, description = "Filter unread only"),
+    ),
+    responses(
+        (status = 200, description = "List of notifications", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_notifications(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -650,6 +689,19 @@ pub async fn delete_all_notifications(
 }
 
 /// 获取单个通知详情
+#[utoipa::path(
+    get,
+    path = "/notification/notifications/{id}",
+    tag = "notification",
+    params(
+        ("id" = Uuid, Path, description = "Notification ID"),
+    ),
+    responses(
+        (status = 200, description = "Notification detail", body = serde_json::Value),
+        (status = 404, description = "Notification not found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_notification(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

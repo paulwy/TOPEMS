@@ -4,8 +4,39 @@
 // 后续可逐步在各模块中添加 #[derive(ToSchema)] 并在此注册 schemas。
 use utoipa::OpenApi;
 
+use crate::modules::{
+    inspection_task::{CreateTaskRequest, InspectionTask},
+    instrument::{CreateInstrumentRequest, Instrument},
+    reagent::{CreateReagentRequest, Reagent},
+    sample::{CreateSampleRequest, Sample},
+};
+
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::modules::sample::list_samples,
+        crate::modules::sample::register_sample,
+        crate::modules::sample::get_sample,
+        crate::modules::instrument::list_instruments,
+        crate::modules::instrument::create_instrument,
+        crate::modules::inspection_task::list_tasks,
+        crate::modules::inspection_task::create_task,
+        crate::modules::inspection_task::get_task,
+        crate::modules::reagent::list_reagents,
+        crate::modules::reagent::create_reagent,
+    ),
+    components(
+        schemas(
+            Sample,
+            CreateSampleRequest,
+            Instrument,
+            CreateInstrumentRequest,
+            InspectionTask,
+            CreateTaskRequest,
+            Reagent,
+            CreateReagentRequest,
+        ),
+    ),
     tags(
         (name = "sample", description = "样品管理 API"),
         (name = "sample_barcode", description = "样品条码 API"),

@@ -80,6 +80,18 @@ pub struct SearchSuggestionsResponse {
     pub suggestions: Vec<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/search",
+    tag = "Search",
+    params(
+        ("q" = Option<String>, Query, description = "Search query"),
+    ),
+    responses(
+        (status = 200, description = "Search results", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn global_search(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

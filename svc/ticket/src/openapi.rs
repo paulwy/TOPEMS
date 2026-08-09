@@ -1,7 +1,4 @@
 // Ticket 服务 OpenAPI 文档
-//
-// 说明：handlers 函数未添加 #[utoipa::path] 注解，此处先注册 components.schemas
-// 以支持前端 TypeScript 类型生成（前后端 DTO 同步）。paths 可后续补充注解后启用。
 use utoipa::OpenApi;
 
 use crate::models::{
@@ -13,6 +10,18 @@ use crate::models::{
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::handlers::create_ticket_handler,
+        crate::handlers::list_tickets_handler,
+        crate::handlers::get_ticket_handler,
+        crate::handlers::update_ticket_handler,
+        crate::handlers::delete_ticket_handler,
+        crate::handlers::get_stats_handler,
+        crate::handlers::add_comment_handler,
+        crate::handlers::list_comments_handler,
+        crate::handlers::create_sla_policy_handler,
+        crate::handlers::list_sla_policies_handler,
+    ),
     components(
         schemas(
             Ticket,

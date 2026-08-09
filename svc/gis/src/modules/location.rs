@@ -56,6 +56,16 @@ pub struct RouteRequest {
 }
 
 /// 创建位置点
+#[utoipa::path(
+    post,
+    path = "/locations/create",
+    tag = "device",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "创建位置成功", body = serde_json::Value),
+        (status = 500, description = "创建位置失败")
+    )
+)]
 pub async fn create_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -88,6 +98,15 @@ pub async fn create_location(
 }
 
 /// 获取位置列表
+#[utoipa::path(
+    get,
+    path = "/locations",
+    tag = "device",
+    responses(
+        (status = 200, description = "获取位置列表成功", body = serde_json::Value),
+        (status = 500, description = "查询失败")
+    )
+)]
 pub async fn list_locations(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, Location>(
         "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM plugin_gis.locations ORDER BY created_at DESC",
@@ -107,6 +126,19 @@ pub async fn list_locations(State(pool): State<PgPool>) -> Json<ApiResponse<serd
 }
 
 /// 获取位置详情
+#[utoipa::path(
+    get,
+    path = "/locations/{id}",
+    tag = "device",
+    params(
+        ("id" = Uuid, Path, description = "位置ID")
+    ),
+    responses(
+        (status = 200, description = "获取位置成功", body = serde_json::Value),
+        (status = 404, description = "位置未找到"),
+        (status = 500, description = "查询失败")
+    )
+)]
 pub async fn get_location(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,

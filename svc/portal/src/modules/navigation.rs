@@ -9,6 +9,15 @@ use crate::{
     shared::AppState,
 };
 
+#[utoipa::path(
+    get,
+    path = "/navigation/menu",
+    tag = "Navigation",
+    responses(
+        (status = 200, description = "Navigation menu", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_navigation_menu(
     State(state): State<AppState>,
 ) -> AxumJson<ApiResponse<Vec<NavigationMenu>>> {

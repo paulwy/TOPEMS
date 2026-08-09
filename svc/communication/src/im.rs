@@ -6,6 +6,15 @@ use axum::{
 };
 use sqlx::PgPool;
 
+#[utoipa::path(
+    get,
+    path = "/im/rooms",
+    tag = "notification",
+    responses(
+        (status = 200, description = "List of chat rooms", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_rooms(State(_pool): State<PgPool>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
@@ -14,6 +23,16 @@ pub async fn list_rooms(State(_pool): State<PgPool>) -> Json<serde_json::Value> 
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/im/rooms",
+    tag = "notification",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "Chat room created", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_room(
     State(_pool): State<PgPool>,
     Json(payload): Json<serde_json::Value>,

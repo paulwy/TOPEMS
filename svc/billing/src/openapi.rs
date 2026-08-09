@@ -1,7 +1,4 @@
 // Billing 服务 OpenAPI 文档
-//
-// 说明：handlers 函数未添加 #[utoipa::path] 注解，此处先注册 components.schemas
-// 以支持前端 TypeScript 类型生成（前后端 DTO 同步）。paths 可后续补充注解后启用。
 use utoipa::OpenApi;
 
 use crate::models::{
@@ -11,6 +8,16 @@ use crate::models::{
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::handlers::list_plans,
+        crate::handlers::get_plan,
+        crate::handlers::get_subscription,
+        crate::handlers::create_subscription,
+        crate::handlers::cancel_subscription,
+        crate::handlers::list_invoices,
+        crate::handlers::get_usage_summary,
+        crate::handlers::record_usage,
+    ),
     components(
         schemas(
             BillingPlan,
