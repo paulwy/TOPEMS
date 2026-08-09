@@ -134,7 +134,7 @@ pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ServiceH
         Err(_) => false,
     };
 
-    Json(topems_shared::build_health_response(
+    Json(topems_shared_core::health::build_health_response(
         "topems-mobile",
         db_status,
     ))
