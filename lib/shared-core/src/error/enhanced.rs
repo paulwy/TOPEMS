@@ -733,9 +733,7 @@ mod tests {
     #[test]
     fn test_safe_get_env_missing() {
         // 用一个极不可能存在的 key
-        let r = SafeErrorHandler::safe_get_env(
-            "__TOPEMS_NOT_EXIST_ENV_VAR_XYZ_12345__",
-        );
+        let r = SafeErrorHandler::safe_get_env("__TOPEMS_NOT_EXIST_ENV_VAR_XYZ_12345__");
         assert!(r.is_err());
     }
 
@@ -836,9 +834,6 @@ mod tests {
     fn test_io_error_permission_denied_mapping() {
         let io = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "denied");
         let te: TopemsError = io.into();
-        assert!(matches!(
-            te,
-            TopemsError::PermissionDenied { required: _ }
-        ));
+        assert!(matches!(te, TopemsError::PermissionDenied { required: _ }));
     }
 }

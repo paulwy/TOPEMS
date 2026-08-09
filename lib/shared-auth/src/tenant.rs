@@ -572,11 +572,7 @@ mod tests {
 
     #[test]
     fn test_tenant_professional_plan_settings() {
-        let t = Tenant::new(
-            "P".to_string(),
-            "p".to_string(),
-            TenantPlan::Professional,
-        );
+        let t = Tenant::new("P".to_string(), "p".to_string(), TenantPlan::Professional);
         assert_eq!(t.settings.max_users, 100);
         assert_eq!(t.settings.max_storage_gb, 200);
         assert_eq!(t.settings.max_api_requests_per_day, 200000);

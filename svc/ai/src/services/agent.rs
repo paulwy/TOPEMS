@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use std::collections::HashMap;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::qa::QAService;

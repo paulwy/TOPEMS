@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use sqlx::Row;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::{db::Database, qa::QAService};

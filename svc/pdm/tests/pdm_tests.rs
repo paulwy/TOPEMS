@@ -36,7 +36,7 @@ async fn ensure_db_available() -> bool {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_create_product() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -71,7 +71,7 @@ async fn test_create_product() {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_get_product() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -109,7 +109,7 @@ async fn test_get_product() {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_update_product() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -155,7 +155,7 @@ async fn test_update_product() {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_delete_product() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -202,7 +202,7 @@ async fn test_delete_product() {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_tenant_isolation() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -237,7 +237,7 @@ async fn test_tenant_isolation() {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_list_products_with_pagination() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -270,7 +270,7 @@ async fn test_list_products_with_pagination() {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_create_material() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -299,7 +299,7 @@ async fn test_create_material() {
 }
 
 #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
+#[ignore = "requires PostgreSQL"]
 async fn test_create_change_notice() {
     if !ensure_db_available().await {
         eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");

@@ -440,11 +440,7 @@ mod tests {
 
     #[test]
     fn test_uuid_validator() {
-        assert!(Validator::uuid(
-            "550e8400-e29b-41d4-a716-446655440000",
-            "f"
-        )
-        .is_valid());
+        assert!(Validator::uuid("550e8400-e29b-41d4-a716-446655440000", "f").is_valid());
         assert!(!Validator::uuid("not-a-uuid", "f").is_valid());
     }
 
@@ -529,10 +525,8 @@ mod tests {
 
     #[test]
     fn test_validation_result_to_error_response() {
-        let r = ValidationResult::error("email", "无效邮箱").merge(ValidationResult::error(
-            "email",
-            "不能为空",
-        ));
+        let r = ValidationResult::error("email", "无效邮箱")
+            .merge(ValidationResult::error("email", "不能为空"));
         let resp = r.to_error_response();
         assert!(resp.contains_key("email"));
         assert_eq!(resp.get("email").unwrap().len(), 2);

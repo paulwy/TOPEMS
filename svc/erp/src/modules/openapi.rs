@@ -4,9 +4,10 @@ use utoipa::{OpenApi, ToSchema};
 use uuid::Uuid;
 
 use crate::models::material::{
-    CreateCustomerRequest, CreateInventoryRequest, CreateMaterialRequest, CreatePurchaseOrderRequest,
-    CreateSalesOrderRequest, CreateSupplierRequest, Customer, Inventory, Material, Supplier,
-    UpdateInventoryRequest, UpdatePurchaseOrderRequest, UpdateSalesOrderRequest,
+    CreateCustomerRequest, CreateInventoryRequest, CreateMaterialRequest,
+    CreatePurchaseOrderRequest, CreateSalesOrderRequest, CreateSupplierRequest, Customer,
+    Inventory, Material, Supplier, UpdateInventoryRequest, UpdatePurchaseOrderRequest,
+    UpdateSalesOrderRequest,
 };
 use crate::models::{Asset, CreateAssetRequest, UpdateAssetRequest};
 

@@ -8,9 +8,9 @@ use axum::{
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
-use utoipa::ToSchema;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
