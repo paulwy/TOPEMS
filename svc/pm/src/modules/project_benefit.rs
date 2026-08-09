@@ -27,6 +27,10 @@ pub fn create_routes(pool: PgPool) -> Router {
     get,
     path = "/projects/{project_id}/benefits",
     tag = "project_benefits",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "获取项目效益分析列表成功", body = ApiResponse<Vec<ProjectBenefit>>),
         (status = 500, description = "服务器内部错误"),
@@ -56,6 +60,10 @@ async fn get_benefits(
     get,
     path = "/projects/{project_id}/benefits/analysis",
     tag = "project_benefits",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "获取项目效益综合分析成功", body = ApiResponse<serde_json::Value>),
         (status = 500, description = "服务器内部错误"),
@@ -155,6 +163,10 @@ async fn get_analysis(
     path = "/projects/{project_id}/benefits",
     tag = "project_benefits",
     request_body = CreateBenefitRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "计算项目效益分析成功", body = ApiResponse<ProjectBenefit>),
         (status = 500, description = "服务器内部错误"),

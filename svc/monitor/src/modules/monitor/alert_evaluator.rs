@@ -350,6 +350,7 @@ pub async fn list_thresholds(
 #[utoipa::path(
     post,
     path = "/api/monitor/thresholds",
+    request_body = ThresholdRequest,
     tag = "thresholds",
     responses(
         (status = 200, description = "OK"),
@@ -382,6 +383,10 @@ pub async fn create_threshold(
     get,
     path = "/api/monitor/thresholds/{id}",
     tag = "thresholds",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -412,7 +417,12 @@ pub async fn get_threshold(
 #[utoipa::path(
     put,
     path = "/api/monitor/thresholds/{id}",
+    request_body = ThresholdRequest,
     tag = "thresholds",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -445,6 +455,10 @@ pub async fn update_threshold(
     delete,
     path = "/api/monitor/thresholds/{id}",
     tag = "thresholds",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),

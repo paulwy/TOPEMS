@@ -31,6 +31,10 @@ pub fn create_routes(pool: PgPool) -> Router {
     get,
     path = "/projects/{project_id}/milestones",
     tag = "project_milestones",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "获取项目里程碑列表成功", body = ApiResponse<Vec<ProjectMilestone>>),
         (status = 500, description = "服务器内部错误"),
@@ -61,6 +65,10 @@ async fn list_milestones(
     path = "/projects/{project_id}/milestones",
     tag = "project_milestones",
     request_body = CreateMilestoneRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "创建项目里程碑成功", body = ApiResponse<ProjectMilestone>),
         (status = 500, description = "服务器内部错误"),
@@ -110,6 +118,11 @@ async fn create_milestone(
     get,
     path = "/projects/{project_id}/milestones/{id}",
     tag = "project_milestones",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "获取项目里程碑成功", body = ApiResponse<ProjectMilestone>),
         (status = 404, description = "项目里程碑不存在"),
@@ -143,6 +156,11 @@ async fn get_milestone(
     path = "/projects/{project_id}/milestones/{id}",
     tag = "project_milestones",
     request_body = UpdateMilestoneRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "更新项目里程碑成功", body = ApiResponse<ProjectMilestone>),
         (status = 404, description = "项目里程碑不存在"),
@@ -196,6 +214,11 @@ async fn update_milestone(
     delete,
     path = "/projects/{project_id}/milestones/{id}",
     tag = "project_milestones",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "删除项目里程碑成功", body = ApiResponse<bool>),
         (status = 404, description = "项目里程碑不存在"),

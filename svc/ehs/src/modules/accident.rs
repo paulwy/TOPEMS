@@ -232,6 +232,7 @@ pub async fn list_accidents(
 #[utoipa::path(
     post,
     path = "/api/ehs/incidents",
+    request_body = CreateAccidentRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -273,6 +274,10 @@ pub async fn report_accident(
     get,
     path = "/api/ehs/incidents/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_accident(
@@ -342,7 +347,12 @@ pub async fn get_accident(
 #[utoipa::path(
     put,
     path = "/api/ehs/incidents/{id}",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_accident(
@@ -381,6 +391,10 @@ pub async fn update_accident(
     delete,
     path = "/api/ehs/incidents/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_accident(
@@ -397,7 +411,12 @@ pub async fn delete_accident(
 #[utoipa::path(
     post,
     path = "/api/ehs/incidents/{id}/investigation",
+    request_body = CreateInvestigationRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn start_investigation(
@@ -432,7 +451,12 @@ pub async fn start_investigation(
 #[utoipa::path(
     put,
     path = "/api/ehs/incidents/{id}/investigation",
+    request_body = UpdateInvestigationRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_investigation(
@@ -475,6 +499,10 @@ pub async fn update_investigation(
     post,
     path = "/api/ehs/incidents/{id}/investigation/complete",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn complete_investigation(
@@ -525,7 +553,12 @@ pub async fn complete_investigation(
 #[utoipa::path(
     post,
     path = "/api/ehs/incidents/{id}/treatment",
+    request_body = CreateTreatmentRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_treatment(
@@ -574,7 +607,13 @@ pub async fn create_treatment(
 #[utoipa::path(
     put,
     path = "/api/ehs/incidents/{id}/treatment/actions/{action_id}",
+    request_body = UpdateTreatmentActionRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("action_id" = String, Path, description = "action_id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_treatment_action(
@@ -610,6 +649,10 @@ pub async fn update_treatment_action(
     post,
     path = "/api/ehs/incidents/{id}/treatment/complete",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn complete_treatment(
@@ -662,7 +705,12 @@ pub async fn complete_treatment(
 #[utoipa::path(
     post,
     path = "/api/ehs/incidents/{id}/review",
+    request_body = CreateReviewRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_review(
@@ -695,6 +743,10 @@ pub async fn create_review(
     post,
     path = "/api/ehs/incidents/{id}/close",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn close_accident(

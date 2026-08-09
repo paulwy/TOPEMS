@@ -4,11 +4,12 @@
 pub use topems_shared_bootstrap::audit::{AuditEventParams, AuditLog, ListAuditLogsQuery};
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 // ===== 通知模型 =====
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SendNotificationRequest {
     pub user_id: Uuid,
     pub title: String,
@@ -88,7 +89,7 @@ pub struct ArchiveConfig {
 
 // ===== 邮件模型 =====
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct SendEmailRequest {
     pub to: String,
     pub subject: String,

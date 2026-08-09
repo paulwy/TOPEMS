@@ -387,6 +387,10 @@ pub async fn list_slos(
     get,
     path = "/api/monitor/slos/{id}",
     tag = "slo",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -428,6 +432,7 @@ pub async fn get_slo(
 #[utoipa::path(
     post,
     path = "/api/monitor/slos",
+    request_body = SloRequest,
     tag = "slo",
     responses(
         (status = 200, description = "OK"),
@@ -469,7 +474,12 @@ pub async fn create_slo(
 #[utoipa::path(
     put,
     path = "/api/monitor/slos/{id}",
+    request_body = SloRequest,
     tag = "slo",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -510,6 +520,10 @@ pub async fn update_slo(
     delete,
     path = "/api/monitor/slos/{id}",
     tag = "slo",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -722,6 +736,10 @@ pub async fn list_slo_violations(
     post,
     path = "/api/monitor/slos/violations/{id}/resolve",
     tag = "slo",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),

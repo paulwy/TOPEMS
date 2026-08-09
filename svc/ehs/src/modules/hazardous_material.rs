@@ -307,6 +307,7 @@ pub async fn list_materials(
 #[utoipa::path(
     post,
     path = "/api/ehs/hazardous-materials",
+    request_body = CreateMaterialRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -358,6 +359,10 @@ pub async fn create_material(
     get,
     path = "/api/ehs/hazardous-materials/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_material(
@@ -472,7 +477,12 @@ pub async fn get_material(
 #[utoipa::path(
     put,
     path = "/api/ehs/hazardous-materials/{id}",
+    request_body = UpdateMaterialRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_material(
@@ -521,6 +531,10 @@ pub async fn update_material(
     delete,
     path = "/api/ehs/hazardous-materials/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_material(
@@ -538,6 +552,10 @@ pub async fn delete_material(
     get,
     path = "/api/ehs/hazardous-materials/{id}/stocks",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_material_stocks(
@@ -576,6 +594,7 @@ pub async fn list_stock_records(
 #[utoipa::path(
     post,
     path = "/api/ehs/hazardous-materials/stock-records/stock-in",
+    request_body = CreateStockRecordRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -618,6 +637,7 @@ pub async fn create_stock_in(
 #[utoipa::path(
     post,
     path = "/api/ehs/hazardous-materials/stock-records/stock-out",
+    request_body = CreateStockRecordRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -661,6 +681,10 @@ pub async fn create_stock_out(
     get,
     path = "/api/ehs/hazardous-materials/stock-records/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_stock_record(
@@ -700,6 +724,10 @@ pub async fn get_stock_record(
     get,
     path = "/api/ehs/hazardous-materials/{id}/msds",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_material_msds(
@@ -744,7 +772,12 @@ pub async fn get_material_msds(
 #[utoipa::path(
     put,
     path = "/api/ehs/hazardous-materials/{id}/msds",
+    request_body = UpdateMsdsRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_material_msds(

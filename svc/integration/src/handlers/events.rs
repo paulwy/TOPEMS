@@ -141,6 +141,7 @@ pub async fn list_events(
 #[utoipa::path(
     post,
     path = "/api/integration/events",
+    request_body = CreateIntegrationEventRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),

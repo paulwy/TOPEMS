@@ -688,6 +688,10 @@ pub async fn list_business_metrics(
     get,
     path = "/api/monitor/business-metrics/{id}",
     tag = "business_metrics",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -721,6 +725,7 @@ pub async fn get_business_metric(
 #[utoipa::path(
     post,
     path = "/api/monitor/business-metrics",
+    request_body = BusinessMetricRequest,
     tag = "business_metrics",
     responses(
         (status = 200, description = "OK"),
@@ -755,7 +760,12 @@ pub async fn create_business_metric(
 #[utoipa::path(
     put,
     path = "/api/monitor/business-metrics/{id}",
+    request_body = BusinessMetricRequest,
     tag = "business_metrics",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -791,6 +801,10 @@ pub async fn update_business_metric(
     delete,
     path = "/api/monitor/business-metrics/{id}",
     tag = "business_metrics",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),

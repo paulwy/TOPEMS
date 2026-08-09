@@ -454,6 +454,10 @@ pub async fn list_alerts(
     get,
     path = "/api/monitor/alerts/{id}",
     tag = "alerts",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -483,7 +487,12 @@ pub async fn get_alert(
 #[utoipa::path(
     post,
     path = "/api/monitor/alerts/{id}",
+    request_body = serde_json::Value,
     tag = "alerts",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -576,6 +585,7 @@ pub async fn get_alert_statistics(
 #[utoipa::path(
     post,
     path = "/api/monitor/alerts/acknowledge",
+    request_body = serde_json::Value,
     tag = "alerts",
     responses(
         (status = 200, description = "OK"),
@@ -609,6 +619,7 @@ pub async fn acknowledge_alerts(
 #[utoipa::path(
     post,
     path = "/api/monitor/alerts/resolve",
+    request_body = serde_json::Value,
     tag = "alerts",
     responses(
         (status = 200, description = "OK"),
@@ -734,6 +745,7 @@ pub async fn list_rules(
 #[utoipa::path(
     post,
     path = "/api/monitor/rules",
+    request_body = AlertRuleRequest,
     tag = "alert_rules",
     responses(
         (status = 200, description = "OK"),
@@ -766,6 +778,10 @@ pub async fn create_rule(
     get,
     path = "/api/monitor/rules/{id}",
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -805,7 +821,12 @@ pub async fn get_rule(
 #[utoipa::path(
     put,
     path = "/api/monitor/rules/{id}",
+    request_body = AlertRuleRequest,
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -838,6 +859,10 @@ pub async fn update_rule(
     delete,
     path = "/api/monitor/rules/{id}",
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -857,6 +882,10 @@ pub async fn delete_rule(
     post,
     path = "/api/monitor/rules/{id}/enable",
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -893,6 +922,10 @@ pub async fn enable_rule(
     post,
     path = "/api/monitor/rules/{id}/disable",
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -931,6 +964,10 @@ pub async fn disable_rule(
     get,
     path = "/api/monitor/alerts/{id}/history",
     tag = "alerts",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -966,6 +1003,10 @@ pub async fn get_alert_history(
     get,
     path = "/api/monitor/alerts/{id}/timeline",
     tag = "alerts",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1006,6 +1047,10 @@ pub async fn get_alert_timeline(
     get,
     path = "/api/monitor/rules/{id}/scheduled-trigger",
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1029,7 +1074,12 @@ pub async fn get_scheduled_trigger(
 #[utoipa::path(
     put,
     path = "/api/monitor/rules/{id}/scheduled-trigger",
+    request_body = ScheduledTrigger,
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1047,6 +1097,10 @@ pub async fn update_scheduled_trigger(
     get,
     path = "/api/monitor/rules/{id}/escalation",
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1104,7 +1158,12 @@ pub async fn get_escalation(
 #[utoipa::path(
     put,
     path = "/api/monitor/rules/{id}/escalation",
+    request_body = AlertEscalation,
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1122,6 +1181,10 @@ pub async fn update_escalation(
     get,
     path = "/api/monitor/rules/{id}/routing",
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1166,7 +1229,12 @@ pub async fn get_routing(
 #[utoipa::path(
     put,
     path = "/api/monitor/rules/{id}/routing",
+    request_body = AlertRouting,
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1218,6 +1286,7 @@ pub async fn list_templates(
 #[utoipa::path(
     post,
     path = "/api/monitor/templates",
+    request_body = AlertTemplate,
     tag = "alert_templates",
     responses(
         (status = 200, description = "OK"),
@@ -1235,6 +1304,10 @@ pub async fn create_template(
     get,
     path = "/api/monitor/templates/{id}",
     tag = "alert_templates",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1259,7 +1332,12 @@ pub async fn get_template(
 #[utoipa::path(
     put,
     path = "/api/monitor/templates/{id}",
+    request_body = AlertTemplate,
     tag = "alert_templates",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1277,6 +1355,10 @@ pub async fn update_template(
     delete,
     path = "/api/monitor/templates/{id}",
     tag = "alert_templates",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1324,6 +1406,7 @@ pub async fn list_suppression_rules(
 #[utoipa::path(
     post,
     path = "/api/monitor/suppression",
+    request_body = SuppressionRule,
     tag = "alert_suppression",
     responses(
         (status = 200, description = "OK"),
@@ -1341,6 +1424,10 @@ pub async fn create_suppression_rule(
     get,
     path = "/api/monitor/suppression/{id}",
     tag = "alert_suppression",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1369,7 +1456,12 @@ pub async fn get_suppression_rule(
 #[utoipa::path(
     put,
     path = "/api/monitor/suppression/{id}",
+    request_body = SuppressionRule,
     tag = "alert_suppression",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1387,6 +1479,10 @@ pub async fn update_suppression_rule(
     delete,
     path = "/api/monitor/suppression/{id}",
     tag = "alert_suppression",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1407,6 +1503,10 @@ pub async fn delete_suppression_rule(
     get,
     path = "/api/monitor/rules/{id}/advanced",
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -1456,7 +1556,12 @@ pub async fn get_advanced_rule(
 #[utoipa::path(
     put,
     path = "/api/monitor/rules/{id}/advanced",
+    request_body = serde_json::Value,
     tag = "alert_rules",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),

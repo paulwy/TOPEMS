@@ -145,6 +145,7 @@ pub async fn list_products(
 #[utoipa::path(
     post,
     path = "/api/pdm/products",
+    request_body = CreateProductRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -194,6 +195,10 @@ pub async fn create_product(
     get,
     path = "/api/pdm/products/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_product(
@@ -228,7 +233,12 @@ pub async fn get_product(
 #[utoipa::path(
     put,
     path = "/api/pdm/products/{id}",
+    request_body = UpdateProductRequest,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_product(
@@ -279,6 +289,10 @@ pub async fn update_product(
     delete,
     path = "/api/pdm/products/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_product(

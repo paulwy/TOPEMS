@@ -350,7 +350,7 @@ fn format_service_name(service_type: &str) -> String {
     post,
     path = "/todos",
     tag = "Todo",
-    request_body = serde_json::Value,
+    request_body = NewTodo,
     responses(
         (status = 200, description = "Todo added", body = serde_json::Value),
         (status = 500, description = "Internal server error")

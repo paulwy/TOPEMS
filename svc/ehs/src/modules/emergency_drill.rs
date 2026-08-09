@@ -293,6 +293,7 @@ pub async fn list_drill_plans(
 #[utoipa::path(
     post,
     path = "/api/ehs/drills/plans",
+    request_body = CreateDrillPlanRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -335,6 +336,10 @@ pub async fn create_drill_plan(
     get,
     path = "/api/ehs/drills/plans/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_drill_plan(
@@ -372,7 +377,12 @@ pub async fn get_drill_plan(
 #[utoipa::path(
     put,
     path = "/api/ehs/drills/plans/{id}",
+    request_body = UpdateDrillPlanRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_drill_plan(
@@ -414,6 +424,10 @@ pub async fn update_drill_plan(
     delete,
     path = "/api/ehs/drills/plans/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_drill_plan(
@@ -449,6 +463,7 @@ pub async fn list_drill_records(
 #[utoipa::path(
     post,
     path = "/api/ehs/drills/records",
+    request_body = CreateDrillRecordRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -495,6 +510,10 @@ pub async fn create_drill_record(
     get,
     path = "/api/ehs/drills/records/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_drill_record(
@@ -573,7 +592,12 @@ pub async fn get_drill_record(
 #[utoipa::path(
     put,
     path = "/api/ehs/drills/records/{id}",
+    request_body = UpdateDrillRecordRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_drill_record(
@@ -619,6 +643,10 @@ pub async fn update_drill_record(
     delete,
     path = "/api/ehs/drills/records/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_drill_record(
@@ -635,7 +663,12 @@ pub async fn delete_drill_record(
 #[utoipa::path(
     post,
     path = "/api/ehs/drills/records/{id}/evaluation",
+    request_body = CreateEvaluationRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_drill_evaluation(
@@ -672,6 +705,10 @@ pub async fn create_drill_evaluation(
     get,
     path = "/api/ehs/drills/records/{id}/problems",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_drill_problems(
@@ -691,7 +728,12 @@ pub async fn list_drill_problems(
 #[utoipa::path(
     post,
     path = "/api/ehs/drills/records/{id}/problems",
+    request_body = CreateDrillProblemRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_drill_problem(
@@ -729,7 +771,13 @@ pub async fn create_drill_problem(
 #[utoipa::path(
     put,
     path = "/api/ehs/drills/records/{id}/problems/{problem_id}",
+    request_body = UpdateDrillProblemRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("problem_id" = String, Path, description = "problem_id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_drill_problem(

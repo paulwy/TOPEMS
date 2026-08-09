@@ -27,6 +27,10 @@ pub fn create_routes(pool: PgPool) -> Router {
     get,
     path = "/projects/{project_id}/expenses",
     tag = "project_expenses",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "获取项目费用列表成功", body = ApiResponse<Vec<ProjectExpense>>),
         (status = 500, description = "服务器内部错误"),
@@ -57,6 +61,10 @@ async fn list_expenses(
     path = "/projects/{project_id}/expenses",
     tag = "project_expenses",
     request_body = CreateExpenseRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "添加项目费用成功", body = ApiResponse<ProjectExpense>),
         (status = 500, description = "服务器内部错误"),
@@ -120,6 +128,11 @@ async fn add_expense(
     get,
     path = "/projects/{project_id}/expenses/{id}",
     tag = "project_expenses",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "获取项目费用成功", body = ApiResponse<ProjectExpense>),
         (status = 404, description = "项目费用不存在"),
@@ -153,6 +166,11 @@ async fn get_expense(
     path = "/projects/{project_id}/expenses/{id}",
     tag = "project_expenses",
     request_body = UpdateExpenseRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "更新项目费用成功", body = ApiResponse<ProjectExpense>),
         (status = 404, description = "项目费用不存在"),
@@ -210,6 +228,11 @@ async fn update_expense(
     delete,
     path = "/projects/{project_id}/expenses/{id}",
     tag = "project_expenses",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "删除项目费用成功", body = ApiResponse<bool>),
         (status = 404, description = "项目费用不存在"),

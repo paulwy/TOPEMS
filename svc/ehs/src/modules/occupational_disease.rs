@@ -359,6 +359,7 @@ pub async fn list_hazard_factors(
 #[utoipa::path(
     post,
     path = "/api/ehs/occupational-disease/factors",
+    request_body = CreateHazardFactorRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -402,6 +403,10 @@ pub async fn create_hazard_factor(
     get,
     path = "/api/ehs/occupational-disease/factors/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_hazard_factor(
@@ -440,7 +445,12 @@ pub async fn get_hazard_factor(
 #[utoipa::path(
     put,
     path = "/api/ehs/occupational-disease/factors/{id}",
+    request_body = UpdateHazardFactorRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_hazard_factor(
@@ -481,6 +491,10 @@ pub async fn update_hazard_factor(
     delete,
     path = "/api/ehs/occupational-disease/factors/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_hazard_factor(
@@ -516,6 +530,7 @@ pub async fn list_detection_records(
 #[utoipa::path(
     post,
     path = "/api/ehs/occupational-disease/detections",
+    request_body = CreateDetectionRecordRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -562,6 +577,10 @@ pub async fn create_detection_record(
     get,
     path = "/api/ehs/occupational-disease/detections/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_detection_record(
@@ -604,6 +623,10 @@ pub async fn get_detection_record(
     delete,
     path = "/api/ehs/occupational-disease/detections/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_detection_record(
@@ -639,6 +662,7 @@ pub async fn list_disease_cases(
 #[utoipa::path(
     post,
     path = "/api/ehs/occupational-disease/cases",
+    request_body = CreateDiseaseCaseRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -687,6 +711,10 @@ pub async fn create_disease_case(
     get,
     path = "/api/ehs/occupational-disease/cases/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_disease_case(
@@ -730,7 +758,12 @@ pub async fn get_disease_case(
 #[utoipa::path(
     put,
     path = "/api/ehs/occupational-disease/cases/{id}",
+    request_body = UpdateDiseaseCaseRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_disease_case(
@@ -783,6 +816,10 @@ pub async fn update_disease_case(
     delete,
     path = "/api/ehs/occupational-disease/cases/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_disease_case(
@@ -818,6 +855,7 @@ pub async fn list_protection_measures(
 #[utoipa::path(
     post,
     path = "/api/ehs/occupational-disease/protection-measures",
+    request_body = CreateProtectionMeasureRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -860,6 +898,10 @@ pub async fn create_protection_measure(
     get,
     path = "/api/ehs/occupational-disease/protection-measures/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_protection_measure(
@@ -897,7 +939,12 @@ pub async fn get_protection_measure(
 #[utoipa::path(
     put,
     path = "/api/ehs/occupational-disease/protection-measures/{id}",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_protection_measure(
@@ -947,6 +994,10 @@ pub async fn update_protection_measure(
     delete,
     path = "/api/ehs/occupational-disease/protection-measures/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_protection_measure(
@@ -982,6 +1033,7 @@ pub async fn list_health_trainings(
 #[utoipa::path(
     post,
     path = "/api/ehs/occupational-disease/trainings",
+    request_body = CreateHealthTrainingRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -1024,6 +1076,10 @@ pub async fn create_health_training(
     get,
     path = "/api/ehs/occupational-disease/trainings/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_health_training(
@@ -1062,6 +1118,10 @@ pub async fn get_health_training(
     delete,
     path = "/api/ehs/occupational-disease/trainings/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_health_training(

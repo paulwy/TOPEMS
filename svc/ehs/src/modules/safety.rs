@@ -205,6 +205,7 @@ pub async fn list_plans(
 #[utoipa::path(
     post,
     path = "/api/ehs/checks/plans",
+    request_body = CreateInspectionPlanRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -243,6 +244,10 @@ pub async fn create_plan(
     get,
     path = "/api/ehs/checks/plans/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_plan(
@@ -277,7 +282,12 @@ pub async fn get_plan(
 #[utoipa::path(
     put,
     path = "/api/ehs/checks/plans/{id}",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_plan(
@@ -314,6 +324,10 @@ pub async fn update_plan(
     delete,
     path = "/api/ehs/checks/plans/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_plan(
@@ -331,6 +345,10 @@ pub async fn delete_plan(
     get,
     path = "/api/ehs/checks/plans/{plan_id}/items",
     tag = "ehs",
+    params(
+        ("plan_id" = String, Path, description = "plan_id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_plan_items(
@@ -387,7 +405,12 @@ pub async fn list_plan_items(
 #[utoipa::path(
     post,
     path = "/api/ehs/checks/plans/{plan_id}/items",
+    request_body = CreateInspectionItemRequest,
     tag = "ehs",
+    params(
+        ("plan_id" = String, Path, description = "plan_id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_plan_item(
@@ -423,6 +446,11 @@ pub async fn create_plan_item(
     delete,
     path = "/api/ehs/checks/plans/{plan_id}/items/{item_id}",
     tag = "ehs",
+    params(
+        ("plan_id" = String, Path, description = "plan_id"),
+        ("item_id" = String, Path, description = "item_id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_plan_item(
@@ -458,6 +486,7 @@ pub async fn list_records(
 #[utoipa::path(
     post,
     path = "/api/ehs/checks/records",
+    request_body = CreateInspectionRecordRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -508,6 +537,10 @@ pub async fn create_record(
     get,
     path = "/api/ehs/checks/records/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_record(
@@ -571,7 +604,12 @@ pub async fn get_record(
 #[utoipa::path(
     put,
     path = "/api/ehs/checks/records/{id}",
+    request_body = UpdateInspectionRecordRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_record(
@@ -610,6 +648,10 @@ pub async fn update_record(
     delete,
     path = "/api/ehs/checks/records/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_record(

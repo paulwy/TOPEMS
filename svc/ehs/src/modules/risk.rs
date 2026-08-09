@@ -98,6 +98,7 @@ pub async fn list_risks(
 #[utoipa::path(
     post,
     path = "/api/ehs/hazards",
+    request_body = serde_json::Value,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -136,6 +137,10 @@ pub async fn create_risk(
     get,
     path = "/api/ehs/hazards/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_risk(
@@ -169,7 +174,12 @@ pub async fn get_risk(
 #[utoipa::path(
     put,
     path = "/api/ehs/hazards/{id}",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_risk(
@@ -204,7 +214,12 @@ pub async fn update_risk(
 #[utoipa::path(
     post,
     path = "/api/ehs/hazards/{id}/assessments",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn assess_risk(
@@ -240,6 +255,10 @@ pub async fn assess_risk(
     delete,
     path = "/api/ehs/hazards/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_risk(
@@ -257,6 +276,10 @@ pub async fn delete_risk(
     get,
     path = "/api/ehs/hazards/{id}/controls",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_control_measures(
@@ -299,7 +322,12 @@ pub async fn list_control_measures(
 #[utoipa::path(
     post,
     path = "/api/ehs/hazards/{id}/controls",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_control_measure(
@@ -340,7 +368,13 @@ pub async fn create_control_measure(
 #[utoipa::path(
     put,
     path = "/api/ehs/hazards/{id}/controls/{measure_id}",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("measure_id" = String, Path, description = "measure_id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_control_measure(
@@ -391,6 +425,11 @@ pub async fn update_control_measure(
     delete,
     path = "/api/ehs/hazards/{id}/controls/{measure_id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("measure_id" = String, Path, description = "measure_id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_control_measure(

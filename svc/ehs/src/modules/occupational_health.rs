@@ -357,6 +357,7 @@ pub async fn list_exam_plans(
 #[utoipa::path(
     post,
     path = "/api/ehs/occupational-health/exam-plans",
+    request_body = CreateExamPlanRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -398,6 +399,10 @@ pub async fn create_exam_plan(
     get,
     path = "/api/ehs/occupational-health/exam-plans/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_exam_plan(
@@ -434,7 +439,12 @@ pub async fn get_exam_plan(
 #[utoipa::path(
     put,
     path = "/api/ehs/occupational-health/exam-plans/{id}",
+    request_body = UpdateExamPlanRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_exam_plan(
@@ -475,6 +485,10 @@ pub async fn update_exam_plan(
     delete,
     path = "/api/ehs/occupational-health/exam-plans/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_exam_plan(
@@ -510,6 +524,7 @@ pub async fn list_exam_records(
 #[utoipa::path(
     post,
     path = "/api/ehs/occupational-health/exam-records",
+    request_body = CreateExamRecordRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -566,6 +581,10 @@ pub async fn create_exam_record(
     get,
     path = "/api/ehs/occupational-health/exam-records/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_exam_record(
@@ -617,7 +636,12 @@ pub async fn get_exam_record(
 #[utoipa::path(
     put,
     path = "/api/ehs/occupational-health/exam-records/{id}",
+    request_body = UpdateExamRecordRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_exam_record(
@@ -671,6 +695,10 @@ pub async fn update_exam_record(
     delete,
     path = "/api/ehs/occupational-health/exam-records/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_exam_record(
@@ -688,6 +716,10 @@ pub async fn delete_exam_record(
     get,
     path = "/api/ehs/occupational-health/archives/{employee_id}",
     tag = "ehs",
+    params(
+        ("employee_id" = String, Path, description = "employee_id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_health_archive(
@@ -739,6 +771,7 @@ pub async fn list_contraindications(
 #[utoipa::path(
     post,
     path = "/api/ehs/occupational-health/contraindications",
+    request_body = CreateContraindicationRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -779,6 +812,10 @@ pub async fn create_contraindication(
     get,
     path = "/api/ehs/occupational-health/contraindications/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_contraindication(
@@ -817,7 +854,12 @@ pub async fn get_contraindication(
 #[utoipa::path(
     put,
     path = "/api/ehs/occupational-health/contraindications/{id}",
+    request_body = UpdateContraindicationRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_contraindication(
@@ -860,6 +902,10 @@ pub async fn update_contraindication(
     delete,
     path = "/api/ehs/occupational-health/contraindications/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_contraindication(
@@ -895,7 +941,12 @@ pub async fn list_abnormalities(
 #[utoipa::path(
     put,
     path = "/api/ehs/occupational-health/abnormalities/{id}",
+    request_body = UpdateAbnormalityRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_abnormality(

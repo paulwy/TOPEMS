@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use sqlx::{postgres::PgRow, PgPool, Row};
 use uuid::Uuid;
 
@@ -12,7 +13,7 @@ use super::auth_utils::extract_user_id_from_token;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::response::ApiResponse;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct BarcodeScanRequest {
     pub barcode: String,
     pub location_lat: Option<f64>,
@@ -99,7 +100,7 @@ impl ScanRecord {
     post,
     path = "/scan/barcode",
     tag = "scan",
-    request_body = serde_json::Value,
+    request_body = BarcodeScanRequest,
     responses(
         (status = 200, description = "条形码扫描成功", body = serde_json::Value),
         (status = 401, description = "未授权"),

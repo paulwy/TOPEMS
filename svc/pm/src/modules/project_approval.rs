@@ -48,6 +48,10 @@ fn get_approval_workflow_id() -> Option<Uuid> {
     get,
     path = "/projects/{project_id}/approval",
     tag = "project_approval",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "获取项目审批信息成功", body = ApiResponse<ProjectApproval>),
         (status = 404, description = "项目审批信息不存在"),
@@ -80,6 +84,10 @@ async fn get_approval(
     path = "/projects/{project_id}/approval",
     tag = "project_approval",
     request_body = ApprovalRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "提交审批成功", body = ApiResponse<ProjectApproval>),
         (status = 500, description = "服务器内部错误"),
@@ -182,6 +190,10 @@ async fn submit_approval(
     path = "/projects/{project_id}/approval/action",
     tag = "project_approval",
     request_body = ApprovalRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "审批操作成功", body = ApiResponse<ProjectApproval>),
         (status = 400, description = "无效的审批操作"),

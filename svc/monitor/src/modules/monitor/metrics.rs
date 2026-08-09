@@ -597,6 +597,7 @@ pub struct ExportRequest {
 #[utoipa::path(
     post,
     path = "/api/monitor/performance/export",
+    request_body = ExportRequest,
     tag = "performance",
     responses(
         (status = 200, description = "OK"),

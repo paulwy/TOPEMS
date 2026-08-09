@@ -43,6 +43,7 @@ pub async fn list_wms_scm_sync(
 #[utoipa::path(
     post,
     path = "/api/integration/wms-scm",
+    request_body = CreateWmsScmSyncRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -103,6 +104,10 @@ pub async fn create_wms_scm_sync(
     get,
     path = "/api/integration/wms-scm/{id}",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -136,6 +141,10 @@ pub async fn get_wms_scm_sync(
     post,
     path = "/api/integration/wms-scm/{id}/sync",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),

@@ -48,6 +48,9 @@ pub async fn create_analysis(
     get,
     path = "/api/bi/analysis/{id}",
     tag = "Analytics",
+    params(
+        ("id" = uuid::Uuid, Path, description = "ID"),
+    ),
     responses(
         (status = 200, description = "Success", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -55,6 +58,7 @@ pub async fn create_analysis(
 )]
 pub async fn get_analysis(
     State(_state): State<crate::shared::AppState>,
+    _id: axum::extract::Path<uuid::Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting analysis");
     Json(serde_json::json!({
@@ -68,6 +72,9 @@ pub async fn get_analysis(
     post,
     path = "/api/bi/analysis/{id}/execute",
     tag = "Analytics",
+    params(
+        ("id" = uuid::Uuid, Path, description = "ID"),
+    ),
     responses(
         (status = 200, description = "Executed successfully", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -75,6 +82,7 @@ pub async fn get_analysis(
 )]
 pub async fn execute_analysis(
     State(_state): State<crate::shared::AppState>,
+    _id: axum::extract::Path<uuid::Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Executing analysis");
     Json(serde_json::json!({

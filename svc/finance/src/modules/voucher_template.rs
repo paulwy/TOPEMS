@@ -73,7 +73,7 @@ pub struct ToggleRuleRequest {
     post,
     path = "/voucher-templates/{template_id}/copy",
     tag = "Voucher Template",
-    params(TemplatePathParams),
+    params(("template_id" = Uuid, Path, description = "模板ID")),
     request_body = CopyTemplateRequest,
     responses(
         (status = 200, description = "复制凭证模板成功", body = ApiResponse<serde_json::Value>),
@@ -132,7 +132,7 @@ pub async fn copy_template(
     put,
     path = "/voucher-templates/{template_id}/toggle",
     tag = "Voucher Template",
-    params(TemplatePathParams),
+    params(("template_id" = Uuid, Path, description = "模板ID")),
     request_body = ToggleTemplateRequest,
     responses(
         (status = 200, description = "启用/禁用凭证模板成功", body = ApiResponse<serde_json::Value>),
@@ -252,7 +252,7 @@ pub async fn match_template(
     get,
     path = "/voucher-templates/{template_id}/usage-stats",
     tag = "Voucher Template",
-    params(TemplatePathParams, UsageStatsQueryParams),
+    params(("template_id" = Uuid, Path, description = "模板ID"), UsageStatsQueryParams),
     responses(
         (status = 200, description = "获取模板使用统计成功", body = ApiResponse<serde_json::Value>),
         (status = 500, description = "服务器内部错误"),
@@ -288,7 +288,7 @@ pub async fn get_usage_stats(
     get,
     path = "/voucher-templates/{template_id}/export",
     tag = "Voucher Template",
-    params(TemplatePathParams, ExportQueryParams),
+    params(("template_id" = Uuid, Path, description = "模板ID"), ExportQueryParams),
     responses(
         (status = 200, description = "导出凭证模板成功"),
         (status = 500, description = "服务器内部错误"),

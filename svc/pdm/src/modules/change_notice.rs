@@ -186,6 +186,7 @@ pub async fn list_change_notices(
 #[utoipa::path(
     post,
     path = "/api/pdm/change-notices",
+    request_body = CreateChangeNoticeRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -258,6 +259,10 @@ pub async fn create_change_notice(
     get,
     path = "/api/pdm/change-notices/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_change_notice(
@@ -294,7 +299,12 @@ pub async fn get_change_notice(
 #[utoipa::path(
     put,
     path = "/api/pdm/change-notices/{id}",
+    request_body = UpdateChangeNoticeRequest,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_change_notice(
@@ -388,6 +398,10 @@ pub async fn update_change_notice(
     delete,
     path = "/api/pdm/change-notices/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_change_notice(
@@ -420,6 +434,10 @@ pub async fn delete_change_notice(
     post,
     path = "/api/pdm/change-notices/{id}/submit",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn submit_change_notice(
@@ -460,7 +478,12 @@ pub async fn submit_change_notice(
 #[utoipa::path(
     post,
     path = "/api/pdm/change-notices/{id}/approve",
+    request_body = serde_json::Value,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn approve_change_notice(
@@ -509,7 +532,12 @@ pub async fn approve_change_notice(
 #[utoipa::path(
     post,
     path = "/api/pdm/change-notices/{id}/reject",
+    request_body = serde_json::Value,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn reject_change_notice(

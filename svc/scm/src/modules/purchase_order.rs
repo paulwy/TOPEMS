@@ -105,6 +105,7 @@ pub async fn list_orders(
 #[utoipa::path(
     post,
     path = "/scm/purchase-orders",
+    request_body = CreatePurchaseOrderRequest,
     responses(
         (status = 200, description = "create_order OK")
     ),
@@ -187,6 +188,10 @@ pub async fn create_order(
 #[utoipa::path(
     get,
     path = "/scm/purchase-orders/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "get_order OK")
     ),
@@ -224,6 +229,11 @@ pub async fn get_order(
 #[utoipa::path(
     put,
     path = "/scm/purchase-orders/{id}",
+    request_body = UpdatePurchaseOrderRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "update_order OK")
     ),
@@ -324,6 +334,10 @@ pub async fn update_order(
 #[utoipa::path(
     delete,
     path = "/scm/purchase-orders/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "delete_order OK")
     ),
@@ -400,6 +414,11 @@ pub struct ApprovalRequest {
 #[utoipa::path(
     post,
     path = "/scm/purchase-orders/{id}/approve",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "approve_order OK")
     ),
@@ -556,6 +575,11 @@ pub async fn approve_order(
 #[utoipa::path(
     post,
     path = "/scm/purchase-orders/{id}/reject",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "reject_order OK")
     ),

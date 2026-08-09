@@ -69,6 +69,7 @@ pub async fn list_records(
 #[utoipa::path(
     post,
     path = "/api/ehs/health",
+    request_body = serde_json::Value,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]

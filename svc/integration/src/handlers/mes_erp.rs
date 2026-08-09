@@ -56,6 +56,7 @@ pub async fn list_mes_erp_sync(
 #[utoipa::path(
     post,
     path = "/api/integration/mes-erp",
+    request_body = CreateMesErpSyncRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -116,6 +117,10 @@ pub async fn create_mes_erp_sync(
     get,
     path = "/api/integration/mes-erp/{id}",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -149,6 +154,10 @@ pub async fn get_mes_erp_sync(
     post,
     path = "/api/integration/mes-erp/{id}/sync",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -196,6 +205,7 @@ pub async fn sync_mes_erp(
 #[utoipa::path(
     post,
     path = "/api/integration/mes-erp/sync/erp-to-mes",
+    request_body = SyncErpToMesRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -233,6 +243,7 @@ pub async fn sync_erp_order_to_mes(
 #[utoipa::path(
     post,
     path = "/api/integration/mes-erp/sync/mes-to-erp",
+    request_body = SyncMesToErpRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -274,6 +285,10 @@ pub async fn sync_mes_progress_to_erp(
     post,
     path = "/api/integration/mes-erp/{id}/retry",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -298,6 +313,10 @@ pub async fn retry_mes_erp_sync(
     get,
     path = "/api/integration/mes-erp/{id}/logs",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),

@@ -214,6 +214,7 @@ pub async fn list_plans(
 #[utoipa::path(
     post,
     path = "/api/ehs/emergency-plans",
+    request_body = CreatePlanRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -261,6 +262,10 @@ pub async fn create_plan(
     get,
     path = "/api/ehs/emergency-plans/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_plan(
@@ -373,7 +378,12 @@ pub async fn get_plan(
 #[utoipa::path(
     put,
     path = "/api/ehs/emergency-plans/{id}",
+    request_body = UpdatePlanRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_plan(
@@ -418,6 +428,10 @@ pub async fn update_plan(
     delete,
     path = "/api/ehs/emergency-plans/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_plan(
@@ -435,6 +449,10 @@ pub async fn delete_plan(
     get,
     path = "/api/ehs/emergency-plans/{id}/supplies",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_plan_supplies(
@@ -454,7 +472,12 @@ pub async fn list_plan_supplies(
 #[utoipa::path(
     post,
     path = "/api/ehs/emergency-plans/{id}/supplies",
+    request_body = CreateSupplyRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn add_plan_supply(
@@ -489,6 +512,11 @@ pub async fn add_plan_supply(
     delete,
     path = "/api/ehs/emergency-plans/{id}/supplies/{supply_id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("supply_id" = String, Path, description = "supply_id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_plan_supply(
@@ -505,7 +533,12 @@ pub async fn delete_plan_supply(
 #[utoipa::path(
     post,
     path = "/api/ehs/emergency-plans/{id}/submit-approval",
+    request_body = SubmitApprovalRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn submit_plan_approval(
@@ -549,7 +582,12 @@ pub async fn submit_plan_approval(
 #[utoipa::path(
     post,
     path = "/api/ehs/emergency-plans/{id}/approve",
+    request_body = ApprovalRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn approve_plan(
@@ -582,6 +620,10 @@ pub async fn approve_plan(
     get,
     path = "/api/ehs/emergency-plans/{id}/versions",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_plan_versions(
@@ -601,7 +643,12 @@ pub async fn list_plan_versions(
 #[utoipa::path(
     post,
     path = "/api/ehs/emergency-plans/{id}/versions",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_new_version(

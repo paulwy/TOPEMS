@@ -18,7 +18,7 @@ use crate::models::{
     post,
     path = "/notify/send",
     tag = "notification",
-    request_body = serde_json::Value,
+    request_body = SendNotificationRequest,
     responses(
         (status = 200, description = "Notification sent", body = serde_json::Value),
         (status = 403, description = "Forbidden"),

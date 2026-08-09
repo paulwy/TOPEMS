@@ -8,6 +8,7 @@ use axum::{
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
+use utoipa::ToSchema;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -33,7 +34,7 @@ pub struct MobileTask {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateTaskRequest {
     pub title: String,
     pub description: Option<String>,
@@ -46,7 +47,7 @@ pub struct CreateTaskRequest {
     pub due_date: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateTaskRequest {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -172,7 +173,7 @@ pub async fn get_task(
     post,
     path = "/mobile-tasks",
     tag = "task",
-    request_body = serde_json::Value,
+    request_body = CreateTaskRequest,
     responses(
         (status = 201, description = "创建任务成功", body = serde_json::Value),
         (status = 401, description = "未授权"),
@@ -252,7 +253,7 @@ pub async fn create_task(
     params(
         ("id" = Uuid, Path, description = "任务ID")
     ),
-    request_body = serde_json::Value,
+    request_body = UpdateTaskRequest,
     responses(
         (status = 200, description = "更新成功", body = serde_json::Value),
         (status = 401, description = "未授权"),

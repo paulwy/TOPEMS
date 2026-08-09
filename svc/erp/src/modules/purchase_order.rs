@@ -115,6 +115,10 @@ pub async fn list_purchase_orders(
 #[utoipa::path(
     get,
     path = "/erp/purchase-orders/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "get_purchase_order OK")
     ),
@@ -149,6 +153,7 @@ pub async fn get_purchase_order(
 #[utoipa::path(
     post,
     path = "/erp/purchase-orders",
+    request_body = CreatePurchaseOrderRequest,
     responses(
         (status = 200, description = "create_purchase_order OK")
     ),
@@ -224,6 +229,10 @@ pub async fn create_purchase_order(
     put,
     path = "/erp/purchase-orders/{id}",
     request_body = UpdatePurchaseOrderRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "update_purchase_order OK")
     ),
@@ -270,6 +279,10 @@ pub async fn update_purchase_order(
 #[utoipa::path(
     delete,
     path = "/erp/purchase-orders/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "delete_purchase_order OK")
     ),
@@ -301,6 +314,10 @@ pub async fn delete_purchase_order(
 #[utoipa::path(
     put,
     path = "/erp/purchase-orders/{id}/approve",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "approve_purchase_order OK")
     ),

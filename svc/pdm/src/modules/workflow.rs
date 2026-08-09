@@ -146,6 +146,7 @@ pub async fn list_workflows(
 #[utoipa::path(
     post,
     path = "/api/pdm/workflows",
+    request_body = CreateWorkflowRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -208,6 +209,10 @@ pub async fn create_workflow(
     get,
     path = "/api/pdm/workflows/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_workflow(
@@ -243,7 +248,12 @@ pub async fn get_workflow(
 #[utoipa::path(
     put,
     path = "/api/pdm/workflows/{id}",
+    request_body = serde_json::Value,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_workflow(
@@ -294,6 +304,10 @@ pub async fn update_workflow(
     delete,
     path = "/api/pdm/workflows/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_workflow(
@@ -324,6 +338,7 @@ pub async fn delete_workflow(
 #[utoipa::path(
     post,
     path = "/api/pdm/workflows/start",
+    request_body = StartWorkflowRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -454,6 +469,10 @@ pub async fn list_workflow_instances(
     get,
     path = "/api/pdm/workflow-instances/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_workflow_instance(
@@ -490,7 +509,12 @@ pub async fn get_workflow_instance(
 #[utoipa::path(
     post,
     path = "/api/pdm/workflow-instances/{id}/advance",
+    request_body = serde_json::Value,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn advance_workflow(

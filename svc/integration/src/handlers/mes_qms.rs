@@ -58,6 +58,10 @@ pub async fn list_mes_qms_sync_api(
     get,
     path = "/api/integration/mes-qms/{id}",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -108,6 +112,7 @@ pub async fn get_mes_qms_stats_api(
 #[utoipa::path(
     post,
     path = "/api/integration/mes-qms/trigger-inspection",
+    request_body = mes_qms_integration::TriggerInspectionRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -145,6 +150,7 @@ pub async fn trigger_qms_inspection_api(
 #[utoipa::path(
     post,
     path = "/api/integration/mes-qms/sync-result",
+    request_body = mes_qms_integration::SyncQualityResultRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -182,6 +188,7 @@ pub async fn sync_quality_result_api(
 #[utoipa::path(
     post,
     path = "/api/integration/mes-qms/sync-trace",
+    request_body = mes_qms_integration::TraceChainSyncRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -219,6 +226,7 @@ pub async fn sync_trace_chain_api(
 #[utoipa::path(
     post,
     path = "/api/integration/mes-qms/defect-handling",
+    request_body = mes_qms_integration::DefectHandlingRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -257,6 +265,10 @@ pub async fn defect_handling_api(
     post,
     path = "/api/integration/mes-qms/{id}/retry",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),

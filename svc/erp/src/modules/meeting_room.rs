@@ -109,6 +109,7 @@ pub async fn list_rooms(
 #[utoipa::path(
     post,
     path = "/erp/meeting-rooms",
+    request_body = CreateMeetingRoomRequest,
     responses(
         (status = 200, description = "create_room OK")
     ),
@@ -190,6 +191,10 @@ pub async fn create_room(
 #[utoipa::path(
     get,
     path = "/erp/meeting-rooms/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "get_room OK")
     ),
@@ -222,6 +227,11 @@ pub async fn get_room(
 #[utoipa::path(
     put,
     path = "/erp/meeting-rooms/{id}",
+    request_body = UpdateMeetingRoomRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "update_room OK")
     ),
@@ -319,6 +329,10 @@ pub async fn update_room(
 #[utoipa::path(
     delete,
     path = "/erp/meeting-rooms/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "delete_room OK")
     ),
@@ -449,6 +463,7 @@ pub async fn list_bookings(
 #[utoipa::path(
     post,
     path = "/erp/meeting-rooms/bookings",
+    request_body = CreateMeetingBookingRequest,
     responses(
         (status = 200, description = "create_booking OK")
     ),

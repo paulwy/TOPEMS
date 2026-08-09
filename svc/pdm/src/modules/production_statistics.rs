@@ -130,6 +130,10 @@ pub async fn list_statistics(
     get,
     path = "/api/pdm/statistics/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_statistics(

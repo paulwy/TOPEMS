@@ -226,6 +226,7 @@ pub async fn list_hazards(
 #[utoipa::path(
     post,
     path = "/api/ehs/issues",
+    request_body = CreateHazardRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -336,6 +337,10 @@ pub async fn create_hazard(
     get,
     path = "/api/ehs/issues/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_hazard(
@@ -405,7 +410,12 @@ pub async fn get_hazard(
 #[utoipa::path(
     put,
     path = "/api/ehs/issues/{id}",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_hazard(
@@ -452,6 +462,10 @@ pub async fn update_hazard(
     delete,
     path = "/api/ehs/issues/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_hazard(
@@ -474,7 +488,12 @@ pub async fn delete_hazard(
 #[utoipa::path(
     post,
     path = "/api/ehs/issues/{id}/rectification",
+    request_body = CreateRectificationRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn start_rectification(
@@ -509,7 +528,12 @@ pub async fn start_rectification(
 #[utoipa::path(
     put,
     path = "/api/ehs/issues/{id}/rectification",
+    request_body = UpdateRectificationRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_rectification(
@@ -563,6 +587,10 @@ pub async fn update_rectification(
     post,
     path = "/api/ehs/issues/{id}/rectification/submit",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn submit_rectification(
@@ -596,7 +624,12 @@ pub async fn submit_rectification(
 #[utoipa::path(
     post,
     path = "/api/ehs/issues/{id}/verification",
+    request_body = CreateVerificationRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn verify_hazard(
@@ -628,6 +661,10 @@ pub async fn verify_hazard(
     post,
     path = "/api/ehs/issues/{id}/close",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn close_hazard(
@@ -677,7 +714,12 @@ pub struct ApprovalActionRequest {
 #[utoipa::path(
     post,
     path = "/api/ehs/issues/{id}/approval/start",
+    request_body = StartApprovalRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn start_hazard_approval(
@@ -741,7 +783,12 @@ pub async fn start_hazard_approval(
 #[utoipa::path(
     post,
     path = "/api/ehs/issues/{id}/approval/approve",
+    request_body = ApprovalActionRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn approve_hazard(
@@ -781,7 +828,12 @@ pub async fn approve_hazard(
 #[utoipa::path(
     post,
     path = "/api/ehs/issues/{id}/approval/reject",
+    request_body = ApprovalActionRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn reject_hazard(
