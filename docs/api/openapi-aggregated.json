@@ -3,7 +3,7 @@
   "info": {
     "title": "TOPEMS API",
     "version": "1.0.0",
-    "description": "TOPEMS 企业级 SaaS 平台统一 API 文档（由 aggregate.py 从 cargo test 提取的 spec 聚合生成）\n\n聚合自 30 个服务，共 638 个端点、397 个 Schema（含 206 个标准类型）。\n生成时间: 2026-08-09T16:21:29.315168+00:00"
+    "description": "TOPEMS 企业级 SaaS 平台统一 API 文档（由 aggregate.py 从 cargo test 提取的 spec 聚合生成）\n\n聚合自 30 个服务，共 710 个端点、405 个 Schema（含 206 个标准类型）。\n生成时间: 2026-08-09T21:51:30.340938+00:00"
   },
   "paths": {
     "/ai/": {
@@ -1581,6 +1581,595 @@
         }
       }
     },
+    "/billing/invoices/{tenant_id}": {
+      "get": {
+        "tags": [
+          "billing",
+          "invoices"
+        ],
+        "operationId": "list_invoices",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "description": "租户ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoices retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Invoice"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/billing/plans": {
+      "get": {
+        "tags": [
+          "billing",
+          "plans"
+        ],
+        "operationId": "list_plans",
+        "responses": {
+          "200": {
+            "description": "Plans retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BillingPlan"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/billing/plans/{id}": {
+      "get": {
+        "tags": [
+          "billing",
+          "plans"
+        ],
+        "operationId": "get_plan",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "套餐ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPlan"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found"
+          }
+        }
+      }
+    },
+    "/billing/subscriptions": {
+      "post": {
+        "tags": [
+          "billing",
+          "subscriptions"
+        ],
+        "operationId": "create_subscription",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to create subscription"
+          }
+        }
+      }
+    },
+    "/billing/subscriptions/{tenant_id}": {
+      "get": {
+        "tags": [
+          "billing",
+          "subscriptions"
+        ],
+        "operationId": "get_subscription",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "description": "租户ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription retrieved",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "billing",
+          "subscriptions"
+        ],
+        "operationId": "cancel_subscription",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "description": "租户ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelSubscriptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subscription not found"
+          }
+        }
+      }
+    },
+    "/billing/usage/{tenant_id}": {
+      "get": {
+        "tags": [
+          "billing",
+          "usage"
+        ],
+        "operationId": "get_usage_summary",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "description": "租户ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usage summary retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageSummary"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/billing/usage/{tenant_id}/{metric_type}": {
+      "post": {
+        "tags": [
+          "billing",
+          "usage"
+        ],
+        "operationId": "record_usage",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "description": "租户ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          {
+            "name": "metric_type",
+            "in": "path",
+            "description": "指标类型 (users/storage/api_calls)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Usage recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageRecord"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to record usage"
+          }
+        }
+      }
+    },
+    "/communication/im/rooms": {
+      "get": {
+        "tags": [
+          "communication",
+          "notification"
+        ],
+        "operationId": "list_rooms",
+        "responses": {
+          "200": {
+            "description": "List of chat rooms",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "communication",
+          "notification"
+        ],
+        "operationId": "create_room",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Chat room created",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/communication/mail/emails": {
+      "get": {
+        "tags": [
+          "communication",
+          "email"
+        ],
+        "operationId": "list_emails",
+        "responses": {
+          "200": {
+            "description": "List of emails",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "communication",
+          "email"
+        ],
+        "operationId": "send_email",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Email sent",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/communication/notification/notifications": {
+      "get": {
+        "tags": [
+          "communication",
+          "notification"
+        ],
+        "summary": "获取当前用户的通知列表（兼容旧API）",
+        "operationId": "get_notifications",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "unread_only",
+            "in": "query",
+            "description": "Filter unread only",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notifications",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/communication/notification/notifications/{id}": {
+      "get": {
+        "tags": [
+          "communication",
+          "notification"
+        ],
+        "summary": "获取单个通知详情",
+        "operationId": "get_notification",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Notification ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification detail",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Notification not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/communication/notify/list": {
+      "get": {
+        "tags": [
+          "communication",
+          "notification"
+        ],
+        "summary": "获取当前用户的通知列表",
+        "operationId": "list_notifications",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "unread_only",
+            "in": "query",
+            "description": "Filter unread only",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notifications",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/communication/notify/send": {
+      "post": {
+        "tags": [
+          "communication",
+          "notification"
+        ],
+        "summary": "发送通知（管理员或系统使用）",
+        "operationId": "send_notification",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Notification sent",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/crm/contacts": {
       "get": {
         "tags": [
@@ -1959,7 +2548,7 @@
         "tags": [
           "ehs"
         ],
-        "operationId": "list_plans",
+        "operationId": "ehs_list_plans",
         "responses": {
           "200": {
             "description": "OK"
@@ -1983,7 +2572,7 @@
         "tags": [
           "ehs"
         ],
-        "operationId": "get_plan",
+        "operationId": "ehs_get_plan",
         "responses": {
           "200": {
             "description": "OK"
@@ -2308,7 +2897,7 @@
         "tags": [
           "ehs"
         ],
-        "operationId": "ehs_list_plans_api_ehs_emergency-plans",
+        "operationId": "ehs_list_plans",
         "responses": {
           "200": {
             "description": "OK"
@@ -2345,7 +2934,7 @@
         "tags": [
           "ehs"
         ],
-        "operationId": "ehs_get_plan_api_ehs_emergency-plans_{id}",
+        "operationId": "ehs_get_plan",
         "responses": {
           "200": {
             "description": "OK"
@@ -4605,7 +5194,7 @@
           "erp",
           "ERP/meeting-room"
         ],
-        "operationId": "list_rooms",
+        "operationId": "erp_list_rooms",
         "responses": {
           "200": {
             "description": "list_rooms OK"
@@ -4617,7 +5206,7 @@
           "erp",
           "ERP/meeting-room"
         ],
-        "operationId": "create_room",
+        "operationId": "erp_create_room",
         "responses": {
           "200": {
             "description": "create_room OK"
@@ -5512,6 +6101,328 @@
           },
           "500": {
             "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/gis/devices": {
+      "get": {
+        "tags": [
+          "gis",
+          "device"
+        ],
+        "summary": "获取设备列表",
+        "operationId": "list_devices",
+        "responses": {
+          "200": {
+            "description": "获取设备列表成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "查询失败"
+          }
+        }
+      }
+    },
+    "/gis/devices/{id}": {
+      "get": {
+        "tags": [
+          "gis",
+          "device"
+        ],
+        "summary": "获取设备详情",
+        "operationId": "get_device",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "设备ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取设备成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "设备未找到"
+          },
+          "500": {
+            "description": "查询失败"
+          }
+        }
+      }
+    },
+    "/gis/locations": {
+      "get": {
+        "tags": [
+          "gis",
+          "device"
+        ],
+        "summary": "获取位置列表",
+        "operationId": "list_locations",
+        "responses": {
+          "200": {
+            "description": "获取位置列表成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "查询失败"
+          }
+        }
+      }
+    },
+    "/gis/locations/create": {
+      "post": {
+        "tags": [
+          "gis",
+          "device"
+        ],
+        "summary": "创建位置点",
+        "operationId": "create_location",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "创建位置成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "创建位置失败"
+          }
+        }
+      }
+    },
+    "/gis/locations/{id}": {
+      "get": {
+        "tags": [
+          "gis",
+          "device"
+        ],
+        "summary": "获取位置详情",
+        "operationId": "get_location",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "位置ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取位置成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "位置未找到"
+          },
+          "500": {
+            "description": "查询失败"
+          }
+        }
+      }
+    },
+    "/gis/maps": {
+      "get": {
+        "tags": [
+          "gis",
+          "project"
+        ],
+        "summary": "获取地图列表",
+        "operationId": "list_maps",
+        "responses": {
+          "200": {
+            "description": "获取地图列表成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "查询地图失败"
+          }
+        }
+      }
+    },
+    "/gis/maps/create": {
+      "post": {
+        "tags": [
+          "gis",
+          "project"
+        ],
+        "summary": "创建地图",
+        "operationId": "create_map",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "创建地图成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "创建地图失败"
+          }
+        }
+      }
+    },
+    "/gis/maps/{id}": {
+      "get": {
+        "tags": [
+          "gis",
+          "project"
+        ],
+        "summary": "获取地图详情",
+        "operationId": "get_map",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "地图ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取地图成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "地图未找到"
+          },
+          "500": {
+            "description": "查询地图失败"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "gis",
+          "project"
+        ],
+        "summary": "更新地图",
+        "operationId": "update_map",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "地图ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新地图成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "地图未找到"
+          },
+          "500": {
+            "description": "更新地图失败"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "gis",
+          "project"
+        ],
+        "summary": "删除地图",
+        "operationId": "delete_map",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "地图ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除地图成功",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "地图未找到"
+          },
+          "500": {
+            "description": "删除地图失败"
           }
         }
       }
@@ -6530,6 +7441,448 @@
         }
       }
     },
+    "/lims/instruments": {
+      "get": {
+        "tags": [
+          "lims",
+          "instrument"
+        ],
+        "operationId": "list_instruments",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Filter by name",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of instruments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "lims",
+          "instrument"
+        ],
+        "operationId": "create_instrument",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInstrumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Instrument created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/lims/reagents": {
+      "get": {
+        "tags": [
+          "lims",
+          "reagent"
+        ],
+        "operationId": "list_reagents",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Filter by name",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of reagents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "lims",
+          "reagent"
+        ],
+        "operationId": "create_reagent",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReagentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Reagent created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/lims/samples": {
+      "get": {
+        "tags": [
+          "lims",
+          "sample"
+        ],
+        "operationId": "list_samples",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "sample_no",
+            "in": "query",
+            "description": "Filter by sample number",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "sample_name",
+            "in": "query",
+            "description": "Filter by sample name",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of samples",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "lims",
+          "sample"
+        ],
+        "operationId": "register_sample",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSampleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Sample registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/lims/samples/{id}": {
+      "get": {
+        "tags": [
+          "lims",
+          "sample"
+        ],
+        "operationId": "get_sample",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Sample ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sample detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sample not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/lims/tasks": {
+      "get": {
+        "tags": [
+          "lims",
+          "inspection_task"
+        ],
+        "operationId": "list_tasks",
+        "responses": {
+          "200": {
+            "description": "List of inspection tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "lims",
+          "inspection_task"
+        ],
+        "operationId": "lims_create_task",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Inspection task created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/lims/tasks/{id}": {
+      "get": {
+        "tags": [
+          "lims",
+          "inspection_task"
+        ],
+        "operationId": "lims_get_task",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Task ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inspection task detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/api/lowcode/apps": {
       "get": {
         "tags": [
@@ -6839,6 +8192,333 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/mobile-tasks": {
+      "get": {
+        "tags": [
+          "mobile",
+          "task"
+        ],
+        "operationId": "get_all_tasks",
+        "responses": {
+          "200": {
+            "description": "获取任务列表成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "未授权"
+          },
+          "500": {
+            "description": "查询失败"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "mobile",
+          "task"
+        ],
+        "operationId": "mobile_create_task",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "创建任务成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "未授权"
+          },
+          "500": {
+            "description": "创建失败"
+          }
+        }
+      }
+    },
+    "/mobile-tasks/{id}": {
+      "get": {
+        "tags": [
+          "mobile",
+          "task"
+        ],
+        "operationId": "mobile_get_task",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "任务ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取任务成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "未授权"
+          },
+          "404": {
+            "description": "任务不存在"
+          },
+          "500": {
+            "description": "查询失败"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "mobile",
+          "task"
+        ],
+        "operationId": "update_task",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "任务ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "未授权"
+          },
+          "404": {
+            "description": "任务不存在或无权修改"
+          },
+          "500": {
+            "description": "更新失败"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "mobile",
+          "task"
+        ],
+        "operationId": "delete_task",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "任务ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "未授权"
+          },
+          "404": {
+            "description": "任务不存在或无权删除"
+          },
+          "500": {
+            "description": "删除失败"
+          }
+        }
+      }
+    },
+    "/mobile/patrol-records": {
+      "get": {
+        "tags": [
+          "mobile",
+          "patrol"
+        ],
+        "operationId": "get_all_patrol_records",
+        "responses": {
+          "200": {
+            "description": "获取巡逻记录成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "未授权"
+          },
+          "500": {
+            "description": "查询失败"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "mobile",
+          "patrol"
+        ],
+        "operationId": "create_patrol_record",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "创建巡逻记录成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "未授权"
+          },
+          "500": {
+            "description": "创建失败"
+          }
+        }
+      }
+    },
+    "/mobile/patrol-records/{id}": {
+      "get": {
+        "tags": [
+          "mobile",
+          "patrol"
+        ],
+        "operationId": "get_patrol_record",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "巡逻记录ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取巡逻记录成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "未授权"
+          },
+          "404": {
+            "description": "巡逻记录不存在"
+          },
+          "500": {
+            "description": "查询失败"
+          }
+        }
+      }
+    },
+    "/mobile/scan/barcode": {
+      "post": {
+        "tags": [
+          "mobile",
+          "scan"
+        ],
+        "operationId": "scan_barcode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "条形码扫描成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "未授权"
+          },
+          "500": {
+            "description": "扫描失败"
+          }
+        }
+      }
+    },
+    "/mobile/stats/dashboard": {
+      "get": {
+        "tags": [
+          "mobile",
+          "task"
+        ],
+        "operationId": "get_dashboard_stats",
+        "responses": {
+          "200": {
+            "description": "获取统计数据成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "未授权"
           }
         }
       }
@@ -8566,6 +10246,258 @@
         }
       }
     },
+    "/plugin-registry/marketplace/categories": {
+      "get": {
+        "tags": [
+          "plugin-registry",
+          "plugin"
+        ],
+        "summary": "List plugin categories",
+        "operationId": "list_categories",
+        "responses": {
+          "200": {
+            "description": "List of plugin categories",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/plugin-registry/marketplace/plugins": {
+      "get": {
+        "tags": [
+          "plugin-registry",
+          "plugin"
+        ],
+        "summary": "List plugins with filters",
+        "operationId": "list_plugins",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Filter by category",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "is_free",
+            "in": "query",
+            "description": "Filter free plugins",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "description": "Sort by: popular, rating, recent, name",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of plugins",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/plugin-registry/marketplace/plugins/{code}": {
+      "get": {
+        "tags": [
+          "plugin-registry",
+          "plugin"
+        ],
+        "summary": "Get plugin by code",
+        "operationId": "get_plugin",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "description": "Plugin code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plugin detail",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Plugin not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/plugin-registry/marketplace/summary": {
+      "get": {
+        "tags": [
+          "plugin-registry",
+          "plugin"
+        ],
+        "summary": "Get marketplace summary",
+        "operationId": "get_marketplace_summary",
+        "responses": {
+          "200": {
+            "description": "Marketplace summary",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/plugin-registry/tenants/{tenant_id}/plugins": {
+      "get": {
+        "tags": [
+          "plugin-registry",
+          "plugin"
+        ],
+        "summary": "Get tenant's installed plugins",
+        "operationId": "list_tenant_plugins",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "description": "Tenant ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tenant plugins",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/plugin-registry/tenants/{tenant_id}/plugins/{plugin_code}": {
+      "post": {
+        "tags": [
+          "plugin-registry",
+          "plugin"
+        ],
+        "summary": "Install plugin for tenant",
+        "operationId": "install_plugin",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "description": "Tenant ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          {
+            "name": "plugin_code",
+            "in": "path",
+            "description": "Plugin code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plugin installed",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Plugin not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/api/pm/projects": {
       "get": {
         "tags": [
@@ -9697,6 +11629,253 @@
         }
       }
     },
+    "/portal/announcements": {
+      "get": {
+        "tags": [
+          "portal",
+          "Portal"
+        ],
+        "operationId": "get_announcements",
+        "responses": {
+          "200": {
+            "description": "List of announcements",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "portal",
+          "Portal"
+        ],
+        "operationId": "create_announcement",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Announcement created",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/portal/dashboard/stats": {
+      "get": {
+        "tags": [
+          "portal",
+          "Dashboard"
+        ],
+        "operationId": "portal_get_dashboard_stats",
+        "responses": {
+          "200": {
+            "description": "Dashboard statistics",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/portal/navigation/menu": {
+      "get": {
+        "tags": [
+          "portal",
+          "Navigation"
+        ],
+        "operationId": "get_navigation_menu",
+        "responses": {
+          "200": {
+            "description": "Navigation menu",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/portal/notifications": {
+      "get": {
+        "tags": [
+          "portal",
+          "Portal"
+        ],
+        "operationId": "portal_get_notifications",
+        "responses": {
+          "200": {
+            "description": "List of notifications",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/portal/search": {
+      "get": {
+        "tags": [
+          "portal",
+          "Search"
+        ],
+        "operationId": "global_search",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Search query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/portal/services": {
+      "get": {
+        "tags": [
+          "portal",
+          "Portal"
+        ],
+        "operationId": "list_services",
+        "responses": {
+          "200": {
+            "description": "List of registered services",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/portal/todos": {
+      "get": {
+        "tags": [
+          "portal",
+          "Todo"
+        ],
+        "operationId": "get_todos",
+        "responses": {
+          "200": {
+            "description": "List of todos",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "portal",
+          "Todo"
+        ],
+        "operationId": "add_todo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Todo added",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/portal/user": {
+      "get": {
+        "tags": [
+          "portal",
+          "Portal"
+        ],
+        "operationId": "get_user_info",
+        "responses": {
+          "200": {
+            "description": "User info",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/api/qms/checks": {
       "get": {
         "tags": [
@@ -10770,6 +12949,395 @@
         "responses": {
           "200": {
             "description": "delete_supplier OK"
+          }
+        }
+      }
+    },
+    "/ticket/sla-policies": {
+      "get": {
+        "tags": [
+          "ticket",
+          "sla"
+        ],
+        "operationId": "list_sla_policies_handler",
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TicketSlaPolicy"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "查询SLA策略失败"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ticket",
+          "sla"
+        ],
+        "operationId": "create_sla_policy_handler",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSlaPolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "SLA策略创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketSlaPolicy"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "创建SLA策略失败"
+          }
+        }
+      }
+    },
+    "/tickets": {
+      "get": {
+        "tags": [
+          "ticket",
+          "tickets"
+        ],
+        "operationId": "list_tickets_handler",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "每页条数",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "状态筛选",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "description": "严重程度筛选",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "ticket_type",
+            "in": "query",
+            "description": "工单类型筛选",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "查询工单失败"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ticket",
+          "tickets"
+        ],
+        "operationId": "create_ticket_handler",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTicketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "工单创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ticket"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "创建工单失败"
+          }
+        }
+      }
+    },
+    "/tickets/stats": {
+      "get": {
+        "tags": [
+          "ticket",
+          "tickets"
+        ],
+        "operationId": "get_stats_handler",
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketStats"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "查询统计失败"
+          }
+        }
+      }
+    },
+    "/tickets/{id}": {
+      "get": {
+        "tags": [
+          "ticket",
+          "tickets"
+        ],
+        "operationId": "get_ticket_handler",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "工单ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ticket"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "工单不存在"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ticket",
+          "tickets"
+        ],
+        "operationId": "update_ticket_handler",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "工单ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTicketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "工单更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ticket"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "更新工单失败"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ticket",
+          "tickets"
+        ],
+        "operationId": "delete_ticket_handler",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "工单ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "工单已取消",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "工单不存在或已关闭"
+          },
+          "500": {
+            "description": "取消工单失败"
+          }
+        }
+      }
+    },
+    "/tickets/{id}/comments": {
+      "get": {
+        "tags": [
+          "ticket",
+          "tickets"
+        ],
+        "operationId": "list_comments_handler",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "工单ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TicketComment"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "查询评论失败"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ticket",
+          "tickets"
+        ],
+        "operationId": "add_comment_handler",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "工单ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "评论已添加",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketComment"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid user id"
+          },
+          "500": {
+            "description": "添加评论失败"
           }
         }
       }
@@ -16452,6 +19020,370 @@
           "phone": "13800138000",
           "position_id": "550e8400-e29b-41d4-a716-446655440005",
           "status": "active"
+        }
+      },
+      "CreateInstrumentRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateReagentRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "batch_no": {
+            "type": "string",
+            "nullable": true
+          },
+          "expired_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "specification": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CreateSampleRequest": {
+        "type": "object",
+        "required": [
+          "sample_name"
+        ],
+        "properties": {
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "sample_name": {
+            "type": "string"
+          },
+          "sample_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CreateTaskRequest": {
+        "type": "object",
+        "required": [
+          "sample_id",
+          "test_items"
+        ],
+        "properties": {
+          "assigned_to": {
+            "type": "string",
+            "nullable": true
+          },
+          "instrument_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "planned_date": {
+            "type": "string",
+            "nullable": true
+          },
+          "sample_id": {
+            "type": "string"
+          },
+          "test_items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "InspectionTask": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "task_no",
+          "sample_id",
+          "sample_no",
+          "test_items",
+          "status"
+        ],
+        "properties": {
+          "actual_end_date": {
+            "type": "string",
+            "nullable": true
+          },
+          "actual_start_date": {
+            "type": "string",
+            "nullable": true
+          },
+          "assigned_to": {
+            "type": "string",
+            "nullable": true
+          },
+          "conclusion": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "instrument_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "planned_date": {
+            "type": "string",
+            "nullable": true
+          },
+          "recorded_by": {
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "nullable": true
+          },
+          "sample_id": {
+            "type": "string"
+          },
+          "sample_no": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "task_no": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string"
+          },
+          "test_items": {},
+          "updated_at": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Instrument": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "instrument_no",
+          "name",
+          "status"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "instrument_no": {
+            "type": "string"
+          },
+          "last_calibration_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "next_calibration_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Reagent": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "reagent_no",
+          "name",
+          "status"
+        ],
+        "properties": {
+          "batch_no": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "expired_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "reagent_no": {
+            "type": "string"
+          },
+          "specification": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Sample": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "sample_no",
+          "sample_name",
+          "status"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "expired_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "received_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "sample_name": {
+            "type": "string"
+          },
+          "sample_no": {
+            "type": "string"
+          },
+          "sample_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "nullable": true
+          }
         }
       },
       "AutoFixAction": {
