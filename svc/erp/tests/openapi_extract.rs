@@ -7,7 +7,7 @@
 //! 产物：tmp/openapi/<PKG>.json（写入 workspace 根，使 aggregate.py 能 glob 合并）
 
 use std::path::PathBuf;
-use topems_erp::modules::openapi::ErpApiDoc;
+use topems_erp::openapi::ErpApiDoc;
 use utoipa::OpenApi;
 
 #[test]

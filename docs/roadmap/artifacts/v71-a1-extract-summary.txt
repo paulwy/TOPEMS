@@ -1,0 +1,83 @@
+V71 A1 OpenAPI Extract 验收快照 @ Sun Aug  9 11:30:51 CST 2026
+SQLX_OFFLINE=true
+================================================================
+PASS / FAIL 计数
+------------------------------------------------
+PASS:  25 / 31
+FAIL:  6 / 31
+
+FAIL 原因分类（全部为存量代码债，非 A1 路径问题）:
+  · A1 import(E0432/E0425/E0433):   0 个  → 已全部修复
+  · 存量代码债 SQLX 宏类型/缓存缺失: 5 个  → analytics, mes, portal, unified-core, wms
+  · 存量代码债 Rust 类型债(E0308):   0 个
+  · 存量代码债 topems_shared 缺符号: 1 个  → hrm (CacheService/RedisConfig/InMemoryCache)
+
+FAIL 清单:
+  1. topems-analytics    存量代码债 · SQLX 宏类型/缓存缺失 (sqlx::query! 离线类型不匹配)
+  2. topems-hrm          存量代码债 · topems_shared 门面缺符号 (CacheService/RedisConfig/InMemoryCache)
+  3. topems-mes          存量代码债 · SQLX 宏类型/缓存缺失 (含 E0277 str 无 Sized)
+  4. topems-portal       存量代码债 · SQLX 宏类型/缓存缺失 (sqlx::query! expand_query)
+  5. topems-unified-core 存量代码债 · SQLX 宏类型/缓存缺失 (sqlx::query! expand_query)
+  6. topems-wms          存量代码债 · SQLX 宏类型/缓存缺失 (sqlx::query! expand_query)
+
+================================================================
+JSON 产物统计
+------------------------------------------------
+tmp/openapi/*.json 文件数: 25 / 31
+Python JSON 合法 (openapi 3.x): 25
+非法: 0
+31 个 JSON 总体积: 228627 bytes
+
+PASS 25 服务 JSON 文件列表（按字节）:
+  tmp/openapi/topems-ai.json                   1162 bytes
+  tmp/openapi/topems-billing.json             11156 bytes
+  tmp/openapi/topems-communication.json         693 bytes
+  tmp/openapi/topems-crm.json                 29610 bytes
+  tmp/openapi/topems-ehs.json                   968 bytes
+  tmp/openapi/topems-erp.json                   628 bytes
+  tmp/openapi/topems-feedback.json              515 bytes
+  tmp/openapi/topems-finance.json             49407 bytes
+  tmp/openapi/topems-gis.json                 19205 bytes
+  tmp/openapi/topems-integration.json           790 bytes
+  tmp/openapi/topems-lims.json                 1429 bytes
+  tmp/openapi/topems-lowcode.json              1051 bytes
+  tmp/openapi/topems-master-data.json         17724 bytes
+  tmp/openapi/topems-migration-sdk.json         561 bytes
+  tmp/openapi/topems-mobile.json               3676 bytes
+  tmp/openapi/topems-monitor.json               581 bytes
+  tmp/openapi/topems-pdm.json                   869 bytes
+  tmp/openapi/topems-plugin-registry.json       610 bytes
+  tmp/openapi/topems-pm.json                   1121 bytes
+  tmp/openapi/topems-qms.json                 26963 bytes
+  tmp/openapi/topems-rd.json                  21443 bytes
+  tmp/openapi/topems-scm.json                  9020 bytes
+  tmp/openapi/topems-search.json                574 bytes
+  tmp/openapi/topems-srm.json                  5343 bytes
+  tmp/openapi/topems-ticket.json              23528 bytes
+
+================================================================
+A1 修复记录（本轮 commit 所包含）:
+  (a) 6 服务新建 src/lib.rs（纯 bin crate → lib+bin 双目标）:
+      - svc/billing/src/lib.rs
+      - svc/communication/src/lib.rs
+      - svc/feedback/src/lib.rs
+      - svc/search/src/lib.rs
+      - svc/ticket/src/lib.rs
+      - svc/lowcode/src/lib.rs (+ src/openapi.rs 拆出 handlers + ApiDoc)
+  (b) 4 服务补 lib.rs pub mod 声明:
+      - svc/erp/src/lib.rs      → + pub mod openapi (因 modules 编译冲突，另建 openapi.rs)
+      - svc/integration/src/lib.rs → + pub mod routes, conversion_rules, models 等 12 项
+      - svc/lims/src/lib.rs     → + pub mod openapi
+      - svc/qms/src/lib.rs      → + pub mod openapi
+  (c) 3 服务把 #[derive(OpenApi)] struct 从 main.rs(二进制)迁入 lib crate:
+      - svc/ehs/src/lib.rs      → 内联 ApiDoc struct (tags + info + servers)
+      - svc/pdm/src/lib.rs      → 内联 ApiDoc struct (tags + info + servers)
+      - svc/finance/src/openapi.rs → 新文件，完整 components(schemas)+paths，由 lib.rs pub use
+  (d) 1 个 test use 路径修正:
+      - svc/erp/tests/openapi_extract.rs → modules::openapi → openapi
+
+================================================================
+说明:
+  - PASS 25/31: 本任务 A1 路径正确性问题已全部归零（0 个 FAIL 因 E0432/E0425/E0433）
+  - FAIL 6/31: 全部为服务存量代码债（SQLX 宏离线类型不匹配 / topems_shared 门面去门面化残留）
+    这些失败在 A1 之前即已存在，与 extract_openapi_spec 测试本身无关，列入 V71.5 清债批次处理
