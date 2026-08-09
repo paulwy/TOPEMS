@@ -92,7 +92,15 @@ pub fn create_routes() -> Router<AppState> {
         .route("/datasets/test-sql", post(test_sql_query))
 }
 
-async fn list_datasets(
+#[utoipa::path(
+    get,
+    path = "/datasets",
+    tag = "BI",
+    responses(
+        (status = 200, description = "List of datasets", body = serde_json::Value),
+    ),
+)]
+pub async fn list_datasets(
     State(state): State<AppState>,
     Query(params): Query<ListDatasetQuery>,
 ) -> Json<ListResponse<Dataset>> {
@@ -133,7 +141,18 @@ async fn list_datasets(
     }
 }
 
-async fn get_dataset(
+#[utoipa::path(
+    get,
+    path = "/datasets/{id}",
+    tag = "BI",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Dataset ID")
+    ),
+    responses(
+        (status = 200, description = "Dataset details", body = serde_json::Value),
+    ),
+)]
+pub async fn get_dataset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
@@ -166,7 +185,15 @@ async fn get_dataset(
     }
 }
 
-async fn create_dataset(
+#[utoipa::path(
+    post,
+    path = "/datasets",
+    tag = "BI",
+    responses(
+        (status = 200, description = "Dataset created", body = serde_json::Value),
+    ),
+)]
+pub async fn create_dataset(
     State(state): State<AppState>,
     Json(req): Json<CreateDatasetRequest>,
 ) -> Json<serde_json::Value> {
@@ -212,7 +239,18 @@ async fn create_dataset(
     }
 }
 
-async fn update_dataset(
+#[utoipa::path(
+    put,
+    path = "/datasets/{id}",
+    tag = "BI",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Dataset ID")
+    ),
+    responses(
+        (status = 200, description = "Dataset updated", body = serde_json::Value),
+    ),
+)]
+pub async fn update_dataset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDatasetRequest>,
@@ -252,7 +290,18 @@ async fn update_dataset(
     }
 }
 
-async fn delete_dataset(
+#[utoipa::path(
+    delete,
+    path = "/datasets/{id}",
+    tag = "BI",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Dataset ID")
+    ),
+    responses(
+        (status = 200, description = "Dataset deleted", body = serde_json::Value),
+    ),
+)]
+pub async fn delete_dataset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
@@ -281,7 +330,18 @@ async fn delete_dataset(
     }
 }
 
-async fn publish_dataset(
+#[utoipa::path(
+    post,
+    path = "/datasets/{id}/publish",
+    tag = "BI",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Dataset ID")
+    ),
+    responses(
+        (status = 200, description = "Dataset published", body = serde_json::Value),
+    ),
+)]
+pub async fn publish_dataset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
@@ -314,7 +374,18 @@ async fn publish_dataset(
     }
 }
 
-async fn refresh_dataset(
+#[utoipa::path(
+    post,
+    path = "/datasets/{id}/refresh",
+    tag = "BI",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Dataset ID")
+    ),
+    responses(
+        (status = 200, description = "Dataset refreshed", body = serde_json::Value),
+    ),
+)]
+pub async fn refresh_dataset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
