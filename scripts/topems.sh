@@ -65,6 +65,7 @@ communication svc/communication    topems-communication         8084
 billing     svc/billing            topems-billing              8085
 ticket      svc/ticket             topems-ticket               8086
 feedback    svc/feedback           topems-feedback             8087
+lowcode     svc/lowcode            topems-lowcode              8088
 master-data svc/master-data        topems-master-data          8090
 "
         CORE_SERVICES="iam"
@@ -173,7 +174,7 @@ get_build_order() {
     # 层 1（核心：iam = unified-core）
     # 层 2（业务：finance/erp/crm/scm/srm/hrm/pm/billing/qms/wms/mes/pdm/ehs/lims/rd/portal）
     # 层 3（分析/搜索/AI/集成等扩展）
-    echo "iam finance erp crm scm srm hrm pm billing qms wms mes pdm ehs lims rd portal master-data ticket feedback communication mobile gis integration search ai bi"
+    echo "iam finance erp crm scm srm hrm pm billing qms wms mes pdm ehs lims rd portal master-data ticket feedback communication lowcode mobile gis integration search ai bi"
 }
 
 # 检测包管理器（pnpm > yarn）
@@ -486,6 +487,7 @@ get_port_env_var() {
         ticket) echo "TICKET_PORT" ;;
         feedback) echo "FEEDBACK_PORT" ;;
         master-data) echo "MASTER_DATA_PORT" ;;
+        lowcode) echo "LOWCODE_PORT" ;;
         *) echo "SERVER_PORT" ;;
     esac
 }
@@ -723,6 +725,13 @@ get_service_display_name() {
         mobile) echo "移动服务" ;;
         gis) echo "地理信息" ;;
         integration) echo "集成服务" ;;
+        billing) echo "计费服务" ;;
+        communication) echo "通讯服务" ;;
+        feedback) echo "反馈服务" ;;
+        master-data) echo "主数据服务" ;;
+        search) echo "搜索服务" ;;
+        ticket) echo "工单服务" ;;
+        lowcode) echo "低代码平台" ;;
         *) echo "$(echo "$1" | sed 's/./\U&/')服务" ;;
     esac
 }
@@ -751,6 +760,13 @@ get_service_description() {
         mobile) echo "移动应用服务" ;;
         gis) echo "地理信息服务" ;;
         integration) echo "系统集成服务" ;;
+        billing) echo "订阅计费与交易结算服务" ;;
+        communication) echo "IM/通知/邮件/短信等通讯能力统一服务" ;;
+        feedback) echo "意见反馈与满意度调查服务" ;;
+        master-data) echo "企业级主数据统一管理服务" ;;
+        search) echo "Elasticsearch全文检索与搜索聚合服务" ;;
+        ticket) echo "工单与服务请求流程引擎服务" ;;
+        lowcode) echo "低代码应用搭建与表单引擎平台" ;;
         *) echo "$(echo "$1" | sed 's/./\U&/')服务" ;;
     esac
 }
