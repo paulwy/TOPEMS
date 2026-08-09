@@ -6,8 +6,8 @@
 //!
 //! 产物：tmp/openapi/<PKG>.json（写入 workspace 根，使 aggregate.py 能 glob 合并）
 
-use topems_migration_sdk::openapi::MigrationSdkApiDoc;
 use std::path::PathBuf;
+use topems_migration_sdk::openapi::MigrationSdkApiDoc;
 use utoipa::OpenApi;
 
 #[test]
@@ -37,7 +37,12 @@ fn extract_openapi_spec() {
         .unwrap_or_else(|e| panic!("V71-A1: 写 {:?} 失败: {e}", out_path));
 
     let meta = std::fs::metadata(&out_path).expect("文件不存在");
-    assert!(meta.len() >= 50, "产物太小: {} bytes（{:?}）", meta.len(), out_path);
+    assert!(
+        meta.len() >= 50,
+        "产物太小: {} bytes（{:?}）",
+        meta.len(),
+        out_path
+    );
 
     eprintln!("[V71-A1] OK: wrote {:?} ({} bytes)", out_path, meta.len());
 }
