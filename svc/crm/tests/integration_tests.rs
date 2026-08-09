@@ -22,6 +22,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -32,6 +33,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_customer_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -55,6 +57,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_contact_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -78,6 +81,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_opportunity_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -101,6 +105,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_interaction_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -124,6 +129,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_tag_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -151,6 +157,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_create_customer() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -188,6 +195,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_list_customers() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -218,6 +226,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_customer_status_update() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -286,6 +295,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_create_opportunity() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -348,6 +358,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_audit_log_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");

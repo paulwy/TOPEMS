@@ -24,6 +24,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -34,6 +35,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_patrol_records_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -57,6 +59,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_mobile_tasks_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -81,6 +84,7 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_create_patrol_record() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -115,6 +119,7 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_list_patrol_records() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");

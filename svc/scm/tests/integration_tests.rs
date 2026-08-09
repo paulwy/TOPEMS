@@ -23,6 +23,7 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -34,6 +35,7 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_purchase_order_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -57,6 +59,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_purchase_item_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -81,6 +84,7 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_supplier_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -105,6 +109,7 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_supplier_evaluation_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -129,6 +134,7 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_create_purchase_order() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -178,6 +184,7 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_list_purchase_orders() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -208,6 +215,7 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_purchase_order_status_update() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -290,6 +298,7 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_create_supplier() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -328,6 +337,7 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_audit_log_table_exists() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");

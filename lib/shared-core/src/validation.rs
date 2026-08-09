@@ -407,4 +407,158 @@ mod tests {
         assert!(!merged.is_valid());
         assert_eq!(merged.errors.len(), 2);
     }
+
+    // ===== 新增：更多 Validator 方法测试 =====
+    #[test]
+    fn test_not_empty_str() {
+        assert!(Validator::not_empty_str("hello", "f").is_valid());
+        assert!(!Validator::not_empty_str("", "f").is_valid());
+        assert!(!Validator::not_empty_str("   ", "f").is_valid());
+    }
+
+    #[test]
+    fn test_min_max_length() {
+        assert!(Validator::min_length("abc", 2, "f").is_valid());
+        assert!(!Validator::min_length("a", 3, "f").is_valid());
+        assert!(Validator::max_length("abc", 5, "f").is_valid());
+        assert!(!Validator::max_length("abcdef", 3, "f").is_valid());
+    }
+
+    #[test]
+    fn test_length_between() {
+        assert!(Validator::length_between("abc", 2, 5, "f").is_valid());
+        assert!(!Validator::length_between("a", 2, 5, "f").is_valid());
+        assert!(!Validator::length_between("abcdef", 2, 5, "f").is_valid());
+    }
+
+    #[test]
+    fn test_url_validator() {
+        assert!(Validator::url("https://example.com", "f").is_valid());
+        assert!(Validator::url("http://localhost:8080/path", "f").is_valid());
+        assert!(!Validator::url("not-a-url", "f").is_valid());
+    }
+
+    #[test]
+    fn test_uuid_validator() {
+        assert!(Validator::uuid(
+            "550e8400-e29b-41d4-a716-446655440000",
+            "f"
+        )
+        .is_valid());
+        assert!(!Validator::uuid("not-a-uuid", "f").is_valid());
+    }
+
+    #[test]
+    fn test_min_max_range_i64() {
+        assert!(Validator::min(5, 1, "f").is_valid());
+        assert!(!Validator::min(0, 1, "f").is_valid());
+        assert!(Validator::max(5, 10, "f").is_valid());
+        assert!(!Validator::max(15, 10, "f").is_valid());
+        assert!(Validator::range(5, 1, 10, "f").is_valid());
+        assert!(!Validator::range(0, 1, 10, "f").is_valid());
+        assert!(!Validator::range(11, 1, 10, "f").is_valid());
+    }
+
+    #[test]
+    fn test_min_max_range_u64() {
+        assert!(Validator::min_u64(5, 1, "f").is_valid());
+        assert!(!Validator::min_u64(0, 1, "f").is_valid());
+        assert!(Validator::max_u64(5, 10, "f").is_valid());
+        assert!(!Validator::max_u64(15, 10, "f").is_valid());
+        assert!(Validator::range_u64(5, 1, 10, "f").is_valid());
+    }
+
+    #[test]
+    fn test_in_list_and_in_list_str() {
+        assert!(Validator::in_list_str("a", &["a", "b", "c"], "f").is_valid());
+        assert!(!Validator::in_list_str("d", &["a", "b", "c"], "f").is_valid());
+    }
+
+    #[test]
+    fn test_custom_validator() {
+        assert!(Validator::custom(|| true, "f", "err").is_valid());
+        let r = Validator::custom(|| false, "f", "custom error");
+        assert!(!r.is_valid());
+        assert_eq!(r.errors[0].message, "custom error");
+    }
+
+    #[test]
+    fn test_matches_regex() {
+        assert!(Validator::matches_regex("abc123", r"^[a-z]+\d+$", "f", "err").is_valid());
+        assert!(!Validator::matches_regex("ABC", r"^[a-z]+$", "f", "err").is_valid());
+        // 无效正则
+        let r = Validator::matches_regex("x", r"[invalid(", "f", "err");
+        assert!(!r.is_valid());
+    }
+
+    #[test]
+    fn test_id_card_validator() {
+        // 18 位数字 + 校验位 X
+        assert!(Validator::id_card("110101199003078888", "f").is_valid());
+        assert!(Validator::id_card("11010119900307888X", "f").is_valid());
+        assert!(!Validator::id_card("12345", "f").is_valid());
+        assert!(!Validator::id_card("abcdefghijklmnopqr", "f").is_valid());
+    }
+
+    #[test]
+    fn test_is_numeric_integer_boolean() {
+        assert!(Validator::is_numeric("123.45", "f").is_valid());
+        assert!(!Validator::is_numeric("abc", "f").is_valid());
+        assert!(Validator::is_integer("42", "f").is_valid());
+        assert!(!Validator::is_integer("42.5", "f").is_valid());
+        assert!(Validator::is_boolean("true", "f").is_valid());
+        assert!(Validator::is_boolean("false", "f").is_valid());
+        assert!(Validator::is_boolean("1", "f").is_valid());
+        assert!(Validator::is_boolean("0", "f").is_valid());
+        assert!(!Validator::is_boolean("yes", "f").is_valid());
+    }
+
+    #[test]
+    fn test_equals_not_equals_contains_starts_ends() {
+        assert!(Validator::equals("abc", "abc", "f").is_valid());
+        assert!(!Validator::equals("abc", "abd", "f").is_valid());
+        assert!(Validator::not_equals("abc", "xyz", "f").is_valid());
+        assert!(!Validator::not_equals("abc", "abc", "f").is_valid());
+        assert!(Validator::contains("hello world", "world", "f").is_valid());
+        assert!(!Validator::contains("hello", "xyz", "f").is_valid());
+        assert!(Validator::starts_with("hello", "he", "f").is_valid());
+        assert!(!Validator::starts_with("hello", "she", "f").is_valid());
+        assert!(Validator::ends_with("hello", "lo", "f").is_valid());
+        assert!(!Validator::ends_with("hello", "la", "f").is_valid());
+    }
+
+    #[test]
+    fn test_validation_result_to_error_response() {
+        let r = ValidationResult::error("email", "无效邮箱").merge(ValidationResult::error(
+            "email",
+            "不能为空",
+        ));
+        let resp = r.to_error_response();
+        assert!(resp.contains_key("email"));
+        assert_eq!(resp.get("email").unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_validation_result_ok_is_valid() {
+        let r = ValidationResult::ok();
+        assert!(r.is_valid());
+        assert!(r.get_errors().is_empty());
+    }
+
+    #[test]
+    fn test_merge_ok_with_error_keeps_error() {
+        let ok = ValidationResult::ok();
+        let err = ValidationResult::error("f", "e");
+        let merged = ok.merge(err);
+        assert!(!merged.is_valid());
+        assert_eq!(merged.errors.len(), 1);
+    }
+
+    #[test]
+    fn test_password_strength_multiple_errors() {
+        let r = Validator::password_strength("short", "pwd");
+        assert!(!r.is_valid());
+        // 短 + 无大写 + 无小写（但 short 全是小写） + 无数字 = 至少 3 个错误
+        assert!(r.errors.len() >= 3);
+    }
 }
