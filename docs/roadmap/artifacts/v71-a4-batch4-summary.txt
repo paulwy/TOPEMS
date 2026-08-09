@@ -1,0 +1,135 @@
+================================================================================
+V71 A4 Batch 4 · A4 OpenAPI 提取根因修复（移除 B2 feature gate 旁路）
+================================================================================
+日期: 2026-08-09
+目标: 修复 6 服务 lib.rs ApiDoc 导出 + 移除 43 处旁路 feature gate + 跑通提取测试
+
+================================================================================
+一、Step 1: 修复 6 服务 lib.rs ApiDoc 导出
+================================================================================
+
+【新建文件】2 个:
+  1. svc/analytics/src/openapi.rs
+     - 从 main.rs 剪切 ApiDoc 定义 (原 main.rs:41-60)
+     - 包含: tags / info / servers 完整属性
+  2. svc/portal/src/openapi.rs
+     - 从 main.rs 剪切 ApiDoc 定义 (原 main.rs:35-55)
+     - 包含: tags / info / servers 完整属性
+
+【修改 lib.rs】5 个:
+  1. svc/analytics/src/lib.rs
+     追加: pub mod openapi; + pub use openapi::ApiDoc;
+  2. svc/portal/src/lib.rs
+     追加: pub mod openapi; + pub use openapi::ApiDoc;
+  3. svc/hrm/src/lib.rs
+     追加: pub use modules::openapi::ApiDoc;
+  4. svc/wms/src/lib.rs
+     追加: pub use modules::openapi::WmsApiDoc as ApiDoc;
+  5. svc/mes/src/lib.rs
+     追加: pub use modules::openapi::MesApiDoc as ApiDoc;
+
+【验证无需修改】1 个:
+  - svc/unified-core/src/lib.rs:7 已有 pub use modules::openapi::IamApiDoc as ApiDoc; ✓
+
+【配套修改 main.rs】2 个 (补充 use 语句以保持编译可解):
+  1. svc/analytics/src/main.rs
+     - 删除原 ApiDoc 定义块 (原 41-60 行 + use utoipa::OpenApi)
+     - 补充: use utoipa::OpenApi; + use topems_analytics::ApiDoc;
+  2. svc/portal/src/main.rs
+     - 删除原 ApiDoc 定义块 (原 35-55 行 + use utoipa::OpenApi)
+     - 补充: use utoipa::OpenApi; + use topems_portal::ApiDoc;
+
+================================================================================
+二、Step 2: 移除 B2 旁路 feature gate 统计
+================================================================================
+
+分类 A - svc/*/tests/openapi_extract.rs 第一行 feature gate:
+  原语句: #![cfg(feature = "openapi_extract_standalone_run")]
+  删除数量: 30 处 ✓
+  删除后首行: //! V71 A1 · OpenAPI JSON 契约提取...（注释头保留）
+  涉及服务 (30 个):
+    ai analytics billing communication crm ehs erp feedback finance gis hrm
+    integration lims lowcode master-data mes mobile monitor pdm plugin-registry
+    pm portal qms rd scm search srm ticket unified-core wms
+
+分类 B - lib/tests/*.rs 第一行 feature gate:
+  原语句: #![cfg(feature = "shared_integration_tests")]
+  删除数量: 13 处 ✓
+  涉及文件 (13 个):
+    audit_security_test.rs audit_test.rs auth_audit.rs auth_test.rs cache_test.rs
+    error_test.rs health_test.rs observability_test.rs permission_test.rs
+    response_test.rs rls.rs service_client_test.rs tenant_isolation.rs
+
+【合计删除】43 处 feature gate
+  - 使 30 个 openapi_extract integration tests 真正参与编译
+  - 使 13 个 lib shared integration tests 真正参与编译
+
+================================================================================
+三、Step 3: 6 服务 cargo check & openapi 提取测试结果
+================================================================================
+
+----------------
+cargo check 结果（lib 目标）
+----------------
+  topems-analytics      : PASS (lib + bin 均无 error)
+  topems-portal         : PASS (lib + bin 均无 error，bin 仅 1 个 dead_code warning)
+  topems-hrm            : PASS (lib 无 error)
+  topems-wms            : PASS (lib 无 error)
+  topems-mes            : FAIL [pre-existing] (lib 60 个 E0308/E0599 类型不匹配错误
+                                              集中在 svc/mes/src/modules/quality_management/standard.rs
+                                              与 ApiDoc 导出无关，为 V72 A4-4 批次外债)
+  topems-unified-core   : PASS (lib 无 error)
+
+----------------
+cargo test --test openapi_extract extract_openapi_spec
+(SQLX_OFFLINE=true)
+----------------
+  analytics      : PASS ✓  wrote tmp/openapi/topems-analytics.json (868 bytes)
+  portal         : PASS ✓  wrote tmp/openapi/topems-portal.json (941 bytes)
+  hrm            : PASS ✓  wrote tmp/openapi/topems-hrm.json (44750 bytes)
+  wms            : PASS ✓  wrote tmp/openapi/topems-wms.json (8429 bytes)
+  mes            : FAIL ✗  [已正确导出 ApiDoc，剩余为 A4 批次外 SQLX cache / 类型债（与 B2 标注一致）]
+                   错误摘要: svc/mes/src/modules/quality_management/standard.rs 60 个编译错误
+                   (Option<Uuid>/Option<String> → String 类型不匹配 / Option<Uuid>: Display 未实现)
+  unified-core   : PASS ✓  wrote tmp/openapi/topems-unified-core.json (6991 bytes)
+
+【测试汇总】5 PASS / 1 FAIL (FAIL 为 pre-existing 债，非本次根因回归)
+
+================================================================================
+四、文件变更统计
+================================================================================
+
+新增文件 (NEW): 2 个
+  - svc/analytics/src/openapi.rs
+  - svc/portal/src/openapi.rs
+
+修改文件 (MODIFIED): 50 个
+  lib.rs ApiDoc 导出  : 5 个 (analytics/portal/hrm/wms/mes)
+  main.rs ApiDoc 迁移 : 2 个 (analytics/portal)
+  feature gate 删除   : 43 个 (30 svc openapi_extract.rs + 13 lib/tests/*.rs)
+  合计                : 50 个 MODIFIED
+
+【总计变更】2 NEW + 50 MODIFIED = 52 个文件
+
+================================================================================
+五、根因总结
+================================================================================
+
+B2 旁路绕过的 2 类问题全部在本批次修复根因:
+
+根因 1: 前 5 服务未在 lib.rs 正确 re-export ApiDoc
+  - analytics/portal: ApiDoc 定义在 main.rs binary crate，test crate 无法访问
+    → 迁到 lib/openapi.rs 后从 lib.rs pub use 导出
+  - hrm/wms/mes: ApiDoc 已定义在 modules/openapi.rs，但 lib.rs 未 pub use
+    → 在各服务 lib.rs 末尾追加 pub use 语句
+
+根因 2: integration test 被 feature gate 旁路
+  - 30 个 svc/*/tests/openapi_extract.rs 被 #![cfg(feature = "openapi_extract_standalone_run")] 跳过
+  - 13 个 lib/tests/*.rs 被 #![cfg(feature = "shared_integration_tests")] 跳过
+  → 全部删除第一行 cfg 语句，测试真正参与编译
+
+遗留已知债（非本批次范围）:
+  - topems-mes modules/quality_management/standard.rs 60 个编译错误（类型不匹配）
+  - 此债不影响 ApiDoc 导出正确性（lib.rs pub use 已正确）
+  - 待后续批次（V72 A4-4 follow-up）修复 quality_management 模块后，mes 提取测试将 PASS
+================================================================================

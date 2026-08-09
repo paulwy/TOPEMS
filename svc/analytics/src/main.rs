@@ -28,36 +28,17 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
-use utoipa::OpenApi;
 
 use topems_shared::ApiResponse;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
+use utoipa::OpenApi;
+
+use topems_analytics::ApiDoc;
 
 pub use shared::*;
-
-#[derive(OpenApi)]
-#[openapi(
-    tags(
-        (name = "BI", description = "商业智能"),
-        (name = "Analytics", description = "数据分析"),
-        (name = "Report", description = "报表"),
-        (name = "Dashboard", description = "仪表盘"),
-        (name = "Visualization", description = "数据可视化"),
-        (name = "Health", description = "健康检查"),
-    ),
-    info(
-        title = "TOPEMS-analytics API",
-        version = "1.0.0",
-        description = "TOPEMS BI 数据分析服务 - 报表、仪表盘、数据可视化",
-    ),
-    servers(
-        (url = "http://localhost:8060", description = "本地开发环境"),
-    )
-)]
-pub struct ApiDoc;
 
 // ==================== 主入口（V2 shared-bootstrap 模板） ====================
 

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateDashboardRequest {
     pub name: String,
     pub description: Option<String>,
@@ -10,7 +10,7 @@ pub struct CreateDashboardRequest {
     pub is_public: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateDashboardRequest {
     pub name: Option<String>,
     pub description: Option<String>,

@@ -305,9 +305,12 @@ def log_error(msg: str) -> None:
 
 
 def extract_service_name(filename: str) -> str | None:
-    """从 `topems-<svc>-openapi.json` 提取 <svc>。"""
+    """从 `topems-<svc>-openapi.json` 或 `topems-<svc>.json` 提取 <svc>。"""
     base = os.path.basename(filename)
     m = re.match(r"^topems-(.+)-openapi\.json$", base)
+    if m:
+        return m.group(1)
+    m = re.match(r"^topems-(.+)\.json$", base)
     return m.group(1) if m else None
 
 

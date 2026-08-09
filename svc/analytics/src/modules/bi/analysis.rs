@@ -4,6 +4,15 @@ use axum::{extract::State, Json};
 use tracing::info;
 
 /// List analyses
+#[utoipa::path(
+    get,
+    path = "/api/bi/analysis",
+    tag = "Analytics",
+    responses(
+        (status = 200, description = "Success", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_analyses(
     State(_state): State<crate::shared::AppState>,
 ) -> Json<serde_json::Value> {
@@ -15,6 +24,16 @@ pub async fn list_analyses(
 }
 
 /// Create analysis
+#[utoipa::path(
+    post,
+    path = "/api/bi/analysis",
+    tag = "Analytics",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "Created successfully", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_analysis(
     State(_state): State<crate::shared::AppState>,
 ) -> Json<serde_json::Value> {
@@ -26,6 +45,16 @@ pub async fn create_analysis(
 }
 
 /// Get analysis
+#[utoipa::path(
+    get,
+    path = "/api/bi/analysis/{id}",
+    tag = "Analytics",
+    params(("id" = uuid::Uuid, Path, description = "Analysis ID")),
+    responses(
+        (status = 200, description = "Success", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_analysis(
     State(_state): State<crate::shared::AppState>,
 ) -> Json<serde_json::Value> {
@@ -37,6 +66,17 @@ pub async fn get_analysis(
 }
 
 /// Execute analysis
+#[utoipa::path(
+    post,
+    path = "/api/bi/analysis/{id}/execute",
+    tag = "Analytics",
+    params(("id" = uuid::Uuid, Path, description = "Analysis ID")),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "Executed successfully", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn execute_analysis(
     State(_state): State<crate::shared::AppState>,
 ) -> Json<serde_json::Value> {
