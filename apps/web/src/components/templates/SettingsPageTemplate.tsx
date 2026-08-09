@@ -33,7 +33,7 @@ import {
   ChevronRight,
   Settings,
 } from 'lucide-react';
-import type { BreadcrumbItem } from './PageHeader';
+import type { BreadcrumbItem, PageHeaderProps } from './PageHeader';
 import { PageHeader } from './PageHeader';
 
 // ============ 类型定义 ============
@@ -85,10 +85,23 @@ export interface SettingTab {
 export interface SettingsPageTemplateProps extends BoxProps {
   title: string;
   subtitle?: string;
+  /** 页面描述（传入后在 PageHeader 副标题下方显示，替代 20 个 setting 页的独立 prop） */
+  description?: string;
+  /** 页面头部图标（与 PageHeader.pageIcon 同语义） */
+  icon?: React.ReactNode;
   breadcrumbs?: BreadcrumbItem[];
 
   tabs?: SettingTab[];
   sections?: SettingSection[];
+
+  /** 页面级头部操作按钮（传入 PageHeader.actions 插槽） */
+  actions?: Array<{
+    label: string;
+    icon?: React.ReactNode;
+    onClick?: () => void;
+    variant?: 'text' | 'outlined' | 'contained';
+    disabled?: boolean;
+  }>;
 
   loading?: boolean;
   saving?: boolean;
@@ -114,9 +127,12 @@ export interface SettingsPageTemplateProps extends BoxProps {
 export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
   title,
   subtitle,
+  description,
+  icon,
   breadcrumbs,
   tabs,
   sections: externalSections,
+  actions,
   loading,
   saving,
   error,
@@ -613,8 +629,11 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
       <PageHeader
         title={title}
         subtitle={subtitle}
+        description={description}
         breadcrumbs={breadcrumbs}
         loading={loading}
+        pageIcon={icon}
+        actions={actions as unknown as PageHeaderProps['actions']}
       >
         {headerContent}
       </PageHeader>
