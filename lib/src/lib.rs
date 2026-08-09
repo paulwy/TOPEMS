@@ -22,6 +22,7 @@ pub use topems_shared_auth::auth;
 pub use topems_shared_auth::middleware;
 pub use topems_shared_auth::permission;
 pub use topems_shared_auth::security;
+pub use topems_shared_auth::security::init_encryption_from_env;
 pub use topems_shared_auth::tenant;
 
 // --- 启动引导 ---
