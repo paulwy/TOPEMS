@@ -210,6 +210,12 @@ pub struct CreateReviewRequest {
     pub reviewer: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/incidents",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_accidents(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -223,6 +229,12 @@ pub async fn list_accidents(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/incidents",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn report_accident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -257,6 +269,12 @@ pub async fn report_accident(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/incidents/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_accident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -321,6 +339,12 @@ pub async fn get_accident(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/incidents/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_accident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -353,6 +377,12 @@ pub async fn update_accident(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/incidents/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_accident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -364,6 +394,12 @@ pub async fn delete_accident(
     Json(ApiResponse::success((), "事故删除成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/incidents/{id}/investigation",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn start_investigation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -393,6 +429,12 @@ pub async fn start_investigation(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/incidents/{id}/investigation",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_investigation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -429,6 +471,12 @@ pub async fn update_investigation(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/incidents/{id}/investigation/complete",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn complete_investigation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -474,6 +522,12 @@ pub async fn complete_investigation(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/incidents/{id}/treatment",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_treatment(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -517,6 +571,12 @@ pub async fn create_treatment(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/incidents/{id}/treatment/actions/{action_id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_treatment_action(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -546,6 +606,12 @@ pub async fn update_treatment_action(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/incidents/{id}/treatment/complete",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn complete_treatment(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -593,6 +659,12 @@ pub async fn complete_treatment(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/incidents/{id}/review",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_review(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -619,6 +691,12 @@ pub async fn create_review(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/incidents/{id}/close",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn close_accident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

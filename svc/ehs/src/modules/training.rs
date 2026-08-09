@@ -130,6 +130,12 @@ pub struct TrainingCertificate {
     pub tenant_id: Uuid,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/training",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_trainings(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -143,6 +149,12 @@ pub async fn list_trainings(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/training",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -172,6 +184,12 @@ pub async fn create_training(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/training/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -198,6 +216,12 @@ pub async fn get_training(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/training/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -245,6 +269,12 @@ pub async fn update_training(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/training/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -256,6 +286,12 @@ pub async fn delete_training(
     Json(ApiResponse::success((), "培训删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/training/plans",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_training_plans(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -269,6 +305,12 @@ pub async fn list_training_plans(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/training/plans",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_training_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -311,6 +353,12 @@ pub async fn create_training_plan(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/training/plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_training_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -337,6 +385,12 @@ pub async fn get_training_plan(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/training/plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_training_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -381,6 +435,12 @@ pub async fn update_training_plan(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/training/plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_training_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -392,6 +452,12 @@ pub async fn delete_training_plan(
     Json(ApiResponse::success((), "培训计划删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/training/records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_training_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -405,6 +471,12 @@ pub async fn list_training_records(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/training/records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_training_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -450,6 +522,12 @@ pub async fn create_training_record(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/training/records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_training_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -476,6 +554,12 @@ pub async fn get_training_record(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/training/records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_training_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -523,6 +607,12 @@ pub async fn update_training_record(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/training/records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_training_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -534,6 +624,12 @@ pub async fn delete_training_record(
     Json(ApiResponse::success((), "培训记录删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/training/certificates",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_certificates(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -547,6 +643,12 @@ pub async fn list_certificates(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/training/certificates",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_certificate(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -586,6 +688,12 @@ pub async fn create_certificate(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/training/certificates/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_certificate(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -611,6 +719,12 @@ pub async fn get_certificate(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/training/certificates/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_certificate(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -652,6 +766,12 @@ pub async fn update_certificate(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/training/certificates/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_certificate(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

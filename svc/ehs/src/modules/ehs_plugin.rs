@@ -39,6 +39,12 @@ pub struct PluginHealth {
 }
 
 // Plugin info endpoint
+#[utoipa::path(
+    get,
+    path = "/api/plugins/info",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url = get_runtime_url();
     let plugin_info = PluginInfo {
@@ -165,6 +171,12 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 }
 
 // Plugin health check endpoint
+#[utoipa::path(
+    get,
+    path = "/api/plugins/health",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<PluginHealth>> {
     let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
         Ok(_) => true,

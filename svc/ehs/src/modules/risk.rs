@@ -79,6 +79,12 @@ pub struct RiskControlMeasure {
     pub tenant_id: Uuid,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/hazards",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_risks(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -89,6 +95,12 @@ pub async fn list_risks(
     Json(ApiResponse::success(Vec::<Risk>::new(), "获取风险列表成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/hazards",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_risk(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -120,6 +132,12 @@ pub async fn create_risk(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/hazards/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_risk(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -148,6 +166,12 @@ pub async fn get_risk(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/hazards/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_risk(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -177,6 +201,12 @@ pub async fn update_risk(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/hazards/{id}/assessments",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn assess_risk(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -206,6 +236,12 @@ pub async fn assess_risk(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/hazards/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_risk(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -217,6 +253,12 @@ pub async fn delete_risk(
     Json(ApiResponse::success((), "风险删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/hazards/{id}/controls",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_control_measures(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -254,6 +296,12 @@ pub async fn list_control_measures(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/hazards/{id}/controls",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_control_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -289,6 +337,12 @@ pub async fn create_control_measure(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/hazards/{id}/controls/{measure_id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_control_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -333,6 +387,12 @@ pub async fn update_control_measure(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/hazards/{id}/controls/{measure_id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_control_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

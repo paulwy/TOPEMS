@@ -59,6 +59,12 @@ pub struct StatisticsDetail {
     pub status_distribution: HashMap<String, i64>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/production-statistics",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -120,6 +126,12 @@ pub async fn list_statistics(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/statistics/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

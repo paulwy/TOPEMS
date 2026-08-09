@@ -3,6 +3,13 @@ use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::handlers::create_feedback,
+        crate::handlers::list_feedbacks,
+        crate::handlers::get_feedback,
+        crate::handlers::response_feedback,
+        crate::handlers::delete_feedback,
+    ),
     tags(
         (name = "feedback_ticket", description = "反馈工单 API"),
         (name = "rating",          description = "满意度评分 API"),

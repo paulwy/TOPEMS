@@ -14,6 +14,14 @@ use axum::Json;
 use reqwest::Client;
 use topems_shared_core::response::ApiResponse;
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/generate",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AIGenerateResponse>> {
     let config = match CONFIG.get() {
         Some(c) => c,
@@ -86,6 +94,14 @@ pub async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AI
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/validate",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<ValidateResponse>> {
     let config = match CONFIG.get() {
         Some(c) => c,
@@ -244,6 +260,14 @@ pub async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<Vali
     Json(ApiResponse::success(ValidateResponse { issues }, "Success"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/complete",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<CompleteResponse>> {
     let config = match CONFIG.get() {
         Some(c) => c,
@@ -367,6 +391,14 @@ pub async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<Comp
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/summarize",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn summarize(Json(req): Json<SummarizeRequest>) -> Json<ApiResponse<SummarizeResponse>> {
     let config = match CONFIG.get() {
         Some(c) => c,
@@ -433,6 +465,14 @@ pub async fn summarize(Json(req): Json<SummarizeRequest>) -> Json<ApiResponse<Su
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ai/templates",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_templates() -> Json<ApiResponse<Vec<AITemplate>>> {
     let templates = vec![
         AITemplate {
@@ -476,6 +516,14 @@ pub async fn list_templates() -> Json<ApiResponse<Vec<AITemplate>>> {
     Json(ApiResponse::success(templates, "Success"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/chat",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse>> {
     let search_results = vector_search(&req.query, 5).await;
 
@@ -591,6 +639,14 @@ pub async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/search",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn ai_search(Json(req): Json<AiSearchRequest>) -> Json<ApiResponse<AiSearchResponse>> {
     let start_time = std::time::Instant::now();
 
@@ -710,6 +766,14 @@ async fn call_ai_api(
 
 // ========== AI 智能助手 Phase 3 ==========
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/assistant/report",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn report_assistant(
     Json(req): Json<ReportAssistantRequest>,
 ) -> Json<ApiResponse<ReportAssistantResponse>> {
@@ -756,6 +820,14 @@ pub async fn report_assistant(
     Json(ApiResponse::success(response, "Success"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/assistant/flow",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn flow_assistant(
     Json(req): Json<FlowAssistantRequest>,
 ) -> Json<ApiResponse<FlowAssistantResponse>> {
@@ -811,6 +883,14 @@ pub async fn flow_assistant(
     Json(ApiResponse::success(response, "Success"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/assistant/anomaly/predict",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn anomaly_predict(
     Json(req): Json<AnomalyPredictRequest>,
 ) -> Json<ApiResponse<AnomalyPredictResponse>> {
@@ -851,6 +931,14 @@ pub async fn anomaly_predict(
     Json(ApiResponse::success(response, "Success"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/assistant/knowledge/ask",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn knowledge_ask(
     Json(req): Json<KnowledgeAskRequest>,
 ) -> Json<ApiResponse<KnowledgeAskResponse>> {

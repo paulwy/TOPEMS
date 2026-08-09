@@ -76,6 +76,12 @@ pub struct StepQuery {
     pub process_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/production-steps",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_steps(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -137,6 +143,12 @@ pub async fn list_steps(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/production-steps",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_step(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -179,6 +191,12 @@ pub async fn create_step(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/production-steps/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_step(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -208,6 +226,12 @@ pub async fn get_step(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pdm/production-steps/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_step(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -255,6 +279,12 @@ pub async fn update_step(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pdm/production-steps/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_step(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

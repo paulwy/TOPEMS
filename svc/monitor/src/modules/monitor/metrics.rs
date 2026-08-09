@@ -125,7 +125,15 @@ pub fn create_routes() -> Router<AppState> {
         .route("/performance/export", post(export_performance_data))
 }
 
-async fn get_system_metrics(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/metrics/system",
+    tag = "metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_system_metrics(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<SystemMetricsResponse>> {
@@ -150,7 +158,15 @@ async fn get_system_metrics(
     Json(ApiResponse::success(metrics, "获取系统指标成功"))
 }
 
-async fn get_database_metrics(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/metrics/database",
+    tag = "metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_database_metrics(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<DatabaseMetricsResponse>> {
@@ -175,7 +191,15 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
         .unwrap_or_else(Uuid::new_v4)
 }
 
-async fn get_api_performance(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/performance/api",
+    tag = "performance",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_api_performance(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ApiPerformance>>> {
@@ -231,7 +255,15 @@ async fn get_api_performance(
     Json(ApiResponse::success(performances, "获取API性能指标成功"))
 }
 
-async fn get_performance_trend(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/performance/trend",
+    tag = "performance",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_performance_trend(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
@@ -266,7 +298,15 @@ async fn get_performance_trend(
     Json(ApiResponse::success(trends, "获取性能趋势成功"))
 }
 
-async fn get_service_performance(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/performance/services",
+    tag = "performance",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_service_performance(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ServicePerformance>>> {
@@ -344,7 +384,15 @@ async fn get_service_performance(
     Json(ApiResponse::success(services, "获取服务性能成功"))
 }
 
-async fn get_performance_summary(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/performance/summary",
+    tag = "performance",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_performance_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<PerformanceSummary>> {
@@ -447,7 +495,15 @@ async fn get_performance_summary(
     Json(ApiResponse::success(summary, "获取性能摘要成功"))
 }
 
-async fn get_slow_queries(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/performance/slow-queries",
+    tag = "performance",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_slow_queries(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
@@ -538,7 +594,15 @@ pub struct ExportRequest {
     pub end_time: Option<String>,
 }
 
-async fn export_performance_data(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/performance/export",
+    tag = "performance",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn export_performance_data(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExportRequest>,

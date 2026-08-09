@@ -81,6 +81,12 @@ pub struct ConfigurationQuery {
     pub product_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/configurations",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_configurations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -152,6 +158,12 @@ pub async fn list_configurations(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/configurations",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_configuration(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -210,6 +222,12 @@ pub async fn create_configuration(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/configurations/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_configuration(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -240,6 +258,12 @@ pub async fn get_configuration(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pdm/configurations/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_configuration(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -292,6 +316,12 @@ pub async fn update_configuration(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pdm/configurations/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_configuration(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

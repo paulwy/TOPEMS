@@ -183,6 +183,12 @@ pub struct UpdateInspectionRecordRequest {
     pub issues: Option<Vec<String>>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/checks/plans",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_plans(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -196,6 +202,12 @@ pub async fn list_plans(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/checks/plans",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -227,6 +239,12 @@ pub async fn create_plan(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/checks/plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -256,6 +274,12 @@ pub async fn get_plan(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/checks/plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -286,6 +310,12 @@ pub async fn update_plan(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/checks/plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -297,6 +327,12 @@ pub async fn delete_plan(
     Json(ApiResponse::success((), "检查计划删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/checks/plans/{plan_id}/items",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_plan_items(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -348,6 +384,12 @@ pub async fn list_plan_items(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/checks/plans/{plan_id}/items",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_plan_item(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -377,6 +419,12 @@ pub async fn create_plan_item(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/checks/plans/{plan_id}/items/{item_id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_plan_item(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -388,6 +436,12 @@ pub async fn delete_plan_item(
     Json(ApiResponse::success((), "检查项删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/checks/records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -401,6 +455,12 @@ pub async fn list_records(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/checks/records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -444,6 +504,12 @@ pub async fn create_record(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/checks/records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -502,6 +568,12 @@ pub async fn get_record(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/checks/records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -534,6 +606,12 @@ pub async fn update_record(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/checks/records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

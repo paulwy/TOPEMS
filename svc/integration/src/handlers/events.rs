@@ -7,6 +7,14 @@ use topems_shared_core::response::ApiResponse;
 
 use crate::models::{AppState, CreateIntegrationEventRequest, IntegrationEvent, SyncStats};
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/stats",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<SyncStats>> {
     let lims_qms_result = sqlx::query(
         "SELECT COUNT(*) as total,
@@ -97,6 +105,14 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<S
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/events",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_events(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<IntegrationEvent>>> {
@@ -122,6 +138,14 @@ pub async fn list_events(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/events",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_event(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationEventRequest>,

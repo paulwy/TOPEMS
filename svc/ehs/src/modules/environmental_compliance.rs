@@ -380,6 +380,12 @@ pub struct UpdateIncidentRequest {
     pub preventive_measures: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/regulations",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_regulations(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -393,6 +399,12 @@ pub async fn list_regulations(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/environmental-compliance/regulations",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_regulation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -430,6 +442,12 @@ pub async fn create_regulation(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/regulations/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_regulation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -466,6 +484,12 @@ pub async fn get_regulation(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/environmental-compliance/regulations/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_regulation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -503,6 +527,12 @@ pub async fn update_regulation(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/environmental-compliance/regulations/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_regulation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -514,6 +544,12 @@ pub async fn delete_regulation(
     Json(ApiResponse::success((), "法规删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/evaluations",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_evaluations(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -527,6 +563,12 @@ pub async fn list_evaluations(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/environmental-compliance/evaluations",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_evaluation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -564,6 +606,12 @@ pub async fn create_evaluation(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/evaluations/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_evaluation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -598,6 +646,12 @@ pub async fn get_evaluation(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/environmental-compliance/evaluations/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_evaluation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -643,6 +697,12 @@ pub async fn update_evaluation(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/environmental-compliance/evaluations/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_evaluation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -654,6 +714,12 @@ pub async fn delete_evaluation(
     Json(ApiResponse::success((), "评价删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/monitoring",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_monitor_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -667,6 +733,12 @@ pub async fn list_monitor_records(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/environmental-compliance/monitoring",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_monitor_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -707,6 +779,12 @@ pub async fn create_monitor_record(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/monitoring/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_monitor_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -744,6 +822,12 @@ pub async fn get_monitor_record(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/environmental-compliance/monitoring/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_monitor_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -755,6 +839,12 @@ pub async fn delete_monitor_record(
     Json(ApiResponse::success((), "监测记录删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/permits",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_permits(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -768,6 +858,12 @@ pub async fn list_permits(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/environmental-compliance/permits",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_permit(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -806,6 +902,12 @@ pub async fn create_permit(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/permits/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_permit(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -845,6 +947,12 @@ pub async fn get_permit(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/environmental-compliance/permits/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_permit(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -881,6 +989,12 @@ pub async fn update_permit(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/environmental-compliance/permits/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_permit(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -892,6 +1006,12 @@ pub async fn delete_permit(
     Json(ApiResponse::success((), "排污许可删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/incidents",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_incidents(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -905,6 +1025,12 @@ pub async fn list_incidents(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/environmental-compliance/incidents",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_incident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -947,6 +1073,12 @@ pub async fn create_incident(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/incidents/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_incident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -986,6 +1118,12 @@ pub async fn get_incident(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/environmental-compliance/incidents/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_incident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1036,6 +1174,12 @@ pub async fn update_incident(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/environmental-compliance/incidents/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_incident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1047,6 +1191,12 @@ pub async fn delete_incident(
     Json(ApiResponse::success((), "环境事件删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/statistics",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_compliance_statistics(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1084,6 +1234,12 @@ pub async fn get_compliance_statistics(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/regulations/categories",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_regulation_categories(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1102,6 +1258,12 @@ pub async fn list_regulation_categories(
     Json(ApiResponse::success(categories, "获取法规分类成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environmental-compliance/monitoring/types",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_monitor_types(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

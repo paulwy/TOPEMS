@@ -10,6 +10,14 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
+#[utoipa::path(
+    get,
+    path = "/api/ai/connectors",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_connectors() -> Json<ApiResponse<Vec<DataConnector>>> {
     if let Some(connectors) = CONNECTORS.get() {
         let connectors = match connectors.lock() {
@@ -31,6 +39,14 @@ pub async fn list_connectors() -> Json<ApiResponse<Vec<DataConnector>>> {
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ai/connectors/get",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_connector(
     Query(params): Query<ConnectorQuery>,
 ) -> Json<ApiResponse<DataConnector>> {
@@ -61,6 +77,14 @@ pub async fn get_connector(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/connectors/create",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_connector(
     Json(req): Json<CreateConnectorRequest>,
 ) -> Json<ApiResponse<DataConnector>> {
@@ -107,6 +131,14 @@ pub async fn create_connector(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/connectors/update",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn update_connector(
     Query(params): Query<ConnectorQuery>,
     Json(req): Json<UpdateConnectorRequest>,
@@ -159,6 +191,14 @@ pub async fn update_connector(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/connectors/delete",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn delete_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiResponse<String>> {
     if let Some(connectors) = CONNECTORS.get() {
         let mut connectors = match connectors.lock() {
@@ -187,6 +227,14 @@ pub async fn delete_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiR
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ai/connectors/test",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn test_connector(
     Query(params): Query<ConnectorQuery>,
 ) -> Json<ApiResponse<ConnectorStatus>> {
@@ -232,6 +280,14 @@ pub async fn test_connector(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/connectors/query",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn query_data(Json(req): Json<DataQueryRequest>) -> Json<ApiResponse<DataQueryResponse>> {
     if let Some(connectors) = CONNECTORS.get() {
         let connectors = match connectors.lock() {

@@ -271,6 +271,12 @@ pub struct UpdateDrillProblemRequest {
     pub verifier: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/drills/plans",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_drill_plans(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -284,6 +290,12 @@ pub async fn list_drill_plans(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/drills/plans",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_drill_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -319,6 +331,12 @@ pub async fn create_drill_plan(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/drills/plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_drill_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -351,6 +369,12 @@ pub async fn get_drill_plan(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/drills/plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_drill_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -386,6 +410,12 @@ pub async fn update_drill_plan(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/drills/plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_drill_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -397,6 +427,12 @@ pub async fn delete_drill_plan(
     Json(ApiResponse::success((), "演练计划删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/drills/records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_drill_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -410,6 +446,12 @@ pub async fn list_drill_records(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/drills/records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_drill_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -449,6 +491,12 @@ pub async fn create_drill_record(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/drills/records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_drill_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -522,6 +570,12 @@ pub async fn get_drill_record(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/drills/records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_drill_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -561,6 +615,12 @@ pub async fn update_drill_record(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/drills/records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_drill_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -572,6 +632,12 @@ pub async fn delete_drill_record(
     Json(ApiResponse::success((), "演练记录删除成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/drills/records/{id}/evaluation",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_drill_evaluation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -602,6 +668,12 @@ pub async fn create_drill_evaluation(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/drills/records/{id}/problems",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_drill_problems(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -616,6 +688,12 @@ pub async fn list_drill_problems(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/drills/records/{id}/problems",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_drill_problem(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -648,6 +726,12 @@ pub async fn create_drill_problem(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/drills/records/{id}/problems/{problem_id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_drill_problem(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -697,6 +781,12 @@ pub async fn update_drill_problem(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/drills/statistics",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_drill_statistics(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -734,6 +824,12 @@ pub async fn get_drill_statistics(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/drills/types",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_drill_types(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

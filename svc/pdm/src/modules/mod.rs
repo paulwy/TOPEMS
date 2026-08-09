@@ -2,6 +2,7 @@ pub mod change_notice;
 pub mod configuration;
 pub mod document;
 pub mod material;
+pub mod openapi;
 pub mod pdm_plugin;
 pub mod product;
 pub mod production_batch;
@@ -11,6 +12,8 @@ pub mod production_statistics;
 pub mod production_step;
 pub mod version;
 pub mod workflow;
+
+pub use openapi::ApiDoc;
 
 use crate::shared::AppState;
 use axum::Router;

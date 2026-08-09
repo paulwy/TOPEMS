@@ -101,6 +101,12 @@ pub struct UpdateChangeNoticeRequest {
     pub effective_date: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/change-notices",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_change_notices(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -177,6 +183,12 @@ pub async fn list_change_notices(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/change-notices",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_change_notice(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -242,6 +254,12 @@ pub async fn create_change_notice(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/change-notices/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_change_notice(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -273,6 +291,12 @@ pub async fn get_change_notice(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pdm/change-notices/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_change_notice(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -360,6 +384,12 @@ pub async fn update_change_notice(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pdm/change-notices/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_change_notice(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -386,6 +416,12 @@ pub async fn delete_change_notice(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/change-notices/{id}/submit",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn submit_change_notice(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -421,6 +457,12 @@ pub async fn submit_change_notice(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/change-notices/{id}/approve",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn approve_change_notice(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -464,6 +506,12 @@ pub async fn approve_change_notice(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/change-notices/{id}/reject",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn reject_change_notice(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

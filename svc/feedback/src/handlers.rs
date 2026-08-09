@@ -58,6 +58,14 @@ pub struct ListFeedbackParams {
     pub user_id: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/feedback/feedbacks",
+    tag = "feedback_ticket",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_feedback(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -86,6 +94,14 @@ pub async fn create_feedback(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/feedback/feedbacks/{id}",
+    tag = "feedback_ticket",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_feedback(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -108,6 +124,14 @@ pub async fn get_feedback(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/feedback/feedbacks",
+    tag = "feedback_ticket",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_feedbacks(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -186,6 +210,14 @@ pub async fn list_feedbacks(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/feedback/feedbacks/{id}",
+    tag = "feedback_ticket",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn response_feedback(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -215,6 +247,14 @@ pub async fn response_feedback(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/feedback/feedbacks/{id}",
+    tag = "feedback_ticket",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn delete_feedback(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

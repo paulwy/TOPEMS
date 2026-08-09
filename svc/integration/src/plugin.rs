@@ -33,6 +33,14 @@ pub struct PermissionDef {
     pub code: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/plugins/info",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url = get_runtime_url();
     let plugin_info = PluginInfo {
@@ -68,6 +76,14 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/plugins/health",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn plugin_health_check() -> Json<ServiceHealth> {
     Json(topems_shared_core::health::build_health_response(
         "topems-integration",

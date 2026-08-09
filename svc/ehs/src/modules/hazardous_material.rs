@@ -285,6 +285,12 @@ pub struct UpdateMsdsRequest {
     pub other_info: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/hazardous-materials",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_materials(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -298,6 +304,12 @@ pub async fn list_materials(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/hazardous-materials",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_material(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -342,6 +354,12 @@ pub async fn create_material(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/hazardous-materials/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_material(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -451,6 +469,12 @@ pub async fn get_material(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/hazardous-materials/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_material(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -493,6 +517,12 @@ pub async fn update_material(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/hazardous-materials/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_material(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -504,6 +534,12 @@ pub async fn delete_material(
     Json(ApiResponse::success((), "危险品删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/hazardous-materials/{id}/stocks",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_material_stocks(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -518,6 +554,12 @@ pub async fn list_material_stocks(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/hazardous-materials/stock-records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_stock_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -531,6 +573,12 @@ pub async fn list_stock_records(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/hazardous-materials/stock-records/stock-in",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_stock_in(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -567,6 +615,12 @@ pub async fn create_stock_in(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/hazardous-materials/stock-records/stock-out",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_stock_out(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -603,6 +657,12 @@ pub async fn create_stock_out(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/hazardous-materials/stock-records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_stock_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -636,6 +696,12 @@ pub async fn get_stock_record(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/hazardous-materials/{id}/msds",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_material_msds(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -675,6 +741,12 @@ pub async fn get_material_msds(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/hazardous-materials/{id}/msds",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_material_msds(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -713,6 +785,12 @@ pub async fn update_material_msds(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/hazardous-materials/statistics",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_material_statistics(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -754,6 +832,12 @@ pub async fn get_material_statistics(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/hazardous-materials/categories",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_material_categories(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

@@ -22,29 +22,10 @@ use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateL
 use topems_shared_observability::telemetry::telemetry_middleware;
 use utoipa::OpenApi;
 
-#[derive(OpenApi)]
-#[openapi(
-    tags(
-        (name = "AI", description = "人工智能服务 API"),
-        (name = "QA", description = "智能问答接口"),
-        (name = "Analysis", description = "智能分析接口"),
-        (name = "Document", description = "文档处理接口"),
-        (name = "Embedding", description = "向量化接口"),
-        (name = "Vector", description = "向量检索接口"),
-        (name = "Multimodal", description = "多模态接口"),
-        (name = "Recommendation", description = "推荐接口"),
-        (name = "Connector", description = "AI 连接器接口"),
-    ),
-    info(
-        title = "TOPEMS-AI API",
-        version = "1.0.0",
-        description = "TOPEMS 人工智能服务 API - 智能问答、文档处理、向量检索、多模态分析",
-    ),
-    servers(
-        (url = "http://localhost:8013", description = "本地开发环境"),
-    )
-)]
-pub struct AiApiDoc;
+// `ApiDoc`（来自 `modules::openapi`）注册了所有 `#[utoipa::path]` 注解的 handler。
+// 此处以 `AiApiDoc` 别名重新导出，保持与 `tests/openapi_extract.rs` 的导入兼容：
+//   use topems_ai::routes::AiApiDoc;
+pub use crate::modules::openapi::ApiDoc as AiApiDoc;
 
 pub fn create_routes(
     app_state: AppState,
