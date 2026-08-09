@@ -234,6 +234,7 @@ node scripts/patch-react-transition-group.js --check
 | billing | 计费服务 | 8085 | |
 | ticket | 工单服务 | 8086 | |
 | feedback | 反馈服务 | 8087 | |
+| lowcode | 低代码平台 | 8088 | |
 | master-data | 主数据管理 | 8090 | |
 | **前端** | | | |
 | web | 前端应用 | 3000 | |
