@@ -219,6 +219,40 @@ if (fixCount > 0) {
   log.warn(`清洗: 修复 ${fixCount} 个 null/缺失 schema 的 media type`);
 }
 
+// 悬空 $ref 修复：扫描全 spec 找所有 $ref 引用，若目标 schema 不存在则注入 stub
+function fixDanglingRefs(spec) {
+  const schemas = spec?.components?.schemas || {};
+  const schemaNames = new Set(Object.keys(schemas));
+  let refFixCount = 0;
+  const missingRefs = new Set();
+
+  function walk(obj) {
+    if (!obj || typeof obj !== 'object') return;
+    if (Array.isArray(obj)) { obj.forEach(walk); return; }
+    if (obj.$ref && typeof obj.$ref === 'string') {
+      const m = obj.$ref.match(/^#\/components\/schemas\/(.+)$/);
+      if (m && !schemaNames.has(m[1])) {
+        missingRefs.add(m[1]);
+      }
+    }
+    for (const v of Object.values(obj)) walk(v);
+  }
+  walk(spec);
+
+  for (const name of missingRefs) {
+    schemas[name] = { type: 'string', description: `Auto-injected stub for missing $ref target: ${name}` };
+    refFixCount++;
+  }
+  if (refFixCount > 0) {
+    spec.components = spec.components || {};
+    spec.components.schemas = schemas;
+    log.warn(`清洗: 注入 ${refFixCount} 个悬空 $ref stub schema（${[...missingRefs].slice(0, 5).join(', ')}${missingRefs.size > 5 ? '...' : ''}）`);
+  }
+  return refFixCount;
+}
+
+fixDanglingRefs(spec);
+
 // 检查 spec 是否有实际内容
 const pathCount = Object.keys(spec?.paths || {}).length;
 const schemaCount = Object.keys(spec?.components?.schemas || {}).length;
@@ -301,19 +335,33 @@ writeFileSync(tmpSpecPath, JSON.stringify(spec, null, 2));
 
 // 解析 openapi-typescript CLI 二进制路径
 function resolveOpenapiTypescriptBin() {
-  try {
-    const pkgPath = require.resolve('openapi-typescript/package.json');
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-    const binRel = pkg.bin && (pkg.bin['openapi-typescript'] || (typeof pkg.bin === 'string' ? pkg.bin : null));
-    if (!binRel) {
-      throw new Error('openapi-typescript 未声明 bin 字段');
+  // openapi-typescript 是 packages/shared-types 的 devDep，
+  // 尝试从多个位置 resolve（scripts/ 层级找不到时会 fallback 到 shared-types）
+  const resolvePaths = [
+    'openapi-typescript/package.json',
+    resolve(ROOT_DIR, 'packages/shared-types/node_modules/openapi-typescript/package.json'),
+  ];
+  let pkgPath = null;
+  let lastErr = null;
+  for (const p of resolvePaths) {
+    try {
+      pkgPath = require.resolve(p);
+      break;
+    } catch (e) {
+      lastErr = e;
     }
-    return resolve(dirname(pkgPath), binRel);
-  } catch (e) {
+  }
+  if (!pkgPath) {
     throw new Error(
-      `无法定位 openapi-typescript CLI。请确认已安装: pnpm add -D openapi-typescript -w\n  原因: ${e.message}`,
+      `无法定位 openapi-typescript CLI。请确认已安装: pnpm add -D openapi-typescript -w\n  原因: ${lastErr?.message || 'unknown'}`,
     );
   }
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+  const binRel = pkg.bin && (pkg.bin['openapi-typescript'] || (typeof pkg.bin === 'string' ? pkg.bin : null));
+  if (!binRel) {
+    throw new Error('openapi-typescript 未声明 bin 字段');
+  }
+  return resolve(dirname(pkgPath), binRel);
 }
 
 // 使用 openapi-typescript CLI 生成类型
