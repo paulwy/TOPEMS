@@ -1,7 +1,7 @@
-use serde_json::json;
 use super::common::{BusinessTerm, FieldDefinition, FormDomain, FormValidationRule};
 use super::config::FormConfig;
 use super::registry::FormRegistry;
+use serde_json::json;
 
 // ==================== ERP 生产域（3 个表单） ====================
 

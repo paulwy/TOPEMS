@@ -1,7 +1,7 @@
-use serde_json::json;
 use super::common::{FieldDefinition, FormDomain};
 use super::config::FormConfig;
 use super::registry::FormRegistry;
+use serde_json::json;
 
 // ==================== 系统域（4 个表单） ====================
 

@@ -1,7 +1,7 @@
-use serde_json::json;
 use super::common::{BusinessTerm, FieldDefinition, FormDomain, FormValidationRule};
 use super::config::FormConfig;
 use super::registry::FormRegistry;
+use serde_json::json;
 
 // ==================== PM 域（4 个表单） ====================
 

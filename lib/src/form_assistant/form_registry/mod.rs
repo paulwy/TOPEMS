@@ -20,22 +20,22 @@ mod config;
 mod registry;
 
 mod crm_forms;
-mod erp_sales_forms;
-mod erp_purchase_forms;
-mod erp_production_forms;
+mod ehs_forms;
 mod erp_finance_forms;
 mod erp_inventory_forms;
-mod pm_forms;
-mod iam_forms;
-mod system_forms;
-mod qms_forms;
-mod mes_forms;
-mod wms_forms;
+mod erp_production_forms;
+mod erp_purchase_forms;
+mod erp_sales_forms;
 mod hrm_forms;
-mod scm_forms;
+mod iam_forms;
 mod lims_forms;
-mod ehs_forms;
+mod mes_forms;
+mod pm_forms;
+mod qms_forms;
 mod rd_forms;
+mod scm_forms;
+mod system_forms;
+mod wms_forms;
 
 #[cfg(test)]
 mod tests;

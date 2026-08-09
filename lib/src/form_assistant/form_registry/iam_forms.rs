@@ -1,7 +1,7 @@
-use serde_json::json;
 use super::common::{FieldDefinition, FormDomain, FormValidationRule};
 use super::config::FormConfig;
 use super::registry::FormRegistry;
+use serde_json::json;
 
 // ==================== IAM 域（5 个表单） ====================
 

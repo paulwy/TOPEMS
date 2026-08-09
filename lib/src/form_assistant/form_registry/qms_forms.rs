@@ -1,7 +1,7 @@
-use serde_json::json;
 use super::common::{AiFeatures, BusinessTerm, FieldDefinition, FormDomain, FormValidationRule};
 use super::config::FormConfig;
 use super::registry::FormRegistry;
+use serde_json::json;
 
 // ==================== QMS 域（2 个表单） ====================
 

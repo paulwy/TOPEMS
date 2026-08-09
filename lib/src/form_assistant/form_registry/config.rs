@@ -1,6 +1,6 @@
+use super::common::{AiFeatures, BusinessTerm, FieldDefinition, FormDomain, FormValidationRule};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use super::common::{AiFeatures, BusinessTerm, FieldDefinition, FormDomain, FormValidationRule};
 
 // ==================== 表单配置 ====================
 

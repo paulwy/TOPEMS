@@ -1,7 +1,7 @@
-use serde_json::json;
 use super::common::{BusinessTerm, FieldDefinition, FormDomain, FormValidationRule};
 use super::config::FormConfig;
 use super::registry::FormRegistry;
+use serde_json::json;
 
 // ==================== ERP 财务域（8 个表单） ====================
 
@@ -329,11 +329,7 @@ pub(super) fn register_erp_finance_forms(registry: &mut FormRegistry) {
                 "occur_date": "2026-07-15",
                 "description": "上海客户现场实施差旅，含机票与住宿"
             }))
-            .with_validation_rule(FormValidationRule::new(
-                "amount",
-                "range",
-                "金额需大于 0",
-            )),
+            .with_validation_rule(FormValidationRule::new("amount", "range", "金额需大于 0")),
     );
 
     // 21. 预算

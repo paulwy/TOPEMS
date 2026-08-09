@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-use std::sync::OnceLock;
 use super::common::FormDomain;
 use super::config::FormConfig;
 use super::{
@@ -8,11 +6,13 @@ use super::{
     erp_inventory_forms::register_erp_inventory_forms,
     erp_production_forms::register_erp_production_forms,
     erp_purchase_forms::register_erp_purchase_forms, erp_sales_forms::register_erp_sales_forms,
-    hrm_forms::register_hrm_forms, iam_forms::register_iam_forms,
-    lims_forms::register_lims_forms, mes_forms::register_mes_forms, pm_forms::register_pm_forms,
-    qms_forms::register_qms_forms, rd_forms::register_rd_forms, scm_forms::register_scm_forms,
+    hrm_forms::register_hrm_forms, iam_forms::register_iam_forms, lims_forms::register_lims_forms,
+    mes_forms::register_mes_forms, pm_forms::register_pm_forms, qms_forms::register_qms_forms,
+    rd_forms::register_rd_forms, scm_forms::register_scm_forms,
     system_forms::register_system_forms, wms_forms::register_wms_forms,
 };
+use std::collections::HashMap;
+use std::sync::OnceLock;
 
 // ==================== 表单注册表 ====================
 
