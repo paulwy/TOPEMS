@@ -707,4 +707,138 @@ mod tests {
             TopemsError::DatabaseRecordNotFound(_)
         ));
     }
+
+    // ===== 新增：更多 SafeErrorHandler 测试 =====
+    #[test]
+    fn test_safe_unwrap_result_ok_and_err() {
+        let ok: StdResult<i32, &str> = Ok(100);
+        let r = SafeErrorHandler::safe_unwrap_result(ok, "失败");
+        assert_eq!(r.unwrap(), 100);
+
+        let err: StdResult<i32, &str> = Err("boom");
+        let r = SafeErrorHandler::safe_unwrap_result(err, "前缀");
+        assert!(r.is_err());
+        assert!(r.unwrap_err().to_string().contains("前缀"));
+    }
+
+    #[test]
+    fn test_safe_get_element_in_range_and_out() {
+        let arr = [10, 20, 30];
+        let r = SafeErrorHandler::safe_get_element(&arr, 1, "数组");
+        assert_eq!(*r.unwrap(), 20);
+        let r = SafeErrorHandler::safe_get_element(&arr, 5, "数组");
+        assert!(r.is_err());
+    }
+
+    #[test]
+    fn test_safe_get_env_missing() {
+        // 用一个极不可能存在的 key
+        let r = SafeErrorHandler::safe_get_env(
+            "__TOPEMS_NOT_EXIST_ENV_VAR_XYZ_12345__",
+        );
+        assert!(r.is_err());
+    }
+
+    // ===== ErrorRecovery 更多测试 =====
+    #[test]
+    fn test_error_recovery_try_or_log_some_none() {
+        let r = ErrorRecovery::try_or_log(|| Ok("hello"));
+        assert_eq!(r, Some("hello"));
+        let r: Option<()> =
+            ErrorRecovery::try_or_log(|| Err(TopemsError::Internal("x".to_string())));
+        assert!(r.is_none());
+    }
+
+    #[test]
+    fn test_error_recovery_try_or_response_ok() {
+        let r: crate::response::ApiResponse<i32> = ErrorRecovery::try_or_response(|| Ok(7));
+        assert!(r.success);
+        assert_eq!(r.data, Some(7));
+    }
+
+    #[test]
+    fn test_error_recovery_try_or_response_maps_error_codes() {
+        let r: crate::response::ApiResponse<()> =
+            ErrorRecovery::try_or_response(|| Err(TopemsError::Unauthorized));
+        assert_eq!(r.code, 401);
+
+        let r: crate::response::ApiResponse<()> = ErrorRecovery::try_or_response(|| {
+            Err(TopemsError::PermissionDenied {
+                required: "admin".to_string(),
+            })
+        });
+        assert_eq!(r.code, 403);
+
+        let r: crate::response::ApiResponse<()> =
+            ErrorRecovery::try_or_response(|| Err(TopemsError::ResourceNotFound("x".to_string())));
+        assert_eq!(r.code, 404);
+
+        let r: crate::response::ApiResponse<()> =
+            ErrorRecovery::try_or_response(|| Err(TopemsError::ValidationFailed("x".to_string())));
+        assert_eq!(r.code, 400);
+
+        let r: crate::response::ApiResponse<()> =
+            ErrorRecovery::try_or_response(|| Err(TopemsError::Internal("x".to_string())));
+        assert_eq!(r.code, 500);
+    }
+
+    // ===== ErrorStatistics 测试 =====
+    #[test]
+    fn test_error_statistics_new_is_empty() {
+        let stats = ErrorStatistics::new();
+        assert!(stats.get_statistics().is_empty());
+    }
+
+    #[test]
+    fn test_error_statistics_record_and_count() {
+        let mut stats = ErrorStatistics::new();
+        let e1 = TopemsError::Internal("a".to_string());
+        let e2 = TopemsError::Internal("b".to_string());
+        stats.record_error(&e1);
+        stats.record_error(&e1);
+        stats.record_error(&e2);
+        let vec = stats.get_statistics();
+        assert_eq!(vec.len(), 2);
+        // a 出现 2 次，b 出现 1 次
+        let total: u64 = vec.iter().map(|(_, c)| *c).sum();
+        assert_eq!(total, 3);
+    }
+
+    #[test]
+    fn test_error_statistics_clear() {
+        let mut stats = ErrorStatistics::new();
+        stats.record_error(&TopemsError::Internal("x".to_string()));
+        assert!(!stats.get_statistics().is_empty());
+        stats.clear();
+        assert!(stats.get_statistics().is_empty());
+    }
+
+    // ===== ErrorContext detail 测试 =====
+    #[test]
+    fn test_error_with_detail_context() {
+        let r: StdResult<i32, &str> = Err("orig");
+        let r = r.with_detail_context("CTX", "detail");
+        let msg = r.unwrap_err().to_string();
+        assert!(msg.contains("CTX"));
+        assert!(msg.contains("detail"));
+        assert!(msg.contains("orig"));
+    }
+
+    // ===== IO 错误转换测试 =====
+    #[test]
+    fn test_io_error_not_found_mapping() {
+        let io = std::io::Error::new(std::io::ErrorKind::NotFound, "missing");
+        let te: TopemsError = io.into();
+        assert!(matches!(te, TopemsError::FileNotFound(_)));
+    }
+
+    #[test]
+    fn test_io_error_permission_denied_mapping() {
+        let io = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "denied");
+        let te: TopemsError = io.into();
+        assert!(matches!(
+            te,
+            TopemsError::PermissionDenied { required: _ }
+        ));
+    }
 }

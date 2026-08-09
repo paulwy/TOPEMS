@@ -144,6 +144,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_contract_integration() {
         if !ensure_api_available().await {
             eprintln!("⏭ 跳过: API服务未运行 (localhost:8000)");

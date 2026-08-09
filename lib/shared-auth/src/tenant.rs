@@ -551,4 +551,183 @@ mod tests {
         let exceeded = metrics.check_limits(&settings);
         assert_eq!(exceeded.len(), 3);
     }
+
+    // ===== 新增：Tenant::new 套餐等级配置测试 =====
+    #[test]
+    fn test_tenant_free_plan_settings() {
+        let t = Tenant::new("F".to_string(), "f".to_string(), TenantPlan::Free);
+        assert_eq!(t.settings.max_users, 5);
+        assert_eq!(t.settings.max_storage_gb, 5);
+        assert_eq!(t.settings.max_api_requests_per_day, 1000);
+        assert_eq!(t.status, TenantStatus::Trial);
+    }
+
+    #[test]
+    fn test_tenant_basic_plan_settings() {
+        let t = Tenant::new("B".to_string(), "b".to_string(), TenantPlan::Basic);
+        assert_eq!(t.settings.max_users, 25);
+        assert_eq!(t.settings.max_storage_gb, 50);
+        assert_eq!(t.settings.max_api_requests_per_day, 50000);
+    }
+
+    #[test]
+    fn test_tenant_professional_plan_settings() {
+        let t = Tenant::new(
+            "P".to_string(),
+            "p".to_string(),
+            TenantPlan::Professional,
+        );
+        assert_eq!(t.settings.max_users, 100);
+        assert_eq!(t.settings.max_storage_gb, 200);
+        assert_eq!(t.settings.max_api_requests_per_day, 200000);
+    }
+
+    #[test]
+    fn test_tenant_enterprise_plan_unlimited() {
+        let t = Tenant::new("E".to_string(), "e".to_string(), TenantPlan::Enterprise);
+        assert_eq!(t.settings.max_users, u32::MAX);
+        assert_eq!(t.settings.max_storage_gb, u64::MAX);
+        assert_eq!(t.settings.max_api_requests_per_day, u64::MAX);
+    }
+
+    #[test]
+    fn test_tenant_is_active_and_status() {
+        let mut t = Tenant::new("A".to_string(), "a".to_string(), TenantPlan::Free);
+        assert!(!t.is_active());
+        t.status = TenantStatus::Active;
+        assert!(t.is_active());
+        t.status = TenantStatus::Suspended;
+        assert!(!t.is_active());
+    }
+
+    #[test]
+    fn test_tenant_can_use_feature_default_true() {
+        let t = Tenant::new("X".to_string(), "x".to_string(), TenantPlan::Free);
+        // 未在 features 中显式设置的 feature 默认为 true
+        assert!(t.can_use_feature("beta_feature"));
+    }
+
+    #[test]
+    fn test_tenant_can_use_feature_explicit_disable() {
+        let mut t = Tenant::new("X".to_string(), "x".to_string(), TenantPlan::Free);
+        t.settings.features.insert("payments".to_string(), false);
+        assert!(!t.can_use_feature("payments"));
+        t.settings.features.insert("payments".to_string(), true);
+        assert!(t.can_use_feature("payments"));
+    }
+
+    // ===== UsageMetrics.check_limits 纯函数更多测试 =====
+    #[test]
+    fn test_usage_metrics_no_exceeded() {
+        let m = UsageMetrics {
+            tenant_id: Uuid::new_v4(),
+            users_count: 5,
+            storage_used_gb: 5.0,
+            api_requests_today: 500,
+            updated_at: Utc::now(),
+        };
+        let s = TenantSettings::default();
+        assert!(m.check_limits(&s).is_empty());
+    }
+
+    #[test]
+    fn test_usage_metrics_only_users_exceeded() {
+        let m = UsageMetrics {
+            tenant_id: Uuid::new_v4(),
+            users_count: 1_000_000,
+            storage_used_gb: 0.0,
+            api_requests_today: 0,
+            updated_at: Utc::now(),
+        };
+        let s = TenantSettings::default();
+        let exceeded = m.check_limits(&s);
+        assert_eq!(exceeded.len(), 1);
+        assert_eq!(exceeded[0].limit_type, "users");
+    }
+
+    #[test]
+    fn test_usage_metrics_storage_and_api_exceeded() {
+        let m = UsageMetrics {
+            tenant_id: Uuid::new_v4(),
+            users_count: 1,
+            storage_used_gb: 99999.0,
+            api_requests_today: 99999999,
+            updated_at: Utc::now(),
+        };
+        let s = TenantSettings::default();
+        let exceeded = m.check_limits(&s);
+        let types: Vec<&str> = exceeded.iter().map(|e| e.limit_type.as_str()).collect();
+        assert!(types.contains(&"storage"));
+        assert!(types.contains(&"api_requests"));
+    }
+
+    // ===== TenantContext 权限测试 =====
+    #[test]
+    fn test_tenant_context_owner_has_all_permissions() {
+        let ctx = TenantContext::new(Uuid::new_v4(), Uuid::new_v4(), TenantRole::Owner);
+        assert!(ctx.has_permission("tenant:manage"));
+        assert!(ctx.has_permission("tenant:billing"));
+        assert!(ctx.has_permission("data:delete"));
+    }
+
+    #[test]
+    fn test_tenant_context_admin_no_billing() {
+        let ctx = TenantContext::new(Uuid::new_v4(), Uuid::new_v4(), TenantRole::Admin);
+        assert!(ctx.has_permission("tenant:users"));
+        assert!(ctx.has_permission("data:write"));
+        assert!(!ctx.has_permission("tenant:manage"));
+        assert!(!ctx.has_permission("tenant:billing"));
+    }
+
+    #[test]
+    fn test_tenant_context_member_can_read_write_not_delete() {
+        let ctx = TenantContext::new(Uuid::new_v4(), Uuid::new_v4(), TenantRole::Member);
+        assert!(ctx.has_permission("data:read"));
+        assert!(ctx.has_permission("data:write"));
+        assert!(!ctx.has_permission("data:delete"));
+        assert!(!ctx.has_permission("tenant:users"));
+    }
+
+    #[test]
+    fn test_tenant_context_guest_readonly() {
+        let ctx = TenantContext::new(Uuid::new_v4(), Uuid::new_v4(), TenantRole::Guest);
+        assert!(ctx.has_permission("data:read"));
+        assert!(!ctx.has_permission("data:write"));
+        assert!(!ctx.has_permission("data:delete"));
+    }
+
+    // ===== TenantSettings 默认值 =====
+    #[test]
+    fn test_tenant_settings_default_values() {
+        let s = TenantSettings::default();
+        assert_eq!(s.max_users, 10);
+        assert_eq!(s.max_storage_gb, 10);
+        assert_eq!(s.max_api_requests_per_day, 10000);
+        assert_eq!(s.security.session_timeout_minutes, 60);
+        assert!(!s.security.sso_enabled);
+    }
+
+    // ===== 枚举变体测试 =====
+    #[test]
+    fn test_tenant_role_variants_four() {
+        use serde_json;
+        let roles = [
+            TenantRole::Owner,
+            TenantRole::Admin,
+            TenantRole::Member,
+            TenantRole::Guest,
+        ];
+        for r in &roles {
+            let _ = serde_json::to_string(r).unwrap();
+        }
+        assert_eq!(roles.len(), 4);
+    }
+
+    #[test]
+    fn test_tenant_plan_basic_equality() {
+        assert_eq!(TenantPlan::Free, TenantPlan::Free);
+        assert_ne!(TenantPlan::Free, TenantPlan::Enterprise);
+        assert_ne!(TenantStatus::Active, TenantStatus::Deleted);
+        assert_ne!(UserStatus::Active, UserStatus::Suspended);
+    }
 }

@@ -14,6 +14,7 @@ mod tests {
 
     // 测试数据库连接
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -33,6 +34,7 @@ mod tests {
 
     // 测试厂区地图创建
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_create_factory_map() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -73,6 +75,7 @@ mod tests {
 
     // 测试设备位置创建
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_create_device_location() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -137,6 +140,7 @@ mod tests {
 
     // 测试管道创建
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_create_pipeline() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -204,6 +208,7 @@ mod tests {
 
     // 测试审计日志
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_audit_log() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -238,6 +243,7 @@ mod tests {
 
     // 测试GeoJSON导出
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_geojson_export() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");

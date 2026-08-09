@@ -51,6 +51,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_plugin_info_endpoint() {
         if !ensure_api_available().await {
             eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
@@ -73,6 +74,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_plugin_info_structure() {
         if !ensure_api_available().await {
             eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
@@ -104,6 +106,7 @@ mod plugin_tests {
     // ============ 认证测试 ============
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_auth_with_x_user_id_header() {
         if !ensure_api_available().await {
             eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
@@ -123,6 +126,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_auth_with_authorization_header() {
         if !ensure_api_available().await {
             eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
@@ -141,6 +145,7 @@ mod plugin_tests {
     // ============ API 路由测试 ============
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_customers_list_endpoint() {
         if !ensure_api_available().await {
             eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
@@ -157,6 +162,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_contacts_list_endpoint() {
         if !ensure_api_available().await {
             eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
@@ -173,6 +179,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_opportunities_list_endpoint() {
         if !ensure_api_available().await {
             eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
@@ -191,6 +198,7 @@ mod plugin_tests {
     // ============ 健康检查测试 ============
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_health_endpoint() {
         if !ensure_api_available().await {
             eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);

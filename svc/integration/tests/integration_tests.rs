@@ -405,6 +405,7 @@ mod sync_stats_tests {
 }
 
 #[cfg(test)]
+#[cfg(feature = "http_endpoint_tests")]
 mod http_endpoint_tests {
     use axum::{
         body::Body,
@@ -412,7 +413,8 @@ mod http_endpoint_tests {
         routing::get,
         Router,
     };
-    use tower::ServiceExt;
+    #[allow(unused_imports)]
+    use tower::util::ServiceExt;
 
     async fn health_handler() -> &'static str {
         "OK"

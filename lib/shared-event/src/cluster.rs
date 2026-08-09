@@ -652,4 +652,260 @@ mod tests {
         assert_eq!(metrics.total_nodes, 0);
         assert_eq!(metrics.healthy_nodes, 0);
     }
+
+    // ===== 新增：NodeHealth 纯函数单元测试 =====
+    #[test]
+    fn test_node_health_is_healthy_perfect() {
+        let h = NodeHealth {
+            cpu_usage: 10.0,
+            memory_usage: 20.0,
+            disk_usage: 30.0,
+            network_latency_ms: 5,
+            request_rate: 100,
+            error_rate: 0.0,
+            score: 95,
+        };
+        assert!(h.is_healthy());
+    }
+
+    #[test]
+    fn test_node_health_is_unhealthy_high_cpu() {
+        let h = NodeHealth {
+            cpu_usage: 90.0,
+            memory_usage: 50.0,
+            disk_usage: 50.0,
+            network_latency_ms: 10,
+            request_rate: 100,
+            error_rate: 1.0,
+            score: 80,
+        };
+        assert!(!h.is_healthy());
+    }
+
+    #[test]
+    fn test_node_health_is_unhealthy_high_error_rate() {
+        let h = NodeHealth {
+            cpu_usage: 50.0,
+            memory_usage: 50.0,
+            disk_usage: 50.0,
+            network_latency_ms: 10,
+            request_rate: 100,
+            error_rate: 10.0,
+            score: 80,
+        };
+        assert!(!h.is_healthy());
+    }
+
+    #[test]
+    fn test_node_health_is_unhealthy_low_score() {
+        let h = NodeHealth {
+            cpu_usage: 50.0,
+            memory_usage: 50.0,
+            disk_usage: 50.0,
+            network_latency_ms: 10,
+            request_rate: 100,
+            error_rate: 1.0,
+            score: 50,
+        };
+        assert!(!h.is_healthy());
+    }
+
+    #[test]
+    fn test_calculate_score_perfect_is_100() {
+        let h = NodeHealth {
+            cpu_usage: 10.0,
+            memory_usage: 20.0,
+            disk_usage: 30.0,
+            network_latency_ms: 10,
+            request_rate: 100,
+            error_rate: 0.5,
+            score: 0,
+        };
+        let score = h.calculate_score();
+        assert_eq!(score, 100);
+    }
+
+    #[test]
+    fn test_calculate_score_penalizes_high_cpu() {
+        let h1 = NodeHealth {
+            cpu_usage: 50.0,
+            memory_usage: 20.0,
+            disk_usage: 30.0,
+            network_latency_ms: 10,
+            request_rate: 100,
+            error_rate: 0.0,
+            score: 0,
+        };
+        let h2 = NodeHealth {
+            cpu_usage: 90.0, // 超过 80 扣 20
+            memory_usage: 20.0,
+            disk_usage: 30.0,
+            network_latency_ms: 10,
+            request_rate: 100,
+            error_rate: 0.0,
+            score: 0,
+        };
+        assert!(h1.calculate_score() > h2.calculate_score());
+    }
+
+    #[test]
+    fn test_calculate_score_penalizes_high_memory() {
+        let h1 = NodeHealth {
+            cpu_usage: 10.0,
+            memory_usage: 50.0,
+            disk_usage: 30.0,
+            network_latency_ms: 10,
+            request_rate: 100,
+            error_rate: 0.0,
+            score: 0,
+        };
+        let h2 = NodeHealth {
+            cpu_usage: 10.0,
+            memory_usage: 90.0, // 超过 85 扣 20
+            disk_usage: 30.0,
+            network_latency_ms: 10,
+            request_rate: 100,
+            error_rate: 0.0,
+            score: 0,
+        };
+        assert!(h1.calculate_score() > h2.calculate_score());
+    }
+
+    #[test]
+    fn test_calculate_score_penalizes_errors_heavily() {
+        let h1 = NodeHealth {
+            cpu_usage: 10.0,
+            memory_usage: 20.0,
+            disk_usage: 30.0,
+            network_latency_ms: 10,
+            request_rate: 100,
+            error_rate: 0.0,
+            score: 0,
+        };
+        let h2 = NodeHealth {
+            cpu_usage: 10.0,
+            memory_usage: 20.0,
+            disk_usage: 30.0,
+            network_latency_ms: 10,
+            request_rate: 100,
+            error_rate: 10.0, // 超过 5 扣 30
+            score: 0,
+        };
+        assert!(h1.calculate_score() >= h2.calculate_score() + 30);
+    }
+
+    #[test]
+    fn test_calculate_score_does_not_go_below_zero() {
+        let h = NodeHealth {
+            cpu_usage: 99.0,
+            memory_usage: 99.0,
+            disk_usage: 99.0,
+            network_latency_ms: 9999,
+            request_rate: 1_000_000,
+            error_rate: 99.0,
+            score: 0,
+        };
+        assert!(h.calculate_score() <= 100);
+    }
+
+    // ===== ClusterMetrics 纯函数测试 =====
+    #[test]
+    fn test_cluster_metrics_health_percentage_zero_nodes() {
+        let m = ClusterMetrics {
+            cluster_id: Uuid::new_v4(),
+            total_nodes: 0,
+            healthy_nodes: 0,
+            unhealthy_nodes: 0,
+            offline_nodes: 0,
+            total_requests: 0,
+            failed_requests: 0,
+            average_response_time_ms: 0,
+            average_load: 0.0,
+            failover_count: 0,
+            last_failover: None,
+            uptime_percentage: 0.0,
+        };
+        assert_eq!(m.calculate_health_percentage(), 0.0);
+    }
+
+    #[test]
+    fn test_cluster_metrics_health_percentage_all_healthy() {
+        let mut m = make_metrics();
+        m.total_nodes = 5;
+        m.healthy_nodes = 5;
+        assert_eq!(m.calculate_health_percentage(), 100.0);
+    }
+
+    #[test]
+    fn test_cluster_metrics_health_percentage_half() {
+        let mut m = make_metrics();
+        m.total_nodes = 10;
+        m.healthy_nodes = 5;
+        assert_eq!(m.calculate_health_percentage(), 50.0);
+    }
+
+    #[test]
+    fn test_cluster_metrics_error_rate_zero_requests() {
+        let m = make_metrics();
+        assert_eq!(m.calculate_error_rate(), 0.0);
+    }
+
+    #[test]
+    fn test_cluster_metrics_error_rate_10_percent() {
+        let mut m = make_metrics();
+        m.total_requests = 1000;
+        m.failed_requests = 100;
+        assert!((m.calculate_error_rate() - 10.0).abs() < 0.001);
+    }
+
+    fn make_metrics() -> ClusterMetrics {
+        ClusterMetrics {
+            cluster_id: Uuid::new_v4(),
+            total_nodes: 0,
+            healthy_nodes: 0,
+            unhealthy_nodes: 0,
+            offline_nodes: 0,
+            total_requests: 0,
+            failed_requests: 0,
+            average_response_time_ms: 0,
+            average_load: 0.0,
+            failover_count: 0,
+            last_failover: None,
+            uptime_percentage: 0.0,
+        }
+    }
+
+    // ===== 枚举序列化基础测试 =====
+    #[test]
+    fn test_cluster_mode_equality() {
+        assert_eq!(ClusterMode::ActivePassive, ClusterMode::ActivePassive);
+        assert_ne!(ClusterMode::ActivePassive, ClusterMode::ActiveActive);
+    }
+
+    #[test]
+    fn test_node_role_and_status_variants() {
+        assert_ne!(NodeRole::Primary, NodeRole::Secondary);
+        assert_ne!(NodeStatus::Online, NodeStatus::Offline);
+        assert_ne!(
+            format!("{:?}", EventSeverity::Info),
+            format!("{:?}", EventSeverity::Critical)
+        );
+    }
+
+    #[test]
+    fn test_load_balancing_algorithm_variants_count() {
+        use serde_json;
+        let algos = [
+            LoadBalancingAlgorithm::RoundRobin,
+            LoadBalancingAlgorithm::LeastConnections,
+            LoadBalancingAlgorithm::IpHash,
+            LoadBalancingAlgorithm::WeightedRoundRobin,
+            LoadBalancingAlgorithm::Random,
+        ];
+        // 验证可以序列化（5 种）
+        for a in &algos {
+            let _ = serde_json::to_string(a).unwrap();
+        }
+        assert_eq!(algos.len(), 5);
+    }
 }

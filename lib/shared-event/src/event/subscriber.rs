@@ -489,6 +489,7 @@ mod tests {
     // ———————————————————————————————————————————————————————————————
 
     #[tokio::test]
+    #[ignore = "requires live Redis pubsub; skip in pure function test runs"]
     async fn test_event_subscriber_receives_mdm_event() {
         let Some(redis_client) = redis_pubsub::skip_without_redis().await else {
             return;

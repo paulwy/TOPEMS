@@ -14,6 +14,7 @@ mod tests {
 
     // 测试数据库连接
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -34,6 +35,7 @@ mod tests {
     // 测试供应商创建
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_create_supplier() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -76,6 +78,7 @@ mod tests {
     // 测试供应商列表查询
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_list_suppliers() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -103,6 +106,7 @@ mod tests {
     // 测试审计日志记录
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_audit_log() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
@@ -138,6 +142,7 @@ mod tests {
     // 测试供应商分类统计
     // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_supplier_category_stats() {
         if !ensure_db_available().await {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");

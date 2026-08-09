@@ -170,3 +170,199 @@ impl Default for FeatureFlagService {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_flag(key: &str, state: FeatureState, conditions: Vec<FeatureCondition>) -> FeatureFlag {
+        FeatureFlag {
+            key: key.to_string(),
+            name: key.to_string(),
+            description: None,
+            state,
+            conditions,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            created_by: None,
+        }
+    }
+
+    fn empty_context() -> FeatureContext {
+        FeatureContext {
+            tenant_id: None,
+            user_id: None,
+            environment: "test".to_string(),
+            metadata: HashMap::new(),
+        }
+    }
+
+    #[test]
+    fn test_feature_state_disabled_returns_false() {
+        let svc = FeatureFlagService::new();
+        svc.register(make_flag("f1", FeatureState::Disabled, vec![]));
+        assert!(!svc.is_enabled("f1", &empty_context()));
+    }
+
+    #[test]
+    fn test_feature_state_enabled_returns_true() {
+        let svc = FeatureFlagService::new();
+        svc.register(make_flag("f1", FeatureState::Enabled, vec![]));
+        assert!(svc.is_enabled("f1", &empty_context()));
+    }
+
+    #[test]
+    fn test_feature_flag_not_found_returns_false() {
+        let svc = FeatureFlagService::new();
+        assert!(!svc.is_enabled("nonexistent", &empty_context()));
+    }
+
+    #[test]
+    fn test_conditional_tenant_whitelist() {
+        let svc = FeatureFlagService::new();
+        let t1 = Uuid::new_v4();
+        let t2 = Uuid::new_v4();
+        svc.register(make_flag(
+            "f1",
+            FeatureState::Conditional,
+            vec![FeatureCondition::TenantWhitelist(vec![t1])],
+        ));
+        let mut ctx = empty_context();
+        ctx.tenant_id = Some(t1);
+        assert!(svc.is_enabled("f1", &ctx));
+        ctx.tenant_id = Some(t2);
+        assert!(!svc.is_enabled("f1", &ctx));
+        ctx.tenant_id = None;
+        assert!(!svc.is_enabled("f1", &ctx));
+    }
+
+    #[test]
+    fn test_conditional_user_whitelist() {
+        let svc = FeatureFlagService::new();
+        let u1 = Uuid::new_v4();
+        svc.register(make_flag(
+            "f1",
+            FeatureState::Conditional,
+            vec![FeatureCondition::UserWhitelist(vec![u1])],
+        ));
+        let mut ctx = empty_context();
+        ctx.user_id = Some(u1);
+        assert!(svc.is_enabled("f1", &ctx));
+        ctx.user_id = Some(Uuid::new_v4());
+        assert!(!svc.is_enabled("f1", &ctx));
+    }
+
+    #[test]
+    fn test_conditional_environment() {
+        let svc = FeatureFlagService::new();
+        svc.register(make_flag(
+            "f1",
+            FeatureState::Conditional,
+            vec![FeatureCondition::Environment("prod".to_string())],
+        ));
+        let mut ctx = empty_context();
+        ctx.environment = "prod".to_string();
+        assert!(svc.is_enabled("f1", &ctx));
+        ctx.environment = "dev".to_string();
+        assert!(!svc.is_enabled("f1", &ctx));
+    }
+
+    #[test]
+    fn test_conditional_and_all_true() {
+        let svc = FeatureFlagService::new();
+        let t = Uuid::new_v4();
+        svc.register(make_flag(
+            "f1",
+            FeatureState::Conditional,
+            vec![FeatureCondition::And(vec![
+                FeatureCondition::TenantWhitelist(vec![t]),
+                FeatureCondition::Environment("prod".to_string()),
+            ])],
+        ));
+        let mut ctx = empty_context();
+        ctx.tenant_id = Some(t);
+        ctx.environment = "prod".to_string();
+        assert!(svc.is_enabled("f1", &ctx));
+        ctx.environment = "dev".to_string();
+        assert!(!svc.is_enabled("f1", &ctx));
+    }
+
+    #[test]
+    fn test_conditional_or_any_true() {
+        let svc = FeatureFlagService::new();
+        let t1 = Uuid::new_v4();
+        let t2 = Uuid::new_v4();
+        svc.register(make_flag(
+            "f1",
+            FeatureState::Conditional,
+            vec![FeatureCondition::Or(vec![
+                FeatureCondition::TenantWhitelist(vec![t1]),
+                FeatureCondition::TenantWhitelist(vec![t2]),
+            ])],
+        ));
+        let mut ctx = empty_context();
+        ctx.tenant_id = Some(t2);
+        assert!(svc.is_enabled("f1", &ctx));
+    }
+
+    #[test]
+    fn test_update_state_changes_behavior() {
+        let svc = FeatureFlagService::new();
+        svc.register(make_flag("f1", FeatureState::Disabled, vec![]));
+        assert!(!svc.is_enabled("f1", &empty_context()));
+        assert!(svc.update_state("f1", FeatureState::Enabled));
+        assert!(svc.is_enabled("f1", &empty_context()));
+    }
+
+    #[test]
+    fn test_update_state_unknown_key_returns_false() {
+        let svc = FeatureFlagService::new();
+        assert!(!svc.update_state("missing", FeatureState::Enabled));
+    }
+
+    #[test]
+    fn test_check_multiple_batch() {
+        let svc = FeatureFlagService::new();
+        svc.register(make_flag("a", FeatureState::Enabled, vec![]));
+        svc.register(make_flag("b", FeatureState::Disabled, vec![]));
+        let result = svc.check_multiple(&["a", "b", "c"], &empty_context());
+        assert_eq!(*result.get("a").unwrap(), true);
+        assert_eq!(*result.get("b").unwrap(), false);
+        assert_eq!(*result.get("c").unwrap(), false);
+    }
+
+    #[test]
+    fn test_list_all_returns_registered() {
+        let svc = FeatureFlagService::new();
+        svc.register(make_flag("a", FeatureState::Enabled, vec![]));
+        svc.register(make_flag("b", FeatureState::Disabled, vec![]));
+        assert_eq!(svc.list_all().len(), 2);
+    }
+
+    #[test]
+    fn test_conditional_user_percentage_stable_for_user() {
+        let svc = FeatureFlagService::new();
+        svc.register(make_flag(
+            "f1",
+            FeatureState::Conditional,
+            vec![FeatureCondition::UserPercentage(100)],
+        ));
+        let mut ctx = empty_context();
+        ctx.user_id = Some(Uuid::new_v4());
+        // 100% 应该对所有用户开启
+        assert!(svc.is_enabled("f1", &ctx));
+    }
+
+    #[test]
+    fn test_conditional_user_percentage_zero_disables() {
+        let svc = FeatureFlagService::new();
+        svc.register(make_flag(
+            "f1",
+            FeatureState::Conditional,
+            vec![FeatureCondition::UserPercentage(0)],
+        ));
+        let mut ctx = empty_context();
+        ctx.user_id = Some(Uuid::new_v4());
+        assert!(!svc.is_enabled("f1", &ctx));
+    }
+}

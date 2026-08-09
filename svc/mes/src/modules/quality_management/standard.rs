@@ -210,7 +210,7 @@ pub async fn list_standards(
 
         if let Ok(value_rows) = values_result {
             for v in value_rows {
-                let standard_id = v.standard_id;
+                let standard_id = v.standard_id.unwrap_or_default();
                 values_map
                     .entry(standard_id)
                     .or_default()

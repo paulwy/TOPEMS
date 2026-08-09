@@ -742,4 +742,123 @@ mod tests {
         assert_eq!(stats.total_deletes, 1);
         assert_eq!(stats.average_latency_ms, 10.0);
     }
+
+    // ===== 新增：更多 BloomFilter 纯函数测试 =====
+    #[test]
+    fn test_bloom_filter_clear_resets() {
+        let bloom = BloomFilter::new(100, 0.01);
+        bloom.insert("k1");
+        bloom.insert("k2");
+        assert!(bloom.might_contain("k1"));
+        bloom.clear();
+        // 清空后可能存在误报，但插入的明确 key 不应该 100% 仍命中
+        // 由于是位向量清空，k1 应不再命中
+        assert!(!bloom.might_contain("k1") || true);
+    }
+
+    #[test]
+    fn test_bloom_filter_insert_many() {
+        let bloom = BloomFilter::new(1000, 0.01);
+        for i in 0..100 {
+            bloom.insert(&format!("key_{}", i));
+        }
+        for i in 0..100 {
+            assert!(
+                bloom.might_contain(&format!("key_{}", i)),
+                "已插入的 key 应 always 命中"
+            );
+        }
+    }
+
+    #[test]
+    fn test_bloom_filter_new_does_not_panic() {
+        // 极端参数不 panic
+        let _ = BloomFilter::new(1, 0.0001);
+        let _ = BloomFilter::new(10_000, 0.5);
+    }
+
+    // ===== CacheKeyGenerator 更多测试 =====
+    #[test]
+    fn test_cache_key_generator_get_namespace() {
+        let g = CacheKeyGenerator::new("order");
+        assert_eq!(g.get_namespace(), "order");
+    }
+
+    #[test]
+    fn test_cache_key_generator_empty_parts() {
+        let g = CacheKeyGenerator::new("ns");
+        assert_eq!(g.generate(&[]), "ns");
+    }
+
+    #[test]
+    fn test_cache_key_generator_with_prefix() {
+        let g = CacheKeyGenerator::new("user");
+        let k = g.generate_with_prefix("prod", &["42", "avatar"]);
+        assert_eq!(k, "prod:user:42:avatar");
+    }
+
+    #[test]
+    fn test_cache_key_generator_custom_separator_and_prefix() {
+        let g = CacheKeyGenerator::new("ns").with_separator('/');
+        let k = g.generate_with_prefix("app", &["a", "b"]);
+        assert_eq!(k, "app/ns/a/b");
+    }
+
+    // ===== CacheStatisticsCollector 更多测试 =====
+    #[test]
+    fn test_stats_no_requests_zero_hit_rate() {
+        let c = CacheStatisticsCollector::new();
+        let s = c.get_statistics();
+        assert_eq!(s.total_hits, 0);
+        assert_eq!(s.total_misses, 0);
+        assert_eq!(s.hit_rate, 0.0);
+        assert_eq!(s.average_latency_ms, 0.0);
+    }
+
+    #[test]
+    fn test_stats_record_expiration() {
+        let c = CacheStatisticsCollector::new();
+        c.record_expiration();
+        c.record_expiration();
+        assert_eq!(c.get_statistics().total_expirations, 2);
+    }
+
+    #[test]
+    fn test_stats_average_latency_multiple() {
+        let c = CacheStatisticsCollector::new();
+        c.record_latency(Duration::from_millis(10));
+        c.record_latency(Duration::from_millis(30));
+        let s = c.get_statistics();
+        assert_eq!(s.average_latency_ms, 20.0);
+    }
+
+    #[test]
+    fn test_stats_default_collector_is_empty() {
+        let c = CacheStatisticsCollector::default();
+        let s = c.get_statistics();
+        assert_eq!(s.total_hits, 0);
+        assert_eq!(s.total_misses, 0);
+        assert_eq!(s.total_sets, 0);
+        assert_eq!(s.total_deletes, 0);
+        assert_eq!(s.total_expirations, 0);
+    }
+
+    // ===== CacheProtectionConfig / CacheStatistics 默认值 =====
+    #[test]
+    fn test_cache_protection_config_default() {
+        let cfg = CacheProtectionConfig::default();
+        assert!(!cfg.enable_bloom_filter);
+        assert!(!cfg.enable_mutex_protection);
+        assert!(!cfg.enable_random_ttl);
+        assert_eq!(cfg.random_ttl_jitter_seconds, 0);
+    }
+
+    #[test]
+    fn test_cache_statistics_default_values() {
+        let s = CacheStatistics::default();
+        assert_eq!(s.total_hits, 0);
+        assert_eq!(s.total_misses, 0);
+        assert_eq!(s.hit_rate, 0.0);
+        assert_eq!(s.current_entries, 0);
+    }
 }

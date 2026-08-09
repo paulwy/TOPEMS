@@ -1332,4 +1332,196 @@ mod tests {
             "应去重"
         );
     }
+
+    // ===== 新增：PermissionMetadataCache 纯函数测试 =====
+    #[test]
+    fn test_permission_cache_new_and_default_are_empty() {
+        let c = PermissionMetadataCache::new();
+        let s = c.stats();
+        assert_eq!(s.total_permissions, 0);
+        assert_eq!(s.total_modules, 0);
+        assert!(s.last_updated.is_none());
+
+        let c2 = PermissionMetadataCache::default();
+        assert_eq!(c2.list_all().len(), 0);
+    }
+
+    fn make_meta(code: &str, module: &str, name: &str) -> PermissionMetadata {
+        PermissionMetadata {
+            code: code.to_string(),
+            module: module.to_string(),
+            resource: "r".to_string(),
+            action: "read".to_string(),
+            scope: "all".to_string(),
+            name: name.to_string(),
+            description: None,
+            is_builtin: false,
+        }
+    }
+
+    #[test]
+    fn test_permission_cache_load_all_populates() {
+        let c = PermissionMetadataCache::new();
+        let items = vec![
+            make_meta("iam:users:read", "iam", "读用户"),
+            make_meta("iam:users:write", "iam", "写用户"),
+            make_meta("hrm:employee:read", "hrm", "读员工"),
+        ];
+        c.load_all(items);
+        let s = c.stats();
+        assert_eq!(s.total_permissions, 3);
+        assert_eq!(s.total_modules, 2);
+        assert!(s.last_updated.is_some());
+    }
+
+    #[test]
+    fn test_permission_cache_get_and_list_by_module() {
+        let c = PermissionMetadataCache::new();
+        c.load_all(vec![
+            make_meta("iam:read", "iam", "读"),
+            make_meta("hrm:read", "hrm", "读"),
+        ]);
+        assert!(c.get("iam:read").is_some());
+        assert!(c.get("missing").is_none());
+        assert_eq!(c.list_by_module("iam").len(), 1);
+        assert_eq!(c.list_by_module("unknown").len(), 0);
+    }
+
+    #[test]
+    fn test_permission_cache_upsert_and_remove() {
+        let c = PermissionMetadataCache::new();
+        // 插入
+        let m1 = make_meta("iam:read", "iam", "读");
+        c.upsert(m1);
+        assert_eq!(c.list_all().len(), 1);
+
+        // 覆盖更新
+        let m1_v2 = make_meta("iam:read", "iam", "读 V2");
+        c.upsert(m1_v2);
+        assert_eq!(c.list_all().len(), 1);
+        assert_eq!(c.get("iam:read").unwrap().name, "读 V2");
+
+        // 删除
+        c.remove("iam:read");
+        assert!(c.get("iam:read").is_none());
+        assert_eq!(c.stats().total_permissions, 0);
+    }
+
+    #[test]
+    fn test_permission_cache_clear_resets() {
+        let c = PermissionMetadataCache::new();
+        c.load_all(vec![
+            make_meta("a:b", "m1", "A"),
+            make_meta("c:d", "m2", "B"),
+        ]);
+        assert!(c.stats().total_permissions > 0);
+        c.clear();
+        assert_eq!(c.stats().total_permissions, 0);
+        assert_eq!(c.stats().total_modules, 0);
+        assert!(c.stats().last_updated.is_none());
+    }
+
+    #[test]
+    fn test_permission_cache_upsert_module_change_updates_index() {
+        let c = PermissionMetadataCache::new();
+        // 先在 module1 插入 code
+        let m1 = PermissionMetadata {
+            code: "shared:code".to_string(),
+            module: "mod_a".to_string(),
+            resource: "r".to_string(),
+            action: "a".to_string(),
+            scope: "s".to_string(),
+            name: "n".to_string(),
+            description: None,
+            is_builtin: false,
+        };
+        c.upsert(m1);
+        assert_eq!(c.list_by_module("mod_a").len(), 1);
+
+        // 再把同一个 code 的 module 改成 mod_b
+        let m2 = PermissionMetadata {
+            code: "shared:code".to_string(),
+            module: "mod_b".to_string(),
+            resource: "r".to_string(),
+            action: "a".to_string(),
+            scope: "s".to_string(),
+            name: "n".to_string(),
+            description: None,
+            is_builtin: false,
+        };
+        c.upsert(m2);
+        // mod_a 应该不再包含这个 code
+        assert_eq!(c.list_by_module("mod_a").len(), 0);
+        assert_eq!(c.list_by_module("mod_b").len(), 1);
+    }
+
+    // ===== PermissionCheckResult / PermissionChangeType 测试 =====
+    #[test]
+    fn test_permission_check_result_allow_and_deny() {
+        let ok = PermissionCheckResult::allow();
+        assert!(ok.allowed);
+        assert!(ok.reason.is_none());
+
+        let deny = PermissionCheckResult::deny("因为 X");
+        assert!(!deny.allowed);
+        assert_eq!(deny.reason.as_deref(), Some("因为 X"));
+    }
+
+    #[test]
+    fn test_permission_change_type_as_str() {
+        assert_eq!(PermissionChangeType::Created.as_str(), "created");
+        assert_eq!(PermissionChangeType::Updated.as_str(), "updated");
+        assert_eq!(PermissionChangeType::Deleted.as_str(), "deleted");
+        assert_eq!(PermissionChangeType::BulkImported.as_str(), "bulk_imported");
+    }
+
+    #[test]
+    fn test_permission_change_type_display() {
+        assert_eq!(format!("{}", PermissionChangeType::Created), "created");
+    }
+
+    // ===== get_all_module_permissions 数量 =====
+    #[test]
+    fn test_get_all_module_permissions_includes_workflow_approve() {
+        let all = get_all_module_permissions();
+        // 20 modules * 4 actions + 1 workflow:approve = 81
+        assert!(all.len() >= 81);
+        let workflow_approve = ModulePermission::new(ModuleCode::Workflow, PermissionAction::Approve);
+        assert!(all.contains(&workflow_approve));
+    }
+
+    // ===== get_module_actions =====
+    #[test]
+    fn test_get_module_actions_has_five_entries() {
+        let actions = get_module_actions();
+        assert_eq!(actions.len(), 5);
+        assert!(actions.iter().any(|(k, _)| k == "read"));
+        assert!(actions.iter().any(|(k, _)| k == "admin"));
+    }
+
+    // ===== PermissionTemplate / Position 更多测试 =====
+    #[test]
+    fn test_permission_template_new_and_add_permission_no_duplicates() {
+        let mut tpl = PermissionTemplate::new(Uuid::new_v4(), "tpl1".to_string());
+        tpl.add_permission("iam:read");
+        tpl.add_permission("iam:read");
+        assert_eq!(tpl.permissions.len(), 1);
+        assert_eq!(tpl.permissions[0], "iam:read");
+    }
+
+    #[test]
+    fn test_position_add_permission_ignores_duplicates() {
+        let mut pos = Position::new(Uuid::new_v4(), "C".to_string(), "C".to_string());
+        let p = ModulePermission::new(ModuleCode::Iam, PermissionAction::Read);
+        pos.add_permission(p.clone());
+        pos.add_permission(p.clone());
+        assert_eq!(pos.permissions.len(), 1);
+    }
+
+    // ===== PermissionScope 默认值 =====
+    #[test]
+    fn test_permission_scope_default_is_all() {
+        let s: PermissionScope = Default::default();
+        assert_eq!(s, PermissionScope::All);
+    }
 }

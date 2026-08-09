@@ -593,6 +593,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires live Redis pubsub; skip in pure function test runs"]
     async fn test_event_publish_and_subscribe() {
         let Some(client) = redis_pubsub::skip_without_redis().await else {
             return;
@@ -748,6 +749,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires live Redis pubsub; skip in pure function test runs"]
     async fn test_event_deserialize_from_channel() {
         let Some(client) = redis_pubsub::skip_without_redis().await else {
             return;
@@ -800,6 +802,7 @@ mod tests {
     ///   - 如果未严格保证"订阅登记完成 → 再发布"，并发下会随机丢消息；
     ///   - 如果未按 event_id 过滤，会收到并发测试的其他对消息，断言错误。
     #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    #[ignore = "requires live Redis pubsub; skip in pure function test runs"]
     async fn test_concurrent_same_channel_no_crosstalk() {
         let Some(client) = redis_pubsub::skip_without_redis().await else {
             return;

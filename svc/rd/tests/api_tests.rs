@@ -488,6 +488,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
     }
 
     #[tokio::test]
+    #[ignore = "requires PostgreSQL"]
     async fn test_rs_integration() {
         if !ensure_api_available().await {
             eprintln!("⏭ 跳过: API服务未运行 (localhost:8000)");
