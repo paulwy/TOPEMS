@@ -14,10 +14,9 @@ import {
 import { Zap, TrendingUp, DollarSign } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Grid } from '@/components/common';
-import LineChartComponent from '@/components/charts/LineChart';
-import PieChartComponent from '@/components/charts/PieChart';
 import type { ChartData } from '@/components/charts/AreaChart';
 import { usageData, modelUsageData } from '../hooks/useAiModelSettings';
+import { LazyChart } from '@/components/charts';
 
 interface TotalUsage {
   tokens: number;
@@ -143,7 +142,7 @@ export const AiModelUsageStats: React.FC<AiModelUsageStatsProps> = ({ totalUsage
               {t('ai.model_settings.usage.trend_7days')}
             </Typography>
             <Box sx={{ height: 300 }}>
-              <LineChartComponent
+              <LazyChart type='line'
                 data={usageData as unknown as ChartData[]}
                 xKey='date'
                 yKey='tokens'
@@ -167,7 +166,7 @@ export const AiModelUsageStats: React.FC<AiModelUsageStatsProps> = ({ totalUsage
               {t('ai.model_settings.usage.model_ratio')}
             </Typography>
             <Box sx={{ height: 300 }}>
-              <PieChartComponent data={modelUsageData} />
+              <LazyChart type='pie' data={modelUsageData} />
             </Box>
           </Paper>
         </Grid>

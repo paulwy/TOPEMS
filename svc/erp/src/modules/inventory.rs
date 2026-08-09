@@ -3,6 +3,7 @@ use axum::{
     routing::*,
     Json, Router,
 };
+use utoipa::path;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -24,6 +25,14 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/inventory/low-stock", get(get_low_stock))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/inventory",
+    responses(
+        (status = 200, description = "list_inventory OK")
+    ),
+    tag = "ERP/inventory"
+)]
 pub async fn list_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -96,6 +105,14 @@ pub async fn list_inventory(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/inventory/{id}",
+    responses(
+        (status = 200, description = "get_inventory OK")
+    ),
+    tag = "ERP/inventory"
+)]
 pub async fn get_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -122,6 +139,14 @@ pub async fn get_inventory(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/inventory",
+    responses(
+        (status = 200, description = "create_inventory OK")
+    ),
+    tag = "ERP/inventory"
+)]
 pub async fn create_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

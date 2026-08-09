@@ -13,6 +13,11 @@
  */
 
 import type { components as ApiComponents } from './openapi';
+import type {
+  ApiResponse,
+  PaginatedResponse as SharedPaginatedResponse,
+  ErrorResponse as SharedErrorResponse,
+} from '../common';
 
 // ============================================================================
 // IAM 模块类型
@@ -168,25 +173,25 @@ export namespace QmsTypes {
 // ============================================================================
 
 export namespace MesTypes {
-  // 工单
-  export type CreateWorkOrderRequest = ApiComponents['schemas']['CreateWorkOrderRequest'];
-  export type UpdateWorkOrderRequest = ApiComponents['schemas']['UpdateWorkOrderRequest'];
-  export type WorkOrderResponse = ApiComponents['schemas']['WorkOrderResponse'];
+  // 工单 — V71.5 待 MES 服务 SQLX 债修复后由 A1 重新生成 spec 解除注释
+  // export type CreateWorkOrderRequest = ApiComponents['schemas']['CreateWorkOrderRequest'];
+  // export type UpdateWorkOrderRequest = ApiComponents['schemas']['UpdateWorkOrderRequest'];
+  // export type WorkOrderResponse = ApiComponents['schemas']['WorkOrderResponse'];
 
-  // 生产报工
-  export type CreateWorkReportRequest = ApiComponents['schemas']['CreateWorkReportRequest'];
-  export type UpdateWorkReportRequest = ApiComponents['schemas']['UpdateWorkReportRequest'];
-  export type RejectWorkReportRequest = ApiComponents['schemas']['RejectWorkReportRequest'];
-  export type WorkReportResponse = ApiComponents['schemas']['WorkReportResponse'];
+  // 生产报工 — V71.5 待 MES 服务 SQLX 债修复后由 A1 重新生成 spec 解除注释
+  // export type CreateWorkReportRequest = ApiComponents['schemas']['CreateWorkReportRequest'];
+  // export type UpdateWorkReportRequest = ApiComponents['schemas']['UpdateWorkReportRequest'];
+  // export type RejectWorkReportRequest = ApiComponents['schemas']['RejectWorkReportRequest'];
+  // export type WorkReportResponse = ApiComponents['schemas']['WorkReportResponse'];
 
-  // 生产订单
-  export type ProductionOrderSource = ApiComponents['schemas']['ProductionOrderSource'];
-  export type ErpSalesOrderInfo = ApiComponents['schemas']['ErpSalesOrderInfo'];
-  export type CreateFromErpRequest = ApiComponents['schemas']['CreateFromErpRequest'];
-  export type CreateProductionOrderRequest = ApiComponents['schemas']['CreateProductionOrderRequest'];
-  export type UpdateProductionOrderRequest = ApiComponents['schemas']['UpdateProductionOrderRequest'];
-  export type ProductionOrderResponse = ApiComponents['schemas']['ProductionOrderResponse'];
-  export type ListProductionOrdersResponse = ApiComponents['schemas']['ListProductionOrdersResponse'];
+  // 生产订单 — V71.5 待 MES 服务 SQLX 债修复后由 A1 重新生成 spec 解除注释
+  // export type ProductionOrderSource = ApiComponents['schemas']['ProductionOrderSource'];
+  // export type ErpSalesOrderInfo = ApiComponents['schemas']['ErpSalesOrderInfo'];
+  // export type CreateFromErpRequest = ApiComponents['schemas']['CreateFromErpRequest'];
+  // export type CreateProductionOrderRequest = ApiComponents['schemas']['CreateProductionOrderRequest'];
+  // export type UpdateProductionOrderRequest = ApiComponents['schemas']['UpdateProductionOrderRequest'];
+  // export type ProductionOrderResponse = ApiComponents['schemas']['ProductionOrderResponse'];
+  // export type ListProductionOrdersResponse = ApiComponents['schemas']['ListProductionOrdersResponse'];
 
   // TODO: 待补充模块：equipment, process_flow, process_route, material_bom,
   // material_requirement, production_kanban, production_process, production_record,
@@ -200,7 +205,7 @@ export namespace MesTypes {
 // ============================================================================
 
 export namespace CommonTypes {
-  export type SuccessResponse = ApiComponents['schemas']['SuccessResponse'];
-  export type ErrorResponse = ApiComponents['schemas']['ErrorResponse'];
-  export type PaginatedResponse = ApiComponents['schemas']['PaginatedResponse'];
+  export type SuccessResponse<T = unknown> = ApiResponse<T>;
+  export type ErrorResponse = SharedErrorResponse;
+  export type PaginatedResponse<T = unknown> = SharedPaginatedResponse<T>;
 }

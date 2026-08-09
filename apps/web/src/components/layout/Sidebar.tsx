@@ -19,7 +19,7 @@ import {
   AlertTriangle,
   CheckCircle,
 } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { LazyIcon } from '@/components/icons/LazyIcon';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePlugins } from '../../context/PluginContext';
 import { navigationRegistryV2 } from '../../lib/navigation';
@@ -119,11 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
       return null;
     }
 
-    const IconComponent = item.icon
-      ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[
-          item.icon
-        ]
-      : null;
+    const iconName = item.icon || null;
 
     return (
       <div key={item.code}>
@@ -183,8 +179,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
               ) : (
                 <ChevronRight size={18} />
               )
-            ) : IconComponent ? (
-              <IconComponent size={18} />
+            ) : iconName ? (
+              <LazyIcon name={iconName} size={18} />
             ) : (
               <ChevronRight size={18} />
             )}

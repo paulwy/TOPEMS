@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use utoipa::path;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -31,6 +32,14 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/purchase-orders/{id}/cancel", put(cancel_purchase_order))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/purchase-orders",
+    responses(
+        (status = 200, description = "list_purchase_orders OK")
+    ),
+    tag = "ERP/purchase-order"
+)]
 pub async fn list_purchase_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -103,6 +112,14 @@ pub async fn list_purchase_orders(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/purchase-orders/{id}",
+    responses(
+        (status = 200, description = "get_purchase_order OK")
+    ),
+    tag = "ERP/purchase-order"
+)]
 pub async fn get_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -129,6 +146,14 @@ pub async fn get_purchase_order(
     Json(ApiResponse::success(purchase_order, "获取采购订单成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/purchase-orders",
+    responses(
+        (status = 200, description = "create_purchase_order OK")
+    ),
+    tag = "ERP/purchase-order"
+)]
 pub async fn create_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -256,6 +281,14 @@ pub async fn delete_purchase_order(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/purchase-orders/{id}/approve",
+    responses(
+        (status = 200, description = "approve_purchase_order OK")
+    ),
+    tag = "ERP/purchase-order"
+)]
 pub async fn approve_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

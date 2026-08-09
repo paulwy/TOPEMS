@@ -2,14 +2,12 @@ import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FolderKanban, CheckSquare, Trophy, AlertTriangle, Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import BarChartComponent from '../../components/charts/BarChart';
-import LineChartComponent from '../../components/charts/LineChart';
-import PieChartComponent from '../../components/charts/PieChart';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { pmApi, type Project } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { LazyChart } from '@/components/charts';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -177,7 +175,7 @@ export const DashboardPage: React.FC = () => {
         id: 'progress',
         title: '项目进度分布',
         chart: (
-          <BarChartComponent
+          <LazyChart type='bar'
             data={chartData.projectProgress}
             xKey='name'
             yKey='value'
@@ -190,7 +188,7 @@ export const DashboardPage: React.FC = () => {
         id: 'trend',
         title: '本周任务完成趋势',
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={chartData.taskTrend}
             xKey='name'
             yKey='value'
@@ -202,7 +200,7 @@ export const DashboardPage: React.FC = () => {
       {
         id: 'status',
         title: '项目状态分布',
-        chart: <PieChartComponent data={chartData.projectStatus} />,
+        chart: <LazyChart type='pie' data={chartData.projectStatus} />,
         height: 300,
         type: 'pie',
       },

@@ -9,12 +9,23 @@ import type {
   OpportunityStats,
   OpportunityForecast,
 } from './types';
+import {
+  toOpenApiParams,
+  type AdaptedQuery,
+  type TypedPaginatedResponse,
+} from '@topems/shared-types';
 
 export const opportunityApi = {
+  /**
+   * A4 绑定样板：list_opportunities operation（openapi: GET /crm/opportunities）
+   * Query Params: { page, pageSize, search, stage, customerId }（AdaptedQuery 后 camelCase）
+   */
   list: async (
-    params?: OpportunityQueryParams
-  ): Promise<ApiResponse<PaginatedResponse<Opportunity>>> => {
-    return apiClient.crm.get('/opportunities', { params });
+    params?: AdaptedQuery<'list_opportunities'> | OpportunityQueryParams,
+  ): Promise<TypedPaginatedResponse<Opportunity>> => {
+    return apiClient.crm.get('/opportunities', {
+      params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
+    });
   },
 
   create: async (data: CreateOpportunityRequest): Promise<ApiResponse<Opportunity>> => {

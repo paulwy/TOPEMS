@@ -92,6 +92,12 @@ STANDARD_TYPES = {
     "Department": {"type": "object", "properties": {"id": {"type": "string", "format": "uuid"}, "parent_id": {"type": "string", "format": "uuid"}, "name": {"type": "string"}, "code": {"type": "string"}, "leader_id": {"type": "string", "format": "uuid"}, "sort": {"type": "integer", "format": "int32"}, "status": {"type": "string"}}},
     "Organization": {"type": "object", "properties": {"id": {"type": "string", "format": "uuid"}, "name": {"type": "string"}, "type": {"type": "string"}, "industry": {"type": "string"}, "scale": {"type": "string"}, "region": {"type": "string"}, "address": {"type": "string"}}},
     "Tenant": {"type": "object", "properties": {"id": {"type": "string", "format": "uuid"}, "name": {"type": "string"}, "code": {"type": "string"}, "plan": {"type": "string"}, "status": {"type": "string"}, "expired_at": {"type": "string", "format": "date-time"}, "max_users": {"type": "integer", "format": "int32"}}},
+    # V71 A2 补齐：HrmTypes.Company 引用，before MES V71.5 修复
+    "Company": {"type": "object", "properties": {"id": {"type": "string", "format": "uuid"}, "name": {"type": "string"}, "code": {"type": "string"}, "legal_person": {"type": "string"}, "tax_id": {"type": "string"}, "address": {"type": "string"}, "phone": {"type": "string"}, "email": {"type": "string", "format": "email"}, "industry": {"type": "string"}, "scale": {"type": "string"}, "status": {"type": "string"}, "parent_id": {"type": "string", "format": "uuid"}}},
+    # V71 A2 补齐：CommonTypes 通用响应包装（与 topems_shared::response 对齐）
+    "SuccessResponse": {"type": "object", "properties": {"success": {"type": "boolean"}, "message": {"type": "string"}, "data": {"type": "object"}, "code": {"type": "integer"}}},
+    "ErrorResponse": {"type": "object", "properties": {"success": {"type": "boolean"}, "error": {"type": "object", "properties": {"code": {"type": "string"}, "message": {"type": "string"}, "details": {"type": "object"}}}, "code": {"type": "integer"}}},
+    "PaginatedResponse": {"type": "object", "properties": {"success": {"type": "boolean"}, "data": {"type": "array", "items": {"type": "object"}}, "total": {"type": "integer"}, "page": {"type": "integer"}, "page_size": {"type": "integer"}, "total_pages": {"type": "integer"}, "code": {"type": "integer"}}},
     "TenantMember": {"type": "object", "properties": {"tenant_id": {"type": "string", "format": "uuid"}, "user_id": {"type": "string", "format": "uuid"}, "role": {"type": "string"}, "joined_at": {"type": "string", "format": "date-time"}, "invited_by": {"type": "string", "format": "uuid"}}},
     "Product": {"type": "object", "properties": {"id": {"type": "string", "format": "uuid"}, "sku": {"type": "string"}, "name": {"type": "string"}, "category_id": {"type": "string", "format": "uuid"}, "brand_id": {"type": "string", "format": "uuid"}, "price": {"type": "number"}, "cost": {"type": "number"}, "stock": {"type": "integer", "format": "int32"}, "unit": {"type": "string"}, "status": {"type": "string"}, "description": {"type": "string"}}},
     "ProductCategory": {"type": "object", "properties": {"id": {"type": "string", "format": "uuid"}, "parent_id": {"type": "string", "format": "uuid"}, "name": {"type": "string"}, "code": {"type": "string"}, "sort": {"type": "integer", "format": "int32"}, "status": {"type": "string"}}},
@@ -350,6 +356,9 @@ def merge_paths(
     total = 0
     conflicts: list[str] = []
     paths: dict = aggregated.setdefault("paths", {})
+    # V72.5 第二批：operationId 全局去重，避免 openapi-typescript 生成重复 TS 标识符。
+    # 首次出现的 operationId 保持原样（向后兼容），后续冲突的自动加 `{svc}_` 前缀。
+    seen_oids: dict[str, str] = {}
 
     for svc, spec in specs:
         svc_paths = spec.get("paths", {})
@@ -378,6 +387,18 @@ def merge_paths(
                 tags = spec_def.setdefault("tags", [])
                 if svc not in tags:
                     tags.insert(0, svc)
+                # operationId 全局去重：冲突时改为 `{svc}_{原 operationId}`
+                oid = spec_def.get("operationId")
+                if oid:
+                    if oid in seen_oids and seen_oids[oid] != svc:
+                        new_oid = f"{svc}_{oid}"
+                        spec_def["operationId"] = new_oid
+                        log_warn(
+                            f"operationId 冲突: '{oid}' 已被 {seen_oids[oid]} 占用，"
+                            f"{svc} 重命名为 '{new_oid}'"
+                        )
+                    else:
+                        seen_oids.setdefault(oid, svc)
                 slot[method] = spec_def
                 total += 1
 

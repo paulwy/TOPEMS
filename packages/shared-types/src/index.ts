@@ -344,3 +344,40 @@ export type {
   TypedCrudApiClient,
   FieldsOf,
 } from './typeBridge';
+
+// OpenAPI 类型适配层（蛇形 ↔ 驼峰 字段映射）
+export {
+  FIELD_MAPPING,
+  SEMANTIC_MAPPING,
+  FULL_MAPPING,
+  adapt,
+  adaptReverse,
+  snakeToCamel,
+  camelToSnake,
+} from './openapi-adapter';
+
+export type {
+  FieldMapping,
+  Adapt,
+  AdaptedKeys,
+} from './openapi-adapter';
+
+// OpenAPI 绑定工具（V72 A4 — 按 OperationId 绑定 query/request/response 类型）
+export {
+  toOpenApiParams,
+  toOpenApiRequestBody,
+  fromOpenApiResponse,
+} from './api-binding-tools';
+
+export type {
+  OpenApiOperation,
+  OpenApiQueryParams,
+  OpenApiRequestBody,
+  OpenApiPathParams,
+  OpenApiResponseSchema,
+  AdaptedQuery,
+  AdaptedRequestBody,
+  TypedApiResponse,
+  TypedPaginatedResponse,
+  OpenApiSchema,
+} from './api-binding-tools';

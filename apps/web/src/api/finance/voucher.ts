@@ -10,13 +10,31 @@ import type {
   ApiResponse,
   BatchOperationResult,
 } from '../../types/finance';
+import {
+  toOpenApiParams,
+  toOpenApiRequestBody,
+  type AdaptedQuery,
+  type AdaptedRequestBody,
+  type TypedApiResponse,
+  type TypedPaginatedResponse,
+} from '@topems/shared-types';
 
 export const voucherApi = {
-  list: (params?: VoucherQueryParams): Promise<ApiResponse<PaginatedResult<Voucher>>> => {
-    return apiClient.finance.get('/vouchers', { params });
+  /**
+   * V72.5 第二批 绑定样板：list_vouchers operation（openapi: GET /finance/vouchers）
+   */
+  list: async (
+    params?: AdaptedQuery<'list_vouchers'> | VoucherQueryParams,
+  ): Promise<TypedPaginatedResponse<Voucher>> => {
+    return apiClient.finance.get('/vouchers', {
+      params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
+    });
   },
 
-  get: (id: string): Promise<ApiResponse<Voucher>> => {
+  /**
+   * V72.5 第二批 绑定样板：get_voucher operation（openapi: GET /finance/vouchers/{voucher_id}）
+   */
+  get: async (id: string): Promise<TypedApiResponse<Voucher, 'get_voucher'>> => {
     return apiClient.finance.get(`/vouchers/${id}`);
   },
 
@@ -28,8 +46,16 @@ export const voucherApi = {
     return apiClient.finance.get(`/vouchers/${id}/items`);
   },
 
-  create: (data: CreateVoucherRequest): Promise<ApiResponse<VoucherOperationResult>> => {
-    return apiClient.finance.post('/vouchers', data);
+  /**
+   * V72.5 第二批 绑定样板：create_voucher operation（openapi: POST /finance/vouchers）
+   */
+  create: async (
+    data: AdaptedRequestBody<'create_voucher'> | CreateVoucherRequest,
+  ): Promise<TypedApiResponse<VoucherOperationResult, 'create_voucher'>> => {
+    return apiClient.finance.post(
+      '/vouchers',
+      toOpenApiRequestBody(data as Record<string, unknown>),
+    );
   },
 
   batchCreate: (

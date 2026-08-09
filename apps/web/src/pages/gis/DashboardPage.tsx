@@ -5,12 +5,10 @@ import { FileText, ArrowRight, Activity, Layers, MapPin, Globe } from 'lucide-re
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import BarChartComponent from '../../components/charts/BarChart';
-import LineChartComponent from '../../components/charts/LineChart';
-import PieChartComponent from '../../components/charts/PieChart';
 import { GIS_PATHS } from '@/modules/gis/config';
 import { gisApi } from '@/api/gis';
 import type { GisStatistics } from '@/api/gis';
+import { LazyChart } from '@/components/charts';
 
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText size={24} />,
@@ -104,7 +102,7 @@ export const DashboardPage: React.FC = () => {
         id: 'city-data-distribution',
         title: '数据分布',
         chart: (
-          <BarChartComponent
+          <LazyChart type='bar'
             data={barData}
             xKey='name'
             yKey='value'
@@ -116,7 +114,7 @@ export const DashboardPage: React.FC = () => {
         id: 'quarterly-data-trend',
         title: '季度数据趋势',
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={lineData}
             xKey='name'
             yKey='value'

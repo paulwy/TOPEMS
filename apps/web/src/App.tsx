@@ -1,14 +1,17 @@
 import React, { Suspense, lazy } from 'react';
 import AppLayout from './components/layout/AppLayout';
 import AppRoutes from './routes/appRoutes';
-// V40.0 Track F: 微前端可观测性（开发模式面板）
-import { ObservabilityPanel } from './microfrontend/observability';
-import { isDev } from '@/config/env';
 
-// DevTools 仅在开发模式按需加载，避免生产包体积膨胀
-const MicroFrontendDevTools = lazy(() => import('./dev-tools'));
+// DevTools 仅在开发模式按需加载，生产构建由 Vite tree-shaking 移除（import.meta.env.DEV 字面量）
+const MicroFrontendDevTools = import.meta.env.DEV
+  ? lazy(() => import('./dev-tools'))
+  : null;
 
-const IS_DEV = isDev();
+// V40.0 Track F: 微前端可观测性面板（开发模式）
+// 使用 import.meta.env.DEV 编译时常量门控，确保生产构建中完全移除
+const ObservabilityPanel = import.meta.env.DEV
+  ? lazy(() => import('./microfrontend/observability').then(m => ({ default: m.ObservabilityPanel })))
+  : null;
 
 /**
  * 应用入口
@@ -21,8 +24,12 @@ const IS_DEV = isDev();
 const App: React.FC = () => (
   <AppLayout>
     <AppRoutes />
-    {IS_DEV && <ObservabilityPanel />}
-    {IS_DEV && (
+    {ObservabilityPanel && (
+      <Suspense fallback={null}>
+        <ObservabilityPanel />
+      </Suspense>
+    )}
+    {MicroFrontendDevTools && (
       <Suspense fallback={null}>
         <MicroFrontendDevTools />
       </Suspense>

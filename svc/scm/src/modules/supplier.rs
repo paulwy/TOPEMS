@@ -1,3 +1,4 @@
+use utoipa::path;
 // ═══════════════════════════════════════════════════════════
 // ⚠️ DEPRECATED: 此模块为 SRM 主数据的本地缓存副本
 // 供应商主数据管理（创建/审批/评估）应通过 SRM 服务进行
@@ -64,6 +65,14 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/scm/suppliers",
+    responses(
+        (status = 200, description = "list_suppliers OK")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn list_suppliers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -158,6 +167,14 @@ pub async fn list_suppliers(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/scm/suppliers",
+    responses(
+        (status = 200, description = "create_supplier OK")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn create_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -270,6 +287,14 @@ pub async fn create_supplier(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/scm/suppliers/{id}",
+    responses(
+        (status = 200, description = "get_supplier OK")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn get_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -333,6 +358,14 @@ pub async fn get_supplier(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/scm/suppliers/{id}",
+    responses(
+        (status = 200, description = "update_supplier OK")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn update_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -471,6 +504,14 @@ pub async fn update_supplier(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/scm/suppliers/{id}",
+    responses(
+        (status = 200, description = "delete_supplier OK")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn delete_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

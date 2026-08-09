@@ -11,7 +11,8 @@
 import React from 'react';
 import { Box, Paper, Typography, IconButton, Tooltip } from '@mui/material';
 import { EmptyState } from '@topems/shared-components';
-import * as LucideIcons from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
+import { LazyIcon } from '@/components/icons/LazyIcon';
 import type { CanvasNode, DesignerComponent } from './types';
 import { getComponentByType } from './types';
 
@@ -144,9 +145,7 @@ function CanvasNodeItem({
   onMoveDown,
 }: CanvasNodeItemProps) {
   const comp = getComponentByType(node.type);
-  const IconComp = comp?.icon
-    ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[comp.icon]
-    : null;
+  const iconName = comp?.icon || null;
 
   return (
     <Paper
@@ -167,7 +166,7 @@ function CanvasNodeItem({
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        {IconComp && <IconComp size={16} />}
+        {iconName && <LazyIcon name={iconName} size={16} />}
         <Typography
           variant='body2'
           sx={{ fontWeight: 500 }}
@@ -193,7 +192,7 @@ function CanvasNodeItem({
                 onMoveUp();
               }}
             >
-              <LucideIcons.ArrowUp size={14} />
+              <ArrowUp size={14} />
             </IconButton>
           </Tooltip>
           <Tooltip title='下移'>
@@ -205,7 +204,7 @@ function CanvasNodeItem({
                 onMoveDown();
               }}
             >
-              <LucideIcons.ArrowDown size={14} />
+              <ArrowDown size={14} />
             </IconButton>
           </Tooltip>
           <Tooltip title='删除'>
@@ -217,7 +216,7 @@ function CanvasNodeItem({
                 onRemove();
               }}
             >
-              <LucideIcons.Trash2 size={14} />
+              <Trash2 size={14} />
             </IconButton>
           </Tooltip>
         </Box>

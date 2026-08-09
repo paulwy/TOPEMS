@@ -6,18 +6,34 @@ import type {
   ApiResponse,
 } from '../../types/finance';
 import { apiClient } from '../client';
+import {
+  toOpenApiParams,
+  toOpenApiRequestBody,
+  type AdaptedQuery,
+  type AdaptedRequestBody,
+  type TypedApiResponse,
+  type TypedPaginatedResponse,
+} from '@topems/shared-types';
 
 export const accountApi = {
-  list: (params?: {
-    category?: string;
-    parentId?: string;
-    level?: number;
-    status?: string;
-    keyword?: string;
-    page?: number;
-    pagesize?: number;
-  }): Promise<ApiResponse<PaginatedResult<Account>>> => {
-    return apiClient.finance.get('/accounts', { params });
+  /**
+   * V72.5 第二批 绑定样板：list_accounts operation（openapi: GET /finance/accounts）
+   * Query Params 经 AdaptedQuery<'list_accounts'> 适配为 camelCase，运行时 adaptReverse → snake_case
+   */
+  list: async (
+    params?: AdaptedQuery<'list_accounts'> | {
+      category?: string;
+      parentId?: string;
+      level?: number;
+      status?: string;
+      keyword?: string;
+      page?: number;
+      pagesize?: number;
+    },
+  ): Promise<TypedPaginatedResponse<Account>> => {
+    return apiClient.finance.get('/accounts', {
+      params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
+    });
   },
 
   getTree: (params?: {
@@ -28,12 +44,24 @@ export const accountApi = {
     return apiClient.finance.get('/accounts/tree', { params });
   },
 
-  get: (id: string): Promise<ApiResponse<Account>> => {
+  /**
+   * V72.5 第二批 绑定样板：get_account operation（openapi: GET /finance/accounts/{account_id}）
+   */
+  get: async (id: string): Promise<TypedApiResponse<Account, 'get_account'>> => {
     return apiClient.finance.get(`/accounts/${id}`);
   },
 
-  create: (data: Partial<Account>): Promise<ApiResponse<Account>> => {
-    return apiClient.finance.post('/accounts', data);
+  /**
+   * V72.5 第二批 绑定样板：create_account operation（openapi: POST /finance/accounts）
+   * Request Body 经 AdaptedRequestBody<'create_account'> 适配，运行时 adaptReverse → snake_case
+   */
+  create: async (
+    data: AdaptedRequestBody<'create_account'> | Partial<Account>,
+  ): Promise<TypedApiResponse<Account, 'create_account'>> => {
+    return apiClient.finance.post(
+      '/accounts',
+      toOpenApiRequestBody(data as Record<string, unknown>),
+    );
   },
 
   update: (id: string, data: Partial<Account>): Promise<ApiResponse<Account>> => {

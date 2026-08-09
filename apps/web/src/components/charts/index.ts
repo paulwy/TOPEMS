@@ -3,7 +3,16 @@ export { default as LineChart, LineChartComponent } from './LineChart';
 export { default as PieChart, PieChartComponent } from './PieChart';
 export { AreaChart } from './AreaChart';
 export { RadarChart } from './RadarChart';
-export { LazyChart } from './LazyChart';
+export { default as LazyChart, LazyChart as LazyChartComponent } from './LazyChart';
+export type {
+  ChartData,
+  BarChartProps,
+  LineChartProps,
+  PieChartProps,
+  AreaChartProps,
+  RadarChartProps,
+  LazyChartProps,
+} from './LazyChart';
 export {
   BIChartColors,
   ChartType,

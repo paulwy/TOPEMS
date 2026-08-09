@@ -1,4 +1,4 @@
-import { useState, useCallback, type ComponentType } from 'react';
+import { useState, useCallback, type ComponentType, type ReactNode } from 'react';
 import {
   Box,
   List,
@@ -22,7 +22,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { NavItem, NavGroup } from '../types';
 import { NAV_GROUPS } from '../types';
-import * as LucideIcons from 'lucide-react';
+import { LazyIcon } from '@/components/icons/LazyIcon';
 
 interface SidebarNavGroupProps {
   grouped: Record<NavGroup | 'other', NavItem[]>;
@@ -37,12 +37,9 @@ const groupIcons: Record<string, ComponentType<{ size?: number | string }>> = {
   settings: Settings,
 };
 
-function getIcon(iconName?: string) {
+function getIcon(iconName?: string): ReactNode {
   if (!iconName) return null;
-  const Icon = (
-    LucideIcons as unknown as Record<string, ComponentType<{ size?: number | string }>>
-  )[iconName];
-  return Icon ? <Icon size={20} /> : null;
+  return <LazyIcon name={iconName} size={20} />;
 }
 
 function NavItemComponent({

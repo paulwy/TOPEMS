@@ -9,17 +9,46 @@ import type {
   CreateTagRequest,
   UpdateTagRequest,
 } from './types';
+import {
+  toOpenApiParams,
+  toOpenApiRequestBody,
+  type AdaptedQuery,
+  type AdaptedRequestBody,
+  type TypedApiResponse,
+  type TypedPaginatedResponse,
+} from '@topems/shared-types';
 
 export const customerApi = {
-  list: async (params?: CustomerQueryParams): Promise<ApiResponse<PaginatedResponse<Customer>>> => {
-    return apiClient.crm.get('/customers', { params });
+  /**
+   * A4 绑定样板：list_customers operation（openapi: GET /crm/customers）
+   * Query Params: { page, pageSize, search, status, customerType, rating, industry } （AdaptedQuery 后为 camelCase）
+   * 运行时：自动 adaptReverse → snake_case 发送给后端
+   */
+  list: async (
+    params?: AdaptedQuery<'list_customers'> | CustomerQueryParams,
+  ): Promise<TypedPaginatedResponse<Customer>> => {
+    return apiClient.crm.get('/customers', {
+      params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
+    });
   },
 
-  create: async (data: CreateCustomerRequest): Promise<ApiResponse<Customer>> => {
-    return apiClient.crm.post('/customers', data);
+  /**
+   * A4 绑定样板：create_customer operation（openapi: POST /crm/customers）
+   * Request Body: CreateCustomerRequest schema（发送前 adaptReverse → snake_case）
+   */
+  create: async (
+    data: AdaptedRequestBody<'create_customer'> | CreateCustomerRequest,
+  ): Promise<TypedApiResponse<Customer, 'create_customer'>> => {
+    return apiClient.crm.post(
+      '/customers',
+      toOpenApiRequestBody(data as Record<string, unknown>),
+    );
   },
 
-  get: async (id: string): Promise<ApiResponse<Customer>> => {
+  /**
+   * A4 绑定样板：get_customer operation（openapi: GET /crm/customers/{id}）
+   */
+  get: async (id: string): Promise<TypedApiResponse<Customer, 'get_customer'>> => {
     return apiClient.crm.get(`/customers/${id}`);
   },
 

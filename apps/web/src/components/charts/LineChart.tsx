@@ -9,7 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
+} from './_vendors/recharts-cartesian';
 import type { ChartData } from './AreaChart';
 
 interface LineChartProps {

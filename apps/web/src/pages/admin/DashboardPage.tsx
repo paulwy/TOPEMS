@@ -7,8 +7,8 @@ import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/
 import { PageContainer } from '@/components/common';
 import { IAM_PATHS } from '@/modules/iam/config';
 import { ADMIN_PATHS } from '@/modules/admin/config';
-import PieChartComponent from '../../components/charts/PieChart';
 import { designTokens } from '@/theme/tokens';
+import { LazyChart } from '@/components/charts';
 
 const ct = designTokens.colors;
 
@@ -87,7 +87,7 @@ export const DashboardPage: React.FC = () => {
     {
       id: 'user-role-distribution',
       title: '用户角色分布',
-      chart: <PieChartComponent data={pieData} />,
+      chart: <LazyChart type='pie' data={pieData} />,
       height: 300,
     },
   ];

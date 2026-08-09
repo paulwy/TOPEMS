@@ -11,9 +11,6 @@ import {
   DollarSign,
   Package,
 } from 'lucide-react';
-import BarChartComponent from '../../components/charts/BarChart';
-import LineChartComponent from '../../components/charts/LineChart';
-import PieChartComponent from '../../components/charts/PieChart';
 import {
   DashboardTemplate,
   type StatCard,
@@ -33,6 +30,7 @@ import type {
 import { SCM_PATHS } from '@/modules/scm/config';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { LazyChart } from '@/components/charts';
 
 const barData = [
   { name: '供应商A', value: 35 },
@@ -227,7 +225,7 @@ export const DashboardPage: React.FC = () => {
         id: 'purchase-volume',
         title: '供应商采购量',
         chart: (
-          <BarChartComponent
+          <LazyChart type='bar'
             data={barData}
             xKey='name'
             yKey='value'
@@ -240,7 +238,7 @@ export const DashboardPage: React.FC = () => {
         id: 'weekly-trend',
         title: '每周采购趋势',
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={lineData}
             xKey='name'
             yKey='value'
@@ -252,7 +250,7 @@ export const DashboardPage: React.FC = () => {
       {
         id: 'purchase-type',
         title: '采购类型分布',
-        chart: <PieChartComponent data={pieData} />,
+        chart: <LazyChart type='pie' data={pieData} />,
         height: 300,
         type: 'pie',
       },

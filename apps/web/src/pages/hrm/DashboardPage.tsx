@@ -3,9 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, GraduationCap, Award, ArrowRight } from 'lucide-react';
-import BarChartComponent from '../../components/charts/BarChart';
-import LineChartComponent from '../../components/charts/LineChart';
-import PieChartComponent from '../../components/charts/PieChart';
 import {
   DashboardTemplate,
   type StatCard,
@@ -26,6 +23,7 @@ import {
 import { HRM_PATHS } from '@/modules/hrm/config';
 
 import { useTranslation } from 'react-i18next';
+import { LazyChart } from '@/components/charts';
 
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
@@ -243,7 +241,7 @@ export const DashboardPage: React.FC = () => {
         id: 'overview',
         title: t('hrm.dashboard_page.text_699d70'),
         chart: (
-          <BarChartComponent
+          <LazyChart type='bar'
             data={chartData.departmentDistribution}
             xKey='name'
             yKey='value'
@@ -256,7 +254,7 @@ export const DashboardPage: React.FC = () => {
         id: 'trend',
         title: t('hrm.dashboard_page.text_b3b5dc'),
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={chartData.monthlyTrend}
             xKey='name'
             yKey='value'
@@ -268,7 +266,7 @@ export const DashboardPage: React.FC = () => {
       {
         id: 'distribution',
         title: t('hrm.dashboard_page.status'),
-        chart: <PieChartComponent data={chartData.statusDistribution} />,
+        chart: <LazyChart type='pie' data={chartData.statusDistribution} />,
         height: 300,
         type: 'pie',
       },

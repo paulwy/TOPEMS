@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTheme } from '@mui/material/styles';
 import { useChartTheme } from './chartTheme';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from './_vendors/recharts-cartesian';
 import type { ChartData } from './AreaChart';
 
 interface BarChartProps {
@@ -14,6 +14,8 @@ interface BarChartProps {
   height?: number;
   barRadius?: number | [number, number, number, number];
   animate?: boolean;
+  cellColors?: string[];
+  tooltipFormatter?: (value: any, name: any, props: any) => React.ReactNode | [React.ReactNode, any] | void;
 }
 
 export const BarChartComponent: React.FC<BarChartProps> = ({
@@ -25,6 +27,8 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
   color,
   height = 200,
   barRadius = [4, 4, 0, 0],
+  cellColors,
+  tooltipFormatter,
 }) => {
   const theme = useTheme();
   const chartTheme = useChartTheme();
@@ -53,12 +57,8 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
           />
           <YAxis tick={{ fill: chartTheme.textColor, fontSize: 12 }} />
           <Tooltip
-            contentStyle={{
-              backgroundColor: chartTheme.tooltipBg,
-              border: `1px solid ${chartTheme.borderColor}`,
-              borderRadius: 8,
-              padding: 12,
-            }}
+            contentStyle={{ backgroundColor: chartTheme.tooltipBg, border: `1px solid ${chartTheme.borderColor}`, borderRadius: 8, padding: 12 }}
+            {...(tooltipFormatter ? { formatter: tooltipFormatter as any } : {})}
           />
           {series.map((item) => (
             <Bar
@@ -67,7 +67,11 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
               name={item.name}
               fill={item.color || resolvedColor}
               radius={Array.isArray(barRadius) ? barRadius : [barRadius, barRadius, 0, 0]}
-            />
+            >
+              {series.length === 1 && cellColors && cellColors.length > 0 && data.map((_, i) => (
+                <Cell key={`cell-${i}`} fill={cellColors[i % cellColors.length]} />
+              ))}
+            </Bar>
           ))}
         </BarChart>
       </ResponsiveContainer>

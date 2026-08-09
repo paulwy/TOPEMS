@@ -5,13 +5,12 @@ import { FileText, ArrowRight, FlaskConical, CheckCircle, Rocket } from 'lucide-
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import BarChartComponent from '../../components/charts/BarChart';
-import LineChartComponent from '../../components/charts/LineChart';
 import { rdApi } from '@/api/rd';
 import type { RsStatistics } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { LazyChart } from '@/components/charts';
 
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText size={24} />,
@@ -117,7 +116,7 @@ export const DashboardPage: React.FC = () => {
         id: 'project-type-distribution',
         title: t('rd.dashboard_page.chart.project_status_distribution'),
         chart: (
-          <BarChartComponent
+          <LazyChart type='bar'
             data={barData}
             xKey='name'
             yKey='value'
@@ -129,7 +128,7 @@ export const DashboardPage: React.FC = () => {
         id: 'monthly-release-trend',
         title: t('rd.dashboard_page.chart.experiment_status_distribution'),
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={lineData}
             xKey='name'
             yKey='value'

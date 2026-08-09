@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
+} from './_vendors/recharts-cartesian';
 import { useChartTheme, getChartColor } from './chartTheme';
 import { CustomTooltip } from './CustomTooltip';
 

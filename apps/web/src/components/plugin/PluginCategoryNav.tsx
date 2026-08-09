@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
-import * as LucideIcons from 'lucide-react';
+import { LazyIcon } from '@/components/icons/LazyIcon';
 import type { PluginCategory } from '@/api/plugin';
 
 interface PluginCategoryNavProps {
@@ -8,11 +8,6 @@ interface PluginCategoryNavProps {
   activeCategory: string;
   onCategoryChange: (category: string) => void;
 }
-
-const iconComponents: Record<
-  string,
-  React.ComponentType<{ size?: number; className?: string }>
-> = LucideIcons as unknown as Record<string, React.ComponentType<any>>;
 
 export const PluginCategoryNav: React.FC<PluginCategoryNavProps> = ({
   categories,
@@ -22,13 +17,13 @@ export const PluginCategoryNav: React.FC<PluginCategoryNavProps> = ({
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
       {categories.map((category) => {
-        const Icon = iconComponents[category.icon || 'Package'] || LucideIcons.Package;
+        const iconName = category.icon || 'Package';
         const isActive = activeCategory === category.code;
 
         return (
           <Chip
             key={category.id}
-            icon={<Icon size={16} />}
+            icon={<LazyIcon name={iconName} size={16} />}
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography variant='body2'>{category.name}</Typography>

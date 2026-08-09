@@ -6,14 +6,38 @@ import type {
   UpdateContactRequest,
   ContactQueryParams,
 } from './types';
+import {
+  toOpenApiParams,
+  toOpenApiRequestBody,
+  type AdaptedQuery,
+  type AdaptedRequestBody,
+  type TypedApiResponse,
+  type TypedPaginatedResponse,
+} from '@topems/shared-types';
 
 export const contactApi = {
-  list: async (params?: ContactQueryParams): Promise<ApiResponse<PaginatedResponse<Contact>>> => {
-    return apiClient.crm.get('/contacts', { params });
+  /**
+   * A4 绑定样板：list_contacts operation（openapi: GET /crm/contacts）
+   * Query Params: { page, pageSize, search, customerId }（AdaptedQuery 后 camelCase）
+   */
+  list: async (
+    params?: AdaptedQuery<'list_contacts'> | ContactQueryParams,
+  ): Promise<TypedPaginatedResponse<Contact>> => {
+    return apiClient.crm.get('/contacts', {
+      params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
+    });
   },
 
-  create: async (data: CreateContactRequest): Promise<ApiResponse<Contact>> => {
-    return apiClient.crm.post('/contacts', data);
+  /**
+   * A4 绑定样板：create_contact operation（openapi: POST /crm/contacts）
+   */
+  create: async (
+    data: AdaptedRequestBody<'create_contact'> | CreateContactRequest,
+  ): Promise<TypedApiResponse<Contact, 'create_contact'>> => {
+    return apiClient.crm.post(
+      '/contacts',
+      toOpenApiRequestBody(data as Record<string, unknown>),
+    );
   },
 
   get: async (id: string): Promise<ApiResponse<Contact>> => {

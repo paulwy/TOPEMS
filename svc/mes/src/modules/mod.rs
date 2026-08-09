@@ -8,6 +8,7 @@ pub mod material_bom;
 pub mod material_requirement;
 pub mod mes_plugin;
 pub mod oee_logic;
+pub mod openapi;
 pub mod process_flow;
 pub mod process_route;
 pub mod production_cost;

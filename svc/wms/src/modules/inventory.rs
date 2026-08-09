@@ -93,6 +93,14 @@ where
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory",
+    responses(
+        (status = 200, description = "list_inventory OK")
+    ),
+    tag = "WMS/inventory"
+)]
 pub async fn list_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -167,6 +175,14 @@ pub async fn list_inventory(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/inventory",
+    responses(
+        (status = 200, description = "create_inventory OK")
+    ),
+    tag = "WMS/inventory"
+)]
 pub async fn create_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -249,6 +265,14 @@ pub async fn create_inventory(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory/{id}",
+    responses(
+        (status = 200, description = "get_inventory OK")
+    ),
+    tag = "WMS/inventory"
+)]
 pub async fn get_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -286,6 +310,14 @@ pub async fn get_inventory(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/wms/inventory/{id}",
+    responses(
+        (status = 200, description = "update_inventory OK")
+    ),
+    tag = "WMS/inventory"
+)]
 pub async fn update_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -499,6 +531,14 @@ pub async fn update_inventory(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/wms/inventory/{id}",
+    responses(
+        (status = 200, description = "delete_inventory OK")
+    ),
+    tag = "WMS/inventory"
+)]
 pub async fn delete_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

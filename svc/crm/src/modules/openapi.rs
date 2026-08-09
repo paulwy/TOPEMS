@@ -53,3 +53,16 @@ use utoipa::OpenApi;
     )
 )]
 pub struct CrmApiDoc;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use utoipa::OpenApi;
+
+    #[test]
+    fn extract_openapi_spec() {
+        let spec = CrmApiDoc::openapi();
+        let json = serde_json::to_string_pretty(&spec).unwrap();
+        std::fs::write("/tmp/topems-crm-openapi.json", json).unwrap();
+    }
+}

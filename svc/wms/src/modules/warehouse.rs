@@ -41,6 +41,14 @@ where
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/warehouses",
+    responses(
+        (status = 200, description = "list_warehouses OK")
+    ),
+    tag = "WMS/warehouse"
+)]
 pub async fn list_warehouses(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
@@ -121,6 +129,14 @@ pub async fn list_warehouses(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/warehouses",
+    responses(
+        (status = 200, description = "create_warehouse OK")
+    ),
+    tag = "WMS/warehouse"
+)]
 pub async fn create_warehouse(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
@@ -197,6 +213,14 @@ pub async fn create_warehouse(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/warehouses/{id}",
+    responses(
+        (status = 200, description = "get_warehouse OK")
+    ),
+    tag = "WMS/warehouse"
+)]
 pub async fn get_warehouse(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
@@ -239,6 +263,14 @@ pub async fn get_warehouse(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/wms/warehouses/{id}",
+    responses(
+        (status = 200, description = "update_warehouse OK")
+    ),
+    tag = "WMS/warehouse"
+)]
 pub async fn update_warehouse(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
@@ -342,6 +374,14 @@ pub async fn update_warehouse(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/wms/warehouses/{id}",
+    responses(
+        (status = 200, description = "delete_warehouse OK")
+    ),
+    tag = "WMS/warehouse"
+)]
 pub async fn delete_warehouse(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,

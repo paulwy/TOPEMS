@@ -2,7 +2,7 @@
 
 mod access_log;
 mod batch;
-mod crud;
+pub(crate) mod crud;
 mod models;
 mod profile;
 mod profile_ext;

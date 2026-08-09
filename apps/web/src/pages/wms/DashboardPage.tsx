@@ -5,9 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { Box, Button } from '@mui/material';
 import { QuickSearch, PageContainer } from '@/components/common';
 import { Warehouse, Package, AlertCircle, ArrowRight, Truck } from 'lucide-react';
-import BarChartComponent from '../../components/charts/BarChart';
-import PieChartComponent from '../../components/charts/PieChart';
-import LineChartComponent from '../../components/charts/LineChart';
 import {
   DashboardTemplate,
   type StatCard,
@@ -15,6 +12,7 @@ import {
   type QuickAction,
 } from '@/components/templates';
 import { WMS_PATHS } from '@/modules/wms/config';
+import { LazyChart } from '@/components/charts';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
   Warehouse,
@@ -120,7 +118,7 @@ export const DashboardPage: React.FC = () => {
         id: 'inventory-distribution',
         title: t('wms.dashboard_page.chart_inventory_distribution'),
         chart: (
-          <BarChartComponent
+          <LazyChart type='bar'
             data={barData}
             xKey='name'
             yKey='value'
@@ -132,7 +130,7 @@ export const DashboardPage: React.FC = () => {
       {
         id: 'inventory-type',
         title: t('wms.dashboard_page.chart_inventory_type'),
-        chart: <PieChartComponent data={pieData} />,
+        chart: <LazyChart type='pie' data={pieData} />,
         height: 300,
         type: 'pie',
       },
@@ -140,7 +138,7 @@ export const DashboardPage: React.FC = () => {
         id: 'daily-trend',
         title: t('wms.dashboard_page.chart_daily_trend'),
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={lineData}
             xKey='name'
             yKey='value'

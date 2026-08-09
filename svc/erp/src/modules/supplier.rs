@@ -19,6 +19,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
+use utoipa::path;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -40,6 +41,14 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/suppliers",
+    responses(
+        (status = 200, description = "list_suppliers OK")
+    ),
+    tag = "ERP/supplier"
+)]
 pub async fn list_suppliers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -120,6 +129,14 @@ pub async fn list_suppliers(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/suppliers/{id}",
+    responses(
+        (status = 200, description = "get_supplier OK")
+    ),
+    tag = "ERP/supplier"
+)]
 pub async fn get_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -146,6 +163,14 @@ pub async fn get_supplier(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/suppliers",
+    responses(
+        (status = 200, description = "create_supplier OK")
+    ),
+    tag = "ERP/supplier"
+)]
 pub async fn create_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -185,6 +210,14 @@ pub async fn create_supplier(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/suppliers/{id}",
+    responses(
+        (status = 200, description = "update_supplier OK")
+    ),
+    tag = "ERP/supplier"
+)]
 pub async fn update_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -225,6 +258,14 @@ pub async fn update_supplier(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/suppliers/{id}",
+    responses(
+        (status = 200, description = "delete_supplier OK")
+    ),
+    tag = "ERP/supplier"
+)]
 pub async fn delete_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

@@ -18,7 +18,7 @@ import {
   Chip,
   Divider,
 } from '@mui/material';
-import * as LucideIcons from 'lucide-react';
+import { LazyIcon } from '@/components/icons/LazyIcon';
 import { BUILTIN_COMPONENTS, type DesignerComponent, type ComponentCategory } from './types';
 
 interface ComponentPaletteProps {
@@ -105,14 +105,7 @@ export function ComponentPalette({ onDragStart, onDragEnd }: ComponentPalettePro
               disablePadding
             >
               {comps.map((comp) => {
-                const IconComp = comp.icon
-                  ? (
-                      LucideIcons as unknown as Record<
-                        string,
-                        React.ComponentType<{ size?: number }>
-                      >
-                    )[comp.icon]
-                  : null;
+                const iconName = comp.icon || null;
 
                 return (
                   <ListItem
@@ -132,9 +125,9 @@ export function ComponentPalette({ onDragStart, onDragEnd }: ComponentPalettePro
                         '&:active': { cursor: 'grabbing' },
                       }}
                     >
-                      {IconComp && (
+                      {iconName && (
                         <ListItemIcon sx={{ minWidth: 32 }}>
-                          <IconComp size={16} />
+                          <LazyIcon name={iconName} size={16} />
                         </ListItemIcon>
                       )}
                       <ListItemText

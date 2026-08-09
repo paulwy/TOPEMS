@@ -2,43 +2,73 @@ import React, { Suspense, lazy } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import type { ChartData } from './AreaChart';
 
+export type { ChartData };
+
 interface BaseChartProps {
   data: ChartData[];
   title?: string;
   height?: number;
 }
 
-interface BarChartProps extends BaseChartProps {
+export interface BarChartProps extends BaseChartProps {
   type: 'bar';
   xKey?: string;
   yKey?: string;
   yKeys?: { key: string; name: string; color?: string }[];
   color?: string;
   barRadius?: number | [number, number, number, number];
+  animate?: boolean;
+  cellColors?: string[];
+  tooltipFormatter?: (...args: any[]) => any;
 }
 
-interface LineChartProps extends BaseChartProps {
+export interface LineChartProps extends BaseChartProps {
   type: 'line';
   xKey?: string;
+  yKey?: string;
   yKeys?: { key: string; name: string; color?: string }[];
+  color?: string;
 }
 
-interface PieChartProps {
+export interface PieChartProps {
   type: 'pie';
   data: { name: string; value: number; color?: string }[];
   title?: string;
   height?: number;
 }
 
-interface AreaChartProps extends BaseChartProps {
+export interface AreaChartProps extends BaseChartProps {
   type: 'area';
   xKey: string;
   yKeys: { key: string; name: string; color?: string }[];
+  showLegend?: boolean;
+  yDomain?: [number, number];
+  animate?: boolean;
+  showGrid?: boolean;
+  strokeType?: 'solid' | 'dashed';
+  fillOpacity?: number;
+  onAreaClick?: (data: ChartData) => void;
 }
 
-type LazyChartProps = BarChartProps | LineChartProps | PieChartProps | AreaChartProps;
+export interface RadarChartProps {
+  type: 'radar';
+  data: ChartData[];
+  dataKey?: string;
+  yKeys: { key: string; name: string; color?: string }[];
+  height?: number;
+  showLegend?: boolean;
+  animate?: boolean;
+  onRadarClick?: (data: ChartData) => void;
+}
 
-const ChartLoadingFallback: React.FC<{ height?: number }> = ({ height = 200 }) => (
+export type LazyChartProps =
+  | BarChartProps
+  | LineChartProps
+  | PieChartProps
+  | AreaChartProps
+  | RadarChartProps;
+
+const ChartLoadingFallback: React.FC<{ height?: number }> = ({ height = 300 }) => (
   <Box
     sx={{
       display: 'flex',
@@ -56,6 +86,7 @@ const LazyBarChart = lazy(() => import('./BarChart'));
 const LazyLineChart = lazy(() => import('./LineChart'));
 const LazyPieChart = lazy(() => import('./PieChart'));
 const LazyAreaChart = lazy(() => import('./AreaChart'));
+const LazyRadarChart = lazy(() => import('./RadarChart'));
 
 export const LazyChart: React.FC<LazyChartProps> = (props) => {
   let chartElement: React.ReactNode = null;
@@ -68,6 +99,8 @@ export const LazyChart: React.FC<LazyChartProps> = (props) => {
     chartElement = <LazyPieChart {...props} />;
   } else if (props.type === 'area') {
     chartElement = <LazyAreaChart {...props} />;
+  } else if (props.type === 'radar') {
+    chartElement = <LazyRadarChart {...props} />;
   }
 
   return (

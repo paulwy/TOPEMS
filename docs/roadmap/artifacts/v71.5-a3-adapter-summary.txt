@@ -1,0 +1,141 @@
+# V71.5 A3: OpenAPI 类型适配层 验收归档
+
+> 归档日期：2026-08-09 13:35
+> 对应任务：TODO.md V71 主题 A · A3
+> 关联前置：V71 A2（openapi.gen.ts 363 Schema · TSC 0 error）
+> 执行文件：packages/shared-types/src/openapi-adapter.ts + src/__tests__/openapi-adapter.test.ts
+
+---
+
+## 1. 适配层设计
+
+### 1.1 核心问题
+
+后端 utoipa 生成 snake_case 字段（is_enabled / created_at / parent_id），
+前端手写业务类型用 camelCase（isEnabled / createdAt / parentId）。
+A2 阶段仅处理了 Account 类型的 2 个字段（is_enabled→isactive, account_type→category），
+A3 需要提供通用适配工具覆盖 ≥24 处冲突字段。
+
+### 1.2 模块结构
+
+```
+packages/shared-types/src/
+├── openapi-adapter.ts          # 适配层主文件（289 行）
+├── __tests__/
+│   └── openapi-adapter.test.ts # 单元测试（296 行 · 26 tests）
+├── vitest.config.ts            # 测试配置（新建）
+└── package.json                # 添加 vitest devDep + test 脚本
+```
+
+### 1.3 API 清单
+
+| 导出名 | 类型 | 用途 |
+|--------|------|------|
+| `FIELD_MAPPING` | const (130+ 条) | 蛇形→驼峰 白名单字典（直接命名冲突） |
+| `SEMANTIC_MAPPING` | const (2 条) | 语义重命名字典（account_type→category, is_enabled→isactive） |
+| `FULL_MAPPING` | const | FIELD + SEMANTIC 合并（SEMANTIC 覆盖同名 key） |
+| `Adapt<T, M>` | type | 泛型工具：Omit 蛇形 + 添加驼峰（编译期字段重命名） |
+| `AdaptedKeys<M>` | type | 提取映射后的字段名列表 |
+| `FieldMapping` | type | 字段映射配置类型 `Readonly<Record<string,string>>` |
+| `adapt<T>(data, mapping?)` | function | 蛇形→驼峰 运行时转换 |
+| `adaptReverse<T>(data, mapping?)` | function | 驼峰→蛇形 反向转换（自动反转 mapping） |
+| `snakeToCamel(s)` | function | 通用 snake→camel 转换（不依赖白名单） |
+| `camelToSnake(s)` | function | 通用 camel→snake 转换（不依赖白名单） |
+
+## 2. 冲突字段覆盖（130+ 条，远超 ≥24 目标）
+
+### 2.1 核心冲突字段（27 条，逐条测试验证）
+
+| 分类 | 蛇形字段 | 驼峰字段 | 出现 Schema 数 |
+|------|---------|---------|---------------|
+| 时间戳 | created_at | createdAt | 13 |
+| 时间戳 | updated_at | updatedAt | 8 |
+| 时间戳 | approved_at | approvedAt | 1 |
+| 时间戳 | submitted_at | submittedAt | 1 |
+| 时间戳 | posted_at | postedAt | 1 |
+| 时间戳 | closed_at | closedAt | 1 |
+| 时间戳 | completed_at | completedAt | 2 |
+| 时间戳 | payment_date | paymentDate | 2 |
+| 时间戳 | start_date | startDate | 2 |
+| 时间戳 | end_date | endDate | 2 |
+| 布尔 | is_active | isActive | 1 |
+| 布尔 | is_enabled | isEnabled | 2 |
+| 布尔 | is_cash_flow | isCashFlow | 1 |
+| 布尔 | is_reversed | isReversed | 1 |
+| 外键 | parent_id | parentId | 3 |
+| 外键 | user_id | userId | 3 |
+| 外键 | account_id | accountId | 3 |
+| 外键 | department_id | departmentId | 2 |
+| 外键 | customer_id | customerId | 9 |
+| 外键 | supplier_id | supplierId | 2 |
+| 外键 | project_id | projectId | 2 |
+| 编码 | account_code | accountCode | 6 |
+| 编码 | voucher_no | voucherNo | 3 |
+| 编码 | voucher_date | voucherDate | 4 |
+| 编码 | voucher_type | voucherType | 3 |
+| 金额 | total_amount | totalAmount | 2 |
+| 金额 | total_debit | totalDebit | 2 |
+
+### 2.2 语义重命名（2 条）
+
+| 蛇形字段 | 重命名后 | 原因 |
+|---------|---------|------|
+| account_type | category | 手写 Account 用 category（AccountCategory 枚举） |
+| is_enabled | isactive | 手写 Account 用 isactive（lowercase concat） |
+
+### 2.3 全量字典覆盖分类
+
+- 时间戳类：16 条
+- 布尔标志类：8 条
+- 外键 ID 类：24 条
+- 编码/名称类：30 条
+- 金额类：26 条
+- 其他类：30+ 条
+- **合计 130+ 条**（远超原计划 24 条）
+
+## 3. 测试结果
+
+### 3.1 测试基础设施搭建
+
+- vitest 2.1.9 安装为 devDependency
+- vitest.config.ts 创建（environment: node, include: src/**/*.test.ts）
+- package.json 添加 `test` / `test:watch` 脚本
+
+### 3.2 测试覆盖（26 tests · 全通过）
+
+| 测试组 | 测试数 | 验证内容 |
+|--------|--------|---------|
+| FIELD_MAPPING 白名单字典 | 3 | ≥24 条 ✅ / snake→camel 格式 ✅ / 27 核心字段逐条 ✅ |
+| SEMANTIC_MAPPING 语义重命名 | 2 | account_type→category ✅ / is_enabled→isactive ✅ |
+| FULL_MAPPING 合并映射 | 3 | 未覆盖条目保留 ✅ / SEMANTIC 条目存在 ✅ / 覆盖优先级 ✅ |
+| adapt() 蛇形→驼峰 | 5 | 已知字段转换 ✅ / 未知字段保留 ✅ / 空对象 ✅ / 全驼峰不变 ✅ / 自定义映射 ✅ |
+| adaptReverse() 驼峰→蛇形 | 4 | 已知字段转换 ✅ / 未知字段保留 ✅ / 空对象 ✅ / 恒等变换 ✅ |
+| snakeToCamel() 通用转换 | 3 | 基本转换 ✅ / 无下划线不变 ✅ / 多段下划线 ✅ |
+| camelToSnake() 通用转换 | 4 | 基本转换 ✅ / 无大写不变 ✅ / 多段大写 ✅ / 恒等变换 ✅ |
+| 端到端验证 | 2 | 14 字段 Account 模拟 ✅ / 反向恒等 ✅ |
+| **合计** | **26** | **全通过** |
+
+### 3.3 TSC 验证
+
+```
+$ cd packages/shared-types && npx tsc --noEmit -p tsconfig.json
+TSC_EXIT=0
+```
+
+## 4. 验收对照 vs TODO.md A3 原标准
+
+| TODO A3 原验收标准 | 本 A3 实测 | 是否达成 |
+|-------------------|-----------|---------|
+| 适配层 unit test 覆盖 24 冲突字段 | 27 核心字段逐条验证 + 130+ 条全量字典 | ✅ 远超 |
+| TSC 0 error | packages/shared-types tsc --noEmit 0 error | ✅ |
+| `Adapt<T>` 映射工具 | `Adapt<T, M>` 泛型工具类型（Omit 蛇形 + 添加驼峰） | ✅ |
+| 白名单字段字典 | FIELD_MAPPING 130+ 条 + SEMANTIC_MAPPING 2 条 + FULL_MAPPING 合并 | ✅ |
+| （隐含）运行时转换函数 | adapt() + adaptReverse() 双向转换 + snakeToCamel/camelToSnake 通用函数 | ✅ 额外 |
+
+## 5. 后续（A4 衔接）
+
+A3 适配层已就绪，A4 任务（前端 1329 API 函数接入生成类型）可：
+1. 在 API 层 `adapt(apiResponse, FIELD_MAPPING)` 将后端蛇形数据转为驼峰
+2. 在请求前 `adaptReverse(payload, FIELD_MAPPING)` 将驼峰转回蛇形
+3. 使用 `Adapt<FinanceTypes.Account, typeof FIELD_MAPPING>` 获得类型安全的适配后类型
+4. 对语义重命名字段使用 `FULL_MAPPING`（含 account_type→category 等）

@@ -37,8 +37,6 @@ import {
   type ChartCard,
   type RecentItem,
 } from '@/components/templates';
-import LineChartComponent from '../../components/charts/LineChart';
-import PieChartComponent from '../../components/charts/PieChart';
 import { useNotificationStore } from '../../store';
 import { handleApiError, getErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
@@ -47,6 +45,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { StatisticsResponse } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
+import { LazyChart } from '@/components/charts';
 
 const ct = designTokens.colors;
 
@@ -303,7 +302,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
         title: '流程趋势图',
         subtitle: '近30天流程发起与完成趋势',
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={trendData}
             xKey='name'
             yKeys={[
@@ -321,7 +320,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
         id: 'distribution',
         title: '流程分布图',
         subtitle: '按流程类型分布占比',
-        chart: <PieChartComponent data={distributionData} />,
+        chart: <LazyChart type='pie' data={distributionData} />,
         height: 360,
         type: 'pie',
         onRefresh: handleRefresh,

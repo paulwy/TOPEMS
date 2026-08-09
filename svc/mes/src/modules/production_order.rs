@@ -14,6 +14,7 @@ use sqlx::{
     types::{BigDecimal, Uuid},
     Row,
 };
+use std::str::FromStr;
 use topems_shared::auth::Claims;
 use topems_shared_event::event::{EventType, ProductionOrderCreatedPayload};
 use utoipa::ToSchema;
