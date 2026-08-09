@@ -239,6 +239,20 @@ async fn get_department(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/departments/{id}",
+    tag = "departments",
+    params(
+        ("id" = Uuid, Path, description = "部门ID"),
+    ),
+    request_body = UpdateDepartmentRequest,
+    responses(
+        (status = 200, description = "部门更新成功", body = ApiResponse<Department>),
+        (status = 404, description = "部门不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn update_department(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -334,6 +348,19 @@ async fn update_department(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/departments/{id}",
+    tag = "departments",
+    params(
+        ("id" = Uuid, Path, description = "部门ID"),
+    ),
+    responses(
+        (status = 200, description = "部门删除成功", body = ApiResponse<()>),
+        (status = 404, description = "部门不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn delete_department(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

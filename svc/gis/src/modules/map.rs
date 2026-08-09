@@ -11,9 +11,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateMap {
     pub name: String,
     pub code: String,
@@ -25,7 +26,7 @@ pub struct CreateMap {
     pub zoom_level: Option<i32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateMap {
     pub name: String,
     pub description: Option<String>,
@@ -74,7 +75,7 @@ pub struct UpdateMapLayer {
     post,
     path = "/maps/create",
     tag = "project",
-    request_body = serde_json::Value,
+    request_body = CreateMap,
     responses(
         (status = 200, description = "创建地图成功", body = serde_json::Value),
         (status = 500, description = "创建地图失败")
@@ -173,7 +174,7 @@ pub async fn get_map(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<A
     params(
         ("id" = Uuid, Path, description = "地图ID")
     ),
-    request_body = serde_json::Value,
+    request_body = UpdateMap,
     responses(
         (status = 200, description = "更新地图成功", body = serde_json::Value),
         (status = 404, description = "地图未找到"),

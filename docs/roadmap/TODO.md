@@ -607,3 +607,38 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 | C（构建性能基线） | P1×3 | 3 | **C1 ✅ · C2 ✅ · C3 ✅（3/3 全闭环）** | C3（前端Vite基线）→ C1（5服务实测）→ C2（sccache采集脚本） |
 | D（第六轮审计探针设计） | P2×1 | 1 | **D1 ✅（1/1 全闭环）** | D1（入口：V71中段再启动） |
 | **合计** | **P0=4 · P1=6 · P2=1** | **11** | **11/11 完成（100%）· V71 全闭环** | **V71 全部闭环 ✅** |
+
+---
+
+## 🎯 V72.6 — P-04 审计探针修复：OpenAPI 方法不匹配清零（✅ 完成）
+
+> **来源**: V71 第六轮审计探针 P-04 执行结果 — 27 个方法不匹配（frontend HTTP method vs OpenAPI method）
+> **根因**: 后端 update/delete handler 缺少 `#[utoipa::path]` 注解 + 部分后端缺少 POST/PUT/DELETE handler
+> **修复策略**: ① 为已有 handler 补全 utoipa 注解 → 注册 ApiDoc paths ② 为缺失 handler 新增 stub/wrapper → 注册路由+注解 ③ 修复 aggregate.py operationId 去重 bug
+
+### 🔴 P-04 方法不匹配修复（27/27 → 0 ✅）
+
+| 服务 | 不匹配数 | 修复内容 | 状态 |
+|------|---------|----------|------|
+| **CRM** | 3 | customer: 补 update_customer(PUT)+delete_customer(DELETE) utoipa 注解 → 注册 CrmApiDoc paths · opportunity: 补 create_opportunity(POST) utoipa 注解 → 注册 paths | ✅ |
+| **HRM** | 4 | company: 补 update_company(PUT)+delete_company(DELETE) · department: 补 update_department(PUT)+delete_department(DELETE) → 注册 ApiDoc paths | ✅ |
+| **QMS** | 4 | quality_inspection: 补 update_inspection(PUT)+delete_inspection(DELETE) · quality_standard: 补 update_standard(PUT)+delete_standard(DELETE) → 注册 QmsApiDoc paths | ✅ |
+| **ERP** | 10 | inventory: 补 update_inventory(PUT)+delete_inventory(DELETE) · purchase_order: 补 update+delete+approve(POST→PUT 修正) · sales_order: 补 update+delete · asset: 补 update+delete · meeting_room: 补 update+delete → ErpApiDoc paths+schemas 注册 10 handler | ✅ |
+| **AI** | 2 | documents: 新增 create(POST)+update(PUT) handler+路由+utoipa 注解 → DocumentApi | ✅ |
+| **EHS** | 2 | hazardous_material: 新增 create_material_category(POST) handler · occupational_health: 新增 get_contraindication(GET) handler → EhsApiDoc paths 注册 | ✅ |
+| **Lowcode** | 1 | apps: 新增 create_app(POST) handler+路由+utoipa 注解 → LowcodeApiDoc paths | ✅ |
+| **Communication** | 5 | notification: 补 mark_as_read(PUT)+delete_notification(DELETE) utoipa 注解 · 新增 create_notification(POST) wrapper handler+路由 → CommunicationApiDoc paths 注册 | ✅ |
+| **aggregate.py** | — | 修复 operationId 去重 bug：重命名后的 new_oid 若已被占用则追加路径后缀，避免二次冲突（修复 ehs_list_plans/ehs_get_plan 重复 identifier） | ✅ |
+
+### 📊 V72.6 统计
+
+| 指标 | 修复前 | 修复后 |
+|------|--------|--------|
+| P-04 方法不匹配数 | 27 | **0** ✅ |
+| OpenAPI 聚合 paths (operations) | 710 | **739** (+29) |
+| OpenAPI 聚合 schemas | 405 | **417** (+12) |
+| openapi.gen.ts 大小 | 684 KB | **787 KB** |
+| shared-types TSC errors | 0 | **0** ✅ |
+| 修改后端服务数 | — | **9** (CRM/HRM/QMS/ERP/AI/EHS/Lowcode/Communication + aggregate.py) |
+| 新增 utoipa 注解 | — | **~25** (update/delete/create handlers) |
+| 新增 handler | — | **5** (AI create/update, EHS create/get, Lowcode create, Communication create) |

@@ -1,12 +1,13 @@
 #![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use std::collections::HashMap;
 use uuid::Uuid;
 
 use super::qa::QAService;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub enum AgentTool {
     Search,
     DocumentQA,
@@ -63,7 +64,7 @@ pub struct AgentState {
     pub current_iteration: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct AgentRequest {
     pub query: String,
     pub conversation_id: Option<String>,

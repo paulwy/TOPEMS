@@ -17,6 +17,7 @@ use topems_shared_core::response::ApiResponse;
 #[utoipa::path(
     post,
     path = "/api/ai/generate",
+    request_body = AIGenerateRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),
@@ -97,6 +98,7 @@ pub async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AI
 #[utoipa::path(
     post,
     path = "/api/ai/validate",
+    request_body = ValidateRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),
@@ -263,6 +265,7 @@ pub async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<Vali
 #[utoipa::path(
     post,
     path = "/api/ai/complete",
+    request_body = CompleteRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),
@@ -394,6 +397,7 @@ pub async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<Comp
 #[utoipa::path(
     post,
     path = "/api/ai/summarize",
+    request_body = SummarizeRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),
@@ -519,6 +523,7 @@ pub async fn list_templates() -> Json<ApiResponse<Vec<AITemplate>>> {
 #[utoipa::path(
     post,
     path = "/api/ai/chat",
+    request_body = ChatRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),
@@ -642,6 +647,7 @@ pub async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse
 #[utoipa::path(
     post,
     path = "/search",
+    request_body = AiSearchRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),
@@ -769,6 +775,7 @@ async fn call_ai_api(
 #[utoipa::path(
     post,
     path = "/api/ai/assistant/report",
+    request_body = ReportAssistantRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),
@@ -823,6 +830,7 @@ pub async fn report_assistant(
 #[utoipa::path(
     post,
     path = "/api/ai/assistant/flow",
+    request_body = FlowAssistantRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),
@@ -886,6 +894,7 @@ pub async fn flow_assistant(
 #[utoipa::path(
     post,
     path = "/api/ai/assistant/anomaly/predict",
+    request_body = AnomalyPredictRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),
@@ -934,6 +943,7 @@ pub async fn anomaly_predict(
 #[utoipa::path(
     post,
     path = "/api/ai/assistant/knowledge/ask",
+    request_body = KnowledgeAskRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),

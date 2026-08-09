@@ -3,7 +3,7 @@
   "info": {
     "title": "TOPEMS API",
     "version": "1.0.0",
-    "description": "TOPEMS 企业级 SaaS 平台统一 API 文档（由 aggregate.py 从 cargo test 提取的 spec 聚合生成）\n\n聚合自 30 个服务，共 710 个端点、405 个 Schema（含 206 个标准类型）。\n生成时间: 2026-08-09T21:51:30.340938+00:00"
+    "description": "TOPEMS 企业级 SaaS 平台统一 API 文档（由 aggregate.py 从 cargo test 提取的 spec 聚合生成）\n\n聚合自 30 个服务，共 739 个端点、417 个 Schema（含 206 个标准类型）。\n生成时间: 2026-08-09T22:16:44.734667+00:00"
   },
   "paths": {
     "/ai/": {
@@ -25,6 +25,16 @@
           "ai"
         ],
         "operationId": "agent_run",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.services.AgentRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -51,6 +61,16 @@
           "ai"
         ],
         "operationId": "_analysis_classify",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.ClassifyTextRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -64,6 +84,16 @@
           "ai"
         ],
         "operationId": "_analysis_entities",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.ExtractEntitiesRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -77,6 +107,16 @@
           "ai"
         ],
         "operationId": "_analysis_history",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.AnalysisHistoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -90,6 +130,16 @@
           "ai"
         ],
         "operationId": "_analysis_keywords",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.ExtractKeywordsRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -103,6 +153,16 @@
           "ai"
         ],
         "operationId": "_analysis_sentiment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.SentimentAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -116,6 +176,16 @@
           "ai"
         ],
         "operationId": "anomaly_predict",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnomalyPredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -129,6 +199,16 @@
           "ai"
         ],
         "operationId": "flow_assistant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlowAssistantRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -142,6 +222,16 @@
           "ai"
         ],
         "operationId": "knowledge_ask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeAskRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -155,6 +245,16 @@
           "ai"
         ],
         "operationId": "report_assistant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportAssistantRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -168,6 +268,16 @@
           "ai"
         ],
         "operationId": "chat",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -181,6 +291,16 @@
           "ai"
         ],
         "operationId": "_code_explain",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.code_assistant.CodeExplainRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -194,6 +314,16 @@
           "ai"
         ],
         "operationId": "_code_fix",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.code_assistant.CodeFixRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -207,6 +337,16 @@
           "ai"
         ],
         "operationId": "_code_generate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.code_assistant.CodeGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -220,6 +360,16 @@
           "ai"
         ],
         "operationId": "_code_optimize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.code_assistant.CodeOptimizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -233,6 +383,16 @@
           "ai"
         ],
         "operationId": "_code_review",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.code_assistant.CodeReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -246,6 +406,16 @@
           "ai"
         ],
         "operationId": "complete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -272,6 +442,16 @@
           "ai"
         ],
         "operationId": "create_connector",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConnectorRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -311,6 +491,16 @@
           "ai"
         ],
         "operationId": "query_data",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -337,6 +527,16 @@
           "ai"
         ],
         "operationId": "update_connector",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConnectorRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -355,6 +555,17 @@
             "description": "OK"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_create",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/ai/documents/qa": {
@@ -363,6 +574,16 @@
           "ai"
         ],
         "operationId": "_document_qa",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.DocumentQAQuestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -389,6 +610,16 @@
           "ai"
         ],
         "operationId": "_document_vectorize_from_file",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.VectorizeFromFileRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -402,6 +633,17 @@
           "ai"
         ],
         "operationId": "_document_get",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_update",
         "responses": {
           "200": {
             "description": "OK"
@@ -426,6 +668,16 @@
           "ai"
         ],
         "operationId": "_document_extract",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.ExtractDocumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -439,6 +691,16 @@
           "ai"
         ],
         "operationId": "_document_key_points",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.ExtractKeyPointsRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -452,6 +714,16 @@
           "ai"
         ],
         "operationId": "_document_process",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.ProcessDocumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -465,6 +737,16 @@
           "ai"
         ],
         "operationId": "_document_summarize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.SummarizeDocumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -478,6 +760,16 @@
           "ai"
         ],
         "operationId": "_embedding_generate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.embedding.EmbeddingRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -491,6 +783,16 @@
           "ai"
         ],
         "operationId": "generate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -504,6 +806,16 @@
           "ai"
         ],
         "operationId": "_multimodal_image_analyze",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.services.multimodal.ImageAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -517,6 +829,16 @@
           "ai"
         ],
         "operationId": "_multimodal_image_caption",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.services.multimodal.ImageAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -530,6 +852,16 @@
           "ai"
         ],
         "operationId": "_multimodal_image_describe",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.services.multimodal.ImageAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -543,6 +875,16 @@
           "ai"
         ],
         "operationId": "_multimodal_image_objects",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.services.multimodal.ImageAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -556,6 +898,16 @@
           "ai"
         ],
         "operationId": "_multimodal_image_text",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.services.multimodal.ImageAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -569,6 +921,16 @@
           "ai"
         ],
         "operationId": "_multimodal_video_analyze",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.services.multimodal.VideoAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -582,6 +944,16 @@
           "ai"
         ],
         "operationId": "_multimodal_video_summary",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.services.multimodal.VideoAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -595,6 +967,14 @@
           "ai"
         ],
         "operationId": "_profile_get",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -608,6 +988,14 @@
           "ai"
         ],
         "operationId": "_profile_update",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -621,6 +1009,16 @@
           "ai"
         ],
         "operationId": "_qa_ask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.AskRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -634,6 +1032,16 @@
           "ai"
         ],
         "operationId": "_qa_ask_conversation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.qa.AskWithConversationRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -647,6 +1055,16 @@
           "ai"
         ],
         "operationId": "_qa_ask_structured",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.qa.AskStructuredRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -660,6 +1078,16 @@
           "ai"
         ],
         "operationId": "_qa_ask_with_context",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.AskWithContextRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -673,6 +1101,16 @@
           "ai"
         ],
         "operationId": "_qa_classify",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.qa.ClassifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -686,6 +1124,16 @@
           "ai"
         ],
         "operationId": "_qa_feedback",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.FeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -712,6 +1160,16 @@
           "ai"
         ],
         "operationId": "_qa_batch_delete_history",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.qa.BatchDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -738,6 +1196,16 @@
           "ai"
         ],
         "operationId": "_recommend",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.services.recommendation.RecommendationRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -751,6 +1219,14 @@
           "ai"
         ],
         "operationId": "_recommend_documents",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -764,6 +1240,14 @@
           "ai"
         ],
         "operationId": "_recommend_knowledge",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -777,6 +1261,14 @@
           "ai"
         ],
         "operationId": "_recommend_opportunities",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -790,6 +1282,16 @@
           "ai"
         ],
         "operationId": "summarize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SummarizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -816,6 +1318,16 @@
           "ai"
         ],
         "operationId": "validate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -829,6 +1341,16 @@
           "ai"
         ],
         "operationId": "_vector_batch_store",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.BatchStoreVectorsRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -855,6 +1377,16 @@
           "ai"
         ],
         "operationId": "_vector_hybrid_search",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.HybridSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -868,6 +1400,16 @@
           "ai"
         ],
         "operationId": "_vector_search",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.VectorSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -894,6 +1436,16 @@
           "ai"
         ],
         "operationId": "_vector_store",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/crate.modules.models.StoreVectorRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -983,6 +1535,16 @@
           "ai"
         ],
         "operationId": "ai_search",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -1019,14 +1581,6 @@
         ],
         "summary": "Create analysis",
         "operationId": "create_analysis",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "Created successfully",
@@ -1050,17 +1604,6 @@
         ],
         "summary": "Get analysis",
         "operationId": "get_analysis",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Analysis ID",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/uuid.Uuid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1084,25 +1627,6 @@
         ],
         "summary": "Execute analysis",
         "operationId": "execute_analysis",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Analysis ID",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/uuid.Uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "Executed successfully",
@@ -1305,7 +1829,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportRequest"
+              }
             }
           },
           "required": true
@@ -1377,7 +1903,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReportRequest"
+              }
             }
           },
           "required": true
@@ -1458,7 +1986,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/CreateWidgetRequest"
+              }
             }
           },
           "required": true
@@ -1530,7 +2060,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWidgetRequest"
+              }
             }
           },
           "required": true
@@ -2038,6 +2570,35 @@
             "description": "Internal server error"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "communication",
+          "notification"
+        ],
+        "summary": "创建通知（兼容前端 POST /notification/notifications 路径）",
+        "operationId": "create_notification",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "通知创建成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
       }
     },
     "/communication/notification/notifications/{id}": {
@@ -2073,6 +2634,76 @@
           },
           "500": {
             "description": "Internal server error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "communication",
+          "notification"
+        ],
+        "summary": "标记单个通知为已读",
+        "operationId": "mark_as_read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "通知ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "标记成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "通知不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "communication",
+          "notification"
+        ],
+        "summary": "删除指定通知",
+        "operationId": "delete_notification",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "通知ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "通知不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
           }
         }
       }
@@ -2446,6 +3077,88 @@
             "description": "服务器内部错误"
           }
         }
+      },
+      "put": {
+        "tags": [
+          "crm",
+          "customer"
+        ],
+        "operationId": "update_customer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "客户ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "客户更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "客户不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "crm",
+          "customer"
+        ],
+        "operationId": "delete_customer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "客户ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "客户删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "客户不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
       }
     },
     "/crm/opportunities": {
@@ -2523,6 +3236,41 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "crm",
+          "opportunity"
+        ],
+        "operationId": "create_opportunity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOpportunityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "商机创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误"
           },
           "500": {
             "description": "服务器内部错误"
@@ -2897,7 +3645,7 @@
         "tags": [
           "ehs"
         ],
-        "operationId": "ehs_list_plans",
+        "operationId": "ehs_list_plans_api_ehs_emergency-plans",
         "responses": {
           "200": {
             "description": "OK"
@@ -2934,7 +3682,7 @@
         "tags": [
           "ehs"
         ],
-        "operationId": "ehs_get_plan",
+        "operationId": "ehs_get_plan_api_ehs_emergency-plans_{id}",
         "responses": {
           "200": {
             "description": "OK"
@@ -3428,6 +4176,25 @@
           "ehs"
         ],
         "operationId": "list_material_categories",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_material_category",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -4401,6 +5168,17 @@
       }
     },
     "/api/ehs/occupational-health/contraindications/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_contraindication",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
       "put": {
         "tags": [
           "ehs"
@@ -5082,6 +5860,88 @@
             "description": "服务器内部错误"
           }
         }
+      },
+      "put": {
+        "tags": [
+          "erp",
+          "Assets"
+        ],
+        "operationId": "update_asset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "资产ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "资产更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资产不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "erp",
+          "Assets"
+        ],
+        "operationId": "delete_asset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "资产ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "资产删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资产不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
       }
     },
     "/erp/customers": {
@@ -5128,7 +5988,7 @@
           "erp",
           "ERP/customer"
         ],
-        "operationId": "update_customer",
+        "operationId": "erp_update_customer",
         "responses": {
           "200": {
             "description": "update_customer OK"
@@ -5140,7 +6000,7 @@
           "erp",
           "ERP/customer"
         ],
-        "operationId": "delete_customer",
+        "operationId": "erp_delete_customer",
         "responses": {
           "200": {
             "description": "delete_customer OK"
@@ -5184,6 +6044,40 @@
         "responses": {
           "200": {
             "description": "get_inventory OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "erp",
+          "ERP/inventory"
+        ],
+        "operationId": "update_inventory",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInventoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "update_inventory OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "erp",
+          "ERP/inventory"
+        ],
+        "operationId": "delete_inventory",
+        "responses": {
+          "200": {
+            "description": "delete_inventory OK"
           }
         }
       }
@@ -5252,6 +6146,30 @@
             "description": "get_room OK"
           }
         }
+      },
+      "put": {
+        "tags": [
+          "erp",
+          "ERP/meeting-room"
+        ],
+        "operationId": "update_room",
+        "responses": {
+          "200": {
+            "description": "update_room OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "erp",
+          "ERP/meeting-room"
+        ],
+        "operationId": "delete_room",
+        "responses": {
+          "200": {
+            "description": "delete_room OK"
+          }
+        }
       }
     },
     "/erp/purchase-orders": {
@@ -5292,10 +6210,44 @@
             "description": "get_purchase_order OK"
           }
         }
+      },
+      "put": {
+        "tags": [
+          "erp",
+          "ERP/purchase-order"
+        ],
+        "operationId": "update_purchase_order",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePurchaseOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "update_purchase_order OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "erp",
+          "ERP/purchase-order"
+        ],
+        "operationId": "delete_purchase_order",
+        "responses": {
+          "200": {
+            "description": "delete_purchase_order OK"
+          }
+        }
       }
     },
     "/erp/purchase-orders/{id}/approve": {
-      "post": {
+      "put": {
         "tags": [
           "erp",
           "ERP/purchase-order"
@@ -5344,6 +6296,40 @@
         "responses": {
           "200": {
             "description": "get_sales_order OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "erp",
+          "ERP/sales-order"
+        ],
+        "operationId": "update_sales_order",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSalesOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "update_sales_order OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "erp",
+          "ERP/sales-order"
+        ],
+        "operationId": "delete_sales_order",
+        "responses": {
+          "200": {
+            "description": "delete_sales_order OK"
           }
         }
       }
@@ -6199,7 +7185,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/CreateLocation"
+              }
             }
           },
           "required": true
@@ -6290,7 +7278,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/CreateMap"
+              }
             }
           },
           "required": true
@@ -6367,7 +7357,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMap"
+              }
             }
           },
           "required": true
@@ -6563,6 +7555,88 @@
             "description": "服务器内部错误"
           }
         }
+      },
+      "put": {
+        "tags": [
+          "hrm",
+          "companies"
+        ],
+        "operationId": "update_company",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "公司ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "公司更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "公司不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "hrm",
+          "companies"
+        ],
+        "operationId": "delete_company",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "公司ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "公司删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "公司不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
       }
     },
     "/hrm/departments": {
@@ -6700,6 +7774,88 @@
         "responses": {
           "200": {
             "description": "部门详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "部门不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "hrm",
+          "departments"
+        ],
+        "operationId": "update_department",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "部门ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDepartmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "部门更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "部门不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "hrm",
+          "departments"
+        ],
+        "operationId": "delete_department",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "部门ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "部门删除成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -7890,6 +9046,18 @@
           "crate"
         ],
         "operationId": "list_apps",
+        "responses": {
+          "501": {
+            "description": "低代码后端待立项"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "lowcode",
+          "crate"
+        ],
+        "operationId": "create_app",
         "responses": {
           "501": {
             "description": "低代码后端待立项"
@@ -12022,6 +13190,88 @@
             "description": "服务器内部错误"
           }
         }
+      },
+      "put": {
+        "tags": [
+          "qms",
+          "quality_inspection"
+        ],
+        "operationId": "update_inspection",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "检验ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInspectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "质量检查更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "无效的检查ID"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "qms",
+          "quality_inspection"
+        ],
+        "operationId": "delete_inspection",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "检验ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "质量检查删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "无效的检查ID"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
       }
     },
     "/api/qms/issues": {
@@ -12255,6 +13505,88 @@
         "responses": {
           "200": {
             "description": "质量标准详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "无效的标准ID"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "qms",
+          "quality_standard"
+        ],
+        "operationId": "update_standard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "标准ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStandardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "质量标准更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "无效的标准ID"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "qms",
+          "quality_standard"
+        ],
+        "operationId": "delete_standard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "标准ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "质量标准删除成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -13352,9 +14684,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
+              "schema": {}
             }
           },
           "required": true
@@ -13386,9 +14716,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
+              "schema": {}
             }
           },
           "required": true
@@ -13459,9 +14787,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateUserRequest"
-              }
+              "schema": {}
             }
           },
           "required": true
@@ -13526,7 +14852,7 @@
           "wms",
           "WMS/inventory"
         ],
-        "operationId": "update_inventory",
+        "operationId": "wms_update_inventory",
         "responses": {
           "200": {
             "description": "update_inventory OK"
@@ -13538,7 +14864,7 @@
           "wms",
           "WMS/inventory"
         ],
-        "operationId": "delete_inventory",
+        "operationId": "wms_delete_inventory",
         "responses": {
           "200": {
             "description": "delete_inventory OK"
@@ -13639,6 +14965,82 @@
           }
         }
       },
+      "CreateReportRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "datasource_id",
+          "fields",
+          "owner_id"
+        ],
+        "properties": {
+          "config": {
+            "nullable": true
+          },
+          "datasource_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "fields": {},
+          "filters": {
+            "nullable": true
+          },
+          "is_public": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner_id": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateWidgetRequest": {
+        "type": "object",
+        "required": [
+          "dashboard_id",
+          "name",
+          "widget_type"
+        ],
+        "properties": {
+          "cache_ttl_seconds": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "config": {
+            "nullable": true
+          },
+          "dashboard_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "datasource_id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ],
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "nullable": true
+          },
+          "query_config": {
+            "nullable": true
+          },
+          "widget_type": {
+            "type": "string"
+          }
+        }
+      },
       "UpdateDashboardRequest": {
         "type": "object",
         "properties": {
@@ -13654,6 +15056,75 @@
             "nullable": true
           },
           "name": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateReportRequest": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "nullable": true
+          },
+          "datasource_id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ],
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "fields": {
+            "nullable": true
+          },
+          "filters": {
+            "nullable": true
+          },
+          "is_public": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateWidgetRequest": {
+        "type": "object",
+        "properties": {
+          "cache_ttl_seconds": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "config": {
+            "nullable": true
+          },
+          "datasource_id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ],
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "position": {
+            "nullable": true
+          },
+          "query_config": {
+            "nullable": true
+          },
+          "widget_type": {
             "type": "string",
             "nullable": true
           }
@@ -15150,6 +16621,109 @@
           }
         }
       },
+      "CreatePurchaseOrderRequest": {
+        "type": "object",
+        "required": [
+          "supplier_id",
+          "order_date",
+          "items"
+        ],
+        "properties": {
+          "delivery_date": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "nullable": true
+          },
+          "discount_rate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderItem"
+            }
+          },
+          "order_date": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "remark": {
+            "type": "string",
+            "nullable": true
+          },
+          "supplier_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "tax_rate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "CreateSalesOrderRequest": {
+        "type": "object",
+        "required": [
+          "order_no",
+          "customer_id"
+        ],
+        "properties": {
+          "customer_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "delivery_date": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "nullable": true
+          },
+          "discount_amount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "order_date": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "nullable": true
+          },
+          "order_no": {
+            "type": "string"
+          },
+          "payable_amount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "remark": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "tax_amount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_amount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
       "CreateSupplierRequest": {
         "type": "object",
         "required": [
@@ -15958,6 +17532,119 @@
           },
           "status": {
             "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateInventoryRequest": {
+        "type": "object",
+        "properties": {
+          "batch_no": {
+            "type": "string",
+            "nullable": true
+          },
+          "expire_date": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "nullable": true
+          },
+          "location_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit_price": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "warehouse_id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "UpdatePurchaseOrderRequest": {
+        "type": "object",
+        "properties": {
+          "delivery_date": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "nullable": true
+          },
+          "remark": {
+            "type": "string",
+            "nullable": true
+          },
+          "supplier_name": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateSalesOrderRequest": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ],
+            "nullable": true
+          },
+          "delivery_date": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "nullable": true
+          },
+          "discount_amount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "payable_amount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "remark": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "tax_amount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "total_amount": {
+            "type": "number",
+            "format": "double",
             "nullable": true
           }
         }
@@ -17577,6 +19264,76 @@
           }
         }
       },
+      "CreateLocation": {
+        "type": "object",
+        "required": [
+          "name",
+          "location_type",
+          "position"
+        ],
+        "properties": {
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "location_type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {},
+          "properties": {
+            "nullable": true
+          }
+        }
+      },
+      "CreateMap": {
+        "type": "object",
+        "required": [
+          "name",
+          "code",
+          "map_type"
+        ],
+        "properties": {
+          "bounds": {
+            "nullable": true
+          },
+          "center": {
+            "nullable": true
+          },
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "map_type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "projection": {
+            "type": "string",
+            "nullable": true
+          },
+          "zoom_level": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
       "CreateTrackRequest": {
         "type": "object",
         "required": [
@@ -18189,6 +19946,44 @@
           "total_duration": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "UpdateMap": {
+        "type": "object",
+        "required": [
+          "name",
+          "map_type"
+        ],
+        "properties": {
+          "bounds": {
+            "nullable": true
+          },
+          "center": {
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "map_type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "projection": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "zoom_level": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         }
       },

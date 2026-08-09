@@ -8,10 +8,11 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateReportRequest {
     pub name: String,
     pub description: Option<String>,
@@ -23,7 +24,7 @@ pub struct CreateReportRequest {
     pub is_public: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateReportRequest {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -132,7 +133,7 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
     post,
     path = "/report",
     tag = "Report",
-    request_body = serde_json::Value,
+    request_body = CreateReportRequest,
     responses(
         (status = 201, description = "Report created", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -264,7 +265,7 @@ pub async fn get_report(
     params(
         ("id" = uuid::Uuid, Path, description = "Report ID")
     ),
-    request_body = serde_json::Value,
+    request_body = UpdateReportRequest,
     responses(
         (status = 200, description = "Report updated", body = serde_json::Value),
         (status = 500, description = "Internal server error")

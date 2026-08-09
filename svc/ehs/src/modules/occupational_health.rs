@@ -55,7 +55,9 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/occupational-health/contraindications/{id}",
-            put(update_contraindication).delete(delete_contraindication),
+            get(get_contraindication)
+                .put(update_contraindication)
+                .delete(delete_contraindication),
         )
         .route(
             "/occupational-health/abnormalities",
@@ -770,6 +772,45 @@ pub async fn create_contraindication(
             tenant_id,
         },
         "职业禁忌症创建成功",
+    ))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-health/contraindications/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_contraindication(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<Contraindication>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    tracing::debug!("Getting contraindication: {}", id);
+    Json(ApiResponse::success(
+        Contraindication {
+            id,
+            employee_id: "EMP001".to_string(),
+            employee_name: "张三".to_string(),
+            department: Some("生产部".to_string()),
+            position: Some("操作工".to_string()),
+            contraindication_type: "hearing".to_string(),
+            description: Some("听力下降".to_string()),
+            diagnosed_at: Some("2024-01-15".to_string()),
+            hospital: Some("市职业病防治院".to_string()),
+            status: "active".to_string(),
+            work_restriction: Some("避免噪声环境".to_string()),
+            advised_position: Some("调离噪声作业岗位".to_string()),
+            follow_up_date: Some("2024-07-15".to_string()),
+            remarks: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
+        },
+        "获取职业禁忌症详情成功",
     ))
 }
 

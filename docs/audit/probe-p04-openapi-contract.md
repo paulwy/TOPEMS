@@ -6,19 +6,19 @@
 
 | 指标 | 数值 |
 |------|------|
-| OpenAPI 端点总数 (method+path) | 638 |
-| 前端 API 调用总数 (去重前) | 2797 |
-| 前端唯一路径数 | 1964 |
-| 已匹配端点数 | 225 |
-| 未使用后端 API (OpenAPI 有/前端无) | 413 |
-| 未文档化前端 API (前端有/OpenAPI 无) | 2533 |
-| 方法不匹配数 | 27 |
-| **总不匹配数** | **2560** |
+| OpenAPI 端点总数 (method+path) | 739 |
+| 前端 API 调用总数 (去重前) | 2875 |
+| 前端唯一路径数 | 1965 |
+| 已匹配端点数 | 268 |
+| 未使用后端 API (OpenAPI 有/前端无) | 471 |
+| 未文档化前端 API (前端有/OpenAPI 无) | 2559 |
+| 方法不匹配数 | 0 |
+| **总不匹配数** | **2559** |
 | CI 严重度 | RED (mismatch >= 5) |
 
 ## 1. 未使用后端 API（OpenAPI 有定义，前端未调用）
 
-共 413 个端点：
+共 471 个端点：
 
 | # | operationId | 方法 | 路径 | Tag | 备注 |
 |---|-------------|------|------|-----|------|
@@ -36,409 +36,467 @@
 | 12 | query_data | POST | `/api/ai/connectors/query` | ai |  |
 | 13 | test_connector | GET | `/api/ai/connectors/test` | ai |  |
 | 14 | update_connector | POST | `/api/ai/connectors/update` | ai |  |
-| 15 | _document_list | GET | `/api/ai/documents` | ai | path exists in frontend but method not called |
-| 16 | _document_upload | POST | `/api/ai/documents/upload` | ai |  |
-| 17 | _document_vectorize_from_file | POST | `/api/ai/documents/vectorize-from-file` | ai |  |
-| 18 | _document_process | POST | `/api/ai/documents/{id}/process` | ai |  |
-| 19 | _embedding_generate | POST | `/api/ai/embedding/generate` | ai |  |
-| 20 | generate | POST | `/api/ai/generate` | ai |  |
-| 21 | _multimodal_image_analyze | POST | `/api/ai/multimodal/image/analyze` | ai |  |
-| 22 | _multimodal_image_caption | POST | `/api/ai/multimodal/image/caption` | ai |  |
-| 23 | _multimodal_image_describe | POST | `/api/ai/multimodal/image/describe` | ai |  |
-| 24 | _multimodal_image_objects | POST | `/api/ai/multimodal/image/objects` | ai |  |
-| 25 | _multimodal_image_text | POST | `/api/ai/multimodal/image/text` | ai |  |
-| 26 | _multimodal_video_analyze | POST | `/api/ai/multimodal/video/analyze` | ai |  |
-| 27 | _multimodal_video_summary | POST | `/api/ai/multimodal/video/summary` | ai |  |
-| 28 | _profile_get | POST | `/api/ai/profile/get` | ai |  |
-| 29 | _profile_update | POST | `/api/ai/profile/update` | ai |  |
-| 30 | _qa_history | GET | `/api/ai/qa/history` | ai |  |
-| 31 | _recommend | POST | `/api/ai/recommend` | ai |  |
-| 32 | _recommend_documents | POST | `/api/ai/recommend/documents` | ai |  |
-| 33 | _recommend_knowledge | POST | `/api/ai/recommend/knowledge` | ai |  |
-| 34 | _recommend_opportunities | POST | `/api/ai/recommend/opportunities` | ai |  |
-| 35 | summarize | POST | `/api/ai/summarize` | ai |  |
-| 36 | list_templates | GET | `/api/ai/templates` | ai |  |
-| 37 | validate | POST | `/api/ai/validate` | ai |  |
-| 38 | _vector_batch_store | POST | `/api/ai/vectors/batch-store` | ai |  |
-| 39 | _vector_clear | POST | `/api/ai/vectors/clear` | ai |  |
-| 40 | _vector_hybrid_search | POST | `/api/ai/vectors/hybrid-search` | ai |  |
-| 41 | _vector_search | POST | `/api/ai/vectors/search` | ai |  |
-| 42 | _vector_stats | GET | `/api/ai/vectors/stats` | ai |  |
-| 43 | _vector_store | POST | `/api/ai/vectors/store` | ai |  |
-| 44 | _vector_get | GET | `/api/ai/vectors/{id}` | ai |  |
-| 45 | _vector_delete | DELETE | `/api/ai/vectors/{id}` | ai |  |
-| 46 | plugin_health_check | GET | `/api/plugins/health` | ai |  |
-| 47 | get_plugin_info | GET | `/api/plugins/info` | ai |  |
-| 48 | health_check_detailed | GET | `/api/ai/health/detailed` | ai |  |
-| 49 | ai_search | POST | `/api/ai/search` | ai |  |
-| 50 | list_analyses | GET | `/api/bi/analysis` | analytics |  |
-| 51 | create_analysis | POST | `/api/bi/analysis` | analytics |  |
-| 52 | get_analysis | GET | `/api/bi/analysis/{id}` | analytics |  |
-| 53 | execute_analysis | POST | `/api/bi/analysis/{id}/execute` | analytics |  |
-| 54 | list_dashboards | GET | `/api/analytics/dashboard` | analytics |  |
-| 55 | create_dashboard | POST | `/api/analytics/dashboard` | analytics |  |
-| 56 | get_dashboard | GET | `/api/analytics/dashboard/{id}` | analytics |  |
-| 57 | update_dashboard | PUT | `/api/analytics/dashboard/{id}` | analytics |  |
-| 58 | delete_dashboard | DELETE | `/api/analytics/dashboard/{id}` | analytics |  |
-| 59 | list_reports | GET | `/api/analytics/report` | analytics |  |
-| 60 | create_report | POST | `/api/analytics/report` | analytics |  |
-| 61 | get_report | GET | `/api/analytics/report/{id}` | analytics |  |
-| 62 | update_report | PUT | `/api/analytics/report/{id}` | analytics |  |
-| 63 | delete_report | DELETE | `/api/analytics/report/{id}` | analytics |  |
-| 64 | list_widgets | GET | `/api/analytics/widget` | analytics |  |
-| 65 | create_widget | POST | `/api/analytics/widget` | analytics |  |
-| 66 | get_widget | GET | `/api/analytics/widget/{id}` | analytics |  |
-| 67 | update_widget | PUT | `/api/analytics/widget/{id}` | analytics |  |
-| 68 | delete_widget | DELETE | `/api/analytics/widget/{id}` | analytics |  |
-| 69 | _home | GET | `/api/ehs` | ehs |  |
-| 70 | list_plans | GET | `/api/ehs/checks/plans` | ehs | path exists in frontend but method not called |
-| 71 | list_plan_items | GET | `/api/ehs/checks/plans/{plan_id}/items` | ehs |  |
-| 72 | create_plan_item | POST | `/api/ehs/checks/plans/{plan_id}/items` | ehs |  |
-| 73 | delete_plan_item | DELETE | `/api/ehs/checks/plans/{plan_id}/items/{item_id}` | ehs |  |
-| 74 | list_records | GET | `/api/ehs/checks/records` | ehs | path exists in frontend but method not called |
-| 75 | list_drill_plans | GET | `/api/ehs/drills/plans` | ehs |  |
-| 76 | create_drill_plan | POST | `/api/ehs/drills/plans` | ehs |  |
-| 77 | get_drill_plan | GET | `/api/ehs/drills/plans/{id}` | ehs |  |
-| 78 | update_drill_plan | PUT | `/api/ehs/drills/plans/{id}` | ehs |  |
-| 79 | delete_drill_plan | DELETE | `/api/ehs/drills/plans/{id}` | ehs |  |
-| 80 | list_drill_records | GET | `/api/ehs/drills/records` | ehs |  |
-| 81 | create_drill_record | POST | `/api/ehs/drills/records` | ehs |  |
-| 82 | get_drill_record | GET | `/api/ehs/drills/records/{id}` | ehs |  |
-| 83 | update_drill_record | PUT | `/api/ehs/drills/records/{id}` | ehs |  |
-| 84 | delete_drill_record | DELETE | `/api/ehs/drills/records/{id}` | ehs |  |
-| 85 | create_drill_evaluation | POST | `/api/ehs/drills/records/{id}/evaluation` | ehs |  |
-| 86 | list_drill_problems | GET | `/api/ehs/drills/records/{id}/problems` | ehs |  |
-| 87 | create_drill_problem | POST | `/api/ehs/drills/records/{id}/problems` | ehs |  |
-| 88 | update_drill_problem | PUT | `/api/ehs/drills/records/{id}/problems/{problem_id}` | ehs |  |
-| 89 | get_drill_statistics | GET | `/api/ehs/drills/statistics` | ehs |  |
-| 90 | list_drill_types | GET | `/api/ehs/drills/types` | ehs |  |
-| 91 | ehs_list_plans_api_ehs_emergency-plans | GET | `/api/ehs/emergency-plans` | ehs |  |
-| 92 | ehs_create_plan_api_ehs_emergency-plans | POST | `/api/ehs/emergency-plans` | ehs |  |
-| 93 | list_plan_categories | GET | `/api/ehs/emergency-plans/categories` | ehs |  |
-| 94 | ehs_get_plan_api_ehs_emergency-plans_{id} | GET | `/api/ehs/emergency-plans/{id}` | ehs |  |
-| 95 | ehs_update_plan_api_ehs_emergency-plans_{id} | PUT | `/api/ehs/emergency-plans/{id}` | ehs |  |
-| 96 | ehs_delete_plan_api_ehs_emergency-plans_{id} | DELETE | `/api/ehs/emergency-plans/{id}` | ehs |  |
-| 97 | approve_plan | POST | `/api/ehs/emergency-plans/{id}/approve` | ehs |  |
-| 98 | submit_plan_approval | POST | `/api/ehs/emergency-plans/{id}/submit-approval` | ehs |  |
-| 99 | list_plan_supplies | GET | `/api/ehs/emergency-plans/{id}/supplies` | ehs |  |
-| 100 | add_plan_supply | POST | `/api/ehs/emergency-plans/{id}/supplies` | ehs |  |
-| 101 | delete_plan_supply | DELETE | `/api/ehs/emergency-plans/{id}/supplies/{supply_id}` | ehs |  |
-| 102 | list_plan_versions | GET | `/api/ehs/emergency-plans/{id}/versions` | ehs |  |
-| 103 | create_new_version | POST | `/api/ehs/emergency-plans/{id}/versions` | ehs |  |
-| 104 | ehs_list_records_api_ehs_environment_records | GET | `/api/ehs/environment/records` | ehs | path exists in frontend but method not called |
-| 105 | list_evaluations | GET | `/api/ehs/environmental-compliance/evaluations` | ehs |  |
-| 106 | create_evaluation | POST | `/api/ehs/environmental-compliance/evaluations` | ehs |  |
-| 107 | get_evaluation | GET | `/api/ehs/environmental-compliance/evaluations/{id}` | ehs |  |
-| 108 | update_evaluation | PUT | `/api/ehs/environmental-compliance/evaluations/{id}` | ehs |  |
-| 109 | delete_evaluation | DELETE | `/api/ehs/environmental-compliance/evaluations/{id}` | ehs |  |
-| 110 | list_incidents | GET | `/api/ehs/environmental-compliance/incidents` | ehs |  |
-| 111 | create_incident | POST | `/api/ehs/environmental-compliance/incidents` | ehs |  |
-| 112 | get_incident | GET | `/api/ehs/environmental-compliance/incidents/{id}` | ehs |  |
-| 113 | update_incident | PUT | `/api/ehs/environmental-compliance/incidents/{id}` | ehs |  |
-| 114 | delete_incident | DELETE | `/api/ehs/environmental-compliance/incidents/{id}` | ehs |  |
-| 115 | list_monitor_records | GET | `/api/ehs/environmental-compliance/monitoring` | ehs |  |
-| 116 | create_monitor_record | POST | `/api/ehs/environmental-compliance/monitoring` | ehs |  |
-| 117 | list_monitor_types | GET | `/api/ehs/environmental-compliance/monitoring/types` | ehs |  |
-| 118 | get_monitor_record | GET | `/api/ehs/environmental-compliance/monitoring/{id}` | ehs |  |
-| 119 | delete_monitor_record | DELETE | `/api/ehs/environmental-compliance/monitoring/{id}` | ehs |  |
-| 120 | list_permits | GET | `/api/ehs/environmental-compliance/permits` | ehs | path exists in frontend but method not called |
-| 121 | list_regulations | GET | `/api/ehs/environmental-compliance/regulations` | ehs | path exists in frontend but method not called |
-| 122 | list_regulation_categories | GET | `/api/ehs/environmental-compliance/regulations/categories` | ehs |  |
-| 123 | get_compliance_statistics | GET | `/api/ehs/environmental-compliance/statistics` | ehs |  |
-| 124 | list_materials | GET | `/api/ehs/hazardous-materials` | ehs | path exists in frontend but method not called |
-| 125 | get_material_statistics | GET | `/api/ehs/hazardous-materials/statistics` | ehs |  |
-| 126 | list_stock_records | GET | `/api/ehs/hazardous-materials/stock-records` | ehs |  |
-| 127 | create_stock_in | POST | `/api/ehs/hazardous-materials/stock-records/stock-in` | ehs |  |
-| 128 | create_stock_out | POST | `/api/ehs/hazardous-materials/stock-records/stock-out` | ehs |  |
-| 129 | get_stock_record | GET | `/api/ehs/hazardous-materials/stock-records/{id}` | ehs |  |
-| 130 | get_material_msds | GET | `/api/ehs/hazardous-materials/{id}/msds` | ehs |  |
-| 131 | update_material_msds | PUT | `/api/ehs/hazardous-materials/{id}/msds` | ehs |  |
-| 132 | list_material_stocks | GET | `/api/ehs/hazardous-materials/{id}/stocks` | ehs |  |
-| 133 | list_risks | GET | `/api/ehs/hazards` | ehs | path exists in frontend but method not called |
-| 134 | assess_risk | POST | `/api/ehs/hazards/{id}/assessments` | ehs |  |
-| 135 | list_control_measures | GET | `/api/ehs/hazards/{id}/controls` | ehs |  |
-| 136 | create_control_measure | POST | `/api/ehs/hazards/{id}/controls` | ehs |  |
-| 137 | update_control_measure | PUT | `/api/ehs/hazards/{id}/controls/{measure_id}` | ehs |  |
-| 138 | delete_control_measure | DELETE | `/api/ehs/hazards/{id}/controls/{measure_id}` | ehs |  |
-| 139 | ehs_create_record_api_ehs_health | POST | `/api/ehs/health` | ehs | path exists in frontend but method not called |
-| 140 | list_accidents | GET | `/api/ehs/incidents` | ehs | path exists in frontend but method not called |
-| 141 | start_investigation | POST | `/api/ehs/incidents/{id}/investigation` | ehs |  |
-| 142 | update_investigation | PUT | `/api/ehs/incidents/{id}/investigation` | ehs |  |
-| 143 | complete_investigation | POST | `/api/ehs/incidents/{id}/investigation/complete` | ehs |  |
-| 144 | create_review | POST | `/api/ehs/incidents/{id}/review` | ehs |  |
-| 145 | create_treatment | POST | `/api/ehs/incidents/{id}/treatment` | ehs |  |
-| 146 | update_treatment_action | PUT | `/api/ehs/incidents/{id}/treatment/actions/{action_id}` | ehs |  |
-| 147 | complete_treatment | POST | `/api/ehs/incidents/{id}/treatment/complete` | ehs |  |
-| 148 | list_hazards | GET | `/api/ehs/issues` | ehs | path exists in frontend but method not called |
-| 149 | approve_hazard | POST | `/api/ehs/issues/{id}/approval/approve` | ehs |  |
-| 150 | reject_hazard | POST | `/api/ehs/issues/{id}/approval/reject` | ehs |  |
-| 151 | start_hazard_approval | POST | `/api/ehs/issues/{id}/approval/start` | ehs |  |
-| 152 | start_rectification | POST | `/api/ehs/issues/{id}/rectification` | ehs |  |
-| 153 | update_rectification | PUT | `/api/ehs/issues/{id}/rectification` | ehs |  |
-| 154 | submit_rectification | POST | `/api/ehs/issues/{id}/rectification/submit` | ehs |  |
-| 155 | verify_hazard | POST | `/api/ehs/issues/{id}/verification` | ehs |  |
-| 156 | list_disease_cases | GET | `/api/ehs/occupational-disease/cases` | ehs |  |
-| 157 | create_disease_case | POST | `/api/ehs/occupational-disease/cases` | ehs |  |
-| 158 | get_disease_case | GET | `/api/ehs/occupational-disease/cases/{id}` | ehs |  |
-| 159 | update_disease_case | PUT | `/api/ehs/occupational-disease/cases/{id}` | ehs |  |
-| 160 | delete_disease_case | DELETE | `/api/ehs/occupational-disease/cases/{id}` | ehs |  |
-| 161 | list_detection_records | GET | `/api/ehs/occupational-disease/detections` | ehs |  |
-| 162 | create_detection_record | POST | `/api/ehs/occupational-disease/detections` | ehs |  |
-| 163 | get_detection_record | GET | `/api/ehs/occupational-disease/detections/{id}` | ehs |  |
-| 164 | delete_detection_record | DELETE | `/api/ehs/occupational-disease/detections/{id}` | ehs |  |
-| 165 | list_factor_types | GET | `/api/ehs/occupational-disease/factor-types` | ehs |  |
-| 166 | list_hazard_factors | GET | `/api/ehs/occupational-disease/factors` | ehs |  |
-| 167 | create_hazard_factor | POST | `/api/ehs/occupational-disease/factors` | ehs |  |
-| 168 | get_hazard_factor | GET | `/api/ehs/occupational-disease/factors/{id}` | ehs |  |
-| 169 | update_hazard_factor | PUT | `/api/ehs/occupational-disease/factors/{id}` | ehs |  |
-| 170 | delete_hazard_factor | DELETE | `/api/ehs/occupational-disease/factors/{id}` | ehs |  |
-| 171 | list_protection_measures | GET | `/api/ehs/occupational-disease/protection-measures` | ehs |  |
-| 172 | create_protection_measure | POST | `/api/ehs/occupational-disease/protection-measures` | ehs |  |
-| 173 | get_protection_measure | GET | `/api/ehs/occupational-disease/protection-measures/{id}` | ehs |  |
-| 174 | update_protection_measure | PUT | `/api/ehs/occupational-disease/protection-measures/{id}` | ehs |  |
-| 175 | delete_protection_measure | DELETE | `/api/ehs/occupational-disease/protection-measures/{id}` | ehs |  |
-| 176 | get_disease_statistics | GET | `/api/ehs/occupational-disease/statistics` | ehs |  |
-| 177 | list_health_trainings | GET | `/api/ehs/occupational-disease/trainings` | ehs |  |
-| 178 | create_health_training | POST | `/api/ehs/occupational-disease/trainings` | ehs |  |
-| 179 | get_health_training | GET | `/api/ehs/occupational-disease/trainings/{id}` | ehs |  |
-| 180 | delete_health_training | DELETE | `/api/ehs/occupational-disease/trainings/{id}` | ehs |  |
-| 181 | list_abnormalities | GET | `/api/ehs/occupational-health/abnormalities` | ehs |  |
-| 182 | update_abnormality | PUT | `/api/ehs/occupational-health/abnormalities/{id}` | ehs |  |
-| 183 | get_health_archive | GET | `/api/ehs/occupational-health/archives/{employee_id}` | ehs |  |
-| 184 | list_contraindications | GET | `/api/ehs/occupational-health/contraindications` | ehs | path exists in frontend but method not called |
-| 185 | list_exam_plans | GET | `/api/ehs/occupational-health/exam-plans` | ehs |  |
-| 186 | create_exam_plan | POST | `/api/ehs/occupational-health/exam-plans` | ehs |  |
-| 187 | get_exam_plan | GET | `/api/ehs/occupational-health/exam-plans/{id}` | ehs |  |
-| 188 | update_exam_plan | PUT | `/api/ehs/occupational-health/exam-plans/{id}` | ehs |  |
-| 189 | delete_exam_plan | DELETE | `/api/ehs/occupational-health/exam-plans/{id}` | ehs |  |
-| 190 | list_exam_records | GET | `/api/ehs/occupational-health/exam-records` | ehs |  |
-| 191 | create_exam_record | POST | `/api/ehs/occupational-health/exam-records` | ehs |  |
-| 192 | get_exam_record | GET | `/api/ehs/occupational-health/exam-records/{id}` | ehs |  |
-| 193 | update_exam_record | PUT | `/api/ehs/occupational-health/exam-records/{id}` | ehs |  |
-| 194 | delete_exam_record | DELETE | `/api/ehs/occupational-health/exam-records/{id}` | ehs |  |
-| 195 | list_exam_types | GET | `/api/ehs/occupational-health/exam-types` | ehs |  |
-| 196 | get_health_statistics | GET | `/api/ehs/occupational-health/statistics` | ehs |  |
-| 197 | list_sync_records | GET | `/api/ehs/sync-records` | ehs |  |
-| 198 | delete_sync_record | DELETE | `/api/ehs/sync-records/{id}` | ehs | path exists in frontend but method not called |
-| 199 | retry_sync | POST | `/api/ehs/sync-records/{id}/retry` | ehs |  |
-| 200 | sync_accident_to_lims | POST | `/api/ehs/sync/accident-to-lims` | ehs |  |
-| 201 | update_sync_configs | PUT | `/api/ehs/sync/configs` | ehs | path exists in frontend but method not called |
-| 202 | sync_hazard_to_qms | POST | `/api/ehs/sync/hazard-to-qms` | ehs |  |
-| 203 | list_trainings | GET | `/api/ehs/training` | ehs |  |
-| 204 | create_training | POST | `/api/ehs/training` | ehs |  |
-| 205 | list_certificates | GET | `/api/ehs/training/certificates` | ehs | path exists in frontend but method not called |
-| 206 | list_training_plans | GET | `/api/ehs/training/plans` | ehs | path exists in frontend but method not called |
-| 207 | list_training_records | GET | `/api/ehs/training/records` | ehs | path exists in frontend but method not called |
-| 208 | get_training | GET | `/api/ehs/training/{id}` | ehs |  |
-| 209 | update_training | PUT | `/api/ehs/training/{id}` | ehs |  |
-| 210 | delete_training | DELETE | `/api/ehs/training/{id}` | ehs |  |
-| 211 | _detailed_health | GET | `/api/health/detailed` | ehs |  |
-| 212 | list_assets | GET | `/api/erp/assets` | erp | path exists in frontend but method not called |
-| 213 | erp_list_customers | GET | `/api/erp/customers` | erp | path exists in frontend but method not called |
-| 214 | list_inventory | GET | `/api/erp/inventory` | erp | path exists in frontend but method not called |
-| 215 | list_rooms | GET | `/api/erp/meeting-rooms` | erp | path exists in frontend but method not called |
-| 216 | list_bookings | GET | `/api/erp/meeting-rooms/bookings` | erp |  |
-| 217 | create_booking | POST | `/api/erp/meeting-rooms/bookings` | erp |  |
-| 218 | list_purchase_orders | GET | `/api/erp/purchase-orders` | erp | path exists in frontend but method not called |
-| 219 | approve_purchase_order | POST | `/api/erp/purchase-orders/{id}/approve` | erp | path exists in frontend but method not called |
-| 220 | list_sales_orders | GET | `/api/erp/sales-orders` | erp | path exists in frontend but method not called |
-| 221 | list_suppliers | GET | `/api/erp/suppliers` | erp | path exists in frontend but method not called |
-| 222 | erp_list_materials | GET | `/api/erp/materials` | erp | path exists in frontend but method not called |
-| 223 | list_feedbacks | GET | `/api/feedback/feedbacks` | feedback |  |
-| 224 | create_feedback | POST | `/api/feedback/feedbacks` | feedback |  |
-| 225 | get_feedback | GET | `/api/feedback/feedbacks/{id}` | feedback |  |
-| 226 | response_feedback | PUT | `/api/feedback/feedbacks/{id}` | feedback |  |
-| 227 | delete_feedback | DELETE | `/api/feedback/feedbacks/{id}` | feedback |  |
-| 228 | get_account | GET | `/api/finance/accounts/{account_id}` | finance |  |
-| 229 | get_balance_sheet | GET | `/api/finance/balance-sheet/{period}` | finance |  |
-| 230 | get_income_statement | GET | `/api/finance/income-statement/{period}` | finance |  |
-| 231 | get_ledger | GET | `/api/finance/ledger` | finance |  |
-| 232 | get_trial_balance | GET | `/api/finance/trial-balance/{period}` | finance |  |
-| 233 | get_voucher | GET | `/api/finance/vouchers/{voucher_id}` | finance |  |
-| 234 | approve_voucher | POST | `/api/finance/vouchers/{voucher_id}/approve` | finance |  |
-| 235 | post_voucher | POST | `/api/finance/vouchers/{voucher_id}/post` | finance |  |
-| 236 | submit_voucher | POST | `/api/finance/vouchers/{voucher_id}/submit` | finance |  |
-| 237 | list_companies | GET | `/api/hrm/companies` | hrm | path exists in frontend but method not called |
-| 238 | list_departments | GET | `/api/hrm/departments` | hrm | path exists in frontend but method not called |
-| 239 | list_employees | GET | `/api/hrm/employees` | hrm | path exists in frontend but method not called |
-| 240 | list_mes_erp_sync_records | GET | `/api/integration/mes-erp/records` | integration |  |
-| 241 | sync_erp_order_to_mes | POST | `/api/integration/mes-erp/sync/erp-to-mes` | integration |  |
-| 242 | sync_mes_progress_to_erp | POST | `/api/integration/mes-erp/sync/mes-to-erp` | integration |  |
-| 243 | get_mes_erp_sync_logs | GET | `/api/integration/mes-erp/{id}/logs` | integration |  |
-| 244 | retry_mes_erp_sync | POST | `/api/integration/mes-erp/{id}/retry` | integration |  |
-| 245 | list_mes_qms_sync_api | GET | `/api/integration/mes-qms` | integration |  |
-| 246 | defect_handling_api | POST | `/api/integration/mes-qms/defect-handling` | integration |  |
-| 247 | get_mes_qms_stats_api | GET | `/api/integration/mes-qms/stats` | integration |  |
-| 248 | sync_quality_result_api | POST | `/api/integration/mes-qms/sync-result` | integration |  |
-| 249 | sync_trace_chain_api | POST | `/api/integration/mes-qms/sync-trace` | integration |  |
-| 250 | trigger_qms_inspection_api | POST | `/api/integration/mes-qms/trigger-inspection` | integration |  |
-| 251 | get_mes_qms_sync_api | GET | `/api/integration/mes-qms/{id}` | integration |  |
-| 252 | retry_mes_qms_sync_api | POST | `/api/integration/mes-qms/{id}/retry` | integration |  |
-| 253 | get_pending | GET | `/api/integration/sync/pending` | integration |  |
-| 254 | retry_failed | POST | `/api/integration/sync/retry-failed` | integration |  |
-| 255 | get_statistics | GET | `/api/integration/sync/statistics` | integration |  |
-| 256 | create_task | POST | `/api/integration/sync/tasks` | integration |  |
-| 257 | get_task | GET | `/api/integration/sync/tasks/{task_id}` | integration |  |
-| 258 | update_status | POST | `/api/integration/sync/tasks/{task_id}/status` | integration |  |
-| 259 | trigger_scm_wms | POST | `/api/integration/sync/trigger/scm-to-wms` | integration |  |
-| 260 | trigger_srm_scm | POST | `/api/integration/sync/trigger/srm-to-scm` | integration |  |
-| 261 | trigger_wms_crm | POST | `/api/integration/sync/trigger/wms-to-crm` | integration |  |
-| 262 | list_apps | GET | `/api/lowcode/apps` | lowcode | path exists in frontend but method not called |
-| 263 | get_designer_schema | GET | `/api/lowcode/designer/schema` | lowcode |  |
-| 264 | generate_suggestions | POST | `/api/master/quality-v51/ai/suggest` | master-data |  |
-| 265 | apply_auto_fix | POST | `/api/master/quality-v51/auto-fix/run` | master-data |  |
-| 266 | list_quality_checks | GET | `/api/master/quality-v51/checks` | master-data |  |
-| 267 | run_quality_check | POST | `/api/master/quality-v51/checks` | master-data |  |
-| 268 | get_quality_dashboard | GET | `/api/master/quality-v51/dashboard` | master-data |  |
-| 269 | list_quality_rules | GET | `/api/master/quality-v51/rules` | master-data |  |
-| 270 | create_quality_rule | POST | `/api/master/quality-v51/rules` | master-data |  |
-| 271 | get_quality_score | GET | `/api/master/quality-v51/score` | master-data |  |
-| 272 | list_alerts | GET | `/api/monitor/alerts` | monitor |  |
-| 273 | acknowledge_alerts | POST | `/api/monitor/alerts/acknowledge` | monitor |  |
-| 274 | resolve_alerts | POST | `/api/monitor/alerts/resolve` | monitor |  |
-| 275 | get_alert_statistics | GET | `/api/monitor/alerts/statistics` | monitor |  |
-| 276 | get_alert | GET | `/api/monitor/alerts/{id}` | monitor |  |
-| 277 | update_alert | POST | `/api/monitor/alerts/{id}` | monitor |  |
-| 278 | get_alert_history | GET | `/api/monitor/alerts/{id}/history` | monitor |  |
-| 279 | get_alert_timeline | GET | `/api/monitor/alerts/{id}/timeline` | monitor |  |
-| 280 | list_business_metrics | GET | `/api/monitor/business-metrics` | monitor |  |
-| 281 | create_business_metric | POST | `/api/monitor/business-metrics` | monitor |  |
-| 282 | get_kpi_dashboard | GET | `/api/monitor/business-metrics/kpi` | monitor |  |
-| 283 | get_business_metric_summary | GET | `/api/monitor/business-metrics/summary` | monitor |  |
-| 284 | get_business_metric_trend | GET | `/api/monitor/business-metrics/trend` | monitor |  |
-| 285 | get_business_metric | GET | `/api/monitor/business-metrics/{id}` | monitor |  |
-| 286 | update_business_metric | PUT | `/api/monitor/business-metrics/{id}` | monitor |  |
-| 287 | delete_business_metric | DELETE | `/api/monitor/business-metrics/{id}` | monitor |  |
-| 288 | get_service_health | GET | `/api/monitor/health` | monitor |  |
-| 289 | get_database_metrics | GET | `/api/monitor/metrics/database` | monitor |  |
-| 290 | get_metric_snapshot | GET | `/api/monitor/metrics/snapshot` | monitor |  |
-| 291 | get_system_metrics | GET | `/api/monitor/metrics/system` | monitor |  |
-| 292 | get_api_performance | GET | `/api/monitor/performance/api` | monitor |  |
-| 293 | export_performance_data | POST | `/api/monitor/performance/export` | monitor |  |
-| 294 | get_service_performance | GET | `/api/monitor/performance/services` | monitor |  |
-| 295 | get_slow_queries | GET | `/api/monitor/performance/slow-queries` | monitor |  |
-| 296 | get_performance_summary | GET | `/api/monitor/performance/summary` | monitor |  |
-| 297 | get_performance_trend | GET | `/api/monitor/performance/trend` | monitor |  |
-| 298 | list_rules | GET | `/api/monitor/rules` | monitor |  |
-| 299 | create_rule | POST | `/api/monitor/rules` | monitor |  |
-| 300 | get_rule | GET | `/api/monitor/rules/{id}` | monitor |  |
-| 301 | update_rule | PUT | `/api/monitor/rules/{id}` | monitor |  |
-| 302 | delete_rule | DELETE | `/api/monitor/rules/{id}` | monitor |  |
-| 303 | get_advanced_rule | GET | `/api/monitor/rules/{id}/advanced` | monitor |  |
-| 304 | update_advanced_rule | PUT | `/api/monitor/rules/{id}/advanced` | monitor |  |
-| 305 | disable_rule | POST | `/api/monitor/rules/{id}/disable` | monitor |  |
-| 306 | enable_rule | POST | `/api/monitor/rules/{id}/enable` | monitor |  |
-| 307 | get_escalation | GET | `/api/monitor/rules/{id}/escalation` | monitor |  |
-| 308 | update_escalation | PUT | `/api/monitor/rules/{id}/escalation` | monitor |  |
-| 309 | get_routing | GET | `/api/monitor/rules/{id}/routing` | monitor |  |
-| 310 | update_routing | PUT | `/api/monitor/rules/{id}/routing` | monitor |  |
-| 311 | get_scheduled_trigger | GET | `/api/monitor/rules/{id}/scheduled-trigger` | monitor |  |
-| 312 | update_scheduled_trigger | PUT | `/api/monitor/rules/{id}/scheduled-trigger` | monitor |  |
-| 313 | list_slos | GET | `/api/monitor/slos` | monitor |  |
-| 314 | create_slo | POST | `/api/monitor/slos` | monitor |  |
-| 315 | get_slo_budget | GET | `/api/monitor/slos/budget` | monitor |  |
-| 316 | get_slo_summary | GET | `/api/monitor/slos/summary` | monitor |  |
-| 317 | get_slo_trend | GET | `/api/monitor/slos/trend` | monitor |  |
-| 318 | list_slo_violations | GET | `/api/monitor/slos/violations` | monitor |  |
-| 319 | resolve_slo_violation | POST | `/api/monitor/slos/violations/{id}/resolve` | monitor |  |
-| 320 | get_slo | GET | `/api/monitor/slos/{id}` | monitor |  |
-| 321 | update_slo | PUT | `/api/monitor/slos/{id}` | monitor |  |
-| 322 | delete_slo | DELETE | `/api/monitor/slos/{id}` | monitor |  |
-| 323 | list_suppression_rules | GET | `/api/monitor/suppression` | monitor |  |
-| 324 | create_suppression_rule | POST | `/api/monitor/suppression` | monitor |  |
-| 325 | get_suppression_rule | GET | `/api/monitor/suppression/{id}` | monitor |  |
-| 326 | update_suppression_rule | PUT | `/api/monitor/suppression/{id}` | monitor |  |
-| 327 | delete_suppression_rule | DELETE | `/api/monitor/suppression/{id}` | monitor |  |
-| 328 | monitor_list_templates | GET | `/api/monitor/templates` | monitor |  |
-| 329 | create_template | POST | `/api/monitor/templates` | monitor |  |
-| 330 | get_template | GET | `/api/monitor/templates/{id}` | monitor |  |
-| 331 | update_template | PUT | `/api/monitor/templates/{id}` | monitor |  |
-| 332 | delete_template | DELETE | `/api/monitor/templates/{id}` | monitor |  |
-| 333 | list_thresholds | GET | `/api/monitor/thresholds` | monitor |  |
-| 334 | create_threshold | POST | `/api/monitor/thresholds` | monitor |  |
-| 335 | evaluate_thresholds | POST | `/api/monitor/thresholds/evaluate` | monitor |  |
-| 336 | get_threshold | GET | `/api/monitor/thresholds/{id}` | monitor |  |
-| 337 | update_threshold | PUT | `/api/monitor/thresholds/{id}` | monitor |  |
-| 338 | delete_threshold | DELETE | `/api/monitor/thresholds/{id}` | monitor |  |
-| 339 | pdm__home | GET | `/api/pdm` | pdm |  |
-| 340 | list_change_notices | GET | `/api/pdm/change-notices` | pdm |  |
-| 341 | create_change_notice | POST | `/api/pdm/change-notices` | pdm |  |
-| 342 | get_change_notice | GET | `/api/pdm/change-notices/{id}` | pdm |  |
-| 343 | update_change_notice | PUT | `/api/pdm/change-notices/{id}` | pdm |  |
-| 344 | delete_change_notice | DELETE | `/api/pdm/change-notices/{id}` | pdm |  |
-| 345 | approve_change_notice | POST | `/api/pdm/change-notices/{id}/approve` | pdm |  |
-| 346 | reject_change_notice | POST | `/api/pdm/change-notices/{id}/reject` | pdm |  |
-| 347 | submit_change_notice | POST | `/api/pdm/change-notices/{id}/submit` | pdm |  |
-| 348 | list_configurations | GET | `/api/pdm/configurations` | pdm |  |
-| 349 | create_configuration | POST | `/api/pdm/configurations` | pdm |  |
-| 350 | get_configuration | GET | `/api/pdm/configurations/{id}` | pdm |  |
-| 351 | update_configuration | PUT | `/api/pdm/configurations/{id}` | pdm |  |
-| 352 | delete_configuration | DELETE | `/api/pdm/configurations/{id}` | pdm |  |
-| 353 | list_pending_documents | GET | `/api/pdm/documents/pending-approval` | pdm |  |
-| 354 | get_document_approval_history | GET | `/api/pdm/documents/{id}/approval-history` | pdm |  |
-| 355 | start_document_approval | POST | `/api/pdm/documents/{id}/approve` | pdm |  |
-| 356 | pdm_get_statistics | GET | `/api/pdm/statistics/{id}` | pdm |  |
-| 357 | list_versions | GET | `/api/pdm/versions` | pdm |  |
-| 358 | create_version | POST | `/api/pdm/versions` | pdm |  |
-| 359 | get_version | GET | `/api/pdm/versions/{id}` | pdm |  |
-| 360 | update_version | PUT | `/api/pdm/versions/{id}` | pdm |  |
-| 361 | delete_version | DELETE | `/api/pdm/versions/{id}` | pdm |  |
-| 362 | list_workflow_instances | GET | `/api/pdm/workflow-instances` | pdm |  |
-| 363 | get_workflow_instance | GET | `/api/pdm/workflow-instances/{id}` | pdm |  |
-| 364 | advance_workflow | POST | `/api/pdm/workflow-instances/{id}/advance` | pdm |  |
-| 365 | list_workflows | GET | `/api/pdm/workflows` | pdm |  |
-| 366 | create_workflow | POST | `/api/pdm/workflows` | pdm |  |
-| 367 | start_workflow | POST | `/api/pdm/workflows/start` | pdm |  |
-| 368 | get_workflow | GET | `/api/pdm/workflows/{id}` | pdm |  |
-| 369 | update_workflow | PUT | `/api/pdm/workflows/{id}` | pdm |  |
-| 370 | delete_workflow | DELETE | `/api/pdm/workflows/{id}` | pdm |  |
-| 371 | get_approval | GET | `/api/pm/projects/{project_id}/approval` | pm |  |
-| 372 | submit_approval | POST | `/api/pm/projects/{project_id}/approval` | pm |  |
-| 373 | handle_approval_action | POST | `/api/pm/projects/{project_id}/approval/action` | pm |  |
-| 374 | get_benefits | GET | `/api/pm/projects/{project_id}/benefits` | pm |  |
-| 375 | calculate_benefits | POST | `/api/pm/projects/{project_id}/benefits` | pm |  |
-| 376 | pm_get_analysis | GET | `/api/pm/projects/{project_id}/benefits/analysis` | pm |  |
-| 377 | list_expenses | GET | `/api/pm/projects/{project_id}/expenses` | pm |  |
-| 378 | add_expense | POST | `/api/pm/projects/{project_id}/expenses` | pm |  |
-| 379 | get_expense | GET | `/api/pm/projects/{project_id}/expenses/{id}` | pm |  |
-| 380 | update_expense | PUT | `/api/pm/projects/{project_id}/expenses/{id}` | pm |  |
-| 381 | remove_expense | DELETE | `/api/pm/projects/{project_id}/expenses/{id}` | pm |  |
-| 382 | list_members | GET | `/api/pm/projects/{project_id}/members` | pm |  |
-| 383 | create_member | POST | `/api/pm/projects/{project_id}/members` | pm |  |
-| 384 | get_member | GET | `/api/pm/projects/{project_id}/members/{id}` | pm |  |
-| 385 | update_member | PUT | `/api/pm/projects/{project_id}/members/{id}` | pm |  |
-| 386 | delete_member | DELETE | `/api/pm/projects/{project_id}/members/{id}` | pm |  |
-| 387 | list_milestones | GET | `/api/pm/projects/{project_id}/milestones` | pm |  |
-| 388 | create_milestone | POST | `/api/pm/projects/{project_id}/milestones` | pm |  |
-| 389 | get_milestone | GET | `/api/pm/projects/{project_id}/milestones/{id}` | pm |  |
-| 390 | update_milestone | PUT | `/api/pm/projects/{project_id}/milestones/{id}` | pm |  |
-| 391 | delete_milestone | DELETE | `/api/pm/projects/{project_id}/milestones/{id}` | pm |  |
-| 392 | list_phases | GET | `/api/pm/projects/{project_id}/phases` | pm |  |
-| 393 | create_phase | POST | `/api/pm/projects/{project_id}/phases` | pm |  |
-| 394 | get_phase | GET | `/api/pm/projects/{project_id}/phases/{id}` | pm |  |
-| 395 | update_phase | PUT | `/api/pm/projects/{project_id}/phases/{id}` | pm |  |
-| 396 | delete_phase | DELETE | `/api/pm/projects/{project_id}/phases/{id}` | pm |  |
-| 397 | list_resources | GET | `/api/pm/projects/{project_id}/resources` | pm |  |
-| 398 | add_resource | POST | `/api/pm/projects/{project_id}/resources` | pm |  |
-| 399 | get_resource | GET | `/api/pm/projects/{project_id}/resources/{id}` | pm |  |
-| 400 | update_resource | PUT | `/api/pm/projects/{project_id}/resources/{id}` | pm |  |
-| 401 | remove_resource | DELETE | `/api/pm/projects/{project_id}/resources/{id}` | pm |  |
-| 402 | list_inspections | GET | `/api/qms/checks` | qms | path exists in frontend but method not called |
-| 403 | list_issues | GET | `/api/qms/issues` | qms | path exists in frontend but method not called |
-| 404 | list_standards | GET | `/api/qms/standards` | qms | path exists in frontend but method not called |
-| 405 | list_audit_logs | GET | `/api/rd/audit-logs` | rd |  |
-| 406 | rd_list_projects | GET | `/api/rd/projects` | rd | path exists in frontend but method not called |
-| 407 | reject_order | POST | `/api/scm/purchase-orders/{id}/reject` | scm |  |
-| 408 | search_handler | GET | `/api/search` | search |  |
-| 409 | health_handler | GET | `/api/search/health` | search |  |
-| 410 | login | POST | `/api/unified-core/iam/auth/login` | unified-core |  |
-| 411 | register | POST | `/api/unified-core/iam/auth/register` | unified-core |  |
-| 412 | list_users | GET | `/api/unified-core/users` | unified-core |  |
-| 413 | create_user | POST | `/api/unified-core/users` | unified-core |  |
+| 15 | _document_upload | POST | `/api/ai/documents/upload` | ai |  |
+| 16 | _document_vectorize_from_file | POST | `/api/ai/documents/vectorize-from-file` | ai |  |
+| 17 | _document_process | POST | `/api/ai/documents/{id}/process` | ai |  |
+| 18 | _embedding_generate | POST | `/api/ai/embedding/generate` | ai |  |
+| 19 | generate | POST | `/api/ai/generate` | ai |  |
+| 20 | _multimodal_image_analyze | POST | `/api/ai/multimodal/image/analyze` | ai |  |
+| 21 | _multimodal_image_caption | POST | `/api/ai/multimodal/image/caption` | ai |  |
+| 22 | _multimodal_image_describe | POST | `/api/ai/multimodal/image/describe` | ai |  |
+| 23 | _multimodal_image_objects | POST | `/api/ai/multimodal/image/objects` | ai |  |
+| 24 | _multimodal_image_text | POST | `/api/ai/multimodal/image/text` | ai |  |
+| 25 | _multimodal_video_analyze | POST | `/api/ai/multimodal/video/analyze` | ai |  |
+| 26 | _multimodal_video_summary | POST | `/api/ai/multimodal/video/summary` | ai |  |
+| 27 | _profile_get | POST | `/api/ai/profile/get` | ai |  |
+| 28 | _profile_update | POST | `/api/ai/profile/update` | ai |  |
+| 29 | _recommend | POST | `/api/ai/recommend` | ai |  |
+| 30 | _recommend_documents | POST | `/api/ai/recommend/documents` | ai |  |
+| 31 | _recommend_knowledge | POST | `/api/ai/recommend/knowledge` | ai |  |
+| 32 | _recommend_opportunities | POST | `/api/ai/recommend/opportunities` | ai |  |
+| 33 | summarize | POST | `/api/ai/summarize` | ai |  |
+| 34 | list_templates | GET | `/api/ai/templates` | ai |  |
+| 35 | validate | POST | `/api/ai/validate` | ai |  |
+| 36 | _vector_batch_store | POST | `/api/ai/vectors/batch-store` | ai |  |
+| 37 | _vector_clear | POST | `/api/ai/vectors/clear` | ai |  |
+| 38 | _vector_hybrid_search | POST | `/api/ai/vectors/hybrid-search` | ai |  |
+| 39 | _vector_search | POST | `/api/ai/vectors/search` | ai |  |
+| 40 | _vector_stats | GET | `/api/ai/vectors/stats` | ai |  |
+| 41 | _vector_store | POST | `/api/ai/vectors/store` | ai |  |
+| 42 | _vector_get | GET | `/api/ai/vectors/{id}` | ai |  |
+| 43 | _vector_delete | DELETE | `/api/ai/vectors/{id}` | ai |  |
+| 44 | plugin_health_check | GET | `/api/plugins/health` | ai |  |
+| 45 | get_plugin_info | GET | `/api/plugins/info` | ai |  |
+| 46 | health_check_detailed | GET | `/api/ai/health/detailed` | ai |  |
+| 47 | ai_search | POST | `/api/ai/search` | ai |  |
+| 48 | list_analyses | GET | `/api/bi/analysis` | analytics |  |
+| 49 | create_analysis | POST | `/api/bi/analysis` | analytics |  |
+| 50 | get_analysis | GET | `/api/bi/analysis/{id}` | analytics |  |
+| 51 | execute_analysis | POST | `/api/bi/analysis/{id}/execute` | analytics |  |
+| 52 | list_dashboards | GET | `/api/analytics/dashboard` | analytics |  |
+| 53 | create_dashboard | POST | `/api/analytics/dashboard` | analytics |  |
+| 54 | get_dashboard | GET | `/api/analytics/dashboard/{id}` | analytics |  |
+| 55 | update_dashboard | PUT | `/api/analytics/dashboard/{id}` | analytics |  |
+| 56 | delete_dashboard | DELETE | `/api/analytics/dashboard/{id}` | analytics |  |
+| 57 | list_reports | GET | `/api/analytics/report` | analytics |  |
+| 58 | create_report | POST | `/api/analytics/report` | analytics |  |
+| 59 | get_report | GET | `/api/analytics/report/{id}` | analytics |  |
+| 60 | update_report | PUT | `/api/analytics/report/{id}` | analytics |  |
+| 61 | delete_report | DELETE | `/api/analytics/report/{id}` | analytics |  |
+| 62 | list_widgets | GET | `/api/analytics/widget` | analytics |  |
+| 63 | create_widget | POST | `/api/analytics/widget` | analytics |  |
+| 64 | get_widget | GET | `/api/analytics/widget/{id}` | analytics |  |
+| 65 | update_widget | PUT | `/api/analytics/widget/{id}` | analytics |  |
+| 66 | delete_widget | DELETE | `/api/analytics/widget/{id}` | analytics |  |
+| 67 | list_invoices | GET | `/api/billing/invoices/{tenant_id}` | billing |  |
+| 68 | list_plans | GET | `/api/billing/plans` | billing |  |
+| 69 | get_plan | GET | `/api/billing/plans/{id}` | billing |  |
+| 70 | create_subscription | POST | `/api/billing/subscriptions` | billing |  |
+| 71 | get_subscription | GET | `/api/billing/subscriptions/{tenant_id}` | billing |  |
+| 72 | cancel_subscription | PUT | `/api/billing/subscriptions/{tenant_id}` | billing |  |
+| 73 | get_usage_summary | GET | `/api/billing/usage/{tenant_id}` | billing |  |
+| 74 | record_usage | POST | `/api/billing/usage/{tenant_id}/{metric_type}` | billing |  |
+| 75 | list_emails | GET | `/api/communication/mail/emails` | communication | path exists in frontend but method not called |
+| 76 | list_notifications | GET | `/api/communication/notify/list` | communication |  |
+| 77 | send_notification | POST | `/api/communication/notify/send` | communication |  |
+| 78 | _home | GET | `/api/ehs` | ehs |  |
+| 79 | ehs_list_plans | GET | `/api/ehs/checks/plans` | ehs | path exists in frontend but method not called |
+| 80 | list_plan_items | GET | `/api/ehs/checks/plans/{plan_id}/items` | ehs |  |
+| 81 | create_plan_item | POST | `/api/ehs/checks/plans/{plan_id}/items` | ehs |  |
+| 82 | delete_plan_item | DELETE | `/api/ehs/checks/plans/{plan_id}/items/{item_id}` | ehs |  |
+| 83 | list_records | GET | `/api/ehs/checks/records` | ehs | path exists in frontend but method not called |
+| 84 | list_drill_plans | GET | `/api/ehs/drills/plans` | ehs |  |
+| 85 | create_drill_plan | POST | `/api/ehs/drills/plans` | ehs |  |
+| 86 | get_drill_plan | GET | `/api/ehs/drills/plans/{id}` | ehs |  |
+| 87 | update_drill_plan | PUT | `/api/ehs/drills/plans/{id}` | ehs |  |
+| 88 | delete_drill_plan | DELETE | `/api/ehs/drills/plans/{id}` | ehs |  |
+| 89 | list_drill_records | GET | `/api/ehs/drills/records` | ehs |  |
+| 90 | create_drill_record | POST | `/api/ehs/drills/records` | ehs |  |
+| 91 | get_drill_record | GET | `/api/ehs/drills/records/{id}` | ehs |  |
+| 92 | update_drill_record | PUT | `/api/ehs/drills/records/{id}` | ehs |  |
+| 93 | delete_drill_record | DELETE | `/api/ehs/drills/records/{id}` | ehs |  |
+| 94 | create_drill_evaluation | POST | `/api/ehs/drills/records/{id}/evaluation` | ehs |  |
+| 95 | list_drill_problems | GET | `/api/ehs/drills/records/{id}/problems` | ehs |  |
+| 96 | create_drill_problem | POST | `/api/ehs/drills/records/{id}/problems` | ehs |  |
+| 97 | update_drill_problem | PUT | `/api/ehs/drills/records/{id}/problems/{problem_id}` | ehs |  |
+| 98 | get_drill_statistics | GET | `/api/ehs/drills/statistics` | ehs |  |
+| 99 | list_drill_types | GET | `/api/ehs/drills/types` | ehs |  |
+| 100 | ehs_list_plans_api_ehs_emergency-plans | GET | `/api/ehs/emergency-plans` | ehs |  |
+| 101 | ehs_create_plan_api_ehs_emergency-plans | POST | `/api/ehs/emergency-plans` | ehs |  |
+| 102 | list_plan_categories | GET | `/api/ehs/emergency-plans/categories` | ehs |  |
+| 103 | ehs_get_plan_api_ehs_emergency-plans_{id} | GET | `/api/ehs/emergency-plans/{id}` | ehs |  |
+| 104 | ehs_update_plan_api_ehs_emergency-plans_{id} | PUT | `/api/ehs/emergency-plans/{id}` | ehs |  |
+| 105 | ehs_delete_plan_api_ehs_emergency-plans_{id} | DELETE | `/api/ehs/emergency-plans/{id}` | ehs |  |
+| 106 | approve_plan | POST | `/api/ehs/emergency-plans/{id}/approve` | ehs |  |
+| 107 | submit_plan_approval | POST | `/api/ehs/emergency-plans/{id}/submit-approval` | ehs |  |
+| 108 | list_plan_supplies | GET | `/api/ehs/emergency-plans/{id}/supplies` | ehs |  |
+| 109 | add_plan_supply | POST | `/api/ehs/emergency-plans/{id}/supplies` | ehs |  |
+| 110 | delete_plan_supply | DELETE | `/api/ehs/emergency-plans/{id}/supplies/{supply_id}` | ehs |  |
+| 111 | list_plan_versions | GET | `/api/ehs/emergency-plans/{id}/versions` | ehs |  |
+| 112 | create_new_version | POST | `/api/ehs/emergency-plans/{id}/versions` | ehs |  |
+| 113 | ehs_list_records_api_ehs_environment_records | GET | `/api/ehs/environment/records` | ehs | path exists in frontend but method not called |
+| 114 | list_evaluations | GET | `/api/ehs/environmental-compliance/evaluations` | ehs |  |
+| 115 | create_evaluation | POST | `/api/ehs/environmental-compliance/evaluations` | ehs |  |
+| 116 | get_evaluation | GET | `/api/ehs/environmental-compliance/evaluations/{id}` | ehs |  |
+| 117 | update_evaluation | PUT | `/api/ehs/environmental-compliance/evaluations/{id}` | ehs |  |
+| 118 | delete_evaluation | DELETE | `/api/ehs/environmental-compliance/evaluations/{id}` | ehs |  |
+| 119 | list_incidents | GET | `/api/ehs/environmental-compliance/incidents` | ehs |  |
+| 120 | create_incident | POST | `/api/ehs/environmental-compliance/incidents` | ehs |  |
+| 121 | get_incident | GET | `/api/ehs/environmental-compliance/incidents/{id}` | ehs |  |
+| 122 | update_incident | PUT | `/api/ehs/environmental-compliance/incidents/{id}` | ehs |  |
+| 123 | delete_incident | DELETE | `/api/ehs/environmental-compliance/incidents/{id}` | ehs |  |
+| 124 | list_monitor_records | GET | `/api/ehs/environmental-compliance/monitoring` | ehs |  |
+| 125 | create_monitor_record | POST | `/api/ehs/environmental-compliance/monitoring` | ehs |  |
+| 126 | list_monitor_types | GET | `/api/ehs/environmental-compliance/monitoring/types` | ehs |  |
+| 127 | get_monitor_record | GET | `/api/ehs/environmental-compliance/monitoring/{id}` | ehs |  |
+| 128 | delete_monitor_record | DELETE | `/api/ehs/environmental-compliance/monitoring/{id}` | ehs |  |
+| 129 | list_permits | GET | `/api/ehs/environmental-compliance/permits` | ehs | path exists in frontend but method not called |
+| 130 | list_regulations | GET | `/api/ehs/environmental-compliance/regulations` | ehs | path exists in frontend but method not called |
+| 131 | list_regulation_categories | GET | `/api/ehs/environmental-compliance/regulations/categories` | ehs |  |
+| 132 | get_compliance_statistics | GET | `/api/ehs/environmental-compliance/statistics` | ehs |  |
+| 133 | list_materials | GET | `/api/ehs/hazardous-materials` | ehs | path exists in frontend but method not called |
+| 134 | get_material_statistics | GET | `/api/ehs/hazardous-materials/statistics` | ehs |  |
+| 135 | list_stock_records | GET | `/api/ehs/hazardous-materials/stock-records` | ehs |  |
+| 136 | create_stock_in | POST | `/api/ehs/hazardous-materials/stock-records/stock-in` | ehs |  |
+| 137 | create_stock_out | POST | `/api/ehs/hazardous-materials/stock-records/stock-out` | ehs |  |
+| 138 | get_stock_record | GET | `/api/ehs/hazardous-materials/stock-records/{id}` | ehs |  |
+| 139 | get_material_msds | GET | `/api/ehs/hazardous-materials/{id}/msds` | ehs |  |
+| 140 | update_material_msds | PUT | `/api/ehs/hazardous-materials/{id}/msds` | ehs |  |
+| 141 | list_material_stocks | GET | `/api/ehs/hazardous-materials/{id}/stocks` | ehs |  |
+| 142 | assess_risk | POST | `/api/ehs/hazards/{id}/assessments` | ehs |  |
+| 143 | list_control_measures | GET | `/api/ehs/hazards/{id}/controls` | ehs |  |
+| 144 | create_control_measure | POST | `/api/ehs/hazards/{id}/controls` | ehs |  |
+| 145 | update_control_measure | PUT | `/api/ehs/hazards/{id}/controls/{measure_id}` | ehs |  |
+| 146 | delete_control_measure | DELETE | `/api/ehs/hazards/{id}/controls/{measure_id}` | ehs |  |
+| 147 | ehs_create_record_api_ehs_health | POST | `/api/ehs/health` | ehs | path exists in frontend but method not called |
+| 148 | start_investigation | POST | `/api/ehs/incidents/{id}/investigation` | ehs |  |
+| 149 | update_investigation | PUT | `/api/ehs/incidents/{id}/investigation` | ehs |  |
+| 150 | complete_investigation | POST | `/api/ehs/incidents/{id}/investigation/complete` | ehs |  |
+| 151 | create_review | POST | `/api/ehs/incidents/{id}/review` | ehs |  |
+| 152 | create_treatment | POST | `/api/ehs/incidents/{id}/treatment` | ehs |  |
+| 153 | update_treatment_action | PUT | `/api/ehs/incidents/{id}/treatment/actions/{action_id}` | ehs |  |
+| 154 | complete_treatment | POST | `/api/ehs/incidents/{id}/treatment/complete` | ehs |  |
+| 155 | list_hazards | GET | `/api/ehs/issues` | ehs | path exists in frontend but method not called |
+| 156 | approve_hazard | POST | `/api/ehs/issues/{id}/approval/approve` | ehs |  |
+| 157 | reject_hazard | POST | `/api/ehs/issues/{id}/approval/reject` | ehs |  |
+| 158 | start_hazard_approval | POST | `/api/ehs/issues/{id}/approval/start` | ehs |  |
+| 159 | start_rectification | POST | `/api/ehs/issues/{id}/rectification` | ehs |  |
+| 160 | update_rectification | PUT | `/api/ehs/issues/{id}/rectification` | ehs |  |
+| 161 | submit_rectification | POST | `/api/ehs/issues/{id}/rectification/submit` | ehs |  |
+| 162 | verify_hazard | POST | `/api/ehs/issues/{id}/verification` | ehs |  |
+| 163 | list_disease_cases | GET | `/api/ehs/occupational-disease/cases` | ehs |  |
+| 164 | create_disease_case | POST | `/api/ehs/occupational-disease/cases` | ehs |  |
+| 165 | get_disease_case | GET | `/api/ehs/occupational-disease/cases/{id}` | ehs |  |
+| 166 | update_disease_case | PUT | `/api/ehs/occupational-disease/cases/{id}` | ehs |  |
+| 167 | delete_disease_case | DELETE | `/api/ehs/occupational-disease/cases/{id}` | ehs |  |
+| 168 | list_detection_records | GET | `/api/ehs/occupational-disease/detections` | ehs |  |
+| 169 | create_detection_record | POST | `/api/ehs/occupational-disease/detections` | ehs |  |
+| 170 | get_detection_record | GET | `/api/ehs/occupational-disease/detections/{id}` | ehs |  |
+| 171 | delete_detection_record | DELETE | `/api/ehs/occupational-disease/detections/{id}` | ehs |  |
+| 172 | list_factor_types | GET | `/api/ehs/occupational-disease/factor-types` | ehs |  |
+| 173 | list_hazard_factors | GET | `/api/ehs/occupational-disease/factors` | ehs |  |
+| 174 | create_hazard_factor | POST | `/api/ehs/occupational-disease/factors` | ehs |  |
+| 175 | get_hazard_factor | GET | `/api/ehs/occupational-disease/factors/{id}` | ehs |  |
+| 176 | update_hazard_factor | PUT | `/api/ehs/occupational-disease/factors/{id}` | ehs |  |
+| 177 | delete_hazard_factor | DELETE | `/api/ehs/occupational-disease/factors/{id}` | ehs |  |
+| 178 | list_protection_measures | GET | `/api/ehs/occupational-disease/protection-measures` | ehs |  |
+| 179 | create_protection_measure | POST | `/api/ehs/occupational-disease/protection-measures` | ehs |  |
+| 180 | get_protection_measure | GET | `/api/ehs/occupational-disease/protection-measures/{id}` | ehs |  |
+| 181 | update_protection_measure | PUT | `/api/ehs/occupational-disease/protection-measures/{id}` | ehs |  |
+| 182 | delete_protection_measure | DELETE | `/api/ehs/occupational-disease/protection-measures/{id}` | ehs |  |
+| 183 | get_disease_statistics | GET | `/api/ehs/occupational-disease/statistics` | ehs |  |
+| 184 | list_health_trainings | GET | `/api/ehs/occupational-disease/trainings` | ehs |  |
+| 185 | create_health_training | POST | `/api/ehs/occupational-disease/trainings` | ehs |  |
+| 186 | get_health_training | GET | `/api/ehs/occupational-disease/trainings/{id}` | ehs |  |
+| 187 | delete_health_training | DELETE | `/api/ehs/occupational-disease/trainings/{id}` | ehs |  |
+| 188 | list_abnormalities | GET | `/api/ehs/occupational-health/abnormalities` | ehs |  |
+| 189 | update_abnormality | PUT | `/api/ehs/occupational-health/abnormalities/{id}` | ehs |  |
+| 190 | get_health_archive | GET | `/api/ehs/occupational-health/archives/{employee_id}` | ehs |  |
+| 191 | list_contraindications | GET | `/api/ehs/occupational-health/contraindications` | ehs | path exists in frontend but method not called |
+| 192 | list_exam_plans | GET | `/api/ehs/occupational-health/exam-plans` | ehs |  |
+| 193 | create_exam_plan | POST | `/api/ehs/occupational-health/exam-plans` | ehs |  |
+| 194 | get_exam_plan | GET | `/api/ehs/occupational-health/exam-plans/{id}` | ehs |  |
+| 195 | update_exam_plan | PUT | `/api/ehs/occupational-health/exam-plans/{id}` | ehs |  |
+| 196 | delete_exam_plan | DELETE | `/api/ehs/occupational-health/exam-plans/{id}` | ehs |  |
+| 197 | list_exam_records | GET | `/api/ehs/occupational-health/exam-records` | ehs |  |
+| 198 | create_exam_record | POST | `/api/ehs/occupational-health/exam-records` | ehs |  |
+| 199 | get_exam_record | GET | `/api/ehs/occupational-health/exam-records/{id}` | ehs |  |
+| 200 | update_exam_record | PUT | `/api/ehs/occupational-health/exam-records/{id}` | ehs |  |
+| 201 | delete_exam_record | DELETE | `/api/ehs/occupational-health/exam-records/{id}` | ehs |  |
+| 202 | list_exam_types | GET | `/api/ehs/occupational-health/exam-types` | ehs |  |
+| 203 | get_health_statistics | GET | `/api/ehs/occupational-health/statistics` | ehs |  |
+| 204 | list_sync_records | GET | `/api/ehs/sync-records` | ehs |  |
+| 205 | delete_sync_record | DELETE | `/api/ehs/sync-records/{id}` | ehs | path exists in frontend but method not called |
+| 206 | retry_sync | POST | `/api/ehs/sync-records/{id}/retry` | ehs |  |
+| 207 | sync_accident_to_lims | POST | `/api/ehs/sync/accident-to-lims` | ehs |  |
+| 208 | update_sync_configs | PUT | `/api/ehs/sync/configs` | ehs | path exists in frontend but method not called |
+| 209 | sync_hazard_to_qms | POST | `/api/ehs/sync/hazard-to-qms` | ehs |  |
+| 210 | list_trainings | GET | `/api/ehs/training` | ehs |  |
+| 211 | create_training | POST | `/api/ehs/training` | ehs |  |
+| 212 | get_training | GET | `/api/ehs/training/{id}` | ehs |  |
+| 213 | update_training | PUT | `/api/ehs/training/{id}` | ehs |  |
+| 214 | delete_training | DELETE | `/api/ehs/training/{id}` | ehs |  |
+| 215 | _detailed_health | GET | `/api/health/detailed` | ehs |  |
+| 216 | list_assets | GET | `/api/erp/assets` | erp | path exists in frontend but method not called |
+| 217 | erp_list_customers | GET | `/api/erp/customers` | erp | path exists in frontend but method not called |
+| 218 | list_inventory | GET | `/api/erp/inventory` | erp | path exists in frontend but method not called |
+| 219 | erp_list_rooms | GET | `/api/erp/meeting-rooms` | erp | path exists in frontend but method not called |
+| 220 | list_bookings | GET | `/api/erp/meeting-rooms/bookings` | erp |  |
+| 221 | create_booking | POST | `/api/erp/meeting-rooms/bookings` | erp |  |
+| 222 | list_purchase_orders | GET | `/api/erp/purchase-orders` | erp | path exists in frontend but method not called |
+| 223 | list_sales_orders | GET | `/api/erp/sales-orders` | erp | path exists in frontend but method not called |
+| 224 | list_suppliers | GET | `/api/erp/suppliers` | erp | path exists in frontend but method not called |
+| 225 | erp_list_materials | GET | `/api/erp/materials` | erp | path exists in frontend but method not called |
+| 226 | list_feedbacks | GET | `/api/feedback/feedbacks` | feedback |  |
+| 227 | create_feedback | POST | `/api/feedback/feedbacks` | feedback |  |
+| 228 | get_feedback | GET | `/api/feedback/feedbacks/{id}` | feedback |  |
+| 229 | response_feedback | PUT | `/api/feedback/feedbacks/{id}` | feedback |  |
+| 230 | delete_feedback | DELETE | `/api/feedback/feedbacks/{id}` | feedback |  |
+| 231 | get_account | GET | `/api/finance/accounts/{account_id}` | finance |  |
+| 232 | get_balance_sheet | GET | `/api/finance/balance-sheet/{period}` | finance |  |
+| 233 | get_income_statement | GET | `/api/finance/income-statement/{period}` | finance |  |
+| 234 | get_ledger | GET | `/api/finance/ledger` | finance |  |
+| 235 | get_trial_balance | GET | `/api/finance/trial-balance/{period}` | finance |  |
+| 236 | get_voucher | GET | `/api/finance/vouchers/{voucher_id}` | finance |  |
+| 237 | approve_voucher | POST | `/api/finance/vouchers/{voucher_id}/approve` | finance |  |
+| 238 | post_voucher | POST | `/api/finance/vouchers/{voucher_id}/post` | finance |  |
+| 239 | submit_voucher | POST | `/api/finance/vouchers/{voucher_id}/submit` | finance |  |
+| 240 | list_devices | GET | `/api/gis/devices` | gis |  |
+| 241 | get_device | GET | `/api/gis/devices/{id}` | gis |  |
+| 242 | list_locations | GET | `/api/gis/locations` | gis |  |
+| 243 | create_location | POST | `/api/gis/locations/create` | gis |  |
+| 244 | get_location | GET | `/api/gis/locations/{id}` | gis |  |
+| 245 | list_maps | GET | `/api/gis/maps` | gis |  |
+| 246 | create_map | POST | `/api/gis/maps/create` | gis |  |
+| 247 | get_map | GET | `/api/gis/maps/{id}` | gis |  |
+| 248 | update_map | PUT | `/api/gis/maps/{id}` | gis |  |
+| 249 | delete_map | DELETE | `/api/gis/maps/{id}` | gis |  |
+| 250 | list_companies | GET | `/api/hrm/companies` | hrm | path exists in frontend but method not called |
+| 251 | list_departments | GET | `/api/hrm/departments` | hrm | path exists in frontend but method not called |
+| 252 | list_employees | GET | `/api/hrm/employees` | hrm | path exists in frontend but method not called |
+| 253 | list_mes_erp_sync_records | GET | `/api/integration/mes-erp/records` | integration |  |
+| 254 | sync_erp_order_to_mes | POST | `/api/integration/mes-erp/sync/erp-to-mes` | integration |  |
+| 255 | sync_mes_progress_to_erp | POST | `/api/integration/mes-erp/sync/mes-to-erp` | integration |  |
+| 256 | get_mes_erp_sync_logs | GET | `/api/integration/mes-erp/{id}/logs` | integration |  |
+| 257 | retry_mes_erp_sync | POST | `/api/integration/mes-erp/{id}/retry` | integration |  |
+| 258 | list_mes_qms_sync_api | GET | `/api/integration/mes-qms` | integration |  |
+| 259 | defect_handling_api | POST | `/api/integration/mes-qms/defect-handling` | integration |  |
+| 260 | get_mes_qms_stats_api | GET | `/api/integration/mes-qms/stats` | integration |  |
+| 261 | sync_quality_result_api | POST | `/api/integration/mes-qms/sync-result` | integration |  |
+| 262 | sync_trace_chain_api | POST | `/api/integration/mes-qms/sync-trace` | integration |  |
+| 263 | trigger_qms_inspection_api | POST | `/api/integration/mes-qms/trigger-inspection` | integration |  |
+| 264 | get_mes_qms_sync_api | GET | `/api/integration/mes-qms/{id}` | integration |  |
+| 265 | retry_mes_qms_sync_api | POST | `/api/integration/mes-qms/{id}/retry` | integration |  |
+| 266 | get_pending | GET | `/api/integration/sync/pending` | integration |  |
+| 267 | retry_failed | POST | `/api/integration/sync/retry-failed` | integration |  |
+| 268 | get_statistics | GET | `/api/integration/sync/statistics` | integration |  |
+| 269 | create_task | POST | `/api/integration/sync/tasks` | integration |  |
+| 270 | get_task | GET | `/api/integration/sync/tasks/{task_id}` | integration |  |
+| 271 | update_status | POST | `/api/integration/sync/tasks/{task_id}/status` | integration |  |
+| 272 | trigger_scm_wms | POST | `/api/integration/sync/trigger/scm-to-wms` | integration |  |
+| 273 | trigger_srm_scm | POST | `/api/integration/sync/trigger/srm-to-scm` | integration |  |
+| 274 | trigger_wms_crm | POST | `/api/integration/sync/trigger/wms-to-crm` | integration |  |
+| 275 | list_instruments | GET | `/api/lims/instruments` | lims |  |
+| 276 | create_instrument | POST | `/api/lims/instruments` | lims |  |
+| 277 | list_reagents | GET | `/api/lims/reagents` | lims |  |
+| 278 | create_reagent | POST | `/api/lims/reagents` | lims |  |
+| 279 | list_samples | GET | `/api/lims/samples` | lims |  |
+| 280 | register_sample | POST | `/api/lims/samples` | lims |  |
+| 281 | get_sample | GET | `/api/lims/samples/{id}` | lims |  |
+| 282 | list_tasks | GET | `/api/lims/tasks` | lims |  |
+| 283 | lims_create_task | POST | `/api/lims/tasks` | lims |  |
+| 284 | lims_get_task | GET | `/api/lims/tasks/{id}` | lims |  |
+| 285 | list_apps | GET | `/api/lowcode/apps` | lowcode | path exists in frontend but method not called |
+| 286 | get_designer_schema | GET | `/api/lowcode/designer/schema` | lowcode |  |
+| 287 | generate_suggestions | POST | `/api/master/quality-v51/ai/suggest` | master-data |  |
+| 288 | apply_auto_fix | POST | `/api/master/quality-v51/auto-fix/run` | master-data |  |
+| 289 | list_quality_checks | GET | `/api/master/quality-v51/checks` | master-data |  |
+| 290 | run_quality_check | POST | `/api/master/quality-v51/checks` | master-data |  |
+| 291 | get_quality_dashboard | GET | `/api/master/quality-v51/dashboard` | master-data |  |
+| 292 | list_quality_rules | GET | `/api/master/quality-v51/rules` | master-data |  |
+| 293 | create_quality_rule | POST | `/api/master/quality-v51/rules` | master-data |  |
+| 294 | get_quality_score | GET | `/api/master/quality-v51/score` | master-data |  |
+| 295 | get_all_tasks | GET | `/api/mobile-tasks` | mobile |  |
+| 296 | mobile_create_task | POST | `/api/mobile-tasks` | mobile |  |
+| 297 | mobile_get_task | GET | `/api/mobile-tasks/{id}` | mobile |  |
+| 298 | update_task | PUT | `/api/mobile-tasks/{id}` | mobile |  |
+| 299 | delete_task | DELETE | `/api/mobile-tasks/{id}` | mobile |  |
+| 300 | get_all_patrol_records | GET | `/api/mobile/patrol-records` | mobile |  |
+| 301 | create_patrol_record | POST | `/api/mobile/patrol-records` | mobile |  |
+| 302 | get_patrol_record | GET | `/api/mobile/patrol-records/{id}` | mobile |  |
+| 303 | scan_barcode | POST | `/api/mobile/scan/barcode` | mobile |  |
+| 304 | get_dashboard_stats | GET | `/api/mobile/stats/dashboard` | mobile |  |
+| 305 | list_alerts | GET | `/api/monitor/alerts` | monitor |  |
+| 306 | acknowledge_alerts | POST | `/api/monitor/alerts/acknowledge` | monitor |  |
+| 307 | resolve_alerts | POST | `/api/monitor/alerts/resolve` | monitor |  |
+| 308 | get_alert_statistics | GET | `/api/monitor/alerts/statistics` | monitor |  |
+| 309 | get_alert | GET | `/api/monitor/alerts/{id}` | monitor |  |
+| 310 | update_alert | POST | `/api/monitor/alerts/{id}` | monitor |  |
+| 311 | get_alert_history | GET | `/api/monitor/alerts/{id}/history` | monitor |  |
+| 312 | get_alert_timeline | GET | `/api/monitor/alerts/{id}/timeline` | monitor |  |
+| 313 | list_business_metrics | GET | `/api/monitor/business-metrics` | monitor |  |
+| 314 | create_business_metric | POST | `/api/monitor/business-metrics` | monitor |  |
+| 315 | get_kpi_dashboard | GET | `/api/monitor/business-metrics/kpi` | monitor |  |
+| 316 | get_business_metric_summary | GET | `/api/monitor/business-metrics/summary` | monitor |  |
+| 317 | get_business_metric_trend | GET | `/api/monitor/business-metrics/trend` | monitor |  |
+| 318 | get_business_metric | GET | `/api/monitor/business-metrics/{id}` | monitor |  |
+| 319 | update_business_metric | PUT | `/api/monitor/business-metrics/{id}` | monitor |  |
+| 320 | delete_business_metric | DELETE | `/api/monitor/business-metrics/{id}` | monitor |  |
+| 321 | get_service_health | GET | `/api/monitor/health` | monitor |  |
+| 322 | get_database_metrics | GET | `/api/monitor/metrics/database` | monitor |  |
+| 323 | get_metric_snapshot | GET | `/api/monitor/metrics/snapshot` | monitor |  |
+| 324 | get_system_metrics | GET | `/api/monitor/metrics/system` | monitor |  |
+| 325 | get_api_performance | GET | `/api/monitor/performance/api` | monitor |  |
+| 326 | export_performance_data | POST | `/api/monitor/performance/export` | monitor |  |
+| 327 | get_service_performance | GET | `/api/monitor/performance/services` | monitor |  |
+| 328 | get_slow_queries | GET | `/api/monitor/performance/slow-queries` | monitor |  |
+| 329 | get_performance_summary | GET | `/api/monitor/performance/summary` | monitor |  |
+| 330 | get_performance_trend | GET | `/api/monitor/performance/trend` | monitor |  |
+| 331 | list_rules | GET | `/api/monitor/rules` | monitor |  |
+| 332 | create_rule | POST | `/api/monitor/rules` | monitor |  |
+| 333 | get_rule | GET | `/api/monitor/rules/{id}` | monitor |  |
+| 334 | update_rule | PUT | `/api/monitor/rules/{id}` | monitor |  |
+| 335 | delete_rule | DELETE | `/api/monitor/rules/{id}` | monitor |  |
+| 336 | get_advanced_rule | GET | `/api/monitor/rules/{id}/advanced` | monitor |  |
+| 337 | update_advanced_rule | PUT | `/api/monitor/rules/{id}/advanced` | monitor |  |
+| 338 | disable_rule | POST | `/api/monitor/rules/{id}/disable` | monitor |  |
+| 339 | enable_rule | POST | `/api/monitor/rules/{id}/enable` | monitor |  |
+| 340 | get_escalation | GET | `/api/monitor/rules/{id}/escalation` | monitor |  |
+| 341 | update_escalation | PUT | `/api/monitor/rules/{id}/escalation` | monitor |  |
+| 342 | get_routing | GET | `/api/monitor/rules/{id}/routing` | monitor |  |
+| 343 | update_routing | PUT | `/api/monitor/rules/{id}/routing` | monitor |  |
+| 344 | get_scheduled_trigger | GET | `/api/monitor/rules/{id}/scheduled-trigger` | monitor |  |
+| 345 | update_scheduled_trigger | PUT | `/api/monitor/rules/{id}/scheduled-trigger` | monitor |  |
+| 346 | list_slos | GET | `/api/monitor/slos` | monitor |  |
+| 347 | create_slo | POST | `/api/monitor/slos` | monitor |  |
+| 348 | get_slo_budget | GET | `/api/monitor/slos/budget` | monitor |  |
+| 349 | get_slo_summary | GET | `/api/monitor/slos/summary` | monitor |  |
+| 350 | get_slo_trend | GET | `/api/monitor/slos/trend` | monitor |  |
+| 351 | list_slo_violations | GET | `/api/monitor/slos/violations` | monitor |  |
+| 352 | resolve_slo_violation | POST | `/api/monitor/slos/violations/{id}/resolve` | monitor |  |
+| 353 | get_slo | GET | `/api/monitor/slos/{id}` | monitor |  |
+| 354 | update_slo | PUT | `/api/monitor/slos/{id}` | monitor |  |
+| 355 | delete_slo | DELETE | `/api/monitor/slos/{id}` | monitor |  |
+| 356 | list_suppression_rules | GET | `/api/monitor/suppression` | monitor |  |
+| 357 | create_suppression_rule | POST | `/api/monitor/suppression` | monitor |  |
+| 358 | get_suppression_rule | GET | `/api/monitor/suppression/{id}` | monitor |  |
+| 359 | update_suppression_rule | PUT | `/api/monitor/suppression/{id}` | monitor |  |
+| 360 | delete_suppression_rule | DELETE | `/api/monitor/suppression/{id}` | monitor |  |
+| 361 | monitor_list_templates | GET | `/api/monitor/templates` | monitor |  |
+| 362 | create_template | POST | `/api/monitor/templates` | monitor |  |
+| 363 | get_template | GET | `/api/monitor/templates/{id}` | monitor |  |
+| 364 | update_template | PUT | `/api/monitor/templates/{id}` | monitor |  |
+| 365 | delete_template | DELETE | `/api/monitor/templates/{id}` | monitor |  |
+| 366 | list_thresholds | GET | `/api/monitor/thresholds` | monitor |  |
+| 367 | create_threshold | POST | `/api/monitor/thresholds` | monitor |  |
+| 368 | evaluate_thresholds | POST | `/api/monitor/thresholds/evaluate` | monitor |  |
+| 369 | get_threshold | GET | `/api/monitor/thresholds/{id}` | monitor |  |
+| 370 | update_threshold | PUT | `/api/monitor/thresholds/{id}` | monitor |  |
+| 371 | delete_threshold | DELETE | `/api/monitor/thresholds/{id}` | monitor |  |
+| 372 | pdm__home | GET | `/api/pdm` | pdm |  |
+| 373 | list_change_notices | GET | `/api/pdm/change-notices` | pdm |  |
+| 374 | create_change_notice | POST | `/api/pdm/change-notices` | pdm |  |
+| 375 | get_change_notice | GET | `/api/pdm/change-notices/{id}` | pdm |  |
+| 376 | update_change_notice | PUT | `/api/pdm/change-notices/{id}` | pdm |  |
+| 377 | delete_change_notice | DELETE | `/api/pdm/change-notices/{id}` | pdm |  |
+| 378 | approve_change_notice | POST | `/api/pdm/change-notices/{id}/approve` | pdm |  |
+| 379 | reject_change_notice | POST | `/api/pdm/change-notices/{id}/reject` | pdm |  |
+| 380 | submit_change_notice | POST | `/api/pdm/change-notices/{id}/submit` | pdm |  |
+| 381 | list_configurations | GET | `/api/pdm/configurations` | pdm |  |
+| 382 | create_configuration | POST | `/api/pdm/configurations` | pdm |  |
+| 383 | get_configuration | GET | `/api/pdm/configurations/{id}` | pdm |  |
+| 384 | update_configuration | PUT | `/api/pdm/configurations/{id}` | pdm |  |
+| 385 | delete_configuration | DELETE | `/api/pdm/configurations/{id}` | pdm |  |
+| 386 | list_pending_documents | GET | `/api/pdm/documents/pending-approval` | pdm |  |
+| 387 | get_document_approval_history | GET | `/api/pdm/documents/{id}/approval-history` | pdm |  |
+| 388 | start_document_approval | POST | `/api/pdm/documents/{id}/approve` | pdm |  |
+| 389 | pdm_get_statistics | GET | `/api/pdm/statistics/{id}` | pdm |  |
+| 390 | list_versions | GET | `/api/pdm/versions` | pdm |  |
+| 391 | create_version | POST | `/api/pdm/versions` | pdm |  |
+| 392 | get_version | GET | `/api/pdm/versions/{id}` | pdm |  |
+| 393 | update_version | PUT | `/api/pdm/versions/{id}` | pdm |  |
+| 394 | delete_version | DELETE | `/api/pdm/versions/{id}` | pdm |  |
+| 395 | list_workflow_instances | GET | `/api/pdm/workflow-instances` | pdm |  |
+| 396 | get_workflow_instance | GET | `/api/pdm/workflow-instances/{id}` | pdm |  |
+| 397 | advance_workflow | POST | `/api/pdm/workflow-instances/{id}/advance` | pdm |  |
+| 398 | list_workflows | GET | `/api/pdm/workflows` | pdm |  |
+| 399 | create_workflow | POST | `/api/pdm/workflows` | pdm |  |
+| 400 | start_workflow | POST | `/api/pdm/workflows/start` | pdm |  |
+| 401 | get_workflow | GET | `/api/pdm/workflows/{id}` | pdm |  |
+| 402 | update_workflow | PUT | `/api/pdm/workflows/{id}` | pdm |  |
+| 403 | delete_workflow | DELETE | `/api/pdm/workflows/{id}` | pdm |  |
+| 404 | list_categories | GET | `/api/plugin-registry/marketplace/categories` | plugin-registry |  |
+| 405 | list_plugins | GET | `/api/plugin-registry/marketplace/plugins` | plugin-registry |  |
+| 406 | get_plugin | GET | `/api/plugin-registry/marketplace/plugins/{code}` | plugin-registry |  |
+| 407 | get_marketplace_summary | GET | `/api/plugin-registry/marketplace/summary` | plugin-registry |  |
+| 408 | list_tenant_plugins | GET | `/api/plugin-registry/tenants/{tenant_id}/plugins` | plugin-registry |  |
+| 409 | install_plugin | POST | `/api/plugin-registry/tenants/{tenant_id}/plugins/{plugin_code}` | plugin-registry |  |
+| 410 | get_approval | GET | `/api/pm/projects/{project_id}/approval` | pm |  |
+| 411 | submit_approval | POST | `/api/pm/projects/{project_id}/approval` | pm |  |
+| 412 | handle_approval_action | POST | `/api/pm/projects/{project_id}/approval/action` | pm |  |
+| 413 | get_benefits | GET | `/api/pm/projects/{project_id}/benefits` | pm |  |
+| 414 | calculate_benefits | POST | `/api/pm/projects/{project_id}/benefits` | pm |  |
+| 415 | pm_get_analysis | GET | `/api/pm/projects/{project_id}/benefits/analysis` | pm |  |
+| 416 | list_expenses | GET | `/api/pm/projects/{project_id}/expenses` | pm |  |
+| 417 | add_expense | POST | `/api/pm/projects/{project_id}/expenses` | pm |  |
+| 418 | get_expense | GET | `/api/pm/projects/{project_id}/expenses/{id}` | pm |  |
+| 419 | update_expense | PUT | `/api/pm/projects/{project_id}/expenses/{id}` | pm |  |
+| 420 | remove_expense | DELETE | `/api/pm/projects/{project_id}/expenses/{id}` | pm |  |
+| 421 | list_members | GET | `/api/pm/projects/{project_id}/members` | pm |  |
+| 422 | create_member | POST | `/api/pm/projects/{project_id}/members` | pm |  |
+| 423 | get_member | GET | `/api/pm/projects/{project_id}/members/{id}` | pm |  |
+| 424 | update_member | PUT | `/api/pm/projects/{project_id}/members/{id}` | pm |  |
+| 425 | delete_member | DELETE | `/api/pm/projects/{project_id}/members/{id}` | pm |  |
+| 426 | list_milestones | GET | `/api/pm/projects/{project_id}/milestones` | pm |  |
+| 427 | create_milestone | POST | `/api/pm/projects/{project_id}/milestones` | pm |  |
+| 428 | get_milestone | GET | `/api/pm/projects/{project_id}/milestones/{id}` | pm |  |
+| 429 | update_milestone | PUT | `/api/pm/projects/{project_id}/milestones/{id}` | pm |  |
+| 430 | delete_milestone | DELETE | `/api/pm/projects/{project_id}/milestones/{id}` | pm |  |
+| 431 | list_phases | GET | `/api/pm/projects/{project_id}/phases` | pm |  |
+| 432 | create_phase | POST | `/api/pm/projects/{project_id}/phases` | pm |  |
+| 433 | get_phase | GET | `/api/pm/projects/{project_id}/phases/{id}` | pm |  |
+| 434 | update_phase | PUT | `/api/pm/projects/{project_id}/phases/{id}` | pm |  |
+| 435 | delete_phase | DELETE | `/api/pm/projects/{project_id}/phases/{id}` | pm |  |
+| 436 | list_resources | GET | `/api/pm/projects/{project_id}/resources` | pm |  |
+| 437 | add_resource | POST | `/api/pm/projects/{project_id}/resources` | pm |  |
+| 438 | get_resource | GET | `/api/pm/projects/{project_id}/resources/{id}` | pm |  |
+| 439 | update_resource | PUT | `/api/pm/projects/{project_id}/resources/{id}` | pm |  |
+| 440 | remove_resource | DELETE | `/api/pm/projects/{project_id}/resources/{id}` | pm |  |
+| 441 | get_announcements | GET | `/api/portal/announcements` | portal |  |
+| 442 | create_announcement | POST | `/api/portal/announcements` | portal |  |
+| 443 | portal_get_dashboard_stats | GET | `/api/portal/dashboard/stats` | portal |  |
+| 444 | get_navigation_menu | GET | `/api/portal/navigation/menu` | portal |  |
+| 445 | portal_get_notifications | GET | `/api/portal/notifications` | portal |  |
+| 446 | list_services | GET | `/api/portal/services` | portal |  |
+| 447 | get_todos | GET | `/api/portal/todos` | portal |  |
+| 448 | add_todo | POST | `/api/portal/todos` | portal |  |
+| 449 | get_user_info | GET | `/api/portal/user` | portal |  |
+| 450 | list_inspections | GET | `/api/qms/checks` | qms | path exists in frontend but method not called |
+| 451 | list_issues | GET | `/api/qms/issues` | qms | path exists in frontend but method not called |
+| 452 | list_standards | GET | `/api/qms/standards` | qms | path exists in frontend but method not called |
+| 453 | list_audit_logs | GET | `/api/rd/audit-logs` | rd |  |
+| 454 | rd_list_projects | GET | `/api/rd/projects` | rd | path exists in frontend but method not called |
+| 455 | reject_order | POST | `/api/scm/purchase-orders/{id}/reject` | scm |  |
+| 456 | search_handler | GET | `/api/search` | search |  |
+| 457 | health_handler | GET | `/api/search/health` | search |  |
+| 458 | list_sla_policies_handler | GET | `/api/ticket/sla-policies` | ticket |  |
+| 459 | create_sla_policy_handler | POST | `/api/ticket/sla-policies` | ticket |  |
+| 460 | list_tickets_handler | GET | `/api/tickets` | ticket |  |
+| 461 | create_ticket_handler | POST | `/api/tickets` | ticket |  |
+| 462 | get_stats_handler | GET | `/api/tickets/stats` | ticket |  |
+| 463 | get_ticket_handler | GET | `/api/tickets/{id}` | ticket |  |
+| 464 | update_ticket_handler | PUT | `/api/tickets/{id}` | ticket |  |
+| 465 | delete_ticket_handler | DELETE | `/api/tickets/{id}` | ticket |  |
+| 466 | list_comments_handler | GET | `/api/tickets/{id}/comments` | ticket |  |
+| 467 | add_comment_handler | POST | `/api/tickets/{id}/comments` | ticket |  |
+| 468 | login | POST | `/api/unified-core/iam/auth/login` | unified-core |  |
+| 469 | register | POST | `/api/unified-core/iam/auth/register` | unified-core |  |
+| 470 | list_users | GET | `/api/unified-core/users` | unified-core |  |
+| 471 | create_user | POST | `/api/unified-core/users` | unified-core |  |
 
 ## 2. 未文档化前端 API（前端有调用，OpenAPI 无定义）
 
-共 2533 个调用：
+共 2559 个调用：
 
 | # | 方法 | 完整路径 | 服务 | 文件 | 行号 |
 |---|------|----------|------|------|------|
@@ -1533,1482 +1591,1478 @@
 | 1089 | GET | `/api/core/iam/access-logs` | iam | apps/web/src/api/iam/user.ts | 177 |
 | 1090 | GET | `/api/core/iam/access-logs/user/{userId}` | iam | apps/web/src/api/iam/user.ts | 188 |
 | 1091 | POST | `/api/core/iam/access-logs` | iam | apps/web/src/api/iam/user.ts | 192 |
-| 1092 | GET | `/api/communication/im/rooms` | im | apps/web/src/api/im/index.ts | 117 |
-| 1093 | POST | `/api/communication/im/rooms` | im | apps/web/src/api/im/index.ts | 120 |
-| 1094 | GET | `/api/communication/im/rooms/{id}` | im | apps/web/src/api/im/index.ts | 123 |
-| 1095 | DELETE | `/api/communication/im/rooms/{id}` | im | apps/web/src/api/im/index.ts | 126 |
-| 1096 | GET | `/api/communication/im/rooms/{chatId}/messages` | im | apps/web/src/api/im/index.ts | 129 |
-| 1097 | POST | `/api/communication/im/rooms/{data.chat_id}/messages` | im | apps/web/src/api/im/index.ts | 132 |
-| 1098 | PUT | `/api/communication/im/messages/{id}/read` | im | apps/web/src/api/im/index.ts | 135 |
-| 1099 | PUT | `/api/communication/im/messages/{id}` | im | apps/web/src/api/im/index.ts | 139 |
-| 1100 | DELETE | `/api/communication/im/messages/{id}` | im | apps/web/src/api/im/index.ts | 145 |
-| 1101 | GET | `/api/communication/im/rooms/{chatRoomId}/members` | im | apps/web/src/api/im/index.ts | 149 |
-| 1102 | POST | `/api/communication/im/rooms/{chatRoomId}/members` | im | apps/web/src/api/im/index.ts | 153 |
-| 1103 | DELETE | `/api/communication/im/rooms/{chatRoomId}/members/{userId}` | im | apps/web/src/api/im/index.ts | 162 |
-| 1104 | GET | `/api/communication/im/project-groups` | im | apps/web/src/api/im/index.ts | 166 |
-| 1105 | POST | `/api/communication/im/project-groups` | im | apps/web/src/api/im/index.ts | 171 |
-| 1106 | GET | `/api/communication/im/notifications/{userId}` | im | apps/web/src/api/im/index.ts | 175 |
-| 1107 | POST | `/api/communication/im/notifications` | im | apps/web/src/api/im/index.ts | 180 |
-| 1108 | PUT | `/api/communication/im/notifications/{id}/read` | im | apps/web/src/api/im/index.ts | 183 |
-| 1109 | PUT | `/api/communication/im/notifications/{userId}/read-all` | im | apps/web/src/api/im/index.ts | 186 |
-| 1110 | GET | `/api/communication/im/health` | im | apps/web/src/api/im/index.ts | 190 |
-| 1111 | GET | `/api/communication/im/online-status/{userId}` | im | apps/web/src/api/im/index.ts | 206 |
-| 1112 | GET | `/api/communication/im/contacts/{userId}` | im | apps/web/src/api/im/index.ts | 210 |
-| 1113 | POST | `/api/communication/im/contacts/{userId}` | im | apps/web/src/api/im/index.ts | 217 |
-| 1114 | PUT | `/api/communication/im/contacts/{userId}/{friendId}/accept` | im | apps/web/src/api/im/index.ts | 221 |
-| 1115 | PUT | `/api/communication/im/contacts/{userId}/{friendId}/reject` | im | apps/web/src/api/im/index.ts | 225 |
-| 1116 | DELETE | `/api/communication/im/contacts/{userId}/{friendId}` | im | apps/web/src/api/im/index.ts | 229 |
-| 1117 | GET | `/api/communication/im/contact-groups/{userId}` | im | apps/web/src/api/im/index.ts | 233 |
-| 1118 | POST | `/api/communication/im/contact-groups/{userId}` | im | apps/web/src/api/im/index.ts | 240 |
-| 1119 | PUT | `/api/communication/im/contact-groups/{userId}/{groupId}` | im | apps/web/src/api/im/index.ts | 248 |
-| 1120 | DELETE | `/api/communication/im/contact-groups/{userId}/{groupId}` | im | apps/web/src/api/im/index.ts | 252 |
-| 1121 | POST | `/api/communication/im/contact-groups/{userId}/{groupId}/members` | im | apps/web/src/api/im/index.ts | 260 |
-| 1122 | DELETE | `/api/communication/im/contact-groups/{userId}/{groupId}/members/{memberUserId}` | im | apps/web/src/api/im/index.ts | 270 |
-| 1123 | PUT | `/api/communication/im/rooms/{chatId}/mute` | im | apps/web/src/api/im/index.ts | 274 |
-| 1124 | PUT | `/api/communication/im/rooms/{chatId}/unmute` | im | apps/web/src/api/im/index.ts | 278 |
-| 1125 | PUT | `/api/communication/im/rooms/{chatId}/pin` | im | apps/web/src/api/im/index.ts | 282 |
-| 1126 | PUT | `/api/communication/im/rooms/{chatId}/unpin` | im | apps/web/src/api/im/index.ts | 286 |
-| 1127 | GET | `/api/integration/erp/connections` | integration | apps/web/src/api/integration/connection.ts | 18 |
-| 1128 | GET | `/api/integration/erp/connections/{id}` | integration | apps/web/src/api/integration/connection.ts | 22 |
-| 1129 | POST | `/api/integration/erp/connections` | integration | apps/web/src/api/integration/connection.ts | 28 |
-| 1130 | PUT | `/api/integration/erp/connections/{id}` | integration | apps/web/src/api/integration/connection.ts | 35 |
-| 1131 | DELETE | `/api/integration/erp/connections/{id}` | integration | apps/web/src/api/integration/connection.ts | 39 |
-| 1132 | POST | `/api/integration/erp/connections/test` | integration | apps/web/src/api/integration/connection.ts | 45 |
-| 1133 | GET | `/api/integration/conversion-rules` | integration | apps/web/src/api/integration/conversionRule.ts | 65 |
-| 1134 | GET | `/api/integration/conversion-rules/{id}` | integration | apps/web/src/api/integration/conversionRule.ts | 69 |
-| 1135 | POST | `/api/integration/conversion-rules` | integration | apps/web/src/api/integration/conversionRule.ts | 73 |
-| 1136 | PUT | `/api/integration/conversion-rules/{id}` | integration | apps/web/src/api/integration/conversionRule.ts | 80 |
-| 1137 | DELETE | `/api/integration/conversion-rules/{id}` | integration | apps/web/src/api/integration/conversionRule.ts | 84 |
-| 1138 | GET | `/api/integration/health` | integration | apps/web/src/api/integration/index.ts | 72 |
-| 1139 | GET | `/api/integration/endpoints` | integration | apps/web/src/api/integration/index.ts | 84 |
-| 1140 | GET | `/api/integration/erp/mappings` | integration | apps/web/src/api/integration/mapping.ts | 15 |
-| 1141 | GET | `/api/integration/erp/mappings/{id}` | integration | apps/web/src/api/integration/mapping.ts | 21 |
-| 1142 | POST | `/api/integration/erp/mappings` | integration | apps/web/src/api/integration/mapping.ts | 25 |
-| 1143 | PUT | `/api/integration/erp/mappings/{id}` | integration | apps/web/src/api/integration/mapping.ts | 32 |
-| 1144 | DELETE | `/api/integration/erp/mappings/{id}` | integration | apps/web/src/api/integration/mapping.ts | 36 |
-| 1145 | GET | `/api/integration/sync-stats` | integration | apps/web/src/api/integration/sync.ts | 85 |
-| 1146 | GET | `/api/integration/sync-stats/history` | integration | apps/web/src/api/integration/sync.ts | 95 |
-| 1147 | GET | `/api/lims/audit-logs/{id}` | lims | apps/web/src/api/lims/audit.ts | 27 |
-| 1148 | POST | `/api/lims/barcodes/generate` | lims | apps/web/src/api/lims/barcode.ts | 28 |
-| 1149 | POST | `/api/lims/barcodes/print` | lims | apps/web/src/api/lims/barcode.ts | 37 |
-| 1150 | GET | `/api/lims/barcodes/scan/{barcode}` | lims | apps/web/src/api/lims/barcode.ts | 41 |
-| 1151 | GET | `/api/lims/barcodes/types` | lims | apps/web/src/api/lims/barcode.ts | 45 |
-| 1152 | GET | `/api/lims/barcodes/{barcode}/trace` | lims | apps/web/src/api/lims/barcode.ts | 49 |
-| 1153 | GET | `/api/lims/rfid-tags` | lims | apps/web/src/api/lims/barcode.ts | 55 |
-| 1154 | POST | `/api/lims/rfid-tags` | lims | apps/web/src/api/lims/barcode.ts | 59 |
-| 1155 | DELETE | `/api/lims/rfid-tags/{id}` | lims | apps/web/src/api/lims/barcode.ts | 63 |
-| 1156 | POST | `/api/lims/rfid-tags/assign` | lims | apps/web/src/api/lims/barcode.ts | 67 |
-| 1157 | POST | `/api/lims/rfid-tags/{tagId}/unassign` | lims | apps/web/src/api/lims/barcode.ts | 71 |
-| 1158 | GET | `/api/lims/print-config` | lims | apps/web/src/api/lims/barcode.ts | 77 |
-| 1159 | GET | `/api/lims/print-config/default` | lims | apps/web/src/api/lims/barcode.ts | 81 |
-| 1160 | GET | `/api/lims/collection-tasks` | lims | apps/web/src/api/lims/collection.ts | 16 |
-| 1161 | GET | `/api/lims/collection-tasks/{id}` | lims | apps/web/src/api/lims/collection.ts | 20 |
-| 1162 | POST | `/api/lims/collection-tasks` | lims | apps/web/src/api/lims/collection.ts | 26 |
-| 1163 | PUT | `/api/lims/collection-tasks/{id}` | lims | apps/web/src/api/lims/collection.ts | 33 |
-| 1164 | DELETE | `/api/lims/collection-tasks/{id}` | lims | apps/web/src/api/lims/collection.ts | 37 |
-| 1165 | POST | `/api/lims/collection-tasks/{id}/trigger` | lims | apps/web/src/api/lims/collection.ts | 41 |
-| 1166 | GET | `/api/lims/parse-rules` | lims | apps/web/src/api/lims/collection.ts | 47 |
-| 1167 | GET | `/api/lims/parse-rules/{id}` | lims | apps/web/src/api/lims/collection.ts | 51 |
-| 1168 | POST | `/api/lims/parse-rules` | lims | apps/web/src/api/lims/collection.ts | 55 |
-| 1169 | PUT | `/api/lims/parse-rules/{id}` | lims | apps/web/src/api/lims/collection.ts | 62 |
-| 1170 | DELETE | `/api/lims/parse-rules/{id}` | lims | apps/web/src/api/lims/collection.ts | 66 |
-| 1171 | GET | `/api/lims/dashboard` | lims | apps/web/src/api/lims/dashboard.ts | 16 |
-| 1172 | GET | `/api/lims/statistics` | lims | apps/web/src/api/lims/index.ts | 235 |
-| 1173 | GET | `/api/lims/health` | lims | apps/web/src/api/lims/index.ts | 239 |
-| 1174 | GET | `/api/lims/tasks/sample/{sampleId}` | lims | apps/web/src/api/lims/inspection.ts | 38 |
-| 1175 | POST | `/api/lims/tasks/{id}/complete_step` | lims | apps/web/src/api/lims/inspection.ts | 45 |
-| 1176 | POST | `/api/lims/tasks/{id}/submit-result` | lims | apps/web/src/api/lims/inspection.ts | 55 |
-| 1177 | GET | `/api/lims/records/task/{taskId}` | lims | apps/web/src/api/lims/inspection.ts | 72 |
-| 1178 | POST | `/api/lims/instruments/{id}/calibrate` | lims | apps/web/src/api/lims/instrument.ts | 39 |
-| 1179 | GET | `/api/lims/instruments/{instrumentId}/calibrations` | lims | apps/web/src/api/lims/instrument.ts | 45 |
-| 1180 | GET | `/api/lims/instruments/{instrumentId}/maintenance` | lims | apps/web/src/api/lims/instrument.ts | 51 |
-| 1181 | POST | `/api/lims/maintenance` | lims | apps/web/src/api/lims/instrument.ts | 55 |
-| 1182 | PUT | `/api/lims/maintenance/{id}` | lims | apps/web/src/api/lims/instrument.ts | 62 |
-| 1183 | DELETE | `/api/lims/maintenance/{id}` | lims | apps/web/src/api/lims/instrument.ts | 66 |
-| 1184 | GET | `/api/lims/instrument-data` | lims | apps/web/src/api/lims/instrument.ts | 72 |
-| 1185 | GET | `/api/lims/instrument-data/{id}` | lims | apps/web/src/api/lims/instrument.ts | 76 |
-| 1186 | POST | `/api/lims/instrument-data` | lims | apps/web/src/api/lims/instrument.ts | 82 |
-| 1187 | PUT | `/api/lims/instrument-data/{id}` | lims | apps/web/src/api/lims/instrument.ts | 89 |
-| 1188 | DELETE | `/api/lims/instrument-data/{id}` | lims | apps/web/src/api/lims/instrument.ts | 93 |
-| 1189 | POST | `/api/lims/instrument-data/{id}/parse` | lims | apps/web/src/api/lims/instrument.ts | 97 |
-| 1190 | POST | `/api/lims/instrument-data/parse/test` | lims | apps/web/src/api/lims/instrument.ts | 101 |
-| 1191 | GET | `/api/lims/instrument-data/statistics` | lims | apps/web/src/api/lims/instrument.ts | 105 |
-| 1192 | GET | `/api/lims/pt-plans/{planId}/samples` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 35 |
-| 1193 | GET | `/api/lims/pt-plans/{planId}/results` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 39 |
-| 1194 | GET | `/api/lims/pt-plans/{planId}/evaluations` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 43 |
-| 1195 | GET | `/api/lims/pt-plans/{planId}/corrective-actions` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 47 |
-| 1196 | POST | `/api/lims/pt-samples/receive` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 53 |
-| 1197 | POST | `/api/lims/pt-results` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 59 |
-| 1198 | POST | `/api/lims/pt-evaluations` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 65 |
-| 1199 | POST | `/api/lims/pt-corrective-actions` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 73 |
-| 1200 | PUT | `/api/lims/pt-corrective-actions/{id}` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 80 |
-| 1201 | GET | `/api/lims/reagents/low-stock` | lims | apps/web/src/api/lims/reagent.ts | 21 |
-| 1202 | GET | `/api/lims/reagents/expiring` | lims | apps/web/src/api/lims/reagent.ts | 25 |
-| 1203 | POST | `/api/lims/samples/batch` | lims | apps/web/src/api/lims/sample.ts | 37 |
-| 1204 | DELETE | `/api/lims/samples/batch` | lims | apps/web/src/api/lims/sample.ts | 43 |
-| 1205 | POST | `/api/lims/samples/import` | lims | apps/web/src/api/lims/sample.ts | 53 |
-| 1206 | GET | `/api/lims/samples/{sampleId}/lifecycle` | lims | apps/web/src/api/lims/sample.ts | 61 |
-| 1207 | POST | `/api/lims/samples/lifecycle-event` | lims | apps/web/src/api/lims/sample.ts | 67 |
-| 1208 | POST | `/api/lims/samples/{sampleId}/transition-stage` | lims | apps/web/src/api/lims/sample.ts | 74 |
-| 1209 | GET | `/api/lims/samples/{sampleId}/traceability` | lims | apps/web/src/api/lims/sample.ts | 78 |
-| 1210 | GET | `/api/lims/lifecycle-stages` | lims | apps/web/src/api/lims/sample.ts | 84 |
-| 1211 | GET | `/api/lims/lifecycle-stages/{id}` | lims | apps/web/src/api/lims/sample.ts | 88 |
-| 1212 | GET | `/api/lims/sync-records` | lims | apps/web/src/api/lims/sync.ts | 9 |
-| 1213 | GET | `/api/lims/sync-records/{id}` | lims | apps/web/src/api/lims/sync.ts | 13 |
-| 1214 | DELETE | `/api/lims/sync-records/{id}` | lims | apps/web/src/api/lims/sync.ts | 17 |
-| 1215 | POST | `/api/lims/sync-records/{id}/retry` | lims | apps/web/src/api/lims/sync.ts | 21 |
-| 1216 | POST | `/api/lims/sync/record-to-qms` | lims | apps/web/src/api/lims/sync.ts | 25 |
-| 1217 | POST | `/api/lims/sync/reagent-to-ehs` | lims | apps/web/src/api/lims/sync.ts | 29 |
-| 1218 | GET | `/api/lims/test-methods/{methodId}/versions` | lims | apps/web/src/api/lims/testMethod.ts | 34 |
-| 1219 | POST | `/api/lims/test-methods/{methodId}/new-version` | lims | apps/web/src/api/lims/testMethod.ts | 41 |
-| 1220 | GET | `/api/lims/method-categories` | lims | apps/web/src/api/lims/testMethod.ts | 47 |
-| 1221 | POST | `/api/lims/method-categories` | lims | apps/web/src/api/lims/testMethod.ts | 53 |
-| 1222 | PUT | `/api/lims/method-categories/{id}` | lims | apps/web/src/api/lims/testMethod.ts | 60 |
-| 1223 | DELETE | `/api/lims/method-categories/{id}` | lims | apps/web/src/api/lims/testMethod.ts | 64 |
-| 1224 | GET | `/api/lims/method-validations` | lims | apps/web/src/api/lims/testMethod.ts | 70 |
-| 1225 | POST | `/api/lims/method-validations` | lims | apps/web/src/api/lims/testMethod.ts | 76 |
-| 1226 | GET | `/api/lims/uncertainty-projects/{projectId}/sources` | lims | apps/web/src/api/lims/uncertainty.ts | 42 |
-| 1227 | POST | `/api/lims/uncertainty-sources` | lims | apps/web/src/api/lims/uncertainty.ts | 48 |
-| 1228 | PUT | `/api/lims/uncertainty-sources/{id}` | lims | apps/web/src/api/lims/uncertainty.ts | 55 |
-| 1229 | DELETE | `/api/lims/uncertainty-sources/{id}` | lims | apps/web/src/api/lims/uncertainty.ts | 59 |
-| 1230 | GET | `/api/lims/uncertainty-projects/{projectId}/components` | lims | apps/web/src/api/lims/uncertainty.ts | 67 |
-| 1231 | POST | `/api/lims/uncertainty-components` | lims | apps/web/src/api/lims/uncertainty.ts | 73 |
-| 1232 | PUT | `/api/lims/uncertainty-components/{id}` | lims | apps/web/src/api/lims/uncertainty.ts | 80 |
-| 1233 | DELETE | `/api/lims/uncertainty-components/{id}` | lims | apps/web/src/api/lims/uncertainty.ts | 84 |
-| 1234 | POST | `/api/lims/uncertainty/type-a` | lims | apps/web/src/api/lims/uncertainty.ts | 90 |
-| 1235 | POST | `/api/lims/uncertainty/type-b` | lims | apps/web/src/api/lims/uncertainty.ts | 96 |
-| 1236 | POST | `/api/lims/uncertainty-projects/{projectId}/combined` | lims | apps/web/src/api/lims/uncertainty.ts | 102 |
-| 1237 | GET | `/api/lims/uncertainty-projects/{projectId}/report` | lims | apps/web/src/api/lims/uncertainty.ts | 106 |
-| 1238 | GET | `/api/lims/{endpoint}/{id}` | lims | apps/web/src/api/lims/utils.ts | 35 |
-| 1239 | PUT | `/api/lims/{endpoint}/{id}` | lims | apps/web/src/api/lims/utils.ts | 43 |
-| 1240 | DELETE | `/api/lims/{endpoint}/{id}` | lims | apps/web/src/api/lims/utils.ts | 47 |
-| 1241 | GET | `/api/lowcode/apps${qs ` | lowcode | apps/web/src/api/lowcode/apps.ts | 21 |
-| 1242 | GET | `/api/lowcode/apps/{id}` | lowcode | apps/web/src/api/lowcode/apps.ts | 27 |
-| 1243 | PUT | `/api/lowcode/apps/{id}` | lowcode | apps/web/src/api/lowcode/apps.ts | 35 |
-| 1244 | DELETE | `/api/lowcode/apps/{id}` | lowcode | apps/web/src/api/lowcode/apps.ts | 39 |
-| 1245 | POST | `/api/lowcode/apps/{id}/publish` | lowcode | apps/web/src/api/lowcode/apps.ts | 43 |
-| 1246 | POST | `/api/lowcode/apps/{id}/unpublish` | lowcode | apps/web/src/api/lowcode/apps.ts | 47 |
-| 1247 | POST | `/api/lowcode/apps/{id}/duplicate` | lowcode | apps/web/src/api/lowcode/apps.ts | 51 |
-| 1248 | GET | `/api/lowcode/apps/{id}/export` | lowcode | apps/web/src/api/lowcode/apps.ts | 55 |
-| 1249 | POST | `/api/lowcode/apps/import` | lowcode | apps/web/src/api/lowcode/apps.ts | 59 |
-| 1250 | GET | `/api/lowcode/data-models${qs ` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 21 |
-| 1251 | GET | `/api/lowcode/data-models/{id}` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 27 |
-| 1252 | POST | `/api/lowcode/data-models` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 31 |
-| 1253 | PUT | `/api/lowcode/data-models/{id}` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 38 |
-| 1254 | DELETE | `/api/lowcode/data-models/{id}` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 42 |
-| 1255 | POST | `/api/lowcode/data-models/{id}/materialize` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 47 |
-| 1256 | GET | `/api/lowcode/apps/{appId}/data-models` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 52 |
-| 1257 | GET | `/api/lowcode/data-sources${qs ` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 22 |
-| 1258 | GET | `/api/lowcode/data-sources/{id}` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 28 |
-| 1259 | POST | `/api/lowcode/data-sources` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 32 |
-| 1260 | PUT | `/api/lowcode/data-sources/{id}` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 39 |
-| 1261 | DELETE | `/api/lowcode/data-sources/{id}` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 43 |
-| 1262 | POST | `/api/lowcode/data-sources/test` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 50 |
-| 1263 | POST | `/api/lowcode/data-sources/{id}/test` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 55 |
-| 1264 | GET | `/api/lowcode/forms${qs ` | lowcode | apps/web/src/api/lowcode/forms.ts | 22 |
-| 1265 | GET | `/api/lowcode/forms/{id}` | lowcode | apps/web/src/api/lowcode/forms.ts | 28 |
-| 1266 | POST | `/api/lowcode/forms` | lowcode | apps/web/src/api/lowcode/forms.ts | 32 |
-| 1267 | PUT | `/api/lowcode/forms/{id}` | lowcode | apps/web/src/api/lowcode/forms.ts | 36 |
-| 1268 | DELETE | `/api/lowcode/forms/{id}` | lowcode | apps/web/src/api/lowcode/forms.ts | 40 |
-| 1269 | POST | `/api/lowcode/forms/{id}/publish` | lowcode | apps/web/src/api/lowcode/forms.ts | 45 |
-| 1270 | GET | `/api/lowcode/forms/{id}/preview` | lowcode | apps/web/src/api/lowcode/forms.ts | 50 |
-| 1271 | GET | `/api/lowcode/apps/{appId}/forms` | lowcode | apps/web/src/api/lowcode/forms.ts | 55 |
-| 1272 | GET | `/api/lowcode/dashboard/stats` | lowcode | apps/web/src/api/lowcode/index.ts | 36 |
-| 1273 | GET | `/api/lowcode/pages${qs ` | lowcode | apps/web/src/api/lowcode/pages.ts | 24 |
-| 1274 | GET | `/api/lowcode/pages/{id}` | lowcode | apps/web/src/api/lowcode/pages.ts | 30 |
-| 1275 | POST | `/api/lowcode/pages` | lowcode | apps/web/src/api/lowcode/pages.ts | 34 |
-| 1276 | PUT | `/api/lowcode/pages/{id}` | lowcode | apps/web/src/api/lowcode/pages.ts | 38 |
-| 1277 | DELETE | `/api/lowcode/pages/{id}` | lowcode | apps/web/src/api/lowcode/pages.ts | 42 |
-| 1278 | POST | `/api/lowcode/pages/{id}/publish` | lowcode | apps/web/src/api/lowcode/pages.ts | 47 |
-| 1279 | GET | `/api/lowcode/pages/{id}/preview` | lowcode | apps/web/src/api/lowcode/pages.ts | 52 |
-| 1280 | POST | `/api/lowcode/pages/{id}/set-home` | lowcode | apps/web/src/api/lowcode/pages.ts | 57 |
-| 1281 | GET | `/api/lowcode/apps/{appId}/pages` | lowcode | apps/web/src/api/lowcode/pages.ts | 62 |
-| 1282 | POST | `/api/lowcode/pages/{pageId}/on-form-submit` | lowcode | apps/web/src/api/lowcode/pages.ts | 79 |
-| 1283 | GET | `/api/lowcode/workflows${qs ` | lowcode | apps/web/src/api/lowcode/workflows.ts | 24 |
-| 1284 | GET | `/api/lowcode/workflows/{id}` | lowcode | apps/web/src/api/lowcode/workflows.ts | 30 |
-| 1285 | POST | `/api/lowcode/workflows` | lowcode | apps/web/src/api/lowcode/workflows.ts | 34 |
-| 1286 | PUT | `/api/lowcode/workflows/{id}` | lowcode | apps/web/src/api/lowcode/workflows.ts | 41 |
-| 1287 | DELETE | `/api/lowcode/workflows/{id}` | lowcode | apps/web/src/api/lowcode/workflows.ts | 45 |
-| 1288 | POST | `/api/lowcode/workflows/{id}/enable` | lowcode | apps/web/src/api/lowcode/workflows.ts | 50 |
-| 1289 | POST | `/api/lowcode/workflows/{id}/disable` | lowcode | apps/web/src/api/lowcode/workflows.ts | 55 |
-| 1290 | GET | `/api/lowcode/apps/{appId}/workflows` | lowcode | apps/web/src/api/lowcode/workflows.ts | 60 |
-| 1291 | GET | `/api/communication/mail/emails${queryString ` | mail | apps/web/src/api/mail/index.ts | 100 |
-| 1292 | GET | `/api/communication/mail/emails/{id}` | mail | apps/web/src/api/mail/index.ts | 104 |
-| 1293 | POST | `/api/communication/mail/emails` | mail | apps/web/src/api/mail/index.ts | 108 |
-| 1294 | POST | `/api/communication/mail/emails/send-with-template` | mail | apps/web/src/api/mail/index.ts | 112 |
-| 1295 | DELETE | `/api/communication/mail/emails/{id}` | mail | apps/web/src/api/mail/index.ts | 116 |
-| 1296 | POST | `/api/communication/mail/emails/resend` | mail | apps/web/src/api/mail/index.ts | 120 |
-| 1297 | GET | `/api/communication/mail/emails/stats` | mail | apps/web/src/api/mail/index.ts | 126 |
-| 1298 | GET | `/api/communication/mail/templates${queryString ` | mail | apps/web/src/api/mail/index.ts | 140 |
-| 1299 | GET | `/api/communication/mail/templates/{id}` | mail | apps/web/src/api/mail/index.ts | 144 |
-| 1300 | POST | `/api/communication/mail/templates` | mail | apps/web/src/api/mail/index.ts | 148 |
-| 1301 | PUT | `/api/communication/mail/templates/{id}` | mail | apps/web/src/api/mail/index.ts | 152 |
-| 1302 | DELETE | `/api/communication/mail/templates/{id}` | mail | apps/web/src/api/mail/index.ts | 156 |
-| 1303 | PUT | `/api/communication/mail/templates/{id}/status` | mail | apps/web/src/api/mail/index.ts | 160 |
-| 1304 | POST | `/api/communication/mail/templates/render` | mail | apps/web/src/api/mail/index.ts | 169 |
-| 1305 | GET | `/api/communication/mail/health` | mail | apps/web/src/api/mail/index.ts | 178 |
-| 1306 | POST | `/api/master-data/{BASE_PATH}/schemas` | master | apps/web/src/api/master/schemaRegistry.ts | 70 |
-| 1307 | GET | `/api/master-data/{BASE_PATH}/schemas` | master | apps/web/src/api/master/schemaRegistry.ts | 76 |
-| 1308 | GET | `/api/master-data/{BASE_PATH}/schemas/{id}` | master | apps/web/src/api/master/schemaRegistry.ts | 80 |
-| 1309 | PUT | `/api/master-data/{BASE_PATH}/schemas/{id}` | master | apps/web/src/api/master/schemaRegistry.ts | 87 |
-| 1310 | DELETE | `/api/master-data/{BASE_PATH}/schemas/{id}` | master | apps/web/src/api/master/schemaRegistry.ts | 91 |
-| 1311 | POST | `/api/master-data/{BASE_PATH}/schemas/{schemaId}/data` | master | apps/web/src/api/master/schemaRegistry.ts | 99 |
-| 1312 | GET | `/api/master-data/{BASE_PATH}/schemas/{schemaId}/data` | master | apps/web/src/api/master/schemaRegistry.ts | 110 |
-| 1313 | GET | `/api/master-data/{BASE_PATH}/schemas/{schemaId}/data/{recordId}` | master | apps/web/src/api/master/schemaRegistry.ts | 114 |
-| 1314 | PUT | `/api/master-data/{BASE_PATH}/schemas/{schemaId}/data/{recordId}` | master | apps/web/src/api/master/schemaRegistry.ts | 122 |
-| 1315 | DELETE | `/api/master-data/{BASE_PATH}/schemas/{schemaId}/data/{recordId}` | master | apps/web/src/api/master/schemaRegistry.ts | 126 |
-| 1316 | GET | `/api/mes/anomaly/alerts` | mes | apps/web/src/api/mes/anomalyDetection.ts | 86 |
-| 1317 | GET | `/api/mes/anomaly/summary` | mes | apps/web/src/api/mes/anomalyDetection.ts | 91 |
-| 1318 | GET | `/api/mes/anomaly/equipment/{equipmentId}` | mes | apps/web/src/api/mes/anomalyDetection.ts | 96 |
-| 1319 | GET | `/api/mes/anomaly/rules` | mes | apps/web/src/api/mes/anomalyDetection.ts | 101 |
-| 1320 | GET | `/api/mes/anomaly/rules/{ruleId}` | mes | apps/web/src/api/mes/anomalyDetection.ts | 106 |
-| 1321 | PUT | `/api/mes/anomaly/rules` | mes | apps/web/src/api/mes/anomalyDetection.ts | 111 |
-| 1322 | POST | `/api/mes/anomaly/scan` | mes | apps/web/src/api/mes/anomalyDetection.ts | 116 |
-| 1323 | GET | `/api/mes/anomaly/trend` | mes | apps/web/src/api/mes/anomalyDetection.ts | 124 |
-| 1324 | POST | `/api/mes/aps/schedule` | mes | apps/web/src/api/mes/aps.ts | 166 |
-| 1325 | POST | `/api/mes/aps/schedule/simulate` | mes | apps/web/src/api/mes/aps.ts | 170 |
-| 1326 | POST | `/api/mes/aps/schedule/check-constraints` | mes | apps/web/src/api/mes/aps.ts | 176 |
-| 1327 | GET | `/api/mes/aps/schedule/optimization-report` | mes | apps/web/src/api/mes/aps.ts | 180 |
-| 1328 | GET | `/api/mes/aps/schedule/bottleneck-analysis{query}` | mes | apps/web/src/api/mes/aps.ts | 185 |
-| 1329 | GET | `/api/mes/aps/orders/{orderId}/feasibility` | mes | apps/web/src/api/mes/aps.ts | 189 |
-| 1330 | GET | `/api/mes/equipment${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 39 |
-| 1331 | GET | `/api/mes/equipment/{id}` | mes | apps/web/src/api/mes/equipment.ts | 43 |
-| 1332 | POST | `/api/mes/equipment` | mes | apps/web/src/api/mes/equipment.ts | 47 |
-| 1333 | PUT | `/api/mes/equipment/{id}` | mes | apps/web/src/api/mes/equipment.ts | 51 |
-| 1334 | DELETE | `/api/mes/equipment/{id}` | mes | apps/web/src/api/mes/equipment.ts | 55 |
-| 1335 | POST | `/api/mes/equipment/{id}/maintenance` | mes | apps/web/src/api/mes/equipment.ts | 62 |
-| 1336 | GET | `/api/mes/equipment/statistics` | mes | apps/web/src/api/mes/equipment.ts | 66 |
-| 1337 | GET | `/api/mes/equipment/statistics` | mes | apps/web/src/api/mes/equipment.ts | 72 |
-| 1338 | GET | `/api/mes/inspections${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 84 |
-| 1339 | POST | `/api/mes/inspections` | mes | apps/web/src/api/mes/equipment.ts | 88 |
-| 1340 | GET | `/api/mes/maintenances${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 100 |
-| 1341 | POST | `/api/mes/maintenances` | mes | apps/web/src/api/mes/equipment.ts | 104 |
-| 1342 | PUT | `/api/mes/maintenances/{id}/status` | mes | apps/web/src/api/mes/equipment.ts | 111 |
-| 1343 | GET | `/api/mes/equipment-oee${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 134 |
-| 1344 | GET | `/api/mes/equipment-oee/{id}` | mes | apps/web/src/api/mes/equipment.ts | 138 |
-| 1345 | POST | `/api/mes/equipment-oee` | mes | apps/web/src/api/mes/equipment.ts | 142 |
-| 1346 | PUT | `/api/mes/equipment-oee/{id}` | mes | apps/web/src/api/mes/equipment.ts | 146 |
-| 1347 | DELETE | `/api/mes/equipment-oee/{id}` | mes | apps/web/src/api/mes/equipment.ts | 150 |
-| 1348 | GET | `/api/mes/equipment-oee/statistics${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 164 |
-| 1349 | GET | `/api/mes/equipment-oee/{equipmentId}/efficiency${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 177 |
-| 1350 | GET | `/api/mes/health` | mes | apps/web/src/api/mes/index.ts | 72 |
-| 1351 | GET | `/api/mes/boms${queryString ` | mes | apps/web/src/api/mes/material.ts | 30 |
-| 1352 | GET | `/api/mes/boms/{id}` | mes | apps/web/src/api/mes/material.ts | 34 |
-| 1353 | POST | `/api/mes/boms` | mes | apps/web/src/api/mes/material.ts | 38 |
-| 1354 | PUT | `/api/mes/boms/{id}` | mes | apps/web/src/api/mes/material.ts | 42 |
-| 1355 | DELETE | `/api/mes/boms/{id}` | mes | apps/web/src/api/mes/material.ts | 46 |
-| 1356 | GET | `/api/mes/material-issues${queryString ` | mes | apps/web/src/api/mes/material.ts | 66 |
-| 1357 | POST | `/api/mes/material-issues` | mes | apps/web/src/api/mes/material.ts | 70 |
-| 1358 | GET | `/api/mes/material-returns${queryString ` | mes | apps/web/src/api/mes/material.ts | 90 |
-| 1359 | POST | `/api/mes/material-returns` | mes | apps/web/src/api/mes/material.ts | 94 |
-| 1360 | GET | `/api/mes/material-requirements${queryString ` | mes | apps/web/src/api/mes/materialRequirement.ts | 26 |
-| 1361 | GET | `/api/mes/material-requirements/{id}` | mes | apps/web/src/api/mes/materialRequirement.ts | 30 |
-| 1362 | POST | `/api/mes/material-requirements` | mes | apps/web/src/api/mes/materialRequirement.ts | 34 |
-| 1363 | PUT | `/api/mes/material-requirements/{id}` | mes | apps/web/src/api/mes/materialRequirement.ts | 41 |
-| 1364 | DELETE | `/api/mes/material-requirements/{id}` | mes | apps/web/src/api/mes/materialRequirement.ts | 45 |
-| 1365 | POST | `/api/mes/material-requirements/calculate` | mes | apps/web/src/api/mes/materialRequirement.ts | 49 |
-| 1366 | PUT | `/api/mes/material-requirements/{id}/confirm` | mes | apps/web/src/api/mes/materialRequirement.ts | 53 |
-| 1367 | PUT | `/api/mes/material-requirements/{id}/release` | mes | apps/web/src/api/mes/materialRequirement.ts | 57 |
-| 1368 | GET | `/api/mes/process-routes${queryString ` | mes | apps/web/src/api/mes/process.ts | 86 |
-| 1369 | GET | `/api/mes/process-routes/{id}` | mes | apps/web/src/api/mes/process.ts | 90 |
-| 1370 | POST | `/api/mes/process-routes` | mes | apps/web/src/api/mes/process.ts | 94 |
-| 1371 | PUT | `/api/mes/process-routes/{id}` | mes | apps/web/src/api/mes/process.ts | 98 |
-| 1372 | DELETE | `/api/mes/process-routes/{id}` | mes | apps/web/src/api/mes/process.ts | 102 |
-| 1373 | GET | `/api/mes/process-routes/{routeId}/steps` | mes | apps/web/src/api/mes/process.ts | 106 |
-| 1374 | POST | `/api/mes/process-routes/{routeId}/steps` | mes | apps/web/src/api/mes/process.ts | 113 |
-| 1375 | PUT | `/api/mes/process-routes/{routeId}/steps/{stepId}` | mes | apps/web/src/api/mes/process.ts | 121 |
-| 1376 | DELETE | `/api/mes/process-routes/{routeId}/steps/{stepId}` | mes | apps/web/src/api/mes/process.ts | 125 |
-| 1377 | PUT | `/api/mes/process-routes/{routeId}/steps/reorder` | mes | apps/web/src/api/mes/process.ts | 132 |
-| 1378 | GET | `/api/mes/process-flows${queryString ` | mes | apps/web/src/api/mes/processFlow.ts | 123 |
-| 1379 | GET | `/api/mes/process-flows/{id}` | mes | apps/web/src/api/mes/processFlow.ts | 127 |
-| 1380 | POST | `/api/mes/process-flows` | mes | apps/web/src/api/mes/processFlow.ts | 131 |
-| 1381 | PUT | `/api/mes/process-flows/{id}` | mes | apps/web/src/api/mes/processFlow.ts | 135 |
-| 1382 | DELETE | `/api/mes/process-flows/{id}` | mes | apps/web/src/api/mes/processFlow.ts | 139 |
-| 1383 | GET | `/api/mes/process-flows/{flowId}/steps` | mes | apps/web/src/api/mes/processFlow.ts | 143 |
-| 1384 | POST | `/api/mes/process-flows/{flowId}/steps` | mes | apps/web/src/api/mes/processFlow.ts | 150 |
-| 1385 | PUT | `/api/mes/process-flows/{flowId}/steps/{stepId}` | mes | apps/web/src/api/mes/processFlow.ts | 158 |
-| 1386 | DELETE | `/api/mes/process-flows/{flowId}/steps/{stepId}` | mes | apps/web/src/api/mes/processFlow.ts | 162 |
-| 1387 | GET | `/api/mes/process-flows/{flowId}/capacity` | mes | apps/web/src/api/mes/processFlow.ts | 166 |
-| 1388 | GET | `/api/mes/kanban/dashboard` | mes | apps/web/src/api/mes/productionKanban.ts | 7 |
-| 1389 | GET | `/api/mes/kanban/order-progress${queryString ` | mes | apps/web/src/api/mes/productionKanban.ts | 26 |
-| 1390 | GET | `/api/mes/kanban/workstation-status` | mes | apps/web/src/api/mes/productionKanban.ts | 42 |
-| 1391 | GET | `/api/mes/kanban/quality-trend${queryString ` | mes | apps/web/src/api/mes/productionKanban.ts | 58 |
-| 1392 | GET | `/api/mes/kanban/equipment-status` | mes | apps/web/src/api/mes/productionKanban.ts | 72 |
-| 1393 | GET | `/api/mes/orders${queryString ` | mes | apps/web/src/api/mes/productionOrder.ts | 27 |
-| 1394 | GET | `/api/mes/orders/{id}` | mes | apps/web/src/api/mes/productionOrder.ts | 31 |
-| 1395 | POST | `/api/mes/orders` | mes | apps/web/src/api/mes/productionOrder.ts | 35 |
-| 1396 | PUT | `/api/mes/orders/{id}` | mes | apps/web/src/api/mes/productionOrder.ts | 42 |
-| 1397 | DELETE | `/api/mes/orders/{id}` | mes | apps/web/src/api/mes/productionOrder.ts | 46 |
-| 1398 | PUT | `/api/mes/orders/{id}/release` | mes | apps/web/src/api/mes/productionOrder.ts | 50 |
-| 1399 | PUT | `/api/mes/orders/{id}/start` | mes | apps/web/src/api/mes/productionOrder.ts | 54 |
-| 1400 | PUT | `/api/mes/orders/{id}/complete` | mes | apps/web/src/api/mes/productionOrder.ts | 58 |
-| 1401 | PUT | `/api/mes/orders/{id}/cancel` | mes | apps/web/src/api/mes/productionOrder.ts | 62 |
-| 1402 | POST | `/api/mes/orders/from-erp` | mes | apps/web/src/api/mes/productionOrder.ts | 66 |
-| 1403 | GET | `/api/mes/processes${queryString ` | mes | apps/web/src/api/mes/productionProcess.ts | 26 |
-| 1404 | GET | `/api/mes/processes/{id}` | mes | apps/web/src/api/mes/productionProcess.ts | 30 |
-| 1405 | POST | `/api/mes/processes` | mes | apps/web/src/api/mes/productionProcess.ts | 34 |
-| 1406 | PUT | `/api/mes/processes/{id}` | mes | apps/web/src/api/mes/productionProcess.ts | 41 |
-| 1407 | DELETE | `/api/mes/processes/{id}` | mes | apps/web/src/api/mes/productionProcess.ts | 45 |
-| 1408 | PUT | `/api/mes/processes/{id}/deactivate` | mes | apps/web/src/api/mes/productionProcess.ts | 49 |
-| 1409 | GET | `/api/mes/records${queryString ` | mes | apps/web/src/api/mes/productionRecord.ts | 26 |
-| 1410 | GET | `/api/mes/records/{id}` | mes | apps/web/src/api/mes/productionRecord.ts | 30 |
-| 1411 | POST | `/api/mes/records` | mes | apps/web/src/api/mes/productionRecord.ts | 34 |
-| 1412 | PUT | `/api/mes/records/{id}` | mes | apps/web/src/api/mes/productionRecord.ts | 41 |
-| 1413 | DELETE | `/api/mes/records/{id}` | mes | apps/web/src/api/mes/productionRecord.ts | 45 |
-| 1414 | PUT | `/api/mes/records/{id}/complete` | mes | apps/web/src/api/mes/productionRecord.ts | 49 |
-| 1415 | GET | `/api/mes/schedules${queryString ` | mes | apps/web/src/api/mes/productionSchedule.ts | 28 |
-| 1416 | GET | `/api/mes/schedules/{id}` | mes | apps/web/src/api/mes/productionSchedule.ts | 32 |
-| 1417 | POST | `/api/mes/schedules` | mes | apps/web/src/api/mes/productionSchedule.ts | 36 |
-| 1418 | PUT | `/api/mes/schedules/{id}` | mes | apps/web/src/api/mes/productionSchedule.ts | 43 |
-| 1419 | DELETE | `/api/mes/schedules/{id}` | mes | apps/web/src/api/mes/productionSchedule.ts | 47 |
-| 1420 | PUT | `/api/mes/schedules/{id}/adjust` | mes | apps/web/src/api/mes/productionSchedule.ts | 51 |
-| 1421 | GET | `/api/mes/schedules/gantt${queryString ` | mes | apps/web/src/api/mes/productionSchedule.ts | 65 |
-| 1422 | GET | `/api/mes/quality/inspections${queryString ` | mes | apps/web/src/api/mes/quality.ts | 171 |
-| 1423 | GET | `/api/mes/quality/inspections/{id}` | mes | apps/web/src/api/mes/quality.ts | 175 |
-| 1424 | POST | `/api/mes/quality/inspections` | mes | apps/web/src/api/mes/quality.ts | 181 |
-| 1425 | PUT | `/api/mes/quality/inspections/{id}` | mes | apps/web/src/api/mes/quality.ts | 188 |
-| 1426 | DELETE | `/api/mes/quality/inspections/{id}` | mes | apps/web/src/api/mes/quality.ts | 192 |
-| 1427 | GET | `/api/mes/quality/patrols${queryString ` | mes | apps/web/src/api/mes/quality.ts | 210 |
-| 1428 | GET | `/api/mes/quality/patrols/{id}` | mes | apps/web/src/api/mes/quality.ts | 214 |
-| 1429 | POST | `/api/mes/quality/patrols` | mes | apps/web/src/api/mes/quality.ts | 220 |
-| 1430 | PUT | `/api/mes/quality/patrols/{id}` | mes | apps/web/src/api/mes/quality.ts | 227 |
-| 1431 | DELETE | `/api/mes/quality/patrols/{id}` | mes | apps/web/src/api/mes/quality.ts | 231 |
-| 1432 | GET | `/api/mes/quality/patrols/{patrolId}/items` | mes | apps/web/src/api/mes/quality.ts | 235 |
-| 1433 | POST | `/api/mes/quality/patrols/{patrolId}/items` | mes | apps/web/src/api/mes/quality.ts | 242 |
-| 1434 | GET | `/api/mes/quality/standards${queryString ` | mes | apps/web/src/api/mes/quality.ts | 260 |
-| 1435 | GET | `/api/mes/quality/standards/{id}` | mes | apps/web/src/api/mes/quality.ts | 264 |
-| 1436 | POST | `/api/mes/quality/standards` | mes | apps/web/src/api/mes/quality.ts | 268 |
-| 1437 | PUT | `/api/mes/quality/standards/{id}` | mes | apps/web/src/api/mes/quality.ts | 275 |
-| 1438 | DELETE | `/api/mes/quality/standards/{id}` | mes | apps/web/src/api/mes/quality.ts | 279 |
-| 1439 | GET | `/api/mes/teams${queryString ` | mes | apps/web/src/api/mes/team.ts | 27 |
-| 1440 | GET | `/api/mes/teams/{id}` | mes | apps/web/src/api/mes/team.ts | 31 |
-| 1441 | POST | `/api/mes/teams` | mes | apps/web/src/api/mes/team.ts | 35 |
-| 1442 | PUT | `/api/mes/teams/{id}` | mes | apps/web/src/api/mes/team.ts | 39 |
-| 1443 | DELETE | `/api/mes/teams/{id}` | mes | apps/web/src/api/mes/team.ts | 43 |
-| 1444 | GET | `/api/mes/teams/{teamId}/members` | mes | apps/web/src/api/mes/team.ts | 47 |
-| 1445 | POST | `/api/mes/teams/{teamId}/members` | mes | apps/web/src/api/mes/team.ts | 54 |
-| 1446 | DELETE | `/api/mes/teams/{teamId}/members/{memberId}` | mes | apps/web/src/api/mes/team.ts | 58 |
-| 1447 | GET | `/api/mes/traceability/forward/{orderId}` | mes | apps/web/src/api/mes/traceability.ts | 7 |
-| 1448 | GET | `/api/mes/traceability/backward/{batchNo}` | mes | apps/web/src/api/mes/traceability.ts | 11 |
-| 1449 | GET | `/api/mes/traceability/chain${queryString ` | mes | apps/web/src/api/mes/traceability.ts | 23 |
-| 1450 | GET | `/api/mes/traceability/quality-records${queryString ` | mes | apps/web/src/api/mes/traceability.ts | 41 |
-| 1451 | GET | `/api/mes/wips${queryString ` | mes | apps/web/src/api/mes/wip.ts | 29 |
-| 1452 | GET | `/api/mes/wips/{id}` | mes | apps/web/src/api/mes/wip.ts | 33 |
-| 1453 | POST | `/api/mes/wips` | mes | apps/web/src/api/mes/wip.ts | 37 |
-| 1454 | PUT | `/api/mes/wips/{id}` | mes | apps/web/src/api/mes/wip.ts | 41 |
-| 1455 | DELETE | `/api/mes/wips/{id}` | mes | apps/web/src/api/mes/wip.ts | 45 |
-| 1456 | POST | `/api/mes/wips/transfer` | mes | apps/web/src/api/mes/wip.ts | 49 |
-| 1457 | GET | `/api/mes/wips/transfers${queryString ` | mes | apps/web/src/api/mes/wip.ts | 66 |
-| 1458 | GET | `/api/mes/wips/statistics` | mes | apps/web/src/api/mes/wip.ts | 70 |
-| 1459 | GET | `/api/mes/work-orders${queryString ` | mes | apps/web/src/api/mes/workOrder.ts | 26 |
-| 1460 | GET | `/api/mes/work-orders/{id}` | mes | apps/web/src/api/mes/workOrder.ts | 30 |
-| 1461 | POST | `/api/mes/work-orders` | mes | apps/web/src/api/mes/workOrder.ts | 34 |
-| 1462 | PUT | `/api/mes/work-orders/{id}` | mes | apps/web/src/api/mes/workOrder.ts | 38 |
-| 1463 | DELETE | `/api/mes/work-orders/{id}` | mes | apps/web/src/api/mes/workOrder.ts | 42 |
-| 1464 | PUT | `/api/mes/work-orders/{id}/start` | mes | apps/web/src/api/mes/workOrder.ts | 46 |
-| 1465 | PUT | `/api/mes/work-orders/{id}/complete` | mes | apps/web/src/api/mes/workOrder.ts | 50 |
-| 1466 | PUT | `/api/mes/work-orders/{id}/cancel` | mes | apps/web/src/api/mes/workOrder.ts | 54 |
-| 1467 | PUT | `/api/mes/work-orders/{id}/pause` | mes | apps/web/src/api/mes/workOrder.ts | 58 |
-| 1468 | PUT | `/api/mes/work-orders/{id}/resume` | mes | apps/web/src/api/mes/workOrder.ts | 62 |
-| 1469 | GET | `/api/mes/work-reports${queryString ` | mes | apps/web/src/api/mes/workReport.ts | 26 |
-| 1470 | GET | `/api/mes/work-reports/{id}` | mes | apps/web/src/api/mes/workReport.ts | 30 |
-| 1471 | POST | `/api/mes/work-reports` | mes | apps/web/src/api/mes/workReport.ts | 34 |
-| 1472 | PUT | `/api/mes/work-reports/{id}` | mes | apps/web/src/api/mes/workReport.ts | 38 |
-| 1473 | DELETE | `/api/mes/work-reports/{id}` | mes | apps/web/src/api/mes/workReport.ts | 42 |
-| 1474 | PUT | `/api/mes/work-reports/{id}/approve` | mes | apps/web/src/api/mes/workReport.ts | 46 |
-| 1475 | PUT | `/api/mes/work-reports/{id}/reject` | mes | apps/web/src/api/mes/workReport.ts | 50 |
-| 1476 | GET | `/api/mes/workstations${queryString ` | mes | apps/web/src/api/mes/workStation.ts | 26 |
-| 1477 | GET | `/api/mes/workstations/{id}` | mes | apps/web/src/api/mes/workStation.ts | 30 |
-| 1478 | POST | `/api/mes/workstations` | mes | apps/web/src/api/mes/workStation.ts | 34 |
-| 1479 | PUT | `/api/mes/workstations/{id}` | mes | apps/web/src/api/mes/workStation.ts | 38 |
-| 1480 | DELETE | `/api/mes/workstations/{id}` | mes | apps/web/src/api/mes/workStation.ts | 42 |
-| 1481 | PUT | `/api/mes/workstations/{id}/activate` | mes | apps/web/src/api/mes/workStation.ts | 46 |
-| 1482 | PUT | `/api/mes/workstations/{id}/deactivate` | mes | apps/web/src/api/mes/workStation.ts | 50 |
-| 1483 | GET | `/api/core/migration/migrations/services` | migration | apps/web/src/api/migration/index.ts | 66 |
-| 1484 | POST | `/api/core/migration/migrations/services/{encodeURIComponent(serviceName)}/apply` | migration | apps/web/src/api/migration/index.ts | 82 |
-| 1485 | POST | `/api/core/migration/migrations/services/{encodeURIComponent(serviceName)}/rollback` | migration | apps/web/src/api/migration/index.ts | 97 |
-| 1486 | GET | `/api/mobile/mobile/dashboard/stats` | mobile | apps/web/src/api/mobile/index.ts | 421 |
-| 1487 | GET | `/api/mobile/mobile/workbench` | mobile | apps/web/src/api/mobile/index.ts | 425 |
-| 1488 | POST | `/api/mobile/mobile/patrol-records` | mobile | apps/web/src/api/mobile/index.ts | 434 |
-| 1489 | POST | `/api/mobile/mobile/scan-records` | mobile | apps/web/src/api/mobile/index.ts | 441 |
-| 1490 | POST | `/api/mobile/mobile/scan` | mobile | apps/web/src/api/mobile/index.ts | 444 |
-| 1491 | POST | `/api/mobile/mobile/photo-evidences` | mobile | apps/web/src/api/mobile/index.ts | 453 |
-| 1492 | POST | `/api/mobile/mobile/audio-recordings` | mobile | apps/web/src/api/mobile/index.ts | 462 |
-| 1493 | POST | `/api/mobile/mobile/video-recordings` | mobile | apps/web/src/api/mobile/index.ts | 471 |
-| 1494 | POST | `/api/mobile/mobile/mobile-tasks` | mobile | apps/web/src/api/mobile/index.ts | 481 |
-| 1495 | PUT | `/api/mobile/mobile/mobile-tasks/{id}/status` | mobile | apps/web/src/api/mobile/index.ts | 484 |
-| 1496 | GET | `/api/mobile/attendance/stats` | mobile | apps/web/src/api/mobile/index.ts | 488 |
-| 1497 | POST | `/api/mobile/attendance/check-in` | mobile | apps/web/src/api/mobile/index.ts | 504 |
-| 1498 | POST | `/api/mobile/attendance/check-out` | mobile | apps/web/src/api/mobile/index.ts | 511 |
-| 1499 | POST | `/api/mobile/attendance/leaves` | mobile | apps/web/src/api/mobile/index.ts | 523 |
-| 1500 | GET | `/api/mobile/mobile/inventory/items/{id}` | mobile | apps/web/src/api/mobile/index.ts | 538 |
-| 1501 | POST | `/api/mobile/mobile/inventory/stocktake/{taskId}/records` | mobile | apps/web/src/api/mobile/index.ts | 556 |
-| 1502 | GET | `/api/mobile/mobile/quality/tasks/{id}` | mobile | apps/web/src/api/mobile/index.ts | 591 |
-| 1503 | POST | `/api/mobile/mobile/quality/defects` | mobile | apps/web/src/api/mobile/index.ts | 604 |
-| 1504 | PUT | `/api/mobile/mobile/quality/tasks/{id}/status` | mobile | apps/web/src/api/mobile/index.ts | 611 |
-| 1505 | GET | `/api/mobile/mobile/production/orders/{id}` | mobile | apps/web/src/api/mobile/index.ts | 628 |
-| 1506 | POST | `/api/mobile/mobile/production/work-reports` | mobile | apps/web/src/api/mobile/index.ts | 647 |
-| 1507 | GET | `/api/mobile/mobile/push/config` | mobile | apps/web/src/api/mobile/index.ts | 660 |
-| 1508 | PUT | `/api/mobile/mobile/push/config` | mobile | apps/web/src/api/mobile/index.ts | 664 |
-| 1509 | PUT | `/api/mobile/mobile/push/templates/{id}` | mobile | apps/web/src/api/mobile/index.ts | 675 |
-| 1510 | GET | `/api/mobile/mobile/offline/sync-status` | mobile | apps/web/src/api/mobile/index.ts | 679 |
-| 1511 | POST | `/api/mobile/mobile/offline/sync` | mobile | apps/web/src/api/mobile/index.ts | 682 |
-| 1512 | GET | `/api/mobile/health` | mobile | apps/web/src/api/mobile/index.ts | 686 |
-| 1513 | GET | `/api/core/monitor/metrics/system` | monitor | apps/web/src/api/monitor/index.ts | 170 |
-| 1514 | GET | `/api/core/monitor/health` | monitor | apps/web/src/api/monitor/index.ts | 178 |
-| 1515 | GET | `/api/core/monitor/performance/api` | monitor | apps/web/src/api/monitor/index.ts | 186 |
-| 1516 | GET | `/api/core/monitor/metrics/database` | monitor | apps/web/src/api/monitor/index.ts | 194 |
-| 1517 | GET | `/api/core/monitor/alerts/{id}` | monitor | apps/web/src/api/monitor/index.ts | 217 |
-| 1518 | PUT | `/api/core/monitor/alerts/{id}/acknowledge` | monitor | apps/web/src/api/monitor/index.ts | 225 |
-| 1519 | PUT | `/api/core/monitor/alerts/{id}/resolve` | monitor | apps/web/src/api/monitor/index.ts | 233 |
-| 1520 | GET | `/api/core/monitor/reports/performance` | monitor | apps/web/src/api/monitor/index.ts | 249 |
-| 1521 | GET | `/api/core/monitor/metrics/realtime` | monitor | apps/web/src/api/monitor/index.ts | 257 |
-| 1522 | GET | `/api/core/monitor/health` | monitor | apps/web/src/api/monitor/index.ts | 264 |
-| 1523 | GET | `/api/core/monitor/metrics/test-retry` | monitor | apps/web/src/api/monitor/index.ts | 269 |
-| 1524 | GET | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 226 |
-| 1525 | POST | `/api/core/monitor/business-metrics` | monitor | apps/web/src/api/monitor/metrics.ts | 229 |
-| 1526 | PUT | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 235 |
-| 1527 | DELETE | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 238 |
-| 1528 | GET | `/api/core/monitor/business-metrics/summary` | monitor | apps/web/src/api/monitor/metrics.ts | 241 |
-| 1529 | GET | `/api/core/monitor/business-metrics/trend` | monitor | apps/web/src/api/monitor/metrics.ts | 247 |
-| 1530 | GET | `/api/core/monitor/business-metrics/kpi` | monitor | apps/web/src/api/monitor/metrics.ts | 255 |
-| 1531 | GET | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 266 |
-| 1532 | POST | `/api/core/monitor/slos` | monitor | apps/web/src/api/monitor/metrics.ts | 269 |
-| 1533 | PUT | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 272 |
-| 1534 | DELETE | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 275 |
-| 1535 | GET | `/api/core/monitor/slos/summary` | monitor | apps/web/src/api/monitor/metrics.ts | 278 |
-| 1536 | GET | `/api/core/monitor/slos/budget` | monitor | apps/web/src/api/monitor/metrics.ts | 281 |
-| 1537 | GET | `/api/core/monitor/slos/trend` | monitor | apps/web/src/api/monitor/metrics.ts | 284 |
-| 1538 | POST | `/api/core/monitor/slos/violations/{id}/resolve` | monitor | apps/web/src/api/monitor/metrics.ts | 300 |
-| 1539 | GET | `/api/core/monitor/rules` | monitor | apps/web/src/api/monitor/metrics.ts | 306 |
-| 1540 | GET | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 309 |
-| 1541 | POST | `/api/core/monitor/rules` | monitor | apps/web/src/api/monitor/metrics.ts | 312 |
-| 1542 | PUT | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 318 |
-| 1543 | DELETE | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 321 |
-| 1544 | POST | `/api/core/monitor/rules/{id}/enable` | monitor | apps/web/src/api/monitor/metrics.ts | 324 |
-| 1545 | POST | `/api/core/monitor/rules/{id}/disable` | monitor | apps/web/src/api/monitor/metrics.ts | 327 |
-| 1546 | GET | `/api/communication/notification/notifications` | notification | apps/web/src/api/notification/index.ts | 159 |
-| 1547 | GET | `/api/communication/notification/notifications/unread` | notification | apps/web/src/api/notification/index.ts | 188 |
-| 1548 | GET | `/api/communication/notification/notifications/unread-count` | notification | apps/web/src/api/notification/index.ts | 195 |
-| 1549 | PUT | `/api/communication/notification/notifications/{id}` | notification | apps/web/src/api/notification/index.ts | 226 |
-| 1550 | PUT | `/api/communication/notification/notifications/read-all` | notification | apps/web/src/api/notification/index.ts | 230 |
-| 1551 | DELETE | `/api/communication/notification/notifications/{id}` | notification | apps/web/src/api/notification/index.ts | 234 |
-| 1552 | POST | `/api/communication/notification/notifications` | notification | apps/web/src/api/notification/index.ts | 240 |
-| 1553 | GET | `/api/communication/notification/notifications/archive/config` | notification | apps/web/src/api/notification/index.ts | 259 |
-| 1554 | PUT | `/api/communication/notification/notifications/archive/config` | notification | apps/web/src/api/notification/index.ts | 266 |
-| 1555 | POST | `/api/communication/notification/notifications/archive/run` | notification | apps/web/src/api/notification/index.ts | 278 |
-| 1556 | GET | `/api/communication/notification/notifications/stats/me` | notification | apps/web/src/api/notification/index.ts | 285 |
-| 1557 | GET | `/api/communication/notification/notification-templates` | notification | apps/web/src/api/notification/index.ts | 312 |
-| 1558 | GET | `/api/communication/notification/notification-templates/{id}` | notification | apps/web/src/api/notification/index.ts | 320 |
-| 1559 | POST | `/api/communication/notification/notification-templates` | notification | apps/web/src/api/notification/index.ts | 329 |
-| 1560 | PUT | `/api/communication/notification/notification-templates/{id}` | notification | apps/web/src/api/notification/index.ts | 340 |
-| 1561 | DELETE | `/api/communication/notification/notification-templates/{id}` | notification | apps/web/src/api/notification/index.ts | 348 |
-| 1562 | POST | `/api/communication/notification/notification-templates/{id}/render` | notification | apps/web/src/api/notification/index.ts | 356 |
-| 1563 | PUT | `/api/communication/notification/notifications/bulk-read` | notification | apps/web/src/api/notification/index.ts | 364 |
-| 1564 | DELETE | `/api/communication/notification/notifications/bulk` | notification | apps/web/src/api/notification/index.ts | 371 |
-| 1565 | GET | `/api/communication/notification/notifications/health/detailed` | notification | apps/web/src/api/notification/index.ts | 395 |
-| 1566 | GET | `/api/communication/notification/notifications/{id}` | notification | apps/web/src/api/notification/index.ts | 404 |
-| 1567 | PUT | `/api/communication/notification/notifications/{id}` | notification | apps/web/src/api/notification/index.ts | 407 |
-| 1568 | PUT | `/api/communication/notification/notifications/{id}/unread` | notification | apps/web/src/api/notification/index.ts | 410 |
-| 1569 | GET | `/api/pdm/bom-versions` | pdm | apps/web/src/api/pdm/bom.ts | 89 |
-| 1570 | GET | `/api/pdm/bom-versions/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 107 |
-| 1571 | POST | `/api/pdm/bom-versions` | pdm | apps/web/src/api/pdm/bom.ts | 110 |
-| 1572 | PUT | `/api/pdm/bom-versions/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 116 |
-| 1573 | DELETE | `/api/pdm/bom-versions/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 119 |
-| 1574 | POST | `/api/pdm/bom-versions/{id}/activate` | pdm | apps/web/src/api/pdm/bom.ts | 122 |
-| 1575 | POST | `/api/pdm/bom-versions/{id}/archive` | pdm | apps/web/src/api/pdm/bom.ts | 125 |
-| 1576 | GET | `/api/pdm/bom-items{params}` | pdm | apps/web/src/api/pdm/bom.ts | 131 |
-| 1577 | GET | `/api/pdm/bom-items/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 134 |
-| 1578 | POST | `/api/pdm/bom-items` | pdm | apps/web/src/api/pdm/bom.ts | 137 |
-| 1579 | PUT | `/api/pdm/bom-items/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 143 |
-| 1580 | DELETE | `/api/pdm/bom-items/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 146 |
-| 1581 | POST | `/api/pdm/bom-versions/{bomVersionId}/items/batch` | pdm | apps/web/src/api/pdm/bom.ts | 152 |
-| 1582 | POST | `/api/pdm/bom-compare` | pdm | apps/web/src/api/pdm/bom.ts | 162 |
-| 1583 | GET | `/api/pdm/bom-compare/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 168 |
-| 1584 | GET | `/api/pdm/bom-compare` | pdm | apps/web/src/api/pdm/bom.ts | 171 |
-| 1585 | GET | `/api/pdm/dashboard` | pdm | apps/web/src/api/pdm/dashboard.ts | 16 |
-| 1586 | POST | `/api/pdm/documents/search` | pdm | apps/web/src/api/pdm/document.ts | 91 |
-| 1587 | PUT | `/api/pdm/documents/{id}/status` | pdm | apps/web/src/api/pdm/document.ts | 109 |
-| 1588 | GET | `/api/pdm/documents/{documentId}/versions` | pdm | apps/web/src/api/pdm/document.ts | 114 |
-| 1589 | GET | `/api/pdm/documents/{documentId}/versions/{versionId}` | pdm | apps/web/src/api/pdm/document.ts | 120 |
-| 1590 | POST | `/api/pdm/documents/{data.document_id}/versions` | pdm | apps/web/src/api/pdm/document.ts | 125 |
-| 1591 | PUT | `/api/pdm/documents/{documentId}/versions/{versionId}` | pdm | apps/web/src/api/pdm/document.ts | 132 |
-| 1592 | DELETE | `/api/pdm/documents/{documentId}/versions/{versionId}` | pdm | apps/web/src/api/pdm/document.ts | 138 |
-| 1593 | POST | `/api/pdm/documents/{documentId}/versions/{versionId}/publish` | pdm | apps/web/src/api/pdm/document.ts | 144 |
-| 1594 | POST | `/api/pdm/documents/{documentId}/upload` | pdm | apps/web/src/api/pdm/document.ts | 154 |
-| 1595 | GET | `/api/pdm/documents/{documentId}/versions/{versionId}/download` | pdm | apps/web/src/api/pdm/document.ts | 161 |
-| 1596 | GET | `/api/pdm/statistics` | pdm | apps/web/src/api/pdm/index.ts | 403 |
-| 1597 | GET | `/api/pdm/change-orders` | pdm | apps/web/src/api/pdm/index.ts | 445 |
-| 1598 | GET | `/api/pdm/change-orders/{id}` | pdm | apps/web/src/api/pdm/index.ts | 448 |
-| 1599 | POST | `/api/pdm/change-orders` | pdm | apps/web/src/api/pdm/index.ts | 451 |
-| 1600 | PUT | `/api/pdm/change-orders/{id}` | pdm | apps/web/src/api/pdm/index.ts | 457 |
-| 1601 | DELETE | `/api/pdm/change-orders/{id}` | pdm | apps/web/src/api/pdm/index.ts | 460 |
-| 1602 | GET | `/api/pdm/product-configs` | pdm | apps/web/src/api/pdm/index.ts | 465 |
-| 1603 | GET | `/api/pdm/product-configs/{id}` | pdm | apps/web/src/api/pdm/index.ts | 468 |
-| 1604 | POST | `/api/pdm/product-configs` | pdm | apps/web/src/api/pdm/index.ts | 473 |
-| 1605 | PUT | `/api/pdm/product-configs/{id}` | pdm | apps/web/src/api/pdm/index.ts | 479 |
-| 1606 | DELETE | `/api/pdm/product-configs/{id}` | pdm | apps/web/src/api/pdm/index.ts | 482 |
-| 1607 | POST | `/api/pdm/import` | pdm | apps/web/src/api/pdm/index.ts | 493 |
-| 1608 | GET | `/api/pdm/projects` | pdm | apps/web/src/api/pdm/project.ts | 77 |
-| 1609 | GET | `/api/pdm/projects/{id}` | pdm | apps/web/src/api/pdm/project.ts | 80 |
-| 1610 | POST | `/api/pdm/projects` | pdm | apps/web/src/api/pdm/project.ts | 83 |
-| 1611 | PUT | `/api/pdm/projects/{id}` | pdm | apps/web/src/api/pdm/project.ts | 89 |
-| 1612 | DELETE | `/api/pdm/projects/{id}` | pdm | apps/web/src/api/pdm/project.ts | 92 |
-| 1613 | PUT | `/api/pdm/projects/{id}/status` | pdm | apps/web/src/api/pdm/project.ts | 95 |
-| 1614 | PUT | `/api/pdm/projects/{id}/phase` | pdm | apps/web/src/api/pdm/project.ts | 98 |
-| 1615 | GET | `/api/pdm/projects/{projectId}/members` | pdm | apps/web/src/api/pdm/project.ts | 103 |
-| 1616 | POST | `/api/pdm/projects/{data.project_id}/members` | pdm | apps/web/src/api/pdm/project.ts | 106 |
-| 1617 | DELETE | `/api/pdm/projects/{projectId}/members/{userId}` | pdm | apps/web/src/api/pdm/project.ts | 112 |
-| 1618 | PUT | `/api/pdm/projects/{projectId}/members/{userId}` | pdm | apps/web/src/api/pdm/project.ts | 119 |
-| 1619 | GET | `/api/pdm/projects/{projectId}/phases` | pdm | apps/web/src/api/pdm/project.ts | 126 |
-| 1620 | POST | `/api/pdm/projects/{data.project_id}/phases` | pdm | apps/web/src/api/pdm/project.ts | 129 |
-| 1621 | PUT | `/api/pdm/projects/{projectId}/phases/{phaseId}` | pdm | apps/web/src/api/pdm/project.ts | 136 |
-| 1622 | DELETE | `/api/pdm/projects/{projectId}/phases/{phaseId}` | pdm | apps/web/src/api/pdm/project.ts | 139 |
-| 1623 | POST | `/api/core/iam/access-logs` | iam | apps/web/src/api/permissionInterceptor.ts | 106 |
-| 1624 | GET | `/api/pm/projects/{projectId}/acceptance-plans` | pm | apps/web/src/api/pm/acceptance.ts | 6 |
-| 1625 | GET | `/api/pm/acceptance-plans/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 10 |
-| 1626 | POST | `/api/pm/projects/{projectId}/acceptance-plans` | pm | apps/web/src/api/pm/acceptance.ts | 28 |
-| 1627 | PUT | `/api/pm/acceptance-plans/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 43 |
-| 1628 | GET | `/api/pm/acceptance-plans/{planId}/items` | pm | apps/web/src/api/pm/acceptance.ts | 49 |
-| 1629 | POST | `/api/pm/acceptance-plans/{planId}/items` | pm | apps/web/src/api/pm/acceptance.ts | 61 |
-| 1630 | PUT | `/api/pm/acceptance-items/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 72 |
-| 1631 | DELETE | `/api/pm/acceptance-items/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 76 |
-| 1632 | GET | `/api/pm/projects/{projectId}/acceptance-records` | pm | apps/web/src/api/pm/acceptance.ts | 82 |
-| 1633 | GET | `/api/pm/acceptance-records/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 86 |
-| 1634 | POST | `/api/pm/acceptance-plans/{planId}/records` | pm | apps/web/src/api/pm/acceptance.ts | 103 |
-| 1635 | PUT | `/api/pm/acceptance-records/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 117 |
-| 1636 | GET | `/api/pm/projects/{projectId}/benefits` | pm | apps/web/src/api/pm/benefit.ts | 6 |
-| 1637 | GET | `/api/pm/projects/{projectId}/benefits/analysis` | pm | apps/web/src/api/pm/benefit.ts | 10 |
-| 1638 | POST | `/api/pm/projects/{projectId}/benefits` | pm | apps/web/src/api/pm/benefit.ts | 29 |
-| 1639 | GET | `/api/pm/projects/{projectId}/budgets` | pm | apps/web/src/api/pm/budget.ts | 6 |
-| 1640 | GET | `/api/pm/budgets/{id}` | pm | apps/web/src/api/pm/budget.ts | 10 |
-| 1641 | POST | `/api/pm/projects/{projectId}/budgets` | pm | apps/web/src/api/pm/budget.ts | 23 |
-| 1642 | PUT | `/api/pm/budgets/{id}` | pm | apps/web/src/api/pm/budget.ts | 35 |
-| 1643 | POST | `/api/pm/budgets/{id}/submit` | pm | apps/web/src/api/pm/budget.ts | 39 |
-| 1644 | POST | `/api/pm/budgets/{id}/approve` | pm | apps/web/src/api/pm/budget.ts | 43 |
-| 1645 | GET | `/api/pm/budgets/{budgetId}/items` | pm | apps/web/src/api/pm/budget.ts | 49 |
-| 1646 | POST | `/api/pm/budgets/{budgetId}/items` | pm | apps/web/src/api/pm/budget.ts | 63 |
-| 1647 | PUT | `/api/pm/budgets/{budgetId}/items/{itemId}` | pm | apps/web/src/api/pm/budget.ts | 77 |
-| 1648 | DELETE | `/api/pm/budgets/{budgetId}/items/{itemId}` | pm | apps/web/src/api/pm/budget.ts | 81 |
-| 1649 | GET | `/api/pm/contracts` | pm | apps/web/src/api/pm/contract.ts | 11 |
-| 1650 | GET | `/api/pm/contracts/{id}` | pm | apps/web/src/api/pm/contract.ts | 15 |
-| 1651 | POST | `/api/pm/contracts` | pm | apps/web/src/api/pm/contract.ts | 38 |
-| 1652 | PUT | `/api/pm/contracts/{id}` | pm | apps/web/src/api/pm/contract.ts | 60 |
-| 1653 | DELETE | `/api/pm/contracts/{id}` | pm | apps/web/src/api/pm/contract.ts | 64 |
-| 1654 | POST | `/api/pm/contracts/{id}/submit` | pm | apps/web/src/api/pm/contract.ts | 68 |
-| 1655 | POST | `/api/pm/contracts/{id}/approve` | pm | apps/web/src/api/pm/contract.ts | 72 |
-| 1656 | POST | `/api/pm/contracts/{id}/reject` | pm | apps/web/src/api/pm/contract.ts | 76 |
-| 1657 | GET | `/api/pm/contracts/{contractId}/milestones` | pm | apps/web/src/api/pm/contract.ts | 82 |
-| 1658 | POST | `/api/pm/contracts/{contractId}/milestones` | pm | apps/web/src/api/pm/contract.ts | 96 |
-| 1659 | PUT | `/api/pm/contracts/{contractId}/milestones/{milestoneId}` | pm | apps/web/src/api/pm/contract.ts | 110 |
-| 1660 | DELETE | `/api/pm/contracts/{contractId}/milestones/{milestoneId}` | pm | apps/web/src/api/pm/contract.ts | 114 |
-| 1661 | GET | `/api/pm/contracts/{contractId}/payments` | pm | apps/web/src/api/pm/contract.ts | 120 |
-| 1662 | POST | `/api/pm/contracts/{contractId}/payments` | pm | apps/web/src/api/pm/contract.ts | 133 |
-| 1663 | PUT | `/api/pm/contracts/{contractId}/payments/{paymentId}` | pm | apps/web/src/api/pm/contract.ts | 146 |
-| 1664 | DELETE | `/api/pm/contracts/{contractId}/payments/{paymentId}` | pm | apps/web/src/api/pm/contract.ts | 150 |
-| 1665 | GET | `/api/pm/projects/{projectId}/contracts` | pm | apps/web/src/api/pm/contract.ts | 156 |
-| 1666 | POST | `/api/pm/projects/{projectId}/contracts` | pm | apps/web/src/api/pm/contract.ts | 181 |
-| 1667 | GET | `/api/pm/contract-templates` | pm | apps/web/src/api/pm/contract.ts | 187 |
-| 1668 | GET | `/api/pm/contract-templates/{id}` | pm | apps/web/src/api/pm/contract.ts | 191 |
-| 1669 | POST | `/api/pm/contract-templates` | pm | apps/web/src/api/pm/contract.ts | 201 |
-| 1670 | PUT | `/api/pm/contract-templates/{id}` | pm | apps/web/src/api/pm/contract.ts | 213 |
-| 1671 | DELETE | `/api/pm/contract-templates/{id}` | pm | apps/web/src/api/pm/contract.ts | 217 |
-| 1672 | GET | `/api/pm/statistics` | pm | apps/web/src/api/pm/dashboard.ts | 7 |
-| 1673 | GET | `/api/pm/projects/{projectId}/documents` | pm | apps/web/src/api/pm/document.ts | 6 |
-| 1674 | GET | `/api/pm/documents/{id}` | pm | apps/web/src/api/pm/document.ts | 10 |
-| 1675 | POST | `/api/pm/projects/{projectId}/documents` | pm | apps/web/src/api/pm/document.ts | 27 |
-| 1676 | PUT | `/api/pm/documents/{id}` | pm | apps/web/src/api/pm/document.ts | 40 |
-| 1677 | DELETE | `/api/pm/documents/{id}` | pm | apps/web/src/api/pm/document.ts | 44 |
-| 1678 | GET | `/api/pm/documents/{documentId}/versions` | pm | apps/web/src/api/pm/document.ts | 50 |
-| 1679 | POST | `/api/pm/documents/{documentId}/versions` | pm | apps/web/src/api/pm/document.ts | 62 |
-| 1680 | GET | `/api/pm/projects/{projectId}/folders` | pm | apps/web/src/api/pm/document.ts | 68 |
-| 1681 | GET | `/api/pm/folders/{id}` | pm | apps/web/src/api/pm/document.ts | 72 |
-| 1682 | POST | `/api/pm/projects/{projectId}/folders` | pm | apps/web/src/api/pm/document.ts | 84 |
-| 1683 | PUT | `/api/pm/folders/{id}` | pm | apps/web/src/api/pm/document.ts | 94 |
-| 1684 | DELETE | `/api/pm/folders/{id}` | pm | apps/web/src/api/pm/document.ts | 98 |
-| 1685 | GET | `/api/pm/projects/{projectId}/notifications` | pm | apps/web/src/api/pm/notification.ts | 6 |
-| 1686 | POST | `/api/pm/projects/{data.project_id}/notifications` | pm | apps/web/src/api/pm/notification.ts | 19 |
-| 1687 | GET | `/api/pm/projects/{projectId}/notification-settings` | pm | apps/web/src/api/pm/notification.ts | 25 |
-| 1688 | POST | `/api/pm/projects/{projectId}/notification-settings` | pm | apps/web/src/api/pm/notification.ts | 37 |
-| 1689 | PUT | `/api/pm/notification-settings/{id}` | pm | apps/web/src/api/pm/notification.ts | 48 |
-| 1690 | GET | `/api/pm/notification-types` | pm | apps/web/src/api/pm/notification.ts | 54 |
-| 1691 | GET | `/api/pm/projects/{projectId}/phases` | pm | apps/web/src/api/pm/project.ts | 54 |
-| 1692 | POST | `/api/pm/projects/{projectId}/phases` | pm | apps/web/src/api/pm/project.ts | 67 |
-| 1693 | GET | `/api/pm/projects/{projectId}/phases/{id}` | pm | apps/web/src/api/pm/project.ts | 71 |
-| 1694 | PUT | `/api/pm/projects/{projectId}/phases/{id}` | pm | apps/web/src/api/pm/project.ts | 88 |
-| 1695 | DELETE | `/api/pm/projects/{projectId}/phases/{id}` | pm | apps/web/src/api/pm/project.ts | 92 |
-| 1696 | GET | `/api/pm/projects/{projectId}/milestones` | pm | apps/web/src/api/pm/project.ts | 98 |
-| 1697 | POST | `/api/pm/projects/{projectId}/milestones` | pm | apps/web/src/api/pm/project.ts | 111 |
-| 1698 | GET | `/api/pm/projects/{projectId}/milestones/{id}` | pm | apps/web/src/api/pm/project.ts | 115 |
-| 1699 | PUT | `/api/pm/projects/{projectId}/milestones/{id}` | pm | apps/web/src/api/pm/project.ts | 130 |
-| 1700 | DELETE | `/api/pm/projects/{projectId}/milestones/{id}` | pm | apps/web/src/api/pm/project.ts | 134 |
-| 1701 | GET | `/api/pm/projects/{projectId}/approval` | pm | apps/web/src/api/pm/project.ts | 140 |
-| 1702 | POST | `/api/pm/projects/{projectId}/approval` | pm | apps/web/src/api/pm/project.ts | 150 |
-| 1703 | POST | `/api/pm/projects/{projectId}/approval/action` | pm | apps/web/src/api/pm/project.ts | 154 |
-| 1704 | GET | `/api/pm/projects/{projectId}/quality-checks` | pm | apps/web/src/api/pm/quality.ts | 6 |
-| 1705 | GET | `/api/pm/quality-checks/{id}` | pm | apps/web/src/api/pm/quality.ts | 10 |
-| 1706 | POST | `/api/pm/projects/{projectId}/quality-checks` | pm | apps/web/src/api/pm/quality.ts | 26 |
-| 1707 | PUT | `/api/pm/quality-checks/{id}` | pm | apps/web/src/api/pm/quality.ts | 45 |
-| 1708 | GET | `/api/pm/projects/{projectId}/defects` | pm | apps/web/src/api/pm/quality.ts | 51 |
-| 1709 | GET | `/api/pm/defects/{id}` | pm | apps/web/src/api/pm/quality.ts | 55 |
-| 1710 | POST | `/api/pm/projects/{projectId}/defects` | pm | apps/web/src/api/pm/quality.ts | 72 |
-| 1711 | PUT | `/api/pm/defects/{id}` | pm | apps/web/src/api/pm/quality.ts | 88 |
-| 1712 | DELETE | `/api/pm/defects/{id}` | pm | apps/web/src/api/pm/quality.ts | 92 |
-| 1713 | GET | `/api/pm/projects/{projectId}/reports` | pm | apps/web/src/api/pm/report.ts | 6 |
-| 1714 | GET | `/api/pm/reports/{id}` | pm | apps/web/src/api/pm/report.ts | 10 |
-| 1715 | POST | `/api/pm/projects/{projectId}/reports` | pm | apps/web/src/api/pm/report.ts | 23 |
-| 1716 | POST | `/api/pm/projects/{projectId}/reports/generate` | pm | apps/web/src/api/pm/report.ts | 36 |
-| 1717 | GET | `/api/pm/report-templates` | pm | apps/web/src/api/pm/report.ts | 42 |
-| 1718 | GET | `/api/pm/report-templates/{id}` | pm | apps/web/src/api/pm/report.ts | 46 |
-| 1719 | POST | `/api/pm/report-templates` | pm | apps/web/src/api/pm/report.ts | 56 |
-| 1720 | PUT | `/api/pm/report-templates/{id}` | pm | apps/web/src/api/pm/report.ts | 66 |
-| 1721 | DELETE | `/api/pm/report-templates/{id}` | pm | apps/web/src/api/pm/report.ts | 70 |
-| 1722 | GET | `/api/pm/projects/{projectId}/resources` | pm | apps/web/src/api/pm/resource.ts | 6 |
-| 1723 | POST | `/api/pm/projects/{projectId}/resources` | pm | apps/web/src/api/pm/resource.ts | 22 |
-| 1724 | GET | `/api/pm/projects/{projectId}/resources/{id}` | pm | apps/web/src/api/pm/resource.ts | 26 |
-| 1725 | PUT | `/api/pm/projects/{projectId}/resources/{id}` | pm | apps/web/src/api/pm/resource.ts | 42 |
-| 1726 | DELETE | `/api/pm/projects/{projectId}/resources/{id}` | pm | apps/web/src/api/pm/resource.ts | 46 |
-| 1727 | GET | `/api/pm/projects/{projectId}/expenses` | pm | apps/web/src/api/pm/resource.ts | 52 |
-| 1728 | POST | `/api/pm/projects/{projectId}/expenses` | pm | apps/web/src/api/pm/resource.ts | 74 |
-| 1729 | GET | `/api/pm/projects/{projectId}/expenses/{id}` | pm | apps/web/src/api/pm/resource.ts | 78 |
-| 1730 | PUT | `/api/pm/projects/{projectId}/expenses/{id}` | pm | apps/web/src/api/pm/resource.ts | 95 |
-| 1731 | DELETE | `/api/pm/projects/{projectId}/expenses/{id}` | pm | apps/web/src/api/pm/resource.ts | 99 |
-| 1732 | GET | `/api/pm/projects/{projectId}/risks` | pm | apps/web/src/api/pm/risk.ts | 6 |
-| 1733 | GET | `/api/pm/risks/{id}` | pm | apps/web/src/api/pm/risk.ts | 10 |
-| 1734 | POST | `/api/pm/projects/{projectId}/risks` | pm | apps/web/src/api/pm/risk.ts | 33 |
-| 1735 | PUT | `/api/pm/risks/{id}` | pm | apps/web/src/api/pm/risk.ts | 55 |
-| 1736 | GET | `/api/pm/risks/{riskId}/events` | pm | apps/web/src/api/pm/risk.ts | 61 |
-| 1737 | POST | `/api/pm/risks/{riskId}/events` | pm | apps/web/src/api/pm/risk.ts | 72 |
-| 1738 | GET | `/api/pm/projects/{projectId}/settlements` | pm | apps/web/src/api/pm/settlement.ts | 6 |
-| 1739 | GET | `/api/pm/settlements/{id}` | pm | apps/web/src/api/pm/settlement.ts | 10 |
-| 1740 | POST | `/api/pm/projects/{projectId}/settlements` | pm | apps/web/src/api/pm/settlement.ts | 25 |
-| 1741 | PUT | `/api/pm/settlements/{id}` | pm | apps/web/src/api/pm/settlement.ts | 37 |
-| 1742 | POST | `/api/pm/settlements/{id}/approve` | pm | apps/web/src/api/pm/settlement.ts | 41 |
-| 1743 | GET | `/api/pm/settlements/{settlementId}/items` | pm | apps/web/src/api/pm/settlement.ts | 47 |
-| 1744 | POST | `/api/pm/settlements/{settlementId}/items` | pm | apps/web/src/api/pm/settlement.ts | 63 |
-| 1745 | PUT | `/api/pm/settlement-items/{id}` | pm | apps/web/src/api/pm/settlement.ts | 75 |
-| 1746 | DELETE | `/api/pm/settlement-items/{id}` | pm | apps/web/src/api/pm/settlement.ts | 79 |
-| 1747 | GET | `/api/pm/settlements/{settlementId}/adjustments` | pm | apps/web/src/api/pm/settlement.ts | 85 |
-| 1748 | POST | `/api/pm/settlements/{settlementId}/adjustments` | pm | apps/web/src/api/pm/settlement.ts | 100 |
-| 1749 | GET | `/api/pm/projects/{projectId}/members` | pm | apps/web/src/api/pm/team.ts | 6 |
-| 1750 | POST | `/api/pm/projects/{projectId}/members` | pm | apps/web/src/api/pm/team.ts | 19 |
-| 1751 | GET | `/api/pm/projects/{projectId}/members/{id}` | pm | apps/web/src/api/pm/team.ts | 23 |
-| 1752 | PUT | `/api/pm/projects/{projectId}/members/{id}` | pm | apps/web/src/api/pm/team.ts | 36 |
-| 1753 | DELETE | `/api/pm/projects/{projectId}/members/{id}` | pm | apps/web/src/api/pm/team.ts | 40 |
-| 1754 | GET | `/api/qms/apqp/projects` | qms | apps/web/src/api/qms/apqp.ts | 22 |
-| 1755 | GET | `/api/qms/apqp/projects/{id}` | qms | apps/web/src/api/qms/apqp.ts | 27 |
-| 1756 | POST | `/api/qms/apqp/projects` | qms | apps/web/src/api/qms/apqp.ts | 31 |
-| 1757 | PUT | `/api/qms/apqp/projects/{id}` | qms | apps/web/src/api/qms/apqp.ts | 38 |
-| 1758 | DELETE | `/api/qms/apqp/projects/{id}` | qms | apps/web/src/api/qms/apqp.ts | 42 |
-| 1759 | POST | `/api/qms/apqp/projects/{id}/transition` | qms | apps/web/src/api/qms/apqp.ts | 49 |
-| 1760 | GET | `/api/qms/apqp/projects/{id}/progress` | qms | apps/web/src/api/qms/apqp.ts | 53 |
-| 1761 | GET | `/api/qms/apqp/phases/{id}` | qms | apps/web/src/api/qms/apqp.ts | 63 |
-| 1762 | POST | `/api/qms/apqp/phases` | qms | apps/web/src/api/qms/apqp.ts | 75 |
-| 1763 | PUT | `/api/qms/apqp/phases/{id}` | qms | apps/web/src/api/qms/apqp.ts | 82 |
-| 1764 | DELETE | `/api/qms/apqp/phases/{id}` | qms | apps/web/src/api/qms/apqp.ts | 86 |
-| 1765 | GET | `/api/qms/apqp/tasks` | qms | apps/web/src/api/qms/apqp.ts | 96 |
-| 1766 | GET | `/api/qms/apqp/tasks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 100 |
-| 1767 | POST | `/api/qms/apqp/tasks` | qms | apps/web/src/api/qms/apqp.ts | 114 |
-| 1768 | PUT | `/api/qms/apqp/tasks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 118 |
-| 1769 | DELETE | `/api/qms/apqp/tasks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 122 |
-| 1770 | GET | `/api/qms/apqp/risks` | qms | apps/web/src/api/qms/apqp.ts | 131 |
-| 1771 | GET | `/api/qms/apqp/risks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 135 |
-| 1772 | POST | `/api/qms/apqp/risks` | qms | apps/web/src/api/qms/apqp.ts | 150 |
-| 1773 | PUT | `/api/qms/apqp/risks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 154 |
-| 1774 | DELETE | `/api/qms/apqp/risks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 158 |
-| 1775 | POST | `/api/qms/apqp/approvals` | qms | apps/web/src/api/qms/apqp.ts | 173 |
-| 1776 | POST | `/api/qms/apqp/approvals/{id}/process` | qms | apps/web/src/api/qms/apqp.ts | 180 |
-| 1777 | GET | `/api/qms/audit-plans` | qms | apps/web/src/api/qms/audit.ts | 7 |
-| 1778 | POST | `/api/qms/audit-plans` | qms | apps/web/src/api/qms/audit.ts | 26 |
-| 1779 | POST | `/api/qms/audit-plans/{id}/start` | qms | apps/web/src/api/qms/audit.ts | 31 |
-| 1780 | POST | `/api/qms/audit-plans/{id}/complete` | qms | apps/web/src/api/qms/audit.ts | 38 |
-| 1781 | POST | `/api/qms/audit-tasks` | qms | apps/web/src/api/qms/audit.ts | 51 |
-| 1782 | PUT | `/api/qms/audit-tasks/{taskId}/complete` | qms | apps/web/src/api/qms/audit.ts | 65 |
-| 1783 | POST | `/api/qms/audit-findings` | qms | apps/web/src/api/qms/audit.ts | 78 |
-| 1784 | POST | `/api/qms/audit-findings/{findingId}/verify` | qms | apps/web/src/api/qms/audit.ts | 96 |
-| 1785 | POST | `/api/qms/actions/{id}/complete` | qms | apps/web/src/api/qms/correctiveAction.ts | 16 |
-| 1786 | GET | `/api/qms/actions/{actionId}/items` | qms | apps/web/src/api/qms/correctiveAction.ts | 28 |
-| 1787 | GET | `/api/qms/quality-dashboard/overview` | qms | apps/web/src/api/qms/dashboard.ts | 12 |
-| 1788 | GET | `/api/qms/eightd` | qms | apps/web/src/api/qms/eightD.ts | 19 |
-| 1789 | GET | `/api/qms/eightd/{id}` | qms | apps/web/src/api/qms/eightD.ts | 25 |
-| 1790 | POST | `/api/qms/eightd` | qms | apps/web/src/api/qms/eightD.ts | 36 |
-| 1791 | PUT | `/api/qms/eightd/{id}` | qms | apps/web/src/api/qms/eightD.ts | 57 |
-| 1792 | DELETE | `/api/qms/eightd/{id}` | qms | apps/web/src/api/qms/eightD.ts | 65 |
-| 1793 | PUT | `/api/qms/eightd/{id}/d1-team` | qms | apps/web/src/api/qms/eightD.ts | 72 |
-| 1794 | POST | `/api/qms/eightd/{id}/d3-containment` | qms | apps/web/src/api/qms/eightD.ts | 87 |
-| 1795 | POST | `/api/qms/eightd/{id}/d4-root-cause` | qms | apps/web/src/api/qms/eightD.ts | 101 |
-| 1796 | POST | `/api/qms/eightd/{id}/d5-permanent-action` | qms | apps/web/src/api/qms/eightD.ts | 115 |
-| 1797 | POST | `/api/qms/eightd/{id}/d6-verify` | qms | apps/web/src/api/qms/eightD.ts | 129 |
-| 1798 | POST | `/api/qms/eightd/{id}/d7-preventive` | qms | apps/web/src/api/qms/eightD.ts | 140 |
-| 1799 | POST | `/api/qms/eightd/{id}/close` | qms | apps/web/src/api/qms/eightD.ts | 154 |
-| 1800 | GET | `/api/qms/eightd/{id}/audit-logs` | qms | apps/web/src/api/qms/eightD.ts | 162 |
-| 1801 | GET | `/api/qms/fmea` | qms | apps/web/src/api/qms/fmea.ts | 25 |
-| 1802 | GET | `/api/qms/fmea/{id}` | qms | apps/web/src/api/qms/fmea.ts | 31 |
-| 1803 | POST | `/api/qms/fmea` | qms | apps/web/src/api/qms/fmea.ts | 42 |
-| 1804 | PUT | `/api/qms/fmea/{id}` | qms | apps/web/src/api/qms/fmea.ts | 67 |
-| 1805 | DELETE | `/api/qms/fmea/{id}` | qms | apps/web/src/api/qms/fmea.ts | 75 |
-| 1806 | GET | `/api/qms/fmea/{fmeaId}/statistics` | qms | apps/web/src/api/qms/fmea.ts | 79 |
-| 1807 | GET | `/api/qms/fmea-items` | qms | apps/web/src/api/qms/fmea.ts | 87 |
-| 1808 | GET | `/api/qms/fmea-items/{id}` | qms | apps/web/src/api/qms/fmea.ts | 95 |
-| 1809 | POST | `/api/qms/fmea-items` | qms | apps/web/src/api/qms/fmea.ts | 117 |
-| 1810 | PUT | `/api/qms/fmea-items/{id}` | qms | apps/web/src/api/qms/fmea.ts | 148 |
-| 1811 | DELETE | `/api/qms/fmea-items/{id}` | qms | apps/web/src/api/qms/fmea.ts | 156 |
-| 1812 | GET | `/api/qms/actions/{id}` | qms | apps/web/src/api/qms/improvement.ts | 24 |
-| 1813 | POST | `/api/qms/actions` | qms | apps/web/src/api/qms/improvement.ts | 35 |
-| 1814 | PUT | `/api/qms/actions/{id}` | qms | apps/web/src/api/qms/improvement.ts | 54 |
-| 1815 | DELETE | `/api/qms/actions/{id}` | qms | apps/web/src/api/qms/improvement.ts | 65 |
-| 1816 | GET | `/api/qms/health` | qms | apps/web/src/api/qms/index.ts | 299 |
-| 1817 | POST | `/api/qms/checks/{id}/assign` | qms | apps/web/src/api/qms/inspection.ts | 73 |
-| 1818 | POST | `/api/qms/checks/{id}/submit` | qms | apps/web/src/api/qms/inspection.ts | 87 |
-| 1819 | POST | `/api/qms/checks/{id}/audit` | qms | apps/web/src/api/qms/inspection.ts | 101 |
-| 1820 | POST | `/api/qms/checks/{id}/rework` | qms | apps/web/src/api/qms/inspection.ts | 115 |
-| 1821 | GET | `/api/qms/checks/{id}/results` | qms | apps/web/src/api/qms/inspection.ts | 126 |
-| 1822 | GET | `/api/qms/checks/{id}/audits` | qms | apps/web/src/api/qms/inspection.ts | 133 |
-| 1823 | GET | `/api/qms/issues/{id}` | qms | apps/web/src/api/qms/issue.ts | 21 |
-| 1824 | PUT | `/api/qms/issues/{id}` | qms | apps/web/src/api/qms/issue.ts | 50 |
-| 1825 | DELETE | `/api/qms/issues/{id}` | qms | apps/web/src/api/qms/issue.ts | 58 |
-| 1826 | GET | `/api/qms/quality-costs` | qms | apps/web/src/api/qms/qualityCost.ts | 22 |
-| 1827 | GET | `/api/qms/quality-costs/{id}` | qms | apps/web/src/api/qms/qualityCost.ts | 28 |
-| 1828 | POST | `/api/qms/quality-costs` | qms | apps/web/src/api/qms/qualityCost.ts | 39 |
-| 1829 | PUT | `/api/qms/quality-costs/{id}` | qms | apps/web/src/api/qms/qualityCost.ts | 62 |
-| 1830 | DELETE | `/api/qms/quality-costs/{id}` | qms | apps/web/src/api/qms/qualityCost.ts | 73 |
-| 1831 | GET | `/api/qms/quality-costs/statistics` | qms | apps/web/src/api/qms/qualityCost.ts | 80 |
-| 1832 | GET | `/api/qms/quality-costs/trend` | qms | apps/web/src/api/qms/qualityCost.ts | 97 |
-| 1833 | GET | `/api/qms/spc/charts` | qms | apps/web/src/api/qms/spc.ts | 23 |
-| 1834 | GET | `/api/qms/spc/charts/{id}` | qms | apps/web/src/api/qms/spc.ts | 29 |
-| 1835 | POST | `/api/qms/spc/charts` | qms | apps/web/src/api/qms/spc.ts | 40 |
-| 1836 | PUT | `/api/qms/spc/charts/{id}` | qms | apps/web/src/api/qms/spc.ts | 68 |
-| 1837 | DELETE | `/api/qms/spc/charts/{id}` | qms | apps/web/src/api/qms/spc.ts | 76 |
-| 1838 | GET | `/api/qms/spc/charts/{chartId}/data-points` | qms | apps/web/src/api/qms/spc.ts | 80 |
-| 1839 | POST | `/api/qms/spc/data-points` | qms | apps/web/src/api/qms/spc.ts | 109 |
-| 1840 | POST | `/api/qms/spc/charts/{chartId}/calculate` | qms | apps/web/src/api/qms/spc.ts | 119 |
-| 1841 | GET | `/api/qms/standards/{standardId}/revisions` | qms | apps/web/src/api/qms/standard.ts | 67 |
-| 1842 | GET | `/api/qms/sync-records` | qms | apps/web/src/api/qms/sync.ts | 13 |
-| 1843 | GET | `/api/qms/sync-records/{id}` | qms | apps/web/src/api/qms/sync.ts | 26 |
-| 1844 | DELETE | `/api/qms/sync-records/{id}` | qms | apps/web/src/api/qms/sync.ts | 34 |
-| 1845 | POST | `/api/qms/sync-records/{id}/retry` | qms | apps/web/src/api/qms/sync.ts | 38 |
-| 1846 | POST | `/api/qms/sync/inspection-to-lims` | qms | apps/web/src/api/qms/sync.ts | 48 |
-| 1847 | POST | `/api/qms/sync/issue-to-ehs` | qms | apps/web/src/api/qms/sync.ts | 58 |
-| 1848 | GET | `/api/rd/bugs/{id}` | rd | apps/web/src/api/rd/bug.ts | 34 |
-| 1849 | POST | `/api/rd/bugs` | rd | apps/web/src/api/rd/bug.ts | 38 |
-| 1850 | PUT | `/api/rd/bugs/{id}` | rd | apps/web/src/api/rd/bug.ts | 42 |
-| 1851 | DELETE | `/api/rd/bugs/{id}` | rd | apps/web/src/api/rd/bug.ts | 46 |
-| 1852 | GET | `/api/rd/builds/{id}` | rd | apps/web/src/api/rd/build.ts | 32 |
-| 1853 | POST | `/api/rd/builds` | rd | apps/web/src/api/rd/build.ts | 36 |
-| 1854 | GET | `/api/rd/deploys/{id}` | rd | apps/web/src/api/rd/deploy.ts | 33 |
-| 1855 | POST | `/api/rd/deploys` | rd | apps/web/src/api/rd/deploy.ts | 37 |
-| 1856 | GET | `/api/rd/experiments/{id}` | rd | apps/web/src/api/rd/experiment.ts | 40 |
-| 1857 | POST | `/api/rd/experiments` | rd | apps/web/src/api/rd/experiment.ts | 44 |
-| 1858 | PUT | `/api/rd/experiments/{id}` | rd | apps/web/src/api/rd/experiment.ts | 51 |
-| 1859 | DELETE | `/api/rd/experiments/{id}` | rd | apps/web/src/api/rd/experiment.ts | 55 |
-| 1860 | GET | `/api/rd/experiments/project/{projectId}` | rd | apps/web/src/api/rd/experiment.ts | 59 |
-| 1861 | POST | `/api/rd/experiments/{id}/advance-phase` | rd | apps/web/src/api/rd/experiment.ts | 142 |
-| 1862 | GET | `/api/rd/batch-trace/{batchNumber}` | rd | apps/web/src/api/rd/experiment.ts | 146 |
-| 1863 | GET | `/api/rd/experiments/{experimentId}/records` | rd | apps/web/src/api/rd/experiment.ts | 150 |
-| 1864 | POST | `/api/rd/experiments/{experimentId}/records` | rd | apps/web/src/api/rd/experiment.ts | 157 |
-| 1865 | GET | `/api/rd/formulas/{id}` | rd | apps/web/src/api/rd/formula.ts | 33 |
-| 1866 | POST | `/api/rd/formulas` | rd | apps/web/src/api/rd/formula.ts | 37 |
-| 1867 | PUT | `/api/rd/formulas/{id}` | rd | apps/web/src/api/rd/formula.ts | 41 |
-| 1868 | DELETE | `/api/rd/formulas/{id}` | rd | apps/web/src/api/rd/formula.ts | 45 |
-| 1869 | GET | `/api/rd/formulas/{formulaId}/versions` | rd | apps/web/src/api/rd/formula.ts | 49 |
-| 1870 | GET | `/api/rd/formulas/{formulaId}/versions` | rd | apps/web/src/api/rd/formula.ts | 53 |
-| 1871 | POST | `/api/rd/formulas/{formulaId}/versions` | rd | apps/web/src/api/rd/formula.ts | 60 |
-| 1872 | POST | `/api/rd/formulas/{formulaId}/versions` | rd | apps/web/src/api/rd/formula.ts | 67 |
-| 1873 | POST | `/api/rd/formulas/{id}/approve` | rd | apps/web/src/api/rd/formula.ts | 71 |
-| 1874 | GET | `/api/rd/health` | rd | apps/web/src/api/rd/index.ts | 56 |
-| 1875 | GET | `/api/rd/materials/{id}` | rd | apps/web/src/api/rd/material.ts | 35 |
-| 1876 | POST | `/api/rd/materials` | rd | apps/web/src/api/rd/material.ts | 39 |
-| 1877 | PUT | `/api/rd/materials/{id}` | rd | apps/web/src/api/rd/material.ts | 46 |
-| 1878 | DELETE | `/api/rd/materials/{id}` | rd | apps/web/src/api/rd/material.ts | 50 |
-| 1879 | DELETE | `/api/rd/materials/batch` | rd | apps/web/src/api/rd/material.ts | 54 |
-| 1880 | POST | `/api/rd/materials/import` | rd | apps/web/src/api/rd/material.ts | 59 |
-| 1881 | POST | `/api/rd/projects/batch` | rd | apps/web/src/api/rd/project.ts | 59 |
-| 1882 | DELETE | `/api/rd/projects/batch` | rd | apps/web/src/api/rd/project.ts | 65 |
-| 1883 | POST | `/api/rd/projects/import` | rd | apps/web/src/api/rd/project.ts | 75 |
-| 1884 | GET | `/api/rd/projects/{id}/dashboard` | rd | apps/web/src/api/rd/project.ts | 83 |
-| 1885 | GET | `/api/rd/projects/{id}/gantt` | rd | apps/web/src/api/rd/project.ts | 87 |
-| 1886 | GET | `/api/rd/statistics` | rd | apps/web/src/api/rd/statistics.ts | 7 |
-| 1887 | GET | `/api/rd/tests/{id}` | rd | apps/web/src/api/rd/test.ts | 33 |
-| 1888 | POST | `/api/rd/tests` | rd | apps/web/src/api/rd/test.ts | 37 |
-| 1889 | PUT | `/api/rd/tests/{id}` | rd | apps/web/src/api/rd/test.ts | 41 |
-| 1890 | DELETE | `/api/rd/tests/{id}` | rd | apps/web/src/api/rd/test.ts | 45 |
-| 1891 | GET | `/api/bi/reports` | bi | apps/web/src/api/report/index.ts | 278 |
-| 1892 | GET | `/api/bi/reports/{id}` | bi | apps/web/src/api/report/index.ts | 282 |
-| 1893 | POST | `/api/bi/reports` | bi | apps/web/src/api/report/index.ts | 286 |
-| 1894 | POST | `/api/bi/reports/from-template` | bi | apps/web/src/api/report/index.ts | 292 |
-| 1895 | PUT | `/api/bi/reports/{id}` | bi | apps/web/src/api/report/index.ts | 299 |
-| 1896 | DELETE | `/api/bi/reports/{id}` | bi | apps/web/src/api/report/index.ts | 303 |
-| 1897 | POST | `/api/bi/reports/{id}/export` | bi | apps/web/src/api/report/index.ts | 310 |
-| 1898 | POST | `/api/bi/reports/{id}/run` | bi | apps/web/src/api/report/index.ts | 314 |
-| 1899 | GET | `/api/bi/templates` | bi | apps/web/src/api/report/index.ts | 318 |
-| 1900 | GET | `/api/bi/templates/{id}` | bi | apps/web/src/api/report/index.ts | 322 |
-| 1901 | POST | `/api/bi/templates` | bi | apps/web/src/api/report/index.ts | 328 |
-| 1902 | PUT | `/api/bi/templates/{id}` | bi | apps/web/src/api/report/index.ts | 335 |
-| 1903 | DELETE | `/api/bi/templates/{id}` | bi | apps/web/src/api/report/index.ts | 339 |
-| 1904 | GET | `/api/bi/report-types` | bi | apps/web/src/api/report/index.ts | 343 |
-| 1905 | GET | `/api/bi/schedules` | bi | apps/web/src/api/report/index.ts | 347 |
-| 1906 | GET | `/api/bi/schedules/{id}` | bi | apps/web/src/api/report/index.ts | 351 |
-| 1907 | POST | `/api/bi/schedules` | bi | apps/web/src/api/report/index.ts | 355 |
-| 1908 | PUT | `/api/bi/schedules/{id}` | bi | apps/web/src/api/report/index.ts | 362 |
-| 1909 | DELETE | `/api/bi/schedules/{id}` | bi | apps/web/src/api/report/index.ts | 366 |
-| 1910 | POST | `/api/bi/schedules/{id}/execute` | bi | apps/web/src/api/report/index.ts | 370 |
-| 1911 | GET | `/api/bi/schedules/{id}/history` | bi | apps/web/src/api/report/index.ts | 374 |
-| 1912 | GET | `/api/bi/subscriptions` | bi | apps/web/src/api/report/index.ts | 378 |
-| 1913 | GET | `/api/bi/subscriptions/{id}` | bi | apps/web/src/api/report/index.ts | 382 |
-| 1914 | POST | `/api/bi/subscriptions` | bi | apps/web/src/api/report/index.ts | 388 |
-| 1915 | PUT | `/api/bi/subscriptions/{id}` | bi | apps/web/src/api/report/index.ts | 395 |
-| 1916 | DELETE | `/api/bi/subscriptions/{id}` | bi | apps/web/src/api/report/index.ts | 399 |
-| 1917 | POST | `/api/bi/subscriptions/{id}/toggle` | bi | apps/web/src/api/report/index.ts | 403 |
-| 1918 | GET | `/api/bi/subscriptions/user/{user_id}` | bi | apps/web/src/api/report/index.ts | 407 |
-| 1919 | GET | `/api/bi/health` | bi | apps/web/src/api/report/index.ts | 411 |
-| 1920 | GET | `/api/bi/reports-center/stats` | bi | apps/web/src/api/report/index.ts | 415 |
-| 1921 | POST | `/api/bi/reports-center/export/{reportType}` | bi | apps/web/src/api/report/index.ts | 422 |
-| 1922 | GET | `/api/scm/audit-logs` | scm | apps/web/src/api/scm/auditLog.ts | 7 |
-| 1923 | GET | `/api/scm/audit-logs/{id}` | scm | apps/web/src/api/scm/auditLog.ts | 11 |
-| 1924 | GET | `/api/scm/delivery-appointments` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 19 |
-| 1925 | POST | `/api/scm/delivery-appointments` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 25 |
-| 1926 | GET | `/api/scm/delivery-appointments/{id}` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 29 |
-| 1927 | PUT | `/api/scm/delivery-appointments/{id}` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 36 |
-| 1928 | DELETE | `/api/scm/delivery-appointments/{id}` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 40 |
-| 1929 | POST | `/api/scm/delivery-appointments/{id}/approve` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 47 |
-| 1930 | POST | `/api/scm/delivery-appointments/{id}/reject` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 54 |
-| 1931 | POST | `/api/scm/delivery-appointments/{id}/confirm-arrival` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 61 |
-| 1932 | POST | `/api/scm/delivery-appointments/{id}/complete` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 68 |
-| 1933 | POST | `/api/scm/delivery-appointments/{id}/cancel` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 75 |
-| 1934 | GET | `/api/scm/delivery-appointments/stats` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 79 |
-| 1935 | GET | `/api/scm/{resource}` | scm | apps/web/src/api/scm/factory.ts | 26 |
-| 1936 | GET | `/api/scm/{resource}/{id}` | scm | apps/web/src/api/scm/factory.ts | 30 |
-| 1937 | POST | `/api/scm/{resource}` | scm | apps/web/src/api/scm/factory.ts | 34 |
-| 1938 | PUT | `/api/scm/{resource}/{id}` | scm | apps/web/src/api/scm/factory.ts | 38 |
-| 1939 | DELETE | `/api/scm/{resource}/{id}` | scm | apps/web/src/api/scm/factory.ts | 42 |
-| 1940 | GET | `/api/scm/incoming-inspections` | scm | apps/web/src/api/scm/incomingInspection.ts | 15 |
-| 1941 | POST | `/api/scm/incoming-inspections` | scm | apps/web/src/api/scm/incomingInspection.ts | 21 |
-| 1942 | GET | `/api/scm/incoming-inspections/{id}` | scm | apps/web/src/api/scm/incomingInspection.ts | 25 |
-| 1943 | PUT | `/api/scm/incoming-inspections/{id}` | scm | apps/web/src/api/scm/incomingInspection.ts | 32 |
-| 1944 | DELETE | `/api/scm/incoming-inspections/{id}` | scm | apps/web/src/api/scm/incomingInspection.ts | 36 |
-| 1945 | POST | `/api/scm/incoming-inspections/{id}/pass` | scm | apps/web/src/api/scm/incomingInspection.ts | 40 |
-| 1946 | POST | `/api/scm/incoming-inspections/{id}/reject` | scm | apps/web/src/api/scm/incomingInspection.ts | 47 |
-| 1947 | GET | `/api/scm/health` | scm | apps/web/src/api/scm/index.ts | 62 |
-| 1948 | GET | `/api/scm/incoming-inspections/{inspectionId}/records` | scm | apps/web/src/api/scm/inspectionRecord.ts | 14 |
-| 1949 | POST | `/api/scm/inspection-records` | scm | apps/web/src/api/scm/inspectionRecord.ts | 18 |
-| 1950 | GET | `/api/scm/inspection-records/{id}` | scm | apps/web/src/api/scm/inspectionRecord.ts | 22 |
-| 1951 | PUT | `/api/scm/inspection-records/{id}` | scm | apps/web/src/api/scm/inspectionRecord.ts | 29 |
-| 1952 | DELETE | `/api/scm/inspection-records/{id}` | scm | apps/web/src/api/scm/inspectionRecord.ts | 33 |
-| 1953 | GET | `/api/scm/inventory-turnover` | scm | apps/web/src/api/scm/inventoryTurnover.ts | 16 |
-| 1954 | GET | `/api/scm/inventory-turnover/{id}` | scm | apps/web/src/api/scm/inventoryTurnover.ts | 20 |
-| 1955 | GET | `/api/scm/inventory-turnover/abc-classification` | scm | apps/web/src/api/scm/inventoryTurnover.ts | 26 |
-| 1956 | GET | `/api/scm/inventory-turnover/trend` | scm | apps/web/src/api/scm/inventoryTurnover.ts | 30 |
-| 1957 | GET | `/api/scm/mrp/suggestions` | scm | apps/web/src/api/scm/mrpPlan.ts | 13 |
-| 1958 | POST | `/api/scm/mrp/suggestions` | scm | apps/web/src/api/scm/mrpPlan.ts | 17 |
-| 1959 | GET | `/api/scm/mrp/suggestions/{id}` | scm | apps/web/src/api/scm/mrpPlan.ts | 21 |
-| 1960 | PUT | `/api/scm/mrp/suggestions/{id}` | scm | apps/web/src/api/scm/mrpPlan.ts | 25 |
-| 1961 | DELETE | `/api/scm/mrp/suggestions/{id}` | scm | apps/web/src/api/scm/mrpPlan.ts | 29 |
-| 1962 | POST | `/api/scm/mrp/suggestions/{id}/confirm` | scm | apps/web/src/api/scm/mrpPlan.ts | 33 |
-| 1963 | GET | `/api/scm/mrp-suggestions` | scm | apps/web/src/api/scm/mrpSuggestion.ts | 14 |
-| 1964 | GET | `/api/scm/mrp-suggestions/{id}` | scm | apps/web/src/api/scm/mrpSuggestion.ts | 18 |
-| 1965 | GET | `/api/scm/mrp-suggestions/summary` | scm | apps/web/src/api/scm/mrpSuggestion.ts | 24 |
-| 1966 | GET | `/api/scm/comparisons` | scm | apps/web/src/api/scm/priceComparison.ts | 17 |
-| 1967 | POST | `/api/scm/comparisons` | scm | apps/web/src/api/scm/priceComparison.ts | 21 |
-| 1968 | GET | `/api/scm/comparisons/{id}` | scm | apps/web/src/api/scm/priceComparison.ts | 25 |
-| 1969 | PUT | `/api/scm/comparisons/{id}` | scm | apps/web/src/api/scm/priceComparison.ts | 32 |
-| 1970 | DELETE | `/api/scm/comparisons/{id}` | scm | apps/web/src/api/scm/priceComparison.ts | 36 |
-| 1971 | GET | `/api/scm/comparisons/{id}` | scm | apps/web/src/api/scm/priceComparison.ts | 40 |
-| 1972 | GET | `/api/scm/quotes` | scm | apps/web/src/api/scm/priceComparison.ts | 44 |
-| 1973 | POST | `/api/scm/quotes` | scm | apps/web/src/api/scm/priceComparison.ts | 48 |
-| 1974 | GET | `/api/scm/purchase-contracts` | scm | apps/web/src/api/scm/purchaseContract.ts | 14 |
-| 1975 | POST | `/api/scm/purchase-contracts` | scm | apps/web/src/api/scm/purchaseContract.ts | 18 |
-| 1976 | GET | `/api/scm/purchase-contracts/{id}` | scm | apps/web/src/api/scm/purchaseContract.ts | 22 |
-| 1977 | PUT | `/api/scm/purchase-contracts/{id}` | scm | apps/web/src/api/scm/purchaseContract.ts | 29 |
-| 1978 | DELETE | `/api/scm/purchase-contracts/{id}` | scm | apps/web/src/api/scm/purchaseContract.ts | 33 |
-| 1979 | POST | `/api/scm/purchase-contracts/{id}/submit` | scm | apps/web/src/api/scm/purchaseContract.ts | 37 |
-| 1980 | POST | `/api/scm/purchase-contracts/{id}/approve` | scm | apps/web/src/api/scm/purchaseContract.ts | 41 |
-| 1981 | POST | `/api/scm/purchase-contracts/{id}/reject` | scm | apps/web/src/api/scm/purchaseContract.ts | 45 |
-| 1982 | POST | `/api/scm/purchase-contracts/{id}/cancel` | scm | apps/web/src/api/scm/purchaseContract.ts | 49 |
-| 1983 | POST | `/api/scm/purchase-contracts/{id}/terminate` | scm | apps/web/src/api/scm/purchaseContract.ts | 53 |
-| 1984 | POST | `/api/scm/purchase-contracts/{id}/renew` | scm | apps/web/src/api/scm/purchaseContract.ts | 57 |
-| 1985 | GET | `/api/scm/purchase-items` | scm | apps/web/src/api/scm/purchaseItem.ts | 14 |
-| 1986 | POST | `/api/scm/purchase-items` | scm | apps/web/src/api/scm/purchaseItem.ts | 18 |
-| 1987 | GET | `/api/scm/purchase-items/{id}` | scm | apps/web/src/api/scm/purchaseItem.ts | 22 |
-| 1988 | PUT | `/api/scm/purchase-items/{id}` | scm | apps/web/src/api/scm/purchaseItem.ts | 29 |
-| 1989 | POST | `/api/scm/purchase-orders/{id}/confirm` | scm | apps/web/src/api/scm/purchaseOrder.ts | 40 |
-| 1990 | POST | `/api/scm/purchase-orders/{id}/cancel` | scm | apps/web/src/api/scm/purchaseOrder.ts | 44 |
-| 1991 | POST | `/api/scm/purchase-orders/{id}/close` | scm | apps/web/src/api/scm/purchaseOrder.ts | 48 |
-| 1992 | GET | `/api/scm/purchase-requisitions` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 14 |
-| 1993 | POST | `/api/scm/purchase-requisitions` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 20 |
-| 1994 | GET | `/api/scm/purchase-requisitions/{id}` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 24 |
-| 1995 | PUT | `/api/scm/purchase-requisitions/{id}` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 31 |
-| 1996 | DELETE | `/api/scm/purchase-requisitions/{id}` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 35 |
-| 1997 | POST | `/api/scm/purchase-requisitions/{id}/submit` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 39 |
-| 1998 | POST | `/api/scm/purchase-requisitions/{id}/approve` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 43 |
-| 1999 | POST | `/api/scm/purchase-requisitions/{id}/reject` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 47 |
-| 2000 | POST | `/api/scm/purchase-requisitions/{id}/cancel` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 51 |
-| 2001 | POST | `/api/scm/purchase-requisitions/{id}/convert-to-order` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 55 |
-| 2002 | GET | `/api/scm/supplier-admissions` | scm | apps/web/src/api/scm/supplierAdmission.ts | 14 |
-| 2003 | POST | `/api/scm/supplier-admissions` | scm | apps/web/src/api/scm/supplierAdmission.ts | 18 |
-| 2004 | GET | `/api/scm/supplier-admissions/{id}` | scm | apps/web/src/api/scm/supplierAdmission.ts | 22 |
-| 2005 | PUT | `/api/scm/supplier-admissions/{id}` | scm | apps/web/src/api/scm/supplierAdmission.ts | 29 |
-| 2006 | DELETE | `/api/scm/supplier-admissions/{id}` | scm | apps/web/src/api/scm/supplierAdmission.ts | 33 |
-| 2007 | POST | `/api/scm/supplier-admissions/{id}/submit` | scm | apps/web/src/api/scm/supplierAdmission.ts | 37 |
-| 2008 | POST | `/api/scm/supplier-admissions/{id}/approve` | scm | apps/web/src/api/scm/supplierAdmission.ts | 41 |
-| 2009 | POST | `/api/scm/supplier-admissions/{id}/reject` | scm | apps/web/src/api/scm/supplierAdmission.ts | 45 |
-| 2010 | POST | `/api/scm/supplier-admissions/{id}/audit` | scm | apps/web/src/api/scm/supplierAdmission.ts | 54 |
-| 2011 | POST | `/api/scm/supplier-admissions/{id}/activate-supplier` | scm | apps/web/src/api/scm/supplierAdmission.ts | 58 |
-| 2012 | GET | `/api/scm/evaluations` | scm | apps/web/src/api/scm/supplierEvaluation.ts | 14 |
-| 2013 | POST | `/api/scm/evaluations` | scm | apps/web/src/api/scm/supplierEvaluation.ts | 20 |
-| 2014 | GET | `/api/scm/evaluations/{id}` | scm | apps/web/src/api/scm/supplierEvaluation.ts | 24 |
-| 2015 | PUT | `/api/scm/evaluations/{id}` | scm | apps/web/src/api/scm/supplierEvaluation.ts | 31 |
-| 2016 | DELETE | `/api/scm/evaluations/{id}` | scm | apps/web/src/api/scm/supplierEvaluation.ts | 35 |
-| 2017 | GET | `/api/scm/dashboard/overview` | scm | apps/web/src/api/scm/supplyChainDashboard.ts | 12 |
-| 2018 | GET | `/api/scm/dashboard/purchase-inbound-outbound` | scm | apps/web/src/api/scm/supplyChainDashboard.ts | 16 |
-| 2019 | GET | `/api/scm/dashboard/supplier-performance` | scm | apps/web/src/api/scm/supplyChainDashboard.ts | 22 |
-| 2020 | GET | `/api/scm/sync-records` | scm | apps/web/src/api/scm/syncRecord.ts | 15 |
-| 2021 | POST | `/api/scm/sync-records` | scm | apps/web/src/api/scm/syncRecord.ts | 19 |
-| 2022 | GET | `/api/scm/sync-records/{id}` | scm | apps/web/src/api/scm/syncRecord.ts | 23 |
-| 2023 | POST | `/api/scm/sync-records/{id}/retry` | scm | apps/web/src/api/scm/syncRecord.ts | 27 |
-| 2024 | POST | `/api/scm/sync/wms/{syncType}` | scm | apps/web/src/api/scm/syncRecord.ts | 31 |
-| 2025 | POST | `/api/scm/sync/srm/{syncType}` | scm | apps/web/src/api/scm/syncRecord.ts | 35 |
-| 2026 | GET | `/api/scm/sync-records/{syncId}/details` | scm | apps/web/src/api/scm/syncRecord.ts | 42 |
-| 2027 | GET | `/api/portal/search` | portal | apps/web/src/api/search/index.ts | 39 |
-| 2028 | GET | `/api/portal/search/suggestions` | portal | apps/web/src/api/search/index.ts | 46 |
-| 2029 | POST | `/api/core/file/upload` | file | apps/web/src/api/shared/index.ts | 34 |
-| 2030 | GET | `/api/core/file/attachments${queryString ` | file | apps/web/src/api/shared/index.ts | 47 |
-| 2031 | GET | `/api/core/file/attachments/{id}` | file | apps/web/src/api/shared/index.ts | 51 |
-| 2032 | DELETE | `/api/core/file/attachments/{id}` | file | apps/web/src/api/shared/index.ts | 55 |
-| 2033 | GET | `/api/core/file/attachments/{id}/download` | file | apps/web/src/api/shared/index.ts | 59 |
-| 2034 | GET | `/api/core/comments` | core | apps/web/src/api/shared/index.ts | 93 |
-| 2035 | POST | `/api/core/comments` | core | apps/web/src/api/shared/index.ts | 97 |
-| 2036 | PUT | `/api/core/comments/{id}` | core | apps/web/src/api/shared/index.ts | 101 |
-| 2037 | DELETE | `/api/core/comments/{id}` | core | apps/web/src/api/shared/index.ts | 105 |
-| 2038 | GET | `/api/core/favorites` | core | apps/web/src/api/shared/index.ts | 127 |
-| 2039 | POST | `/api/core/favorites` | core | apps/web/src/api/shared/index.ts | 131 |
-| 2040 | DELETE | `/api/core/favorites/{id}` | core | apps/web/src/api/shared/index.ts | 135 |
-| 2041 | GET | `/api/core/favorites/check` | core | apps/web/src/api/shared/index.ts | 139 |
-| 2042 | GET | `/api/core/search` | core | apps/web/src/api/shared/index.ts | 176 |
-| 2043 | GET | `/api/core/search/suggestions` | core | apps/web/src/api/shared/index.ts | 180 |
-| 2044 | GET | `/api/core/search/recent` | core | apps/web/src/api/shared/index.ts | 184 |
-| 2045 | DELETE | `/api/core/search/recent` | core | apps/web/src/api/shared/index.ts | 188 |
-| 2046 | GET | `/api/srm/supplier-evaluations` | srm | apps/web/src/api/srm/index.ts | 498 |
-| 2047 | GET | `/api/srm/supplier-evaluations/{id}` | srm | apps/web/src/api/srm/index.ts | 501 |
-| 2048 | POST | `/api/srm/supplier-evaluations` | srm | apps/web/src/api/srm/index.ts | 506 |
-| 2049 | PUT | `/api/srm/supplier-evaluations/{id}` | srm | apps/web/src/api/srm/index.ts | 512 |
-| 2050 | DELETE | `/api/srm/supplier-evaluations/{id}` | srm | apps/web/src/api/srm/index.ts | 515 |
-| 2051 | GET | `/api/srm/purchase-orders` | srm | apps/web/src/api/srm/index.ts | 520 |
-| 2052 | GET | `/api/srm/purchase-orders/{id}` | srm | apps/web/src/api/srm/index.ts | 523 |
-| 2053 | POST | `/api/srm/purchase-orders` | srm | apps/web/src/api/srm/index.ts | 528 |
-| 2054 | PUT | `/api/srm/purchase-orders/{id}` | srm | apps/web/src/api/srm/index.ts | 534 |
-| 2055 | DELETE | `/api/srm/purchase-orders/{id}` | srm | apps/web/src/api/srm/index.ts | 537 |
-| 2056 | GET | `/api/srm/supplier-contracts` | srm | apps/web/src/api/srm/index.ts | 542 |
-| 2057 | GET | `/api/srm/supplier-contracts/{id}` | srm | apps/web/src/api/srm/index.ts | 545 |
-| 2058 | POST | `/api/srm/supplier-contracts` | srm | apps/web/src/api/srm/index.ts | 550 |
-| 2059 | PUT | `/api/srm/supplier-contracts/{id}` | srm | apps/web/src/api/srm/index.ts | 556 |
-| 2060 | DELETE | `/api/srm/supplier-contracts/{id}` | srm | apps/web/src/api/srm/index.ts | 559 |
-| 2061 | GET | `/api/srm/statistics` | srm | apps/web/src/api/srm/index.ts | 564 |
-| 2062 | GET | `/api/srm/statistics/detailed` | srm | apps/web/src/api/srm/index.ts | 567 |
-| 2063 | GET | `/api/srm/suppliers-with-stats` | srm | apps/web/src/api/srm/index.ts | 570 |
-| 2064 | GET | `/api/srm/scoring-dimensions` | srm | apps/web/src/api/srm/index.ts | 575 |
-| 2065 | GET | `/api/srm/scoring-dimensions/active` | srm | apps/web/src/api/srm/index.ts | 578 |
-| 2066 | GET | `/api/srm/scoring-dimensions/{id}` | srm | apps/web/src/api/srm/index.ts | 581 |
-| 2067 | POST | `/api/srm/scoring-dimensions` | srm | apps/web/src/api/srm/index.ts | 586 |
-| 2068 | PUT | `/api/srm/scoring-dimensions/{id}` | srm | apps/web/src/api/srm/index.ts | 592 |
-| 2069 | DELETE | `/api/srm/scoring-dimensions/{id}` | srm | apps/web/src/api/srm/index.ts | 595 |
-| 2070 | GET | `/api/srm/performance/reports${query ` | srm | apps/web/src/api/srm/index.ts | 610 |
-| 2071 | GET | `/api/srm/performance/reports/{id}` | srm | apps/web/src/api/srm/index.ts | 613 |
-| 2072 | GET | `/api/srm/performance/summary` | srm | apps/web/src/api/srm/index.ts | 616 |
-| 2073 | GET | `/api/srm/performance/score-level-distribution` | srm | apps/web/src/api/srm/index.ts | 624 |
-| 2074 | GET | `/api/srm/performance/top-suppliers` | srm | apps/web/src/api/srm/index.ts | 632 |
-| 2075 | GET | `/api/srm/performance/trend${query ` | srm | apps/web/src/api/srm/index.ts | 639 |
-| 2076 | GET | `/api/srm/performance/compare` | srm | apps/web/src/api/srm/index.ts | 644 |
-| 2077 | GET | `/api/srm/health` | srm | apps/web/src/api/srm/index.ts | 648 |
-| 2078 | GET | `/api/srm/supplier-portal/{supplierId}/stats` | srm | apps/web/src/api/srm/index.ts | 653 |
-| 2079 | GET | `/api/srm/supplier-portal/{supplierId}/orders` | srm | apps/web/src/api/srm/index.ts | 656 |
-| 2080 | GET | `/api/srm/supplier-portal/{supplierId}/invoices` | srm | apps/web/src/api/srm/index.ts | 659 |
-| 2081 | GET | `/api/srm/supplier-portal/{supplierId}/deliveries` | srm | apps/web/src/api/srm/index.ts | 662 |
-| 2082 | GET | `/api/srm/supplier-portal/announcements` | srm | apps/web/src/api/srm/index.ts | 665 |
-| 2083 | GET | `/api/srm/inquiries` | srm | apps/web/src/api/srm/index.ts | 672 |
-| 2084 | GET | `/api/srm/inquiries/{id}` | srm | apps/web/src/api/srm/index.ts | 675 |
-| 2085 | POST | `/api/srm/inquiries` | srm | apps/web/src/api/srm/index.ts | 678 |
-| 2086 | PUT | `/api/srm/inquiries/{id}` | srm | apps/web/src/api/srm/index.ts | 684 |
-| 2087 | DELETE | `/api/srm/inquiries/{id}` | srm | apps/web/src/api/srm/index.ts | 687 |
-| 2088 | POST | `/api/srm/inquiries/{id}/publish` | srm | apps/web/src/api/srm/index.ts | 690 |
-| 2089 | POST | `/api/srm/inquiries/{id}/close` | srm | apps/web/src/api/srm/index.ts | 693 |
-| 2090 | GET | `/api/srm/quotations/{id}` | srm | apps/web/src/api/srm/index.ts | 701 |
-| 2091 | POST | `/api/srm/quotations` | srm | apps/web/src/api/srm/index.ts | 704 |
-| 2092 | PUT | `/api/srm/quotations/{id}` | srm | apps/web/src/api/srm/index.ts | 710 |
-| 2093 | POST | `/api/srm/quotations/{id}/award` | srm | apps/web/src/api/srm/index.ts | 713 |
-| 2094 | POST | `/api/srm/quotations/{id}/reject` | srm | apps/web/src/api/srm/index.ts | 716 |
-| 2095 | GET | `/api/srm/biddings` | srm | apps/web/src/api/srm/index.ts | 723 |
-| 2096 | GET | `/api/srm/biddings/{id}` | srm | apps/web/src/api/srm/index.ts | 726 |
-| 2097 | POST | `/api/srm/biddings` | srm | apps/web/src/api/srm/index.ts | 729 |
-| 2098 | PUT | `/api/srm/biddings/{id}` | srm | apps/web/src/api/srm/index.ts | 735 |
-| 2099 | DELETE | `/api/srm/biddings/{id}` | srm | apps/web/src/api/srm/index.ts | 738 |
-| 2100 | POST | `/api/srm/biddings/{id}/publish` | srm | apps/web/src/api/srm/index.ts | 741 |
-| 2101 | POST | `/api/srm/biddings/{id}/open` | srm | apps/web/src/api/srm/index.ts | 744 |
-| 2102 | POST | `/api/srm/biddings/{id}/evaluate` | srm | apps/web/src/api/srm/index.ts | 747 |
-| 2103 | POST | `/api/srm/biddings/{id}/award` | srm | apps/web/src/api/srm/index.ts | 750 |
-| 2104 | GET | `/api/srm/biddings/{biddingId}/suppliers` | srm | apps/web/src/api/srm/index.ts | 753 |
-| 2105 | GET | `/api/core/system/audit-logs${queryString ` | core | apps/web/src/api/system/audit.ts | 20 |
-| 2106 | GET | `/api/core/system/audit-logs/{id}` | core | apps/web/src/api/system/audit.ts | 26 |
-| 2107 | GET | `/api/core/system/audit-logs/export${queryString ` | core | apps/web/src/api/system/audit.ts | 41 |
-| 2108 | GET | `/api/core/dict/dict-types${queryString ` | core | apps/web/src/api/system/index.ts | 111 |
-| 2109 | GET | `/api/core/dict/dict-types/{id}` | core | apps/web/src/api/system/index.ts | 115 |
-| 2110 | POST | `/api/core/dict/dict-types` | core | apps/web/src/api/system/index.ts | 119 |
-| 2111 | PUT | `/api/core/dict/dict-types/{id}` | core | apps/web/src/api/system/index.ts | 123 |
-| 2112 | DELETE | `/api/core/dict/dict-types/{id}` | core | apps/web/src/api/system/index.ts | 127 |
-| 2113 | GET | `/api/core/dict/dict-types/{dictTypeId}/items${queryString ` | core | apps/web/src/api/system/index.ts | 155 |
-| 2114 | GET | `/api/core/dict/dict-items/{id}` | core | apps/web/src/api/system/index.ts | 161 |
-| 2115 | POST | `/api/core/dict/dict-items` | core | apps/web/src/api/system/index.ts | 165 |
-| 2116 | PUT | `/api/core/dict/dict-items/{id}` | core | apps/web/src/api/system/index.ts | 169 |
-| 2117 | DELETE | `/api/core/dict/dict-items/{id}` | core | apps/web/src/api/system/index.ts | 173 |
-| 2118 | POST | `/api/core/dict/dict-items/batch` | core | apps/web/src/api/system/index.ts | 177 |
-| 2119 | GET | `/api/core/dict/dict-types/{dictTypeId}/items/export` | core | apps/web/src/api/system/index.ts | 181 |
-| 2120 | GET | `/api/erp/system/db/tables${queryString ` | erp | apps/web/src/api/system/index.ts | 198 |
-| 2121 | GET | `/api/erp/system/db/tables/{tableName}` | erp | apps/web/src/api/system/index.ts | 202 |
-| 2122 | POST | `/api/erp/system/db/columns/preview` | erp | apps/web/src/api/system/index.ts | 209 |
-| 2123 | POST | `/api/erp/system/db/columns` | erp | apps/web/src/api/system/index.ts | 216 |
-| 2124 | PUT | `/api/erp/system/db/columns/{tableName}/{columnName}` | erp | apps/web/src/api/system/index.ts | 224 |
-| 2125 | DELETE | `/api/erp/system/db/columns/{tableName}/{columnName}` | erp | apps/web/src/api/system/index.ts | 232 |
-| 2126 | GET | `/api/erp/system/db/changes${queryString ` | erp | apps/web/src/api/system/index.ts | 244 |
-| 2127 | GET | `/api/core/system/config` | core | apps/web/src/api/system/params.ts | 7 |
-| 2128 | PUT | `/api/core/system/config` | core | apps/web/src/api/system/params.ts | 11 |
-| 2129 | GET | `/api/core/system/cache/config` | core | apps/web/src/api/system/params.ts | 15 |
-| 2130 | PUT | `/api/core/system/cache/config` | core | apps/web/src/api/system/params.ts | 19 |
-| 2131 | POST | `/api/core/system/cache/clear` | core | apps/web/src/api/system/params.ts | 23 |
-| 2132 | GET | `/api/core/system/cache/stats` | core | apps/web/src/api/system/params.ts | 33 |
-| 2133 | GET | `/api/core/system/log/config` | core | apps/web/src/api/system/params.ts | 37 |
-| 2134 | PUT | `/api/core/system/log/config` | core | apps/web/src/api/system/params.ts | 41 |
-| 2135 | GET | `/api/core/system/params` | core | apps/web/src/api/system/params.ts | 45 |
-| 2136 | PUT | `/api/core/system/params` | core | apps/web/src/api/system/params.ts | 49 |
-| 2137 | GET | `/api/core/doc/templates${queryString ` | doc | apps/web/src/api/template/index.ts | 121 |
-| 2138 | GET | `/api/core/doc/templates/{id}` | doc | apps/web/src/api/template/index.ts | 125 |
-| 2139 | POST | `/api/core/doc/templates` | doc | apps/web/src/api/template/index.ts | 129 |
-| 2140 | PUT | `/api/core/doc/templates/{id}` | doc | apps/web/src/api/template/index.ts | 133 |
-| 2141 | DELETE | `/api/core/doc/templates/{id}` | doc | apps/web/src/api/template/index.ts | 137 |
-| 2142 | GET | `/api/core/doc/templates/categories${queryString ` | doc | apps/web/src/api/template/index.ts | 148 |
-| 2143 | POST | `/api/core/doc/templates/{id}/render` | doc | apps/web/src/api/template/index.ts | 155 |
-| 2144 | POST | `/api/core/doc/templates/{id}/duplicate` | doc | apps/web/src/api/template/index.ts | 161 |
-| 2145 | PUT | `/api/core/doc/templates/{id}/toggle-status` | doc | apps/web/src/api/template/index.ts | 165 |
-| 2146 | GET | `/api/core/{API_BASE}/list` | core | apps/web/src/api/tenant/index.ts | 27 |
-| 2147 | GET | `/api/core/{API_BASE}/{tenantId}` | core | apps/web/src/api/tenant/index.ts | 31 |
-| 2148 | GET | `/api/core/{API_BASE}/slug/{slug}` | core | apps/web/src/api/tenant/index.ts | 35 |
-| 2149 | POST | `/api/core/{API_BASE}/create` | core | apps/web/src/api/tenant/index.ts | 39 |
-| 2150 | PUT | `/api/core/{API_BASE}/{tenantId}` | core | apps/web/src/api/tenant/index.ts | 46 |
-| 2151 | DELETE | `/api/core/{API_BASE}/{tenantId}` | core | apps/web/src/api/tenant/index.ts | 50 |
-| 2152 | POST | `/api/core/{API_BASE}/{tenantId}/activate` | core | apps/web/src/api/tenant/index.ts | 54 |
-| 2153 | POST | `/api/core/{API_BASE}/{tenantId}/suspend` | core | apps/web/src/api/tenant/index.ts | 58 |
-| 2154 | GET | `/api/core/{API_BASE}/{tenantId}/users` | core | apps/web/src/api/tenant/index.ts | 73 |
-| 2155 | POST | `/api/core/{API_BASE}/{tenantId}/users/invite` | core | apps/web/src/api/tenant/index.ts | 80 |
-| 2156 | DELETE | `/api/core/{API_BASE}/{tenantId}/users/{userId}` | core | apps/web/src/api/tenant/index.ts | 84 |
-| 2157 | PUT | `/api/core/{API_BASE}/{tenantId}/users/{userId}/role` | core | apps/web/src/api/tenant/index.ts | 92 |
-| 2158 | GET | `/api/core/{API_BASE}/{tenantId}/stats` | core | apps/web/src/api/tenant/index.ts | 96 |
-| 2159 | GET | `/api/core/{API_BASE}/{tenantId}/usage` | core | apps/web/src/api/tenant/index.ts | 100 |
-| 2160 | GET | `/api/core/{API_BASE}/{tenantId}/billing` | core | apps/web/src/api/tenant/index.ts | 104 |
-| 2161 | GET | `/api/core/{API_BASE}/{tenantId}/invoices` | core | apps/web/src/api/tenant/index.ts | 108 |
-| 2162 | GET | `/api/core/{API_BASE}/context` | core | apps/web/src/api/tenant/index.ts | 112 |
-| 2163 | GET | `/api/core/{API_BASE}/my` | core | apps/web/src/api/tenant/index.ts | 116 |
-| 2164 | POST | `/api/core/{API_BASE}/switch` | core | apps/web/src/api/tenant/index.ts | 120 |
-| 2165 | GET | `/api/finance/voucher-templates` | finance | apps/web/src/api/voucherTemplate/index.ts | 41 |
-| 2166 | GET | `/api/finance/voucher-templates/{templateId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 46 |
-| 2167 | POST | `/api/finance/voucher-templates` | finance | apps/web/src/api/voucherTemplate/index.ts | 60 |
-| 2168 | PUT | `/api/finance/voucher-templates/{templateId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 66 |
-| 2169 | DELETE | `/api/finance/voucher-templates/{templateId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 72 |
-| 2170 | POST | `/api/finance/voucher-templates/{templateId}/copy` | finance | apps/web/src/api/voucherTemplate/index.ts | 78 |
-| 2171 | POST | `/api/finance/voucher-templates/{templateId}/set-default` | finance | apps/web/src/api/voucherTemplate/index.ts | 87 |
-| 2172 | PUT | `/api/finance/voucher-templates/{templateId}/toggle` | finance | apps/web/src/api/voucherTemplate/index.ts | 95 |
-| 2173 | POST | `/api/finance/voucher-templates/{templateId}/entries` | finance | apps/web/src/api/voucherTemplate/index.ts | 107 |
-| 2174 | PUT | `/api/finance/voucher-templates/{templateId}/entries/{entryId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 116 |
-| 2175 | DELETE | `/api/finance/voucher-templates/{templateId}/entries/{entryId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 122 |
-| 2176 | PUT | `/api/finance/voucher-templates/{templateId}/entries/reorder` | finance | apps/web/src/api/voucherTemplate/index.ts | 128 |
-| 2177 | POST | `/api/finance/voucher/generate/preview` | finance | apps/web/src/api/voucherTemplate/index.ts | 145 |
-| 2178 | POST | `/api/finance/voucher/generate/from-source` | finance | apps/web/src/api/voucherTemplate/index.ts | 158 |
-| 2179 | POST | `/api/finance/voucher/generate/batch` | finance | apps/web/src/api/voucherTemplate/index.ts | 169 |
-| 2180 | POST | `/api/finance/voucher/generate/auto` | finance | apps/web/src/api/voucherTemplate/index.ts | 181 |
-| 2181 | POST | `/api/finance/voucher/generate/regenerate/{originalVoucherId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 187 |
-| 2182 | POST | `/api/finance/voucher-templates/match` | finance | apps/web/src/api/voucherTemplate/index.ts | 204 |
-| 2183 | GET | `/api/finance/voucher-templates/{templateId}/usage-stats` | finance | apps/web/src/api/voucherTemplate/index.ts | 216 |
-| 2184 | GET | `/api/finance/voucher-generation-rules` | finance | apps/web/src/api/voucherTemplate/index.ts | 232 |
-| 2185 | POST | `/api/finance/voucher-generation-rules` | finance | apps/web/src/api/voucherTemplate/index.ts | 245 |
-| 2186 | PUT | `/api/finance/voucher-generation-rules/{ruleId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 251 |
-| 2187 | DELETE | `/api/finance/voucher-generation-rules/{ruleId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 257 |
-| 2188 | PUT | `/api/finance/voucher-generation-rules/{ruleId}/toggle` | finance | apps/web/src/api/voucherTemplate/index.ts | 263 |
-| 2189 | POST | `/api/finance/voucher-templates/import` | finance | apps/web/src/api/voucherTemplate/index.ts | 285 |
-| 2190 | GET | `/api/wms/audit-logs` | wms | apps/web/src/api/wms/audit.ts | 9 |
-| 2191 | GET | `/api/wms/audit-logs/{id}` | wms | apps/web/src/api/wms/audit.ts | 13 |
-| 2192 | GET | `/api/wms/audit-logs/modules` | wms | apps/web/src/api/wms/audit.ts | 17 |
-| 2193 | GET | `/api/wms/batches` | wms | apps/web/src/api/wms/batch.ts | 13 |
-| 2194 | POST | `/api/wms/batches` | wms | apps/web/src/api/wms/batch.ts | 17 |
-| 2195 | GET | `/api/wms/batches/{id}` | wms | apps/web/src/api/wms/batch.ts | 21 |
-| 2196 | PUT | `/api/wms/batches/{id}` | wms | apps/web/src/api/wms/batch.ts | 25 |
-| 2197 | DELETE | `/api/wms/batches/{id}` | wms | apps/web/src/api/wms/batch.ts | 29 |
-| 2198 | GET | `/api/wms/batches/statistics` | wms | apps/web/src/api/wms/batch.ts | 35 |
-| 2199 | GET | `/api/wms/batches/expiring-soon` | wms | apps/web/src/api/wms/batch.ts | 42 |
-| 2200 | GET | `/api/wms/batches/expired` | wms | apps/web/src/api/wms/batch.ts | 48 |
-| 2201 | POST | `/api/wms/batches/{id}/adjust-quantity` | wms | apps/web/src/api/wms/batch.ts | 55 |
-| 2202 | POST | `/api/wms/batches/{id}/transfer-location` | wms | apps/web/src/api/wms/batch.ts | 62 |
-| 2203 | GET | `/api/wms/dashboard` | wms | apps/web/src/api/wms/dashboard.ts | 16 |
-| 2204 | GET | `/api/wms/inbound-orders` | wms | apps/web/src/api/wms/inbound.ts | 17 |
-| 2205 | GET | `/api/wms/inbound-orders/{id}` | wms | apps/web/src/api/wms/inbound.ts | 21 |
-| 2206 | POST | `/api/wms/inbound-orders` | wms | apps/web/src/api/wms/inbound.ts | 25 |
-| 2207 | PUT | `/api/wms/inbound-orders/{id}` | wms | apps/web/src/api/wms/inbound.ts | 29 |
-| 2208 | DELETE | `/api/wms/inbound-orders/{id}` | wms | apps/web/src/api/wms/inbound.ts | 33 |
-| 2209 | GET | `/api/wms/inbound-orders/{order_id}/items` | wms | apps/web/src/api/wms/inbound.ts | 39 |
-| 2210 | POST | `/api/wms/inbound-orders/{order_id}/items` | wms | apps/web/src/api/wms/inbound.ts | 46 |
-| 2211 | PUT | `/api/wms/inbound-orders/{order_id}/items/{item_id}` | wms | apps/web/src/api/wms/inbound.ts | 54 |
-| 2212 | DELETE | `/api/wms/inbound-orders/{order_id}/items/{item_id}` | wms | apps/web/src/api/wms/inbound.ts | 58 |
-| 2213 | POST | `/api/wms/inbound-orders/{id}/confirm` | wms | apps/web/src/api/wms/inbound.ts | 62 |
-| 2214 | POST | `/api/wms/inbound-orders/{id}/receive` | wms | apps/web/src/api/wms/inbound.ts | 66 |
-| 2215 | POST | `/api/wms/inbound-orders/{id}/complete` | wms | apps/web/src/api/wms/inbound.ts | 70 |
-| 2216 | GET | `/api/wms/inventory/low-stock` | wms | apps/web/src/api/wms/inventory.ts | 73 |
-| 2217 | GET | `/api/wms/inventory/warehouse/{warehouse_id}` | wms | apps/web/src/api/wms/inventory.ts | 86 |
-| 2218 | GET | `/api/wms/inventory-alerts/rules` | wms | apps/web/src/api/wms/inventory.ts | 94 |
-| 2219 | GET | `/api/wms/inventory-alerts/rules/{id}` | wms | apps/web/src/api/wms/inventory.ts | 98 |
-| 2220 | POST | `/api/wms/inventory-alerts/rules` | wms | apps/web/src/api/wms/inventory.ts | 104 |
-| 2221 | PUT | `/api/wms/inventory-alerts/rules/{id}` | wms | apps/web/src/api/wms/inventory.ts | 111 |
-| 2222 | DELETE | `/api/wms/inventory-alerts/rules/{id}` | wms | apps/web/src/api/wms/inventory.ts | 115 |
-| 2223 | GET | `/api/wms/inventory-alerts/records` | wms | apps/web/src/api/wms/inventory.ts | 121 |
-| 2224 | GET | `/api/wms/inventory-alerts/records/{id}` | wms | apps/web/src/api/wms/inventory.ts | 125 |
-| 2225 | POST | `/api/wms/inventory-alerts/records/{id}/confirm` | wms | apps/web/src/api/wms/inventory.ts | 132 |
-| 2226 | GET | `/api/wms/inventory-alerts/statistics` | wms | apps/web/src/api/wms/inventory.ts | 138 |
-| 2227 | GET | `/api/wms/inventory/statistics` | wms | apps/web/src/api/wms/inventory.ts | 146 |
-| 2228 | GET | `/api/wms/inventory/abc-analysis` | wms | apps/web/src/api/wms/inventory.ts | 152 |
-| 2229 | GET | `/api/wms/inventory/turnover` | wms | apps/web/src/api/wms/inventory.ts | 158 |
-| 2230 | GET | `/api/wms/inventory/value-by-warehouse` | wms | apps/web/src/api/wms/inventory.ts | 164 |
-| 2231 | GET | `/api/wms/locations` | wms | apps/web/src/api/wms/location.ts | 15 |
-| 2232 | GET | `/api/wms/locations/{id}` | wms | apps/web/src/api/wms/location.ts | 19 |
-| 2233 | POST | `/api/wms/locations` | wms | apps/web/src/api/wms/location.ts | 23 |
-| 2234 | PUT | `/api/wms/locations/{id}` | wms | apps/web/src/api/wms/location.ts | 27 |
-| 2235 | DELETE | `/api/wms/locations/{id}` | wms | apps/web/src/api/wms/location.ts | 31 |
-| 2236 | GET | `/api/wms/locations/status` | wms | apps/web/src/api/wms/location.ts | 35 |
-| 2237 | POST | `/api/wms/locations/batch` | wms | apps/web/src/api/wms/location.ts | 41 |
-| 2238 | PUT | `/api/wms/locations/batch` | wms | apps/web/src/api/wms/location.ts | 48 |
-| 2239 | POST | `/api/wms/locations/batch-delete` | wms | apps/web/src/api/wms/location.ts | 52 |
-| 2240 | GET | `/api/wms/outbound-orders` | wms | apps/web/src/api/wms/outbound.ts | 21 |
-| 2241 | GET | `/api/wms/outbound-orders/{id}` | wms | apps/web/src/api/wms/outbound.ts | 25 |
-| 2242 | POST | `/api/wms/outbound-orders` | wms | apps/web/src/api/wms/outbound.ts | 29 |
-| 2243 | PUT | `/api/wms/outbound-orders/{id}` | wms | apps/web/src/api/wms/outbound.ts | 33 |
-| 2244 | DELETE | `/api/wms/outbound-orders/{id}` | wms | apps/web/src/api/wms/outbound.ts | 37 |
-| 2245 | GET | `/api/wms/outbound-orders/{order_id}/items` | wms | apps/web/src/api/wms/outbound.ts | 43 |
-| 2246 | POST | `/api/wms/outbound-orders/{order_id}/items` | wms | apps/web/src/api/wms/outbound.ts | 50 |
-| 2247 | PUT | `/api/wms/outbound-orders/{order_id}/items/{item_id}` | wms | apps/web/src/api/wms/outbound.ts | 58 |
-| 2248 | DELETE | `/api/wms/outbound-orders/{order_id}/items/{item_id}` | wms | apps/web/src/api/wms/outbound.ts | 62 |
-| 2249 | POST | `/api/wms/outbound-orders/{id}/confirm` | wms | apps/web/src/api/wms/outbound.ts | 66 |
-| 2250 | POST | `/api/wms/outbound-orders/{id}/pick` | wms | apps/web/src/api/wms/outbound.ts | 70 |
-| 2251 | POST | `/api/wms/outbound-orders/{id}/pack` | wms | apps/web/src/api/wms/outbound.ts | 74 |
-| 2252 | POST | `/api/wms/outbound-orders/{id}/ship` | wms | apps/web/src/api/wms/outbound.ts | 78 |
-| 2253 | POST | `/api/wms/outbound-orders/{id}/complete` | wms | apps/web/src/api/wms/outbound.ts | 82 |
-| 2254 | GET | `/api/wms/wave-picks` | wms | apps/web/src/api/wms/outbound.ts | 88 |
-| 2255 | GET | `/api/wms/wave-picks/{id}` | wms | apps/web/src/api/wms/outbound.ts | 92 |
-| 2256 | POST | `/api/wms/wave-picks` | wms | apps/web/src/api/wms/outbound.ts | 96 |
-| 2257 | PUT | `/api/wms/wave-picks/{id}` | wms | apps/web/src/api/wms/outbound.ts | 100 |
-| 2258 | DELETE | `/api/wms/wave-picks/{id}` | wms | apps/web/src/api/wms/outbound.ts | 104 |
-| 2259 | GET | `/api/wms/wave-picks/{wave_id}/items` | wms | apps/web/src/api/wms/outbound.ts | 110 |
-| 2260 | POST | `/api/wms/wave-picks/{id}/assign` | wms | apps/web/src/api/wms/outbound.ts | 114 |
-| 2261 | POST | `/api/wms/wave-picks/{id}/start` | wms | apps/web/src/api/wms/outbound.ts | 118 |
-| 2262 | POST | `/api/wms/wave-picks/{id}/complete` | wms | apps/web/src/api/wms/outbound.ts | 122 |
-| 2263 | POST | `/api/wms/wave-picks/{id}/cancel` | wms | apps/web/src/api/wms/outbound.ts | 126 |
-| 2264 | GET | `/api/wms/smart-replenishment/suggestions` | wms | apps/web/src/api/wms/replenishment.ts | 20 |
-| 2265 | GET | `/api/wms/smart-replenishment/suggestions/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 24 |
-| 2266 | POST | `/api/wms/smart-replenishment/suggestions/generate` | wms | apps/web/src/api/wms/replenishment.ts | 32 |
-| 2267 | GET | `/api/wms/smart-replenishment/statistics` | wms | apps/web/src/api/wms/replenishment.ts | 39 |
-| 2268 | GET | `/api/wms/smart-replenishment/orders` | wms | apps/web/src/api/wms/replenishment.ts | 45 |
-| 2269 | GET | `/api/wms/smart-replenishment/orders/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 49 |
-| 2270 | POST | `/api/wms/smart-replenishment/orders` | wms | apps/web/src/api/wms/replenishment.ts | 55 |
-| 2271 | PUT | `/api/wms/smart-replenishment/orders/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 62 |
-| 2272 | DELETE | `/api/wms/smart-replenishment/orders/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 66 |
-| 2273 | GET | `/api/wms/smart-replenishment/orders/{order_id}/items` | wms | apps/web/src/api/wms/replenishment.ts | 72 |
-| 2274 | POST | `/api/wms/smart-replenishment/orders/{id}/confirm` | wms | apps/web/src/api/wms/replenishment.ts | 76 |
-| 2275 | POST | `/api/wms/smart-replenishment/orders/{id}/complete` | wms | apps/web/src/api/wms/replenishment.ts | 80 |
-| 2276 | GET | `/api/wms/smart-replenishment/safety-stock` | wms | apps/web/src/api/wms/replenishment.ts | 86 |
-| 2277 | GET | `/api/wms/smart-replenishment/safety-stock/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 90 |
-| 2278 | PUT | `/api/wms/smart-replenishment/safety-stock/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 97 |
-| 2279 | POST | `/api/wms/smart-replenishment/safety-stock/batch-update` | wms | apps/web/src/api/wms/replenishment.ts | 103 |
-| 2280 | POST | `/api/wms/smart-replenishment/safety-stock/calculate` | wms | apps/web/src/api/wms/replenishment.ts | 111 |
-| 2281 | GET | `/api/wms/serial-numbers` | wms | apps/web/src/api/wms/serialNumber.ts | 15 |
-| 2282 | POST | `/api/wms/serial-numbers` | wms | apps/web/src/api/wms/serialNumber.ts | 19 |
-| 2283 | POST | `/api/wms/serial-numbers/bulk` | wms | apps/web/src/api/wms/serialNumber.ts | 23 |
-| 2284 | GET | `/api/wms/serial-numbers/{id}` | wms | apps/web/src/api/wms/serialNumber.ts | 27 |
-| 2285 | GET | `/api/wms/serial-numbers/by-serial/{serialNo}` | wms | apps/web/src/api/wms/serialNumber.ts | 31 |
-| 2286 | PUT | `/api/wms/serial-numbers/{id}` | wms | apps/web/src/api/wms/serialNumber.ts | 38 |
-| 2287 | DELETE | `/api/wms/serial-numbers/{id}` | wms | apps/web/src/api/wms/serialNumber.ts | 42 |
-| 2288 | GET | `/api/wms/serial-numbers/statistics` | wms | apps/web/src/api/wms/serialNumber.ts | 48 |
-| 2289 | GET | `/api/wms/serial-numbers/by-batch/{batchNo}` | wms | apps/web/src/api/wms/serialNumber.ts | 52 |
-| 2290 | POST | `/api/wms/serial-numbers/{id}/transfer-location` | wms | apps/web/src/api/wms/serialNumber.ts | 59 |
-| 2291 | GET | `/api/wms/serial-numbers/{id}/trace` | wms | apps/web/src/api/wms/serialNumber.ts | 63 |
-| 2292 | GET | `/api/wms/stock-takes` | wms | apps/web/src/api/wms/stocktake.ts | 14 |
-| 2293 | GET | `/api/wms/stock-takes/{id}` | wms | apps/web/src/api/wms/stocktake.ts | 18 |
-| 2294 | POST | `/api/wms/stock-takes` | wms | apps/web/src/api/wms/stocktake.ts | 22 |
-| 2295 | PUT | `/api/wms/stock-takes/{id}` | wms | apps/web/src/api/wms/stocktake.ts | 26 |
-| 2296 | DELETE | `/api/wms/stock-takes/{id}` | wms | apps/web/src/api/wms/stocktake.ts | 30 |
-| 2297 | GET | `/api/wms/stock-takes/{id}/items` | wms | apps/web/src/api/wms/stocktake.ts | 43 |
-| 2298 | GET | `/api/wms/stock-takes/{id}/items/{item_id}` | wms | apps/web/src/api/wms/stocktake.ts | 47 |
-| 2299 | POST | `/api/wms/stock-takes/{id}/items` | wms | apps/web/src/api/wms/stocktake.ts | 54 |
-| 2300 | PUT | `/api/wms/stock-takes/{id}/items/{item_id}` | wms | apps/web/src/api/wms/stocktake.ts | 62 |
-| 2301 | DELETE | `/api/wms/stock-takes/{id}/items/{item_id}` | wms | apps/web/src/api/wms/stocktake.ts | 66 |
-| 2302 | POST | `/api/wms/stock-takes/{id}/start` | wms | apps/web/src/api/wms/stocktake.ts | 70 |
-| 2303 | POST | `/api/wms/stock-takes/{id}/count` | wms | apps/web/src/api/wms/stocktake.ts | 77 |
-| 2304 | POST | `/api/wms/stock-takes/{id}/complete` | wms | apps/web/src/api/wms/stocktake.ts | 81 |
-| 2305 | POST | `/api/wms/stock-takes/{id}/adjust` | wms | apps/web/src/api/wms/stocktake.ts | 85 |
-| 2306 | GET | `/api/wms/sync-records` | wms | apps/web/src/api/wms/sync.ts | 9 |
-| 2307 | GET | `/api/wms/sync-records/{id}` | wms | apps/web/src/api/wms/sync.ts | 13 |
-| 2308 | GET | `/api/wms/sync-records/{sync_record_id}/items` | wms | apps/web/src/api/wms/sync.ts | 20 |
-| 2309 | POST | `/api/wms/sync-records/{id}/retry` | wms | apps/web/src/api/wms/sync.ts | 24 |
-| 2310 | POST | `/api/wms/sync-records/{id}/retry-items` | wms | apps/web/src/api/wms/sync.ts | 31 |
-| 2311 | GET | `/api/wms/sync-records/statistics` | wms | apps/web/src/api/wms/sync.ts | 38 |
-| 2312 | POST | `/api/wms/sync/scm` | wms | apps/web/src/api/wms/sync.ts | 47 |
-| 2313 | POST | `/api/wms/sync/scm/inventory` | wms | apps/web/src/api/wms/sync.ts | 55 |
-| 2314 | POST | `/api/wms/sync/scm/orders` | wms | apps/web/src/api/wms/sync.ts | 63 |
-| 2315 | GET | `/api/wms/transfers` | wms | apps/web/src/api/wms/transfer.ts | 15 |
-| 2316 | GET | `/api/wms/transfers/{id}` | wms | apps/web/src/api/wms/transfer.ts | 19 |
-| 2317 | POST | `/api/wms/transfers` | wms | apps/web/src/api/wms/transfer.ts | 23 |
-| 2318 | PUT | `/api/wms/transfers/{id}` | wms | apps/web/src/api/wms/transfer.ts | 27 |
-| 2319 | DELETE | `/api/wms/transfers/{id}` | wms | apps/web/src/api/wms/transfer.ts | 31 |
-| 2320 | GET | `/api/wms/transfers/{transfer_id}/items` | wms | apps/web/src/api/wms/transfer.ts | 37 |
-| 2321 | POST | `/api/wms/transfers/{id}/confirm` | wms | apps/web/src/api/wms/transfer.ts | 41 |
-| 2322 | POST | `/api/wms/transfers/{id}/ship` | wms | apps/web/src/api/wms/transfer.ts | 45 |
-| 2323 | POST | `/api/wms/transfers/{id}/receive` | wms | apps/web/src/api/wms/transfer.ts | 52 |
-| 2324 | POST | `/api/wms/transfers/{id}/complete` | wms | apps/web/src/api/wms/transfer.ts | 56 |
-| 2325 | GET | `/api/core/flow/approvals` | workflow | apps/web/src/api/workflow/approval.ts | 6 |
-| 2326 | POST | `/api/core/flow/approvals` | workflow | apps/web/src/api/workflow/approval.ts | 10 |
-| 2327 | GET | `/api/core/flow/approvals/{id}` | workflow | apps/web/src/api/workflow/approval.ts | 14 |
-| 2328 | POST | `/api/core/flow/approvals/{id}/process` | workflow | apps/web/src/api/workflow/approval.ts | 18 |
-| 2329 | GET | `/api/core/flow/approvals` | workflow | apps/web/src/api/workflow/approval.ts | 22 |
-| 2330 | GET | `/api/core/flow/records` | workflow | apps/web/src/api/workflow/approval.ts | 26 |
-| 2331 | GET | `/api/core/flow/records/{approvalId}` | workflow | apps/web/src/api/workflow/approval.ts | 30 |
-| 2332 | GET | `/api/core/flow/approval-tasks` | workflow | apps/web/src/api/workflow/approval.ts | 36 |
-| 2333 | GET | `/api/core/flow/approval-tasks/{id}` | workflow | apps/web/src/api/workflow/approval.ts | 40 |
-| 2334 | POST | `/api/core/flow/approval-tasks/{id}/approve` | workflow | apps/web/src/api/workflow/approval.ts | 44 |
-| 2335 | POST | `/api/core/flow/approval-tasks/{id}/reject` | workflow | apps/web/src/api/workflow/approval.ts | 48 |
-| 2336 | POST | `/api/core/flow/approval-tasks/{id}/delegate` | workflow | apps/web/src/api/workflow/approval.ts | 52 |
-| 2337 | POST | `/api/core/flow/approval-tasks/{id}/reassign` | workflow | apps/web/src/api/workflow/approval.ts | 56 |
-| 2338 | POST | `/api/core/flow/approval-tasks/{id}/claim` | workflow | apps/web/src/api/workflow/approval.ts | 60 |
-| 2339 | POST | `/api/core/flow/approval-tasks/{id}/unclaim` | workflow | apps/web/src/api/workflow/approval.ts | 64 |
-| 2340 | GET | `/api/core/flow/categories/active` | workflow | apps/web/src/api/workflow/category.ts | 22 |
-| 2341 | GET | `/api/core/flow/categories/{categoryId}/workflows` | workflow | apps/web/src/api/workflow/category.ts | 26 |
-| 2342 | GET | `/api/core/flow/categories/tree` | workflow | apps/web/src/api/workflow/category.ts | 30 |
-| 2343 | POST | `/api/core/flow/categories/sort` | workflow | apps/web/src/api/workflow/category.ts | 34 |
-| 2344 | POST | `/api/core/flow/workflows/{id}/deploy` | workflow | apps/web/src/api/workflow/definition.ts | 28 |
-| 2345 | POST | `/api/core/flow/workflows/{id}/activate` | workflow | apps/web/src/api/workflow/definition.ts | 32 |
-| 2346 | POST | `/api/core/flow/workflows/{id}/deactivate` | workflow | apps/web/src/api/workflow/definition.ts | 36 |
-| 2347 | GET | `/api/core/flow/workflows/{workflowId}/versions` | workflow | apps/web/src/api/workflow/definition.ts | 40 |
-| 2348 | POST | `/api/core/flow/workflows/{workflowId}/versions` | workflow | apps/web/src/api/workflow/definition.ts | 46 |
-| 2349 | GET | `/api/core/flow/workflows/{workflowId}/versions/{versionId}` | workflow | apps/web/src/api/workflow/definition.ts | 50 |
-| 2350 | POST | `/api/core/flow/workflows/{workflowId}/versions/{versionId}/activate` | workflow | apps/web/src/api/workflow/definition.ts | 54 |
-| 2351 | POST | `/api/core/flow/workflows/{workflowId}/rollback` | workflow | apps/web/src/api/workflow/definition.ts | 58 |
-| 2352 | GET | `/api/core/flow/workflows/{workflowId}/compare/{version1}/{version2}` | workflow | apps/web/src/api/workflow/definition.ts | 62 |
-| 2353 | DELETE | `/api/core/flow/workflows/{workflowId}/versions/{versionId}` | workflow | apps/web/src/api/workflow/definition.ts | 66 |
-| 2354 | GET | `/api/core/flow/workflows/{id}/export` | workflow | apps/web/src/api/workflow/definition.ts | 70 |
-| 2355 | POST | `/api/core/flow/workflows/import` | workflow | apps/web/src/api/workflow/definition.ts | 74 |
-| 2356 | POST | `/api/core/flow/workflows/{id}/copy` | workflow | apps/web/src/api/workflow/definition.ts | 78 |
-| 2357 | POST | `/api/core/flow/delegates/{id}/activate` | workflow | apps/web/src/api/workflow/delegate.ts | 27 |
-| 2358 | POST | `/api/core/flow/delegates/{id}/deactivate` | workflow | apps/web/src/api/workflow/delegate.ts | 31 |
-| 2359 | GET | `/api/core/flow/delegates/my` | workflow | apps/web/src/api/workflow/delegate.ts | 35 |
-| 2360 | GET | `/api/core/flow/delegates/my/attorneys` | workflow | apps/web/src/api/workflow/delegate.ts | 39 |
-| 2361 | GET | `/api/core/flow/delegates/active` | workflow | apps/web/src/api/workflow/delegate.ts | 44 |
-| 2362 | GET | `/api/core/flow/delegates/{id}/workflows` | workflow | apps/web/src/api/workflow/delegate.ts | 48 |
-| 2363 | GET | `/api/core/flow/delegates/check/{workflowId}` | workflow | apps/web/src/api/workflow/delegate.ts | 53 |
-| 2364 | POST | `/api/core/flow/form-definitions/{id}/activate` | workflow | apps/web/src/api/workflow/form.ts | 31 |
-| 2365 | POST | `/api/core/flow/form-definitions/{id}/deactivate` | workflow | apps/web/src/api/workflow/form.ts | 35 |
-| 2366 | POST | `/api/core/flow/form-definitions/{id}/publish` | workflow | apps/web/src/api/workflow/form.ts | 39 |
-| 2367 | POST | `/api/core/flow/form-definitions/{id}/copy` | workflow | apps/web/src/api/workflow/form.ts | 43 |
-| 2368 | GET | `/api/core/flow/form-definitions/workflow/{workflowId}` | workflow | apps/web/src/api/workflow/form.ts | 47 |
-| 2369 | GET | `/api/core/flow/form-definitions/categories` | workflow | apps/web/src/api/workflow/form.ts | 51 |
-| 2370 | GET | `/api/core/flow/form-definitions/{formId}/versions/{versionId}` | workflow | apps/web/src/api/workflow/form.ts | 55 |
-| 2371 | GET | `/api/core/flow/form-definitions/{formId}/versions` | workflow | apps/web/src/api/workflow/form.ts | 59 |
-| 2372 | POST | `/api/core/flow/form-definitions/{formId}/versions/{versionId}/rollback` | workflow | apps/web/src/api/workflow/form.ts | 63 |
-| 2373 | POST | `/api/core/flow/form-definitions/{id}/preview` | workflow | apps/web/src/api/workflow/form.ts | 67 |
-| 2374 | POST | `/api/core/flow/form-definitions/{id}/validate` | workflow | apps/web/src/api/workflow/form.ts | 71 |
-| 2375 | GET | `/api/core/flow/form-definitions/{id}/export` | workflow | apps/web/src/api/workflow/form.ts | 75 |
-| 2376 | POST | `/api/core/flow/form-definitions/import` | workflow | apps/web/src/api/workflow/form.ts | 81 |
-| 2377 | GET | `/api/core/flow/form-instances/workflow-instance/{workflowInstanceId}` | workflow | apps/web/src/api/workflow/form.ts | 102 |
-| 2378 | GET | `/api/core/flow/form-instances/form-definition/{formDefinitionId}` | workflow | apps/web/src/api/workflow/form.ts | 106 |
-| 2379 | POST | `/api/core/flow/form-instances/{id}/submit` | workflow | apps/web/src/api/workflow/form.ts | 112 |
-| 2380 | POST | `/api/core/flow/form-instances/{id}/draft` | workflow | apps/web/src/api/workflow/form.ts | 116 |
-| 2381 | GET | `/api/core/flow/form-instances/{id}/data` | workflow | apps/web/src/api/workflow/form.ts | 120 |
-| 2382 | PUT | `/api/core/flow/form-instances/{id}/data` | workflow | apps/web/src/api/workflow/form.ts | 124 |
-| 2383 | GET | `/api/core/flow/form-instances/{id}/history` | workflow | apps/web/src/api/workflow/form.ts | 128 |
-| 2384 | GET | `/api/core/flow/form-instances/my` | workflow | apps/web/src/api/workflow/form.ts | 132 |
-| 2385 | GET | `/api/core/flow/form-instances/my/drafts` | workflow | apps/web/src/api/workflow/form.ts | 136 |
-| 2386 | GET | `/api/core/flow/form-instances/{id}/export` | workflow | apps/web/src/api/workflow/form.ts | 140 |
-| 2387 | GET | `/api/core/flow/history` | workflow | apps/web/src/api/workflow/history.ts | 6 |
-| 2388 | GET | `/api/core/flow/history/{id}` | workflow | apps/web/src/api/workflow/history.ts | 10 |
-| 2389 | GET | `/api/core/flow/history/instance/{instanceId}` | workflow | apps/web/src/api/workflow/history.ts | 14 |
-| 2390 | GET | `/api/core/flow/history/workflow/{workflowId}` | workflow | apps/web/src/api/workflow/history.ts | 18 |
-| 2391 | GET | `/api/core/flow/statistics` | workflow | apps/web/src/api/workflow/index.ts | 232 |
-| 2392 | GET | `/api/core/flow/performance` | workflow | apps/web/src/api/workflow/index.ts | 236 |
-| 2393 | POST | `/api/core/flow/performance/reset` | workflow | apps/web/src/api/workflow/index.ts | 240 |
-| 2394 | GET | `/api/core/flow/health` | workflow | apps/web/src/api/workflow/index.ts | 244 |
-| 2395 | GET | `/api/core/flow/instances` | workflow | apps/web/src/api/workflow/instance.ts | 6 |
-| 2396 | POST | `/api/core/flow/instances` | workflow | apps/web/src/api/workflow/instance.ts | 10 |
-| 2397 | GET | `/api/core/flow/instances/{id}` | workflow | apps/web/src/api/workflow/instance.ts | 14 |
-| 2398 | GET | `/api/core/flow/instances/{id}/details` | workflow | apps/web/src/api/workflow/instance.ts | 18 |
-| 2399 | GET | `/api/core/flow/instances` | workflow | apps/web/src/api/workflow/instance.ts | 22 |
-| 2400 | GET | `/api/core/flow/instances/{id}` | workflow | apps/web/src/api/workflow/instance.ts | 26 |
-| 2401 | POST | `/api/core/flow/instances/{id}/cancel` | workflow | apps/web/src/api/workflow/instance.ts | 30 |
-| 2402 | POST | `/api/core/flow/instances/{id}/suspend` | workflow | apps/web/src/api/workflow/instance.ts | 34 |
-| 2403 | POST | `/api/core/flow/instances/{id}/resume` | workflow | apps/web/src/api/workflow/instance.ts | 38 |
-| 2404 | DELETE | `/api/core/flow/instances/{id}` | workflow | apps/web/src/api/workflow/instance.ts | 42 |
-| 2405 | POST | `/api/core/flow/instances/{id}/activate` | workflow | apps/web/src/api/workflow/instance.ts | 46 |
-| 2406 | DELETE | `/api/core/flow/instances/{id}` | workflow | apps/web/src/api/workflow/instance.ts | 50 |
-| 2407 | POST | `/api/core/flow/instances/{id}/terminate` | workflow | apps/web/src/api/workflow/instance.ts | 54 |
-| 2408 | GET | `/api/core/flow/instances/{id}/variables` | workflow | apps/web/src/api/workflow/instance.ts | 58 |
-| 2409 | POST | `/api/core/flow/instances/{id}/variables` | workflow | apps/web/src/api/workflow/instance.ts | 62 |
-| 2410 | GET | `/api/core/flow/instances/{id}/tasks` | workflow | apps/web/src/api/workflow/instance.ts | 66 |
-| 2411 | GET | `/api/core/flow/instances/{id}/history` | workflow | apps/web/src/api/workflow/instance.ts | 70 |
-| 2412 | GET | `/api/core/flow/instances/{id}/logs` | workflow | apps/web/src/api/workflow/instance.ts | 74 |
-| 2413 | GET | `/api/core/flow/instances/{id}/diagram` | workflow | apps/web/src/api/workflow/instance.ts | 78 |
-| 2414 | GET | `/api/core/flow/monitor/instances` | workflow | apps/web/src/api/workflow/monitor.ts | 18 |
-| 2415 | GET | `/api/core/flow/monitor/instances/{id}` | workflow | apps/web/src/api/workflow/monitor.ts | 22 |
-| 2416 | GET | `/api/core/flow/monitor/instances/{id}/history` | workflow | apps/web/src/api/workflow/monitor.ts | 28 |
-| 2417 | GET | `/api/core/flow/monitor/instances/{id}/tasks` | workflow | apps/web/src/api/workflow/monitor.ts | 32 |
-| 2418 | GET | `/api/core/flow/monitor/instances/{id}/variables` | workflow | apps/web/src/api/workflow/monitor.ts | 36 |
-| 2419 | GET | `/api/core/flow/monitor/instances/{id}/diagram` | workflow | apps/web/src/api/workflow/monitor.ts | 40 |
-| 2420 | GET | `/api/core/flow/monitor/instances/running` | workflow | apps/web/src/api/workflow/monitor.ts | 44 |
-| 2421 | GET | `/api/core/flow/monitor/instances/completed` | workflow | apps/web/src/api/workflow/monitor.ts | 48 |
-| 2422 | GET | `/api/core/flow/monitor/instances/rejected` | workflow | apps/web/src/api/workflow/monitor.ts | 52 |
-| 2423 | GET | `/api/core/flow/monitor/instances/suspended` | workflow | apps/web/src/api/workflow/monitor.ts | 56 |
-| 2424 | GET | `/api/core/flow/monitor/instances/overdue` | workflow | apps/web/src/api/workflow/monitor.ts | 60 |
-| 2425 | GET | `/api/core/flow/monitor/statistics` | workflow | apps/web/src/api/workflow/monitor.ts | 64 |
-| 2426 | GET | `/api/core/flow/monitor/analysis/{workflowId}` | workflow | apps/web/src/api/workflow/monitor.ts | 68 |
-| 2427 | GET | `/api/core/flow/monitor/analysis/{workflowId}/nodes` | workflow | apps/web/src/api/workflow/monitor.ts | 74 |
-| 2428 | GET | `/api/core/flow/monitor/analysis/{workflowId}/bottlenecks` | workflow | apps/web/src/api/workflow/monitor.ts | 78 |
-| 2429 | GET | `/api/core/flow/monitor/analysis/efficiency` | workflow | apps/web/src/api/workflow/monitor.ts | 82 |
-| 2430 | GET | `/api/core/flow/monitor/analysis/trend` | workflow | apps/web/src/api/workflow/monitor.ts | 88 |
-| 2431 | GET | `/api/core/flow/monitor/analysis/users` | workflow | apps/web/src/api/workflow/monitor.ts | 94 |
-| 2432 | GET | `/api/core/flow/monitor/analysis/departments` | workflow | apps/web/src/api/workflow/monitor.ts | 100 |
-| 2433 | GET | `/api/core/flow/monitor/logs` | workflow | apps/web/src/api/workflow/monitor.ts | 106 |
-| 2434 | GET | `/api/core/flow/monitor/logs/{id}` | workflow | apps/web/src/api/workflow/monitor.ts | 110 |
-| 2435 | GET | `/api/core/flow/monitor/logs/instance/{instanceId}` | workflow | apps/web/src/api/workflow/monitor.ts | 114 |
-| 2436 | GET | `/api/core/flow/monitor/logs/workflow/{workflowId}` | workflow | apps/web/src/api/workflow/monitor.ts | 118 |
-| 2437 | GET | `/api/core/flow/monitor/logs/node/{workflowId}/{nodeId}` | workflow | apps/web/src/api/workflow/monitor.ts | 122 |
-| 2438 | GET | `/api/core/flow/monitor/logs/user/{userId}` | workflow | apps/web/src/api/workflow/monitor.ts | 126 |
-| 2439 | GET | `/api/core/flow/monitor/realtime` | workflow | apps/web/src/api/workflow/monitor.ts | 130 |
-| 2440 | GET | `/api/core/flow/monitor/dashboard` | workflow | apps/web/src/api/workflow/monitor.ts | 134 |
-| 2441 | GET | `/api/core/flow/monitor/performance` | workflow | apps/web/src/api/workflow/monitor.ts | 138 |
-| 2442 | GET | `/api/core/flow/monitor/sla-compliance` | workflow | apps/web/src/api/workflow/monitor.ts | 142 |
-| 2443 | GET | `/api/core/flow/monitor/instances/error` | workflow | apps/web/src/api/workflow/monitor.ts | 146 |
-| 2444 | POST | `/api/core/flow/monitor/instances/{id}/retry` | workflow | apps/web/src/api/workflow/monitor.ts | 150 |
-| 2445 | POST | `/api/core/flow/monitor/instances/{id}/skip` | workflow | apps/web/src/api/workflow/monitor.ts | 154 |
-| 2446 | POST | `/api/core/flow/monitor/instances/{id}/force-complete` | workflow | apps/web/src/api/workflow/monitor.ts | 158 |
-| 2447 | POST | `/api/core/flow/monitor/instances/{id}/force-terminate` | workflow | apps/web/src/api/workflow/monitor.ts | 162 |
-| 2448 | GET | `/api/core/flow/rules/workflow/{workflowId}` | workflow | apps/web/src/api/workflow/rule.ts | 20 |
-| 2449 | GET | `/api/core/flow/rules/node/{workflowId}/{nodeId}` | workflow | apps/web/src/api/workflow/rule.ts | 24 |
-| 2450 | GET | `/api/core/flow/rules/type` | workflow | apps/web/src/api/workflow/rule.ts | 28 |
-| 2451 | POST | `/api/core/flow/rules/{id}/activate` | workflow | apps/web/src/api/workflow/rule.ts | 34 |
-| 2452 | POST | `/api/core/flow/rules/{id}/deactivate` | workflow | apps/web/src/api/workflow/rule.ts | 38 |
-| 2453 | POST | `/api/core/flow/rules/batch` | workflow | apps/web/src/api/workflow/rule.ts | 42 |
-| 2454 | POST | `/api/core/flow/rules/{id}/test` | workflow | apps/web/src/api/workflow/rule.ts | 46 |
-| 2455 | GET | `/api/core/flow/settings` | workflow | apps/web/src/api/workflow/setting.ts | 6 |
-| 2456 | GET | `/api/core/flow/settings/{id}` | workflow | apps/web/src/api/workflow/setting.ts | 10 |
-| 2457 | PUT | `/api/core/flow/settings/{id}` | workflow | apps/web/src/api/workflow/setting.ts | 14 |
-| 2458 | GET | `/api/core/flow/settings/key/{key}` | workflow | apps/web/src/api/workflow/setting.ts | 18 |
-| 2459 | POST | `/api/core/flow/settings/batch` | workflow | apps/web/src/api/workflow/setting.ts | 22 |
-| 2460 | POST | `/api/core/flow/settings/{id}/reset` | workflow | apps/web/src/api/workflow/setting.ts | 26 |
-| 2461 | GET | `/api/core/flow/tasks` | workflow | apps/web/src/api/workflow/task.ts | 15 |
-| 2462 | GET | `/api/core/flow/tasks/{id}` | workflow | apps/web/src/api/workflow/task.ts | 19 |
-| 2463 | GET | `/api/core/flow/tasks` | workflow | apps/web/src/api/workflow/task.ts | 23 |
-| 2464 | GET | `/api/core/flow/tasks/{id}` | workflow | apps/web/src/api/workflow/task.ts | 27 |
-| 2465 | POST | `/api/core/flow/tasks/{id}/claim` | workflow | apps/web/src/api/workflow/task.ts | 31 |
-| 2466 | POST | `/api/core/flow/tasks/{id}/unclaim` | workflow | apps/web/src/api/workflow/task.ts | 35 |
-| 2467 | POST | `/api/core/flow/tasks/{id}/complete` | workflow | apps/web/src/api/workflow/task.ts | 42 |
-| 2468 | POST | `/api/core/flow/tasks/{id}/approve` | workflow | apps/web/src/api/workflow/task.ts | 46 |
-| 2469 | POST | `/api/core/flow/tasks/{id}/reject` | workflow | apps/web/src/api/workflow/task.ts | 50 |
-| 2470 | POST | `/api/core/flow/tasks/{id}/delegate` | workflow | apps/web/src/api/workflow/task.ts | 54 |
-| 2471 | POST | `/api/core/flow/tasks/{id}/transfer` | workflow | apps/web/src/api/workflow/task.ts | 58 |
-| 2472 | POST | `/api/core/flow/tasks/{id}/reassign` | workflow | apps/web/src/api/workflow/task.ts | 65 |
-| 2473 | POST | `/api/core/flow/tasks/{id}/add-sign` | workflow | apps/web/src/api/workflow/task.ts | 69 |
-| 2474 | POST | `/api/core/flow/tasks/{id}/counter-sign` | workflow | apps/web/src/api/workflow/task.ts | 73 |
-| 2475 | POST | `/api/core/flow/tasks/{id}/withdraw` | workflow | apps/web/src/api/workflow/task.ts | 77 |
-| 2476 | POST | `/api/core/flow/tasks/{id}/return` | workflow | apps/web/src/api/workflow/task.ts | 81 |
-| 2477 | POST | `/api/core/flow/tasks/{id}/jump` | workflow | apps/web/src/api/workflow/task.ts | 85 |
-| 2478 | POST | `/api/core/flow/tasks/{id}/urge` | workflow | apps/web/src/api/workflow/task.ts | 89 |
-| 2479 | POST | `/api/core/flow/tasks/batch/approve` | workflow | apps/web/src/api/workflow/task.ts | 93 |
-| 2480 | POST | `/api/core/flow/tasks/batch/complete` | workflow | apps/web/src/api/workflow/task.ts | 100 |
-| 2481 | POST | `/api/core/flow/tasks/batch/delegate` | workflow | apps/web/src/api/workflow/task.ts | 111 |
-| 2482 | GET | `/api/core/flow/tasks/my` | workflow | apps/web/src/api/workflow/task.ts | 118 |
-| 2483 | GET | `/api/core/flow/tasks/my/pending` | workflow | apps/web/src/api/workflow/task.ts | 122 |
-| 2484 | GET | `/api/core/flow/tasks/my/completed` | workflow | apps/web/src/api/workflow/task.ts | 126 |
-| 2485 | GET | `/api/core/flow/tasks/my/involved` | workflow | apps/web/src/api/workflow/task.ts | 130 |
-| 2486 | GET | `/api/core/flow/tasks/my/created` | workflow | apps/web/src/api/workflow/task.ts | 134 |
-| 2487 | GET | `/api/core/flow/tasks/candidate` | workflow | apps/web/src/api/workflow/task.ts | 138 |
-| 2488 | GET | `/api/core/flow/tasks/{taskId}/comments` | workflow | apps/web/src/api/workflow/task.ts | 142 |
-| 2489 | POST | `/api/core/flow/tasks/{taskId}/comments` | workflow | apps/web/src/api/workflow/task.ts | 146 |
-| 2490 | GET | `/api/core/flow/tasks/{taskId}/attachments` | workflow | apps/web/src/api/workflow/task.ts | 150 |
-| 2491 | POST | `/api/core/flow/tasks/{taskId}/attachments` | workflow | apps/web/src/api/workflow/task.ts | 154 |
-| 2492 | DELETE | `/api/core/flow/tasks/{taskId}/attachments/{attachmentId}` | workflow | apps/web/src/api/workflow/task.ts | 158 |
-| 2493 | GET | `/api/core/flow/tasks/{taskId}/form` | workflow | apps/web/src/api/workflow/task.ts | 162 |
-| 2494 | POST | `/api/core/flow/tasks/{taskId}/form` | workflow | apps/web/src/api/workflow/task.ts | 166 |
-| 2495 | GET | `/api/core/flow/tasks/{taskId}/variables` | workflow | apps/web/src/api/workflow/task.ts | 170 |
-| 2496 | POST | `/api/core/flow/tasks/{taskId}/variables` | workflow | apps/web/src/api/workflow/task.ts | 174 |
-| 2497 | GET | `/api/core/flow/tasks/count` | workflow | apps/web/src/api/workflow/task.ts | 178 |
-| 2498 | GET | `/api/core/flow/tasks/my/count` | workflow | apps/web/src/api/workflow/task.ts | 182 |
-| 2499 | GET | `/api/core/flow/tasks/high-priority` | workflow | apps/web/src/api/workflow/task.ts | 186 |
-| 2500 | GET | `/api/core/flow/tasks/overdue` | workflow | apps/web/src/api/workflow/task.ts | 190 |
-| 2501 | GET | `/api/core/flow/tasks/due-soon` | workflow | apps/web/src/api/workflow/task.ts | 194 |
-| 2502 | GET | `/api/core/flow/tasks/{taskId}/timeline` | workflow | apps/web/src/api/workflow/task.ts | 198 |
-| 2503 | GET | `/api/core/flow/tasks/{taskId}/history` | workflow | apps/web/src/api/workflow/task.ts | 202 |
-| 2504 | GET | `/api/core/flow/tasks/my/pending` | workflow | apps/web/src/api/workflow/task.ts | 206 |
-| 2505 | GET | `/api/core/flow/tasks/my/completed` | workflow | apps/web/src/api/workflow/task.ts | 210 |
-| 2506 | GET | `/api/core/flow/tasks/my/created` | workflow | apps/web/src/api/workflow/task.ts | 214 |
-| 2507 | GET | `/api/core/flow/tasks/my/cc` | workflow | apps/web/src/api/workflow/task.ts | 218 |
-| 2508 | GET | `/api/core/flow/tasks/my/stats` | workflow | apps/web/src/api/workflow/task.ts | 222 |
-| 2509 | GET | `/api/core/flow/templates` | workflow | apps/web/src/api/workflow/template.ts | 6 |
-| 2510 | GET | `/api/core/flow/templates/{id}` | workflow | apps/web/src/api/workflow/template.ts | 10 |
-| 2511 | POST | `/api/core/flow/templates` | workflow | apps/web/src/api/workflow/template.ts | 14 |
-| 2512 | PUT | `/api/core/flow/templates/{id}` | workflow | apps/web/src/api/workflow/template.ts | 18 |
-| 2513 | DELETE | `/api/core/flow/templates/{id}` | workflow | apps/web/src/api/workflow/template.ts | 22 |
-| 2514 | POST | `/api/core/flow/templates/{id}/copy` | workflow | apps/web/src/api/workflow/template.ts | 26 |
-| 2515 | GET | `/api/core/flow/templates/{id}/export` | workflow | apps/web/src/api/workflow/template.ts | 30 |
-| 2516 | POST | `/api/core/flow/templates/import` | workflow | apps/web/src/api/workflow/template.ts | 34 |
-| 2517 | GET | `/api/core/flow/{endpoint}/{id}` | workflow | apps/web/src/api/workflow/utils.ts | 35 |
-| 2518 | PUT | `/api/core/flow/{endpoint}/{id}` | workflow | apps/web/src/api/workflow/utils.ts | 43 |
-| 2519 | DELETE | `/api/core/flow/{endpoint}/{id}` | workflow | apps/web/src/api/workflow/utils.ts | 47 |
-| 2520 | GET | `/api/core/flow/variables/instance/{instanceId}` | workflow | apps/web/src/api/workflow/variable.ts | 6 |
-| 2521 | GET | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 10 |
-| 2522 | POST | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 14 |
-| 2523 | DELETE | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 21 |
-| 2524 | GET | `/api/core/flow/variables/instance/{instanceId}` | workflow | apps/web/src/api/workflow/variable.ts | 25 |
-| 2525 | GET | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 29 |
-| 2526 | POST | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 33 |
-| 2527 | POST | `/api/core/flow/variables/instance/{instanceId}` | workflow | apps/web/src/api/workflow/variable.ts | 40 |
-| 2528 | DELETE | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 44 |
-| 2529 | GET | `/api/core/flow/variables/task/{taskId}` | workflow | apps/web/src/api/workflow/variable.ts | 48 |
-| 2530 | POST | `/api/core/flow/variables/task/{taskId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 52 |
-| 2531 | POST | `/api/core/flow/variables/global/{workflowId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 64 |
-| 2532 | GET | `/api/core/flow/variables/instance/{instanceId}/scope/{scope}` | workflow | apps/web/src/api/workflow/variable.ts | 71 |
-| 2533 | GET | `/api/core/flow/variables/instance/{instanceId}/{key}/history` | workflow | apps/web/src/api/workflow/variable.ts | 75 |
+| 1092 | GET | `/api/communication/im/rooms/{id}` | im | apps/web/src/api/im/index.ts | 123 |
+| 1093 | DELETE | `/api/communication/im/rooms/{id}` | im | apps/web/src/api/im/index.ts | 126 |
+| 1094 | GET | `/api/communication/im/rooms/{chatId}/messages` | im | apps/web/src/api/im/index.ts | 129 |
+| 1095 | POST | `/api/communication/im/rooms/{data.chat_id}/messages` | im | apps/web/src/api/im/index.ts | 132 |
+| 1096 | PUT | `/api/communication/im/messages/{id}/read` | im | apps/web/src/api/im/index.ts | 135 |
+| 1097 | PUT | `/api/communication/im/messages/{id}` | im | apps/web/src/api/im/index.ts | 139 |
+| 1098 | DELETE | `/api/communication/im/messages/{id}` | im | apps/web/src/api/im/index.ts | 145 |
+| 1099 | GET | `/api/communication/im/rooms/{chatRoomId}/members` | im | apps/web/src/api/im/index.ts | 149 |
+| 1100 | POST | `/api/communication/im/rooms/{chatRoomId}/members` | im | apps/web/src/api/im/index.ts | 153 |
+| 1101 | DELETE | `/api/communication/im/rooms/{chatRoomId}/members/{userId}` | im | apps/web/src/api/im/index.ts | 162 |
+| 1102 | GET | `/api/communication/im/project-groups` | im | apps/web/src/api/im/index.ts | 166 |
+| 1103 | POST | `/api/communication/im/project-groups` | im | apps/web/src/api/im/index.ts | 171 |
+| 1104 | GET | `/api/communication/im/notifications/{userId}` | im | apps/web/src/api/im/index.ts | 175 |
+| 1105 | POST | `/api/communication/im/notifications` | im | apps/web/src/api/im/index.ts | 180 |
+| 1106 | PUT | `/api/communication/im/notifications/{id}/read` | im | apps/web/src/api/im/index.ts | 183 |
+| 1107 | PUT | `/api/communication/im/notifications/{userId}/read-all` | im | apps/web/src/api/im/index.ts | 186 |
+| 1108 | GET | `/api/communication/im/health` | im | apps/web/src/api/im/index.ts | 190 |
+| 1109 | GET | `/api/communication/im/online-status/{userId}` | im | apps/web/src/api/im/index.ts | 206 |
+| 1110 | GET | `/api/communication/im/contacts/{userId}` | im | apps/web/src/api/im/index.ts | 210 |
+| 1111 | POST | `/api/communication/im/contacts/{userId}` | im | apps/web/src/api/im/index.ts | 217 |
+| 1112 | PUT | `/api/communication/im/contacts/{userId}/{friendId}/accept` | im | apps/web/src/api/im/index.ts | 221 |
+| 1113 | PUT | `/api/communication/im/contacts/{userId}/{friendId}/reject` | im | apps/web/src/api/im/index.ts | 225 |
+| 1114 | DELETE | `/api/communication/im/contacts/{userId}/{friendId}` | im | apps/web/src/api/im/index.ts | 229 |
+| 1115 | GET | `/api/communication/im/contact-groups/{userId}` | im | apps/web/src/api/im/index.ts | 233 |
+| 1116 | POST | `/api/communication/im/contact-groups/{userId}` | im | apps/web/src/api/im/index.ts | 240 |
+| 1117 | PUT | `/api/communication/im/contact-groups/{userId}/{groupId}` | im | apps/web/src/api/im/index.ts | 248 |
+| 1118 | DELETE | `/api/communication/im/contact-groups/{userId}/{groupId}` | im | apps/web/src/api/im/index.ts | 252 |
+| 1119 | POST | `/api/communication/im/contact-groups/{userId}/{groupId}/members` | im | apps/web/src/api/im/index.ts | 260 |
+| 1120 | DELETE | `/api/communication/im/contact-groups/{userId}/{groupId}/members/{memberUserId}` | im | apps/web/src/api/im/index.ts | 270 |
+| 1121 | PUT | `/api/communication/im/rooms/{chatId}/mute` | im | apps/web/src/api/im/index.ts | 274 |
+| 1122 | PUT | `/api/communication/im/rooms/{chatId}/unmute` | im | apps/web/src/api/im/index.ts | 278 |
+| 1123 | PUT | `/api/communication/im/rooms/{chatId}/pin` | im | apps/web/src/api/im/index.ts | 282 |
+| 1124 | PUT | `/api/communication/im/rooms/{chatId}/unpin` | im | apps/web/src/api/im/index.ts | 286 |
+| 1125 | GET | `/api/integration/erp/connections` | integration | apps/web/src/api/integration/connection.ts | 18 |
+| 1126 | GET | `/api/integration/erp/connections/{id}` | integration | apps/web/src/api/integration/connection.ts | 22 |
+| 1127 | POST | `/api/integration/erp/connections` | integration | apps/web/src/api/integration/connection.ts | 28 |
+| 1128 | PUT | `/api/integration/erp/connections/{id}` | integration | apps/web/src/api/integration/connection.ts | 35 |
+| 1129 | DELETE | `/api/integration/erp/connections/{id}` | integration | apps/web/src/api/integration/connection.ts | 39 |
+| 1130 | POST | `/api/integration/erp/connections/test` | integration | apps/web/src/api/integration/connection.ts | 45 |
+| 1131 | GET | `/api/integration/conversion-rules` | integration | apps/web/src/api/integration/conversionRule.ts | 65 |
+| 1132 | GET | `/api/integration/conversion-rules/{id}` | integration | apps/web/src/api/integration/conversionRule.ts | 69 |
+| 1133 | POST | `/api/integration/conversion-rules` | integration | apps/web/src/api/integration/conversionRule.ts | 73 |
+| 1134 | PUT | `/api/integration/conversion-rules/{id}` | integration | apps/web/src/api/integration/conversionRule.ts | 80 |
+| 1135 | DELETE | `/api/integration/conversion-rules/{id}` | integration | apps/web/src/api/integration/conversionRule.ts | 84 |
+| 1136 | GET | `/api/integration/health` | integration | apps/web/src/api/integration/index.ts | 72 |
+| 1137 | GET | `/api/integration/endpoints` | integration | apps/web/src/api/integration/index.ts | 84 |
+| 1138 | GET | `/api/integration/erp/mappings` | integration | apps/web/src/api/integration/mapping.ts | 15 |
+| 1139 | GET | `/api/integration/erp/mappings/{id}` | integration | apps/web/src/api/integration/mapping.ts | 21 |
+| 1140 | POST | `/api/integration/erp/mappings` | integration | apps/web/src/api/integration/mapping.ts | 25 |
+| 1141 | PUT | `/api/integration/erp/mappings/{id}` | integration | apps/web/src/api/integration/mapping.ts | 32 |
+| 1142 | DELETE | `/api/integration/erp/mappings/{id}` | integration | apps/web/src/api/integration/mapping.ts | 36 |
+| 1143 | GET | `/api/integration/sync-stats` | integration | apps/web/src/api/integration/sync.ts | 85 |
+| 1144 | GET | `/api/integration/sync-stats/history` | integration | apps/web/src/api/integration/sync.ts | 95 |
+| 1145 | GET | `/api/lims/audit-logs/{id}` | lims | apps/web/src/api/lims/audit.ts | 27 |
+| 1146 | POST | `/api/lims/barcodes/generate` | lims | apps/web/src/api/lims/barcode.ts | 28 |
+| 1147 | POST | `/api/lims/barcodes/print` | lims | apps/web/src/api/lims/barcode.ts | 37 |
+| 1148 | GET | `/api/lims/barcodes/scan/{barcode}` | lims | apps/web/src/api/lims/barcode.ts | 41 |
+| 1149 | GET | `/api/lims/barcodes/types` | lims | apps/web/src/api/lims/barcode.ts | 45 |
+| 1150 | GET | `/api/lims/barcodes/{barcode}/trace` | lims | apps/web/src/api/lims/barcode.ts | 49 |
+| 1151 | GET | `/api/lims/rfid-tags` | lims | apps/web/src/api/lims/barcode.ts | 55 |
+| 1152 | POST | `/api/lims/rfid-tags` | lims | apps/web/src/api/lims/barcode.ts | 59 |
+| 1153 | DELETE | `/api/lims/rfid-tags/{id}` | lims | apps/web/src/api/lims/barcode.ts | 63 |
+| 1154 | POST | `/api/lims/rfid-tags/assign` | lims | apps/web/src/api/lims/barcode.ts | 67 |
+| 1155 | POST | `/api/lims/rfid-tags/{tagId}/unassign` | lims | apps/web/src/api/lims/barcode.ts | 71 |
+| 1156 | GET | `/api/lims/print-config` | lims | apps/web/src/api/lims/barcode.ts | 77 |
+| 1157 | GET | `/api/lims/print-config/default` | lims | apps/web/src/api/lims/barcode.ts | 81 |
+| 1158 | GET | `/api/lims/collection-tasks` | lims | apps/web/src/api/lims/collection.ts | 16 |
+| 1159 | GET | `/api/lims/collection-tasks/{id}` | lims | apps/web/src/api/lims/collection.ts | 20 |
+| 1160 | POST | `/api/lims/collection-tasks` | lims | apps/web/src/api/lims/collection.ts | 26 |
+| 1161 | PUT | `/api/lims/collection-tasks/{id}` | lims | apps/web/src/api/lims/collection.ts | 33 |
+| 1162 | DELETE | `/api/lims/collection-tasks/{id}` | lims | apps/web/src/api/lims/collection.ts | 37 |
+| 1163 | POST | `/api/lims/collection-tasks/{id}/trigger` | lims | apps/web/src/api/lims/collection.ts | 41 |
+| 1164 | GET | `/api/lims/parse-rules` | lims | apps/web/src/api/lims/collection.ts | 47 |
+| 1165 | GET | `/api/lims/parse-rules/{id}` | lims | apps/web/src/api/lims/collection.ts | 51 |
+| 1166 | POST | `/api/lims/parse-rules` | lims | apps/web/src/api/lims/collection.ts | 55 |
+| 1167 | PUT | `/api/lims/parse-rules/{id}` | lims | apps/web/src/api/lims/collection.ts | 62 |
+| 1168 | DELETE | `/api/lims/parse-rules/{id}` | lims | apps/web/src/api/lims/collection.ts | 66 |
+| 1169 | GET | `/api/lims/dashboard` | lims | apps/web/src/api/lims/dashboard.ts | 16 |
+| 1170 | GET | `/api/lims/statistics` | lims | apps/web/src/api/lims/index.ts | 235 |
+| 1171 | GET | `/api/lims/health` | lims | apps/web/src/api/lims/index.ts | 239 |
+| 1172 | GET | `/api/lims/tasks/sample/{sampleId}` | lims | apps/web/src/api/lims/inspection.ts | 38 |
+| 1173 | POST | `/api/lims/tasks/{id}/complete_step` | lims | apps/web/src/api/lims/inspection.ts | 45 |
+| 1174 | POST | `/api/lims/tasks/{id}/submit-result` | lims | apps/web/src/api/lims/inspection.ts | 55 |
+| 1175 | GET | `/api/lims/records/task/{taskId}` | lims | apps/web/src/api/lims/inspection.ts | 72 |
+| 1176 | POST | `/api/lims/instruments/{id}/calibrate` | lims | apps/web/src/api/lims/instrument.ts | 39 |
+| 1177 | GET | `/api/lims/instruments/{instrumentId}/calibrations` | lims | apps/web/src/api/lims/instrument.ts | 45 |
+| 1178 | GET | `/api/lims/instruments/{instrumentId}/maintenance` | lims | apps/web/src/api/lims/instrument.ts | 51 |
+| 1179 | POST | `/api/lims/maintenance` | lims | apps/web/src/api/lims/instrument.ts | 55 |
+| 1180 | PUT | `/api/lims/maintenance/{id}` | lims | apps/web/src/api/lims/instrument.ts | 62 |
+| 1181 | DELETE | `/api/lims/maintenance/{id}` | lims | apps/web/src/api/lims/instrument.ts | 66 |
+| 1182 | GET | `/api/lims/instrument-data` | lims | apps/web/src/api/lims/instrument.ts | 72 |
+| 1183 | GET | `/api/lims/instrument-data/{id}` | lims | apps/web/src/api/lims/instrument.ts | 76 |
+| 1184 | POST | `/api/lims/instrument-data` | lims | apps/web/src/api/lims/instrument.ts | 82 |
+| 1185 | PUT | `/api/lims/instrument-data/{id}` | lims | apps/web/src/api/lims/instrument.ts | 89 |
+| 1186 | DELETE | `/api/lims/instrument-data/{id}` | lims | apps/web/src/api/lims/instrument.ts | 93 |
+| 1187 | POST | `/api/lims/instrument-data/{id}/parse` | lims | apps/web/src/api/lims/instrument.ts | 97 |
+| 1188 | POST | `/api/lims/instrument-data/parse/test` | lims | apps/web/src/api/lims/instrument.ts | 101 |
+| 1189 | GET | `/api/lims/instrument-data/statistics` | lims | apps/web/src/api/lims/instrument.ts | 105 |
+| 1190 | GET | `/api/lims/pt-plans/{planId}/samples` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 35 |
+| 1191 | GET | `/api/lims/pt-plans/{planId}/results` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 39 |
+| 1192 | GET | `/api/lims/pt-plans/{planId}/evaluations` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 43 |
+| 1193 | GET | `/api/lims/pt-plans/{planId}/corrective-actions` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 47 |
+| 1194 | POST | `/api/lims/pt-samples/receive` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 53 |
+| 1195 | POST | `/api/lims/pt-results` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 59 |
+| 1196 | POST | `/api/lims/pt-evaluations` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 65 |
+| 1197 | POST | `/api/lims/pt-corrective-actions` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 73 |
+| 1198 | PUT | `/api/lims/pt-corrective-actions/{id}` | lims | apps/web/src/api/lims/proficiencyTesting.ts | 80 |
+| 1199 | GET | `/api/lims/reagents/low-stock` | lims | apps/web/src/api/lims/reagent.ts | 21 |
+| 1200 | GET | `/api/lims/reagents/expiring` | lims | apps/web/src/api/lims/reagent.ts | 25 |
+| 1201 | POST | `/api/lims/samples/batch` | lims | apps/web/src/api/lims/sample.ts | 37 |
+| 1202 | DELETE | `/api/lims/samples/batch` | lims | apps/web/src/api/lims/sample.ts | 43 |
+| 1203 | POST | `/api/lims/samples/import` | lims | apps/web/src/api/lims/sample.ts | 53 |
+| 1204 | GET | `/api/lims/samples/{sampleId}/lifecycle` | lims | apps/web/src/api/lims/sample.ts | 61 |
+| 1205 | POST | `/api/lims/samples/lifecycle-event` | lims | apps/web/src/api/lims/sample.ts | 67 |
+| 1206 | POST | `/api/lims/samples/{sampleId}/transition-stage` | lims | apps/web/src/api/lims/sample.ts | 74 |
+| 1207 | GET | `/api/lims/samples/{sampleId}/traceability` | lims | apps/web/src/api/lims/sample.ts | 78 |
+| 1208 | GET | `/api/lims/lifecycle-stages` | lims | apps/web/src/api/lims/sample.ts | 84 |
+| 1209 | GET | `/api/lims/lifecycle-stages/{id}` | lims | apps/web/src/api/lims/sample.ts | 88 |
+| 1210 | GET | `/api/lims/sync-records` | lims | apps/web/src/api/lims/sync.ts | 9 |
+| 1211 | GET | `/api/lims/sync-records/{id}` | lims | apps/web/src/api/lims/sync.ts | 13 |
+| 1212 | DELETE | `/api/lims/sync-records/{id}` | lims | apps/web/src/api/lims/sync.ts | 17 |
+| 1213 | POST | `/api/lims/sync-records/{id}/retry` | lims | apps/web/src/api/lims/sync.ts | 21 |
+| 1214 | POST | `/api/lims/sync/record-to-qms` | lims | apps/web/src/api/lims/sync.ts | 25 |
+| 1215 | POST | `/api/lims/sync/reagent-to-ehs` | lims | apps/web/src/api/lims/sync.ts | 29 |
+| 1216 | GET | `/api/lims/test-methods/{methodId}/versions` | lims | apps/web/src/api/lims/testMethod.ts | 34 |
+| 1217 | POST | `/api/lims/test-methods/{methodId}/new-version` | lims | apps/web/src/api/lims/testMethod.ts | 41 |
+| 1218 | GET | `/api/lims/method-categories` | lims | apps/web/src/api/lims/testMethod.ts | 47 |
+| 1219 | POST | `/api/lims/method-categories` | lims | apps/web/src/api/lims/testMethod.ts | 53 |
+| 1220 | PUT | `/api/lims/method-categories/{id}` | lims | apps/web/src/api/lims/testMethod.ts | 60 |
+| 1221 | DELETE | `/api/lims/method-categories/{id}` | lims | apps/web/src/api/lims/testMethod.ts | 64 |
+| 1222 | GET | `/api/lims/method-validations` | lims | apps/web/src/api/lims/testMethod.ts | 70 |
+| 1223 | POST | `/api/lims/method-validations` | lims | apps/web/src/api/lims/testMethod.ts | 76 |
+| 1224 | GET | `/api/lims/uncertainty-projects/{projectId}/sources` | lims | apps/web/src/api/lims/uncertainty.ts | 42 |
+| 1225 | POST | `/api/lims/uncertainty-sources` | lims | apps/web/src/api/lims/uncertainty.ts | 48 |
+| 1226 | PUT | `/api/lims/uncertainty-sources/{id}` | lims | apps/web/src/api/lims/uncertainty.ts | 55 |
+| 1227 | DELETE | `/api/lims/uncertainty-sources/{id}` | lims | apps/web/src/api/lims/uncertainty.ts | 59 |
+| 1228 | GET | `/api/lims/uncertainty-projects/{projectId}/components` | lims | apps/web/src/api/lims/uncertainty.ts | 67 |
+| 1229 | POST | `/api/lims/uncertainty-components` | lims | apps/web/src/api/lims/uncertainty.ts | 73 |
+| 1230 | PUT | `/api/lims/uncertainty-components/{id}` | lims | apps/web/src/api/lims/uncertainty.ts | 80 |
+| 1231 | DELETE | `/api/lims/uncertainty-components/{id}` | lims | apps/web/src/api/lims/uncertainty.ts | 84 |
+| 1232 | POST | `/api/lims/uncertainty/type-a` | lims | apps/web/src/api/lims/uncertainty.ts | 90 |
+| 1233 | POST | `/api/lims/uncertainty/type-b` | lims | apps/web/src/api/lims/uncertainty.ts | 96 |
+| 1234 | POST | `/api/lims/uncertainty-projects/{projectId}/combined` | lims | apps/web/src/api/lims/uncertainty.ts | 102 |
+| 1235 | GET | `/api/lims/uncertainty-projects/{projectId}/report` | lims | apps/web/src/api/lims/uncertainty.ts | 106 |
+| 1236 | GET | `/api/lims/{endpoint}/{id}` | lims | apps/web/src/api/lims/utils.ts | 35 |
+| 1237 | PUT | `/api/lims/{endpoint}/{id}` | lims | apps/web/src/api/lims/utils.ts | 43 |
+| 1238 | DELETE | `/api/lims/{endpoint}/{id}` | lims | apps/web/src/api/lims/utils.ts | 47 |
+| 1239 | GET | `/api/lowcode/apps${qs ` | lowcode | apps/web/src/api/lowcode/apps.ts | 21 |
+| 1240 | GET | `/api/lowcode/apps/{id}` | lowcode | apps/web/src/api/lowcode/apps.ts | 27 |
+| 1241 | PUT | `/api/lowcode/apps/{id}` | lowcode | apps/web/src/api/lowcode/apps.ts | 35 |
+| 1242 | DELETE | `/api/lowcode/apps/{id}` | lowcode | apps/web/src/api/lowcode/apps.ts | 39 |
+| 1243 | POST | `/api/lowcode/apps/{id}/publish` | lowcode | apps/web/src/api/lowcode/apps.ts | 43 |
+| 1244 | POST | `/api/lowcode/apps/{id}/unpublish` | lowcode | apps/web/src/api/lowcode/apps.ts | 47 |
+| 1245 | POST | `/api/lowcode/apps/{id}/duplicate` | lowcode | apps/web/src/api/lowcode/apps.ts | 51 |
+| 1246 | GET | `/api/lowcode/apps/{id}/export` | lowcode | apps/web/src/api/lowcode/apps.ts | 55 |
+| 1247 | POST | `/api/lowcode/apps/import` | lowcode | apps/web/src/api/lowcode/apps.ts | 59 |
+| 1248 | GET | `/api/lowcode/data-models${qs ` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 21 |
+| 1249 | GET | `/api/lowcode/data-models/{id}` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 27 |
+| 1250 | POST | `/api/lowcode/data-models` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 31 |
+| 1251 | PUT | `/api/lowcode/data-models/{id}` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 38 |
+| 1252 | DELETE | `/api/lowcode/data-models/{id}` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 42 |
+| 1253 | POST | `/api/lowcode/data-models/{id}/materialize` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 47 |
+| 1254 | GET | `/api/lowcode/apps/{appId}/data-models` | lowcode | apps/web/src/api/lowcode/dataModels.ts | 52 |
+| 1255 | GET | `/api/lowcode/data-sources${qs ` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 22 |
+| 1256 | GET | `/api/lowcode/data-sources/{id}` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 28 |
+| 1257 | POST | `/api/lowcode/data-sources` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 32 |
+| 1258 | PUT | `/api/lowcode/data-sources/{id}` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 39 |
+| 1259 | DELETE | `/api/lowcode/data-sources/{id}` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 43 |
+| 1260 | POST | `/api/lowcode/data-sources/test` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 50 |
+| 1261 | POST | `/api/lowcode/data-sources/{id}/test` | lowcode | apps/web/src/api/lowcode/dataSources.ts | 55 |
+| 1262 | GET | `/api/lowcode/forms${qs ` | lowcode | apps/web/src/api/lowcode/forms.ts | 22 |
+| 1263 | GET | `/api/lowcode/forms/{id}` | lowcode | apps/web/src/api/lowcode/forms.ts | 28 |
+| 1264 | POST | `/api/lowcode/forms` | lowcode | apps/web/src/api/lowcode/forms.ts | 32 |
+| 1265 | PUT | `/api/lowcode/forms/{id}` | lowcode | apps/web/src/api/lowcode/forms.ts | 36 |
+| 1266 | DELETE | `/api/lowcode/forms/{id}` | lowcode | apps/web/src/api/lowcode/forms.ts | 40 |
+| 1267 | POST | `/api/lowcode/forms/{id}/publish` | lowcode | apps/web/src/api/lowcode/forms.ts | 45 |
+| 1268 | GET | `/api/lowcode/forms/{id}/preview` | lowcode | apps/web/src/api/lowcode/forms.ts | 50 |
+| 1269 | GET | `/api/lowcode/apps/{appId}/forms` | lowcode | apps/web/src/api/lowcode/forms.ts | 55 |
+| 1270 | GET | `/api/lowcode/dashboard/stats` | lowcode | apps/web/src/api/lowcode/index.ts | 36 |
+| 1271 | GET | `/api/lowcode/pages${qs ` | lowcode | apps/web/src/api/lowcode/pages.ts | 24 |
+| 1272 | GET | `/api/lowcode/pages/{id}` | lowcode | apps/web/src/api/lowcode/pages.ts | 30 |
+| 1273 | POST | `/api/lowcode/pages` | lowcode | apps/web/src/api/lowcode/pages.ts | 34 |
+| 1274 | PUT | `/api/lowcode/pages/{id}` | lowcode | apps/web/src/api/lowcode/pages.ts | 38 |
+| 1275 | DELETE | `/api/lowcode/pages/{id}` | lowcode | apps/web/src/api/lowcode/pages.ts | 42 |
+| 1276 | POST | `/api/lowcode/pages/{id}/publish` | lowcode | apps/web/src/api/lowcode/pages.ts | 47 |
+| 1277 | GET | `/api/lowcode/pages/{id}/preview` | lowcode | apps/web/src/api/lowcode/pages.ts | 52 |
+| 1278 | POST | `/api/lowcode/pages/{id}/set-home` | lowcode | apps/web/src/api/lowcode/pages.ts | 57 |
+| 1279 | GET | `/api/lowcode/apps/{appId}/pages` | lowcode | apps/web/src/api/lowcode/pages.ts | 62 |
+| 1280 | POST | `/api/lowcode/pages/{pageId}/on-form-submit` | lowcode | apps/web/src/api/lowcode/pages.ts | 79 |
+| 1281 | GET | `/api/lowcode/workflows${qs ` | lowcode | apps/web/src/api/lowcode/workflows.ts | 24 |
+| 1282 | GET | `/api/lowcode/workflows/{id}` | lowcode | apps/web/src/api/lowcode/workflows.ts | 30 |
+| 1283 | POST | `/api/lowcode/workflows` | lowcode | apps/web/src/api/lowcode/workflows.ts | 34 |
+| 1284 | PUT | `/api/lowcode/workflows/{id}` | lowcode | apps/web/src/api/lowcode/workflows.ts | 41 |
+| 1285 | DELETE | `/api/lowcode/workflows/{id}` | lowcode | apps/web/src/api/lowcode/workflows.ts | 45 |
+| 1286 | POST | `/api/lowcode/workflows/{id}/enable` | lowcode | apps/web/src/api/lowcode/workflows.ts | 50 |
+| 1287 | POST | `/api/lowcode/workflows/{id}/disable` | lowcode | apps/web/src/api/lowcode/workflows.ts | 55 |
+| 1288 | GET | `/api/lowcode/apps/{appId}/workflows` | lowcode | apps/web/src/api/lowcode/workflows.ts | 60 |
+| 1289 | GET | `/api/communication/mail/emails${queryString ` | mail | apps/web/src/api/mail/index.ts | 100 |
+| 1290 | GET | `/api/communication/mail/emails/{id}` | mail | apps/web/src/api/mail/index.ts | 104 |
+| 1291 | POST | `/api/communication/mail/emails/send-with-template` | mail | apps/web/src/api/mail/index.ts | 112 |
+| 1292 | DELETE | `/api/communication/mail/emails/{id}` | mail | apps/web/src/api/mail/index.ts | 116 |
+| 1293 | POST | `/api/communication/mail/emails/resend` | mail | apps/web/src/api/mail/index.ts | 120 |
+| 1294 | GET | `/api/communication/mail/emails/stats` | mail | apps/web/src/api/mail/index.ts | 126 |
+| 1295 | GET | `/api/communication/mail/templates${queryString ` | mail | apps/web/src/api/mail/index.ts | 140 |
+| 1296 | GET | `/api/communication/mail/templates/{id}` | mail | apps/web/src/api/mail/index.ts | 144 |
+| 1297 | POST | `/api/communication/mail/templates` | mail | apps/web/src/api/mail/index.ts | 148 |
+| 1298 | PUT | `/api/communication/mail/templates/{id}` | mail | apps/web/src/api/mail/index.ts | 152 |
+| 1299 | DELETE | `/api/communication/mail/templates/{id}` | mail | apps/web/src/api/mail/index.ts | 156 |
+| 1300 | PUT | `/api/communication/mail/templates/{id}/status` | mail | apps/web/src/api/mail/index.ts | 160 |
+| 1301 | POST | `/api/communication/mail/templates/render` | mail | apps/web/src/api/mail/index.ts | 169 |
+| 1302 | GET | `/api/communication/mail/health` | mail | apps/web/src/api/mail/index.ts | 178 |
+| 1303 | POST | `/api/master-data/{BASE_PATH}/schemas` | master | apps/web/src/api/master/schemaRegistry.ts | 70 |
+| 1304 | GET | `/api/master-data/{BASE_PATH}/schemas` | master | apps/web/src/api/master/schemaRegistry.ts | 76 |
+| 1305 | GET | `/api/master-data/{BASE_PATH}/schemas/{id}` | master | apps/web/src/api/master/schemaRegistry.ts | 80 |
+| 1306 | PUT | `/api/master-data/{BASE_PATH}/schemas/{id}` | master | apps/web/src/api/master/schemaRegistry.ts | 87 |
+| 1307 | DELETE | `/api/master-data/{BASE_PATH}/schemas/{id}` | master | apps/web/src/api/master/schemaRegistry.ts | 91 |
+| 1308 | POST | `/api/master-data/{BASE_PATH}/schemas/{schemaId}/data` | master | apps/web/src/api/master/schemaRegistry.ts | 99 |
+| 1309 | GET | `/api/master-data/{BASE_PATH}/schemas/{schemaId}/data` | master | apps/web/src/api/master/schemaRegistry.ts | 110 |
+| 1310 | GET | `/api/master-data/{BASE_PATH}/schemas/{schemaId}/data/{recordId}` | master | apps/web/src/api/master/schemaRegistry.ts | 114 |
+| 1311 | PUT | `/api/master-data/{BASE_PATH}/schemas/{schemaId}/data/{recordId}` | master | apps/web/src/api/master/schemaRegistry.ts | 122 |
+| 1312 | DELETE | `/api/master-data/{BASE_PATH}/schemas/{schemaId}/data/{recordId}` | master | apps/web/src/api/master/schemaRegistry.ts | 126 |
+| 1313 | GET | `/api/mes/anomaly/alerts` | mes | apps/web/src/api/mes/anomalyDetection.ts | 86 |
+| 1314 | GET | `/api/mes/anomaly/summary` | mes | apps/web/src/api/mes/anomalyDetection.ts | 91 |
+| 1315 | GET | `/api/mes/anomaly/equipment/{equipmentId}` | mes | apps/web/src/api/mes/anomalyDetection.ts | 96 |
+| 1316 | GET | `/api/mes/anomaly/rules` | mes | apps/web/src/api/mes/anomalyDetection.ts | 101 |
+| 1317 | GET | `/api/mes/anomaly/rules/{ruleId}` | mes | apps/web/src/api/mes/anomalyDetection.ts | 106 |
+| 1318 | PUT | `/api/mes/anomaly/rules` | mes | apps/web/src/api/mes/anomalyDetection.ts | 111 |
+| 1319 | POST | `/api/mes/anomaly/scan` | mes | apps/web/src/api/mes/anomalyDetection.ts | 116 |
+| 1320 | GET | `/api/mes/anomaly/trend` | mes | apps/web/src/api/mes/anomalyDetection.ts | 124 |
+| 1321 | POST | `/api/mes/aps/schedule` | mes | apps/web/src/api/mes/aps.ts | 166 |
+| 1322 | POST | `/api/mes/aps/schedule/simulate` | mes | apps/web/src/api/mes/aps.ts | 170 |
+| 1323 | POST | `/api/mes/aps/schedule/check-constraints` | mes | apps/web/src/api/mes/aps.ts | 176 |
+| 1324 | GET | `/api/mes/aps/schedule/optimization-report` | mes | apps/web/src/api/mes/aps.ts | 180 |
+| 1325 | GET | `/api/mes/aps/schedule/bottleneck-analysis{query}` | mes | apps/web/src/api/mes/aps.ts | 185 |
+| 1326 | GET | `/api/mes/aps/orders/{orderId}/feasibility` | mes | apps/web/src/api/mes/aps.ts | 189 |
+| 1327 | GET | `/api/mes/equipment${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 39 |
+| 1328 | GET | `/api/mes/equipment/{id}` | mes | apps/web/src/api/mes/equipment.ts | 43 |
+| 1329 | POST | `/api/mes/equipment` | mes | apps/web/src/api/mes/equipment.ts | 47 |
+| 1330 | PUT | `/api/mes/equipment/{id}` | mes | apps/web/src/api/mes/equipment.ts | 51 |
+| 1331 | DELETE | `/api/mes/equipment/{id}` | mes | apps/web/src/api/mes/equipment.ts | 55 |
+| 1332 | POST | `/api/mes/equipment/{id}/maintenance` | mes | apps/web/src/api/mes/equipment.ts | 62 |
+| 1333 | GET | `/api/mes/equipment/statistics` | mes | apps/web/src/api/mes/equipment.ts | 66 |
+| 1334 | GET | `/api/mes/equipment/statistics` | mes | apps/web/src/api/mes/equipment.ts | 72 |
+| 1335 | GET | `/api/mes/inspections${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 84 |
+| 1336 | POST | `/api/mes/inspections` | mes | apps/web/src/api/mes/equipment.ts | 88 |
+| 1337 | GET | `/api/mes/maintenances${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 100 |
+| 1338 | POST | `/api/mes/maintenances` | mes | apps/web/src/api/mes/equipment.ts | 104 |
+| 1339 | PUT | `/api/mes/maintenances/{id}/status` | mes | apps/web/src/api/mes/equipment.ts | 111 |
+| 1340 | GET | `/api/mes/equipment-oee${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 134 |
+| 1341 | GET | `/api/mes/equipment-oee/{id}` | mes | apps/web/src/api/mes/equipment.ts | 138 |
+| 1342 | POST | `/api/mes/equipment-oee` | mes | apps/web/src/api/mes/equipment.ts | 142 |
+| 1343 | PUT | `/api/mes/equipment-oee/{id}` | mes | apps/web/src/api/mes/equipment.ts | 146 |
+| 1344 | DELETE | `/api/mes/equipment-oee/{id}` | mes | apps/web/src/api/mes/equipment.ts | 150 |
+| 1345 | GET | `/api/mes/equipment-oee/statistics${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 164 |
+| 1346 | GET | `/api/mes/equipment-oee/{equipmentId}/efficiency${queryString ` | mes | apps/web/src/api/mes/equipment.ts | 177 |
+| 1347 | GET | `/api/mes/health` | mes | apps/web/src/api/mes/index.ts | 72 |
+| 1348 | GET | `/api/mes/boms${queryString ` | mes | apps/web/src/api/mes/material.ts | 30 |
+| 1349 | GET | `/api/mes/boms/{id}` | mes | apps/web/src/api/mes/material.ts | 34 |
+| 1350 | POST | `/api/mes/boms` | mes | apps/web/src/api/mes/material.ts | 38 |
+| 1351 | PUT | `/api/mes/boms/{id}` | mes | apps/web/src/api/mes/material.ts | 42 |
+| 1352 | DELETE | `/api/mes/boms/{id}` | mes | apps/web/src/api/mes/material.ts | 46 |
+| 1353 | GET | `/api/mes/material-issues${queryString ` | mes | apps/web/src/api/mes/material.ts | 66 |
+| 1354 | POST | `/api/mes/material-issues` | mes | apps/web/src/api/mes/material.ts | 70 |
+| 1355 | GET | `/api/mes/material-returns${queryString ` | mes | apps/web/src/api/mes/material.ts | 90 |
+| 1356 | POST | `/api/mes/material-returns` | mes | apps/web/src/api/mes/material.ts | 94 |
+| 1357 | GET | `/api/mes/material-requirements${queryString ` | mes | apps/web/src/api/mes/materialRequirement.ts | 26 |
+| 1358 | GET | `/api/mes/material-requirements/{id}` | mes | apps/web/src/api/mes/materialRequirement.ts | 30 |
+| 1359 | POST | `/api/mes/material-requirements` | mes | apps/web/src/api/mes/materialRequirement.ts | 34 |
+| 1360 | PUT | `/api/mes/material-requirements/{id}` | mes | apps/web/src/api/mes/materialRequirement.ts | 41 |
+| 1361 | DELETE | `/api/mes/material-requirements/{id}` | mes | apps/web/src/api/mes/materialRequirement.ts | 45 |
+| 1362 | POST | `/api/mes/material-requirements/calculate` | mes | apps/web/src/api/mes/materialRequirement.ts | 49 |
+| 1363 | PUT | `/api/mes/material-requirements/{id}/confirm` | mes | apps/web/src/api/mes/materialRequirement.ts | 53 |
+| 1364 | PUT | `/api/mes/material-requirements/{id}/release` | mes | apps/web/src/api/mes/materialRequirement.ts | 57 |
+| 1365 | GET | `/api/mes/process-routes${queryString ` | mes | apps/web/src/api/mes/process.ts | 86 |
+| 1366 | GET | `/api/mes/process-routes/{id}` | mes | apps/web/src/api/mes/process.ts | 90 |
+| 1367 | POST | `/api/mes/process-routes` | mes | apps/web/src/api/mes/process.ts | 94 |
+| 1368 | PUT | `/api/mes/process-routes/{id}` | mes | apps/web/src/api/mes/process.ts | 98 |
+| 1369 | DELETE | `/api/mes/process-routes/{id}` | mes | apps/web/src/api/mes/process.ts | 102 |
+| 1370 | GET | `/api/mes/process-routes/{routeId}/steps` | mes | apps/web/src/api/mes/process.ts | 106 |
+| 1371 | POST | `/api/mes/process-routes/{routeId}/steps` | mes | apps/web/src/api/mes/process.ts | 113 |
+| 1372 | PUT | `/api/mes/process-routes/{routeId}/steps/{stepId}` | mes | apps/web/src/api/mes/process.ts | 121 |
+| 1373 | DELETE | `/api/mes/process-routes/{routeId}/steps/{stepId}` | mes | apps/web/src/api/mes/process.ts | 125 |
+| 1374 | PUT | `/api/mes/process-routes/{routeId}/steps/reorder` | mes | apps/web/src/api/mes/process.ts | 132 |
+| 1375 | GET | `/api/mes/process-flows${queryString ` | mes | apps/web/src/api/mes/processFlow.ts | 123 |
+| 1376 | GET | `/api/mes/process-flows/{id}` | mes | apps/web/src/api/mes/processFlow.ts | 127 |
+| 1377 | POST | `/api/mes/process-flows` | mes | apps/web/src/api/mes/processFlow.ts | 131 |
+| 1378 | PUT | `/api/mes/process-flows/{id}` | mes | apps/web/src/api/mes/processFlow.ts | 135 |
+| 1379 | DELETE | `/api/mes/process-flows/{id}` | mes | apps/web/src/api/mes/processFlow.ts | 139 |
+| 1380 | GET | `/api/mes/process-flows/{flowId}/steps` | mes | apps/web/src/api/mes/processFlow.ts | 143 |
+| 1381 | POST | `/api/mes/process-flows/{flowId}/steps` | mes | apps/web/src/api/mes/processFlow.ts | 150 |
+| 1382 | PUT | `/api/mes/process-flows/{flowId}/steps/{stepId}` | mes | apps/web/src/api/mes/processFlow.ts | 158 |
+| 1383 | DELETE | `/api/mes/process-flows/{flowId}/steps/{stepId}` | mes | apps/web/src/api/mes/processFlow.ts | 162 |
+| 1384 | GET | `/api/mes/process-flows/{flowId}/capacity` | mes | apps/web/src/api/mes/processFlow.ts | 166 |
+| 1385 | GET | `/api/mes/kanban/dashboard` | mes | apps/web/src/api/mes/productionKanban.ts | 7 |
+| 1386 | GET | `/api/mes/kanban/order-progress${queryString ` | mes | apps/web/src/api/mes/productionKanban.ts | 26 |
+| 1387 | GET | `/api/mes/kanban/workstation-status` | mes | apps/web/src/api/mes/productionKanban.ts | 42 |
+| 1388 | GET | `/api/mes/kanban/quality-trend${queryString ` | mes | apps/web/src/api/mes/productionKanban.ts | 58 |
+| 1389 | GET | `/api/mes/kanban/equipment-status` | mes | apps/web/src/api/mes/productionKanban.ts | 72 |
+| 1390 | GET | `/api/mes/orders${queryString ` | mes | apps/web/src/api/mes/productionOrder.ts | 27 |
+| 1391 | GET | `/api/mes/orders/{id}` | mes | apps/web/src/api/mes/productionOrder.ts | 31 |
+| 1392 | POST | `/api/mes/orders` | mes | apps/web/src/api/mes/productionOrder.ts | 35 |
+| 1393 | PUT | `/api/mes/orders/{id}` | mes | apps/web/src/api/mes/productionOrder.ts | 42 |
+| 1394 | DELETE | `/api/mes/orders/{id}` | mes | apps/web/src/api/mes/productionOrder.ts | 46 |
+| 1395 | PUT | `/api/mes/orders/{id}/release` | mes | apps/web/src/api/mes/productionOrder.ts | 50 |
+| 1396 | PUT | `/api/mes/orders/{id}/start` | mes | apps/web/src/api/mes/productionOrder.ts | 54 |
+| 1397 | PUT | `/api/mes/orders/{id}/complete` | mes | apps/web/src/api/mes/productionOrder.ts | 58 |
+| 1398 | PUT | `/api/mes/orders/{id}/cancel` | mes | apps/web/src/api/mes/productionOrder.ts | 62 |
+| 1399 | POST | `/api/mes/orders/from-erp` | mes | apps/web/src/api/mes/productionOrder.ts | 66 |
+| 1400 | GET | `/api/mes/processes${queryString ` | mes | apps/web/src/api/mes/productionProcess.ts | 26 |
+| 1401 | GET | `/api/mes/processes/{id}` | mes | apps/web/src/api/mes/productionProcess.ts | 30 |
+| 1402 | POST | `/api/mes/processes` | mes | apps/web/src/api/mes/productionProcess.ts | 34 |
+| 1403 | PUT | `/api/mes/processes/{id}` | mes | apps/web/src/api/mes/productionProcess.ts | 41 |
+| 1404 | DELETE | `/api/mes/processes/{id}` | mes | apps/web/src/api/mes/productionProcess.ts | 45 |
+| 1405 | PUT | `/api/mes/processes/{id}/deactivate` | mes | apps/web/src/api/mes/productionProcess.ts | 49 |
+| 1406 | GET | `/api/mes/records${queryString ` | mes | apps/web/src/api/mes/productionRecord.ts | 26 |
+| 1407 | GET | `/api/mes/records/{id}` | mes | apps/web/src/api/mes/productionRecord.ts | 30 |
+| 1408 | POST | `/api/mes/records` | mes | apps/web/src/api/mes/productionRecord.ts | 34 |
+| 1409 | PUT | `/api/mes/records/{id}` | mes | apps/web/src/api/mes/productionRecord.ts | 41 |
+| 1410 | DELETE | `/api/mes/records/{id}` | mes | apps/web/src/api/mes/productionRecord.ts | 45 |
+| 1411 | PUT | `/api/mes/records/{id}/complete` | mes | apps/web/src/api/mes/productionRecord.ts | 49 |
+| 1412 | GET | `/api/mes/schedules${queryString ` | mes | apps/web/src/api/mes/productionSchedule.ts | 28 |
+| 1413 | GET | `/api/mes/schedules/{id}` | mes | apps/web/src/api/mes/productionSchedule.ts | 32 |
+| 1414 | POST | `/api/mes/schedules` | mes | apps/web/src/api/mes/productionSchedule.ts | 36 |
+| 1415 | PUT | `/api/mes/schedules/{id}` | mes | apps/web/src/api/mes/productionSchedule.ts | 43 |
+| 1416 | DELETE | `/api/mes/schedules/{id}` | mes | apps/web/src/api/mes/productionSchedule.ts | 47 |
+| 1417 | PUT | `/api/mes/schedules/{id}/adjust` | mes | apps/web/src/api/mes/productionSchedule.ts | 51 |
+| 1418 | GET | `/api/mes/schedules/gantt${queryString ` | mes | apps/web/src/api/mes/productionSchedule.ts | 65 |
+| 1419 | GET | `/api/mes/quality/inspections${queryString ` | mes | apps/web/src/api/mes/quality.ts | 171 |
+| 1420 | GET | `/api/mes/quality/inspections/{id}` | mes | apps/web/src/api/mes/quality.ts | 175 |
+| 1421 | POST | `/api/mes/quality/inspections` | mes | apps/web/src/api/mes/quality.ts | 181 |
+| 1422 | PUT | `/api/mes/quality/inspections/{id}` | mes | apps/web/src/api/mes/quality.ts | 188 |
+| 1423 | DELETE | `/api/mes/quality/inspections/{id}` | mes | apps/web/src/api/mes/quality.ts | 192 |
+| 1424 | GET | `/api/mes/quality/patrols${queryString ` | mes | apps/web/src/api/mes/quality.ts | 210 |
+| 1425 | GET | `/api/mes/quality/patrols/{id}` | mes | apps/web/src/api/mes/quality.ts | 214 |
+| 1426 | POST | `/api/mes/quality/patrols` | mes | apps/web/src/api/mes/quality.ts | 220 |
+| 1427 | PUT | `/api/mes/quality/patrols/{id}` | mes | apps/web/src/api/mes/quality.ts | 227 |
+| 1428 | DELETE | `/api/mes/quality/patrols/{id}` | mes | apps/web/src/api/mes/quality.ts | 231 |
+| 1429 | GET | `/api/mes/quality/patrols/{patrolId}/items` | mes | apps/web/src/api/mes/quality.ts | 235 |
+| 1430 | POST | `/api/mes/quality/patrols/{patrolId}/items` | mes | apps/web/src/api/mes/quality.ts | 242 |
+| 1431 | GET | `/api/mes/quality/standards${queryString ` | mes | apps/web/src/api/mes/quality.ts | 260 |
+| 1432 | GET | `/api/mes/quality/standards/{id}` | mes | apps/web/src/api/mes/quality.ts | 264 |
+| 1433 | POST | `/api/mes/quality/standards` | mes | apps/web/src/api/mes/quality.ts | 268 |
+| 1434 | PUT | `/api/mes/quality/standards/{id}` | mes | apps/web/src/api/mes/quality.ts | 275 |
+| 1435 | DELETE | `/api/mes/quality/standards/{id}` | mes | apps/web/src/api/mes/quality.ts | 279 |
+| 1436 | GET | `/api/mes/teams${queryString ` | mes | apps/web/src/api/mes/team.ts | 27 |
+| 1437 | GET | `/api/mes/teams/{id}` | mes | apps/web/src/api/mes/team.ts | 31 |
+| 1438 | POST | `/api/mes/teams` | mes | apps/web/src/api/mes/team.ts | 35 |
+| 1439 | PUT | `/api/mes/teams/{id}` | mes | apps/web/src/api/mes/team.ts | 39 |
+| 1440 | DELETE | `/api/mes/teams/{id}` | mes | apps/web/src/api/mes/team.ts | 43 |
+| 1441 | GET | `/api/mes/teams/{teamId}/members` | mes | apps/web/src/api/mes/team.ts | 47 |
+| 1442 | POST | `/api/mes/teams/{teamId}/members` | mes | apps/web/src/api/mes/team.ts | 54 |
+| 1443 | DELETE | `/api/mes/teams/{teamId}/members/{memberId}` | mes | apps/web/src/api/mes/team.ts | 58 |
+| 1444 | GET | `/api/mes/traceability/forward/{orderId}` | mes | apps/web/src/api/mes/traceability.ts | 7 |
+| 1445 | GET | `/api/mes/traceability/backward/{batchNo}` | mes | apps/web/src/api/mes/traceability.ts | 11 |
+| 1446 | GET | `/api/mes/traceability/chain${queryString ` | mes | apps/web/src/api/mes/traceability.ts | 23 |
+| 1447 | GET | `/api/mes/traceability/quality-records${queryString ` | mes | apps/web/src/api/mes/traceability.ts | 41 |
+| 1448 | GET | `/api/mes/wips${queryString ` | mes | apps/web/src/api/mes/wip.ts | 29 |
+| 1449 | GET | `/api/mes/wips/{id}` | mes | apps/web/src/api/mes/wip.ts | 33 |
+| 1450 | POST | `/api/mes/wips` | mes | apps/web/src/api/mes/wip.ts | 37 |
+| 1451 | PUT | `/api/mes/wips/{id}` | mes | apps/web/src/api/mes/wip.ts | 41 |
+| 1452 | DELETE | `/api/mes/wips/{id}` | mes | apps/web/src/api/mes/wip.ts | 45 |
+| 1453 | POST | `/api/mes/wips/transfer` | mes | apps/web/src/api/mes/wip.ts | 49 |
+| 1454 | GET | `/api/mes/wips/transfers${queryString ` | mes | apps/web/src/api/mes/wip.ts | 66 |
+| 1455 | GET | `/api/mes/wips/statistics` | mes | apps/web/src/api/mes/wip.ts | 70 |
+| 1456 | GET | `/api/mes/work-orders${queryString ` | mes | apps/web/src/api/mes/workOrder.ts | 26 |
+| 1457 | GET | `/api/mes/work-orders/{id}` | mes | apps/web/src/api/mes/workOrder.ts | 30 |
+| 1458 | POST | `/api/mes/work-orders` | mes | apps/web/src/api/mes/workOrder.ts | 34 |
+| 1459 | PUT | `/api/mes/work-orders/{id}` | mes | apps/web/src/api/mes/workOrder.ts | 38 |
+| 1460 | DELETE | `/api/mes/work-orders/{id}` | mes | apps/web/src/api/mes/workOrder.ts | 42 |
+| 1461 | PUT | `/api/mes/work-orders/{id}/start` | mes | apps/web/src/api/mes/workOrder.ts | 46 |
+| 1462 | PUT | `/api/mes/work-orders/{id}/complete` | mes | apps/web/src/api/mes/workOrder.ts | 50 |
+| 1463 | PUT | `/api/mes/work-orders/{id}/cancel` | mes | apps/web/src/api/mes/workOrder.ts | 54 |
+| 1464 | PUT | `/api/mes/work-orders/{id}/pause` | mes | apps/web/src/api/mes/workOrder.ts | 58 |
+| 1465 | PUT | `/api/mes/work-orders/{id}/resume` | mes | apps/web/src/api/mes/workOrder.ts | 62 |
+| 1466 | GET | `/api/mes/work-reports${queryString ` | mes | apps/web/src/api/mes/workReport.ts | 26 |
+| 1467 | GET | `/api/mes/work-reports/{id}` | mes | apps/web/src/api/mes/workReport.ts | 30 |
+| 1468 | POST | `/api/mes/work-reports` | mes | apps/web/src/api/mes/workReport.ts | 34 |
+| 1469 | PUT | `/api/mes/work-reports/{id}` | mes | apps/web/src/api/mes/workReport.ts | 38 |
+| 1470 | DELETE | `/api/mes/work-reports/{id}` | mes | apps/web/src/api/mes/workReport.ts | 42 |
+| 1471 | PUT | `/api/mes/work-reports/{id}/approve` | mes | apps/web/src/api/mes/workReport.ts | 46 |
+| 1472 | PUT | `/api/mes/work-reports/{id}/reject` | mes | apps/web/src/api/mes/workReport.ts | 50 |
+| 1473 | GET | `/api/mes/workstations${queryString ` | mes | apps/web/src/api/mes/workStation.ts | 26 |
+| 1474 | GET | `/api/mes/workstations/{id}` | mes | apps/web/src/api/mes/workStation.ts | 30 |
+| 1475 | POST | `/api/mes/workstations` | mes | apps/web/src/api/mes/workStation.ts | 34 |
+| 1476 | PUT | `/api/mes/workstations/{id}` | mes | apps/web/src/api/mes/workStation.ts | 38 |
+| 1477 | DELETE | `/api/mes/workstations/{id}` | mes | apps/web/src/api/mes/workStation.ts | 42 |
+| 1478 | PUT | `/api/mes/workstations/{id}/activate` | mes | apps/web/src/api/mes/workStation.ts | 46 |
+| 1479 | PUT | `/api/mes/workstations/{id}/deactivate` | mes | apps/web/src/api/mes/workStation.ts | 50 |
+| 1480 | GET | `/api/core/migration/migrations/services` | migration | apps/web/src/api/migration/index.ts | 66 |
+| 1481 | POST | `/api/core/migration/migrations/services/{encodeURIComponent(serviceName)}/apply` | migration | apps/web/src/api/migration/index.ts | 82 |
+| 1482 | POST | `/api/core/migration/migrations/services/{encodeURIComponent(serviceName)}/rollback` | migration | apps/web/src/api/migration/index.ts | 97 |
+| 1483 | GET | `/api/mobile/mobile/dashboard/stats` | mobile | apps/web/src/api/mobile/index.ts | 421 |
+| 1484 | GET | `/api/mobile/mobile/workbench` | mobile | apps/web/src/api/mobile/index.ts | 425 |
+| 1485 | POST | `/api/mobile/mobile/patrol-records` | mobile | apps/web/src/api/mobile/index.ts | 434 |
+| 1486 | POST | `/api/mobile/mobile/scan-records` | mobile | apps/web/src/api/mobile/index.ts | 441 |
+| 1487 | POST | `/api/mobile/mobile/scan` | mobile | apps/web/src/api/mobile/index.ts | 444 |
+| 1488 | POST | `/api/mobile/mobile/photo-evidences` | mobile | apps/web/src/api/mobile/index.ts | 453 |
+| 1489 | POST | `/api/mobile/mobile/audio-recordings` | mobile | apps/web/src/api/mobile/index.ts | 462 |
+| 1490 | POST | `/api/mobile/mobile/video-recordings` | mobile | apps/web/src/api/mobile/index.ts | 471 |
+| 1491 | POST | `/api/mobile/mobile/mobile-tasks` | mobile | apps/web/src/api/mobile/index.ts | 481 |
+| 1492 | PUT | `/api/mobile/mobile/mobile-tasks/{id}/status` | mobile | apps/web/src/api/mobile/index.ts | 484 |
+| 1493 | GET | `/api/mobile/attendance/stats` | mobile | apps/web/src/api/mobile/index.ts | 488 |
+| 1494 | POST | `/api/mobile/attendance/check-in` | mobile | apps/web/src/api/mobile/index.ts | 504 |
+| 1495 | POST | `/api/mobile/attendance/check-out` | mobile | apps/web/src/api/mobile/index.ts | 511 |
+| 1496 | POST | `/api/mobile/attendance/leaves` | mobile | apps/web/src/api/mobile/index.ts | 523 |
+| 1497 | GET | `/api/mobile/mobile/inventory/items/{id}` | mobile | apps/web/src/api/mobile/index.ts | 538 |
+| 1498 | POST | `/api/mobile/mobile/inventory/stocktake/{taskId}/records` | mobile | apps/web/src/api/mobile/index.ts | 556 |
+| 1499 | GET | `/api/mobile/mobile/quality/tasks/{id}` | mobile | apps/web/src/api/mobile/index.ts | 591 |
+| 1500 | POST | `/api/mobile/mobile/quality/defects` | mobile | apps/web/src/api/mobile/index.ts | 604 |
+| 1501 | PUT | `/api/mobile/mobile/quality/tasks/{id}/status` | mobile | apps/web/src/api/mobile/index.ts | 611 |
+| 1502 | GET | `/api/mobile/mobile/production/orders/{id}` | mobile | apps/web/src/api/mobile/index.ts | 628 |
+| 1503 | POST | `/api/mobile/mobile/production/work-reports` | mobile | apps/web/src/api/mobile/index.ts | 647 |
+| 1504 | GET | `/api/mobile/mobile/push/config` | mobile | apps/web/src/api/mobile/index.ts | 660 |
+| 1505 | PUT | `/api/mobile/mobile/push/config` | mobile | apps/web/src/api/mobile/index.ts | 664 |
+| 1506 | PUT | `/api/mobile/mobile/push/templates/{id}` | mobile | apps/web/src/api/mobile/index.ts | 675 |
+| 1507 | GET | `/api/mobile/mobile/offline/sync-status` | mobile | apps/web/src/api/mobile/index.ts | 679 |
+| 1508 | POST | `/api/mobile/mobile/offline/sync` | mobile | apps/web/src/api/mobile/index.ts | 682 |
+| 1509 | GET | `/api/mobile/health` | mobile | apps/web/src/api/mobile/index.ts | 686 |
+| 1510 | GET | `/api/core/monitor/alerts` | monitor | apps/web/src/api/monitor/alertTyped.ts | 8 |
+| 1511 | GET | `/api/core/monitor/alerts/{id}` | monitor | apps/web/src/api/monitor/alertTyped.ts | 9 |
+| 1512 | PUT | `/api/core/monitor/alerts/{id}/acknowledge` | monitor | apps/web/src/api/monitor/alertTyped.ts | 10 |
+| 1513 | PUT | `/api/core/monitor/alerts/{id}/resolve` | monitor | apps/web/src/api/monitor/alertTyped.ts | 11 |
+| 1514 | GET | `/api/core/monitor/alerts` | monitor | apps/web/src/api/monitor/alertTyped.ts | 41 |
+| 1515 | GET | `/api/core/monitor/alerts/{id}` | monitor | apps/web/src/api/monitor/alertTyped.ts | 50 |
+| 1516 | GET | `/api/core/monitor/metrics/system` | monitor | apps/web/src/api/monitor/index.ts | 170 |
+| 1517 | GET | `/api/core/monitor/health` | monitor | apps/web/src/api/monitor/index.ts | 178 |
+| 1518 | GET | `/api/core/monitor/performance/api` | monitor | apps/web/src/api/monitor/index.ts | 186 |
+| 1519 | GET | `/api/core/monitor/metrics/database` | monitor | apps/web/src/api/monitor/index.ts | 194 |
+| 1520 | GET | `/api/core/monitor/alerts/{id}` | monitor | apps/web/src/api/monitor/index.ts | 217 |
+| 1521 | PUT | `/api/core/monitor/alerts/{id}/acknowledge` | monitor | apps/web/src/api/monitor/index.ts | 225 |
+| 1522 | PUT | `/api/core/monitor/alerts/{id}/resolve` | monitor | apps/web/src/api/monitor/index.ts | 233 |
+| 1523 | GET | `/api/core/monitor/reports/performance` | monitor | apps/web/src/api/monitor/index.ts | 249 |
+| 1524 | GET | `/api/core/monitor/metrics/realtime` | monitor | apps/web/src/api/monitor/index.ts | 257 |
+| 1525 | GET | `/api/core/monitor/health` | monitor | apps/web/src/api/monitor/index.ts | 264 |
+| 1526 | GET | `/api/core/monitor/metrics/test-retry` | monitor | apps/web/src/api/monitor/index.ts | 269 |
+| 1527 | GET | `/api/core/monitor/business-metrics` | monitor | apps/web/src/api/monitor/metricTyped.ts | 9 |
+| 1528 | GET | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metricTyped.ts | 10 |
+| 1529 | POST | `/api/core/monitor/business-metrics` | monitor | apps/web/src/api/monitor/metricTyped.ts | 11 |
+| 1530 | PUT | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metricTyped.ts | 12 |
+| 1531 | DELETE | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metricTyped.ts | 13 |
+| 1532 | GET | `/api/core/monitor/business-metrics` | monitor | apps/web/src/api/monitor/metricTyped.ts | 44 |
+| 1533 | GET | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metricTyped.ts | 55 |
+| 1534 | POST | `/api/core/monitor/business-metrics` | monitor | apps/web/src/api/monitor/metricTyped.ts | 65 |
+| 1535 | PUT | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metricTyped.ts | 78 |
+| 1536 | DELETE | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metricTyped.ts | 90 |
+| 1537 | GET | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 226 |
+| 1538 | POST | `/api/core/monitor/business-metrics` | monitor | apps/web/src/api/monitor/metrics.ts | 229 |
+| 1539 | PUT | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 235 |
+| 1540 | DELETE | `/api/core/monitor/business-metrics/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 238 |
+| 1541 | GET | `/api/core/monitor/business-metrics/summary` | monitor | apps/web/src/api/monitor/metrics.ts | 241 |
+| 1542 | GET | `/api/core/monitor/business-metrics/trend` | monitor | apps/web/src/api/monitor/metrics.ts | 247 |
+| 1543 | GET | `/api/core/monitor/business-metrics/kpi` | monitor | apps/web/src/api/monitor/metrics.ts | 255 |
+| 1544 | GET | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 266 |
+| 1545 | POST | `/api/core/monitor/slos` | monitor | apps/web/src/api/monitor/metrics.ts | 269 |
+| 1546 | PUT | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 272 |
+| 1547 | DELETE | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 275 |
+| 1548 | GET | `/api/core/monitor/slos/summary` | monitor | apps/web/src/api/monitor/metrics.ts | 278 |
+| 1549 | GET | `/api/core/monitor/slos/budget` | monitor | apps/web/src/api/monitor/metrics.ts | 281 |
+| 1550 | GET | `/api/core/monitor/slos/trend` | monitor | apps/web/src/api/monitor/metrics.ts | 284 |
+| 1551 | POST | `/api/core/monitor/slos/violations/{id}/resolve` | monitor | apps/web/src/api/monitor/metrics.ts | 300 |
+| 1552 | GET | `/api/core/monitor/rules` | monitor | apps/web/src/api/monitor/metrics.ts | 306 |
+| 1553 | GET | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 309 |
+| 1554 | POST | `/api/core/monitor/rules` | monitor | apps/web/src/api/monitor/metrics.ts | 312 |
+| 1555 | PUT | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 318 |
+| 1556 | DELETE | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/metrics.ts | 321 |
+| 1557 | POST | `/api/core/monitor/rules/{id}/enable` | monitor | apps/web/src/api/monitor/metrics.ts | 324 |
+| 1558 | POST | `/api/core/monitor/rules/{id}/disable` | monitor | apps/web/src/api/monitor/metrics.ts | 327 |
+| 1559 | GET | `/api/core/monitor/rules` | monitor | apps/web/src/api/monitor/ruleTyped.ts | 8 |
+| 1560 | GET | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/ruleTyped.ts | 9 |
+| 1561 | POST | `/api/core/monitor/rules` | monitor | apps/web/src/api/monitor/ruleTyped.ts | 10 |
+| 1562 | PUT | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/ruleTyped.ts | 11 |
+| 1563 | DELETE | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/ruleTyped.ts | 12 |
+| 1564 | GET | `/api/core/monitor/rules` | monitor | apps/web/src/api/monitor/ruleTyped.ts | 39 |
+| 1565 | GET | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/ruleTyped.ts | 48 |
+| 1566 | POST | `/api/core/monitor/rules` | monitor | apps/web/src/api/monitor/ruleTyped.ts | 58 |
+| 1567 | PUT | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/ruleTyped.ts | 71 |
+| 1568 | DELETE | `/api/core/monitor/rules/{id}` | monitor | apps/web/src/api/monitor/ruleTyped.ts | 83 |
+| 1569 | GET | `/api/core/monitor/slos` | monitor | apps/web/src/api/monitor/sloTyped.ts | 8 |
+| 1570 | GET | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/sloTyped.ts | 9 |
+| 1571 | POST | `/api/core/monitor/slos` | monitor | apps/web/src/api/monitor/sloTyped.ts | 10 |
+| 1572 | PUT | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/sloTyped.ts | 11 |
+| 1573 | DELETE | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/sloTyped.ts | 12 |
+| 1574 | GET | `/api/core/monitor/slos` | monitor | apps/web/src/api/monitor/sloTyped.ts | 39 |
+| 1575 | GET | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/sloTyped.ts | 48 |
+| 1576 | POST | `/api/core/monitor/slos` | monitor | apps/web/src/api/monitor/sloTyped.ts | 58 |
+| 1577 | PUT | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/sloTyped.ts | 71 |
+| 1578 | DELETE | `/api/core/monitor/slos/{id}` | monitor | apps/web/src/api/monitor/sloTyped.ts | 81 |
+| 1579 | GET | `/api/communication/notification/notifications/unread` | notification | apps/web/src/api/notification/index.ts | 188 |
+| 1580 | GET | `/api/communication/notification/notifications/unread-count` | notification | apps/web/src/api/notification/index.ts | 195 |
+| 1581 | PUT | `/api/communication/notification/notifications/read-all` | notification | apps/web/src/api/notification/index.ts | 230 |
+| 1582 | GET | `/api/communication/notification/notifications/archive/config` | notification | apps/web/src/api/notification/index.ts | 259 |
+| 1583 | PUT | `/api/communication/notification/notifications/archive/config` | notification | apps/web/src/api/notification/index.ts | 266 |
+| 1584 | POST | `/api/communication/notification/notifications/archive/run` | notification | apps/web/src/api/notification/index.ts | 278 |
+| 1585 | GET | `/api/communication/notification/notifications/stats/me` | notification | apps/web/src/api/notification/index.ts | 285 |
+| 1586 | GET | `/api/communication/notification/notification-templates` | notification | apps/web/src/api/notification/index.ts | 312 |
+| 1587 | GET | `/api/communication/notification/notification-templates/{id}` | notification | apps/web/src/api/notification/index.ts | 320 |
+| 1588 | POST | `/api/communication/notification/notification-templates` | notification | apps/web/src/api/notification/index.ts | 329 |
+| 1589 | PUT | `/api/communication/notification/notification-templates/{id}` | notification | apps/web/src/api/notification/index.ts | 340 |
+| 1590 | DELETE | `/api/communication/notification/notification-templates/{id}` | notification | apps/web/src/api/notification/index.ts | 348 |
+| 1591 | POST | `/api/communication/notification/notification-templates/{id}/render` | notification | apps/web/src/api/notification/index.ts | 356 |
+| 1592 | PUT | `/api/communication/notification/notifications/bulk-read` | notification | apps/web/src/api/notification/index.ts | 364 |
+| 1593 | DELETE | `/api/communication/notification/notifications/bulk` | notification | apps/web/src/api/notification/index.ts | 371 |
+| 1594 | GET | `/api/communication/notification/notifications/health/detailed` | notification | apps/web/src/api/notification/index.ts | 395 |
+| 1595 | PUT | `/api/communication/notification/notifications/{id}/unread` | notification | apps/web/src/api/notification/index.ts | 410 |
+| 1596 | GET | `/api/pdm/bom-versions` | pdm | apps/web/src/api/pdm/bom.ts | 89 |
+| 1597 | GET | `/api/pdm/bom-versions/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 107 |
+| 1598 | POST | `/api/pdm/bom-versions` | pdm | apps/web/src/api/pdm/bom.ts | 110 |
+| 1599 | PUT | `/api/pdm/bom-versions/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 116 |
+| 1600 | DELETE | `/api/pdm/bom-versions/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 119 |
+| 1601 | POST | `/api/pdm/bom-versions/{id}/activate` | pdm | apps/web/src/api/pdm/bom.ts | 122 |
+| 1602 | POST | `/api/pdm/bom-versions/{id}/archive` | pdm | apps/web/src/api/pdm/bom.ts | 125 |
+| 1603 | GET | `/api/pdm/bom-items{params}` | pdm | apps/web/src/api/pdm/bom.ts | 131 |
+| 1604 | GET | `/api/pdm/bom-items/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 134 |
+| 1605 | POST | `/api/pdm/bom-items` | pdm | apps/web/src/api/pdm/bom.ts | 137 |
+| 1606 | PUT | `/api/pdm/bom-items/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 143 |
+| 1607 | DELETE | `/api/pdm/bom-items/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 146 |
+| 1608 | POST | `/api/pdm/bom-versions/{bomVersionId}/items/batch` | pdm | apps/web/src/api/pdm/bom.ts | 152 |
+| 1609 | POST | `/api/pdm/bom-compare` | pdm | apps/web/src/api/pdm/bom.ts | 162 |
+| 1610 | GET | `/api/pdm/bom-compare/{id}` | pdm | apps/web/src/api/pdm/bom.ts | 168 |
+| 1611 | GET | `/api/pdm/bom-compare` | pdm | apps/web/src/api/pdm/bom.ts | 171 |
+| 1612 | GET | `/api/pdm/dashboard` | pdm | apps/web/src/api/pdm/dashboard.ts | 16 |
+| 1613 | POST | `/api/pdm/documents/search` | pdm | apps/web/src/api/pdm/document.ts | 91 |
+| 1614 | PUT | `/api/pdm/documents/{id}/status` | pdm | apps/web/src/api/pdm/document.ts | 109 |
+| 1615 | GET | `/api/pdm/documents/{documentId}/versions` | pdm | apps/web/src/api/pdm/document.ts | 114 |
+| 1616 | GET | `/api/pdm/documents/{documentId}/versions/{versionId}` | pdm | apps/web/src/api/pdm/document.ts | 120 |
+| 1617 | POST | `/api/pdm/documents/{data.document_id}/versions` | pdm | apps/web/src/api/pdm/document.ts | 125 |
+| 1618 | PUT | `/api/pdm/documents/{documentId}/versions/{versionId}` | pdm | apps/web/src/api/pdm/document.ts | 132 |
+| 1619 | DELETE | `/api/pdm/documents/{documentId}/versions/{versionId}` | pdm | apps/web/src/api/pdm/document.ts | 138 |
+| 1620 | POST | `/api/pdm/documents/{documentId}/versions/{versionId}/publish` | pdm | apps/web/src/api/pdm/document.ts | 144 |
+| 1621 | POST | `/api/pdm/documents/{documentId}/upload` | pdm | apps/web/src/api/pdm/document.ts | 154 |
+| 1622 | GET | `/api/pdm/documents/{documentId}/versions/{versionId}/download` | pdm | apps/web/src/api/pdm/document.ts | 161 |
+| 1623 | GET | `/api/pdm/statistics` | pdm | apps/web/src/api/pdm/index.ts | 403 |
+| 1624 | GET | `/api/pdm/change-orders` | pdm | apps/web/src/api/pdm/index.ts | 445 |
+| 1625 | GET | `/api/pdm/change-orders/{id}` | pdm | apps/web/src/api/pdm/index.ts | 448 |
+| 1626 | POST | `/api/pdm/change-orders` | pdm | apps/web/src/api/pdm/index.ts | 451 |
+| 1627 | PUT | `/api/pdm/change-orders/{id}` | pdm | apps/web/src/api/pdm/index.ts | 457 |
+| 1628 | DELETE | `/api/pdm/change-orders/{id}` | pdm | apps/web/src/api/pdm/index.ts | 460 |
+| 1629 | GET | `/api/pdm/product-configs` | pdm | apps/web/src/api/pdm/index.ts | 465 |
+| 1630 | GET | `/api/pdm/product-configs/{id}` | pdm | apps/web/src/api/pdm/index.ts | 468 |
+| 1631 | POST | `/api/pdm/product-configs` | pdm | apps/web/src/api/pdm/index.ts | 473 |
+| 1632 | PUT | `/api/pdm/product-configs/{id}` | pdm | apps/web/src/api/pdm/index.ts | 479 |
+| 1633 | DELETE | `/api/pdm/product-configs/{id}` | pdm | apps/web/src/api/pdm/index.ts | 482 |
+| 1634 | POST | `/api/pdm/import` | pdm | apps/web/src/api/pdm/index.ts | 493 |
+| 1635 | GET | `/api/pdm/projects` | pdm | apps/web/src/api/pdm/project.ts | 77 |
+| 1636 | GET | `/api/pdm/projects/{id}` | pdm | apps/web/src/api/pdm/project.ts | 80 |
+| 1637 | POST | `/api/pdm/projects` | pdm | apps/web/src/api/pdm/project.ts | 83 |
+| 1638 | PUT | `/api/pdm/projects/{id}` | pdm | apps/web/src/api/pdm/project.ts | 89 |
+| 1639 | DELETE | `/api/pdm/projects/{id}` | pdm | apps/web/src/api/pdm/project.ts | 92 |
+| 1640 | PUT | `/api/pdm/projects/{id}/status` | pdm | apps/web/src/api/pdm/project.ts | 95 |
+| 1641 | PUT | `/api/pdm/projects/{id}/phase` | pdm | apps/web/src/api/pdm/project.ts | 98 |
+| 1642 | GET | `/api/pdm/projects/{projectId}/members` | pdm | apps/web/src/api/pdm/project.ts | 103 |
+| 1643 | POST | `/api/pdm/projects/{data.project_id}/members` | pdm | apps/web/src/api/pdm/project.ts | 106 |
+| 1644 | DELETE | `/api/pdm/projects/{projectId}/members/{userId}` | pdm | apps/web/src/api/pdm/project.ts | 112 |
+| 1645 | PUT | `/api/pdm/projects/{projectId}/members/{userId}` | pdm | apps/web/src/api/pdm/project.ts | 119 |
+| 1646 | GET | `/api/pdm/projects/{projectId}/phases` | pdm | apps/web/src/api/pdm/project.ts | 126 |
+| 1647 | POST | `/api/pdm/projects/{data.project_id}/phases` | pdm | apps/web/src/api/pdm/project.ts | 129 |
+| 1648 | PUT | `/api/pdm/projects/{projectId}/phases/{phaseId}` | pdm | apps/web/src/api/pdm/project.ts | 136 |
+| 1649 | DELETE | `/api/pdm/projects/{projectId}/phases/{phaseId}` | pdm | apps/web/src/api/pdm/project.ts | 139 |
+| 1650 | POST | `/api/core/iam/access-logs` | iam | apps/web/src/api/permissionInterceptor.ts | 106 |
+| 1651 | GET | `/api/pm/projects/{projectId}/acceptance-plans` | pm | apps/web/src/api/pm/acceptance.ts | 6 |
+| 1652 | GET | `/api/pm/acceptance-plans/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 10 |
+| 1653 | POST | `/api/pm/projects/{projectId}/acceptance-plans` | pm | apps/web/src/api/pm/acceptance.ts | 28 |
+| 1654 | PUT | `/api/pm/acceptance-plans/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 43 |
+| 1655 | GET | `/api/pm/acceptance-plans/{planId}/items` | pm | apps/web/src/api/pm/acceptance.ts | 49 |
+| 1656 | POST | `/api/pm/acceptance-plans/{planId}/items` | pm | apps/web/src/api/pm/acceptance.ts | 61 |
+| 1657 | PUT | `/api/pm/acceptance-items/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 72 |
+| 1658 | DELETE | `/api/pm/acceptance-items/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 76 |
+| 1659 | GET | `/api/pm/projects/{projectId}/acceptance-records` | pm | apps/web/src/api/pm/acceptance.ts | 82 |
+| 1660 | GET | `/api/pm/acceptance-records/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 86 |
+| 1661 | POST | `/api/pm/acceptance-plans/{planId}/records` | pm | apps/web/src/api/pm/acceptance.ts | 103 |
+| 1662 | PUT | `/api/pm/acceptance-records/{id}` | pm | apps/web/src/api/pm/acceptance.ts | 117 |
+| 1663 | GET | `/api/pm/projects/{projectId}/benefits` | pm | apps/web/src/api/pm/benefit.ts | 6 |
+| 1664 | GET | `/api/pm/projects/{projectId}/benefits/analysis` | pm | apps/web/src/api/pm/benefit.ts | 10 |
+| 1665 | POST | `/api/pm/projects/{projectId}/benefits` | pm | apps/web/src/api/pm/benefit.ts | 29 |
+| 1666 | GET | `/api/pm/projects/{projectId}/budgets` | pm | apps/web/src/api/pm/budget.ts | 6 |
+| 1667 | GET | `/api/pm/budgets/{id}` | pm | apps/web/src/api/pm/budget.ts | 10 |
+| 1668 | POST | `/api/pm/projects/{projectId}/budgets` | pm | apps/web/src/api/pm/budget.ts | 23 |
+| 1669 | PUT | `/api/pm/budgets/{id}` | pm | apps/web/src/api/pm/budget.ts | 35 |
+| 1670 | POST | `/api/pm/budgets/{id}/submit` | pm | apps/web/src/api/pm/budget.ts | 39 |
+| 1671 | POST | `/api/pm/budgets/{id}/approve` | pm | apps/web/src/api/pm/budget.ts | 43 |
+| 1672 | GET | `/api/pm/budgets/{budgetId}/items` | pm | apps/web/src/api/pm/budget.ts | 49 |
+| 1673 | POST | `/api/pm/budgets/{budgetId}/items` | pm | apps/web/src/api/pm/budget.ts | 63 |
+| 1674 | PUT | `/api/pm/budgets/{budgetId}/items/{itemId}` | pm | apps/web/src/api/pm/budget.ts | 77 |
+| 1675 | DELETE | `/api/pm/budgets/{budgetId}/items/{itemId}` | pm | apps/web/src/api/pm/budget.ts | 81 |
+| 1676 | GET | `/api/pm/contracts` | pm | apps/web/src/api/pm/contract.ts | 11 |
+| 1677 | GET | `/api/pm/contracts/{id}` | pm | apps/web/src/api/pm/contract.ts | 15 |
+| 1678 | POST | `/api/pm/contracts` | pm | apps/web/src/api/pm/contract.ts | 38 |
+| 1679 | PUT | `/api/pm/contracts/{id}` | pm | apps/web/src/api/pm/contract.ts | 60 |
+| 1680 | DELETE | `/api/pm/contracts/{id}` | pm | apps/web/src/api/pm/contract.ts | 64 |
+| 1681 | POST | `/api/pm/contracts/{id}/submit` | pm | apps/web/src/api/pm/contract.ts | 68 |
+| 1682 | POST | `/api/pm/contracts/{id}/approve` | pm | apps/web/src/api/pm/contract.ts | 72 |
+| 1683 | POST | `/api/pm/contracts/{id}/reject` | pm | apps/web/src/api/pm/contract.ts | 76 |
+| 1684 | GET | `/api/pm/contracts/{contractId}/milestones` | pm | apps/web/src/api/pm/contract.ts | 82 |
+| 1685 | POST | `/api/pm/contracts/{contractId}/milestones` | pm | apps/web/src/api/pm/contract.ts | 96 |
+| 1686 | PUT | `/api/pm/contracts/{contractId}/milestones/{milestoneId}` | pm | apps/web/src/api/pm/contract.ts | 110 |
+| 1687 | DELETE | `/api/pm/contracts/{contractId}/milestones/{milestoneId}` | pm | apps/web/src/api/pm/contract.ts | 114 |
+| 1688 | GET | `/api/pm/contracts/{contractId}/payments` | pm | apps/web/src/api/pm/contract.ts | 120 |
+| 1689 | POST | `/api/pm/contracts/{contractId}/payments` | pm | apps/web/src/api/pm/contract.ts | 133 |
+| 1690 | PUT | `/api/pm/contracts/{contractId}/payments/{paymentId}` | pm | apps/web/src/api/pm/contract.ts | 146 |
+| 1691 | DELETE | `/api/pm/contracts/{contractId}/payments/{paymentId}` | pm | apps/web/src/api/pm/contract.ts | 150 |
+| 1692 | GET | `/api/pm/projects/{projectId}/contracts` | pm | apps/web/src/api/pm/contract.ts | 156 |
+| 1693 | POST | `/api/pm/projects/{projectId}/contracts` | pm | apps/web/src/api/pm/contract.ts | 181 |
+| 1694 | GET | `/api/pm/contract-templates` | pm | apps/web/src/api/pm/contract.ts | 187 |
+| 1695 | GET | `/api/pm/contract-templates/{id}` | pm | apps/web/src/api/pm/contract.ts | 191 |
+| 1696 | POST | `/api/pm/contract-templates` | pm | apps/web/src/api/pm/contract.ts | 201 |
+| 1697 | PUT | `/api/pm/contract-templates/{id}` | pm | apps/web/src/api/pm/contract.ts | 213 |
+| 1698 | DELETE | `/api/pm/contract-templates/{id}` | pm | apps/web/src/api/pm/contract.ts | 217 |
+| 1699 | GET | `/api/pm/statistics` | pm | apps/web/src/api/pm/dashboard.ts | 7 |
+| 1700 | GET | `/api/pm/projects/{projectId}/documents` | pm | apps/web/src/api/pm/document.ts | 6 |
+| 1701 | GET | `/api/pm/documents/{id}` | pm | apps/web/src/api/pm/document.ts | 10 |
+| 1702 | POST | `/api/pm/projects/{projectId}/documents` | pm | apps/web/src/api/pm/document.ts | 27 |
+| 1703 | PUT | `/api/pm/documents/{id}` | pm | apps/web/src/api/pm/document.ts | 40 |
+| 1704 | DELETE | `/api/pm/documents/{id}` | pm | apps/web/src/api/pm/document.ts | 44 |
+| 1705 | GET | `/api/pm/documents/{documentId}/versions` | pm | apps/web/src/api/pm/document.ts | 50 |
+| 1706 | POST | `/api/pm/documents/{documentId}/versions` | pm | apps/web/src/api/pm/document.ts | 62 |
+| 1707 | GET | `/api/pm/projects/{projectId}/folders` | pm | apps/web/src/api/pm/document.ts | 68 |
+| 1708 | GET | `/api/pm/folders/{id}` | pm | apps/web/src/api/pm/document.ts | 72 |
+| 1709 | POST | `/api/pm/projects/{projectId}/folders` | pm | apps/web/src/api/pm/document.ts | 84 |
+| 1710 | PUT | `/api/pm/folders/{id}` | pm | apps/web/src/api/pm/document.ts | 94 |
+| 1711 | DELETE | `/api/pm/folders/{id}` | pm | apps/web/src/api/pm/document.ts | 98 |
+| 1712 | GET | `/api/pm/projects/{projectId}/notifications` | pm | apps/web/src/api/pm/notification.ts | 6 |
+| 1713 | POST | `/api/pm/projects/{data.project_id}/notifications` | pm | apps/web/src/api/pm/notification.ts | 19 |
+| 1714 | GET | `/api/pm/projects/{projectId}/notification-settings` | pm | apps/web/src/api/pm/notification.ts | 25 |
+| 1715 | POST | `/api/pm/projects/{projectId}/notification-settings` | pm | apps/web/src/api/pm/notification.ts | 37 |
+| 1716 | PUT | `/api/pm/notification-settings/{id}` | pm | apps/web/src/api/pm/notification.ts | 48 |
+| 1717 | GET | `/api/pm/notification-types` | pm | apps/web/src/api/pm/notification.ts | 54 |
+| 1718 | GET | `/api/pm/projects/{projectId}/phases` | pm | apps/web/src/api/pm/project.ts | 54 |
+| 1719 | POST | `/api/pm/projects/{projectId}/phases` | pm | apps/web/src/api/pm/project.ts | 67 |
+| 1720 | GET | `/api/pm/projects/{projectId}/phases/{id}` | pm | apps/web/src/api/pm/project.ts | 71 |
+| 1721 | PUT | `/api/pm/projects/{projectId}/phases/{id}` | pm | apps/web/src/api/pm/project.ts | 88 |
+| 1722 | DELETE | `/api/pm/projects/{projectId}/phases/{id}` | pm | apps/web/src/api/pm/project.ts | 92 |
+| 1723 | GET | `/api/pm/projects/{projectId}/milestones` | pm | apps/web/src/api/pm/project.ts | 98 |
+| 1724 | POST | `/api/pm/projects/{projectId}/milestones` | pm | apps/web/src/api/pm/project.ts | 111 |
+| 1725 | GET | `/api/pm/projects/{projectId}/milestones/{id}` | pm | apps/web/src/api/pm/project.ts | 115 |
+| 1726 | PUT | `/api/pm/projects/{projectId}/milestones/{id}` | pm | apps/web/src/api/pm/project.ts | 130 |
+| 1727 | DELETE | `/api/pm/projects/{projectId}/milestones/{id}` | pm | apps/web/src/api/pm/project.ts | 134 |
+| 1728 | GET | `/api/pm/projects/{projectId}/approval` | pm | apps/web/src/api/pm/project.ts | 140 |
+| 1729 | POST | `/api/pm/projects/{projectId}/approval` | pm | apps/web/src/api/pm/project.ts | 150 |
+| 1730 | POST | `/api/pm/projects/{projectId}/approval/action` | pm | apps/web/src/api/pm/project.ts | 154 |
+| 1731 | GET | `/api/pm/projects/{projectId}/quality-checks` | pm | apps/web/src/api/pm/quality.ts | 6 |
+| 1732 | GET | `/api/pm/quality-checks/{id}` | pm | apps/web/src/api/pm/quality.ts | 10 |
+| 1733 | POST | `/api/pm/projects/{projectId}/quality-checks` | pm | apps/web/src/api/pm/quality.ts | 26 |
+| 1734 | PUT | `/api/pm/quality-checks/{id}` | pm | apps/web/src/api/pm/quality.ts | 45 |
+| 1735 | GET | `/api/pm/projects/{projectId}/defects` | pm | apps/web/src/api/pm/quality.ts | 51 |
+| 1736 | GET | `/api/pm/defects/{id}` | pm | apps/web/src/api/pm/quality.ts | 55 |
+| 1737 | POST | `/api/pm/projects/{projectId}/defects` | pm | apps/web/src/api/pm/quality.ts | 72 |
+| 1738 | PUT | `/api/pm/defects/{id}` | pm | apps/web/src/api/pm/quality.ts | 88 |
+| 1739 | DELETE | `/api/pm/defects/{id}` | pm | apps/web/src/api/pm/quality.ts | 92 |
+| 1740 | GET | `/api/pm/projects/{projectId}/reports` | pm | apps/web/src/api/pm/report.ts | 6 |
+| 1741 | GET | `/api/pm/reports/{id}` | pm | apps/web/src/api/pm/report.ts | 10 |
+| 1742 | POST | `/api/pm/projects/{projectId}/reports` | pm | apps/web/src/api/pm/report.ts | 23 |
+| 1743 | POST | `/api/pm/projects/{projectId}/reports/generate` | pm | apps/web/src/api/pm/report.ts | 36 |
+| 1744 | GET | `/api/pm/report-templates` | pm | apps/web/src/api/pm/report.ts | 42 |
+| 1745 | GET | `/api/pm/report-templates/{id}` | pm | apps/web/src/api/pm/report.ts | 46 |
+| 1746 | POST | `/api/pm/report-templates` | pm | apps/web/src/api/pm/report.ts | 56 |
+| 1747 | PUT | `/api/pm/report-templates/{id}` | pm | apps/web/src/api/pm/report.ts | 66 |
+| 1748 | DELETE | `/api/pm/report-templates/{id}` | pm | apps/web/src/api/pm/report.ts | 70 |
+| 1749 | GET | `/api/pm/projects/{projectId}/resources` | pm | apps/web/src/api/pm/resource.ts | 6 |
+| 1750 | POST | `/api/pm/projects/{projectId}/resources` | pm | apps/web/src/api/pm/resource.ts | 22 |
+| 1751 | GET | `/api/pm/projects/{projectId}/resources/{id}` | pm | apps/web/src/api/pm/resource.ts | 26 |
+| 1752 | PUT | `/api/pm/projects/{projectId}/resources/{id}` | pm | apps/web/src/api/pm/resource.ts | 42 |
+| 1753 | DELETE | `/api/pm/projects/{projectId}/resources/{id}` | pm | apps/web/src/api/pm/resource.ts | 46 |
+| 1754 | GET | `/api/pm/projects/{projectId}/expenses` | pm | apps/web/src/api/pm/resource.ts | 52 |
+| 1755 | POST | `/api/pm/projects/{projectId}/expenses` | pm | apps/web/src/api/pm/resource.ts | 74 |
+| 1756 | GET | `/api/pm/projects/{projectId}/expenses/{id}` | pm | apps/web/src/api/pm/resource.ts | 78 |
+| 1757 | PUT | `/api/pm/projects/{projectId}/expenses/{id}` | pm | apps/web/src/api/pm/resource.ts | 95 |
+| 1758 | DELETE | `/api/pm/projects/{projectId}/expenses/{id}` | pm | apps/web/src/api/pm/resource.ts | 99 |
+| 1759 | GET | `/api/pm/projects/{projectId}/risks` | pm | apps/web/src/api/pm/risk.ts | 6 |
+| 1760 | GET | `/api/pm/risks/{id}` | pm | apps/web/src/api/pm/risk.ts | 10 |
+| 1761 | POST | `/api/pm/projects/{projectId}/risks` | pm | apps/web/src/api/pm/risk.ts | 33 |
+| 1762 | PUT | `/api/pm/risks/{id}` | pm | apps/web/src/api/pm/risk.ts | 55 |
+| 1763 | GET | `/api/pm/risks/{riskId}/events` | pm | apps/web/src/api/pm/risk.ts | 61 |
+| 1764 | POST | `/api/pm/risks/{riskId}/events` | pm | apps/web/src/api/pm/risk.ts | 72 |
+| 1765 | GET | `/api/pm/projects/{projectId}/settlements` | pm | apps/web/src/api/pm/settlement.ts | 6 |
+| 1766 | GET | `/api/pm/settlements/{id}` | pm | apps/web/src/api/pm/settlement.ts | 10 |
+| 1767 | POST | `/api/pm/projects/{projectId}/settlements` | pm | apps/web/src/api/pm/settlement.ts | 25 |
+| 1768 | PUT | `/api/pm/settlements/{id}` | pm | apps/web/src/api/pm/settlement.ts | 37 |
+| 1769 | POST | `/api/pm/settlements/{id}/approve` | pm | apps/web/src/api/pm/settlement.ts | 41 |
+| 1770 | GET | `/api/pm/settlements/{settlementId}/items` | pm | apps/web/src/api/pm/settlement.ts | 47 |
+| 1771 | POST | `/api/pm/settlements/{settlementId}/items` | pm | apps/web/src/api/pm/settlement.ts | 63 |
+| 1772 | PUT | `/api/pm/settlement-items/{id}` | pm | apps/web/src/api/pm/settlement.ts | 75 |
+| 1773 | DELETE | `/api/pm/settlement-items/{id}` | pm | apps/web/src/api/pm/settlement.ts | 79 |
+| 1774 | GET | `/api/pm/settlements/{settlementId}/adjustments` | pm | apps/web/src/api/pm/settlement.ts | 85 |
+| 1775 | POST | `/api/pm/settlements/{settlementId}/adjustments` | pm | apps/web/src/api/pm/settlement.ts | 100 |
+| 1776 | GET | `/api/pm/projects/{projectId}/members` | pm | apps/web/src/api/pm/team.ts | 6 |
+| 1777 | POST | `/api/pm/projects/{projectId}/members` | pm | apps/web/src/api/pm/team.ts | 19 |
+| 1778 | GET | `/api/pm/projects/{projectId}/members/{id}` | pm | apps/web/src/api/pm/team.ts | 23 |
+| 1779 | PUT | `/api/pm/projects/{projectId}/members/{id}` | pm | apps/web/src/api/pm/team.ts | 36 |
+| 1780 | DELETE | `/api/pm/projects/{projectId}/members/{id}` | pm | apps/web/src/api/pm/team.ts | 40 |
+| 1781 | GET | `/api/qms/apqp/projects` | qms | apps/web/src/api/qms/apqp.ts | 22 |
+| 1782 | GET | `/api/qms/apqp/projects/{id}` | qms | apps/web/src/api/qms/apqp.ts | 27 |
+| 1783 | POST | `/api/qms/apqp/projects` | qms | apps/web/src/api/qms/apqp.ts | 31 |
+| 1784 | PUT | `/api/qms/apqp/projects/{id}` | qms | apps/web/src/api/qms/apqp.ts | 38 |
+| 1785 | DELETE | `/api/qms/apqp/projects/{id}` | qms | apps/web/src/api/qms/apqp.ts | 42 |
+| 1786 | POST | `/api/qms/apqp/projects/{id}/transition` | qms | apps/web/src/api/qms/apqp.ts | 49 |
+| 1787 | GET | `/api/qms/apqp/projects/{id}/progress` | qms | apps/web/src/api/qms/apqp.ts | 53 |
+| 1788 | GET | `/api/qms/apqp/phases/{id}` | qms | apps/web/src/api/qms/apqp.ts | 63 |
+| 1789 | POST | `/api/qms/apqp/phases` | qms | apps/web/src/api/qms/apqp.ts | 75 |
+| 1790 | PUT | `/api/qms/apqp/phases/{id}` | qms | apps/web/src/api/qms/apqp.ts | 82 |
+| 1791 | DELETE | `/api/qms/apqp/phases/{id}` | qms | apps/web/src/api/qms/apqp.ts | 86 |
+| 1792 | GET | `/api/qms/apqp/tasks` | qms | apps/web/src/api/qms/apqp.ts | 96 |
+| 1793 | GET | `/api/qms/apqp/tasks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 100 |
+| 1794 | POST | `/api/qms/apqp/tasks` | qms | apps/web/src/api/qms/apqp.ts | 114 |
+| 1795 | PUT | `/api/qms/apqp/tasks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 118 |
+| 1796 | DELETE | `/api/qms/apqp/tasks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 122 |
+| 1797 | GET | `/api/qms/apqp/risks` | qms | apps/web/src/api/qms/apqp.ts | 131 |
+| 1798 | GET | `/api/qms/apqp/risks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 135 |
+| 1799 | POST | `/api/qms/apqp/risks` | qms | apps/web/src/api/qms/apqp.ts | 150 |
+| 1800 | PUT | `/api/qms/apqp/risks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 154 |
+| 1801 | DELETE | `/api/qms/apqp/risks/{id}` | qms | apps/web/src/api/qms/apqp.ts | 158 |
+| 1802 | POST | `/api/qms/apqp/approvals` | qms | apps/web/src/api/qms/apqp.ts | 173 |
+| 1803 | POST | `/api/qms/apqp/approvals/{id}/process` | qms | apps/web/src/api/qms/apqp.ts | 180 |
+| 1804 | GET | `/api/qms/audit-plans` | qms | apps/web/src/api/qms/audit.ts | 7 |
+| 1805 | POST | `/api/qms/audit-plans` | qms | apps/web/src/api/qms/audit.ts | 26 |
+| 1806 | POST | `/api/qms/audit-plans/{id}/start` | qms | apps/web/src/api/qms/audit.ts | 31 |
+| 1807 | POST | `/api/qms/audit-plans/{id}/complete` | qms | apps/web/src/api/qms/audit.ts | 38 |
+| 1808 | POST | `/api/qms/audit-tasks` | qms | apps/web/src/api/qms/audit.ts | 51 |
+| 1809 | PUT | `/api/qms/audit-tasks/{taskId}/complete` | qms | apps/web/src/api/qms/audit.ts | 65 |
+| 1810 | POST | `/api/qms/audit-findings` | qms | apps/web/src/api/qms/audit.ts | 78 |
+| 1811 | POST | `/api/qms/audit-findings/{findingId}/verify` | qms | apps/web/src/api/qms/audit.ts | 96 |
+| 1812 | POST | `/api/qms/actions/{id}/complete` | qms | apps/web/src/api/qms/correctiveAction.ts | 16 |
+| 1813 | GET | `/api/qms/actions/{actionId}/items` | qms | apps/web/src/api/qms/correctiveAction.ts | 28 |
+| 1814 | GET | `/api/qms/quality-dashboard/overview` | qms | apps/web/src/api/qms/dashboard.ts | 12 |
+| 1815 | GET | `/api/qms/eightd` | qms | apps/web/src/api/qms/eightD.ts | 19 |
+| 1816 | GET | `/api/qms/eightd/{id}` | qms | apps/web/src/api/qms/eightD.ts | 25 |
+| 1817 | POST | `/api/qms/eightd` | qms | apps/web/src/api/qms/eightD.ts | 36 |
+| 1818 | PUT | `/api/qms/eightd/{id}` | qms | apps/web/src/api/qms/eightD.ts | 57 |
+| 1819 | DELETE | `/api/qms/eightd/{id}` | qms | apps/web/src/api/qms/eightD.ts | 65 |
+| 1820 | PUT | `/api/qms/eightd/{id}/d1-team` | qms | apps/web/src/api/qms/eightD.ts | 72 |
+| 1821 | POST | `/api/qms/eightd/{id}/d3-containment` | qms | apps/web/src/api/qms/eightD.ts | 87 |
+| 1822 | POST | `/api/qms/eightd/{id}/d4-root-cause` | qms | apps/web/src/api/qms/eightD.ts | 101 |
+| 1823 | POST | `/api/qms/eightd/{id}/d5-permanent-action` | qms | apps/web/src/api/qms/eightD.ts | 115 |
+| 1824 | POST | `/api/qms/eightd/{id}/d6-verify` | qms | apps/web/src/api/qms/eightD.ts | 129 |
+| 1825 | POST | `/api/qms/eightd/{id}/d7-preventive` | qms | apps/web/src/api/qms/eightD.ts | 140 |
+| 1826 | POST | `/api/qms/eightd/{id}/close` | qms | apps/web/src/api/qms/eightD.ts | 154 |
+| 1827 | GET | `/api/qms/eightd/{id}/audit-logs` | qms | apps/web/src/api/qms/eightD.ts | 162 |
+| 1828 | GET | `/api/qms/fmea` | qms | apps/web/src/api/qms/fmea.ts | 25 |
+| 1829 | GET | `/api/qms/fmea/{id}` | qms | apps/web/src/api/qms/fmea.ts | 31 |
+| 1830 | POST | `/api/qms/fmea` | qms | apps/web/src/api/qms/fmea.ts | 42 |
+| 1831 | PUT | `/api/qms/fmea/{id}` | qms | apps/web/src/api/qms/fmea.ts | 67 |
+| 1832 | DELETE | `/api/qms/fmea/{id}` | qms | apps/web/src/api/qms/fmea.ts | 75 |
+| 1833 | GET | `/api/qms/fmea/{fmeaId}/statistics` | qms | apps/web/src/api/qms/fmea.ts | 79 |
+| 1834 | GET | `/api/qms/fmea-items` | qms | apps/web/src/api/qms/fmea.ts | 87 |
+| 1835 | GET | `/api/qms/fmea-items/{id}` | qms | apps/web/src/api/qms/fmea.ts | 95 |
+| 1836 | POST | `/api/qms/fmea-items` | qms | apps/web/src/api/qms/fmea.ts | 117 |
+| 1837 | PUT | `/api/qms/fmea-items/{id}` | qms | apps/web/src/api/qms/fmea.ts | 148 |
+| 1838 | DELETE | `/api/qms/fmea-items/{id}` | qms | apps/web/src/api/qms/fmea.ts | 156 |
+| 1839 | GET | `/api/qms/actions/{id}` | qms | apps/web/src/api/qms/improvement.ts | 24 |
+| 1840 | POST | `/api/qms/actions` | qms | apps/web/src/api/qms/improvement.ts | 35 |
+| 1841 | PUT | `/api/qms/actions/{id}` | qms | apps/web/src/api/qms/improvement.ts | 54 |
+| 1842 | DELETE | `/api/qms/actions/{id}` | qms | apps/web/src/api/qms/improvement.ts | 65 |
+| 1843 | GET | `/api/qms/health` | qms | apps/web/src/api/qms/index.ts | 299 |
+| 1844 | POST | `/api/qms/checks/{id}/assign` | qms | apps/web/src/api/qms/inspection.ts | 73 |
+| 1845 | POST | `/api/qms/checks/{id}/submit` | qms | apps/web/src/api/qms/inspection.ts | 87 |
+| 1846 | POST | `/api/qms/checks/{id}/audit` | qms | apps/web/src/api/qms/inspection.ts | 101 |
+| 1847 | POST | `/api/qms/checks/{id}/rework` | qms | apps/web/src/api/qms/inspection.ts | 115 |
+| 1848 | GET | `/api/qms/checks/{id}/results` | qms | apps/web/src/api/qms/inspection.ts | 126 |
+| 1849 | GET | `/api/qms/checks/{id}/audits` | qms | apps/web/src/api/qms/inspection.ts | 133 |
+| 1850 | GET | `/api/qms/issues/{id}` | qms | apps/web/src/api/qms/issue.ts | 21 |
+| 1851 | PUT | `/api/qms/issues/{id}` | qms | apps/web/src/api/qms/issue.ts | 50 |
+| 1852 | DELETE | `/api/qms/issues/{id}` | qms | apps/web/src/api/qms/issue.ts | 58 |
+| 1853 | GET | `/api/qms/quality-costs` | qms | apps/web/src/api/qms/qualityCost.ts | 22 |
+| 1854 | GET | `/api/qms/quality-costs/{id}` | qms | apps/web/src/api/qms/qualityCost.ts | 28 |
+| 1855 | POST | `/api/qms/quality-costs` | qms | apps/web/src/api/qms/qualityCost.ts | 39 |
+| 1856 | PUT | `/api/qms/quality-costs/{id}` | qms | apps/web/src/api/qms/qualityCost.ts | 62 |
+| 1857 | DELETE | `/api/qms/quality-costs/{id}` | qms | apps/web/src/api/qms/qualityCost.ts | 73 |
+| 1858 | GET | `/api/qms/quality-costs/statistics` | qms | apps/web/src/api/qms/qualityCost.ts | 80 |
+| 1859 | GET | `/api/qms/quality-costs/trend` | qms | apps/web/src/api/qms/qualityCost.ts | 97 |
+| 1860 | GET | `/api/qms/spc/charts` | qms | apps/web/src/api/qms/spc.ts | 23 |
+| 1861 | GET | `/api/qms/spc/charts/{id}` | qms | apps/web/src/api/qms/spc.ts | 29 |
+| 1862 | POST | `/api/qms/spc/charts` | qms | apps/web/src/api/qms/spc.ts | 40 |
+| 1863 | PUT | `/api/qms/spc/charts/{id}` | qms | apps/web/src/api/qms/spc.ts | 68 |
+| 1864 | DELETE | `/api/qms/spc/charts/{id}` | qms | apps/web/src/api/qms/spc.ts | 76 |
+| 1865 | GET | `/api/qms/spc/charts/{chartId}/data-points` | qms | apps/web/src/api/qms/spc.ts | 80 |
+| 1866 | POST | `/api/qms/spc/data-points` | qms | apps/web/src/api/qms/spc.ts | 109 |
+| 1867 | POST | `/api/qms/spc/charts/{chartId}/calculate` | qms | apps/web/src/api/qms/spc.ts | 119 |
+| 1868 | GET | `/api/qms/standards/{standardId}/revisions` | qms | apps/web/src/api/qms/standard.ts | 67 |
+| 1869 | GET | `/api/qms/sync-records` | qms | apps/web/src/api/qms/sync.ts | 13 |
+| 1870 | GET | `/api/qms/sync-records/{id}` | qms | apps/web/src/api/qms/sync.ts | 26 |
+| 1871 | DELETE | `/api/qms/sync-records/{id}` | qms | apps/web/src/api/qms/sync.ts | 34 |
+| 1872 | POST | `/api/qms/sync-records/{id}/retry` | qms | apps/web/src/api/qms/sync.ts | 38 |
+| 1873 | POST | `/api/qms/sync/inspection-to-lims` | qms | apps/web/src/api/qms/sync.ts | 48 |
+| 1874 | POST | `/api/qms/sync/issue-to-ehs` | qms | apps/web/src/api/qms/sync.ts | 58 |
+| 1875 | GET | `/api/rd/bugs/{id}` | rd | apps/web/src/api/rd/bug.ts | 34 |
+| 1876 | POST | `/api/rd/bugs` | rd | apps/web/src/api/rd/bug.ts | 38 |
+| 1877 | PUT | `/api/rd/bugs/{id}` | rd | apps/web/src/api/rd/bug.ts | 42 |
+| 1878 | DELETE | `/api/rd/bugs/{id}` | rd | apps/web/src/api/rd/bug.ts | 46 |
+| 1879 | GET | `/api/rd/builds/{id}` | rd | apps/web/src/api/rd/build.ts | 32 |
+| 1880 | POST | `/api/rd/builds` | rd | apps/web/src/api/rd/build.ts | 36 |
+| 1881 | GET | `/api/rd/deploys/{id}` | rd | apps/web/src/api/rd/deploy.ts | 33 |
+| 1882 | POST | `/api/rd/deploys` | rd | apps/web/src/api/rd/deploy.ts | 37 |
+| 1883 | GET | `/api/rd/experiments/{id}` | rd | apps/web/src/api/rd/experiment.ts | 40 |
+| 1884 | POST | `/api/rd/experiments` | rd | apps/web/src/api/rd/experiment.ts | 44 |
+| 1885 | PUT | `/api/rd/experiments/{id}` | rd | apps/web/src/api/rd/experiment.ts | 51 |
+| 1886 | DELETE | `/api/rd/experiments/{id}` | rd | apps/web/src/api/rd/experiment.ts | 55 |
+| 1887 | GET | `/api/rd/experiments/project/{projectId}` | rd | apps/web/src/api/rd/experiment.ts | 59 |
+| 1888 | POST | `/api/rd/experiments/{id}/advance-phase` | rd | apps/web/src/api/rd/experiment.ts | 142 |
+| 1889 | GET | `/api/rd/batch-trace/{batchNumber}` | rd | apps/web/src/api/rd/experiment.ts | 146 |
+| 1890 | GET | `/api/rd/experiments/{experimentId}/records` | rd | apps/web/src/api/rd/experiment.ts | 150 |
+| 1891 | POST | `/api/rd/experiments/{experimentId}/records` | rd | apps/web/src/api/rd/experiment.ts | 157 |
+| 1892 | GET | `/api/rd/formulas/{id}` | rd | apps/web/src/api/rd/formula.ts | 33 |
+| 1893 | POST | `/api/rd/formulas` | rd | apps/web/src/api/rd/formula.ts | 37 |
+| 1894 | PUT | `/api/rd/formulas/{id}` | rd | apps/web/src/api/rd/formula.ts | 41 |
+| 1895 | DELETE | `/api/rd/formulas/{id}` | rd | apps/web/src/api/rd/formula.ts | 45 |
+| 1896 | GET | `/api/rd/formulas/{formulaId}/versions` | rd | apps/web/src/api/rd/formula.ts | 49 |
+| 1897 | GET | `/api/rd/formulas/{formulaId}/versions` | rd | apps/web/src/api/rd/formula.ts | 53 |
+| 1898 | POST | `/api/rd/formulas/{formulaId}/versions` | rd | apps/web/src/api/rd/formula.ts | 60 |
+| 1899 | POST | `/api/rd/formulas/{formulaId}/versions` | rd | apps/web/src/api/rd/formula.ts | 67 |
+| 1900 | POST | `/api/rd/formulas/{id}/approve` | rd | apps/web/src/api/rd/formula.ts | 71 |
+| 1901 | GET | `/api/rd/health` | rd | apps/web/src/api/rd/index.ts | 56 |
+| 1902 | GET | `/api/rd/materials/{id}` | rd | apps/web/src/api/rd/material.ts | 35 |
+| 1903 | POST | `/api/rd/materials` | rd | apps/web/src/api/rd/material.ts | 39 |
+| 1904 | PUT | `/api/rd/materials/{id}` | rd | apps/web/src/api/rd/material.ts | 46 |
+| 1905 | DELETE | `/api/rd/materials/{id}` | rd | apps/web/src/api/rd/material.ts | 50 |
+| 1906 | DELETE | `/api/rd/materials/batch` | rd | apps/web/src/api/rd/material.ts | 54 |
+| 1907 | POST | `/api/rd/materials/import` | rd | apps/web/src/api/rd/material.ts | 59 |
+| 1908 | POST | `/api/rd/projects/batch` | rd | apps/web/src/api/rd/project.ts | 59 |
+| 1909 | DELETE | `/api/rd/projects/batch` | rd | apps/web/src/api/rd/project.ts | 65 |
+| 1910 | POST | `/api/rd/projects/import` | rd | apps/web/src/api/rd/project.ts | 75 |
+| 1911 | GET | `/api/rd/projects/{id}/dashboard` | rd | apps/web/src/api/rd/project.ts | 83 |
+| 1912 | GET | `/api/rd/projects/{id}/gantt` | rd | apps/web/src/api/rd/project.ts | 87 |
+| 1913 | GET | `/api/rd/statistics` | rd | apps/web/src/api/rd/statistics.ts | 7 |
+| 1914 | GET | `/api/rd/tests/{id}` | rd | apps/web/src/api/rd/test.ts | 33 |
+| 1915 | POST | `/api/rd/tests` | rd | apps/web/src/api/rd/test.ts | 37 |
+| 1916 | PUT | `/api/rd/tests/{id}` | rd | apps/web/src/api/rd/test.ts | 41 |
+| 1917 | DELETE | `/api/rd/tests/{id}` | rd | apps/web/src/api/rd/test.ts | 45 |
+| 1918 | GET | `/api/bi/reports` | bi | apps/web/src/api/report/index.ts | 278 |
+| 1919 | GET | `/api/bi/reports/{id}` | bi | apps/web/src/api/report/index.ts | 282 |
+| 1920 | POST | `/api/bi/reports` | bi | apps/web/src/api/report/index.ts | 286 |
+| 1921 | POST | `/api/bi/reports/from-template` | bi | apps/web/src/api/report/index.ts | 292 |
+| 1922 | PUT | `/api/bi/reports/{id}` | bi | apps/web/src/api/report/index.ts | 299 |
+| 1923 | DELETE | `/api/bi/reports/{id}` | bi | apps/web/src/api/report/index.ts | 303 |
+| 1924 | POST | `/api/bi/reports/{id}/export` | bi | apps/web/src/api/report/index.ts | 310 |
+| 1925 | POST | `/api/bi/reports/{id}/run` | bi | apps/web/src/api/report/index.ts | 314 |
+| 1926 | GET | `/api/bi/templates` | bi | apps/web/src/api/report/index.ts | 318 |
+| 1927 | GET | `/api/bi/templates/{id}` | bi | apps/web/src/api/report/index.ts | 322 |
+| 1928 | POST | `/api/bi/templates` | bi | apps/web/src/api/report/index.ts | 328 |
+| 1929 | PUT | `/api/bi/templates/{id}` | bi | apps/web/src/api/report/index.ts | 335 |
+| 1930 | DELETE | `/api/bi/templates/{id}` | bi | apps/web/src/api/report/index.ts | 339 |
+| 1931 | GET | `/api/bi/report-types` | bi | apps/web/src/api/report/index.ts | 343 |
+| 1932 | GET | `/api/bi/schedules` | bi | apps/web/src/api/report/index.ts | 347 |
+| 1933 | GET | `/api/bi/schedules/{id}` | bi | apps/web/src/api/report/index.ts | 351 |
+| 1934 | POST | `/api/bi/schedules` | bi | apps/web/src/api/report/index.ts | 355 |
+| 1935 | PUT | `/api/bi/schedules/{id}` | bi | apps/web/src/api/report/index.ts | 362 |
+| 1936 | DELETE | `/api/bi/schedules/{id}` | bi | apps/web/src/api/report/index.ts | 366 |
+| 1937 | POST | `/api/bi/schedules/{id}/execute` | bi | apps/web/src/api/report/index.ts | 370 |
+| 1938 | GET | `/api/bi/schedules/{id}/history` | bi | apps/web/src/api/report/index.ts | 374 |
+| 1939 | GET | `/api/bi/subscriptions` | bi | apps/web/src/api/report/index.ts | 378 |
+| 1940 | GET | `/api/bi/subscriptions/{id}` | bi | apps/web/src/api/report/index.ts | 382 |
+| 1941 | POST | `/api/bi/subscriptions` | bi | apps/web/src/api/report/index.ts | 388 |
+| 1942 | PUT | `/api/bi/subscriptions/{id}` | bi | apps/web/src/api/report/index.ts | 395 |
+| 1943 | DELETE | `/api/bi/subscriptions/{id}` | bi | apps/web/src/api/report/index.ts | 399 |
+| 1944 | POST | `/api/bi/subscriptions/{id}/toggle` | bi | apps/web/src/api/report/index.ts | 403 |
+| 1945 | GET | `/api/bi/subscriptions/user/{user_id}` | bi | apps/web/src/api/report/index.ts | 407 |
+| 1946 | GET | `/api/bi/health` | bi | apps/web/src/api/report/index.ts | 411 |
+| 1947 | GET | `/api/bi/reports-center/stats` | bi | apps/web/src/api/report/index.ts | 415 |
+| 1948 | POST | `/api/bi/reports-center/export/{reportType}` | bi | apps/web/src/api/report/index.ts | 422 |
+| 1949 | GET | `/api/scm/audit-logs` | scm | apps/web/src/api/scm/auditLog.ts | 7 |
+| 1950 | GET | `/api/scm/audit-logs/{id}` | scm | apps/web/src/api/scm/auditLog.ts | 11 |
+| 1951 | GET | `/api/scm/delivery-appointments` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 19 |
+| 1952 | POST | `/api/scm/delivery-appointments` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 25 |
+| 1953 | GET | `/api/scm/delivery-appointments/{id}` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 29 |
+| 1954 | PUT | `/api/scm/delivery-appointments/{id}` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 36 |
+| 1955 | DELETE | `/api/scm/delivery-appointments/{id}` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 40 |
+| 1956 | POST | `/api/scm/delivery-appointments/{id}/approve` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 47 |
+| 1957 | POST | `/api/scm/delivery-appointments/{id}/reject` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 54 |
+| 1958 | POST | `/api/scm/delivery-appointments/{id}/confirm-arrival` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 61 |
+| 1959 | POST | `/api/scm/delivery-appointments/{id}/complete` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 68 |
+| 1960 | POST | `/api/scm/delivery-appointments/{id}/cancel` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 75 |
+| 1961 | GET | `/api/scm/delivery-appointments/stats` | scm | apps/web/src/api/scm/deliveryAppointment.ts | 79 |
+| 1962 | GET | `/api/scm/{resource}` | scm | apps/web/src/api/scm/factory.ts | 26 |
+| 1963 | GET | `/api/scm/{resource}/{id}` | scm | apps/web/src/api/scm/factory.ts | 30 |
+| 1964 | POST | `/api/scm/{resource}` | scm | apps/web/src/api/scm/factory.ts | 34 |
+| 1965 | PUT | `/api/scm/{resource}/{id}` | scm | apps/web/src/api/scm/factory.ts | 38 |
+| 1966 | DELETE | `/api/scm/{resource}/{id}` | scm | apps/web/src/api/scm/factory.ts | 42 |
+| 1967 | GET | `/api/scm/incoming-inspections` | scm | apps/web/src/api/scm/incomingInspection.ts | 15 |
+| 1968 | POST | `/api/scm/incoming-inspections` | scm | apps/web/src/api/scm/incomingInspection.ts | 21 |
+| 1969 | GET | `/api/scm/incoming-inspections/{id}` | scm | apps/web/src/api/scm/incomingInspection.ts | 25 |
+| 1970 | PUT | `/api/scm/incoming-inspections/{id}` | scm | apps/web/src/api/scm/incomingInspection.ts | 32 |
+| 1971 | DELETE | `/api/scm/incoming-inspections/{id}` | scm | apps/web/src/api/scm/incomingInspection.ts | 36 |
+| 1972 | POST | `/api/scm/incoming-inspections/{id}/pass` | scm | apps/web/src/api/scm/incomingInspection.ts | 40 |
+| 1973 | POST | `/api/scm/incoming-inspections/{id}/reject` | scm | apps/web/src/api/scm/incomingInspection.ts | 47 |
+| 1974 | GET | `/api/scm/health` | scm | apps/web/src/api/scm/index.ts | 62 |
+| 1975 | GET | `/api/scm/incoming-inspections/{inspectionId}/records` | scm | apps/web/src/api/scm/inspectionRecord.ts | 14 |
+| 1976 | POST | `/api/scm/inspection-records` | scm | apps/web/src/api/scm/inspectionRecord.ts | 18 |
+| 1977 | GET | `/api/scm/inspection-records/{id}` | scm | apps/web/src/api/scm/inspectionRecord.ts | 22 |
+| 1978 | PUT | `/api/scm/inspection-records/{id}` | scm | apps/web/src/api/scm/inspectionRecord.ts | 29 |
+| 1979 | DELETE | `/api/scm/inspection-records/{id}` | scm | apps/web/src/api/scm/inspectionRecord.ts | 33 |
+| 1980 | GET | `/api/scm/inventory-turnover` | scm | apps/web/src/api/scm/inventoryTurnover.ts | 16 |
+| 1981 | GET | `/api/scm/inventory-turnover/{id}` | scm | apps/web/src/api/scm/inventoryTurnover.ts | 20 |
+| 1982 | GET | `/api/scm/inventory-turnover/abc-classification` | scm | apps/web/src/api/scm/inventoryTurnover.ts | 26 |
+| 1983 | GET | `/api/scm/inventory-turnover/trend` | scm | apps/web/src/api/scm/inventoryTurnover.ts | 30 |
+| 1984 | GET | `/api/scm/mrp/suggestions` | scm | apps/web/src/api/scm/mrpPlan.ts | 13 |
+| 1985 | POST | `/api/scm/mrp/suggestions` | scm | apps/web/src/api/scm/mrpPlan.ts | 17 |
+| 1986 | GET | `/api/scm/mrp/suggestions/{id}` | scm | apps/web/src/api/scm/mrpPlan.ts | 21 |
+| 1987 | PUT | `/api/scm/mrp/suggestions/{id}` | scm | apps/web/src/api/scm/mrpPlan.ts | 25 |
+| 1988 | DELETE | `/api/scm/mrp/suggestions/{id}` | scm | apps/web/src/api/scm/mrpPlan.ts | 29 |
+| 1989 | POST | `/api/scm/mrp/suggestions/{id}/confirm` | scm | apps/web/src/api/scm/mrpPlan.ts | 33 |
+| 1990 | GET | `/api/scm/mrp-suggestions` | scm | apps/web/src/api/scm/mrpSuggestion.ts | 14 |
+| 1991 | GET | `/api/scm/mrp-suggestions/{id}` | scm | apps/web/src/api/scm/mrpSuggestion.ts | 18 |
+| 1992 | GET | `/api/scm/mrp-suggestions/summary` | scm | apps/web/src/api/scm/mrpSuggestion.ts | 24 |
+| 1993 | GET | `/api/scm/comparisons` | scm | apps/web/src/api/scm/priceComparison.ts | 17 |
+| 1994 | POST | `/api/scm/comparisons` | scm | apps/web/src/api/scm/priceComparison.ts | 21 |
+| 1995 | GET | `/api/scm/comparisons/{id}` | scm | apps/web/src/api/scm/priceComparison.ts | 25 |
+| 1996 | PUT | `/api/scm/comparisons/{id}` | scm | apps/web/src/api/scm/priceComparison.ts | 32 |
+| 1997 | DELETE | `/api/scm/comparisons/{id}` | scm | apps/web/src/api/scm/priceComparison.ts | 36 |
+| 1998 | GET | `/api/scm/comparisons/{id}` | scm | apps/web/src/api/scm/priceComparison.ts | 40 |
+| 1999 | GET | `/api/scm/quotes` | scm | apps/web/src/api/scm/priceComparison.ts | 44 |
+| 2000 | POST | `/api/scm/quotes` | scm | apps/web/src/api/scm/priceComparison.ts | 48 |
+| 2001 | GET | `/api/scm/purchase-contracts` | scm | apps/web/src/api/scm/purchaseContract.ts | 14 |
+| 2002 | POST | `/api/scm/purchase-contracts` | scm | apps/web/src/api/scm/purchaseContract.ts | 18 |
+| 2003 | GET | `/api/scm/purchase-contracts/{id}` | scm | apps/web/src/api/scm/purchaseContract.ts | 22 |
+| 2004 | PUT | `/api/scm/purchase-contracts/{id}` | scm | apps/web/src/api/scm/purchaseContract.ts | 29 |
+| 2005 | DELETE | `/api/scm/purchase-contracts/{id}` | scm | apps/web/src/api/scm/purchaseContract.ts | 33 |
+| 2006 | POST | `/api/scm/purchase-contracts/{id}/submit` | scm | apps/web/src/api/scm/purchaseContract.ts | 37 |
+| 2007 | POST | `/api/scm/purchase-contracts/{id}/approve` | scm | apps/web/src/api/scm/purchaseContract.ts | 41 |
+| 2008 | POST | `/api/scm/purchase-contracts/{id}/reject` | scm | apps/web/src/api/scm/purchaseContract.ts | 45 |
+| 2009 | POST | `/api/scm/purchase-contracts/{id}/cancel` | scm | apps/web/src/api/scm/purchaseContract.ts | 49 |
+| 2010 | POST | `/api/scm/purchase-contracts/{id}/terminate` | scm | apps/web/src/api/scm/purchaseContract.ts | 53 |
+| 2011 | POST | `/api/scm/purchase-contracts/{id}/renew` | scm | apps/web/src/api/scm/purchaseContract.ts | 57 |
+| 2012 | GET | `/api/scm/purchase-items` | scm | apps/web/src/api/scm/purchaseItem.ts | 14 |
+| 2013 | POST | `/api/scm/purchase-items` | scm | apps/web/src/api/scm/purchaseItem.ts | 18 |
+| 2014 | GET | `/api/scm/purchase-items/{id}` | scm | apps/web/src/api/scm/purchaseItem.ts | 22 |
+| 2015 | PUT | `/api/scm/purchase-items/{id}` | scm | apps/web/src/api/scm/purchaseItem.ts | 29 |
+| 2016 | POST | `/api/scm/purchase-orders/{id}/confirm` | scm | apps/web/src/api/scm/purchaseOrder.ts | 40 |
+| 2017 | POST | `/api/scm/purchase-orders/{id}/cancel` | scm | apps/web/src/api/scm/purchaseOrder.ts | 44 |
+| 2018 | POST | `/api/scm/purchase-orders/{id}/close` | scm | apps/web/src/api/scm/purchaseOrder.ts | 48 |
+| 2019 | GET | `/api/scm/purchase-requisitions` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 14 |
+| 2020 | POST | `/api/scm/purchase-requisitions` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 20 |
+| 2021 | GET | `/api/scm/purchase-requisitions/{id}` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 24 |
+| 2022 | PUT | `/api/scm/purchase-requisitions/{id}` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 31 |
+| 2023 | DELETE | `/api/scm/purchase-requisitions/{id}` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 35 |
+| 2024 | POST | `/api/scm/purchase-requisitions/{id}/submit` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 39 |
+| 2025 | POST | `/api/scm/purchase-requisitions/{id}/approve` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 43 |
+| 2026 | POST | `/api/scm/purchase-requisitions/{id}/reject` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 47 |
+| 2027 | POST | `/api/scm/purchase-requisitions/{id}/cancel` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 51 |
+| 2028 | POST | `/api/scm/purchase-requisitions/{id}/convert-to-order` | scm | apps/web/src/api/scm/purchaseRequisition.ts | 55 |
+| 2029 | GET | `/api/scm/supplier-admissions` | scm | apps/web/src/api/scm/supplierAdmission.ts | 14 |
+| 2030 | POST | `/api/scm/supplier-admissions` | scm | apps/web/src/api/scm/supplierAdmission.ts | 18 |
+| 2031 | GET | `/api/scm/supplier-admissions/{id}` | scm | apps/web/src/api/scm/supplierAdmission.ts | 22 |
+| 2032 | PUT | `/api/scm/supplier-admissions/{id}` | scm | apps/web/src/api/scm/supplierAdmission.ts | 29 |
+| 2033 | DELETE | `/api/scm/supplier-admissions/{id}` | scm | apps/web/src/api/scm/supplierAdmission.ts | 33 |
+| 2034 | POST | `/api/scm/supplier-admissions/{id}/submit` | scm | apps/web/src/api/scm/supplierAdmission.ts | 37 |
+| 2035 | POST | `/api/scm/supplier-admissions/{id}/approve` | scm | apps/web/src/api/scm/supplierAdmission.ts | 41 |
+| 2036 | POST | `/api/scm/supplier-admissions/{id}/reject` | scm | apps/web/src/api/scm/supplierAdmission.ts | 45 |
+| 2037 | POST | `/api/scm/supplier-admissions/{id}/audit` | scm | apps/web/src/api/scm/supplierAdmission.ts | 54 |
+| 2038 | POST | `/api/scm/supplier-admissions/{id}/activate-supplier` | scm | apps/web/src/api/scm/supplierAdmission.ts | 58 |
+| 2039 | GET | `/api/scm/evaluations` | scm | apps/web/src/api/scm/supplierEvaluation.ts | 14 |
+| 2040 | POST | `/api/scm/evaluations` | scm | apps/web/src/api/scm/supplierEvaluation.ts | 20 |
+| 2041 | GET | `/api/scm/evaluations/{id}` | scm | apps/web/src/api/scm/supplierEvaluation.ts | 24 |
+| 2042 | PUT | `/api/scm/evaluations/{id}` | scm | apps/web/src/api/scm/supplierEvaluation.ts | 31 |
+| 2043 | DELETE | `/api/scm/evaluations/{id}` | scm | apps/web/src/api/scm/supplierEvaluation.ts | 35 |
+| 2044 | GET | `/api/scm/dashboard/overview` | scm | apps/web/src/api/scm/supplyChainDashboard.ts | 12 |
+| 2045 | GET | `/api/scm/dashboard/purchase-inbound-outbound` | scm | apps/web/src/api/scm/supplyChainDashboard.ts | 16 |
+| 2046 | GET | `/api/scm/dashboard/supplier-performance` | scm | apps/web/src/api/scm/supplyChainDashboard.ts | 22 |
+| 2047 | GET | `/api/scm/sync-records` | scm | apps/web/src/api/scm/syncRecord.ts | 15 |
+| 2048 | POST | `/api/scm/sync-records` | scm | apps/web/src/api/scm/syncRecord.ts | 19 |
+| 2049 | GET | `/api/scm/sync-records/{id}` | scm | apps/web/src/api/scm/syncRecord.ts | 23 |
+| 2050 | POST | `/api/scm/sync-records/{id}/retry` | scm | apps/web/src/api/scm/syncRecord.ts | 27 |
+| 2051 | POST | `/api/scm/sync/wms/{syncType}` | scm | apps/web/src/api/scm/syncRecord.ts | 31 |
+| 2052 | POST | `/api/scm/sync/srm/{syncType}` | scm | apps/web/src/api/scm/syncRecord.ts | 35 |
+| 2053 | GET | `/api/scm/sync-records/{syncId}/details` | scm | apps/web/src/api/scm/syncRecord.ts | 42 |
+| 2054 | GET | `/api/portal/search/suggestions` | portal | apps/web/src/api/search/index.ts | 46 |
+| 2055 | POST | `/api/core/file/upload` | file | apps/web/src/api/shared/index.ts | 34 |
+| 2056 | GET | `/api/core/file/attachments${queryString ` | file | apps/web/src/api/shared/index.ts | 47 |
+| 2057 | GET | `/api/core/file/attachments/{id}` | file | apps/web/src/api/shared/index.ts | 51 |
+| 2058 | DELETE | `/api/core/file/attachments/{id}` | file | apps/web/src/api/shared/index.ts | 55 |
+| 2059 | GET | `/api/core/file/attachments/{id}/download` | file | apps/web/src/api/shared/index.ts | 59 |
+| 2060 | GET | `/api/core/comments` | core | apps/web/src/api/shared/index.ts | 93 |
+| 2061 | POST | `/api/core/comments` | core | apps/web/src/api/shared/index.ts | 97 |
+| 2062 | PUT | `/api/core/comments/{id}` | core | apps/web/src/api/shared/index.ts | 101 |
+| 2063 | DELETE | `/api/core/comments/{id}` | core | apps/web/src/api/shared/index.ts | 105 |
+| 2064 | GET | `/api/core/favorites` | core | apps/web/src/api/shared/index.ts | 127 |
+| 2065 | POST | `/api/core/favorites` | core | apps/web/src/api/shared/index.ts | 131 |
+| 2066 | DELETE | `/api/core/favorites/{id}` | core | apps/web/src/api/shared/index.ts | 135 |
+| 2067 | GET | `/api/core/favorites/check` | core | apps/web/src/api/shared/index.ts | 139 |
+| 2068 | GET | `/api/core/search` | core | apps/web/src/api/shared/index.ts | 176 |
+| 2069 | GET | `/api/core/search/suggestions` | core | apps/web/src/api/shared/index.ts | 180 |
+| 2070 | GET | `/api/core/search/recent` | core | apps/web/src/api/shared/index.ts | 184 |
+| 2071 | DELETE | `/api/core/search/recent` | core | apps/web/src/api/shared/index.ts | 188 |
+| 2072 | GET | `/api/srm/supplier-evaluations` | srm | apps/web/src/api/srm/index.ts | 498 |
+| 2073 | GET | `/api/srm/supplier-evaluations/{id}` | srm | apps/web/src/api/srm/index.ts | 501 |
+| 2074 | POST | `/api/srm/supplier-evaluations` | srm | apps/web/src/api/srm/index.ts | 506 |
+| 2075 | PUT | `/api/srm/supplier-evaluations/{id}` | srm | apps/web/src/api/srm/index.ts | 512 |
+| 2076 | DELETE | `/api/srm/supplier-evaluations/{id}` | srm | apps/web/src/api/srm/index.ts | 515 |
+| 2077 | GET | `/api/srm/purchase-orders` | srm | apps/web/src/api/srm/index.ts | 520 |
+| 2078 | GET | `/api/srm/purchase-orders/{id}` | srm | apps/web/src/api/srm/index.ts | 523 |
+| 2079 | POST | `/api/srm/purchase-orders` | srm | apps/web/src/api/srm/index.ts | 528 |
+| 2080 | PUT | `/api/srm/purchase-orders/{id}` | srm | apps/web/src/api/srm/index.ts | 534 |
+| 2081 | DELETE | `/api/srm/purchase-orders/{id}` | srm | apps/web/src/api/srm/index.ts | 537 |
+| 2082 | GET | `/api/srm/supplier-contracts` | srm | apps/web/src/api/srm/index.ts | 542 |
+| 2083 | GET | `/api/srm/supplier-contracts/{id}` | srm | apps/web/src/api/srm/index.ts | 545 |
+| 2084 | POST | `/api/srm/supplier-contracts` | srm | apps/web/src/api/srm/index.ts | 550 |
+| 2085 | PUT | `/api/srm/supplier-contracts/{id}` | srm | apps/web/src/api/srm/index.ts | 556 |
+| 2086 | DELETE | `/api/srm/supplier-contracts/{id}` | srm | apps/web/src/api/srm/index.ts | 559 |
+| 2087 | GET | `/api/srm/statistics` | srm | apps/web/src/api/srm/index.ts | 564 |
+| 2088 | GET | `/api/srm/statistics/detailed` | srm | apps/web/src/api/srm/index.ts | 567 |
+| 2089 | GET | `/api/srm/suppliers-with-stats` | srm | apps/web/src/api/srm/index.ts | 570 |
+| 2090 | GET | `/api/srm/scoring-dimensions` | srm | apps/web/src/api/srm/index.ts | 575 |
+| 2091 | GET | `/api/srm/scoring-dimensions/active` | srm | apps/web/src/api/srm/index.ts | 578 |
+| 2092 | GET | `/api/srm/scoring-dimensions/{id}` | srm | apps/web/src/api/srm/index.ts | 581 |
+| 2093 | POST | `/api/srm/scoring-dimensions` | srm | apps/web/src/api/srm/index.ts | 586 |
+| 2094 | PUT | `/api/srm/scoring-dimensions/{id}` | srm | apps/web/src/api/srm/index.ts | 592 |
+| 2095 | DELETE | `/api/srm/scoring-dimensions/{id}` | srm | apps/web/src/api/srm/index.ts | 595 |
+| 2096 | GET | `/api/srm/performance/reports${query ` | srm | apps/web/src/api/srm/index.ts | 610 |
+| 2097 | GET | `/api/srm/performance/reports/{id}` | srm | apps/web/src/api/srm/index.ts | 613 |
+| 2098 | GET | `/api/srm/performance/summary` | srm | apps/web/src/api/srm/index.ts | 616 |
+| 2099 | GET | `/api/srm/performance/score-level-distribution` | srm | apps/web/src/api/srm/index.ts | 624 |
+| 2100 | GET | `/api/srm/performance/top-suppliers` | srm | apps/web/src/api/srm/index.ts | 632 |
+| 2101 | GET | `/api/srm/performance/trend${query ` | srm | apps/web/src/api/srm/index.ts | 639 |
+| 2102 | GET | `/api/srm/performance/compare` | srm | apps/web/src/api/srm/index.ts | 644 |
+| 2103 | GET | `/api/srm/health` | srm | apps/web/src/api/srm/index.ts | 648 |
+| 2104 | GET | `/api/srm/supplier-portal/{supplierId}/stats` | srm | apps/web/src/api/srm/index.ts | 653 |
+| 2105 | GET | `/api/srm/supplier-portal/{supplierId}/orders` | srm | apps/web/src/api/srm/index.ts | 656 |
+| 2106 | GET | `/api/srm/supplier-portal/{supplierId}/invoices` | srm | apps/web/src/api/srm/index.ts | 659 |
+| 2107 | GET | `/api/srm/supplier-portal/{supplierId}/deliveries` | srm | apps/web/src/api/srm/index.ts | 662 |
+| 2108 | GET | `/api/srm/supplier-portal/announcements` | srm | apps/web/src/api/srm/index.ts | 665 |
+| 2109 | GET | `/api/srm/inquiries` | srm | apps/web/src/api/srm/index.ts | 672 |
+| 2110 | GET | `/api/srm/inquiries/{id}` | srm | apps/web/src/api/srm/index.ts | 675 |
+| 2111 | POST | `/api/srm/inquiries` | srm | apps/web/src/api/srm/index.ts | 678 |
+| 2112 | PUT | `/api/srm/inquiries/{id}` | srm | apps/web/src/api/srm/index.ts | 684 |
+| 2113 | DELETE | `/api/srm/inquiries/{id}` | srm | apps/web/src/api/srm/index.ts | 687 |
+| 2114 | POST | `/api/srm/inquiries/{id}/publish` | srm | apps/web/src/api/srm/index.ts | 690 |
+| 2115 | POST | `/api/srm/inquiries/{id}/close` | srm | apps/web/src/api/srm/index.ts | 693 |
+| 2116 | GET | `/api/srm/quotations/{id}` | srm | apps/web/src/api/srm/index.ts | 701 |
+| 2117 | POST | `/api/srm/quotations` | srm | apps/web/src/api/srm/index.ts | 704 |
+| 2118 | PUT | `/api/srm/quotations/{id}` | srm | apps/web/src/api/srm/index.ts | 710 |
+| 2119 | POST | `/api/srm/quotations/{id}/award` | srm | apps/web/src/api/srm/index.ts | 713 |
+| 2120 | POST | `/api/srm/quotations/{id}/reject` | srm | apps/web/src/api/srm/index.ts | 716 |
+| 2121 | GET | `/api/srm/biddings` | srm | apps/web/src/api/srm/index.ts | 723 |
+| 2122 | GET | `/api/srm/biddings/{id}` | srm | apps/web/src/api/srm/index.ts | 726 |
+| 2123 | POST | `/api/srm/biddings` | srm | apps/web/src/api/srm/index.ts | 729 |
+| 2124 | PUT | `/api/srm/biddings/{id}` | srm | apps/web/src/api/srm/index.ts | 735 |
+| 2125 | DELETE | `/api/srm/biddings/{id}` | srm | apps/web/src/api/srm/index.ts | 738 |
+| 2126 | POST | `/api/srm/biddings/{id}/publish` | srm | apps/web/src/api/srm/index.ts | 741 |
+| 2127 | POST | `/api/srm/biddings/{id}/open` | srm | apps/web/src/api/srm/index.ts | 744 |
+| 2128 | POST | `/api/srm/biddings/{id}/evaluate` | srm | apps/web/src/api/srm/index.ts | 747 |
+| 2129 | POST | `/api/srm/biddings/{id}/award` | srm | apps/web/src/api/srm/index.ts | 750 |
+| 2130 | GET | `/api/srm/biddings/{biddingId}/suppliers` | srm | apps/web/src/api/srm/index.ts | 753 |
+| 2131 | GET | `/api/core/system/audit-logs${queryString ` | core | apps/web/src/api/system/audit.ts | 20 |
+| 2132 | GET | `/api/core/system/audit-logs/{id}` | core | apps/web/src/api/system/audit.ts | 26 |
+| 2133 | GET | `/api/core/system/audit-logs/export${queryString ` | core | apps/web/src/api/system/audit.ts | 41 |
+| 2134 | GET | `/api/core/dict/dict-types${queryString ` | core | apps/web/src/api/system/index.ts | 111 |
+| 2135 | GET | `/api/core/dict/dict-types/{id}` | core | apps/web/src/api/system/index.ts | 115 |
+| 2136 | POST | `/api/core/dict/dict-types` | core | apps/web/src/api/system/index.ts | 119 |
+| 2137 | PUT | `/api/core/dict/dict-types/{id}` | core | apps/web/src/api/system/index.ts | 123 |
+| 2138 | DELETE | `/api/core/dict/dict-types/{id}` | core | apps/web/src/api/system/index.ts | 127 |
+| 2139 | GET | `/api/core/dict/dict-types/{dictTypeId}/items${queryString ` | core | apps/web/src/api/system/index.ts | 155 |
+| 2140 | GET | `/api/core/dict/dict-items/{id}` | core | apps/web/src/api/system/index.ts | 161 |
+| 2141 | POST | `/api/core/dict/dict-items` | core | apps/web/src/api/system/index.ts | 165 |
+| 2142 | PUT | `/api/core/dict/dict-items/{id}` | core | apps/web/src/api/system/index.ts | 169 |
+| 2143 | DELETE | `/api/core/dict/dict-items/{id}` | core | apps/web/src/api/system/index.ts | 173 |
+| 2144 | POST | `/api/core/dict/dict-items/batch` | core | apps/web/src/api/system/index.ts | 177 |
+| 2145 | GET | `/api/core/dict/dict-types/{dictTypeId}/items/export` | core | apps/web/src/api/system/index.ts | 181 |
+| 2146 | GET | `/api/erp/system/db/tables${queryString ` | erp | apps/web/src/api/system/index.ts | 198 |
+| 2147 | GET | `/api/erp/system/db/tables/{tableName}` | erp | apps/web/src/api/system/index.ts | 202 |
+| 2148 | POST | `/api/erp/system/db/columns/preview` | erp | apps/web/src/api/system/index.ts | 209 |
+| 2149 | POST | `/api/erp/system/db/columns` | erp | apps/web/src/api/system/index.ts | 216 |
+| 2150 | PUT | `/api/erp/system/db/columns/{tableName}/{columnName}` | erp | apps/web/src/api/system/index.ts | 224 |
+| 2151 | DELETE | `/api/erp/system/db/columns/{tableName}/{columnName}` | erp | apps/web/src/api/system/index.ts | 232 |
+| 2152 | GET | `/api/erp/system/db/changes${queryString ` | erp | apps/web/src/api/system/index.ts | 244 |
+| 2153 | GET | `/api/core/system/config` | core | apps/web/src/api/system/params.ts | 7 |
+| 2154 | PUT | `/api/core/system/config` | core | apps/web/src/api/system/params.ts | 11 |
+| 2155 | GET | `/api/core/system/cache/config` | core | apps/web/src/api/system/params.ts | 15 |
+| 2156 | PUT | `/api/core/system/cache/config` | core | apps/web/src/api/system/params.ts | 19 |
+| 2157 | POST | `/api/core/system/cache/clear` | core | apps/web/src/api/system/params.ts | 23 |
+| 2158 | GET | `/api/core/system/cache/stats` | core | apps/web/src/api/system/params.ts | 33 |
+| 2159 | GET | `/api/core/system/log/config` | core | apps/web/src/api/system/params.ts | 37 |
+| 2160 | PUT | `/api/core/system/log/config` | core | apps/web/src/api/system/params.ts | 41 |
+| 2161 | GET | `/api/core/system/params` | core | apps/web/src/api/system/params.ts | 45 |
+| 2162 | PUT | `/api/core/system/params` | core | apps/web/src/api/system/params.ts | 49 |
+| 2163 | GET | `/api/core/doc/templates${queryString ` | doc | apps/web/src/api/template/index.ts | 121 |
+| 2164 | GET | `/api/core/doc/templates/{id}` | doc | apps/web/src/api/template/index.ts | 125 |
+| 2165 | POST | `/api/core/doc/templates` | doc | apps/web/src/api/template/index.ts | 129 |
+| 2166 | PUT | `/api/core/doc/templates/{id}` | doc | apps/web/src/api/template/index.ts | 133 |
+| 2167 | DELETE | `/api/core/doc/templates/{id}` | doc | apps/web/src/api/template/index.ts | 137 |
+| 2168 | GET | `/api/core/doc/templates/categories${queryString ` | doc | apps/web/src/api/template/index.ts | 148 |
+| 2169 | POST | `/api/core/doc/templates/{id}/render` | doc | apps/web/src/api/template/index.ts | 155 |
+| 2170 | POST | `/api/core/doc/templates/{id}/duplicate` | doc | apps/web/src/api/template/index.ts | 161 |
+| 2171 | PUT | `/api/core/doc/templates/{id}/toggle-status` | doc | apps/web/src/api/template/index.ts | 165 |
+| 2172 | GET | `/api/core/{API_BASE}/list` | core | apps/web/src/api/tenant/index.ts | 27 |
+| 2173 | GET | `/api/core/{API_BASE}/{tenantId}` | core | apps/web/src/api/tenant/index.ts | 31 |
+| 2174 | GET | `/api/core/{API_BASE}/slug/{slug}` | core | apps/web/src/api/tenant/index.ts | 35 |
+| 2175 | POST | `/api/core/{API_BASE}/create` | core | apps/web/src/api/tenant/index.ts | 39 |
+| 2176 | PUT | `/api/core/{API_BASE}/{tenantId}` | core | apps/web/src/api/tenant/index.ts | 46 |
+| 2177 | DELETE | `/api/core/{API_BASE}/{tenantId}` | core | apps/web/src/api/tenant/index.ts | 50 |
+| 2178 | POST | `/api/core/{API_BASE}/{tenantId}/activate` | core | apps/web/src/api/tenant/index.ts | 54 |
+| 2179 | POST | `/api/core/{API_BASE}/{tenantId}/suspend` | core | apps/web/src/api/tenant/index.ts | 58 |
+| 2180 | GET | `/api/core/{API_BASE}/{tenantId}/users` | core | apps/web/src/api/tenant/index.ts | 73 |
+| 2181 | POST | `/api/core/{API_BASE}/{tenantId}/users/invite` | core | apps/web/src/api/tenant/index.ts | 80 |
+| 2182 | DELETE | `/api/core/{API_BASE}/{tenantId}/users/{userId}` | core | apps/web/src/api/tenant/index.ts | 84 |
+| 2183 | PUT | `/api/core/{API_BASE}/{tenantId}/users/{userId}/role` | core | apps/web/src/api/tenant/index.ts | 92 |
+| 2184 | GET | `/api/core/{API_BASE}/{tenantId}/stats` | core | apps/web/src/api/tenant/index.ts | 96 |
+| 2185 | GET | `/api/core/{API_BASE}/{tenantId}/usage` | core | apps/web/src/api/tenant/index.ts | 100 |
+| 2186 | GET | `/api/core/{API_BASE}/{tenantId}/billing` | core | apps/web/src/api/tenant/index.ts | 104 |
+| 2187 | GET | `/api/core/{API_BASE}/{tenantId}/invoices` | core | apps/web/src/api/tenant/index.ts | 108 |
+| 2188 | GET | `/api/core/{API_BASE}/context` | core | apps/web/src/api/tenant/index.ts | 112 |
+| 2189 | GET | `/api/core/{API_BASE}/my` | core | apps/web/src/api/tenant/index.ts | 116 |
+| 2190 | POST | `/api/core/{API_BASE}/switch` | core | apps/web/src/api/tenant/index.ts | 120 |
+| 2191 | GET | `/api/finance/voucher-templates` | finance | apps/web/src/api/voucherTemplate/index.ts | 41 |
+| 2192 | GET | `/api/finance/voucher-templates/{templateId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 46 |
+| 2193 | POST | `/api/finance/voucher-templates` | finance | apps/web/src/api/voucherTemplate/index.ts | 60 |
+| 2194 | PUT | `/api/finance/voucher-templates/{templateId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 66 |
+| 2195 | DELETE | `/api/finance/voucher-templates/{templateId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 72 |
+| 2196 | POST | `/api/finance/voucher-templates/{templateId}/copy` | finance | apps/web/src/api/voucherTemplate/index.ts | 78 |
+| 2197 | POST | `/api/finance/voucher-templates/{templateId}/set-default` | finance | apps/web/src/api/voucherTemplate/index.ts | 87 |
+| 2198 | PUT | `/api/finance/voucher-templates/{templateId}/toggle` | finance | apps/web/src/api/voucherTemplate/index.ts | 95 |
+| 2199 | POST | `/api/finance/voucher-templates/{templateId}/entries` | finance | apps/web/src/api/voucherTemplate/index.ts | 107 |
+| 2200 | PUT | `/api/finance/voucher-templates/{templateId}/entries/{entryId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 116 |
+| 2201 | DELETE | `/api/finance/voucher-templates/{templateId}/entries/{entryId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 122 |
+| 2202 | PUT | `/api/finance/voucher-templates/{templateId}/entries/reorder` | finance | apps/web/src/api/voucherTemplate/index.ts | 128 |
+| 2203 | POST | `/api/finance/voucher/generate/preview` | finance | apps/web/src/api/voucherTemplate/index.ts | 145 |
+| 2204 | POST | `/api/finance/voucher/generate/from-source` | finance | apps/web/src/api/voucherTemplate/index.ts | 158 |
+| 2205 | POST | `/api/finance/voucher/generate/batch` | finance | apps/web/src/api/voucherTemplate/index.ts | 169 |
+| 2206 | POST | `/api/finance/voucher/generate/auto` | finance | apps/web/src/api/voucherTemplate/index.ts | 181 |
+| 2207 | POST | `/api/finance/voucher/generate/regenerate/{originalVoucherId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 187 |
+| 2208 | POST | `/api/finance/voucher-templates/match` | finance | apps/web/src/api/voucherTemplate/index.ts | 204 |
+| 2209 | GET | `/api/finance/voucher-templates/{templateId}/usage-stats` | finance | apps/web/src/api/voucherTemplate/index.ts | 216 |
+| 2210 | GET | `/api/finance/voucher-generation-rules` | finance | apps/web/src/api/voucherTemplate/index.ts | 232 |
+| 2211 | POST | `/api/finance/voucher-generation-rules` | finance | apps/web/src/api/voucherTemplate/index.ts | 245 |
+| 2212 | PUT | `/api/finance/voucher-generation-rules/{ruleId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 251 |
+| 2213 | DELETE | `/api/finance/voucher-generation-rules/{ruleId}` | finance | apps/web/src/api/voucherTemplate/index.ts | 257 |
+| 2214 | PUT | `/api/finance/voucher-generation-rules/{ruleId}/toggle` | finance | apps/web/src/api/voucherTemplate/index.ts | 263 |
+| 2215 | POST | `/api/finance/voucher-templates/import` | finance | apps/web/src/api/voucherTemplate/index.ts | 285 |
+| 2216 | GET | `/api/wms/audit-logs` | wms | apps/web/src/api/wms/audit.ts | 9 |
+| 2217 | GET | `/api/wms/audit-logs/{id}` | wms | apps/web/src/api/wms/audit.ts | 13 |
+| 2218 | GET | `/api/wms/audit-logs/modules` | wms | apps/web/src/api/wms/audit.ts | 17 |
+| 2219 | GET | `/api/wms/batches` | wms | apps/web/src/api/wms/batch.ts | 13 |
+| 2220 | POST | `/api/wms/batches` | wms | apps/web/src/api/wms/batch.ts | 17 |
+| 2221 | GET | `/api/wms/batches/{id}` | wms | apps/web/src/api/wms/batch.ts | 21 |
+| 2222 | PUT | `/api/wms/batches/{id}` | wms | apps/web/src/api/wms/batch.ts | 25 |
+| 2223 | DELETE | `/api/wms/batches/{id}` | wms | apps/web/src/api/wms/batch.ts | 29 |
+| 2224 | GET | `/api/wms/batches/statistics` | wms | apps/web/src/api/wms/batch.ts | 35 |
+| 2225 | GET | `/api/wms/batches/expiring-soon` | wms | apps/web/src/api/wms/batch.ts | 42 |
+| 2226 | GET | `/api/wms/batches/expired` | wms | apps/web/src/api/wms/batch.ts | 48 |
+| 2227 | POST | `/api/wms/batches/{id}/adjust-quantity` | wms | apps/web/src/api/wms/batch.ts | 55 |
+| 2228 | POST | `/api/wms/batches/{id}/transfer-location` | wms | apps/web/src/api/wms/batch.ts | 62 |
+| 2229 | GET | `/api/wms/dashboard` | wms | apps/web/src/api/wms/dashboard.ts | 16 |
+| 2230 | GET | `/api/wms/inbound-orders` | wms | apps/web/src/api/wms/inbound.ts | 17 |
+| 2231 | GET | `/api/wms/inbound-orders/{id}` | wms | apps/web/src/api/wms/inbound.ts | 21 |
+| 2232 | POST | `/api/wms/inbound-orders` | wms | apps/web/src/api/wms/inbound.ts | 25 |
+| 2233 | PUT | `/api/wms/inbound-orders/{id}` | wms | apps/web/src/api/wms/inbound.ts | 29 |
+| 2234 | DELETE | `/api/wms/inbound-orders/{id}` | wms | apps/web/src/api/wms/inbound.ts | 33 |
+| 2235 | GET | `/api/wms/inbound-orders/{order_id}/items` | wms | apps/web/src/api/wms/inbound.ts | 39 |
+| 2236 | POST | `/api/wms/inbound-orders/{order_id}/items` | wms | apps/web/src/api/wms/inbound.ts | 46 |
+| 2237 | PUT | `/api/wms/inbound-orders/{order_id}/items/{item_id}` | wms | apps/web/src/api/wms/inbound.ts | 54 |
+| 2238 | DELETE | `/api/wms/inbound-orders/{order_id}/items/{item_id}` | wms | apps/web/src/api/wms/inbound.ts | 58 |
+| 2239 | POST | `/api/wms/inbound-orders/{id}/confirm` | wms | apps/web/src/api/wms/inbound.ts | 62 |
+| 2240 | POST | `/api/wms/inbound-orders/{id}/receive` | wms | apps/web/src/api/wms/inbound.ts | 66 |
+| 2241 | POST | `/api/wms/inbound-orders/{id}/complete` | wms | apps/web/src/api/wms/inbound.ts | 70 |
+| 2242 | GET | `/api/wms/inventory/low-stock` | wms | apps/web/src/api/wms/inventory.ts | 73 |
+| 2243 | GET | `/api/wms/inventory/warehouse/{warehouse_id}` | wms | apps/web/src/api/wms/inventory.ts | 86 |
+| 2244 | GET | `/api/wms/inventory-alerts/rules` | wms | apps/web/src/api/wms/inventory.ts | 94 |
+| 2245 | GET | `/api/wms/inventory-alerts/rules/{id}` | wms | apps/web/src/api/wms/inventory.ts | 98 |
+| 2246 | POST | `/api/wms/inventory-alerts/rules` | wms | apps/web/src/api/wms/inventory.ts | 104 |
+| 2247 | PUT | `/api/wms/inventory-alerts/rules/{id}` | wms | apps/web/src/api/wms/inventory.ts | 111 |
+| 2248 | DELETE | `/api/wms/inventory-alerts/rules/{id}` | wms | apps/web/src/api/wms/inventory.ts | 115 |
+| 2249 | GET | `/api/wms/inventory-alerts/records` | wms | apps/web/src/api/wms/inventory.ts | 121 |
+| 2250 | GET | `/api/wms/inventory-alerts/records/{id}` | wms | apps/web/src/api/wms/inventory.ts | 125 |
+| 2251 | POST | `/api/wms/inventory-alerts/records/{id}/confirm` | wms | apps/web/src/api/wms/inventory.ts | 132 |
+| 2252 | GET | `/api/wms/inventory-alerts/statistics` | wms | apps/web/src/api/wms/inventory.ts | 138 |
+| 2253 | GET | `/api/wms/inventory/statistics` | wms | apps/web/src/api/wms/inventory.ts | 146 |
+| 2254 | GET | `/api/wms/inventory/abc-analysis` | wms | apps/web/src/api/wms/inventory.ts | 152 |
+| 2255 | GET | `/api/wms/inventory/turnover` | wms | apps/web/src/api/wms/inventory.ts | 158 |
+| 2256 | GET | `/api/wms/inventory/value-by-warehouse` | wms | apps/web/src/api/wms/inventory.ts | 164 |
+| 2257 | GET | `/api/wms/locations` | wms | apps/web/src/api/wms/location.ts | 15 |
+| 2258 | GET | `/api/wms/locations/{id}` | wms | apps/web/src/api/wms/location.ts | 19 |
+| 2259 | POST | `/api/wms/locations` | wms | apps/web/src/api/wms/location.ts | 23 |
+| 2260 | PUT | `/api/wms/locations/{id}` | wms | apps/web/src/api/wms/location.ts | 27 |
+| 2261 | DELETE | `/api/wms/locations/{id}` | wms | apps/web/src/api/wms/location.ts | 31 |
+| 2262 | GET | `/api/wms/locations/status` | wms | apps/web/src/api/wms/location.ts | 35 |
+| 2263 | POST | `/api/wms/locations/batch` | wms | apps/web/src/api/wms/location.ts | 41 |
+| 2264 | PUT | `/api/wms/locations/batch` | wms | apps/web/src/api/wms/location.ts | 48 |
+| 2265 | POST | `/api/wms/locations/batch-delete` | wms | apps/web/src/api/wms/location.ts | 52 |
+| 2266 | GET | `/api/wms/outbound-orders` | wms | apps/web/src/api/wms/outbound.ts | 21 |
+| 2267 | GET | `/api/wms/outbound-orders/{id}` | wms | apps/web/src/api/wms/outbound.ts | 25 |
+| 2268 | POST | `/api/wms/outbound-orders` | wms | apps/web/src/api/wms/outbound.ts | 29 |
+| 2269 | PUT | `/api/wms/outbound-orders/{id}` | wms | apps/web/src/api/wms/outbound.ts | 33 |
+| 2270 | DELETE | `/api/wms/outbound-orders/{id}` | wms | apps/web/src/api/wms/outbound.ts | 37 |
+| 2271 | GET | `/api/wms/outbound-orders/{order_id}/items` | wms | apps/web/src/api/wms/outbound.ts | 43 |
+| 2272 | POST | `/api/wms/outbound-orders/{order_id}/items` | wms | apps/web/src/api/wms/outbound.ts | 50 |
+| 2273 | PUT | `/api/wms/outbound-orders/{order_id}/items/{item_id}` | wms | apps/web/src/api/wms/outbound.ts | 58 |
+| 2274 | DELETE | `/api/wms/outbound-orders/{order_id}/items/{item_id}` | wms | apps/web/src/api/wms/outbound.ts | 62 |
+| 2275 | POST | `/api/wms/outbound-orders/{id}/confirm` | wms | apps/web/src/api/wms/outbound.ts | 66 |
+| 2276 | POST | `/api/wms/outbound-orders/{id}/pick` | wms | apps/web/src/api/wms/outbound.ts | 70 |
+| 2277 | POST | `/api/wms/outbound-orders/{id}/pack` | wms | apps/web/src/api/wms/outbound.ts | 74 |
+| 2278 | POST | `/api/wms/outbound-orders/{id}/ship` | wms | apps/web/src/api/wms/outbound.ts | 78 |
+| 2279 | POST | `/api/wms/outbound-orders/{id}/complete` | wms | apps/web/src/api/wms/outbound.ts | 82 |
+| 2280 | GET | `/api/wms/wave-picks` | wms | apps/web/src/api/wms/outbound.ts | 88 |
+| 2281 | GET | `/api/wms/wave-picks/{id}` | wms | apps/web/src/api/wms/outbound.ts | 92 |
+| 2282 | POST | `/api/wms/wave-picks` | wms | apps/web/src/api/wms/outbound.ts | 96 |
+| 2283 | PUT | `/api/wms/wave-picks/{id}` | wms | apps/web/src/api/wms/outbound.ts | 100 |
+| 2284 | DELETE | `/api/wms/wave-picks/{id}` | wms | apps/web/src/api/wms/outbound.ts | 104 |
+| 2285 | GET | `/api/wms/wave-picks/{wave_id}/items` | wms | apps/web/src/api/wms/outbound.ts | 110 |
+| 2286 | POST | `/api/wms/wave-picks/{id}/assign` | wms | apps/web/src/api/wms/outbound.ts | 114 |
+| 2287 | POST | `/api/wms/wave-picks/{id}/start` | wms | apps/web/src/api/wms/outbound.ts | 118 |
+| 2288 | POST | `/api/wms/wave-picks/{id}/complete` | wms | apps/web/src/api/wms/outbound.ts | 122 |
+| 2289 | POST | `/api/wms/wave-picks/{id}/cancel` | wms | apps/web/src/api/wms/outbound.ts | 126 |
+| 2290 | GET | `/api/wms/smart-replenishment/suggestions` | wms | apps/web/src/api/wms/replenishment.ts | 20 |
+| 2291 | GET | `/api/wms/smart-replenishment/suggestions/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 24 |
+| 2292 | POST | `/api/wms/smart-replenishment/suggestions/generate` | wms | apps/web/src/api/wms/replenishment.ts | 32 |
+| 2293 | GET | `/api/wms/smart-replenishment/statistics` | wms | apps/web/src/api/wms/replenishment.ts | 39 |
+| 2294 | GET | `/api/wms/smart-replenishment/orders` | wms | apps/web/src/api/wms/replenishment.ts | 45 |
+| 2295 | GET | `/api/wms/smart-replenishment/orders/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 49 |
+| 2296 | POST | `/api/wms/smart-replenishment/orders` | wms | apps/web/src/api/wms/replenishment.ts | 55 |
+| 2297 | PUT | `/api/wms/smart-replenishment/orders/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 62 |
+| 2298 | DELETE | `/api/wms/smart-replenishment/orders/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 66 |
+| 2299 | GET | `/api/wms/smart-replenishment/orders/{order_id}/items` | wms | apps/web/src/api/wms/replenishment.ts | 72 |
+| 2300 | POST | `/api/wms/smart-replenishment/orders/{id}/confirm` | wms | apps/web/src/api/wms/replenishment.ts | 76 |
+| 2301 | POST | `/api/wms/smart-replenishment/orders/{id}/complete` | wms | apps/web/src/api/wms/replenishment.ts | 80 |
+| 2302 | GET | `/api/wms/smart-replenishment/safety-stock` | wms | apps/web/src/api/wms/replenishment.ts | 86 |
+| 2303 | GET | `/api/wms/smart-replenishment/safety-stock/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 90 |
+| 2304 | PUT | `/api/wms/smart-replenishment/safety-stock/{id}` | wms | apps/web/src/api/wms/replenishment.ts | 97 |
+| 2305 | POST | `/api/wms/smart-replenishment/safety-stock/batch-update` | wms | apps/web/src/api/wms/replenishment.ts | 103 |
+| 2306 | POST | `/api/wms/smart-replenishment/safety-stock/calculate` | wms | apps/web/src/api/wms/replenishment.ts | 111 |
+| 2307 | GET | `/api/wms/serial-numbers` | wms | apps/web/src/api/wms/serialNumber.ts | 15 |
+| 2308 | POST | `/api/wms/serial-numbers` | wms | apps/web/src/api/wms/serialNumber.ts | 19 |
+| 2309 | POST | `/api/wms/serial-numbers/bulk` | wms | apps/web/src/api/wms/serialNumber.ts | 23 |
+| 2310 | GET | `/api/wms/serial-numbers/{id}` | wms | apps/web/src/api/wms/serialNumber.ts | 27 |
+| 2311 | GET | `/api/wms/serial-numbers/by-serial/{serialNo}` | wms | apps/web/src/api/wms/serialNumber.ts | 31 |
+| 2312 | PUT | `/api/wms/serial-numbers/{id}` | wms | apps/web/src/api/wms/serialNumber.ts | 38 |
+| 2313 | DELETE | `/api/wms/serial-numbers/{id}` | wms | apps/web/src/api/wms/serialNumber.ts | 42 |
+| 2314 | GET | `/api/wms/serial-numbers/statistics` | wms | apps/web/src/api/wms/serialNumber.ts | 48 |
+| 2315 | GET | `/api/wms/serial-numbers/by-batch/{batchNo}` | wms | apps/web/src/api/wms/serialNumber.ts | 52 |
+| 2316 | POST | `/api/wms/serial-numbers/{id}/transfer-location` | wms | apps/web/src/api/wms/serialNumber.ts | 59 |
+| 2317 | GET | `/api/wms/serial-numbers/{id}/trace` | wms | apps/web/src/api/wms/serialNumber.ts | 63 |
+| 2318 | GET | `/api/wms/stock-takes` | wms | apps/web/src/api/wms/stocktake.ts | 14 |
+| 2319 | GET | `/api/wms/stock-takes/{id}` | wms | apps/web/src/api/wms/stocktake.ts | 18 |
+| 2320 | POST | `/api/wms/stock-takes` | wms | apps/web/src/api/wms/stocktake.ts | 22 |
+| 2321 | PUT | `/api/wms/stock-takes/{id}` | wms | apps/web/src/api/wms/stocktake.ts | 26 |
+| 2322 | DELETE | `/api/wms/stock-takes/{id}` | wms | apps/web/src/api/wms/stocktake.ts | 30 |
+| 2323 | GET | `/api/wms/stock-takes/{id}/items` | wms | apps/web/src/api/wms/stocktake.ts | 43 |
+| 2324 | GET | `/api/wms/stock-takes/{id}/items/{item_id}` | wms | apps/web/src/api/wms/stocktake.ts | 47 |
+| 2325 | POST | `/api/wms/stock-takes/{id}/items` | wms | apps/web/src/api/wms/stocktake.ts | 54 |
+| 2326 | PUT | `/api/wms/stock-takes/{id}/items/{item_id}` | wms | apps/web/src/api/wms/stocktake.ts | 62 |
+| 2327 | DELETE | `/api/wms/stock-takes/{id}/items/{item_id}` | wms | apps/web/src/api/wms/stocktake.ts | 66 |
+| 2328 | POST | `/api/wms/stock-takes/{id}/start` | wms | apps/web/src/api/wms/stocktake.ts | 70 |
+| 2329 | POST | `/api/wms/stock-takes/{id}/count` | wms | apps/web/src/api/wms/stocktake.ts | 77 |
+| 2330 | POST | `/api/wms/stock-takes/{id}/complete` | wms | apps/web/src/api/wms/stocktake.ts | 81 |
+| 2331 | POST | `/api/wms/stock-takes/{id}/adjust` | wms | apps/web/src/api/wms/stocktake.ts | 85 |
+| 2332 | GET | `/api/wms/sync-records` | wms | apps/web/src/api/wms/sync.ts | 9 |
+| 2333 | GET | `/api/wms/sync-records/{id}` | wms | apps/web/src/api/wms/sync.ts | 13 |
+| 2334 | GET | `/api/wms/sync-records/{sync_record_id}/items` | wms | apps/web/src/api/wms/sync.ts | 20 |
+| 2335 | POST | `/api/wms/sync-records/{id}/retry` | wms | apps/web/src/api/wms/sync.ts | 24 |
+| 2336 | POST | `/api/wms/sync-records/{id}/retry-items` | wms | apps/web/src/api/wms/sync.ts | 31 |
+| 2337 | GET | `/api/wms/sync-records/statistics` | wms | apps/web/src/api/wms/sync.ts | 38 |
+| 2338 | POST | `/api/wms/sync/scm` | wms | apps/web/src/api/wms/sync.ts | 47 |
+| 2339 | POST | `/api/wms/sync/scm/inventory` | wms | apps/web/src/api/wms/sync.ts | 55 |
+| 2340 | POST | `/api/wms/sync/scm/orders` | wms | apps/web/src/api/wms/sync.ts | 63 |
+| 2341 | GET | `/api/wms/transfers` | wms | apps/web/src/api/wms/transfer.ts | 15 |
+| 2342 | GET | `/api/wms/transfers/{id}` | wms | apps/web/src/api/wms/transfer.ts | 19 |
+| 2343 | POST | `/api/wms/transfers` | wms | apps/web/src/api/wms/transfer.ts | 23 |
+| 2344 | PUT | `/api/wms/transfers/{id}` | wms | apps/web/src/api/wms/transfer.ts | 27 |
+| 2345 | DELETE | `/api/wms/transfers/{id}` | wms | apps/web/src/api/wms/transfer.ts | 31 |
+| 2346 | GET | `/api/wms/transfers/{transfer_id}/items` | wms | apps/web/src/api/wms/transfer.ts | 37 |
+| 2347 | POST | `/api/wms/transfers/{id}/confirm` | wms | apps/web/src/api/wms/transfer.ts | 41 |
+| 2348 | POST | `/api/wms/transfers/{id}/ship` | wms | apps/web/src/api/wms/transfer.ts | 45 |
+| 2349 | POST | `/api/wms/transfers/{id}/receive` | wms | apps/web/src/api/wms/transfer.ts | 52 |
+| 2350 | POST | `/api/wms/transfers/{id}/complete` | wms | apps/web/src/api/wms/transfer.ts | 56 |
+| 2351 | GET | `/api/core/flow/approvals` | workflow | apps/web/src/api/workflow/approval.ts | 6 |
+| 2352 | POST | `/api/core/flow/approvals` | workflow | apps/web/src/api/workflow/approval.ts | 10 |
+| 2353 | GET | `/api/core/flow/approvals/{id}` | workflow | apps/web/src/api/workflow/approval.ts | 14 |
+| 2354 | POST | `/api/core/flow/approvals/{id}/process` | workflow | apps/web/src/api/workflow/approval.ts | 18 |
+| 2355 | GET | `/api/core/flow/approvals` | workflow | apps/web/src/api/workflow/approval.ts | 22 |
+| 2356 | GET | `/api/core/flow/records` | workflow | apps/web/src/api/workflow/approval.ts | 26 |
+| 2357 | GET | `/api/core/flow/records/{approvalId}` | workflow | apps/web/src/api/workflow/approval.ts | 30 |
+| 2358 | GET | `/api/core/flow/approval-tasks` | workflow | apps/web/src/api/workflow/approval.ts | 36 |
+| 2359 | GET | `/api/core/flow/approval-tasks/{id}` | workflow | apps/web/src/api/workflow/approval.ts | 40 |
+| 2360 | POST | `/api/core/flow/approval-tasks/{id}/approve` | workflow | apps/web/src/api/workflow/approval.ts | 44 |
+| 2361 | POST | `/api/core/flow/approval-tasks/{id}/reject` | workflow | apps/web/src/api/workflow/approval.ts | 48 |
+| 2362 | POST | `/api/core/flow/approval-tasks/{id}/delegate` | workflow | apps/web/src/api/workflow/approval.ts | 52 |
+| 2363 | POST | `/api/core/flow/approval-tasks/{id}/reassign` | workflow | apps/web/src/api/workflow/approval.ts | 56 |
+| 2364 | POST | `/api/core/flow/approval-tasks/{id}/claim` | workflow | apps/web/src/api/workflow/approval.ts | 60 |
+| 2365 | POST | `/api/core/flow/approval-tasks/{id}/unclaim` | workflow | apps/web/src/api/workflow/approval.ts | 64 |
+| 2366 | GET | `/api/core/flow/categories/active` | workflow | apps/web/src/api/workflow/category.ts | 22 |
+| 2367 | GET | `/api/core/flow/categories/{categoryId}/workflows` | workflow | apps/web/src/api/workflow/category.ts | 26 |
+| 2368 | GET | `/api/core/flow/categories/tree` | workflow | apps/web/src/api/workflow/category.ts | 30 |
+| 2369 | POST | `/api/core/flow/categories/sort` | workflow | apps/web/src/api/workflow/category.ts | 34 |
+| 2370 | POST | `/api/core/flow/workflows/{id}/deploy` | workflow | apps/web/src/api/workflow/definition.ts | 28 |
+| 2371 | POST | `/api/core/flow/workflows/{id}/activate` | workflow | apps/web/src/api/workflow/definition.ts | 32 |
+| 2372 | POST | `/api/core/flow/workflows/{id}/deactivate` | workflow | apps/web/src/api/workflow/definition.ts | 36 |
+| 2373 | GET | `/api/core/flow/workflows/{workflowId}/versions` | workflow | apps/web/src/api/workflow/definition.ts | 40 |
+| 2374 | POST | `/api/core/flow/workflows/{workflowId}/versions` | workflow | apps/web/src/api/workflow/definition.ts | 46 |
+| 2375 | GET | `/api/core/flow/workflows/{workflowId}/versions/{versionId}` | workflow | apps/web/src/api/workflow/definition.ts | 50 |
+| 2376 | POST | `/api/core/flow/workflows/{workflowId}/versions/{versionId}/activate` | workflow | apps/web/src/api/workflow/definition.ts | 54 |
+| 2377 | POST | `/api/core/flow/workflows/{workflowId}/rollback` | workflow | apps/web/src/api/workflow/definition.ts | 58 |
+| 2378 | GET | `/api/core/flow/workflows/{workflowId}/compare/{version1}/{version2}` | workflow | apps/web/src/api/workflow/definition.ts | 62 |
+| 2379 | DELETE | `/api/core/flow/workflows/{workflowId}/versions/{versionId}` | workflow | apps/web/src/api/workflow/definition.ts | 66 |
+| 2380 | GET | `/api/core/flow/workflows/{id}/export` | workflow | apps/web/src/api/workflow/definition.ts | 70 |
+| 2381 | POST | `/api/core/flow/workflows/import` | workflow | apps/web/src/api/workflow/definition.ts | 74 |
+| 2382 | POST | `/api/core/flow/workflows/{id}/copy` | workflow | apps/web/src/api/workflow/definition.ts | 78 |
+| 2383 | POST | `/api/core/flow/delegates/{id}/activate` | workflow | apps/web/src/api/workflow/delegate.ts | 27 |
+| 2384 | POST | `/api/core/flow/delegates/{id}/deactivate` | workflow | apps/web/src/api/workflow/delegate.ts | 31 |
+| 2385 | GET | `/api/core/flow/delegates/my` | workflow | apps/web/src/api/workflow/delegate.ts | 35 |
+| 2386 | GET | `/api/core/flow/delegates/my/attorneys` | workflow | apps/web/src/api/workflow/delegate.ts | 39 |
+| 2387 | GET | `/api/core/flow/delegates/active` | workflow | apps/web/src/api/workflow/delegate.ts | 44 |
+| 2388 | GET | `/api/core/flow/delegates/{id}/workflows` | workflow | apps/web/src/api/workflow/delegate.ts | 48 |
+| 2389 | GET | `/api/core/flow/delegates/check/{workflowId}` | workflow | apps/web/src/api/workflow/delegate.ts | 53 |
+| 2390 | POST | `/api/core/flow/form-definitions/{id}/activate` | workflow | apps/web/src/api/workflow/form.ts | 31 |
+| 2391 | POST | `/api/core/flow/form-definitions/{id}/deactivate` | workflow | apps/web/src/api/workflow/form.ts | 35 |
+| 2392 | POST | `/api/core/flow/form-definitions/{id}/publish` | workflow | apps/web/src/api/workflow/form.ts | 39 |
+| 2393 | POST | `/api/core/flow/form-definitions/{id}/copy` | workflow | apps/web/src/api/workflow/form.ts | 43 |
+| 2394 | GET | `/api/core/flow/form-definitions/workflow/{workflowId}` | workflow | apps/web/src/api/workflow/form.ts | 47 |
+| 2395 | GET | `/api/core/flow/form-definitions/categories` | workflow | apps/web/src/api/workflow/form.ts | 51 |
+| 2396 | GET | `/api/core/flow/form-definitions/{formId}/versions/{versionId}` | workflow | apps/web/src/api/workflow/form.ts | 55 |
+| 2397 | GET | `/api/core/flow/form-definitions/{formId}/versions` | workflow | apps/web/src/api/workflow/form.ts | 59 |
+| 2398 | POST | `/api/core/flow/form-definitions/{formId}/versions/{versionId}/rollback` | workflow | apps/web/src/api/workflow/form.ts | 63 |
+| 2399 | POST | `/api/core/flow/form-definitions/{id}/preview` | workflow | apps/web/src/api/workflow/form.ts | 67 |
+| 2400 | POST | `/api/core/flow/form-definitions/{id}/validate` | workflow | apps/web/src/api/workflow/form.ts | 71 |
+| 2401 | GET | `/api/core/flow/form-definitions/{id}/export` | workflow | apps/web/src/api/workflow/form.ts | 75 |
+| 2402 | POST | `/api/core/flow/form-definitions/import` | workflow | apps/web/src/api/workflow/form.ts | 81 |
+| 2403 | GET | `/api/core/flow/form-instances/workflow-instance/{workflowInstanceId}` | workflow | apps/web/src/api/workflow/form.ts | 102 |
+| 2404 | GET | `/api/core/flow/form-instances/form-definition/{formDefinitionId}` | workflow | apps/web/src/api/workflow/form.ts | 106 |
+| 2405 | POST | `/api/core/flow/form-instances/{id}/submit` | workflow | apps/web/src/api/workflow/form.ts | 112 |
+| 2406 | POST | `/api/core/flow/form-instances/{id}/draft` | workflow | apps/web/src/api/workflow/form.ts | 116 |
+| 2407 | GET | `/api/core/flow/form-instances/{id}/data` | workflow | apps/web/src/api/workflow/form.ts | 120 |
+| 2408 | PUT | `/api/core/flow/form-instances/{id}/data` | workflow | apps/web/src/api/workflow/form.ts | 124 |
+| 2409 | GET | `/api/core/flow/form-instances/{id}/history` | workflow | apps/web/src/api/workflow/form.ts | 128 |
+| 2410 | GET | `/api/core/flow/form-instances/my` | workflow | apps/web/src/api/workflow/form.ts | 132 |
+| 2411 | GET | `/api/core/flow/form-instances/my/drafts` | workflow | apps/web/src/api/workflow/form.ts | 136 |
+| 2412 | GET | `/api/core/flow/form-instances/{id}/export` | workflow | apps/web/src/api/workflow/form.ts | 140 |
+| 2413 | GET | `/api/core/flow/history` | workflow | apps/web/src/api/workflow/history.ts | 6 |
+| 2414 | GET | `/api/core/flow/history/{id}` | workflow | apps/web/src/api/workflow/history.ts | 10 |
+| 2415 | GET | `/api/core/flow/history/instance/{instanceId}` | workflow | apps/web/src/api/workflow/history.ts | 14 |
+| 2416 | GET | `/api/core/flow/history/workflow/{workflowId}` | workflow | apps/web/src/api/workflow/history.ts | 18 |
+| 2417 | GET | `/api/core/flow/statistics` | workflow | apps/web/src/api/workflow/index.ts | 232 |
+| 2418 | GET | `/api/core/flow/performance` | workflow | apps/web/src/api/workflow/index.ts | 236 |
+| 2419 | POST | `/api/core/flow/performance/reset` | workflow | apps/web/src/api/workflow/index.ts | 240 |
+| 2420 | GET | `/api/core/flow/health` | workflow | apps/web/src/api/workflow/index.ts | 244 |
+| 2421 | GET | `/api/core/flow/instances` | workflow | apps/web/src/api/workflow/instance.ts | 6 |
+| 2422 | POST | `/api/core/flow/instances` | workflow | apps/web/src/api/workflow/instance.ts | 10 |
+| 2423 | GET | `/api/core/flow/instances/{id}` | workflow | apps/web/src/api/workflow/instance.ts | 14 |
+| 2424 | GET | `/api/core/flow/instances/{id}/details` | workflow | apps/web/src/api/workflow/instance.ts | 18 |
+| 2425 | GET | `/api/core/flow/instances` | workflow | apps/web/src/api/workflow/instance.ts | 22 |
+| 2426 | GET | `/api/core/flow/instances/{id}` | workflow | apps/web/src/api/workflow/instance.ts | 26 |
+| 2427 | POST | `/api/core/flow/instances/{id}/cancel` | workflow | apps/web/src/api/workflow/instance.ts | 30 |
+| 2428 | POST | `/api/core/flow/instances/{id}/suspend` | workflow | apps/web/src/api/workflow/instance.ts | 34 |
+| 2429 | POST | `/api/core/flow/instances/{id}/resume` | workflow | apps/web/src/api/workflow/instance.ts | 38 |
+| 2430 | DELETE | `/api/core/flow/instances/{id}` | workflow | apps/web/src/api/workflow/instance.ts | 42 |
+| 2431 | POST | `/api/core/flow/instances/{id}/activate` | workflow | apps/web/src/api/workflow/instance.ts | 46 |
+| 2432 | DELETE | `/api/core/flow/instances/{id}` | workflow | apps/web/src/api/workflow/instance.ts | 50 |
+| 2433 | POST | `/api/core/flow/instances/{id}/terminate` | workflow | apps/web/src/api/workflow/instance.ts | 54 |
+| 2434 | GET | `/api/core/flow/instances/{id}/variables` | workflow | apps/web/src/api/workflow/instance.ts | 58 |
+| 2435 | POST | `/api/core/flow/instances/{id}/variables` | workflow | apps/web/src/api/workflow/instance.ts | 62 |
+| 2436 | GET | `/api/core/flow/instances/{id}/tasks` | workflow | apps/web/src/api/workflow/instance.ts | 66 |
+| 2437 | GET | `/api/core/flow/instances/{id}/history` | workflow | apps/web/src/api/workflow/instance.ts | 70 |
+| 2438 | GET | `/api/core/flow/instances/{id}/logs` | workflow | apps/web/src/api/workflow/instance.ts | 74 |
+| 2439 | GET | `/api/core/flow/instances/{id}/diagram` | workflow | apps/web/src/api/workflow/instance.ts | 78 |
+| 2440 | GET | `/api/core/flow/monitor/instances` | workflow | apps/web/src/api/workflow/monitor.ts | 18 |
+| 2441 | GET | `/api/core/flow/monitor/instances/{id}` | workflow | apps/web/src/api/workflow/monitor.ts | 22 |
+| 2442 | GET | `/api/core/flow/monitor/instances/{id}/history` | workflow | apps/web/src/api/workflow/monitor.ts | 28 |
+| 2443 | GET | `/api/core/flow/monitor/instances/{id}/tasks` | workflow | apps/web/src/api/workflow/monitor.ts | 32 |
+| 2444 | GET | `/api/core/flow/monitor/instances/{id}/variables` | workflow | apps/web/src/api/workflow/monitor.ts | 36 |
+| 2445 | GET | `/api/core/flow/monitor/instances/{id}/diagram` | workflow | apps/web/src/api/workflow/monitor.ts | 40 |
+| 2446 | GET | `/api/core/flow/monitor/instances/running` | workflow | apps/web/src/api/workflow/monitor.ts | 44 |
+| 2447 | GET | `/api/core/flow/monitor/instances/completed` | workflow | apps/web/src/api/workflow/monitor.ts | 48 |
+| 2448 | GET | `/api/core/flow/monitor/instances/rejected` | workflow | apps/web/src/api/workflow/monitor.ts | 52 |
+| 2449 | GET | `/api/core/flow/monitor/instances/suspended` | workflow | apps/web/src/api/workflow/monitor.ts | 56 |
+| 2450 | GET | `/api/core/flow/monitor/instances/overdue` | workflow | apps/web/src/api/workflow/monitor.ts | 60 |
+| 2451 | GET | `/api/core/flow/monitor/statistics` | workflow | apps/web/src/api/workflow/monitor.ts | 64 |
+| 2452 | GET | `/api/core/flow/monitor/analysis/{workflowId}` | workflow | apps/web/src/api/workflow/monitor.ts | 68 |
+| 2453 | GET | `/api/core/flow/monitor/analysis/{workflowId}/nodes` | workflow | apps/web/src/api/workflow/monitor.ts | 74 |
+| 2454 | GET | `/api/core/flow/monitor/analysis/{workflowId}/bottlenecks` | workflow | apps/web/src/api/workflow/monitor.ts | 78 |
+| 2455 | GET | `/api/core/flow/monitor/analysis/efficiency` | workflow | apps/web/src/api/workflow/monitor.ts | 82 |
+| 2456 | GET | `/api/core/flow/monitor/analysis/trend` | workflow | apps/web/src/api/workflow/monitor.ts | 88 |
+| 2457 | GET | `/api/core/flow/monitor/analysis/users` | workflow | apps/web/src/api/workflow/monitor.ts | 94 |
+| 2458 | GET | `/api/core/flow/monitor/analysis/departments` | workflow | apps/web/src/api/workflow/monitor.ts | 100 |
+| 2459 | GET | `/api/core/flow/monitor/logs` | workflow | apps/web/src/api/workflow/monitor.ts | 106 |
+| 2460 | GET | `/api/core/flow/monitor/logs/{id}` | workflow | apps/web/src/api/workflow/monitor.ts | 110 |
+| 2461 | GET | `/api/core/flow/monitor/logs/instance/{instanceId}` | workflow | apps/web/src/api/workflow/monitor.ts | 114 |
+| 2462 | GET | `/api/core/flow/monitor/logs/workflow/{workflowId}` | workflow | apps/web/src/api/workflow/monitor.ts | 118 |
+| 2463 | GET | `/api/core/flow/monitor/logs/node/{workflowId}/{nodeId}` | workflow | apps/web/src/api/workflow/monitor.ts | 122 |
+| 2464 | GET | `/api/core/flow/monitor/logs/user/{userId}` | workflow | apps/web/src/api/workflow/monitor.ts | 126 |
+| 2465 | GET | `/api/core/flow/monitor/realtime` | workflow | apps/web/src/api/workflow/monitor.ts | 130 |
+| 2466 | GET | `/api/core/flow/monitor/dashboard` | workflow | apps/web/src/api/workflow/monitor.ts | 134 |
+| 2467 | GET | `/api/core/flow/monitor/performance` | workflow | apps/web/src/api/workflow/monitor.ts | 138 |
+| 2468 | GET | `/api/core/flow/monitor/sla-compliance` | workflow | apps/web/src/api/workflow/monitor.ts | 142 |
+| 2469 | GET | `/api/core/flow/monitor/instances/error` | workflow | apps/web/src/api/workflow/monitor.ts | 146 |
+| 2470 | POST | `/api/core/flow/monitor/instances/{id}/retry` | workflow | apps/web/src/api/workflow/monitor.ts | 150 |
+| 2471 | POST | `/api/core/flow/monitor/instances/{id}/skip` | workflow | apps/web/src/api/workflow/monitor.ts | 154 |
+| 2472 | POST | `/api/core/flow/monitor/instances/{id}/force-complete` | workflow | apps/web/src/api/workflow/monitor.ts | 158 |
+| 2473 | POST | `/api/core/flow/monitor/instances/{id}/force-terminate` | workflow | apps/web/src/api/workflow/monitor.ts | 162 |
+| 2474 | GET | `/api/core/flow/rules/workflow/{workflowId}` | workflow | apps/web/src/api/workflow/rule.ts | 20 |
+| 2475 | GET | `/api/core/flow/rules/node/{workflowId}/{nodeId}` | workflow | apps/web/src/api/workflow/rule.ts | 24 |
+| 2476 | GET | `/api/core/flow/rules/type` | workflow | apps/web/src/api/workflow/rule.ts | 28 |
+| 2477 | POST | `/api/core/flow/rules/{id}/activate` | workflow | apps/web/src/api/workflow/rule.ts | 34 |
+| 2478 | POST | `/api/core/flow/rules/{id}/deactivate` | workflow | apps/web/src/api/workflow/rule.ts | 38 |
+| 2479 | POST | `/api/core/flow/rules/batch` | workflow | apps/web/src/api/workflow/rule.ts | 42 |
+| 2480 | POST | `/api/core/flow/rules/{id}/test` | workflow | apps/web/src/api/workflow/rule.ts | 46 |
+| 2481 | GET | `/api/core/flow/settings` | workflow | apps/web/src/api/workflow/setting.ts | 6 |
+| 2482 | GET | `/api/core/flow/settings/{id}` | workflow | apps/web/src/api/workflow/setting.ts | 10 |
+| 2483 | PUT | `/api/core/flow/settings/{id}` | workflow | apps/web/src/api/workflow/setting.ts | 14 |
+| 2484 | GET | `/api/core/flow/settings/key/{key}` | workflow | apps/web/src/api/workflow/setting.ts | 18 |
+| 2485 | POST | `/api/core/flow/settings/batch` | workflow | apps/web/src/api/workflow/setting.ts | 22 |
+| 2486 | POST | `/api/core/flow/settings/{id}/reset` | workflow | apps/web/src/api/workflow/setting.ts | 26 |
+| 2487 | GET | `/api/core/flow/tasks` | workflow | apps/web/src/api/workflow/task.ts | 15 |
+| 2488 | GET | `/api/core/flow/tasks/{id}` | workflow | apps/web/src/api/workflow/task.ts | 19 |
+| 2489 | GET | `/api/core/flow/tasks` | workflow | apps/web/src/api/workflow/task.ts | 23 |
+| 2490 | GET | `/api/core/flow/tasks/{id}` | workflow | apps/web/src/api/workflow/task.ts | 27 |
+| 2491 | POST | `/api/core/flow/tasks/{id}/claim` | workflow | apps/web/src/api/workflow/task.ts | 31 |
+| 2492 | POST | `/api/core/flow/tasks/{id}/unclaim` | workflow | apps/web/src/api/workflow/task.ts | 35 |
+| 2493 | POST | `/api/core/flow/tasks/{id}/complete` | workflow | apps/web/src/api/workflow/task.ts | 42 |
+| 2494 | POST | `/api/core/flow/tasks/{id}/approve` | workflow | apps/web/src/api/workflow/task.ts | 46 |
+| 2495 | POST | `/api/core/flow/tasks/{id}/reject` | workflow | apps/web/src/api/workflow/task.ts | 50 |
+| 2496 | POST | `/api/core/flow/tasks/{id}/delegate` | workflow | apps/web/src/api/workflow/task.ts | 54 |
+| 2497 | POST | `/api/core/flow/tasks/{id}/transfer` | workflow | apps/web/src/api/workflow/task.ts | 58 |
+| 2498 | POST | `/api/core/flow/tasks/{id}/reassign` | workflow | apps/web/src/api/workflow/task.ts | 65 |
+| 2499 | POST | `/api/core/flow/tasks/{id}/add-sign` | workflow | apps/web/src/api/workflow/task.ts | 69 |
+| 2500 | POST | `/api/core/flow/tasks/{id}/counter-sign` | workflow | apps/web/src/api/workflow/task.ts | 73 |
+| 2501 | POST | `/api/core/flow/tasks/{id}/withdraw` | workflow | apps/web/src/api/workflow/task.ts | 77 |
+| 2502 | POST | `/api/core/flow/tasks/{id}/return` | workflow | apps/web/src/api/workflow/task.ts | 81 |
+| 2503 | POST | `/api/core/flow/tasks/{id}/jump` | workflow | apps/web/src/api/workflow/task.ts | 85 |
+| 2504 | POST | `/api/core/flow/tasks/{id}/urge` | workflow | apps/web/src/api/workflow/task.ts | 89 |
+| 2505 | POST | `/api/core/flow/tasks/batch/approve` | workflow | apps/web/src/api/workflow/task.ts | 93 |
+| 2506 | POST | `/api/core/flow/tasks/batch/complete` | workflow | apps/web/src/api/workflow/task.ts | 100 |
+| 2507 | POST | `/api/core/flow/tasks/batch/delegate` | workflow | apps/web/src/api/workflow/task.ts | 111 |
+| 2508 | GET | `/api/core/flow/tasks/my` | workflow | apps/web/src/api/workflow/task.ts | 118 |
+| 2509 | GET | `/api/core/flow/tasks/my/pending` | workflow | apps/web/src/api/workflow/task.ts | 122 |
+| 2510 | GET | `/api/core/flow/tasks/my/completed` | workflow | apps/web/src/api/workflow/task.ts | 126 |
+| 2511 | GET | `/api/core/flow/tasks/my/involved` | workflow | apps/web/src/api/workflow/task.ts | 130 |
+| 2512 | GET | `/api/core/flow/tasks/my/created` | workflow | apps/web/src/api/workflow/task.ts | 134 |
+| 2513 | GET | `/api/core/flow/tasks/candidate` | workflow | apps/web/src/api/workflow/task.ts | 138 |
+| 2514 | GET | `/api/core/flow/tasks/{taskId}/comments` | workflow | apps/web/src/api/workflow/task.ts | 142 |
+| 2515 | POST | `/api/core/flow/tasks/{taskId}/comments` | workflow | apps/web/src/api/workflow/task.ts | 146 |
+| 2516 | GET | `/api/core/flow/tasks/{taskId}/attachments` | workflow | apps/web/src/api/workflow/task.ts | 150 |
+| 2517 | POST | `/api/core/flow/tasks/{taskId}/attachments` | workflow | apps/web/src/api/workflow/task.ts | 154 |
+| 2518 | DELETE | `/api/core/flow/tasks/{taskId}/attachments/{attachmentId}` | workflow | apps/web/src/api/workflow/task.ts | 158 |
+| 2519 | GET | `/api/core/flow/tasks/{taskId}/form` | workflow | apps/web/src/api/workflow/task.ts | 162 |
+| 2520 | POST | `/api/core/flow/tasks/{taskId}/form` | workflow | apps/web/src/api/workflow/task.ts | 166 |
+| 2521 | GET | `/api/core/flow/tasks/{taskId}/variables` | workflow | apps/web/src/api/workflow/task.ts | 170 |
+| 2522 | POST | `/api/core/flow/tasks/{taskId}/variables` | workflow | apps/web/src/api/workflow/task.ts | 174 |
+| 2523 | GET | `/api/core/flow/tasks/count` | workflow | apps/web/src/api/workflow/task.ts | 178 |
+| 2524 | GET | `/api/core/flow/tasks/my/count` | workflow | apps/web/src/api/workflow/task.ts | 182 |
+| 2525 | GET | `/api/core/flow/tasks/high-priority` | workflow | apps/web/src/api/workflow/task.ts | 186 |
+| 2526 | GET | `/api/core/flow/tasks/overdue` | workflow | apps/web/src/api/workflow/task.ts | 190 |
+| 2527 | GET | `/api/core/flow/tasks/due-soon` | workflow | apps/web/src/api/workflow/task.ts | 194 |
+| 2528 | GET | `/api/core/flow/tasks/{taskId}/timeline` | workflow | apps/web/src/api/workflow/task.ts | 198 |
+| 2529 | GET | `/api/core/flow/tasks/{taskId}/history` | workflow | apps/web/src/api/workflow/task.ts | 202 |
+| 2530 | GET | `/api/core/flow/tasks/my/pending` | workflow | apps/web/src/api/workflow/task.ts | 206 |
+| 2531 | GET | `/api/core/flow/tasks/my/completed` | workflow | apps/web/src/api/workflow/task.ts | 210 |
+| 2532 | GET | `/api/core/flow/tasks/my/created` | workflow | apps/web/src/api/workflow/task.ts | 214 |
+| 2533 | GET | `/api/core/flow/tasks/my/cc` | workflow | apps/web/src/api/workflow/task.ts | 218 |
+| 2534 | GET | `/api/core/flow/tasks/my/stats` | workflow | apps/web/src/api/workflow/task.ts | 222 |
+| 2535 | GET | `/api/core/flow/templates` | workflow | apps/web/src/api/workflow/template.ts | 6 |
+| 2536 | GET | `/api/core/flow/templates/{id}` | workflow | apps/web/src/api/workflow/template.ts | 10 |
+| 2537 | POST | `/api/core/flow/templates` | workflow | apps/web/src/api/workflow/template.ts | 14 |
+| 2538 | PUT | `/api/core/flow/templates/{id}` | workflow | apps/web/src/api/workflow/template.ts | 18 |
+| 2539 | DELETE | `/api/core/flow/templates/{id}` | workflow | apps/web/src/api/workflow/template.ts | 22 |
+| 2540 | POST | `/api/core/flow/templates/{id}/copy` | workflow | apps/web/src/api/workflow/template.ts | 26 |
+| 2541 | GET | `/api/core/flow/templates/{id}/export` | workflow | apps/web/src/api/workflow/template.ts | 30 |
+| 2542 | POST | `/api/core/flow/templates/import` | workflow | apps/web/src/api/workflow/template.ts | 34 |
+| 2543 | GET | `/api/core/flow/{endpoint}/{id}` | workflow | apps/web/src/api/workflow/utils.ts | 35 |
+| 2544 | PUT | `/api/core/flow/{endpoint}/{id}` | workflow | apps/web/src/api/workflow/utils.ts | 43 |
+| 2545 | DELETE | `/api/core/flow/{endpoint}/{id}` | workflow | apps/web/src/api/workflow/utils.ts | 47 |
+| 2546 | GET | `/api/core/flow/variables/instance/{instanceId}` | workflow | apps/web/src/api/workflow/variable.ts | 6 |
+| 2547 | GET | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 10 |
+| 2548 | POST | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 14 |
+| 2549 | DELETE | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 21 |
+| 2550 | GET | `/api/core/flow/variables/instance/{instanceId}` | workflow | apps/web/src/api/workflow/variable.ts | 25 |
+| 2551 | GET | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 29 |
+| 2552 | POST | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 33 |
+| 2553 | POST | `/api/core/flow/variables/instance/{instanceId}` | workflow | apps/web/src/api/workflow/variable.ts | 40 |
+| 2554 | DELETE | `/api/core/flow/variables/instance/{instanceId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 44 |
+| 2555 | GET | `/api/core/flow/variables/task/{taskId}` | workflow | apps/web/src/api/workflow/variable.ts | 48 |
+| 2556 | POST | `/api/core/flow/variables/task/{taskId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 52 |
+| 2557 | POST | `/api/core/flow/variables/global/{workflowId}/{key}` | workflow | apps/web/src/api/workflow/variable.ts | 64 |
+| 2558 | GET | `/api/core/flow/variables/instance/{instanceId}/scope/{scope}` | workflow | apps/web/src/api/workflow/variable.ts | 71 |
+| 2559 | GET | `/api/core/flow/variables/instance/{instanceId}/{key}/history` | workflow | apps/web/src/api/workflow/variable.ts | 75 |
 
 ## 3. 方法不匹配（路径匹配但 HTTP 方法不一致）
 
-共 27 个不匹配：
-
-| # | 前端方法 | OpenAPI 方法 | 路径 | operationId | 文件 | 行号 |
-|---|----------|-------------|------|-------------|------|------|
-| 1 | POST | GET | `/api/ai/documents` | _document_list | apps/web/src/api/ai/documents.ts | 34 |
-| 2 | PUT | GET, DELETE | `/api/ai/documents/{id}` | _document_get, _document_delete | apps/web/src/api/ai/documents.ts | 38 |
-| 3 | PUT | GET | `/api/crm/customers/{id}` | get_customer | apps/web/src/api/crm/customer.ts | 56 |
-| 4 | DELETE | GET | `/api/crm/customers/{id}` | get_customer | apps/web/src/api/crm/customer.ts | 60 |
-| 5 | POST | GET | `/api/crm/opportunities` | list_opportunities | apps/web/src/api/crm/opportunity.ts | 32 |
-| 6 | POST | GET | `/api/ehs/hazardous-materials/categories` | list_material_categories | apps/web/src/api/ehs/hazardousMaterial.ts | 71 |
-| 7 | GET | PUT, DELETE | `/api/ehs/occupational-health/contraindications/{id}` | update_contraindication, delete_contraindication | apps/web/src/api/ehs/occupationalHealth.ts | 156 |
-| 8 | PUT | GET | `/api/erp/meeting-rooms/{id}` | get_room | apps/web/src/api/erp/admin/meeting.ts | 27 |
-| 9 | DELETE | GET | `/api/erp/meeting-rooms/{id}` | get_room | apps/web/src/api/erp/admin/meeting.ts | 31 |
-| 10 | PUT | GET | `/api/erp/inventory/{id}` | get_inventory | apps/web/src/api/erp/core/inventory.ts | 38 |
-| 11 | DELETE | GET | `/api/erp/inventory/{id}` | get_inventory | apps/web/src/api/erp/core/inventory.ts | 42 |
-| 12 | PUT | GET | `/api/erp/purchase-orders/{id}` | get_purchase_order | apps/web/src/api/erp/core/purchaseOrder.ts | 38 |
-| 13 | DELETE | GET | `/api/erp/purchase-orders/{id}` | get_purchase_order | apps/web/src/api/erp/core/purchaseOrder.ts | 42 |
-| 14 | PUT | POST | `/api/erp/purchase-orders/{id}/approve` | approve_purchase_order | apps/web/src/api/erp/core/purchaseOrder.ts | 46 |
-| 15 | PUT | GET | `/api/erp/sales-orders/{id}` | get_sales_order | apps/web/src/api/erp/core/salesOrder.ts | 38 |
-| 16 | DELETE | GET | `/api/erp/sales-orders/{id}` | get_sales_order | apps/web/src/api/erp/core/salesOrder.ts | 42 |
-| 17 | PUT | GET | `/api/erp/assets/{id}` | get_asset | apps/web/src/api/erp/finance/asset.ts | 34 |
-| 18 | DELETE | GET | `/api/erp/assets/{id}` | get_asset | apps/web/src/api/erp/finance/asset.ts | 38 |
-| 19 | PUT | GET | `/api/hrm/companies/{id}` | get_company | apps/web/src/api/hrm/company.ts | 51 |
-| 20 | DELETE | GET | `/api/hrm/companies/{id}` | get_company | apps/web/src/api/hrm/company.ts | 55 |
-| 21 | PUT | GET | `/api/hrm/departments/{id}` | get_department | apps/web/src/api/hrm/department.ts | 50 |
-| 22 | DELETE | GET | `/api/hrm/departments/{id}` | get_department | apps/web/src/api/hrm/department.ts | 54 |
-| 23 | POST | GET | `/api/lowcode/apps` | list_apps | apps/web/src/api/lowcode/apps.ts | 31 |
-| 24 | PUT | GET | `/api/qms/checks/{id}` | get_inspection | apps/web/src/api/qms/inspection.ts | 55 |
-| 25 | DELETE | GET | `/api/qms/checks/{id}` | get_inspection | apps/web/src/api/qms/inspection.ts | 66 |
-| 26 | PUT | GET | `/api/qms/standards/{id}` | get_standard | apps/web/src/api/qms/standard.ts | 52 |
-| 27 | DELETE | GET | `/api/qms/standards/{id}` | get_standard | apps/web/src/api/qms/standard.ts | 63 |
+> 无发现。所有匹配路径的 HTTP 方法一致。
 
 ## 5. 方法论
 

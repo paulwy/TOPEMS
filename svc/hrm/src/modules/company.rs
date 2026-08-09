@@ -265,6 +265,20 @@ async fn get_company(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/companies/{id}",
+    tag = "companies",
+    params(
+        ("id" = Uuid, Path, description = "公司ID"),
+    ),
+    request_body = UpdateCompanyRequest,
+    responses(
+        (status = 200, description = "公司更新成功", body = ApiResponse<Company>),
+        (status = 404, description = "公司不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn update_company(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -374,6 +388,19 @@ async fn update_company(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/companies/{id}",
+    tag = "companies",
+    params(
+        ("id" = Uuid, Path, description = "公司ID"),
+    ),
+    responses(
+        (status = 200, description = "公司删除成功", body = ApiResponse<()>),
+        (status = 404, description = "公司不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn delete_company(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

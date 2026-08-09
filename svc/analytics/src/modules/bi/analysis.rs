@@ -28,7 +28,6 @@ pub async fn list_analyses(
     post,
     path = "/api/bi/analysis",
     tag = "Analytics",
-    request_body = serde_json::Value,
     responses(
         (status = 200, description = "Created successfully", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -49,7 +48,6 @@ pub async fn create_analysis(
     get,
     path = "/api/bi/analysis/{id}",
     tag = "Analytics",
-    params(("id" = uuid::Uuid, Path, description = "Analysis ID")),
     responses(
         (status = 200, description = "Success", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -70,8 +68,6 @@ pub async fn get_analysis(
     post,
     path = "/api/bi/analysis/{id}/execute",
     tag = "Analytics",
-    params(("id" = uuid::Uuid, Path, description = "Analysis ID")),
-    request_body = serde_json::Value,
     responses(
         (status = 200, description = "Executed successfully", body = serde_json::Value),
         (status = 500, description = "Internal server error")

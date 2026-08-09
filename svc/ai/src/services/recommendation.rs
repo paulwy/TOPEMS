@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use sqlx::Row;
 use uuid::Uuid;
 
 use super::{db::Database, qa::QAService};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct RecommendationRequest {
     pub user_id: Option<Uuid>,
     pub tenant_id: Uuid,

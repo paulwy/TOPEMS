@@ -4,10 +4,11 @@ pub mod audit_log;
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use std::sync::{Arc, Mutex};
 
 // AI 生成请求
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AIGenerateRequest {
     pub template_id: Option<String>,
     pub variables: serde_json::Value,
@@ -21,7 +22,7 @@ pub struct AIGenerateResponse {
 }
 
 // 数据验证请求
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ValidateRequest {
     pub data: serde_json::Value,
     pub context: Option<serde_json::Value>,
@@ -41,7 +42,7 @@ pub struct ValidationIssue {
 }
 
 // 数据补全请求
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CompleteRequest {
     pub data: Option<serde_json::Value>,
     pub partial_data: Option<serde_json::Value>,
@@ -62,7 +63,7 @@ pub struct Suggestion {
 }
 
 // 摘要请求
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SummarizeRequest {
     pub text: String,
     pub max_length: Option<i32>,
@@ -198,7 +199,7 @@ pub struct Config {
     pub embedding_model: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ChatRequest {
     pub query: String,
     pub conversation_id: Option<String>,
@@ -228,7 +229,7 @@ pub struct ChunkInfo {
     pub metadata: serde_json::Value,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub enum ConnectorType {
     Database,
     Api,
@@ -237,7 +238,7 @@ pub enum ConnectorType {
     CloudStorage,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub enum DatabaseType {
     Postgres,
     Mysql,
@@ -245,7 +246,7 @@ pub enum DatabaseType {
     SqlServer,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ConnectorConfig {
     pub host: Option<String>,
     pub port: Option<u16>,
@@ -272,7 +273,7 @@ pub struct DataConnector {
     pub updated_at: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CreateConnectorRequest {
     pub name: String,
     pub connector_type: ConnectorType,
@@ -281,7 +282,7 @@ pub struct CreateConnectorRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct UpdateConnectorRequest {
     pub name: Option<String>,
     pub config: Option<ConnectorConfig>,
@@ -289,7 +290,7 @@ pub struct UpdateConnectorRequest {
     pub is_active: Option<bool>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DataQueryRequest {
     pub connector_id: String,
     pub query: String,
@@ -319,7 +320,7 @@ pub struct ConnectorQuery {
     pub id: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AiSearchRequest {
     pub query: String,
     pub limit: Option<usize>,
@@ -353,7 +354,7 @@ pub struct AiSearchResponse {
 }
 
 // AI 智能助手 - 报表助手
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ReportAssistantRequest {
     pub query: String,
     pub data_source: Option<String>,
@@ -381,7 +382,7 @@ pub struct ReportAssistantResponse {
 }
 
 // AI 智能助手 - 流程助手
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct FlowAssistantRequest {
     pub query: String,
     pub module: Option<String>,
@@ -407,7 +408,7 @@ pub struct FlowAssistantResponse {
 }
 
 // AI 智能助手 - 异常预测
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AnomalyPredictRequest {
     pub metric: String,
     pub time_range: Option<String>,
@@ -434,7 +435,7 @@ pub struct AnomalyPredictResponse {
 }
 
 // AI 智能助手 - 知识库问答
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct KnowledgeAskRequest {
     pub question: String,
     pub knowledge_base: Option<String>,

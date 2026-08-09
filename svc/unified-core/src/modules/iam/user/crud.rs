@@ -150,7 +150,7 @@ struct CreateUserRequest {
     post,
     path = "/users",
     tag = "IAM",
-    request_body = CreateUserRequest,
+    request_body = serde_json::Value,
     responses(
         (status = 201, description = "创建成功"),
         (status = 400, description = "参数错误"),

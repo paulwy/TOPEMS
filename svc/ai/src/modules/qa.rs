@@ -1,5 +1,6 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -15,7 +16,7 @@ pub fn get_tenant_id(claims: &Claims) -> Uuid {
         .unwrap_or(Uuid::nil())
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct AskStructuredRequest {
     pub question: String,
     pub document_ids: Option<Vec<Uuid>>,
@@ -31,7 +32,7 @@ pub struct AskStructuredResponse {
     pub follow_up_questions: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct AskWithConversationRequest {
     pub question: String,
     pub history: Vec<HistoryItem>,
@@ -39,13 +40,13 @@ pub struct AskWithConversationRequest {
     pub top_k: Option<usize>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct HistoryItem {
     pub question: String,
     pub answer: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ClassifyRequest {
     pub question: String,
 }
@@ -62,7 +63,7 @@ pub struct QaHistoryQuery {
     pub query: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct BatchDeleteRequest {
     pub ids: Vec<Uuid>,
 }

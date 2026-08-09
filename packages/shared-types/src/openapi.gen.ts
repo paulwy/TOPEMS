@@ -1,8 +1,8 @@
 /**
  * 此文件由 scripts/openapi/gen-types.mjs 自动生成，请勿手动编辑。
- * 生成时间: 2026-08-09T21:51:36.186Z
+ * 生成时间: 2026-08-09T22:16:45.266Z
  * 输入源: /Users/xingzhai/TOPEMS/docs/api/openapi-aggregated.json
- * 路径数: 459 | Schema 数: 426
+ * 路径数: 459 | Schema 数: 480
  */
 
 /**
@@ -436,7 +436,7 @@ export interface paths {
         };
         get: operations["_document_list"];
         put?: never;
-        post?: never;
+        post: operations["_document_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -499,7 +499,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["_document_get"];
-        put?: never;
+        put: operations["_document_update"];
         post?: never;
         delete: operations["_document_delete"];
         options?: never;
@@ -1497,7 +1497,8 @@ export interface paths {
         /** 获取当前用户的通知列表（兼容旧API） */
         get: operations["get_notifications"];
         put?: never;
-        post?: never;
+        /** 创建通知（兼容前端 POST /notification/notifications 路径） */
+        post: operations["create_notification"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1513,9 +1514,11 @@ export interface paths {
         };
         /** 获取单个通知详情 */
         get: operations["get_notification"];
-        put?: never;
+        /** 标记单个通知为已读 */
+        put: operations["mark_as_read"];
         post?: never;
-        delete?: never;
+        /** 删除指定通知 */
+        delete: operations["delete_notification"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1595,9 +1598,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_customer"];
-        put?: never;
+        put: operations["update_customer"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_customer"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1612,7 +1615,7 @@ export interface paths {
         };
         get: operations["list_opportunities"];
         put?: never;
-        post?: never;
+        post: operations["create_opportunity"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1882,7 +1885,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ehs_list_plans"];
+        get: operations["ehs_list_plans_api_ehs_emergency-plans"];
         put?: never;
         post: operations["ehs_create_plan_api_ehs_emergency-plans"];
         delete?: never;
@@ -1914,7 +1917,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ehs_get_plan"];
+        get: operations["ehs_get_plan_api_ehs_emergency-plans_{id}"];
         put: operations["ehs_update_plan_api_ehs_emergency-plans_{id}"];
         post?: never;
         delete: operations["ehs_delete_plan_api_ehs_emergency-plans_{id}"];
@@ -2252,7 +2255,7 @@ export interface paths {
         };
         get: operations["list_material_categories"];
         put?: never;
-        post?: never;
+        post: operations["create_material_category"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3034,7 +3037,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["get_contraindication"];
         put: operations["update_contraindication"];
         post?: never;
         delete: operations["delete_contraindication"];
@@ -3435,9 +3438,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_asset"];
-        put?: never;
+        put: operations["update_asset"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_asset"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3467,9 +3470,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["erp_get_customer"];
-        put: operations["update_customer"];
+        put: operations["erp_update_customer"];
         post?: never;
-        delete: operations["delete_customer"];
+        delete: operations["erp_delete_customer"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3499,9 +3502,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_inventory"];
-        put?: never;
+        put: operations["update_inventory"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_inventory"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3547,9 +3550,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_room"];
-        put?: never;
+        put: operations["update_room"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_room"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3579,9 +3582,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_purchase_order"];
-        put?: never;
+        put: operations["update_purchase_order"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_purchase_order"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3595,8 +3598,8 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
-        post: operations["approve_purchase_order"];
+        put: operations["approve_purchase_order"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3627,9 +3630,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_sales_order"];
-        put?: never;
+        put: operations["update_sales_order"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_sales_order"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4053,9 +4056,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_company"];
-        put?: never;
+        put: operations["update_company"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_company"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4085,9 +4088,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_department"];
-        put?: never;
+        put: operations["update_department"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_department"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4854,7 +4857,7 @@ export interface paths {
         };
         get: operations["list_apps"];
         put?: never;
-        post?: never;
+        post: operations["create_app"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6907,9 +6910,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_inspection"];
-        put?: never;
+        put: operations["update_inspection"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_inspection"];
         options?: never;
         head?: never;
         patch?: never;
@@ -6955,9 +6958,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_standard"];
-        put?: never;
+        put: operations["update_standard"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_standard"];
         options?: never;
         head?: never;
         patch?: never;
@@ -7339,9 +7342,9 @@ export interface paths {
             cookie?: never;
         };
         get: operations["wms_get_inventory"];
-        put: operations["update_inventory"];
+        put: operations["wms_update_inventory"];
         post?: never;
-        delete: operations["delete_inventory"];
+        delete: operations["wms_delete_inventory"];
         options?: never;
         head?: never;
         patch?: never;
@@ -7390,11 +7393,51 @@ export interface components {
             name: string;
             owner_id: string;
         };
+        CreateReportRequest: {
+            config?: unknown;
+            datasource_id: components["schemas"]["Uuid"];
+            description?: string | null;
+            fields: unknown;
+            filters?: unknown;
+            is_public?: boolean | null;
+            name: string;
+            owner_id: string;
+        };
+        CreateWidgetRequest: {
+            /** Format: int32 */
+            cache_ttl_seconds?: number | null;
+            config?: unknown;
+            dashboard_id: components["schemas"]["Uuid"];
+            datasource_id?: components["schemas"]["Uuid"] | null;
+            name: string;
+            position?: unknown;
+            query_config?: unknown;
+            widget_type: string;
+        };
         UpdateDashboardRequest: {
             description?: string | null;
             is_public?: boolean | null;
             layout?: unknown;
             name?: string | null;
+        };
+        UpdateReportRequest: {
+            config?: unknown;
+            datasource_id?: components["schemas"]["Uuid"] | null;
+            description?: string | null;
+            fields?: unknown;
+            filters?: unknown;
+            is_public?: boolean | null;
+            name?: string | null;
+        };
+        UpdateWidgetRequest: {
+            /** Format: int32 */
+            cache_ttl_seconds?: number | null;
+            config?: unknown;
+            datasource_id?: components["schemas"]["Uuid"] | null;
+            name?: string | null;
+            position?: unknown;
+            query_config?: unknown;
+            widget_type?: string | null;
         };
         BillingPlan: {
             code: string;
@@ -7785,6 +7828,33 @@ export interface components {
             /** Format: double */
             unit_price?: number | null;
         };
+        CreatePurchaseOrderRequest: {
+            delivery_date?: components["schemas"]["DateTime"] | null;
+            /** Format: double */
+            discount_rate?: number | null;
+            items: components["schemas"]["PurchaseOrderItem"][];
+            order_date: components["schemas"]["DateTime"];
+            remark?: string | null;
+            supplier_id: components["schemas"]["Uuid"];
+            /** Format: double */
+            tax_rate?: number | null;
+        };
+        CreateSalesOrderRequest: {
+            customer_id: components["schemas"]["Uuid"];
+            delivery_date?: components["schemas"]["DateTime"] | null;
+            /** Format: double */
+            discount_amount?: number | null;
+            order_date?: components["schemas"]["DateTime"] | null;
+            order_no: string;
+            /** Format: double */
+            payable_amount?: number | null;
+            remark?: string | null;
+            status?: string | null;
+            /** Format: double */
+            tax_amount?: number | null;
+            /** Format: double */
+            total_amount?: number | null;
+        };
         CreateSupplierRequest: {
             address?: string | null;
             city?: string | null;
@@ -7987,6 +8057,36 @@ export interface components {
             serial_number?: string | null;
             specifications?: unknown;
             status?: string | null;
+        };
+        UpdateInventoryRequest: {
+            batch_no?: string | null;
+            expire_date?: components["schemas"]["DateTime"] | null;
+            location_code?: string | null;
+            /** Format: double */
+            quantity?: number | null;
+            status?: string | null;
+            /** Format: double */
+            unit_price?: number | null;
+            warehouse_id?: components["schemas"]["Uuid"] | null;
+        };
+        UpdatePurchaseOrderRequest: {
+            delivery_date?: components["schemas"]["DateTime"] | null;
+            remark?: string | null;
+            supplier_name?: string | null;
+        };
+        UpdateSalesOrderRequest: {
+            customer_id?: components["schemas"]["Uuid"] | null;
+            delivery_date?: components["schemas"]["DateTime"] | null;
+            /** Format: double */
+            discount_amount?: number | null;
+            /** Format: double */
+            payable_amount?: number | null;
+            remark?: string | null;
+            status?: string | null;
+            /** Format: double */
+            tax_amount?: number | null;
+            /** Format: double */
+            total_amount?: number | null;
         };
         Vehicle: {
             brand?: string | null;
@@ -8353,6 +8453,26 @@ export interface components {
             thumbnail_url?: string | null;
             title: string;
         };
+        CreateLocation: {
+            address?: string | null;
+            code?: string | null;
+            description?: string | null;
+            location_type: string;
+            name: string;
+            position: unknown;
+            properties?: unknown;
+        };
+        CreateMap: {
+            bounds?: unknown;
+            center?: unknown;
+            code: string;
+            description?: string | null;
+            map_type: string;
+            name: string;
+            projection?: string | null;
+            /** Format: int32 */
+            zoom_level?: number | null;
+        };
         CreateTrackRequest: {
             device_id: components["schemas"]["Uuid"];
             device_name: string;
@@ -8528,6 +8648,17 @@ export interface components {
             total_distance: number;
             /** Format: int64 */
             total_duration: number;
+        };
+        UpdateMap: {
+            bounds?: unknown;
+            center?: unknown;
+            description?: string | null;
+            map_type: string;
+            name: string;
+            projection?: string | null;
+            status?: string | null;
+            /** Format: int32 */
+            zoom_level?: number | null;
         };
         ContractRenewal: {
             approved_at?: components["schemas"]["DateTime"] | null;
@@ -12776,6 +12907,96 @@ export interface components {
             /** Format: uuid */
             created_by?: string;
         };
+        /** @description Auto-injected stub for missing $ref target: crate.services.AgentRequest */
+        "crate.services.AgentRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.ClassifyTextRequest */
+        "crate.modules.models.ClassifyTextRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.ExtractEntitiesRequest */
+        "crate.modules.models.ExtractEntitiesRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.AnalysisHistoryRequest */
+        "crate.modules.models.AnalysisHistoryRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.ExtractKeywordsRequest */
+        "crate.modules.models.ExtractKeywordsRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.SentimentAnalysisRequest */
+        "crate.modules.models.SentimentAnalysisRequest": string;
+        /** @description Auto-injected stub for missing $ref target: AnomalyPredictRequest */
+        AnomalyPredictRequest: string;
+        /** @description Auto-injected stub for missing $ref target: FlowAssistantRequest */
+        FlowAssistantRequest: string;
+        /** @description Auto-injected stub for missing $ref target: KnowledgeAskRequest */
+        KnowledgeAskRequest: string;
+        /** @description Auto-injected stub for missing $ref target: ReportAssistantRequest */
+        ReportAssistantRequest: string;
+        /** @description Auto-injected stub for missing $ref target: ChatRequest */
+        ChatRequest: string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.code_assistant.CodeExplainRequest */
+        "crate.modules.code_assistant.CodeExplainRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.code_assistant.CodeFixRequest */
+        "crate.modules.code_assistant.CodeFixRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.code_assistant.CodeGenerateRequest */
+        "crate.modules.code_assistant.CodeGenerateRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.code_assistant.CodeOptimizeRequest */
+        "crate.modules.code_assistant.CodeOptimizeRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.code_assistant.CodeReviewRequest */
+        "crate.modules.code_assistant.CodeReviewRequest": string;
+        /** @description Auto-injected stub for missing $ref target: CompleteRequest */
+        CompleteRequest: string;
+        /** @description Auto-injected stub for missing $ref target: CreateConnectorRequest */
+        CreateConnectorRequest: string;
+        /** @description Auto-injected stub for missing $ref target: DataQueryRequest */
+        DataQueryRequest: string;
+        /** @description Auto-injected stub for missing $ref target: UpdateConnectorRequest */
+        UpdateConnectorRequest: string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.DocumentQAQuestionRequest */
+        "crate.modules.models.DocumentQAQuestionRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.VectorizeFromFileRequest */
+        "crate.modules.models.VectorizeFromFileRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.ExtractDocumentRequest */
+        "crate.modules.models.ExtractDocumentRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.ExtractKeyPointsRequest */
+        "crate.modules.models.ExtractKeyPointsRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.ProcessDocumentRequest */
+        "crate.modules.models.ProcessDocumentRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.SummarizeDocumentRequest */
+        "crate.modules.models.SummarizeDocumentRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.embedding.EmbeddingRequest */
+        "crate.modules.embedding.EmbeddingRequest": string;
+        /** @description Auto-injected stub for missing $ref target: AIGenerateRequest */
+        AIGenerateRequest: string;
+        /** @description Auto-injected stub for missing $ref target: crate.services.multimodal.ImageAnalysisRequest */
+        "crate.services.multimodal.ImageAnalysisRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.services.multimodal.VideoAnalysisRequest */
+        "crate.services.multimodal.VideoAnalysisRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.AskRequest */
+        "crate.modules.models.AskRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.qa.AskWithConversationRequest */
+        "crate.modules.qa.AskWithConversationRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.qa.AskStructuredRequest */
+        "crate.modules.qa.AskStructuredRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.AskWithContextRequest */
+        "crate.modules.models.AskWithContextRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.qa.ClassifyRequest */
+        "crate.modules.qa.ClassifyRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.FeedbackRequest */
+        "crate.modules.models.FeedbackRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.qa.BatchDeleteRequest */
+        "crate.modules.qa.BatchDeleteRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.services.recommendation.RecommendationRequest */
+        "crate.services.recommendation.RecommendationRequest": string;
+        /** @description Auto-injected stub for missing $ref target: SummarizeRequest */
+        SummarizeRequest: string;
+        /** @description Auto-injected stub for missing $ref target: ValidateRequest */
+        ValidateRequest: string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.BatchStoreVectorsRequest */
+        "crate.modules.models.BatchStoreVectorsRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.HybridSearchRequest */
+        "crate.modules.models.HybridSearchRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.VectorSearchRequest */
+        "crate.modules.models.VectorSearchRequest": string;
+        /** @description Auto-injected stub for missing $ref target: crate.modules.models.StoreVectorRequest */
+        "crate.modules.models.StoreVectorRequest": string;
+        /** @description Auto-injected stub for missing $ref target: AiSearchRequest */
+        AiSearchRequest: string;
         /** @description Auto-injected stub for missing $ref target: uuid.Uuid */
         "uuid.Uuid": string;
         /** @description Auto-injected stub for missing $ref target: ApprovalRequest */
@@ -12802,12 +13023,6 @@ export interface components {
         CreateResourceRequest: string;
         /** @description Auto-injected stub for missing $ref target: UpdateResourceRequest */
         UpdateResourceRequest: string;
-        /** @description Auto-injected stub for missing $ref target: LoginRequest */
-        LoginRequest: string;
-        /** @description Auto-injected stub for missing $ref target: RegisterRequest */
-        RegisterRequest: string;
-        /** @description Auto-injected stub for missing $ref target: CreateUserRequest */
-        CreateUserRequest: string;
         /** @description Auto-injected stub for missing $ref target: NaiveDate */
         NaiveDate: string;
         /** @description Auto-injected stub for missing $ref target: AutoFixActionType */
@@ -12852,7 +13067,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.services.AgentRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -12888,7 +13107,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.ClassifyTextRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -12906,7 +13129,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.ExtractEntitiesRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -12924,7 +13151,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.AnalysisHistoryRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -12942,7 +13173,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.ExtractKeywordsRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -12960,7 +13195,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.SentimentAnalysisRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -12978,7 +13217,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnomalyPredictRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -12996,7 +13239,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FlowAssistantRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13014,7 +13261,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KnowledgeAskRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13032,7 +13283,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportAssistantRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13050,7 +13305,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13068,7 +13327,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.code_assistant.CodeExplainRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13086,7 +13349,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.code_assistant.CodeFixRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13104,7 +13371,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.code_assistant.CodeGenerateRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13122,7 +13393,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.code_assistant.CodeOptimizeRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13140,7 +13415,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.code_assistant.CodeReviewRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13158,7 +13437,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13194,7 +13477,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateConnectorRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13248,7 +13535,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DataQueryRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13284,7 +13575,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateConnectorRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13313,7 +13608,7 @@ export interface operations {
             };
         };
     };
-    _document_qa: {
+    _document_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -13321,6 +13616,28 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    _document_qa: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.DocumentQAQuestionRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13356,7 +13673,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.VectorizeFromFileRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13368,6 +13689,24 @@ export interface operations {
         };
     };
     _document_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    _document_update: {
         parameters: {
             query?: never;
             header?: never;
@@ -13410,7 +13749,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.ExtractDocumentRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13428,7 +13771,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.ExtractKeyPointsRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13446,7 +13793,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.ProcessDocumentRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13464,7 +13815,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.SummarizeDocumentRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13482,7 +13837,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.embedding.EmbeddingRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13500,7 +13859,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AIGenerateRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13518,7 +13881,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.services.multimodal.ImageAnalysisRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13536,7 +13903,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.services.multimodal.ImageAnalysisRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13554,7 +13925,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.services.multimodal.ImageAnalysisRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13572,7 +13947,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.services.multimodal.ImageAnalysisRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13590,7 +13969,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.services.multimodal.ImageAnalysisRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13608,7 +13991,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.services.multimodal.VideoAnalysisRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13626,7 +14013,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.services.multimodal.VideoAnalysisRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13644,7 +14035,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13662,7 +14057,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13680,7 +14079,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.AskRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13698,7 +14101,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.qa.AskWithConversationRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13716,7 +14123,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.qa.AskStructuredRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13734,7 +14145,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.AskWithContextRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13752,7 +14167,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.qa.ClassifyRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13770,7 +14189,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.FeedbackRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13806,7 +14229,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.qa.BatchDeleteRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13842,7 +14269,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.services.recommendation.RecommendationRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13860,7 +14291,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13878,7 +14313,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13896,7 +14335,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13914,7 +14357,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SummarizeRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13950,7 +14397,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ValidateRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -13968,7 +14419,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.BatchStoreVectorsRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -14004,7 +14459,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.HybridSearchRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -14022,7 +14481,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.VectorSearchRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -14058,7 +14521,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["crate.modules.models.StoreVectorRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -14184,7 +14651,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiSearchRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -14229,11 +14700,7 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": unknown;
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Created successfully */
             200: {
@@ -14257,10 +14724,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Analysis ID */
-                id: components["schemas"]["uuid.Uuid"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -14287,17 +14751,10 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Analysis ID */
-                id: components["schemas"]["uuid.Uuid"];
-            };
+            path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": unknown;
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Executed successfully */
             200: {
@@ -14505,7 +14962,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": unknown;
+                "application/json": components["schemas"]["CreateReportRequest"];
             };
         };
         responses: {
@@ -14569,7 +15026,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": unknown;
+                "application/json": components["schemas"]["UpdateReportRequest"];
             };
         };
         responses: {
@@ -14657,7 +15114,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": unknown;
+                "application/json": components["schemas"]["CreateWidgetRequest"];
             };
         };
         responses: {
@@ -14721,7 +15178,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": unknown;
+                "application/json": components["schemas"]["UpdateWidgetRequest"];
             };
         };
         responses: {
@@ -15171,6 +15628,37 @@ export interface operations {
             };
         };
     };
+    create_notification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
+        responses: {
+            /** @description 通知创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_notification: {
         parameters: {
             query?: never;
@@ -15200,6 +15688,80 @@ export interface operations {
                 content?: never;
             };
             /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    mark_as_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 通知ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 标记成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description 通知不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_notification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 通知ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 删除成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description 通知不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -15471,6 +16033,84 @@ export interface operations {
             };
         };
     };
+    update_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 客户ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCustomerRequest"];
+            };
+        };
+        responses: {
+            /** @description 客户更新成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 客户不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 客户ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 客户删除成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 客户不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_opportunities: {
         parameters: {
             query?: {
@@ -15499,6 +16139,44 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ApiResponse"];
                 };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_opportunity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateOpportunityRequest"];
+            };
+        };
+        responses: {
+            /** @description 商机创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 请求参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description 服务器内部错误 */
             500: {
@@ -16049,7 +16727,7 @@ export interface operations {
             };
         };
     };
-    ehs_list_plans: {
+    "ehs_list_plans_api_ehs_emergency-plans": {
         parameters: {
             query?: never;
             header?: never;
@@ -16103,7 +16781,7 @@ export interface operations {
             };
         };
     };
-    ehs_get_plan: {
+    "ehs_get_plan_api_ehs_emergency-plans_{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -16849,6 +17527,28 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_material_category: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -18281,6 +18981,24 @@ export interface operations {
             };
         };
     };
+    get_contraindication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     update_contraindication: {
         parameters: {
             query?: never;
@@ -19202,6 +19920,84 @@ export interface operations {
             };
         };
     };
+    update_asset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 资产ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAssetRequest"];
+            };
+        };
+        responses: {
+            /** @description 资产更新成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 资产不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_asset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 资产ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 资产删除成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 资产不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     erp_list_customers: {
         parameters: {
             query?: never;
@@ -19256,7 +20052,7 @@ export interface operations {
             };
         };
     };
-    update_customer: {
+    erp_update_customer: {
         parameters: {
             query?: never;
             header?: never;
@@ -19274,7 +20070,7 @@ export interface operations {
             };
         };
     };
-    delete_customer: {
+    erp_delete_customer: {
         parameters: {
             query?: never;
             header?: never;
@@ -19338,6 +20134,46 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description get_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateInventoryRequest"];
+            };
+        };
+        responses: {
+            /** @description update_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_inventory OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -19436,6 +20272,42 @@ export interface operations {
             };
         };
     };
+    update_room: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_room OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_room: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_room OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_purchase_orders: {
         parameters: {
             query?: never;
@@ -19482,6 +20354,46 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description get_purchase_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_purchase_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePurchaseOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description update_purchase_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_purchase_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_purchase_order OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -19554,6 +20466,46 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description get_sales_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_sales_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSalesOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description update_sales_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_sales_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_sales_order OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -20326,7 +21278,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": unknown;
+                "application/json": components["schemas"]["CreateLocation"];
             };
         };
         responses: {
@@ -20421,7 +21373,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": unknown;
+                "application/json": components["schemas"]["CreateMap"];
             };
         };
         responses: {
@@ -20492,7 +21444,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": unknown;
+                "application/json": components["schemas"]["UpdateMap"];
             };
         };
         responses: {
@@ -20662,6 +21614,84 @@ export interface operations {
             };
         };
     };
+    update_company: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 公司ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCompanyRequest"];
+            };
+        };
+        responses: {
+            /** @description 公司更新成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 公司不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_company: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 公司ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 公司删除成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 公司不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_departments: {
         parameters: {
             query?: {
@@ -20744,6 +21774,84 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description 部门详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 部门不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_department: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 部门ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDepartmentRequest"];
+            };
+        };
+        responses: {
+            /** @description 部门更新成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 部门不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_department: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 部门ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 部门删除成功 */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -22135,6 +23243,24 @@ export interface operations {
         };
     };
     list_apps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 低代码后端待立项 */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_app: {
         parameters: {
             query?: never;
             header?: never;
@@ -27067,6 +28193,84 @@ export interface operations {
             };
         };
     };
+    update_inspection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 检验ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateInspectionRequest"];
+            };
+        };
+        responses: {
+            /** @description 质量检查更新成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 无效的检查ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_inspection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 检验ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 质量检查删除成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 无效的检查ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_issues: {
         parameters: {
             query?: {
@@ -27216,6 +28420,84 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description 质量标准详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 无效的标准ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_standard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 标准ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStandardRequest"];
+            };
+        };
+        responses: {
+            /** @description 质量标准更新成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 无效的标准ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_standard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 标准ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 质量标准删除成功 */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -28194,7 +29476,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LoginRequest"];
+                "application/json": unknown;
             };
         };
         responses: {
@@ -28237,7 +29519,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RegisterRequest"];
+                "application/json": unknown;
             };
         };
         responses: {
@@ -28310,7 +29592,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateUserRequest"];
+                "application/json": unknown;
             };
         };
         responses: {
@@ -28398,7 +29680,7 @@ export interface operations {
             };
         };
     };
-    update_inventory: {
+    wms_update_inventory: {
         parameters: {
             query?: never;
             header?: never;
@@ -28416,7 +29698,7 @@ export interface operations {
             };
         };
     };
-    delete_inventory: {
+    wms_delete_inventory: {
         parameters: {
             query?: never;
             header?: never;
