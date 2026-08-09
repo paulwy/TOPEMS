@@ -1,8 +1,8 @@
 /**
  * 此文件由 scripts/openapi/gen-types.mjs 自动生成，请勿手动编辑。
- * 生成时间: 2026-08-09T12:01:19.570Z
- * 输入源: /Users/air/TOPEMS/docs/api/openapi-aggregated.json
- * 路径数: 395 | Schema 数: 364
+ * 生成时间: 2026-08-09T16:21:49.586Z
+ * 输入源: /Users/xingzhai/TOPEMS/docs/api/openapi-aggregated.json
+ * 路径数: 407 | Schema 数: 418
  */
 
 /**
@@ -1190,6 +1190,154 @@ export interface paths {
         put?: never;
         post: operations["ai_search"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bi/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List analyses */
+        get: operations["list_analyses"];
+        put?: never;
+        /** Create analysis */
+        post: operations["create_analysis"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bi/analysis/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get analysis */
+        get: operations["get_analysis"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bi/analysis/{id}/execute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Execute analysis */
+        post: operations["execute_analysis"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_dashboards"];
+        put?: never;
+        post: operations["create_dashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/dashboard/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_dashboard"];
+        put: operations["update_dashboard"];
+        post?: never;
+        delete: operations["delete_dashboard"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_reports"];
+        put?: never;
+        post: operations["create_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/report/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_report"];
+        put: operations["update_report"];
+        post?: never;
+        delete: operations["delete_report"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/widget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_widgets"];
+        put?: never;
+        post: operations["create_widget"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/widget/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_widget"];
+        put: operations["update_widget"];
+        post?: never;
+        delete: operations["delete_widget"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4251,6 +4399,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/lowcode/apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_apps"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lowcode/designer/schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_designer_schema"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lowcode/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["lowcode_health"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/master/quality-v51/ai/suggest": {
         parameters: {
             query?: never;
@@ -5746,7 +5942,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_analysis"];
+        get: operations["pm_get_analysis"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6335,6 +6531,103 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        CreateDashboardRequest: {
+            description?: string | null;
+            is_public?: boolean | null;
+            layout?: unknown;
+            name: string;
+            owner_id: string;
+        };
+        UpdateDashboardRequest: {
+            description?: string | null;
+            is_public?: boolean | null;
+            layout?: unknown;
+            name?: string | null;
+        };
+        BillingPlan: {
+            code: string;
+            created_at: components["schemas"]["DateTime"];
+            description?: string | null;
+            id: components["schemas"]["uuid.Uuid"];
+            /** Format: int64 */
+            included_api_calls?: number | null;
+            included_modules?: string[] | null;
+            /** Format: int64 */
+            included_storage_gb?: number | null;
+            /** Format: int32 */
+            included_users: number;
+            is_active: boolean;
+            is_trial: boolean;
+            license_type: string;
+            name: string;
+            /** Format: int32 */
+            overage_api_calls_cents?: number | null;
+            /** Format: int32 */
+            overage_storage_cents?: number | null;
+            /** Format: int32 */
+            overage_users_cents?: number | null;
+            /** Format: int32 */
+            price_cents: number;
+            price_period: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        CancelSubscriptionRequest: {
+            cancel_at_period_end?: boolean;
+        };
+        CostBreakdown: {
+            /** Format: int32 */
+            base_cost_cents: number;
+            /** Format: int32 */
+            overage_cost_cents: number;
+            /** Format: int32 */
+            plugin_cost_cents: number;
+            /** Format: int32 */
+            total_cost_cents: number;
+        };
+        CreateSubscriptionRequest: {
+            is_trial?: boolean;
+            plan_id: components["schemas"]["uuid.Uuid"];
+            tenant_id: components["schemas"]["uuid.Uuid"];
+            /** Format: int32 */
+            trial_days?: number;
+        };
+        MetricUsage: {
+            /** Format: int64 */
+            current: number;
+            /** Format: double */
+            percent_used: number;
+            /** Format: int64 */
+            quota: number;
+        };
+        PeriodInfo: {
+            end_date: components["schemas"]["NaiveDate"];
+            start_date: components["schemas"]["NaiveDate"];
+        };
+        UsageMetrics: {
+            api_calls: components["schemas"]["MetricUsage"];
+            storage: components["schemas"]["MetricUsage"];
+            users: components["schemas"]["MetricUsage"];
+        };
+        UsageRecord: {
+            /** Format: int32 */
+            cost_cents?: number | null;
+            created_at: components["schemas"]["DateTime"];
+            id: components["schemas"]["uuid.Uuid"];
+            metric_name?: string | null;
+            metric_type: string;
+            period_end: components["schemas"]["DateTime"];
+            period_start: components["schemas"]["DateTime"];
+            /** Format: int64 */
+            quantity: number;
+            tenant_id: components["schemas"]["uuid.Uuid"];
+            unit?: string | null;
+        };
+        UsageSummary: {
+            costs: components["schemas"]["CostBreakdown"];
+            period: components["schemas"]["PeriodInfo"];
+            tenant_id: components["schemas"]["uuid.Uuid"];
+            usage: components["schemas"]["UsageMetrics"];
+        };
         AddTagToCustomerRequest: {
             customer_id: components["schemas"]["Uuid"];
             tag_id: components["schemas"]["Uuid"];
@@ -7174,6 +7467,216 @@ export interface components {
         VoucherStatus: "draft" | "submitted" | "approved" | "posted" | "reversed" | "rejected" | "cancelled";
         /** @enum {string} */
         VoucherType: "general" | "payment" | "receipt" | "transfer";
+        BatchEvidenceUpload: {
+            evidence_list: components["schemas"]["EvidenceItem"][];
+        };
+        BatchPositionUpload: {
+            device_id: components["schemas"]["Uuid"];
+            positions: components["schemas"]["PositionItem"][];
+        };
+        CreateDevicePointRequest: {
+            description?: string | null;
+            device_type?: string | null;
+            /** Format: double */
+            latitude: number;
+            /** Format: double */
+            longitude: number;
+            name: string;
+            status: string;
+        };
+        CreateEvidenceRequest: {
+            description?: string | null;
+            /** Format: int32 */
+            duration?: number | null;
+            evidence_type: string;
+            file_hash?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            file_url?: string | null;
+            metadata?: unknown;
+            position: unknown;
+            recorded_at: components["schemas"]["DateTime"];
+            recorded_by: components["schemas"]["Uuid"];
+            tags?: string[] | null;
+            thumbnail_url?: string | null;
+            title: string;
+        };
+        CreateTrackRequest: {
+            device_id: components["schemas"]["Uuid"];
+            device_name: string;
+        };
+        DevicePoint: {
+            created_at: components["schemas"]["DateTime"];
+            description?: string | null;
+            device_type?: string | null;
+            id: components["schemas"]["Uuid"];
+            /** Format: double */
+            latitude: number;
+            /** Format: double */
+            longitude: number;
+            name: string;
+            status: string;
+            tenant_id: components["schemas"]["Uuid"];
+            updated_at: components["schemas"]["DateTime"];
+        };
+        EvidenceItem: {
+            description?: string | null;
+            /** Format: int32 */
+            duration?: number | null;
+            evidence_type: string;
+            file_hash?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            file_url?: string | null;
+            local_id: string;
+            position: unknown;
+            recorded_at: components["schemas"]["DateTime"];
+            recorded_by: components["schemas"]["Uuid"];
+            tags?: string[] | null;
+            thumbnail_url?: string | null;
+            title: string;
+        };
+        EvidenceRecord: {
+            created_at: components["schemas"]["DateTime"];
+            description?: string | null;
+            /** Format: int32 */
+            duration?: number | null;
+            evidence_type: string;
+            file_hash?: string | null;
+            /** Format: int64 */
+            file_size?: number | null;
+            file_url?: string | null;
+            id: components["schemas"]["Uuid"];
+            metadata?: unknown;
+            position: unknown;
+            recorded_at: components["schemas"]["DateTime"];
+            recorded_by: components["schemas"]["Uuid"];
+            tags?: string[] | null;
+            tenant_id: components["schemas"]["Uuid"];
+            thumbnail_url?: string | null;
+            title: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        GisFeature: {
+            created_at: components["schemas"]["DateTime"];
+            geometry: unknown;
+            id: components["schemas"]["Uuid"];
+            layer_id: components["schemas"]["Uuid"];
+            properties: unknown;
+            style?: unknown;
+        };
+        GisLayer: {
+            bounds?: unknown;
+            created_at: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            layer_type: string;
+            name: string;
+            properties?: unknown;
+            source?: string | null;
+            status: string;
+        };
+        MapProject: {
+            center?: unknown;
+            created_at: components["schemas"]["DateTime"];
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            layers?: components["schemas"]["Uuid"][] | null;
+            name: string;
+            status: string;
+            /** Format: int32 */
+            zoom?: number | null;
+        };
+        OfflineDataDownload: {
+            device_points: components["schemas"]["DevicePoint"][];
+            evidence: components["schemas"]["EvidenceRecord"][];
+            synced_at: components["schemas"]["DateTime"];
+            tracks: components["schemas"]["TrackRecord"][];
+        };
+        PositionItem: {
+            /** Format: double */
+            accuracy?: number | null;
+            /** Format: double */
+            altitude?: number | null;
+            /** Format: int32 */
+            battery_level?: number | null;
+            /** Format: double */
+            heading?: number | null;
+            position: unknown;
+            /** Format: double */
+            speed?: number | null;
+            timestamp: components["schemas"]["DateTime"];
+        };
+        SpatialAnalysis: {
+            analysis_type: string;
+            created_at: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            parameters: unknown;
+            results?: unknown;
+            status: string;
+        };
+        SyncResponse: {
+            errors: string[];
+            synced_evidence: components["schemas"]["SyncedEvidenceResult"][];
+            synced_positions: number;
+        };
+        SyncStatus: {
+            last_sync_time: components["schemas"]["DateTime"];
+            /** Format: int64 */
+            pending_evidence: number;
+            /** Format: int64 */
+            pending_positions: number;
+            sync_enabled: boolean;
+        };
+        SyncedEvidenceResult: {
+            error?: string | null;
+            local_id: string;
+            server_id: components["schemas"]["Uuid"];
+            success: boolean;
+        };
+        TrackPosition: {
+            /** Format: double */
+            accuracy?: number | null;
+            /** Format: double */
+            altitude?: number | null;
+            /** Format: int32 */
+            battery_level?: number | null;
+            created_at: components["schemas"]["DateTime"];
+            /** Format: double */
+            heading?: number | null;
+            id: components["schemas"]["Uuid"];
+            position: unknown;
+            /** Format: double */
+            speed?: number | null;
+            timestamp: components["schemas"]["DateTime"];
+            track_id: components["schemas"]["Uuid"];
+        };
+        TrackRecord: {
+            created_at: components["schemas"]["DateTime"];
+            device_id: components["schemas"]["Uuid"];
+            device_name: string;
+            end_time: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            start_time: components["schemas"]["DateTime"];
+            tenant_id: components["schemas"]["Uuid"];
+            /** Format: double */
+            total_distance: number;
+        };
+        TrackStatistics: {
+            /** Format: double */
+            avg_speed: number;
+            end_time: components["schemas"]["DateTime"];
+            /** Format: double */
+            max_speed: number;
+            /** Format: double */
+            min_speed: number;
+            /** Format: int32 */
+            point_count: number;
+            start_time: components["schemas"]["DateTime"];
+            /** Format: double */
+            total_distance: number;
+            /** Format: int64 */
+            total_duration: number;
+        };
         ContractRenewal: {
             approved_at?: components["schemas"]["DateTime"] | null;
             approver_id?: components["schemas"]["Uuid"] | null;
@@ -7717,6 +8220,38 @@ export interface components {
             work_station_id?: string | null;
             work_station_name?: string | null;
         };
+        MobileTask: {
+            assignee_id?: string | null;
+            created_at: string;
+            description?: string | null;
+            due_date?: string | null;
+            id: string;
+            /** Format: int32 */
+            priority?: number | null;
+            status: string;
+            task_type: string;
+            title: string;
+            updated_at?: string | null;
+        };
+        PatrolRecord: {
+            created_at: string;
+            id: string;
+            location?: string | null;
+            notes?: string | null;
+            photo_url?: string | null;
+            status: string;
+            task_id?: string | null;
+            user_id: string;
+        };
+        ScanRecord: {
+            code: string;
+            code_type: string;
+            created_at: string;
+            device_id?: string | null;
+            id: string;
+            result?: string | null;
+            user_id: string;
+        };
         AssignInspectionRequest: {
             assignee: string;
             operator: string;
@@ -8078,6 +8613,241 @@ export interface components {
             status: string;
             supplier_id: components["schemas"]["Uuid"];
             unit?: string | null;
+        };
+        AddCommentRequest: {
+            content: string;
+            is_internal?: boolean | null;
+        };
+        CreateSlaPolicyRequest: {
+            business_hours_end?: string | null;
+            business_hours_start?: string | null;
+            description?: string | null;
+            /** Format: double */
+            escalation_hours_1?: number | null;
+            /** Format: double */
+            escalation_hours_2?: number | null;
+            /** Format: double */
+            escalation_hours_3?: number | null;
+            /** Format: int32 */
+            escalation_levels: number;
+            is_default?: boolean | null;
+            name: string;
+            /** Format: double */
+            resolution_hours: number;
+            /** Format: double */
+            response_hours: number;
+            severity?: string | null;
+            ticket_type?: string | null;
+            weekend_excluded?: boolean | null;
+            working_hours_only?: boolean | null;
+        };
+        CreateTicketRequest: {
+            assignee_id?: components["schemas"]["Uuid"] | null;
+            description?: string | null;
+            metadata?: unknown;
+            severity?: string | null;
+            /** Format: int32 */
+            sla_hours?: number | null;
+            source_business_id?: string | null;
+            source_service: string;
+            tags?: string[] | null;
+            ticket_type: string;
+            title: string;
+        };
+        SeverityCount: {
+            /** Format: int64 */
+            count: number;
+            severity: string;
+        };
+        SlaBreachTrendItem: {
+            /** Format: int64 */
+            breached: number;
+            date: string;
+            /** Format: int64 */
+            total: number;
+        };
+        SlaEscalationEvent: {
+            created_at: components["schemas"]["DateTime"];
+            escalated_to?: components["schemas"]["Uuid"] | null;
+            escalation_time: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            /** Format: int32 */
+            level: number;
+            reason?: string | null;
+            tenant_id: components["schemas"]["Uuid"];
+            ticket_id: components["schemas"]["Uuid"];
+        };
+        SlaSeverityStat: {
+            /** Format: double */
+            breach_rate: number;
+            /** Format: int64 */
+            breached: number;
+            severity: string;
+            /** Format: int64 */
+            total: number;
+        };
+        SlaTypeStat: {
+            /** Format: double */
+            breach_rate: number;
+            /** Format: int64 */
+            breached: number;
+            ticket_type: string;
+            /** Format: int64 */
+            total: number;
+        };
+        SourceCount: {
+            /** Format: int64 */
+            count: number;
+            source_service: string;
+        };
+        TicketActivity: {
+            action: string;
+            created_at: components["schemas"]["DateTime"];
+            from_value?: string | null;
+            id: components["schemas"]["Uuid"];
+            tenant_id: components["schemas"]["Uuid"];
+            ticket_id: components["schemas"]["Uuid"];
+            to_value?: string | null;
+            user_id?: components["schemas"]["Uuid"] | null;
+        };
+        TicketListResponse: {
+            items: components["schemas"]["Ticket"][];
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            page_size: number;
+            /** Format: int64 */
+            total: number;
+        };
+        TicketQuery: {
+            assignee_id?: components["schemas"]["Uuid"] | null;
+            /** Format: int64 */
+            page?: number | null;
+            /** Format: int64 */
+            page_size?: number | null;
+            reporter_id?: components["schemas"]["Uuid"] | null;
+            severity?: string | null;
+            sla_breached?: boolean | null;
+            source_business_id?: string | null;
+            source_service?: string | null;
+            status?: string | null;
+            ticket_type?: string | null;
+        };
+        TicketSlaInfo: {
+            /** Format: int32 */
+            current_escalation_level: number;
+            escalation_history: components["schemas"]["SlaEscalationEvent"][];
+            is_breached: boolean;
+            policy_name?: string | null;
+            /** Format: double */
+            resolution_hours?: number | null;
+            response_breached: boolean;
+            response_due_at?: components["schemas"]["DateTime"] | null;
+            /** Format: double */
+            response_hours?: number | null;
+            /** Format: int64 */
+            response_time_remaining_minutes?: number | null;
+            sla_due_at?: components["schemas"]["DateTime"] | null;
+            /** Format: int64 */
+            time_remaining_minutes?: number | null;
+        };
+        TicketSlaPolicy: {
+            business_hours_end?: string | null;
+            business_hours_start?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            description?: string | null;
+            /** Format: double */
+            escalation_hours_1?: number | null;
+            /** Format: double */
+            escalation_hours_2?: number | null;
+            /** Format: double */
+            escalation_hours_3?: number | null;
+            /** Format: int32 */
+            escalation_levels: number;
+            id: components["schemas"]["Uuid"];
+            is_active: boolean;
+            is_default: boolean;
+            name: string;
+            /** Format: double */
+            resolution_hours: number;
+            /** Format: double */
+            response_hours: number;
+            severity?: string | null;
+            tenant_id: components["schemas"]["Uuid"];
+            ticket_type?: string | null;
+            updated_at: components["schemas"]["DateTime"];
+            weekend_excluded: boolean;
+            working_hours_only: boolean;
+        };
+        TicketSlaStats: {
+            /** Format: double */
+            avg_resolution_minutes?: number | null;
+            /** Format: double */
+            avg_response_minutes?: number | null;
+            /** Format: double */
+            breach_rate: number;
+            breach_trend: components["schemas"]["SlaBreachTrendItem"][];
+            /** Format: int64 */
+            breached: number;
+            by_severity: components["schemas"]["SlaSeverityStat"][];
+            by_type: components["schemas"]["SlaTypeStat"][];
+            /** Format: int64 */
+            on_time: number;
+            /** Format: int64 */
+            total: number;
+        };
+        TicketStats: {
+            by_severity: components["schemas"]["SeverityCount"][];
+            by_source: components["schemas"]["SourceCount"][];
+            by_type: components["schemas"]["TypeCount"][];
+            /** Format: int64 */
+            closed: number;
+            /** Format: int64 */
+            in_progress: number;
+            /** Format: int64 */
+            open: number;
+            /** Format: int64 */
+            pending: number;
+            /** Format: int64 */
+            resolved: number;
+            /** Format: int64 */
+            sla_breached: number;
+            /** Format: int64 */
+            total: number;
+        };
+        TypeCount: {
+            /** Format: int64 */
+            count: number;
+            ticket_type: string;
+        };
+        UpdateSlaPolicyRequest: {
+            description?: string | null;
+            /** Format: double */
+            escalation_hours_1?: number | null;
+            /** Format: double */
+            escalation_hours_2?: number | null;
+            /** Format: double */
+            escalation_hours_3?: number | null;
+            /** Format: int32 */
+            escalation_levels?: number | null;
+            is_active?: boolean | null;
+            is_default?: boolean | null;
+            name?: string | null;
+            /** Format: double */
+            resolution_hours?: number | null;
+            /** Format: double */
+            response_hours?: number | null;
+            weekend_excluded?: boolean | null;
+            working_hours_only?: boolean | null;
+        };
+        UpdateTicketRequest: {
+            assignee_id?: components["schemas"]["Uuid"] | null;
+            description?: string | null;
+            metadata?: unknown;
+            severity?: string | null;
+            status?: string | null;
+            tags?: string[] | null;
+            title?: string | null;
         };
         InboundOrder: {
             actual_date?: components["schemas"]["DateTime"] | null;
@@ -11058,6 +11828,8 @@ export interface components {
             /** Format: uuid */
             created_by?: string;
         };
+        /** @description Auto-injected stub for missing $ref target: uuid.Uuid */
+        "uuid.Uuid": string;
         /** @description Auto-injected stub for missing $ref target: ApprovalRequest */
         ApprovalRequest: string;
         /** @description Auto-injected stub for missing $ref target: CreateBenefitRequest */
@@ -12468,6 +13240,584 @@ export interface operations {
         responses: {
             /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_analyses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_analysis: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
+        responses: {
+            /** @description Created successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_analysis: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Analysis ID */
+                id: components["schemas"]["uuid.Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    execute_analysis: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Analysis ID */
+                id: components["schemas"]["uuid.Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
+        responses: {
+            /** @description Executed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_dashboards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of dashboards */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDashboardRequest"];
+            };
+        };
+        responses: {
+            /** @description Dashboard created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard ID */
+                id: components["schemas"]["uuid.Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dashboard details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard ID */
+                id: components["schemas"]["uuid.Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDashboardRequest"];
+            };
+        };
+        responses: {
+            /** @description Dashboard updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard ID */
+                id: components["schemas"]["uuid.Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dashboard deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_reports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of reports */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
+        responses: {
+            /** @description Report created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Report ID */
+                id: components["schemas"]["uuid.Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Report details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Report ID */
+                id: components["schemas"]["uuid.Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
+        responses: {
+            /** @description Report updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Report ID */
+                id: components["schemas"]["uuid.Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Report deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_widgets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of widgets */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_widget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
+        responses: {
+            /** @description Widget created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_widget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Widget ID */
+                id: components["schemas"]["uuid.Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Widget details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_widget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Widget ID */
+                id: components["schemas"]["uuid.Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
+        responses: {
+            /** @description Widget updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_widget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Widget ID */
+                id: components["schemas"]["uuid.Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Widget deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18662,6 +20012,60 @@ export interface operations {
             };
         };
     };
+    list_apps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 低代码后端待立项 */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_designer_schema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 低代码后端待立项 */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    lowcode_health: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 服务健康 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     generate_suggestions: {
         parameters: {
             query?: never;
@@ -21704,7 +23108,7 @@ export interface operations {
             };
         };
     };
-    get_analysis: {
+    pm_get_analysis: {
         parameters: {
             query?: never;
             header?: never;
