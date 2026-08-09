@@ -5,6 +5,7 @@ mod im;
 mod mail;
 mod models;
 mod notification;
+pub mod openapi;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

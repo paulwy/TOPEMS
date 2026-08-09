@@ -19,3 +19,5 @@ pub use history::MigrationHistory;
 pub use lock::DistLock;
 pub use migration::{Migration, MigrationBundle, MigrationScript, MigrationStatus, SqlMigration};
 pub use runner::MigrationRunner;
+
+pub mod openapi;
