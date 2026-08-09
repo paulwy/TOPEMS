@@ -261,6 +261,10 @@ async fn create_project(
     get,
     path = "/api/pm/projects/{id}",
     tag = "projects",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "获取项目成功", body = ApiResponse<Project>),
         (status = 404, description = "项目不存在"),
@@ -293,6 +297,10 @@ async fn get_project(
     path = "/api/pm/projects/{id}",
     tag = "projects",
     request_body = UpdateProjectRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "更新项目成功", body = ApiResponse<Project>),
         (status = 404, description = "项目不存在"),
@@ -361,6 +369,10 @@ async fn update_project(
     delete,
     path = "/api/pm/projects/{id}",
     tag = "projects",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "删除项目成功", body = ApiResponse<bool>),
         (status = 404, description = "项目不存在"),
@@ -392,6 +404,10 @@ async fn delete_project(
     get,
     path = "/api/pm/projects/{id}/dashboard",
     tag = "projects",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "获取项目仪表盘成功", body = ApiResponse<ProjectDashboardResponse>),
         (status = 404, description = "项目不存在"),
@@ -509,6 +525,10 @@ async fn get_project_dashboard(
     get,
     path = "/api/pm/projects/{id}/gantt",
     tag = "projects",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "获取甘特图数据成功", body = ApiResponse<ProjectGanttResponse>),
         (status = 500, description = "服务器内部错误"),

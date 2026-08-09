@@ -132,6 +132,10 @@ pub async fn list_suppliers(
 #[utoipa::path(
     get,
     path = "/erp/suppliers/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "get_supplier OK")
     ),
@@ -166,6 +170,7 @@ pub async fn get_supplier(
 #[utoipa::path(
     post,
     path = "/erp/suppliers",
+    request_body = CreateSupplierRequest,
     responses(
         (status = 200, description = "create_supplier OK")
     ),
@@ -213,6 +218,11 @@ pub async fn create_supplier(
 #[utoipa::path(
     put,
     path = "/erp/suppliers/{id}",
+    request_body = UpdateSupplierRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "update_supplier OK")
     ),
@@ -261,6 +271,10 @@ pub async fn update_supplier(
 #[utoipa::path(
     delete,
     path = "/erp/suppliers/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "delete_supplier OK")
     ),

@@ -44,6 +44,7 @@ pub async fn list_lims_qms_sync(
 #[utoipa::path(
     post,
     path = "/api/integration/lims-qms",
+    request_body = CreateLimsQmsSyncRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -105,6 +106,10 @@ pub async fn create_lims_qms_sync(
     get,
     path = "/api/integration/lims-qms/{id}",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -139,6 +144,10 @@ pub async fn get_lims_qms_sync(
     post,
     path = "/api/integration/lims-qms/{id}/sync",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),

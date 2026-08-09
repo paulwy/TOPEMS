@@ -163,7 +163,7 @@ pub async fn get_announcement(
     post,
     path = "/announcements",
     tag = "Portal",
-    request_body = serde_json::Value,
+    request_body = NewAnnouncement,
     responses(
         (status = 200, description = "Announcement created", body = serde_json::Value),
         (status = 500, description = "Internal server error")

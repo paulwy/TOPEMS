@@ -61,6 +61,7 @@ pub struct ListFeedbackParams {
 #[utoipa::path(
     post,
     path = "/api/feedback/feedbacks",
+    request_body = CreateFeedbackRequest,
     tag = "feedback_ticket",
     responses(
         (status = 200, description = "OK"),
@@ -98,6 +99,10 @@ pub async fn create_feedback(
     get,
     path = "/api/feedback/feedbacks/{id}",
     tag = "feedback_ticket",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -213,7 +218,12 @@ pub async fn list_feedbacks(
 #[utoipa::path(
     put,
     path = "/api/feedback/feedbacks/{id}",
+    request_body = ResponseFeedbackRequest,
     tag = "feedback_ticket",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -251,6 +261,10 @@ pub async fn response_feedback(
     delete,
     path = "/api/feedback/feedbacks/{id}",
     tag = "feedback_ticket",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),

@@ -27,6 +27,10 @@ pub fn create_routes(pool: PgPool) -> Router {
     get,
     path = "/projects/{project_id}/phases",
     tag = "project_phases",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "获取项目阶段列表成功", body = ApiResponse<Vec<ProjectPhase>>),
         (status = 500, description = "服务器内部错误"),
@@ -57,6 +61,10 @@ async fn list_phases(
     path = "/projects/{project_id}/phases",
     tag = "project_phases",
     request_body = CreatePhaseRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "创建项目阶段成功", body = ApiResponse<ProjectPhase>),
         (status = 500, description = "服务器内部错误"),
@@ -121,6 +129,11 @@ async fn create_phase(
     get,
     path = "/projects/{project_id}/phases/{id}",
     tag = "project_phases",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "获取项目阶段成功", body = ApiResponse<ProjectPhase>),
         (status = 404, description = "项目阶段不存在"),
@@ -154,6 +167,11 @@ async fn get_phase(
     path = "/projects/{project_id}/phases/{id}",
     tag = "project_phases",
     request_body = UpdatePhaseRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "更新项目阶段成功", body = ApiResponse<ProjectPhase>),
         (status = 404, description = "项目阶段不存在"),
@@ -211,6 +229,11 @@ async fn update_phase(
     delete,
     path = "/projects/{project_id}/phases/{id}",
     tag = "project_phases",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "删除项目阶段成功", body = ApiResponse<bool>),
         (status = 404, description = "项目阶段不存在"),

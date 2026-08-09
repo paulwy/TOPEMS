@@ -132,6 +132,7 @@ pub async fn list_warehouses(
 #[utoipa::path(
     post,
     path = "/api/wms/warehouses",
+    request_body = CreateWarehouseRequest,
     responses(
         (status = 200, description = "create_warehouse OK")
     ),
@@ -216,6 +217,10 @@ pub async fn create_warehouse(
 #[utoipa::path(
     get,
     path = "/api/wms/warehouses/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "get_warehouse OK")
     ),
@@ -266,6 +271,11 @@ pub async fn get_warehouse(
 #[utoipa::path(
     put,
     path = "/api/wms/warehouses/{id}",
+    request_body = UpdateWarehouseRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "update_warehouse OK")
     ),
@@ -377,6 +387,10 @@ pub async fn update_warehouse(
 #[utoipa::path(
     delete,
     path = "/api/wms/warehouses/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "delete_warehouse OK")
     ),

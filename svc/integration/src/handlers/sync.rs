@@ -113,6 +113,7 @@ impl From<SyncTaskRow> for SyncTask {
 #[utoipa::path(
     post,
     path = "/api/integration/sync/tasks",
+    request_body = CreateSyncTaskRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -162,6 +163,10 @@ pub async fn create_task(
     get,
     path = "/api/integration/sync/tasks/{task_id}",
     tag = "integration",
+    params(
+        ("task_id" = String, Path, description = "task_id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -197,7 +202,12 @@ pub async fn get_task(
 #[utoipa::path(
     post,
     path = "/api/integration/sync/tasks/{task_id}/status",
+    request_body = UpdateStatusRequest,
     tag = "integration",
+    params(
+        ("task_id" = String, Path, description = "task_id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -327,6 +337,7 @@ pub async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<S
 #[utoipa::path(
     post,
     path = "/api/integration/sync/retry-failed",
+    request_body = RetryFailedRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -402,6 +413,7 @@ pub async fn retry_failed(
 #[utoipa::path(
     post,
     path = "/api/integration/sync/trigger/scm-to-wms",
+    request_body = TriggerSyncRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -446,6 +458,7 @@ pub async fn trigger_scm_wms(
 #[utoipa::path(
     post,
     path = "/api/integration/sync/trigger/wms-to-crm",
+    request_body = TriggerSyncRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -490,6 +503,7 @@ pub async fn trigger_wms_crm(
 #[utoipa::path(
     post,
     path = "/api/integration/sync/trigger/srm-to-scm",
+    request_body = TriggerSyncRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),

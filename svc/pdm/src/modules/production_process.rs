@@ -155,6 +155,7 @@ pub async fn list_processes(
 #[utoipa::path(
     post,
     path = "/api/pdm/production-processes",
+    request_body = CreateProcessRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -206,6 +207,10 @@ pub async fn create_process(
     get,
     path = "/api/pdm/production-processes/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_process(
@@ -240,7 +245,12 @@ pub async fn get_process(
 #[utoipa::path(
     put,
     path = "/api/pdm/production-processes/{id}",
+    request_body = UpdateProcessRequest,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_process(
@@ -295,6 +305,10 @@ pub async fn update_process(
     delete,
     path = "/api/pdm/production-processes/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_process(

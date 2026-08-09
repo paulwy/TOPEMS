@@ -146,7 +146,7 @@ pub async fn list_emails(
     post,
     path = "/mail/emails",
     tag = "email",
-    request_body = serde_json::Value,
+    request_body = SendEmailRequest,
     responses(
         (status = 200, description = "Email sent", body = serde_json::Value),
         (status = 500, description = "Internal server error")

@@ -31,6 +31,10 @@ pub fn create_routes(pool: PgPool) -> Router {
     get,
     path = "/projects/{project_id}/resources",
     tag = "project_resources",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "获取项目资源列表成功", body = ApiResponse<Vec<ProjectResource>>),
         (status = 500, description = "服务器内部错误"),
@@ -61,6 +65,10 @@ async fn list_resources(
     path = "/projects/{project_id}/resources",
     tag = "project_resources",
     request_body = CreateResourceRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "添加项目资源成功", body = ApiResponse<ProjectResource>),
         (status = 500, description = "服务器内部错误"),
@@ -116,6 +124,11 @@ async fn add_resource(
     get,
     path = "/projects/{project_id}/resources/{id}",
     tag = "project_resources",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "获取项目资源成功", body = ApiResponse<ProjectResource>),
         (status = 404, description = "项目资源不存在"),
@@ -149,6 +162,11 @@ async fn get_resource(
     path = "/projects/{project_id}/resources/{id}",
     tag = "project_resources",
     request_body = UpdateResourceRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "更新项目资源成功", body = ApiResponse<ProjectResource>),
         (status = 404, description = "项目资源不存在"),
@@ -204,6 +222,11 @@ async fn update_resource(
     delete,
     path = "/projects/{project_id}/resources/{id}",
     tag = "project_resources",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "删除项目资源成功", body = ApiResponse<bool>),
         (status = 404, description = "项目资源不存在"),

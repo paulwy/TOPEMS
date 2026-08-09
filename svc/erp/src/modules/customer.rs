@@ -125,6 +125,10 @@ pub async fn list_customers(
 #[utoipa::path(
     get,
     path = "/erp/customers/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "get_customer OK")
     ),
@@ -159,6 +163,7 @@ pub async fn get_customer(
 #[utoipa::path(
     post,
     path = "/erp/customers",
+    request_body = CreateCustomerRequest,
     responses(
         (status = 200, description = "create_customer OK")
     ),
@@ -207,6 +212,11 @@ pub async fn create_customer(
 #[utoipa::path(
     put,
     path = "/erp/customers/{id}",
+    request_body = UpdateCustomerRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "update_customer OK")
     ),
@@ -256,6 +266,10 @@ pub async fn update_customer(
 #[utoipa::path(
     delete,
     path = "/erp/customers/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "delete_customer OK")
     ),

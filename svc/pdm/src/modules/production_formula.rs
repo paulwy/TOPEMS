@@ -157,6 +157,7 @@ pub async fn list_formulas(
 #[utoipa::path(
     post,
     path = "/api/pdm/production-formulas",
+    request_body = CreateFormulaRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -210,6 +211,10 @@ pub async fn create_formula(
     get,
     path = "/api/pdm/production-formulas/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_formula(
@@ -245,7 +250,12 @@ pub async fn get_formula(
 #[utoipa::path(
     put,
     path = "/api/pdm/production-formulas/{id}",
+    request_body = UpdateFormulaRequest,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_formula(
@@ -299,6 +309,10 @@ pub async fn update_formula(
     delete,
     path = "/api/pdm/production-formulas/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_formula(

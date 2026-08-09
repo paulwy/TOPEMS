@@ -147,6 +147,10 @@ pub async fn list_sync_records(
     get,
     path = "/api/ehs/sync-records/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_sync_record(
@@ -193,6 +197,7 @@ pub async fn get_sync_record(
 #[utoipa::path(
     post,
     path = "/api/ehs/sync/hazard-to-qms",
+    request_body = SyncHazardToQmsRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -293,6 +298,7 @@ pub async fn sync_hazard_to_qms(
 #[utoipa::path(
     post,
     path = "/api/ehs/sync/accident-to-lims",
+    request_body = SyncAccidentToLimsRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -399,6 +405,10 @@ pub async fn sync_accident_to_lims(
     post,
     path = "/api/ehs/sync-records/{id}/retry",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn retry_sync(
@@ -446,6 +456,10 @@ pub async fn retry_sync(
     delete,
     path = "/api/ehs/sync-records/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_sync_record(
@@ -514,6 +528,7 @@ pub async fn list_sync_configs(
 #[utoipa::path(
     put,
     path = "/api/ehs/sync/configs",
+    request_body = serde_json::Value,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -564,6 +579,7 @@ pub async fn update_sync_configs(
 #[utoipa::path(
     post,
     path = "/api/ehs/sync/retry",
+    request_body = serde_json::Value,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]

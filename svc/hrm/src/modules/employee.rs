@@ -128,6 +128,10 @@ async fn list_employees(
     get,
     path = "/employees/{id}",
     tag = "employees",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "获取员工成功", body = Employee),
         (status = 401, description = "未授权"),
@@ -188,6 +192,10 @@ async fn get_employee(
     get,
     path = "/employees/{id}/details",
     tag = "employees",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "获取员工详细信息成功"),
         (status = 401, description = "未授权"),
@@ -262,6 +270,7 @@ async fn get_employee_details(
 #[utoipa::path(
     post,
     path = "/employees",
+    request_body = CreateEmployeeRequest,
     tag = "employees",
     responses(
         (status = 200, description = "员工创建成功", body = Employee),
@@ -394,7 +403,12 @@ async fn create_employee(
 #[utoipa::path(
     put,
     path = "/employees/{id}",
+    request_body = UpdateEmployeeRequest,
     tag = "employees",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "员工更新成功", body = Employee),
         (status = 401, description = "未授权"),
@@ -490,6 +504,10 @@ async fn update_employee(
     delete,
     path = "/employees/{id}",
     tag = "employees",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "员工删除成功"),
         (status = 401, description = "未授权"),
@@ -564,6 +582,7 @@ async fn delete_employee(
 #[utoipa::path(
     post,
     path = "/employees/export",
+    request_body = ExportRequest,
     tag = "employees",
     responses(
         (status = 200, description = "导出成功"),

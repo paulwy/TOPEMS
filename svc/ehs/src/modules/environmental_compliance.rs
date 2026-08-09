@@ -402,6 +402,7 @@ pub async fn list_regulations(
 #[utoipa::path(
     post,
     path = "/api/ehs/environmental-compliance/regulations",
+    request_body = CreateRegulationRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -446,6 +447,10 @@ pub async fn create_regulation(
     get,
     path = "/api/ehs/environmental-compliance/regulations/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_regulation(
@@ -487,7 +492,12 @@ pub async fn get_regulation(
 #[utoipa::path(
     put,
     path = "/api/ehs/environmental-compliance/regulations/{id}",
+    request_body = UpdateRegulationRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_regulation(
@@ -531,6 +541,10 @@ pub async fn update_regulation(
     delete,
     path = "/api/ehs/environmental-compliance/regulations/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_regulation(
@@ -566,6 +580,7 @@ pub async fn list_evaluations(
 #[utoipa::path(
     post,
     path = "/api/ehs/environmental-compliance/evaluations",
+    request_body = CreateEvaluationRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -610,6 +625,10 @@ pub async fn create_evaluation(
     get,
     path = "/api/ehs/environmental-compliance/evaluations/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_evaluation(
@@ -649,7 +668,12 @@ pub async fn get_evaluation(
 #[utoipa::path(
     put,
     path = "/api/ehs/environmental-compliance/evaluations/{id}",
+    request_body = UpdateEvaluationRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_evaluation(
@@ -701,6 +725,10 @@ pub async fn update_evaluation(
     delete,
     path = "/api/ehs/environmental-compliance/evaluations/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_evaluation(
@@ -736,6 +764,7 @@ pub async fn list_monitor_records(
 #[utoipa::path(
     post,
     path = "/api/ehs/environmental-compliance/monitoring",
+    request_body = CreateMonitorRecordRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -783,6 +812,10 @@ pub async fn create_monitor_record(
     get,
     path = "/api/ehs/environmental-compliance/monitoring/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_monitor_record(
@@ -826,6 +859,10 @@ pub async fn get_monitor_record(
     delete,
     path = "/api/ehs/environmental-compliance/monitoring/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_monitor_record(
@@ -861,6 +898,7 @@ pub async fn list_permits(
 #[utoipa::path(
     post,
     path = "/api/ehs/environmental-compliance/permits",
+    request_body = CreatePermitRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -906,6 +944,10 @@ pub async fn create_permit(
     get,
     path = "/api/ehs/environmental-compliance/permits/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_permit(
@@ -950,7 +992,12 @@ pub async fn get_permit(
 #[utoipa::path(
     put,
     path = "/api/ehs/environmental-compliance/permits/{id}",
+    request_body = UpdatePermitRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_permit(
@@ -993,6 +1040,10 @@ pub async fn update_permit(
     delete,
     path = "/api/ehs/environmental-compliance/permits/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_permit(
@@ -1028,6 +1079,7 @@ pub async fn list_incidents(
 #[utoipa::path(
     post,
     path = "/api/ehs/environmental-compliance/incidents",
+    request_body = CreateIncidentRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -1077,6 +1129,10 @@ pub async fn create_incident(
     get,
     path = "/api/ehs/environmental-compliance/incidents/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_incident(
@@ -1121,7 +1177,12 @@ pub async fn get_incident(
 #[utoipa::path(
     put,
     path = "/api/ehs/environmental-compliance/incidents/{id}",
+    request_body = UpdateIncidentRequest,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_incident(
@@ -1178,6 +1239,10 @@ pub async fn update_incident(
     delete,
     path = "/api/ehs/environmental-compliance/incidents/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_incident(

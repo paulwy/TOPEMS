@@ -178,6 +178,7 @@ pub async fn list_inventory(
 #[utoipa::path(
     post,
     path = "/api/wms/inventory",
+    request_body = CreateInventoryItemRequest,
     responses(
         (status = 200, description = "create_inventory OK")
     ),
@@ -268,6 +269,10 @@ pub async fn create_inventory(
 #[utoipa::path(
     get,
     path = "/api/wms/inventory/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "get_inventory OK")
     ),
@@ -313,6 +318,11 @@ pub async fn get_inventory(
 #[utoipa::path(
     put,
     path = "/api/wms/inventory/{id}",
+    request_body = UpdateInventoryItemRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "update_inventory OK")
     ),
@@ -534,6 +544,10 @@ pub async fn update_inventory(
 #[utoipa::path(
     delete,
     path = "/api/wms/inventory/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "delete_inventory OK")
     ),

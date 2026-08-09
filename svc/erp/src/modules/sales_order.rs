@@ -111,6 +111,10 @@ pub async fn list_sales_orders(
 #[utoipa::path(
     get,
     path = "/erp/sales-orders/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "get_sales_order OK")
     ),
@@ -145,6 +149,7 @@ pub async fn get_sales_order(
 #[utoipa::path(
     post,
     path = "/erp/sales-orders",
+    request_body = CreateSalesOrderRequest,
     responses(
         (status = 200, description = "create_sales_order OK")
     ),
@@ -209,6 +214,10 @@ pub async fn create_sales_order(
     put,
     path = "/erp/sales-orders/{id}",
     request_body = UpdateSalesOrderRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "update_sales_order OK")
     ),
@@ -252,6 +261,10 @@ pub async fn update_sales_order(
 #[utoipa::path(
     delete,
     path = "/erp/sales-orders/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "delete_sales_order OK")
     ),

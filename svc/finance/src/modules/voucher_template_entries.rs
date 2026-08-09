@@ -56,7 +56,7 @@ pub struct ReorderEntriesRequest {
     get,
     path = "/voucher-templates/{template_id}/entries",
     tag = "Voucher Template",
-    params(TemplatePathParams),
+    params(("template_id" = Uuid, Path, description = "模板ID")),
     responses(
         (status = 200, description = "获取模板分录列表成功", body = ApiResponse<Vec<VoucherTemplateLine>>),
         (status = 404, description = "凭证模板不存在"),
@@ -90,7 +90,7 @@ pub async fn list_entries(
     get,
     path = "/voucher-templates/{template_id}/entries/{entry_id}",
     tag = "Voucher Template",
-    params(TemplateEntryPathParams),
+    params(("template_id" = Uuid, Path, description = "模板ID"), ("entry_id" = Uuid, Path, description = "条目ID")),
     responses(
         (status = 200, description = "获取模板分录详情成功", body = ApiResponse<VoucherTemplateLine>),
         (status = 404, description = "模板分录不存在"),
@@ -122,7 +122,7 @@ pub async fn get_entry(
     post,
     path = "/voucher-templates/{template_id}/entries",
     tag = "Voucher Template",
-    params(TemplatePathParams),
+    params(("template_id" = Uuid, Path, description = "模板ID")),
     request_body = AddTemplateEntryRequest,
     responses(
         (status = 200, description = "新增模板分录成功", body = ApiResponse<VoucherTemplateLine>),
@@ -189,7 +189,7 @@ pub async fn create_entry(
     put,
     path = "/voucher-templates/{template_id}/entries/{entry_id}",
     tag = "Voucher Template",
-    params(TemplateEntryPathParams),
+    params(("template_id" = Uuid, Path, description = "模板ID"), ("entry_id" = Uuid, Path, description = "条目ID")),
     request_body = UpdateTemplateEntryRequest,
     responses(
         (status = 200, description = "更新模板分录成功", body = ApiResponse<VoucherTemplateLine>),
@@ -255,7 +255,7 @@ pub async fn update_entry(
     delete,
     path = "/voucher-templates/{template_id}/entries/{entry_id}",
     tag = "Voucher Template",
-    params(TemplateEntryPathParams),
+    params(("template_id" = Uuid, Path, description = "模板ID"), ("entry_id" = Uuid, Path, description = "条目ID")),
     responses(
         (status = 200, description = "删除模板分录成功", body = ApiResponse<serde_json::Value>),
         (status = 404, description = "模板分录不存在"),
@@ -294,7 +294,7 @@ pub async fn delete_entry(
     put,
     path = "/voucher-templates/{template_id}/entries/reorder",
     tag = "Voucher Template",
-    params(TemplatePathParams),
+    params(("template_id" = Uuid, Path, description = "模板ID")),
     request_body = ReorderEntriesRequest,
     responses(
         (status = 200, description = "重新排序模板分录成功", body = ApiResponse<serde_json::Value>),

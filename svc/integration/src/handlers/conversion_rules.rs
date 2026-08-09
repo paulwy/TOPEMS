@@ -43,6 +43,10 @@ pub async fn list_conversion_rules_api(
     get,
     path = "/api/integration/rules/{id}",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -73,6 +77,7 @@ pub async fn get_conversion_rule_api(
 #[utoipa::path(
     post,
     path = "/api/integration/rules",
+    request_body = CreateConversionRuleRequest,
     tag = "integration",
     responses(
         (status = 200, description = "OK"),
@@ -128,7 +133,12 @@ pub async fn create_conversion_rule_api(
 #[utoipa::path(
     put,
     path = "/api/integration/rules/{id}",
+    request_body = UpdateConversionRuleRequest,
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -202,6 +212,10 @@ pub async fn update_conversion_rule_api(
     delete,
     path = "/api/integration/rules/{id}",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -239,6 +253,10 @@ pub async fn delete_conversion_rule_api(
     get,
     path = "/api/integration/rules/{id}/executions",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -265,7 +283,12 @@ pub async fn get_rule_executions_api(
 #[utoipa::path(
     post,
     path = "/api/integration/rules/{id}/execute",
+    request_body = ExecuteConversionRequest,
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -347,6 +370,10 @@ pub async fn execute_conversion_rule_api(
     post,
     path = "/api/integration/rules/{id}/enable",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),
@@ -376,6 +403,10 @@ pub async fn enable_conversion_rule_api(
     post,
     path = "/api/integration/rules/{id}/disable",
     tag = "integration",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "OK"),
     ),

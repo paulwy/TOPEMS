@@ -108,6 +108,10 @@ pub async fn list_inventory(
 #[utoipa::path(
     get,
     path = "/erp/inventory/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "get_inventory OK")
     ),
@@ -142,6 +146,7 @@ pub async fn get_inventory(
 #[utoipa::path(
     post,
     path = "/erp/inventory",
+    request_body = CreateInventoryRequest,
     responses(
         (status = 200, description = "create_inventory OK")
     ),
@@ -206,6 +211,10 @@ pub async fn create_inventory(
     put,
     path = "/erp/inventory/{id}",
     request_body = UpdateInventoryRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "update_inventory OK")
     ),
@@ -248,6 +257,10 @@ pub async fn update_inventory(
 #[utoipa::path(
     delete,
     path = "/erp/inventory/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "delete_inventory OK")
     ),

@@ -27,6 +27,10 @@ pub fn create_routes(pool: PgPool) -> Router {
     get,
     path = "/projects/{project_id}/members",
     tag = "project_members",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "获取项目成员列表成功", body = ApiResponse<Vec<ProjectMember>>),
         (status = 500, description = "服务器内部错误"),
@@ -57,6 +61,10 @@ async fn list_members(
     path = "/projects/{project_id}/members",
     tag = "project_members",
     request_body = CreateMemberRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id")
+    ),
+
     responses(
         (status = 200, description = "添加项目成员成功", body = ApiResponse<ProjectMember>),
         (status = 409, description = "成员已存在"),
@@ -108,6 +116,11 @@ async fn create_member(
     get,
     path = "/projects/{project_id}/members/{id}",
     tag = "project_members",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "获取项目成员成功", body = ApiResponse<ProjectMember>),
         (status = 404, description = "项目成员不存在"),
@@ -141,6 +154,11 @@ async fn get_member(
     path = "/projects/{project_id}/members/{id}",
     tag = "project_members",
     request_body = UpdateMemberRequest,
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "更新项目成员成功", body = ApiResponse<ProjectMember>),
         (status = 404, description = "项目成员不存在"),
@@ -190,6 +208,11 @@ async fn update_member(
     delete,
     path = "/projects/{project_id}/members/{id}",
     tag = "project_members",
+    params(
+        ("project_id" = Uuid, Path, description = "project_id"),
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses(
         (status = 200, description = "删除项目成员成功", body = ApiResponse<bool>),
         (status = 404, description = "项目成员不存在"),

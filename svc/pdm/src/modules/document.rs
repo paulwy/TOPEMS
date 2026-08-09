@@ -181,6 +181,7 @@ pub async fn list_documents(
 #[utoipa::path(
     post,
     path = "/api/pdm/documents",
+    request_body = CreateDocumentRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -247,6 +248,10 @@ pub async fn create_document(
     get,
     path = "/api/pdm/documents/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_document(
@@ -282,7 +287,12 @@ pub async fn get_document(
 #[utoipa::path(
     put,
     path = "/api/pdm/documents/{id}",
+    request_body = UpdateDocumentRequest,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_document(
@@ -373,6 +383,10 @@ pub async fn update_document(
     delete,
     path = "/api/pdm/documents/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_document(
@@ -409,7 +423,12 @@ pub struct StartDocumentApprovalRequest {
 #[utoipa::path(
     post,
     path = "/api/pdm/documents/{id}/approve",
+    request_body = StartDocumentApprovalRequest,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn start_document_approval(
@@ -548,6 +567,10 @@ pub async fn start_document_approval(
     get,
     path = "/api/pdm/documents/{id}/approval-history",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_document_approval_history(

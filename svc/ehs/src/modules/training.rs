@@ -152,6 +152,7 @@ pub async fn list_trainings(
 #[utoipa::path(
     post,
     path = "/api/ehs/training",
+    request_body = serde_json::Value,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -188,6 +189,10 @@ pub async fn create_training(
     get,
     path = "/api/ehs/training/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_training(
@@ -219,7 +224,12 @@ pub async fn get_training(
 #[utoipa::path(
     put,
     path = "/api/ehs/training/{id}",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_training(
@@ -273,6 +283,10 @@ pub async fn update_training(
     delete,
     path = "/api/ehs/training/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_training(
@@ -308,6 +322,7 @@ pub async fn list_training_plans(
 #[utoipa::path(
     post,
     path = "/api/ehs/training/plans",
+    request_body = serde_json::Value,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -357,6 +372,10 @@ pub async fn create_training_plan(
     get,
     path = "/api/ehs/training/plans/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_training_plan(
@@ -388,7 +407,12 @@ pub async fn get_training_plan(
 #[utoipa::path(
     put,
     path = "/api/ehs/training/plans/{id}",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_training_plan(
@@ -439,6 +463,10 @@ pub async fn update_training_plan(
     delete,
     path = "/api/ehs/training/plans/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_training_plan(
@@ -474,6 +502,7 @@ pub async fn list_training_records(
 #[utoipa::path(
     post,
     path = "/api/ehs/training/records",
+    request_body = serde_json::Value,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -526,6 +555,10 @@ pub async fn create_training_record(
     get,
     path = "/api/ehs/training/records/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_training_record(
@@ -557,7 +590,12 @@ pub async fn get_training_record(
 #[utoipa::path(
     put,
     path = "/api/ehs/training/records/{id}",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_training_record(
@@ -611,6 +649,10 @@ pub async fn update_training_record(
     delete,
     path = "/api/ehs/training/records/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_training_record(
@@ -646,6 +688,7 @@ pub async fn list_certificates(
 #[utoipa::path(
     post,
     path = "/api/ehs/training/certificates",
+    request_body = serde_json::Value,
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -692,6 +735,10 @@ pub async fn create_certificate(
     get,
     path = "/api/ehs/training/certificates/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_certificate(
@@ -722,7 +769,12 @@ pub async fn get_certificate(
 #[utoipa::path(
     put,
     path = "/api/ehs/training/certificates/{id}",
+    request_body = serde_json::Value,
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_certificate(
@@ -770,6 +822,10 @@ pub async fn update_certificate(
     delete,
     path = "/api/ehs/training/certificates/{id}",
     tag = "ehs",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_certificate(

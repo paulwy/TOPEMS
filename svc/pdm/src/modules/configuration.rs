@@ -161,6 +161,7 @@ pub async fn list_configurations(
 #[utoipa::path(
     post,
     path = "/api/pdm/configurations",
+    request_body = CreateConfigurationRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -226,6 +227,10 @@ pub async fn create_configuration(
     get,
     path = "/api/pdm/configurations/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_configuration(
@@ -261,7 +266,12 @@ pub async fn get_configuration(
 #[utoipa::path(
     put,
     path = "/api/pdm/configurations/{id}",
+    request_body = UpdateConfigurationRequest,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_configuration(
@@ -320,6 +330,10 @@ pub async fn update_configuration(
     delete,
     path = "/api/pdm/configurations/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_configuration(

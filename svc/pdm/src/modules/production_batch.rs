@@ -164,6 +164,7 @@ pub async fn list_batches(
 #[utoipa::path(
     post,
     path = "/api/pdm/production-batches",
+    request_body = CreateBatchRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -217,6 +218,10 @@ pub async fn create_batch(
     get,
     path = "/api/pdm/production-batches/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_batch(
@@ -252,7 +257,12 @@ pub async fn get_batch(
 #[utoipa::path(
     put,
     path = "/api/pdm/production-batches/{id}",
+    request_body = UpdateBatchRequest,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_batch(
@@ -312,6 +322,10 @@ pub async fn update_batch(
     delete,
     path = "/api/pdm/production-batches/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_batch(

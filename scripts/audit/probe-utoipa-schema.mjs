@@ -103,6 +103,7 @@ function parseUtoipaAnnotations(content, filePath) {
 
     let handlerName = null;
     let handlerSig = '';
+    let isStub = false;
     if (handlerMatch) {
       handlerName = handlerMatch[2];
       // Extract the full function signature up to the opening '{'
@@ -113,6 +114,11 @@ function parseUtoipaAnnotations(content, filePath) {
       const openBrace = fnText.indexOf('{');
       if (openBrace !== -1) {
         handlerSig = fnText.slice(0, openBrace).trim();
+        // Detect stub functions: name starts with '_' and body is empty {}
+        const bodyAfterBrace = fnText.slice(openBrace + 1).trimStart();
+        if (handlerName.startsWith('_') && bodyAfterBrace.startsWith('}')) {
+          isStub = true;
+        }
       }
     }
 
@@ -122,6 +128,7 @@ function parseUtoipaAnnotations(content, filePath) {
       ...parsed,
       handlerName,
       handlerSig,
+      isStub,
       rawAnnotation: annotationBody,
       file: relative(ROOT, filePath),
       line: lineNum,
@@ -168,7 +175,9 @@ function parseAnnotationBody(body) {
   // Extract request_body = Type
   // request_body = CreateProjectRequest
   // request_body = inline(CreateProjectRequest)
-  const rbMatch = body.match(/request_body\s*=\s*(?:inline\()?(\w+)\)?/);
+  // request_body = serde_json::Value
+  // request_body = crate::services::AgentRequest
+  const rbMatch = body.match(/request_body\s*=\s*(?:inline\()?([\w:]+)\)?/);
   if (rbMatch) {
     result.requestBody = rbMatch[1];
   }
@@ -254,8 +263,8 @@ function splitTopLevelCommas(str) {
 
   for (let i = 0; i < str.length; i++) {
     const ch = str[i];
-    if (ch === '(' || ch === '[' || ch === '{') depth++;
-    else if (ch === ')' || ch === ']' || ch === '}') depth--;
+    if (ch === '(' || ch === '[' || ch === '{' || ch === '<') depth++;
+    else if (ch === ')' || ch === ']' || ch === '}' || ch === '>') depth--;
 
     if (ch === ',' && depth === 0) {
       parts.push(current);
@@ -608,6 +617,11 @@ function main() {
   let matchCount = 0;
 
   for (const ann of allAnnotations) {
+    // Skip stub functions (placeholder functions in openapi.rs that carry utoipa annotations)
+    if (ann.isStub) {
+      matchCount++;
+      continue;
+    }
     const { mismatches } = compareAnnotationVsHandler(ann);
     if (mismatches.length === 0) {
       matchCount++;

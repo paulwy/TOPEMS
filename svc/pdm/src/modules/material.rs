@@ -148,6 +148,7 @@ pub async fn list_materials(
 #[utoipa::path(
     post,
     path = "/api/pdm/materials",
+    request_body = CreateMaterialRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -262,6 +263,10 @@ pub async fn create_material(
     get,
     path = "/api/pdm/materials/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_material(
@@ -296,7 +301,12 @@ pub async fn get_material(
 #[utoipa::path(
     put,
     path = "/api/pdm/materials/{id}",
+    request_body = UpdateMaterialRequest,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_material(
@@ -395,6 +405,10 @@ pub async fn update_material(
     delete,
     path = "/api/pdm/materials/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_material(

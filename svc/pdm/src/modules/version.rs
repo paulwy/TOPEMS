@@ -164,6 +164,7 @@ pub async fn list_versions(
 #[utoipa::path(
     post,
     path = "/api/pdm/versions",
+    request_body = CreateVersionRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -217,6 +218,10 @@ pub async fn create_version(
     get,
     path = "/api/pdm/versions/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_version(
@@ -252,7 +257,12 @@ pub async fn get_version(
 #[utoipa::path(
     put,
     path = "/api/pdm/versions/{id}",
+    request_body = UpdateVersionRequest,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_version(
@@ -310,6 +320,10 @@ pub async fn update_version(
     delete,
     path = "/api/pdm/versions/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_version(

@@ -146,6 +146,7 @@ pub async fn list_steps(
 #[utoipa::path(
     post,
     path = "/api/pdm/production-steps",
+    request_body = CreateStepRequest,
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
@@ -195,6 +196,10 @@ pub async fn create_step(
     get,
     path = "/api/pdm/production-steps/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_step(
@@ -229,7 +234,12 @@ pub async fn get_step(
 #[utoipa::path(
     put,
     path = "/api/pdm/production-steps/{id}",
+    request_body = UpdateStepRequest,
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_step(
@@ -283,6 +293,10 @@ pub async fn update_step(
     delete,
     path = "/api/pdm/production-steps/{id}",
     tag = "pdm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_step(

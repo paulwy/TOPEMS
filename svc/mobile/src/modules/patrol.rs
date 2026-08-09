@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -27,7 +28,7 @@ pub struct PatrolRecord {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreatePatrolRequest {
     pub title: String,
     pub description: Option<String>,
@@ -156,7 +157,7 @@ pub async fn get_patrol_record(
     post,
     path = "/patrol-records",
     tag = "patrol",
-    request_body = serde_json::Value,
+    request_body = CreatePatrolRequest,
     responses(
         (status = 201, description = "创建巡逻记录成功", body = serde_json::Value),
         (status = 401, description = "未授权"),

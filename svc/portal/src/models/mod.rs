@@ -1,6 +1,7 @@
 pub mod audit_log;
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize)]
 pub struct ServiceDto {
@@ -26,7 +27,7 @@ pub struct Todo {
     pub link_url: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct NewTodo {
     pub title: String,
     pub service: String,
@@ -169,7 +170,7 @@ pub struct Announcement {
     pub author: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct NewAnnouncement {
     pub title: String,
     pub content: String,
