@@ -252,6 +252,20 @@ pub async fn get_asset(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/assets/{id}",
+    tag = "Assets",
+    params(
+        ("id" = Uuid, Path, description = "资产ID"),
+    ),
+    request_body = UpdateAssetRequest,
+    responses(
+        (status = 200, description = "资产更新成功", body = ApiResponse<Asset>),
+        (status = 404, description = "资产不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn update_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -374,6 +388,19 @@ pub async fn update_asset(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/assets/{id}",
+    tag = "Assets",
+    params(
+        ("id" = Uuid, Path, description = "资产ID"),
+    ),
+    responses(
+        (status = 200, description = "资产删除成功", body = ApiResponse<String>),
+        (status = 404, description = "资产不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn delete_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

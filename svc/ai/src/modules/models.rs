@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// 搜索结果 - 使用 services/vector 模块的定义
@@ -32,7 +33,7 @@ pub struct AnalysisResult {
 }
 
 /// 文档处理请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ProcessDocumentRequest {
     pub document_id: Uuid,
     #[allow(dead_code)]
@@ -42,7 +43,7 @@ pub struct ProcessDocumentRequest {
 }
 
 /// 文档提取请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ExtractDocumentRequest {
     #[allow(dead_code)]
     pub document_id: Uuid,
@@ -50,7 +51,7 @@ pub struct ExtractDocumentRequest {
 }
 
 /// 文档摘要请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SummarizeDocumentRequest {
     #[allow(dead_code)]
     pub document_id: Uuid,
@@ -58,7 +59,7 @@ pub struct SummarizeDocumentRequest {
 }
 
 /// 提取关键点请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ExtractKeyPointsRequest {
     pub max_points: Option<i32>,
 }
@@ -71,7 +72,7 @@ pub struct ExtractKeyPointsResponse {
 }
 
 /// 文档问答请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct DocumentQAQuestionRequest {
     pub question: String,
     pub document_ids: Option<Vec<Uuid>>,
@@ -97,7 +98,7 @@ pub struct DocumentQASourceResponse {
 }
 
 /// 向量存储请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct StoreVectorRequest {
     pub document_id: Uuid,
     pub chunk_id: Uuid,
@@ -107,13 +108,13 @@ pub struct StoreVectorRequest {
 }
 
 /// 批量向量存储请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct BatchStoreVectorsRequest {
     pub vectors: Vec<StoreVectorRequest>,
 }
 
 /// 向量搜索请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct VectorSearchRequest {
     #[allow(dead_code)]
     pub query: String,
@@ -123,7 +124,7 @@ pub struct VectorSearchRequest {
 }
 
 /// 混合检索请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct HybridSearchRequest {
     pub query: String,
     pub top_k: Option<usize>,
@@ -132,7 +133,7 @@ pub struct HybridSearchRequest {
 }
 
 /// 问答请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AskRequest {
     pub question: String,
     #[allow(dead_code)]
@@ -141,7 +142,7 @@ pub struct AskRequest {
 }
 
 /// 基于文档上下文提问请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AskWithContextRequest {
     pub question: String,
     pub document_ids: Vec<Uuid>,
@@ -149,7 +150,7 @@ pub struct AskWithContextRequest {
 }
 
 /// 答案反馈请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct FeedbackRequest {
     pub qa_id: Uuid,
     pub feedback: String,
@@ -157,13 +158,13 @@ pub struct FeedbackRequest {
 }
 
 /// 情感分析请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SentimentAnalysisRequest {
     pub text: String,
 }
 
 /// 分析历史请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AnalysisHistoryRequest {
     pub analysis_type: Option<String>,
     pub limit: Option<usize>,
@@ -177,21 +178,21 @@ pub struct AnalysisHistoryResponse {
 }
 
 /// 文本分类请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ClassifyTextRequest {
     pub text: String,
     pub categories: Option<Vec<String>>,
 }
 
 /// 实体提取请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ExtractEntitiesRequest {
     pub text: String,
     pub entity_types: Option<Vec<String>>,
 }
 
 /// 关键词提取请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ExtractKeywordsRequest {
     pub text: String,
     pub max_keywords: Option<i32>,
@@ -354,7 +355,7 @@ pub struct VectorStats {
 }
 
 /// 从 File 服务向量化请求
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct VectorizeFromFileRequest {
     pub file_id: Uuid,
 }

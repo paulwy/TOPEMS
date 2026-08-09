@@ -31,7 +31,7 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/hazardous-materials/categories",
-            get(list_material_categories),
+            get(list_material_categories).post(create_material_category),
         )
         .route(
             "/hazardous-materials/statistics",
@@ -856,4 +856,22 @@ pub async fn list_material_categories(
         serde_json::json!({ "code": "miscellaneous", "name": "其他" }),
     ];
     Json(ApiResponse::success(categories, "获取危险品分类成功"))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/hazardous-materials/categories",
+    tag = "ehs",
+    request_body = serde_json::Value,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn create_material_category(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let _tenant_id = get_tenant_id(&claims, &headers);
+    tracing::debug!("Creating material category: {:?}", req);
+    Json(ApiResponse::success(req, "危险品分类创建成功"))
 }

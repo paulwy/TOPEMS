@@ -1,5 +1,7 @@
 use crate::modules;
 use crate::modules::bi::dashboard::{CreateDashboardRequest, UpdateDashboardRequest};
+use crate::modules::bi::self_service_report::{CreateReportRequest, UpdateReportRequest};
+use crate::modules::bi::widget::{CreateWidgetRequest, UpdateWidgetRequest};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
@@ -26,7 +28,14 @@ use utoipa::OpenApi;
         modules::bi::analysis::execute_analysis,
     ),
     components(
-        schemas(CreateDashboardRequest, UpdateDashboardRequest)
+        schemas(
+            CreateDashboardRequest,
+            UpdateDashboardRequest,
+            CreateReportRequest,
+            UpdateReportRequest,
+            CreateWidgetRequest,
+            UpdateWidgetRequest,
+        )
     ),
     tags(
         (name = "BI", description = "商业智能"),

@@ -220,6 +220,15 @@ pub async fn create_purchase_order(
     Json(ApiResponse::success(purchase_order, "创建采购订单成功"))
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/purchase-orders/{id}",
+    request_body = UpdatePurchaseOrderRequest,
+    responses(
+        (status = 200, description = "update_purchase_order OK")
+    ),
+    tag = "ERP/purchase-order"
+)]
 pub async fn update_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -258,6 +267,14 @@ pub async fn update_purchase_order(
     Json(ApiResponse::success(purchase_order, "更新采购订单成功"))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/purchase-orders/{id}",
+    responses(
+        (status = 200, description = "delete_purchase_order OK")
+    ),
+    tag = "ERP/purchase-order"
+)]
 pub async fn delete_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -282,7 +299,7 @@ pub async fn delete_purchase_order(
 }
 
 #[utoipa::path(
-    post,
+    put,
     path = "/erp/purchase-orders/{id}/approve",
     responses(
         (status = 200, description = "approve_purchase_order OK")

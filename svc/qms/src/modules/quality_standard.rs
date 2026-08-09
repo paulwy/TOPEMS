@@ -256,6 +256,20 @@ pub async fn get_standard(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/qms/standards/{id}",
+    tag = "quality_standard",
+    params(
+        ("id" = String, Path, description = "标准ID"),
+    ),
+    request_body = UpdateStandardRequest,
+    responses(
+        (status = 200, description = "质量标准更新成功", body = ApiResponse<QualityStandard>),
+        (status = 400, description = "无效的标准ID"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn update_standard(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -294,6 +308,19 @@ pub async fn update_standard(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/qms/standards/{id}",
+    tag = "quality_standard",
+    params(
+        ("id" = String, Path, description = "标准ID"),
+    ),
+    responses(
+        (status = 200, description = "质量标准删除成功", body = ApiResponse<()>),
+        (status = 400, description = "无效的标准ID"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn delete_standard(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

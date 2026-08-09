@@ -13,9 +13,12 @@ use utoipa::OpenApi;
         crate::modules::customer::list_customers,
         crate::modules::customer::create_customer,
         crate::modules::customer::get_customer,
+        crate::modules::customer::update_customer,
+        crate::modules::customer::delete_customer,
         crate::modules::contact::list_contacts,
         crate::modules::contact::create_contact,
         crate::modules::opportunity::list_opportunities,
+        crate::modules::opportunity::create_opportunity,
     ),
     components(
         schemas(

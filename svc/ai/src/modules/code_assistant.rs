@@ -1,9 +1,10 @@
 use axum::{extract::Extension, Json};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CodeGenerateRequest {
     pub prompt: String,
     pub language: Option<String>,
@@ -17,7 +18,7 @@ pub struct CodeGenerateResponse {
     pub framework: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CodeExplainRequest {
     pub code: String,
     pub language: Option<String>,
@@ -30,7 +31,7 @@ pub struct CodeExplainResponse {
     pub key_points: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 #[allow(dead_code)]
 pub struct CodeFixRequest {
     pub code: String,
@@ -45,7 +46,7 @@ pub struct CodeFixResponse {
     pub explanation: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 #[allow(dead_code)]
 pub struct CodeOptimizeRequest {
     pub code: String,
@@ -60,7 +61,7 @@ pub struct CodeOptimizeResponse {
     pub after_size: Option<usize>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 #[allow(dead_code)]
 pub struct CodeReviewRequest {
     pub code: String,

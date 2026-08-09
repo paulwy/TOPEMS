@@ -80,6 +80,7 @@ pub async fn get_connector(
 #[utoipa::path(
     post,
     path = "/api/ai/connectors/create",
+    request_body = CreateConnectorRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),
@@ -134,6 +135,7 @@ pub async fn create_connector(
 #[utoipa::path(
     post,
     path = "/api/ai/connectors/update",
+    request_body = UpdateConnectorRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),
@@ -283,6 +285,7 @@ pub async fn test_connector(
 #[utoipa::path(
     post,
     path = "/api/ai/connectors/query",
+    request_body = DataQueryRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),

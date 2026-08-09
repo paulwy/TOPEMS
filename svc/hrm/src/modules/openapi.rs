@@ -17,9 +17,13 @@ use utoipa::OpenApi;
         crate::modules::department::list_departments,
         crate::modules::department::create_department,
         crate::modules::department::get_department,
+        crate::modules::department::update_department,
+        crate::modules::department::delete_department,
         crate::modules::company::list_companies,
         crate::modules::company::create_company,
         crate::modules::company::get_company,
+        crate::modules::company::update_company,
+        crate::modules::company::delete_company,
     ),
     components(
         schemas(

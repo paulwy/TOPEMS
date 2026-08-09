@@ -1,11 +1,12 @@
 #![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::qa::QAService;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ImageAnalysisRequest {
     pub image_base64: String,
     pub prompt: Option<String>,
@@ -63,7 +64,7 @@ pub struct TextRegion {
     pub bounding_box: BoundingBox,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct VideoAnalysisRequest {
     pub video_url: String,
     pub analysis_type: String,

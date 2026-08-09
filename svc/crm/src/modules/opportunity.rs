@@ -190,6 +190,17 @@ async fn list_opportunities(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/opportunities",
+    tag = "opportunity",
+    request_body = CreateOpportunityRequest,
+    responses(
+        (status = 200, description = "商机创建成功", body = ApiResponse<Opportunity>),
+        (status = 400, description = "请求参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn create_opportunity(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

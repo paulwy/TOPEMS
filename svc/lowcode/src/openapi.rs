@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse, routing::get, Json, Router};
+use axum::{http::StatusCode, response::IntoResponse, routing::{get, post}, Json, Router};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
@@ -8,7 +8,7 @@ use utoipa::OpenApi;
         version = "0.1.0",
         description = "低代码平台 API（占位，待立项实现）"
     ),
-    paths(health, list_apps, get_designer_schema)
+    paths(health, list_apps, create_app, get_designer_schema)
 )]
 pub struct ApiDoc;
 
@@ -42,6 +42,15 @@ pub async fn list_apps() -> impl IntoResponse {
 }
 
 #[utoipa::path(
+    post,
+    path = "/api/lowcode/apps",
+    responses((status = 501, description = "低代码后端待立项"))
+)]
+pub async fn create_app() -> impl IntoResponse {
+    not_implemented("Create app")
+}
+
+#[utoipa::path(
     get,
     path = "/api/lowcode/designer/schema",
     responses((status = 501, description = "低代码后端待立项"))
@@ -52,7 +61,7 @@ pub async fn get_designer_schema() -> impl IntoResponse {
 
 pub fn public_routes() -> Router {
     Router::new()
-        .route("/apps", get(list_apps))
+        .route("/apps", get(list_apps).post(create_app))
         .route("/designer/schema", get(get_designer_schema))
         .route(
             "/",

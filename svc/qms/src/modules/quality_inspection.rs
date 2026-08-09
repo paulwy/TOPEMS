@@ -350,6 +350,20 @@ pub async fn get_inspection(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/qms/checks/{id}",
+    tag = "quality_inspection",
+    params(
+        ("id" = String, Path, description = "检验ID"),
+    ),
+    request_body = UpdateInspectionRequest,
+    responses(
+        (status = 200, description = "质量检查更新成功", body = ApiResponse<Inspection>),
+        (status = 400, description = "无效的检查ID"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn update_inspection(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -385,6 +399,19 @@ pub async fn update_inspection(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/qms/checks/{id}",
+    tag = "quality_inspection",
+    params(
+        ("id" = String, Path, description = "检验ID"),
+    ),
+    responses(
+        (status = 200, description = "质量检查删除成功", body = ApiResponse<()>),
+        (status = 400, description = "无效的检查ID"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn delete_inspection(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

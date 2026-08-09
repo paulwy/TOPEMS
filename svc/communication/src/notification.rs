@@ -169,6 +169,34 @@ pub async fn broadcast_notification(
     }))
 }
 
+/// 创建通知（兼容前端 POST /notification/notifications 路径）
+#[utoipa::path(
+    post,
+    path = "/notification/notifications",
+    tag = "notification",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "通知创建成功", body = serde_json::Value),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn create_notification(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Creating notification via /notification/notifications");
+    // 委托给 send_notification 处理逻辑
+    let send_req = serde_json::from_value::<SendNotificationRequest>(req.clone());
+    match send_req {
+        Ok(r) => send_notification(State(pool), Extension(claims), Json(r)).await,
+        Err(_) => Json(serde_json::json!({
+            "success": false,
+            "message": "Invalid notification request body"
+        })),
+    }
+}
+
 /// 获取当前用户的通知列表
 #[utoipa::path(
     get,
@@ -293,6 +321,19 @@ pub async fn list_notifications(
 }
 
 /// 标记单个通知为已读
+#[utoipa::path(
+    put,
+    path = "/notification/notifications/{id}",
+    tag = "notification",
+    params(
+        ("id" = Uuid, Path, description = "通知ID"),
+    ),
+    responses(
+        (status = 200, description = "标记成功", body = serde_json::Value),
+        (status = 404, description = "通知不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn mark_as_read(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -572,6 +613,19 @@ pub async fn get_unread_notifications(
 }
 
 /// 删除指定通知
+#[utoipa::path(
+    delete,
+    path = "/notification/notifications/{id}",
+    tag = "notification",
+    params(
+        ("id" = Uuid, Path, description = "通知ID"),
+    ),
+    responses(
+        (status = 200, description = "删除成功", body = serde_json::Value),
+        (status = 404, description = "通知不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn delete_notification(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

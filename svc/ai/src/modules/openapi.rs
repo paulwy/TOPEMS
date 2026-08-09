@@ -19,6 +19,7 @@ use utoipa::OpenApi;
 #[utoipa::path(
     post,
     path = "/api/ai/analysis/sentiment",
+    request_body = crate::modules::models::SentimentAnalysisRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -27,6 +28,7 @@ fn _analysis_sentiment() {}
 #[utoipa::path(
     post,
     path = "/api/ai/analysis/classify",
+    request_body = crate::modules::models::ClassifyTextRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -35,6 +37,7 @@ fn _analysis_classify() {}
 #[utoipa::path(
     post,
     path = "/api/ai/analysis/entities",
+    request_body = crate::modules::models::ExtractEntitiesRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -43,6 +46,7 @@ fn _analysis_entities() {}
 #[utoipa::path(
     post,
     path = "/api/ai/analysis/keywords",
+    request_body = crate::modules::models::ExtractKeywordsRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -51,6 +55,7 @@ fn _analysis_keywords() {}
 #[utoipa::path(
     post,
     path = "/api/ai/analysis/history",
+    request_body = crate::modules::models::AnalysisHistoryRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -60,6 +65,7 @@ fn _analysis_history() {}
 #[utoipa::path(
     post,
     path = "/api/ai/code/generate",
+    request_body = crate::modules::code_assistant::CodeGenerateRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -68,6 +74,7 @@ fn _code_generate() {}
 #[utoipa::path(
     post,
     path = "/api/ai/code/explain",
+    request_body = crate::modules::code_assistant::CodeExplainRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -76,6 +83,7 @@ fn _code_explain() {}
 #[utoipa::path(
     post,
     path = "/api/ai/code/fix",
+    request_body = crate::modules::code_assistant::CodeFixRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -84,6 +92,7 @@ fn _code_fix() {}
 #[utoipa::path(
     post,
     path = "/api/ai/code/optimize",
+    request_body = crate::modules::code_assistant::CodeOptimizeRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -92,6 +101,7 @@ fn _code_optimize() {}
 #[utoipa::path(
     post,
     path = "/api/ai/code/review",
+    request_body = crate::modules::code_assistant::CodeReviewRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -109,6 +119,7 @@ fn _document_upload() {}
 #[utoipa::path(
     post,
     path = "/api/ai/documents/{id}/process",
+    request_body = crate::modules::models::ProcessDocumentRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -140,7 +151,24 @@ fn _document_list() {}
 
 #[utoipa::path(
     post,
+    path = "/api/ai/documents",
+    tag = "ai",
+    responses((status = 200, description = "OK")),
+)]
+fn _document_create() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/ai/documents/{id}",
+    tag = "ai",
+    responses((status = 200, description = "OK")),
+)]
+fn _document_update() {}
+
+#[utoipa::path(
+    post,
     path = "/api/ai/documents/{id}/extract",
+    request_body = crate::modules::models::ExtractDocumentRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -149,6 +177,7 @@ fn _document_extract() {}
 #[utoipa::path(
     post,
     path = "/api/ai/documents/vectorize-from-file",
+    request_body = crate::modules::models::VectorizeFromFileRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -157,6 +186,7 @@ fn _document_vectorize_from_file() {}
 #[utoipa::path(
     post,
     path = "/api/ai/documents/{id}/summarize",
+    request_body = crate::modules::models::SummarizeDocumentRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -165,6 +195,7 @@ fn _document_summarize() {}
 #[utoipa::path(
     post,
     path = "/api/ai/documents/{id}/key-points",
+    request_body = crate::modules::models::ExtractKeyPointsRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -173,6 +204,7 @@ fn _document_key_points() {}
 #[utoipa::path(
     post,
     path = "/api/ai/documents/qa",
+    request_body = crate::modules::models::DocumentQAQuestionRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -182,6 +214,7 @@ fn _document_qa() {}
 #[utoipa::path(
     post,
     path = "/api/ai/embedding/generate",
+    request_body = crate::modules::embedding::EmbeddingRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -191,6 +224,7 @@ fn _embedding_generate() {}
 #[utoipa::path(
     post,
     path = "/api/ai/multimodal/image/analyze",
+    request_body = crate::services::multimodal::ImageAnalysisRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -199,6 +233,7 @@ fn _multimodal_image_analyze() {}
 #[utoipa::path(
     post,
     path = "/api/ai/multimodal/image/caption",
+    request_body = crate::services::multimodal::ImageAnalysisRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -207,6 +242,7 @@ fn _multimodal_image_caption() {}
 #[utoipa::path(
     post,
     path = "/api/ai/multimodal/image/objects",
+    request_body = crate::services::multimodal::ImageAnalysisRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -215,6 +251,7 @@ fn _multimodal_image_objects() {}
 #[utoipa::path(
     post,
     path = "/api/ai/multimodal/image/text",
+    request_body = crate::services::multimodal::ImageAnalysisRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -223,6 +260,7 @@ fn _multimodal_image_text() {}
 #[utoipa::path(
     post,
     path = "/api/ai/multimodal/image/describe",
+    request_body = crate::services::multimodal::ImageAnalysisRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -231,6 +269,7 @@ fn _multimodal_image_describe() {}
 #[utoipa::path(
     post,
     path = "/api/ai/multimodal/video/analyze",
+    request_body = crate::services::multimodal::VideoAnalysisRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -239,6 +278,7 @@ fn _multimodal_video_analyze() {}
 #[utoipa::path(
     post,
     path = "/api/ai/multimodal/video/summary",
+    request_body = crate::services::multimodal::VideoAnalysisRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -248,6 +288,7 @@ fn _multimodal_video_summary() {}
 #[utoipa::path(
     post,
     path = "/api/ai/qa/ask",
+    request_body = crate::modules::models::AskRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -256,6 +297,7 @@ fn _qa_ask() {}
 #[utoipa::path(
     post,
     path = "/api/ai/qa/ask-with-context",
+    request_body = crate::modules::models::AskWithContextRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -264,6 +306,7 @@ fn _qa_ask_with_context() {}
 #[utoipa::path(
     post,
     path = "/api/ai/qa/ask-structured",
+    request_body = crate::modules::qa::AskStructuredRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -272,6 +315,7 @@ fn _qa_ask_structured() {}
 #[utoipa::path(
     post,
     path = "/api/ai/qa/ask-conversation",
+    request_body = crate::modules::qa::AskWithConversationRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -280,6 +324,7 @@ fn _qa_ask_conversation() {}
 #[utoipa::path(
     post,
     path = "/api/ai/qa/classify",
+    request_body = crate::modules::qa::ClassifyRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -304,6 +349,7 @@ fn _qa_delete_history() {}
 #[utoipa::path(
     post,
     path = "/api/ai/qa/history/batch-delete",
+    request_body = crate::modules::qa::BatchDeleteRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -312,6 +358,7 @@ fn _qa_batch_delete_history() {}
 #[utoipa::path(
     post,
     path = "/api/ai/qa/feedback",
+    request_body = crate::modules::models::FeedbackRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -321,6 +368,7 @@ fn _qa_feedback() {}
 #[utoipa::path(
     post,
     path = "/api/ai/recommend",
+    request_body = crate::services::recommendation::RecommendationRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -329,6 +377,7 @@ fn _recommend() {}
 #[utoipa::path(
     post,
     path = "/api/ai/profile/get",
+    request_body = serde_json::Value,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -337,6 +386,7 @@ fn _profile_get() {}
 #[utoipa::path(
     post,
     path = "/api/ai/profile/update",
+    request_body = serde_json::Value,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -345,6 +395,7 @@ fn _profile_update() {}
 #[utoipa::path(
     post,
     path = "/api/ai/recommend/documents",
+    request_body = serde_json::Value,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -353,6 +404,7 @@ fn _recommend_documents() {}
 #[utoipa::path(
     post,
     path = "/api/ai/recommend/opportunities",
+    request_body = serde_json::Value,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -361,6 +413,7 @@ fn _recommend_opportunities() {}
 #[utoipa::path(
     post,
     path = "/api/ai/recommend/knowledge",
+    request_body = serde_json::Value,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -370,6 +423,7 @@ fn _recommend_knowledge() {}
 #[utoipa::path(
     post,
     path = "/api/ai/vectors/store",
+    request_body = crate::modules::models::StoreVectorRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -378,6 +432,7 @@ fn _vector_store() {}
 #[utoipa::path(
     post,
     path = "/api/ai/vectors/search",
+    request_body = crate::modules::models::VectorSearchRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -402,6 +457,7 @@ fn _vector_delete() {}
 #[utoipa::path(
     post,
     path = "/api/ai/vectors/batch-store",
+    request_body = crate::modules::models::BatchStoreVectorsRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -410,6 +466,7 @@ fn _vector_batch_store() {}
 #[utoipa::path(
     post,
     path = "/api/ai/vectors/hybrid-search",
+    request_body = crate::modules::models::HybridSearchRequest,
     tag = "ai",
     responses((status = 200, description = "OK")),
 )]
@@ -494,7 +551,9 @@ fn _vector_clear() {}
         _document_process,
         _document_get,
         _document_delete,
+        _document_update,
         _document_list,
+        _document_create,
         _document_extract,
         _document_vectorize_from_file,
         _document_summarize,

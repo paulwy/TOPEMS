@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 use utoipa::{OpenApi, ToSchema};
 use uuid::Uuid;
 
+use crate::modules::location::CreateLocation;
+use crate::modules::map::{CreateMap, UpdateMap};
+
 // ==================== 基础类型 ====================
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -282,6 +285,9 @@ pub struct ApiResponse<T> {
             SyncStatus,
             OfflineDataDownload,
             ApiResponse<String>,
+            CreateLocation,
+            CreateMap,
+            UpdateMap,
         ),
     ),
     tags(

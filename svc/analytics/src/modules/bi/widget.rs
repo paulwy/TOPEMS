@@ -4,11 +4,12 @@ use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
+use utoipa::ToSchema;
 
 use crate::modules::bi::chart_service::{ChartQuery, ChartService, ChartType};
 use crate::shared::AppState;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateWidgetRequest {
     pub dashboard_id: Uuid,
     pub name: String,
@@ -20,7 +21,7 @@ pub struct CreateWidgetRequest {
     pub cache_ttl_seconds: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateWidgetRequest {
     pub name: Option<String>,
     pub widget_type: Option<String>,
@@ -250,7 +251,7 @@ pub async fn get_widgets_by_dashboard(
     post,
     path = "/widget",
     tag = "Visualization",
-    request_body = serde_json::Value,
+    request_body = CreateWidgetRequest,
     responses(
         (status = 201, description = "Widget created", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -384,7 +385,7 @@ pub async fn get_widget(
     params(
         ("id" = uuid::Uuid, Path, description = "Widget ID")
     ),
-    request_body = serde_json::Value,
+    request_body = UpdateWidgetRequest,
     responses(
         (status = 200, description = "Widget updated", body = serde_json::Value),
         (status = 500, description = "Internal server error")

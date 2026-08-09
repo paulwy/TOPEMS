@@ -379,6 +379,20 @@ async fn get_customer(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/customers/{id}",
+    tag = "customer",
+    params(
+        ("id" = Uuid, Path, description = "客户ID"),
+    ),
+    request_body = UpdateCustomerRequest,
+    responses(
+        (status = 200, description = "客户更新成功", body = ApiResponse<Customer>),
+        (status = 404, description = "客户不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn update_customer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -564,6 +578,19 @@ async fn update_customer(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/customers/{id}",
+    tag = "customer",
+    params(
+        ("id" = Uuid, Path, description = "客户ID"),
+    ),
+    responses(
+        (status = 200, description = "客户删除成功", body = ApiResponse<()>),
+        (status = 404, description = "客户不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn delete_customer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

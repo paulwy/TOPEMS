@@ -74,6 +74,10 @@ async fn main() -> anyhow::Result<()> {
     let notification_write = Router::new()
         .route("/notify/send", post(notification::send_notification))
         .route(
+            "/notification/notifications",
+            post(notification::create_notification),
+        )
+        .route(
             "/notify/broadcast",
             post(notification::broadcast_notification),
         )

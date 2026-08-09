@@ -14,6 +14,7 @@ pub fn create_routes() -> Router<crate::shared::AppState> {
 #[utoipa::path(
     post,
     path = "/api/ai/agent/run",
+    request_body = crate::services::AgentRequest,
     tag = "ai",
     responses(
         (status = 200, description = "OK"),

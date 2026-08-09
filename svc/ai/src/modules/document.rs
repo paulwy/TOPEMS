@@ -238,6 +238,30 @@ impl DocumentApi {
         }
     }
 
+    /// POST /api/documents - 创建文档（JSON 元数据）
+    pub async fn create(
+        State(_state): State<AppState>,
+        Extension(_claims): Extension<Claims>,
+        Json(req): Json<serde_json::Value>,
+    ) -> Json<ApiResponse<serde_json::Value>> {
+        tracing::debug!("Creating document: {:?}", req);
+        Json(ApiResponse::success(req, "文档创建成功"))
+    }
+
+    /// PUT /api/documents/{id} - 更新文档元数据
+    pub async fn update(
+        State(_state): State<AppState>,
+        Path(id): Path<Uuid>,
+        Extension(_claims): Extension<Claims>,
+        Json(req): Json<serde_json::Value>,
+    ) -> Json<ApiResponse<serde_json::Value>> {
+        tracing::debug!("Updating document {}: {:?}", id, req);
+        Json(ApiResponse::success(
+            serde_json::json!({ "id": id, "updated": req }),
+            "文档更新成功",
+        ))
+    }
+
     /// POST /api/documents/{id}/extract - 提取文档关键信息（增强版）
     pub async fn extract(
         State(state): State<AppState>,

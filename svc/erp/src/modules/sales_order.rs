@@ -205,6 +205,15 @@ pub async fn create_sales_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/sales-orders/{id}",
+    request_body = UpdateSalesOrderRequest,
+    responses(
+        (status = 200, description = "update_sales_order OK")
+    ),
+    tag = "ERP/sales-order"
+)]
 pub async fn update_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -240,6 +249,14 @@ pub async fn update_sales_order(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/sales-orders/{id}",
+    responses(
+        (status = 200, description = "delete_sales_order OK")
+    ),
+    tag = "ERP/sales-order"
+)]
 pub async fn delete_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

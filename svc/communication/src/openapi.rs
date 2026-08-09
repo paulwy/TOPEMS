@@ -7,9 +7,12 @@ use utoipa::OpenApi;
 #[openapi(
     paths(
         crate::notification::send_notification,
+        crate::notification::create_notification,
         crate::notification::list_notifications,
         crate::notification::get_notifications,
         crate::notification::get_notification,
+        crate::notification::mark_as_read,
+        crate::notification::delete_notification,
         crate::im::list_rooms,
         crate::im::create_room,
         crate::mail::list_emails,

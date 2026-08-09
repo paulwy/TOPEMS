@@ -1,10 +1,11 @@
 use axum::extract::{Json, State};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct EmbeddingRequest {
     pub texts: Vec<String>,
     pub model: Option<String>,

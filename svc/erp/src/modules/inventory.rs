@@ -202,6 +202,15 @@ pub async fn create_inventory(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/inventory/{id}",
+    request_body = UpdateInventoryRequest,
+    responses(
+        (status = 200, description = "update_inventory OK")
+    ),
+    tag = "ERP/inventory"
+)]
 pub async fn update_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -236,6 +245,14 @@ pub async fn update_inventory(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/inventory/{id}",
+    responses(
+        (status = 200, description = "delete_inventory OK")
+    ),
+    tag = "ERP/inventory"
+)]
 pub async fn delete_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

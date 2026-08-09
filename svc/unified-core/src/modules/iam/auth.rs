@@ -107,7 +107,7 @@ struct UserInfo {
     post,
     path = "/iam/auth/login",
     tag = "IAM-Auth",
-    request_body = LoginRequest,
+    request_body = serde_json::Value,
     responses(
         (status = 200, description = "登录成功"),
         (status = 400, description = "参数错误"),
@@ -423,7 +423,7 @@ struct RegisterRequest {
     post,
     path = "/iam/auth/register",
     tag = "IAM-Auth",
-    request_body = RegisterRequest,
+    request_body = serde_json::Value,
     responses(
         (status = 200, description = "注册成功"),
         (status = 400, description = "参数错误"),

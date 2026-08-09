@@ -8,9 +8,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateLocation {
     pub name: String,
     pub code: Option<String>,
@@ -60,7 +61,7 @@ pub struct RouteRequest {
     post,
     path = "/locations/create",
     tag = "device",
-    request_body = serde_json::Value,
+    request_body = CreateLocation,
     responses(
         (status = 200, description = "创建位置成功", body = serde_json::Value),
         (status = 500, description = "创建位置失败")

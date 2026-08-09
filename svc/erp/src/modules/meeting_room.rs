@@ -219,6 +219,14 @@ pub async fn get_room(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/meeting-rooms/{id}",
+    responses(
+        (status = 200, description = "update_room OK")
+    ),
+    tag = "ERP/meeting-room"
+)]
 pub async fn update_room(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -308,6 +316,14 @@ pub async fn update_room(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/meeting-rooms/{id}",
+    responses(
+        (status = 200, description = "delete_room OK")
+    ),
+    tag = "ERP/meeting-room"
+)]
 pub async fn delete_room(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
