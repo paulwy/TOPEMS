@@ -52,7 +52,7 @@ use crate::modules::portal_plugin::{auto_register_to_core, get_plugin_info, plug
         (url = "http://localhost:8063", description = "本地开发环境"),
     )
 )]
-struct ApiDoc;
+pub struct ApiDoc;
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
 

@@ -57,7 +57,7 @@ pub use shared::*;
         (url = "http://localhost:8060", description = "本地开发环境"),
     )
 )]
-struct ApiDoc;
+pub struct ApiDoc;
 
 // ==================== 主入口（V2 shared-bootstrap 模板） ====================
 

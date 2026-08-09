@@ -86,7 +86,7 @@ use topems_shared_service_client::service_client::create_workflow_client;
         (url = "http://localhost:8011", description = "本地开发环境"),
     )
 )]
-struct ApiDoc;
+pub struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

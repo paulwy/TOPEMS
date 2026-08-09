@@ -22,7 +22,7 @@ mod models;
     ),
     paths(health, list_apps, get_designer_schema)
 )]
-struct ApiDoc;
+pub struct ApiDoc;
 
 /// 501 Not Implemented 通用占位响应
 fn not_implemented(feature: &str) -> impl IntoResponse {
