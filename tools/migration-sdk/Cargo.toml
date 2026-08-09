@@ -1,5 +1,5 @@
 [package]
-name = "migration-sdk"
+name = "topems-migration-sdk"
 version = "0.1.0"
 edition = "2021"
 resolver = "2"
@@ -37,6 +37,9 @@ async-trait = "0.1"
 
 # 哈希
 sha2 = "0.10"
+
+# OpenAPI 文档骨架（V71 A1）
+utoipa = "=4.2.3"
 
 [dev-dependencies]
 tokio-test = "0.4"

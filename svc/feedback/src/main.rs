@@ -7,6 +7,7 @@ use topems_shared_bootstrap::{bootstrap_service, build_application, run, Service
 
 mod handlers;
 mod models;
+pub mod openapi;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
