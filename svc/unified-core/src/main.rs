@@ -83,7 +83,7 @@ pub use shared::*;
         ("BearerAuth" = [])
     )
 )]
-struct ApiDoc;
+pub struct ApiDoc;
 
 impl Modify for ApiDoc {
     fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {

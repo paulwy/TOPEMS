@@ -79,7 +79,7 @@ use modules::work_report::{
         (url = "http://localhost:8030", description = "本地开发环境"),
     )
 )]
-struct ApiDoc;
+pub struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

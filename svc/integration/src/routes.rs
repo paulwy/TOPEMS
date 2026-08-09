@@ -36,7 +36,7 @@ use crate::plugin;
         (url = "http://localhost:8072", description = "本地开发环境"),
     )
 )]
-struct ApiDoc;
+pub struct ApiDoc;
 
 pub fn create_routes(state: AppState) -> Router {
     let public_routes = Router::new()

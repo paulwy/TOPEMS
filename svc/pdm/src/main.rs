@@ -49,7 +49,7 @@ pub use shared::AppState;
         (url = "http://localhost:8031", description = "本地开发环境"),
     )
 )]
-struct ApiDoc;
+pub struct ApiDoc;
 
 // ==================== 主入口 ====================
 

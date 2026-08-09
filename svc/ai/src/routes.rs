@@ -44,7 +44,7 @@ use utoipa::OpenApi;
         (url = "http://localhost:8013", description = "本地开发环境"),
     )
 )]
-struct AiApiDoc;
+pub struct AiApiDoc;
 
 pub fn create_routes(
     app_state: AppState,
