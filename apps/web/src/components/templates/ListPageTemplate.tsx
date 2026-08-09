@@ -1906,6 +1906,10 @@ export function ListPageTemplate<T extends { id?: string | number }>({
   const [exportComplete, setExportComplete] = useState(false);
   const [exportAnchorEl, setExportAnchorEl] = useState<HTMLElement | null>(null);
 
+  // 移动端溢出菜单的 anchor 状态
+  // 原在 L3825 IIFE 内调用 React.useState 违反 hooks/rules-of-hooks，上提到顶层
+  const [mobileMenuEl, setMobileMenuEl] = React.useState<HTMLElement | null>(null);
+
   // URL 同步列配置（当 columnConfig prop 启用时）
   const urlColSyncEnabled = columnConfigProp?.urlSync && columnConfigProp.key;
   const columnConfigResult = useColumnConfig({
@@ -3822,7 +3826,6 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                   const actions = effectiveActions || [];
                   const visibleActions = isMobile ? actions.slice(0, 2) : actions;
                   const hiddenActions = isMobile ? actions.slice(2) : [];
-                  const [mobileMenuEl, setMobileMenuEl] = React.useState<HTMLElement | null>(null);
                   return (
                     <>
                       {visibleActions.map((action, index) => (
