@@ -242,12 +242,46 @@ pub struct VehicleRequest {
 
 #[derive(OpenApi)]
 #[openapi(
+    // 23 条 paths（2026-08 V72.5 已为下列 23 handlers 补全 #[utoipa::path] 宏）
     paths(
+        // Assets
         crate::modules::asset::list_assets,
         crate::modules::asset::create_asset,
         crate::modules::asset::get_asset,
+        // Materials
         crate::modules::material::list_materials,
         crate::modules::material::create_material,
+        // Customers
+        crate::modules::customer::list_customers,
+        crate::modules::customer::create_customer,
+        crate::modules::customer::get_customer,
+        crate::modules::customer::update_customer,
+        crate::modules::customer::delete_customer,
+        // Suppliers
+        crate::modules::supplier::list_suppliers,
+        crate::modules::supplier::create_supplier,
+        crate::modules::supplier::get_supplier,
+        crate::modules::supplier::update_supplier,
+        crate::modules::supplier::delete_supplier,
+        // Inventory
+        crate::modules::inventory::list_inventory,
+        crate::modules::inventory::create_inventory,
+        crate::modules::inventory::get_inventory,
+        // Meeting Rooms
+        crate::modules::meeting_room::list_rooms,
+        crate::modules::meeting_room::create_room,
+        crate::modules::meeting_room::get_room,
+        crate::modules::meeting_room::list_bookings,
+        crate::modules::meeting_room::create_booking,
+        // Purchase Orders
+        crate::modules::purchase_order::list_purchase_orders,
+        crate::modules::purchase_order::create_purchase_order,
+        crate::modules::purchase_order::get_purchase_order,
+        crate::modules::purchase_order::approve_purchase_order,
+        // Sales Orders
+        crate::modules::sales_order::list_sales_orders,
+        crate::modules::sales_order::create_sales_order,
+        crate::modules::sales_order::get_sales_order,
     ),
     components(
         schemas(
@@ -300,3 +334,16 @@ pub struct VehicleRequest {
     )
 )]
 pub struct ErpApiDoc;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_openapi_spec() {
+        let spec = ErpApiDoc::openapi();
+        let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
+        std::fs::write("/tmp/topems-erp-openapi.json", json).expect("Failed to write spec");
+        eprintln!("OpenAPI spec written to /tmp/topems-erp-openapi.json");
+    }
+}

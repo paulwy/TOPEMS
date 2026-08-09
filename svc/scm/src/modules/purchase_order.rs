@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use utoipa::path;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -27,6 +28,14 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/purchase-orders/{id}/reject", post(reject_order))
 }
 
+#[utoipa::path(
+    get,
+    path = "/scm/purchase-orders",
+    responses(
+        (status = 200, description = "list_orders OK")
+    ),
+    tag = "SCM/purchase-order"
+)]
 pub async fn list_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -93,6 +102,14 @@ pub async fn list_orders(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/scm/purchase-orders",
+    responses(
+        (status = 200, description = "create_order OK")
+    ),
+    tag = "SCM/purchase-order"
+)]
 pub async fn create_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -167,6 +184,14 @@ pub async fn create_order(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/scm/purchase-orders/{id}",
+    responses(
+        (status = 200, description = "get_order OK")
+    ),
+    tag = "SCM/purchase-order"
+)]
 pub async fn get_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -196,6 +221,14 @@ pub async fn get_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/scm/purchase-orders/{id}",
+    responses(
+        (status = 200, description = "update_order OK")
+    ),
+    tag = "SCM/purchase-order"
+)]
 pub async fn update_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -288,6 +321,14 @@ pub async fn update_order(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/scm/purchase-orders/{id}",
+    responses(
+        (status = 200, description = "delete_order OK")
+    ),
+    tag = "SCM/purchase-order"
+)]
 pub async fn delete_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -356,6 +397,14 @@ pub struct ApprovalRequest {
     pub remarks: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/scm/purchase-orders/{id}/approve",
+    responses(
+        (status = 200, description = "approve_order OK")
+    ),
+    tag = "SCM/purchase-order"
+)]
 pub async fn approve_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -504,6 +553,14 @@ pub async fn approve_order(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/scm/purchase-orders/{id}/reject",
+    responses(
+        (status = 200, description = "reject_order OK")
+    ),
+    tag = "SCM/purchase-order"
+)]
 pub async fn reject_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

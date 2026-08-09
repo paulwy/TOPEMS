@@ -1,0 +1,62 @@
+============================================================
+V72.5 第二批 — unified-core IAM paths 注册收尾验证证据
+============================================================
+日期: 2026-08-09
+批次: V72.5 Phase 2 (finance/master-data/srm/wms/unified-core)
+
+------------------------------------------------------------
+1. Extract Tests (cargo test --test openapi_extract)
+------------------------------------------------------------
+PASS topems-finance       49407 bytes  (11 paths / 27 schemas)
+PASS topems-master-data   17724 bytes  ( 8 paths / 12 schemas)
+PASS topems-unified-core   6991 bytes  ( 4 paths /  3 schemas)  ← 本批修复
+PASS topems-srm            6574 bytes  ( 5 paths /  5 schemas)
+PASS topems-wms            8429 bytes  (10 paths /  4 schemas)
+
+unified-core 修复详情:
+  - lib.rs 新增: pub use modules::openapi::IamApiDoc as ApiDoc;
+  - modules/iam/user/mod.rs: mod crud → pub(crate) mod crud
+  - modules/openapi.rs: IamApiDoc.paths 注册 4 IAM handler
+    (list_users / create_user / login / register)
+
+------------------------------------------------------------
+2. Aggregation (gen_openapi_types.sh)
+------------------------------------------------------------
+JSON coverage: 11 services
+Aggregated:    64 paths / 334 schemas
+openapi.gen.ts: 342 schemas (banner) / 301 (block-keys) / 259KB
+
+operationId 去重 (aggregate.py):
+  srm_list_suppliers / srm_create_supplier / srm_get_supplier
+  srm_update_supplier / srm_delete_supplier
+  wms_list_inventory / wms_create_inventory / wms_get_inventory
+  (冲突时自动加 {svc}_ 前缀，共 16 处去重)
+
+------------------------------------------------------------
+3. TSC Verification
+------------------------------------------------------------
+shared-types TSC: 0 error ✅
+apps/web TSC:    73 pre-existing errors (recharts/iam/MesTypes)
+                 0 new errors from V72.5 batch2 bindings ✅
+
+------------------------------------------------------------
+4. Frontend Bindings (4 files)
+------------------------------------------------------------
+apps/web/src/api/finance/account.ts   (list/get/create accounts)
+apps/web/src/api/finance/voucher.ts   (list/get/create vouchers)
+apps/web/src/api/wms/inventory.ts     (wms_list/get/create inventory)
+apps/web/src/api/srm/supplierTyped.ts (srm_* 5 op full CRUD)
+
+------------------------------------------------------------
+5. 修改文件清单
+------------------------------------------------------------
+svc/unified-core/src/lib.rs                    (export IamApiDoc as ApiDoc)
+svc/unified-core/src/modules/openapi.rs        (register 4 IAM paths)
+svc/unified-core/src/modules/iam/user/mod.rs   (crud: mod → pub(crate))
+scripts/gen_openapi_types.sh                   (JSON threshold 15→10)
+docs/roadmap/TODO.md                           (A4 batch2 status update)
+docs/api/openapi-aggregated.json               (regenerated)
+packages/shared-types/src/openapi.gen.ts       (regenerated)
+packages/shared-types/src/generated/openapi.d.ts (regenerated)
+tmp/openapi/topems-unified-core*.json          (new extract)
+============================================================

@@ -1,9 +1,8 @@
 /**
- * 此文件由 scripts/openapi/gen-types.mjs 自动生成
- * A2 验收文件（命名对齐 V71 TODO.md A2 要求 packages/shared-types/src/openapi.gen.ts），请勿手动编辑。
- * 生成时间: 2026-08-09T04:16:24.591Z
+ * 此文件由 scripts/openapi/gen-types.mjs 自动生成，请勿手动编辑。
+ * 生成时间: 2026-08-09T10:47:48.971Z
  * 输入源: /Users/air/TOPEMS/docs/api/openapi-aggregated.json
- * 路径数: 33 | Schema 数: 348
+ * 路径数: 64 | Schema 数: 342
  */
 
 /**
@@ -70,6 +69,278 @@ export interface paths {
         get: operations["list_opportunities"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_assets"];
+        put?: never;
+        post: operations["create_asset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/assets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_asset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["erp_list_customers"];
+        put?: never;
+        post: operations["erp_create_customer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/customers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["erp_get_customer"];
+        put: operations["update_customer"];
+        post?: never;
+        delete: operations["delete_customer"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_inventory"];
+        put?: never;
+        post: operations["create_inventory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/inventory/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_inventory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/meeting-rooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_rooms"];
+        put?: never;
+        post: operations["create_room"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/meeting-rooms/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_bookings"];
+        put?: never;
+        post: operations["create_booking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/meeting-rooms/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_room"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/purchase-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_purchase_orders"];
+        put?: never;
+        post: operations["create_purchase_order"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/purchase-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_purchase_order"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/purchase-orders/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["approve_purchase_order"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/sales-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_sales_orders"];
+        put?: never;
+        post: operations["create_sales_order"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/sales-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_sales_order"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_suppliers"];
+        put?: never;
+        post: operations["create_supplier"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/suppliers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_supplier"];
+        put: operations["update_supplier"];
+        post?: never;
+        delete: operations["delete_supplier"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/materials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_materials"];
+        put?: never;
+        post: operations["create_material"];
         delete?: never;
         options?: never;
         head?: never;
@@ -252,14 +523,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/lowcode/apps": {
+    "/hrm/companies": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list_apps"];
+        get: operations["list_companies"];
+        put?: never;
+        post: operations["create_company"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/hrm/companies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_company"];
         put?: never;
         post?: never;
         delete?: never;
@@ -268,14 +555,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/lowcode/designer/schema": {
+    "/hrm/departments": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_designer_schema"];
+        get: operations["list_departments"];
+        put?: never;
+        post: operations["create_department"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/hrm/departments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_department"];
         put?: never;
         post?: never;
         delete?: never;
@@ -284,17 +587,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/lowcode/health": {
+    "/hrm/employees": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["health"];
+        get: operations["list_employees"];
         put?: never;
-        post?: never;
+        post: operations["create_employee"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/hrm/employees/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_employee"];
+        put: operations["update_employee"];
+        post?: never;
+        delete: operations["delete_employee"];
         options?: never;
         head?: never;
         patch?: never;
@@ -476,65 +795,241 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/rd/audit-logs": {
+    "/scm/purchase-orders": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list_audit_logs"];
+        get: operations["list_orders"];
         put?: never;
-        post?: never;
+        post: operations["create_order"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/rd/audit-logs/{id}": {
+    "/scm/purchase-orders/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_audit_log"];
-        put?: never;
+        get: operations["get_order"];
+        put: operations["update_order"];
         post?: never;
+        delete: operations["delete_order"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scm/purchase-orders/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["approve_order"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/rd/projects": {
+    "/scm/purchase-orders/{id}/reject": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list_projects"];
+        get?: never;
         put?: never;
-        post: operations["create_project"];
+        post: operations["reject_order"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/rd/projects/{id}": {
+    "/scm/suppliers": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_project"];
-        put: operations["update_project"];
+        get: operations["scm_list_suppliers"];
+        put?: never;
+        post: operations["scm_create_supplier"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scm/suppliers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["scm_get_supplier"];
+        put: operations["scm_update_supplier"];
         post?: never;
-        delete: operations["delete_project"];
+        delete: operations["scm_delete_supplier"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/srm/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["srm_list_suppliers"];
+        put?: never;
+        post: operations["srm_create_supplier"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/srm/suppliers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["srm_get_supplier"];
+        put: operations["srm_update_supplier"];
+        post?: never;
+        delete: operations["srm_delete_supplier"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/unified-core/iam/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/unified-core/iam/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/unified-core/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_users"];
+        put?: never;
+        post: operations["create_user"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wms/inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["wms_list_inventory"];
+        put?: never;
+        post: operations["wms_create_inventory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wms/inventory/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["wms_get_inventory"];
+        put: operations["update_inventory"];
+        post?: never;
+        delete: operations["delete_inventory"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wms/warehouses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_warehouses"];
+        put?: never;
+        post: operations["create_warehouse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wms/warehouses/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_warehouse"];
+        put: operations["update_warehouse"];
+        post?: never;
+        delete: operations["delete_warehouse"];
         options?: never;
         head?: never;
         patch?: never;
@@ -544,90 +1039,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        BillingPlan: {
-            code: string;
-            created_at: components["schemas"]["DateTime"];
-            description?: string | null;
-            id: components["schemas"]["uuid.Uuid"];
-            /** Format: int64 */
-            included_api_calls?: number | null;
-            included_modules?: string[] | null;
-            /** Format: int64 */
-            included_storage_gb?: number | null;
-            /** Format: int32 */
-            included_users: number;
-            is_active: boolean;
-            is_trial: boolean;
-            license_type: string;
-            name: string;
-            /** Format: int32 */
-            overage_api_calls_cents?: number | null;
-            /** Format: int32 */
-            overage_storage_cents?: number | null;
-            /** Format: int32 */
-            overage_users_cents?: number | null;
-            /** Format: int32 */
-            price_cents: number;
-            price_period: string;
-            updated_at: components["schemas"]["DateTime"];
-        };
-        CancelSubscriptionRequest: {
-            cancel_at_period_end?: boolean;
-        };
-        CostBreakdown: {
-            /** Format: int32 */
-            base_cost_cents: number;
-            /** Format: int32 */
-            overage_cost_cents: number;
-            /** Format: int32 */
-            plugin_cost_cents: number;
-            /** Format: int32 */
-            total_cost_cents: number;
-        };
-        CreateSubscriptionRequest: {
-            is_trial?: boolean;
-            plan_id: components["schemas"]["uuid.Uuid"];
-            tenant_id: components["schemas"]["uuid.Uuid"];
-            /** Format: int32 */
-            trial_days?: number;
-        };
-        MetricUsage: {
-            /** Format: int64 */
-            current: number;
-            /** Format: double */
-            percent_used: number;
-            /** Format: int64 */
-            quota: number;
-        };
-        PeriodInfo: {
-            end_date: components["schemas"]["NaiveDate"];
-            start_date: components["schemas"]["NaiveDate"];
-        };
-        UsageMetrics: {
-            api_calls: components["schemas"]["MetricUsage"];
-            storage: components["schemas"]["MetricUsage"];
-            users: components["schemas"]["MetricUsage"];
-        };
-        UsageRecord: {
-            /** Format: int32 */
-            cost_cents?: number | null;
-            created_at: components["schemas"]["DateTime"];
-            id: components["schemas"]["uuid.Uuid"];
-            metric_name?: string | null;
-            metric_type: string;
-            period_end: components["schemas"]["DateTime"];
-            period_start: components["schemas"]["DateTime"];
-            /** Format: int64 */
-            quantity: number;
-            tenant_id: components["schemas"]["uuid.Uuid"];
-            unit?: string | null;
-        };
-        UsageSummary: {
-            costs: components["schemas"]["CostBreakdown"];
-            period: components["schemas"]["PeriodInfo"];
-            tenant_id: components["schemas"]["uuid.Uuid"];
-            usage: components["schemas"]["UsageMetrics"];
-        };
         AddTagToCustomerRequest: {
             customer_id: components["schemas"]["Uuid"];
             tag_id: components["schemas"]["Uuid"];
@@ -788,6 +1199,384 @@ export interface components {
             color?: string | null;
             description?: string | null;
             name?: string | null;
+        };
+        AccountingSubject: {
+            category: string;
+            code: string;
+            created_at: components["schemas"]["DateTime"];
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            is_cash_flow: boolean;
+            /** Format: int32 */
+            level: number;
+            name: string;
+            parent_code?: string | null;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        Asset: {
+            asset_number: string;
+            brand?: string | null;
+            category?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            department?: string | null;
+            id: components["schemas"]["Uuid"];
+            image_url?: string | null;
+            location?: string | null;
+            manufacturer?: string | null;
+            model?: string | null;
+            name: string;
+            /** Format: double */
+            purchase_amount?: number | null;
+            purchase_date?: components["schemas"]["DateTime"] | null;
+            /** Format: double */
+            rated_current?: number | null;
+            /** Format: double */
+            rated_power?: number | null;
+            /** Format: double */
+            rated_voltage?: number | null;
+            responsible_id?: components["schemas"]["Uuid"] | null;
+            serial_number?: string | null;
+            specifications?: unknown;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        BankAccount: {
+            account_name: string;
+            account_number: string;
+            account_type: string;
+            /** Format: double */
+            balance: number;
+            bank_name: string;
+            branch_name?: string | null;
+            company_id: components["schemas"]["Uuid"];
+            created_at: components["schemas"]["DateTime"];
+            currency: string;
+            id: components["schemas"]["Uuid"];
+            opening_date: components["schemas"]["DateTime"];
+            status: string;
+            tax_registration_number?: string | null;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        BankTransaction: {
+            /** Format: double */
+            amount: number;
+            /** Format: double */
+            balance_after: number;
+            /** Format: double */
+            balance_before: number;
+            bank_account_id: components["schemas"]["Uuid"];
+            created_at: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            reference_number?: string | null;
+            summary?: string | null;
+            transaction_date: components["schemas"]["DateTime"];
+            transaction_type: string;
+        };
+        CreateAssetRequest: {
+            asset_number: string;
+            brand?: string | null;
+            category?: string | null;
+            department?: string | null;
+            image_url?: string | null;
+            location?: string | null;
+            manufacturer?: string | null;
+            model?: string | null;
+            name: string;
+            /** Format: double */
+            purchase_amount?: number | null;
+            purchase_date?: components["schemas"]["DateTime"] | null;
+            /** Format: double */
+            rated_current?: number | null;
+            /** Format: double */
+            rated_power?: number | null;
+            /** Format: double */
+            rated_voltage?: number | null;
+            responsible_id?: components["schemas"]["Uuid"] | null;
+            serial_number?: string | null;
+            specifications?: unknown;
+        };
+        erp_CreateCustomerRequest: {
+            address?: string | null;
+            city?: string | null;
+            code: string;
+            contact_person?: string | null;
+            contact_phone?: string | null;
+            /** Format: double */
+            credit_limit?: number | null;
+            customer_type: string;
+            district?: string | null;
+            email?: string | null;
+            industry?: string | null;
+            name: string;
+            province?: string | null;
+            scale?: string | null;
+            short_name?: string | null;
+            status?: string | null;
+        };
+        CreateInventoryRequest: {
+            batch_no?: string | null;
+            expire_date?: components["schemas"]["DateTime"] | null;
+            location_code?: string | null;
+            material_id: components["schemas"]["Uuid"];
+            /** Format: double */
+            quantity: number;
+            status?: string | null;
+            /** Format: double */
+            unit_price?: number | null;
+            warehouse_id?: components["schemas"]["Uuid"] | null;
+        };
+        CreateMaterialRequest: {
+            barcode?: string | null;
+            brand?: string | null;
+            category: string;
+            code: string;
+            description?: string | null;
+            model?: string | null;
+            name: string;
+            /** Format: double */
+            safety_stock?: number | null;
+            specification?: string | null;
+            status?: string | null;
+            /** Format: double */
+            tax_rate?: number | null;
+            unit: string;
+            /** Format: double */
+            unit_price?: number | null;
+        };
+        CreateSupplierRequest: {
+            address?: string | null;
+            city?: string | null;
+            code: string;
+            contact_person?: string | null;
+            contact_phone?: string | null;
+            district?: string | null;
+            email?: string | null;
+            industry?: string | null;
+            name: string;
+            province?: string | null;
+            qualification_level?: string | null;
+            short_name?: string | null;
+            status?: string | null;
+            supplier_type: string;
+        };
+        Expense: {
+            /** Format: double */
+            amount: number;
+            applicant_name?: string | null;
+            approved_at?: components["schemas"]["DateTime"] | null;
+            approver_id?: components["schemas"]["Uuid"] | null;
+            budget_item_id?: components["schemas"]["Uuid"] | null;
+            contract_id?: components["schemas"]["Uuid"] | null;
+            created_at: components["schemas"]["DateTime"];
+            department_id?: components["schemas"]["Uuid"] | null;
+            description?: string | null;
+            expense_date?: components["schemas"]["DateTime"] | null;
+            expense_number: string;
+            expense_type?: string | null;
+            id: components["schemas"]["Uuid"];
+            project_id?: components["schemas"]["Uuid"] | null;
+            /** Format: int32 */
+            receipt_count?: number | null;
+            reimbursed_at?: components["schemas"]["DateTime"] | null;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        FixedAsset: {
+            /** Format: double */
+            accumulated_depreciation: number;
+            asset_category: string;
+            asset_code: string;
+            asset_name: string;
+            asset_type: string;
+            created_at: components["schemas"]["DateTime"];
+            department_id?: components["schemas"]["Uuid"] | null;
+            department_name?: string | null;
+            depreciation_method: string;
+            depreciation_period: string;
+            id: components["schemas"]["Uuid"];
+            location?: string | null;
+            /** Format: double */
+            net_value: number;
+            /** Format: double */
+            original_value: number;
+            purchase_date?: components["schemas"]["DateTime"] | null;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+            /** Format: int32 */
+            useful_life_months: number;
+        };
+        Inventory: {
+            /** Format: double */
+            available_quantity: number;
+            batch_no?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            expire_date?: components["schemas"]["DateTime"] | null;
+            id: components["schemas"]["Uuid"];
+            location_code?: string | null;
+            material_code: string;
+            material_id: components["schemas"]["Uuid"];
+            material_name: string;
+            /** Format: double */
+            quantity: number;
+            /** Format: double */
+            reserved_quantity: number;
+            status: string;
+            /** Format: double */
+            total_amount: number;
+            unit: string;
+            /** Format: double */
+            unit_price: number;
+            updated_at: components["schemas"]["DateTime"];
+            warehouse_id?: components["schemas"]["Uuid"] | null;
+            warehouse_name?: string | null;
+        };
+        Material: {
+            barcode?: string | null;
+            brand?: string | null;
+            category: string;
+            code: string;
+            created_at: components["schemas"]["DateTime"];
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            model?: string | null;
+            name: string;
+            /** Format: double */
+            safety_stock: number;
+            specification?: string | null;
+            status: string;
+            /** Format: double */
+            tax_rate: number;
+            unit: string;
+            /** Format: double */
+            unit_price: number;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        MeetingBooking: {
+            created_at: components["schemas"]["DateTime"];
+            end_time: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            organizer: string;
+            room_id: components["schemas"]["Uuid"];
+            room_name: string;
+            start_time: components["schemas"]["DateTime"];
+            status: string;
+            title: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        MeetingRoom: {
+            /** Format: int32 */
+            capacity: number;
+            created_at: components["schemas"]["DateTime"];
+            facilities?: string[] | null;
+            id: components["schemas"]["Uuid"];
+            location?: string | null;
+            name: string;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        OpeningBalance: {
+            company_id: components["schemas"]["Uuid"];
+            created_at: components["schemas"]["DateTime"];
+            /** Format: double */
+            credit_balance: number;
+            /** Format: double */
+            debit_balance: number;
+            id: components["schemas"]["Uuid"];
+            period: string;
+            subject_code: string;
+            subject_name: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        Payable: {
+            /** Format: double */
+            amount: number;
+            category?: string | null;
+            contract_id?: components["schemas"]["Uuid"] | null;
+            created_at: components["schemas"]["DateTime"];
+            due_date?: components["schemas"]["DateTime"] | null;
+            id: components["schemas"]["Uuid"];
+            invoice_date?: components["schemas"]["DateTime"] | null;
+            invoice_number: string;
+            /** Format: double */
+            paid_amount: number;
+            payment_schedule?: unknown;
+            project_id?: components["schemas"]["Uuid"] | null;
+            status: string;
+            supplier_name?: string | null;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        Receivable: {
+            /** Format: double */
+            amount: number;
+            contract_id?: components["schemas"]["Uuid"] | null;
+            created_at: components["schemas"]["DateTime"];
+            customer_name?: string | null;
+            due_date?: components["schemas"]["DateTime"] | null;
+            id: components["schemas"]["Uuid"];
+            invoice_date?: components["schemas"]["DateTime"] | null;
+            invoice_number: string;
+            payment_schedule?: unknown;
+            project_id?: components["schemas"]["Uuid"] | null;
+            project_name?: string | null;
+            /** Format: double */
+            received_amount: number;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        UpdateAssetRequest: {
+            brand?: string | null;
+            category?: string | null;
+            department?: string | null;
+            image_url?: string | null;
+            location?: string | null;
+            manufacturer?: string | null;
+            model?: string | null;
+            name?: string | null;
+            /** Format: double */
+            purchase_amount?: number | null;
+            purchase_date?: components["schemas"]["DateTime"] | null;
+            /** Format: double */
+            rated_current?: number | null;
+            /** Format: double */
+            rated_power?: number | null;
+            /** Format: double */
+            rated_voltage?: number | null;
+            responsible_id?: components["schemas"]["Uuid"] | null;
+            serial_number?: string | null;
+            specifications?: unknown;
+            status?: string | null;
+        };
+        Vehicle: {
+            brand?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            driver?: string | null;
+            fuel_type?: string | null;
+            id: components["schemas"]["Uuid"];
+            last_service?: components["schemas"]["DateTime"] | null;
+            /** Format: int32 */
+            mileage?: number | null;
+            model?: string | null;
+            plate_number: string;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+            vehicle_type?: string | null;
+        };
+        VehicleRequest: {
+            approved_at?: components["schemas"]["DateTime"] | null;
+            approved_by?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            driver_required: boolean;
+            end_time: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            purpose: string;
+            rejected_reason?: string | null;
+            requester: string;
+            start_time: components["schemas"]["DateTime"];
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+            vehicle_id: components["schemas"]["Uuid"];
+            vehicle_plate: string;
         };
         Account: {
             account_type?: components["schemas"]["AccountType"] | null;
@@ -1089,215 +1878,247 @@ export interface components {
         VoucherStatus: "draft" | "submitted" | "approved" | "posted" | "reversed" | "rejected" | "cancelled";
         /** @enum {string} */
         VoucherType: "general" | "payment" | "receipt" | "transfer";
-        BatchEvidenceUpload: {
-            evidence_list: components["schemas"]["EvidenceItem"][];
-        };
-        BatchPositionUpload: {
-            device_id: components["schemas"]["Uuid"];
-            positions: components["schemas"]["PositionItem"][];
-        };
-        CreateDevicePointRequest: {
-            description?: string | null;
-            device_type?: string | null;
-            /** Format: double */
-            latitude: number;
-            /** Format: double */
-            longitude: number;
-            name: string;
-            status: string;
-        };
-        CreateEvidenceRequest: {
-            description?: string | null;
-            /** Format: int32 */
-            duration?: number | null;
-            evidence_type: string;
-            file_hash?: string | null;
-            /** Format: int64 */
-            file_size?: number | null;
-            file_url?: string | null;
-            metadata?: unknown;
-            position: unknown;
-            recorded_at: components["schemas"]["DateTime"];
-            recorded_by: components["schemas"]["Uuid"];
-            tags?: string[] | null;
-            thumbnail_url?: string | null;
-            title: string;
-        };
-        CreateTrackRequest: {
-            device_id: components["schemas"]["Uuid"];
-            device_name: string;
-        };
-        DevicePoint: {
+        ContractRenewal: {
+            approved_at?: components["schemas"]["DateTime"] | null;
+            approver_id?: components["schemas"]["Uuid"] | null;
+            contract_id: components["schemas"]["Uuid"];
             created_at: components["schemas"]["DateTime"];
-            description?: string | null;
-            device_type?: string | null;
             id: components["schemas"]["Uuid"];
+            new_end_date?: components["schemas"]["DateTime"] | null;
             /** Format: double */
-            latitude: number;
-            /** Format: double */
-            longitude: number;
-            name: string;
+            new_salary?: number | null;
+            new_start_date: components["schemas"]["DateTime"];
+            previous_contract_id?: components["schemas"]["Uuid"] | null;
+            rejection_reason?: string | null;
+            renewal_reason?: string | null;
+            renewal_type: string;
             status: string;
             tenant_id: components["schemas"]["Uuid"];
             updated_at: components["schemas"]["DateTime"];
         };
-        EvidenceItem: {
+        CreateAttendanceRequest: {
+            check_in?: components["schemas"]["DateTime"] | null;
+            check_out?: components["schemas"]["DateTime"] | null;
+            date: components["schemas"]["DateTime"];
+            employee_id: components["schemas"]["Uuid"];
+            notes?: string | null;
+            status?: string | null;
+            /** Format: double */
+            work_hours?: number | null;
+        };
+        CreateCompanyRequest: {
+            address?: string | null;
+            contact_phone?: string | null;
             description?: string | null;
-            /** Format: int32 */
-            duration?: number | null;
-            evidence_type: string;
-            file_hash?: string | null;
-            /** Format: int64 */
-            file_size?: number | null;
-            file_url?: string | null;
-            local_id: string;
-            position: unknown;
-            recorded_at: components["schemas"]["DateTime"];
-            recorded_by: components["schemas"]["Uuid"];
-            tags?: string[] | null;
-            thumbnail_url?: string | null;
-            title: string;
-        };
-        EvidenceRecord: {
-            created_at: components["schemas"]["DateTime"];
-            description?: string | null;
-            /** Format: int32 */
-            duration?: number | null;
-            evidence_type: string;
-            file_hash?: string | null;
-            /** Format: int64 */
-            file_size?: number | null;
-            file_url?: string | null;
-            id: components["schemas"]["Uuid"];
-            metadata?: unknown;
-            position: unknown;
-            recorded_at: components["schemas"]["DateTime"];
-            recorded_by: components["schemas"]["Uuid"];
-            tags?: string[] | null;
-            tenant_id: components["schemas"]["Uuid"];
-            thumbnail_url?: string | null;
-            title: string;
-            updated_at: components["schemas"]["DateTime"];
-        };
-        GisFeature: {
-            created_at: components["schemas"]["DateTime"];
-            geometry: unknown;
-            id: components["schemas"]["Uuid"];
-            layer_id: components["schemas"]["Uuid"];
-            properties: unknown;
-            style?: unknown;
-        };
-        GisLayer: {
-            bounds?: unknown;
-            created_at: components["schemas"]["DateTime"];
-            id: components["schemas"]["Uuid"];
-            layer_type: string;
+            email?: string | null;
             name: string;
-            properties?: unknown;
-            source?: string | null;
-            status: string;
+            registration_number?: string | null;
+            short_name?: string | null;
+            tax_number?: string | null;
+            tenant_id?: components["schemas"]["Uuid"] | null;
+            website?: string | null;
         };
-        MapProject: {
-            center?: unknown;
-            created_at: components["schemas"]["DateTime"];
+        CreateContractRequest: {
+            contract_file_path?: string | null;
+            contract_no?: string | null;
+            contract_type: string;
+            employee_id: components["schemas"]["Uuid"];
+            end_date?: components["schemas"]["DateTime"] | null;
+            notes?: string | null;
+            party_a_contact?: string | null;
+            party_a_name?: string | null;
+            party_b_contact?: string | null;
+            party_b_name?: string | null;
+            /** Format: int32 */
+            probation_period_days?: number | null;
+            /** Format: int32 */
+            reminder_days?: number | null;
+            /** Format: double */
+            salary?: number | null;
+            start_date: components["schemas"]["DateTime"];
+        };
+        CreateDepartmentRequest: {
+            code?: string | null;
             description?: string | null;
-            id: components["schemas"]["Uuid"];
-            layers?: components["schemas"]["Uuid"][] | null;
+            manager_id?: components["schemas"]["Uuid"] | null;
             name: string;
-            status: string;
+            org_id?: components["schemas"]["Uuid"] | null;
+            parent_id?: components["schemas"]["Uuid"] | null;
+            tenant_id?: components["schemas"]["Uuid"] | null;
+        };
+        /**
+         * @example {
+         *       "department_id": "550e8400-e29b-41d4-a716-446655440002",
+         *       "email": "zhangsan@example.com",
+         *       "employee_number": "EMP001",
+         *       "gender": "男",
+         *       "hire_date": "2024-01-01",
+         *       "name": "张三",
+         *       "org_id": "550e8400-e29b-41d4-a716-446655440001",
+         *       "phone": "13800138000",
+         *       "position_id": "550e8400-e29b-41d4-a716-446655440003"
+         *     }
+         */
+        CreateEmployeeRequest: {
+            /** @example 北京市朝阳区建国路88号 */
+            address?: string | null;
+            birth_date?: components["schemas"]["NaiveDate"] | null;
+            department_id?: components["schemas"]["Uuid"] | null;
+            /** @example 本科 */
+            education?: string | null;
+            /** @example zhangsan@example.com */
+            email?: string | null;
+            /** @example 张父 */
+            emergency_contact?: string | null;
+            /** @example 13900139000 */
+            emergency_phone?: string | null;
+            /** @example 父亲 */
+            emergency_relation?: string | null;
+            /** @example EMP001 */
+            employee_number: string;
+            /** @example full-time */
+            employee_type?: string | null;
+            /** @example 男 */
+            gender?: string | null;
+            hire_date?: components["schemas"]["NaiveDate"] | null;
+            /** @example 北京市海淀区 */
+            hukou_location?: string | null;
+            /** @example 110101199001011234 */
+            id_card_number?: string | null;
+            /** @example P6 */
+            joblevel?: string | null;
+            /** @example 张三 */
+            name: string;
+            org_id: components["schemas"]["Uuid"];
+            /** @example 13800138000 */
+            phone?: string | null;
+            /** @example 高级工程师 */
+            position?: string | null;
+            position_id?: components["schemas"]["Uuid"] | null;
+            /**
+             * Format: int32
+             * @example 3
+             */
+            probation_period?: number | null;
+            regular_date?: components["schemas"]["NaiveDate"] | null;
+            /** @example 表现优秀 */
+            remark?: string | null;
+            /** @example 李经理 */
+            report_to_name?: string | null;
+            user_id?: components["schemas"]["Uuid"] | null;
+            /** @example 北京 */
+            work_location?: string | null;
+        };
+        UpdateAttendanceRequest: {
+            check_in?: components["schemas"]["DateTime"] | null;
+            check_out?: components["schemas"]["DateTime"] | null;
+            notes?: string | null;
+            status?: string | null;
+            /** Format: double */
+            work_hours?: number | null;
+        };
+        UpdateCompanyRequest: {
+            address?: string | null;
+            contact_phone?: string | null;
+            description?: string | null;
+            email?: string | null;
+            name?: string | null;
+            registration_number?: string | null;
+            short_name?: string | null;
+            status?: string | null;
+            tax_number?: string | null;
+            website?: string | null;
+        };
+        UpdateContractRequest: {
+            contract_file_path?: string | null;
+            contract_no?: string | null;
+            contract_type?: string | null;
+            end_date?: components["schemas"]["DateTime"] | null;
+            notes?: string | null;
+            party_a_contact?: string | null;
+            party_a_name?: string | null;
+            party_b_contact?: string | null;
+            party_b_name?: string | null;
             /** Format: int32 */
-            zoom?: number | null;
-        };
-        OfflineDataDownload: {
-            device_points: components["schemas"]["DevicePoint"][];
-            evidence: components["schemas"]["EvidenceRecord"][];
-            synced_at: components["schemas"]["DateTime"];
-            tracks: components["schemas"]["TrackRecord"][];
-        };
-        PositionItem: {
-            /** Format: double */
-            accuracy?: number | null;
-            /** Format: double */
-            altitude?: number | null;
+            probation_period_days?: number | null;
             /** Format: int32 */
-            battery_level?: number | null;
+            reminder_days?: number | null;
             /** Format: double */
-            heading?: number | null;
-            position: unknown;
-            /** Format: double */
-            speed?: number | null;
-            timestamp: components["schemas"]["DateTime"];
+            salary?: number | null;
+            start_date?: components["schemas"]["DateTime"] | null;
+            status?: string | null;
         };
-        SpatialAnalysis: {
-            analysis_type: string;
-            created_at: components["schemas"]["DateTime"];
-            id: components["schemas"]["Uuid"];
-            parameters: unknown;
-            results?: unknown;
-            status: string;
+        UpdateDepartmentRequest: {
+            code?: string | null;
+            description?: string | null;
+            manager_id?: components["schemas"]["Uuid"] | null;
+            name?: string | null;
+            org_id?: components["schemas"]["Uuid"] | null;
+            parent_id?: components["schemas"]["Uuid"] | null;
+            status?: string | null;
         };
-        SyncResponse: {
-            errors: string[];
-            synced_evidence: components["schemas"]["SyncedEvidenceResult"][];
-            synced_positions: number;
-        };
-        SyncStatus: {
-            last_sync_time: components["schemas"]["DateTime"];
-            /** Format: int64 */
-            pending_evidence: number;
-            /** Format: int64 */
-            pending_positions: number;
-            sync_enabled: boolean;
-        };
-        SyncedEvidenceResult: {
-            error?: string | null;
-            local_id: string;
-            server_id: components["schemas"]["Uuid"];
-            success: boolean;
-        };
-        TrackPosition: {
-            /** Format: double */
-            accuracy?: number | null;
-            /** Format: double */
-            altitude?: number | null;
-            /** Format: int32 */
-            battery_level?: number | null;
-            created_at: components["schemas"]["DateTime"];
-            /** Format: double */
-            heading?: number | null;
-            id: components["schemas"]["Uuid"];
-            position: unknown;
-            /** Format: double */
-            speed?: number | null;
-            timestamp: components["schemas"]["DateTime"];
-            track_id: components["schemas"]["Uuid"];
-        };
-        TrackRecord: {
-            created_at: components["schemas"]["DateTime"];
-            device_id: components["schemas"]["Uuid"];
-            device_name: string;
-            end_time: components["schemas"]["DateTime"];
-            id: components["schemas"]["Uuid"];
-            start_time: components["schemas"]["DateTime"];
-            tenant_id: components["schemas"]["Uuid"];
-            /** Format: double */
-            total_distance: number;
-        };
-        TrackStatistics: {
-            /** Format: double */
-            avg_speed: number;
-            end_time: components["schemas"]["DateTime"];
-            /** Format: double */
-            max_speed: number;
-            /** Format: double */
-            min_speed: number;
-            /** Format: int32 */
-            point_count: number;
-            start_time: components["schemas"]["DateTime"];
-            /** Format: double */
-            total_distance: number;
-            /** Format: int64 */
-            total_duration: number;
+        /**
+         * @example {
+         *       "department_id": "550e8400-e29b-41d4-a716-446655440004",
+         *       "email": "zhangsan@example.com",
+         *       "gender": "男",
+         *       "hire_date": "2020-06-01",
+         *       "name": "张三",
+         *       "org_id": "550e8400-e29b-41d4-a716-446655440001",
+         *       "phone": "13800138000",
+         *       "position_id": "550e8400-e29b-41d4-a716-446655440005",
+         *       "status": "active"
+         *     }
+         */
+        UpdateEmployeeRequest: {
+            /** @example 北京市朝阳区建国路88号 */
+            address?: string | null;
+            birth_date?: components["schemas"]["NaiveDate"] | null;
+            department_id?: components["schemas"]["Uuid"] | null;
+            /** @example 本科 */
+            education?: string | null;
+            /** @example zhangsan@example.com */
+            email?: string | null;
+            /** @example 张父 */
+            emergency_contact?: string | null;
+            /** @example 13900139000 */
+            emergency_phone?: string | null;
+            /** @example 父亲 */
+            emergency_relation?: string | null;
+            /** @example full-time */
+            employee_type?: string | null;
+            /** @example 男 */
+            gender?: string | null;
+            hire_date?: components["schemas"]["NaiveDate"] | null;
+            /** @example 北京市海淀区 */
+            hukou_location?: string | null;
+            /** @example 110101199001011234 */
+            id_card_number?: string | null;
+            /** @example P6 */
+            joblevel?: string | null;
+            /** @example 张三 */
+            name?: string | null;
+            org_id?: components["schemas"]["Uuid"] | null;
+            /** @example 13800138000 */
+            phone?: string | null;
+            /** @example 高级工程师 */
+            position?: string | null;
+            position_id?: components["schemas"]["Uuid"] | null;
+            /**
+             * Format: int32
+             * @example 3
+             */
+            probation_period?: number | null;
+            regular_date?: components["schemas"]["NaiveDate"] | null;
+            /** @example 表现优秀 */
+            remark?: string | null;
+            /** @example 李经理 */
+            report_to_name?: string | null;
+            /** @example active */
+            status?: string | null;
+            user_id?: components["schemas"]["Uuid"] | null;
+            /** @example 北京 */
+            work_location?: string | null;
         };
         AutoFixAction: {
             action_type: components["schemas"]["AutoFixActionType"];
@@ -1418,37 +2239,187 @@ export interface components {
             entity_type: string;
             rule_ids?: string[] | null;
         };
-        MobileTask: {
-            assignee_id?: string | null;
-            created_at: string;
-            description?: string | null;
-            due_date?: string | null;
-            id: string;
+        CreateFromErpRequest: {
+            erp_order: components["schemas"]["ErpSalesOrderInfo"];
+            planned_end_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+        };
+        CreateProductionOrderRequest: {
+            order_no?: string | null;
+            planned_end_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+            priority?: string | null;
+            product_code: string;
+            product_id?: components["schemas"]["Uuid"] | null;
+            product_name: string;
+            quantity: unknown;
+            remark?: string | null;
+            unit?: string | null;
+        };
+        CreateWorkOrderRequest: {
+            order_id?: string | null;
+            order_no?: string | null;
+            plan_end_date?: components["schemas"]["DateTime"] | null;
+            plan_start_date?: components["schemas"]["DateTime"] | null;
+            planned_quantity: unknown;
+            priority?: string | null;
+            process_id?: string | null;
+            product_code: string;
+            product_name: string;
+            team_id?: string | null;
+            work_order_no: string;
+            work_station_id?: string | null;
+        };
+        CreateWorkReportRequest: {
+            bad_quantity?: unknown;
+            good_quantity?: unknown;
+            operator_id?: string | null;
+            operator_name?: string | null;
+            remark?: string | null;
+            report_date?: components["schemas"]["DateTime"] | null;
+            scrap_quantity?: unknown;
+            /** Format: double */
+            work_hours?: number | null;
+            work_order_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+        };
+        ErpSalesOrderInfo: {
+            customer?: string | null;
+            items?: unknown;
+            order_no: string;
+        };
+        ListProductionOrdersQuery: {
             /** Format: int32 */
-            priority?: number | null;
-            status: string;
-            task_type: string;
-            title: string;
-            updated_at?: string | null;
+            page?: number | null;
+            /** Format: int32 */
+            pagesize?: number | null;
+            search?: string | null;
+            status?: string | null;
         };
-        PatrolRecord: {
-            created_at: string;
-            id: string;
-            location?: string | null;
-            notes?: string | null;
-            photo_url?: string | null;
-            status: string;
-            task_id?: string | null;
-            user_id: string;
+        ListWorkOrdersQuery: {
+            /** Format: int32 */
+            page?: number | null;
+            /** Format: int32 */
+            pagesize?: number | null;
+            search?: string | null;
+            status?: string | null;
         };
-        ScanRecord: {
-            code: string;
-            code_type: string;
-            created_at: string;
-            device_id?: string | null;
+        ListWorkReportsQuery: {
+            /** Format: int32 */
+            page?: number | null;
+            /** Format: int32 */
+            pagesize?: number | null;
+            search?: string | null;
+            status?: string | null;
+            work_order_id?: string | null;
+        };
+        ProductionOrderResponse: {
+            actual_end_date?: components["schemas"]["DateTime"] | null;
+            actual_start_date?: components["schemas"]["DateTime"] | null;
+            completed_quantity?: unknown;
+            created_at: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            order_no: string;
+            planned_end_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+            priority: string;
+            product_code: string;
+            product_id?: components["schemas"]["Uuid"] | null;
+            product_name: string;
+            quantity: unknown;
+            remark?: string | null;
+            status: string;
+            unit?: string | null;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        UpdateProductionOrderRequest: {
+            order_no?: string | null;
+            planned_end_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+            priority?: string | null;
+            product_code?: string | null;
+            product_name?: string | null;
+            quantity?: unknown;
+            remark?: string | null;
+            status?: string | null;
+            unit?: string | null;
+        };
+        UpdateWorkOrderRequest: {
+            order_id?: string | null;
+            order_no?: string | null;
+            plan_end_date?: components["schemas"]["DateTime"] | null;
+            plan_start_date?: components["schemas"]["DateTime"] | null;
+            planned_quantity?: unknown;
+            priority?: string | null;
+            process_id?: string | null;
+            product_code?: string | null;
+            product_name?: string | null;
+            status?: string | null;
+            team_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+        };
+        UpdateWorkReportRequest: {
+            bad_quantity?: unknown;
+            good_quantity?: unknown;
+            operator_id?: string | null;
+            operator_name?: string | null;
+            remark?: string | null;
+            report_date?: components["schemas"]["DateTime"] | null;
+            scrap_quantity?: unknown;
+            status?: string | null;
+            /** Format: double */
+            work_hours?: number | null;
+            work_order_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+        };
+        WorkOrderResponse: {
+            actual_end_date?: components["schemas"]["DateTime"] | null;
+            actual_start_date?: components["schemas"]["DateTime"] | null;
+            completed_quantity?: unknown;
+            created_at: components["schemas"]["DateTime"];
             id: string;
-            result?: string | null;
-            user_id: string;
+            order_id?: string | null;
+            order_no?: string | null;
+            plan_end_date?: components["schemas"]["DateTime"] | null;
+            plan_start_date?: components["schemas"]["DateTime"] | null;
+            planned_quantity: unknown;
+            priority: string;
+            process_id?: string | null;
+            process_name?: string | null;
+            product_code: string;
+            product_name: string;
+            status: string;
+            team_id?: string | null;
+            team_name?: string | null;
+            updated_at: components["schemas"]["DateTime"];
+            work_order_no: string;
+            work_station_id?: string | null;
+            work_station_name?: string | null;
+        };
+        WorkReportResponse: {
+            bad_quantity?: unknown;
+            created_at: components["schemas"]["DateTime"];
+            good_quantity: unknown;
+            id: string;
+            operator_id?: string | null;
+            operator_name?: string | null;
+            remark?: string | null;
+            report_date: components["schemas"]["DateTime"];
+            report_no: string;
+            reviewed_at?: components["schemas"]["DateTime"] | null;
+            reviewer_id?: string | null;
+            scrap_quantity?: unknown;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+            /** Format: double */
+            work_hours?: number | null;
+            work_order_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+            work_station_name?: string | null;
         };
         AssignInspectionRequest: {
             assignee: string;
@@ -1607,104 +2578,7 @@ export interface components {
             status?: string | null;
             version?: string | null;
         };
-        AuditLog: {
-            action: string;
-            created_at: components["schemas"]["DateTime"];
-            entity_id?: components["schemas"]["Uuid"] | null;
-            entity_ids?: unknown;
-            entity_type: string;
-            error_message?: string | null;
-            id: components["schemas"]["Uuid"];
-            ip_address?: string | null;
-            request_details?: unknown;
-            response_details?: unknown;
-            status: string;
-            tenant_id: components["schemas"]["Uuid"];
-            user_agent?: string | null;
-            user_id?: string | null;
-            user_name?: string | null;
-        };
-        AuditLogQuery: {
-            action?: string | null;
-            end_date?: components["schemas"]["DateTime"] | null;
-            entity_type?: string | null;
-            /** Format: int64 */
-            page?: number | null;
-            /** Format: int64 */
-            page_size?: number | null;
-            start_date?: components["schemas"]["DateTime"] | null;
-            status?: string | null;
-            user_id?: string | null;
-        };
-        BatchCreateRequest: {
-            projects: components["schemas"]["CreateProjectRequest"][];
-        };
-        BatchDeleteRequest: {
-            ids: components["schemas"]["Uuid"][];
-        };
-        BatchOperationResult: {
-            errors: string[];
-            failed: number;
-            success: number;
-            total: number;
-        };
-        CreateProjectRequest: {
-            benefit_target?: unknown;
-            /** Format: double */
-            budget?: number | null;
-            code: string;
-            description?: string | null;
-            end_date?: components["schemas"]["DateTime"] | null;
-            leader: string;
-            name: string;
-            parent_id?: components["schemas"]["Uuid"] | null;
-            /** Format: int32 */
-            priority?: number | null;
-            project_config?: unknown;
-            project_type: components["schemas"]["ProjectType"];
-            risk_level?: string | null;
-            start_date: components["schemas"]["DateTime"];
-            tags?: unknown;
-            team_members?: unknown;
-            workspace_id?: components["schemas"]["Uuid"] | null;
-        };
-        ListAuditLogsQuery: {
-            action?: string | null;
-            end_date?: string | null;
-            entity_type?: string | null;
-            /** Format: int64 */
-            page?: number | null;
-            /** Format: int64 */
-            page_size?: number | null;
-            start_date?: string | null;
-            status?: string | null;
-            user_id?: string | null;
-        };
-        /** @enum {string} */
-        ProjectStatus: "DRAFT" | "PENDING_APPROVAL" | "ACTIVE" | "PAUSED" | "COMPLETED" | "CANCELLED";
-        /** @enum {string} */
-        ProjectType: "R_D" | "PRODUCTION" | "DESIGN" | "CONSTRUCTION" | "SERVICE";
-        UpdateProjectRequest: {
-            benefit_target?: unknown;
-            /** Format: double */
-            budget?: number | null;
-            description?: string | null;
-            end_date?: components["schemas"]["DateTime"] | null;
-            leader?: string | null;
-            name?: string | null;
-            parent_id?: components["schemas"]["Uuid"] | null;
-            /** Format: int32 */
-            priority?: number | null;
-            /** Format: int32 */
-            progress?: number | null;
-            project_config?: unknown;
-            risk_level?: string | null;
-            status?: components["schemas"]["ProjectStatus"] | null;
-            tags?: unknown;
-            team_members?: unknown;
-            workspace_id?: components["schemas"]["Uuid"] | null;
-        };
-        CreateSupplierRequest: {
+        scm_CreateSupplierRequest: {
             address?: string | null;
             bank_account?: string | null;
             contact_name?: string | null;
@@ -1812,240 +2686,48 @@ export interface components {
             supplier_id: components["schemas"]["Uuid"];
             unit?: string | null;
         };
-        AddCommentRequest: {
-            content: string;
-            is_internal?: boolean | null;
-        };
-        CreateSlaPolicyRequest: {
-            business_hours_end?: string | null;
-            business_hours_start?: string | null;
-            description?: string | null;
-            /** Format: double */
-            escalation_hours_1?: number | null;
-            /** Format: double */
-            escalation_hours_2?: number | null;
-            /** Format: double */
-            escalation_hours_3?: number | null;
-            /** Format: int32 */
-            escalation_levels: number;
-            is_default?: boolean | null;
-            name: string;
-            /** Format: double */
-            resolution_hours: number;
-            /** Format: double */
-            response_hours: number;
-            severity?: string | null;
-            ticket_type?: string | null;
-            weekend_excluded?: boolean | null;
-            working_hours_only?: boolean | null;
-        };
-        CreateTicketRequest: {
-            assignee_id?: components["schemas"]["Uuid"] | null;
-            description?: string | null;
-            metadata?: unknown;
-            severity?: string | null;
-            /** Format: int32 */
-            sla_hours?: number | null;
-            source_business_id?: string | null;
-            source_service: string;
-            tags?: string[] | null;
-            ticket_type: string;
-            title: string;
-        };
-        SeverityCount: {
-            /** Format: int64 */
-            count: number;
-            severity: string;
-        };
-        SlaBreachTrendItem: {
-            /** Format: int64 */
-            breached: number;
-            date: string;
-            /** Format: int64 */
-            total: number;
-        };
-        SlaEscalationEvent: {
+        InboundOrder: {
+            actual_date?: components["schemas"]["DateTime"] | null;
             created_at: components["schemas"]["DateTime"];
-            escalated_to?: components["schemas"]["Uuid"] | null;
-            escalation_time: components["schemas"]["DateTime"];
+            expected_date?: components["schemas"]["DateTime"] | null;
             id: components["schemas"]["Uuid"];
-            /** Format: int32 */
-            level: number;
-            reason?: string | null;
-            tenant_id: components["schemas"]["Uuid"];
-            ticket_id: components["schemas"]["Uuid"];
-        };
-        SlaSeverityStat: {
+            order_no: string;
+            order_type: string;
+            status: string;
+            supplier_id?: components["schemas"]["Uuid"] | null;
             /** Format: double */
-            breach_rate: number;
-            /** Format: int64 */
-            breached: number;
-            severity: string;
-            /** Format: int64 */
-            total: number;
-        };
-        SlaTypeStat: {
+            total_amount?: number | null;
             /** Format: double */
-            breach_rate: number;
-            /** Format: int64 */
-            breached: number;
-            ticket_type: string;
-            /** Format: int64 */
-            total: number;
+            total_quantity?: number | null;
+            warehouse_id: components["schemas"]["Uuid"];
         };
-        SourceCount: {
-            /** Format: int64 */
-            count: number;
-            source_service: string;
-        };
-        TicketActivity: {
-            action: string;
-            created_at: components["schemas"]["DateTime"];
-            from_value?: string | null;
+        wms_Inventory: {
+            batch_no?: string | null;
             id: components["schemas"]["Uuid"];
-            tenant_id: components["schemas"]["Uuid"];
-            ticket_id: components["schemas"]["Uuid"];
-            to_value?: string | null;
-            user_id?: components["schemas"]["Uuid"] | null;
-        };
-        TicketListResponse: {
-            items: components["schemas"]["Ticket"][];
-            /** Format: int64 */
-            page: number;
-            /** Format: int64 */
-            page_size: number;
-            /** Format: int64 */
-            total: number;
-        };
-        TicketQuery: {
-            assignee_id?: components["schemas"]["Uuid"] | null;
-            /** Format: int64 */
-            page?: number | null;
-            /** Format: int64 */
-            page_size?: number | null;
-            reporter_id?: components["schemas"]["Uuid"] | null;
-            severity?: string | null;
-            sla_breached?: boolean | null;
-            source_business_id?: string | null;
-            source_service?: string | null;
-            status?: string | null;
-            ticket_type?: string | null;
-        };
-        TicketSlaInfo: {
-            /** Format: int32 */
-            current_escalation_level: number;
-            escalation_history: components["schemas"]["SlaEscalationEvent"][];
-            is_breached: boolean;
-            policy_name?: string | null;
+            location?: string | null;
+            product_code?: string | null;
+            product_id: components["schemas"]["Uuid"];
+            product_name: string;
             /** Format: double */
-            resolution_hours?: number | null;
-            response_breached: boolean;
-            response_due_at?: components["schemas"]["DateTime"] | null;
-            /** Format: double */
-            response_hours?: number | null;
-            /** Format: int64 */
-            response_time_remaining_minutes?: number | null;
-            sla_due_at?: components["schemas"]["DateTime"] | null;
-            /** Format: int64 */
-            time_remaining_minutes?: number | null;
-        };
-        TicketSlaPolicy: {
-            business_hours_end?: string | null;
-            business_hours_start?: string | null;
-            created_at: components["schemas"]["DateTime"];
-            description?: string | null;
-            /** Format: double */
-            escalation_hours_1?: number | null;
-            /** Format: double */
-            escalation_hours_2?: number | null;
-            /** Format: double */
-            escalation_hours_3?: number | null;
-            /** Format: int32 */
-            escalation_levels: number;
-            id: components["schemas"]["Uuid"];
-            is_active: boolean;
-            is_default: boolean;
-            name: string;
-            /** Format: double */
-            resolution_hours: number;
-            /** Format: double */
-            response_hours: number;
-            severity?: string | null;
-            tenant_id: components["schemas"]["Uuid"];
-            ticket_type?: string | null;
+            quantity: number;
+            unit?: string | null;
             updated_at: components["schemas"]["DateTime"];
-            weekend_excluded: boolean;
-            working_hours_only: boolean;
+            warehouse_id: components["schemas"]["Uuid"];
         };
-        TicketSlaStats: {
+        OutboundOrder: {
+            actual_date?: components["schemas"]["DateTime"] | null;
+            created_at: components["schemas"]["DateTime"];
+            customer_id?: components["schemas"]["Uuid"] | null;
+            expected_date?: components["schemas"]["DateTime"] | null;
+            id: components["schemas"]["Uuid"];
+            order_no: string;
+            order_type: string;
+            status: string;
             /** Format: double */
-            avg_resolution_minutes?: number | null;
+            total_amount?: number | null;
             /** Format: double */
-            avg_response_minutes?: number | null;
-            /** Format: double */
-            breach_rate: number;
-            breach_trend: components["schemas"]["SlaBreachTrendItem"][];
-            /** Format: int64 */
-            breached: number;
-            by_severity: components["schemas"]["SlaSeverityStat"][];
-            by_type: components["schemas"]["SlaTypeStat"][];
-            /** Format: int64 */
-            on_time: number;
-            /** Format: int64 */
-            total: number;
-        };
-        TicketStats: {
-            by_severity: components["schemas"]["SeverityCount"][];
-            by_source: components["schemas"]["SourceCount"][];
-            by_type: components["schemas"]["TypeCount"][];
-            /** Format: int64 */
-            closed: number;
-            /** Format: int64 */
-            in_progress: number;
-            /** Format: int64 */
-            open: number;
-            /** Format: int64 */
-            pending: number;
-            /** Format: int64 */
-            resolved: number;
-            /** Format: int64 */
-            sla_breached: number;
-            /** Format: int64 */
-            total: number;
-        };
-        TypeCount: {
-            /** Format: int64 */
-            count: number;
-            ticket_type: string;
-        };
-        UpdateSlaPolicyRequest: {
-            description?: string | null;
-            /** Format: double */
-            escalation_hours_1?: number | null;
-            /** Format: double */
-            escalation_hours_2?: number | null;
-            /** Format: double */
-            escalation_hours_3?: number | null;
-            /** Format: int32 */
-            escalation_levels?: number | null;
-            is_active?: boolean | null;
-            is_default?: boolean | null;
-            name?: string | null;
-            /** Format: double */
-            resolution_hours?: number | null;
-            /** Format: double */
-            response_hours?: number | null;
-            weekend_excluded?: boolean | null;
-            working_hours_only?: boolean | null;
-        };
-        UpdateTicketRequest: {
-            assignee_id?: components["schemas"]["Uuid"] | null;
-            description?: string | null;
-            metadata?: unknown;
-            severity?: string | null;
-            status?: string | null;
-            tags?: string[] | null;
-            title?: string | null;
+            total_quantity?: number | null;
+            warehouse_id: components["schemas"]["Uuid"];
         };
         /** Format: uuid */
         Uuid: string;
@@ -2230,6 +2912,47 @@ export interface components {
             expired_at?: string;
             /** Format: int32 */
             max_users?: number;
+        };
+        Company: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            code?: string;
+            legal_person?: string;
+            tax_id?: string;
+            address?: string;
+            phone?: string;
+            /** Format: email */
+            email?: string;
+            industry?: string;
+            scale?: string;
+            status?: string;
+            /** Format: uuid */
+            parent_id?: string;
+        };
+        SuccessResponse: {
+            success?: boolean;
+            message?: string;
+            data?: Record<string, never>;
+            code?: number;
+        };
+        ErrorResponse: {
+            success?: boolean;
+            error?: {
+                code?: string;
+                message?: string;
+                details?: Record<string, never>;
+            };
+            code?: number;
+        };
+        PaginatedResponse: {
+            success?: boolean;
+            data?: Record<string, never>[];
+            total?: number;
+            page?: number;
+            page_size?: number;
+            total_pages?: number;
+            code?: number;
         };
         TenantMember: {
             /** Format: uuid */
@@ -4942,8 +5665,12 @@ export interface components {
             /** Format: uuid */
             created_by?: string;
         };
-        /** @description Auto-injected stub for missing $ref target: uuid.Uuid */
-        "uuid.Uuid": string;
+        /** @description Auto-injected stub for missing $ref target: LoginRequest */
+        LoginRequest: string;
+        /** @description Auto-injected stub for missing $ref target: RegisterRequest */
+        RegisterRequest: string;
+        /** @description Auto-injected stub for missing $ref target: CreateUserRequest */
+        CreateUserRequest: string;
         /** @description Auto-injected stub for missing $ref target: NaiveDate */
         NaiveDate: string;
         /** @description Auto-injected stub for missing $ref target: AutoFixActionType */
@@ -5182,6 +5909,643 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ApiResponse"];
                 };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_assets: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                page_size?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 资产列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_asset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAssetRequest"];
+            };
+        };
+        responses: {
+            /** @description 资产创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 请求参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_asset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 资产ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 资产详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 资产不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    erp_list_customers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_customers OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    erp_create_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_customer OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    erp_get_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_customer OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_customer OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_customer OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_rooms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_rooms OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_room: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_room OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_bookings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_bookings OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_booking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_booking OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_room: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_room OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_purchase_orders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_purchase_orders OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_purchase_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_purchase_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_purchase_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_purchase_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approve_purchase_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description approve_purchase_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_sales_orders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_sales_orders OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_sales_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_sales_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_sales_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_sales_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_suppliers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_suppliers OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_materials: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                pagesize?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+                /** @description 分类过滤 */
+                category?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 物料列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_material: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMaterialRequest"];
+            };
+        };
+        responses: {
+            /** @description 物料创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 请求参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description 服务器内部错误 */
             500: {
@@ -5600,53 +6964,412 @@ export interface operations {
             };
         };
     };
-    list_apps: {
+    list_companies: {
         parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description 低代码后端待立项 */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                page_size?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
             };
-        };
-    };
-    get_designer_schema: {
-        parameters: {
-            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description 低代码后端待立项 */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    health: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description 服务健康 */
+            /** @description 公司列表 */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_company: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCompanyRequest"];
+            };
+        };
+        responses: {
+            /** @description 公司创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_company: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 公司ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 公司详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 公司不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_departments: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                page_size?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+                /** @description 公司ID过滤 */
+                org_id?: components["schemas"]["Uuid"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 部门列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_department: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDepartmentRequest"];
+            };
+        };
+        responses: {
+            /** @description 部门创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_department: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 部门ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 部门详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 部门不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_employees: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 获取员工列表成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"][];
+                };
+            };
+            /** @description 未授权 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 权限不足 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_employee: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 员工创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"];
+                };
+            };
+            /** @description 参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 未授权 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 权限不足 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 员工编号已存在 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_employee: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 获取员工成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"];
+                };
+            };
+            /** @description 未授权 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 权限不足 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 员工不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_employee: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 员工更新成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"];
+                };
+            };
+            /** @description 未授权 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 权限不足 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 员工不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_employee: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 员工删除成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 未授权 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 权限不足 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 员工不存在 */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6129,80 +7852,17 @@ export interface operations {
             };
         };
     };
-    list_audit_logs: {
-        parameters: {
-            query?: {
-                /** @description 操作类型 */
-                action?: string | null;
-                /** @description 实体类型 */
-                entity_type?: string | null;
-                /** @description 用户 ID */
-                user_id?: string | null;
-                /** @description 操作状态 */
-                status?: string | null;
-                /** @description 开始时间 */
-                start_date?: string | null;
-                /** @description 结束时间 */
-                end_date?: string | null;
-                /** @description 页码 */
-                page?: number | null;
-                /** @description 每页数量 */
-                page_size?: number | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description 获取审计日志成功 */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponse"];
-                };
-            };
-            /** @description 服务器错误 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_audit_log: {
+    list_orders: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description 审计日志 ID */
-                id: components["schemas"]["Uuid"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description 获取审计日志成功 */
+            /** @description list_orders OK */
             200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponse"];
-                };
-            };
-            /** @description 审计日志不存在 */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description 服务器错误 */
-            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6210,35 +7870,17 @@ export interface operations {
             };
         };
     };
-    list_projects: {
+    create_order: {
         parameters: {
-            query?: {
-                /** @description Page number, starting from 1 */
-                page?: number | null;
-                /** @description Number of items per page */
-                page_size?: number | null;
-                /** @description Search by name or code */
-                search?: string | null;
-                /** @description Filter by status */
-                status?: string | null;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description List of projects retrieved successfully */
+            /** @description create_order OK */
             200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponse"];
-                };
-            };
-            /** @description Internal server error */
-            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6246,7 +7888,277 @@ export interface operations {
             };
         };
     };
-    create_project: {
+    get_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approve_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description approve_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reject_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description reject_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    scm_list_suppliers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_suppliers OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    scm_create_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    scm_get_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    scm_update_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    scm_delete_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    srm_list_suppliers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_suppliers OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    srm_create_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    srm_get_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    srm_update_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    srm_delete_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    login: {
         parameters: {
             query?: never;
             header?: never;
@@ -6255,20 +8167,32 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateProjectRequest"];
+                "application/json": components["schemas"]["LoginRequest"];
             };
         };
         responses: {
-            /** @description Project created successfully */
+            /** @description 登录成功 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["ApiResponse"];
-                };
+                content?: never;
             };
-            /** @description Internal server error */
+            /** @description 参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 用户名或密码错误 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 登录失败 */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -6277,76 +8201,41 @@ export interface operations {
             };
         };
     };
-    get_project: {
+    register: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Project ID */
-                id: components["schemas"]["Uuid"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Project retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponse"];
-                };
-            };
-            /** @description Project not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    update_project: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Project ID */
-                id: components["schemas"]["Uuid"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateProjectRequest"];
+                "application/json": components["schemas"]["RegisterRequest"];
             };
         };
         responses: {
-            /** @description Project updated successfully */
+            /** @description 注册成功 */
             200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponse"];
-                };
-            };
-            /** @description Project not found */
-            404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Internal server error */
+            /** @description 参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 用户名或邮箱已存在 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 注册失败 */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -6355,34 +8244,252 @@ export interface operations {
             };
         };
     };
-    delete_project: {
+    list_users: {
         parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Project ID */
-                id: components["schemas"]["Uuid"];
+            query?: {
+                /** @description 页码，默认1 */
+                page?: number | null;
+                /** @description 每页条数，默认20 */
+                page_size?: number | null;
             };
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Project deleted successfully */
+            /** @description 查询成功 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Project not found */
-            404: {
+            /** @description 查询失败 */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Internal server error */
+        };
+    };
+    create_user: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateUserRequest"];
+            };
+        };
+        responses: {
+            /** @description 创建成功 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 用户名或邮箱已存在 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 创建失败 */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    wms_list_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    wms_create_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    wms_get_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_warehouses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_warehouses OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_warehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_warehouse OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_warehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_warehouse OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_warehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_warehouse OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_warehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_warehouse OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

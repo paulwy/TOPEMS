@@ -62,6 +62,13 @@ pub struct SupplierProduct {
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::modules::supplier::list_suppliers,
+        crate::modules::supplier::create_supplier,
+        crate::modules::supplier::get_supplier,
+        crate::modules::supplier::update_supplier,
+        crate::modules::supplier::delete_supplier,
+    ),
     components(
         schemas(
             Supplier,

@@ -1,8 +1,8 @@
 /**
  * 此文件由 scripts/openapi/gen-types.mjs 自动生成，请勿手动编辑。
- * 生成时间: 2026-07-25T02:14:36.152Z
- * 输入源: /tmp/topems-aggregated-openapi.json
- * 路径数: 53 | Schema 数: 117
+ * 生成时间: 2026-08-09T10:47:48.971Z
+ * 输入源: /Users/air/TOPEMS/docs/api/openapi-aggregated.json
+ * 路径数: 64 | Schema 数: 342
  */
 
 /**
@@ -11,7 +11,343 @@
  */
 
 export interface paths {
-    "/accounts": {
+    "/crm/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_contacts"];
+        put?: never;
+        post: operations["create_contact"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/crm/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_customers"];
+        put?: never;
+        post: operations["create_customer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/crm/customers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_customer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/crm/opportunities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_opportunities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_assets"];
+        put?: never;
+        post: operations["create_asset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/assets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_asset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["erp_list_customers"];
+        put?: never;
+        post: operations["erp_create_customer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/customers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["erp_get_customer"];
+        put: operations["update_customer"];
+        post?: never;
+        delete: operations["delete_customer"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_inventory"];
+        put?: never;
+        post: operations["create_inventory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/inventory/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_inventory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/meeting-rooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_rooms"];
+        put?: never;
+        post: operations["create_room"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/meeting-rooms/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_bookings"];
+        put?: never;
+        post: operations["create_booking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/meeting-rooms/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_room"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/purchase-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_purchase_orders"];
+        put?: never;
+        post: operations["create_purchase_order"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/purchase-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_purchase_order"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/purchase-orders/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["approve_purchase_order"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/sales-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_sales_orders"];
+        put?: never;
+        post: operations["create_sales_order"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/sales-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_sales_order"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_suppliers"];
+        put?: never;
+        post: operations["create_supplier"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/suppliers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_supplier"];
+        put: operations["update_supplier"];
+        post?: never;
+        delete: operations["delete_supplier"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/erp/materials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_materials"];
+        put?: never;
+        post: operations["create_material"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/finance/accounts": {
         parameters: {
             query?: never;
             header?: never;
@@ -27,7 +363,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/accounts/{account_id}": {
+    "/finance/accounts/{account_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -43,7 +379,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/balance-sheet/{period}": {
+    "/finance/balance-sheet/{period}": {
         parameters: {
             query?: never;
             header?: never;
@@ -59,7 +395,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/income-statement/{period}": {
+    "/finance/income-statement/{period}": {
         parameters: {
             query?: never;
             header?: never;
@@ -75,7 +411,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/ledger": {
+    "/finance/ledger": {
         parameters: {
             query?: never;
             header?: never;
@@ -91,7 +427,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/trial-balance/{period}": {
+    "/finance/trial-balance/{period}": {
         parameters: {
             query?: never;
             header?: never;
@@ -107,7 +443,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/vouchers": {
+    "/finance/vouchers": {
         parameters: {
             query?: never;
             header?: never;
@@ -123,7 +459,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/vouchers/{voucher_id}": {
+    "/finance/vouchers/{voucher_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -139,7 +475,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/vouchers/{voucher_id}/approve": {
+    "/finance/vouchers/{voucher_id}/approve": {
         parameters: {
             query?: never;
             header?: never;
@@ -155,7 +491,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/vouchers/{voucher_id}/post": {
+    "/finance/vouchers/{voucher_id}/post": {
         parameters: {
             query?: never;
             header?: never;
@@ -171,7 +507,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/vouchers/{voucher_id}/submit": {
+    "/finance/vouchers/{voucher_id}/submit": {
         parameters: {
             query?: never;
             header?: never;
@@ -187,30 +523,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/mes/orders": {
+    "/hrm/companies": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list_production_orders"];
+        get: operations["list_companies"];
         put?: never;
-        post: operations["create_production_order"];
+        post: operations["create_company"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/mes/orders/{id}": {
+    "/hrm/companies/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_production_order"];
+        get: operations["get_company"];
         put?: never;
         post?: never;
         delete?: never;
@@ -219,30 +555,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/mes/work-orders": {
+    "/hrm/departments": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list_work_orders"];
+        get: operations["list_departments"];
         put?: never;
-        post: operations["create_work_order"];
+        post: operations["create_department"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/mes/work-orders/{id}": {
+    "/hrm/departments/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_work_order"];
+        get: operations["get_department"];
         put?: never;
         post?: never;
         delete?: never;
@@ -251,33 +587,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/mes/work-reports": {
+    "/hrm/employees": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list_work_reports"];
+        get: operations["list_employees"];
         put?: never;
-        post: operations["create_work_report"];
+        post: operations["create_employee"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/mes/work-reports/{id}": {
+    "/hrm/employees/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_work_report"];
-        put?: never;
+        get: operations["get_employee"];
+        put: operations["update_employee"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_employee"];
         options?: never;
         head?: never;
         patch?: never;
@@ -459,7 +795,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/core/iam/auth/login": {
+    "/scm/purchase-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_orders"];
+        put?: never;
+        post: operations["create_order"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scm/purchase-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_order"];
+        put: operations["update_order"];
+        post?: never;
+        delete: operations["delete_order"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scm/purchase-orders/{id}/approve": {
         parameters: {
             query?: never;
             header?: never;
@@ -468,70 +836,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * 用户登录
-         * @description 通过用户名和密码获取JWT令牌
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @example admin */
-                        username: string;
-                        /** @example admin123 */
-                        password: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 登录成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example 200 */
-                            code?: number;
-                            /** @example success */
-                            message?: string;
-                            data?: {
-                                /** @example eyJhbGciOiJIUzI1NiIs... */
-                                token?: string;
-                                /**
-                                 * Format: date-time
-                                 * @example 2026-06-24T10:00:00Z
-                                 */
-                                expires_at?: string;
-                                user?: components["schemas"]["User"];
-                            };
-                        };
-                    };
-                };
-                /** @description 认证失败 */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["approve_order"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/core/iam/auth/logout": {
+    "/scm/purchase-orders/{id}/reject": {
         parameters: {
             query?: never;
             header?: never;
@@ -540,37 +852,78 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * 用户登出
-         * @description 使当前令牌失效
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 登出成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["reject_order"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/core/iam/auth/refresh": {
+    "/scm/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["scm_list_suppliers"];
+        put?: never;
+        post: operations["scm_create_supplier"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scm/suppliers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["scm_get_supplier"];
+        put: operations["scm_update_supplier"];
+        post?: never;
+        delete: operations["scm_delete_supplier"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/srm/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["srm_list_suppliers"];
+        put?: never;
+        post: operations["srm_create_supplier"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/srm/suppliers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["srm_get_supplier"];
+        put: operations["srm_update_supplier"];
+        post?: never;
+        delete: operations["srm_delete_supplier"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/unified-core/iam/auth/login": {
         parameters: {
             query?: never;
             header?: never;
@@ -579,433 +932,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * 刷新令牌
-         * @description 使用刷新令牌获取新的访问令牌
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        refresh_token: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 刷新成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example 200 */
-                            code?: number;
-                            /** @example success */
-                            message?: string;
-                            data?: {
-                                token?: string;
-                                /** Format: date-time */
-                                expires_at?: string;
-                            };
-                        };
-                    };
-                };
-            };
-        };
+        post: operations["login"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/core/iam/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 获取用户列表
-         * @description 分页获取系统用户列表
-         */
-        get: {
-            parameters: {
-                query?: {
-                    /**
-                     * @description 页码
-                     * @default 1
-                     */
-                    page?: string;
-                    /**
-                     * @description 每页数量
-                     * @default 20
-                     */
-                    page_size?: string;
-                    /** @description 搜索关键词 */
-                    search?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PaginatedResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        /**
-         * 创建用户
-         * @description 创建新的系统用户
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @example newuser */
-                        username: string;
-                        /** @example password123 */
-                        password: string;
-                        /** @example newuser@topems.com */
-                        email?: string;
-                        /** @example 新用户 */
-                        full_name?: string;
-                        /** @example true */
-                        isActive?: boolean;
-                    };
-                };
-            };
-            responses: {
-                /** @description 创建成功 */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example 201 */
-                            code?: number;
-                            /** @example 创建成功 */
-                            message?: string;
-                            data?: components["schemas"]["User"];
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/core/iam/users/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 获取用户详情
-         * @description 获取指定用户的详细信息
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * Format: uuid
-                     * @description 用户ID
-                     */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        /**
-         * 更新用户
-         * @description 更新指定用户的信息
-         */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        email?: string;
-                        full_name?: string;
-                        isActive?: boolean;
-                    };
-                };
-            };
-            responses: {
-                /** @description 更新成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        /**
-         * 删除用户
-         * @description 删除指定用户
-         */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 删除成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/core/iam/roles": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 获取角色列表
-         * @description 获取所有角色列表
-         */
-        get: {
-            parameters: {
-                query?: {
-                    /** @default 1 */
-                    page?: string;
-                    /** @default 20 */
-                    page_size?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PaginatedResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        /**
-         * 创建角色
-         * @description 创建新的角色
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @example 新角色 */
-                        name: string;
-                        /** @example new-role */
-                        code: string;
-                        /** @example 新角色描述 */
-                        description?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 创建成功 */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/core/iam/roles/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 获取角色详情
-         * @description 获取指定角色的详细信息
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        /**
-         * 更新角色
-         * @description 更新指定角色的信息
-         */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        name?: string;
-                        description?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 更新成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        /**
-         * 删除角色
-         * @description 删除指定角色
-         */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 删除成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/core/iam/roles/{id}/permissions": {
+    "/unified-core/iam/auth/register": {
         parameters: {
             query?: never;
             header?: never;
@@ -1014,1373 +948,88 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * 分配权限给角色
-         * @description 为指定角色分配权限
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        permission_ids: string[];
-                    };
-                };
-            };
-            responses: {
-                /** @description 分配成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["register"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/core/iam/permissions": {
+    "/unified-core/users": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 获取权限列表
-         * @description 获取所有权限列表
-         */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description 按模块筛选 */
-                    module?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PaginatedResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["list_users"];
         put?: never;
-        /**
-         * 创建权限
-         * @description 创建新的权限
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @example module:action:resource */
-                        code: string;
-                        /** @example 权限名称 */
-                        name: string;
-                        /** @example 权限描述 */
-                        description?: string;
-                        /** @example system */
-                        module?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 创建成功 */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["create_user"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/core/iam/users/{id}/roles": {
+    "/api/wms/inventory": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["wms_list_inventory"];
         put?: never;
-        /**
-         * 分配角色给用户
-         * @description 为指定用户分配角色
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        role_ids: string[];
-                    };
-                };
-            };
-            responses: {
-                /** @description 分配成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["wms_create_inventory"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/core/iam/users/{id}/effective-permissions": {
+    "/api/wms/inventory/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 获取用户有效权限
-         * @description 获取用户拥有的所有有效权限
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
+        get: operations["wms_get_inventory"];
+        put: operations["update_inventory"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_inventory"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/hrm/companies": {
+    "/api/wms/warehouses": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 获取公司列表
-         * @description 分页获取公司列表
-         */
-        get: {
-            parameters: {
-                query?: {
-                    /** @default 1 */
-                    page?: string;
-                    /** @default 20 */
-                    page_size?: string;
-                    search?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PaginatedResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["list_warehouses"];
         put?: never;
-        /**
-         * 创建公司
-         * @description 创建新的公司
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @example 新公司 */
-                        name: string;
-                        /** @example NC */
-                        short_name?: string;
-                        /** @example 91310000XXXXXXXXXX */
-                        registration_number?: string;
-                        /** @example 310XXXXXXXXXXXXX */
-                        tax_number?: string;
-                        /** @example 上海市... */
-                        address?: string;
-                        /** @example 400-123-4567 */
-                        contact_phone?: string;
-                        /** @example contact@company.com */
-                        email?: string;
-                        /** @example https://www.company.com */
-                        website?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 创建成功 */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
+        post: operations["create_warehouse"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/hrm/companies/{id}": {
+    "/api/wms/warehouses/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 获取公司详情
-         * @description 获取指定公司的详细信息
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        /**
-         * 更新公司
-         * @description 更新指定公司的信息
-         */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        name?: string;
-                        short_name?: string;
-                        address?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 更新成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["get_warehouse"];
+        put: operations["update_warehouse"];
         post?: never;
-        /**
-         * 删除公司
-         * @description 删除指定公司
-         */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 删除成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hrm/departments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 获取部门列表
-         * @description 分页获取部门列表
-         */
-        get: {
-            parameters: {
-                query?: {
-                    /** @default 1 */
-                    page?: string;
-                    /** @default 20 */
-                    page_size?: string;
-                    /** Format: uuid */
-                    company_id?: string;
-                    status?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PaginatedResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        /**
-         * 创建部门
-         * @description 创建新的部门
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /**
-                         * Format: uuid
-                         * @example 550e8400-e29b-41d4-a716-446655440000
-                         */
-                        company_id: string;
-                        /** @example 技术部 */
-                        name: string;
-                        /** @example TECH */
-                        code: string;
-                        /** Format: uuid */
-                        parentId?: string;
-                        /** Format: uuid */
-                        manager_id?: string;
-                        /** @example 负责系统开发 */
-                        description?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 创建成功 */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hrm/departments/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 获取部门详情 */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        /** 更新部门 */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        name?: string;
-                        /** Format: uuid */
-                        manager_id?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 更新成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        /** 删除部门 */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 删除成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hrm/positions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 获取职位列表 */
-        get: {
-            parameters: {
-                query?: {
-                    /** @default 1 */
-                    page?: string;
-                    /** @default 20 */
-                    page_size?: string;
-                    /** Format: uuid */
-                    company_id?: string;
-                    /** Format: uuid */
-                    department_id?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PaginatedResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        /** 创建职位 */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: uuid */
-                        company_id?: string;
-                        /** Format: uuid */
-                        department_id?: string;
-                        /** @example 软件工程师 */
-                        name: string;
-                        /** @example SE */
-                        code: string;
-                        /** @example 3 */
-                        level?: number;
-                        /**
-                         * Format: decimal
-                         * @example 10000
-                         */
-                        min_salary?: number;
-                        /**
-                         * Format: decimal
-                         * @example 30000
-                         */
-                        max_salary?: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description 创建成功 */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hrm/positions/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 获取职位详情 */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        /** 更新职位 */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        name?: string;
-                        level?: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description 更新成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        /** 删除职位 */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 删除成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hrm/employees": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 获取员工列表 */
-        get: {
-            parameters: {
-                query?: {
-                    /** @default 1 */
-                    page?: string;
-                    /** @default 20 */
-                    page_size?: string;
-                    /** Format: uuid */
-                    company_id?: string;
-                    /** Format: uuid */
-                    department_id?: string;
-                    status?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PaginatedResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        /** 创建员工 */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: uuid */
-                        company_id: string;
-                        /** Format: uuid */
-                        department_id: string;
-                        /** Format: uuid */
-                        position_id: string;
-                        /** @example EMP001 */
-                        employee_number: string;
-                        /** @example 张三 */
-                        name: string;
-                        /** @example male */
-                        gender?: string;
-                        /**
-                         * Format: date
-                         * @example 1990-01-01
-                         */
-                        birth_date?: string;
-                        /**
-                         * Format: date
-                         * @example 2026-01-01
-                         */
-                        hire_date?: string;
-                        /** @example zhangsan@topems.com */
-                        email?: string;
-                        /** @example 13800138000 */
-                        phone?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 创建成功 */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hrm/employees/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 获取员工详情 */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        /** 更新员工 */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: uuid */
-                        department_id?: string;
-                        /** Format: uuid */
-                        position_id?: string;
-                        email?: string;
-                        phone?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 更新成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        /** 删除员工 */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 删除成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hrm/contracts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 获取合同列表 */
-        get: {
-            parameters: {
-                query?: {
-                    /** @default 1 */
-                    page?: string;
-                    /** @default 20 */
-                    page_size?: string;
-                    status?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PaginatedResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        /** 创建合同 */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: uuid */
-                        employee_id: string;
-                        /** @example 固定期限 */
-                        contract_type: string;
-                        /**
-                         * Format: date
-                         * @example 2024-01-01
-                         */
-                        start_date: string;
-                        /**
-                         * Format: date
-                         * @example 2026-12-31
-                         */
-                        end_date: string;
-                        /**
-                         * Format: date
-                         * @example 2024-01-01
-                         */
-                        signing_date?: string;
-                        /**
-                         * Format: decimal
-                         * @example 15000
-                         */
-                        monthly_salary?: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description 创建成功 */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hrm/contracts/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 获取合同详情 */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        /** 更新合同 */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: date */
-                        end_date?: string;
-                        /** Format: decimal */
-                        monthly_salary?: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description 更新成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        /** 删除合同 */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 删除成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hrm/contracts/expiring": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 获取即将到期合同 */
-        get: {
-            parameters: {
-                query?: {
-                    /**
-                     * @description 到期天数
-                     * @default 30
-                     */
-                    days?: string;
-                    /** @default 1 */
-                    page?: string;
-                    /** @default 20 */
-                    page_size?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PaginatedResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hrm/contracts/{id}/renew": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** 合同续签 */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /**
-                         * Format: date
-                         * @example 2027-12-31
-                         */
-                        new_end_date: string;
-                        /**
-                         * Format: decimal
-                         * @example 18000
-                         */
-                        new_monthly_salary?: number;
-                        /** @example 续签 */
-                        renewal_type?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 续签成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/rs/projects": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 获取项目列表 */
-        get: {
-            parameters: {
-                query?: {
-                    /** @default 1 */
-                    page?: string;
-                    /** @default 20 */
-                    page_size?: string;
-                    /** @description 项目状态 */
-                    status?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PaginatedResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        /** 创建项目 */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @example 新型催化剂研发 */
-                        name: string;
-                        /** @example PRJ-2026-001 */
-                        code: string;
-                        /** @example 研发高效催化剂 */
-                        description?: string;
-                        /** @example 研发项目 */
-                        project_type?: string;
-                        /** @example active */
-                        status?: string;
-                        /**
-                         * Format: date
-                         * @example 2026-01-01
-                         */
-                        start_date?: string;
-                        /**
-                         * Format: date
-                         * @example 2026-12-31
-                         */
-                        end_date?: string;
-                        /** Format: uuid */
-                        manager_id?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 创建成功 */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuccessResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/rs/projects/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 获取项目详情 */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** Format: uuid */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 获取成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
+        delete: operations["delete_warehouse"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2390,20 +1039,576 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Account: {
-            account_type: components["schemas"]["AccountType"];
-            code: string;
+        AddTagToCustomerRequest: {
+            customer_id: components["schemas"]["Uuid"];
+            tag_id: components["schemas"]["Uuid"];
+        };
+        Contact: {
             created_at: components["schemas"]["DateTime"];
-            currency: string;
+            customer_id?: components["schemas"]["Uuid"] | null;
+            email?: string | null;
+            first_name: string;
+            id: components["schemas"]["Uuid"];
+            last_name?: string | null;
+            notes?: string | null;
+            phone?: string | null;
+            position?: string | null;
+            status: string;
+            tenant_id: components["schemas"]["Uuid"];
+            updated_at: components["schemas"]["DateTime"];
+        };
+        CreateContactRequest: {
+            customer_id?: components["schemas"]["Uuid"] | null;
+            email?: string | null;
+            first_name: string;
+            last_name?: string | null;
+            notes?: string | null;
+            phone?: string | null;
+            position?: string | null;
+        };
+        CreateCustomerRequest: {
+            address?: string | null;
+            city?: string | null;
+            code?: string | null;
+            company_size?: string | null;
+            country?: string | null;
+            customer_type?: string | null;
+            email?: string | null;
+            /** Format: int32 */
+            employee_count?: number | null;
+            fax?: string | null;
+            industry?: string | null;
+            name: string;
+            notes?: string | null;
+            phone?: string | null;
+            postal_code?: string | null;
+            province?: string | null;
+            rating?: string | null;
+            /** Format: double */
+            revenue?: number | null;
+            source?: string | null;
+            website?: string | null;
+        };
+        CreateInteractionRequest: {
+            contact_id?: components["schemas"]["Uuid"] | null;
+            content?: string | null;
+            customer_id?: components["schemas"]["Uuid"] | null;
+            notes?: string | null;
+            scheduled_at?: components["schemas"]["DateTime"] | null;
+            subject?: string | null;
+            type_: string;
+        };
+        CreateOpportunityRequest: {
+            close_date?: components["schemas"]["DateTime"] | null;
+            customer_id?: components["schemas"]["Uuid"] | null;
+            name: string;
+            notes?: string | null;
+            /** Format: int32 */
+            probability?: number | null;
+            value?: components["schemas"]["Decimal"] | null;
+        };
+        CreateTagRequest: {
+            color?: string | null;
+            description?: string | null;
+            name: string;
+        };
+        CustomerWithTags: {
+            customer_id: components["schemas"]["Uuid"];
+            customer_name: string;
+            tags: components["schemas"]["Tag"][];
+        };
+        Interaction: {
+            completed_at?: components["schemas"]["DateTime"] | null;
+            contact_id?: components["schemas"]["Uuid"] | null;
+            content?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            customer_id?: components["schemas"]["Uuid"] | null;
+            id: components["schemas"]["Uuid"];
+            scheduled_at?: components["schemas"]["DateTime"] | null;
+            status: string;
+            subject?: string | null;
+            tenant_id: components["schemas"]["Uuid"];
+            type_: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        Tag: {
+            color: string;
+            created_at: components["schemas"]["DateTime"];
             description?: string | null;
             id: components["schemas"]["Uuid"];
-            isEnabled: boolean;
+            name: string;
+            tenant_id: components["schemas"]["Uuid"];
+            updated_at: components["schemas"]["DateTime"];
+        };
+        UpdateContactRequest: {
+            customer_id?: components["schemas"]["Uuid"] | null;
+            email?: string | null;
+            first_name?: string | null;
+            last_name?: string | null;
+            notes?: string | null;
+            phone?: string | null;
+            position?: string | null;
+            status?: string | null;
+        };
+        UpdateCustomerRequest: {
+            address?: string | null;
+            city?: string | null;
+            code?: string | null;
+            company_size?: string | null;
+            country?: string | null;
+            customer_type?: string | null;
+            email?: string | null;
+            /** Format: int32 */
+            employee_count?: number | null;
+            fax?: string | null;
+            industry?: string | null;
+            name?: string | null;
+            notes?: string | null;
+            phone?: string | null;
+            postal_code?: string | null;
+            province?: string | null;
+            rating?: string | null;
+            /** Format: double */
+            revenue?: number | null;
+            source?: string | null;
+            status?: string | null;
+            website?: string | null;
+        };
+        UpdateInteractionRequest: {
+            completed_at?: components["schemas"]["DateTime"] | null;
+            contact_id?: components["schemas"]["Uuid"] | null;
+            content?: string | null;
+            customer_id?: components["schemas"]["Uuid"] | null;
+            notes?: string | null;
+            scheduled_at?: components["schemas"]["DateTime"] | null;
+            status?: string | null;
+            subject?: string | null;
+            type_?: string | null;
+        };
+        UpdateOpportunityRequest: {
+            close_date?: components["schemas"]["DateTime"] | null;
+            customer_id?: components["schemas"]["Uuid"] | null;
+            name?: string | null;
+            notes?: string | null;
+            /** Format: int32 */
+            probability?: number | null;
+            stage?: string | null;
+            value?: components["schemas"]["Decimal"] | null;
+        };
+        UpdateTagRequest: {
+            color?: string | null;
+            description?: string | null;
+            name?: string | null;
+        };
+        AccountingSubject: {
+            category: string;
+            code: string;
+            created_at: components["schemas"]["DateTime"];
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            is_cash_flow: boolean;
             /** Format: int32 */
             level: number;
             name: string;
-            parentId?: components["schemas"]["Uuid"] | null;
-            tenant_id: components["schemas"]["Uuid"];
+            parent_code?: string | null;
+            status: string;
             updated_at: components["schemas"]["DateTime"];
+        };
+        Asset: {
+            asset_number: string;
+            brand?: string | null;
+            category?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            department?: string | null;
+            id: components["schemas"]["Uuid"];
+            image_url?: string | null;
+            location?: string | null;
+            manufacturer?: string | null;
+            model?: string | null;
+            name: string;
+            /** Format: double */
+            purchase_amount?: number | null;
+            purchase_date?: components["schemas"]["DateTime"] | null;
+            /** Format: double */
+            rated_current?: number | null;
+            /** Format: double */
+            rated_power?: number | null;
+            /** Format: double */
+            rated_voltage?: number | null;
+            responsible_id?: components["schemas"]["Uuid"] | null;
+            serial_number?: string | null;
+            specifications?: unknown;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        BankAccount: {
+            account_name: string;
+            account_number: string;
+            account_type: string;
+            /** Format: double */
+            balance: number;
+            bank_name: string;
+            branch_name?: string | null;
+            company_id: components["schemas"]["Uuid"];
+            created_at: components["schemas"]["DateTime"];
+            currency: string;
+            id: components["schemas"]["Uuid"];
+            opening_date: components["schemas"]["DateTime"];
+            status: string;
+            tax_registration_number?: string | null;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        BankTransaction: {
+            /** Format: double */
+            amount: number;
+            /** Format: double */
+            balance_after: number;
+            /** Format: double */
+            balance_before: number;
+            bank_account_id: components["schemas"]["Uuid"];
+            created_at: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            reference_number?: string | null;
+            summary?: string | null;
+            transaction_date: components["schemas"]["DateTime"];
+            transaction_type: string;
+        };
+        CreateAssetRequest: {
+            asset_number: string;
+            brand?: string | null;
+            category?: string | null;
+            department?: string | null;
+            image_url?: string | null;
+            location?: string | null;
+            manufacturer?: string | null;
+            model?: string | null;
+            name: string;
+            /** Format: double */
+            purchase_amount?: number | null;
+            purchase_date?: components["schemas"]["DateTime"] | null;
+            /** Format: double */
+            rated_current?: number | null;
+            /** Format: double */
+            rated_power?: number | null;
+            /** Format: double */
+            rated_voltage?: number | null;
+            responsible_id?: components["schemas"]["Uuid"] | null;
+            serial_number?: string | null;
+            specifications?: unknown;
+        };
+        erp_CreateCustomerRequest: {
+            address?: string | null;
+            city?: string | null;
+            code: string;
+            contact_person?: string | null;
+            contact_phone?: string | null;
+            /** Format: double */
+            credit_limit?: number | null;
+            customer_type: string;
+            district?: string | null;
+            email?: string | null;
+            industry?: string | null;
+            name: string;
+            province?: string | null;
+            scale?: string | null;
+            short_name?: string | null;
+            status?: string | null;
+        };
+        CreateInventoryRequest: {
+            batch_no?: string | null;
+            expire_date?: components["schemas"]["DateTime"] | null;
+            location_code?: string | null;
+            material_id: components["schemas"]["Uuid"];
+            /** Format: double */
+            quantity: number;
+            status?: string | null;
+            /** Format: double */
+            unit_price?: number | null;
+            warehouse_id?: components["schemas"]["Uuid"] | null;
+        };
+        CreateMaterialRequest: {
+            barcode?: string | null;
+            brand?: string | null;
+            category: string;
+            code: string;
+            description?: string | null;
+            model?: string | null;
+            name: string;
+            /** Format: double */
+            safety_stock?: number | null;
+            specification?: string | null;
+            status?: string | null;
+            /** Format: double */
+            tax_rate?: number | null;
+            unit: string;
+            /** Format: double */
+            unit_price?: number | null;
+        };
+        CreateSupplierRequest: {
+            address?: string | null;
+            city?: string | null;
+            code: string;
+            contact_person?: string | null;
+            contact_phone?: string | null;
+            district?: string | null;
+            email?: string | null;
+            industry?: string | null;
+            name: string;
+            province?: string | null;
+            qualification_level?: string | null;
+            short_name?: string | null;
+            status?: string | null;
+            supplier_type: string;
+        };
+        Expense: {
+            /** Format: double */
+            amount: number;
+            applicant_name?: string | null;
+            approved_at?: components["schemas"]["DateTime"] | null;
+            approver_id?: components["schemas"]["Uuid"] | null;
+            budget_item_id?: components["schemas"]["Uuid"] | null;
+            contract_id?: components["schemas"]["Uuid"] | null;
+            created_at: components["schemas"]["DateTime"];
+            department_id?: components["schemas"]["Uuid"] | null;
+            description?: string | null;
+            expense_date?: components["schemas"]["DateTime"] | null;
+            expense_number: string;
+            expense_type?: string | null;
+            id: components["schemas"]["Uuid"];
+            project_id?: components["schemas"]["Uuid"] | null;
+            /** Format: int32 */
+            receipt_count?: number | null;
+            reimbursed_at?: components["schemas"]["DateTime"] | null;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        FixedAsset: {
+            /** Format: double */
+            accumulated_depreciation: number;
+            asset_category: string;
+            asset_code: string;
+            asset_name: string;
+            asset_type: string;
+            created_at: components["schemas"]["DateTime"];
+            department_id?: components["schemas"]["Uuid"] | null;
+            department_name?: string | null;
+            depreciation_method: string;
+            depreciation_period: string;
+            id: components["schemas"]["Uuid"];
+            location?: string | null;
+            /** Format: double */
+            net_value: number;
+            /** Format: double */
+            original_value: number;
+            purchase_date?: components["schemas"]["DateTime"] | null;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+            /** Format: int32 */
+            useful_life_months: number;
+        };
+        Inventory: {
+            /** Format: double */
+            available_quantity: number;
+            batch_no?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            expire_date?: components["schemas"]["DateTime"] | null;
+            id: components["schemas"]["Uuid"];
+            location_code?: string | null;
+            material_code: string;
+            material_id: components["schemas"]["Uuid"];
+            material_name: string;
+            /** Format: double */
+            quantity: number;
+            /** Format: double */
+            reserved_quantity: number;
+            status: string;
+            /** Format: double */
+            total_amount: number;
+            unit: string;
+            /** Format: double */
+            unit_price: number;
+            updated_at: components["schemas"]["DateTime"];
+            warehouse_id?: components["schemas"]["Uuid"] | null;
+            warehouse_name?: string | null;
+        };
+        Material: {
+            barcode?: string | null;
+            brand?: string | null;
+            category: string;
+            code: string;
+            created_at: components["schemas"]["DateTime"];
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            model?: string | null;
+            name: string;
+            /** Format: double */
+            safety_stock: number;
+            specification?: string | null;
+            status: string;
+            /** Format: double */
+            tax_rate: number;
+            unit: string;
+            /** Format: double */
+            unit_price: number;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        MeetingBooking: {
+            created_at: components["schemas"]["DateTime"];
+            end_time: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            organizer: string;
+            room_id: components["schemas"]["Uuid"];
+            room_name: string;
+            start_time: components["schemas"]["DateTime"];
+            status: string;
+            title: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        MeetingRoom: {
+            /** Format: int32 */
+            capacity: number;
+            created_at: components["schemas"]["DateTime"];
+            facilities?: string[] | null;
+            id: components["schemas"]["Uuid"];
+            location?: string | null;
+            name: string;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        OpeningBalance: {
+            company_id: components["schemas"]["Uuid"];
+            created_at: components["schemas"]["DateTime"];
+            /** Format: double */
+            credit_balance: number;
+            /** Format: double */
+            debit_balance: number;
+            id: components["schemas"]["Uuid"];
+            period: string;
+            subject_code: string;
+            subject_name: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        Payable: {
+            /** Format: double */
+            amount: number;
+            category?: string | null;
+            contract_id?: components["schemas"]["Uuid"] | null;
+            created_at: components["schemas"]["DateTime"];
+            due_date?: components["schemas"]["DateTime"] | null;
+            id: components["schemas"]["Uuid"];
+            invoice_date?: components["schemas"]["DateTime"] | null;
+            invoice_number: string;
+            /** Format: double */
+            paid_amount: number;
+            payment_schedule?: unknown;
+            project_id?: components["schemas"]["Uuid"] | null;
+            status: string;
+            supplier_name?: string | null;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        Receivable: {
+            /** Format: double */
+            amount: number;
+            contract_id?: components["schemas"]["Uuid"] | null;
+            created_at: components["schemas"]["DateTime"];
+            customer_name?: string | null;
+            due_date?: components["schemas"]["DateTime"] | null;
+            id: components["schemas"]["Uuid"];
+            invoice_date?: components["schemas"]["DateTime"] | null;
+            invoice_number: string;
+            payment_schedule?: unknown;
+            project_id?: components["schemas"]["Uuid"] | null;
+            project_name?: string | null;
+            /** Format: double */
+            received_amount: number;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        UpdateAssetRequest: {
+            brand?: string | null;
+            category?: string | null;
+            department?: string | null;
+            image_url?: string | null;
+            location?: string | null;
+            manufacturer?: string | null;
+            model?: string | null;
+            name?: string | null;
+            /** Format: double */
+            purchase_amount?: number | null;
+            purchase_date?: components["schemas"]["DateTime"] | null;
+            /** Format: double */
+            rated_current?: number | null;
+            /** Format: double */
+            rated_power?: number | null;
+            /** Format: double */
+            rated_voltage?: number | null;
+            responsible_id?: components["schemas"]["Uuid"] | null;
+            serial_number?: string | null;
+            specifications?: unknown;
+            status?: string | null;
+        };
+        Vehicle: {
+            brand?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            driver?: string | null;
+            fuel_type?: string | null;
+            id: components["schemas"]["Uuid"];
+            last_service?: components["schemas"]["DateTime"] | null;
+            /** Format: int32 */
+            mileage?: number | null;
+            model?: string | null;
+            plate_number: string;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+            vehicle_type?: string | null;
+        };
+        VehicleRequest: {
+            approved_at?: components["schemas"]["DateTime"] | null;
+            approved_by?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            driver_required: boolean;
+            end_time: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            purpose: string;
+            rejected_reason?: string | null;
+            requester: string;
+            start_time: components["schemas"]["DateTime"];
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+            vehicle_id: components["schemas"]["Uuid"];
+            vehicle_plate: string;
+        };
+        Account: {
+            account_type?: components["schemas"]["AccountType"] | null;
+            balance_direction?: string | null;
+            children?: components["schemas"]["Account"][] | null;
+            code: string;
+            created_at: components["schemas"]["DateTime"];
+            created_by?: components["schemas"]["Uuid"] | null;
+            currency: string;
+            default_currency?: string | null;
+            description?: string | null;
+            dimensions?: unknown[] | null;
+            enable_foreign_currency?: boolean | null;
+            enable_quantity?: boolean | null;
+            full_name?: string | null;
+            haschildren?: boolean | null;
+            id: components["schemas"]["Uuid"];
+            is_cash_flow?: boolean | null;
+            is_detail?: boolean | null;
+            is_enabled?: boolean | null;
+            /** Format: int32 */
+            level: number;
+            name: string;
+            name_en?: string | null;
+            parent_code?: string | null;
+            parent_id?: components["schemas"]["Uuid"] | null;
+            status?: string | null;
+            tenant_id: components["schemas"]["Uuid"];
+            type?: string | null;
+            unit?: string | null;
+            updated_at: components["schemas"]["DateTime"];
+            updated_by?: components["schemas"]["Uuid"] | null;
         };
         /** @enum {string} */
         AccountType: "asset" | "liability" | "equity" | "income" | "expense" | "cost";
@@ -2415,11 +1620,11 @@ export interface components {
             created_at: components["schemas"]["DateTime"];
             description?: string | null;
             id: components["schemas"]["Uuid"];
-            isEnabled: boolean;
+            is_enabled: boolean;
             /** Format: int32 */
             level: number;
             name: string;
-            parentId?: components["schemas"]["Uuid"] | null;
+            parent_id?: components["schemas"]["Uuid"] | null;
             tenant_id: components["schemas"]["Uuid"];
             updated_at: components["schemas"]["DateTime"];
         };
@@ -2454,12 +1659,12 @@ export interface components {
             total_outflow: components["schemas"]["Decimal"];
         };
         CreateAccountRequest: {
-            account_type: components["schemas"]["AccountType"];
+            account_type?: components["schemas"]["AccountType"] | null;
             code: string;
             currency: string;
             description?: string | null;
             name: string;
-            parentId?: components["schemas"]["Uuid"] | null;
+            parent_id?: components["schemas"]["Uuid"] | null;
         };
         CreatePaymentRequest: {
             bank_account_id?: components["schemas"]["Uuid"] | null;
@@ -2477,6 +1682,7 @@ export interface components {
         CreateVoucherRequest: {
             description?: string | null;
             lines: components["schemas"]["VoucherLineRequest"][];
+            template_id?: components["schemas"]["Uuid"] | null;
             voucher_date: components["schemas"]["DateTime"];
             voucher_type: components["schemas"]["VoucherType"];
         };
@@ -2508,32 +1714,6 @@ export interface components {
             voucher_date: components["schemas"]["DateTime"];
             voucher_id: components["schemas"]["Uuid"];
             voucher_no: string;
-        };
-        Payment: {
-            actual_payment_date?: components["schemas"]["chrono.NaiveDate"] | null;
-            approved_by?: string | null;
-            attachment_url?: string | null;
-            bank_account_id?: components["schemas"]["Uuid"] | null;
-            bank_account_no?: string | null;
-            bank_name?: string | null;
-            bank_transaction_no?: string | null;
-            created_at: components["schemas"]["DateTime"];
-            created_by: string;
-            currency: string;
-            exchange_rate?: components["schemas"]["Decimal"] | null;
-            executed_at?: components["schemas"]["DateTime"] | null;
-            executed_by?: string | null;
-            id: components["schemas"]["Uuid"];
-            payment_date?: components["schemas"]["chrono.NaiveDate"] | null;
-            payment_method: string;
-            payment_no: string;
-            remark?: string | null;
-            supplier_id?: components["schemas"]["Uuid"] | null;
-            supplier_name?: string | null;
-            tenant_id: components["schemas"]["Uuid"];
-            total_amount: components["schemas"]["Decimal"];
-            updated_at: components["schemas"]["DateTime"];
-            voucher_id: components["schemas"]["Uuid"];
         };
         PaymentItem: {
             created_at: components["schemas"]["DateTime"];
@@ -2608,21 +1788,55 @@ export interface components {
             debit_balance: components["schemas"]["Decimal"];
         };
         Voucher: {
+            approved_at?: components["schemas"]["DateTime"] | null;
             approved_by?: string | null;
+            approver_id?: components["schemas"]["Uuid"] | null;
+            approver_name?: string | null;
+            /** Format: int32 */
+            attachment_count?: number | null;
+            bookkeeper_id?: components["schemas"]["Uuid"] | null;
+            bookkeeper_name?: string | null;
+            checker_id?: components["schemas"]["Uuid"] | null;
+            checker_name?: string | null;
             created_at: components["schemas"]["DateTime"];
             created_by: string;
+            currency_code?: string | null;
             description?: string | null;
+            entries?: components["schemas"]["VoucherLine"][] | null;
             id: components["schemas"]["Uuid"];
+            is_reversed?: boolean | null;
+            maker_id?: components["schemas"]["Uuid"] | null;
+            maker_name?: string | null;
+            /** Format: int32 */
+            month?: number | null;
             period: string;
+            posted_at?: components["schemas"]["DateTime"] | null;
             posted_by?: string | null;
+            poster_id?: components["schemas"]["Uuid"] | null;
+            poster_name?: string | null;
+            reverse_voucher_id?: components["schemas"]["Uuid"] | null;
+            reversed_at?: components["schemas"]["DateTime"] | null;
+            source_id?: string | null;
+            source_module?: string | null;
             status: components["schemas"]["VoucherStatus"];
+            submitted_at?: components["schemas"]["DateTime"] | null;
+            submitter_id?: components["schemas"]["Uuid"] | null;
+            submitter_name?: string | null;
+            summary?: string | null;
+            template_id?: components["schemas"]["Uuid"] | null;
             tenant_id: components["schemas"]["Uuid"];
+            /** Format: double */
+            total_amount?: number | null;
             total_credit: components["schemas"]["Decimal"];
             total_debit: components["schemas"]["Decimal"];
             updated_at: components["schemas"]["DateTime"];
+            updated_by?: components["schemas"]["Uuid"] | null;
             voucher_date: components["schemas"]["DateTime"];
             voucher_no: string;
+            voucher_number?: string | null;
             voucher_type: components["schemas"]["VoucherType"];
+            /** Format: int32 */
+            year?: number | null;
         };
         VoucherLine: {
             account_code: string;
@@ -2661,210 +1875,250 @@ export interface components {
             voucher_type: components["schemas"]["VoucherType"];
         };
         /** @enum {string} */
-        VoucherStatus: "draft" | "submitted" | "approved" | "posted" | "rejected" | "cancelled";
+        VoucherStatus: "draft" | "submitted" | "approved" | "posted" | "reversed" | "rejected" | "cancelled";
         /** @enum {string} */
         VoucherType: "general" | "payment" | "receipt" | "transfer";
-        CreateFromErpRequest: {
-            erp_order: components["schemas"]["ErpSalesOrderInfo"];
-            notes?: string | null;
-            planned_completion_date?: components["schemas"]["DateTime"] | null;
-            plannedStartDate?: components["schemas"]["DateTime"] | null;
-            workshop_id?: components["schemas"]["Uuid"] | null;
-        };
-        CreateProductionOrderRequest: {
-            notes?: string | null;
-            plannedEndDate?: components["schemas"]["DateTime"] | null;
-            plannedStartDate?: components["schemas"]["DateTime"] | null;
-            product_code: string;
-            product_id?: components["schemas"]["Uuid"] | null;
-            product_name: string;
-            /** Format: double */
-            quantity: number;
-            workshop_id?: components["schemas"]["Uuid"] | null;
-        };
-        CreateWorkOrderRequest: {
-            operator?: string | null;
-            order_id?: string | null;
-            orderNo?: string | null;
-            planEndDate?: string | null;
-            planStartDate?: string | null;
-            /** Format: double */
-            plannedQuantity: number;
-            priority?: string | null;
-            process_id?: string | null;
-            product_code: string;
-            product_name: string;
-            remark?: string | null;
-            team_id?: string | null;
-            work_order_no: string;
-            work_station_id?: string | null;
-        };
-        CreateWorkReportRequest: {
-            /** Format: double */
-            defect_quantity?: number | null;
-            /** Format: double */
-            labor_hours?: number | null;
-            order_id?: string | null;
-            orderNo?: string | null;
-            /** Format: double */
-            output_quantity?: number | null;
-            remark?: string | null;
-            report_date: string;
-            reporter_name: string;
-            shift?: string | null;
-            work_order_id?: string | null;
-            work_order_no?: string | null;
-            work_station_id?: string | null;
-            work_station_name?: string | null;
-        };
-        ErpSalesOrderInfo: {
-            customer_name: string;
-            delivery_date?: components["schemas"]["DateTime"] | null;
-            order_id: components["schemas"]["Uuid"];
-            order_number: string;
-            /** Format: int32 */
-            priority?: number | null;
-            product_code: string;
-            product_name: string;
-            /** Format: double */
-            quantity: number;
-            unit: string;
-        };
-        ListProductionOrdersResponse: {
-            orders: components["schemas"]["ProductionOrderResponse"][];
-            /** Format: int64 */
-            page: number;
-            /** Format: int64 */
-            pagesize: number;
-            /** Format: int64 */
-            total: number;
-        };
-        ProductionOrderResponse: {
-            actualEndDate?: components["schemas"]["DateTime"] | null;
-            actualStartDate?: components["schemas"]["DateTime"] | null;
-            /** Format: double */
-            completed_quantity: number;
+        ContractRenewal: {
+            approved_at?: components["schemas"]["DateTime"] | null;
+            approver_id?: components["schemas"]["Uuid"] | null;
+            contract_id: components["schemas"]["Uuid"];
             created_at: components["schemas"]["DateTime"];
             id: components["schemas"]["Uuid"];
-            notes?: string | null;
-            orderNo: string;
-            plannedEndDate?: components["schemas"]["DateTime"] | null;
-            plannedStartDate?: components["schemas"]["DateTime"] | null;
-            product_code: string;
-            product_id?: components["schemas"]["Uuid"] | null;
-            product_name: string;
+            new_end_date?: components["schemas"]["DateTime"] | null;
             /** Format: double */
-            quantity: number;
-            source: string;
-            source_order_id?: components["schemas"]["Uuid"] | null;
-            source_order_number?: string | null;
+            new_salary?: number | null;
+            new_start_date: components["schemas"]["DateTime"];
+            previous_contract_id?: components["schemas"]["Uuid"] | null;
+            rejection_reason?: string | null;
+            renewal_reason?: string | null;
+            renewal_type: string;
             status: string;
+            tenant_id: components["schemas"]["Uuid"];
             updated_at: components["schemas"]["DateTime"];
-            workshop_id?: components["schemas"]["Uuid"] | null;
         };
-        /** @enum {string} */
-        ProductionOrderSource: "manual" | "erp_sales_order" | "mrp";
-        RejectWorkReportRequest: {
-            remark?: string | null;
-        };
-        UpdateProductionOrderRequest: {
+        CreateAttendanceRequest: {
+            check_in?: components["schemas"]["DateTime"] | null;
+            check_out?: components["schemas"]["DateTime"] | null;
+            date: components["schemas"]["DateTime"];
+            employee_id: components["schemas"]["Uuid"];
             notes?: string | null;
-            plannedEndDate?: components["schemas"]["DateTime"] | null;
-            plannedStartDate?: components["schemas"]["DateTime"] | null;
-            product_code?: string | null;
-            product_name?: string | null;
-            /** Format: double */
-            quantity?: number | null;
-            workshop_id?: components["schemas"]["Uuid"] | null;
-        };
-        UpdateWorkOrderRequest: {
-            /** Format: double */
-            completed_quantity?: number | null;
-            operator?: string | null;
-            order_id?: string | null;
-            orderNo?: string | null;
-            planEndDate?: string | null;
-            planStartDate?: string | null;
-            /** Format: double */
-            plannedQuantity?: number | null;
-            priority?: string | null;
-            process_id?: string | null;
-            product_code?: string | null;
-            product_name?: string | null;
-            remark?: string | null;
-            team_id?: string | null;
-            work_order_no?: string | null;
-            work_station_id?: string | null;
-        };
-        UpdateWorkReportRequest: {
-            /** Format: double */
-            defect_quantity?: number | null;
-            /** Format: double */
-            labor_hours?: number | null;
-            order_id?: string | null;
-            orderNo?: string | null;
-            /** Format: double */
-            output_quantity?: number | null;
-            remark?: string | null;
-            report_date?: string | null;
-            reporter_name?: string | null;
-            shift?: string | null;
             status?: string | null;
-            work_order_id?: string | null;
-            work_order_no?: string | null;
-            work_station_id?: string | null;
-            work_station_name?: string | null;
+            /** Format: double */
+            work_hours?: number | null;
         };
-        WorkOrderResponse: {
-            actualEndDate?: string | null;
-            actualStartDate?: string | null;
-            /** Format: double */
-            completed_quantity: number;
-            created_at: string;
-            id: string;
-            operator?: string | null;
-            order_id?: string | null;
-            orderNo?: string | null;
-            planEndDate?: string | null;
-            planStartDate?: string | null;
-            /** Format: double */
-            plannedQuantity: number;
-            priority?: string | null;
-            process_id?: string | null;
-            product_code: string;
-            product_name: string;
-            remark?: string | null;
-            status: string;
-            team_id?: string | null;
-            updated_at: string;
-            work_order_no: string;
-            work_station_id?: string | null;
+        CreateCompanyRequest: {
+            address?: string | null;
+            contact_phone?: string | null;
+            description?: string | null;
+            email?: string | null;
+            name: string;
+            registration_number?: string | null;
+            short_name?: string | null;
+            tax_number?: string | null;
+            tenant_id?: components["schemas"]["Uuid"] | null;
+            website?: string | null;
         };
-        WorkReportResponse: {
-            approval_remark?: string | null;
-            approved_at?: string | null;
-            approved_by?: string | null;
-            created_at: string;
+        CreateContractRequest: {
+            contract_file_path?: string | null;
+            contract_no?: string | null;
+            contract_type: string;
+            employee_id: components["schemas"]["Uuid"];
+            end_date?: components["schemas"]["DateTime"] | null;
+            notes?: string | null;
+            party_a_contact?: string | null;
+            party_a_name?: string | null;
+            party_b_contact?: string | null;
+            party_b_name?: string | null;
+            /** Format: int32 */
+            probation_period_days?: number | null;
+            /** Format: int32 */
+            reminder_days?: number | null;
             /** Format: double */
-            defect_quantity: number;
-            id: string;
-            /** Format: double */
-            labor_hours: number;
-            order_id?: string | null;
-            orderNo?: string | null;
-            /** Format: double */
-            output_quantity: number;
+            salary?: number | null;
+            start_date: components["schemas"]["DateTime"];
+        };
+        CreateDepartmentRequest: {
+            code?: string | null;
+            description?: string | null;
+            manager_id?: components["schemas"]["Uuid"] | null;
+            name: string;
+            org_id?: components["schemas"]["Uuid"] | null;
+            parent_id?: components["schemas"]["Uuid"] | null;
+            tenant_id?: components["schemas"]["Uuid"] | null;
+        };
+        /**
+         * @example {
+         *       "department_id": "550e8400-e29b-41d4-a716-446655440002",
+         *       "email": "zhangsan@example.com",
+         *       "employee_number": "EMP001",
+         *       "gender": "男",
+         *       "hire_date": "2024-01-01",
+         *       "name": "张三",
+         *       "org_id": "550e8400-e29b-41d4-a716-446655440001",
+         *       "phone": "13800138000",
+         *       "position_id": "550e8400-e29b-41d4-a716-446655440003"
+         *     }
+         */
+        CreateEmployeeRequest: {
+            /** @example 北京市朝阳区建国路88号 */
+            address?: string | null;
+            birth_date?: components["schemas"]["NaiveDate"] | null;
+            department_id?: components["schemas"]["Uuid"] | null;
+            /** @example 本科 */
+            education?: string | null;
+            /** @example zhangsan@example.com */
+            email?: string | null;
+            /** @example 张父 */
+            emergency_contact?: string | null;
+            /** @example 13900139000 */
+            emergency_phone?: string | null;
+            /** @example 父亲 */
+            emergency_relation?: string | null;
+            /** @example EMP001 */
+            employee_number: string;
+            /** @example full-time */
+            employee_type?: string | null;
+            /** @example 男 */
+            gender?: string | null;
+            hire_date?: components["schemas"]["NaiveDate"] | null;
+            /** @example 北京市海淀区 */
+            hukou_location?: string | null;
+            /** @example 110101199001011234 */
+            id_card_number?: string | null;
+            /** @example P6 */
+            joblevel?: string | null;
+            /** @example 张三 */
+            name: string;
+            org_id: components["schemas"]["Uuid"];
+            /** @example 13800138000 */
+            phone?: string | null;
+            /** @example 高级工程师 */
+            position?: string | null;
+            position_id?: components["schemas"]["Uuid"] | null;
+            /**
+             * Format: int32
+             * @example 3
+             */
+            probation_period?: number | null;
+            regular_date?: components["schemas"]["NaiveDate"] | null;
+            /** @example 表现优秀 */
             remark?: string | null;
-            report_date: string;
-            report_no: string;
-            reporter_name: string;
-            shift?: string | null;
-            status: string;
-            updated_at: string;
-            work_order_id?: string | null;
-            work_order_no?: string | null;
-            work_station_id?: string | null;
-            work_station_name?: string | null;
+            /** @example 李经理 */
+            report_to_name?: string | null;
+            user_id?: components["schemas"]["Uuid"] | null;
+            /** @example 北京 */
+            work_location?: string | null;
+        };
+        UpdateAttendanceRequest: {
+            check_in?: components["schemas"]["DateTime"] | null;
+            check_out?: components["schemas"]["DateTime"] | null;
+            notes?: string | null;
+            status?: string | null;
+            /** Format: double */
+            work_hours?: number | null;
+        };
+        UpdateCompanyRequest: {
+            address?: string | null;
+            contact_phone?: string | null;
+            description?: string | null;
+            email?: string | null;
+            name?: string | null;
+            registration_number?: string | null;
+            short_name?: string | null;
+            status?: string | null;
+            tax_number?: string | null;
+            website?: string | null;
+        };
+        UpdateContractRequest: {
+            contract_file_path?: string | null;
+            contract_no?: string | null;
+            contract_type?: string | null;
+            end_date?: components["schemas"]["DateTime"] | null;
+            notes?: string | null;
+            party_a_contact?: string | null;
+            party_a_name?: string | null;
+            party_b_contact?: string | null;
+            party_b_name?: string | null;
+            /** Format: int32 */
+            probation_period_days?: number | null;
+            /** Format: int32 */
+            reminder_days?: number | null;
+            /** Format: double */
+            salary?: number | null;
+            start_date?: components["schemas"]["DateTime"] | null;
+            status?: string | null;
+        };
+        UpdateDepartmentRequest: {
+            code?: string | null;
+            description?: string | null;
+            manager_id?: components["schemas"]["Uuid"] | null;
+            name?: string | null;
+            org_id?: components["schemas"]["Uuid"] | null;
+            parent_id?: components["schemas"]["Uuid"] | null;
+            status?: string | null;
+        };
+        /**
+         * @example {
+         *       "department_id": "550e8400-e29b-41d4-a716-446655440004",
+         *       "email": "zhangsan@example.com",
+         *       "gender": "男",
+         *       "hire_date": "2020-06-01",
+         *       "name": "张三",
+         *       "org_id": "550e8400-e29b-41d4-a716-446655440001",
+         *       "phone": "13800138000",
+         *       "position_id": "550e8400-e29b-41d4-a716-446655440005",
+         *       "status": "active"
+         *     }
+         */
+        UpdateEmployeeRequest: {
+            /** @example 北京市朝阳区建国路88号 */
+            address?: string | null;
+            birth_date?: components["schemas"]["NaiveDate"] | null;
+            department_id?: components["schemas"]["Uuid"] | null;
+            /** @example 本科 */
+            education?: string | null;
+            /** @example zhangsan@example.com */
+            email?: string | null;
+            /** @example 张父 */
+            emergency_contact?: string | null;
+            /** @example 13900139000 */
+            emergency_phone?: string | null;
+            /** @example 父亲 */
+            emergency_relation?: string | null;
+            /** @example full-time */
+            employee_type?: string | null;
+            /** @example 男 */
+            gender?: string | null;
+            hire_date?: components["schemas"]["NaiveDate"] | null;
+            /** @example 北京市海淀区 */
+            hukou_location?: string | null;
+            /** @example 110101199001011234 */
+            id_card_number?: string | null;
+            /** @example P6 */
+            joblevel?: string | null;
+            /** @example 张三 */
+            name?: string | null;
+            org_id?: components["schemas"]["Uuid"] | null;
+            /** @example 13800138000 */
+            phone?: string | null;
+            /** @example 高级工程师 */
+            position?: string | null;
+            position_id?: components["schemas"]["Uuid"] | null;
+            /**
+             * Format: int32
+             * @example 3
+             */
+            probation_period?: number | null;
+            regular_date?: components["schemas"]["NaiveDate"] | null;
+            /** @example 表现优秀 */
+            remark?: string | null;
+            /** @example 李经理 */
+            report_to_name?: string | null;
+            /** @example active */
+            status?: string | null;
+            user_id?: components["schemas"]["Uuid"] | null;
+            /** @example 北京 */
+            work_location?: string | null;
         };
         AutoFixAction: {
             action_type: components["schemas"]["AutoFixActionType"];
@@ -2964,7 +2218,7 @@ export interface components {
             by_entity_type: {
                 [key: string]: number;
             };
-            bySeverity: {
+            by_severity: {
                 [key: string]: number;
             };
             /** Format: int64 */
@@ -2984,6 +2238,188 @@ export interface components {
             entity_id: string;
             entity_type: string;
             rule_ids?: string[] | null;
+        };
+        CreateFromErpRequest: {
+            erp_order: components["schemas"]["ErpSalesOrderInfo"];
+            planned_end_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+        };
+        CreateProductionOrderRequest: {
+            order_no?: string | null;
+            planned_end_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+            priority?: string | null;
+            product_code: string;
+            product_id?: components["schemas"]["Uuid"] | null;
+            product_name: string;
+            quantity: unknown;
+            remark?: string | null;
+            unit?: string | null;
+        };
+        CreateWorkOrderRequest: {
+            order_id?: string | null;
+            order_no?: string | null;
+            plan_end_date?: components["schemas"]["DateTime"] | null;
+            plan_start_date?: components["schemas"]["DateTime"] | null;
+            planned_quantity: unknown;
+            priority?: string | null;
+            process_id?: string | null;
+            product_code: string;
+            product_name: string;
+            team_id?: string | null;
+            work_order_no: string;
+            work_station_id?: string | null;
+        };
+        CreateWorkReportRequest: {
+            bad_quantity?: unknown;
+            good_quantity?: unknown;
+            operator_id?: string | null;
+            operator_name?: string | null;
+            remark?: string | null;
+            report_date?: components["schemas"]["DateTime"] | null;
+            scrap_quantity?: unknown;
+            /** Format: double */
+            work_hours?: number | null;
+            work_order_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+        };
+        ErpSalesOrderInfo: {
+            customer?: string | null;
+            items?: unknown;
+            order_no: string;
+        };
+        ListProductionOrdersQuery: {
+            /** Format: int32 */
+            page?: number | null;
+            /** Format: int32 */
+            pagesize?: number | null;
+            search?: string | null;
+            status?: string | null;
+        };
+        ListWorkOrdersQuery: {
+            /** Format: int32 */
+            page?: number | null;
+            /** Format: int32 */
+            pagesize?: number | null;
+            search?: string | null;
+            status?: string | null;
+        };
+        ListWorkReportsQuery: {
+            /** Format: int32 */
+            page?: number | null;
+            /** Format: int32 */
+            pagesize?: number | null;
+            search?: string | null;
+            status?: string | null;
+            work_order_id?: string | null;
+        };
+        ProductionOrderResponse: {
+            actual_end_date?: components["schemas"]["DateTime"] | null;
+            actual_start_date?: components["schemas"]["DateTime"] | null;
+            completed_quantity?: unknown;
+            created_at: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            order_no: string;
+            planned_end_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+            priority: string;
+            product_code: string;
+            product_id?: components["schemas"]["Uuid"] | null;
+            product_name: string;
+            quantity: unknown;
+            remark?: string | null;
+            status: string;
+            unit?: string | null;
+            updated_at: components["schemas"]["DateTime"];
+        };
+        UpdateProductionOrderRequest: {
+            order_no?: string | null;
+            planned_end_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+            priority?: string | null;
+            product_code?: string | null;
+            product_name?: string | null;
+            quantity?: unknown;
+            remark?: string | null;
+            status?: string | null;
+            unit?: string | null;
+        };
+        UpdateWorkOrderRequest: {
+            order_id?: string | null;
+            order_no?: string | null;
+            plan_end_date?: components["schemas"]["DateTime"] | null;
+            plan_start_date?: components["schemas"]["DateTime"] | null;
+            planned_quantity?: unknown;
+            priority?: string | null;
+            process_id?: string | null;
+            product_code?: string | null;
+            product_name?: string | null;
+            status?: string | null;
+            team_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+        };
+        UpdateWorkReportRequest: {
+            bad_quantity?: unknown;
+            good_quantity?: unknown;
+            operator_id?: string | null;
+            operator_name?: string | null;
+            remark?: string | null;
+            report_date?: components["schemas"]["DateTime"] | null;
+            scrap_quantity?: unknown;
+            status?: string | null;
+            /** Format: double */
+            work_hours?: number | null;
+            work_order_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+        };
+        WorkOrderResponse: {
+            actual_end_date?: components["schemas"]["DateTime"] | null;
+            actual_start_date?: components["schemas"]["DateTime"] | null;
+            completed_quantity?: unknown;
+            created_at: components["schemas"]["DateTime"];
+            id: string;
+            order_id?: string | null;
+            order_no?: string | null;
+            plan_end_date?: components["schemas"]["DateTime"] | null;
+            plan_start_date?: components["schemas"]["DateTime"] | null;
+            planned_quantity: unknown;
+            priority: string;
+            process_id?: string | null;
+            process_name?: string | null;
+            product_code: string;
+            product_name: string;
+            status: string;
+            team_id?: string | null;
+            team_name?: string | null;
+            updated_at: components["schemas"]["DateTime"];
+            work_order_no: string;
+            work_station_id?: string | null;
+            work_station_name?: string | null;
+        };
+        WorkReportResponse: {
+            bad_quantity?: unknown;
+            created_at: components["schemas"]["DateTime"];
+            good_quantity: unknown;
+            id: string;
+            operator_id?: string | null;
+            operator_name?: string | null;
+            remark?: string | null;
+            report_date: components["schemas"]["DateTime"];
+            report_no: string;
+            reviewed_at?: components["schemas"]["DateTime"] | null;
+            reviewer_id?: string | null;
+            scrap_quantity?: unknown;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+            /** Format: double */
+            work_hours?: number | null;
+            work_order_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+            work_station_name?: string | null;
         };
         AssignInspectionRequest: {
             assignee: string;
@@ -3097,21 +2533,6 @@ export interface components {
             approval_status?: string | null;
             approval_workflow_id?: string | null;
         };
-        QualityStandard: {
-            category: string;
-            code: string;
-            created_at?: string | null;
-            created_by?: string | null;
-            description?: string | null;
-            id: string;
-            level?: string | null;
-            name: string;
-            specification?: string | null;
-            status?: string | null;
-            tenant_id: string;
-            updated_at?: string | null;
-            version?: string | null;
-        };
         StandardRevision: {
             category: string;
             created_at?: string | null;
@@ -3157,745 +2578,3109 @@ export interface components {
             status?: string | null;
             version?: string | null;
         };
+        scm_CreateSupplierRequest: {
+            address?: string | null;
+            bank_account?: string | null;
+            contact_name?: string | null;
+            contact_phone?: string | null;
+            email?: string | null;
+            name: string;
+            short_name?: string | null;
+            tax_number?: string | null;
+        };
+        PaginationParams: {
+            /** Format: int64 */
+            page?: number | null;
+            /** Format: int64 */
+            page_size?: number | null;
+            search?: string | null;
+            status?: string | null;
+        };
+        SupplierDeliveryAppointment: {
+            actual_arrival_time?: components["schemas"]["DateTime"] | null;
+            applicant?: string | null;
+            appointment_no: string;
+            approved_at?: components["schemas"]["DateTime"] | null;
+            approver?: string | null;
+            cargo_description?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            created_by?: components["schemas"]["Uuid"] | null;
+            delivery_date: string;
+            delivery_method: string;
+            delivery_time?: string | null;
+            destination_warehouse?: string | null;
+            driver_name?: string | null;
+            driver_phone?: string | null;
+            expected_arrival_time?: string | null;
+            id: components["schemas"]["Uuid"];
+            purchase_order_id?: components["schemas"]["Uuid"] | null;
+            purchase_order_no?: string | null;
+            rejection_reason?: string | null;
+            remarks?: string | null;
+            status: string;
+            supplier_id: components["schemas"]["Uuid"];
+            supplier_name?: string | null;
+            /** Format: double */
+            total_quantity?: number | null;
+            /** Format: double */
+            total_weight?: number | null;
+            updated_at: components["schemas"]["DateTime"];
+            vehicle_no?: string | null;
+        };
+        SupplierEvaluation: {
+            comment?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            evaluator_id: components["schemas"]["Uuid"];
+            id: components["schemas"]["Uuid"];
+            /** Format: double */
+            score: number;
+            supplier_id: components["schemas"]["Uuid"];
+        };
+        UpdateSupplierRequest: {
+            address?: string | null;
+            contact_name?: string | null;
+            contact_phone?: string | null;
+            email?: string | null;
+            name?: string | null;
+            status?: string | null;
+        };
+        SupplierCategory: {
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            name: string;
+            parent_id?: components["schemas"]["Uuid"] | null;
+        };
+        SupplierContract: {
+            /** Format: double */
+            amount: number;
+            contract_no: string;
+            created_at: components["schemas"]["DateTime"];
+            end_date?: components["schemas"]["DateTime"] | null;
+            id: components["schemas"]["Uuid"];
+            start_date?: components["schemas"]["DateTime"] | null;
+            status: string;
+            supplier_id: components["schemas"]["Uuid"];
+        };
+        srm_SupplierEvaluation: {
+            comment?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            /** Format: double */
+            delivery_score?: number | null;
+            evaluator_id: components["schemas"]["Uuid"];
+            id: components["schemas"]["Uuid"];
+            /** Format: double */
+            quality_score?: number | null;
+            /** Format: double */
+            score: number;
+            /** Format: double */
+            service_score?: number | null;
+            supplier_id: components["schemas"]["Uuid"];
+        };
+        SupplierProduct: {
+            code?: string | null;
+            id: components["schemas"]["Uuid"];
+            name: string;
+            /** Format: double */
+            price?: number | null;
+            status: string;
+            supplier_id: components["schemas"]["Uuid"];
+            unit?: string | null;
+        };
+        InboundOrder: {
+            actual_date?: components["schemas"]["DateTime"] | null;
+            created_at: components["schemas"]["DateTime"];
+            expected_date?: components["schemas"]["DateTime"] | null;
+            id: components["schemas"]["Uuid"];
+            order_no: string;
+            order_type: string;
+            status: string;
+            supplier_id?: components["schemas"]["Uuid"] | null;
+            /** Format: double */
+            total_amount?: number | null;
+            /** Format: double */
+            total_quantity?: number | null;
+            warehouse_id: components["schemas"]["Uuid"];
+        };
+        wms_Inventory: {
+            batch_no?: string | null;
+            id: components["schemas"]["Uuid"];
+            location?: string | null;
+            product_code?: string | null;
+            product_id: components["schemas"]["Uuid"];
+            product_name: string;
+            /** Format: double */
+            quantity: number;
+            unit?: string | null;
+            updated_at: components["schemas"]["DateTime"];
+            warehouse_id: components["schemas"]["Uuid"];
+        };
+        OutboundOrder: {
+            actual_date?: components["schemas"]["DateTime"] | null;
+            created_at: components["schemas"]["DateTime"];
+            customer_id?: components["schemas"]["Uuid"] | null;
+            expected_date?: components["schemas"]["DateTime"] | null;
+            id: components["schemas"]["Uuid"];
+            order_no: string;
+            order_type: string;
+            status: string;
+            /** Format: double */
+            total_amount?: number | null;
+            /** Format: double */
+            total_quantity?: number | null;
+            warehouse_id: components["schemas"]["Uuid"];
+        };
         /** Format: uuid */
         Uuid: string;
         /** Format: date-time */
         DateTime: string;
-        Decimal: number;
-        BigDecimal: number;
+        /** Format: date-time */
+        NaiveDateTime: string;
+        /** Format: date-time */
+        "chrono.NaiveDateTime": string;
         /** Format: date */
         "chrono.NaiveDate": string;
+        /** Format: time */
+        "chrono.NaiveTime": string;
+        /** Format: date */
+        Date: string;
+        Decimal: number;
+        BigDecimal: number;
+        JsonValue: {
+            [key: string]: unknown;
+        };
+        "serde_json::Value": {
+            [key: string]: unknown;
+        };
+        HashMap_String_String: {
+            [key: string]: string;
+        };
         ApiResponse: {
             success?: boolean;
             message?: string;
             data?: Record<string, never>;
             code?: number;
         };
-        AutoFixActionType: string;
-        FixStatus: string;
-        SuggestionStatus: string;
-        SuggestionType: string;
-        SuccessResponse: {
-            /** @example 200 */
-            code?: number;
-            /** @example success */
-            message?: string;
-            data?: Record<string, never>;
-            /** @example 1717056000 */
-            timestamp?: number;
+        /** Format: uri */
+        Uri: string;
+        /** Format: email */
+        Email: string;
+        /** Format: hostname */
+        Hostname: string;
+        /** Format: ipv4 */
+        Ipv4: string;
+        /** Format: ipv6 */
+        Ipv6: string;
+        /** Format: byte */
+        Byte: string;
+        /** Format: binary */
+        Binary: string;
+        /** Format: byte */
+        Base64: string;
+        UuidSet: string[];
+        StringList: string[];
+        IntList: number[];
+        LongList: number[];
+        I18nString: {
+            [key: string]: string;
         };
-        ErrorResponse: {
-            /** @example 401 */
-            code?: number;
-            /** @example 未认证 */
-            message?: string;
-            data?: Record<string, never> | null;
-            /** @example 1717056000 */
-            timestamp?: number;
+        Pagination: {
+            page?: number;
+            page_size?: number;
+            total?: number;
         };
-        PaginatedResponse: {
-            /** @example 200 */
-            code?: number;
-            /** @example success */
-            message?: string;
-            data?: {
-                items?: unknown[];
-                /** @example 1 */
-                page?: number;
-                /** @example 20 */
-                page_size?: number;
-                /** @example 100 */
-                total?: number;
-                /** @example 5 */
-                total_pages?: number;
-            };
-            /** @example 1717056000 */
-            timestamp?: number;
+        AuditStamp: {
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+            /** Format: uuid */
+            created_by?: string;
+            /** Format: uuid */
+            updated_by?: string;
+        };
+        SoftDelete: {
+            /** Format: date-time */
+            deleted_at?: string;
+            /** Format: uuid */
+            deleted_by?: string;
         };
         User: {
-            /**
-             * Format: uuid
-             * @example 550e8400-e29b-41d4-a716-446655440000
-             */
+            /** Format: uuid */
             id?: string;
-            /** @example admin */
             username?: string;
-            /** @example admin@topems.com */
+            /** Format: email */
             email?: string;
-            /** @example 管理员 */
-            full_name?: string;
-            /** @example true */
-            isActive?: boolean;
-            /** @example false */
-            is_superuser?: boolean;
-            /**
-             * @example [
-             *       "admin"
-             *     ]
-             */
-            roles?: string[];
-            /**
-             * @example [
-             *       "users:read",
-             *       "users:write"
-             *     ]
-             */
-            permissions?: string[];
-            /**
-             * Format: date-time
-             * @example 2026-06-23T10:00:00Z
-             */
-            created_at?: string;
-            /**
-             * Format: date-time
-             * @example 2026-06-23T10:00:00Z
-             */
-            updated_at?: string;
+            phone?: string;
+            status?: string;
+            /** Format: uri */
+            avatar?: string;
+        };
+        UserProfile: {
+            /** Format: uuid */
+            user_id?: string;
+            nickname?: string;
+            gender?: string;
+            /** Format: date */
+            birthday?: string;
+            bio?: string;
+            locale?: string;
+            timezone?: string;
+        };
+        UserRole: {
+            /** Format: uuid */
+            user_id?: string;
+            /** Format: uuid */
+            role_id?: string;
+            /** Format: date-time */
+            assigned_at?: string;
+            /** Format: uuid */
+            assigned_by?: string;
+        };
+        UserPermission: {
+            /** Format: uuid */
+            user_id?: string;
+            permission_key?: string;
+            resource?: string;
+            action?: string;
+            /** Format: date-time */
+            granted_at?: string;
         };
         Role: {
             /** Format: uuid */
             id?: string;
-            /** @example 管理员 */
             name?: string;
-            /** @example admin */
             code?: string;
-            /** @example 系统管理员 */
             description?: string;
-            permissions?: string[];
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
+            is_system?: boolean;
+            /** Format: int32 */
+            priority?: number;
         };
         Permission: {
             /** Format: uuid */
             id?: string;
-            /** @example users:read */
-            code?: string;
-            /** @example 查看用户 */
+            key?: string;
             name?: string;
-            /** @example 查看系统用户列表 */
-            description?: string;
-            /** @example system */
+            resource?: string;
+            action?: string;
             module?: string;
-            /** Format: date-time */
-            created_at?: string;
+            description?: string;
         };
-        Company: {
+        Menu: {
             /** Format: uuid */
             id?: string;
-            /** @example TOPEMS科技有限公司 */
+            /** Format: uuid */
+            parent_id?: string;
             name?: string;
-            /** @example TOPEMS */
-            short_name?: string;
-            /** @example 91310000XXXXXXXXXX */
-            registration_number?: string;
-            /** @example 310XXXXXXXXXXXXX */
-            tax_number?: string;
-            /** @example 上海市浦东新区... */
-            address?: string;
-            /** @example 400-123-4567 */
-            contact_phone?: string;
-            /** @example hr@topems.com */
-            email?: string;
-            /** @example https://www.topems.com */
-            website?: string;
-            /** @example 专注于企业管理系统研发 */
-            description?: string;
-            /** @example active */
-            status?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
+            path?: string;
+            icon?: string;
+            /** Format: int32 */
+            sort?: number;
+            visible?: boolean;
+            permission_key?: string;
         };
         Department: {
             /** Format: uuid */
             id?: string;
             /** Format: uuid */
-            company_id?: string;
-            /** @example 技术部 */
+            parent_id?: string;
             name?: string;
-            /** @example TECH */
             code?: string;
             /** Format: uuid */
-            parentId?: string | null;
+            leader_id?: string;
+            /** Format: int32 */
+            sort?: number;
+            status?: string;
+        };
+        Organization: {
             /** Format: uuid */
-            manager_id?: string | null;
-            /** @example 负责系统开发 */
-            description?: string;
-            /** @example active */
+            id?: string;
+            name?: string;
+            type?: string;
+            industry?: string;
+            scale?: string;
+            region?: string;
+            address?: string;
+        };
+        Tenant: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            code?: string;
+            plan?: string;
             status?: string;
             /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
+            expired_at?: string;
+            /** Format: int32 */
+            max_users?: number;
         };
-        Position: {
+        Company: {
             /** Format: uuid */
             id?: string;
-            /** Format: uuid */
-            department_id?: string;
-            /** @example 软件工程师 */
             name?: string;
-            /** @example SE */
             code?: string;
-            /** @example 3 */
-            level?: number;
-            /**
-             * Format: decimal
-             * @example 10000
-             */
-            min_salary?: number;
-            /**
-             * Format: decimal
-             * @example 30000
-             */
-            max_salary?: number;
-            /** @example 负责软件开发 */
-            description?: string;
-            /** @example 本科及以上学历 */
-            requirements?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Employee: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            company_id?: string;
-            /** Format: uuid */
-            department_id?: string;
-            /** Format: uuid */
-            position_id?: string;
-            /** @example EMP001 */
-            employee_number?: string;
-            /** @example 张三 */
-            name?: string;
-            /** @example male */
-            gender?: string;
-            /**
-             * Format: date
-             * @example 1990-01-01
-             */
-            birth_date?: string;
-            /** @example 110101199001011234 */
-            id_card_number?: string;
-            /**
-             * Format: date
-             * @example 2026-01-01
-             */
-            hire_date?: string;
-            /** @example zhangsan@topems.com */
-            email?: string;
-            /** @example 13800138000 */
+            legal_person?: string;
+            tax_id?: string;
+            address?: string;
             phone?: string;
-            /** @example 北京市朝阳区... */
-            address?: string;
-            /** @example active */
-            status?: string;
-            /**
-             * @example [
-             *       "Python",
-             *       "Rust"
-             *     ]
-             */
-            skills?: string[];
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Contract: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            employee_id?: string;
-            /** @example HT20240001 */
-            contract_number?: string;
-            /** @example 固定期限 */
-            contract_type?: string;
-            /**
-             * Format: date
-             * @example 2024-01-01
-             */
-            start_date?: string;
-            /**
-             * Format: date
-             * @example 2026-12-31
-             */
-            end_date?: string;
-            /**
-             * Format: date
-             * @example 2024-01-01
-             */
-            signing_date?: string;
-            /**
-             * Format: decimal
-             * @example 15000
-             */
-            monthly_salary?: number;
-            /** @example active */
-            status?: string;
-            /** @example 合同备注 */
-            remarks?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Project: {
-            /** Format: uuid */
-            id?: string;
-            /** @example 新型催化剂研发 */
-            name?: string;
-            /** @example PRJ-2026-001 */
-            code?: string;
-            /** @example 研发高效、低成本的工业催化剂 */
-            description?: string;
-            /** @example 研发项目 */
-            project_type?: string;
-            /** @example active */
-            status?: string;
-            /**
-             * Format: date
-             * @example 2026-01-01
-             */
-            start_date?: string;
-            /**
-             * Format: date
-             * @example 2026-12-31
-             */
-            end_date?: string;
-            /** Format: uuid */
-            manager_id?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Experiment: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            project_id?: string;
-            /** @example 催化剂A活性测试 */
-            title?: string;
-            /** @example 测试催化剂A在不同温度下的活性 */
-            description?: string;
-            /** @example 催化活性测试 */
-            experiment_type?: string;
-            /** @example 转化率达到95% */
-            result?: string;
-            /** @example completed */
-            status?: string;
-            /**
-             * Format: date
-             * @example 2026-05-20
-             */
-            experiment_date?: string;
-            /** @example 张工程师 */
-            experimenter?: string;
-            /** @example 100°C为最佳温度 */
-            conclusion?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Material: {
-            /** Format: uuid */
-            id?: string;
-            /** @example 碳纤维布 */
-            name?: string;
-            /** @example MAT-001 */
-            code?: string;
-            /** @example 原材料 */
-            category?: string;
-            /** @example kg */
-            unit?: string;
-            /** @example 3K-200g */
-            specification?: string;
-            /** @example 高强度碳纤维材料 */
-            description?: string;
-            /** @example active */
-            status?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Formula: {
-            /** Format: uuid */
-            id?: string;
-            /** @example 催化剂配方A */
-            name?: string;
-            /** @example FOR-001 */
-            code?: string;
-            /** @example 标准催化剂配方 */
-            description?: string;
-            /** @example active */
-            status?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Patent: {
-            /** Format: uuid */
-            id?: string;
-            /** @example 一种高效催化剂及其制备方法 */
-            name?: string;
-            /** @example CN202410000000.0 */
-            patent_number?: string;
-            /** @example 发明专利 */
-            patent_type?: string;
-            /** @example pending */
-            status?: string;
-            /**
-             * Format: date
-             * @example 2024-01-15
-             */
-            application_date?: string;
-            /**
-             * @example [
-             *       "张三",
-             *       "李四"
-             *     ]
-             */
-            inventors?: string[];
-            /** @example 本发明公开了一种... */
-            description?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        QualityImprovement: {
-            /** Format: uuid */
-            id?: string;
-            /** @example QI-2026-IMP-001 */
-            improvement_no?: string;
-            /** @example 优化配料流程 */
-            title?: string;
-            /** @example 引入自动化配料系统 */
-            description?: string;
-            /** @example 流程改进 */
-            category?: string;
-            /** @example in_progress */
-            status?: string;
-            /** @example 李经理 */
-            proposer?: string;
-            /** @example 王工 */
-            assignee?: string;
-            /** @example 待评估 */
-            improvement_effect?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Sample: {
-            /** Format: uuid */
-            id?: string;
-            /** @example 样品A-001 */
-            name?: string;
-            /** @example 催化剂样品 */
-            description?: string;
-            /** Format: uuid */
-            project_id?: string;
-            /**
-             * Format: date
-             * @example 2026-05-20
-             */
-            received_date?: string;
-            /** @example pending */
-            status?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Instrument: {
-            /** Format: uuid */
-            id?: string;
-            /** @example 气相色谱仪 */
-            name?: string;
-            /** @example INS-001 */
-            code?: string;
-            /** @example GC-2010 */
-            model?: string;
-            /** @example Shimadzu */
-            manufacturer?: string;
-            /**
-             * Format: date
-             * @example 2026-01-01
-             */
-            calibration_date?: string;
-            /** @example active */
-            status?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Supplier: {
-            /** Format: uuid */
-            id?: string;
-            /** @example XX材料有限公司 */
-            name?: string;
-            /** @example SUP-001 */
-            code?: string;
-            /** @example 王经理 */
-            contact_name?: string;
-            /** @example 13900139000 */
-            contact_phone?: string;
-            /** @example wang@supplier.com */
+            /** Format: email */
             email?: string;
-            /** @example 浙江省杭州市... */
-            address?: string;
-            /** @example active */
+            industry?: string;
+            scale?: string;
             status?: string;
+            /** Format: uuid */
+            parent_id?: string;
+        };
+        SuccessResponse: {
+            success?: boolean;
+            message?: string;
+            data?: Record<string, never>;
+            code?: number;
+        };
+        ErrorResponse: {
+            success?: boolean;
+            error?: {
+                code?: string;
+                message?: string;
+                details?: Record<string, never>;
+            };
+            code?: number;
+        };
+        PaginatedResponse: {
+            success?: boolean;
+            data?: Record<string, never>[];
+            total?: number;
+            page?: number;
+            page_size?: number;
+            total_pages?: number;
+            code?: number;
+        };
+        TenantMember: {
+            /** Format: uuid */
+            tenant_id?: string;
+            /** Format: uuid */
+            user_id?: string;
+            role?: string;
             /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
+            joined_at?: string;
+            /** Format: uuid */
+            invited_by?: string;
         };
         Product: {
             /** Format: uuid */
             id?: string;
-            /** @example 碳纤维复合材料 */
+            sku?: string;
             name?: string;
-            /** @example PRD-001 */
-            code?: string;
-            /** @example 高性能碳纤维产品 */
-            description?: string;
-            /** @example active */
+            /** Format: uuid */
+            category_id?: string;
+            /** Format: uuid */
+            brand_id?: string;
+            price?: number;
+            cost?: number;
+            /** Format: int32 */
+            stock?: number;
+            unit?: string;
             status?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
+            description?: string;
         };
-        BOM: {
+        ProductCategory: {
             /** Format: uuid */
             id?: string;
             /** Format: uuid */
-            product_id?: string;
-            /** @example 1.0 */
-            version?: string;
-            /** @example 产品物料清单 */
-            description?: string;
-            /** @example active */
+            parent_id?: string;
+            name?: string;
+            code?: string;
+            /** Format: int32 */
+            sort?: number;
             status?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
+        };
+        ProductBrand: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: uri */
+            logo?: string;
+            /** Format: uri */
+            website?: string;
+            description?: string;
+            country?: string;
+        };
+        ProductInventory: {
+            /** Format: uuid */
+            product_id?: string;
+            /** Format: uuid */
+            warehouse_id?: string;
+            /** Format: int32 */
+            quantity?: number;
+            /** Format: int32 */
+            reserved?: number;
+            /** Format: int32 */
+            available?: number;
+            /** Format: int32 */
+            safety_stock?: number;
         };
         Warehouse: {
             /** Format: uuid */
             id?: string;
-            /** @example A仓库 */
             name?: string;
-            /** @example WH-A */
             code?: string;
-            /** @example 北京市朝阳区... */
             address?: string;
-            /** @example active */
+            /** Format: uuid */
+            manager_id?: string;
+            type?: string;
             status?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
         };
-        Inventory: {
+        Order: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            customer_id?: string;
+            total_amount?: number;
+            discount_amount?: number;
+            paid_amount?: number;
+            status?: string;
+            source?: string;
+            remark?: string;
+            /** Format: date-time */
+            placed_at?: string;
+            /** Format: date-time */
+            paid_at?: string;
+            /** Format: date-time */
+            shipped_at?: string;
+            /** Format: date-time */
+            completed_at?: string;
+        };
+        OrderItem: {
             /** Format: uuid */
             id?: string;
             /** Format: uuid */
-            warehouse_id?: string;
+            order_id?: string;
             /** Format: uuid */
-            material_id?: string;
-            /** @example 100 */
-            quantity?: number;
-            /** @example kg */
-            unit?: string;
-            /** @example A-01-01 */
-            location?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Workflow: {
-            /** Format: uuid */
-            id?: string;
-            /** @example 请假审批流程 */
+            product_id?: string;
+            sku?: string;
             name?: string;
-            /** @example leave-approval */
+            /** Format: int32 */
+            quantity?: number;
+            unit_price?: number;
+            subtotal?: number;
+            discount?: number;
+        };
+        Invoice: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            order_id?: string;
+            type?: string;
+            title?: string;
+            tax_no?: string;
+            amount?: number;
+            tax_amount?: number;
+            status?: string;
+            /** Format: date-time */
+            issued_at?: string;
+        };
+        Customer: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            type?: string;
+            level?: string;
+            industry?: string;
+            region?: string;
+            credit_limit?: number;
+            balance?: number;
+            status?: string;
+            source?: string;
+        };
+        CustomerContact: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            customer_id?: string;
+            name?: string;
+            position?: string;
+            phone?: string;
+            /** Format: email */
+            email?: string;
+            is_primary?: boolean;
+        };
+        CustomerAddress: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            customer_id?: string;
+            province?: string;
+            city?: string;
+            district?: string;
+            detail?: string;
+            zipcode?: string;
+            is_default?: boolean;
+        };
+        Supplier: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
             code?: string;
-            /** @example 员工请假审批流程 */
+            type?: string;
+            industry?: string;
+            region?: string;
+            credit_rating?: string;
+            payment_terms?: string;
+            status?: string;
+        };
+        SupplierContact: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            supplier_id?: string;
+            name?: string;
+            position?: string;
+            phone?: string;
+            /** Format: email */
+            email?: string;
+            is_primary?: boolean;
+        };
+        Project: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            code?: string;
+            type?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            status?: string;
+            priority?: string;
+            budget?: number;
+            /** Format: int32 */
+            progress?: number;
+            /** Format: date */
+            start_date?: string;
+            /** Format: date */
+            end_date?: string;
             description?: string;
-            /** @example active */
-            status?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
         };
-        WorkflowInstance: {
+        ProjectMember: {
+            /** Format: uuid */
+            project_id?: string;
+            /** Format: uuid */
+            user_id?: string;
+            role?: string;
+            /** Format: date */
+            join_date?: string;
+            /** Format: int32 */
+            allocation?: number;
+        };
+        TaskItem: {
             /** Format: uuid */
             id?: string;
             /** Format: uuid */
-            workflow_id?: string;
-            /** @example 请假审批流程 */
-            workflow_name?: string;
-            /** @example running */
-            status?: string;
+            project_id?: string;
             /** Format: uuid */
-            creator_id?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        ApprovalTask: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            instance_id?: string;
-            /** @example 部门经理审批 */
-            task_name?: string;
+            parent_id?: string;
+            title?: string;
+            description?: string;
             /** Format: uuid */
             assignee_id?: string;
-            /** @example pending */
             status?: string;
+            priority?: string;
+            /** Format: int32 */
+            story_points?: number;
+            /** Format: date */
+            due_date?: string;
+            /** Format: date-time */
+            started_at?: string;
+            /** Format: date-time */
+            completed_at?: string;
+        };
+        Milestone: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            project_id?: string;
+            name?: string;
+            /** Format: date */
+            target_date?: string;
+            status?: string;
+            /** Format: date-time */
+            achieved_at?: string;
+            description?: string;
+        };
+        Ticket: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            title?: string;
+            type?: string;
+            priority?: string;
+            status?: string;
+            channel?: string;
+            /** Format: uuid */
+            reporter_id?: string;
+            /** Format: uuid */
+            assignee_id?: string;
+            category?: string;
             /** Format: date-time */
             created_at?: string;
             /** Format: date-time */
             updated_at?: string;
         };
-        File: {
+        TicketComment: {
             /** Format: uuid */
             id?: string;
-            /** @example report.pdf */
-            filename?: string;
-            /** @example /uploads/report.pdf */
-            storage_path?: string;
-            /** @example 1024000 */
-            file_size?: number;
-            /** @example application/pdf */
-            content_type?: string;
-            /** @example document */
-            file_type?: string;
-            /** @example report */
-            category?: string;
-            /** @example 1 */
-            version?: number;
-            /** @example false */
-            is_shared?: boolean;
-            /** @example private */
-            visibility?: string;
-            /** @example active */
-            status?: string;
+            /** Format: uuid */
+            ticket_id?: string;
+            /** Format: uuid */
+            author_id?: string;
+            content?: string;
+            is_internal?: boolean;
             /** Format: date-time */
             created_at?: string;
+        };
+        Attachment: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            original_name?: string;
+            mime_type?: string;
+            /** Format: int64 */
+            size_bytes?: number;
+            /** Format: uri */
+            url?: string;
+            storage_key?: string;
+            bucket?: string;
+            /** Format: uuid */
+            uploaded_by?: string;
             /** Format: date-time */
-            updated_at?: string;
+            uploaded_at?: string;
+        };
+        TagItem: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            color?: string;
+            category?: string;
+            /** Format: int32 */
+            usage_count?: number;
+        };
+        CommentItem: {
+            /** Format: uuid */
+            id?: string;
+            resource_type?: string;
+            /** Format: uuid */
+            resource_id?: string;
+            /** Format: uuid */
+            author_id?: string;
+            content?: string;
+            /** Format: uuid */
+            reply_to_id?: string;
+            /** Format: int32 */
+            likes?: number;
+            /** Format: date-time */
+            created_at?: string;
         };
         Notification: {
             /** Format: uuid */
             id?: string;
             /** Format: uuid */
             user_id?: string;
-            /** @example system */
-            notification_type?: string;
-            /** @example 系统通知 */
+            type?: string;
             title?: string;
-            /** @example 您有新的审批任务 */
             content?: string;
-            data?: Record<string, never>;
-            /** @example false */
-            is_read?: boolean;
-            /** @example 2 */
-            priority?: number;
+            read?: boolean;
+            /** Format: date-time */
+            read_at?: string;
+            resource_type?: string;
+            /** Format: uuid */
+            resource_id?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        Message: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            conversation_id?: string;
+            /** Format: uuid */
+            sender_id?: string;
+            content?: string;
+            type?: string;
+            /** Format: date-time */
+            sent_at?: string;
+            /** Format: date-time */
+            delivered_at?: string;
+            /** Format: date-time */
+            read_at?: string;
+        };
+        Conversation: {
+            /** Format: uuid */
+            id?: string;
+            type?: string;
+            title?: string;
+            /** Format: uuid */
+            last_message_id?: string;
+            /** Format: date-time */
+            last_activity_at?: string;
+            /** Format: int32 */
+            member_count?: number;
+        };
+        EventLog: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            user_id?: string;
+            action?: string;
+            resource_type?: string;
+            /** Format: uuid */
+            resource_id?: string;
+            ip?: string;
+            user_agent?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        AuditLogEntry: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            operator_id?: string;
+            operator_name?: string;
+            operation?: string;
+            target_type?: string;
+            /** Format: uuid */
+            target_id?: string;
+            status?: string;
+            reason?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        Workflow: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            code?: string;
+            category?: string;
+            /** Format: int32 */
+            version?: number;
+            status?: string;
+            trigger_type?: string;
+            description?: string;
+            /** Format: uuid */
+            created_by?: string;
+            /** Format: date-time */
+            published_at?: string;
+        };
+        WorkflowInstance: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            workflow_id?: string;
+            /** Format: int32 */
+            workflow_version?: number;
+            business_key?: string;
+            status?: string;
+            /** Format: uuid */
+            initiator_id?: string;
+            current_node?: string;
+            /** Format: date-time */
+            started_at?: string;
+            /** Format: date-time */
+            ended_at?: string;
+        };
+        WorkflowTask: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            instance_id?: string;
+            node_key?: string;
+            node_name?: string;
+            /** Format: uuid */
+            assignee_id?: string;
+            status?: string;
+            action?: string;
+            comment?: string;
             /** Format: date-time */
             created_at?: string;
             /** Format: date-time */
-            read_at?: string | null;
+            completed_at?: string;
         };
-        Email: {
+        Form: {
             /** Format: uuid */
             id?: string;
-            /** @example 邮件主题 */
-            subject?: string;
-            /** @example noreply@topems.com */
-            from_address?: string;
-            /**
-             * @example [
-             *       "user@example.com"
-             *     ]
-             */
-            to_addresses?: string[];
-            /**
-             * @example [
-             *       "cc@example.com"
-             *     ]
-             */
-            cc_addresses?: string[];
-            /** @example 邮件正文 */
-            body?: string;
-            body_html?: string;
-            /** @example pending */
+            name?: string;
+            code?: string;
+            /** Format: int32 */
+            version?: number;
+            category?: string;
             status?: string;
-            /** @example normal */
+        };
+        FormSubmission: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            form_id?: string;
+            /** Format: int32 */
+            form_version?: number;
+            /** Format: uuid */
+            submitter_id?: string;
+            status?: string;
+            /** Format: date-time */
+            submitted_at?: string;
+        };
+        Dashboard: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            is_public?: boolean;
+            category?: string;
+        };
+        ReportItem: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            type?: string;
+            data_source?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            /** Format: int32 */
+            refresh_interval?: number;
+            /** Format: date-time */
+            last_run_at?: string;
+        };
+        KpiMetric: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            category?: string;
+            unit?: string;
+            target_value?: number;
+            actual_value?: number;
+            period?: string;
+            trend?: string;
+            /** Format: uuid */
+            owner_id?: string;
+        };
+        CalendarEvent: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            description?: string;
+            /** Format: date-time */
+            start_at?: string;
+            /** Format: date-time */
+            end_at?: string;
+            is_all_day?: boolean;
+            location?: string;
+            /** Format: uuid */
+            organizer_id?: string;
+            visibility?: string;
+            status?: string;
+        };
+        ResourceBooking: {
+            /** Format: uuid */
+            id?: string;
+            resource_type?: string;
+            /** Format: uuid */
+            resource_id?: string;
+            /** Format: uuid */
+            booker_id?: string;
+            /** Format: date-time */
+            start_at?: string;
+            /** Format: date-time */
+            end_at?: string;
+            status?: string;
+            purpose?: string;
+            /** Format: int32 */
+            attendee_count?: number;
+        };
+        Article: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            slug?: string;
+            summary?: string;
+            content?: string;
+            /** Format: uri */
+            cover?: string;
+            /** Format: uuid */
+            author_id?: string;
+            /** Format: uuid */
+            category_id?: string;
+            status?: string;
+            /** Format: int64 */
+            views?: number;
+            /** Format: int32 */
+            likes?: number;
+            /** Format: date-time */
+            published_at?: string;
+        };
+        ArticleCategory: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            parent_id?: string;
+            name?: string;
+            slug?: string;
+            /** Format: int32 */
+            sort?: number;
+            status?: string;
+        };
+        Survey: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            description?: string;
+            type?: string;
+            status?: string;
+            /** Format: date-time */
+            start_at?: string;
+            /** Format: date-time */
+            end_at?: string;
+            /** Format: int32 */
+            max_responses?: number;
+            /** Format: int32 */
+            response_count?: number;
+        };
+        SurveyResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            survey_id?: string;
+            /** Format: uuid */
+            respondent_id?: string;
+            /** Format: date-time */
+            submitted_at?: string;
+            /** Format: int32 */
+            duration_seconds?: number;
+        };
+        Sla: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            priority?: string;
+            /** Format: int32 */
+            response_time_minutes?: number;
+            /** Format: int32 */
+            resolution_time_minutes?: number;
+            /** Format: int32 */
+            warning_threshold_percent?: number;
+            enabled?: boolean;
+        };
+        SlaViolation: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            sla_id?: string;
+            /** Format: uuid */
+            ticket_id?: string;
+            violation_type?: string;
+            /** Format: date-time */
+            triggered_at?: string;
+            acknowledged?: boolean;
+            /** Format: uuid */
+            acknowledged_by?: string;
+        };
+        Contract: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            title?: string;
+            type?: string;
+            party_a?: string;
+            party_b?: string;
+            amount?: number;
+            currency?: string;
+            /** Format: date */
+            start_date?: string;
+            /** Format: date */
+            end_date?: string;
+            status?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            /** Format: date-time */
+            signed_at?: string;
+        };
+        ContractClause: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            contract_id?: string;
+            section?: string;
+            title?: string;
+            content?: string;
+            /** Format: int32 */
+            sort?: number;
+        };
+        Payment: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            order_id?: string;
+            method?: string;
+            channel?: string;
+            amount?: number;
+            currency?: string;
+            status?: string;
+            transaction_no?: string;
+            /** Format: date-time */
+            paid_at?: string;
+            /** Format: date-time */
+            refunded_at?: string;
+        };
+        Refund: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            payment_id?: string;
+            /** Format: uuid */
+            order_id?: string;
+            amount?: number;
+            reason?: string;
+            status?: string;
+            /** Format: uuid */
+            requested_by?: string;
+            /** Format: uuid */
+            approved_by?: string;
+            /** Format: date-time */
+            requested_at?: string;
+            /** Format: date-time */
+            completed_at?: string;
+        };
+        Shipment: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            order_id?: string;
+            carrier?: string;
+            tracking_no?: string;
+            origin_address?: string;
+            destination_address?: string;
+            weight_kg?: number;
+            volume_m3?: number;
+            cost?: number;
+            status?: string;
+            /** Format: date-time */
+            shipped_at?: string;
+            /** Format: date-time */
+            delivered_at?: string;
+        };
+        PurchaseOrder: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            supplier_id?: string;
+            /** Format: uuid */
+            warehouse_id?: string;
+            total_amount?: number;
+            status?: string;
+            /** Format: date */
+            expected_date?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            remark?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            approved_at?: string;
+        };
+        PurchaseOrderItem: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            order_id?: string;
+            /** Format: uuid */
+            product_id?: string;
+            /** Format: int32 */
+            quantity?: number;
+            unit_price?: number;
+            subtotal?: number;
+            /** Format: int32 */
+            received_quantity?: number;
+        };
+        GoodsReceipt: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            purchase_order_id?: string;
+            /** Format: uuid */
+            warehouse_id?: string;
+            status?: string;
+            /** Format: uuid */
+            received_by?: string;
+            /** Format: date-time */
+            received_at?: string;
+            remark?: string;
+        };
+        StockTransfer: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            from_warehouse_id?: string;
+            /** Format: uuid */
+            to_warehouse_id?: string;
+            status?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            shipped_at?: string;
+            /** Format: date-time */
+            received_at?: string;
+        };
+        StockAdjustment: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            warehouse_id?: string;
+            type?: string;
+            reason?: string;
+            status?: string;
+            /** Format: uuid */
+            created_by?: string;
+            /** Format: uuid */
+            approved_by?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        WorkOrder: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            product_id?: string;
+            /** Format: int32 */
+            quantity?: number;
+            unit?: string;
+            priority?: string;
+            status?: string;
+            /** Format: date */
+            start_date?: string;
+            /** Format: date */
+            end_date?: string;
+            /** Format: uuid */
+            bom_id?: string;
+            /** Format: uuid */
+            workshop_id?: string;
+            /** Format: uuid */
+            owner_id?: string;
+        };
+        BillOfMaterials: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            product_id?: string;
+            /** Format: int32 */
+            version?: number;
+            status?: string;
+            yield_quantity?: number;
+            unit?: string;
+            /** Format: uuid */
+            created_by?: string;
+            /** Format: uuid */
+            approved_by?: string;
+        };
+        Routing: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            product_id?: string;
+            name?: string;
+            /** Format: int32 */
+            version?: number;
+            status?: string;
+        };
+        Equipment: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            type?: string;
+            model?: string;
+            manufacturer?: string;
+            serial_no?: string;
+            location?: string;
+            status?: string;
+            /** Format: date */
+            install_date?: string;
+            /** Format: date */
+            warranty_end?: string;
+        };
+        MaintenancePlan: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            equipment_id?: string;
+            name?: string;
+            type?: string;
+            /** Format: int32 */
+            interval_days?: number;
+            /** Format: date-time */
+            last_done_at?: string;
+            /** Format: date-time */
+            next_due_at?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            status?: string;
+        };
+        MaintenanceWorkOrder: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            equipment_id?: string;
+            /** Format: uuid */
+            plan_id?: string;
+            type?: string;
+            priority?: string;
+            status?: string;
+            description?: string;
+            /** Format: uuid */
+            assignee_id?: string;
+            /** Format: date-time */
+            started_at?: string;
+            /** Format: date-time */
+            completed_at?: string;
+            cost?: number;
+        };
+        QualityInspection: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            type?: string;
+            source_type?: string;
+            /** Format: uuid */
+            source_id?: string;
+            /** Format: uuid */
+            inspector_id?: string;
+            standard?: string;
+            result?: string;
+            /** Format: int32 */
+            defect_count?: number;
+            /** Format: int32 */
+            sample_size?: number;
+            /** Format: int32 */
+            batch_size?: number;
+            remark?: string;
+            /** Format: date-time */
+            inspected_at?: string;
+        };
+        QualityStandard: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            /** Format: uuid */
+            product_id?: string;
+            /** Format: int32 */
+            version?: number;
+            status?: string;
+            /** Format: date */
+            effective_date?: string;
+        };
+        NonConformance: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            type?: string;
+            source?: string;
+            description?: string;
+            severity?: string;
+            root_cause?: string;
+            corrective_action?: string;
+            preventive_action?: string;
+            status?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            /** Format: date-time */
+            raised_at?: string;
+            /** Format: date-time */
+            closed_at?: string;
+        };
+        RiskItem: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            title?: string;
+            category?: string;
+            description?: string;
+            likelihood?: string;
+            impact?: string;
+            level?: string;
+            mitigation?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            status?: string;
+            /** Format: date */
+            identified_at?: string;
+        };
+        IncidentRecord: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            title?: string;
+            type?: string;
+            severity?: string;
+            description?: string;
+            /** Format: uuid */
+            reported_by?: string;
+            /** Format: uuid */
+            handler_id?: string;
+            status?: string;
+            root_cause?: string;
+            resolution?: string;
+            /** Format: date-time */
+            reported_at?: string;
+            /** Format: date-time */
+            resolved_at?: string;
+        };
+        Document: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            code?: string;
+            type?: string;
+            /** Format: uuid */
+            category_id?: string;
+            /** Format: int32 */
+            version?: number;
+            status?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            security_level?: string;
+            /** Format: date-time */
+            published_at?: string;
+            /** Format: date-time */
+            expired_at?: string;
+        };
+        DocumentFolder: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            parent_id?: string;
+            name?: string;
+            code?: string;
+            /** Format: int32 */
+            sort?: number;
+            is_public?: boolean;
+            /** Format: uuid */
+            owner_id?: string;
+        };
+        TrainingCourse: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            code?: string;
+            category?: string;
+            level?: string;
+            duration_hours?: number;
+            description?: string;
+            objectives?: string;
+            /** Format: uuid */
+            instructor_id?: string;
+            status?: string;
+            /** Format: int32 */
+            max_participants?: number;
+        };
+        TrainingSession: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            course_id?: string;
+            /** Format: date-time */
+            start_at?: string;
+            /** Format: date-time */
+            end_at?: string;
+            location?: string;
+            mode?: string;
+            /** Format: uuid */
+            instructor_id?: string;
+            /** Format: int32 */
+            participant_count?: number;
+            status?: string;
+        };
+        LearningRecord: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            user_id?: string;
+            /** Format: uuid */
+            course_id?: string;
+            /** Format: uuid */
+            session_id?: string;
+            /** Format: int32 */
+            progress_percent?: number;
+            score?: number;
+            status?: string;
+            certificate_no?: string;
+            /** Format: date-time */
+            started_at?: string;
+            /** Format: date-time */
+            completed_at?: string;
+        };
+        RecruitmentJob: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            code?: string;
+            /** Format: uuid */
+            department_id?: string;
+            /** Format: uuid */
+            hiring_manager_id?: string;
+            type?: string;
+            level?: string;
+            location?: string;
+            /** Format: int32 */
+            headcount?: number;
+            salary_min?: number;
+            salary_max?: number;
+            status?: string;
+            description?: string;
+            requirements?: string;
+            /** Format: date-time */
+            posted_at?: string;
+            /** Format: date-time */
+            closed_at?: string;
+        };
+        Candidate: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            job_id?: string;
+            name?: string;
+            phone?: string;
+            /** Format: email */
+            email?: string;
+            gender?: string;
+            /** Format: date */
+            birthday?: string;
+            education?: string;
+            /** Format: int32 */
+            years_experience?: number;
+            source?: string;
+            status?: string;
+            /** Format: uri */
+            resume_url?: string;
+            /** Format: date-time */
+            applied_at?: string;
+        };
+        Interview: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            candidate_id?: string;
+            /** Format: uuid */
+            job_id?: string;
+            /** Format: int32 */
+            round?: number;
+            type?: string;
+            /** Format: date-time */
+            start_at?: string;
+            /** Format: date-time */
+            end_at?: string;
+            location?: string;
+            mode?: string;
+            result?: string;
+            feedback?: string;
+            /** Format: int32 */
+            score?: number;
+        };
+        Employee: {
+            /** Format: uuid */
+            id?: string;
+            emp_no?: string;
+            /** Format: uuid */
+            user_id?: string;
+            name?: string;
+            gender?: string;
+            /** Format: date */
+            birthday?: string;
+            /** Format: uuid */
+            department_id?: string;
+            /** Format: uuid */
+            position_id?: string;
+            level?: string;
+            employment_type?: string;
+            /** Format: date */
+            hire_date?: string;
+            /** Format: date */
+            probation_end?: string;
+            /** Format: date */
+            regular_date?: string;
+            /** Format: date */
+            resign_date?: string;
+            status?: string;
+        };
+        Position: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            /** Format: uuid */
+            department_id?: string;
+            /** Format: uuid */
+            parent_id?: string;
+            level?: string;
+            job_family?: string;
+            description?: string;
+            /** Format: int32 */
+            headcount?: number;
+        };
+        AttendanceRecord: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            employee_id?: string;
+            /** Format: date */
+            date?: string;
+            /** Format: date-time */
+            check_in?: string;
+            /** Format: date-time */
+            check_out?: string;
+            /** Format: date-time */
+            work_start?: string;
+            /** Format: date-time */
+            work_end?: string;
+            status?: string;
+            /** Format: int32 */
+            late_minutes?: number;
+            /** Format: int32 */
+            early_leave_minutes?: number;
+            /** Format: int32 */
+            overtime_minutes?: number;
+            location?: string;
+        };
+        LeaveRequest: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            employee_id?: string;
+            type?: string;
+            /** Format: date */
+            start_date?: string;
+            /** Format: date */
+            end_date?: string;
+            days?: number;
+            hours?: number;
+            reason?: string;
+            status?: string;
+            /** Format: uuid */
+            approved_by?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            approved_at?: string;
+        };
+        Payroll: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            employee_id?: string;
+            period?: string;
+            base_salary?: number;
+            bonus?: number;
+            allowance?: number;
+            overtime_pay?: number;
+            deductions?: number;
+            tax?: number;
+            social_insurance?: number;
+            housing_fund?: number;
+            net_pay?: number;
+            currency?: string;
+            status?: string;
+            /** Format: date-time */
+            paid_at?: string;
+        };
+        BenefitPlan: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            type?: string;
+            coverage?: string;
+            employee_cost?: number;
+            company_cost?: number;
+            currency?: string;
+            provider?: string;
+            /** Format: date */
+            effective_date?: string;
+            status?: string;
+        };
+        AssetItem: {
+            /** Format: uuid */
+            id?: string;
+            tag?: string;
+            name?: string;
+            category?: string;
+            type?: string;
+            model?: string;
+            serial_no?: string;
+            /** Format: date */
+            purchase_date?: string;
+            purchase_cost?: number;
+            currency?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            location?: string;
+            status?: string;
+            /** Format: date */
+            warranty_end?: string;
+            depreciated_value?: number;
+        };
+        AssetLoan: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            asset_id?: string;
+            /** Format: uuid */
+            borrower_id?: string;
+            purpose?: string;
+            /** Format: date */
+            loan_date?: string;
+            /** Format: date */
+            expected_return?: string;
+            /** Format: date */
+            actual_return?: string;
+            status?: string;
+        };
+        Vendor: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            type?: string;
+            category?: string;
+            service_area?: string;
+            contact_name?: string;
+            contact_phone?: string;
+            /** Format: email */
+            contact_email?: string;
+            tax_no?: string;
+            bank_account?: string;
+            status?: string;
+            rating?: number;
+        };
+        ServiceCatalogItem: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            category?: string;
+            description?: string;
+            /** Format: int32 */
+            fulfillment_days?: number;
+            price?: number;
+            currency?: string;
+            required_approval?: boolean;
+            /** Format: uuid */
+            sla_id?: string;
+            status?: string;
+        };
+        ServiceRequest: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            catalog_item_id?: string;
+            /** Format: uuid */
+            requester_id?: string;
+            /** Format: uuid */
+            assignee_id?: string;
+            status?: string;
             priority?: string;
             /** Format: date-time */
-            sent_at?: string | null;
-            error_message?: string | null;
+            created_at?: string;
+            /** Format: date-time */
+            fulfilled_at?: string;
+        };
+        Campaign: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            code?: string;
+            type?: string;
+            channel?: string;
+            budget?: number;
+            currency?: string;
+            target_audience?: string;
+            goal?: string;
+            status?: string;
+            /** Format: date */
+            start_date?: string;
+            /** Format: date */
+            end_date?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        Lead: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            company?: string;
+            title?: string;
+            phone?: string;
+            /** Format: email */
+            email?: string;
+            source?: string;
+            /** Format: uuid */
+            campaign_id?: string;
+            status?: string;
+            /** Format: int32 */
+            score?: number;
+            industry?: string;
+            size?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            converted_at?: string;
+        };
+        Opportunity: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: uuid */
+            customer_id?: string;
+            /** Format: uuid */
+            lead_id?: string;
+            amount?: number;
+            currency?: string;
+            stage?: string;
+            /** Format: int32 */
+            probability_percent?: number;
+            /** Format: date */
+            expected_close_date?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            status?: string;
+            source?: string;
+            /** Format: uuid */
+            campaign_id?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            closed_at?: string;
+        };
+        AccountCRM: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            type?: string;
+            industry?: string;
+            revenue?: number;
+            /** Format: int32 */
+            employees?: number;
+            region?: string;
+            address?: string;
+            /** Format: uri */
+            website?: string;
+            phone?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            status?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        ContactCRM: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            account_id?: string;
+            first_name?: string;
+            last_name?: string;
+            title?: string;
+            department?: string;
+            phone?: string;
+            mobile?: string;
+            /** Format: email */
+            email?: string;
+            is_primary?: boolean;
+            /** Format: uuid */
+            owner_id?: string;
+            status?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        CaseRecord: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            subject?: string;
+            /** Format: uuid */
+            account_id?: string;
+            /** Format: uuid */
+            contact_id?: string;
+            type?: string;
+            origin?: string;
+            priority?: string;
+            status?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            description?: string;
+            resolution?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            closed_at?: string;
+        };
+        Forecast: {
+            /** Format: uuid */
+            id?: string;
+            period?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            currency?: string;
+            quota?: number;
+            pipeline_amount?: number;
+            committed_amount?: number;
+            best_case?: number;
+            worst_case?: number;
+            actual_amount?: number;
+            status?: string;
+            /** Format: date-time */
+            submitted_at?: string;
+        };
+        Territory: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            code?: string;
+            region?: string;
+            country?: string;
+            /** Format: uuid */
+            parent_id?: string;
+            /** Format: uuid */
+            manager_id?: string;
+            quota?: number;
+            currency?: string;
+            status?: string;
+        };
+        InvoiceLine: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            invoice_id?: string;
+            item_type?: string;
+            description?: string;
+            quantity?: number;
+            unit_price?: number;
+            amount?: number;
+            tax_rate?: number;
+            tax_amount?: number;
+            line_total?: number;
+        };
+        BillPayable: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            supplier_id?: string;
+            type?: string;
+            /** Format: date */
+            issue_date?: string;
+            /** Format: date */
+            due_date?: string;
+            total_amount?: number;
+            paid_amount?: number;
+            balance?: number;
+            currency?: string;
+            status?: string;
+            approval_status?: string;
+            /** Format: uuid */
+            approved_by?: string;
+            /** Format: date-time */
+            paid_at?: string;
+        };
+        ExpenseReport: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: uuid */
+            employee_id?: string;
+            purpose?: string;
+            /** Format: date */
+            report_date?: string;
+            total_amount?: number;
+            currency?: string;
+            status?: string;
+            approval_status?: string;
+            /** Format: uuid */
+            approved_by?: string;
+            /** Format: date-time */
+            reimbursed_at?: string;
+        };
+        ExpenseItem: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            report_id?: string;
+            /** Format: date */
+            date?: string;
+            category?: string;
+            description?: string;
+            amount?: number;
+            currency?: string;
+            /** Format: uri */
+            receipt_url?: string;
+            /** Format: uuid */
+            project_id?: string;
+            billable?: boolean;
+        };
+        JournalEntry: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            /** Format: date */
+            entry_date?: string;
+            period?: string;
+            type?: string;
+            reference_type?: string;
+            /** Format: uuid */
+            reference_id?: string;
+            total_debit?: number;
+            total_credit?: number;
+            currency?: string;
+            status?: string;
+            /** Format: uuid */
+            approved_by?: string;
+            /** Format: date-time */
+            posted_at?: string;
+        };
+        JournalLine: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            entry_id?: string;
+            account_code?: string;
+            description?: string;
+            debit?: number;
+            credit?: number;
+            currency?: string;
+            dimension1?: string;
+            dimension2?: string;
+            dimension3?: string;
+        };
+        GlAccount: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            type?: string;
+            category?: string;
+            /** Format: uuid */
+            parent_id?: string;
+            currency?: string;
+            is_contra?: boolean;
+            is_active?: boolean;
+            description?: string;
+        };
+        Budget: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            code?: string;
+            period?: string;
+            account_code?: string;
+            /** Format: uuid */
+            department_id?: string;
+            /** Format: uuid */
+            project_id?: string;
+            amount?: number;
+            currency?: string;
+            consumed?: number;
+            committed?: number;
+            available?: number;
+            status?: string;
+        };
+        TaxCode: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            type?: string;
+            rate_percent?: number;
+            account_code?: string;
+            /** Format: date */
+            effective_date?: string;
+            /** Format: date */
+            expiry_date?: string;
+            is_active?: boolean;
+        };
+        CurrencyRate: {
+            /** Format: uuid */
+            id?: string;
+            from_currency?: string;
+            to_currency?: string;
+            rate?: number;
+            /** Format: date */
+            rate_date?: string;
+            provider?: string;
+            source?: string;
+        };
+        PeriodFiscal: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            /** Format: int32 */
+            fiscal_year?: number;
+            /** Format: int32 */
+            period_no?: number;
+            /** Format: date */
+            start_date?: string;
+            /** Format: date */
+            end_date?: string;
+            status?: string;
+            /** Format: uuid */
+            closed_by?: string;
+            /** Format: date-time */
+            closed_at?: string;
+        };
+        Reconciliation: {
+            /** Format: uuid */
+            id?: string;
+            account_code?: string;
+            period?: string;
+            balance_per_books?: number;
+            balance_per_bank?: number;
+            difference?: number;
+            reconciled?: boolean;
+            /** Format: uuid */
+            reconciled_by?: string;
+            /** Format: date-time */
+            reconciled_at?: string;
+        };
+        FixedAssetItem: {
+            /** Format: uuid */
+            id?: string;
+            tag?: string;
+            name?: string;
+            category?: string;
+            /** Format: date */
+            acquisition_date?: string;
+            acquisition_cost?: number;
+            currency?: string;
+            salvage_value?: number;
+            /** Format: int32 */
+            useful_life_months?: number;
+            depreciation_method?: string;
+            accumulated_depreciation?: number;
+            net_book_value?: number;
+            location?: string;
+            /** Format: uuid */
+            custodian_id?: string;
+            status?: string;
+        };
+        Subscription: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            customer_id?: string;
+            /** Format: uuid */
+            plan_id?: string;
+            status?: string;
+            /** Format: int32 */
+            quantity?: number;
+            unit_price?: number;
+            currency?: string;
+            billing_cycle?: string;
+            /** Format: date */
+            start_date?: string;
+            /** Format: date */
+            end_date?: string;
+            /** Format: date */
+            trial_end?: string;
+            /** Format: date-time */
+            canceled_at?: string;
+            /** Format: date-time */
+            next_billing?: string;
+        };
+        SubscriptionPlan: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            /** Format: uuid */
+            product_id?: string;
+            billing_cycle?: string;
+            price?: number;
+            currency?: string;
+            /** Format: int32 */
+            trial_days?: number;
+            /** Format: int32 */
+            grace_days?: number;
+            proration?: boolean;
+            status?: string;
+        };
+        Coupon: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            type?: string;
+            discount_type?: string;
+            discount_value?: number;
+            min_order_amount?: number;
+            max_discount?: number;
+            currency?: string;
+            /** Format: int32 */
+            usage_limit?: number;
+            /** Format: int32 */
+            used_count?: number;
+            /** Format: date-time */
+            valid_from?: string;
+            /** Format: date-time */
+            valid_until?: string;
+            status?: string;
+        };
+        Promotion: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            type?: string;
+            scope?: string;
+            status?: string;
+            /** Format: date-time */
+            start_date?: string;
+            /** Format: date-time */
+            end_date?: string;
+            stackable?: boolean;
+        };
+        LoyaltyProgram: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            tier_name?: string;
+            /** Format: int32 */
+            tier_level?: number;
+            /** Format: int32 */
+            min_points?: number;
+            points_per_currency?: number;
+            status?: string;
+            /** Format: date */
+            start_date?: string;
+            /** Format: date */
+            end_date?: string;
+        };
+        MemberAccount: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            customer_id?: string;
+            /** Format: uuid */
+            program_id?: string;
+            /** Format: uuid */
+            tier_id?: string;
+            /** Format: int64 */
+            points_balance?: number;
+            /** Format: int64 */
+            points_earned?: number;
+            /** Format: int64 */
+            points_redeemed?: number;
+            /** Format: int32 */
+            points_expiring?: number;
+            /** Format: date */
+            join_date?: string;
+            status?: string;
+        };
+        Gateway: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            type?: string;
+            provider?: string;
+            mode?: string;
+            merchant_id?: string;
+            fee_percent?: number;
+            fee_fixed?: number;
+            status?: string;
+            is_default?: boolean;
+        };
+        Webhook: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: uri */
+            url?: string;
+            secret?: string;
+            content_type?: string;
+            auth_type?: string;
+            auth_token?: string;
+            status?: string;
+            /** Format: uuid */
+            created_by?: string;
+        };
+        Integration: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            type?: string;
+            provider?: string;
+            connection_mode?: string;
+            status?: string;
+            /** Format: date-time */
+            last_sync_at?: string;
+            sync_status?: string;
+            /** Format: uuid */
+            owner_id?: string;
+        };
+        ApiKey: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            key_prefix?: string;
+            /** Format: int32 */
+            rate_limit_per_min?: number;
+            /** Format: date-time */
+            expires_at?: string;
+            /** Format: date-time */
+            last_used_at?: string;
+            status?: string;
+            /** Format: uuid */
+            created_by?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        OAuthClient: {
+            /** Format: uuid */
+            id?: string;
+            client_id?: string;
+            name?: string;
+            /** Format: int32 */
+            token_expiry_seconds?: number;
+            /** Format: int32 */
+            refresh_expiry_seconds?: number;
+            is_public?: boolean;
+            status?: string;
+            /** Format: uuid */
+            owner_id?: string;
+        };
+        Site: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            domain?: string;
+            type?: string;
+            theme?: string;
+            language?: string;
+            timezone?: string;
+            status?: string;
+            is_default?: boolean;
+            /** Format: uuid */
+            owner_id?: string;
+            /** Format: date-time */
+            published_at?: string;
+        };
+        SitePage: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            site_id?: string;
+            /** Format: uuid */
+            parent_id?: string;
+            title?: string;
+            slug?: string;
+            path?: string;
+            template?: string;
+            status?: string;
+            /** Format: int32 */
+            sort?: number;
+            /** Format: date-time */
+            published_at?: string;
+        };
+        ContentBlock: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            page_id?: string;
+            type?: string;
+            name?: string;
+            content?: string;
+            /** Format: int32 */
+            sort?: number;
+        };
+        NavigationMenu: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            site_id?: string;
+            name?: string;
+            location?: string;
+            status?: string;
+        };
+        Theme: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            version?: string;
+            author?: string;
+            /** Format: uri */
+            screenshot_url?: string;
+            /** Format: uri */
+            preview_url?: string;
+            status?: string;
+            is_published?: boolean;
+            /** Format: date-time */
+            installed_at?: string;
+        };
+        Plugin: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            version?: string;
+            type?: string;
+            author?: string;
+            description?: string;
+            icon?: string;
+            status?: string;
+            /** Format: date-time */
+            installed_at?: string;
+            enabled?: boolean;
+        };
+        Dataset: {
+            /** Format: uuid */
+            id?: string;
+            code?: string;
+            name?: string;
+            source_type?: string;
+            refresh_policy?: string;
+            /** Format: int32 */
+            refresh_interval_min?: number;
+            /** Format: int64 */
+            row_count?: number;
+            /** Format: int64 */
+            size_bytes?: number;
+            /** Format: date-time */
+            last_refresh_at?: string;
+            status?: string;
+            /** Format: uuid */
+            owner_id?: string;
+        };
+        DataModel: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            dataset_id?: string;
+            name?: string;
+            status?: string;
+            /** Format: int32 */
+            version?: number;
+        };
+        Visualization: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            dataset_id?: string;
+            /** Format: uuid */
+            model_id?: string;
+            name?: string;
+            type?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            status?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        AIModel: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            code?: string;
+            provider?: string;
+            base_model?: string;
+            version?: string;
+            type?: string;
+            /** Format: int32 */
+            context_window?: number;
+            /** Format: int32 */
+            max_output_tokens?: number;
+            temperature?: number;
+            fine_tuned?: boolean;
+            training_data_ref?: string;
+            status?: string;
+            /** Format: date-time */
+            deployed_at?: string;
+        };
+        PromptTemplate: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: uuid */
+            model_id?: string;
+            category?: string;
+            template?: string;
+            /** Format: int32 */
+            version?: number;
+            status?: string;
+            /** Format: uuid */
+            owner_id?: string;
+        };
+        AIConversation: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            user_id?: string;
+            /** Format: uuid */
+            model_id?: string;
+            title?: string;
+            system_prompt?: string;
+            /** Format: int32 */
+            message_count?: number;
+            /** Format: int64 */
+            token_usage_in?: number;
+            /** Format: int64 */
+            token_usage_out?: number;
+            status?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            last_message_at?: string;
+        };
+        AIFineTuneJob: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            base_model_id?: string;
+            target_model?: string;
+            dataset_ref?: string;
+            status?: string;
+            /** Format: int32 */
+            progress_percent?: number;
+            estimated_cost?: number;
+            actual_cost?: number;
+            /** Format: date-time */
+            started_at?: string;
+            /** Format: date-time */
+            completed_at?: string;
+            /** Format: uuid */
+            owner_id?: string;
+        };
+        Space: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            code?: string;
+            type?: string;
+            visibility?: string;
+            description?: string;
+            avatar?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            /** Format: int32 */
+            member_count?: number;
+            status?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        PageDoc: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            space_id?: string;
+            /** Format: uuid */
+            parent_id?: string;
+            title?: string;
+            slug?: string;
+            content?: string;
+            format?: string;
+            status?: string;
+            /** Format: uuid */
+            editor_id?: string;
+            /** Format: int32 */
+            sort?: number;
+            /** Format: int64 */
+            views?: number;
+            /** Format: int32 */
+            likes?: number;
             /** Format: date-time */
             created_at?: string;
             /** Format: date-time */
             updated_at?: string;
         };
-        ChatRequest: {
-            /** @example 请介绍一下TOPEMS系统 */
-            query?: string;
-            /** @example conv-123 */
-            conversation_id?: string;
-            context?: Record<string, never>;
+        WikiPageDoc: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            space_id?: string;
+            title?: string;
+            content?: string;
+            format?: string;
+            /** Format: int32 */
+            version?: number;
+            status?: string;
+            /** Format: uuid */
+            editor_id?: string;
+            /** Format: date-time */
+            published_at?: string;
+            /** Format: date-time */
+            last_modified_at?: string;
         };
-        ChatResponse: {
-            /** @example TOPEMS是一个企业级数字化平台... */
-            answer?: string;
-            sources?: Record<string, never>[];
+        CodeRepo: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            path?: string;
+            provider?: string;
+            /** Format: uri */
+            url?: string;
+            default_branch?: string;
+            visibility?: string;
+            language?: string;
+            /** Format: int64 */
+            size_kb?: number;
+            status?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            /** Format: date-time */
+            created_at?: string;
         };
-        SummarizeRequest: {
-            /** @example 要摘要的文本内容... */
-            text?: string;
-            /** @example 200 */
-            max_length?: number;
-            /** @example summary */
+        BuildPipeline: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            repo_id?: string;
+            name?: string;
             type?: string;
+            status?: string;
+            /** Format: date-time */
+            last_run_at?: string;
+            last_run_status?: string;
         };
-        SummarizeResponse: {
-            /** @example 摘要内容... */
-            summary?: string;
+        Deployment: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            pipeline_id?: string;
+            artifact_ref?: string;
+            environment?: string;
+            cluster?: string;
+            namespace?: string;
+            /** Format: int32 */
+            replicas?: number;
+            status?: string;
+            /** Format: uuid */
+            deployed_by?: string;
+            /** Format: date-time */
+            started_at?: string;
+            /** Format: date-time */
+            completed_at?: string;
         };
-        VectorSearchRequest: {
-            /** @example 催化剂活性 */
+        Environment: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            code?: string;
+            cluster?: string;
+            namespace?: string;
+            type?: string;
+            status?: string;
+            is_protected?: boolean;
+        };
+        FeatureFlag: {
+            /** Format: uuid */
+            id?: string;
+            key?: string;
+            name?: string;
+            type?: string;
+            description?: string;
+            enabled?: boolean;
+            /** Format: int32 */
+            rollout_percent?: number;
+            /** Format: uuid */
+            owner_id?: string;
+            status?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        Experiment: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            flag_id?: string;
+            name?: string;
+            hypothesis?: string;
+            primary_metric?: string;
+            variant_a_name?: string;
+            variant_b_name?: string;
+            /** Format: int32 */
+            traffic_split_percent?: number;
+            status?: string;
+            /** Format: date */
+            start_date?: string;
+            /** Format: date */
+            end_date?: string;
+            confidence_level?: number;
+        };
+        Cluster: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            provider?: string;
+            region?: string;
+            k8s_version?: string;
+            /** Format: int32 */
+            node_count?: number;
+            total_cpu?: number;
+            total_memory_gb?: number;
+            total_storage_tb?: number;
+            status?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        CloudResource: {
+            /** Format: uuid */
+            id?: string;
+            provider?: string;
+            region?: string;
+            service?: string;
+            resource_type?: string;
+            resource_id?: string;
+            name?: string;
+            status?: string;
+            cost_monthly?: number;
+            currency?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        HealthCheck: {
+            /** Format: uuid */
+            id?: string;
+            target_ref?: string;
+            type?: string;
+            endpoint?: string;
+            /** Format: int32 */
+            interval_seconds?: number;
+            /** Format: int32 */
+            timeout_seconds?: number;
+            /** Format: int32 */
+            threshold_ok?: number;
+            /** Format: int32 */
+            threshold_fail?: number;
+            last_status?: string;
+            /** Format: date-time */
+            last_checked_at?: string;
+            /** Format: int32 */
+            avg_latency_ms?: number;
+        };
+        AlertRecord: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            rule_id?: string;
+            severity?: string;
+            source?: string;
+            target_ref?: string;
+            message?: string;
+            status?: string;
+            /** Format: date-time */
+            triggered_at?: string;
+            /** Format: date-time */
+            acknowledged_at?: string;
+            /** Format: date-time */
+            resolved_at?: string;
+            /** Format: uuid */
+            acknowledged_by?: string;
+        };
+        AlertRule: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            type?: string;
+            severity?: string;
             query?: string;
-            /** @example 10 */
-            top_k?: number;
-            filters?: Record<string, never>;
+            for_duration?: string;
+            enabled?: boolean;
         };
-        VectorSearchResponse: {
-            results?: Record<string, never>[];
-            /** @example 50 */
-            query_time_ms?: number;
+        IncidentTimelineEvent: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            incident_id?: string;
+            event_type?: string;
+            /** Format: uuid */
+            actor_id?: string;
+            message?: string;
+            /** Format: date-time */
+            created_at?: string;
         };
+        ChangeRequest: {
+            /** Format: uuid */
+            id?: string;
+            no?: string;
+            title?: string;
+            type?: string;
+            risk?: string;
+            description?: string;
+            backout_plan?: string;
+            test_plan?: string;
+            status?: string;
+            /** Format: uuid */
+            requester_id?: string;
+            /** Format: uuid */
+            approver_id?: string;
+            /** Format: date-time */
+            scheduled_at?: string;
+            /** Format: date-time */
+            implemented_at?: string;
+            /** Format: date-time */
+            closed_at?: string;
+        };
+        ProductRoadmapItem: {
+            /** Format: uuid */
+            id?: string;
+            theme?: string;
+            title?: string;
+            description?: string;
+            quarter?: string;
+            /** Format: int32 */
+            year?: number;
+            /** Format: uuid */
+            owner_id?: string;
+            status?: string;
+            confidence?: string;
+            effort_weeks?: number;
+            /** Format: int32 */
+            value_score?: number;
+        };
+        IdeaItem: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            description?: string;
+            category?: string;
+            source?: string;
+            /** Format: uuid */
+            submitter_id?: string;
+            status?: string;
+            /** Format: int32 */
+            votes?: number;
+            /** Format: int32 */
+            comments_count?: number;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        ReleaseInfo: {
+            /** Format: uuid */
+            id?: string;
+            version?: string;
+            name?: string;
+            product?: string;
+            status?: string;
+            phase?: string;
+            /** Format: date */
+            release_date?: string;
+            changelog?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            /** Format: date-time */
+            published_at?: string;
+        };
+        CustomerHealthScore: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            customer_id?: string;
+            /** Format: int32 */
+            overall_score?: number;
+            /** Format: int32 */
+            engagement_score?: number;
+            /** Format: int32 */
+            adoption_score?: number;
+            /** Format: int32 */
+            support_score?: number;
+            /** Format: int32 */
+            financial_score?: number;
+            risk_level?: string;
+            trend?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        CustomerJourney: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            customer_id?: string;
+            stage?: string;
+            /** Format: int32 */
+            stage_order?: number;
+            /** Format: date-time */
+            entered_at?: string;
+            /** Format: date-time */
+            exited_at?: string;
+            notes?: string;
+            /** Format: uuid */
+            owner_id?: string;
+        };
+        CustomerTouchpoint: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            customer_id?: string;
+            type?: string;
+            channel?: string;
+            title?: string;
+            content?: string;
+            sentiment?: string;
+            /** Format: uuid */
+            created_by?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        SurveyQuestion: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            survey_id?: string;
+            code?: string;
+            type?: string;
+            title?: string;
+            required?: boolean;
+            /** Format: int32 */
+            sort?: number;
+        };
+        TicketCategory: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: uuid */
+            parent_id?: string;
+            code?: string;
+            description?: string;
+            /** Format: uuid */
+            sla_id?: string;
+            /** Format: uuid */
+            default_assignee_id?: string;
+            /** Format: int32 */
+            sort?: number;
+            status?: string;
+        };
+        TicketPriorityMatrix: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            category_id?: string;
+            impact?: string;
+            urgency?: string;
+            priority?: string;
+            /** Format: int32 */
+            response_sla_minutes?: number;
+            /** Format: int32 */
+            resolution_sla_minutes?: number;
+        };
+        KnowledgeBase: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            code?: string;
+            description?: string;
+            visibility?: string;
+            language?: string;
+            /** Format: uuid */
+            owner_id?: string;
+            /** Format: int32 */
+            article_count?: number;
+            status?: string;
+        };
+        KnowledgeArticle: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            base_id?: string;
+            /** Format: uuid */
+            category_id?: string;
+            title?: string;
+            summary?: string;
+            content?: string;
+            format?: string;
+            /** Format: uuid */
+            author_id?: string;
+            /** Format: uuid */
+            reviewer_id?: string;
+            status?: string;
+            /** Format: int32 */
+            version?: number;
+            /** Format: int64 */
+            views?: number;
+            /** Format: int32 */
+            helpful_votes?: number;
+            /** Format: date-time */
+            published_at?: string;
+            /** Format: date-time */
+            last_updated_at?: string;
+        };
+        BatchJob: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            type?: string;
+            cron_expression?: string;
+            timezone?: string;
+            command_ref?: string;
+            status?: string;
+            enabled?: boolean;
+            /** Format: date-time */
+            last_run_at?: string;
+            last_run_status?: string;
+            /** Format: date-time */
+            next_run_at?: string;
+        };
+        BatchJobRun: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            job_id?: string;
+            trigger_type?: string;
+            status?: string;
+            /** Format: date-time */
+            started_at?: string;
+            /** Format: date-time */
+            finished_at?: string;
+            /** Format: int32 */
+            duration_seconds?: number;
+            /** Format: int32 */
+            exit_code?: number;
+            output_ref?: string;
+            error_message?: string;
+            /** Format: int64 */
+            processed_count?: number;
+            /** Format: int32 */
+            failed_count?: number;
+        };
+        DataImportJob: {
+            /** Format: uuid */
+            id?: string;
+            type?: string;
+            target?: string;
+            file_ref?: string;
+            file_name?: string;
+            /** Format: int64 */
+            file_size_bytes?: number;
+            /** Format: int64 */
+            row_count?: number;
+            /** Format: int64 */
+            success_count?: number;
+            /** Format: int32 */
+            failed_count?: number;
+            /** Format: int32 */
+            skipped_count?: number;
+            status?: string;
+            error_log_ref?: string;
+            /** Format: uuid */
+            imported_by?: string;
+            /** Format: date-time */
+            started_at?: string;
+            /** Format: date-time */
+            completed_at?: string;
+        };
+        DataExportJob: {
+            /** Format: uuid */
+            id?: string;
+            type?: string;
+            source?: string;
+            format?: string;
+            /** Format: int64 */
+            row_count?: number;
+            file_ref?: string;
+            file_name?: string;
+            /** Format: int64 */
+            file_size_bytes?: number;
+            status?: string;
+            /** Format: date-time */
+            expires_at?: string;
+            /** Format: uuid */
+            requested_by?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            ready_at?: string;
+        };
+        Announcement: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            type?: string;
+            severity?: string;
+            content?: string;
+            scope?: string;
+            target_audience?: string;
+            /** Format: date-time */
+            schedule_at?: string;
+            /** Format: date-time */
+            expires_at?: string;
+            status?: string;
+            banner?: boolean;
+            sticky?: boolean;
+            /** Format: uuid */
+            published_by?: string;
+        };
+        FeedbackItem: {
+            /** Format: uuid */
+            id?: string;
+            type?: string;
+            title?: string;
+            description?: string;
+            app?: string;
+            page_path?: string;
+            os?: string;
+            browser?: string;
+            device?: string;
+            /** Format: uri */
+            screenshot_url?: string;
+            /** Format: uuid */
+            submitter_id?: string;
+            status?: string;
+            /** Format: uuid */
+            assignee_id?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        VotePoll: {
+            /** Format: uuid */
+            id?: string;
+            question?: string;
+            description?: string;
+            allow_multiple?: boolean;
+            allow_write_in?: boolean;
+            visibility?: string;
+            status?: string;
+            /** Format: date-time */
+            starts_at?: string;
+            /** Format: date-time */
+            ends_at?: string;
+            /** Format: int32 */
+            total_votes?: number;
+            /** Format: uuid */
+            created_by?: string;
+        };
+        /** @description Auto-injected stub for missing $ref target: LoginRequest */
+        LoginRequest: string;
+        /** @description Auto-injected stub for missing $ref target: RegisterRequest */
+        RegisterRequest: string;
+        /** @description Auto-injected stub for missing $ref target: CreateUserRequest */
+        CreateUserRequest: string;
+        /** @description Auto-injected stub for missing $ref target: NaiveDate */
+        NaiveDate: string;
+        /** @description Auto-injected stub for missing $ref target: AutoFixActionType */
+        AutoFixActionType: string;
+        /** @description Auto-injected stub for missing $ref target: FixStatus */
+        FixStatus: string;
+        /** @description Auto-injected stub for missing $ref target: SuggestionStatus */
+        SuggestionStatus: string;
+        /** @description Auto-injected stub for missing $ref target: SuggestionType */
+        SuggestionType: string;
     };
     responses: never;
     parameters: never;
@@ -3905,12 +5690,878 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_contacts: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                page_size?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 客户ID过滤 */
+                customer_id?: components["schemas"]["Uuid"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 联系人列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateContactRequest"];
+            };
+        };
+        responses: {
+            /** @description 联系人创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 请求参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_customers: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                page_size?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+                /** @description 客户类型过滤 */
+                customer_type?: string | null;
+                /** @description 评级过滤 */
+                rating?: string | null;
+                /** @description 行业过滤 */
+                industry?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 客户列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCustomerRequest"];
+            };
+        };
+        responses: {
+            /** @description 客户创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 请求参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 客户ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 客户详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 客户不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_opportunities: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                page_size?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 阶段过滤 */
+                stage?: string | null;
+                /** @description 客户ID过滤 */
+                customer_id?: components["schemas"]["Uuid"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 商机列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_assets: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                page_size?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 资产列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_asset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAssetRequest"];
+            };
+        };
+        responses: {
+            /** @description 资产创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 请求参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_asset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 资产ID */
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 资产详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 资产不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    erp_list_customers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_customers OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    erp_create_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_customer OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    erp_get_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_customer OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_customer OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_customer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_customer OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_rooms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_rooms OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_room: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_room OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_bookings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_bookings OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_booking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_booking OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_room: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_room OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_purchase_orders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_purchase_orders OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_purchase_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_purchase_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_purchase_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_purchase_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approve_purchase_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description approve_purchase_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_sales_orders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_sales_orders OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_sales_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_sales_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_sales_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_sales_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_suppliers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_suppliers OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_materials: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                pagesize?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+                /** @description 分类过滤 */
+                category?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 物料列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_material: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMaterialRequest"];
+            };
+        };
+        responses: {
+            /** @description 物料创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 请求参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_accounts: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                parentId: components["schemas"]["Uuid"] | null;
+                parent_id: components["schemas"]["Uuid"] | null;
             };
             cookie?: never;
         };
@@ -4313,13 +6964,13 @@ export interface operations {
             };
         };
     };
-    list_production_orders: {
+    list_companies: {
         parameters: {
             query?: {
                 /** @description 页码 */
                 page?: number | null;
                 /** @description 每页数量 */
-                pagesize?: number | null;
+                page_size?: number | null;
                 /** @description 搜索关键词 */
                 search?: string | null;
                 /** @description 状态过滤 */
@@ -4331,7 +6982,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description 生产订单列表 */
+            /** @description 公司列表 */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4349,7 +7000,7 @@ export interface operations {
             };
         };
     };
-    create_production_order: {
+    create_company: {
         parameters: {
             query?: never;
             header?: never;
@@ -4358,11 +7009,11 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateProductionOrderRequest"];
+                "application/json": components["schemas"]["CreateCompanyRequest"];
             };
         };
         responses: {
-            /** @description 生产订单创建成功 */
+            /** @description 公司创建成功 */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4380,19 +7031,19 @@ export interface operations {
             };
         };
     };
-    get_production_order: {
+    get_company: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description 订单ID */
-                id: string;
+                /** @description 公司ID */
+                id: components["schemas"]["Uuid"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description 生产订单详情 */
+            /** @description 公司详情 */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4400,6 +7051,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ApiResponse"];
                 };
+            };
+            /** @description 公司不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description 服务器内部错误 */
             500: {
@@ -4410,17 +7068,19 @@ export interface operations {
             };
         };
     };
-    list_work_orders: {
+    list_departments: {
         parameters: {
             query?: {
                 /** @description 页码 */
                 page?: number | null;
                 /** @description 每页数量 */
-                pagesize?: number | null;
+                page_size?: number | null;
                 /** @description 搜索关键词 */
                 search?: string | null;
                 /** @description 状态过滤 */
                 status?: string | null;
+                /** @description 公司ID过滤 */
+                org_id?: components["schemas"]["Uuid"] | null;
             };
             header?: never;
             path?: never;
@@ -4428,7 +7088,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description 工单列表 */
+            /** @description 部门列表 */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4446,7 +7106,7 @@ export interface operations {
             };
         };
     };
-    create_work_order: {
+    create_department: {
         parameters: {
             query?: never;
             header?: never;
@@ -4455,11 +7115,11 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateWorkOrderRequest"];
+                "application/json": components["schemas"]["CreateDepartmentRequest"];
             };
         };
         responses: {
-            /** @description 工单创建成功 */
+            /** @description 部门创建成功 */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4477,19 +7137,19 @@ export interface operations {
             };
         };
     };
-    get_work_order: {
+    get_department: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description 工单ID */
-                id: string;
+                /** @description 部门ID */
+                id: components["schemas"]["Uuid"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description 工单详情 */
+            /** @description 部门详情 */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4497,6 +7157,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ApiResponse"];
                 };
+            };
+            /** @description 部门不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description 服务器内部错误 */
             500: {
@@ -4507,35 +7174,33 @@ export interface operations {
             };
         };
     };
-    list_work_reports: {
+    list_employees: {
         parameters: {
-            query?: {
-                /** @description 页码 */
-                page?: number | null;
-                /** @description 每页数量 */
-                pagesize?: number | null;
-                /** @description 搜索关键词 */
-                search?: string | null;
-                /** @description 状态过滤 */
-                status?: string | null;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description 生产报工列表 */
+            /** @description 获取员工列表成功 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponse"];
+                    "application/json": components["schemas"]["Employee"][];
                 };
             };
-            /** @description 服务器内部错误 */
-            500: {
+            /** @description 未授权 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 权限不足 */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4543,30 +7208,47 @@ export interface operations {
             };
         };
     };
-    create_work_report: {
+    create_employee: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateWorkReportRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description 生产报工创建成功 */
+            /** @description 员工创建成功 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponse"];
+                    "application/json": components["schemas"]["Employee"];
                 };
             };
-            /** @description 服务器内部错误 */
-            500: {
+            /** @description 参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 未授权 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 权限不足 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 员工编号已存在 */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4574,29 +7256,120 @@ export interface operations {
             };
         };
     };
-    get_work_report: {
+    get_employee: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description 报工ID */
-                id: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description 生产报工详情 */
+            /** @description 获取员工成功 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponse"];
+                    "application/json": components["schemas"]["Employee"];
                 };
             };
-            /** @description 服务器内部错误 */
-            500: {
+            /** @description 未授权 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 权限不足 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 员工不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_employee: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 员工更新成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"];
+                };
+            };
+            /** @description 未授权 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 权限不足 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 员工不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_employee: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 员工删除成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 未授权 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 权限不足 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 员工不存在 */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5072,6 +7845,651 @@ export interface operations {
             };
             /** @description 服务器内部错误 */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_orders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_orders OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approve_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description approve_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reject_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description reject_order OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    scm_list_suppliers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_suppliers OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    scm_create_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    scm_get_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    scm_update_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    scm_delete_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    srm_list_suppliers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_suppliers OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    srm_create_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    srm_get_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    srm_update_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    srm_delete_supplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_supplier OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description 登录成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 用户名或密码错误 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 登录失败 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description 注册成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 用户名或邮箱已存在 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 注册失败 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_users: {
+        parameters: {
+            query?: {
+                /** @description 页码，默认1 */
+                page?: number | null;
+                /** @description 每页条数，默认20 */
+                page_size?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 查询成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 查询失败 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_user: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateUserRequest"];
+            };
+        };
+        responses: {
+            /** @description 创建成功 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 参数错误 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 用户名或邮箱已存在 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 创建失败 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    wms_list_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    wms_create_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    wms_get_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_inventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_inventory OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_warehouses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description list_warehouses OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_warehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description create_warehouse OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_warehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description get_warehouse OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_warehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description update_warehouse OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_warehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description delete_warehouse OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

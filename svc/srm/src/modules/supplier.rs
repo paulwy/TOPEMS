@@ -131,7 +131,15 @@ fn suppliers_list_cache_key(
 
 // ==================== Supplier Handlers ====================
 
-async fn list_suppliers(
+#[utoipa::path(
+    get,
+    path = "/api/srm/suppliers",
+    responses(
+        (status = 200, description = "list_suppliers OK")
+    ),
+    tag = "SRM/supplier"
+)]
+pub async fn list_suppliers(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
@@ -255,7 +263,15 @@ async fn list_suppliers(
     }
 }
 
-async fn create_supplier(
+#[utoipa::path(
+    post,
+    path = "/api/srm/suppliers",
+    responses(
+        (status = 200, description = "create_supplier OK")
+    ),
+    tag = "SRM/supplier"
+)]
+pub async fn create_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
@@ -413,7 +429,15 @@ async fn create_supplier(
     }
 }
 
-async fn get_supplier(
+#[utoipa::path(
+    get,
+    path = "/api/srm/suppliers/{id}",
+    responses(
+        (status = 200, description = "get_supplier OK")
+    ),
+    tag = "SRM/supplier"
+)]
+pub async fn get_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -460,7 +484,15 @@ async fn get_supplier(
     }
 }
 
-async fn update_supplier(
+#[utoipa::path(
+    put,
+    path = "/api/srm/suppliers/{id}",
+    responses(
+        (status = 200, description = "update_supplier OK")
+    ),
+    tag = "SRM/supplier"
+)]
+pub async fn update_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -608,7 +640,15 @@ async fn update_supplier(
     }
 }
 
-async fn delete_supplier(
+#[utoipa::path(
+    delete,
+    path = "/api/srm/suppliers/{id}",
+    responses(
+        (status = 200, description = "delete_supplier OK")
+    ),
+    tag = "SRM/supplier"
+)]
+pub async fn delete_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

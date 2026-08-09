@@ -8,7 +8,8 @@
 import React from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
-import * as LucideIcons from 'lucide-react';
+import { ChevronRight, ChevronDown } from 'lucide-react';
+import { LazyIcon } from '@/components/icons/LazyIcon';
 import type { CanvasNode } from './types';
 import { getComponentByType } from './types';
 
@@ -45,15 +46,11 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
 
   const renderTreeItem = (node: CanvasNode) => {
     const comp = getComponentByType(node.type);
-    const IconComp = comp?.icon
-      ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[
-          comp.icon
-        ]
-      : null;
+    const iconName = comp?.icon || null;
 
     const label = (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        {IconComp && <IconComp size={14} />}
+        {iconName && <LazyIcon name={iconName} size={14} />}
         <Typography
           variant='body2'
           sx={{ fontSize: '0.8rem' }}
@@ -94,7 +91,7 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
       <SimpleTreeView
         selectedItems={selectedNodeId ?? null}
         onItemSelectionToggle={(_, nodeId, isSelected) => onSelectNode(isSelected ? nodeId : null)}
-        slots={{ expandIcon: LucideIcons.ChevronRight, collapseIcon: LucideIcons.ChevronDown }}
+        slots={{ expandIcon: ChevronRight, collapseIcon: ChevronDown }}
       >
         {nodes.map(renderTreeItem)}
       </SimpleTreeView>

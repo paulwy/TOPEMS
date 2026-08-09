@@ -14,6 +14,7 @@ use sqlx::{
     types::{BigDecimal, Uuid},
     Row,
 };
+use std::str::FromStr;
 use topems_shared::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};

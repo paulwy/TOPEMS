@@ -5,11 +5,9 @@ import { Users, ShoppingCart, Clock, Calculator, Award, Truck, Star } from 'luci
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import BarChartComponent from '../../components/charts/BarChart';
-import LineChartComponent from '../../components/charts/LineChart';
-import PieChartComponent from '../../components/charts/PieChart';
 import { designTokens } from '@/theme/tokens';
 import { SCM_PATHS } from '@/modules/scm/config';
+import { LazyChart } from '@/components/charts';
 
 const ct = designTokens.colors;
 
@@ -105,7 +103,7 @@ const ScmOverviewPage: React.FC = () => {
         id: 'order-trend',
         title: '采购订单趋势',
         chart: (
-          <BarChartComponent
+          <LazyChart type='bar'
             data={orderTrendData}
             xKey='name'
             yKey='value'
@@ -116,14 +114,14 @@ const ScmOverviewPage: React.FC = () => {
       {
         id: 'supplier-rating',
         title: '供应商评级分布',
-        chart: <PieChartComponent data={supplierRatingData} />,
+        chart: <LazyChart type='pie' data={supplierRatingData} />,
         height: 300,
       },
       {
         id: 'mrp-suggestion',
         title: 'MRP建议状态',
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={mrpStatusData}
             xKey='name'
             yKey='value'

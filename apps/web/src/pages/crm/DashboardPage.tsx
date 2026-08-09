@@ -10,9 +10,6 @@ import {
   Activity,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import BarChartComponent from '../../components/charts/BarChart';
-import LineChartComponent from '../../components/charts/LineChart';
-import PieChartComponent from '../../components/charts/PieChart';
 import {
   DashboardTemplate,
   type StatCard,
@@ -26,6 +23,7 @@ import type { FunnelStage, OpportunityStats } from '@/api/crm';
 import { CRM_PATHS } from '@/modules/crm/config';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { LazyChart } from '@/components/charts';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   TrendingUp,
@@ -154,7 +152,7 @@ export const DashboardPage: React.FC = () => {
       title: t('crm.overview.chart_funnel_count'),
       height: 300,
       chart: (
-        <BarChartComponent
+        <LazyChart type='bar'
           data={funnelBarData}
           xKey='name'
           yKey='value'
@@ -166,7 +164,7 @@ export const DashboardPage: React.FC = () => {
       title: t('crm.overview.chart_funnel_value'),
       height: 300,
       chart: (
-        <BarChartComponent
+        <LazyChart type='bar'
           data={funnelValueData}
           xKey='name'
           yKey='value'
@@ -178,7 +176,7 @@ export const DashboardPage: React.FC = () => {
       title: t('crm.overview.chart_stage_ratio'),
       height: 300,
       chart: (
-        <PieChartComponent
+        <LazyChart type='pie'
           data={funnelData.map((item) => ({
             name: item.stage_label,
             value: item.count,

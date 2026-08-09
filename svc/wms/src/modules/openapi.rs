@@ -62,6 +62,18 @@ pub struct OutboundOrder {
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::modules::warehouse::list_warehouses,
+        crate::modules::warehouse::create_warehouse,
+        crate::modules::warehouse::get_warehouse,
+        crate::modules::warehouse::update_warehouse,
+        crate::modules::warehouse::delete_warehouse,
+        crate::modules::inventory::list_inventory,
+        crate::modules::inventory::create_inventory,
+        crate::modules::inventory::get_inventory,
+        crate::modules::inventory::update_inventory,
+        crate::modules::inventory::delete_inventory,
+    ),
     components(
         schemas(
             Warehouse,

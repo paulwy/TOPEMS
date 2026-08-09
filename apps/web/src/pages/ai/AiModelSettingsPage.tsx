@@ -46,11 +46,9 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageContainer, Grid } from '@/components/common';
-import LineChartComponent from '@/components/charts/LineChart';
-import BarChartComponent from '@/components/charts/BarChart';
-import PieChartComponent from '@/components/charts/PieChart';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { LazyChart } from '@/components/charts';
 
 const ct = designTokens.colors;
 
@@ -764,7 +762,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         {t('ai.model_settings.usage.trend_7days')}
                       </Typography>
                       <Box sx={{ height: 300 }}>
-                        <LineChartComponent
+                        <LazyChart type='line'
                           data={usageData}
                           xKey='date'
                           yKey='tokens'
@@ -788,7 +786,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         {t('ai.model_settings.usage.model_ratio')}
                       </Typography>
                       <Box sx={{ height: 300 }}>
-                        <PieChartComponent data={modelUsageData} />
+                        <LazyChart type='pie' data={modelUsageData} />
                       </Box>
                     </Paper>
                   </Grid>

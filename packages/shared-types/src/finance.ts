@@ -36,14 +36,14 @@ export type GeneratedAuxiliaryAccount = FinanceTypes.AuxiliaryAccount;
 // 适配类型：将生成类型字段重映射到手写命名（任务 2）
 // ============================================================================
 // 手写 Account 与生成 Account 字段差异较大：
-// - isactive（手写） ↔ isEnabled（生成）—— 语义不同但都表示启用状态
+// - isactive（手写） ↔ is_enabled（生成）—— 语义不同但都表示启用状态
 // - category（手写 AccountCategory） ↔ account_type（生成 AccountType）—— 枚举值一致，字段名不同
 // 由于手写 Account 有大量生成类型没有的业务扩展字段，这里仅做字段名映射演示，
 // 完整替换需后端补充更多 Schema 字段（TODO）。
 
-/** 生成类型 Account 的字段重映射：isEnabled → isactive, account_type → category */
-export type AdaptedAccount = Omit<FinanceTypes.Account, 'isEnabled' | 'account_type'> & {
-  isactive?: FinanceTypes.Account['isEnabled'];
+/** 生成类型 Account 的字段重映射：is_enabled → isactive, account_type → category */
+export type AdaptedAccount = Omit<FinanceTypes.Account, 'is_enabled' | 'account_type'> & {
+  isactive?: FinanceTypes.Account['is_enabled'];
   category?: FinanceTypes.Account['account_type'];
 };
 
@@ -53,16 +53,16 @@ export type AdaptedAccount = Omit<FinanceTypes.Account, 'isEnabled' | 'account_t
 
 /**
  * 将生成类型 Account 转换为手写命名的 AdaptedAccount。
- * 字段映射：isEnabled → isactive, account_type → category
+ * 字段映射：is_enabled → isactive, account_type → category
  * 注意：手写 Account 还有 balance_direction/status/children 等扩展字段，需在业务层补充。
  */
 export const adaptAccountFromGenerated = (
   generated: FinanceTypes.Account
 ): AdaptedAccount => {
-  const { isEnabled, account_type, ...rest } = generated;
+  const { is_enabled, account_type, ...rest } = generated;
   return {
     ...rest,
-    isactive: isEnabled,
+    isactive: is_enabled,
     category: account_type,
   };
 };

@@ -16,11 +16,9 @@ import {
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import BarChartComponent from '../../components/charts/BarChart';
-import LineChartComponent from '../../components/charts/LineChart';
-import PieChartComponent from '../../components/charts/PieChart';
 import { designTokens } from '@/theme/tokens';
 import { RD_PATHS } from '@/modules/rd/config';
+import { LazyChart } from '@/components/charts';
 
 const ct = designTokens.colors;
 
@@ -123,14 +121,14 @@ const RsOverviewPage: React.FC = () => {
       {
         id: 'project-status',
         title: '项目状态分布',
-        chart: <PieChartComponent data={projectStatusData} />,
+        chart: <LazyChart type='pie' data={projectStatusData} />,
         height: 300,
       },
       {
         id: 'bug-trend',
         title: '月度缺陷趋势',
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={monthlyBugTrendData}
             xKey='name'
             yKey='value'
@@ -142,7 +140,7 @@ const RsOverviewPage: React.FC = () => {
         id: 'module-code',
         title: '模块代码量',
         chart: (
-          <BarChartComponent
+          <LazyChart type='bar'
             data={moduleCodeData}
             xKey='name'
             yKey='value'

@@ -21,22 +21,10 @@ import {
   Network,
 } from 'lucide-react';
 import { Box, Tabs, Tab, Stack, Menu, MenuItem, Button } from '@mui/material';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts';
 
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
-import LineChartComponent from '../../components/charts/LineChart';
-import { AreaChart } from '../../components/charts/AreaChart';
-import { BarChartComponent } from '../../components/charts/BarChart';
+import { LazyChart } from '@/components/charts';
 import { useNotificationStore } from '@/store';
 import { getErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
@@ -335,7 +323,8 @@ export const MonitorMetricsPage: React.FC = () => {
         title: 'CPU 使用率趋势',
         subtitle: '多服务 CPU 使用率对比',
         chart: (
-          <LineChartComponent
+          <LazyChart
+            type='line'
             data={cpuTrendData}
             xKey='name'
             yKeys={serviceNames.slice(0, 4).map((name, i) => ({
@@ -355,7 +344,8 @@ export const MonitorMetricsPage: React.FC = () => {
         title: '内存使用率趋势',
         subtitle: '多服务内存使用率对比',
         chart: (
-          <LineChartComponent
+          <LazyChart
+            type='line'
             data={memoryTrendData}
             xKey='name'
             yKeys={serviceNames.slice(0, 4).map((name, i) => ({
@@ -375,7 +365,8 @@ export const MonitorMetricsPage: React.FC = () => {
         title: '磁盘 I/O',
         subtitle: '磁盘读写吞吐量',
         chart: (
-          <AreaChart
+          <LazyChart
+            type='area'
             data={diskIOData}
             xKey='name'
             yKeys={[
@@ -394,7 +385,8 @@ export const MonitorMetricsPage: React.FC = () => {
         title: '网络流量',
         subtitle: '网络流入流出流量',
         chart: (
-          <AreaChart
+          <LazyChart
+            type='area'
             data={networkData}
             xKey='name'
             yKeys={[
@@ -413,46 +405,23 @@ export const MonitorMetricsPage: React.FC = () => {
         title: 'API 请求量',
         subtitle: '各服务 API 请求量对比',
         chart: (
-          <ResponsiveContainer
-            width='100%'
+          <LazyChart
+            type='bar'
+            data={apiRequestData}
+            xKey='name'
+            yKey='请求量'
+            barRadius={[4, 4, 0, 0]}
             height={280}
-          >
-            <BarChart data={apiRequestData}>
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis
-                dataKey='name'
-                tick={{ fontSize: 12 }}
-              />
-              <YAxis />
-              <Tooltip
-                formatter={(value) => [`${value} 次`, '请求量'] as [string, string]}
-                contentStyle={{
-                  borderRadius: 8,
-                  padding: 12,
-                }}
-              />
-              <Bar
-                dataKey='请求量'
-                radius={[4, 4, 0, 0]}
-              >
-                {apiRequestData.map((_, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={
-                      [
-                        'primary.main',
-                        'success.main',
-                        'warning.main',
-                        'error.main',
-                        'secondary.main',
-                        ct.cyan[500],
-                      ][index]
-                    }
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+            cellColors={[
+              'primary.main',
+              'success.main',
+              'warning.main',
+              'error.main',
+              'secondary.main',
+              ct.cyan[500],
+            ]}
+            tooltipFormatter={(value) => [`${value} 次`, '请求量'] as [string, string]}
+          />
         ),
         height: 360,
         type: 'bar',
@@ -463,7 +432,8 @@ export const MonitorMetricsPage: React.FC = () => {
         title: '响应时间分布',
         subtitle: 'P50 / P90 / P99 响应时间分布',
         chart: (
-          <BarChartComponent
+          <LazyChart
+            type='bar'
             data={responseTimeData}
             xKey='name'
             yKeys={[

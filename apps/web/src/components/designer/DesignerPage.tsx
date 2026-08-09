@@ -17,7 +17,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import * as LucideIcons from 'lucide-react';
+import { Layout, Undo2, Redo2, Trash2, Save } from 'lucide-react';
 import { useDesigner } from './useDesigner';
 import { ComponentPalette } from './ComponentPalette';
 import { DesignCanvas } from './DesignCanvas';
@@ -82,7 +82,7 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
           variant='subtitle1'
           sx={{ fontWeight: 600, flex: 1 }}
         >
-          <LucideIcons.Layout
+          <Layout
             style={{ marginRight: 8, verticalAlign: 'middle' }}
             size={18}
           />
@@ -97,7 +97,7 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
               size='small'
               aria-label='撤销'
             >
-              <LucideIcons.Undo2 size={18} />
+              <Undo2 size={18} />
             </IconButton>
           </span>
         </Tooltip>
@@ -110,7 +110,7 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
               size='small'
               aria-label='重做'
             >
-              <LucideIcons.Redo2 size={18} />
+              <Redo2 size={18} />
             </IconButton>
           </span>
         </Tooltip>
@@ -128,7 +128,7 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
             color='error'
             aria-label='清空画布'
           >
-            <LucideIcons.Trash2 size={18} />
+            <Trash2 size={18} />
           </IconButton>
         </Tooltip>
 
@@ -151,7 +151,7 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
         <Button
           variant='contained'
           size='small'
-          startIcon={<LucideIcons.Save size={16} />}
+          startIcon={<Save size={16} />}
           onClick={handleSave}
         >
           导出 Schema

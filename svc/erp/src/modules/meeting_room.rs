@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use utoipa::path;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -41,6 +42,14 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/meeting-rooms/{id}/bookings", get(get_room_bookings))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/meeting-rooms",
+    responses(
+        (status = 200, description = "list_rooms OK")
+    ),
+    tag = "ERP/meeting-room"
+)]
 pub async fn list_rooms(
     State(state): State<ApiState>,
     Query(params): Query<RoomQueryParams>,
@@ -97,6 +106,14 @@ pub async fn list_rooms(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/meeting-rooms",
+    responses(
+        (status = 200, description = "create_room OK")
+    ),
+    tag = "ERP/meeting-room"
+)]
 pub async fn create_room(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -170,6 +187,14 @@ pub async fn create_room(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/meeting-rooms/{id}",
+    responses(
+        (status = 200, description = "get_room OK")
+    ),
+    tag = "ERP/meeting-room"
+)]
 pub async fn get_room(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -341,6 +366,14 @@ pub async fn delete_room(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/meeting-rooms/bookings",
+    responses(
+        (status = 200, description = "list_bookings OK")
+    ),
+    tag = "ERP/meeting-room"
+)]
 pub async fn list_bookings(
     State(state): State<ApiState>,
     Query(params): Query<RoomQueryParams>,
@@ -397,6 +430,14 @@ pub async fn list_bookings(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/meeting-rooms/bookings",
+    responses(
+        (status = 200, description = "create_booking OK")
+    ),
+    tag = "ERP/meeting-room"
+)]
 pub async fn create_booking(
     State(state): State<ApiState>,
     headers: HeaderMap,

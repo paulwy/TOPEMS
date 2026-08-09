@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
+} from './_vendors/recharts-polar';
 import { useChartTheme, getChartColor } from './chartTheme';
 import type { ChartData } from './AreaChart';
 

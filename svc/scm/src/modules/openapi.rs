@@ -109,6 +109,23 @@ pub struct ApiResponse<T> {
 
 #[derive(OpenApi)]
 #[openapi(
+    // V72.5: 12 条 paths 已注册（suppliers×5 + purchase_orders×7），对应 handlers 已补 #[utoipa::path] 宏
+    paths(
+        // Suppliers
+        crate::modules::supplier::list_suppliers,
+        crate::modules::supplier::create_supplier,
+        crate::modules::supplier::get_supplier,
+        crate::modules::supplier::update_supplier,
+        crate::modules::supplier::delete_supplier,
+        // Purchase Orders
+        crate::modules::purchase_order::list_orders,
+        crate::modules::purchase_order::create_order,
+        crate::modules::purchase_order::get_order,
+        crate::modules::purchase_order::update_order,
+        crate::modules::purchase_order::delete_order,
+        crate::modules::purchase_order::approve_order,
+        crate::modules::purchase_order::reject_order,
+    ),
     components(
         schemas(
             Supplier,
@@ -131,6 +148,22 @@ pub struct ApiResponse<T> {
         title = "TOPEMS SCM API",
         version = "1.0.0",
         description = "供应链管理系统 API - 包含供应商管理、采购订单、供应商评价、送货预约等功能"
+    ),
+    servers(
+        (url = "http://localhost:8063", description = "本地开发环境"),
     )
 )]
 pub struct ScmApiDoc;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_openapi_spec() {
+        let spec = ScmApiDoc::openapi();
+        let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
+        std::fs::write("/tmp/topems-scm-openapi.json", json).expect("Failed to write spec");
+        eprintln!("OpenAPI spec written to /tmp/topems-scm-openapi.json");
+    }
+}

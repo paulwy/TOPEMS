@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import {
   BarChart,
   Bar,
@@ -6,25 +6,20 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  PieChart,
-  Pie,
-  Cell,
   LineChart,
   Line,
   Legend,
   AreaChart,
   Area,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
   ScatterChart,
   Scatter,
   ComposedChart,
   Brush,
   ResponsiveContainer,
-} from 'recharts';
+  Cell,
+} from '../charts/_vendors/recharts-cartesian';
+
+const PolarCasesLazy = lazy(() => import('./ChartLibrary.polar').then(m => ({ default: m.PolarCases })));
 
 export type ChartType =
   'bar' | 'pie' | 'line' | 'area' | 'radar' | 'scatter' | 'composed' | 'histogram' | 'gauge';
@@ -340,30 +335,22 @@ export const ChartComponent: React.FC<ChartConfig> = ({
     switch (type) {
       case 'pie':
         return (
-          <PieChart
-            width={chartWidth}
-            height={chartHeight}
-          >
-            <Pie
+          <Suspense fallback={<div style={{ width: chartWidth, height: chartHeight }} />}>
+            <PolarCasesLazy
+              type='pie'
               data={data}
-              cx='50%'
-              cy='50%'
-              innerRadius={40}
-              outerRadius={80}
-              paddingAngle={2}
-              dataKey={dataKey || yKey}
-              nameKey={nameKey || xKey}
-            >
-              {data.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={(entry[colorKey] as string) || colors[index % colors.length]}
-                />
-              ))}
-            </Pie>
-            {showTooltip && <Tooltip content={<CustomTooltip />} />}
-            {showLegend && <Legend />}
-          </PieChart>
+              chartWidth={chartWidth}
+              chartHeight={chartHeight}
+              xKey={xKey}
+              yKey={yKey}
+              dataKey={dataKey}
+              nameKey={nameKey}
+              colors={colors}
+              colorKey={colorKey}
+              showLegend={showLegend}
+              showTooltip={showTooltip}
+            />
+          </Suspense>
         );
 
       case 'line':
@@ -494,29 +481,20 @@ export const ChartComponent: React.FC<ChartConfig> = ({
 
       case 'radar':
         return (
-          <RadarChart
-            width={chartWidth}
-            height={chartHeight}
-            data={data}
-          >
-            <PolarGrid stroke='border.default' />
-            <PolarAngleAxis
-              dataKey={xKey}
-              tick={{ fill: 'grey.600', fontSize: 11 }}
+          <Suspense fallback={<div style={{ width: chartWidth, height: chartHeight }} />}>
+            <PolarCasesLazy
+              type='radar'
+              data={data}
+              chartWidth={chartWidth}
+              chartHeight={chartHeight}
+              xKey={xKey}
+              yKey={yKey}
+              colors={colors}
+              colorKey={colorKey}
+              showLegend={showLegend}
+              showTooltip={showTooltip}
             />
-            <PolarRadiusAxis
-              angle={30}
-              domain={[0, 'dataMax']}
-            />
-            {showTooltip && <Tooltip content={<CustomTooltip />} />}
-            {showLegend && <Legend />}
-            <Radar
-              dataKey={yKey}
-              stroke={colors[0]}
-              fill={colors[0]}
-              fillOpacity={0.3}
-            />
-          </RadarChart>
+          </Suspense>
         );
 
       case 'scatter':

@@ -17,20 +17,45 @@ import type {
   InventoryStatisticsParams,
   PaginationParams,
 } from './types';
+import {
+  toOpenApiParams,
+  toOpenApiRequestBody,
+  type AdaptedQuery,
+  type AdaptedRequestBody,
+  type TypedApiResponse,
+  type TypedPaginatedResponse,
+} from '@topems/shared-types';
 
 export const inventoryApi = {
+  /**
+   * V72.5 第二批 绑定样板：wms_list_inventory operation（openapi: GET /api/wms/inventory）
+   * 注意：operationId 经 aggregate.py 去重为 wms_list_inventory（与 erp_list_inventory 区分）
+   */
   list: async (
-    params?: PaginationParams
-  ): Promise<ApiResponse<PaginatedResponse<InventoryItem>>> => {
-    return apiClient.wms.get('/inventory', { params });
+    params?: AdaptedQuery<'wms_list_inventory'> | PaginationParams,
+  ): Promise<TypedPaginatedResponse<InventoryItem>> => {
+    return apiClient.wms.get('/inventory', {
+      params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
+    });
   },
 
-  get: async (id: string): Promise<ApiResponse<InventoryItem>> => {
+  /**
+   * V72.5 第二批 绑定样板：wms_get_inventory operation（openapi: GET /api/wms/inventory/{id}）
+   */
+  get: async (id: string): Promise<TypedApiResponse<InventoryItem, 'wms_get_inventory'>> => {
     return apiClient.wms.get(`/inventory/${id}`);
   },
 
-  create: async (data: CreateInventoryItemRequest): Promise<ApiResponse<InventoryItem>> => {
-    return apiClient.wms.post('/inventory', data);
+  /**
+   * V72.5 第二批 绑定样板：wms_create_inventory operation（openapi: POST /api/wms/inventory）
+   */
+  create: async (
+    data: AdaptedRequestBody<'wms_create_inventory'> | CreateInventoryItemRequest,
+  ): Promise<TypedApiResponse<InventoryItem, 'wms_create_inventory'>> => {
+    return apiClient.wms.post(
+      '/inventory',
+      toOpenApiRequestBody(data as Record<string, unknown>),
+    );
   },
 
   update: async (

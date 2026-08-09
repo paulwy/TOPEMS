@@ -17,11 +17,10 @@ import {
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import BarChartComponent from '../../components/charts/BarChart';
-import LineChartComponent from '../../components/charts/LineChart';
 import { erpApi } from '@/api/erp';
 import type { ErpDashboardStats } from '@/api/erp';
 import { ERP_PATHS } from '@/modules/erp/config';
+import { LazyChart } from '@/components/charts';
 
 const iconMap: Record<string, React.ReactNode> = {
   TrendingUp: <TrendingUp size={24} />,
@@ -157,7 +156,7 @@ export const DashboardPage: React.FC = () => {
         id: 'data-overview',
         title: '数据概览',
         chart: (
-          <BarChartComponent
+          <LazyChart type='bar'
             data={barData}
             xKey='name'
             yKey='value'
@@ -169,7 +168,7 @@ export const DashboardPage: React.FC = () => {
         id: 'trend-analysis',
         title: '趋势分析',
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={lineData}
             xKey='name'
             yKey='value'

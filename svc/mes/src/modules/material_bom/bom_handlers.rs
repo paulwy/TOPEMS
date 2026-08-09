@@ -1,6 +1,8 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{NaiveDateTime, Utc};
+use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
+use std::str::FromStr;
 use topems_shared::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -218,8 +220,17 @@ pub async fn create_material_bom(
             item.material_name.clone(),
             item.specification.clone(),
             item.unit.clone(),
-            BigDecimal::from_str(&item.quantity.to_string()).unwrap_or_default(),
-            BigDecimal::from_str(&item.loss_rate.unwrap_or(0.0).to_string()).unwrap_or_default(),
+            item.quantity
+                .to_string()
+                .parse::<BigDecimal>()
+                .ok()
+                .unwrap_or_else(|| BigDecimal::new(0.into(), 0)),
+            item.loss_rate
+                .unwrap_or(0.0)
+                .to_string()
+                .parse::<BigDecimal>()
+                .ok()
+                .unwrap_or_else(|| BigDecimal::new(0.into(), 0)),
             item.sequence.unwrap_or(idx as i32),
             item.notes.clone(),
         )
@@ -445,9 +456,17 @@ pub async fn update_material_bom(
                 item.material_name.clone(),
                 item.specification.clone(),
                 item.unit.clone(),
-                BigDecimal::from_str(&item.quantity.to_string()).unwrap_or_default(),
-                BigDecimal::from_str(&item.loss_rate.unwrap_or(0.0).to_string())
-                    .unwrap_or_default(),
+                item.quantity
+                    .to_string()
+                    .parse::<BigDecimal>()
+                    .ok()
+                    .unwrap_or_else(|| BigDecimal::new(0.into(), 0)),
+                item.loss_rate
+                    .unwrap_or(0.0)
+                    .to_string()
+                    .parse::<BigDecimal>()
+                    .ok()
+                    .unwrap_or_else(|| BigDecimal::new(0.into(), 0)),
                 item.sequence.unwrap_or(idx as i32),
                 item.notes.clone(),
             )

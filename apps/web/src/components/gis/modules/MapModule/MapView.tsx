@@ -1,5 +1,5 @@
 // modules/MapModule/MapView.tsx
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useTheme } from '@mui/material';
 import {
   MapContainer,
@@ -19,7 +19,8 @@ import MapControls from './MapControls';
 import LayerManager from './LayerManager';
 import ToolPanel from './ToolPanel';
 import HeatmapLayer, { HeatmapLegend } from '../HeatmapModule/HeatmapLayer';
-import Map3DView from '../../Map3DView';
+// C3 §5 P1-2: Map3DView 按需懒加载，将 three.js + @react-three/* 拆分为独立 chunk
+const Map3DView = lazy(() => import('../../Map3DView'));
 import AmapLayer from '../../AmapLayer';
 import DeviceTrackPanel from '../../DeviceTrackPanel';
 import L from 'leaflet';
@@ -1194,12 +1195,14 @@ const MapView: React.FC<MapViewProps> = ({
               overflow: 'hidden',
             }}
           >
-            <Map3DView
-              devicePoints={devicePoints}
-              pipelines={pipelines}
-              storageLocations={storageLocations}
-              onClose={() => setShow3DView(false)}
-            />
+            <Suspense fallback={null}>
+              <Map3DView
+                devicePoints={devicePoints}
+                pipelines={pipelines}
+                storageLocations={storageLocations}
+                onClose={() => setShow3DView(false)}
+              />
+            </Suspense>
           </div>
         </div>
       )}

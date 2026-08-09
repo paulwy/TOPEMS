@@ -15,12 +15,11 @@ import {
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import PieChartComponent from '../../components/charts/PieChart';
-import LineChartComponent from '../../components/charts/LineChart';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { docApi } from '@/api/doc';
 import type { DocDashboardStats } from '@/api/doc';
+import { LazyChart } from '@/components/charts';
 
 const ct = designTokens.colors;
 
@@ -133,14 +132,14 @@ export const DocumentDashboardPage: React.FC = () => {
       {
         id: 'document-type-distribution',
         title: '文档状态分布',
-        chart: <PieChartComponent data={pieData} />,
+        chart: <LazyChart type='pie' data={pieData} />,
         height: 300,
       },
       {
         id: 'upload-trend',
         title: '文档统计',
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={lineData}
             xKey='name'
             yKey='value'

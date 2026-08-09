@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use utoipa::path;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -27,6 +28,14 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/sales-orders",
+    responses(
+        (status = 200, description = "list_sales_orders OK")
+    ),
+    tag = "ERP/sales-order"
+)]
 pub async fn list_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -99,6 +108,14 @@ pub async fn list_sales_orders(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/sales-orders/{id}",
+    responses(
+        (status = 200, description = "get_sales_order OK")
+    ),
+    tag = "ERP/sales-order"
+)]
 pub async fn get_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -125,6 +142,14 @@ pub async fn get_sales_order(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/sales-orders",
+    responses(
+        (status = 200, description = "create_sales_order OK")
+    ),
+    tag = "ERP/sales-order"
+)]
 pub async fn create_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

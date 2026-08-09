@@ -16,11 +16,9 @@ import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/
 import { PageContainer } from '@/components/common';
 import { HRM_PATHS } from '@/modules/hrm/config';
 import { designTokens } from '@/theme/tokens';
-import BarChartComponent from '../../components/charts/BarChart';
-import LineChartComponent from '../../components/charts/LineChart';
-import PieChartComponent from '../../components/charts/PieChart';
 
 import { useTranslation } from 'react-i18next';
+import { LazyChart } from '@/components/charts';
 
 const ct = designTokens.colors;
 
@@ -127,7 +125,7 @@ const HrmOverviewPage: React.FC = () => {
         id: 'department-distribution',
         title: t('hrm.hrm_overview_page.text_a2487e'),
         chart: (
-          <BarChartComponent
+          <LazyChart type='bar'
             data={departmentData}
             xKey='name'
             yKey='value'
@@ -139,7 +137,7 @@ const HrmOverviewPage: React.FC = () => {
         id: 'hire-trend',
         title: t('hrm.hrm_overview_page.text_0b2824'),
         chart: (
-          <LineChartComponent
+          <LazyChart type='line'
             data={monthlyTrendData}
             xKey='name'
             yKey='value'
@@ -150,7 +148,7 @@ const HrmOverviewPage: React.FC = () => {
       {
         id: 'performance-distribution',
         title: t('hrm.hrm_overview_page.text_5890cb'),
-        chart: <PieChartComponent data={performanceData} />,
+        chart: <LazyChart type='pie' data={performanceData} />,
         height: 300,
       },
     ],

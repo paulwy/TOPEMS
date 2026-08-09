@@ -4,4 +4,5 @@ pub mod modules;
 pub mod services;
 pub mod shared;
 
+pub use modules::openapi::IamApiDoc as ApiDoc;
 pub use shared::{AppState, CoreResponse};

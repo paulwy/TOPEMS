@@ -10,7 +10,9 @@
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
-    "gen:types": "node ../../scripts/openapi/gen-types.mjs"
+    "gen:types": "node ../../scripts/openapi/gen-types.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "files": [
     "dist",
@@ -34,6 +36,7 @@
     "openapi-typescript": "^7.13.0",
     "react": "^19.2.7",
     "tsup": "^8.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
   }
 }

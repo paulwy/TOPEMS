@@ -61,6 +61,12 @@ pub struct Permission {
             Permission,
         ),
     ),
+    paths(
+        crate::modules::iam::user::crud::list_users,
+        crate::modules::iam::user::crud::create_user,
+        crate::modules::iam::auth::login,
+        crate::modules::iam::auth::register,
+    ),
     tags(
         (name = "IAM", description = "身份与访问管理 - 用户、角色、权限管理"),
         (name = "IAM-Auth", description = "认证接口 - 登录、注册、Token刷新"),

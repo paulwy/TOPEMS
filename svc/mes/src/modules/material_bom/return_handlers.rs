@@ -1,6 +1,8 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{NaiveDateTime, Utc};
+use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
+use std::str::FromStr;
 use topems_shared::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -94,7 +96,11 @@ pub async fn create_material_return(
             item.material_code.clone(),
             item.material_name.clone(),
             item.unit.clone(),
-            BigDecimal::from_str(&item.quantity.to_string()).unwrap_or_default(),
+            item.quantity
+                .to_string()
+                .parse::<BigDecimal>()
+                .ok()
+                .unwrap_or_else(|| BigDecimal::new(0.into(), 0)),
             item.reason.clone(),
             item.batch_no.clone(),
             item.notes.clone(),
