@@ -13,6 +13,14 @@ use crate::conversion_rules::{
 };
 use crate::models::AppState;
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/rules",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_conversion_rules_api(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<ConversionRule>>> {
@@ -31,6 +39,14 @@ pub async fn list_conversion_rules_api(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/rules/{id}",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -54,6 +70,14 @@ pub async fn get_conversion_rule_api(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/rules",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_conversion_rule_api(
     State(state): State<AppState>,
     Json(req): Json<CreateConversionRuleRequest>,
@@ -101,6 +125,14 @@ pub async fn create_conversion_rule_api(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/integration/rules/{id}",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn update_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -166,6 +198,14 @@ pub async fn update_conversion_rule_api(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/integration/rules/{id}",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn delete_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -195,6 +235,14 @@ pub async fn delete_conversion_rule_api(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/rules/{id}/executions",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_rule_executions_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -214,6 +262,14 @@ pub async fn get_rule_executions_api(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/rules/{id}/execute",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn execute_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -287,6 +343,14 @@ pub async fn execute_conversion_rule_api(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/rules/{id}/enable",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn enable_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -308,6 +372,14 @@ pub async fn enable_conversion_rule_api(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/rules/{id}/disable",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn disable_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

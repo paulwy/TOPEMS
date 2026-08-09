@@ -8,6 +8,14 @@ use topems_shared_core::response::ApiResponse;
 use crate::mes_qms_integration;
 use crate::models::{get_tenant_id, AppState};
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/mes-qms",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_mes_qms_sync_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
@@ -46,6 +54,14 @@ pub async fn list_mes_qms_sync_api(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/mes-qms/{id}",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_mes_qms_sync_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -63,6 +79,14 @@ pub async fn get_mes_qms_sync_api(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/mes-qms/stats",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_mes_qms_stats_api(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<mes_qms_integration::SyncStats>> {
@@ -81,6 +105,14 @@ pub async fn get_mes_qms_stats_api(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/mes-qms/trigger-inspection",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn trigger_qms_inspection_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
@@ -110,6 +142,14 @@ pub async fn trigger_qms_inspection_api(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/mes-qms/sync-result",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn sync_quality_result_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
@@ -139,6 +179,14 @@ pub async fn sync_quality_result_api(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/mes-qms/sync-trace",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn sync_trace_chain_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
@@ -168,6 +216,14 @@ pub async fn sync_trace_chain_api(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/mes-qms/defect-handling",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn defect_handling_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
@@ -197,6 +253,14 @@ pub async fn defect_handling_api(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/mes-qms/{id}/retry",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn retry_mes_qms_sync_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

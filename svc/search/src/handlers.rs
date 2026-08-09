@@ -275,6 +275,21 @@ async fn search_all(
     results.into_iter().take(limit as usize).collect()
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/search",
+    tag = "fulltext",
+    params(
+        ("keyword" = String, Query, description = "搜索关键词"),
+        ("page" = Option<i64>, Query, description = "页码（默认 1）"),
+        ("page_size" = Option<i64>, Query, description = "每页数量（默认 20，最大 100）"),
+        ("modules" = Option<Vec<String>>, Query, description = "限定搜索模块列表，如 user/customer/order/document"),
+    ),
+    responses(
+        (status = 200, description = "搜索结果"),
+        (status = 400, description = "搜索关键词为空"),
+    ),
+)]
 pub async fn search_handler(
     State(pool): State<PgPool>,
     Query(req): Query<SearchRequest>,
@@ -299,6 +314,14 @@ pub async fn search_handler(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "health",
+    responses(
+        (status = 200, description = "服务健康"),
+    ),
+)]
 pub async fn health_handler() -> &'static str {
     "OK"
 }

@@ -10,9 +10,12 @@ pub mod hazardous_material;
 pub mod health;
 pub mod occupational_disease;
 pub mod occupational_health;
+pub mod openapi;
 pub mod risk;
 pub mod safety;
 pub mod training;
+
+pub use openapi::ApiDoc;
 
 use crate::shared::AppState;
 use axum::Router;

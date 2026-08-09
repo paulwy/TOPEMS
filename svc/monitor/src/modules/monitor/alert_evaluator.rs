@@ -248,6 +248,14 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
         .unwrap_or_else(Uuid::new_v4)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/monitor/thresholds",
+    tag = "thresholds",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_thresholds(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -339,6 +347,14 @@ pub async fn list_thresholds(
     axum::Json(ApiResponse::success(filtered, "获取阈值列表成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/monitor/thresholds",
+    tag = "thresholds",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_threshold(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -362,6 +378,14 @@ pub async fn create_threshold(
     axum::Json(ApiResponse::success(threshold, "阈值创建成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/monitor/thresholds/{id}",
+    tag = "thresholds",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_threshold(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -385,6 +409,14 @@ pub async fn get_threshold(
     axum::Json(ApiResponse::success(threshold, "获取阈值详情成功"))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/monitor/thresholds/{id}",
+    tag = "thresholds",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn update_threshold(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -409,6 +441,14 @@ pub async fn update_threshold(
     axum::Json(ApiResponse::success(threshold, "阈值更新成功"))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/monitor/thresholds/{id}",
+    tag = "thresholds",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn delete_threshold(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -420,6 +460,14 @@ pub async fn delete_threshold(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/monitor/thresholds/evaluate",
+    tag = "thresholds",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn evaluate_thresholds(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -446,6 +494,14 @@ pub async fn evaluate_thresholds(
     axum::Json(ApiResponse::success(results, "阈值评估完成"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/monitor/metrics/snapshot",
+    tag = "metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_metric_snapshot(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

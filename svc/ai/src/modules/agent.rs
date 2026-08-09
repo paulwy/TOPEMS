@@ -11,7 +11,15 @@ pub fn create_routes() -> Router<crate::shared::AppState> {
         .route("/agent/tools", get(list_agent_tools))
 }
 
-async fn agent_run(
+#[utoipa::path(
+    post,
+    path = "/api/ai/agent/run",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn agent_run(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<crate::services::AgentRequest>,
 ) -> Json<ApiResponse<crate::services::AgentResponse>> {
@@ -21,7 +29,15 @@ async fn agent_run(
     }
 }
 
-async fn list_agent_tools() -> Json<ApiResponse<Vec<serde_json::Value>>> {
+#[utoipa::path(
+    get,
+    path = "/api/ai/agent/tools",
+    tag = "ai",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn list_agent_tools() -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let tools = vec![
         serde_json::json!({
             "name": "search",

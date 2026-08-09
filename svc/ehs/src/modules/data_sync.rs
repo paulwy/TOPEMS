@@ -70,6 +70,12 @@ pub struct SyncAccidentToLimsRequest {
 
 // ==================== Handler Functions ====================
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/sync-records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_sync_records(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<SyncQuery>,
@@ -137,6 +143,12 @@ pub async fn list_sync_records(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/sync-records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_sync_record(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -178,6 +190,12 @@ pub async fn get_sync_record(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/sync/hazard-to-qms",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn sync_hazard_to_qms(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<SyncHazardToQmsRequest>,
@@ -272,6 +290,12 @@ pub async fn sync_hazard_to_qms(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/sync/accident-to-lims",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn sync_accident_to_lims(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<SyncAccidentToLimsRequest>,
@@ -371,6 +395,12 @@ pub async fn sync_accident_to_lims(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/sync-records/{id}/retry",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn retry_sync(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -412,6 +442,12 @@ pub async fn retry_sync(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/sync-records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_sync_record(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -446,6 +482,12 @@ pub struct SyncConfig {
     pub last_sync_at: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/sync/configs",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_sync_configs(
     State(_state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<SyncConfig>> {
@@ -469,6 +511,12 @@ pub async fn list_sync_configs(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/sync/configs",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_sync_configs(
     State(_state): State<crate::shared::AppState>,
     Json(req): Json<serde_json::Value>,
@@ -513,6 +561,12 @@ pub async fn update_sync_configs(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/sync/retry",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn batch_retry_sync(
     State(_state): State<crate::shared::AppState>,
     Json(req): Json<serde_json::Value>,

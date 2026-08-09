@@ -388,13 +388,18 @@ def merge_paths(
                 if svc not in tags:
                     tags.insert(0, svc)
                 # operationId 全局去重：冲突时改为 `{svc}_{原 operationId}`
+                # 同服务内也需去重（如 ehs 的 list_plans 在 checks 和 emergency-plans 模块都有）
                 oid = spec_def.get("operationId")
                 if oid:
-                    if oid in seen_oids and seen_oids[oid] != svc:
-                        new_oid = f"{svc}_{oid}"
+                    if oid in seen_oids:
+                        owner = seen_oids[oid]
+                        if owner == svc:
+                            new_oid = f"{svc}_{oid}_{prefixed.replace('/', '_').strip('_')}"
+                        else:
+                            new_oid = f"{svc}_{oid}"
                         spec_def["operationId"] = new_oid
                         log_warn(
-                            f"operationId 冲突: '{oid}' 已被 {seen_oids[oid]} 占用，"
+                            f"operationId 冲突: '{oid}' 已被 {owner} 占用，"
                             f"{svc} 重命名为 '{new_oid}'"
                         )
                     else:

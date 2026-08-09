@@ -6,3 +6,5 @@ pub mod modules;
 pub mod routes;
 pub mod services;
 pub mod shared;
+
+pub use modules::ApiDoc;

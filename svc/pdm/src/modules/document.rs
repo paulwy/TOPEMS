@@ -105,6 +105,12 @@ pub struct WorkflowStep {
     pub timeout_days: Option<i32>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/documents",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_documents(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -172,6 +178,12 @@ pub async fn list_documents(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/documents",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -231,6 +243,12 @@ pub async fn create_document(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/documents/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -261,6 +279,12 @@ pub async fn get_document(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pdm/documents/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -345,6 +369,12 @@ pub async fn update_document(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pdm/documents/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -376,6 +406,12 @@ pub struct StartDocumentApprovalRequest {
     pub created_by: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/documents/{id}/approve",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn start_document_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -508,6 +544,12 @@ pub async fn start_document_approval(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/documents/{id}/approval-history",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_document_approval_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -566,6 +608,12 @@ pub async fn get_document_approval_history(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/documents/pending-approval",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_pending_documents(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -337,6 +337,12 @@ pub struct CreateHealthTrainingRequest {
     pub pass_rate: Option<f64>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/factors",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_hazard_factors(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -350,6 +356,12 @@ pub async fn list_hazard_factors(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-disease/factors",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_hazard_factor(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -386,6 +398,12 @@ pub async fn create_hazard_factor(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/factors/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_hazard_factor(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -419,6 +437,12 @@ pub async fn get_hazard_factor(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/occupational-disease/factors/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_hazard_factor(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -453,6 +477,12 @@ pub async fn update_hazard_factor(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/occupational-disease/factors/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_hazard_factor(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -464,6 +494,12 @@ pub async fn delete_hazard_factor(
     Json(ApiResponse::success((), "危害因素删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/detections",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_detection_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -477,6 +513,12 @@ pub async fn list_detection_records(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-disease/detections",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_detection_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -516,6 +558,12 @@ pub async fn create_detection_record(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/detections/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_detection_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -552,6 +600,12 @@ pub async fn get_detection_record(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/occupational-disease/detections/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_detection_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -563,6 +617,12 @@ pub async fn delete_detection_record(
     Json(ApiResponse::success((), "检测记录删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/cases",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_disease_cases(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -576,6 +636,12 @@ pub async fn list_disease_cases(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-disease/cases",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_disease_case(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -617,6 +683,12 @@ pub async fn create_disease_case(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/cases/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_disease_case(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -655,6 +727,12 @@ pub async fn get_disease_case(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/occupational-disease/cases/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_disease_case(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -701,6 +779,12 @@ pub async fn update_disease_case(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/occupational-disease/cases/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_disease_case(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -712,6 +796,12 @@ pub async fn delete_disease_case(
     Json(ApiResponse::success((), "职业病案例删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/protection-measures",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_protection_measures(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -725,6 +815,12 @@ pub async fn list_protection_measures(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-disease/protection-measures",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_protection_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -760,6 +856,12 @@ pub async fn create_protection_measure(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/protection-measures/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_protection_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -792,6 +894,12 @@ pub async fn get_protection_measure(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/occupational-disease/protection-measures/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_protection_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -835,6 +943,12 @@ pub async fn update_protection_measure(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/occupational-disease/protection-measures/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_protection_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -846,6 +960,12 @@ pub async fn delete_protection_measure(
     Json(ApiResponse::success((), "防护措施删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/trainings",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_health_trainings(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -859,6 +979,12 @@ pub async fn list_health_trainings(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-disease/trainings",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_health_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -894,6 +1020,12 @@ pub async fn create_health_training(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/trainings/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_health_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -926,6 +1058,12 @@ pub async fn get_health_training(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/occupational-disease/trainings/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_health_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -937,6 +1075,12 @@ pub async fn delete_health_training(
     Json(ApiResponse::success((), "培训记录删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/statistics",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_disease_statistics(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -972,6 +1116,12 @@ pub async fn get_disease_statistics(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/occupational-disease/factor-types",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_factor_types(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

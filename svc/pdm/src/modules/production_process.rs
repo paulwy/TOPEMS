@@ -80,6 +80,12 @@ pub struct ProcessQuery {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/production-processes",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_processes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -146,6 +152,12 @@ pub async fn list_processes(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/production-processes",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -190,6 +202,12 @@ pub async fn create_process(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/production-processes/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -219,6 +237,12 @@ pub async fn get_process(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pdm/production-processes/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -267,6 +291,12 @@ pub async fn update_process(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pdm/production-processes/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

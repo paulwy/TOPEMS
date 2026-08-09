@@ -77,6 +77,12 @@ pub struct FormulaQuery {
     pub product_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/production-formulas",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_formulas(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -148,6 +154,12 @@ pub async fn list_formulas(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/production-formulas",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_formula(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -194,6 +206,12 @@ pub async fn create_formula(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/production-formulas/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_formula(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -224,6 +242,12 @@ pub async fn get_formula(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pdm/production-formulas/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_formula(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -271,6 +295,12 @@ pub async fn update_formula(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pdm/production-formulas/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_formula(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

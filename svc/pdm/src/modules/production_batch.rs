@@ -84,6 +84,12 @@ pub struct BatchQuery {
     pub product_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/production-batches",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_batches(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -155,6 +161,12 @@ pub async fn list_batches(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/production-batches",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_batch(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -201,6 +213,12 @@ pub async fn create_batch(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/production-batches/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_batch(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -231,6 +249,12 @@ pub async fn get_batch(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pdm/production-batches/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_batch(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -284,6 +308,12 @@ pub async fn update_batch(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pdm/production-batches/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_batch(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

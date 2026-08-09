@@ -3,9 +3,993 @@
   "info": {
     "title": "TOPEMS API",
     "version": "1.0.0",
-    "description": "TOPEMS 企业级 SaaS 平台统一 API 文档（由 aggregate.py 从 cargo test 提取的 spec 聚合生成）\n\n聚合自 11 个服务，共 107 个端点、334 个 Schema（含 206 个标准类型）。\n生成时间: 2026-08-09T10:47:48.327631+00:00"
+    "description": "TOPEMS 企业级 SaaS 平台统一 API 文档（由 aggregate.py 从 cargo test 提取的 spec 聚合生成）\n\n聚合自 20 个服务，共 616 个端点、344 个 Schema（含 206 个标准类型）。\n生成时间: 2026-08-09T12:01:18.824821+00:00"
   },
   "paths": {
+    "/ai/": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "home",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/agent/run": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "agent_run",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/agent/tools": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "list_agent_tools",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/analysis/classify": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_analysis_classify",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/analysis/entities": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_analysis_entities",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/analysis/history": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_analysis_history",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/analysis/keywords": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_analysis_keywords",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/analysis/sentiment": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_analysis_sentiment",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/assistant/anomaly/predict": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "anomaly_predict",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/assistant/flow": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "flow_assistant",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/assistant/knowledge/ask": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "knowledge_ask",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/assistant/report": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "report_assistant",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/chat": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "chat",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/code/explain": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_code_explain",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/code/fix": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_code_fix",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/code/generate": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_code_generate",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/code/optimize": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_code_optimize",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/code/review": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_code_review",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/complete": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "complete",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/connectors": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "list_connectors",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/connectors/create": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "create_connector",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/connectors/delete": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "delete_connector",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/connectors/get": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "get_connector",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/connectors/query": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "query_data",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/connectors/test": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "test_connector",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/connectors/update": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "update_connector",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/documents": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_list",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/documents/qa": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_qa",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/documents/upload": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_upload",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/documents/vectorize-from-file": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_vectorize_from_file",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/documents/{id}": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_get",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_delete",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/documents/{id}/extract": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_extract",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/documents/{id}/key-points": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_key_points",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/documents/{id}/process": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_process",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/documents/{id}/summarize": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_document_summarize",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/embedding/generate": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_embedding_generate",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/generate": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "generate",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/multimodal/image/analyze": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_multimodal_image_analyze",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/multimodal/image/caption": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_multimodal_image_caption",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/multimodal/image/describe": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_multimodal_image_describe",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/multimodal/image/objects": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_multimodal_image_objects",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/multimodal/image/text": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_multimodal_image_text",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/multimodal/video/analyze": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_multimodal_video_analyze",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/multimodal/video/summary": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_multimodal_video_summary",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/profile/get": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_profile_get",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/profile/update": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_profile_update",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/qa/ask": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_qa_ask",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/qa/ask-conversation": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_qa_ask_conversation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/qa/ask-structured": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_qa_ask_structured",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/qa/ask-with-context": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_qa_ask_with_context",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/qa/classify": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_qa_classify",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/qa/feedback": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_qa_feedback",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/qa/history": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_qa_history",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/qa/history/batch-delete": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_qa_batch_delete_history",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/qa/history/{id}": {
+      "delete": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_qa_delete_history",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/recommend": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_recommend",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/recommend/documents": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_recommend_documents",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/recommend/knowledge": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_recommend_knowledge",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/recommend/opportunities": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_recommend_opportunities",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/summarize": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "summarize",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/templates": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "list_templates",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/validate": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "validate",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/vectors/batch-store": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_vector_batch_store",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/vectors/clear": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_vector_clear",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/vectors/hybrid-search": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_vector_hybrid_search",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/vectors/search": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_vector_search",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/vectors/stats": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_vector_stats",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/vectors/store": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_vector_store",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ai/vectors/{id}": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_vector_get",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "_vector_delete",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/plugins/health": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "plugin_health_check",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/plugins/info": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "get_plugin_info",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/ai/health": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/ai/health/detailed": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "health_check_detailed",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/ai/search": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "ai_search",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/crm/contacts": {
       "get": {
         "tags": [
@@ -362,6 +1346,2419 @@
           },
           "500": {
             "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/ehs/": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "_home",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/checks/plans": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_plans",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/checks/plans/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/checks/plans/{plan_id}/items": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_plan_items",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_plan_item",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/checks/plans/{plan_id}/items/{item_id}": {
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_plan_item",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/checks/records": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_records",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/checks/records/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/drills/plans": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_drill_plans",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_drill_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/drills/plans/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_drill_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_drill_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_drill_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/drills/records": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_drill_records",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_drill_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/drills/records/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_drill_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_drill_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_drill_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/drills/records/{id}/evaluation": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_drill_evaluation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/drills/records/{id}/problems": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_drill_problems",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_drill_problem",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/drills/records/{id}/problems/{problem_id}": {
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_drill_problem",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/drills/statistics": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_drill_statistics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/drills/types": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_drill_types",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/emergency-plans": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "ehs_list_plans_api_ehs_emergency-plans",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "ehs_create_plan_api_ehs_emergency-plans",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/emergency-plans/categories": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_plan_categories",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/emergency-plans/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "ehs_get_plan_api_ehs_emergency-plans_{id}",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "ehs_update_plan_api_ehs_emergency-plans_{id}",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "ehs_delete_plan_api_ehs_emergency-plans_{id}",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/emergency-plans/{id}/approve": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "approve_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/emergency-plans/{id}/submit-approval": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "submit_plan_approval",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/emergency-plans/{id}/supplies": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_plan_supplies",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "add_plan_supply",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/emergency-plans/{id}/supplies/{supply_id}": {
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_plan_supply",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/emergency-plans/{id}/versions": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_plan_versions",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_new_version",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environment/records": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "ehs_list_records_api_ehs_environment_records",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "ehs_create_record_api_ehs_environment_records",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/evaluations": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_evaluations",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_evaluation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/evaluations/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_evaluation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_evaluation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_evaluation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/incidents": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_incidents",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_incident",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/incidents/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_incident",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_incident",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_incident",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/monitoring": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_monitor_records",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_monitor_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/monitoring/types": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_monitor_types",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/monitoring/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_monitor_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_monitor_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/permits": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_permits",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_permit",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/permits/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_permit",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_permit",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_permit",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/regulations": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_regulations",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_regulation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/regulations/categories": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_regulation_categories",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/regulations/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_regulation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_regulation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_regulation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/environmental-compliance/statistics": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_compliance_statistics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazardous-materials": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_materials",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_material",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazardous-materials/categories": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_material_categories",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazardous-materials/statistics": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_material_statistics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazardous-materials/stock-records": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_stock_records",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazardous-materials/stock-records/stock-in": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_stock_in",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazardous-materials/stock-records/stock-out": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_stock_out",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazardous-materials/stock-records/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_stock_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazardous-materials/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_material",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_material",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_material",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazardous-materials/{id}/msds": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_material_msds",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_material_msds",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazardous-materials/{id}/stocks": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_material_stocks",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazards": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_risks",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_risk",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazards/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_risk",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_risk",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_risk",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazards/{id}/assessments": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "assess_risk",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazards/{id}/controls": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_control_measures",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_control_measure",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/hazards/{id}/controls/{measure_id}": {
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_control_measure",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_control_measure",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/health": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "ehs_list_records_api_ehs_health",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "ehs_create_record_api_ehs_health",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/incidents": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_accidents",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "report_accident",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/incidents/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_accident",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_accident",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_accident",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/incidents/{id}/close": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "close_accident",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/incidents/{id}/investigation": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "start_investigation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_investigation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/incidents/{id}/investigation/complete": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "complete_investigation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/incidents/{id}/review": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_review",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/incidents/{id}/treatment": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_treatment",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/incidents/{id}/treatment/actions/{action_id}": {
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_treatment_action",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/incidents/{id}/treatment/complete": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "complete_treatment",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/issues": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_hazards",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_hazard",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/issues/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_hazard",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_hazard",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_hazard",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/issues/{id}/approval/approve": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "approve_hazard",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/issues/{id}/approval/reject": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "reject_hazard",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/issues/{id}/approval/start": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "start_hazard_approval",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/issues/{id}/close": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "close_hazard",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/issues/{id}/rectification": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "start_rectification",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_rectification",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/issues/{id}/rectification/submit": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "submit_rectification",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/issues/{id}/verification": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "verify_hazard",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/cases": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_disease_cases",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_disease_case",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/cases/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_disease_case",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_disease_case",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_disease_case",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/detections": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_detection_records",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_detection_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/detections/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_detection_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_detection_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/factor-types": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_factor_types",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/factors": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_hazard_factors",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_hazard_factor",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/factors/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_hazard_factor",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_hazard_factor",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_hazard_factor",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/protection-measures": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_protection_measures",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_protection_measure",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/protection-measures/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_protection_measure",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_protection_measure",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_protection_measure",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/statistics": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_disease_statistics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/trainings": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_health_trainings",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_health_training",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-disease/trainings/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_health_training",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_health_training",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-health/abnormalities": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_abnormalities",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-health/abnormalities/{id}": {
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_abnormality",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-health/archives/{employee_id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_health_archive",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-health/contraindications": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_contraindications",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_contraindication",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-health/contraindications/{id}": {
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_contraindication",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_contraindication",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-health/exam-plans": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_exam_plans",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_exam_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-health/exam-plans/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_exam_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_exam_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_exam_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-health/exam-records": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_exam_records",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_exam_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-health/exam-records/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_exam_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_exam_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_exam_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-health/exam-types": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_exam_types",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/occupational-health/statistics": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_health_statistics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/sync-records": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_sync_records",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/sync-records/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_sync_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_sync_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/sync-records/{id}/retry": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "retry_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/sync/accident-to-lims": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "sync_accident_to_lims",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/sync/configs": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_sync_configs",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_sync_configs",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/sync/hazard-to-qms": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "sync_hazard_to_qms",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/sync/retry": {
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "batch_retry_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/training": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_trainings",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_training",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/training/certificates": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_certificates",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_certificate",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/training/certificates/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_certificate",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_certificate",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_certificate",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/training/plans": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_training_plans",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_training_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/training/plans/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_training_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_training_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_training_plan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/training/records": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "list_training_records",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "create_training_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/training/records/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_training_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_training_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_training_record",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ehs/training/{id}": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "get_training",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "update_training",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "delete_training",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/health/detailed": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "_detailed_health",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/ehs/health": {
+      "get": {
+        "tags": [
+          "ehs"
+        ],
+        "operationId": "_health",
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -841,7 +4238,7 @@
           "erp",
           "ERP"
         ],
-        "operationId": "list_materials",
+        "operationId": "erp_list_materials",
         "parameters": [
           {
             "name": "page",
@@ -917,7 +4314,7 @@
           "erp",
           "ERP"
         ],
-        "operationId": "create_material",
+        "operationId": "erp_create_material",
         "requestBody": {
           "content": {
             "application/json": {
@@ -944,6 +4341,70 @@
           },
           "500": {
             "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/api/feedback/feedbacks": {
+      "get": {
+        "tags": [
+          "feedback",
+          "feedback_ticket"
+        ],
+        "operationId": "list_feedbacks",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "feedback",
+          "feedback_ticket"
+        ],
+        "operationId": "create_feedback",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/feedback/feedbacks/{id}": {
+      "get": {
+        "tags": [
+          "feedback",
+          "feedback_ticket"
+        ],
+        "operationId": "get_feedback",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "feedback",
+          "feedback_ticket"
+        ],
+        "operationId": "response_feedback",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "feedback",
+          "feedback_ticket"
+        ],
+        "operationId": "delete_feedback",
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -1894,6 +5355,590 @@
         }
       }
     },
+    "/api/integration/events": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "list_events",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "create_event",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/lims-qms": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "list_lims_qms_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "create_lims_qms_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/lims-qms/{id}": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_lims_qms_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/lims-qms/{id}/sync": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "sync_lims_qms",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-erp": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "list_mes_erp_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "create_mes_erp_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-erp/records": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "list_mes_erp_sync_records",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-erp/sync/erp-to-mes": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "sync_erp_order_to_mes",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-erp/sync/mes-to-erp": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "sync_mes_progress_to_erp",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-erp/{id}": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_mes_erp_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-erp/{id}/logs": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_mes_erp_sync_logs",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-erp/{id}/retry": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "retry_mes_erp_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-erp/{id}/sync": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "sync_mes_erp",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-qms": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "list_mes_qms_sync_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-qms/defect-handling": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "defect_handling_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-qms/stats": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_mes_qms_stats_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-qms/sync-result": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "sync_quality_result_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-qms/sync-trace": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "sync_trace_chain_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-qms/trigger-inspection": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "trigger_qms_inspection_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-qms/{id}": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_mes_qms_sync_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/mes-qms/{id}/retry": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "retry_mes_qms_sync_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/rules": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "list_conversion_rules_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "create_conversion_rule_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/rules/{id}": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_conversion_rule_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "update_conversion_rule_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "delete_conversion_rule_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/rules/{id}/disable": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "disable_conversion_rule_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/rules/{id}/enable": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "enable_conversion_rule_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/rules/{id}/execute": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "execute_conversion_rule_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/rules/{id}/executions": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_rule_executions_api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/stats": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_sync_stats",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/sync/pending": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_pending",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/sync/retry-failed": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "retry_failed",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/sync/statistics": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_statistics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/sync/tasks": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "create_task",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/sync/tasks/{task_id}": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_task",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/sync/tasks/{task_id}/status": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "update_status",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/sync/trigger/scm-to-wms": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "trigger_scm_wms",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/sync/trigger/srm-to-scm": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "trigger_srm_scm",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/sync/trigger/wms-to-crm": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "trigger_wms_crm",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/wms-scm": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "list_wms_scm_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "create_wms_scm_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/wms-scm/{id}": {
+      "get": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "get_wms_scm_sync",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/integration/wms-scm/{id}/sync": {
+      "post": {
+        "tags": [
+          "integration"
+        ],
+        "operationId": "sync_wms_scm",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/master/quality-v51/ai/suggest": {
       "post": {
         "tags": [
@@ -2161,6 +6206,2860 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/monitor/alerts": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alerts"
+        ],
+        "operationId": "list_alerts",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/alerts/acknowledge": {
+      "post": {
+        "tags": [
+          "monitor",
+          "alerts"
+        ],
+        "operationId": "acknowledge_alerts",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/alerts/resolve": {
+      "post": {
+        "tags": [
+          "monitor",
+          "alerts"
+        ],
+        "operationId": "resolve_alerts",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/alerts/statistics": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alerts"
+        ],
+        "operationId": "get_alert_statistics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/alerts/{id}": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alerts"
+        ],
+        "operationId": "get_alert",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "monitor",
+          "alerts"
+        ],
+        "operationId": "update_alert",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/alerts/{id}/history": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alerts"
+        ],
+        "operationId": "get_alert_history",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/alerts/{id}/timeline": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alerts"
+        ],
+        "operationId": "get_alert_timeline",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/business-metrics": {
+      "get": {
+        "tags": [
+          "monitor",
+          "business_metrics"
+        ],
+        "operationId": "list_business_metrics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "monitor",
+          "business_metrics"
+        ],
+        "operationId": "create_business_metric",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/business-metrics/kpi": {
+      "get": {
+        "tags": [
+          "monitor",
+          "business_metrics"
+        ],
+        "operationId": "get_kpi_dashboard",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/business-metrics/summary": {
+      "get": {
+        "tags": [
+          "monitor",
+          "business_metrics"
+        ],
+        "operationId": "get_business_metric_summary",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/business-metrics/trend": {
+      "get": {
+        "tags": [
+          "monitor",
+          "business_metrics"
+        ],
+        "operationId": "get_business_metric_trend",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/business-metrics/{id}": {
+      "get": {
+        "tags": [
+          "monitor",
+          "business_metrics"
+        ],
+        "operationId": "get_business_metric",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "monitor",
+          "business_metrics"
+        ],
+        "operationId": "update_business_metric",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "monitor",
+          "business_metrics"
+        ],
+        "operationId": "delete_business_metric",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/health": {
+      "get": {
+        "tags": [
+          "monitor",
+          "health"
+        ],
+        "operationId": "get_service_health",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/metrics/database": {
+      "get": {
+        "tags": [
+          "monitor",
+          "metrics"
+        ],
+        "operationId": "get_database_metrics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/metrics/snapshot": {
+      "get": {
+        "tags": [
+          "monitor",
+          "metrics"
+        ],
+        "operationId": "get_metric_snapshot",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/metrics/system": {
+      "get": {
+        "tags": [
+          "monitor",
+          "metrics"
+        ],
+        "operationId": "get_system_metrics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/performance/api": {
+      "get": {
+        "tags": [
+          "monitor",
+          "performance"
+        ],
+        "operationId": "get_api_performance",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/performance/export": {
+      "post": {
+        "tags": [
+          "monitor",
+          "performance"
+        ],
+        "operationId": "export_performance_data",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/performance/services": {
+      "get": {
+        "tags": [
+          "monitor",
+          "performance"
+        ],
+        "operationId": "get_service_performance",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/performance/slow-queries": {
+      "get": {
+        "tags": [
+          "monitor",
+          "performance"
+        ],
+        "operationId": "get_slow_queries",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/performance/summary": {
+      "get": {
+        "tags": [
+          "monitor",
+          "performance"
+        ],
+        "operationId": "get_performance_summary",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/performance/trend": {
+      "get": {
+        "tags": [
+          "monitor",
+          "performance"
+        ],
+        "operationId": "get_performance_trend",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/rules": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "list_rules",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "create_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/rules/{id}": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "get_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "update_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "delete_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/rules/{id}/advanced": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "get_advanced_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "update_advanced_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/rules/{id}/disable": {
+      "post": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "disable_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/rules/{id}/enable": {
+      "post": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "enable_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/rules/{id}/escalation": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "get_escalation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "update_escalation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/rules/{id}/routing": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "get_routing",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "update_routing",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/rules/{id}/scheduled-trigger": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "get_scheduled_trigger",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "monitor",
+          "alert_rules"
+        ],
+        "operationId": "update_scheduled_trigger",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/slos": {
+      "get": {
+        "tags": [
+          "monitor",
+          "slo"
+        ],
+        "operationId": "list_slos",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "monitor",
+          "slo"
+        ],
+        "operationId": "create_slo",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/slos/budget": {
+      "get": {
+        "tags": [
+          "monitor",
+          "slo"
+        ],
+        "operationId": "get_slo_budget",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/slos/summary": {
+      "get": {
+        "tags": [
+          "monitor",
+          "slo"
+        ],
+        "operationId": "get_slo_summary",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/slos/trend": {
+      "get": {
+        "tags": [
+          "monitor",
+          "slo"
+        ],
+        "operationId": "get_slo_trend",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/slos/violations": {
+      "get": {
+        "tags": [
+          "monitor",
+          "slo"
+        ],
+        "operationId": "list_slo_violations",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/slos/violations/{id}/resolve": {
+      "post": {
+        "tags": [
+          "monitor",
+          "slo"
+        ],
+        "operationId": "resolve_slo_violation",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/slos/{id}": {
+      "get": {
+        "tags": [
+          "monitor",
+          "slo"
+        ],
+        "operationId": "get_slo",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "monitor",
+          "slo"
+        ],
+        "operationId": "update_slo",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "monitor",
+          "slo"
+        ],
+        "operationId": "delete_slo",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/suppression": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alert_suppression"
+        ],
+        "operationId": "list_suppression_rules",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "monitor",
+          "alert_suppression"
+        ],
+        "operationId": "create_suppression_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/suppression/{id}": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alert_suppression"
+        ],
+        "operationId": "get_suppression_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "monitor",
+          "alert_suppression"
+        ],
+        "operationId": "update_suppression_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "monitor",
+          "alert_suppression"
+        ],
+        "operationId": "delete_suppression_rule",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/templates": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alert_templates"
+        ],
+        "operationId": "monitor_list_templates",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "monitor",
+          "alert_templates"
+        ],
+        "operationId": "create_template",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/templates/{id}": {
+      "get": {
+        "tags": [
+          "monitor",
+          "alert_templates"
+        ],
+        "operationId": "get_template",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "monitor",
+          "alert_templates"
+        ],
+        "operationId": "update_template",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "monitor",
+          "alert_templates"
+        ],
+        "operationId": "delete_template",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/thresholds": {
+      "get": {
+        "tags": [
+          "monitor",
+          "thresholds"
+        ],
+        "operationId": "list_thresholds",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "monitor",
+          "thresholds"
+        ],
+        "operationId": "create_threshold",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/thresholds/evaluate": {
+      "post": {
+        "tags": [
+          "monitor",
+          "thresholds"
+        ],
+        "operationId": "evaluate_thresholds",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/monitor/thresholds/{id}": {
+      "get": {
+        "tags": [
+          "monitor",
+          "thresholds"
+        ],
+        "operationId": "get_threshold",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "monitor",
+          "thresholds"
+        ],
+        "operationId": "update_threshold",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "monitor",
+          "thresholds"
+        ],
+        "operationId": "delete_threshold",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/pdm/": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "pdm__home",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/change-notices": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_change_notices",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "create_change_notice",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/change-notices/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_change_notice",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "update_change_notice",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "delete_change_notice",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/change-notices/{id}/approve": {
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "approve_change_notice",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/change-notices/{id}/reject": {
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "reject_change_notice",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/change-notices/{id}/submit": {
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "submit_change_notice",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/configurations": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_configurations",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "create_configuration",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/configurations/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_configuration",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "update_configuration",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "delete_configuration",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/documents": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_documents",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "create_document",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/documents/pending-approval": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_pending_documents",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/documents/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_document",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "update_document",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "delete_document",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/documents/{id}/approval-history": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_document_approval_history",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/documents/{id}/approve": {
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "start_document_approval",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/materials": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "pdm_list_materials",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "pdm_create_material",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/materials/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "pdm_get_material",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "pdm_update_material",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "pdm_delete_material",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/production-batches": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_batches",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "create_batch",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/production-batches/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_batch",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "update_batch",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "delete_batch",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/production-formulas": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_formulas",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "create_formula",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/production-formulas/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_formula",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "update_formula",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "delete_formula",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/production-processes": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_processes",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "create_process",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/production-processes/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_process",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "update_process",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "delete_process",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/production-statistics": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_statistics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/production-steps": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_steps",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "create_step",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/production-steps/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_step",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "update_step",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "delete_step",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/products": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_products",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "create_product",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/products/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_product",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "update_product",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "delete_product",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/statistics/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "pdm_get_statistics",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/versions": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_versions",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "create_version",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/versions/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_version",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "update_version",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "delete_version",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/workflow-instances": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_workflow_instances",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/workflow-instances/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_workflow_instance",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/workflow-instances/{id}/advance": {
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "advance_workflow",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/workflows": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "list_workflows",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "create_workflow",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/workflows/start": {
+      "post": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "start_workflow",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pdm/workflows/{id}": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "get_workflow",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "update_workflow",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "delete_workflow",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/pdm/health": {
+      "get": {
+        "tags": [
+          "pdm"
+        ],
+        "operationId": "pdm__health",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/pm/projects": {
+      "get": {
+        "tags": [
+          "pm",
+          "projects"
+        ],
+        "operationId": "list_projects",
+        "parameters": [
+          {
+            "name": "project_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "status",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "page",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取项目列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pm",
+          "projects"
+        ],
+        "operationId": "create_project",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "创建项目成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/api/pm/projects/{id}": {
+      "get": {
+        "tags": [
+          "pm",
+          "projects"
+        ],
+        "operationId": "get_project",
+        "responses": {
+          "200": {
+            "description": "获取项目成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pm",
+          "projects"
+        ],
+        "operationId": "update_project",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新项目成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pm",
+          "projects"
+        ],
+        "operationId": "delete_project",
+        "responses": {
+          "200": {
+            "description": "删除项目成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/api/pm/projects/{id}/dashboard": {
+      "get": {
+        "tags": [
+          "pm",
+          "projects"
+        ],
+        "operationId": "get_project_dashboard",
+        "responses": {
+          "200": {
+            "description": "获取项目仪表盘成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/api/pm/projects/{id}/gantt": {
+      "get": {
+        "tags": [
+          "pm",
+          "projects"
+        ],
+        "operationId": "get_project_gantt",
+        "responses": {
+          "200": {
+            "description": "获取甘特图数据成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/approval": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_approval"
+        ],
+        "operationId": "get_approval",
+        "responses": {
+          "200": {
+            "description": "获取项目审批信息成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目审批信息不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pm",
+          "project_approval"
+        ],
+        "operationId": "submit_approval",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "提交审批成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/approval/action": {
+      "post": {
+        "tags": [
+          "pm",
+          "project_approval"
+        ],
+        "operationId": "handle_approval_action",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "审批操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "无效的审批操作"
+          },
+          "404": {
+            "description": "项目审批信息不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/benefits": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_benefits"
+        ],
+        "operationId": "get_benefits",
+        "responses": {
+          "200": {
+            "description": "获取项目效益分析列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pm",
+          "project_benefits"
+        ],
+        "operationId": "calculate_benefits",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBenefitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "计算项目效益分析成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/benefits/analysis": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_benefits"
+        ],
+        "operationId": "get_analysis",
+        "responses": {
+          "200": {
+            "description": "获取项目效益综合分析成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/expenses": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_expenses"
+        ],
+        "operationId": "list_expenses",
+        "responses": {
+          "200": {
+            "description": "获取项目费用列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pm",
+          "project_expenses"
+        ],
+        "operationId": "add_expense",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "添加项目费用成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/expenses/{id}": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_expenses"
+        ],
+        "operationId": "get_expense",
+        "responses": {
+          "200": {
+            "description": "获取项目费用成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目费用不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pm",
+          "project_expenses"
+        ],
+        "operationId": "update_expense",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExpenseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新项目费用成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目费用不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pm",
+          "project_expenses"
+        ],
+        "operationId": "remove_expense",
+        "responses": {
+          "200": {
+            "description": "删除项目费用成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目费用不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/members": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_members"
+        ],
+        "operationId": "list_members",
+        "responses": {
+          "200": {
+            "description": "获取项目成员列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pm",
+          "project_members"
+        ],
+        "operationId": "create_member",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "添加项目成员成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "成员已存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/members/{id}": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_members"
+        ],
+        "operationId": "get_member",
+        "responses": {
+          "200": {
+            "description": "获取项目成员成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目成员不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pm",
+          "project_members"
+        ],
+        "operationId": "update_member",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新项目成员成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目成员不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pm",
+          "project_members"
+        ],
+        "operationId": "delete_member",
+        "responses": {
+          "200": {
+            "description": "删除项目成员成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目成员不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/milestones": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_milestones"
+        ],
+        "operationId": "list_milestones",
+        "responses": {
+          "200": {
+            "description": "获取项目里程碑列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pm",
+          "project_milestones"
+        ],
+        "operationId": "create_milestone",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMilestoneRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "创建项目里程碑成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/milestones/{id}": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_milestones"
+        ],
+        "operationId": "get_milestone",
+        "responses": {
+          "200": {
+            "description": "获取项目里程碑成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目里程碑不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pm",
+          "project_milestones"
+        ],
+        "operationId": "update_milestone",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMilestoneRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新项目里程碑成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目里程碑不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pm",
+          "project_milestones"
+        ],
+        "operationId": "delete_milestone",
+        "responses": {
+          "200": {
+            "description": "删除项目里程碑成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目里程碑不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/phases": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_phases"
+        ],
+        "operationId": "list_phases",
+        "responses": {
+          "200": {
+            "description": "获取项目阶段列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pm",
+          "project_phases"
+        ],
+        "operationId": "create_phase",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePhaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "创建项目阶段成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/phases/{id}": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_phases"
+        ],
+        "operationId": "get_phase",
+        "responses": {
+          "200": {
+            "description": "获取项目阶段成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目阶段不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pm",
+          "project_phases"
+        ],
+        "operationId": "update_phase",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePhaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新项目阶段成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目阶段不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pm",
+          "project_phases"
+        ],
+        "operationId": "delete_phase",
+        "responses": {
+          "200": {
+            "description": "删除项目阶段成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目阶段不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/resources": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_resources"
+        ],
+        "operationId": "list_resources",
+        "responses": {
+          "200": {
+            "description": "获取项目资源列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pm",
+          "project_resources"
+        ],
+        "operationId": "add_resource",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "添加项目资源成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      }
+    },
+    "/pm/projects/{project_id}/resources/{id}": {
+      "get": {
+        "tags": [
+          "pm",
+          "project_resources"
+        ],
+        "operationId": "get_resource",
+        "responses": {
+          "200": {
+            "description": "获取项目资源成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目资源不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pm",
+          "project_resources"
+        ],
+        "operationId": "update_resource",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新项目资源成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目资源不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pm",
+          "project_resources"
+        ],
+        "operationId": "remove_resource",
+        "responses": {
+          "200": {
+            "description": "删除项目资源成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目资源不存在"
+          },
+          "500": {
+            "description": "服务器内部错误"
           }
         }
       }
@@ -2561,6 +9460,390 @@
         }
       }
     },
+    "/rd/audit-logs": {
+      "get": {
+        "tags": [
+          "rd",
+          "audit"
+        ],
+        "operationId": "list_audit_logs",
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "description": "操作类型",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "description": "实体类型",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "用户 ID",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "操作状态",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "description": "开始时间",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "description": "结束时间",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "每页数量",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取审计日志成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误"
+          }
+        }
+      }
+    },
+    "/rd/audit-logs/{id}": {
+      "get": {
+        "tags": [
+          "rd",
+          "audit"
+        ],
+        "operationId": "get_audit_log",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "审计日志 ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取审计日志成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "审计日志不存在"
+          },
+          "500": {
+            "description": "服务器错误"
+          }
+        }
+      }
+    },
+    "/rd/projects": {
+      "get": {
+        "tags": [
+          "rd",
+          "projects"
+        ],
+        "operationId": "rd_list_projects",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number, starting from 1",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search by name or code",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of projects retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "rd",
+          "projects"
+        ],
+        "operationId": "rd_create_project",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Project created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/rd/projects/{id}": {
+      "get": {
+        "tags": [
+          "rd",
+          "projects"
+        ],
+        "operationId": "rd_get_project",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Project ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "rd",
+          "projects"
+        ],
+        "operationId": "rd_update_project",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Project ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Project updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "rd",
+          "projects"
+        ],
+        "operationId": "rd_delete_project",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Project ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project deleted successfully"
+          },
+          "404": {
+            "description": "Project not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
     "/scm/purchase-orders": {
       "get": {
         "tags": [
@@ -2713,6 +9996,83 @@
         "responses": {
           "200": {
             "description": "delete_supplier OK"
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "tags": [
+          "search",
+          "fulltext"
+        ],
+        "operationId": "search_handler",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "搜索关键词",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码（默认 1）",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "每页数量（默认 20，最大 100）",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "modules",
+            "in": "query",
+            "description": "限定搜索模块列表，如 user/customer/order/document",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "搜索结果"
+          },
+          "400": {
+            "description": "搜索关键词为空"
+          }
+        }
+      }
+    },
+    "/search/health": {
+      "get": {
+        "tags": [
+          "search",
+          "health"
+        ],
+        "operationId": "health_handler",
+        "responses": {
+          "200": {
+            "description": "服务健康"
           }
         }
       }
@@ -9183,6 +16543,399 @@
           },
           "version": {
             "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AuditLog": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "action",
+          "entity_type",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "entity_id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ],
+            "nullable": true
+          },
+          "entity_ids": {
+            "nullable": true
+          },
+          "entity_type": {
+            "type": "string"
+          },
+          "error_message": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "ip_address": {
+            "type": "string",
+            "nullable": true
+          },
+          "request_details": {
+            "nullable": true
+          },
+          "response_details": {
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "user_agent": {
+            "type": "string",
+            "nullable": true
+          },
+          "user_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "user_name": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AuditLogQuery": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "nullable": true
+          },
+          "end_date": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "nullable": true
+          },
+          "entity_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "page": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "page_size": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "start_date": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "user_id": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "BatchCreateRequest": {
+        "type": "object",
+        "required": [
+          "projects"
+        ],
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateProjectRequest"
+            }
+          }
+        }
+      },
+      "BatchDeleteRequest": {
+        "type": "object",
+        "required": [
+          "ids"
+        ],
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        }
+      },
+      "BatchOperationResult": {
+        "type": "object",
+        "required": [
+          "total",
+          "success",
+          "failed",
+          "errors"
+        ],
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "success": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "CreateProjectRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "code",
+          "project_type",
+          "leader",
+          "start_date"
+        ],
+        "properties": {
+          "benefit_target": {
+            "nullable": true
+          },
+          "budget": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "end_date": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "nullable": true
+          },
+          "leader": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ],
+            "nullable": true
+          },
+          "priority": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "project_config": {
+            "nullable": true
+          },
+          "project_type": {
+            "$ref": "#/components/schemas/ProjectType"
+          },
+          "risk_level": {
+            "type": "string",
+            "nullable": true
+          },
+          "start_date": {
+            "$ref": "#/components/schemas/DateTime"
+          },
+          "tags": {
+            "nullable": true
+          },
+          "team_members": {
+            "nullable": true
+          },
+          "workspace_id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "ListAuditLogsQuery": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "nullable": true
+          },
+          "end_date": {
+            "type": "string",
+            "nullable": true
+          },
+          "entity_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "page": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "page_size": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "start_date": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "user_id": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ProjectStatus": {
+        "type": "string",
+        "enum": [
+          "DRAFT",
+          "PENDING_APPROVAL",
+          "ACTIVE",
+          "PAUSED",
+          "COMPLETED",
+          "CANCELLED"
+        ]
+      },
+      "ProjectType": {
+        "type": "string",
+        "enum": [
+          "R_D",
+          "PRODUCTION",
+          "DESIGN",
+          "CONSTRUCTION",
+          "SERVICE"
+        ]
+      },
+      "UpdateProjectRequest": {
+        "type": "object",
+        "properties": {
+          "benefit_target": {
+            "nullable": true
+          },
+          "budget": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "end_date": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "nullable": true
+          },
+          "leader": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "parent_id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ],
+            "nullable": true
+          },
+          "priority": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "progress": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "project_config": {
+            "nullable": true
+          },
+          "risk_level": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProjectStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "tags": {
+            "nullable": true
+          },
+          "team_members": {
+            "nullable": true
+          },
+          "workspace_id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ],
             "nullable": true
           }
         }

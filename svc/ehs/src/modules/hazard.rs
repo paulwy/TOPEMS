@@ -181,6 +181,12 @@ pub struct CreateVerificationRequest {
     pub remarks: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/issues",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_hazards(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -217,6 +223,12 @@ pub async fn list_hazards(
     Json(ApiResponse::success(hazards, "获取隐患列表成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/issues",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_hazard(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -320,6 +332,12 @@ pub async fn create_hazard(
     Json(ApiResponse::success(hazard, "隐患上报成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/issues/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_hazard(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -384,6 +402,12 @@ pub async fn get_hazard(
     Json(ApiResponse::success(detail, "获取隐患详情成功"))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/issues/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_hazard(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -424,6 +448,12 @@ pub async fn update_hazard(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/issues/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_hazard(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -441,6 +471,12 @@ pub async fn delete_hazard(
     Json(ApiResponse::success((), "隐患删除成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/issues/{id}/rectification",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn start_rectification(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -470,6 +506,12 @@ pub async fn start_rectification(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/issues/{id}/rectification",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_rectification(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -517,6 +559,12 @@ pub async fn update_rectification(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/issues/{id}/rectification/submit",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn submit_rectification(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -545,6 +593,12 @@ pub async fn submit_rectification(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/issues/{id}/verification",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn verify_hazard(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -570,6 +624,12 @@ pub async fn verify_hazard(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/issues/{id}/close",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn close_hazard(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -614,6 +674,12 @@ pub struct ApprovalActionRequest {
     pub comment: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/issues/{id}/approval/start",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn start_hazard_approval(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -672,6 +738,12 @@ pub async fn start_hazard_approval(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/issues/{id}/approval/approve",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn approve_hazard(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -706,6 +778,12 @@ pub async fn approve_hazard(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/issues/{id}/approval/reject",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn reject_hazard(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

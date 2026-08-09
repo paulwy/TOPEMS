@@ -56,6 +56,12 @@ pub struct EnvironmentRecord {
     pub tenant_id: Uuid,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/environment/records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -69,6 +75,12 @@ pub async fn list_records(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/environment/records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

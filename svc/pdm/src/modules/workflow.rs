@@ -102,6 +102,12 @@ pub struct StartWorkflowRequest {
     pub created_by: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/workflows",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_workflows(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -137,6 +143,12 @@ pub async fn list_workflows(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/workflows",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -192,6 +204,12 @@ pub async fn create_workflow(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/workflows/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -222,6 +240,12 @@ pub async fn get_workflow(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pdm/workflows/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -266,6 +290,12 @@ pub async fn update_workflow(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pdm/workflows/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -291,6 +321,12 @@ pub async fn delete_workflow(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/workflows/start",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn start_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -372,6 +408,12 @@ pub async fn start_workflow(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/workflow-instances",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_workflow_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -408,6 +450,12 @@ pub async fn list_workflow_instances(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/workflow-instances/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_workflow_instance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -439,6 +487,12 @@ pub async fn get_workflow_instance(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/workflow-instances/{id}/advance",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn advance_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -70,6 +70,12 @@ pub struct ProductQuery {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/products",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_products(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -136,6 +142,12 @@ pub async fn list_products(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/products",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_product(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -178,6 +190,12 @@ pub async fn create_product(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/products/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_product(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -207,6 +225,12 @@ pub async fn get_product(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pdm/products/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_product(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -251,6 +275,12 @@ pub async fn update_product(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pdm/products/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_product(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

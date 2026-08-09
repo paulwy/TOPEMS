@@ -18,25 +18,7 @@ use crate::handlers::{conversion_rules, events, lims_qms, mes_erp, mes_qms, sync
 use crate::models::AppState;
 use crate::plugin;
 
-#[derive(OpenApi)]
-#[openapi(
-    tags(
-        (name = "Integration", description = "集成"),
-        (name = "Sync", description = "数据同步"),
-        (name = "Gateway", description = "API网关"),
-        (name = "MessageQueue", description = "消息队列"),
-        (name = "Health", description = "健康检查"),
-    ),
-    info(
-        title = "TOPEMS-integration API",
-        version = "1.0.0",
-        description = "TOPEMS 集成服务 - 数据同步、API 网关、消息队列",
-    ),
-    servers(
-        (url = "http://localhost:8072", description = "本地开发环境"),
-    )
-)]
-pub struct ApiDoc;
+pub use crate::openapi::ApiDoc;
 
 pub fn create_routes(state: AppState) -> Router {
     let public_routes = Router::new()

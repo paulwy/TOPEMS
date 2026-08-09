@@ -80,6 +80,12 @@ pub struct VersionQuery {
     pub target_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/versions",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_versions(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -155,6 +161,12 @@ pub async fn list_versions(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/versions",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -201,6 +213,12 @@ pub async fn create_version(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/versions/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -231,6 +249,12 @@ pub async fn get_version(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pdm/versions/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -282,6 +306,12 @@ pub async fn update_version(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pdm/versions/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

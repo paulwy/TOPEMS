@@ -192,6 +192,12 @@ pub struct ApprovalRequest {
     pub result: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/emergency-plans",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_plans(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -205,6 +211,12 @@ pub async fn list_plans(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/emergency-plans",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -245,6 +257,12 @@ pub async fn create_plan(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/emergency-plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -352,6 +370,12 @@ pub async fn get_plan(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/ehs/emergency-plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -390,6 +414,12 @@ pub async fn update_plan(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/emergency-plans/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -401,6 +431,12 @@ pub async fn delete_plan(
     Json(ApiResponse::success((), "应急预案删除成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/emergency-plans/{id}/supplies",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_plan_supplies(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -415,6 +451,12 @@ pub async fn list_plan_supplies(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/emergency-plans/{id}/supplies",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn add_plan_supply(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -443,6 +485,12 @@ pub async fn add_plan_supply(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/ehs/emergency-plans/{id}/supplies/{supply_id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_plan_supply(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -454,6 +502,12 @@ pub async fn delete_plan_supply(
     Json(ApiResponse::success((), "应急物资删除成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/emergency-plans/{id}/submit-approval",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn submit_plan_approval(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -492,6 +546,12 @@ pub async fn submit_plan_approval(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/emergency-plans/{id}/approve",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn approve_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -518,6 +578,12 @@ pub async fn approve_plan(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/emergency-plans/{id}/versions",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_plan_versions(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -532,6 +598,12 @@ pub async fn list_plan_versions(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ehs/emergency-plans/{id}/versions",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_new_version(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -560,6 +632,12 @@ pub async fn create_new_version(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/ehs/emergency-plans/categories",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_plan_categories(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

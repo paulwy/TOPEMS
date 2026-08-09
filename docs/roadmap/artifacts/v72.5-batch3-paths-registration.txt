@@ -1,0 +1,69 @@
+============================================================
+V72.5 第三批 — 8 服务 OpenAPI paths 注册验证证据
+============================================================
+日期: 2026-08-09
+批次: V72.5 Phase 3 (pm/monitor/search/feedback/integration/ai/pdm/ehs)
+
+------------------------------------------------------------
+1. Extract Tests (cargo test --test openapi_extract)
+------------------------------------------------------------
+PASS topems-pm            28566 bytes  (38 paths / 38 ops)  类别1: 已有utoipa注解,仅注册paths
+PASS topems-rd            21443 bytes  ( 7 paths /  7 ops)  类别1: 已有注册,复用
+PASS topems-monitor       18328 bytes  (46 paths / 69 ops)  类别2: 补69个utoipa宏
+PASS topems-search         2486 bytes  ( 2 paths /  2 ops)  类别2: 补2个utoipa宏
+PASS topems-feedback       1697 bytes  ( 2 paths /  5 ops)  类别2: 补5个utoipa宏
+PASS topems-integration   13279 bytes  (41 paths / 48 ops)  类别3: 新建openapi.rs+48宏
+PASS topems-ai            19075 bytes  (74 paths / 76 ops)  类别3: 新建openapi.rs+76宏
+PASS topems-pdm           17075 bytes  (39 paths / 72 ops)  类别3: 新建openapi.rs+72宏
+PASS topems-ehs           48434 bytes  (114 paths/101 ops)  类别3: 新建openapi.rs+101宏
+
+新增 utoipa::path 注解总数: 374 个
+新增 paths 注册总数: 356 paths / 410 ops
+
+------------------------------------------------------------
+2. aggregate.py 增强
+------------------------------------------------------------
+修复同服务内 operationId 冲突去重逻辑:
+  原逻辑: 仅跨服务冲突时加 {svc}_ 前缀 (seen_oids[oid] != svc)
+  新逻辑: 无条件去重, 同服务内冲突时加 {svc}_{oid}_{path} 后缀
+  典型案例: ehs 的 list_plans 在 checks 和 emergency-plans 模块都有
+
+------------------------------------------------------------
+3. Aggregation (gen_openapi_types.sh)
+------------------------------------------------------------
+JSON coverage: 20 services (原11 + 新增8 + rd已有1)
+Aggregated:    395 paths / 344 schemas
+openapi.gen.ts: 364 schemas (banner) / 309 (block-keys) / 642KB
+
+------------------------------------------------------------
+4. TSC Verification
+------------------------------------------------------------
+shared-types TSC: 0 error ✅
+apps/web TSC:    73 pre-existing errors (recharts/iam/MesTypes)
+                 0 new errors from V72.5 batch3 ✅
+
+------------------------------------------------------------
+5. 修改文件清单（新增/修改核心文件）
+------------------------------------------------============
+svc/pm/src/modules/openapi.rs                    (注册38 paths)
+svc/monitor/src/openapi.rs                       (注册69 paths)
+svc/monitor/src/modules/monitor/*.rs             (8文件补utoipa宏)
+svc/search/src/openapi.rs                        (注册2 paths)
+svc/search/src/handlers.rs                       (补2个utoipa宏)
+svc/feedback/src/openapi.rs                      (注册5 paths)
+svc/feedback/src/handlers.rs                     (补5个utoipa宏)
+svc/integration/src/openapi.rs                   (新建,注册48 paths)
+svc/integration/src/routes.rs + lib.rs + main.rs (导出ApiDoc)
+svc/integration/src/handlers/*.rs                (8文件补utoipa宏)
+svc/ai/src/modules/openapi.rs                    (新建,注册76 paths)
+svc/ai/src/modules/{vector,qa,multimodal,recommendation}.rs (移除impl块内无效注解)
+svc/pdm/src/modules/openapi.rs                   (新建,注册72 paths)
+svc/pdm/src/lib.rs + main.rs + modules/mod.rs    (导出ApiDoc)
+svc/pdm/src/modules/*.rs                         (13文件补utoipa宏)
+svc/ehs/src/modules/openapi.rs                   (已有,验证)
+svc/ehs/src/modules/*.rs                         (5文件补utoipa宏)
+scripts/openapi/aggregate.py                     (同服务内operationId去重)
+docs/api/openapi-aggregated.json                 (regenerated)
+packages/shared-types/src/openapi.gen.ts         (regenerated)
+packages/shared-types/src/generated/openapi.d.ts (regenerated)
+============================================================

@@ -10,9 +10,12 @@ pub mod mes_erp_sync;
 pub mod mes_qms_integration;
 pub mod middleware;
 pub mod models;
+pub mod openapi;
 pub mod plugin;
 pub mod qms_lims_ehs;
 pub mod retry_handler;
 pub mod routes;
 pub mod rule_engine;
 pub mod sync_retry;
+
+pub use openapi::ApiDoc;

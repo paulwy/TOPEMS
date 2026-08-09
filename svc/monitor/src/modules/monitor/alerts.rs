@@ -329,7 +329,15 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
         .unwrap_or_else(Uuid::new_v4)
 }
 
-async fn list_alerts(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/alerts",
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn list_alerts(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
@@ -442,7 +450,15 @@ async fn list_alerts(
     ))
 }
 
-async fn get_alert(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/alerts/{id}",
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_alert(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -464,7 +480,15 @@ async fn get_alert(
     Json(ApiResponse::success(alert, "获取告警详情成功"))
 }
 
-async fn update_alert(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/alerts/{id}",
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn update_alert(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -501,7 +525,15 @@ async fn update_alert(
 }
 
 // Alert Statistics
-async fn get_alert_statistics(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/alerts/statistics",
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_alert_statistics(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<AlertStatistics>> {
@@ -541,7 +573,15 @@ async fn get_alert_statistics(
 }
 
 // Batch acknowledge alerts
-async fn acknowledge_alerts(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/alerts/acknowledge",
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn acknowledge_alerts(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -566,7 +606,15 @@ async fn acknowledge_alerts(
 }
 
 // Batch resolve alerts
-async fn resolve_alerts(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/alerts/resolve",
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn resolve_alerts(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -591,7 +639,15 @@ async fn resolve_alerts(
 }
 
 // Alert Rules API
-async fn list_rules(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/rules",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn list_rules(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AlertRule>>> {
@@ -675,7 +731,15 @@ async fn list_rules(
     Json(ApiResponse::success(rules, "获取规则列表成功"))
 }
 
-async fn create_rule(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/rules",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn create_rule(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AlertRuleRequest>,
@@ -698,7 +762,15 @@ async fn create_rule(
     Json(ApiResponse::success(rule, "规则创建成功"))
 }
 
-async fn get_rule(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/rules/{id}",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_rule(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -730,7 +802,15 @@ async fn get_rule(
     Json(ApiResponse::success(rule, "获取规则详情成功"))
 }
 
-async fn update_rule(
+#[utoipa::path(
+    put,
+    path = "/api/monitor/rules/{id}",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn update_rule(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -754,7 +834,15 @@ async fn update_rule(
     Json(ApiResponse::success(rule, "规则更新成功"))
 }
 
-async fn delete_rule(
+#[utoipa::path(
+    delete,
+    path = "/api/monitor/rules/{id}",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn delete_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -765,7 +853,15 @@ async fn delete_rule(
     ))
 }
 
-async fn enable_rule(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/rules/{id}/enable",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn enable_rule(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -793,7 +889,15 @@ async fn enable_rule(
     Json(ApiResponse::success(rule, "规则已启用"))
 }
 
-async fn disable_rule(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/rules/{id}/disable",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn disable_rule(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -823,7 +927,15 @@ async fn disable_rule(
 
 // Advanced Alert Rule Handlers
 
-async fn get_alert_history(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/alerts/{id}/history",
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_alert_history(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -850,7 +962,15 @@ async fn get_alert_history(
     Json(ApiResponse::success(history, "获取告警历史成功"))
 }
 
-async fn get_alert_timeline(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/alerts/{id}/timeline",
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_alert_timeline(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -882,7 +1002,15 @@ async fn get_alert_timeline(
     Json(ApiResponse::success(timeline, "获取告警时间线成功"))
 }
 
-async fn get_scheduled_trigger(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/rules/{id}/scheduled-trigger",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_scheduled_trigger(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
@@ -898,7 +1026,15 @@ async fn get_scheduled_trigger(
     Json(ApiResponse::success(trigger, "获取定时触发配置成功"))
 }
 
-async fn update_scheduled_trigger(
+#[utoipa::path(
+    put,
+    path = "/api/monitor/rules/{id}/scheduled-trigger",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn update_scheduled_trigger(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
@@ -907,7 +1043,15 @@ async fn update_scheduled_trigger(
     Json(ApiResponse::success(req, "定时触发配置已更新"))
 }
 
-async fn get_escalation(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/rules/{id}/escalation",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_escalation(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
@@ -957,7 +1101,15 @@ async fn get_escalation(
     Json(ApiResponse::success(escalation, "获取告警升级配置成功"))
 }
 
-async fn update_escalation(
+#[utoipa::path(
+    put,
+    path = "/api/monitor/rules/{id}/escalation",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn update_escalation(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
@@ -966,7 +1118,15 @@ async fn update_escalation(
     Json(ApiResponse::success(req, "告警升级配置已更新"))
 }
 
-async fn get_routing(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/rules/{id}/routing",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_routing(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
@@ -1003,7 +1163,15 @@ async fn get_routing(
     Json(ApiResponse::success(routing, "获取告警路由配置成功"))
 }
 
-async fn update_routing(
+#[utoipa::path(
+    put,
+    path = "/api/monitor/rules/{id}/routing",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn update_routing(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
@@ -1013,7 +1181,15 @@ async fn update_routing(
 }
 
 // Template Management
-async fn list_templates(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/templates",
+    tag = "alert_templates",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn list_templates(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AlertTemplate>>> {
@@ -1039,7 +1215,15 @@ async fn list_templates(
     Json(ApiResponse::success(templates, "获取告警模板列表成功"))
 }
 
-async fn create_template(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/templates",
+    tag = "alert_templates",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn create_template(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<AlertTemplate>,
@@ -1047,7 +1231,15 @@ async fn create_template(
     Json(ApiResponse::success(req, "告警模板创建成功"))
 }
 
-async fn get_template(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/templates/{id}",
+    tag = "alert_templates",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_template(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -1064,7 +1256,15 @@ async fn get_template(
     Json(ApiResponse::success(template, "获取告警模板成功"))
 }
 
-async fn update_template(
+#[utoipa::path(
+    put,
+    path = "/api/monitor/templates/{id}",
+    tag = "alert_templates",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn update_template(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<String>,
@@ -1073,7 +1273,15 @@ async fn update_template(
     Json(ApiResponse::success(req, "告警模板更新成功"))
 }
 
-async fn delete_template(
+#[utoipa::path(
+    delete,
+    path = "/api/monitor/templates/{id}",
+    tag = "alert_templates",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn delete_template(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -1085,7 +1293,15 @@ async fn delete_template(
 }
 
 // Suppression Rules
-async fn list_suppression_rules(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/suppression",
+    tag = "alert_suppression",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn list_suppression_rules(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<SuppressionRule>>> {
@@ -1105,7 +1321,15 @@ async fn list_suppression_rules(
     Json(ApiResponse::success(rules, "获取抑制规则列表成功"))
 }
 
-async fn create_suppression_rule(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/suppression",
+    tag = "alert_suppression",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn create_suppression_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<SuppressionRule>,
@@ -1113,7 +1337,15 @@ async fn create_suppression_rule(
     Json(ApiResponse::success(req, "抑制规则创建成功"))
 }
 
-async fn get_suppression_rule(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/suppression/{id}",
+    tag = "alert_suppression",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_suppression_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -1134,7 +1366,15 @@ async fn get_suppression_rule(
     Json(ApiResponse::success(rule, "获取抑制规则成功"))
 }
 
-async fn update_suppression_rule(
+#[utoipa::path(
+    put,
+    path = "/api/monitor/suppression/{id}",
+    tag = "alert_suppression",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn update_suppression_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<String>,
@@ -1143,7 +1383,15 @@ async fn update_suppression_rule(
     Json(ApiResponse::success(req, "抑制规则更新成功"))
 }
 
-async fn delete_suppression_rule(
+#[utoipa::path(
+    delete,
+    path = "/api/monitor/suppression/{id}",
+    tag = "alert_suppression",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn delete_suppression_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -1155,7 +1403,15 @@ async fn delete_suppression_rule(
 }
 
 // Advanced Rule Handler
-async fn get_advanced_rule(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/rules/{id}/advanced",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_advanced_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1197,7 +1453,15 @@ async fn get_advanced_rule(
     Json(ApiResponse::success(advanced, "获取高级规则配置成功"))
 }
 
-async fn update_advanced_rule(
+#[utoipa::path(
+    put,
+    path = "/api/monitor/rules/{id}/advanced",
+    tag = "alert_rules",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn update_advanced_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,

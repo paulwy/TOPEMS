@@ -110,6 +110,14 @@ impl From<SyncTaskRow> for SyncTask {
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/sync/tasks",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_task(
     State(state): State<AppState>,
     Json(req): Json<CreateSyncTaskRequest>,
@@ -150,6 +158,14 @@ pub async fn create_task(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/sync/tasks/{task_id}",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_task(
     State(state): State<AppState>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
@@ -178,6 +194,14 @@ pub async fn get_task(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/sync/tasks/{task_id}/status",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn update_status(
     State(state): State<AppState>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
@@ -213,6 +237,14 @@ pub async fn update_status(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/sync/pending",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_pending(State(state): State<AppState>) -> Json<ApiResponse<Vec<SyncTask>>> {
     match sqlx::query_as::<_, SyncTaskRow>(
         r#"
@@ -235,6 +267,14 @@ pub async fn get_pending(State(state): State<AppState>) -> Json<ApiResponse<Vec<
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/sync/statistics",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<SyncStatistics>> {
     let result: Result<SyncStatistics, sqlx::Error> = async {
         let total_tasks = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_inter_module_sync")
@@ -284,6 +324,14 @@ pub async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<S
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/sync/retry-failed",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn retry_failed(
     State(state): State<AppState>,
     Json(req): Json<RetryFailedRequest>,
@@ -351,6 +399,14 @@ pub async fn retry_failed(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/sync/trigger/scm-to-wms",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn trigger_scm_wms(
     State(state): State<AppState>,
     Json(req): Json<TriggerSyncRequest>,
@@ -387,6 +443,14 @@ pub async fn trigger_scm_wms(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/sync/trigger/wms-to-crm",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn trigger_wms_crm(
     State(state): State<AppState>,
     Json(req): Json<TriggerSyncRequest>,
@@ -423,6 +487,14 @@ pub async fn trigger_wms_crm(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/sync/trigger/srm-to-scm",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn trigger_srm_scm(
     State(state): State<AppState>,
     Json(req): Json<TriggerSyncRequest>,

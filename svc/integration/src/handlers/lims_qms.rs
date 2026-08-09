@@ -7,6 +7,14 @@ use topems_shared_core::response::ApiResponse;
 
 use crate::models::{AppState, CreateLimsQmsSyncRequest, LimsQmsSync};
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/lims-qms",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_lims_qms_sync(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<LimsQmsSync>>> {
@@ -33,6 +41,14 @@ pub async fn list_lims_qms_sync(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/lims-qms",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_lims_qms_sync(
     State(state): State<AppState>,
     Json(req): Json<CreateLimsQmsSyncRequest>,
@@ -85,6 +101,14 @@ pub async fn create_lims_qms_sync(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/lims-qms/{id}",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_lims_qms_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -111,6 +135,14 @@ pub async fn get_lims_qms_sync(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/lims-qms/{id}/sync",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn sync_lims_qms(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

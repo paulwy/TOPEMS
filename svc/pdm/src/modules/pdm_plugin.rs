@@ -28,6 +28,12 @@ pub struct PermissionDef {
     pub action: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/plugins/info",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url =
         std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8031".to_string());
@@ -50,6 +56,12 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     Json(ApiResponse::success(info, "Plugin info"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/plugins/health",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {
     let db_healthy = sqlx::query("SELECT 1").fetch_one(&state.pool).await.is_ok();
 

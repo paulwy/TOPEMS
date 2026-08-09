@@ -622,7 +622,15 @@ fn metric_status(metric: &BusinessMetric) -> &'static str {
 
 // ==================== 路由处理器 ====================
 
-async fn list_business_metrics(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/business-metrics",
+    tag = "business_metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn list_business_metrics(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<BusinessMetricQuery>,
@@ -676,7 +684,15 @@ async fn list_business_metrics(
     ))
 }
 
-async fn get_business_metric(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/business-metrics/{id}",
+    tag = "business_metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_business_metric(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
@@ -702,7 +718,15 @@ async fn get_business_metric(
     Json(ApiResponse::success(metric, "获取业务指标详情成功"))
 }
 
-async fn create_business_metric(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/business-metrics",
+    tag = "business_metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn create_business_metric(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BusinessMetricRequest>,
@@ -728,7 +752,15 @@ async fn create_business_metric(
     Json(ApiResponse::success(metric, "业务指标创建成功"))
 }
 
-async fn update_business_metric(
+#[utoipa::path(
+    put,
+    path = "/api/monitor/business-metrics/{id}",
+    tag = "business_metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn update_business_metric(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
@@ -755,7 +787,15 @@ async fn update_business_metric(
     Json(ApiResponse::success(metric, "业务指标更新成功"))
 }
 
-async fn delete_business_metric(
+#[utoipa::path(
+    delete,
+    path = "/api/monitor/business-metrics/{id}",
+    tag = "business_metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn delete_business_metric(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
@@ -766,7 +806,15 @@ async fn delete_business_metric(
     ))
 }
 
-async fn get_business_metric_summary(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/business-metrics/summary",
+    tag = "business_metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_business_metric_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<BusinessMetricSummary>> {
@@ -831,7 +879,15 @@ async fn get_business_metric_summary(
     Json(ApiResponse::success(summary, "获取业务指标摘要成功"))
 }
 
-async fn get_business_metric_trend(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/business-metrics/trend",
+    tag = "business_metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_business_metric_trend(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(query): Query<TrendQuery>,
@@ -867,7 +923,15 @@ async fn get_business_metric_trend(
     Json(ApiResponse::success(trends, "获取业务指标趋势成功"))
 }
 
-async fn get_kpi_dashboard(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/business-metrics/kpi",
+    tag = "business_metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_kpi_dashboard(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(query): Query<KpiRequest>,

@@ -73,6 +73,12 @@ pub struct MaterialQuery {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/materials",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn list_materials(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -139,6 +145,12 @@ pub async fn list_materials(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pdm/materials",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn create_material(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -246,6 +258,12 @@ pub async fn create_material(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pdm/materials/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn get_material(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -275,6 +293,12 @@ pub async fn get_material(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pdm/materials/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn update_material(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -367,6 +391,12 @@ pub async fn update_material(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pdm/materials/{id}",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
 pub async fn delete_material(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -327,7 +327,15 @@ fn seed_violations(_tenant_id: Uuid) -> Vec<SloViolation> {
 
 // ==================== 路由处理器 ====================
 
-async fn list_slos(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/slos",
+    tag = "slo",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn list_slos(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<SloQuery>,
@@ -375,7 +383,15 @@ async fn list_slos(
     ))
 }
 
-async fn get_slo(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/slos/{id}",
+    tag = "slo",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_slo(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
@@ -409,7 +425,15 @@ async fn get_slo(
     Json(ApiResponse::success(slo, "获取 SLO 详情成功"))
 }
 
-async fn create_slo(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/slos",
+    tag = "slo",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn create_slo(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SloRequest>,
@@ -442,7 +466,15 @@ async fn create_slo(
     Json(ApiResponse::success(slo, "SLO 创建成功"))
 }
 
-async fn update_slo(
+#[utoipa::path(
+    put,
+    path = "/api/monitor/slos/{id}",
+    tag = "slo",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn update_slo(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
@@ -474,7 +506,15 @@ async fn update_slo(
     Json(ApiResponse::success(slo, "SLO 更新成功"))
 }
 
-async fn delete_slo(
+#[utoipa::path(
+    delete,
+    path = "/api/monitor/slos/{id}",
+    tag = "slo",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn delete_slo(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
@@ -485,7 +525,15 @@ async fn delete_slo(
     ))
 }
 
-async fn get_slo_summary(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/slos/summary",
+    tag = "slo",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_slo_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<SloSummary>> {
@@ -525,7 +573,15 @@ async fn get_slo_summary(
     Json(ApiResponse::success(summary, "获取 SLO 摘要成功"))
 }
 
-async fn get_slo_budget(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/slos/budget",
+    tag = "slo",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_slo_budget(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<SloBudget>>> {
@@ -570,7 +626,15 @@ async fn get_slo_budget(
     Json(ApiResponse::success(budgets, "获取 SLO 错误预算成功"))
 }
 
-async fn get_slo_trend(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/slos/trend",
+    tag = "slo",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_slo_trend(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(query): Query<SloTrendQuery>,
@@ -606,7 +670,15 @@ async fn get_slo_trend(
     Json(ApiResponse::success(points, "获取 SLO 趋势成功"))
 }
 
-async fn list_slo_violations(
+#[utoipa::path(
+    get,
+    path = "/api/monitor/slos/violations",
+    tag = "slo",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn list_slo_violations(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<SloViolationQuery>,
@@ -646,7 +718,15 @@ async fn list_slo_violations(
     ))
 }
 
-async fn resolve_slo_violation(
+#[utoipa::path(
+    post,
+    path = "/api/monitor/slos/violations/{id}/resolve",
+    tag = "slo",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn resolve_slo_violation(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,

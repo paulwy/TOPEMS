@@ -7,6 +7,14 @@ use topems_shared_core::response::ApiResponse;
 
 use crate::models::{AppState, CreateWmsScmSyncRequest, WmsScmSync};
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/wms-scm",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_wms_scm_sync(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<WmsScmSync>>> {
@@ -32,6 +40,14 @@ pub async fn list_wms_scm_sync(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/wms-scm",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_wms_scm_sync(
     State(state): State<AppState>,
     Json(req): Json<CreateWmsScmSyncRequest>,
@@ -83,6 +99,14 @@ pub async fn create_wms_scm_sync(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/wms-scm/{id}",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_wms_scm_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -108,6 +132,14 @@ pub async fn get_wms_scm_sync(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/wms-scm/{id}/sync",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn sync_wms_scm(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

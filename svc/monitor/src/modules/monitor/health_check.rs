@@ -19,6 +19,14 @@ pub fn create_routes() -> Router<AppState> {
     Router::new().route("/health", get(get_service_health))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/monitor/health",
+    tag = "health",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_service_health(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<ServiceHealth>>> {

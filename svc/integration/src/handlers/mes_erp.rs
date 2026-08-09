@@ -20,6 +20,14 @@ pub struct SyncMesToErpRequest {
     pub mes_order_id: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/mes-erp",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_mes_erp_sync(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<MesErpSync>>> {
@@ -45,6 +53,14 @@ pub async fn list_mes_erp_sync(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/mes-erp",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn create_mes_erp_sync(
     State(state): State<AppState>,
     Json(req): Json<CreateMesErpSyncRequest>,
@@ -96,6 +112,14 @@ pub async fn create_mes_erp_sync(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/mes-erp/{id}",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_mes_erp_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -121,6 +145,14 @@ pub async fn get_mes_erp_sync(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/mes-erp/{id}/sync",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn sync_mes_erp(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -161,6 +193,14 @@ pub async fn sync_mes_erp(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/mes-erp/sync/erp-to-mes",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn sync_erp_order_to_mes(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
@@ -190,6 +230,14 @@ pub async fn sync_erp_order_to_mes(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/mes-erp/sync/mes-to-erp",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn sync_mes_progress_to_erp(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
@@ -222,6 +270,14 @@ pub async fn sync_mes_progress_to_erp(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/integration/mes-erp/{id}/retry",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn retry_mes_erp_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -238,6 +294,14 @@ pub async fn retry_mes_erp_sync(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/mes-erp/{id}/logs",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn get_mes_erp_sync_logs(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -251,6 +315,14 @@ pub async fn get_mes_erp_sync_logs(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/integration/mes-erp/records",
+    tag = "integration",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
 pub async fn list_mes_erp_sync_records(
     State(state): State<AppState>,
     Query(query): Query<HashMap<String, String>>,
