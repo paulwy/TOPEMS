@@ -16,7 +16,11 @@ fn test_default_registry_has_30_plus_forms() {
 fn test_default_registry_supports_all_domains() {
     let registry = default_registry();
     let domains = registry.domains();
-    assert!(domains.len() >= 9, "应覆盖 9 个业务域，实际：{}", domains.len());
+    assert!(
+        domains.len() >= 9,
+        "应覆盖 9 个业务域，实际：{}",
+        domains.len()
+    );
 }
 
 #[test]
@@ -69,7 +73,12 @@ fn test_registry_register_and_overrides() {
     let cfg = FormConfig::new("test_form", "测试表单", FormDomain::System)
         .with_description("测试用")
         .with_field(FieldDefinition::new(
-            "f1", "字段1", "text", "测试字段", true, "示例",
+            "f1",
+            "字段1",
+            "text",
+            "测试字段",
+            true,
+            "示例",
         ));
     registry.register(cfg);
     assert_eq!(registry.count(), 1);
