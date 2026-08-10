@@ -1973,6 +1973,10 @@ pub async fn compat_post_api_core_monitor_slos_violations_id_resolve() {}
 
 // ========== RC4b · IAM compatibility ==========
 
+#[utoipa::path(post, path = "/api/core/iam/auth/login", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_auth_login() {}
+#[utoipa::path(post, path = "/api/core/iam/auth/register", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_auth_register() {}
 #[utoipa::path(post, path = "/api/core/iam/auth/logout", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
 pub async fn compat_post_api_core_iam_auth_logout() {}
 #[utoipa::path(post, path = "/api/core/iam/auth/refresh", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]

@@ -6,21 +6,21 @@
 
 | 指标 | 数值 |
 |------|------|
-| OpenAPI 端点总数 (method+path) | 3165 |
+| OpenAPI 端点总数 (method+path) | 3173 |
 | 前端 API 调用总数 (去重前) | 2875 |
 | 前端唯一路径数 | 1881 |
-| 已匹配端点数 | 2738 |
-| 未使用后端 API (OpenAPI 有/前端无) | 386 |
+| 已匹配端点数 | 2745 |
+| 未使用后端 API (OpenAPI 有/前端无) | 387 |
 | 未使用后端 API — 已豁免 | 41 |
-| 未文档化前端 API (前端有/OpenAPI 无) | 7 |
+| 未文档化前端 API (前端有/OpenAPI 无) | 0 |
 | 未文档化前端 API — 已豁免 | 11 |
 | 方法不匹配数 | 0 |
-| **总不匹配数** | **7** |
-| CI 严重度 | RED (mismatch >= 5) |
+| **总不匹配数** | **0** |
+| CI 严重度 | GREEN |
 
 ## 1. 未使用后端 API（OpenAPI 有定义，前端未调用）
 
-共 386 个端点：
+共 387 个端点：
 
 | # | operationId | 方法 | 路径 | Tag | 备注 |
 |---|-------------|------|------|-----|------|
@@ -196,234 +196,225 @@
 | 170 | export_template | GET | `/api/finance/voucher-templates/{param}/export` | finance |  |
 | 171 | export_vouchers | POST | `/api/finance/vouchers/export` | finance |  |
 | 172 | unpost_voucher | POST | `/api/finance/vouchers/{param}/unpost` | finance |  |
-| 173 | list_pending_approvals | GET | `/api/core/flow/approvals/pending` | flow |  |
-| 174 | approve_task | POST | `/api/core/flow/approvals/{param}/approve` | flow |  |
-| 175 | reject_task | POST | `/api/core/flow/approvals/{param}/reject` | flow |  |
-| 176 | approve_instance | POST | `/api/core/flow/instances/{param}/approve` | flow |  |
-| 177 | reject_instance | POST | `/api/core/flow/instances/{param}/reject` | flow |  |
-| 178 | start_instance | POST | `/api/core/flow/instances/{param}/start` | flow |  |
-| 179 | list_workflows | GET | `/api/core/flow/workflows` | flow |  |
-| 180 | create_workflow | POST | `/api/core/flow/workflows` | flow |  |
-| 181 | get_workflow | GET | `/api/core/flow/workflows/{param}` | flow |  |
-| 182 | update_workflow | PUT | `/api/core/flow/workflows/{param}` | flow |  |
-| 183 | delete_workflow | DELETE | `/api/core/flow/workflows/{param}` | flow |  |
-| 184 | publish_workflow | POST | `/api/core/flow/workflows/{param}/publish` | flow |  |
-| 185 | unpublish_workflow | POST | `/api/core/flow/workflows/{param}/unpublish` | flow |  |
-| 186 | list_devices | GET | `/api/gis/devices` | gis |  |
-| 187 | get_device | GET | `/api/gis/devices/{param}` | gis |  |
-| 188 | list_locations | GET | `/api/gis/locations` | gis |  |
-| 189 | create_location | POST | `/api/gis/locations/create` | gis |  |
-| 190 | get_location | GET | `/api/gis/locations/{param}` | gis |  |
-| 191 | list_maps | GET | `/api/gis/maps` | gis |  |
-| 192 | create_map | POST | `/api/gis/maps/create` | gis |  |
-| 193 | get_map | GET | `/api/gis/maps/{param}` | gis |  |
-| 194 | update_map | PUT | `/api/gis/maps/{param}` | gis |  |
-| 195 | delete_map | DELETE | `/api/gis/maps/{param}` | gis |  |
-| 196 | list_mes_erp_sync_records | GET | `/api/integration/mes-erp/records` | integration |  |
-| 197 | sync_erp_order_to_mes | POST | `/api/integration/mes-erp/sync/erp-to-mes` | integration |  |
-| 198 | sync_mes_progress_to_erp | POST | `/api/integration/mes-erp/sync/mes-to-erp` | integration |  |
-| 199 | get_mes_erp_sync_logs | GET | `/api/integration/mes-erp/{param}/logs` | integration |  |
-| 200 | retry_mes_erp_sync | POST | `/api/integration/mes-erp/{param}/retry` | integration |  |
-| 201 | list_mes_qms_sync_api | GET | `/api/integration/mes-qms` | integration |  |
-| 202 | defect_handling_api | POST | `/api/integration/mes-qms/defect-handling` | integration |  |
-| 203 | get_mes_qms_stats_api | GET | `/api/integration/mes-qms/stats` | integration |  |
-| 204 | sync_quality_result_api | POST | `/api/integration/mes-qms/sync-result` | integration |  |
-| 205 | sync_trace_chain_api | POST | `/api/integration/mes-qms/sync-trace` | integration |  |
-| 206 | trigger_qms_inspection_api | POST | `/api/integration/mes-qms/trigger-inspection` | integration |  |
-| 207 | get_mes_qms_sync_api | GET | `/api/integration/mes-qms/{param}` | integration |  |
-| 208 | retry_mes_qms_sync_api | POST | `/api/integration/mes-qms/{param}/retry` | integration |  |
-| 209 | get_pending | GET | `/api/integration/sync/pending` | integration |  |
-| 210 | retry_failed | POST | `/api/integration/sync/retry-failed` | integration |  |
-| 211 | integration_get_statistics | GET | `/api/integration/sync/statistics` | integration |  |
-| 212 | create_task | POST | `/api/integration/sync/tasks` | integration |  |
-| 213 | integration_get_task | GET | `/api/integration/sync/tasks/{param}` | integration |  |
-| 214 | update_status | POST | `/api/integration/sync/tasks/{param}/status` | integration |  |
-| 215 | trigger_scm_wms | POST | `/api/integration/sync/trigger/scm-to-wms` | integration |  |
-| 216 | trigger_srm_scm | POST | `/api/integration/sync/trigger/srm-to-scm` | integration |  |
-| 217 | trigger_wms_crm | POST | `/api/integration/sync/trigger/wms-to-crm` | integration |  |
-| 218 | list_instruments | GET | `/api/lims/instruments` | lims |  |
-| 219 | create_instrument | POST | `/api/lims/instruments` | lims |  |
-| 220 | list_reagents | GET | `/api/lims/reagents` | lims |  |
-| 221 | create_reagent | POST | `/api/lims/reagents` | lims |  |
-| 222 | list_samples | GET | `/api/lims/samples` | lims |  |
-| 223 | register_sample | POST | `/api/lims/samples` | lims |  |
-| 224 | get_sample | GET | `/api/lims/samples/{param}` | lims |  |
-| 225 | lims_list_tasks | GET | `/api/lims/tasks` | lims |  |
-| 226 | lims_create_task | POST | `/api/lims/tasks` | lims |  |
-| 227 | lims_get_task | GET | `/api/lims/tasks/{param}` | lims |  |
-| 228 | get_designer_schema | GET | `/api/lowcode/designer/schema` | lowcode |  |
-| 229 | generate_suggestions | POST | `/api/master/quality-v51/ai/suggest` | master-data |  |
-| 230 | apply_auto_fix | POST | `/api/master/quality-v51/auto-fix/run` | master-data |  |
-| 231 | list_quality_checks | GET | `/api/master/quality-v51/checks` | master-data |  |
-| 232 | run_quality_check | POST | `/api/master/quality-v51/checks` | master-data |  |
-| 233 | get_quality_dashboard | GET | `/api/master/quality-v51/dashboard` | master-data |  |
-| 234 | list_quality_rules | GET | `/api/master/quality-v51/rules` | master-data |  |
-| 235 | create_quality_rule | POST | `/api/master/quality-v51/rules` | master-data |  |
-| 236 | get_quality_score | GET | `/api/master/quality-v51/score` | master-data |  |
-| 237 | list_wip_transfers | GET | `/api/mes/wips/{param}/transfers` | mes |  |
-| 238 | get_today_production_output | GET | `/api/mes/work-reports/today/output` | mes |  |
-| 239 | get_all_tasks | GET | `/api/mobile/mobile-tasks` | mobile |  |
-| 240 | mobile_create_task | POST | `/api/mobile/mobile-tasks` | mobile |  |
-| 241 | mobile_get_task | GET | `/api/mobile/mobile-tasks/{param}` | mobile |  |
-| 242 | update_task | PUT | `/api/mobile/mobile-tasks/{param}` | mobile |  |
-| 243 | delete_task | DELETE | `/api/mobile/mobile-tasks/{param}` | mobile |  |
-| 244 | get_all_patrol_records | GET | `/api/mobile/patrol-records` | mobile |  |
-| 245 | create_patrol_record | POST | `/api/mobile/patrol-records` | mobile |  |
-| 246 | get_patrol_record | GET | `/api/mobile/patrol-records/{param}` | mobile |  |
-| 247 | scan_barcode | POST | `/api/mobile/scan/barcode` | mobile |  |
-| 248 | get_dashboard_stats | GET | `/api/mobile/stats/dashboard` | mobile |  |
-| 249 | list_alerts | GET | `/api/monitor/alerts` | monitor |  |
-| 250 | acknowledge_alerts | POST | `/api/monitor/alerts/acknowledge` | monitor |  |
-| 251 | resolve_alerts | POST | `/api/monitor/alerts/resolve` | monitor |  |
-| 252 | get_alert_statistics | GET | `/api/monitor/alerts/statistics` | monitor |  |
-| 253 | get_alert | GET | `/api/monitor/alerts/{param}` | monitor |  |
-| 254 | update_alert | POST | `/api/monitor/alerts/{param}` | monitor |  |
-| 255 | get_alert_history | GET | `/api/monitor/alerts/{param}/history` | monitor |  |
-| 256 | get_alert_timeline | GET | `/api/monitor/alerts/{param}/timeline` | monitor |  |
-| 257 | list_business_metrics | GET | `/api/monitor/business-metrics` | monitor |  |
-| 258 | create_business_metric | POST | `/api/monitor/business-metrics` | monitor |  |
-| 259 | get_kpi_dashboard | GET | `/api/monitor/business-metrics/kpi` | monitor |  |
-| 260 | get_business_metric_summary | GET | `/api/monitor/business-metrics/summary` | monitor |  |
-| 261 | get_business_metric_trend | GET | `/api/monitor/business-metrics/trend` | monitor |  |
-| 262 | get_business_metric | GET | `/api/monitor/business-metrics/{param}` | monitor |  |
-| 263 | update_business_metric | PUT | `/api/monitor/business-metrics/{param}` | monitor |  |
-| 264 | delete_business_metric | DELETE | `/api/monitor/business-metrics/{param}` | monitor |  |
-| 265 | get_api_performance | GET | `/api/monitor/performance/api` | monitor |  |
-| 266 | export_performance_data | POST | `/api/monitor/performance/export` | monitor |  |
-| 267 | get_service_performance | GET | `/api/monitor/performance/services` | monitor |  |
-| 268 | get_slow_queries | GET | `/api/monitor/performance/slow-queries` | monitor |  |
-| 269 | get_performance_summary | GET | `/api/monitor/performance/summary` | monitor |  |
-| 270 | get_performance_trend | GET | `/api/monitor/performance/trend` | monitor |  |
-| 271 | list_rules | GET | `/api/monitor/rules` | monitor |  |
-| 272 | create_rule | POST | `/api/monitor/rules` | monitor |  |
-| 273 | get_rule | GET | `/api/monitor/rules/{param}` | monitor |  |
-| 274 | update_rule | PUT | `/api/monitor/rules/{param}` | monitor |  |
-| 275 | delete_rule | DELETE | `/api/monitor/rules/{param}` | monitor |  |
-| 276 | get_advanced_rule | GET | `/api/monitor/rules/{param}/advanced` | monitor |  |
-| 277 | update_advanced_rule | PUT | `/api/monitor/rules/{param}/advanced` | monitor |  |
-| 278 | disable_rule | POST | `/api/monitor/rules/{param}/disable` | monitor |  |
-| 279 | enable_rule | POST | `/api/monitor/rules/{param}/enable` | monitor |  |
-| 280 | get_escalation | GET | `/api/monitor/rules/{param}/escalation` | monitor |  |
-| 281 | update_escalation | PUT | `/api/monitor/rules/{param}/escalation` | monitor |  |
-| 282 | get_routing | GET | `/api/monitor/rules/{param}/routing` | monitor |  |
-| 283 | update_routing | PUT | `/api/monitor/rules/{param}/routing` | monitor |  |
-| 284 | get_scheduled_trigger | GET | `/api/monitor/rules/{param}/scheduled-trigger` | monitor |  |
-| 285 | update_scheduled_trigger | PUT | `/api/monitor/rules/{param}/scheduled-trigger` | monitor |  |
-| 286 | list_slos | GET | `/api/monitor/slos` | monitor |  |
-| 287 | create_slo | POST | `/api/monitor/slos` | monitor |  |
-| 288 | get_slo_budget | GET | `/api/monitor/slos/budget` | monitor |  |
-| 289 | get_slo_summary | GET | `/api/monitor/slos/summary` | monitor |  |
-| 290 | get_slo_trend | GET | `/api/monitor/slos/trend` | monitor |  |
-| 291 | list_slo_violations | GET | `/api/monitor/slos/violations` | monitor |  |
-| 292 | resolve_slo_violation | POST | `/api/monitor/slos/violations/{param}/resolve` | monitor |  |
-| 293 | get_slo | GET | `/api/monitor/slos/{param}` | monitor |  |
-| 294 | update_slo | PUT | `/api/monitor/slos/{param}` | monitor |  |
-| 295 | delete_slo | DELETE | `/api/monitor/slos/{param}` | monitor |  |
-| 296 | list_suppression_rules | GET | `/api/monitor/suppression` | monitor |  |
-| 297 | create_suppression_rule | POST | `/api/monitor/suppression` | monitor |  |
-| 298 | get_suppression_rule | GET | `/api/monitor/suppression/{param}` | monitor |  |
-| 299 | update_suppression_rule | PUT | `/api/monitor/suppression/{param}` | monitor |  |
-| 300 | delete_suppression_rule | DELETE | `/api/monitor/suppression/{param}` | monitor |  |
-| 301 | monitor_list_templates | GET | `/api/monitor/templates` | monitor |  |
-| 302 | monitor_create_template | POST | `/api/monitor/templates` | monitor |  |
-| 303 | monitor_get_template | GET | `/api/monitor/templates/{param}` | monitor |  |
-| 304 | monitor_update_template | PUT | `/api/monitor/templates/{param}` | monitor |  |
-| 305 | monitor_delete_template | DELETE | `/api/monitor/templates/{param}` | monitor |  |
-| 306 | list_thresholds | GET | `/api/monitor/thresholds` | monitor |  |
-| 307 | create_threshold | POST | `/api/monitor/thresholds` | monitor |  |
-| 308 | evaluate_thresholds | POST | `/api/monitor/thresholds/evaluate` | monitor |  |
-| 309 | get_threshold | GET | `/api/monitor/thresholds/{param}` | monitor |  |
-| 310 | update_threshold | PUT | `/api/monitor/thresholds/{param}` | monitor |  |
-| 311 | delete_threshold | DELETE | `/api/monitor/thresholds/{param}` | monitor |  |
-| 312 | pdm__home | GET | `/api/pdm` | pdm |  |
-| 313 | approve_change_notice | POST | `/api/pdm/change-notices/{param}/approve` | pdm |  |
-| 314 | reject_change_notice | POST | `/api/pdm/change-notices/{param}/reject` | pdm |  |
-| 315 | submit_change_notice | POST | `/api/pdm/change-notices/{param}/submit` | pdm |  |
-| 316 | list_pending_documents | GET | `/api/pdm/documents/pending-approval` | pdm |  |
-| 317 | get_document_approval_history | GET | `/api/pdm/documents/{param}/approval-history` | pdm |  |
-| 318 | start_document_approval | POST | `/api/pdm/documents/{param}/approve` | pdm |  |
-| 319 | pdm_get_statistics | GET | `/api/pdm/statistics/{param}` | pdm |  |
-| 320 | pdm_list_versions_api_pdm_versions | GET | `/api/pdm/versions` | pdm |  |
-| 321 | pdm_create_version_api_pdm_versions | POST | `/api/pdm/versions` | pdm |  |
-| 322 | pdm_get_version_api_pdm_versions_{id} | GET | `/api/pdm/versions/{param}` | pdm |  |
-| 323 | pdm_update_version_api_pdm_versions_{id} | PUT | `/api/pdm/versions/{param}` | pdm |  |
-| 324 | pdm_delete_version_api_pdm_versions_{id} | DELETE | `/api/pdm/versions/{param}` | pdm |  |
-| 325 | list_workflow_instances | GET | `/api/pdm/workflow-instances` | pdm |  |
-| 326 | get_workflow_instance | GET | `/api/pdm/workflow-instances/{param}` | pdm |  |
-| 327 | advance_workflow | POST | `/api/pdm/workflow-instances/{param}/advance` | pdm |  |
-| 328 | pdm_list_workflows | GET | `/api/pdm/workflows` | pdm |  |
-| 329 | pdm_create_workflow | POST | `/api/pdm/workflows` | pdm |  |
-| 330 | start_workflow | POST | `/api/pdm/workflows/start` | pdm |  |
-| 331 | pdm_get_workflow | GET | `/api/pdm/workflows/{param}` | pdm |  |
-| 332 | pdm_update_workflow | PUT | `/api/pdm/workflows/{param}` | pdm |  |
-| 333 | pdm_delete_workflow | DELETE | `/api/pdm/workflows/{param}` | pdm |  |
-| 334 | get_announcements | GET | `/api/portal/announcements` | portal |  |
-| 335 | portal_create_announcement | POST | `/api/portal/announcements` | portal |  |
-| 336 | portal_get_dashboard_stats | GET | `/api/portal/dashboard/stats` | portal |  |
-| 337 | get_navigation_menu | GET | `/api/portal/navigation/menu` | portal |  |
-| 338 | portal_get_notifications | GET | `/api/portal/notifications` | portal |  |
-| 339 | list_services | GET | `/api/portal/services` | portal |  |
-| 340 | get_todos | GET | `/api/portal/todos` | portal |  |
-| 341 | add_todo | POST | `/api/portal/todos` | portal |  |
-| 342 | get_user_info | GET | `/api/portal/user` | portal |  |
-| 343 | qms_list_inspections | GET | `/api/qms/checks` | qms | path exists in frontend but method not called |
-| 344 | list_issues | GET | `/api/qms/issues` | qms | path exists in frontend but method not called |
-| 345 | list_standards | GET | `/api/qms/standards` | qms | path exists in frontend but method not called |
-| 346 | rd_list_audit_logs | GET | `/api/rd/audit-logs` | rd |  |
-| 347 | rd_list_projects | GET | `/api/rd/projects` | rd | path exists in frontend but method not called |
-| 348 | reject_order | POST | `/api/scm/purchase-orders/{param}/reject` | scm |  |
-| 349 | search_handler | GET | `/api/search` | search |  |
-| 350 | list_sla_policies_handler | GET | `/api/ticket/sla-policies` | ticket |  |
-| 351 | create_sla_policy_handler | POST | `/api/ticket/sla-policies` | ticket |  |
-| 352 | list_tickets_handler | GET | `/api/ticket/tickets` | ticket |  |
-| 353 | create_ticket_handler | POST | `/api/ticket/tickets` | ticket |  |
-| 354 | get_stats_handler | GET | `/api/ticket/tickets/stats` | ticket |  |
-| 355 | get_ticket_handler | GET | `/api/ticket/tickets/{param}` | ticket |  |
-| 356 | update_ticket_handler | PUT | `/api/ticket/tickets/{param}` | ticket |  |
-| 357 | delete_ticket_handler | DELETE | `/api/ticket/tickets/{param}` | ticket |  |
-| 358 | list_comments_handler | GET | `/api/ticket/tickets/{param}/comments` | ticket |  |
-| 359 | add_comment_handler | POST | `/api/ticket/tickets/{param}/comments` | ticket |  |
-| 360 | unified-core_create_document | POST | `/api/core/doc/documents` | unified-core | path exists in frontend but method not called |
-| 361 | unified-core_update_document | PUT | `/api/core/doc/documents/{param}` | unified-core | path exists in frontend but method not called |
-| 362 | download_file | GET | `/api/core/file/download/{param}` | unified-core |  |
-| 363 | list_files | GET | `/api/core/file/files` | unified-core |  |
-| 364 | get_received_files | GET | `/api/core/file/files/received` | unified-core |  |
-| 365 | search_files | GET | `/api/core/file/files/search` | unified-core |  |
-| 366 | list_starred_files | GET | `/api/core/file/files/starred` | unified-core |  |
-| 367 | update_file | PUT | `/api/core/file/files/{param}` | unified-core | path exists in frontend but method not called |
-| 368 | copy_file | POST | `/api/core/file/files/{param}/copy` | unified-core |  |
-| 369 | move_file | POST | `/api/core/file/files/{param}/move` | unified-core |  |
-| 370 | set_file_permission | POST | `/api/core/file/files/{param}/permission` | unified-core |  |
-| 371 | set_file_permissions | POST | `/api/core/file/files/{param}/permissions` | unified-core | path exists in frontend but method not called |
-| 372 | get_file_shares | GET | `/api/core/file/files/{param}/shares` | unified-core |  |
-| 373 | star_file | POST | `/api/core/file/files/{param}/star` | unified-core |  |
-| 374 | unstar_file | POST | `/api/core/file/files/{param}/unstar` | unified-core |  |
-| 375 | preview_file | GET | `/api/core/file/preview/{param}` | unified-core |  |
-| 376 | delete_share | DELETE | `/api/core/file/shares/{param}` | unified-core |  |
-| 377 | get_file_stats | GET | `/api/core/file/stats` | unified-core |  |
-| 378 | get_thumbnail | GET | `/api/core/file/thumbnail/{param}` | unified-core |  |
-| 379 | upload_multiple | POST | `/api/core/file/upload/multiple` | unified-core |  |
-| 380 | login | POST | `/api/unified-core/iam/auth/login` | unified-core |  |
-| 381 | register | POST | `/api/unified-core/iam/auth/register` | unified-core |  |
-| 382 | list_users | GET | `/api/unified-core/users` | unified-core |  |
-| 383 | create_user | POST | `/api/unified-core/users` | unified-core |  |
-| 384 | wms_list_alerts | GET | `/api/wms/inventory-alerts` | wms |  |
-| 385 | wms_get_alert | GET | `/api/wms/inventory-alerts/{param}` | wms |  |
-| 386 | acknowledge_alert | POST | `/api/wms/inventory-alerts/{param}/acknowledge` | wms |  |
+| 173 | list_devices | GET | `/api/gis/devices` | gis |  |
+| 174 | get_device | GET | `/api/gis/devices/{param}` | gis |  |
+| 175 | list_locations | GET | `/api/gis/locations` | gis |  |
+| 176 | create_location | POST | `/api/gis/locations/create` | gis |  |
+| 177 | get_location | GET | `/api/gis/locations/{param}` | gis |  |
+| 178 | list_maps | GET | `/api/gis/maps` | gis |  |
+| 179 | create_map | POST | `/api/gis/maps/create` | gis |  |
+| 180 | get_map | GET | `/api/gis/maps/{param}` | gis |  |
+| 181 | update_map | PUT | `/api/gis/maps/{param}` | gis |  |
+| 182 | delete_map | DELETE | `/api/gis/maps/{param}` | gis |  |
+| 183 | list_mes_erp_sync_records | GET | `/api/integration/mes-erp/records` | integration |  |
+| 184 | sync_erp_order_to_mes | POST | `/api/integration/mes-erp/sync/erp-to-mes` | integration |  |
+| 185 | sync_mes_progress_to_erp | POST | `/api/integration/mes-erp/sync/mes-to-erp` | integration |  |
+| 186 | get_mes_erp_sync_logs | GET | `/api/integration/mes-erp/{param}/logs` | integration |  |
+| 187 | retry_mes_erp_sync | POST | `/api/integration/mes-erp/{param}/retry` | integration |  |
+| 188 | list_mes_qms_sync_api | GET | `/api/integration/mes-qms` | integration |  |
+| 189 | defect_handling_api | POST | `/api/integration/mes-qms/defect-handling` | integration |  |
+| 190 | get_mes_qms_stats_api | GET | `/api/integration/mes-qms/stats` | integration |  |
+| 191 | sync_quality_result_api | POST | `/api/integration/mes-qms/sync-result` | integration |  |
+| 192 | sync_trace_chain_api | POST | `/api/integration/mes-qms/sync-trace` | integration |  |
+| 193 | trigger_qms_inspection_api | POST | `/api/integration/mes-qms/trigger-inspection` | integration |  |
+| 194 | get_mes_qms_sync_api | GET | `/api/integration/mes-qms/{param}` | integration |  |
+| 195 | retry_mes_qms_sync_api | POST | `/api/integration/mes-qms/{param}/retry` | integration |  |
+| 196 | get_pending | GET | `/api/integration/sync/pending` | integration |  |
+| 197 | retry_failed | POST | `/api/integration/sync/retry-failed` | integration |  |
+| 198 | integration_get_statistics | GET | `/api/integration/sync/statistics` | integration |  |
+| 199 | create_task | POST | `/api/integration/sync/tasks` | integration |  |
+| 200 | integration_get_task | GET | `/api/integration/sync/tasks/{param}` | integration |  |
+| 201 | update_status | POST | `/api/integration/sync/tasks/{param}/status` | integration |  |
+| 202 | trigger_scm_wms | POST | `/api/integration/sync/trigger/scm-to-wms` | integration |  |
+| 203 | trigger_srm_scm | POST | `/api/integration/sync/trigger/srm-to-scm` | integration |  |
+| 204 | trigger_wms_crm | POST | `/api/integration/sync/trigger/wms-to-crm` | integration |  |
+| 205 | list_instruments | GET | `/api/lims/instruments` | lims |  |
+| 206 | create_instrument | POST | `/api/lims/instruments` | lims |  |
+| 207 | list_reagents | GET | `/api/lims/reagents` | lims |  |
+| 208 | create_reagent | POST | `/api/lims/reagents` | lims |  |
+| 209 | list_samples | GET | `/api/lims/samples` | lims |  |
+| 210 | register_sample | POST | `/api/lims/samples` | lims |  |
+| 211 | get_sample | GET | `/api/lims/samples/{param}` | lims |  |
+| 212 | lims_list_tasks | GET | `/api/lims/tasks` | lims |  |
+| 213 | lims_create_task | POST | `/api/lims/tasks` | lims |  |
+| 214 | lims_get_task | GET | `/api/lims/tasks/{param}` | lims |  |
+| 215 | get_designer_schema | GET | `/api/lowcode/designer/schema` | lowcode |  |
+| 216 | generate_suggestions | POST | `/api/master/quality-v51/ai/suggest` | master-data |  |
+| 217 | apply_auto_fix | POST | `/api/master/quality-v51/auto-fix/run` | master-data |  |
+| 218 | list_quality_checks | GET | `/api/master/quality-v51/checks` | master-data |  |
+| 219 | run_quality_check | POST | `/api/master/quality-v51/checks` | master-data |  |
+| 220 | get_quality_dashboard | GET | `/api/master/quality-v51/dashboard` | master-data |  |
+| 221 | list_quality_rules | GET | `/api/master/quality-v51/rules` | master-data |  |
+| 222 | create_quality_rule | POST | `/api/master/quality-v51/rules` | master-data |  |
+| 223 | get_quality_score | GET | `/api/master/quality-v51/score` | master-data |  |
+| 224 | list_wip_transfers | GET | `/api/mes/wips/{param}/transfers` | mes |  |
+| 225 | get_today_production_output | GET | `/api/mes/work-reports/today/output` | mes |  |
+| 226 | get_all_tasks | GET | `/api/mobile/mobile-tasks` | mobile |  |
+| 227 | mobile_create_task | POST | `/api/mobile/mobile-tasks` | mobile |  |
+| 228 | mobile_get_task | GET | `/api/mobile/mobile-tasks/{param}` | mobile |  |
+| 229 | update_task | PUT | `/api/mobile/mobile-tasks/{param}` | mobile |  |
+| 230 | delete_task | DELETE | `/api/mobile/mobile-tasks/{param}` | mobile |  |
+| 231 | get_all_patrol_records | GET | `/api/mobile/patrol-records` | mobile |  |
+| 232 | create_patrol_record | POST | `/api/mobile/patrol-records` | mobile |  |
+| 233 | get_patrol_record | GET | `/api/mobile/patrol-records/{param}` | mobile |  |
+| 234 | scan_barcode | POST | `/api/mobile/scan/barcode` | mobile |  |
+| 235 | get_dashboard_stats | GET | `/api/mobile/stats/dashboard` | mobile |  |
+| 236 | list_alerts | GET | `/api/monitor/alerts` | monitor |  |
+| 237 | acknowledge_alerts | POST | `/api/monitor/alerts/acknowledge` | monitor |  |
+| 238 | resolve_alerts | POST | `/api/monitor/alerts/resolve` | monitor |  |
+| 239 | get_alert_statistics | GET | `/api/monitor/alerts/statistics` | monitor |  |
+| 240 | get_alert | GET | `/api/monitor/alerts/{param}` | monitor |  |
+| 241 | update_alert | POST | `/api/monitor/alerts/{param}` | monitor |  |
+| 242 | get_alert_history | GET | `/api/monitor/alerts/{param}/history` | monitor |  |
+| 243 | get_alert_timeline | GET | `/api/monitor/alerts/{param}/timeline` | monitor |  |
+| 244 | list_business_metrics | GET | `/api/monitor/business-metrics` | monitor |  |
+| 245 | create_business_metric | POST | `/api/monitor/business-metrics` | monitor |  |
+| 246 | get_kpi_dashboard | GET | `/api/monitor/business-metrics/kpi` | monitor |  |
+| 247 | get_business_metric_summary | GET | `/api/monitor/business-metrics/summary` | monitor |  |
+| 248 | get_business_metric_trend | GET | `/api/monitor/business-metrics/trend` | monitor |  |
+| 249 | get_business_metric | GET | `/api/monitor/business-metrics/{param}` | monitor |  |
+| 250 | update_business_metric | PUT | `/api/monitor/business-metrics/{param}` | monitor |  |
+| 251 | delete_business_metric | DELETE | `/api/monitor/business-metrics/{param}` | monitor |  |
+| 252 | get_api_performance | GET | `/api/monitor/performance/api` | monitor |  |
+| 253 | export_performance_data | POST | `/api/monitor/performance/export` | monitor |  |
+| 254 | get_service_performance | GET | `/api/monitor/performance/services` | monitor |  |
+| 255 | get_slow_queries | GET | `/api/monitor/performance/slow-queries` | monitor |  |
+| 256 | get_performance_summary | GET | `/api/monitor/performance/summary` | monitor |  |
+| 257 | get_performance_trend | GET | `/api/monitor/performance/trend` | monitor |  |
+| 258 | list_rules | GET | `/api/monitor/rules` | monitor |  |
+| 259 | create_rule | POST | `/api/monitor/rules` | monitor |  |
+| 260 | get_rule | GET | `/api/monitor/rules/{param}` | monitor |  |
+| 261 | update_rule | PUT | `/api/monitor/rules/{param}` | monitor |  |
+| 262 | delete_rule | DELETE | `/api/monitor/rules/{param}` | monitor |  |
+| 263 | get_advanced_rule | GET | `/api/monitor/rules/{param}/advanced` | monitor |  |
+| 264 | update_advanced_rule | PUT | `/api/monitor/rules/{param}/advanced` | monitor |  |
+| 265 | disable_rule | POST | `/api/monitor/rules/{param}/disable` | monitor |  |
+| 266 | enable_rule | POST | `/api/monitor/rules/{param}/enable` | monitor |  |
+| 267 | get_escalation | GET | `/api/monitor/rules/{param}/escalation` | monitor |  |
+| 268 | update_escalation | PUT | `/api/monitor/rules/{param}/escalation` | monitor |  |
+| 269 | get_routing | GET | `/api/monitor/rules/{param}/routing` | monitor |  |
+| 270 | update_routing | PUT | `/api/monitor/rules/{param}/routing` | monitor |  |
+| 271 | get_scheduled_trigger | GET | `/api/monitor/rules/{param}/scheduled-trigger` | monitor |  |
+| 272 | update_scheduled_trigger | PUT | `/api/monitor/rules/{param}/scheduled-trigger` | monitor |  |
+| 273 | list_slos | GET | `/api/monitor/slos` | monitor |  |
+| 274 | create_slo | POST | `/api/monitor/slos` | monitor |  |
+| 275 | get_slo_budget | GET | `/api/monitor/slos/budget` | monitor |  |
+| 276 | get_slo_summary | GET | `/api/monitor/slos/summary` | monitor |  |
+| 277 | get_slo_trend | GET | `/api/monitor/slos/trend` | monitor |  |
+| 278 | list_slo_violations | GET | `/api/monitor/slos/violations` | monitor |  |
+| 279 | resolve_slo_violation | POST | `/api/monitor/slos/violations/{param}/resolve` | monitor |  |
+| 280 | get_slo | GET | `/api/monitor/slos/{param}` | monitor |  |
+| 281 | update_slo | PUT | `/api/monitor/slos/{param}` | monitor |  |
+| 282 | delete_slo | DELETE | `/api/monitor/slos/{param}` | monitor |  |
+| 283 | list_suppression_rules | GET | `/api/monitor/suppression` | monitor |  |
+| 284 | create_suppression_rule | POST | `/api/monitor/suppression` | monitor |  |
+| 285 | get_suppression_rule | GET | `/api/monitor/suppression/{param}` | monitor |  |
+| 286 | update_suppression_rule | PUT | `/api/monitor/suppression/{param}` | monitor |  |
+| 287 | delete_suppression_rule | DELETE | `/api/monitor/suppression/{param}` | monitor |  |
+| 288 | monitor_list_templates | GET | `/api/monitor/templates` | monitor |  |
+| 289 | monitor_create_template | POST | `/api/monitor/templates` | monitor |  |
+| 290 | monitor_get_template | GET | `/api/monitor/templates/{param}` | monitor |  |
+| 291 | monitor_update_template | PUT | `/api/monitor/templates/{param}` | monitor |  |
+| 292 | monitor_delete_template | DELETE | `/api/monitor/templates/{param}` | monitor |  |
+| 293 | list_thresholds | GET | `/api/monitor/thresholds` | monitor |  |
+| 294 | create_threshold | POST | `/api/monitor/thresholds` | monitor |  |
+| 295 | evaluate_thresholds | POST | `/api/monitor/thresholds/evaluate` | monitor |  |
+| 296 | get_threshold | GET | `/api/monitor/thresholds/{param}` | monitor |  |
+| 297 | update_threshold | PUT | `/api/monitor/thresholds/{param}` | monitor |  |
+| 298 | delete_threshold | DELETE | `/api/monitor/thresholds/{param}` | monitor |  |
+| 299 | pdm__home | GET | `/api/pdm` | pdm |  |
+| 300 | approve_change_notice | POST | `/api/pdm/change-notices/{param}/approve` | pdm |  |
+| 301 | reject_change_notice | POST | `/api/pdm/change-notices/{param}/reject` | pdm |  |
+| 302 | submit_change_notice | POST | `/api/pdm/change-notices/{param}/submit` | pdm |  |
+| 303 | list_pending_documents | GET | `/api/pdm/documents/pending-approval` | pdm |  |
+| 304 | get_document_approval_history | GET | `/api/pdm/documents/{param}/approval-history` | pdm |  |
+| 305 | start_document_approval | POST | `/api/pdm/documents/{param}/approve` | pdm |  |
+| 306 | pdm_get_statistics | GET | `/api/pdm/statistics/{param}` | pdm |  |
+| 307 | pdm_list_versions_api_pdm_versions | GET | `/api/pdm/versions` | pdm |  |
+| 308 | pdm_create_version_api_pdm_versions | POST | `/api/pdm/versions` | pdm |  |
+| 309 | pdm_get_version_api_pdm_versions_{id} | GET | `/api/pdm/versions/{param}` | pdm |  |
+| 310 | pdm_update_version_api_pdm_versions_{id} | PUT | `/api/pdm/versions/{param}` | pdm |  |
+| 311 | pdm_delete_version_api_pdm_versions_{id} | DELETE | `/api/pdm/versions/{param}` | pdm |  |
+| 312 | list_workflow_instances | GET | `/api/pdm/workflow-instances` | pdm |  |
+| 313 | get_workflow_instance | GET | `/api/pdm/workflow-instances/{param}` | pdm |  |
+| 314 | advance_workflow | POST | `/api/pdm/workflow-instances/{param}/advance` | pdm |  |
+| 315 | pdm_list_workflows | GET | `/api/pdm/workflows` | pdm |  |
+| 316 | pdm_create_workflow | POST | `/api/pdm/workflows` | pdm |  |
+| 317 | start_workflow | POST | `/api/pdm/workflows/start` | pdm |  |
+| 318 | pdm_get_workflow | GET | `/api/pdm/workflows/{param}` | pdm |  |
+| 319 | pdm_update_workflow | PUT | `/api/pdm/workflows/{param}` | pdm |  |
+| 320 | pdm_delete_workflow | DELETE | `/api/pdm/workflows/{param}` | pdm |  |
+| 321 | get_announcements | GET | `/api/portal/announcements` | portal |  |
+| 322 | portal_create_announcement | POST | `/api/portal/announcements` | portal |  |
+| 323 | portal_get_dashboard_stats | GET | `/api/portal/dashboard/stats` | portal |  |
+| 324 | get_navigation_menu | GET | `/api/portal/navigation/menu` | portal |  |
+| 325 | portal_get_notifications | GET | `/api/portal/notifications` | portal |  |
+| 326 | list_services | GET | `/api/portal/services` | portal |  |
+| 327 | get_todos | GET | `/api/portal/todos` | portal |  |
+| 328 | add_todo | POST | `/api/portal/todos` | portal |  |
+| 329 | get_user_info | GET | `/api/portal/user` | portal |  |
+| 330 | qms_list_inspections | GET | `/api/qms/checks` | qms | path exists in frontend but method not called |
+| 331 | list_issues | GET | `/api/qms/issues` | qms | path exists in frontend but method not called |
+| 332 | list_standards | GET | `/api/qms/standards` | qms | path exists in frontend but method not called |
+| 333 | reject_order | POST | `/api/scm/purchase-orders/{param}/reject` | scm |  |
+| 334 | search_handler | GET | `/api/search` | search |  |
+| 335 | list_sla_policies_handler | GET | `/api/ticket/sla-policies` | ticket |  |
+| 336 | create_sla_policy_handler | POST | `/api/ticket/sla-policies` | ticket |  |
+| 337 | list_tickets_handler | GET | `/api/ticket/tickets` | ticket |  |
+| 338 | create_ticket_handler | POST | `/api/ticket/tickets` | ticket |  |
+| 339 | get_stats_handler | GET | `/api/ticket/tickets/stats` | ticket |  |
+| 340 | get_ticket_handler | GET | `/api/ticket/tickets/{param}` | ticket |  |
+| 341 | update_ticket_handler | PUT | `/api/ticket/tickets/{param}` | ticket |  |
+| 342 | delete_ticket_handler | DELETE | `/api/ticket/tickets/{param}` | ticket |  |
+| 343 | list_comments_handler | GET | `/api/ticket/tickets/{param}/comments` | ticket |  |
+| 344 | add_comment_handler | POST | `/api/ticket/tickets/{param}/comments` | ticket |  |
+| 345 | wms_list_alerts | GET | `/api/wms/inventory-alerts` | wms |  |
+| 346 | wms_get_alert | GET | `/api/wms/inventory-alerts/{param}` | wms |  |
+| 347 | acknowledge_alert | POST | `/api/wms/inventory-alerts/{param}/acknowledge` | wms |  |
+| 348 | rd_list_audit_logs | GET | `/api/rd/audit-logs` | rd |  |
+| 349 | rd_list_projects | GET | `/api/rd/projects` | rd | path exists in frontend but method not called |
+| 350 | export_projects | GET | `/api/rd/projects/export` | rd |  |
+| 351 | unified-core_create_document | POST | `/api/core/doc/documents` | unified-core | path exists in frontend but method not called |
+| 352 | unified-core_update_document | PUT | `/api/core/doc/documents/{param}` | unified-core | path exists in frontend but method not called |
+| 353 | download_file | GET | `/api/core/file/download/{param}` | unified-core |  |
+| 354 | list_files | GET | `/api/core/file/files` | unified-core |  |
+| 355 | get_received_files | GET | `/api/core/file/files/received` | unified-core |  |
+| 356 | search_files | GET | `/api/core/file/files/search` | unified-core |  |
+| 357 | list_starred_files | GET | `/api/core/file/files/starred` | unified-core |  |
+| 358 | update_file | PUT | `/api/core/file/files/{param}` | unified-core | path exists in frontend but method not called |
+| 359 | copy_file | POST | `/api/core/file/files/{param}/copy` | unified-core |  |
+| 360 | move_file | POST | `/api/core/file/files/{param}/move` | unified-core |  |
+| 361 | set_file_permission | POST | `/api/core/file/files/{param}/permission` | unified-core |  |
+| 362 | set_file_permissions | POST | `/api/core/file/files/{param}/permissions` | unified-core | path exists in frontend but method not called |
+| 363 | get_file_shares | GET | `/api/core/file/files/{param}/shares` | unified-core |  |
+| 364 | star_file | POST | `/api/core/file/files/{param}/star` | unified-core |  |
+| 365 | unstar_file | POST | `/api/core/file/files/{param}/unstar` | unified-core |  |
+| 366 | preview_file | GET | `/api/core/file/preview/{param}` | unified-core |  |
+| 367 | delete_share | DELETE | `/api/core/file/shares/{param}` | unified-core |  |
+| 368 | get_file_stats | GET | `/api/core/file/stats` | unified-core |  |
+| 369 | get_thumbnail | GET | `/api/core/file/thumbnail/{param}` | unified-core |  |
+| 370 | upload_multiple | POST | `/api/core/file/upload/multiple` | unified-core |  |
+| 371 | list_pending_approvals | GET | `/api/core/flow/approvals/pending` | unified-core |  |
+| 372 | approve_task | POST | `/api/core/flow/approvals/{param}/approve` | unified-core |  |
+| 373 | reject_task | POST | `/api/core/flow/approvals/{param}/reject` | unified-core |  |
+| 374 | approve_instance | POST | `/api/core/flow/instances/{param}/approve` | unified-core |  |
+| 375 | reject_instance | POST | `/api/core/flow/instances/{param}/reject` | unified-core |  |
+| 376 | start_instance | POST | `/api/core/flow/instances/{param}/start` | unified-core |  |
+| 377 | list_workflows | GET | `/api/core/flow/workflows` | unified-core |  |
+| 378 | create_workflow | POST | `/api/core/flow/workflows` | unified-core |  |
+| 379 | get_workflow | GET | `/api/core/flow/workflows/{param}` | unified-core |  |
+| 380 | update_workflow | PUT | `/api/core/flow/workflows/{param}` | unified-core |  |
+| 381 | delete_workflow | DELETE | `/api/core/flow/workflows/{param}` | unified-core |  |
+| 382 | publish_workflow | POST | `/api/core/flow/workflows/{param}/publish` | unified-core |  |
+| 383 | unpublish_workflow | POST | `/api/core/flow/workflows/{param}/unpublish` | unified-core |  |
+| 384 | login | POST | `/api/unified-core/iam/auth/login` | unified-core |  |
+| 385 | register | POST | `/api/unified-core/iam/auth/register` | unified-core |  |
+| 386 | list_users | GET | `/api/unified-core/users` | unified-core |  |
+| 387 | create_user | POST | `/api/unified-core/users` | unified-core |  |
 
 ## 2. 未文档化前端 API（前端有调用，OpenAPI 无定义）
 
-共 7 个调用：
-
-| # | 方法 | 完整路径 | 服务 | 文件 | 行号 |
-|---|------|----------|------|------|------|
-| 1 | POST | `/api/core/iam/auth/register` | iam | apps/web/src/api/iam/auth.ts | 19 |
-| 2 | POST | `/api/core/iam/auth/login` | iam | apps/web/src/api/iam/auth.ts | 26 |
-| 3 | POST | `/api/rd/projects/batch` | rd | apps/web/src/api/rd/project.ts | 59 |
-| 4 | DELETE | `/api/rd/projects/batch` | rd | apps/web/src/api/rd/project.ts | 65 |
-| 5 | POST | `/api/rd/projects/import` | rd | apps/web/src/api/rd/project.ts | 75 |
-| 6 | GET | `/api/rd/projects/{param}/dashboard` | rd | apps/web/src/api/rd/project.ts | 83 |
-| 7 | GET | `/api/rd/projects/{param}/gantt` | rd | apps/web/src/api/rd/project.ts | 87 |
+> 无发现。所有前端 API 调用均在 OpenAPI 中有定义。
 
 ## 3. 方法不匹配（路径匹配但 HTTP 方法不一致）
 

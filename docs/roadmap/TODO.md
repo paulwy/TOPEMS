@@ -897,7 +897,7 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 
 ---
 
-## 🎯 V73 — 未使用后端端点清理：死代码删除（✅ Phase 1 完成）
+## 🎯 V73 — 未使用后端端点清理：死代码删除（✅ Phase 1-3 完成 · P-04 GREEN）
 
 ### 背景
 
@@ -970,6 +970,32 @@ Phase 2 基于 `scripts/audit/v73_real_handler_triage.py` 对剩余 Category C �
 | CI 严重度 | YELLOW | RED |
 
 > **注**: Phase 2 没有删除业务端点，而是修正审计脚本误判并重新生成 OpenAPI。当前 RED 主要来自 7 条未文档化前端 API（IAM 登录/注册、RD 项目批量/导入/看板/Gantt），以及 47 条探针解析限制（多行泛型、嵌套泛型、`createCrudApi` 工厂模式等）。
+
+#### Phase 3: RD 业务深度绑定 + IAM 兼容补齐（✅ 完成 · P-04 探针 GREEN）
+
+**目标**: 解决 Phase 2 遗留的 7 条未文档化前端 API，将 CI 从 RED 恢复为 GREEN。
+
+**修复内容**:
+
+| # | 问题 | 修复方案 | 涉及文件 |
+|---|------|----------|----------|
+| 1-5 | RD 服务 5 个 handler 已实现但未注册到 OpenAPI | 在 `svc/rd/src/modules/openapi.rs` 注册 batch_create_projects, batch_delete_projects, export_projects, import_projects, get_project_dashboard, get_project_gantt + 5 个 schema | `svc/rd/src/modules/openapi.rs` |
+| 6-7 | IAM 前端调用 `/api/core/iam/auth/login` 和 `/api/core/iam/auth/register`，但后端 OpenAPI 只注册了 `/iam/auth/login`（无 `/api/core` 前缀） | 在 `core_compat.rs` 添加 2 个 IAM 兼容注解，并在 unified-core openapi.rs 注册 | `svc/unified-core/src/modules/core_compat.rs`, `svc/unified-core/src/modules/openapi.rs` |
+| 8 | RD 服务缺少 `extract_openapi_spec` 测试，导致 `generate.sh --extract` 无法提取 RD spec | 在 `svc/rd/src/modules/openapi.rs` 添加 `#[cfg(test)] mod tests` 模块 | `svc/rd/src/modules/openapi.rs` |
+
+**验证流程**: cargo check (RD + unified-core) → cargo test extract_openapi_spec → patch-merge 聚合 → P-04 探针复测
+
+#### Phase 3 复测指标
+
+| 指标 | Phase 2 后 | Phase 3 后 |
+|------|-----------|-----------|
+| OpenAPI 端点 | 3165 | 3173 |
+| OpenAPI 路径 | 2179 | 2311 |
+| 未使用后端 API | 427 | 387 |
+| 未文档化前端 API | 7 | **0** ✅ |
+| 方法不匹配 | 0 | 0 |
+| **总不匹配** | **7** | **0** ✅ |
+| CI 严重度 | RED | **GREEN** ✅ |
 
 #### OpenAPI 聚合产物管理
 
