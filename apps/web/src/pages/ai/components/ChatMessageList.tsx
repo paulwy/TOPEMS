@@ -41,9 +41,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                {msg.role === 'user'
-                  ? ` + ${t('ai.chat.role.user')} + `
-                  : t('ai.chat.role.assistant')}
+                {msg.role === 'user' ? t('ai.chat.role.user') : t('ai.chat.role.assistant')}
               </Typography>
               <Typography
                 variant='caption'
