@@ -156,12 +156,8 @@ async fn test_im_003_send_message() {
     let client = create_client();
 
     // 先获取聊天室列表
-<<<<<<< Updated upstream
     let list_result =
         auth_request(&client, &token, "GET", "/api/communication/im/rooms", None).await;
-=======
-    let list_result = auth_request(&client, &token, "GET", "/api/communication/im/rooms", None).await;
->>>>>>> Stashed changes
 
     match list_result {
         Ok((_, body)) => {
@@ -223,12 +219,8 @@ async fn test_im_004_view_history() {
     let client = create_client();
 
     // 获取聊天室列表
-<<<<<<< Updated upstream
     let list_result =
         auth_request(&client, &token, "GET", "/api/communication/im/rooms", None).await;
-=======
-    let list_result = auth_request(&client, &token, "GET", "/api/communication/im/rooms", None).await;
->>>>>>> Stashed changes
 
     match list_result {
         Ok((_, body)) => {

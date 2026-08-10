@@ -15,10 +15,7 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
-<<<<<<< Updated upstream
 use topems_shared::LocalInMemoryCache as InMemoryCache;
-=======
->>>>>>> Stashed changes
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
@@ -27,10 +24,6 @@ use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
 };
-<<<<<<< Updated upstream
-=======
-use topems_shared::NotificationServiceClient;
->>>>>>> Stashed changes
 
 lazy_static::lazy_static! {
     pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").expect("Failed to register asset_count gauge - check for duplicate metric registrations");
@@ -211,7 +204,3 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     tracing::info!("[erp] erp_master_data_refs 表已就绪（AC-5 本地主数据引用）");
     Ok(())
 }
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes

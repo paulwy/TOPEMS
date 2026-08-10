@@ -72,13 +72,9 @@ pub use logging::{
     request_context_middleware, JsonEventFormatter, LogAggregator, LogEntry, LogFormat, LogQuery,
     LogStats, RequestContext, RequestContextExt, TraceContext,
 };
-<<<<<<< Updated upstream
 pub use response::{
     api_error, api_success, ApiResponse, ListResponse, PaginatedResponse, PaginationParams,
 };
-=======
-pub use response::{api_error, api_success, ApiResponse, ListResponse, PaginatedResponse, PaginationParams};
->>>>>>> Stashed changes
 pub use service_config::{
     global_registry, DeploymentType, ServiceConfigRegistry, ServiceDefinition, ServiceGroup,
     ValidationIssue, ValidationSeverity,

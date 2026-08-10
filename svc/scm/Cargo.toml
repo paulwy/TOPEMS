@@ -21,12 +21,9 @@ anyhow.workspace = true
 thiserror.workspace = true
 topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
-<<<<<<< Updated upstream
 topems-shared-event = { path = "../../lib/shared-event" }
 topems-shared-core = { path = "../../lib/shared-core" }
 topems-shared-auth = { path = "../../lib/shared-auth" }
-=======
->>>>>>> Stashed changes
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true

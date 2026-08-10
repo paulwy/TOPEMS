@@ -5,14 +5,10 @@
 use anyhow::Result;
 use axum::routing::get;
 use prometheus::{default_registry, Gauge};
-<<<<<<< Updated upstream
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
-=======
-use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
->>>>>>> Stashed changes
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 use topems_shared_service_client::TypedServiceClient;
 use utoipa::OpenApi;
