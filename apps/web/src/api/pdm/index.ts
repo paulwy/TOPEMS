@@ -442,44 +442,44 @@ export const pdmApi = {
 
   // Change Orders
   listChangeOrders: async (): Promise<ApiResponse<ChangeOrder[]>> => {
-    return apiClient.pdm.get<ChangeOrder[]>('/change-orders');
+    return apiClient.pdm.get<ChangeOrder[]>('/change-notices');
   },
   getChangeOrder: async (id: string): Promise<ApiResponse<ChangeOrder>> => {
-    return apiClient.pdm.get<ChangeOrder>(`/change-orders/${id}`);
+    return apiClient.pdm.get<ChangeOrder>(`/change-notices/${id}`);
   },
   createChangeOrder: async (data: CreateChangeOrderRequest): Promise<ApiResponse<ChangeOrder>> => {
-    return apiClient.pdm.post<ChangeOrder>('/change-orders', data);
+    return apiClient.pdm.post<ChangeOrder>('/change-notices', data);
   },
   updateChangeOrder: async (
     id: string,
     data: UpdateChangeOrderRequest
   ): Promise<ApiResponse<ChangeOrder>> => {
-    return apiClient.pdm.put<ChangeOrder>(`/change-orders/${id}`, data);
+    return apiClient.pdm.put<ChangeOrder>(`/change-notices/${id}`, data);
   },
   deleteChangeOrder: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/change-orders/${id}`);
+    return apiClient.pdm.delete<boolean>(`/change-notices/${id}`);
   },
 
   // Product Configurations
   listProductConfigs: async (): Promise<ApiResponse<ProductConfig[]>> => {
-    return apiClient.pdm.get<ProductConfig[]>('/product-configs');
+    return apiClient.pdm.get<ProductConfig[]>('/configurations');
   },
   getProductConfig: async (id: string): Promise<ApiResponse<ProductConfig>> => {
-    return apiClient.pdm.get<ProductConfig>(`/product-configs/${id}`);
+    return apiClient.pdm.get<ProductConfig>(`/configurations/${id}`);
   },
   createProductConfig: async (
     data: CreateProductConfigRequest
   ): Promise<ApiResponse<ProductConfig>> => {
-    return apiClient.pdm.post<ProductConfig>('/product-configs', data);
+    return apiClient.pdm.post<ProductConfig>('/configurations', data);
   },
   updateProductConfig: async (
     id: string,
     data: Partial<CreateProductConfigRequest>
   ): Promise<ApiResponse<ProductConfig>> => {
-    return apiClient.pdm.put<ProductConfig>(`/product-configs/${id}`, data);
+    return apiClient.pdm.put<ProductConfig>(`/configurations/${id}`, data);
   },
   deleteProductConfig: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/product-configs/${id}`);
+    return apiClient.pdm.delete<boolean>(`/configurations/${id}`);
   },
 
   health: async (): Promise<ApiResponse<string>> => {

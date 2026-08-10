@@ -16,6 +16,12 @@ macro_rules! log_audit {
     ($($args:expr),*) => {};
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/company-relations",
+    tag = "Consolidation",
+    responses((status = 200, description = "获取公司关系列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_company_relations(
     State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
@@ -43,6 +49,12 @@ pub async fn list_company_relations(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/company-tree",
+    tag = "Consolidation",
+    responses((status = 200, description = "获取公司架构树成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_company_tree(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<CompanyTreeNode>>> {
@@ -80,6 +92,12 @@ pub async fn get_company_tree(
     Json(ApiResponse::success(tree, "获取公司架构树成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/consolidation/company-relations",
+    tag = "Consolidation",
+    responses((status = 200, description = "创建公司关系成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn create_company_relation(
     State(state): State<ApiState>,
     _headers: HeaderMap,
@@ -120,6 +138,13 @@ pub async fn create_company_relation(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/consolidation/company-relations/{relationId}",
+    tag = "Consolidation",
+    params(("relationId" = String, Path, description = "公司关系ID")),
+    responses((status = 200, description = "更新公司关系成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn update_company_relation(
     State(state): State<ApiState>,
     Path(relation_id): Path<Uuid>,
@@ -168,6 +193,13 @@ pub async fn update_company_relation(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/consolidation/company-relations/{relationId}",
+    tag = "Consolidation",
+    params(("relationId" = String, Path, description = "公司关系ID")),
+    responses((status = 200, description = "删除公司关系成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn delete_company_relation(
     State(state): State<ApiState>,
     Path(relation_id): Path<Uuid>,
@@ -199,6 +231,13 @@ pub async fn delete_company_relation(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/companies/{companyId}/financial-data",
+    tag = "Consolidation",
+    params(("companyId" = String, Path, description = "公司ID")),
+    responses((status = 200, description = "获取公司财务数据成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_company_financial_data(
     State(_state): State<ApiState>,
     Path(company_id): Path<Uuid>,

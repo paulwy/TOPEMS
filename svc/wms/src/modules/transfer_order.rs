@@ -35,6 +35,12 @@ where
         .route("/transfers/{id}/complete", post(complete_transfer))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/transfers",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_transfers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -104,6 +110,12 @@ pub async fn list_transfers(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/transfers",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -205,6 +217,12 @@ pub async fn create_transfer(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/transfers/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -237,6 +255,12 @@ pub async fn get_transfer(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/transfers/{id}/items",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_transfer_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -274,6 +298,12 @@ pub async fn list_transfer_items(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/wms/transfers/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -351,6 +381,12 @@ pub async fn update_transfer(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/wms/transfers/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -393,6 +429,12 @@ pub async fn delete_transfer(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/transfers/{id}/confirm",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn confirm_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -436,6 +478,12 @@ pub async fn confirm_transfer(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/transfers/{id}/ship",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn ship_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -479,6 +527,12 @@ pub async fn ship_transfer(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/transfers/{id}/receive",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn receive_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -551,6 +605,12 @@ pub async fn receive_transfer(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/transfers/{id}/complete",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn complete_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

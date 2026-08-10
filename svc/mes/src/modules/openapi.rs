@@ -1,244 +1,189 @@
 // MES 服务 OpenAPI 文档
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use utoipa::{OpenApi, ToSchema};
-use uuid::Uuid;
+//
+// V72 fix: 导入实际模块类型（而非占位符），注册 paths 使 extract_openapi_spec
+// 能生成包含全部 MES 路径的完整 OpenAPI spec。
+use utoipa::OpenApi;
 
-// ===== Work Order (工单) =====
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ListWorkOrdersQuery {
-    pub page: Option<i32>,
-    pub pagesize: Option<i32>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct CreateWorkOrderRequest {
-    pub work_order_no: String,
-    pub order_id: Option<String>,
-    pub order_no: Option<String>,
-    pub product_code: String,
-    pub product_name: String,
-    pub work_station_id: Option<String>,
-    pub process_id: Option<String>,
-    pub team_id: Option<String>,
-    pub planned_quantity: serde_json::Value,
-    pub priority: Option<String>,
-    pub plan_start_date: Option<DateTime<Utc>>,
-    pub plan_end_date: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct UpdateWorkOrderRequest {
-    pub work_order_no: Option<String>,
-    pub order_id: Option<String>,
-    pub order_no: Option<String>,
-    pub product_code: Option<String>,
-    pub product_name: Option<String>,
-    pub work_station_id: Option<String>,
-    pub process_id: Option<String>,
-    pub team_id: Option<String>,
-    pub planned_quantity: Option<serde_json::Value>,
-    pub priority: Option<String>,
-    pub plan_start_date: Option<DateTime<Utc>>,
-    pub plan_end_date: Option<DateTime<Utc>>,
-    pub status: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct WorkOrderResponse {
-    pub id: String,
-    pub work_order_no: String,
-    pub order_id: Option<String>,
-    pub order_no: Option<String>,
-    pub product_code: String,
-    pub product_name: String,
-    pub work_station_id: Option<String>,
-    pub work_station_name: Option<String>,
-    pub process_id: Option<String>,
-    pub process_name: Option<String>,
-    pub team_id: Option<String>,
-    pub team_name: Option<String>,
-    pub planned_quantity: serde_json::Value,
-    pub completed_quantity: Option<serde_json::Value>,
-    pub priority: String,
-    pub status: String,
-    pub plan_start_date: Option<DateTime<Utc>>,
-    pub plan_end_date: Option<DateTime<Utc>>,
-    pub actual_start_date: Option<DateTime<Utc>>,
-    pub actual_end_date: Option<DateTime<Utc>>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-// ===== Work Report (报工) =====
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ListWorkReportsQuery {
-    pub page: Option<i32>,
-    pub pagesize: Option<i32>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-    pub work_order_id: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct CreateWorkReportRequest {
-    pub work_order_id: Option<String>,
-    pub work_order_no: Option<String>,
-    pub work_station_id: Option<String>,
-    pub operator_id: Option<String>,
-    pub operator_name: Option<String>,
-    pub report_date: Option<DateTime<Utc>>,
-    pub good_quantity: Option<serde_json::Value>,
-    pub bad_quantity: Option<serde_json::Value>,
-    pub scrap_quantity: Option<serde_json::Value>,
-    pub work_hours: Option<f64>,
-    pub remark: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct UpdateWorkReportRequest {
-    pub work_order_id: Option<String>,
-    pub work_order_no: Option<String>,
-    pub work_station_id: Option<String>,
-    pub operator_id: Option<String>,
-    pub operator_name: Option<String>,
-    pub report_date: Option<DateTime<Utc>>,
-    pub good_quantity: Option<serde_json::Value>,
-    pub bad_quantity: Option<serde_json::Value>,
-    pub scrap_quantity: Option<serde_json::Value>,
-    pub work_hours: Option<f64>,
-    pub remark: Option<String>,
-    pub status: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct WorkReportResponse {
-    pub id: String,
-    pub report_no: String,
-    pub work_order_id: Option<String>,
-    pub work_order_no: Option<String>,
-    pub work_station_id: Option<String>,
-    pub work_station_name: Option<String>,
-    pub operator_id: Option<String>,
-    pub operator_name: Option<String>,
-    pub report_date: DateTime<Utc>,
-    pub good_quantity: serde_json::Value,
-    pub bad_quantity: Option<serde_json::Value>,
-    pub scrap_quantity: Option<serde_json::Value>,
-    pub work_hours: Option<f64>,
-    pub status: String,
-    pub remark: Option<String>,
-    pub reviewer_id: Option<String>,
-    pub reviewed_at: Option<DateTime<Utc>>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-// ===== Production Order (生产订单) =====
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ListProductionOrdersQuery {
-    pub page: Option<i32>,
-    pub pagesize: Option<i32>,
-    pub search: Option<String>,
-    pub status: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ErpSalesOrderInfo {
-    pub order_no: String,
-    pub customer: Option<String>,
-    pub items: Option<serde_json::Value>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct CreateFromErpRequest {
-    pub erp_order: ErpSalesOrderInfo,
-    pub planned_start_date: Option<DateTime<Utc>>,
-    pub planned_end_date: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct CreateProductionOrderRequest {
-    pub product_id: Option<Uuid>,
-    pub product_name: String,
-    pub product_code: String,
-    pub order_no: Option<String>,
-    pub quantity: serde_json::Value,
-    pub unit: Option<String>,
-    pub planned_start_date: Option<DateTime<Utc>>,
-    pub planned_end_date: Option<DateTime<Utc>>,
-    pub priority: Option<String>,
-    pub remark: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct UpdateProductionOrderRequest {
-    pub product_name: Option<String>,
-    pub product_code: Option<String>,
-    pub order_no: Option<String>,
-    pub quantity: Option<serde_json::Value>,
-    pub unit: Option<String>,
-    pub planned_start_date: Option<DateTime<Utc>>,
-    pub planned_end_date: Option<DateTime<Utc>>,
-    pub priority: Option<String>,
-    pub status: Option<String>,
-    pub remark: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ProductionOrderResponse {
-    pub id: Uuid,
-    pub order_no: String,
-    pub product_id: Option<Uuid>,
-    pub product_name: String,
-    pub product_code: String,
-    pub quantity: serde_json::Value,
-    pub completed_quantity: Option<serde_json::Value>,
-    pub unit: Option<String>,
-    pub status: String,
-    pub priority: String,
-    pub planned_start_date: Option<DateTime<Utc>>,
-    pub planned_end_date: Option<DateTime<Utc>>,
-    pub actual_start_date: Option<DateTime<Utc>>,
-    pub actual_end_date: Option<DateTime<Utc>>,
-    pub remark: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
+// Re-export handler modules' public types for schema registration
+use crate::modules::equipment::{
+    CreateEquipmentRequest, CreateInspectionRequest, CreateMaintenanceRecord,
+    EquipmentResponse, ListEquipmentResponse, MaintenanceRecord, UpdateEquipmentRequest,
+    UpdateMaintenanceStatus,
+};
+use crate::modules::equipment_oee::{
+    CreateOeeRecordRequest, EquipmentEfficiencyAnalysis, ListOeeRecordsResponse, OeeRecordResponse,
+    OeeStatisticsResponse, UpdateOeeRecordRequest,
+};
+use crate::modules::production_kanban::DashboardResponse;
+use crate::modules::production_order::{
+    CreateFromErpRequest, CreateProductionOrderRequest, ErpSalesOrderInfo,
+    ListProductionOrdersResponse, ProductionOrderResponse, ProductionOrderSource,
+    UpdateProductionOrderRequest,
+};
+use crate::modules::production_scheduling::{
+    AdjustScheduleRequest, CreateProductionScheduleRequest, GanttDataResponse,
+    ListProductionSchedulesResponse, ProductionScheduleResponse, UpdateProductionScheduleRequest,
+};
+use crate::modules::wip::{
+    CreateWipRequest, CreateWipTransferRequest, ListWipResponse, UpdateWipRequest, WipResponse,
+    WipStatisticsResponse, WipTransferResponse,
+};
+use crate::modules::work_order::{
+    CreateWorkOrderRequest, UpdateWorkOrderRequest, WorkOrderResponse,
+};
+use crate::modules::work_report::{
+    CreateWorkReportRequest, RejectWorkReportRequest, UpdateWorkReportRequest, WorkReportResponse,
+};
 
 #[derive(OpenApi)]
 #[openapi(
-    // TODO(V72 A4-4 follow-up): 逐个 handler 添加 #[utoipa::path(...)] 宏后再在下面注册，
-    // 目前仅注册 components(schemas) 保证 extract_openapi_spec 能生成完整 schema。
+    paths(
+        // ── Work Order ──────────────────────────────────────────────
+        crate::modules::work_order::list_work_orders,
+        crate::modules::work_order::create_work_order,
+        crate::modules::work_order::get_work_order,
+        crate::modules::work_order::update_work_order,
+        crate::modules::work_order::delete_work_order,
+        crate::modules::work_order::start_work_order,
+        crate::modules::work_order::complete_work_order,
+        crate::modules::work_order::cancel_work_order,
+        crate::modules::work_order::pause_work_order,
+        crate::modules::work_order::resume_work_order,
+
+        // ── Work Report ─────────────────────────────────────────────
+        crate::modules::work_report::list_work_reports,
+        crate::modules::work_report::create_work_report,
+        crate::modules::work_report::get_work_report,
+        crate::modules::work_report::update_work_report,
+        crate::modules::work_report::delete_work_report,
+        crate::modules::work_report::approve_work_report,
+        crate::modules::work_report::reject_work_report,
+        crate::modules::work_report::get_today_production_output,
+
+        // ── Production Order ────────────────────────────────────────
+        crate::modules::production_order::list_production_orders,
+        crate::modules::production_order::create_production_order,
+        crate::modules::production_order::get_production_order,
+        crate::modules::production_order::update_production_order,
+        crate::modules::production_order::delete_production_order,
+        crate::modules::production_order::create_from_erp,
+        crate::modules::production_order::release_production_order,
+        crate::modules::production_order::start_production_order,
+        crate::modules::production_order::complete_production_order,
+        crate::modules::production_order::cancel_production_order,
+
+        // ── Equipment ───────────────────────────────────────────────
+        crate::modules::equipment::list_equipment,
+        crate::modules::equipment::create_equipment,
+        crate::modules::equipment::get_equipment,
+        crate::modules::equipment::update_equipment,
+        crate::modules::equipment::delete_equipment,
+        crate::modules::equipment::maintenance_equipment,
+        crate::modules::equipment::get_equipment_statistics,
+        crate::modules::equipment::list_inspections,
+        crate::modules::equipment::create_inspection,
+        crate::modules::equipment::list_maintenances,
+        crate::modules::equipment::create_maintenance,
+        crate::modules::equipment::update_maintenance_status,
+
+        // ── Equipment OEE ───────────────────────────────────────────
+        crate::modules::equipment_oee::list_oee_records,
+        crate::modules::equipment_oee::create_oee_record,
+        crate::modules::equipment_oee::get_oee_record,
+        crate::modules::equipment_oee::update_oee_record,
+        crate::modules::equipment_oee::delete_oee_record,
+        crate::modules::equipment_oee::get_oee_statistics,
+        crate::modules::equipment_oee::get_equipment_efficiency_analysis,
+
+        // ── Production Scheduling ───────────────────────────────────
+        crate::modules::production_scheduling::list_production_schedules,
+        crate::modules::production_scheduling::create_production_schedule,
+        crate::modules::production_scheduling::get_production_schedule,
+        crate::modules::production_scheduling::update_production_schedule,
+        crate::modules::production_scheduling::delete_production_schedule,
+        crate::modules::production_scheduling::adjust_schedule,
+        crate::modules::production_scheduling::get_gantt_data,
+
+        // ── WIP ─────────────────────────────────────────────────────
+        crate::modules::wip::list_wips,
+        crate::modules::wip::create_wip,
+        crate::modules::wip::get_wip,
+        crate::modules::wip::update_wip,
+        crate::modules::wip::delete_wip,
+        crate::modules::wip::transfer_wip,
+        crate::modules::wip::list_wip_transfers,
+        crate::modules::wip::get_wip_statistics,
+
+        // ── Production Kanban ───────────────────────────────────────
+        crate::modules::production_kanban::get_dashboard,
+        crate::modules::production_kanban::get_order_progress,
+        crate::modules::production_kanban::get_workstation_status,
+        crate::modules::production_kanban::get_quality_trend,
+        crate::modules::production_kanban::get_equipment_status,
+    ),
     components(
         schemas(
             // Work Order
-            ListWorkOrdersQuery,
             CreateWorkOrderRequest,
             UpdateWorkOrderRequest,
             WorkOrderResponse,
             // Work Report
-            ListWorkReportsQuery,
             CreateWorkReportRequest,
             UpdateWorkReportRequest,
+            RejectWorkReportRequest,
             WorkReportResponse,
             // Production Order
-            ListProductionOrdersQuery,
+            ProductionOrderSource,
             ErpSalesOrderInfo,
-            CreateProductionOrderRequest,
             CreateFromErpRequest,
+            CreateProductionOrderRequest,
             UpdateProductionOrderRequest,
             ProductionOrderResponse,
+            ListProductionOrdersResponse,
+            // Equipment
+            CreateEquipmentRequest,
+            UpdateEquipmentRequest,
+            EquipmentResponse,
+            ListEquipmentResponse,
+            CreateMaintenanceRecord,
+            UpdateMaintenanceStatus,
+            MaintenanceRecord,
+            CreateInspectionRequest,
+            // Equipment OEE
+            CreateOeeRecordRequest,
+            UpdateOeeRecordRequest,
+            OeeRecordResponse,
+            ListOeeRecordsResponse,
+            OeeStatisticsResponse,
+            EquipmentEfficiencyAnalysis,
+            // Production Scheduling
+            CreateProductionScheduleRequest,
+            UpdateProductionScheduleRequest,
+            AdjustScheduleRequest,
+            ProductionScheduleResponse,
+            ListProductionSchedulesResponse,
+            GanttDataResponse,
+            // WIP
+            CreateWipRequest,
+            UpdateWipRequest,
+            CreateWipTransferRequest,
+            WipResponse,
+            ListWipResponse,
+            WipTransferResponse,
+            WipStatisticsResponse,
+            // Production Kanban
+            DashboardResponse,
         ),
     ),
     tags(
-        (name = "work_order", description = "工单管理 API"),
-        (name = "work_report", description = "报工管理 API"),
-        (name = "production_order", description = "生产订单 API"),
-        (name = "equipment", description = "设备管理 API"),
-        (name = "quality", description = "质量管理 API"),
+        (name = "WorkOrder", description = "工单管理 API"),
+        (name = "WorkReport", description = "报工管理 API"),
+        (name = "ProductionOrder", description = "生产订单 API"),
+        (name = "Equipment", description = "设备管理 API"),
+        (name = "EquipmentOEE", description = "设备 OEE API"),
+        (name = "ProductionScheduling", description = "生产排程 API"),
+        (name = "WIP", description = "在制品管理 API"),
+        (name = "ProductionKanban", description = "生产看板 API"),
     ),
     info(
         title = "TOPEMS MES API",
@@ -246,7 +191,7 @@ pub struct ProductionOrderResponse {
         description = "制造执行系统 API - 包含工单、报工、生产订单、设备 OEE、质量追溯等功能"
     ),
     servers(
-        (url = "http://localhost:8058", description = "本地开发环境"),
+        (url = "http://localhost:8030", description = "本地开发环境"),
     )
 )]
 pub struct MesApiDoc;

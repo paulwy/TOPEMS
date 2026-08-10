@@ -9,8 +9,9 @@ use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Feedback {
     pub id: Uuid,
     pub user_id: String,
@@ -27,7 +28,7 @@ pub struct Feedback {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CreateFeedbackRequest {
     pub type_: String,
     pub title: String,
@@ -36,7 +37,7 @@ pub struct CreateFeedbackRequest {
     pub satisfaction: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ResponseFeedbackRequest {
     pub response: String,
 }
@@ -60,7 +61,7 @@ pub struct ListFeedbackParams {
 
 #[utoipa::path(
     post,
-    path = "/api/feedback/feedbacks",
+    path = "/api/core/feedbacks",
     request_body = CreateFeedbackRequest,
     tag = "feedback_ticket",
     responses(
@@ -97,7 +98,7 @@ pub async fn create_feedback(
 
 #[utoipa::path(
     get,
-    path = "/api/feedback/feedbacks/{id}",
+    path = "/api/core/feedbacks/{id}",
     tag = "feedback_ticket",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -131,7 +132,7 @@ pub async fn get_feedback(
 
 #[utoipa::path(
     get,
-    path = "/api/feedback/feedbacks",
+    path = "/api/core/feedbacks",
     tag = "feedback_ticket",
     responses(
         (status = 200, description = "OK"),
@@ -217,7 +218,7 @@ pub async fn list_feedbacks(
 
 #[utoipa::path(
     put,
-    path = "/api/feedback/feedbacks/{id}",
+    path = "/api/core/feedbacks/{id}",
     request_body = ResponseFeedbackRequest,
     tag = "feedback_ticket",
     params(
@@ -259,7 +260,7 @@ pub async fn response_feedback(
 
 #[utoipa::path(
     delete,
-    path = "/api/feedback/feedbacks/{id}",
+    path = "/api/core/feedbacks/{id}",
     tag = "feedback_ticket",
     params(
         ("id" = Uuid, Path, description = "id")

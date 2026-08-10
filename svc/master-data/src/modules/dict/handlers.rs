@@ -30,6 +30,22 @@ fn csv_field(s: &str) -> String {
 
 // ==================== DictType handlers ====================
 
+#[utoipa::path(
+    get,
+    path = "/api/core/dict/dict-types",
+    tag = "Dict",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页条数"),
+        ("category" = Option<String>, Query, description = "分类"),
+        ("status" = Option<String>, Query, description = "状态"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+    ),
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn list_dict_types(
     State(state): State<AppState>,
     Query(query): Query<DictTypeQuery>,
@@ -95,6 +111,19 @@ pub async fn list_dict_types(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/dict/dict-types/{id}",
+    tag = "Dict",
+    params(
+        ("id" = Uuid, Path, description = "字典类型ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 404, description = "字典类型不存在"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn get_dict_type(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -122,6 +151,17 @@ pub async fn get_dict_type(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/dict/dict-types",
+    tag = "Dict",
+    request_body = serde_json::Value,
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "创建失败"),
+    ),
+)]
 pub async fn create_dict_type(
     State(state): State<AppState>,
     Json(req): Json<CreateDictTypeRequest>,
@@ -158,6 +198,20 @@ pub async fn create_dict_type(
     Json(api_success(dict_type))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/core/dict/dict-types/{id}",
+    tag = "Dict",
+    params(
+        ("id" = Uuid, Path, description = "字典类型ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新成功"),
+        (status = 404, description = "字典类型不存在"),
+        (status = 500, description = "更新失败"),
+    ),
+)]
 pub async fn update_dict_type(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -200,6 +254,19 @@ pub async fn update_dict_type(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/core/dict/dict-types/{id}",
+    tag = "Dict",
+    params(
+        ("id" = Uuid, Path, description = "字典类型ID"),
+    ),
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 404, description = "字典类型不存在"),
+        (status = 500, description = "删除失败"),
+    ),
+)]
 pub async fn delete_dict_type(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -221,6 +288,22 @@ pub async fn delete_dict_type(
 
 // ==================== DictItem handlers ====================
 
+#[utoipa::path(
+    get,
+    path = "/api/core/dict/dict-types/{dict_type_id}/items",
+    tag = "Dict",
+    params(
+        ("dict_type_id" = Uuid, Path, description = "字典类型ID"),
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页条数"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态"),
+    ),
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn list_dict_items(
     State(state): State<AppState>,
     Path(dict_type_id): Path<Uuid>,
@@ -286,6 +369,19 @@ pub async fn list_dict_items(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/dict/dict-items/{id}",
+    tag = "Dict",
+    params(
+        ("id" = Uuid, Path, description = "字典项ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 404, description = "字典项不存在"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn get_dict_item(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -313,6 +409,17 @@ pub async fn get_dict_item(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/dict/dict-items",
+    tag = "Dict",
+    request_body = serde_json::Value,
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "创建失败"),
+    ),
+)]
 pub async fn create_dict_item(
     State(state): State<AppState>,
     Json(req): Json<CreateDictItemRequest>,
@@ -352,6 +459,20 @@ pub async fn create_dict_item(
     Json(api_success(dict_item))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/core/dict/dict-items/{id}",
+    tag = "Dict",
+    params(
+        ("id" = Uuid, Path, description = "字典项ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新成功"),
+        (status = 404, description = "字典项不存在"),
+        (status = 500, description = "更新失败"),
+    ),
+)]
 pub async fn update_dict_item(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -398,6 +519,19 @@ pub async fn update_dict_item(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/core/dict/dict-items/{id}",
+    tag = "Dict",
+    params(
+        ("id" = Uuid, Path, description = "字典项ID"),
+    ),
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 404, description = "字典项不存在"),
+        (status = 500, description = "删除失败"),
+    ),
+)]
 pub async fn delete_dict_item(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -417,6 +551,17 @@ pub async fn delete_dict_item(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/dict/dict-items/batch",
+    tag = "Dict",
+    request_body = serde_json::Value,
+    responses(
+        (status = 201, description = "批量创建成功"),
+        (status = 400, description = "字典项列表不能为空"),
+        (status = 500, description = "批量创建失败"),
+    ),
+)]
 pub async fn batch_create_dict_items(
     State(state): State<AppState>,
     Json(req): Json<BatchCreateDictItemsRequest>,
@@ -471,6 +616,18 @@ pub async fn batch_create_dict_items(
     Json(api_success(results))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/dict/dict-types/{dict_type_id}/items/export",
+    tag = "Dict",
+    params(
+        ("dict_type_id" = Uuid, Path, description = "字典类型ID"),
+    ),
+    responses(
+        (status = 200, description = "导出成功，返回CSV文本"),
+        (status = 500, description = "导出失败"),
+    ),
+)]
 pub async fn export_dict_items(
     State(state): State<AppState>,
     Path(dict_type_id): Path<Uuid>,

@@ -92,7 +92,16 @@ async fn count_table_with_tenant_and_condition(
     }
 }
 
-async fn list_documents(
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/documents",
+    tag = "Doc",
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn list_documents(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<Document>>> {
@@ -104,7 +113,19 @@ async fn list_documents(
     }
 }
 
-async fn get_document(
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/documents/{document_id}",
+    tag = "Doc",
+    params(
+        ("document_id" = Uuid, Path, description = "文档ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn get_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
@@ -117,7 +138,17 @@ async fn get_document(
     }
 }
 
-async fn create_document(
+#[utoipa::path(
+    post,
+    path = "/api/core/doc/documents",
+    tag = "Doc",
+    request_body = serde_json::Value,
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 500, description = "创建失败"),
+    ),
+)]
+pub async fn create_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDocumentRequest>,
@@ -131,7 +162,20 @@ async fn create_document(
     }
 }
 
-async fn update_document(
+#[utoipa::path(
+    put,
+    path = "/api/core/doc/documents/{document_id}",
+    tag = "Doc",
+    params(
+        ("document_id" = Uuid, Path, description = "文档ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新成功"),
+        (status = 500, description = "更新失败"),
+    ),
+)]
+pub async fn update_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
@@ -145,7 +189,19 @@ async fn update_document(
     }
 }
 
-async fn delete_document(
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/documents/{document_id}",
+    tag = "Doc",
+    params(
+        ("document_id" = Uuid, Path, description = "文档ID"),
+    ),
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 500, description = "删除失败"),
+    ),
+)]
+pub async fn delete_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
@@ -158,7 +214,16 @@ async fn delete_document(
     }
 }
 
-async fn list_templates(
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates",
+    tag = "Doc",
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn list_templates(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<Template>>> {
@@ -170,7 +235,16 @@ async fn list_templates(
     }
 }
 
-async fn list_template_categories(
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/categories",
+    tag = "Doc",
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn list_template_categories(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<String>>> {
@@ -182,7 +256,19 @@ async fn list_template_categories(
     }
 }
 
-async fn get_template(
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/{template_id}",
+    tag = "Doc",
+    params(
+        ("template_id" = Uuid, Path, description = "模板ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn get_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -195,7 +281,17 @@ async fn get_template(
     }
 }
 
-async fn create_template(
+#[utoipa::path(
+    post,
+    path = "/api/core/doc/templates",
+    tag = "Doc",
+    request_body = serde_json::Value,
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 500, description = "创建失败"),
+    ),
+)]
+pub async fn create_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTemplateRequest>,
@@ -209,7 +305,20 @@ async fn create_template(
     }
 }
 
-async fn update_template(
+#[utoipa::path(
+    put,
+    path = "/api/core/doc/templates/{template_id}",
+    tag = "Doc",
+    params(
+        ("template_id" = Uuid, Path, description = "模板ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新成功"),
+        (status = 500, description = "更新失败"),
+    ),
+)]
+pub async fn update_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -223,7 +332,19 @@ async fn update_template(
     }
 }
 
-async fn delete_template(
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/templates/{template_id}",
+    tag = "Doc",
+    params(
+        ("template_id" = Uuid, Path, description = "模板ID"),
+    ),
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 500, description = "删除失败"),
+    ),
+)]
+pub async fn delete_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -236,7 +357,16 @@ async fn delete_template(
     }
 }
 
-async fn list_folders(
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/folders",
+    tag = "Doc",
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn list_folders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<Folder>>> {
@@ -248,7 +378,19 @@ async fn list_folders(
     }
 }
 
-async fn get_folder(
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/folders/{folder_id}",
+    tag = "Doc",
+    params(
+        ("folder_id" = Uuid, Path, description = "文件夹ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn get_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(folder_id): Path<Uuid>,
@@ -261,7 +403,17 @@ async fn get_folder(
     }
 }
 
-async fn create_folder(
+#[utoipa::path(
+    post,
+    path = "/api/core/doc/folders",
+    tag = "Doc",
+    request_body = serde_json::Value,
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 500, description = "创建失败"),
+    ),
+)]
+pub async fn create_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateFolderRequest>,
@@ -275,7 +427,20 @@ async fn create_folder(
     }
 }
 
-async fn update_folder(
+#[utoipa::path(
+    put,
+    path = "/api/core/doc/folders/{folder_id}",
+    tag = "Doc",
+    params(
+        ("folder_id" = Uuid, Path, description = "文件夹ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新成功"),
+        (status = 500, description = "更新失败"),
+    ),
+)]
+pub async fn update_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(folder_id): Path<Uuid>,
@@ -289,7 +454,19 @@ async fn update_folder(
     }
 }
 
-async fn delete_folder(
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/folders/{folder_id}",
+    tag = "Doc",
+    params(
+        ("folder_id" = Uuid, Path, description = "文件夹ID"),
+    ),
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 500, description = "删除失败"),
+    ),
+)]
+pub async fn delete_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(folder_id): Path<Uuid>,
@@ -315,7 +492,16 @@ pub struct DocDashboardStats {
     pub this_month_updated: i64,
 }
 
-async fn get_dashboard_handler(
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/dashboard",
+    tag = "Doc",
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn get_dashboard_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<DocDashboardStats>> {

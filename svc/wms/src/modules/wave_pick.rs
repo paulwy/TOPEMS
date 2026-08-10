@@ -71,6 +71,12 @@ where
         .route("/wave-picks/{id}/cancel", post(cancel_wave_pick))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/wave-picks",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_wave_picks(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -144,6 +150,12 @@ pub async fn list_wave_picks(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/wave-picks",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -220,6 +232,12 @@ pub async fn create_wave_pick(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/wave-picks/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -254,6 +272,12 @@ pub async fn get_wave_pick(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/wms/wave-picks/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -340,6 +364,12 @@ pub async fn update_wave_pick(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/wms/wave-picks/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -419,6 +449,12 @@ pub struct WavePickItem {
     pub updated_at: DateTime<Utc>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/wave-picks/{id}/items",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_wave_pick_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -462,6 +498,12 @@ pub async fn list_wave_pick_items(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/wave-picks/{id}/assign",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn assign_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -537,6 +579,12 @@ pub async fn assign_wave_pick(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/wave-picks/{id}/start",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn start_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -611,6 +659,12 @@ pub async fn start_wave_pick(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/wave-picks/{id}/complete",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn complete_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -685,6 +739,12 @@ pub async fn complete_wave_pick(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/wave-picks/{id}/cancel",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn cancel_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

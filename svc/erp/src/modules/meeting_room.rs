@@ -6,7 +6,6 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use utoipa::path;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -398,7 +397,7 @@ pub async fn delete_room(
 
 #[utoipa::path(
     get,
-    path = "/erp/meeting-rooms/bookings",
+    path = "/erp/meeting-bookings",
     responses(
         (status = 200, description = "list_bookings OK")
     ),
@@ -462,7 +461,7 @@ pub async fn list_bookings(
 
 #[utoipa::path(
     post,
-    path = "/erp/meeting-rooms/bookings",
+    path = "/erp/meeting-bookings",
     request_body = CreateMeetingBookingRequest,
     responses(
         (status = 200, description = "create_booking OK")
@@ -576,6 +575,17 @@ pub async fn create_booking(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/meeting-bookings/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_booking OK")
+    ),
+    tag = "ERP/meeting-room"
+)]
 pub async fn get_booking(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -600,6 +610,18 @@ pub async fn get_booking(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/meeting-bookings/{id}",
+    request_body = UpdateMeetingBookingRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "update_booking OK")
+    ),
+    tag = "ERP/meeting-room"
+)]
 pub async fn update_booking(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -689,6 +711,17 @@ pub async fn update_booking(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/meeting-bookings/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "delete_booking OK")
+    ),
+    tag = "ERP/meeting-room"
+)]
 pub async fn delete_booking(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -747,6 +780,17 @@ pub async fn delete_booking(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/meeting-rooms/{id}/bookings",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_room_bookings OK")
+    ),
+    tag = "ERP/meeting-room"
+)]
 pub async fn get_room_bookings(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

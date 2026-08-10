@@ -34,6 +34,17 @@ struct UploadResult {
 }
 
 /// 上传单个文件
+#[utoipa::path(
+    post,
+    path = "/api/core/file/upload",
+    tag = "File",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "文件上传成功"),
+        (status = 400, description = "文件上传失败（大小超限或类型不支持）"),
+        (status = 500, description = "服务器错误"),
+    ),
+)]
 pub async fn upload_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -215,6 +226,17 @@ pub async fn upload_file(
 }
 
 /// 上传多个文件
+#[utoipa::path(
+    post,
+    path = "/api/core/file/upload/multiple",
+    tag = "File",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "文件上传成功"),
+        (status = 400, description = "文件上传失败"),
+        (status = 500, description = "服务器错误"),
+    ),
+)]
 pub async fn upload_multiple(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

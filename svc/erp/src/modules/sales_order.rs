@@ -4,7 +4,6 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use utoipa::path;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -26,6 +25,10 @@ pub fn create_routes() -> Router<ApiState> {
                 .put(update_sales_order)
                 .delete(delete_sales_order),
         )
+        .route("/sales-orders/{id}/approve", put(approve_sales_order))
+        .route("/sales-orders/{id}/ship", put(ship_sales_order))
+        .route("/sales-orders/{id}/complete", put(complete_sales_order))
+        .route("/sales-orders/{id}/cancel", put(cancel_sales_order))
 }
 
 #[utoipa::path(
@@ -295,4 +298,126 @@ pub async fn delete_sales_order(
             Json(api_error(500, "删除销售订单失败"))
         }
     }
+}
+
+async fn update_sales_order_status(
+    state: ApiState,
+    claims: Claims,
+    id: Uuid,
+    status: &'static str,
+    success_message: &'static str,
+    error_message: &'static str,
+) -> Json<ApiResponse<SalesOrder>> {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let result = sqlx::query_as::<_, SalesOrder>(
+        "UPDATE sales_orders SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at",
+    )
+    .bind(status)
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(sales_order)) => Json(ApiResponse::success(sales_order, success_message)),
+        Ok(None) => Json(api_error(404, "销售订单不存在")),
+        Err(e) => {
+            tracing::error!("{}: {}", error_message, e);
+            Json(api_error(500, error_message))
+        }
+    }
+}
+
+#[utoipa::path(
+    put,
+    path = "/erp/sales-orders/{id}/approve",
+    params(("id" = Uuid, Path, description = "销售订单ID")),
+    responses((status = 200, description = "approve_sales_order OK")),
+    tag = "ERP/sales-order"
+)]
+pub async fn approve_sales_order(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<SalesOrder>> {
+    update_sales_order_status(
+        state,
+        claims,
+        id,
+        "approved",
+        "销售订单审批成功",
+        "审批销售订单失败",
+    )
+    .await
+}
+
+#[utoipa::path(
+    put,
+    path = "/erp/sales-orders/{id}/ship",
+    params(("id" = Uuid, Path, description = "销售订单ID")),
+    responses((status = 200, description = "ship_sales_order OK")),
+    tag = "ERP/sales-order"
+)]
+pub async fn ship_sales_order(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<SalesOrder>> {
+    update_sales_order_status(
+        state,
+        claims,
+        id,
+        "shipped",
+        "销售订单发货成功",
+        "销售订单发货失败",
+    )
+    .await
+}
+
+#[utoipa::path(
+    put,
+    path = "/erp/sales-orders/{id}/complete",
+    params(("id" = Uuid, Path, description = "销售订单ID")),
+    responses((status = 200, description = "complete_sales_order OK")),
+    tag = "ERP/sales-order"
+)]
+pub async fn complete_sales_order(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<SalesOrder>> {
+    update_sales_order_status(
+        state,
+        claims,
+        id,
+        "completed",
+        "销售订单完成成功",
+        "完成销售订单失败",
+    )
+    .await
+}
+
+#[utoipa::path(
+    put,
+    path = "/erp/sales-orders/{id}/cancel",
+    params(("id" = Uuid, Path, description = "销售订单ID")),
+    responses((status = 200, description = "cancel_sales_order OK")),
+    tag = "ERP/sales-order"
+)]
+pub async fn cancel_sales_order(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<SalesOrder>> {
+    update_sales_order_status(
+        state,
+        claims,
+        id,
+        "cancelled",
+        "销售订单取消成功",
+        "取消销售订单失败",
+    )
+    .await
 }

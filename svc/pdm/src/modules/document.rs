@@ -31,12 +31,14 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/documents", get(list_documents).post(create_document))
+        .route("/documents/search", post(search_documents))
         .route(
             "/documents/{id}",
             get(get_document)
                 .put(update_document)
                 .delete(delete_document),
         )
+        .route("/documents/{id}/status", axum::routing::put(update_document_status))
         .route("/documents/{id}/approve", post(start_document_approval))
         .route(
             "/documents/{id}/approval-history",
@@ -93,6 +95,24 @@ pub struct ListDocumentsQuery {
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub status: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DocumentSearchRequest {
+    pub keyword: Option<String>,
+    #[serde(rename = "type")]
+    pub document_type: Option<String>,
+    pub category: Option<String>,
+    pub status: Option<String>,
+    pub date_from: Option<String>,
+    pub date_to: Option<String>,
+    pub page: Option<i64>,
+    pub pagesize: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateDocumentStatusRequest {
+    pub status: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -174,6 +194,90 @@ pub async fn list_documents(
         Err(e) => {
             tracing::error!("获取文档列表失败: {}", e);
             Json(ApiResponse::error(500, "获取文档列表失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/pdm/documents/search",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
+pub async fn search_documents(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    Json(query): Json<DocumentSearchRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.pagesize.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+    let search_pattern = query.keyword.as_ref().map(|s| format!("%{}%", s));
+
+    let result = sqlx::query_as::<_, Document>(
+        r#"
+        SELECT id, tenant_id, document_no, name, description, document_type, file_path,
+               file_size, version, status, created_by, created_at, updated_at
+        FROM pdm_documents
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
+          AND ($3::text IS NULL OR document_type = $3)
+          AND ($4::text IS NULL OR status = $4)
+          AND ($5::text IS NULL OR created_at >= $5::timestamp)
+          AND ($6::text IS NULL OR created_at <= $6::timestamp)
+        ORDER BY created_at DESC
+        LIMIT $7 OFFSET $8
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(&search_pattern)
+    .bind(&query.document_type)
+    .bind(&query.status)
+    .bind(&query.date_from)
+    .bind(&query.date_to)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(documents) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM pdm_documents
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
+                  AND ($3::text IS NULL OR document_type = $3)
+                  AND ($4::text IS NULL OR status = $4)
+                  AND ($5::text IS NULL OR created_at >= $5::timestamp)
+                  AND ($6::text IS NULL OR created_at <= $6::timestamp)
+                "#,
+            )
+            .bind(tenant_id)
+            .bind(&search_pattern)
+            .bind(&query.document_type)
+            .bind(&query.status)
+            .bind(&query.date_from)
+            .bind(&query.date_to)
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "documents": documents,
+                    "total": count_result,
+                    "page": page,
+                    "pagesize": page_size
+                }),
+                "搜索文档成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("搜索文档失败: {}", e);
+            Json(ApiResponse::error(500, "搜索文档失败"))
         }
     }
 }
@@ -375,6 +479,50 @@ pub async fn update_document(
             } else {
                 Json(ApiResponse::error(500, "更新文档失败"))
             }
+        }
+    }
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/pdm/documents/{id}/status",
+    tag = "pdm",
+    params(("id" = Uuid, Path, description = "文档 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_document_status(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<UpdateDocumentStatusRequest>,
+) -> Json<ApiResponse<Document>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    if req.status.trim().is_empty() {
+        return Json(ApiResponse::error(400, "文档状态不能为空"));
+    }
+
+    let result = sqlx::query_as::<_, Document>(
+        r#"
+        UPDATE pdm_documents
+        SET status = $3, updated_at = NOW()
+        WHERE id = $1 AND tenant_id = $2
+        RETURNING id, tenant_id, document_no, name, description, document_type, file_path,
+                  file_size, version, status, created_by, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .bind(&req.status)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(document)) => Json(ApiResponse::success(document, "更新文档状态成功")),
+        Ok(None) => Json(ApiResponse::error(404, "文档不存在")),
+        Err(e) => {
+            tracing::error!("更新文档状态失败: {}", e);
+            Json(ApiResponse::error(500, "更新文档状态失败"))
         }
     }
 }

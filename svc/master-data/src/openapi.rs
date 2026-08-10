@@ -38,6 +38,19 @@ use crate::modules::quality_v51::{
         crate::modules::quality_v51::get_quality_dashboard,
         crate::modules::quality_v51::apply_auto_fix,
         crate::modules::quality_v51::generate_suggestions,
+        // ===== Dict module =====
+        crate::modules::dict::handlers::list_dict_types,
+        crate::modules::dict::handlers::get_dict_type,
+        crate::modules::dict::handlers::create_dict_type,
+        crate::modules::dict::handlers::update_dict_type,
+        crate::modules::dict::handlers::delete_dict_type,
+        crate::modules::dict::handlers::list_dict_items,
+        crate::modules::dict::handlers::get_dict_item,
+        crate::modules::dict::handlers::create_dict_item,
+        crate::modules::dict::handlers::update_dict_item,
+        crate::modules::dict::handlers::delete_dict_item,
+        crate::modules::dict::handlers::batch_create_dict_items,
+        crate::modules::dict::handlers::export_dict_items,
     ),
     tags(
         (name = "quality_v51", description = "数据质量闭环 + 自动修复 + AI 治理 API"),
@@ -50,6 +63,7 @@ use crate::modules::quality_v51::{
         (name = "governance_v58", description = "治理成熟度 + 自动化工作流 + 数据产品化 API"),
         (name = "ai_governance_v59", description = "AI 治理 + 智能匹配 + 自动分类 API"),
         (name = "metadata_v60", description = "元数据管理 + 血缘增强 + 生命周期 API"),
+        (name = "Dict", description = "字典管理 - 字典类型与字典项CRUD"),
     ),
     info(
         title = "TOPEMS Master Data API",

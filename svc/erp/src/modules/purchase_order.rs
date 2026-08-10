@@ -4,7 +4,6 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use utoipa::path;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -352,6 +351,18 @@ pub async fn approve_purchase_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/purchase-orders/{id}/cancel",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+
+    responses(
+        (status = 200, description = "cancel_purchase_order OK")
+    ),
+    tag = "ERP/purchase-order"
+)]
 pub async fn cancel_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

@@ -80,12 +80,13 @@ function parseOpenApi(jsonPath) {
     for (const [method, def] of Object.entries(methods)) {
       if (!HTTP_METHODS.includes(method)) continue;
       if (typeof def !== 'object' || def === null) continue;
+      const tag = (def.tags && def.tags[0]) || '';
       ops.push({
         operationId: def.operationId || '(no-operationId)',
         method: method.toUpperCase(),
         path: path,
-        normalizedPath: normalizeOpenApiPath(path),
-        tag: (def.tags && def.tags[0]) || '',
+        normalizedPath: normalizeOpenApiPath(path, tag),
+        tag,
       });
     }
   }
@@ -98,12 +99,39 @@ function parseOpenApi(jsonPath) {
  * instead of "/api/crm/customers").  We add it back so comparisons with the
  * frontend-reconstructed paths are consistent.
  */
-function normalizeOpenApiPath(path) {
+function normalizeOpenApiPath(path, tag = '') {
   if (path.startsWith('/api/')) return path;
   // Special case: "/ai/" is the root of the AI service
   if (path === '/ai/' || path === '/ai') return '/api/ai/';
   // Skip non-service paths like /health
   if (path === '/health' || path === '/api/health') return '/api/health';
+
+  const service = String(tag || '').toLowerCase();
+  const coreSubmodules = new Set([
+    'iam',
+    'doc',
+    'file',
+    'flow',
+    'monitor',
+    'system',
+    'automation',
+    'migration',
+  ]);
+  const segments = path.split('/').filter(Boolean);
+  const first = segments[0] || '';
+
+  if (service === 'unified-core' && coreSubmodules.has(first)) {
+    return '/api/core' + path;
+  }
+
+  if (service && first === service) {
+    return '/api' + path;
+  }
+
+  if (service && service !== 'health') {
+    return `/api/${service}${path}`;
+  }
+
   return '/api' + path;
 }
 
@@ -129,9 +157,100 @@ function walkTs(dir) {
  * Convert a template-literal URL fragment to an OpenAPI-style path.
  *   `/bugs/${id}`            -> /bugs/{id}
  *   `/vouchers/${id}/entries` -> /vouchers/{id}/entries
+ *   `/audit/operations${queryString}` -> /audit/operations  (strip non-path vars)
+ *
+ * Variables that are NOT path parameters (queryString, qs, params, searchParams)
+ * are stripped entirely rather than converted to {param} placeholders.
  */
+const NON_PATH_VARS = new Set([
+  'queryString', 'qs', 'params', 'searchParams', 'query', 'search',
+  'filter', 'sort', 'page', 'limit', 'offset',
+]);
+
+/**
+ * Find the end of a template literal while ignoring nested backticks inside
+ * `${...}` expressions, e.g. `${queryString ? `?${queryString}` : ''}`.
+ */
+function findTemplateLiteralEnd(text, startIndex) {
+  let expressionDepth = 0;
+  for (let i = startIndex + 1; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (ch === '\\') {
+      i++;
+      continue;
+    }
+    if (ch === '$' && next === '{') {
+      expressionDepth++;
+      i++;
+      continue;
+    }
+    if (ch === '}' && expressionDepth > 0) {
+      expressionDepth--;
+      continue;
+    }
+    if (ch === '`' && expressionDepth === 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Find the matching closing brace for a `${...}` template expression. Nested
+ * `${...}` blocks inside inner template literals are handled by depth counting.
+ */
+function findTemplateExpressionEnd(text, startIndex) {
+  let expressionDepth = 1;
+  for (let i = startIndex; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (ch === '\\') {
+      i++;
+      continue;
+    }
+    if (ch === '$' && next === '{') {
+      expressionDepth++;
+      i++;
+      continue;
+    }
+    if (ch === '}') {
+      expressionDepth--;
+      if (expressionDepth === 0) {
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+function templateExpressionToPath(rawExpression) {
+  const expression = rawExpression.trim();
+  const leadingIdentifier = expression.match(/^([A-Za-z_$][\w$]*)\b/)?.[1];
+  if (NON_PATH_VARS.has(expression) || NON_PATH_VARS.has(leadingIdentifier)) {
+    return '';
+  }
+  return `{${expression}}`;
+}
+
 function templateToPath(urlStr) {
-  return urlStr.replace(/\$\{([^}]+)\}/g, '{$1}');
+  let output = '';
+  for (let i = 0; i < urlStr.length; i++) {
+    if (urlStr[i] === '$' && urlStr[i + 1] === '{') {
+      const end = findTemplateExpressionEnd(urlStr, i + 2);
+      if (end === -1) {
+        output += urlStr.slice(i);
+        break;
+      }
+      output += templateExpressionToPath(urlStr.slice(i + 2, end));
+      i = end;
+      continue;
+    }
+    output += urlStr[i];
+  }
+  return output;
 }
 
 /**
@@ -146,11 +265,8 @@ function extractUrlArg(text, startIndex) {
 
   if (text[i] === '`') {
     // Template literal - find matching closing backtick
-    let end = i + 1;
-    while (end < text.length && text[end] !== '`') {
-      if (text[end] === '\\') end++; // skip escaped chars
-      end++;
-    }
+    const end = findTemplateLiteralEnd(text, i);
+    if (end === -1) return null;
     return templateToPath(text.slice(i + 1, end));
   } else if (text[i] === "'" || text[i] === '"') {
     const quote = text[i];
@@ -234,9 +350,54 @@ function parseFrontendApiFiles(files) {
 function normalizeFrontendPath(path) {
   // Remove double slashes (except after protocol)
   let p = path.replace(/\/{2,}/g, '/');
+  // Treat OpenAPI/frontend parameter identifier names as equivalent:
+  // /items/{id}, /items/{itemId}, and /items/{item_id} are the same route.
+  p = p.replace(/\{[^/}]+\}/g, '{param}');
   // Remove trailing slash unless it's the root "/"
   if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
   return p;
+}
+
+// ---------------------------------------------------------------------------
+// 2b. Exemption lists — items expected to be unmatched (not real mismatches)
+// ---------------------------------------------------------------------------
+
+/** Paths that are expected to be unused by frontend (health, metrics, plugin) */
+const EXEMPT_UNUSED_PATH_PATTERNS = [
+  /\/health$/,
+  /\/health\/detailed$/,
+  /\/api-docs/,
+  /\/openapi\.json$/,
+  /\/api\/plugins\/(health|info)$/,
+  /\/plugin-registry\/marketplace/,
+  /\/plugin-registry\/tenants/,
+  /\/api\/monitor\/metrics/,
+  /\/api\/monitor\/health$/,
+];
+
+/** operationIds that are stubs or internal (prefixed with _) */
+function isStubOperationId(opId) {
+  return opId.startsWith('_');
+}
+
+/** Paths that are deprecated/legacy aliases */
+const DEPRECATED_PATH_PATTERNS = [
+  /^\/analytics\/dashboard/,
+  /^\/analytics\/report/,
+  /^\/analytics\/widget/,
+];
+
+/** Frontend paths that are internal (mock, test, dev) */
+const FRONTEND_INTERNAL_PATTERNS = [
+  /\/mock/i,
+  /\/local/i,
+  /\/test/i,
+  /\/dev\//i,
+];
+
+/** Check if a path matches any pattern in a list */
+function matchesAny(path, patterns) {
+  return patterns.some((p) => p.test(path));
 }
 
 // ---------------------------------------------------------------------------
@@ -277,7 +438,9 @@ function diff(openapiOps, frontendCalls) {
   }
 
   const unusedBackend = []; // in OpenAPI but not called by frontend
+  const unusedBackendExempt = []; // exempted (health/stub/deprecated)
   const undocumentedFrontend = []; // called by frontend but not in OpenAPI
+  const undocumentedFrontendExempt = []; // exempted (mock/test/internal)
   const methodMismatches = []; // path exists in both but method differs
 
   // 3a. Paths in OpenAPI but NOT called by frontend
@@ -285,13 +448,30 @@ function diff(openapiOps, frontendCalls) {
     const np = normalizeFrontendPath(op.normalizedPath);
     const feMethods = frontendByPath.get(np);
     if (!feMethods) {
-      unusedBackend.push({
-        operationId: op.operationId,
-        method: op.method,
-        path: op.path,
-        normalizedPath: np,
-        tag: op.tag,
-      });
+      // Check exemptions
+      const isExempt = matchesAny(np, EXEMPT_UNUSED_PATH_PATTERNS) ||
+                       isStubOperationId(op.operationId) ||
+                       matchesAny(op.path, DEPRECATED_PATH_PATTERNS);
+      if (isExempt) {
+        unusedBackendExempt.push({
+          operationId: op.operationId,
+          method: op.method,
+          path: op.path,
+          normalizedPath: np,
+          tag: op.tag,
+          exemptReason: isStubOperationId(op.operationId) ? 'AI stub' :
+                        matchesAny(op.path, DEPRECATED_PATH_PATTERNS) ? 'deprecated' :
+                        'health/internal',
+        });
+      } else {
+        unusedBackend.push({
+          operationId: op.operationId,
+          method: op.method,
+          path: op.path,
+          normalizedPath: np,
+          tag: op.tag,
+        });
+      }
     } else if (!feMethods.has(op.method)) {
       // Path exists but this method is not called
       unusedBackend.push({
@@ -311,14 +491,27 @@ function diff(openapiOps, frontendCalls) {
     const np = call.fullPath;
     const oaOps = openapiByPath.get(np);
     if (!oaOps) {
-      undocumentedFrontend.push({
-        service: call.service,
-        method: call.method,
-        url: call.url,
-        fullPath: np,
-        file: call.file,
-        line: call.line,
-      });
+      // Check exemptions (frontend internal paths)
+      if (matchesAny(np, FRONTEND_INTERNAL_PATTERNS)) {
+        undocumentedFrontendExempt.push({
+          service: call.service,
+          method: call.method,
+          url: call.url,
+          fullPath: np,
+          file: call.file,
+          line: call.line,
+          exemptReason: 'frontend internal',
+        });
+      } else {
+        undocumentedFrontend.push({
+          service: call.service,
+          method: call.method,
+          url: call.url,
+          fullPath: np,
+          file: call.file,
+          line: call.line,
+        });
+      }
     } else {
       // Path exists - check method
       const oaMethods = new Set(oaOps.map((o) => o.method));
@@ -336,7 +529,7 @@ function diff(openapiOps, frontendCalls) {
     }
   }
 
-  return { unusedBackend, undocumentedFrontend, methodMismatches };
+  return { unusedBackend, unusedBackendExempt, undocumentedFrontend, undocumentedFrontendExempt, methodMismatches };
 }
 
 // ---------------------------------------------------------------------------
@@ -344,7 +537,7 @@ function diff(openapiOps, frontendCalls) {
 // ---------------------------------------------------------------------------
 
 function generateReport(openapiOps, frontendCalls, diffResult) {
-  const { unusedBackend, undocumentedFrontend, methodMismatches } = diffResult;
+  const { unusedBackend, unusedBackendExempt, undocumentedFrontend, undocumentedFrontendExempt, methodMismatches } = diffResult;
 
   // Summary stats
   const totalOpenApiOps = openapiOps.length;
@@ -352,7 +545,7 @@ function generateReport(openapiOps, frontendCalls, diffResult) {
   const uniqueFrontendPaths = new Set(
     frontendCalls.filter((c) => c.fullPath).map((c) => c.fullPath)
   ).size;
-  const matchedPaths = totalOpenApiOps - unusedBackend.length;
+  const matchedPaths = totalOpenApiOps - unusedBackend.length - unusedBackendExempt.length;
   const totalMismatches =
     undocumentedFrontend.length + methodMismatches.length;
 
@@ -373,9 +566,11 @@ function generateReport(openapiOps, frontendCalls, diffResult) {
   lines.push(`| 前端唯一路径数 | ${uniqueFrontendPaths} |`);
   lines.push(`| 已匹配端点数 | ${matchedPaths} |`);
   lines.push(`| 未使用后端 API (OpenAPI 有/前端无) | ${unusedBackend.length} |`);
+  lines.push(`| 未使用后端 API — 已豁免 | ${unusedBackendExempt.length} |`);
   lines.push(
     `| 未文档化前端 API (前端有/OpenAPI 无) | ${undocumentedFrontend.length} |`
   );
+  lines.push(`| 未文档化前端 API — 已豁免 | ${undocumentedFrontendExempt.length} |`);
   lines.push(`| 方法不匹配数 | ${methodMismatches.length} |`);
   lines.push(`| **总不匹配数** | **${totalMismatches}** |`);
   lines.push(
@@ -508,10 +703,10 @@ function main() {
   console.log('[3/4] 执行差异分析...');
   const diffResult = diff(openapiOps, frontendCalls);
   console.log(
-    `      -> 未使用后端 API: ${diffResult.unusedBackend.length}`
+    `      -> 未使用后端 API: ${diffResult.unusedBackend.length} (豁免: ${diffResult.unusedBackendExempt?.length || 0})`
   );
   console.log(
-    `      -> 未文档化前端 API: ${diffResult.undocumentedFrontend.length}`
+    `      -> 未文档化前端 API: ${diffResult.undocumentedFrontend.length} (豁免: ${diffResult.undocumentedFrontendExempt?.length || 0})`
   );
   console.log(`      -> 方法不匹配: ${diffResult.methodMismatches.length}\n`);
 

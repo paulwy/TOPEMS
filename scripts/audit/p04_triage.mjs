@@ -25,8 +25,8 @@ import { join, extname, relative } from 'node:path';
 const ROOT = '/Users/xingzhai/TOPEMS';
 const OPENAPI_JSON = join(ROOT, 'docs/api/openapi-aggregated.json');
 const FRONTEND_API_DIR = join(ROOT, 'apps/web/src/api');
-const OUTPUT_JSON = '/Users/xingzhai/.trae-cn/work/6a7892893c61e286885080ca/p04-triage-result.json';
-const OUTPUT_MD = '/Users/xingzhai/.trae-cn/work/6a7892893c61e286885080ca/p04-triage-report.md';
+const OUTPUT_JSON = join(ROOT, 'docs/audit/p04-triage-result.json');
+const OUTPUT_MD = join(ROOT, 'docs/audit/p04-triage-report.md');
 
 const SERVICE_PREFIXES = {
   iam: '/api/core/iam',
@@ -86,22 +86,50 @@ function parseOpenApi(jsonPath) {
     for (const [method, def] of Object.entries(methods)) {
       if (!HTTP_METHODS.includes(method)) continue;
       if (typeof def !== 'object' || def === null) continue;
+      const tag = (def.tags && def.tags[0]) || '';
       ops.push({
         operationId: def.operationId || '(no-operationId)',
         method: method.toUpperCase(),
         path: path,
-        normalizedPath: normalizeOpenApiPath(path),
-        tag: (def.tags && def.tags[0]) || '',
+        normalizedPath: normalizeOpenApiPath(path, tag),
+        tag,
       });
     }
   }
   return ops;
 }
 
-function normalizeOpenApiPath(path) {
+function normalizeOpenApiPath(path, tag = '') {
   if (path.startsWith('/api/')) return path;
   if (path === '/ai/' || path === '/ai') return '/api/ai/';
   if (path === '/health' || path === '/api/health') return '/api/health';
+
+  const service = String(tag || '').toLowerCase();
+  const coreSubmodules = new Set([
+    'iam',
+    'doc',
+    'file',
+    'flow',
+    'monitor',
+    'system',
+    'automation',
+    'migration',
+  ]);
+  const segments = path.split('/').filter(Boolean);
+  const first = segments[0] || '';
+
+  if (service === 'unified-core' && coreSubmodules.has(first)) {
+    return '/api/core' + path;
+  }
+
+  if (service && first === service) {
+    return '/api' + path;
+  }
+
+  if (service && service !== 'health') {
+    return `/api/${service}${path}`;
+  }
+
   return '/api' + path;
 }
 
@@ -123,8 +151,87 @@ function walkTs(dir) {
   return results;
 }
 
+const NON_PATH_VARS = new Set([
+  'queryString', 'qs', 'params', 'searchParams', 'query', 'search',
+  'filter', 'sort', 'page', 'limit', 'offset',
+]);
+
+function findTemplateLiteralEnd(text, startIndex) {
+  let expressionDepth = 0;
+  for (let i = startIndex + 1; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (ch === '\\') {
+      i++;
+      continue;
+    }
+    if (ch === '$' && next === '{') {
+      expressionDepth++;
+      i++;
+      continue;
+    }
+    if (ch === '}' && expressionDepth > 0) {
+      expressionDepth--;
+      continue;
+    }
+    if (ch === '`' && expressionDepth === 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function findTemplateExpressionEnd(text, startIndex) {
+  let expressionDepth = 1;
+  for (let i = startIndex; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (ch === '\\') {
+      i++;
+      continue;
+    }
+    if (ch === '$' && next === '{') {
+      expressionDepth++;
+      i++;
+      continue;
+    }
+    if (ch === '}') {
+      expressionDepth--;
+      if (expressionDepth === 0) {
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+function templateExpressionToPath(rawExpression) {
+  const expression = rawExpression.trim();
+  const leadingIdentifier = expression.match(/^([A-Za-z_$][\w$]*)\b/)?.[1];
+  if (NON_PATH_VARS.has(expression) || NON_PATH_VARS.has(leadingIdentifier)) {
+    return '';
+  }
+  return `{${expression}}`;
+}
+
 function templateToPath(urlStr) {
-  return urlStr.replace(/\$\{([^}]+)\}/g, '{$1}');
+  let output = '';
+  for (let i = 0; i < urlStr.length; i++) {
+    if (urlStr[i] === '$' && urlStr[i + 1] === '{') {
+      const end = findTemplateExpressionEnd(urlStr, i + 2);
+      if (end === -1) {
+        output += urlStr.slice(i);
+        break;
+      }
+      output += templateExpressionToPath(urlStr.slice(i + 2, end));
+      i = end;
+      continue;
+    }
+    output += urlStr[i];
+  }
+  return output;
 }
 
 function extractUrlArg(text, startIndex) {
@@ -132,11 +239,8 @@ function extractUrlArg(text, startIndex) {
   while (i < text.length && /\s/.test(text[i])) i++;
 
   if (text[i] === '`') {
-    let end = i + 1;
-    while (end < text.length && text[end] !== '`') {
-      if (text[end] === '\\') end++;
-      end++;
-    }
+    const end = findTemplateLiteralEnd(text, i);
+    if (end === -1) return null;
     return templateToPath(text.slice(i + 1, end));
   } else if (text[i] === "'" || text[i] === '"') {
     const quote = text[i];
@@ -152,6 +256,7 @@ function extractUrlArg(text, startIndex) {
 
 function normalizeFrontendPath(path) {
   let p = path.replace(/\/{2,}/g, '/');
+  p = p.replace(/\{[^/}]+\}/g, '{param}');
   if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
   return p;
 }
@@ -351,16 +456,17 @@ function triageUnusedBackend(unusedBackend) {
 // ---------------------------------------------------------------------------
 
 function triageUndocumentedFrontend(undocumentedFrontend, openapiOps) {
-  // Build a set of OpenAPI paths for fuzzy matching
+  // Build a set of OpenAPI paths for exact prefix-variant checks.
+  // RC1 is intentionally narrow: it only covers real gateway prefix aliases
+  // such as /api/v1/* or a missing /api/core/* segment.  Do not classify
+  // "same tail path under another service" as RC1; shared resource names like
+  // /documents, /projects, /health, or /sync-records are common across services
+  // and should remain RC4 unless the target service documents that path.
   const openapiPaths = new Set();
-  const openapiPathVariants = new Map(); // path without /api/ prefix -> full path
 
   for (const op of openapiOps) {
     const np = normalizeFrontendPath(op.normalizedPath);
     openapiPaths.add(np);
-    // Also store without /api/ prefix for fuzzy matching
-    const stripped = np.replace(/^\/api\//, '');
-    openapiPathVariants.set(stripped, np);
   }
 
   const rootCauses = {
@@ -402,39 +508,6 @@ function triageUndocumentedFrontend(undocumentedFrontend, openapiOps) {
       rootCauses.RC5_frontend_internal.push(item);
       continue;
     }
-
-    // RC2: Check if a similar path exists in OpenAPI (fuzzy match)
-    // Strip the service prefix and try to match
-    const fpStripped = fp.replace(/^\/api\/[^/]+\//, '');
-    let fuzzyMatch = false;
-    for (const [oaStripped, oaFull] of openapiPathVariants) {
-      // Check if the path structure is similar (same number of segments)
-      const fpSegs = fp.split('/').filter(s => s.length > 0);
-      const oaSegs = oaFull.split('/').filter(s => s.length > 0);
-
-      if (fpSegs.length === oaSegs.length) {
-        // Check if segments match except for the service prefix
-        let match = true;
-        for (let i = 2; i < fpSegs.length; i++) {
-          const fpSeg = fpSegs[i];
-          const oaSeg = oaSegs[i];
-          // Normalize {id} and :id and actual values
-          const fpNorm = fpSeg.startsWith('{') || fpSeg.startsWith(':') ? '{param}' : fpSeg;
-          const oaNorm = oaSeg.startsWith('{') || oaSeg.startsWith(':') ? '{param}' : oaSeg;
-          if (fpNorm !== oaNorm) {
-            match = false;
-            break;
-          }
-        }
-        if (match && fpSegs[0] === oaSegs[0] && fpSegs[1] !== oaSegs[1]) {
-          // Same top-level but different service segment
-          rootCauses.RC1_prefix_mismatch.push(item);
-          fuzzyMatch = true;
-          break;
-        }
-      }
-    }
-    if (fuzzyMatch) continue;
 
     // RC4: Completely unregistered routes
     rootCauses.RC4_unregistered.push(item);
@@ -522,6 +595,7 @@ const result = {
       RC1_prefix_mismatch: {
         count: frontendTriage.rootCauses.RC1_prefix_mismatch.length,
         byService: groupByService(frontendTriage.rootCauses.RC1_prefix_mismatch),
+        items: frontendTriage.rootCauses.RC1_prefix_mismatch,
         sample: frontendTriage.rootCauses.RC1_prefix_mismatch.slice(0, 30),
       },
       RC2_missing_utoipa: {
@@ -537,6 +611,7 @@ const result = {
       RC4_unregistered: {
         count: frontendTriage.rootCauses.RC4_unregistered.length,
         byService: groupByService(frontendTriage.rootCauses.RC4_unregistered),
+        items: frontendTriage.rootCauses.RC4_unregistered,
         sample: frontendTriage.rootCauses.RC4_unregistered.slice(0, 50),
       },
       RC5_frontend_internal: {

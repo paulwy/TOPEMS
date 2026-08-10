@@ -91,6 +91,12 @@ pub struct RetrySyncResponse {
 
 // ==================== Handler Functions ====================
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/sync-records",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn list_sync_records(
     State(state): State<AppState>,
     Query(query): Query<SyncRecordQuery>,
@@ -238,6 +244,12 @@ pub async fn list_sync_records(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/sync-records/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_sync_record(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -278,6 +290,12 @@ pub async fn get_sync_record(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/bi/sync-records",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn create_sync_record(
     State(state): State<AppState>,
     Json(req): Json<CreateSyncRecordRequest>,
@@ -353,6 +371,12 @@ pub async fn create_sync_record(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/bi/sync-records/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn update_sync_record(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -409,6 +433,12 @@ pub async fn update_sync_record(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/bi/sync-records/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn delete_sync_record(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -437,6 +467,12 @@ pub async fn delete_sync_record(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/bi/sync-records/{id}/retry",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn retry_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

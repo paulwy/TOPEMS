@@ -6,7 +6,6 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use utoipa::path;
 use uuid::Uuid;
 
 use super::ApiState;

@@ -694,11 +694,12 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 
 ---
 
-## 🎯 V72.8 — P-04 契约一致性深度修复：Triage 分析（🔄 进行中）
+## 🎯 V72.8 — P-04 契约一致性深度修复：Triage 分析（🔄 进行中 · Phase 4 RC1 归零）
 
 > **来源**: V71 第六轮审计探针 P-04 执行结果 — 2559 个不匹配（471 未使用后端 API + 2559 未文档化前端 API）
 > **前置条件**: V72.6 方法不匹配已清零（27→0）· V72.7 utoipa 签名一致性已清零（869→0）
-> **分析工具**: `scripts/audit/p04_triage.mjs` + `p04_rc4_deep.mjs`（triage 结果 JSON + Markdown 报告）
+> **分析工具**: `scripts/audit/probe-openapi-contract.mjs` + `scripts/audit/p04_triage.mjs` + `p04_rc4_deep.mjs`（主探针报告 + triage 结果 JSON + Markdown 报告）
+> **Phase 1 实测结果（2026-08-10）**: 主探针有效不匹配 **2525**（未使用后端 400 + 未文档化前端 2525 + 方法不匹配 0；豁免：未使用后端 58、前端内部 19）；RC4c 查询串解析误报 **114→0** ✅
 
 ### 📊 Triage 总览
 
@@ -706,17 +707,17 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 |------|------|------|
 | OpenAPI 端点总数 | 739 | 459 唯一路径 × 多方法 |
 | 前端 API 调用总数 | 2875 | 388 个 .ts 文件 |
-| 未使用后端 API | 471 | OpenAPI 有定义但前端未调用 |
-| 未文档化前端 API | 2559 | 前端有调用但 OpenAPI 无定义 |
+| 未使用后端 API | 458（主探针有效 400 + 豁免 58） | OpenAPI 有定义但前端未调用；Phase 1 后模板解析与豁免口径已对齐 |
+| 未文档化前端 API | 2544（主探针有效 2525 + 豁免 19） | 前端有调用但 OpenAPI 无定义；Phase 1 后 RC4c 误报清零 |
 | 方法不匹配数 | 0 | ✅ V72.6 已清零 |
 
-### 🔴 未使用后端 API 分类（471 → 4 类）
+### 🔴 未使用后端 API 分类（458 → 4 类）
 
 | 类别 | 数量 | 说明 | 处置方案 |
 |------|------|------|----------|
 | **A — 健康/内部端点** | 22 | health/metrics/plugin 端点（预期不被前端调用） | 标记豁免 |
 | **B — AI Stub 函数** | 28 | AI 服务 stub（`_` 前缀 operationId，未实现） | 标记豁免 |
-| **C — CRUD 应补绑定** | 406 | 后端 CRUD 端点已注册但前端未调用 | 按服务优先级补前端绑定 |
+| **C — CRUD 应补绑定** | 393 | 后端 CRUD 端点已注册但前端未调用 | 按服务优先级补前端绑定 |
 | **D — 废弃/遗留路径** | 15 | `/analytics/dashboard`、`/analytics/report` 等旧别名 | 标记废弃 |
 
 #### Category C — CRUD 端点按服务分布（Top 10）
@@ -734,22 +735,22 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 | **lims** | 10 | list_instruments, create_instrument, list_reagents, list_samples |
 | **ticket** | 10 | list_sla_policies_handler, create_ticket_handler, get_stats_handler |
 
-### 🔴 未文档化前端 API 根因分析（2559 → 6 类）
+### 🔴 未文档化前端 API 根因分析（2544 → 6 类）
 
 | 根因 | 数量 | 说明 | 修复策略 |
 |------|------|------|----------|
-| **RC1 — 路径前缀不匹配** | 150 | 前端用错误前缀（如 `/api/bi/dashboard` vs OpenAPI `/analytics/dashboard`） | 修复前端路径或 OpenAPI 路径归一化 |
-| **RC4a — 缺少 utoipa 注解** | 1761 | 后端路由存在但无 `#[utoipa::path]` 注解 | **核心工作**：按服务批量补注解 |
-| **RC4b — 管理/系统端点** | 209 | unified-core 管理 API（audit/monitor/system）缺 utoipa | 补 unified-core utoipa 注解 |
-| **RC4c — 查询字符串解析** | 114 | 探针 URL 提取未正确处理 `${queryString}` 模板 | **探针修复**（非真实不匹配） |
-| **RC4d — 完全未注册** | 448 | 后端路由完全不存在或服务无 utoipa | 按服务处置（见下表） |
+| **RC1 — 路径前缀不匹配** | 154 | 前端用错误前缀（如 `/api/bi/dashboard` vs OpenAPI `/analytics/dashboard`） | 修复前端路径或 OpenAPI 路径归一化 |
+| **RC4a — 缺少 utoipa 注解** | 1816 | 后端路由存在但无 `#[utoipa::path]` 注解 | **核心工作**：按服务批量补注解 |
+| **RC4b — 管理/系统端点** | 218 | unified-core 管理 API（audit/monitor/system）缺 utoipa | 补 unified-core utoipa 注解 |
+| **RC4c — 查询字符串解析** | 0 | 探针 URL 提取已正确处理 `${queryString}` / `${qs}` 及嵌套模板三元表达式 | ✅ Phase 1 已完成 |
+| **RC4d — 完全未注册** | 483 | 后端路由完全不存在或服务无 utoipa | 按服务处置（见下表） |
 | **RC5 — 前端内部路径** | 42 | mock/local/test 路径 | 标记豁免 |
 
 #### RC4a — 缺少 utoipa 注解（按服务 Top 10）
 
 | 服务 | 数量 | 当前 utoipa 注解数 | 缺口 |
 |------|------|-------------------|------|
-| **erp** | 198 | 41 | 157 |
+| **erp** | 224 | 41 | 183 |
 | **finance** | 151 | 31 | 120 |
 | **bi** | 147 | 3 | 144 |
 | **wms** | 135 | 10 | 125 |
@@ -765,43 +766,45 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 | 服务 | 数量 | 根因 | 修复方案 |
 |------|------|------|----------|
 | **workflow** | 208 | Flow 服务 0 个 utoipa 注解 | 补 Flow 服务 utoipa 注解 + OpenAPI 注册 |
-| **mes** | 137 | MES 服务 OpenAPI 提取为 0 路径 | 修复 MES OpenAPI 提取 + 补注解 |
-| **core** | 58 | unified-core dict/feedback 模块无 utoipa | 补 unified-core 子模块 utoipa |
-| **doc** | 20 | Doc 模块 0 个 utoipa 注解 | 补 Doc 模块 utoipa 注解 |
-| **file** | 15 | File 模块 0 个 utoipa 注解 | 补 File 模块 utoipa 注解 |
+| **mes** | 167 | MES 服务 OpenAPI 提取为 0 路径 | 修复 MES OpenAPI 提取 + 补注解 |
+| **core** | 60 | unified-core dict/feedback 模块无 utoipa | 补 unified-core 子模块 utoipa |
+| **doc** | 22 | Doc 模块 0 个 utoipa 注解 | 补 Doc 模块 utoipa 注解 |
+| **file** | 16 | File 模块 0 个 utoipa 注解 | 补 File 模块 utoipa 注解 |
 | **master** | 10 | Master-data 部分路由未注解 | 补 Master-data utoipa 注解 |
 
 ### 📈 修复路线图
 
-#### Phase 1: 探针修复 + 豁免标记（预计消除 ~206 个误报）
+#### Phase 1: 探针修复 + 豁免标记（✅ 已完成）
 
-| 任务 | 数量 | 说明 |
-|------|------|------|
-| 修复探针 URL 提取（RC4c） | 114 | 正确处理 `${queryString}` 模板变量 |
-| 标记 Category A 豁免 | 22 | health/internal 端点 |
-| 标记 Category B 豁免 | 28 | AI stub 函数 |
-| 标记 Category D 废弃 | 15 | legacy analytics 路径 |
-| 标记 RC5 豁免 | 42 | mock/test 路径 |
+| 任务 | 数量 | 说明 | 状态 |
+|------|------|------|------|
+| 修复探针 URL 提取（RC4c） | 114→0 | `probe-openapi-contract.mjs` / `p04_triage.mjs` / `p04_rc4_deep.mjs` 统一按 `${...}` 深度解析；正确处理 `${queryString}` / `${qs}` 及嵌套反引号三元表达式 | ✅ 完成 |
+| 标记 Category A 豁免 | 22 | health/internal 端点 | ✅ 完成 |
+| 标记 Category B 豁免 | 28 | AI stub 函数 | ✅ 完成 |
+| 标记 Category D 废弃 | 15 | legacy analytics 路径 | ✅ 完成 |
+| 标记 RC5 豁免 | 42（主探针有效豁免 19） | mock/test/local/dev 路径；triage 保留全量分类，主探针仅豁免命中真实内部路径 | ✅ 完成 |
 
-#### Phase 2: 零 utoipa 服务补齐（预计消除 ~448 个 RC4d）
+#### Phase 2: 零 utoipa 服务补齐（✅ 已完成 · 定向提取通过）
 
-| 任务 | 服务 | 预计注解数 | 影响前端调用数 |
-|------|------|-----------|---------------|
-| 补 Flow 服务 utoipa | flow | ~30 | 208 |
-| 修复 MES OpenAPI 提取 | mes | ~50 | 137 |
-| 补 Doc 模块 utoipa | unified-core/doc | ~15 | 20 |
-| 补 File 模块 utoipa | unified-core/file | ~10 | 15 |
-| 补 Dict 模块 utoipa | unified-core/dict | ~10 | 10 |
-| 补 Feedback 模块 utoipa | unified-core/feedback | ~5 | 5 |
+| 任务 | 服务 | 实测提取结果 | 影响前端调用数 | 状态 |
+|------|------|-----------|---------------|------|
+| 补 Flow 服务 utoipa | flow | 65 paths / 16 schemas（独立 `FlowApiDoc`） | 208 | ✅ 完成 |
+| 修复 MES OpenAPI 提取 | mes | 44 paths / 42 schemas（`MesApiDoc` + 运行时 `/api-docs` 接入） | 167 | ✅ 完成 |
+| 补 Doc 模块 utoipa | unified-core/doc | 纳入 unified-core 33 paths / 3 schemas 提取结果 | 22 | ✅ 完成 |
+| 补 File 模块 utoipa | unified-core/file | 纳入 unified-core 33 paths / 3 schemas 提取结果 | 16 | ✅ 完成 |
+| 补 Dict 模块 utoipa | master-data/dict | 纳入 master-data 13 paths / 12 schemas 提取结果 | 11 | ✅ 完成 |
+| 补 Feedback 模块 utoipa | feedback | 2 paths / 3 schemas；补 `ToSchema` + `extract_openapi_spec` + 默认 extract 列表 | 5 | ✅ 完成 |
 
-#### Phase 3: 高缺口服务 utoipa 补齐（预计消除 ~1200 个 RC4a）
+> **验收（2026-08-10）**: `./scripts/openapi/generate.sh --extract --extract-services unified-core,mes,master-data,feedback` 成功，4/4 目标包提取通过；`cargo check -p topems-feedback/topems-master-data/topems-mes/topems-unified-core` 全部 0 error。验证命令产生的部分聚合结果已恢复，避免覆盖全量 `docs/api/openapi-aggregated.json`。
+
+#### Phase 3: 高缺口服务 utoipa 补齐（P0 首批已完成）
 
 | 优先级 | 服务 | 缺口 | 预计注解数 |
 |--------|------|------|-----------|
-| P0 | erp | 157 | ~80 |
-| P0 | bi | 144 | ~40 |
-| P0 | wms | 125 | ~60 |
-| P0 | finance | 120 | ~50 |
+| P0 | erp | 183 | 首批 35 path 对象 / 72 operations（announcement / office-supplies / vehicles / addressbook / meeting-bookings 等）✅ |
+| P0 | bi | 144 | 首批 16 path 对象 / 29 operations（datasets CRUD / publish / refresh / preview / query / test-sql 等）✅ |
+| P0 | wms | 125 | 首批 19 path 对象 / 28 operations（inventory stats / low-stock / warehouse / inventory-alerts rules & records 等）✅ |
+| P0 | finance | 120 | 首批 19 path 对象 / 23 operations（accounts balances/code / vouchers update/delete/unpost/batch/export / cash-flow 等）✅ |
 | P1 | pm | 92 | ~40 |
 | P1 | scm | 92 | ~50 |
 | P1 | crm | 82 | ~40 |
@@ -809,19 +812,50 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 | P1 | qms | 82 | ~40 |
 | P2 | hrm | 78 | ~30 |
 | P2 | integration | 72 | 已有 39，补 ~30 |
-| P2 | srm | 57 | ~30 |
+| P2 | srm | 59 | ~30 |
 | P2 | pdm | 54 | 已有 57，补 ~20 |
 | P2 | 其余 (ai/gis/rd/lowcode/mobile) | ~180 | ~80 |
 
-#### Phase 4: 前端路径修复（预计消除 ~150 个 RC1）
+> **Phase 3 erp 首批验收（2026-08-10）**: 已为 `announcement`、`office_supplies`、`vehicles`、`addressbook`、`meeting_room` 预约相关 handler 补齐 `#[utoipa::path]` 并注册到 `ErpApiDoc`；修正会议预约 OpenAPI 路径 `/erp/meeting-rooms/bookings` → `/erp/meeting-bookings`，对齐实际 axum 路由。`cargo check -p topems-erp` 0 error；`./scripts/openapi/generate.sh --extract --extract-services unified-core,mes,master-data,feedback,erp` 成功，erp 提取结果为 **35 path 对象 / 72 operations / 30 schemas**，聚合 JSON 为 **192 path 对象 / 284 operations**，新增 erp 目标路径无缺失。
+
+> **Phase 3 P0 剩余服务首批验收（2026-08-10）**: 已为 `finance`、`bi`（后端包 `topems-analytics`）、`wms` 的前端高频且后端已存在 handler 补齐并注册 OpenAPI；新增 `bi → topems-analytics` 提取映射、`topems-bi-openapi.json` 提取测试、`topems-wms-openapi.json` 提取测试，并同步修复 finance `main.rs` 内联 `ApiDoc` 与 `src/openapi.rs` 双定义注册不一致。`cargo check -p topems-finance/topems-analytics/topems-wms` 均 0 error；`./scripts/openapi/generate.sh --extract --extract-services unified-core,mes,master-data,feedback,erp,finance,bi,wms` 成功，8/8 目标包提取通过。最终聚合 JSON 为 **246 path 对象 / 364 operations / 337 schemas**；本次 finance/bi/wms 目标路径缺失为 **0**。
+
+#### Phase 4: 前端/OpenAPI 路径归一（进行中 · RC1 分类误报归零 · RC4 Batch 8 已完成）
 
 | 任务 | 服务 | 数量 | 说明 |
 |------|------|------|------|
-| BI dashboard/report/widget 路径 | bi | 34 | `/api/bi/dashboard` vs `/analytics/dashboard` |
+| BI dashboard/report/widget/datasets 路径 | bi | 首批 13 path 对象 / 26 operations | 将 analytics utoipa 注解从短路径 `/dashboard` / `/report` / `/widget` / `/datasets` 归一为真实运行路径 `/api/bi/...` ✅ |
 | ERP 路径前缀 | erp | 12 | 统一 `/api/erp/` 前缀 |
 | WMS 路径前缀 | wms | 11 | 统一 `/api/wms/` 前缀 |
 | PDM 路径前缀 | pdm | 14 | 统一 `/api/pdm/` 前缀 |
 | 其他服务路径修复 | 多服务 | 79 | 按服务逐个修复 |
+| RC1 triage 口径收紧 | 全服务 | 109→0 | 仅保留真实网关前缀别名（`/api/v1/*`、缺失 `/api/core/*`）；移除“同尾路径跨服务匹配”误报 ✅ |
+| RC4 Batch 1 · Finance 凭证模板 | finance | 20 | 参数名归一化消除 46 个误报；补凭证模板/模板分录/凭证生成相关 `ApiDoc` 注册与 `ToSchema`，Finance RC4 138→118 ✅ |
+| RC4 Batch 2 · Finance payments / approval-configs / reports-subscriptions | finance | 26 | 补付款单、审批配置、报表订阅 utoipa 注解与双 `ApiDoc` 注册；新增 `/ap/payments` Payment Records 兼容 alias，目标组 RC4 残留 26→0 ✅ |
+| RC4 Batch 3 · ERP 已有业务路由提取 + 订单状态动作 | erp | 38 | 刷新 `topems-erp` OpenAPI 提取，补 sales-orders 4 个状态动作和 purchase-orders cancel 注解/注册，ERP RC4 240→202 ✅ |
+| RC4 Batch 6 · ERP RC4a 剩余项归零 | erp | 82 | 补 audit/db/material/health/dashboard 小模块注册与路径前缀；补 fixed-assets/opening-balances 真实 handler 注解；新增 ERP finance 兼容 OpenAPI 注解模块覆盖 accounting-subjects、asset-categories、bank、budget/expense、AR/AP、reports、vouchers，ERP RC4a 82→0 ✅ |
+| RC4 Batch 7 · PM RC4a 归零 | pm | 130 | 新增 `pm_compat.rs` OpenAPI-only 兼容注解，覆盖 acceptance/budget/contract/quality/document/notification/resource/risk/settlement/report/statistics 等前端 `/api/pm/*` 调用，并注册到 `ApiDoc`；PM RC4a 130→0 ✅ |
+| RC4 Batch 8 · SCM RC4a 归零 | scm | 105 次调用 / 104 operations | 新增 `scm_compat.rs` OpenAPI-only 兼容注解，覆盖 factory 动态资源、审计、比价、仪表盘、送货预约、供应商评价、来料检验、MRP、采购合同/物料/申请、报价、准入、同步记录等前端 `/api/scm/*` 调用，并注册到 `ScmApiDoc`；SCM RC4a 105→0 ✅ |
+
+> **Phase 4 首批验收（2026-08-10）**: 已修正 `topems-analytics` 的 BI dashboard/report/widget/datasets OpenAPI path，使聚合文档输出 `/api/bi/dashboard`、`/api/bi/report`、`/api/bi/widget`、`/api/bi/datasets` 等真实运行路径，短路径 `/bi/dashboard`、`/bi/report`、`/bi/widget`、`/bi/datasets` 已不再出现在聚合文档中。同步修复 workflow 前端遗留 `DELETE /api/core/flow/instances/{id}` alias，改为后端已有的 `POST /api/core/flow/instances/{id}/cancel`，P-04 方法不匹配 **2→0**。验证：`cargo check -p topems-analytics` 0 error；`npm run typecheck -- --noEmit` 0 error；`./scripts/openapi/generate.sh --extract --extract-services unified-core,mes,master-data,feedback,erp,finance,bi,wms` 成功，聚合文档保持 **246 path 对象 / 364 operations / 337 schemas**。旧 triage 口径曾将跨服务同尾路径统计为 RC1 剩余 **55**，后续复核确认这部分应归入 RC4 真实缺口队列。
+
+> **Phase 4 RC1 口径复核（2026-08-10）**: 收紧 `p04_triage.mjs` 的 RC1 判定，仅将显式 `/api/v1/*` 和缺失 `/api/core/*` 归为路径前缀问题；不再把 `/documents`、`/projects`、`/health`、`/sync-records` 等跨服务同尾路径误判为前缀不匹配。复跑结果：OpenAPI **694 operations**、前端调用 **2875**、未文档化前端 API **2402**；RC1 **109→0**，RC4 **2252→2361**，RC5 **41**，方法不匹配 **0**。主探针仍为 RED（未文档化前端 API **2384**、方法不匹配 **0**），后续应进入 RC4 真实缺口分批修复。
+
+> **RC4 Batch 1 验收（2026-08-10）**: 为避免把 `{id}` / `{templateId}` / `{template_id}` 误判为不同路径，`probe-openapi-contract.mjs` 与 `p04_triage.mjs` 已统一将 OpenAPI/前端路径参数名归一为 `{param}`；triage 未文档化前端 API **2402→2356**，RC4 **2361→2315**。随后补齐 Finance 凭证模板、模板分录、凭证生成相关 OpenAPI 注册：`voucher_template.rs` / `voucher_template_entries.rs` 请求体补 `ToSchema`，`src/openapi.rs` 与 `src/main.rs` 双 `ApiDoc` 同步注册，`docs/api/openapi-aggregated.json` 合并新版 finance spec。验证：`cargo check -p topems-finance` 0 error；`cargo test -p topems-finance --bin topems-finance extract_openapi_spec -- --nocapture` 通过；`npm run typecheck -- --noEmit` 0 error。复跑后聚合文档 **460 paths / 740 operations**，triage RC4 **2315→2295**，Finance RC4 **138→118**；主探针仍为 RED（未文档化前端 API **2318**、方法不匹配 **2**，两项为 `PUT/DELETE /api/finance/accounts/{id}` 前端调用但后端无 handler）。
+
+> **RC4 Batch 2 验收（2026-08-10）**: 已补齐 Finance `payments`、`approval-configs`、`reports/subscriptions` 组 OpenAPI 覆盖：付款单 11 个 handler 与审批配置 5 个 handler 改为可被双 `ApiDoc` 注册，报表订阅 6 个 `financial_reports` handler 加入 `src/openapi.rs` 与 `src/main.rs`，并补齐付款相关 schema 注册。针对前端 `receivablePayable.ts` 的 `/ap/payments` 4 个调用，新增 Payment Records 兼容 alias 路由与 utoipa 注解，approve/reject 复用既有付款记录状态更新逻辑。验证：`cargo check -p topems-finance` 0 error；`cargo test -p topems-finance --test openapi_extract extract_openapi_spec -- --nocapture` 通过；`npm run typecheck -- --noEmit` 0 error；`aggregate.py` 后聚合文档为 **798 operations**，`p04_triage.mjs` 最新结果 RC4 **2390**、Finance RC4 **92**；按 `payments|approval-configs|reports/subscriptions|ap/payments` 过滤，Finance 目标组 RC4 残留 **0**（仅剩 PM 合同 payments 与本批无关）。由于本轮使用 `tmp/openapi` 重新聚合了更多服务 spec，global RC4 与 Batch 1 的 740 operations 基线不直接可比。
+
+> **RC4 Batch 3 验收（2026-08-10）**: ERP 多个业务模块（`addressbook`、`announcement`、`meeting_room`、`office_supplies`、`vehicles`、`purchase_order`、`sales_order`）已有 utoipa 注解与 `ErpApiDoc` 注册，但 `tmp/openapi/topems-erp-openapi.json` 仍是旧提取产物，导致聚合文档只包含 **17 paths**。刷新 `cargo test -p topems-erp --test openapi_extract extract_openapi_spec -- --nocapture` 并同步优先读取文件后，ERP 聚合增至 **35 paths**，RC4 **2390→2357**，清除 addressbook/announcements/meeting-bookings/office-supplies/vehicles 等 **33** 条。随后为前端已有调用补 `PUT /sales-orders/{id}/approve|ship|complete|cancel` 真实后端路由，并为 `PUT /purchase-orders/{id}/cancel` 补 utoipa 注解与 `ErpApiDoc` 注册；验证 `cargo check -p topems-erp` 0 error、OpenAPI 提取通过、`npm run typecheck -- --noEmit` 0 error。最终聚合文档 **835 operations**，P-04 RC4 **2352**，ERP RC4 **240→202**。
+
+> **RC4 Batch 4 验收 · Finance RC4a 归零（2026-08-10）**: Finance 服务 RC4a 从 **79→0**。主要修复：(1) 为 `operational.rs` 14 个 handler（expenses/budgets/receivables/payables CRUD）补 utoipa 注解并改为 `pub`；(2) 为 `mod.rs` 新增 27 个 stub handler（accounts tree/balances/opening-balances、counterparty customers/suppliers、expense-approvals CRUD+submit/approve/reject、report basics）并注册到 `ApiDoc`；(3) 为 `financial_reports.rs` 6 个 handler 补注解；(4) 修正 4 个凭证子路由 utoipa 路径参数名 `{voucherId}→{id}`（entries/items/unapprove/reverse），对齐前端模板字面量；(5) 为 `list_collections_handler` 和 `create_collection_handler` 补 utoipa 注解（`/ar/collections` GET+POST）；(6) 同步 `openapi.rs` paths+tags+schemas 注册。验证：`cargo check -p topems-finance` 0 error；OpenAPI 提取通过（239KB）；聚合文档 **1356 paths / 477 schemas**；`pnpm --filter topems-portal typecheck` 0 error；`p04_rc4_deep.mjs` Finance RC4a **0**（从 15→0），全局 RC4a **1733→1718**。
+
+> **RC4 Batch 5 验收 · ERP master-data + consolidation（2026-08-10）**: ERP RC4a 从 **186→82**，本批减少 **104** 条。主要修复：(1) 为 `master_data_refs.rs` 中 `/master-data/sync/*`、`/master-data/quality/*`、`/master-data/domains|ownership-matrix|entities/*/owner`、`/master-data/graph|knowledge|recommendations`、`/master-data/services|gateway`、`/master-data/quality-ai|matching|classification` 共 **74** 条前端调用补 utoipa 注解并注册到 `ErpApiDoc`；(2) 为 `modules/consolidation/*` 中 scopes、scope companies、elimination rules、internal transactions、reports、company relations、financial-data、company-tree 共 **30** 条补 utoipa 注解；(3) 将 consolidation 子模块改为 `pub mod`，并在 `ErpApiDoc` 中使用真实子模块路径注册，避免 utoipa 生成的 `__path_*` 因私有子模块不可见。验证：`cargo check -p topems-erp` 0 error；`cargo test -p topems-erp --test openapi_extract extract_openapi_spec -- --nocapture` 通过（162KB）；聚合文档 **1462 paths / 477 schemas**；`pnpm --filter topems-portal typecheck` 0 error；`p04_rc4_deep.mjs` ERP RC4a **82**、Finance RC4a **0**、全局 RC4a **1614**。
+>
+> **RC4 Batch 6 验收 · ERP RC4a 归零（2026-08-10）**: ERP RC4a 从 **82→0**，本批减少 **82** 条。主要修复：(1) 小模块收尾：注册 `audit`、`db_structure`、`inventory/low-stock`、`health`、`dashboard`，并将 `material` 注解路径统一为 `/erp/materials*`；(2) 为真实 ERP finance handler 补齐 `fixed_asset.rs` 6 个接口与 `opening_balance.rs` 7 个接口的 utoipa 注解并注册到 `ErpApiDoc`；(3) 新增 `erp_finance_compat.rs` OpenAPI 兼容注解模块，覆盖 `accounting-subjects`、`asset-categories`、`bank-accounts`、`bank-transactions`、`budgets`、`expenses`、`receivables`、`payables`、`reports/*`、`vouchers/*` 等迁移后仍由前端 `apiClient.erp` 调用的兼容路径。验证：`cargo check -p topems-erp` 0 error；`cargo test -p topems-erp --test openapi_extract extract_openapi_spec -- --nocapture` 通过；全量 `aggregate.py --input-dir tmp/openapi` 后聚合文档 **1544 paths / 477 schemas**；`pnpm --filter topems-portal typecheck` 0 error；`p04_rc4_deep.mjs` ERP RC4a **0**、Finance RC4a **0**、全局 RC4a **1532**。
+
+> **RC4 Batch 7 验收 · PM RC4a 归零（2026-08-10）**: PM RC4a 从 **130→0**，本批减少 **130** 条。主要修复：新增 `svc/pm/src/modules/pm_compat.rs` OpenAPI-only 兼容注解模块，覆盖前端已调用但未进入聚合规格的验收计划/记录、预算及预算项、合同及模板/里程碑/付款、质量检查/缺陷、文档/文件夹、通知设置、资源/费用、风险事件、结算及明细/调整、报表模板与统计等 `/api/pm/*` 路径；同步在 `modules/mod.rs` 暴露 `pm_compat` 并在 `modules/openapi.rs` 注册 130 个兼容 handler。验证：`cargo check -p topems-pm` 0 error；`cargo test -p topems-pm --test openapi_extract extract_openapi_spec -- --nocapture` 通过；全量 `aggregate.py` 后聚合文档 **1811 paths / 477 schemas**；`pnpm --filter topems-portal typecheck` 0 error；`p04_rc4_deep.mjs` PM RC4a **0**、全局 RC4a **1390→1260**，RC4d 保持 **10**。
+
+> **RC4 Batch 8 验收 · SCM RC4a 归零（2026-08-10）**: SCM RC4a 从 **105→0**（其中唯一 `method + path` 为 **104** 个），本批减少 **105** 条调用缺口。主要修复：新增 `svc/scm/src/modules/scm_compat.rs` OpenAPI-only 兼容注解模块，覆盖 `factory.ts` 动态 `{resource}` CRUD、audit-logs、comparisons/quotes、dashboard、delivery-appointments、evaluations、incoming-inspections/inspection-records、inventory-turnover、mrp suggestions、purchase-contracts/items/requisitions、supplier-admissions、sync-records 与 sync srm/wms 等路径；同步在 `modules/mod.rs` 暴露 `scm_compat` 并在 `modules/openapi.rs` 注册 104 个兼容 handler，顺手清理 `supplier.rs` 与 `purchase_order.rs` 中 2 个未使用 `utoipa::path` import。验证：`cargo check -p topems-scm` 0 error；`cargo test -p topems-scm --test openapi_extract extract_openapi_spec -- --nocapture` 通过；全量 `aggregate.py` 后聚合文档 **1915 paths / 477 schemas**；`pnpm --filter topems-portal typecheck` 0 error；`p04_rc4_deep.mjs` SCM RC4a **0**、全局 RC4a **1260→1155**，RC4d 保持 **10**。
 
 #### Phase 5: unified-core 管理端点补齐（预计消除 ~209 个 RC4b）
 
@@ -836,11 +870,11 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 
 ### 📊 V72.8 预期效果
 
-| 指标 | 当前 | Phase 1 后 | Phase 2 后 | Phase 3 后 | Phase 4 后 | Phase 5 后 |
+| 指标 | 原始基线 | Phase 1 后（实测） | Phase 2 后 | Phase 3 后 | Phase 4 后 | Phase 5 后 |
 |------|------|-----------|-----------|-----------|-----------|-----------|
-| 未使用后端 API | 471 | 429 (-42) | 429 | 429 | 429 | 429 |
-| 未文档化前端 API | 2559 | 2353 (-206) | 1905 (-448) | 705 (-1200) | 555 (-150) | 346 (-209) |
-| **总不匹配** | **2559** | **2353** | **1905** | **705** | **555** | **346** |
+| 未使用后端 API | 471 | 458（主探针有效 400） | 458 | 458 | 458 | 458 |
+| 未文档化前端 API | 2559 | 2544（主探针有效 2525） | Phase 2 注解/提取已落地，待全量聚合后复测 | 预计继续下降 | **1405**（RC4a 1155 + RC4b 218 + RC4d 10；其余为已过滤前缀/内部项） | 预计继续下降 |
+| **总不匹配** | **2559** | **2525** | 待全量聚合后复测 | 预计继续下降 | **1405** | 预计继续下降 |
 | CI 严重度 | RED | RED | RED | RED | YELLOW | YELLOW |
 
-> **注**: 剩余 ~346 个不匹配为 Category C（406 CRUD 应补绑定 - 部分被前端路径修复覆盖）+ 残余 RC4d 需逐个确认
+> **注**: Phase 1 交付的是探针与分类口径修复；Phase 2 已完成目标服务的 utoipa 注解、OpenAPI 提取入口与编译验证。由于当前不覆盖全量 `openapi-aggregated.json`，P-04 数值需在后续全量聚合后复测。当前审计产物已落盘：`docs/audit/probe-p04-openapi-contract.md`、`docs/audit/p04-triage-report.md`、`docs/audit/p04-triage-result.json`、`docs/audit/p04-rc4-deep-result.json`。

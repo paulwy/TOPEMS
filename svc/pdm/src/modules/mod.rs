@@ -1,9 +1,13 @@
+pub mod bom;
 pub mod change_notice;
 pub mod configuration;
+pub mod dashboard;
 pub mod document;
+pub mod document_version;
 pub mod material;
 pub mod openapi;
 pub mod pdm_plugin;
+pub mod project;
 pub mod product;
 pub mod production_batch;
 pub mod production_formula;
@@ -20,10 +24,14 @@ use axum::Router;
 
 pub fn create_api_routes() -> Router<AppState> {
     Router::new()
+        .merge(bom::create_routes())
+        .merge(dashboard::create_routes())
         .merge(product::create_routes())
         .merge(material::create_routes())
         .merge(configuration::create_routes())
         .merge(document::create_routes())
+        .merge(document_version::create_routes())
+        .merge(project::create_routes())
         .merge(version::create_routes())
         .merge(production_process::create_routes())
         .merge(production_step::create_routes())

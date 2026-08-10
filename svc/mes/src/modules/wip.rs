@@ -20,6 +20,7 @@ use topems_shared::auth::Claims;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared::response::ApiResponse;
+use utoipa::ToSchema;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -35,7 +36,7 @@ pub fn create_routes() -> Router<AppState> {
 
 // ==================== Data Types ====================
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListWipsQuery {
     page: Option<i32>,
     pagesize: Option<i32>,
@@ -43,7 +44,7 @@ pub struct ListWipsQuery {
     status: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct WipResponse {
     pub id: Uuid,
     pub wip_no: String,
@@ -67,7 +68,7 @@ pub struct WipResponse {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct WipTransferResponse {
     pub id: Uuid,
     pub transfer_no: String,
@@ -87,7 +88,7 @@ pub struct WipTransferResponse {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct WipStatisticsResponse {
     pub total_wip: i64,
     pub total_quantity: f64,
@@ -95,14 +96,14 @@ pub struct WipStatisticsResponse {
     pub by_process: Vec<WipProcessCount>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct WipStatusCount {
     pub status: String,
     pub count: i64,
     pub quantity: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct WipProcessCount {
     pub process_id: Option<Uuid>,
     pub process_name: String,
@@ -110,7 +111,7 @@ pub struct WipProcessCount {
     pub quantity: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ListWipResponse {
     pub wips: Vec<WipResponse>,
     pub total: i64,
@@ -118,7 +119,7 @@ pub struct ListWipResponse {
     pub pagesize: i64,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateWipRequest {
     pub order_id: Option<Uuid>,
     pub product_id: Option<Uuid>,
@@ -132,7 +133,7 @@ pub struct CreateWipRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateWipTransferRequest {
     pub wip_id: Uuid,
     pub from_process_id: Option<Uuid>,
@@ -145,7 +146,7 @@ pub struct CreateWipTransferRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateWipRequest {
     pub quantity: Option<f64>,
     pub status: Option<String>,
@@ -169,6 +170,21 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 
 // ==================== WIP Handlers ====================
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/wips",
+    tag = "WIP",
+    params(
+        ("page" = Option<i32>, Query, description = "页码"),
+        ("pagesize" = Option<i32>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+    ),
+    responses(
+        (status = 200, description = "WIP列表", body = ApiResponse<ListWipResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_wips(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -331,6 +347,16 @@ pub async fn list_wips(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/wips",
+    tag = "WIP",
+    request_body = CreateWipRequest,
+    responses(
+        (status = 200, description = "WIP创建成功", body = ApiResponse<WipResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_wip(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -427,6 +453,18 @@ pub async fn create_wip(
     Json(ApiResponse::success(wip, "WIP创建成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/wips/{id}",
+    tag = "WIP",
+    params(
+        ("id" = Uuid, Path, description = "WIP ID"),
+    ),
+    responses(
+        (status = 200, description = "WIP详情", body = ApiResponse<WipResponse>),
+        (status = 404, description = "WIP不存在"),
+    ),
+)]
 pub async fn get_wip(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -494,6 +532,19 @@ pub async fn get_wip(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/wips/{id}",
+    tag = "WIP",
+    params(
+        ("id" = Uuid, Path, description = "WIP ID"),
+    ),
+    request_body = UpdateWipRequest,
+    responses(
+        (status = 200, description = "WIP更新成功", body = ApiResponse<WipResponse>),
+        (status = 404, description = "WIP不存在"),
+    ),
+)]
 pub async fn update_wip(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -568,6 +619,18 @@ pub async fn update_wip(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/mes/wips/{id}",
+    tag = "WIP",
+    params(
+        ("id" = Uuid, Path, description = "WIP ID"),
+    ),
+    responses(
+        (status = 200, description = "WIP删除成功"),
+        (status = 404, description = "WIP不存在"),
+    ),
+)]
 pub async fn delete_wip(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -602,6 +665,16 @@ pub async fn delete_wip(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/wips/transfer",
+    tag = "WIP",
+    request_body = CreateWipTransferRequest,
+    responses(
+        (status = 200, description = "WIP转移成功", body = ApiResponse<WipTransferResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn transfer_wip(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -782,6 +855,18 @@ pub async fn transfer_wip(
     Json(ApiResponse::success(response, "WIP转移成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/wips/{wip_id}/transfers",
+    tag = "WIP",
+    params(
+        ("wip_id" = Uuid, Path, description = "WIP ID"),
+    ),
+    responses(
+        (status = 200, description = "WIP转移记录列表", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_wip_transfers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -850,6 +935,15 @@ pub async fn list_wip_transfers(
     Json(ApiResponse::success(transfer_list, "获取WIP转移记录成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/wips/statistics",
+    tag = "WIP",
+    responses(
+        (status = 200, description = "WIP统计数据", body = ApiResponse<WipStatisticsResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_wip_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

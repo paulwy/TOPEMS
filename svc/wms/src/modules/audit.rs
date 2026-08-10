@@ -34,6 +34,12 @@ pub struct ListAuditLogsQuery {
     pub page_size: Option<i64>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/audit-logs",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_audit_logs(
     State(state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
@@ -110,6 +116,12 @@ pub async fn list_audit_logs(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/audit-logs/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_audit_log(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

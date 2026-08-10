@@ -21,6 +21,7 @@ use topems_shared_auth::auth::Claims;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -46,7 +47,7 @@ pub fn create_routes() -> Router<AppState> {
 
 // ==================== Data Types ====================
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListEquipmentQuery {
     page: Option<i32>,
     pagesize: Option<i32>,
@@ -54,7 +55,7 @@ pub struct ListEquipmentQuery {
     status: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateEquipmentRequest {
     pub equipment_no: Option<String>,
     pub name: String,
@@ -67,7 +68,7 @@ pub struct CreateEquipmentRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateEquipmentRequest {
     pub name: Option<String>,
     pub model: Option<String>,
@@ -82,7 +83,7 @@ pub struct UpdateEquipmentRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct EquipmentResponse {
     pub id: String,
     pub equipment_no: String,
@@ -101,7 +102,7 @@ pub struct EquipmentResponse {
     pub updated_at: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ListEquipmentResponse {
     pub equipments: Vec<EquipmentResponse>,
     pub total: i64,
@@ -187,6 +188,21 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
 
 // ==================== Equipment Handlers ====================
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/equipment",
+    tag = "Equipment",
+    params(
+        ("page" = Option<i32>, Query, description = "页码"),
+        ("pagesize" = Option<i32>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+    ),
+    responses(
+        (status = 200, description = "设备列表", body = ApiResponse<ListEquipmentResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -285,6 +301,16 @@ pub async fn list_equipment(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/equipment",
+    tag = "Equipment",
+    request_body = CreateEquipmentRequest,
+    responses(
+        (status = 200, description = "设备创建成功", body = ApiResponse<EquipmentResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -353,6 +379,18 @@ pub async fn create_equipment(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/equipment/{id}",
+    tag = "Equipment",
+    params(
+        ("id" = Uuid, Path, description = "设备ID"),
+    ),
+    responses(
+        (status = 200, description = "设备详情", body = ApiResponse<EquipmentResponse>),
+        (status = 404, description = "设备不存在"),
+    ),
+)]
 pub async fn get_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -394,6 +432,19 @@ pub async fn get_equipment(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/equipment/{id}",
+    tag = "Equipment",
+    params(
+        ("id" = Uuid, Path, description = "设备ID"),
+    ),
+    request_body = UpdateEquipmentRequest,
+    responses(
+        (status = 200, description = "设备更新成功", body = ApiResponse<EquipmentResponse>),
+        (status = 404, description = "设备不存在"),
+    ),
+)]
 pub async fn update_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -461,6 +512,18 @@ pub async fn update_equipment(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/mes/equipment/{id}",
+    tag = "Equipment",
+    params(
+        ("id" = Uuid, Path, description = "设备ID"),
+    ),
+    responses(
+        (status = 200, description = "设备删除成功"),
+        (status = 404, description = "设备不存在"),
+    ),
+)]
 pub async fn delete_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -496,6 +559,18 @@ pub async fn delete_equipment(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/equipment/{id}/maintenance",
+    tag = "Equipment",
+    params(
+        ("id" = Uuid, Path, description = "设备ID"),
+    ),
+    responses(
+        (status = 200, description = "设备维护成功", body = ApiResponse<EquipmentResponse>),
+        (status = 404, description = "设备不存在"),
+    ),
+)]
 pub async fn maintenance_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -550,6 +625,15 @@ pub async fn maintenance_equipment(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/equipment/statistics",
+    tag = "Equipment",
+    responses(
+        (status = 200, description = "设备统计", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_equipment_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -592,14 +676,14 @@ pub async fn get_equipment_statistics(
     ))
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListMaintenancesParams {
     pub page: Option<i64>,
     pub pagesize: Option<i64>,
     pub equipment_id: Option<Uuid>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateMaintenanceRecord {
     pub equipment_id: Uuid,
     pub maintenance_type: String,
@@ -613,13 +697,13 @@ pub struct CreateMaintenanceRecord {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateMaintenanceStatus {
     pub status: String,
     pub result: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct MaintenanceRecord {
     pub id: Uuid,
     pub equipment_id: Uuid,
@@ -638,6 +722,20 @@ pub struct MaintenanceRecord {
     pub updated_at: DateTime<Utc>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/maintenances",
+    tag = "Equipment",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页数量"),
+        ("equipment_id" = Option<Uuid>, Query, description = "设备ID"),
+    ),
+    responses(
+        (status = 200, description = "维护记录列表", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_maintenances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -686,10 +784,10 @@ pub async fn list_maintenances(
             equipment_id: r.equipment_id.unwrap_or_default(),
             equipment_name: Some(r.equipment_name),
             equipment_no: Some(r.equipment_no),
-            maintenance_type: r.maintenance_type.clone().unwrap_or_default(),
+            maintenance_type: r.maintenance_type.clone(),
             description: r.description,
             maintainer: r.maintainer.unwrap_or_default(),
-            start_time: naive_to_utc(r.start_time),
+            start_time: naive_to_utc(Some(r.start_time)),
             end_time: r.end_time.map(|dt| naive_to_utc(Some(dt))),
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
@@ -723,6 +821,16 @@ pub async fn list_maintenances(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/maintenances",
+    tag = "Equipment",
+    request_body = CreateMaintenanceRecord,
+    responses(
+        (status = 200, description = "维护记录创建成功", body = ApiResponse<MaintenanceRecord>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_maintenance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -801,10 +909,10 @@ pub async fn create_maintenance(
             equipment_id: result.equipment_id.unwrap_or_default(),
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type.clone().unwrap_or_default(),
+            maintenance_type: result.maintenance_type.clone(),
             description: result.description,
             maintainer: result.maintainer.unwrap_or_default(),
-            start_time: naive_to_utc(result.start_time),
+            start_time: naive_to_utc(Some(result.start_time)),
             end_time: result.end_time.map(|dt| naive_to_utc(Some(dt))),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
@@ -817,6 +925,19 @@ pub async fn create_maintenance(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/maintenances/{id}/status",
+    tag = "Equipment",
+    params(
+        ("id" = Uuid, Path, description = "维护记录ID"),
+    ),
+    request_body = UpdateMaintenanceStatus,
+    responses(
+        (status = 200, description = "维护状态更新成功", body = ApiResponse<MaintenanceRecord>),
+        (status = 404, description = "维护记录不存在"),
+    ),
+)]
 pub async fn update_maintenance_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -882,10 +1003,10 @@ pub async fn update_maintenance_status(
             equipment_id: result.equipment_id.unwrap_or_default(),
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type.clone().unwrap_or_default(),
+            maintenance_type: result.maintenance_type.clone(),
             description: result.description,
             maintainer: result.maintainer.unwrap_or_default(),
-            start_time: naive_to_utc(result.start_time),
+            start_time: naive_to_utc(Some(result.start_time)),
             end_time: result.end_time.map(|dt| naive_to_utc(Some(dt))),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
@@ -900,14 +1021,14 @@ pub async fn update_maintenance_status(
 
 // ==================== Equipment Inspection Handlers ====================
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListInspectionsQuery {
     page: Option<i32>,
     pagesize: Option<i32>,
     equipment_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateInspectionRequest {
     equipment_id: String,
     inspector: String,
@@ -922,7 +1043,7 @@ pub struct CreateInspectionRequest {
     remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct InspectionResponse {
     id: String,
     equipment_id: String,
@@ -941,6 +1062,20 @@ pub struct InspectionResponse {
     created_at: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/inspections",
+    tag = "Equipment",
+    params(
+        ("page" = Option<i32>, Query, description = "页码"),
+        ("pagesize" = Option<i32>, Query, description = "每页数量"),
+        ("equipment_id" = Option<String>, Query, description = "设备ID"),
+    ),
+    responses(
+        (status = 200, description = "点检记录列表", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_inspections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1003,11 +1138,11 @@ pub async fn list_inspections(
                 .into_iter()
                 .map(|r| InspectionResponse {
                     id: r.id.to_string(),
-                    equipment_id: r.equipment_id.to_string(),
+                    equipment_id: r.equipment_id.unwrap_or_default().to_string(),
                     equipment_code: r.equipment_code.unwrap_or_default(),
                     equipment_name: r.equipment_name.unwrap_or_default(),
-                    inspector: r.inspector,
-                    inspection_date: r.inspection_date,
+                    inspector: r.inspector.unwrap_or_default(),
+                    inspection_date: r.inspection_date.map(|dt| dt.format("%Y-%m-%dT%H:%M:%S").to_string()).unwrap_or_default(),
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1019,7 +1154,7 @@ pub async fn list_inspections(
                         .noiselevel
                         .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
                     status: r.status.unwrap_or_else(|| "normal".to_string()),
-                    items: r.items.and_then(|s| serde_json::from_value(s).ok()),
+                    items: r.items.and_then(|s| serde_json::from_str(&s).ok()),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
                     created_at: naive_to_utc(r.created_at).to_rfc3339(),
@@ -1043,6 +1178,16 @@ pub async fn list_inspections(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/inspections",
+    tag = "Equipment",
+    request_body = CreateInspectionRequest,
+    responses(
+        (status = 200, description = "创建点检记录成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1118,11 +1263,11 @@ pub async fn create_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                equipment_id: r.equipment_id.to_string(),
+                equipment_id: r.equipment_id.unwrap_or_default().to_string(),
                 equipment_code: r.equipment_code.unwrap_or_default(),
                 equipment_name: r.equipment_name.unwrap_or_default(),
-                inspector: r.inspector,
-                inspection_date: r.inspection_date,
+                inspector: r.inspector.unwrap_or_default(),
+                inspection_date: r.inspection_date.map(|dt| dt.format("%Y-%m-%dT%H:%M:%S").to_string()).unwrap_or_default(),
                 location: r.location,
                 temperature: r
                     .temperature
@@ -1134,7 +1279,7 @@ pub async fn create_inspection(
                     .noiselevel
                     .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
                 status: r.status.unwrap_or_else(|| "normal".to_string()),
-                items: r.items.and_then(|s| serde_json::from_value(s).ok()),
+                items: r.items.and_then(|s| serde_json::from_str(&s).ok()),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
                 created_at: naive_to_utc(r.created_at).to_rfc3339(),

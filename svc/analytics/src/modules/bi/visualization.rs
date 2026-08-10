@@ -209,6 +209,12 @@ pub async fn generate_gauge_chart(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/widgets/{widget_id}/drilldown",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_drilldown_config(
     State(_state): State<AppState>,
     Path(widget_id): Path<String>,
@@ -237,6 +243,12 @@ pub async fn update_drilldown_config(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/bi/widgets/{widget_id}/drilldown/execute",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn execute_drilldown(
     State(_state): State<AppState>,
     Path(widget_id): Path<String>,
@@ -270,6 +282,12 @@ pub async fn get_chart_link_config(
     }))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/bi/dashboards/{dashboard_id}/links",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn update_chart_link_config(
     State(_state): State<AppState>,
     Path(dashboard_id): Path<String>,
@@ -294,6 +312,12 @@ pub async fn get_chart_annotations(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/bi/widgets/{widget_id}/annotations",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn create_chart_annotation(
     State(_state): State<AppState>,
     Path(widget_id): Path<String>,
@@ -314,6 +338,12 @@ pub async fn create_chart_annotation(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/bi/annotations/{annotation_id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn delete_chart_annotation(
     State(_state): State<AppState>,
     Path(annotation_id): Path<String>,
@@ -325,6 +355,12 @@ pub async fn delete_chart_annotation(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/bi/widgets/{widget_id}/export",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn export_chart(
     State(_state): State<AppState>,
     Path(widget_id): Path<String>,
@@ -345,6 +381,12 @@ pub async fn export_chart(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/widgets/{widget_id}/fullscreen",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_fullscreen_chart(
     State(_state): State<AppState>,
     Path(widget_id): Path<String>,

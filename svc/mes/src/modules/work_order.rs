@@ -546,6 +546,19 @@ pub async fn create_work_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/work-orders/{id}",
+    tag = "WorkOrder",
+    params(
+        ("id" = String, Path, description = "工单ID"),
+    ),
+    request_body = UpdateWorkOrderRequest,
+    responses(
+        (status = 200, description = "工单更新成功", body = ApiResponse<WorkOrderResponse>),
+        (status = 404, description = "工单不存在"),
+    ),
+)]
 pub async fn update_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -666,6 +679,18 @@ pub async fn update_work_order(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/mes/work-orders/{id}",
+    tag = "WorkOrder",
+    params(
+        ("id" = String, Path, description = "工单ID"),
+    ),
+    responses(
+        (status = 200, description = "工单删除成功"),
+        (status = 404, description = "工单不存在"),
+    ),
+)]
 pub async fn delete_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -709,6 +734,18 @@ pub async fn delete_work_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/work-orders/{id}/start",
+    tag = "WorkOrder",
+    params(
+        ("id" = String, Path, description = "工单ID"),
+    ),
+    responses(
+        (status = 200, description = "工单开始成功", body = ApiResponse<WorkOrderResponse>),
+        (status = 404, description = "工单不存在"),
+    ),
+)]
 pub async fn start_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -786,6 +823,18 @@ pub async fn start_work_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/work-orders/{id}/complete",
+    tag = "WorkOrder",
+    params(
+        ("id" = String, Path, description = "工单ID"),
+    ),
+    responses(
+        (status = 200, description = "工单完成成功", body = ApiResponse<WorkOrderResponse>),
+        (status = 404, description = "工单不存在"),
+    ),
+)]
 pub async fn complete_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -863,6 +912,18 @@ pub async fn complete_work_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/work-orders/{id}/cancel",
+    tag = "WorkOrder",
+    params(
+        ("id" = String, Path, description = "工单ID"),
+    ),
+    responses(
+        (status = 200, description = "工单取消成功", body = ApiResponse<WorkOrderResponse>),
+        (status = 404, description = "工单不存在"),
+    ),
+)]
 pub async fn cancel_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -940,6 +1001,18 @@ pub async fn cancel_work_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/work-orders/{id}/pause",
+    tag = "WorkOrder",
+    params(
+        ("id" = String, Path, description = "工单ID"),
+    ),
+    responses(
+        (status = 200, description = "工单暂停成功", body = ApiResponse<WorkOrderResponse>),
+        (status = 404, description = "工单不存在"),
+    ),
+)]
 pub async fn pause_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1017,6 +1090,18 @@ pub async fn pause_work_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/work-orders/{id}/resume",
+    tag = "WorkOrder",
+    params(
+        ("id" = String, Path, description = "工单ID"),
+    ),
+    responses(
+        (status = 200, description = "工单恢复成功", body = ApiResponse<WorkOrderResponse>),
+        (status = 404, description = "工单不存在"),
+    ),
+)]
 pub async fn resume_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

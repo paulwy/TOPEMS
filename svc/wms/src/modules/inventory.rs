@@ -616,6 +616,14 @@ pub async fn delete_inventory(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory/low-stock",
+    responses(
+        (status = 200, description = "list_low_stock_inventory OK")
+    ),
+    tag = "WMS/inventory"
+)]
 pub async fn list_low_stock_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -658,6 +666,17 @@ pub async fn list_low_stock_inventory(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory/warehouse/{warehouse_id}",
+    params(
+        ("warehouse_id" = Uuid, Path, description = "warehouse_id")
+    ),
+    responses(
+        (status = 200, description = "list_inventory_by_warehouse OK")
+    ),
+    tag = "WMS/inventory"
+)]
 pub async fn list_inventory_by_warehouse(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -711,6 +730,14 @@ pub async fn list_inventory_by_warehouse(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory/statistics",
+    responses(
+        (status = 200, description = "get_inventory_statistics OK")
+    ),
+    tag = "WMS/inventory"
+)]
 pub async fn get_inventory_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -793,6 +820,14 @@ pub async fn get_inventory_statistics(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory/abc-analysis",
+    responses(
+        (status = 200, description = "get_abc_analysis OK")
+    ),
+    tag = "WMS/inventory"
+)]
 pub async fn get_abc_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -886,6 +921,14 @@ pub async fn get_abc_analysis(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory/turnover",
+    responses(
+        (status = 200, description = "get_turnover OK")
+    ),
+    tag = "WMS/inventory"
+)]
 pub async fn get_turnover(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -949,6 +992,14 @@ pub async fn get_turnover(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory/value-by-warehouse",
+    responses(
+        (status = 200, description = "get_value_by_warehouse OK")
+    ),
+    tag = "WMS/inventory"
+)]
 pub async fn get_value_by_warehouse(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

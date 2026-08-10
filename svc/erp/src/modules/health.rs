@@ -21,6 +21,12 @@ pub async fn check_database(pool: &PgPool) -> String {
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/health",
+    tag = "Health",
+    responses((status = 200, description = "ERP 服务健康检查成功"))
+)]
 pub async fn health_check(State(state): State<ApiState>) -> (StatusCode, Json<HealthResponse>) {
     let uptime = state.start_time.elapsed().as_secs();
     let db_status = check_database(&state.db).await;

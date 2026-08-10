@@ -813,3 +813,16 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
 
     Json(ApiResponse::success(response, "Detailed health check"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_openapi_spec() {
+        let spec = ApiDoc::openapi();
+        let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
+        std::fs::write("/tmp/topems-bi-openapi.json", json).expect("Failed to write spec");
+        eprintln!("OpenAPI spec written to /tmp/topems-bi-openapi.json");
+    }
+}

@@ -233,6 +233,12 @@ async fn test_connection_result(
 // ==================== Handlers ====================
 
 /// List datasources with optional pagination and filtering.
+#[utoipa::path(
+    get,
+    path = "/api/bi/data-sources",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn list_datasources(
     State(state): State<AppState>,
     Query(query): Query<ListDatasourceQuery>,
@@ -346,6 +352,12 @@ pub async fn list_datasources(
 }
 
 /// Create a new datasource.
+#[utoipa::path(
+    post,
+    path = "/api/bi/data-sources",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn create_datasource(
     State(state): State<AppState>,
     Json(req): Json<CreateDatasourceRequest>,
@@ -421,6 +433,12 @@ pub async fn create_datasource(
 }
 
 /// Get a single datasource by id.
+#[utoipa::path(
+    get,
+    path = "/api/bi/data-sources/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_datasource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -480,6 +498,12 @@ pub async fn get_datasource(
 }
 
 /// Update a datasource (partial).
+#[utoipa::path(
+    put,
+    path = "/api/bi/data-sources/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn update_datasource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -572,6 +596,12 @@ pub async fn update_datasource(
 }
 
 /// Delete a datasource.
+#[utoipa::path(
+    delete,
+    path = "/api/bi/data-sources/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn delete_datasource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -613,6 +643,12 @@ pub async fn delete_datasource(
 /// sqlx pool; for other types it reports `success` based on the presence of
 /// host/port/database/connection_string so the UI can mark the result
 /// accordingly.
+#[utoipa::path(
+    post,
+    path = "/api/bi/data-sources/{id}/test",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn test_datasource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -707,6 +743,12 @@ pub async fn test_datasource(
 ///
 /// Updates `last_sync`, increments `data_volume` (heuristic based on type)
 /// and marks the datasource as `active` on success.
+#[utoipa::path(
+    post,
+    path = "/api/bi/data-sources/{id}/refresh",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn refresh_datasource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

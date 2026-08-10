@@ -102,6 +102,12 @@ where
         .route("/stock-takes/{id}/adjust", post(adjust_stock_take))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/stock-takes",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_stock_takes(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -181,6 +187,12 @@ pub async fn list_stock_takes(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/stock-takes",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -257,6 +269,12 @@ pub async fn create_stock_take(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/stock-takes/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -293,6 +311,12 @@ pub async fn get_stock_take(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/wms/stock-takes/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -390,6 +414,12 @@ pub async fn update_stock_take(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/wms/stock-takes/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -453,6 +483,12 @@ pub async fn delete_stock_take(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/stock-takes/{id}/start",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn start_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -570,6 +606,12 @@ pub async fn start_stock_take(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/stock-takes/{id}/items",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_stock_take_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -639,6 +681,12 @@ pub async fn list_stock_take_items(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/stock-takes/{id}/items",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_stock_take_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -745,6 +793,12 @@ pub async fn create_stock_take_item(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/stock-takes/{id}/count",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn count_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -822,6 +876,12 @@ pub async fn count_stock_take(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/stock-takes/{id}/items/{item_id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_stock_take_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -861,6 +921,12 @@ pub async fn get_stock_take_item(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/wms/stock-takes/{id}/items/{item_id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_stock_take_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -994,6 +1060,12 @@ pub async fn update_stock_take_item(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/wms/stock-takes/{id}/items/{item_id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_stock_take_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1056,6 +1128,12 @@ pub async fn delete_stock_take_item(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/stock-takes/{id}/complete",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn complete_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1199,6 +1277,12 @@ pub async fn complete_stock_take(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/stock-takes/{id}/adjust",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn adjust_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

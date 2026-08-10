@@ -87,7 +87,13 @@ async fn count_table_with_status(pool: &sqlx::PgPool, table: &str, status: &str)
     }
 }
 
-async fn get_dashboard(
+#[utoipa::path(
+    get,
+    path = "/erp/dashboard",
+    tag = "ERP",
+    responses((status = 200, description = "获取 ERP 仪表盘统计成功"))
+)]
+pub async fn get_dashboard(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<ErpDashboardStats>> {

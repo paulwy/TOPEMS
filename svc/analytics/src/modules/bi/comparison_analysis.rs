@@ -119,6 +119,12 @@ pub struct RunComparisonResponse {
 // ============================================================================
 
 /// GET /api/bi/comparison-analysis
+#[utoipa::path(
+    get,
+    path = "/api/bi/comparison-analysis",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn list_comparisons(
     State(state): State<AppState>,
     Query(query): Query<ListComparisonsQuery>,
@@ -221,6 +227,12 @@ pub async fn list_comparisons(
 }
 
 /// GET /api/bi/comparison-analysis/{id}
+#[utoipa::path(
+    get,
+    path = "/api/bi/comparison-analysis/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_comparison(
     State(state): State<AppState>,
     Path(id_str): Path<String>,
@@ -289,6 +301,12 @@ pub async fn get_comparison(
 }
 
 /// POST /api/bi/comparison-analysis
+#[utoipa::path(
+    post,
+    path = "/api/bi/comparison-analysis",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn create_comparison(
     State(state): State<AppState>,
     Json(req): Json<CreateComparisonRequest>,
@@ -351,6 +369,12 @@ pub async fn create_comparison(
 }
 
 /// PUT /api/bi/comparison-analysis/{id}
+#[utoipa::path(
+    put,
+    path = "/api/bi/comparison-analysis/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn update_comparison(
     State(state): State<AppState>,
     Path(id_str): Path<String>,
@@ -435,6 +459,12 @@ pub async fn update_comparison(
 }
 
 /// DELETE /api/bi/comparison-analysis/{id}
+#[utoipa::path(
+    delete,
+    path = "/api/bi/comparison-analysis/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn delete_comparison(
     State(state): State<AppState>,
     Path(id_str): Path<String>,
@@ -487,6 +517,12 @@ pub async fn delete_comparison(
 /// Triggers a synchronous execution of the comparison. The result is
 /// persisted in `analytics_comparison_results` and the parent record is
 /// updated to `completed` with a fresh `last_run_at` timestamp.
+#[utoipa::path(
+    post,
+    path = "/api/bi/comparison-analysis/{id}/run",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn run_comparison(
     State(state): State<AppState>,
     Path(id_str): Path<String>,
@@ -647,6 +683,12 @@ pub async fn run_comparison(
 }
 
 /// GET /api/bi/comparison-analysis/{id}/result
+#[utoipa::path(
+    get,
+    path = "/api/bi/comparison-analysis/{id}/result",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_comparison_result(
     State(state): State<AppState>,
     Path(id_str): Path<String>,

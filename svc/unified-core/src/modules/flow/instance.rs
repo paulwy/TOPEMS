@@ -4,6 +4,7 @@ use axum::{
     Json,
 };
 use serde::Deserialize;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared::ApiResponse;
@@ -11,7 +12,8 @@ use topems_shared_core::response::{api_error, PaginatedResponse};
 
 use super::models::{CreateInstanceRequest, WorkflowInstance};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
+#[schema(as = InstanceQueryParams)]
 pub struct InstanceQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -20,6 +22,22 @@ pub struct InstanceQueryParams {
     pub workflow_id: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/instances",
+    tag = "Flow-Instance",
+    params(
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认20，最大100"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "实例状态筛选"),
+        ("workflow_id" = Option<String>, Query, description = "工作流ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<PaginatedResponse<WorkflowInstance>>),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn list_instances(
     State(state): State<AppState>,
     Query(params): Query<InstanceQueryParams>,
@@ -113,6 +131,19 @@ pub async fn list_instances(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/instances/{id}",
+    tag = "Flow-Instance",
+    params(
+        ("id" = Uuid, Path, description = "实例ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<WorkflowInstance>),
+        (status = 404, description = "实例不存在"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn get_instance(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -137,6 +168,16 @@ pub async fn get_instance(
     Json(ApiResponse::success(instance, "查询成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/instances",
+    tag = "Flow-Instance",
+    request_body = CreateInstanceRequest,
+    responses(
+        (status = 200, description = "创建成功", body = ApiResponse<WorkflowInstance>),
+        (status = 500, description = "创建失败"),
+    ),
+)]
 pub async fn create_instance(
     State(state): State<AppState>,
     Json(payload): Json<CreateInstanceRequest>,
@@ -164,6 +205,19 @@ pub async fn create_instance(
     Json(ApiResponse::success(instance, "创建成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/instances/{id}/start",
+    tag = "Flow-Instance",
+    params(
+        ("id" = Uuid, Path, description = "实例ID"),
+    ),
+    responses(
+        (status = 200, description = "启动成功", body = ApiResponse<WorkflowInstance>),
+        (status = 404, description = "实例不存在"),
+        (status = 500, description = "启动失败"),
+    ),
+)]
 pub async fn start_instance(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -190,6 +244,19 @@ pub async fn start_instance(
     Json(ApiResponse::success(instance, "启动成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/instances/{id}/approve",
+    tag = "Flow-Instance",
+    params(
+        ("id" = Uuid, Path, description = "实例ID"),
+    ),
+    responses(
+        (status = 200, description = "审批通过", body = ApiResponse<WorkflowInstance>),
+        (status = 404, description = "实例不存在"),
+        (status = 500, description = "审批失败"),
+    ),
+)]
 pub async fn approve_instance(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -216,6 +283,19 @@ pub async fn approve_instance(
     Json(ApiResponse::success(instance, "审批通过"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/instances/{id}/reject",
+    tag = "Flow-Instance",
+    params(
+        ("id" = Uuid, Path, description = "实例ID"),
+    ),
+    responses(
+        (status = 200, description = "已拒绝", body = ApiResponse<WorkflowInstance>),
+        (status = 404, description = "实例不存在"),
+        (status = 500, description = "拒绝失败"),
+    ),
+)]
 pub async fn reject_instance(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -242,6 +322,19 @@ pub async fn reject_instance(
     Json(ApiResponse::success(instance, "已拒绝"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/instances/{id}/cancel",
+    tag = "Flow-Instance",
+    params(
+        ("id" = Uuid, Path, description = "实例ID"),
+    ),
+    responses(
+        (status = 200, description = "取消成功", body = ApiResponse<WorkflowInstance>),
+        (status = 404, description = "实例不存在"),
+        (status = 500, description = "取消失败"),
+    ),
+)]
 pub async fn cancel_instance(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -268,6 +361,19 @@ pub async fn cancel_instance(
     Json(ApiResponse::success(instance, "取消成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/instances/{id}/resume",
+    tag = "Flow-Instance",
+    params(
+        ("id" = Uuid, Path, description = "实例ID"),
+    ),
+    responses(
+        (status = 200, description = "恢复成功", body = ApiResponse<WorkflowInstance>),
+        (status = 404, description = "实例不存在"),
+        (status = 500, description = "恢复失败"),
+    ),
+)]
 pub async fn resume_instance(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -294,6 +400,19 @@ pub async fn resume_instance(
     Json(ApiResponse::success(instance, "恢复成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/instances/{id}/suspend",
+    tag = "Flow-Instance",
+    params(
+        ("id" = Uuid, Path, description = "实例ID"),
+    ),
+    responses(
+        (status = 200, description = "暂停成功", body = ApiResponse<WorkflowInstance>),
+        (status = 404, description = "实例不存在"),
+        (status = 500, description = "暂停失败"),
+    ),
+)]
 pub async fn suspend_instance(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -320,6 +439,19 @@ pub async fn suspend_instance(
     Json(ApiResponse::success(instance, "暂停成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/instances/{id}/details",
+    tag = "Flow-Instance",
+    params(
+        ("id" = Uuid, Path, description = "实例ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<WorkflowInstance>),
+        (status = 404, description = "实例不存在"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn get_instance_details(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

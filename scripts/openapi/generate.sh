@@ -111,7 +111,7 @@ EXTRACT=false
 
 # --extract 模式下通过 cargo test extract_openapi_spec 提取 spec 的服务列表。
 # 这些服务已在源码中实现了 extract_openapi_spec 测试（将 spec 写到 /tmp/topems-<svc>-openapi.json）。
-EXTRACT_SERVICES=("finance" "hrm" "mes" "master-data" "qms" "unified-core" "wms")
+EXTRACT_SERVICES=("finance" "hrm" "mes" "master-data" "qms" "unified-core" "wms" "feedback")
 
 print_help() {
   cat << 'EOF'
@@ -123,7 +123,7 @@ print_help() {
   --with-types           聚合后继续生成 TypeScript 类型
   --no-types             不生成 TypeScript 类型（默认）
   --extract              通过 cargo test extract_openapi_spec 提取各服务 spec（无需启动服务）
-  --extract-services <a,b,c>  覆盖 --extract 默认服务列表（默认: finance,mes,master-data,qms）
+  --extract-services <a,b,c>  覆盖 --extract 默认服务列表（默认: finance,hrm,mes,master-data,qms,unified-core,wms,feedback）
   --timeout <seconds>    单个服务抓取超时时间（默认: 10秒）
   --connect-timeout <s>  连接超时时间（默认: 3秒）
   -h, --help             显示帮助信息
@@ -196,11 +196,29 @@ extract_specs() {
     local pkg
     case "${svc}" in
       unified-core) pkg="topems-unified-core" ;;
+      bi) pkg="topems-analytics" ;;
       *) pkg="topems-${svc}" ;;
     esac
     log_info "  ${pkg} — cargo test extract_openapi_spec"
+    local spec_file="/tmp/topems-${svc}-openapi.json"
+    local workspace_spec="${ROOT_DIR}/tmp/openapi/${pkg}.json"
+    rm -f "${spec_file}" "${workspace_spec}" 2>/dev/null || true
+
+    local test_ok=false
     if cargo test -p "${pkg}" --bin "${pkg}" extract_openapi_spec -- --nocapture >/dev/null 2>&1; then
-      local spec_file="/tmp/topems-${svc}-openapi.json"
+      test_ok=true
+    fi
+    if [[ ! -f "${spec_file}" && ! -f "${workspace_spec}" ]]; then
+      if cargo test -p "${pkg}" --test openapi_extract extract_openapi_spec -- --nocapture >/dev/null 2>&1; then
+        test_ok=true
+      fi
+    fi
+
+    if [[ "${test_ok}" == "true" ]]; then
+      if [[ ! -f "${spec_file}" && -f "${workspace_spec}" ]]; then
+        cp "${workspace_spec}" "${spec_file}"
+      fi
+
       if [[ -f "${spec_file}" ]]; then
         local stats
         stats=$(OUTFILE="${spec_file}" python3 -c "

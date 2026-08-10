@@ -20,7 +20,7 @@ export const vectorApi = {
       query_time_ms: number;
     }>
   > => {
-    return apiClient.ai.post('/vector/search', data);
+    return apiClient.ai.post('/vectors/search', data);
   },
 
   getVectorCollections: async (): Promise<

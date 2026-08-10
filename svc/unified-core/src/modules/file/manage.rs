@@ -49,6 +49,19 @@ pub struct FilePermissionRequest {
 }
 
 /// 列出文件列表
+#[utoipa::path(
+    get,
+    path = "/api/core/file/files",
+    tag = "File",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页条数"),
+    ),
+    responses(
+        (status = 200, description = "获取文件列表成功"),
+        (status = 500, description = "获取文件列表失败"),
+    ),
+)]
 pub async fn list_files(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -174,6 +187,20 @@ pub async fn list_files(
 }
 
 /// 获取文件详情
+#[utoipa::path(
+    get,
+    path = "/api/core/file/files/{id}",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    responses(
+        (status = 200, description = "获取文件详情成功"),
+        (status = 400, description = "无效的文件ID"),
+        (status = 403, description = "没有权限查看此文件"),
+        (status = 404, description = "文件不存在"),
+    ),
+)]
 pub async fn get_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -277,6 +304,22 @@ pub async fn get_file(
 }
 
 /// 更新文件信息
+#[utoipa::path(
+    put,
+    path = "/api/core/file/files/{id}",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "文件更新成功"),
+        (status = 400, description = "无效的文件ID或没有更新内容"),
+        (status = 403, description = "没有权限更新此文件"),
+        (status = 404, description = "文件不存在"),
+        (status = 500, description = "文件更新失败"),
+    ),
+)]
 pub async fn update_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -428,6 +471,21 @@ pub async fn update_file(
 }
 
 /// 删除文件（软删除）
+#[utoipa::path(
+    delete,
+    path = "/api/core/file/files/{id}",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    responses(
+        (status = 200, description = "文件删除成功"),
+        (status = 400, description = "无效的文件ID或文件已被删除"),
+        (status = 403, description = "没有权限删除此文件"),
+        (status = 404, description = "文件不存在"),
+        (status = 500, description = "文件删除失败"),
+    ),
+)]
 pub async fn delete_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -554,6 +612,22 @@ pub async fn delete_file(
 }
 
 /// 移动文件
+#[utoipa::path(
+    post,
+    path = "/api/core/file/files/{id}/move",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "文件移动成功"),
+        (status = 400, description = "无效的文件ID或文件夹ID"),
+        (status = 403, description = "没有权限移动此文件"),
+        (status = 404, description = "文件不存在"),
+        (status = 500, description = "文件移动失败"),
+    ),
+)]
 pub async fn move_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -684,6 +758,22 @@ pub async fn move_file(
 }
 
 /// 复制文件
+#[utoipa::path(
+    post,
+    path = "/api/core/file/files/{id}/copy",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "文件复制成功"),
+        (status = 400, description = "无效的文件ID或文件夹ID"),
+        (status = 403, description = "没有权限复制此文件"),
+        (status = 404, description = "文件不存在"),
+        (status = 500, description = "文件复制失败"),
+    ),
+)]
 pub async fn copy_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -845,6 +935,22 @@ pub async fn copy_file(
 }
 
 /// 设置文件权限
+#[utoipa::path(
+    post,
+    path = "/api/core/file/files/{id}/permission",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "文件权限设置成功"),
+        (status = 400, description = "无效的文件ID或用户ID或权限类型"),
+        (status = 403, description = "没有权限设置文件权限"),
+        (status = 404, description = "文件不存在"),
+        (status = 500, description = "文件权限设置失败"),
+    ),
+)]
 pub async fn set_file_permission(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -967,6 +1073,19 @@ pub async fn set_file_permission(
 }
 
 /// 分享文件
+#[utoipa::path(
+    post,
+    path = "/api/core/file/files/{id}/share",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "分享成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn share_file(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -987,6 +1106,18 @@ pub async fn share_file(
 }
 
 /// 获取文件的分享列表
+#[utoipa::path(
+    get,
+    path = "/api/core/file/files/{id}/shares",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn get_file_shares(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1006,6 +1137,18 @@ pub async fn get_file_shares(
 }
 
 /// 删除分享
+#[utoipa::path(
+    delete,
+    path = "/api/core/file/shares/{id}",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "分享ID"),
+    ),
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn delete_share(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1025,6 +1168,19 @@ pub async fn delete_share(
 }
 
 /// 设置文件权限
+#[utoipa::path(
+    post,
+    path = "/api/core/file/files/{id}/permissions",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "设置成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn set_file_permissions(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1045,6 +1201,18 @@ pub async fn set_file_permissions(
 }
 
 /// 获取文件权限
+#[utoipa::path(
+    get,
+    path = "/api/core/file/files/{id}/permissions",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn get_file_permissions(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1064,6 +1232,15 @@ pub async fn get_file_permissions(
 }
 
 /// 获取我分享的文件列表
+#[utoipa::path(
+    get,
+    path = "/api/core/file/files/shared",
+    tag = "File",
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn get_shared_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1081,6 +1258,15 @@ pub async fn get_shared_files(
 }
 
 /// 获取分享给我的文件列表
+#[utoipa::path(
+    get,
+    path = "/api/core/file/files/received",
+    tag = "File",
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn get_received_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1098,6 +1284,15 @@ pub async fn get_received_files(
 }
 
 /// 获取文件统计信息
+#[utoipa::path(
+    get,
+    path = "/api/core/file/stats",
+    tag = "File",
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn get_file_stats(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1115,6 +1310,18 @@ pub async fn get_file_stats(
 }
 
 /// 收藏文件
+#[utoipa::path(
+    post,
+    path = "/api/core/file/files/{id}/star",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    responses(
+        (status = 200, description = "收藏成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn star_file(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1134,6 +1341,18 @@ pub async fn star_file(
 }
 
 /// 取消收藏
+#[utoipa::path(
+    post,
+    path = "/api/core/file/files/{id}/unstar",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    responses(
+        (status = 200, description = "取消收藏成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn unstar_file(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1153,6 +1372,15 @@ pub async fn unstar_file(
 }
 
 /// 列出收藏的文件
+#[utoipa::path(
+    get,
+    path = "/api/core/file/files/starred",
+    tag = "File",
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn list_starred_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1170,6 +1398,16 @@ pub async fn list_starred_files(
 }
 
 /// 导出文件（批量）
+#[utoipa::path(
+    post,
+    path = "/api/core/file/files/export",
+    tag = "File",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "导出成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn export_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1188,6 +1426,19 @@ pub async fn export_files(
 }
 
 /// 搜索文件
+#[utoipa::path(
+    get,
+    path = "/api/core/file/files/search",
+    tag = "File",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页条数"),
+    ),
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 501, description = "功能尚未实现"),
+    ),
+)]
 pub async fn search_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,

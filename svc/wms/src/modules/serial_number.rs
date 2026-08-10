@@ -49,6 +49,12 @@ where
         .route("/serial-numbers/{id}/trace", get(get_trace))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/serial-numbers",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_serial_numbers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -130,6 +136,12 @@ pub async fn list_serial_numbers(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/serial-numbers",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -187,6 +199,12 @@ pub async fn create_serial_number(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/serial-numbers/bulk",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn bulk_create_serial_numbers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -246,6 +264,12 @@ pub async fn bulk_create_serial_numbers(
     Json(ApiResponse::success(created_serials, "批量创建序列号成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/serial-numbers/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -331,6 +355,12 @@ pub async fn get_by_batch(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/wms/serial-numbers/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -408,6 +438,12 @@ pub async fn update_serial_number(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/wms/serial-numbers/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -440,6 +476,12 @@ pub async fn delete_serial_number(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/serial-numbers/statistics",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_serial_number_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

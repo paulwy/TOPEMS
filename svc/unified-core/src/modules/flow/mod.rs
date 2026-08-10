@@ -1,9 +1,11 @@
 //! Flow module - Workflow Automation
 
 pub mod approval;
+pub mod compat;
 pub mod history;
 pub mod instance;
 pub mod models;
+pub mod openapi;
 pub mod record;
 pub mod setting;
 pub mod statistics;

@@ -6,6 +6,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared::ApiResponse;
@@ -59,7 +60,8 @@ pub struct ApprovalTaskRow {
     pub workflow_published_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
+#[schema(as = ApprovalTaskQuery)]
 pub struct ApprovalTaskQuery {
     pub status: Option<String>,
     pub page: Option<i64>,
@@ -68,7 +70,8 @@ pub struct ApprovalTaskQuery {
     pub initiator_id: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
+#[schema(as = ApprovalTask)]
 pub struct ApprovalTask {
     pub id: String,
     pub workflow_instance_id: Option<String>,
@@ -89,7 +92,8 @@ pub struct ApprovalTask {
     pub priority: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
+#[schema(as = ApprovalTaskListResponse)]
 pub struct ApprovalTaskListResponse {
     pub items: Vec<ApprovalTask>,
     pub total: i64,
@@ -97,6 +101,22 @@ pub struct ApprovalTaskListResponse {
     pub page_size: i64,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/approval-tasks",
+    tag = "Flow-Approval",
+    params(
+        ("status" = Option<String>, Query, description = "任务状态筛选"),
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认10"),
+        ("assignee_id" = Option<String>, Query, description = "处理人ID"),
+        ("initiator_id" = Option<String>, Query, description = "发起人ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<ApprovalTaskListResponse>),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn list_approval_tasks(
     State(state): State<AppState>,
     Query(query): Query<ApprovalTaskQuery>,
@@ -187,6 +207,20 @@ pub async fn list_approval_tasks(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/approval-tasks/{id}",
+    tag = "Flow-Approval",
+    params(
+        ("id" = String, Path, description = "审批任务ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<ApprovalTask>),
+        (status = 400, description = "无效的任务ID"),
+        (status = 404, description = "审批任务不存在"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn get_approval_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -243,6 +277,15 @@ pub async fn get_approval_task(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/approvals/pending",
+    tag = "Flow-Approval",
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<Vec<ApprovalTask>>),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn list_pending_approvals(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<ApprovalTask>>> {
@@ -293,6 +336,21 @@ pub async fn list_pending_approvals(
     Json(ApiResponse::success(items, "查询成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/approvals/{id}/approve",
+    tag = "Flow-Approval",
+    params(
+        ("id" = String, Path, description = "审批任务ID"),
+    ),
+    request_body = TaskActionRequest,
+    responses(
+        (status = 200, description = "审批成功", body = ApiResponse<ApprovalTask>),
+        (status = 400, description = "无效的任务ID"),
+        (status = 404, description = "审批任务不存在或状态不正确"),
+        (status = 500, description = "审批失败"),
+    ),
+)]
 pub async fn approve_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -375,6 +433,21 @@ pub async fn approve_task(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/approvals/{id}/reject",
+    tag = "Flow-Approval",
+    params(
+        ("id" = String, Path, description = "审批任务ID"),
+    ),
+    request_body = TaskActionRequest,
+    responses(
+        (status = 200, description = "驳回成功", body = ApiResponse<ApprovalTask>),
+        (status = 400, description = "无效的任务ID"),
+        (status = 404, description = "审批任务不存在或状态不正确"),
+        (status = 500, description = "驳回失败"),
+    ),
+)]
 pub async fn reject_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -457,6 +530,20 @@ pub async fn reject_task(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/approval-tasks/{id}/claim",
+    tag = "Flow-Approval",
+    params(
+        ("id" = String, Path, description = "审批任务ID"),
+    ),
+    responses(
+        (status = 200, description = "认领成功", body = ApiResponse<ApprovalTask>),
+        (status = 400, description = "无效的任务ID"),
+        (status = 404, description = "审批任务不存在或状态不正确"),
+        (status = 500, description = "认领失败"),
+    ),
+)]
 pub async fn claim_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -535,6 +622,20 @@ pub async fn claim_task(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/approval-tasks/{id}/unclaim",
+    tag = "Flow-Approval",
+    params(
+        ("id" = String, Path, description = "审批任务ID"),
+    ),
+    responses(
+        (status = 200, description = "取消认领成功", body = ApiResponse<ApprovalTask>),
+        (status = 400, description = "无效的任务ID"),
+        (status = 404, description = "审批任务不存在或状态不正确"),
+        (status = 500, description = "取消认领失败"),
+    ),
+)]
 pub async fn unclaim_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -613,6 +714,21 @@ pub async fn unclaim_task(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/approval-tasks/{id}/delegate",
+    tag = "Flow-Approval",
+    params(
+        ("id" = String, Path, description = "审批任务ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "委托成功", body = ApiResponse<ApprovalTask>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "审批任务不存在"),
+        (status = 500, description = "委托失败"),
+    ),
+)]
 pub async fn delegate_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -703,6 +819,21 @@ pub async fn delegate_task(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/approval-tasks/{id}/reassign",
+    tag = "Flow-Approval",
+    params(
+        ("id" = String, Path, description = "审批任务ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "重新分配成功", body = ApiResponse<ApprovalTask>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "审批任务不存在"),
+        (status = 500, description = "重新分配失败"),
+    ),
+)]
 pub async fn reassign_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -793,6 +924,15 @@ pub async fn reassign_task(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/approvals",
+    tag = "Flow-Approval",
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<Vec<ApprovalTask>>),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn list_approvals(State(state): State<AppState>) -> Json<ApiResponse<Vec<ApprovalTask>>> {
     let tasks: Vec<ApprovalTaskRow> = match sqlx::query_as(
         r#"SELECT t.id as task_id, t.instance_id as task_instance_id, t.node_id as task_node_id, t.assignee_id as task_assignee_id, t.status as task_status, t.comment as task_comment, t.created_at as task_created_at, t.completed_at as task_completed_at,
@@ -840,6 +980,20 @@ pub async fn list_approvals(State(state): State<AppState>) -> Json<ApiResponse<V
     Json(ApiResponse::success(items, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/approvals/{id}",
+    tag = "Flow-Approval",
+    params(
+        ("id" = String, Path, description = "审批ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<ApprovalTask>),
+        (status = 400, description = "无效的任务ID"),
+        (status = 404, description = "审批任务不存在"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn get_approval(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -847,6 +1001,17 @@ pub async fn get_approval(
     get_approval_task(State(state), Path(id)).await
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/approvals",
+    tag = "Flow-Approval",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "创建成功", body = ApiResponse<ApprovalTask>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "创建失败"),
+    ),
+)]
 pub async fn create_approval(
     State(state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -955,6 +1120,21 @@ pub async fn create_approval(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/approvals/{id}/process",
+    tag = "Flow-Approval",
+    params(
+        ("id" = String, Path, description = "审批ID"),
+    ),
+    request_body = TaskActionRequest,
+    responses(
+        (status = 200, description = "处理成功", body = ApiResponse<ApprovalTask>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "审批任务不存在或状态不正确"),
+        (status = 500, description = "处理失败"),
+    ),
+)]
 pub async fn process_approval(
     State(state): State<AppState>,
     Path(id): Path<String>,

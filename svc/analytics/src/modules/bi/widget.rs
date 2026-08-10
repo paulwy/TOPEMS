@@ -135,7 +135,7 @@ pub static WIDGET_CACHE: Lazy<WidgetCache> = Lazy::new(WidgetCache::new);
 
 #[utoipa::path(
     get,
-    path = "/widget",
+    path = "/api/bi/widget",
     tag = "Visualization",
     responses(
         (status = 200, description = "List of widgets", body = serde_json::Value),
@@ -192,6 +192,12 @@ pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Val
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/widget/dashboard/{dashboard_id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_widgets_by_dashboard(
     State(state): State<AppState>,
     Path(dashboard_id): Path<Uuid>,
@@ -249,7 +255,7 @@ pub async fn get_widgets_by_dashboard(
 
 #[utoipa::path(
     post,
-    path = "/widget",
+    path = "/api/bi/widget",
     tag = "Visualization",
     request_body = CreateWidgetRequest,
     responses(
@@ -317,7 +323,7 @@ pub async fn create_widget(
 
 #[utoipa::path(
     get,
-    path = "/widget/{id}",
+    path = "/api/bi/widget/{id}",
     tag = "Visualization",
     params(
         ("id" = uuid::Uuid, Path, description = "Widget ID")
@@ -380,7 +386,7 @@ pub async fn get_widget(
 
 #[utoipa::path(
     put,
-    path = "/widget/{id}",
+    path = "/api/bi/widget/{id}",
     tag = "Visualization",
     params(
         ("id" = uuid::Uuid, Path, description = "Widget ID")
@@ -462,7 +468,7 @@ pub async fn update_widget(
 
 #[utoipa::path(
     delete,
-    path = "/widget/{id}",
+    path = "/api/bi/widget/{id}",
     tag = "Visualization",
     params(
         ("id" = uuid::Uuid, Path, description = "Widget ID")
@@ -508,6 +514,12 @@ pub async fn delete_widget(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/widget/{id}/data",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_widget_data(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

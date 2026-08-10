@@ -150,6 +150,15 @@ pub struct TodayOutputQuery {
     pub operator: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/work-reports/today/output",
+    tag = "WorkReport",
+    responses(
+        (status = 200, description = "今日产量", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_today_production_output(
     State(state): State<AppState>,
     Query(query): Query<TodayOutputQuery>,
@@ -620,6 +629,19 @@ pub async fn create_work_report(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/work-reports/{id}",
+    tag = "WorkReport",
+    params(
+        ("id" = String, Path, description = "报工ID"),
+    ),
+    request_body = UpdateWorkReportRequest,
+    responses(
+        (status = 200, description = "报工更新成功", body = ApiResponse<WorkReportResponse>),
+        (status = 404, description = "报工不存在"),
+    ),
+)]
 pub async fn update_work_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -752,6 +774,18 @@ pub async fn update_work_report(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/mes/work-reports/{id}",
+    tag = "WorkReport",
+    params(
+        ("id" = String, Path, description = "报工ID"),
+    ),
+    responses(
+        (status = 200, description = "报工删除成功"),
+        (status = 404, description = "报工不存在"),
+    ),
+)]
 pub async fn delete_work_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -788,6 +822,18 @@ pub async fn delete_work_report(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/work-reports/{id}/approve",
+    tag = "WorkReport",
+    params(
+        ("id" = String, Path, description = "报工ID"),
+    ),
+    responses(
+        (status = 200, description = "报工审批成功", body = ApiResponse<WorkReportResponse>),
+        (status = 404, description = "报工不存在"),
+    ),
+)]
 pub async fn approve_work_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -866,6 +912,19 @@ pub async fn approve_work_report(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/work-reports/{id}/reject",
+    tag = "WorkReport",
+    params(
+        ("id" = String, Path, description = "报工ID"),
+    ),
+    request_body = RejectWorkReportRequest,
+    responses(
+        (status = 200, description = "报工驳回成功", body = ApiResponse<WorkReportResponse>),
+        (status = 404, description = "报工不存在"),
+    ),
+)]
 pub async fn reject_work_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

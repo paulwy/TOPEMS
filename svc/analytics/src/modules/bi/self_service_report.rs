@@ -72,7 +72,7 @@ pub struct ReportExportQuery {
 
 #[utoipa::path(
     get,
-    path = "/report",
+    path = "/api/bi/report",
     tag = "Report",
     responses(
         (status = 200, description = "List of reports", body = serde_json::Value),
@@ -131,7 +131,7 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
 
 #[utoipa::path(
     post,
-    path = "/report",
+    path = "/api/bi/report",
     tag = "Report",
     request_body = CreateReportRequest,
     responses(
@@ -197,7 +197,7 @@ pub async fn create_report(
 
 #[utoipa::path(
     get,
-    path = "/report/{id}",
+    path = "/api/bi/report/{id}",
     tag = "Report",
     params(
         ("id" = uuid::Uuid, Path, description = "Report ID")
@@ -260,7 +260,7 @@ pub async fn get_report(
 
 #[utoipa::path(
     put,
-    path = "/report/{id}",
+    path = "/api/bi/report/{id}",
     tag = "Report",
     params(
         ("id" = uuid::Uuid, Path, description = "Report ID")
@@ -338,7 +338,7 @@ pub async fn update_report(
 
 #[utoipa::path(
     delete,
-    path = "/report/{id}",
+    path = "/api/bi/report/{id}",
     tag = "Report",
     params(
         ("id" = uuid::Uuid, Path, description = "Report ID")

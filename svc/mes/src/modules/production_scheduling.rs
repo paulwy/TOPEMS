@@ -20,6 +20,7 @@ use topems_shared::auth::Claims;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared::response::ApiResponse;
+use utoipa::ToSchema;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -39,7 +40,7 @@ pub fn create_routes() -> Router<AppState> {
 
 // ==================== Data Types ====================
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListProductionSchedulesQuery {
     page: Option<i32>,
     pagesize: Option<i32>,
@@ -47,7 +48,7 @@ pub struct ListProductionSchedulesQuery {
     status: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ProductionScheduleResponse {
     pub id: Uuid,
     pub schedule_no: String,
@@ -75,7 +76,7 @@ pub struct ProductionScheduleResponse {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ListProductionSchedulesResponse {
     pub schedules: Vec<ProductionScheduleResponse>,
     pub total: i64,
@@ -83,7 +84,7 @@ pub struct ListProductionSchedulesResponse {
     pub pagesize: i64,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateProductionScheduleRequest {
     pub order_id: Option<Uuid>,
     pub product_id: Option<Uuid>,
@@ -100,7 +101,7 @@ pub struct CreateProductionScheduleRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateProductionScheduleRequest {
     pub work_station_id: Option<Uuid>,
     pub equipment_id: Option<Uuid>,
@@ -113,14 +114,14 @@ pub struct UpdateProductionScheduleRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct AdjustScheduleRequest {
     pub schedule_ids: Vec<Uuid>,
     pub new_start_time: Option<DateTime<Utc>>,
     pub new_work_station_id: Option<Uuid>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GanttTask {
     pub id: String,
     pub name: String,
@@ -132,13 +133,13 @@ pub struct GanttTask {
     pub parent: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GanttDataResponse {
     pub tasks: Vec<GanttTask>,
     pub resources: Vec<GanttResource>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GanttResource {
     pub id: String,
     pub name: String,
@@ -161,6 +162,21 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 
 // ==================== Production Scheduling Handlers ====================
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/schedules",
+    tag = "ProductionScheduling",
+    params(
+        ("page" = Option<i32>, Query, description = "页码"),
+        ("pagesize" = Option<i32>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+    ),
+    responses(
+        (status = 200, description = "排产列表", body = ApiResponse<ListProductionSchedulesResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_production_schedules(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -356,6 +372,16 @@ pub async fn list_production_schedules(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/schedules",
+    tag = "ProductionScheduling",
+    request_body = CreateProductionScheduleRequest,
+    responses(
+        (status = 200, description = "排产创建成功", body = ApiResponse<ProductionScheduleResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_production_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -467,6 +493,18 @@ pub async fn create_production_schedule(
     Json(ApiResponse::success(schedule, "生产排产创建成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/schedules/{id}",
+    tag = "ProductionScheduling",
+    params(
+        ("id" = Uuid, Path, description = "排产ID"),
+    ),
+    responses(
+        (status = 200, description = "排产详情", body = ApiResponse<ProductionScheduleResponse>),
+        (status = 404, description = "排产不存在"),
+    ),
+)]
 pub async fn get_production_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -548,6 +586,19 @@ pub async fn get_production_schedule(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/schedules/{id}",
+    tag = "ProductionScheduling",
+    params(
+        ("id" = Uuid, Path, description = "排产ID"),
+    ),
+    request_body = UpdateProductionScheduleRequest,
+    responses(
+        (status = 200, description = "排产更新成功", body = ApiResponse<ProductionScheduleResponse>),
+        (status = 404, description = "排产不存在"),
+    ),
+)]
 pub async fn update_production_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -644,6 +695,18 @@ pub async fn update_production_schedule(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/mes/schedules/{id}",
+    tag = "ProductionScheduling",
+    params(
+        ("id" = Uuid, Path, description = "排产ID"),
+    ),
+    responses(
+        (status = 200, description = "排产删除成功"),
+        (status = 404, description = "排产不存在"),
+    ),
+)]
 pub async fn delete_production_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -684,6 +747,19 @@ pub async fn delete_production_schedule(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/schedules/{id}/adjust",
+    tag = "ProductionScheduling",
+    params(
+        ("id" = Uuid, Path, description = "排产ID"),
+    ),
+    request_body = AdjustScheduleRequest,
+    responses(
+        (status = 200, description = "排产调整成功"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn adjust_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -728,6 +804,15 @@ pub async fn adjust_schedule(
     Json(ApiResponse::success("".to_string(), "生产排产调整成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/schedules/gantt",
+    tag = "ProductionScheduling",
+    responses(
+        (status = 200, description = "甘特图数据", body = ApiResponse<GanttDataResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_gantt_data(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

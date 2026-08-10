@@ -4,6 +4,7 @@ use axum::{
     Json,
 };
 use serde::Deserialize;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared::ApiResponse;
@@ -11,7 +12,8 @@ use topems_shared_core::response::{api_error, PaginatedResponse};
 
 use super::models::{CreateWorkflowRequest, UpdateWorkflowRequest, Workflow};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
+#[schema(as = WorkflowQueryParams)]
 pub struct WorkflowQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -19,6 +21,21 @@ pub struct WorkflowQueryParams {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/workflows",
+    tag = "Flow-Workflow",
+    params(
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认20，最大100"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "工作流状态筛选"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<PaginatedResponse<Workflow>>),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn list_workflows(
     State(state): State<AppState>,
     Query(params): Query<WorkflowQueryParams>,
@@ -100,6 +117,19 @@ pub async fn list_workflows(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/workflows/{id}",
+    tag = "Flow-Workflow",
+    params(
+        ("id" = Uuid, Path, description = "工作流ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<Workflow>),
+        (status = 404, description = "工作流不存在"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn get_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -124,6 +154,16 @@ pub async fn get_workflow(
     Json(ApiResponse::success(workflow, "查询成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/workflows",
+    tag = "Flow-Workflow",
+    request_body = CreateWorkflowRequest,
+    responses(
+        (status = 200, description = "创建成功", body = ApiResponse<Workflow>),
+        (status = 500, description = "创建失败"),
+    ),
+)]
 pub async fn create_workflow(
     State(state): State<AppState>,
     Json(payload): Json<CreateWorkflowRequest>,
@@ -152,6 +192,20 @@ pub async fn create_workflow(
     Json(ApiResponse::success(workflow, "创建成功"))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/core/flow/workflows/{id}",
+    tag = "Flow-Workflow",
+    params(
+        ("id" = Uuid, Path, description = "工作流ID"),
+    ),
+    request_body = UpdateWorkflowRequest,
+    responses(
+        (status = 200, description = "更新成功", body = ApiResponse<Workflow>),
+        (status = 404, description = "工作流不存在"),
+        (status = 500, description = "更新失败"),
+    ),
+)]
 pub async fn update_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -188,6 +242,19 @@ pub async fn update_workflow(
     Json(ApiResponse::success(workflow, "更新成功"))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/core/flow/workflows/{id}",
+    tag = "Flow-Workflow",
+    params(
+        ("id" = Uuid, Path, description = "工作流ID"),
+    ),
+    responses(
+        (status = 200, description = "删除成功", body = ApiResponse<()>),
+        (status = 404, description = "工作流不存在"),
+        (status = 500, description = "删除失败"),
+    ),
+)]
 pub async fn delete_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -212,6 +279,19 @@ pub async fn delete_workflow(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/workflows/{id}/publish",
+    tag = "Flow-Workflow",
+    params(
+        ("id" = Uuid, Path, description = "工作流ID"),
+    ),
+    responses(
+        (status = 200, description = "发布成功", body = ApiResponse<Workflow>),
+        (status = 404, description = "工作流不存在"),
+        (status = 500, description = "发布失败"),
+    ),
+)]
 pub async fn publish_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -238,6 +318,19 @@ pub async fn publish_workflow(
     Json(ApiResponse::success(workflow, "发布成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/workflows/{id}/unpublish",
+    tag = "Flow-Workflow",
+    params(
+        ("id" = Uuid, Path, description = "工作流ID"),
+    ),
+    responses(
+        (status = 200, description = "取消发布成功", body = ApiResponse<Workflow>),
+        (status = 404, description = "工作流不存在"),
+        (status = 500, description = "取消发布失败"),
+    ),
+)]
 pub async fn unpublish_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -264,6 +357,19 @@ pub async fn unpublish_workflow(
     Json(ApiResponse::success(workflow, "取消发布成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/workflows/{id}/activate",
+    tag = "Flow-Workflow",
+    params(
+        ("id" = Uuid, Path, description = "工作流ID"),
+    ),
+    responses(
+        (status = 200, description = "激活成功", body = ApiResponse<Workflow>),
+        (status = 404, description = "工作流不存在"),
+        (status = 500, description = "激活失败"),
+    ),
+)]
 pub async fn activate_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -290,6 +396,19 @@ pub async fn activate_workflow(
     Json(ApiResponse::success(workflow, "激活成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/workflows/{id}/deactivate",
+    tag = "Flow-Workflow",
+    params(
+        ("id" = Uuid, Path, description = "工作流ID"),
+    ),
+    responses(
+        (status = 200, description = "停用成功", body = ApiResponse<Workflow>),
+        (status = 404, description = "工作流不存在"),
+        (status = 500, description = "停用失败"),
+    ),
+)]
 pub async fn deactivate_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -316,6 +435,19 @@ pub async fn deactivate_workflow(
     Json(ApiResponse::success(workflow, "停用成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/workflows/{id}/deploy",
+    tag = "Flow-Workflow",
+    params(
+        ("id" = Uuid, Path, description = "工作流ID"),
+    ),
+    responses(
+        (status = 200, description = "部署成功", body = ApiResponse<Workflow>),
+        (status = 404, description = "工作流不存在"),
+        (status = 500, description = "部署失败"),
+    ),
+)]
 pub async fn deploy_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -342,6 +474,19 @@ pub async fn deploy_workflow(
     Json(ApiResponse::success(workflow, "部署成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/workflows/{workflow_id}/rollback",
+    tag = "Flow-Workflow",
+    params(
+        ("workflow_id" = Uuid, Path, description = "工作流ID"),
+    ),
+    responses(
+        (status = 200, description = "回滚成功", body = ApiResponse<Workflow>),
+        (status = 404, description = "工作流不存在"),
+        (status = 500, description = "回滚失败"),
+    ),
+)]
 pub async fn rollback_workflow(
     State(state): State<AppState>,
     Path(workflow_id): Path<Uuid>,

@@ -15,7 +15,7 @@ use super::models::{
 
 #[utoipa::path(
     get,
-    path = "/dashboard",
+    path = "/api/bi/dashboard",
     tag = "Dashboard",
     responses(
         (status = 200, description = "List of dashboards", body = serde_json::Value),
@@ -71,7 +71,7 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
 
 #[utoipa::path(
     post,
-    path = "/dashboard",
+    path = "/api/bi/dashboard",
     tag = "Dashboard",
     request_body = CreateDashboardRequest,
     responses(
@@ -129,7 +129,7 @@ pub async fn create_dashboard(
 
 #[utoipa::path(
     get,
-    path = "/dashboard/{id}",
+    path = "/api/bi/dashboard/{id}",
     tag = "Dashboard",
     params(
         ("id" = uuid::Uuid, Path, description = "Dashboard ID")
@@ -189,7 +189,7 @@ pub async fn get_dashboard(
 
 #[utoipa::path(
     put,
-    path = "/dashboard/{id}",
+    path = "/api/bi/dashboard/{id}",
     tag = "Dashboard",
     params(
         ("id" = uuid::Uuid, Path, description = "Dashboard ID")
@@ -258,7 +258,7 @@ pub async fn update_dashboard(
 
 #[utoipa::path(
     delete,
-    path = "/dashboard/{id}",
+    path = "/api/bi/dashboard/{id}",
     tag = "Dashboard",
     params(
         ("id" = uuid::Uuid, Path, description = "Dashboard ID")
@@ -301,6 +301,12 @@ pub async fn delete_dashboard(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/dashboard/public",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing public dashboards");
 
@@ -349,6 +355,12 @@ pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/dashboard/user/{owner_id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_user_dashboards(
     State(state): State<AppState>,
     Path(owner_id): Path<String>,
@@ -401,6 +413,12 @@ pub async fn get_user_dashboards(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/bi/dashboard/{id}/clone",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn clone_dashboard(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

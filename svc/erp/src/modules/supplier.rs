@@ -19,7 +19,6 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
-use utoipa::path;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {

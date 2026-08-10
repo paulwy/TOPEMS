@@ -43,6 +43,14 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/announcements",
+    responses(
+        (status = 200, description = "list_announcements OK")
+    ),
+    tag = "ERP/announcement"
+)]
 pub async fn list_announcements(
     State(state): State<ApiState>,
     Query(params): Query<AnnouncementQueryParams>,
@@ -104,6 +112,15 @@ pub async fn list_announcements(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/announcements",
+    request_body = CreateAnnouncementRequest,
+    responses(
+        (status = 200, description = "create_announcement OK")
+    ),
+    tag = "ERP/announcement"
+)]
 pub async fn create_announcement(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -182,6 +199,17 @@ pub async fn create_announcement(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/announcements/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_announcement OK")
+    ),
+    tag = "ERP/announcement"
+)]
 pub async fn get_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -206,6 +234,18 @@ pub async fn get_announcement(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/announcements/{id}",
+    request_body = UpdateAnnouncementRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "update_announcement OK")
+    ),
+    tag = "ERP/announcement"
+)]
 pub async fn update_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -297,6 +337,17 @@ pub async fn update_announcement(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/announcements/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "delete_announcement OK")
+    ),
+    tag = "ERP/announcement"
+)]
 pub async fn delete_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -355,6 +406,17 @@ pub async fn delete_announcement(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/announcements/{id}/publish",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "publish_announcement OK")
+    ),
+    tag = "ERP/announcement"
+)]
 pub async fn publish_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -424,6 +486,17 @@ pub async fn publish_announcement(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/announcements/{id}/unpublish",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "unpublish_announcement OK")
+    ),
+    tag = "ERP/announcement"
+)]
 pub async fn unpublish_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
