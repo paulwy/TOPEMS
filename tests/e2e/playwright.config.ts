@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
 /**
  * Playwright configuration for TOPEMS E2E tests.
@@ -14,6 +14,8 @@ import { defineConfig, devices } from '@playwright/test';
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:8063';
 const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:8080';
 const IS_CI = !!process.env.CI;
+const DISABLE_ARTIFACTS = process.env.E2E_DISABLE_ARTIFACTS === 'true';
+const BROWSER_CHANNEL = process.env.E2E_BROWSER_CHANNEL;
 
 export default defineConfig({
   testDir: './tests',
@@ -35,9 +37,9 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL,
     storageState: './storageState.json',
-    trace: 'retain-on-failure',
-    video: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    trace: DISABLE_ARTIFACTS ? 'off' : 'retain-on-failure',
+    video: DISABLE_ARTIFACTS ? 'off' : 'retain-on-failure',
+    screenshot: DISABLE_ARTIFACTS ? 'off' : 'only-on-failure',
     actionTimeout: 15_000,
     navigationTimeout: 30_000,
     extraHTTPHeaders: {
@@ -55,8 +57,14 @@ export default defineConfig({
     {
       name: 'chromium',
       use: {
-        ...devices['Desktop Chrome'],
-        channel: 'chrome',
+        viewport: { width: 1440, height: 900 },
+        deviceScaleFactor: 1,
+        isMobile: false,
+        hasTouch: false,
+        launchOptions: {
+          args: ['--disable-crash-reporter', '--disable-crashpad'],
+        },
+        ...(BROWSER_CHANNEL ? { channel: BROWSER_CHANNEL } : {}),
       },
     },
   ],

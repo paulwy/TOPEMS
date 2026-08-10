@@ -13,8 +13,8 @@ export interface DeviceInfo {
 
 export function getDeviceInfo(): DeviceInfo {
   const userAgent = navigator.userAgent.toLowerCase();
-  const screenWidth = window.screen.width;
-  const screenHeight = window.screen.height;
+  const screenWidth = window.innerWidth || window.screen.width;
+  const screenHeight = window.innerHeight || window.screen.height;
   const pixelRatio = window.devicePixelRatio || 1;
 
   const isWeChat = userAgent.includes('micromessenger');
