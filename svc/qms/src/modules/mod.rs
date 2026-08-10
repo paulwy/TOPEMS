@@ -5,6 +5,7 @@ pub mod dashboard;
 pub mod data_sync;
 pub mod eight_d;
 pub mod fmea;
+pub mod qms_compat;
 pub mod qms_plugin;
 pub mod quality_cost;
 pub mod quality_dashboard;

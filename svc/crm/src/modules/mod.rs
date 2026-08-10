@@ -12,6 +12,7 @@ pub mod aftersales;
 pub mod audit;
 pub mod billing;
 pub mod contact;
+pub mod crm_compat;
 pub mod crm_plugin;
 pub mod customer;
 pub mod customer_profile;

@@ -4,6 +4,7 @@ pub mod inspection_record;
 pub mod inspection_task;
 pub mod instrument;
 pub mod instrument_data;
+pub mod lims_compat;
 pub mod lims_plugin;
 pub mod process;
 pub mod proficiency_testing;
