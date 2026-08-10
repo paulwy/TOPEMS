@@ -630,6 +630,18 @@ export default defineConfig({
           eager: true,
           strictVersion: false,
         },
+        // CJS 模块：prop-types 是 @mui/material / recharts / 旧类库的传递依赖。
+        // 如果不加 singleton+eager，MF remote 会用 loadShare 直接从
+        // pnpm virtual store 的 /@fs/... 路径 serve 原始 CJS 文件（prop-types/index.js），
+        // 从而在 ESM 下抛出 "doesn't provide an export named: 'default'"，
+        // 表现为 lazy-loaded DashboardPage 重试 3 次后崩溃。加 eager 后，
+        // 统一由 host 的 optimizeDeps（已 include 'prop-types'）预构建后分发，
+        // default/interop 均正常。dedupe 数组中也已列出 prop-types 防版本分叉。
+        'prop-types': {
+          singleton: true,
+          eager: true,
+          strictVersion: false,
+        },
         'zustand': {
           singleton: true,
           requiredVersion: '^5.0.0',
