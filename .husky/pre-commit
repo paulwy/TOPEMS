@@ -23,6 +23,14 @@ for file in $STAGED_FILES; do
         continue
         ;;
     esac
+
+    # Git LFS 管理的文件在工作区仍是完整文件，但提交对象会被 clean
+    # filter 转换为 LFS pointer。此类文件不应触发普通大文件检查。
+    LFS_FILTER=$(git check-attr filter -- "$file" 2>/dev/null | awk -F': ' '{print $3}')
+    if [ "$LFS_FILTER" = "lfs" ]; then
+      continue
+    fi
+
     FILE_SIZE=$(wc -c < "$file")
     if [ "$FILE_SIZE" -gt "$MAX_SIZE" ]; then
       SIZE_KB=$((FILE_SIZE / 1024))

@@ -971,6 +971,10 @@ Phase 2 基于 `scripts/audit/v73_real_handler_triage.py` 对剩余 Category C �
 
 > **注**: Phase 2 没有删除业务端点，而是修正审计脚本误判并重新生成 OpenAPI。当前 RED 主要来自 7 条未文档化前端 API（IAM 登录/注册、RD 项目批量/导入/看板/Gantt），以及 47 条探针解析限制（多行泛型、嵌套泛型、`createCrudApi` 工厂模式等）。
 
+#### OpenAPI 聚合产物管理
+
+`docs/api/openapi-aggregated.json` 当前约 2.2MB，超过仓库 pre-commit 大文件阈值。V73 Phase 2 起该聚合 JSON 改由 Git LFS 跟踪，普通 Git 提交只保存 LFS pointer，便于继续版本化完整聚合规范。
+
 ### 审计产物
 
 - `docs/audit/v73-compat-deadcode.json` — 兼容函数死代码分析报告
@@ -981,3 +985,4 @@ Phase 2 基于 `scripts/audit/v73_real_handler_triage.py` 对剩余 Category C �
 - `docs/audit/v73-real-handler-triage.json` — real handler 分类结构化结果
 - `docs/audit/probe-p04-openapi-contract.md` — 更新后的探针报告
 - `docs/audit/p04-triage-result.json` — 更新后的 triage 结果
+- `docs/api/openapi-aggregated.json` — 聚合 OpenAPI 规范（Git LFS 管理）
