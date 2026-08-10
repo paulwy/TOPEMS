@@ -1142,7 +1142,10 @@ pub async fn list_inspections(
                     equipment_code: r.equipment_code.unwrap_or_default(),
                     equipment_name: r.equipment_name.unwrap_or_default(),
                     inspector: r.inspector.unwrap_or_default(),
-                    inspection_date: r.inspection_date.map(|dt| dt.format("%Y-%m-%dT%H:%M:%S").to_string()).unwrap_or_default(),
+                    inspection_date: r
+                        .inspection_date
+                        .map(|dt| dt.format("%Y-%m-%dT%H:%M:%S").to_string())
+                        .unwrap_or_default(),
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1267,7 +1270,10 @@ pub async fn create_inspection(
                 equipment_code: r.equipment_code.unwrap_or_default(),
                 equipment_name: r.equipment_name.unwrap_or_default(),
                 inspector: r.inspector.unwrap_or_default(),
-                inspection_date: r.inspection_date.map(|dt| dt.format("%Y-%m-%dT%H:%M:%S").to_string()).unwrap_or_default(),
+                inspection_date: r
+                    .inspection_date
+                    .map(|dt| dt.format("%Y-%m-%dT%H:%M:%S").to_string())
+                    .unwrap_or_default(),
                 location: r.location,
                 temperature: r
                     .temperature

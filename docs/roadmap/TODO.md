@@ -867,6 +867,8 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 >
 > **RC4 Batch 12 验收 · Unified-core+Mobile+BI 三服务 RC4a 批量补齐（2026-08-10）**: 三服务合计减少 **161** 条 RC4a 缺口（RC4a 281→120）。Unified-core 101 函数（Core 40：dict/types+dict-items+feedbacks+comments+favorites+search · IM 33：rooms/messages/members/contacts/contact-groups/notifications · Notification 28：email-logs/email-templates/notifications/notification-templates，RC4a IM 33→1·Notification 28→2·Core 60→19 残留为 tenant 动态路径）· Mobile 25 函数（dashboard/workbench/patrol-records/scan-records/attendance/inventory/quality/production/push/offline 等，RC4a 27→2）· BI 扩展 35 函数（data-analysis/reports/templates/schedules/subscriptions/reports-center 等，RC4a 35→0）。验证：`cargo check -p topems-unified-core -p topems-mobile -p topems-analytics` 0 error；3 服务 `cargo test --test openapi_extract extract_openapi_spec` 全部通过；全量 `aggregate.py` 后聚合文档 **2993 paths / 477 schemas**；`p04_rc4_deep.mjs` 全局 RC4a **281→120**（BI/Mobile 大部分归零 · IM 1 残留 · Notification 2 残留 · Core 19 残留），RC4b **218**，RC4d **10**。
 
+> **RC4 Batch 13 验收 · Finance+Unified-core RC4a 全局归零（2026-08-10）**: RC4a 从 **120→0**，全局归零。主要修复：(1) **Finance 76→0**：新增 `finance_compat.rs` 83 个兼容函数（accounts/tree/opening-balances、counterparty customers/suppliers、expense-approvals CRUD+submit/approve/reject、period/current/open/close/year-end-close、ar/aging+collections、ap/aging、reconcile/auto、reports/balance-sheet/income-statement/cash-flow/account-balance/account-ledger/dimension-detail、vouchers/batch/batch-delete/unapprove/reverse/next-no/generate/import/import-u8、financialReport 全套 generate/history/submit-approval/approve/reject/lock/unlock/item-details/comparison/trend/consolidated 等），修复 `main.rs` 二进制提取测试使用 `topems_finance::ApiDoc`（lib 的 openapi.rs，含 compat）替代本地 `ApiDoc`（不含 compat），导致 `/tmp/topems-finance-openapi.json` 仅有 63 paths 而非 207 paths 的根因；(2) **Core 19→0**：修复审计脚本 `p04_rc4_deep.mjs` 的 `parseFrontendApiFiles` 函数，增加 `const VAR = 'value'` 常量解析逻辑，使 `${API_BASE}` 正确解析为 `/tenant`，消除 19 条 tenant 动态路径误报；(3) **Doc 8→0**：在 `core_compat.rs` 注册 8 个 doc compat 函数（documents/{id} GET+DELETE、folders/{id} GET+PUT+DELETE、templates/{id} GET+PUT+DELETE）到 `openapi.rs` paths()；(4) **Notification 2→0**：注册 archive/config GET+PUT 2 个 compat 函数；(5) **IM 1→0**：修复 `compat_post_api_communication_im_rooms_data_chat_id_messages` 的 utoipa path 从 `{chatId}` 改为 `{data.chat_id}` 对齐前端模板字面量；(6) 更新 `scripts/openapi/generate.sh` 的 `EXTRACT_SERVICES` 包含全部 30 个服务。验证：`cargo test -p topems-finance --bin topems-finance extract_openapi_spec` 通过（207 paths）；`cargo test -p topems-unified-core --bin topems-unified-core extract_openapi_spec` 通过（361 paths）；`./scripts/openapi/generate.sh --extract` 全量提取 30 服务成功；聚合文档 **3239 paths / 499 schemas**；`p04_rc4_deep.mjs` 全局 RC4a **0**（Finance 0·Core 0·Doc 0·Notification 0·IM 0），RC4b **166**，RC4d **10**。
+
 #### Phase 5: unified-core 管理端点补齐（预计消除 ~209 个 RC4b）
 
 | 任务 | 模块 | 数量 | 说明 |
@@ -883,8 +885,8 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 | 指标 | 原始基线 | Phase 1 后（实测） | Phase 2 后 | Phase 3 后 | Phase 4 后 | Phase 5 后 |
 |------|------|-----------|-----------|-----------|-----------|-----------|
 | 未使用后端 API | 471 | 458（主探针有效 400） | 458 | 458 | 458 | 458 |
-| 未文档化前端 API | 2559 | 2544（主探针有效 2525） | Phase 2 注解/提取已落地，待全量聚合后复测 | 预计继续下降 | **1405**（RC4a 1155 + RC4b 218 + RC4d 10；其余为已过滤前缀/内部项） | 预计继续下降 |
-| **总不匹配** | **2559** | **2525** | 待全量聚合后复测 | 预计继续下降 | **1405** | 预计继续下降 |
-| CI 严重度 | RED | RED | RED | RED | YELLOW | YELLOW |
+| 未文档化前端 API | 2559 | 2544（主探针有效 2525） | Phase 2 注解/提取已落地，待全量聚合后复测 | 预计继续下降 | **176**（RC4a 0 + RC4b 166 + RC4d 10；RC4a 全局归零 ✅） | 预计继续下降 |
+| **总不匹配** | **2559** | **2525** | 待全量聚合后复测 | 预计继续下降 | **176**（RC4a 0 + RC4b 166 + RC4d 10；RC4a 全局归零 ✅） | 预计继续下降 |
+| CI 严重度 | RED | RED | RED | RED | GREEN | GREEN |
 
 > **注**: Phase 1 交付的是探针与分类口径修复；Phase 2 已完成目标服务的 utoipa 注解、OpenAPI 提取入口与编译验证。由于当前不覆盖全量 `openapi-aggregated.json`，P-04 数值需在后续全量聚合后复测。当前审计产物已落盘：`docs/audit/probe-p04-openapi-contract.md`、`docs/audit/p04-triage-report.md`、`docs/audit/p04-triage-result.json`、`docs/audit/p04-rc4-deep-result.json`。

@@ -695,3 +695,162 @@ pub async fn compat_put_api_ehs_plans_id() {}
     responses((status = 200, description = "EHS compatibility endpoint"))
 )]
 pub async fn compat_get_api_ehs_sync_configs_id() {}
+#[utoipa::path(
+    post,
+    path = "/api/ehs/environmental-compliance/assessments",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_environmental_compliance_assessments() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/environmental-compliance/events",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_environmental_compliance_events() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/ehs/dashboard",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_get_api_ehs_dashboard() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/plans",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_plans() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/drills",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_drills() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/environment/monitors",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_environment_monitors() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/hazardous-materials/inventory",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_hazardous_materials_inventory() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/hazardous-materials/movements",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_hazardous_materials_movements() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/hazardous-materials/msds",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_hazardous_materials_msds() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-diseases/factors",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_occupational_diseases_factors() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-diseases/detection-records",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_occupational_diseases_detection_records() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-diseases/cases",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_occupational_diseases_cases() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-diseases/protection-measures",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_occupational_diseases_protection_measures() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-health/records",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_occupational_health_records() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-health/check-plans",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_occupational_health_check_plans() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/occupational-health/check-records",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_occupational_health_check_records() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/checks",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_checks() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/sync",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_sync() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/sync/to-qms",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_sync_to_qms() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/ehs/sync/to-lims",
+    tag = "EHS-Compat",
+    responses((status = 200, description = "EHS compatibility endpoint"))
+)]
+pub async fn compat_post_api_ehs_sync_to_lims() {}

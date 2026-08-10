@@ -7,13 +7,13 @@ pub mod document_version;
 pub mod material;
 pub mod openapi;
 pub mod pdm_plugin;
-pub mod project;
 pub mod product;
 pub mod production_batch;
 pub mod production_formula;
 pub mod production_process;
 pub mod production_statistics;
 pub mod production_step;
+pub mod project;
 pub mod version;
 pub mod workflow;
 

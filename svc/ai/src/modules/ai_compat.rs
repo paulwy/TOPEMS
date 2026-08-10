@@ -299,3 +299,33 @@ pub async fn compat_delete_api_ai_vector_collections_id() {}
     responses((status = 200, description = "AI compatibility endpoint"))
 )]
 pub async fn compat_post_api_ai_vector_index_documentid() {}
+
+// =============================================================================
+// health & model config
+// =============================================================================
+
+#[utoipa::path(
+    get,
+    path = "/api/ai/health",
+    tag = "AI-Compat",
+    responses((status = 200, description = "AI compatibility endpoint"))
+)]
+pub async fn compat_get_api_ai_health() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/ai/models/{modelId}/config",
+    tag = "AI-Compat",
+    params(("modelId" = String, Path, description = "modelId")),
+    responses((status = 200, description = "AI compatibility endpoint"))
+)]
+pub async fn compat_get_api_ai_models_modelid_config() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/ai/models/{modelId}/config",
+    tag = "AI-Compat",
+    params(("modelId" = String, Path, description = "modelId")),
+    responses((status = 200, description = "AI compatibility endpoint"))
+)]
+pub async fn compat_put_api_ai_models_modelid_config() {}

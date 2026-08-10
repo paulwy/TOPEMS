@@ -8,21 +8,21 @@
 macro_rules! compat_path {
     ($name:ident, $method:ident, $path:literal, $tag:literal) => {
         #[utoipa::path(
-            $method,
-            path = $path,
-            tag = $tag,
-            responses((status = 200, description = "ERP finance compatibility endpoint"))
-        )]
+                    $method,
+                    path = $path,
+                    tag = $tag,
+                    responses((status = 200, description = "ERP finance compatibility endpoint"))
+                )]
         pub async fn $name() {}
     };
     ($name:ident, $method:ident, $path:literal, $tag:literal, $param:literal) => {
         #[utoipa::path(
-            $method,
-            path = $path,
-            tag = $tag,
-            params(($param = String, Path, description = "路径参数")),
-            responses((status = 200, description = "ERP finance compatibility endpoint"))
-        )]
+                    $method,
+                    path = $path,
+                    tag = $tag,
+                    params(($param = String, Path, description = "路径参数")),
+                    responses((status = 200, description = "ERP finance compatibility endpoint"))
+                )]
         pub async fn $name() {}
     };
 }
@@ -89,7 +89,12 @@ compat_path!(
     "id"
 );
 
-compat_path!(list_bank_accounts_compat, get, "/erp/bank-accounts", "Finance");
+compat_path!(
+    list_bank_accounts_compat,
+    get,
+    "/erp/bank-accounts",
+    "Finance"
+);
 compat_path!(
     get_bank_account_compat,
     get,
@@ -164,7 +169,13 @@ compat_path!(
 );
 
 compat_path!(list_expenses_compat, get, "/erp/expenses", "Finance");
-compat_path!(get_expense_compat, get, "/erp/expenses/{id}", "Finance", "id");
+compat_path!(
+    get_expense_compat,
+    get,
+    "/erp/expenses/{id}",
+    "Finance",
+    "id"
+);
 compat_path!(create_expense_compat, post, "/erp/expenses", "Finance");
 compat_path!(
     update_expense_compat,
@@ -211,7 +222,13 @@ compat_path!(
 );
 
 compat_path!(list_payables_compat, get, "/erp/payables", "Finance");
-compat_path!(get_payable_compat, get, "/erp/payables/{id}", "Finance", "id");
+compat_path!(
+    get_payable_compat,
+    get,
+    "/erp/payables/{id}",
+    "Finance",
+    "id"
+);
 compat_path!(create_payable_compat, post, "/erp/payables", "Finance");
 compat_path!(
     update_payable_compat,
@@ -308,7 +325,13 @@ compat_path!(
 );
 
 compat_path!(list_vouchers_compat, get, "/erp/vouchers", "Voucher");
-compat_path!(get_voucher_compat, get, "/erp/vouchers/{id}", "Voucher", "id");
+compat_path!(
+    get_voucher_compat,
+    get,
+    "/erp/vouchers/{id}",
+    "Voucher",
+    "id"
+);
 compat_path!(
     get_voucher_items_compat,
     get,

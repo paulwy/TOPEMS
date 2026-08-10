@@ -28,7 +28,10 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/documents/{documentId}/versions", get(list_versions).post(create_version))
+        .route(
+            "/documents/{documentId}/versions",
+            get(list_versions).post(create_version),
+        )
         .route(
             "/documents/{documentId}/versions/{versionId}",
             get(get_version).put(update_version).delete(delete_version),
@@ -37,7 +40,10 @@ pub fn create_routes() -> Router<AppState> {
             "/documents/{documentId}/versions/{versionId}/publish",
             axum::routing::post(publish_version),
         )
-        .route("/documents/{documentId}/upload", axum::routing::post(upload_version))
+        .route(
+            "/documents/{documentId}/upload",
+            axum::routing::post(upload_version),
+        )
         .route(
             "/documents/{documentId}/versions/{versionId}/download",
             get(download_version),
@@ -393,9 +399,20 @@ pub async fn upload_version(
     };
     let doc_type = get_document_type(&state, tenant_id, document_id).await;
     let version_number = next_version_number(&state, tenant_id, document_id).await;
-    let title = filename.clone().unwrap_or_else(|| format!("版本 {}", version_number));
-    let file_type = content_type.or_else(|| filename.as_ref().and_then(|n| n.rsplit('.').next().map(|s| s.to_string())));
-    let file_url = filename.map(|n| format!("pdm://documents/{}/versions/{}/{}", document_id, version_number, n));
+    let title = filename
+        .clone()
+        .unwrap_or_else(|| format!("版本 {}", version_number));
+    let file_type = content_type.or_else(|| {
+        filename
+            .as_ref()
+            .and_then(|n| n.rsplit('.').next().map(|s| s.to_string()))
+    });
+    let file_url = filename.map(|n| {
+        format!(
+            "pdm://documents/{}/versions/{}/{}",
+            document_id, version_number, n
+        )
+    });
     let changes: Vec<String> = vec!["upload".to_string()];
 
     let result = sqlx::query_as::<_, DocumentVersion>(&format!(
@@ -459,7 +476,8 @@ pub async fn download_version(
             let download = file_url
                 .or_else(|| {
                     content_base64.map(|b| {
-                        let mime = file_type.unwrap_or_else(|| "application/octet-stream".to_string());
+                        let mime =
+                            file_type.unwrap_or_else(|| "application/octet-stream".to_string());
                         format!("data:{};base64,{}", mime, b)
                     })
                 })

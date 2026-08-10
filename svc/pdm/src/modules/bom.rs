@@ -30,7 +30,10 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/bom-versions", get(list_bom_versions).post(create_bom_version))
+        .route(
+            "/bom-versions",
+            get(list_bom_versions).post(create_bom_version),
+        )
         .route(
             "/bom-versions/{id}",
             get(get_bom_version)
@@ -39,7 +42,10 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/bom-versions/{id}/activate", post(activate_bom_version))
         .route("/bom-versions/{id}/archive", post(archive_bom_version))
-        .route("/bom-versions/{id}/items/batch", post(batch_create_bom_items))
+        .route(
+            "/bom-versions/{id}/items/batch",
+            post(batch_create_bom_items),
+        )
         .route("/bom-items", get(list_bom_items).post(create_bom_item))
         .route(
             "/bom-items/{id}",
@@ -47,7 +53,10 @@ pub fn create_routes() -> Router<AppState> {
                 .put(update_bom_item)
                 .delete(delete_bom_item),
         )
-        .route("/bom-compare", get(list_bom_comparisons).post(compare_bom_versions))
+        .route(
+            "/bom-compare",
+            get(list_bom_comparisons).post(compare_bom_versions),
+        )
         .route("/bom-compare/{id}", get(get_bom_comparison))
 }
 
@@ -165,7 +174,9 @@ pub struct BomDifferences {
     pub modifieditems: Vec<serde_json::Value>,
 }
 
-fn parse_optional_uuid(value: &Option<String>) -> Result<Option<Uuid>, Json<ApiResponse<serde_json::Value>>> {
+fn parse_optional_uuid(
+    value: &Option<String>,
+) -> Result<Option<Uuid>, Json<ApiResponse<serde_json::Value>>> {
     match value {
         Some(raw) if !raw.trim().is_empty() => Uuid::parse_str(raw)
             .map(Some)
@@ -174,7 +185,11 @@ fn parse_optional_uuid(value: &Option<String>) -> Result<Option<Uuid>, Json<ApiR
     }
 }
 
-fn json_value<T: Serialize>(value: T, success_msg: &str, error_msg: &str) -> Json<ApiResponse<serde_json::Value>> {
+fn json_value<T: Serialize>(
+    value: T,
+    success_msg: &str,
+    error_msg: &str,
+) -> Json<ApiResponse<serde_json::Value>> {
     match serde_json::to_value(value) {
         Ok(value) => Json(ApiResponse::success(value, success_msg)),
         Err(e) => {
@@ -733,12 +748,22 @@ pub async fn compare_bom_versions(
         }
     };
 
-    let keys_a: HashSet<String> = items_a.iter().map(|item| item.part_number.clone()).collect();
-    let keys_b: HashSet<String> = items_b.iter().map(|item| item.part_number.clone()).collect();
-    let by_key_a: HashMap<String, BomItem> =
-        items_a.into_iter().map(|item| (item.part_number.clone(), item)).collect();
-    let by_key_b: HashMap<String, BomItem> =
-        items_b.into_iter().map(|item| (item.part_number.clone(), item)).collect();
+    let keys_a: HashSet<String> = items_a
+        .iter()
+        .map(|item| item.part_number.clone())
+        .collect();
+    let keys_b: HashSet<String> = items_b
+        .iter()
+        .map(|item| item.part_number.clone())
+        .collect();
+    let by_key_a: HashMap<String, BomItem> = items_a
+        .into_iter()
+        .map(|item| (item.part_number.clone(), item))
+        .collect();
+    let by_key_b: HashMap<String, BomItem> = items_b
+        .into_iter()
+        .map(|item| (item.part_number.clone(), item))
+        .collect();
 
     let addeditems = keys_b
         .difference(&keys_a)
@@ -753,7 +778,10 @@ pub async fn compare_bom_versions(
         .filter_map(|key| {
             let before = by_key_a.get(key)?;
             let after = by_key_b.get(key)?;
-            if before.quantity != after.quantity || before.unit != after.unit || before.part_name != after.part_name {
+            if before.quantity != after.quantity
+                || before.unit != after.unit
+                || before.part_name != after.part_name
+            {
                 Some(serde_json::json!({
                     "part_number": key,
                     "before": before,
@@ -809,7 +837,11 @@ async fn fetch_items_by_bom(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_bom_comparisons() -> Json<ApiResponse<serde_json::Value>> {
-    json_value(Vec::<BomComparison>::new(), "获取 BOM 对比列表成功", "获取 BOM 对比列表失败")
+    json_value(
+        Vec::<BomComparison>::new(),
+        "获取 BOM 对比列表成功",
+        "获取 BOM 对比列表失败",
+    )
 }
 
 #[utoipa::path(
@@ -820,5 +852,8 @@ pub async fn list_bom_comparisons() -> Json<ApiResponse<serde_json::Value>> {
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_bom_comparison(Path(_id): Path<Uuid>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "BOM 对比结果未持久化，请重新发起对比"))
+    Json(ApiResponse::error(
+        404,
+        "BOM 对比结果未持久化，请重新发起对比",
+    ))
 }

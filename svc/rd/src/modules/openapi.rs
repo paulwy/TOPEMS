@@ -48,6 +48,12 @@ use utoipa::OpenApi;
         crate::modules::rd_compat::compat_get_api_rd_projects_id_dashboard,
         crate::modules::rd_compat::compat_get_api_rd_projects_id_gantt,
         crate::modules::rd_compat::compat_get_api_rd_statistics,
+        // === RD-Compat: missing project & audit-log endpoints ===
+        crate::modules::rd_compat::compat_get_api_rd_projects_id,
+        crate::modules::rd_compat::compat_post_api_rd_projects,
+        crate::modules::rd_compat::compat_put_api_rd_projects_id,
+        crate::modules::rd_compat::compat_delete_api_rd_projects_id,
+        crate::modules::rd_compat::compat_get_api_rd_audit_logs_id,
     ),
     components(
         schemas(

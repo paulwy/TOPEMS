@@ -5,6 +5,7 @@ mod compliance_v51;
 mod cqrs_routes;
 pub mod decision_v60;
 mod event_routes;
+pub mod finance_compat;
 pub mod financial_reports;
 mod forecast_v53;
 mod forecasting;
@@ -3512,16 +3513,24 @@ pub async fn get_voucher_entries(
     .await;
     match rows {
         Ok(rs) => {
-            let items: Vec<serde_json::Value> = rs.iter().map(|r| serde_json::json!({
-                "id": r.try_get::<Uuid, _>("id").ok(),
-                "voucher_id": r.try_get::<Uuid, _>("voucher_id").ok(),
-                "account_code": r.try_get::<String, _>("account_code").ok(),
-                "account_name": r.try_get::<String, _>("account_name").ok(),
-                "description": r.try_get::<String, _>("description").ok(),
-                "debit": r.try_get::<f64, _>("debit").ok(),
-                "credit": r.try_get::<f64, _>("credit").ok(),
-            })).collect();
-            Json(ApiResponse::success(serde_json::Value::Array(items), "查询成功"))
+            let items: Vec<serde_json::Value> = rs
+                .iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.try_get::<Uuid, _>("id").ok(),
+                        "voucher_id": r.try_get::<Uuid, _>("voucher_id").ok(),
+                        "account_code": r.try_get::<String, _>("account_code").ok(),
+                        "account_name": r.try_get::<String, _>("account_name").ok(),
+                        "description": r.try_get::<String, _>("description").ok(),
+                        "debit": r.try_get::<f64, _>("debit").ok(),
+                        "credit": r.try_get::<f64, _>("credit").ok(),
+                    })
+                })
+                .collect();
+            Json(ApiResponse::success(
+                serde_json::Value::Array(items),
+                "查询成功",
+            ))
         }
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -3552,17 +3561,25 @@ pub async fn get_voucher_items(
     .await;
     match rows {
         Ok(rs) => {
-            let items: Vec<serde_json::Value> = rs.iter().map(|r| serde_json::json!({
-                "id": r.try_get::<Uuid, _>("id").ok(),
-                "voucher_id": r.try_get::<Uuid, _>("voucher_id").ok(),
-                "account_code": r.try_get::<String, _>("account_code").ok(),
-                "account_name": r.try_get::<String, _>("account_name").ok(),
-                "description": r.try_get::<String, _>("description").ok(),
-                "debit": r.try_get::<f64, _>("debit").ok(),
-                "credit": r.try_get::<f64, _>("credit").ok(),
-                "sort_order": r.try_get::<i32, _>("sort_order").ok(),
-            })).collect();
-            Json(ApiResponse::success(serde_json::Value::Array(items), "查询成功"))
+            let items: Vec<serde_json::Value> = rs
+                .iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.try_get::<Uuid, _>("id").ok(),
+                        "voucher_id": r.try_get::<Uuid, _>("voucher_id").ok(),
+                        "account_code": r.try_get::<String, _>("account_code").ok(),
+                        "account_name": r.try_get::<String, _>("account_name").ok(),
+                        "description": r.try_get::<String, _>("description").ok(),
+                        "debit": r.try_get::<f64, _>("debit").ok(),
+                        "credit": r.try_get::<f64, _>("credit").ok(),
+                        "sort_order": r.try_get::<i32, _>("sort_order").ok(),
+                    })
+                })
+                .collect();
+            Json(ApiResponse::success(
+                serde_json::Value::Array(items),
+                "查询成功",
+            ))
         }
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -3583,10 +3600,16 @@ pub async fn batch_create_vouchers(
     Extension(_claims): Extension<Claims>,
     Json(req): Json<BatchCreateVouchersRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let results: Vec<serde_json::Value> = req.vouchers.iter().map(|_| serde_json::json!({
-        "success": false,
-        "error": "批量创建尚未实现",
-    })).collect();
+    let results: Vec<serde_json::Value> = req
+        .vouchers
+        .iter()
+        .map(|_| {
+            serde_json::json!({
+                "success": false,
+                "error": "批量创建尚未实现",
+            })
+        })
+        .collect();
     Json(ApiResponse::success(
         serde_json::json!({"results": results}),
         "批量创建完成",
@@ -3612,11 +3635,12 @@ pub async fn batch_delete_vouchers(
     let mut deleted = 0i64;
     for id_str in &req.ids {
         if let Ok(id) = Uuid::parse_str(id_str) {
-            let res = sqlx::query("DELETE FROM core_finance_vouchers WHERE id = $1 AND tenant_id = $2")
-                .bind(id)
-                .bind(tenant_id)
-                .execute(&state.pool)
-                .await;
+            let res =
+                sqlx::query("DELETE FROM core_finance_vouchers WHERE id = $1 AND tenant_id = $2")
+                    .bind(id)
+                    .bind(tenant_id)
+                    .execute(&state.pool)
+                    .await;
             if let Ok(r) = res {
                 deleted += r.rows_affected() as i64;
             }
@@ -3722,12 +3746,16 @@ pub async fn get_next_voucher_no(
     Query(params): Query<NextVoucherNoQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id(&claims);
-    let prefix = format!("{}-", params.voucher_type.unwrap_or_else(|| "GEN".to_string()));
-    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_finance_vouchers WHERE tenant_id = $1")
-        .bind(tenant_id)
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
+    let prefix = format!(
+        "{}-",
+        params.voucher_type.unwrap_or_else(|| "GEN".to_string())
+    );
+    let count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM core_finance_vouchers WHERE tenant_id = $1")
+            .bind(tenant_id)
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(0);
     let voucher_no = format!("{}{:06}", prefix, count + 1);
     Json(ApiResponse::success(
         serde_json::json!({"voucher_no": voucher_no}),
@@ -3880,7 +3908,13 @@ pub async fn list_periods(
     let mut items: Vec<serde_json::Value> = Vec::new();
     for month in 1..=12u32 {
         let period_str = format!("{:04}-{:02}", year, month);
-        let status = if month < now.month() { "closed" } else if month == now.month() { "open" } else { "locked" };
+        let status = if month < now.month() {
+            "closed"
+        } else if month == now.month() {
+            "open"
+        } else {
+            "locked"
+        };
         items.push(serde_json::json!({
             "period": period_str,
             "year": year,
@@ -3919,7 +3953,10 @@ pub async fn open_period_v2(
         .execute(&state.pool)
         .await;
     match res {
-        Ok(_) => Json(ApiResponse::success(serde_json::json!({"period": period, "status": "open"}), "开启成功")),
+        Ok(_) => Json(ApiResponse::success(
+            serde_json::json!({"period": period, "status": "open"}),
+            "开启成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
@@ -3951,7 +3988,10 @@ pub async fn close_period_v2(
             if r.rows_affected() == 0 {
                 Json(ApiResponse::error(404, "会计期间不存在"))
             } else {
-                Json(ApiResponse::success(serde_json::json!({"period": period, "status": "closed"}), "关闭成功"))
+                Json(ApiResponse::success(
+                    serde_json::json!({"period": period, "status": "closed"}),
+                    "关闭成功",
+                ))
             }
         }
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -4139,17 +4179,25 @@ pub async fn get_account_tree(
     .await;
     match rows {
         Ok(rs) => {
-            let items: Vec<serde_json::Value> = rs.iter().map(|r| serde_json::json!({
-                "id": r.try_get::<uuid::Uuid, _>("id").ok(),
-                "code": r.try_get::<String, _>("code").ok(),
-                "name": r.try_get::<String, _>("name").ok(),
-                "parent_id": r.try_get::<Option<uuid::Uuid>, _>("parent_id").ok(),
-                "category": r.try_get::<String, _>("category").ok(),
-                "level": r.try_get::<i32, _>("level").ok(),
-                "is_leaf": r.try_get::<bool, _>("is_leaf").ok(),
-                "status": r.try_get::<String, _>("status").ok(),
-            })).collect();
-            Json(ApiResponse::success(serde_json::Value::Array(items), "查询成功"))
+            let items: Vec<serde_json::Value> = rs
+                .iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.try_get::<uuid::Uuid, _>("id").ok(),
+                        "code": r.try_get::<String, _>("code").ok(),
+                        "name": r.try_get::<String, _>("name").ok(),
+                        "parent_id": r.try_get::<Option<uuid::Uuid>, _>("parent_id").ok(),
+                        "category": r.try_get::<String, _>("category").ok(),
+                        "level": r.try_get::<i32, _>("level").ok(),
+                        "is_leaf": r.try_get::<bool, _>("is_leaf").ok(),
+                        "status": r.try_get::<String, _>("status").ok(),
+                    })
+                })
+                .collect();
+            Json(ApiResponse::success(
+                serde_json::Value::Array(items),
+                "查询成功",
+            ))
         }
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -4235,7 +4283,10 @@ pub async fn get_opening_balances(
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"items": [], "total": 0}), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"items": [], "total": 0}),
+        "查询成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4297,7 +4348,10 @@ pub async fn list_counterparty_customers(
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"items": [], "total": 0}), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"items": [], "total": 0}),
+        "查询成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4316,7 +4370,10 @@ pub async fn get_counterparty_customer(
     Extension(_claims): Extension<Claims>,
     Path(customer_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"customer_id": customer_id}), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"customer_id": customer_id}),
+        "查询成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4336,7 +4393,10 @@ pub async fn update_counterparty_customer(
     Path(customer_id): Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"customer_id": customer_id, "data": req}), "更新成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"customer_id": customer_id, "data": req}),
+        "更新成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4358,7 +4418,10 @@ pub async fn list_counterparty_suppliers(
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"items": [], "total": 0}), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"items": [], "total": 0}),
+        "查询成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4377,7 +4440,10 @@ pub async fn get_counterparty_supplier(
     Extension(_claims): Extension<Claims>,
     Path(supplier_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"supplier_id": supplier_id}), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"supplier_id": supplier_id}),
+        "查询成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4397,7 +4463,10 @@ pub async fn update_counterparty_supplier(
     Path(supplier_id): Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"supplier_id": supplier_id, "data": req}), "更新成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"supplier_id": supplier_id, "data": req}),
+        "更新成功",
+    ))
 }
 
 // ==================== RC4a 补齐: 费用审批 ====================
@@ -4423,7 +4492,10 @@ pub async fn list_expense_approvals(
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"items": [], "total": 0}), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"items": [], "total": 0}),
+        "查询成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4460,7 +4532,10 @@ pub async fn get_expense_approval(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"id": id}), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"id": id}),
+        "查询成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4480,7 +4555,10 @@ pub async fn update_expense_approval(
     Path(id): Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"id": id, "data": req}), "更新成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"id": id, "data": req}),
+        "更新成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4516,7 +4594,10 @@ pub async fn submit_expense_approval(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"id": id, "status": "submitted"}), "提交成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"id": id, "status": "submitted"}),
+        "提交成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4534,7 +4615,10 @@ pub async fn approve_expense_approval(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"id": id, "status": "approved"}), "审批通过"))
+    Json(ApiResponse::success(
+        serde_json::json!({"id": id, "status": "approved"}),
+        "审批通过",
+    ))
 }
 
 #[utoipa::path(
@@ -4554,7 +4638,10 @@ pub async fn reject_expense_approval(
     Path(id): Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"id": id, "status": "rejected"}), "驳回成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"id": id, "status": "rejected"}),
+        "驳回成功",
+    ))
 }
 
 // ==================== RC4a 补齐: 报表基础 ====================
@@ -4580,7 +4667,10 @@ pub async fn get_account_balance_report(
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"items": [], "total_records": 0}), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"items": [], "total_records": 0}),
+        "查询成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4607,7 +4697,10 @@ pub async fn get_account_ledger_report(
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"items": [], "total": 0}), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"items": [], "total": 0}),
+        "查询成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4631,7 +4724,10 @@ pub async fn get_dimension_detail_report(
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"items": []}), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"items": []}),
+        "查询成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4652,7 +4748,10 @@ pub async fn export_balance_sheet_report(
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"file_name": "balance_sheet.csv"}), "导出成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"file_name": "balance_sheet.csv"}),
+        "导出成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4673,7 +4772,10 @@ pub async fn export_income_statement_report(
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"file_name": "income_statement.csv"}), "导出成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"file_name": "income_statement.csv"}),
+        "导出成功",
+    ))
 }
 
 #[utoipa::path(
@@ -4694,7 +4796,10 @@ pub async fn export_cash_flow_report(
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"file_name": "cash_flow.csv"}), "导出成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"file_name": "cash_flow.csv"}),
+        "导出成功",
+    ))
 }
 
 pub fn create_routes() -> Router<AppState> {
@@ -5092,10 +5197,7 @@ pub fn create_routes() -> Router<AppState> {
             "/vouchers/{voucher_id}/reverse",
             axum::routing::post(reverse_voucher),
         )
-        .route(
-            "/vouchers/next-no",
-            axum::routing::get(get_next_voucher_no),
-        )
+        .route("/vouchers/next-no", axum::routing::get(get_next_voucher_no))
         .route(
             "/vouchers/generate",
             axum::routing::post(generate_voucher_by_template),
@@ -5129,7 +5231,10 @@ pub fn create_routes() -> Router<AppState> {
         .route("/ar/aging", axum::routing::get(get_ar_aging))
         .route("/ap/aging", axum::routing::get(get_ap_aging))
         .route("/reconcile", axum::routing::post(reconcile_handler))
-        .route("/reconcile/auto", axum::routing::post(auto_reconcile_handler))
+        .route(
+            "/reconcile/auto",
+            axum::routing::post(auto_reconcile_handler),
+        )
         // RC4a 补齐: 科目扩展路由
         .route("/accounts/tree", axum::routing::get(get_account_tree))
         .route(
@@ -5155,8 +5260,7 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/counterparty/customers/{customer_id}",
-            axum::routing::get(get_counterparty_customer)
-                .put(update_counterparty_customer),
+            axum::routing::get(get_counterparty_customer).put(update_counterparty_customer),
         )
         .route(
             "/counterparty/suppliers",
@@ -5164,14 +5268,12 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/counterparty/suppliers/{supplier_id}",
-            axum::routing::get(get_counterparty_supplier)
-                .put(update_counterparty_supplier),
+            axum::routing::get(get_counterparty_supplier).put(update_counterparty_supplier),
         )
         // RC4a 补齐: 费用审批路由
         .route(
             "/expense-approvals",
-            axum::routing::get(list_expense_approvals)
-                .post(create_expense_approval),
+            axum::routing::get(list_expense_approvals).post(create_expense_approval),
         )
         .route(
             "/expense-approvals/{id}",

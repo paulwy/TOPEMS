@@ -111,7 +111,7 @@ EXTRACT=false
 
 # --extract 模式下通过 cargo test extract_openapi_spec 提取 spec 的服务列表。
 # 这些服务已在源码中实现了 extract_openapi_spec 测试（将 spec 写到 /tmp/topems-<svc>-openapi.json）。
-EXTRACT_SERVICES=("finance" "hrm" "mes" "master-data" "qms" "unified-core" "wms" "feedback")
+EXTRACT_SERVICES=("finance" "hrm" "mes" "master-data" "qms" "unified-core" "wms" "feedback" "ehs" "crm" "integration" "portal" "analytics" "ai" "erp" "gis" "lims" "lowcode" "mobile" "pm" "pdm" "scm" "srm" "rd" "billing" "communication" "monitor" "search" "ticket" "plugin-registry")
 
 print_help() {
   cat << 'EOF'
