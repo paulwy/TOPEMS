@@ -166,6 +166,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
               </Box>
             </Box>
           }
+          slotProps={{ secondary: { component: 'div' } }}
           sx={{ pr: 2 }}
         />
       </ListItem>
