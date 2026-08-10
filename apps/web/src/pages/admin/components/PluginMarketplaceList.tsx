@@ -138,6 +138,11 @@ const PluginMarketplaceList: React.FC<PluginMarketplaceListProps> = ({
                     </Stack>
                   </Box>
                 }
+                slotProps={{
+                  secondary: {
+                    component: 'div',
+                  },
+                }}
               />
             </ListItem>
           );
