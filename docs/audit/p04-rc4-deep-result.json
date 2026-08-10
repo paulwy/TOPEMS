@@ -1,22 +1,21 @@
 {
-  "rc4_total": 527,
+  "rc4_total": 366,
   "subCategories": {
     "RC4a_missing_utoipa": {
-      "count": 281,
+      "count": 120,
       "byService": {
         "ai": 2,
-        "bi": 35,
         "crm": 19,
-        "core": 60,
         "doc": 15,
         "ehs": 20,
-        "notification": 30,
         "file": 7,
-        "im": 33,
+        "im": 1,
         "integration": 19,
         "mail": 13,
-        "mobile": 27,
-        "portal": 1
+        "mobile": 2,
+        "notification": 2,
+        "portal": 1,
+        "core": 19
       },
       "sample": [
         {
@@ -34,38 +33,6 @@
           "fullPath": "/api/ai/models/{modelId}/config",
           "file": "apps/web/src/api/ai/index.ts",
           "line": 184
-        },
-        {
-          "service": "bi",
-          "method": "GET",
-          "url": "/data-analysis/sales-trend",
-          "fullPath": "/api/bi/data-analysis/sales-trend",
-          "file": "apps/web/src/api/bi/dataAnalysis.ts",
-          "line": 41
-        },
-        {
-          "service": "bi",
-          "method": "GET",
-          "url": "/data-analysis/region-sales",
-          "fullPath": "/api/bi/data-analysis/region-sales",
-          "file": "apps/web/src/api/bi/dataAnalysis.ts",
-          "line": 47
-        },
-        {
-          "service": "bi",
-          "method": "GET",
-          "url": "/data-analysis/category-pivot",
-          "fullPath": "/api/bi/data-analysis/category-pivot",
-          "file": "apps/web/src/api/bi/dataAnalysis.ts",
-          "line": 53
-        },
-        {
-          "service": "bi",
-          "method": "GET",
-          "url": "/data-analysis",
-          "fullPath": "/api/bi/data-analysis",
-          "file": "apps/web/src/api/bi/dataAnalysis.ts",
-          "line": 59
         },
         {
           "service": "crm",
@@ -220,44 +187,76 @@
           "line": 277
         },
         {
-          "service": "core",
+          "service": "doc",
           "method": "GET",
-          "url": "/dict/types",
-          "fullPath": "/api/core/dict/types",
-          "file": "apps/web/src/api/dict/dict.ts",
-          "line": 28
+          "url": "/documents/{id}",
+          "fullPath": "/api/core/doc/documents/{id}",
+          "file": "apps/web/src/api/doc/index.ts",
+          "line": 86
         },
         {
-          "service": "core",
-          "method": "GET",
-          "url": "/dict/types/{code}",
-          "fullPath": "/api/core/dict/types/{code}",
-          "file": "apps/web/src/api/dict/dict.ts",
-          "line": 32
-        },
-        {
-          "service": "core",
-          "method": "POST",
-          "url": "/dict/types",
-          "fullPath": "/api/core/dict/types",
-          "file": "apps/web/src/api/dict/dict.ts",
-          "line": 41
-        },
-        {
-          "service": "core",
-          "method": "PUT",
-          "url": "/dict/types/{code}",
-          "fullPath": "/api/core/dict/types/{code}",
-          "file": "apps/web/src/api/dict/dict.ts",
-          "line": 48
-        },
-        {
-          "service": "core",
+          "service": "doc",
           "method": "DELETE",
-          "url": "/dict/types/{code}",
-          "fullPath": "/api/core/dict/types/{code}",
-          "file": "apps/web/src/api/dict/dict.ts",
-          "line": 52
+          "url": "/documents/{id}",
+          "fullPath": "/api/core/doc/documents/{id}",
+          "file": "apps/web/src/api/doc/index.ts",
+          "line": 107
+        },
+        {
+          "service": "doc",
+          "method": "GET",
+          "url": "/folders/{id}",
+          "fullPath": "/api/core/doc/folders/{id}",
+          "file": "apps/web/src/api/doc/index.ts",
+          "line": 120
+        },
+        {
+          "service": "doc",
+          "method": "PUT",
+          "url": "/folders/{id}",
+          "fullPath": "/api/core/doc/folders/{id}",
+          "file": "apps/web/src/api/doc/index.ts",
+          "line": 124
+        },
+        {
+          "service": "doc",
+          "method": "DELETE",
+          "url": "/folders/{id}",
+          "fullPath": "/api/core/doc/folders/{id}",
+          "file": "apps/web/src/api/doc/index.ts",
+          "line": 128
+        },
+        {
+          "service": "doc",
+          "method": "GET",
+          "url": "/documents/{fileId}/versions",
+          "fullPath": "/api/core/doc/documents/{fileId}/versions",
+          "file": "apps/web/src/api/doc/index.ts",
+          "line": 132
+        },
+        {
+          "service": "doc",
+          "method": "GET",
+          "url": "/documents/{fileId}/versions/{version}",
+          "fullPath": "/api/core/doc/documents/{fileId}/versions/{version}",
+          "file": "apps/web/src/api/doc/index.ts",
+          "line": 136
+        },
+        {
+          "service": "doc",
+          "method": "POST",
+          "url": "/documents/{fileId}/versions/{version}/restore",
+          "fullPath": "/api/core/doc/documents/{fileId}/versions/{version}/restore",
+          "file": "apps/web/src/api/doc/index.ts",
+          "line": 140
+        },
+        {
+          "service": "doc",
+          "method": "GET",
+          "url": "/health",
+          "fullPath": "/api/core/doc/health",
+          "file": "apps/web/src/api/doc/index.ts",
+          "line": 144
         }
       ]
     },

@@ -254,3 +254,316 @@ pub async fn compat_get_api_bi_widgets_widgetid_fullscreen() {}
     responses((status = 200, description = "BI compatibility endpoint"))
 )]
 pub async fn compat_get_api_bi_moduleid() {}
+
+// === data-analysis (RC4a gaps) ===
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/data-analysis/sales-trend",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_data_analysis_sales_trend() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/data-analysis/region-sales",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_data_analysis_region_sales() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/data-analysis/category-pivot",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_data_analysis_category_pivot() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/data-analysis",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_data_analysis() {}
+
+// === reports (RC4a gaps) ===
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/reports",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_reports() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/reports/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_reports_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/bi/reports",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_post_api_bi_reports() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/bi/reports/from-template",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_post_api_bi_reports_from_template() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/bi/reports/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_put_api_bi_reports_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/bi/reports/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_delete_api_bi_reports_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/bi/reports/{id}/export",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_post_api_bi_reports_id_export() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/bi/reports/{id}/run",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_post_api_bi_reports_id_run() {}
+
+// === templates (RC4a gaps) ===
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/templates",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_templates() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/templates/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_templates_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/bi/templates",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_post_api_bi_templates() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/bi/templates/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_put_api_bi_templates_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/bi/templates/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_delete_api_bi_templates_id() {}
+
+// === report-types (RC4a gaps) ===
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/report-types",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_report_types() {}
+
+// === schedules (RC4a gaps) ===
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/schedules",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_schedules() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/schedules/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_schedules_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/bi/schedules",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_post_api_bi_schedules() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/bi/schedules/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_put_api_bi_schedules_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/bi/schedules/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_delete_api_bi_schedules_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/bi/schedules/{id}/execute",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_post_api_bi_schedules_id_execute() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/schedules/{id}/history",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_schedules_id_history() {}
+
+// === subscriptions (RC4a gaps) ===
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/subscriptions",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_subscriptions() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/subscriptions/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_subscriptions_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/bi/subscriptions",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_post_api_bi_subscriptions() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/bi/subscriptions/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_put_api_bi_subscriptions_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/bi/subscriptions/{id}",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_delete_api_bi_subscriptions_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/bi/subscriptions/{id}/toggle",
+    tag = "BI-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_post_api_bi_subscriptions_id_toggle() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/subscriptions/user/{user_id}",
+    tag = "BI-Compat",
+    params(("user_id" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_subscriptions_user_user_id() {}
+
+// === health & reports-center (RC4a gaps) ===
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/health",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_health() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/bi/reports-center/stats",
+    tag = "BI-Compat",
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_get_api_bi_reports_center_stats() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/bi/reports-center/export/{reportType}",
+    tag = "BI-Compat",
+    params(("reportType" = String, Path, description = "id")),
+    responses((status = 200, description = "BI compatibility endpoint"))
+)]
+pub async fn compat_post_api_bi_reports_center_export_reporttype() {}
