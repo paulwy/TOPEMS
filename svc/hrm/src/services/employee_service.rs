@@ -3,12 +3,8 @@ use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
-<<<<<<< Updated upstream
 use topems_shared_auth::security::encryption::FieldEncryptionService;
 use topems_shared_core::response::{api_error, ApiResponse, ListResponse};
-=======
-use topems_shared::{api_error, ApiResponse, FieldEncryptionService, ListResponse};
->>>>>>> Stashed changes
 
 pub struct EmployeeService {
     db: PgPool,
@@ -32,11 +28,7 @@ impl EmployeeService {
         search: Option<String>,
         status: Option<String>,
         department_id: Option<Uuid>,
-<<<<<<< Updated upstream
         org_id: Option<Uuid>,
-=======
-        company_id: Option<Uuid>,
->>>>>>> Stashed changes
     ) -> ApiResponse<ListResponse<Employee>> {
         let offset = (page - 1) * page_size;
         let search_pattern = search.map(|s| format!("%{}%", s));

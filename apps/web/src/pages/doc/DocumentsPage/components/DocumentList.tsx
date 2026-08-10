@@ -10,20 +10,7 @@ import {
   Chip,
   useTheme,
 } from '@mui/material';
-<<<<<<< Updated upstream
 import { Folder, FileText, Star, History, Trash2, Upload, Eye, Download } from 'lucide-react';
-=======
-import {
-  Folder,
-  FileText,
-  Star,
-  History,
-  Trash2,
-  Upload,
-  Eye,
-  Download,
-} from 'lucide-react';
->>>>>>> Stashed changes
 import { useNavigate } from 'react-router-dom';
 import StatCard from './StatCard';
 import FileCard from './FileCard';
@@ -493,13 +480,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                     ) : (
                       <tr
                         key={item.id}
-<<<<<<< Updated upstream
                         onClick={() => navigate(DOC_PATHS.documentDetail.replace(':id', item.id))}
-=======
-                        onClick={() =>
-                          navigate(DOC_PATHS.documentDetail.replace(':id', item.id))
-                        }
->>>>>>> Stashed changes
                         style={{ cursor: 'pointer' }}
                       >
                         <td

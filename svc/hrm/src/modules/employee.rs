@@ -8,7 +8,6 @@ use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
 use crate::modules::audit::log_audit_event;
 use crate::services::employee_service::EmployeeService;
 use crate::shared::permission::{check_permission, ModulePermission};
-<<<<<<< Updated upstream
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
@@ -16,12 +15,6 @@ use topems_shared_core::response::ListResponse;
 use topems_shared_event::event::EventType;
 use topems_shared_event::event::HrmEmployeeCreatedPayload;
 use topems_shared_event::event::MasterDataAction;
-=======
-use topems_shared::{
-    api_error, event::EventType, event::HrmEmployeeCreatedPayload, event::MasterDataAction,
-    ApiResponse, Claims, ListResponse,
-};
->>>>>>> Stashed changes
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims

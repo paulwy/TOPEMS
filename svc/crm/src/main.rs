@@ -22,13 +22,9 @@ use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
-<<<<<<< Updated upstream
 use topems_shared_service_client::service_client::{
     create_erp_client, create_wms_client, create_workflow_client,
 };
-=======
-use topems_shared::service_client::{create_erp_client, create_wms_client, create_workflow_client};
->>>>>>> Stashed changes
 
 mod middleware;
 mod models;
@@ -175,7 +171,3 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     tracing::info!("[crm] crm_master_data_refs 表已就绪（AC-5 本地主数据引用）");
     Ok(())
 }
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes

@@ -13,21 +13,13 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
-<<<<<<< Updated upstream
 use topems_shared::{config::CacheConfig, LocalInMemoryCache as InMemoryCache};
-=======
-use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
->>>>>>> Stashed changes
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
-<<<<<<< Updated upstream
 use topems_shared_core::config::enhanced::RedisConfig;
 use topems_shared_event::redis::{CacheService, RedisCacheService, RedisPool as RedisPoolTrait};
-=======
-use topems_shared::{config::CacheConfig, CacheService};
->>>>>>> Stashed changes
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -122,10 +114,6 @@ async fn init_cache() -> Arc<dyn CacheService + Send + Sync> {
     }
 }
 
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
     Ok(())
 }

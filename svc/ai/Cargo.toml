@@ -21,14 +21,11 @@ anyhow.workspace = true
 reqwest.workspace = true
 topems-shared = { path = "../../lib" }
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
-<<<<<<< Updated upstream
 topems-shared-event = { path = "../../lib/shared-event" }
 topems-shared-core = { path = "../../lib/shared-core" }
 topems-shared-auth = { path = "../../lib/shared-auth" }
 topems-shared-ai = { path = "../../lib/shared-ai" }
 topems-shared-observability = { path = "../../lib/shared-observability" }
-=======
->>>>>>> Stashed changes
 axum-prometheus.workspace = true
 prometheus.workspace = true
 walkdir.workspace = true

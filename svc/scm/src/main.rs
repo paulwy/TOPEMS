@@ -22,10 +22,6 @@ use utoipa::OpenApi;
 
 use prometheus::{default_registry, Gauge};
 use topems_scm::shared::cache::InMemoryCache;
-<<<<<<< Updated upstream
-=======
-use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
->>>>>>> Stashed changes
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     Application, ServiceConfig,

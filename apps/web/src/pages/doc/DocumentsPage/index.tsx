@@ -712,14 +712,10 @@ const DocumentsPage: React.FC = () => {
         </Box>
       </Box>
 
-<<<<<<< Updated upstream
       <UploadDialog
         uploading={uploading}
         uploadProgress={uploadProgress}
       />
-=======
-      <UploadDialog uploading={uploading} uploadProgress={uploadProgress} />
->>>>>>> Stashed changes
 
       <Box
         component='main'
