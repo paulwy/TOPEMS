@@ -230,6 +230,18 @@ pub struct ApiResponse<T> {
         crate::modules::scm_compat::compat_get_sync_records_syncid_details,
         crate::modules::scm_compat::compat_post_sync_srm_synctype,
         crate::modules::scm_compat::compat_post_sync_wms_synctype,
+        // === SCM-Compat: missing purchase-orders & suppliers endpoints ===
+        crate::modules::scm_compat::compat_get_api_scm_purchase_orders,
+        crate::modules::scm_compat::compat_post_api_scm_purchase_orders,
+        crate::modules::scm_compat::compat_get_api_scm_purchase_orders_id,
+        crate::modules::scm_compat::compat_put_api_scm_purchase_orders_id,
+        crate::modules::scm_compat::compat_delete_api_scm_purchase_orders_id,
+        crate::modules::scm_compat::compat_post_api_scm_purchase_orders_id_approve,
+        crate::modules::scm_compat::compat_get_api_scm_suppliers,
+        crate::modules::scm_compat::compat_post_api_scm_suppliers,
+        crate::modules::scm_compat::compat_get_api_scm_suppliers_id,
+        crate::modules::scm_compat::compat_put_api_scm_suppliers_id,
+        crate::modules::scm_compat::compat_delete_api_scm_suppliers_id,
     ),
     components(
         schemas(
@@ -248,6 +260,7 @@ pub struct ApiResponse<T> {
         (name = "supplier_evaluation", description = "供应商评价 API"),
         (name = "supplier_delivery_appointment", description = "供应商送货预约 API"),
         (name = "audit", description = "审计日志 API"),
+        (name = "SCM-Compat", description = "SCM 前端兼容 OpenAPI 注解"),
     ),
     info(
         title = "TOPEMS SCM API",

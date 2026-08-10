@@ -1,274 +1,20 @@
 {
-  "rc4_total": 366,
+  "rc4_total": 194,
   "subCategories": {
     "RC4a_missing_utoipa": {
-      "count": 120,
-      "byService": {
-        "ai": 2,
-        "crm": 19,
-        "doc": 15,
-        "ehs": 20,
-        "file": 7,
-        "im": 1,
-        "integration": 19,
-        "mail": 13,
-        "mobile": 2,
-        "notification": 2,
-        "portal": 1,
-        "core": 19
-      },
-      "sample": [
-        {
-          "service": "ai",
-          "method": "GET",
-          "url": "/models/{modelId}/config",
-          "fullPath": "/api/ai/models/{modelId}/config",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 170
-        },
-        {
-          "service": "ai",
-          "method": "PUT",
-          "url": "/models/{modelId}/config",
-          "fullPath": "/api/ai/models/{modelId}/config",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 184
-        },
-        {
-          "service": "crm",
-          "method": "GET",
-          "url": "/customers/{customerId}/finance",
-          "fullPath": "/api/crm/customers/{customerId}/finance",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 75
-        },
-        {
-          "service": "crm",
-          "method": "PUT",
-          "url": "/customers/{customerId}/finance",
-          "fullPath": "/api/crm/customers/{customerId}/finance",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 83
-        },
-        {
-          "service": "crm",
-          "method": "GET",
-          "url": "/invoices/{invoiceId}",
-          "fullPath": "/api/crm/invoices/{invoiceId}",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 109
-        },
-        {
-          "service": "crm",
-          "method": "POST",
-          "url": "/invoices",
-          "fullPath": "/api/crm/invoices",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 115
-        },
-        {
-          "service": "crm",
-          "method": "PUT",
-          "url": "/invoices/{invoiceId}",
-          "fullPath": "/api/crm/invoices/{invoiceId}",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 121
-        },
-        {
-          "service": "crm",
-          "method": "DELETE",
-          "url": "/invoices/{invoiceId}",
-          "fullPath": "/api/crm/invoices/{invoiceId}",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 130
-        },
-        {
-          "service": "crm",
-          "method": "POST",
-          "url": "/invoices/{invoiceId}/issue",
-          "fullPath": "/api/crm/invoices/{invoiceId}/issue",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 136
-        },
-        {
-          "service": "crm",
-          "method": "POST",
-          "url": "/invoices/{invoiceId}/cancel",
-          "fullPath": "/api/crm/invoices/{invoiceId}/cancel",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 144
-        },
-        {
-          "service": "crm",
-          "method": "POST",
-          "url": "/invoices/{invoiceId}/red-flush",
-          "fullPath": "/api/crm/invoices/{invoiceId}/red-flush",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 153
-        },
-        {
-          "service": "crm",
-          "method": "GET",
-          "url": "/collections/{recordId}",
-          "fullPath": "/api/crm/collections/{recordId}",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 178
-        },
-        {
-          "service": "crm",
-          "method": "POST",
-          "url": "/collections",
-          "fullPath": "/api/crm/collections",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 186
-        },
-        {
-          "service": "crm",
-          "method": "POST",
-          "url": "/collections/{recordId}/confirm",
-          "fullPath": "/api/crm/collections/{recordId}/confirm",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 192
-        },
-        {
-          "service": "crm",
-          "method": "POST",
-          "url": "/collections/batch-confirm",
-          "fullPath": "/api/crm/collections/batch-confirm",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 200
-        },
-        {
-          "service": "crm",
-          "method": "GET",
-          "url": "/reports/receivable-aging",
-          "fullPath": "/api/crm/reports/receivable-aging",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 212
-        },
-        {
-          "service": "crm",
-          "method": "GET",
-          "url": "/reports/receivable-summary",
-          "fullPath": "/api/crm/reports/receivable-summary",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 220
-        },
-        {
-          "service": "crm",
-          "method": "GET",
-          "url": "/reports/overdue-receivables",
-          "fullPath": "/api/crm/reports/overdue-receivables",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 234
-        },
-        {
-          "service": "crm",
-          "method": "GET",
-          "url": "/invoices/export",
-          "fullPath": "/api/crm/invoices/export",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 249
-        },
-        {
-          "service": "crm",
-          "method": "GET",
-          "url": "/collections/export",
-          "fullPath": "/api/crm/collections/export",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 263
-        },
-        {
-          "service": "crm",
-          "method": "GET",
-          "url": "/reports/receivable-aging/export",
-          "fullPath": "/api/crm/reports/receivable-aging/export",
-          "file": "apps/web/src/api/crmFinance/index.ts",
-          "line": 277
-        },
-        {
-          "service": "doc",
-          "method": "GET",
-          "url": "/documents/{id}",
-          "fullPath": "/api/core/doc/documents/{id}",
-          "file": "apps/web/src/api/doc/index.ts",
-          "line": 86
-        },
-        {
-          "service": "doc",
-          "method": "DELETE",
-          "url": "/documents/{id}",
-          "fullPath": "/api/core/doc/documents/{id}",
-          "file": "apps/web/src/api/doc/index.ts",
-          "line": 107
-        },
-        {
-          "service": "doc",
-          "method": "GET",
-          "url": "/folders/{id}",
-          "fullPath": "/api/core/doc/folders/{id}",
-          "file": "apps/web/src/api/doc/index.ts",
-          "line": 120
-        },
-        {
-          "service": "doc",
-          "method": "PUT",
-          "url": "/folders/{id}",
-          "fullPath": "/api/core/doc/folders/{id}",
-          "file": "apps/web/src/api/doc/index.ts",
-          "line": 124
-        },
-        {
-          "service": "doc",
-          "method": "DELETE",
-          "url": "/folders/{id}",
-          "fullPath": "/api/core/doc/folders/{id}",
-          "file": "apps/web/src/api/doc/index.ts",
-          "line": 128
-        },
-        {
-          "service": "doc",
-          "method": "GET",
-          "url": "/documents/{fileId}/versions",
-          "fullPath": "/api/core/doc/documents/{fileId}/versions",
-          "file": "apps/web/src/api/doc/index.ts",
-          "line": 132
-        },
-        {
-          "service": "doc",
-          "method": "GET",
-          "url": "/documents/{fileId}/versions/{version}",
-          "fullPath": "/api/core/doc/documents/{fileId}/versions/{version}",
-          "file": "apps/web/src/api/doc/index.ts",
-          "line": 136
-        },
-        {
-          "service": "doc",
-          "method": "POST",
-          "url": "/documents/{fileId}/versions/{version}/restore",
-          "fullPath": "/api/core/doc/documents/{fileId}/versions/{version}/restore",
-          "file": "apps/web/src/api/doc/index.ts",
-          "line": 140
-        },
-        {
-          "service": "doc",
-          "method": "GET",
-          "url": "/health",
-          "fullPath": "/api/core/doc/health",
-          "file": "apps/web/src/api/doc/index.ts",
-          "line": 144
-        }
-      ]
+      "count": 0,
+      "byService": {},
+      "sample": []
     },
     "RC4b_admin_system": {
-      "count": 218,
+      "count": 166,
       "byService": {
-        "core": 46,
+        "core": 18,
         "erp": 18,
         "automation": 30,
         "iam": 53,
         "migration": 3,
-        "monitor": 68
+        "monitor": 44
       },
       "sample": [
         {
@@ -322,194 +68,194 @@
         {
           "service": "core",
           "method": "GET",
-          "url": "/monitor/alerts?{queryParams.toString()}",
-          "fullPath": "/api/core/monitor/alerts",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 165
-        },
-        {
-          "service": "core",
-          "method": "GET",
-          "url": "/monitor/alerts/{id}",
-          "fullPath": "/api/core/monitor/alerts/{id}",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 169
-        },
-        {
-          "service": "core",
-          "method": "POST",
-          "url": "/monitor/alerts/acknowledge",
-          "fullPath": "/api/core/monitor/alerts/acknowledge",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 173
-        },
-        {
-          "service": "core",
-          "method": "POST",
-          "url": "/monitor/alerts/resolve",
-          "fullPath": "/api/core/monitor/alerts/resolve",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 180
-        },
-        {
-          "service": "core",
-          "method": "POST",
-          "url": "/monitor/alerts/{id}/escalate",
-          "fullPath": "/api/core/monitor/alerts/{id}/escalate",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 190
-        },
-        {
-          "service": "core",
-          "method": "POST",
-          "url": "/monitor/alerts/{id}/dismiss",
-          "fullPath": "/api/core/monitor/alerts/{id}/dismiss",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 194
-        },
-        {
-          "service": "core",
-          "method": "GET",
-          "url": "/monitor/alerts/statistics?{queryParams.toString()}",
-          "fullPath": "/api/core/monitor/alerts/statistics",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 205
-        },
-        {
-          "service": "core",
-          "method": "GET",
-          "url": "/monitor/alerts/export?{queryParams.toString()}",
-          "fullPath": "/api/core/monitor/alerts/export",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 218
-        },
-        {
-          "service": "core",
-          "method": "GET",
-          "url": "/monitor/rules?{queryParams.toString()}",
-          "fullPath": "/api/core/monitor/rules",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 240
-        },
-        {
-          "service": "core",
-          "method": "GET",
-          "url": "/monitor/rules/{id}",
-          "fullPath": "/api/core/monitor/rules/{id}",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 244
-        },
-        {
-          "service": "core",
-          "method": "POST",
-          "url": "/monitor/rules",
-          "fullPath": "/api/core/monitor/rules",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 248
+          "url": "/system/settings/smtp",
+          "fullPath": "/api/core/system/settings/smtp",
+          "file": "apps/web/src/api/admin/smtpSettings.ts",
+          "line": 23
         },
         {
           "service": "core",
           "method": "PUT",
-          "url": "/monitor/rules/{id}",
-          "fullPath": "/api/core/monitor/rules/{id}",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 255
+          "url": "/system/settings/smtp",
+          "fullPath": "/api/core/system/settings/smtp",
+          "file": "apps/web/src/api/admin/smtpSettings.ts",
+          "line": 27
         },
         {
-          "service": "core",
+          "service": "erp",
+          "method": "GET",
+          "url": "/system/settings?{queryParams.toString()}",
+          "fullPath": "/api/erp/system/settings",
+          "file": "apps/web/src/api/admin/systemSetting.ts",
+          "line": 13
+        },
+        {
+          "service": "erp",
+          "method": "GET",
+          "url": "/system/settings/{key}",
+          "fullPath": "/api/erp/system/settings/{key}",
+          "file": "apps/web/src/api/admin/systemSetting.ts",
+          "line": 17
+        },
+        {
+          "service": "erp",
+          "method": "POST",
+          "url": "/system/settings",
+          "fullPath": "/api/erp/system/settings",
+          "file": "apps/web/src/api/admin/systemSetting.ts",
+          "line": 26
+        },
+        {
+          "service": "erp",
+          "method": "PUT",
+          "url": "/system/settings/{key}",
+          "fullPath": "/api/erp/system/settings/{key}",
+          "file": "apps/web/src/api/admin/systemSetting.ts",
+          "line": 37
+        },
+        {
+          "service": "erp",
           "method": "DELETE",
-          "url": "/monitor/rules/{id}",
-          "fullPath": "/api/core/monitor/rules/{id}",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 259
+          "url": "/system/settings/{key}",
+          "fullPath": "/api/erp/system/settings/{key}",
+          "file": "apps/web/src/api/admin/systemSetting.ts",
+          "line": 41
         },
         {
-          "service": "core",
+          "service": "erp",
+          "method": "PUT",
+          "url": "/system/settings/batch",
+          "fullPath": "/api/erp/system/settings/batch",
+          "file": "apps/web/src/api/admin/systemSetting.ts",
+          "line": 47
+        },
+        {
+          "service": "erp",
+          "method": "GET",
+          "url": "/system/config",
+          "fullPath": "/api/erp/system/config",
+          "file": "apps/web/src/api/admin/systemSetting.ts",
+          "line": 51
+        },
+        {
+          "service": "erp",
+          "method": "PUT",
+          "url": "/system/config",
+          "fullPath": "/api/erp/system/config",
+          "file": "apps/web/src/api/admin/systemSetting.ts",
+          "line": 55
+        },
+        {
+          "service": "automation",
+          "method": "GET",
+          "url": "/dashboard/stats",
+          "fullPath": "/api/core/automation/dashboard/stats",
+          "file": "apps/web/src/api/automation/dashboard.ts",
+          "line": 9
+        },
+        {
+          "service": "automation",
+          "method": "GET",
+          "url": "/health",
+          "fullPath": "/api/core/automation/health",
+          "file": "apps/web/src/api/automation/dashboard.ts",
+          "line": 14
+        },
+        {
+          "service": "automation",
+          "method": "GET",
+          "url": "/designer/canvas/{encodeURIComponent(ruleId)}",
+          "fullPath": "/api/core/automation/designer/canvas/{encodeURIComponent(ruleId)}",
+          "file": "apps/web/src/api/automation/designer.ts",
+          "line": 13
+        },
+        {
+          "service": "automation",
+          "method": "PUT",
+          "url": "/designer/canvas/{encodeURIComponent(ruleId)}",
+          "fullPath": "/api/core/automation/designer/canvas/{encodeURIComponent(ruleId)}",
+          "file": "apps/web/src/api/automation/designer.ts",
+          "line": 23
+        },
+        {
+          "service": "automation",
+          "method": "GET",
+          "url": "/designer/resources",
+          "fullPath": "/api/core/automation/designer/resources",
+          "file": "apps/web/src/api/automation/designer.ts",
+          "line": 47
+        },
+        {
+          "service": "automation",
           "method": "POST",
-          "url": "/monitor/rules/{id}/enable",
-          "fullPath": "/api/core/monitor/rules/{id}/enable",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 263
+          "url": "/designer/canvas/{encodeURIComponent(ruleId)}/sync-to-rule",
+          "fullPath": "/api/core/automation/designer/canvas/{encodeURIComponent(ruleId)}/sync-to-rule",
+          "file": "apps/web/src/api/automation/designer.ts",
+          "line": 54
         },
         {
-          "service": "core",
+          "service": "automation",
           "method": "POST",
-          "url": "/monitor/rules/{id}/disable",
-          "fullPath": "/api/core/monitor/rules/{id}/disable",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 267
+          "url": "/designer/canvas/{encodeURIComponent(ruleId)}/sync-from-rule",
+          "fullPath": "/api/core/automation/designer/canvas/{encodeURIComponent(ruleId)}/sync-from-rule",
+          "file": "apps/web/src/api/automation/designer.ts",
+          "line": 61
         },
         {
-          "service": "core",
+          "service": "automation",
           "method": "GET",
-          "url": "/monitor/health",
-          "fullPath": "/api/core/monitor/health",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 271
+          "url": "/rules",
+          "fullPath": "/api/core/automation/rules",
+          "file": "apps/web/src/api/automation/rules.ts",
+          "line": 22
         },
         {
-          "service": "core",
+          "service": "automation",
           "method": "GET",
-          "url": "/monitor/metrics?{queryParams.toString()}",
-          "fullPath": "/api/core/monitor/metrics",
-          "file": "apps/web/src/api/admin/monitoring.ts",
-          "line": 282
+          "url": "/rules/{id}",
+          "fullPath": "/api/core/automation/rules/{id}",
+          "file": "apps/web/src/api/automation/rules.ts",
+          "line": 28
         },
         {
-          "service": "core",
+          "service": "automation",
           "method": "GET",
-          "url": "/audit/operations",
-          "fullPath": "/api/core/audit/operations",
-          "file": "apps/web/src/api/admin/operationAudit.ts",
-          "line": 77
+          "url": "/rules/by-code/{encodeURIComponent(code)}",
+          "fullPath": "/api/core/automation/rules/by-code/{encodeURIComponent(code)}",
+          "file": "apps/web/src/api/automation/rules.ts",
+          "line": 32
         },
         {
-          "service": "core",
-          "method": "GET",
-          "url": "/audit/operations/{id}",
-          "fullPath": "/api/core/audit/operations/{id}",
-          "file": "apps/web/src/api/admin/operationAudit.ts",
-          "line": 83
+          "service": "automation",
+          "method": "POST",
+          "url": "/rules",
+          "fullPath": "/api/core/automation/rules",
+          "file": "apps/web/src/api/automation/rules.ts",
+          "line": 36
         },
         {
-          "service": "core",
-          "method": "GET",
-          "url": "/audit/operations/stats",
-          "fullPath": "/api/core/audit/operations/stats",
-          "file": "apps/web/src/api/admin/operationAudit.ts",
-          "line": 87
+          "service": "automation",
+          "method": "PUT",
+          "url": "/rules/{id}",
+          "fullPath": "/api/core/automation/rules/{id}",
+          "file": "apps/web/src/api/automation/rules.ts",
+          "line": 43
         },
         {
-          "service": "core",
-          "method": "GET",
-          "url": "/audit/permission-changes?{queryParams.toString()}",
-          "fullPath": "/api/core/audit/permission-changes",
-          "file": "apps/web/src/api/admin/permissionAudit.ts",
-          "line": 148
+          "service": "automation",
+          "method": "DELETE",
+          "url": "/rules/{id}",
+          "fullPath": "/api/core/automation/rules/{id}",
+          "file": "apps/web/src/api/automation/rules.ts",
+          "line": 47
         },
         {
-          "service": "core",
-          "method": "GET",
-          "url": "/audit/permission-changes/{id}",
-          "fullPath": "/api/core/audit/permission-changes/{id}",
-          "file": "apps/web/src/api/admin/permissionAudit.ts",
-          "line": 154
-        },
-        {
-          "service": "core",
-          "method": "GET",
-          "url": "/audit/permission-changes/stats?{queryParams.toString()}",
-          "fullPath": "/api/core/audit/permission-changes/stats",
-          "file": "apps/web/src/api/admin/permissionAudit.ts",
-          "line": 165
-        },
-        {
-          "service": "core",
-          "method": "GET",
-          "url": "/audit/permission-changes/export?{queryParams.toString()}",
-          "fullPath": "/api/core/audit/permission-changes/export",
-          "file": "apps/web/src/api/admin/permissionAudit.ts",
-          "line": 183
+          "service": "automation",
+          "method": "POST",
+          "url": "/rules/{id}/enable",
+          "fullPath": "/api/core/automation/rules/{id}/enable",
+          "file": "apps/web/src/api/automation/rules.ts",
+          "line": 51
         }
       ]
     },

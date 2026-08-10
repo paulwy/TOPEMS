@@ -78,6 +78,9 @@ pub struct MobileTask {
         crate::services::mobile_compat::compat_get_api_mobile_mobile_offline_sync_status,
         crate::services::mobile_compat::compat_post_api_mobile_mobile_offline_sync,
         crate::services::mobile_compat::compat_get_api_mobile_health,
+        // === mobile_compat supplement (OpenAPI-only) ===
+        crate::services::mobile_compat::compat_get_api_mobile_mobile_push_config,
+        crate::services::mobile_compat::compat_put_api_mobile_mobile_push_config,
     ),
     components(schemas(PatrolRecord, ScanRecord, MobileTask)),
     tags(

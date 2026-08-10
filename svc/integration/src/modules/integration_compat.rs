@@ -535,3 +535,163 @@ pub async fn compat_get_api_integration_external_erp_sync_logs_logid() {}
     responses((status = 200, description = "Integration compatibility endpoint"))
 )]
 pub async fn compat_get_api_integration_external_erp_connections_configid_sync_statistics() {}
+#[utoipa::path(
+    get,
+    path = "/api/integration/erp/connections",
+    tag = "Integration-Compat",
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_get_api_integration_erp_connections() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/integration/erp/connections/{id}",
+    tag = "Integration-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_get_api_integration_erp_connections_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/integration/erp/connections",
+    tag = "Integration-Compat",
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_post_api_integration_erp_connections() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/integration/erp/connections/{id}",
+    tag = "Integration-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_put_api_integration_erp_connections_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/integration/erp/connections/{id}",
+    tag = "Integration-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_delete_api_integration_erp_connections_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/integration/conversion-rules",
+    tag = "Integration-Compat",
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_get_api_integration_conversion_rules() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/integration/conversion-rules/{id}",
+    tag = "Integration-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_get_api_integration_conversion_rules_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/integration/conversion-rules",
+    tag = "Integration-Compat",
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_post_api_integration_conversion_rules() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/integration/conversion-rules/{id}",
+    tag = "Integration-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_put_api_integration_conversion_rules_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/integration/conversion-rules/{id}",
+    tag = "Integration-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_delete_api_integration_conversion_rules_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/integration/health",
+    tag = "Integration-Compat",
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_get_api_integration_health() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/integration/endpoints",
+    tag = "Integration-Compat",
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_get_api_integration_endpoints() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/integration/erp/mappings",
+    tag = "Integration-Compat",
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_get_api_integration_erp_mappings() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/integration/erp/mappings/{id}",
+    tag = "Integration-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_get_api_integration_erp_mappings_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/integration/erp/mappings",
+    tag = "Integration-Compat",
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_post_api_integration_erp_mappings() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/integration/erp/mappings/{id}",
+    tag = "Integration-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_put_api_integration_erp_mappings_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/integration/erp/mappings/{id}",
+    tag = "Integration-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_delete_api_integration_erp_mappings_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/integration/sync-stats",
+    tag = "Integration-Compat",
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_get_api_integration_sync_stats() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/integration/sync-stats/history",
+    tag = "Integration-Compat",
+    responses((status = 200, description = "Integration compatibility endpoint"))
+)]
+pub async fn compat_get_api_integration_sync_stats_history() {}

@@ -8,9 +8,9 @@
 //! 的注解保留在各自模块中。
 
 use crate::modules::{
-    bom, change_notice, configuration, dashboard, document, document_version, material, pdm_plugin, product, project,
-    production_batch, production_formula, production_process, production_statistics, production_step,
-    version, workflow,
+    bom, change_notice, configuration, dashboard, document, document_version, material, pdm_plugin,
+    product, production_batch, production_formula, production_process, production_statistics,
+    production_step, project, version, workflow,
 };
 use utoipa::OpenApi;
 

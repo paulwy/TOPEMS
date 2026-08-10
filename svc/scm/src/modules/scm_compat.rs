@@ -905,3 +905,100 @@ pub async fn compat_post_sync_srm_synctype() {}
     responses((status = 200, description = "SCM compatibility endpoint"))
 )]
 pub async fn compat_post_sync_wms_synctype() {}
+
+// ===== SCM-Compat: missing purchase-orders & suppliers endpoints (path prefix mismatch) =====
+
+#[utoipa::path(
+    get,
+    path = "/api/scm/purchase-orders",
+    tag = "SCM-Compat",
+    responses((status = 200, description = "SCM compatibility endpoint"))
+)]
+pub async fn compat_get_api_scm_purchase_orders() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/scm/purchase-orders",
+    tag = "SCM-Compat",
+    responses((status = 200, description = "SCM compatibility endpoint"))
+)]
+pub async fn compat_post_api_scm_purchase_orders() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/scm/purchase-orders/{id}",
+    tag = "SCM-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "SCM compatibility endpoint"))
+)]
+pub async fn compat_get_api_scm_purchase_orders_id() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/scm/purchase-orders/{id}",
+    tag = "SCM-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "SCM compatibility endpoint"))
+)]
+pub async fn compat_put_api_scm_purchase_orders_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/scm/purchase-orders/{id}",
+    tag = "SCM-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "SCM compatibility endpoint"))
+)]
+pub async fn compat_delete_api_scm_purchase_orders_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/scm/purchase-orders/{id}/approve",
+    tag = "SCM-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "SCM compatibility endpoint"))
+)]
+pub async fn compat_post_api_scm_purchase_orders_id_approve() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/scm/suppliers",
+    tag = "SCM-Compat",
+    responses((status = 200, description = "SCM compatibility endpoint"))
+)]
+pub async fn compat_get_api_scm_suppliers() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/scm/suppliers",
+    tag = "SCM-Compat",
+    responses((status = 200, description = "SCM compatibility endpoint"))
+)]
+pub async fn compat_post_api_scm_suppliers() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/scm/suppliers/{id}",
+    tag = "SCM-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "SCM compatibility endpoint"))
+)]
+pub async fn compat_get_api_scm_suppliers_id() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/scm/suppliers/{id}",
+    tag = "SCM-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "SCM compatibility endpoint"))
+)]
+pub async fn compat_put_api_scm_suppliers_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/scm/suppliers/{id}",
+    tag = "SCM-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "SCM compatibility endpoint"))
+)]
+pub async fn compat_delete_api_scm_suppliers_id() {}

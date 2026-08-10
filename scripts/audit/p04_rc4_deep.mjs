@@ -170,16 +170,19 @@ function findTemplateExpressionEnd(text, startIndex) {
   return -1;
 }
 
-function templateExpressionToPath(rawExpression) {
+function templateExpressionToPath(rawExpression, constMap) {
   const expression = rawExpression.trim();
   const leadingIdentifier = expression.match(/^([A-Za-z_$][\w$]*)\b/)?.[1];
   if (NON_PATH_VARS.has(expression) || NON_PATH_VARS.has(leadingIdentifier)) {
     return '';
   }
+  if (constMap && constMap.has(expression)) {
+    return constMap.get(expression);
+  }
   return `{${expression}}`;
 }
 
-function templateToPath(urlStr) {
+function templateToPath(urlStr, constMap) {
   let output = '';
   for (let i = 0; i < urlStr.length; i++) {
     if (urlStr[i] === '$' && urlStr[i + 1] === '{') {
@@ -188,7 +191,7 @@ function templateToPath(urlStr) {
         output += urlStr.slice(i);
         break;
       }
-      output += templateExpressionToPath(urlStr.slice(i + 2, end));
+      output += templateExpressionToPath(urlStr.slice(i + 2, end), constMap);
       i = end;
       continue;
     }
@@ -197,13 +200,13 @@ function templateToPath(urlStr) {
   return output;
 }
 
-function extractUrlArg(text, startIndex) {
+function extractUrlArg(text, startIndex, constMap) {
   let i = startIndex;
   while (i < text.length && /\s/.test(text[i])) i++;
   if (text[i] === '`') {
     const end = findTemplateLiteralEnd(text, i);
     if (end === -1) return null;
-    return templateToPath(text.slice(i + 1, end));
+    return templateToPath(text.slice(i + 1, end), constMap);
   } else if (text[i] === "'" || text[i] === '"') {
     const quote = text[i];
     let end = i + 1;
@@ -227,13 +230,19 @@ function parseFrontendApiFiles(files) {
   for (const file of files) {
     const content = readFileSync(file, 'utf-8');
     const relFile = relative(ROOT, file);
+    const constMap = new Map();
+    const constRegex = /const\s+([A-Za-z_$][\w$]*)\s*=\s*['"`]([^'"`]+)['"`]/g;
+    let constMatch;
+    while ((constMatch = constRegex.exec(content)) !== null) {
+      constMap.set(constMatch[1], constMatch[2]);
+    }
     const regex = /apiClient\.(\w+)\.(get|post|put|patch|delete)\s*(?:<[^>]*>)?\s*\(/g;
     let match;
     while ((match = regex.exec(content)) !== null) {
       const service = match[1];
       const method = match[2].toUpperCase();
       const urlStart = match.index + match[0].length;
-      const url = extractUrlArg(content, urlStart);
+      const url = extractUrlArg(content, urlStart, constMap);
       if (url === null) continue;
       const prefix = SERVICE_PREFIXES[service];
       if (!prefix) {

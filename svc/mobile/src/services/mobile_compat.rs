@@ -211,3 +211,19 @@ pub async fn compat_post_api_mobile_mobile_offline_sync() {}
     responses((status = 200, description = "Mobile compatibility endpoint"))
 )]
 pub async fn compat_get_api_mobile_health() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/mobile/mobile/push/config",
+    tag = "Mobile-Compat",
+    responses((status = 200, description = "Mobile compatibility endpoint"))
+)]
+pub async fn compat_get_api_mobile_mobile_push_config() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/mobile/mobile/push/config",
+    tag = "Mobile-Compat",
+    responses((status = 200, description = "Mobile compatibility endpoint"))
+)]
+pub async fn compat_put_api_mobile_mobile_push_config() {}

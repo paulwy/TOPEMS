@@ -83,13 +83,12 @@ pub async fn get_dashboard(
     .await
     .unwrap_or(0);
 
-    let total_boms = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM pdm_boms WHERE tenant_id = $1",
-    )
-    .bind(tenant_id)
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or(0);
+    let total_boms =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm_boms WHERE tenant_id = $1")
+            .bind(tenant_id)
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(0);
 
     let document_types = fetch_named_counts(
         &state,

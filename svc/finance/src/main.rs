@@ -268,7 +268,7 @@ mod openapi_extract_tests {
 
     #[test]
     fn extract_openapi_spec() {
-        let spec = ApiDoc::openapi();
+        let spec = topems_finance::ApiDoc::openapi();
         let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
         std::fs::write("/tmp/topems-finance-openapi.json", json).expect("Failed to write spec");
         tracing::info!("OpenAPI spec written to /tmp/topems-finance-openapi.json");

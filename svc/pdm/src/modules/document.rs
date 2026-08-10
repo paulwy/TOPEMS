@@ -38,7 +38,10 @@ pub fn create_routes() -> Router<AppState> {
                 .put(update_document)
                 .delete(delete_document),
         )
-        .route("/documents/{id}/status", axum::routing::put(update_document_status))
+        .route(
+            "/documents/{id}/status",
+            axum::routing::put(update_document_status),
+        )
         .route("/documents/{id}/approve", post(start_document_approval))
         .route(
             "/documents/{id}/approval-history",

@@ -29,14 +29,26 @@ pub fn create_routes() -> Router<AppState> {
             "/projects/{id}",
             get(get_project).put(update_project).delete(delete_project),
         )
-        .route("/projects/{id}/status", axum::routing::put(update_project_status))
-        .route("/projects/{id}/phase", axum::routing::put(update_project_phase))
-        .route("/projects/{projectId}/members", get(list_members).post(add_member))
+        .route(
+            "/projects/{id}/status",
+            axum::routing::put(update_project_status),
+        )
+        .route(
+            "/projects/{id}/phase",
+            axum::routing::put(update_project_phase),
+        )
+        .route(
+            "/projects/{projectId}/members",
+            get(list_members).post(add_member),
+        )
         .route(
             "/projects/{projectId}/members/{userId}",
             axum::routing::put(update_member).delete(remove_member),
         )
-        .route("/projects/{projectId}/phases", get(list_phases).post(create_phase))
+        .route(
+            "/projects/{projectId}/phases",
+            get(list_phases).post(create_phase),
+        )
         .route(
             "/projects/{projectId}/phases/{phaseId}",
             axum::routing::put(update_phase).delete(delete_phase),

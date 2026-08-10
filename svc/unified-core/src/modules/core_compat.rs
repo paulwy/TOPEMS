@@ -877,3 +877,826 @@ pub async fn compat_get_api_communication_notification_notifications_health_deta
     responses((status = 200, description = "Notification compatibility endpoint"))
 )]
 pub async fn compat_put_api_communication_notification_notifications_id_unread() {}
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/documents/{fileId}/versions",
+    tag = "Doc-Compat",
+    params(("fileId" = String, Path, description = "fileId")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_doc_documents_fileid_versions() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/documents/{fileId}/versions/{version}",
+    tag = "Doc-Compat",
+    params(
+        ("fileId" = String, Path, description = "fileId"),
+        ("version" = String, Path, description = "version"),
+    ),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_doc_documents_fileid_versions_version() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/doc/documents/{fileId}/versions/{version}/restore",
+    tag = "Doc-Compat",
+    params(
+        ("fileId" = String, Path, description = "fileId"),
+        ("version" = String, Path, description = "version"),
+    ),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_doc_documents_fileid_versions_version_restore() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/health",
+    tag = "Doc-Compat",
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_doc_health() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/doc/templates/{id}/render",
+    tag = "Doc-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_doc_templates_id_render() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/doc/templates/{id}/duplicate",
+    tag = "Doc-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_doc_templates_id_duplicate() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/core/doc/templates/{id}/toggle-status",
+    tag = "Doc-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_put_api_core_doc_templates_id_toggle_status() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/communication/mail/emails/{id}",
+    tag = "Mail-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_get_api_communication_mail_emails_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/communication/mail/emails/send-with-template",
+    tag = "Mail-Compat",
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_post_api_communication_mail_emails_send_with_template() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/communication/mail/emails/{id}",
+    tag = "Mail-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_delete_api_communication_mail_emails_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/communication/mail/emails/resend",
+    tag = "Mail-Compat",
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_post_api_communication_mail_emails_resend() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/communication/mail/emails/stats",
+    tag = "Mail-Compat",
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_get_api_communication_mail_emails_stats() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/communication/mail/templates",
+    tag = "Mail-Compat",
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_get_api_communication_mail_templates() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/communication/mail/templates/{id}",
+    tag = "Mail-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_get_api_communication_mail_templates_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/communication/mail/templates",
+    tag = "Mail-Compat",
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_post_api_communication_mail_templates() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/communication/mail/templates/{id}",
+    tag = "Mail-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_put_api_communication_mail_templates_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/communication/mail/templates/{id}",
+    tag = "Mail-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_delete_api_communication_mail_templates_id() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/communication/mail/templates/{id}/status",
+    tag = "Mail-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_put_api_communication_mail_templates_id_status() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/communication/mail/templates/render",
+    tag = "Mail-Compat",
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_post_api_communication_mail_templates_render() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/communication/mail/health",
+    tag = "Mail-Compat",
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_get_api_communication_mail_health() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/core/file/files/{id}/permissions/revoke/{principal_type}/{principal_id}/{permission}",
+    tag = "File-Compat",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("principal_type" = String, Path, description = "principal_type"),
+        ("principal_id" = String, Path, description = "principal_id"),
+        ("permission" = String, Path, description = "permission"),
+    ),
+    responses((status = 200, description = "File compatibility endpoint"))
+)]
+pub async fn compat_delete_api_core_file_files_id_permissions_revoke_principal_type_principal_id_permission(
+) {
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/file/files/stats",
+    tag = "File-Compat",
+    responses((status = 200, description = "File compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_file_files_stats() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/file/health",
+    tag = "File-Compat",
+    responses((status = 200, description = "File compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_file_health() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/file/attachments",
+    tag = "File-Compat",
+    responses((status = 200, description = "File compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_file_attachments() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/file/attachments/{id}",
+    tag = "File-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "File compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_file_attachments_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/core/file/attachments/{id}",
+    tag = "File-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "File compatibility endpoint"))
+)]
+pub async fn compat_delete_api_core_file_attachments_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/file/attachments/{id}/download",
+    tag = "File-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "File compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_file_attachments_id_download() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/monitor/alerts",
+    tag = "Monitor-Compat",
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_monitor_alerts() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/monitor/alerts/{id}",
+    tag = "Monitor-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_monitor_alerts_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/monitor/alerts/acknowledge",
+    tag = "Monitor-Compat",
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_monitor_alerts_acknowledge() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/monitor/alerts/resolve",
+    tag = "Monitor-Compat",
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_monitor_alerts_resolve() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/monitor/alerts/{id}/escalate",
+    tag = "Monitor-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_monitor_alerts_id_escalate() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/monitor/alerts/{id}/dismiss",
+    tag = "Monitor-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_monitor_alerts_id_dismiss() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/monitor/alerts/statistics",
+    tag = "Monitor-Compat",
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_monitor_alerts_statistics() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/monitor/alerts/export",
+    tag = "Monitor-Compat",
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_monitor_alerts_export() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/monitor/rules",
+    tag = "Monitor-Compat",
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_monitor_rules() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/monitor/rules/{id}",
+    tag = "Monitor-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_monitor_rules_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/monitor/rules",
+    tag = "Monitor-Compat",
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_monitor_rules() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/core/monitor/rules/{id}",
+    tag = "Monitor-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_put_api_core_monitor_rules_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/core/monitor/rules/{id}",
+    tag = "Monitor-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_delete_api_core_monitor_rules_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/monitor/rules/{id}/enable",
+    tag = "Monitor-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_monitor_rules_id_enable() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/monitor/rules/{id}/disable",
+    tag = "Monitor-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_monitor_rules_id_disable() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/monitor/health",
+    tag = "Monitor-Compat",
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_monitor_health() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/monitor/metrics",
+    tag = "Monitor-Compat",
+    responses((status = 200, description = "Monitor compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_monitor_metrics() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/audit/operations",
+    tag = "Audit-Compat",
+    responses((status = 200, description = "Audit compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_audit_operations() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/audit/operations/{id}",
+    tag = "Audit-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Audit compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_audit_operations_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/audit/operations/stats",
+    tag = "Audit-Compat",
+    responses((status = 200, description = "Audit compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_audit_operations_stats() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/audit/permission-changes",
+    tag = "Audit-Compat",
+    responses((status = 200, description = "Audit compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_audit_permission_changes() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/audit/permission-changes/{id}",
+    tag = "Audit-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Audit compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_audit_permission_changes_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/audit/permission-changes/stats",
+    tag = "Audit-Compat",
+    responses((status = 200, description = "Audit compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_audit_permission_changes_stats() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/audit/permission-changes/export",
+    tag = "Audit-Compat",
+    responses((status = 200, description = "Audit compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_audit_permission_changes_export() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/audit/access-logs",
+    tag = "Audit-Compat",
+    responses((status = 200, description = "Audit compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_audit_access_logs() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/audit/access-logs/{id}",
+    tag = "Audit-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Audit compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_audit_access_logs_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/audit/access-logs/stats",
+    tag = "Audit-Compat",
+    responses((status = 200, description = "Audit compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_audit_access_logs_stats() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/audit/access-logs/export",
+    tag = "Audit-Compat",
+    responses((status = 200, description = "Audit compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_audit_access_logs_export() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/tenant/list",
+    tag = "Tenant-Compat",
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_tenant_list() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/tenant/{tenantId}",
+    tag = "Tenant-Compat",
+    params(("tenantId" = String, Path, description = "tenantId")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_tenant_tenantid() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/tenant/slug/{slug}",
+    tag = "Tenant-Compat",
+    params(("slug" = String, Path, description = "slug")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_tenant_slug_slug() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/tenant/create",
+    tag = "Tenant-Compat",
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_tenant_create() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/core/tenant/{tenantId}",
+    tag = "Tenant-Compat",
+    params(("tenantId" = String, Path, description = "tenantId")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_put_api_core_tenant_tenantid() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/core/tenant/{tenantId}",
+    tag = "Tenant-Compat",
+    params(("tenantId" = String, Path, description = "tenantId")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_delete_api_core_tenant_tenantid() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/tenant/{tenantId}/activate",
+    tag = "Tenant-Compat",
+    params(("tenantId" = String, Path, description = "tenantId")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_tenant_tenantid_activate() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/tenant/{tenantId}/suspend",
+    tag = "Tenant-Compat",
+    params(("tenantId" = String, Path, description = "tenantId")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_tenant_tenantid_suspend() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/tenant/{tenantId}/users",
+    tag = "Tenant-Compat",
+    params(("tenantId" = String, Path, description = "tenantId")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_tenant_tenantid_users() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/tenant/{tenantId}/users/invite",
+    tag = "Tenant-Compat",
+    params(("tenantId" = String, Path, description = "tenantId")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_tenant_tenantid_users_invite() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/core/tenant/{tenantId}/users/{userId}",
+    tag = "Tenant-Compat",
+    params(
+        ("tenantId" = String, Path, description = "tenantId"),
+        ("userId" = String, Path, description = "userId"),
+    ),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_delete_api_core_tenant_tenantid_users_userid() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/core/tenant/{tenantId}/users/{userId}/role",
+    tag = "Tenant-Compat",
+    params(
+        ("tenantId" = String, Path, description = "tenantId"),
+        ("userId" = String, Path, description = "userId"),
+    ),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_put_api_core_tenant_tenantid_users_userid_role() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/tenant/{tenantId}/stats",
+    tag = "Tenant-Compat",
+    params(("tenantId" = String, Path, description = "tenantId")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_tenant_tenantid_stats() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/tenant/{tenantId}/usage",
+    tag = "Tenant-Compat",
+    params(("tenantId" = String, Path, description = "tenantId")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_tenant_tenantid_usage() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/tenant/{tenantId}/billing",
+    tag = "Tenant-Compat",
+    params(("tenantId" = String, Path, description = "tenantId")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_tenant_tenantid_billing() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/tenant/{tenantId}/invoices",
+    tag = "Tenant-Compat",
+    params(("tenantId" = String, Path, description = "tenantId")),
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_tenant_tenantid_invoices() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/tenant/context",
+    tag = "Tenant-Compat",
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_tenant_context() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/tenant/my",
+    tag = "Tenant-Compat",
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_tenant_my() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/tenant/switch",
+    tag = "Tenant-Compat",
+    responses((status = 200, description = "Tenant compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_tenant_switch() {}
+
+// ===== Doc-Compat: parameter name mismatch ({id} vs {document_id}/{folder_id}/{template_id}) =====
+
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/documents/{id}",
+    tag = "Doc-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_doc_documents_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/documents/{id}",
+    tag = "Doc-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_delete_api_core_doc_documents_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/folders/{id}",
+    tag = "Doc-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_doc_folders_id() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/core/doc/folders/{id}",
+    tag = "Doc-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_put_api_core_doc_folders_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/folders/{id}",
+    tag = "Doc-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_delete_api_core_doc_folders_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/{id}",
+    tag = "Doc-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_doc_templates_id() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/core/doc/templates/{id}",
+    tag = "Doc-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_put_api_core_doc_templates_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/templates/{id}",
+    tag = "Doc-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Doc compatibility endpoint"))
+)]
+pub async fn compat_delete_api_core_doc_templates_id() {}
+
+// ===== Notification-Compat: missing notification endpoints =====
+
+#[utoipa::path(
+    get,
+    path = "/api/communication/notification/notifications",
+    tag = "Notification-Compat",
+    responses((status = 200, description = "Notification compatibility endpoint"))
+)]
+pub async fn compat_get_api_communication_notification_notifications() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/communication/notification/notifications",
+    tag = "Notification-Compat",
+    responses((status = 200, description = "Notification compatibility endpoint"))
+)]
+pub async fn compat_post_api_communication_notification_notifications() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/communication/notification/notifications/{id}",
+    tag = "Notification-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Notification compatibility endpoint"))
+)]
+pub async fn compat_put_api_communication_notification_notifications_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/communication/notification/notifications/{id}",
+    tag = "Notification-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Notification compatibility endpoint"))
+)]
+pub async fn compat_delete_api_communication_notification_notifications_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/communication/notification/notifications/archive/config",
+    tag = "Notification-Compat",
+    responses((status = 200, description = "Notification compatibility endpoint"))
+)]
+pub async fn compat_get_api_communication_notification_notifications_archive_config() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/communication/notification/notifications/archive/config",
+    tag = "Notification-Compat",
+    responses((status = 200, description = "Notification compatibility endpoint"))
+)]
+pub async fn compat_put_api_communication_notification_notifications_archive_config() {}
+
+// ===== IM-Compat: missing IM list/create room endpoints =====
+
+#[utoipa::path(
+    get,
+    path = "/api/communication/im/rooms",
+    tag = "IM-Compat",
+    responses((status = 200, description = "IM compatibility endpoint"))
+)]
+pub async fn compat_get_api_communication_im_rooms() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/communication/im/rooms",
+    tag = "IM-Compat",
+    responses((status = 200, description = "IM compatibility endpoint"))
+)]
+pub async fn compat_post_api_communication_im_rooms() {}
+
+// ===== Mail-Compat: missing mail send endpoint =====
+
+#[utoipa::path(
+    post,
+    path = "/api/communication/mail/emails",
+    tag = "Mail-Compat",
+    responses((status = 200, description = "Mail compatibility endpoint"))
+)]
+pub async fn compat_post_api_communication_mail_emails() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/communication/notification/notifications/{id}",
+    tag = "Notification-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Notification compatibility endpoint"))
+)]
+pub async fn compat_get_api_communication_notification_notifications_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/communication/im/rooms/{data.chat_id}/messages",
+    tag = "IM-Compat",
+    params(("data.chat_id" = String, Path, description = "data.chat_id")),
+    responses((status = 200, description = "IM compatibility endpoint"))
+)]
+pub async fn compat_post_api_communication_im_rooms_data_chat_id_messages() {}

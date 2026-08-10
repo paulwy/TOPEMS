@@ -9,12 +9,12 @@
 
 use utoipa::OpenApi;
 
-use super::models::{
-    CreateInstanceRequest, CreateWorkflowRequest, MonthlyData, StatisticsResponse, TaskActionRequest,
-    TaskBatchRequest, TaskBatchResult, TaskFailure, TaskStats, UpdateWorkflowRequest, Workflow,
-    WorkflowInstance, WorkflowStat, WorkflowTask,
-};
 use super::approval::{ApprovalTask, ApprovalTaskListResponse};
+use super::models::{
+    CreateInstanceRequest, CreateWorkflowRequest, MonthlyData, StatisticsResponse,
+    TaskActionRequest, TaskBatchRequest, TaskBatchResult, TaskFailure, TaskStats,
+    UpdateWorkflowRequest, Workflow, WorkflowInstance, WorkflowStat, WorkflowTask,
+};
 
 /// Flow OpenAPI 文档（仅 Flow 模块）
 #[derive(OpenApi)]
@@ -153,8 +153,7 @@ mod tests {
     fn extract_openapi_spec() {
         let spec = FlowApiDoc::openapi();
         let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
-        std::fs::write("/tmp/topems-flow-openapi.json", json)
-            .expect("Failed to write spec");
+        std::fs::write("/tmp/topems-flow-openapi.json", json).expect("Failed to write spec");
         tracing::info!("Flow OpenAPI spec written to /tmp/topems-flow-openapi.json");
     }
 }

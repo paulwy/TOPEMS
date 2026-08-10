@@ -697,3 +697,164 @@ pub async fn compat_put_api_crm_tags_id() {}
     responses((status = 200, description = "CRM compatibility endpoint"))
 )]
 pub async fn compat_get_api_crm_tags_id_customers() {}
+#[utoipa::path(
+    get,
+    path = "/api/crm/customers/{customerId}/finance",
+    tag = "CRM-Compat",
+    params(("customerId" = String, Path, description = "customerId")),
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_get_api_crm_customers_customerid_finance() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/crm/customers/{customerId}/finance",
+    tag = "CRM-Compat",
+    params(("customerId" = String, Path, description = "customerId")),
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_put_api_crm_customers_customerid_finance() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/crm/invoices/{invoiceId}",
+    tag = "CRM-Compat",
+    params(("invoiceId" = String, Path, description = "invoiceId")),
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_get_api_crm_invoices_invoiceid() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/crm/invoices",
+    tag = "CRM-Compat",
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_post_api_crm_invoices() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/crm/invoices/{invoiceId}",
+    tag = "CRM-Compat",
+    params(("invoiceId" = String, Path, description = "invoiceId")),
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_put_api_crm_invoices_invoiceid() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/crm/invoices/{invoiceId}",
+    tag = "CRM-Compat",
+    params(("invoiceId" = String, Path, description = "invoiceId")),
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_delete_api_crm_invoices_invoiceid() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/crm/invoices/{invoiceId}/issue",
+    tag = "CRM-Compat",
+    params(("invoiceId" = String, Path, description = "invoiceId")),
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_post_api_crm_invoices_invoiceid_issue() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/crm/invoices/{invoiceId}/cancel",
+    tag = "CRM-Compat",
+    params(("invoiceId" = String, Path, description = "invoiceId")),
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_post_api_crm_invoices_invoiceid_cancel() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/crm/invoices/{invoiceId}/red-flush",
+    tag = "CRM-Compat",
+    params(("invoiceId" = String, Path, description = "invoiceId")),
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_post_api_crm_invoices_invoiceid_red_flush() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/crm/collections/{recordId}",
+    tag = "CRM-Compat",
+    params(("recordId" = String, Path, description = "recordId")),
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_get_api_crm_collections_recordid() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/crm/collections",
+    tag = "CRM-Compat",
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_post_api_crm_collections() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/crm/collections/{recordId}/confirm",
+    tag = "CRM-Compat",
+    params(("recordId" = String, Path, description = "recordId")),
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_post_api_crm_collections_recordid_confirm() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/crm/collections/batch-confirm",
+    tag = "CRM-Compat",
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_post_api_crm_collections_batch_confirm() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/crm/reports/receivable-aging",
+    tag = "CRM-Compat",
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_get_api_crm_reports_receivable_aging() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/crm/reports/receivable-summary",
+    tag = "CRM-Compat",
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_get_api_crm_reports_receivable_summary() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/crm/reports/overdue-receivables",
+    tag = "CRM-Compat",
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_get_api_crm_reports_overdue_receivables() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/crm/invoices/export",
+    tag = "CRM-Compat",
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_get_api_crm_invoices_export() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/crm/collections/export",
+    tag = "CRM-Compat",
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_get_api_crm_collections_export() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/crm/reports/receivable-aging/export",
+    tag = "CRM-Compat",
+    responses((status = 200, description = "CRM compatibility endpoint"))
+)]
+pub async fn compat_get_api_crm_reports_receivable_aging_export() {}
