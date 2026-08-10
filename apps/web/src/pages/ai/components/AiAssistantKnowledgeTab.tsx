@@ -58,7 +58,9 @@ const KnowledgeResultView: React.FC<{ result: KnowledgeAskResponse }> = ({ resul
             )}
             {source.relevance !== undefined && (
               <Chip
-                label={t('ai.assistant.knowledge.relevance')}
+                label={t('ai.assistant.knowledge.relevance', {
+                  pct: (source.relevance * 100).toFixed(0),
+                })}
                 size='small'
                 sx={{ mt: 0.5 }}
               />

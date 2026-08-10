@@ -86,14 +86,14 @@ const FlowResultView: React.FC<{ result: FlowAssistantResponse }> = ({ result })
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {step.responsible && (
                 <Chip
-                  label={t('ai.assistant.flow.responsible')}
+                  label={t('ai.assistant.flow.responsible', { person: step.responsible })}
                   size='small'
                   variant='outlined'
                 />
               )}
               {step.estimated_time && (
                 <Chip
-                  label={t('ai.assistant.flow.estimated_time')}
+                  label={t('ai.assistant.flow.estimated_time', { time: step.estimated_time })}
                   size='small'
                   variant='outlined'
                 />
@@ -130,11 +130,11 @@ const AnomalyResultView: React.FC<{ result: AnomalyPredictResponse }> = ({ resul
   const getSeverityLabel = (severity: string) => {
     switch (severity) {
       case 'high':
-        return ` + ${t('ai.assistant.severity.high')} + `;
+        return t('ai.assistant.severity.high');
       case 'medium':
-        return " + t('ai.assistant.severity.medium') + ";
+        return t('ai.assistant.severity.medium');
       case 'low':
-        return ` + ${t('ai.assistant.severity.low')} + `;
+        return t('ai.assistant.severity.low');
       default:
         return severity;
     }
@@ -145,7 +145,7 @@ const AnomalyResultView: React.FC<{ result: AnomalyPredictResponse }> = ({ resul
         variant='h6'
         sx={{ mb: 1 }}
       >
-        {t('ai.assistant.anomaly.result_title')}
+        {t('ai.assistant.anomaly.result_title')}：{result.metric}
       </Typography>
       <Typography
         variant='body2'
