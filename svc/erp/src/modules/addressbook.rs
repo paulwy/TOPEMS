@@ -243,6 +243,14 @@ pub async fn fetch_entries_by_type(
     entries
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/addressbook",
+    responses(
+        (status = 200, description = "get_contacts OK")
+    ),
+    tag = "ERP/addressbook"
+)]
 pub async fn get_contacts(
     State(state): State<ApiState>,
     Query(params): Query<AddressbookQueryParams>,
@@ -286,6 +294,17 @@ pub async fn get_contacts(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/addressbook/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_contact_detail OK")
+    ),
+    tag = "ERP/addressbook"
+)]
 pub async fn get_contact_detail(
     State(state): State<ApiState>,
     Path(id): Path<String>,
@@ -387,6 +406,14 @@ pub struct ContactDetailParams {
     contact_type: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/addressbook/search",
+    responses(
+        (status = 200, description = "search_contacts OK")
+    ),
+    tag = "ERP/addressbook"
+)]
 pub async fn search_contacts(
     State(state): State<ApiState>,
     Query(params): Query<AddressbookSearchParams>,
@@ -415,6 +442,14 @@ pub async fn search_contacts(
     Json(ApiResponse::success(limited_entries, "搜索成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/addressbook/departments/tree",
+    responses(
+        (status = 200, description = "get_department_tree OK")
+    ),
+    tag = "ERP/addressbook"
+)]
 pub async fn get_department_tree(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<HrmDepartmentNode>>> {
@@ -434,6 +469,14 @@ pub async fn get_department_tree(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/addressbook/export",
+    responses(
+        (status = 200, description = "export_contacts OK")
+    ),
+    tag = "ERP/addressbook"
+)]
 pub async fn export_contacts(
     State(state): State<ApiState>,
     Query(params): Query<ExportParams>,

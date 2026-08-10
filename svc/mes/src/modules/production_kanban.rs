@@ -14,6 +14,7 @@ use topems_shared_auth::auth::Claims;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -26,7 +27,7 @@ pub fn create_routes() -> Router<AppState> {
 
 // ==================== Response Types ====================
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct KanbanSummary {
     pub total_orders: i64,
     pub in_progress_orders: i64,
@@ -36,7 +37,7 @@ pub struct KanbanSummary {
     pub oee: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct DashboardResponse {
     pub summary: KanbanSummary,
     pub order_progress: Vec<OrderProgressResponse>,
@@ -45,7 +46,7 @@ pub struct DashboardResponse {
     pub equipment_status: Vec<EquipmentStatusResponse>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct OrderProgressResponse {
     pub order_id: String,
     pub order_number: String,
@@ -56,7 +57,7 @@ pub struct OrderProgressResponse {
     pub status: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct WorkstationStatusResponse {
     pub work_station_id: String,
     pub work_station_name: String,
@@ -67,7 +68,7 @@ pub struct WorkstationStatusResponse {
     pub operator: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct QualityTrendResponse {
     pub date: String,
     pub pass_rate: f64,
@@ -75,7 +76,7 @@ pub struct QualityTrendResponse {
     pub good_quantity: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct EquipmentStatusResponse {
     pub equipment_id: String,
     pub equipment_name: String,
@@ -100,6 +101,15 @@ fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
 /// GET /api/mes/kanban/dashboard
 ///
 /// 看板总览：聚合返回 summary、订单进度、工位状态、质量趋势、设备状态。
+#[utoipa::path(
+    get,
+    path = "/api/mes/kanban/dashboard",
+    tag = "ProductionKanban",
+    responses(
+        (status = 200, description = "看板总览", body = ApiResponse<DashboardResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_dashboard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -445,6 +455,15 @@ pub async fn get_dashboard(
 /// GET /api/mes/kanban/order-progress
 ///
 /// 订单进度列表：progress = completed_quantity / quantity * 100
+#[utoipa::path(
+    get,
+    path = "/api/mes/kanban/order-progress",
+    tag = "ProductionKanban",
+    responses(
+        (status = 200, description = "订单进度", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_order_progress(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -501,6 +520,15 @@ pub async fn get_order_progress(
 /// GET /api/mes/kanban/workstation-status
 ///
 /// 工位状态：每台工位关联当前在制生产记录及当日产出。
+#[utoipa::path(
+    get,
+    path = "/api/mes/kanban/workstation-status",
+    tag = "ProductionKanban",
+    responses(
+        (status = 200, description = "工位状态", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_workstation_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -591,6 +619,15 @@ pub async fn get_workstation_status(
 /// GET /api/mes/kanban/quality-trend
 ///
 /// 质量趋势：按天聚合 quality_records，计算合格率与数量。
+#[utoipa::path(
+    get,
+    path = "/api/mes/kanban/quality-trend",
+    tag = "ProductionKanban",
+    responses(
+        (status = 200, description = "质量趋势", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_quality_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -662,6 +699,15 @@ pub async fn get_quality_trend(
 /// GET /api/mes/kanban/equipment-status
 ///
 /// 设备状态：每台设备关联最新 OEE 记录。
+#[utoipa::path(
+    get,
+    path = "/api/mes/kanban/equipment-status",
+    tag = "ProductionKanban",
+    responses(
+        (status = 200, description = "设备状态", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_equipment_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

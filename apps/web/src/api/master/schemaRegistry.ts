@@ -60,35 +60,31 @@ export interface ListDataQuery {
   search?: string;
 }
 
-// ============ Schema 管理 API ============
-
-const BASE_PATH = '/schema-registry';
-
 export const schemaRegistryApi = {
   // Schema CRUD
   createSchema: async (data: CreateSchemaRequest): Promise<ApiResponse<SchemaDefinition>> => {
-    return apiClient.master.post(`${BASE_PATH}/schemas`, data);
+    return apiClient.master.post('/schema-registry/schemas', data);
   },
 
   listSchemas: async (
     params?: ListSchemaQuery
   ): Promise<ApiResponse<PaginatedResponse<SchemaDefinition>>> => {
-    return apiClient.master.get(`${BASE_PATH}/schemas`, { params });
+    return apiClient.master.get('/schema-registry/schemas', { params });
   },
 
   getSchema: async (id: string): Promise<ApiResponse<SchemaDefinition>> => {
-    return apiClient.master.get(`${BASE_PATH}/schemas/${id}`);
+    return apiClient.master.get(`/schema-registry/schemas/${id}`);
   },
 
   updateSchema: async (
     id: string,
     data: UpdateSchemaRequest
   ): Promise<ApiResponse<SchemaDefinition>> => {
-    return apiClient.master.put(`${BASE_PATH}/schemas/${id}`, data);
+    return apiClient.master.put(`/schema-registry/schemas/${id}`, data);
   },
 
   deleteSchema: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.master.delete(`${BASE_PATH}/schemas/${id}`);
+    return apiClient.master.delete(`/schema-registry/schemas/${id}`);
   },
 
   // 动态数据 CRUD
@@ -96,7 +92,7 @@ export const schemaRegistryApi = {
     schemaId: string,
     data: Record<string, unknown>
   ): Promise<ApiResponse<DynamicDataRecord>> => {
-    return apiClient.master.post(`${BASE_PATH}/schemas/${schemaId}/data`, data);
+    return apiClient.master.post(`/schema-registry/schemas/${schemaId}/data`, data);
   },
 
   listData: async (
@@ -107,11 +103,11 @@ export const schemaRegistryApi = {
       PaginatedResponse<DynamicDataRecord> & { schema: { id: string; name: string; title: string } }
     >
   > => {
-    return apiClient.master.get(`${BASE_PATH}/schemas/${schemaId}/data`, { params });
+    return apiClient.master.get(`/schema-registry/schemas/${schemaId}/data`, { params });
   },
 
   getData: async (schemaId: string, recordId: string): Promise<ApiResponse<DynamicDataRecord>> => {
-    return apiClient.master.get(`${BASE_PATH}/schemas/${schemaId}/data/${recordId}`);
+    return apiClient.master.get(`/schema-registry/schemas/${schemaId}/data/${recordId}`);
   },
 
   updateData: async (
@@ -119,11 +115,11 @@ export const schemaRegistryApi = {
     recordId: string,
     data: Record<string, unknown>
   ): Promise<ApiResponse<DynamicDataRecord>> => {
-    return apiClient.master.put(`${BASE_PATH}/schemas/${schemaId}/data/${recordId}`, data);
+    return apiClient.master.put(`/schema-registry/schemas/${schemaId}/data/${recordId}`, data);
   },
 
   deleteData: async (schemaId: string, recordId: string): Promise<ApiResponse<string>> => {
-    return apiClient.master.delete(`${BASE_PATH}/schemas/${schemaId}/data/${recordId}`);
+    return apiClient.master.delete(`/schema-registry/schemas/${schemaId}/data/${recordId}`);
   },
 };
 

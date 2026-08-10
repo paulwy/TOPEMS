@@ -15,6 +15,7 @@ use topems_shared::auth::Claims;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared::response::ApiResponse;
+use utoipa::ToSchema;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -37,7 +38,7 @@ pub fn create_routes() -> Router<AppState> {
 
 // ==================== Data Types ====================
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListOeeRecordsQuery {
     page: Option<i32>,
     pagesize: Option<i32>,
@@ -45,7 +46,7 @@ pub struct ListOeeRecordsQuery {
     shift: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct OeeRecordResponse {
     pub id: Uuid,
     pub equipment_id: Uuid,
@@ -70,7 +71,7 @@ pub struct OeeRecordResponse {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct OeeEquipmentStat {
     pub equipment_id: Uuid,
     pub equipment_name: String,
@@ -81,7 +82,7 @@ pub struct OeeEquipmentStat {
     pub oee: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct OeeTrendItem {
     pub date: String,
     pub availability: f64,
@@ -90,7 +91,7 @@ pub struct OeeTrendItem {
     pub oee: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct OeeStatisticsResponse {
     pub total_records: i64,
     pub avg_availability: f64,
@@ -101,7 +102,7 @@ pub struct OeeStatisticsResponse {
     pub by_equipment: Vec<OeeEquipmentStat>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct EquipmentEfficiencyAnalysis {
     pub equipment_id: Uuid,
     pub equipment_name: String,
@@ -115,7 +116,7 @@ pub struct EquipmentEfficiencyAnalysis {
     pub status: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ListOeeRecordsResponse {
     pub records: Vec<OeeRecordResponse>,
     pub total: i64,
@@ -123,7 +124,7 @@ pub struct ListOeeRecordsResponse {
     pub pagesize: i64,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateOeeRecordRequest {
     pub equipment_id: Uuid,
     pub record_date: DateTime<Utc>,
@@ -139,7 +140,7 @@ pub struct CreateOeeRecordRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateOeeRecordRequest {
     pub planned_production_time: Option<f64>,
     pub actual_run_time: Option<f64>,
@@ -153,7 +154,7 @@ pub struct UpdateOeeRecordRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct OeeStatisticsQuery {
     pub equipment_id: Option<Uuid>,
     pub start_date: Option<String>,
@@ -204,6 +205,21 @@ fn calculate_oee(
 
 // ==================== Equipment OEE Handlers ====================
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/equipment-oee",
+    tag = "EquipmentOEE",
+    params(
+        ("page" = Option<i32>, Query, description = "页码"),
+        ("pagesize" = Option<i32>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("shift" = Option<String>, Query, description = "班次过滤"),
+    ),
+    responses(
+        (status = 200, description = "OEE记录列表", body = ApiResponse<ListOeeRecordsResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_oee_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -395,6 +411,16 @@ pub async fn list_oee_records(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/equipment-oee",
+    tag = "EquipmentOEE",
+    request_body = CreateOeeRecordRequest,
+    responses(
+        (status = 200, description = "OEE记录创建成功", body = ApiResponse<OeeRecordResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_oee_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -497,6 +523,18 @@ pub async fn create_oee_record(
     Json(ApiResponse::success(record, "OEE记录创建成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/equipment-oee/{id}",
+    tag = "EquipmentOEE",
+    params(
+        ("id" = Uuid, Path, description = "OEE记录ID"),
+    ),
+    responses(
+        (status = 200, description = "OEE记录详情", body = ApiResponse<OeeRecordResponse>),
+        (status = 404, description = "OEE记录不存在"),
+    ),
+)]
 pub async fn get_oee_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -565,6 +603,19 @@ pub async fn get_oee_record(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/equipment-oee/{id}",
+    tag = "EquipmentOEE",
+    params(
+        ("id" = Uuid, Path, description = "OEE记录ID"),
+    ),
+    request_body = UpdateOeeRecordRequest,
+    responses(
+        (status = 200, description = "OEE记录更新成功", body = ApiResponse<OeeRecordResponse>),
+        (status = 404, description = "OEE记录不存在"),
+    ),
+)]
 pub async fn update_oee_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -708,6 +759,18 @@ pub async fn update_oee_record(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/mes/equipment-oee/{id}",
+    tag = "EquipmentOEE",
+    params(
+        ("id" = Uuid, Path, description = "OEE记录ID"),
+    ),
+    responses(
+        (status = 200, description = "OEE记录删除成功"),
+        (status = 404, description = "OEE记录不存在"),
+    ),
+)]
 pub async fn delete_oee_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -741,6 +804,20 @@ pub async fn delete_oee_record(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/equipment-oee/statistics",
+    tag = "EquipmentOEE",
+    params(
+        ("equipment_id" = Option<Uuid>, Query, description = "设备ID"),
+        ("start_date" = Option<String>, Query, description = "开始日期"),
+        ("end_date" = Option<String>, Query, description = "结束日期"),
+    ),
+    responses(
+        (status = 200, description = "OEE统计数据", body = ApiResponse<OeeStatisticsResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_oee_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -916,6 +993,18 @@ pub async fn get_oee_statistics(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/equipment-oee/{equipment_id}/efficiency",
+    tag = "EquipmentOEE",
+    params(
+        ("equipment_id" = String, Path, description = "设备ID"),
+    ),
+    responses(
+        (status = 200, description = "设备效率分析", body = ApiResponse<Vec<EquipmentEfficiencyAnalysis>>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_equipment_efficiency_analysis(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

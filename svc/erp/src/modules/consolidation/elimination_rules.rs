@@ -16,6 +16,12 @@ macro_rules! log_audit {
     ($($args:expr),*) => {};
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/elimination-rules",
+    tag = "Consolidation",
+    responses((status = 200, description = "获取抵消规则列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_elimination_rules(
     State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
@@ -76,6 +82,13 @@ pub async fn list_elimination_rules(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/elimination-rules/{ruleId}",
+    tag = "Consolidation",
+    params(("ruleId" = String, Path, description = "抵消规则ID")),
+    responses((status = 200, description = "获取抵消规则详情成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
@@ -96,6 +109,12 @@ pub async fn get_elimination_rule(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/consolidation/elimination-rules",
+    tag = "Consolidation",
+    responses((status = 200, description = "创建抵消规则成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn create_elimination_rule(
     State(state): State<ApiState>,
     _headers: HeaderMap,
@@ -145,6 +164,13 @@ pub async fn create_elimination_rule(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/consolidation/elimination-rules/{ruleId}",
+    tag = "Consolidation",
+    params(("ruleId" = String, Path, description = "抵消规则ID")),
+    responses((status = 200, description = "更新抵消规则成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn update_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
@@ -206,6 +232,13 @@ pub async fn update_elimination_rule(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/consolidation/elimination-rules/{ruleId}",
+    tag = "Consolidation",
+    params(("ruleId" = String, Path, description = "抵消规则ID")),
+    responses((status = 200, description = "删除抵消规则成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn delete_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,

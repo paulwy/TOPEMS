@@ -6,6 +6,12 @@ use chrono::Utc;
 use serde_json::Value;
 
 /// Get module-specific analytics
+#[utoipa::path(
+    get,
+    path = "/api/bi/{module_id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_module_analytics(Path(module_id): Path<String>) -> Json<Value> {
     let result = match module_id.as_str() {
         "development" | "rs" => get_development_analytics().await,
@@ -25,6 +31,12 @@ pub async fn get_module_analytics(Path(module_id): Path<String>) -> Json<Value> 
 }
 
 /// Get summary dashboard analytics
+#[utoipa::path(
+    get,
+    path = "/api/bi/summary",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_summary_analytics() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -91,6 +103,12 @@ pub async fn get_summary_analytics() -> Json<Value> {
 }
 
 /// Get development analytics (研发)
+#[utoipa::path(
+    get,
+    path = "/api/bi/development",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_development_analytics() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -125,6 +143,12 @@ pub async fn get_development_analytics() -> Json<Value> {
 }
 
 /// Get quality analytics (质量)
+#[utoipa::path(
+    get,
+    path = "/api/bi/quality",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_quality_analytics() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -155,6 +179,12 @@ pub async fn get_quality_analytics() -> Json<Value> {
 }
 
 /// Get production analytics (生产)
+#[utoipa::path(
+    get,
+    path = "/api/bi/production",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_production_analytics() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -184,6 +214,12 @@ pub async fn get_production_analytics() -> Json<Value> {
 }
 
 /// Get laboratory analytics (实验室)
+#[utoipa::path(
+    get,
+    path = "/api/bi/laboratory",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_laboratory_analytics() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -211,6 +247,12 @@ pub async fn get_laboratory_analytics() -> Json<Value> {
 }
 
 /// Get analytics overview
+#[utoipa::path(
+    get,
+    path = "/api/bi/overview",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_analytics_overview() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -315,6 +357,12 @@ pub async fn get_analytics_report() -> Json<Value> {
 }
 
 /// Get SRM analytics (供应商管理)
+#[utoipa::path(
+    get,
+    path = "/api/bi/srm/summary",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_srm_analytics() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -346,6 +394,12 @@ pub async fn get_srm_analytics() -> Json<Value> {
 }
 
 /// Get EHS analytics (环境健康安全)
+#[utoipa::path(
+    get,
+    path = "/api/bi/ehs/summary",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_ehs_analytics() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -379,6 +433,12 @@ pub async fn get_ehs_analytics() -> Json<Value> {
 // ==================== RS (Research & Development) Analytics ====================
 
 /// Get RS summary
+#[utoipa::path(
+    get,
+    path = "/api/bi/rs/summary",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_rs_summary() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -398,6 +458,12 @@ pub async fn get_rs_summary() -> Json<Value> {
 }
 
 /// Get RS project timeline
+#[utoipa::path(
+    get,
+    path = "/api/bi/rs/project-timeline",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_rs_project_timeline() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -419,6 +485,12 @@ pub async fn get_rs_project_timeline() -> Json<Value> {
 }
 
 /// Get RS experiment success rate
+#[utoipa::path(
+    get,
+    path = "/api/bi/rs/experiment-success-rate",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_rs_experiment_success_rate() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -446,6 +518,12 @@ pub async fn get_rs_experiment_success_rate() -> Json<Value> {
 }
 
 /// Get RS material usage
+#[utoipa::path(
+    get,
+    path = "/api/bi/rs/material-usage",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_rs_material_usage() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -476,6 +554,12 @@ pub async fn get_rs_material_usage() -> Json<Value> {
 }
 
 /// Get RS project ranking
+#[utoipa::path(
+    get,
+    path = "/api/bi/rs/project-ranking",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_rs_project_ranking() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -501,6 +585,12 @@ pub async fn get_rs_project_ranking() -> Json<Value> {
 // ==================== LIMS Analytics ====================
 
 /// Get LIMS summary
+#[utoipa::path(
+    get,
+    path = "/api/bi/lims/summary",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_lims_summary() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -520,6 +610,12 @@ pub async fn get_lims_summary() -> Json<Value> {
 }
 
 /// Get LIMS sample timeline
+#[utoipa::path(
+    get,
+    path = "/api/bi/lims/sample-timeline",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_lims_sample_timeline() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -541,6 +637,12 @@ pub async fn get_lims_sample_timeline() -> Json<Value> {
 }
 
 /// Get LIMS test pass rate
+#[utoipa::path(
+    get,
+    path = "/api/bi/lims/test-pass-rate",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_lims_test_pass_rate() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -568,6 +670,12 @@ pub async fn get_lims_test_pass_rate() -> Json<Value> {
 }
 
 /// Get LIMS instrument usage
+#[utoipa::path(
+    get,
+    path = "/api/bi/lims/instrument-usage",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_lims_instrument_usage() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -591,6 +699,12 @@ pub async fn get_lims_instrument_usage() -> Json<Value> {
 }
 
 /// Get LIMS sample status distribution
+#[utoipa::path(
+    get,
+    path = "/api/bi/lims/sample-status-distribution",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_lims_sample_status_distribution() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -618,6 +732,12 @@ pub async fn get_lims_sample_status_distribution() -> Json<Value> {
 // ==================== QMS Analytics ====================
 
 /// Get QMS summary
+#[utoipa::path(
+    get,
+    path = "/api/bi/qms/summary",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_qms_summary() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -637,6 +757,12 @@ pub async fn get_qms_summary() -> Json<Value> {
 }
 
 /// Get QMS quality trend
+#[utoipa::path(
+    get,
+    path = "/api/bi/qms/quality-trend",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_qms_quality_trend() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -658,6 +784,12 @@ pub async fn get_qms_quality_trend() -> Json<Value> {
 }
 
 /// Get QMS issue distribution
+#[utoipa::path(
+    get,
+    path = "/api/bi/qms/issue-distribution",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_qms_issue_distribution() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -690,6 +822,12 @@ pub async fn get_qms_issue_distribution() -> Json<Value> {
 // ==================== EHS Analytics ====================
 
 /// Get EHS risk distribution
+#[utoipa::path(
+    get,
+    path = "/api/bi/ehs/risk-distribution",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_ehs_risk_distribution() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -715,6 +853,12 @@ pub async fn get_ehs_risk_distribution() -> Json<Value> {
 }
 
 /// Get EHS incident trend
+#[utoipa::path(
+    get,
+    path = "/api/bi/ehs/incident-trend",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_ehs_incident_trend() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -739,6 +883,12 @@ pub async fn get_ehs_incident_trend() -> Json<Value> {
 // ==================== SRM Analytics ====================
 
 /// Get SRM supplier ranking
+#[utoipa::path(
+    get,
+    path = "/api/bi/srm/supplier-ranking",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_srm_supplier_ranking() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -762,6 +912,12 @@ pub async fn get_srm_supplier_ranking() -> Json<Value> {
 }
 
 /// Get SRM order timeline
+#[utoipa::path(
+    get,
+    path = "/api/bi/srm/order-timeline",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_srm_order_timeline() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -785,6 +941,12 @@ pub async fn get_srm_order_timeline() -> Json<Value> {
 // ==================== PDM Analytics ====================
 
 /// Get PDM summary
+#[utoipa::path(
+    get,
+    path = "/api/bi/pdm/summary",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_pdm_summary() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -803,6 +965,12 @@ pub async fn get_pdm_summary() -> Json<Value> {
 }
 
 /// Get PDM production trend
+#[utoipa::path(
+    get,
+    path = "/api/bi/pdm/production-trend",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_pdm_production_trend() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,
@@ -823,6 +991,12 @@ pub async fn get_pdm_production_trend() -> Json<Value> {
 }
 
 /// Get PDM batch status distribution
+#[utoipa::path(
+    get,
+    path = "/api/bi/pdm/batch-status-distribution",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_pdm_batch_status_distribution() -> Json<Value> {
     Json(serde_json::json!({
         "code": 0,

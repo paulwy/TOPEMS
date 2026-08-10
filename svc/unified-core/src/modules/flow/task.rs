@@ -29,7 +29,7 @@ pub struct TaskQueryParams {
 
 #[utoipa::path(
     get,
-    path = "/tasks",
+    path = "/api/core/flow/tasks",
     tag = "Flow-Task",
     params(
         ("page" = Option<i64>, Query, description = "页码，默认1"),
@@ -146,7 +146,7 @@ pub async fn list_tasks(
 
 #[utoipa::path(
     get,
-    path = "/tasks/{id}",
+    path = "/api/core/flow/tasks/{id}",
     tag = "Flow-Task",
     params(
         ("id" = Uuid, Path, description = "任务ID"),
@@ -183,7 +183,7 @@ pub async fn get_task(
 
 #[utoipa::path(
     post,
-    path = "/tasks/{id}/claim",
+    path = "/api/core/flow/tasks/{id}/claim",
     tag = "Flow-Task",
     params(
         ("id" = Uuid, Path, description = "任务ID"),
@@ -218,6 +218,19 @@ pub async fn claim_task(
     Json(ApiResponse::success(task, "认领成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/tasks/{id}/unclaim",
+    tag = "Flow-Task",
+    params(
+        ("id" = Uuid, Path, description = "任务ID"),
+    ),
+    responses(
+        (status = 200, description = "取消认领成功", body = ApiResponse<WorkflowTask>),
+        (status = 404, description = "任务不存在"),
+        (status = 500, description = "取消认领失败"),
+    ),
+)]
 pub async fn unclaim_task(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -244,7 +257,7 @@ pub async fn unclaim_task(
 
 #[utoipa::path(
     post,
-    path = "/tasks/{id}/approve",
+    path = "/api/core/flow/tasks/{id}/approve",
     tag = "Flow-Task",
     params(
         ("id" = Uuid, Path, description = "任务ID"),
@@ -284,7 +297,7 @@ pub async fn approve_task(
 
 #[utoipa::path(
     post,
-    path = "/tasks/{id}/reject",
+    path = "/api/core/flow/tasks/{id}/reject",
     tag = "Flow-Task",
     params(
         ("id" = Uuid, Path, description = "任务ID"),
@@ -322,6 +335,20 @@ pub async fn reject_task(
     Json(ApiResponse::success(task, "已拒绝"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/tasks/{id}/complete",
+    tag = "Flow-Task",
+    params(
+        ("id" = Uuid, Path, description = "任务ID"),
+    ),
+    request_body = TaskActionRequest,
+    responses(
+        (status = 200, description = "完成成功", body = ApiResponse<WorkflowTask>),
+        (status = 404, description = "任务不存在"),
+        (status = 500, description = "完成任务失败"),
+    ),
+)]
 pub async fn complete_task(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -348,6 +375,20 @@ pub async fn complete_task(
     Json(ApiResponse::success(task, "完成成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/tasks/{id}/delegate",
+    tag = "Flow-Task",
+    params(
+        ("id" = Uuid, Path, description = "任务ID"),
+    ),
+    request_body = TaskActionRequest,
+    responses(
+        (status = 200, description = "委托成功", body = ApiResponse<WorkflowTask>),
+        (status = 404, description = "任务不存在"),
+        (status = 500, description = "委托任务失败"),
+    ),
+)]
 pub async fn delegate_task(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -376,7 +417,7 @@ pub async fn delegate_task(
 
 #[utoipa::path(
     post,
-    path = "/tasks/batch/approve",
+    path = "/api/core/flow/tasks/batch/approve",
     tag = "Flow-Task",
     request_body = TaskBatchRequest,
     responses(
@@ -427,6 +468,15 @@ pub async fn batch_approve(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/tasks/batch/complete",
+    tag = "Flow-Task",
+    request_body = TaskBatchRequest,
+    responses(
+        (status = 200, description = "批量操作完成", body = ApiResponse<TaskBatchResult>),
+    ),
+)]
 pub async fn batch_complete(
     State(state): State<AppState>,
     Json(payload): Json<TaskBatchRequest>,
@@ -471,6 +521,15 @@ pub async fn batch_complete(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/tasks/batch/delegate",
+    tag = "Flow-Task",
+    request_body = TaskBatchRequest,
+    responses(
+        (status = 200, description = "批量操作完成", body = ApiResponse<TaskBatchResult>),
+    ),
+)]
 pub async fn batch_delegate(
     State(state): State<AppState>,
     Json(payload): Json<TaskBatchRequest>,
@@ -515,6 +574,20 @@ pub async fn batch_delegate(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/tasks/my",
+    tag = "Flow-Task",
+    params(
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认20"),
+        ("status" = Option<String>, Query, description = "任务状态筛选"),
+        ("assignee_id" = Option<String>, Query, description = "处理人ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<PaginatedResponse<WorkflowTask>>),
+    ),
+)]
 pub async fn my_tasks(
     State(state): State<AppState>,
     Query(params): Query<TaskQueryParams>,
@@ -522,6 +595,19 @@ pub async fn my_tasks(
     list_tasks(State(state), Query(params)).await
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/tasks/my/pending",
+    tag = "Flow-Task",
+    params(
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认20"),
+        ("assignee_id" = Option<String>, Query, description = "处理人ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<PaginatedResponse<WorkflowTask>>),
+    ),
+)]
 pub async fn my_pending_tasks(
     State(state): State<AppState>,
     Query(mut params): Query<TaskQueryParams>,
@@ -530,6 +616,19 @@ pub async fn my_pending_tasks(
     list_tasks(State(state), Query(params)).await
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/tasks/my/completed",
+    tag = "Flow-Task",
+    params(
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认20"),
+        ("assignee_id" = Option<String>, Query, description = "处理人ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<PaginatedResponse<WorkflowTask>>),
+    ),
+)]
 pub async fn my_completed_tasks(
     State(state): State<AppState>,
     Query(mut params): Query<TaskQueryParams>,
@@ -538,6 +637,19 @@ pub async fn my_completed_tasks(
     list_tasks(State(state), Query(params)).await
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/tasks/candidate",
+    tag = "Flow-Task",
+    params(
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认20"),
+        ("assignee_id" = Option<String>, Query, description = "处理人ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<PaginatedResponse<WorkflowTask>>),
+    ),
+)]
 pub async fn candidate_tasks(
     State(state): State<AppState>,
     Query(params): Query<TaskQueryParams>,
@@ -545,6 +657,19 @@ pub async fn candidate_tasks(
     list_tasks(State(state), Query(params)).await
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/tasks/count",
+    tag = "Flow-Task",
+    params(
+        ("status" = Option<String>, Query, description = "任务状态筛选"),
+        ("assignee_id" = Option<String>, Query, description = "处理人ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<i64>),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn get_task_count(
     State(state): State<AppState>,
     Query(params): Query<TaskQueryParams>,
@@ -583,7 +708,7 @@ pub async fn get_task_count(
 
 #[utoipa::path(
     get,
-    path = "/tasks/my/stats",
+    path = "/api/core/flow/tasks/my/stats",
     tag = "Flow-Task",
     responses(
         (status = 200, description = "查询成功", body = ApiResponse<TaskStats>),
@@ -606,6 +731,19 @@ pub async fn get_task_stats(State(_state): State<AppState>) -> Json<ApiResponse<
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/tasks/high-priority",
+    tag = "Flow-Task",
+    params(
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认20"),
+        ("assignee_id" = Option<String>, Query, description = "处理人ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<PaginatedResponse<WorkflowTask>>),
+    ),
+)]
 pub async fn high_priority_tasks(
     State(state): State<AppState>,
     Query(mut params): Query<TaskQueryParams>,
@@ -614,6 +752,19 @@ pub async fn high_priority_tasks(
     list_tasks(State(state), Query(params)).await
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/tasks/overdue",
+    tag = "Flow-Task",
+    params(
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认20"),
+        ("assignee_id" = Option<String>, Query, description = "处理人ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<PaginatedResponse<WorkflowTask>>),
+    ),
+)]
 pub async fn overdue_tasks(
     State(state): State<AppState>,
     Query(params): Query<TaskQueryParams>,

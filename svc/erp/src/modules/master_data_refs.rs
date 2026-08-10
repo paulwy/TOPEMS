@@ -5290,6 +5290,12 @@ fn get_sync_store() -> Arc<SyncStore> {
 // --- 同步任务 Handlers ---
 
 /// V41.0 AC-13: 创建同步任务
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/sync/jobs",
+    tag = "Master Data",
+    responses((status = 200, description = "创建同步任务成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn create_sync_job(
     State(state): State<ApiState>,
     Json(payload): Json<CreateSyncJobRequest>,
@@ -5454,6 +5460,13 @@ fn simulate_sync_step(target_system: &str, operation: &str) -> bool {
 }
 
 /// V41.0 AC-13: 获取同步任务详情
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/sync/jobs/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "同步任务ID")),
+    responses((status = 200, description = "获取同步任务详情成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_sync_job(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -5469,6 +5482,12 @@ pub async fn get_sync_job(
 }
 
 /// V41.0 AC-13: 列出同步任务
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/sync/jobs",
+    tag = "Master Data",
+    responses((status = 200, description = "获取同步任务列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_sync_jobs(
     Query(params): Query<ListSyncJobsParams>,
     State(state): State<ApiState>,
@@ -5524,6 +5543,13 @@ pub async fn list_sync_jobs(
 }
 
 /// V41.0 AC-13: 重试失败任务
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/sync/jobs/{id}/retry",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "同步任务ID")),
+    responses((status = 200, description = "重试同步任务成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn retry_sync_job(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -5568,6 +5594,13 @@ pub async fn retry_sync_job(
 }
 
 /// V41.0 AC-13: 取消同步任务
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/sync/jobs/{id}/cancel",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "同步任务ID")),
+    responses((status = 200, description = "取消同步任务成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn cancel_sync_job(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -5598,6 +5631,13 @@ pub async fn cancel_sync_job(
 }
 
 /// V41.0 AC-13: 触发补偿
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/sync/jobs/{id}/compensate",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "同步任务ID")),
+    responses((status = 200, description = "触发同步补偿成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn trigger_compensation(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -5662,6 +5702,12 @@ fn simulate_compensation(target_system: &str, operation: &str) -> bool {
 }
 
 /// V41.0 AC-13: 同步统计
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/sync/stats",
+    tag = "Master Data",
+    responses((status = 200, description = "获取同步统计成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_sync_stats(State(state): State<ApiState>) -> Json<ApiResponse<SyncStats>> {
     let _ = &state;
     let store = get_sync_store();
@@ -5766,6 +5812,12 @@ pub async fn get_sync_stats(State(state): State<ApiState>) -> Json<ApiResponse<S
 // --- 死信队列 Handlers ---
 
 /// V41.0 AC-13: 列出死信
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/sync/dead-letters",
+    tag = "Master Data",
+    responses((status = 200, description = "获取死信队列成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_dead_letters(
     Query(params): Query<ListDeadLettersParams>,
     State(state): State<ApiState>,
@@ -5806,6 +5858,13 @@ pub async fn list_dead_letters(
 }
 
 /// V41.0 AC-13: 重放死信
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/sync/dead-letters/{id}/replay",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "死信ID")),
+    responses((status = 200, description = "重放死信成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn replay_dead_letter(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -5840,6 +5899,12 @@ pub async fn replay_dead_letter(
 }
 
 /// V41.0 AC-13: 批量重放死信
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/sync/dead-letters/batch-replay",
+    tag = "Master Data",
+    responses((status = 200, description = "批量重放死信成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn batch_replay_dead_letters(
     State(state): State<ApiState>,
     Json(payload): Json<BatchReplayRequest>,
@@ -5880,6 +5945,13 @@ pub async fn batch_replay_dead_letters(
 }
 
 /// V41.0 AC-13: 删除死信
+#[utoipa::path(
+    delete,
+    path = "/erp/master-data/sync/dead-letters/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "死信ID")),
+    responses((status = 204, description = "删除死信成功"))
+)]
 pub async fn delete_dead_letter(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6221,6 +6293,12 @@ fn get_quality_loop_store() -> Arc<QualityLoopStore> {
 // ==================== 质量工单 Handlers ====================
 
 /// V42.0 AC-14: 创建质量工单（从质量检测结果创建闭环工单）
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/tickets",
+    tag = "Master Data",
+    responses((status = 200, description = "创建质量工单成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn create_quality_ticket(
     State(state): State<ApiState>,
     Json(req): Json<CreateQualityTicketRequest>,
@@ -6276,6 +6354,12 @@ pub async fn create_quality_ticket(
 }
 
 /// V42.0 AC-14: 列出质量工单（支持状态/严重级别/实体类型筛选）
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/quality/tickets",
+    tag = "Master Data",
+    responses((status = 200, description = "获取质量工单列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_quality_tickets(
     Query(params): Query<ListQualityTicketsQuery>,
     State(state): State<ApiState>,
@@ -6331,6 +6415,13 @@ pub async fn list_quality_tickets(
 }
 
 /// V42.0 AC-14: 获取质量工单详情
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/quality/tickets/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "质量工单ID")),
+    responses((status = 200, description = "获取质量工单详情成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6346,6 +6437,13 @@ pub async fn get_quality_ticket(
 }
 
 /// V42.0 AC-14: 获取质量工单历史记录
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/quality/tickets/{id}/history",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "质量工单ID")),
+    responses((status = 200, description = "获取质量工单历史成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_quality_ticket_history(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6361,6 +6459,13 @@ pub async fn get_quality_ticket_history(
 }
 
 /// V42.0 AC-14: 分配质量工单责任人
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/tickets/{id}/assign",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "质量工单ID")),
+    responses((status = 200, description = "分配质量工单成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn assign_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6391,6 +6496,13 @@ pub async fn assign_quality_ticket(
 }
 
 /// V42.0 AC-14: 开始处理质量工单
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/tickets/{id}/start",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "质量工单ID")),
+    responses((status = 200, description = "启动质量工单成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn start_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6429,6 +6541,13 @@ pub async fn start_quality_ticket(
 }
 
 /// V42.0 AC-14: 提交修复方案
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/tickets/{id}/submit",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "质量工单ID")),
+    responses((status = 200, description = "提交质量工单成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn submit_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6466,6 +6585,13 @@ pub async fn submit_quality_ticket(
 }
 
 /// V42.0 AC-14: 验证修复结果
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/tickets/{id}/verify",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "质量工单ID")),
+    responses((status = 200, description = "验证质量工单成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn verify_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6505,6 +6631,13 @@ pub async fn verify_quality_ticket(
 }
 
 /// V42.0 AC-14: 关闭质量工单
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/tickets/{id}/close",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "质量工单ID")),
+    responses((status = 200, description = "关闭质量工单成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn close_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6539,6 +6672,13 @@ pub async fn close_quality_ticket(
 }
 
 /// V42.0 AC-14: 驳回质量工单
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/tickets/{id}/reject",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "质量工单ID")),
+    responses((status = 200, description = "驳回质量工单成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn reject_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6571,6 +6711,13 @@ pub async fn reject_quality_ticket(
 }
 
 /// V42.0 AC-14: 升级质量工单（按升级路径逐级升级）
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/tickets/{id}/escalate",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "质量工单ID")),
+    responses((status = 200, description = "升级质量工单成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn escalate_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6654,6 +6801,12 @@ pub async fn escalate_ticket(
 // ==================== 自动修复工作流 Handlers ====================
 
 /// V42.0 AC-14: 创建修复工作流
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/repair-workflows",
+    tag = "Master Data",
+    responses((status = 200, description = "创建修复工作流成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn create_repair_workflow(
     State(state): State<ApiState>,
     Json(req): Json<CreateRepairWorkflowRequest>,
@@ -6729,6 +6882,13 @@ pub async fn create_repair_workflow(
 }
 
 /// V42.0 AC-14: 执行修复工作流
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/repair-workflows/{id}/execute",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "修复工作流ID")),
+    responses((status = 200, description = "执行修复工作流成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn execute_repair_workflow(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6843,6 +7003,16 @@ fn simulate_repair_step(action: &str, target_field: &str) -> bool {
 }
 
 /// V42.0 AC-14: 执行单个修复步骤
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/repair-workflows/{workflowId}/steps/{stepIndex}/execute",
+    tag = "Master Data",
+    params(
+        ("workflowId" = String, Path, description = "修复工作流ID"),
+        ("stepIndex" = usize, Path, description = "步骤序号")
+    ),
+    responses((status = 200, description = "执行修复步骤成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn execute_repair_step(
     Path((workflow_id, step_index)): Path<(String, usize)>,
     State(state): State<ApiState>,
@@ -6879,6 +7049,13 @@ pub async fn execute_repair_step(
 }
 
 /// V42.0 AC-14: 审批修复工作流
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/repair-workflows/{id}/approve",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "修复工作流ID")),
+    responses((status = 200, description = "审批修复工作流成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn approve_repair_workflow(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6908,6 +7085,13 @@ pub async fn approve_repair_workflow(
 }
 
 /// V42.0 AC-14: 获取修复工作流详情
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/quality/repair-workflows/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "修复工作流ID")),
+    responses((status = 200, description = "获取修复工作流详情成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_repair_workflow(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -6923,6 +7107,12 @@ pub async fn get_repair_workflow(
 }
 
 /// V42.0 AC-14: 列出修复工作流
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/quality/repair-workflows",
+    tag = "Master Data",
+    responses((status = 200, description = "获取修复工作流列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_repair_workflows(
     Query(params): Query<ListQualityTicketsQuery>,
     State(state): State<ApiState>,
@@ -6968,6 +7158,13 @@ pub async fn list_repair_workflows(
 }
 
 /// V42.0 AC-14: 验证修复结果（重新运行质量规则）
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality/repair-workflows/{id}/verify",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "修复工作流ID")),
+    responses((status = 200, description = "验证修复工作流成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn verify_repair(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -7007,6 +7204,12 @@ pub async fn verify_repair(
 // ==================== 数据所有权管理 Handlers ====================
 
 /// V42.0 AC-14: 创建数据域
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/domains",
+    tag = "Master Data",
+    responses((status = 200, description = "创建数据域成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn create_data_domain(
     State(state): State<ApiState>,
     Json(req): Json<CreateDataDomainRequest>,
@@ -7035,6 +7238,12 @@ pub async fn create_data_domain(
 }
 
 /// V42.0 AC-14: 列出数据域
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/domains",
+    tag = "Master Data",
+    responses((status = 200, description = "获取数据域列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_data_domains(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<DataDomain>>> {
@@ -7045,6 +7254,13 @@ pub async fn list_data_domains(
 }
 
 /// V42.0 AC-14: 获取数据域详情
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/domains/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "数据域ID")),
+    responses((status = 200, description = "获取数据域详情成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_data_domain(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -7060,6 +7276,13 @@ pub async fn get_data_domain(
 }
 
 /// V42.0 AC-14: 更新数据域
+#[utoipa::path(
+    put,
+    path = "/erp/master-data/domains/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "数据域ID")),
+    responses((status = 200, description = "更新数据域成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn update_data_domain(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -7100,6 +7323,13 @@ pub async fn update_data_domain(
 }
 
 /// V42.0 AC-14: 获取责任矩阵（RACI）
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/ownership-matrix/{entityType}",
+    tag = "Master Data",
+    params(("entityType" = String, Path, description = "实体类型")),
+    responses((status = 200, description = "获取责任矩阵成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_ownership_matrix(
     Path(entity_type): Path<String>,
     State(state): State<ApiState>,
@@ -7115,6 +7345,13 @@ pub async fn get_ownership_matrix(
 }
 
 /// V42.0 AC-14: 设置责任矩阵
+#[utoipa::path(
+    put,
+    path = "/erp/master-data/ownership-matrix/{entityType}",
+    tag = "Master Data",
+    params(("entityType" = String, Path, description = "实体类型")),
+    responses((status = 200, description = "设置责任矩阵成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn set_ownership_matrix(
     Path(entity_type): Path<String>,
     State(state): State<ApiState>,
@@ -7141,6 +7378,13 @@ pub async fn set_ownership_matrix(
 }
 
 /// V42.0 AC-14: 获取实体所有者信息
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/entities/{entityType}/owner",
+    tag = "Master Data",
+    params(("entityType" = String, Path, description = "实体类型")),
+    responses((status = 200, description = "获取实体负责人成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_entity_owner(
     Path(entity_type): Path<String>,
     State(state): State<ApiState>,
@@ -7183,6 +7427,12 @@ pub async fn get_entity_owner(
 // ==================== 质量闭环统计 ====================
 
 /// V42.0 AC-14: 质量闭环统计
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/quality/loop-stats",
+    tag = "Master Data",
+    responses((status = 200, description = "获取质量闭环统计成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_quality_loop_stats(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<QualityLoopStats>> {
@@ -8565,6 +8815,12 @@ fn suggest_completions(
 
 // ==================== 主数据图谱 Handlers ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/graph",
+    tag = "Master Data",
+    responses((status = 200, description = "获取主数据图谱成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_master_data_graph(
     State(state): State<ApiState>,
     Query(params): Query<GraphQuery>,
@@ -8640,6 +8896,13 @@ pub async fn get_master_data_graph(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/graph/nodes/{nodeId}",
+    tag = "Master Data",
+    params(("nodeId" = String, Path, description = "节点ID")),
+    responses((status = 200, description = "获取图谱节点成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_graph_node(
     State(state): State<ApiState>,
     Path(node_id): Path<String>,
@@ -8655,6 +8918,13 @@ pub async fn get_graph_node(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/graph/nodes/{nodeId}/neighbors",
+    tag = "Master Data",
+    params(("nodeId" = String, Path, description = "节点ID")),
+    responses((status = 200, description = "获取节点邻居成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_node_neighbors(
     State(state): State<ApiState>,
     Path(node_id): Path<String>,
@@ -8706,6 +8976,12 @@ pub async fn get_node_neighbors(
     Json(ApiResponse::success(neighbors, "节点邻居列表"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/graph/shortest-path",
+    tag = "Master Data",
+    responses((status = 200, description = "获取最短路径成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_shortest_path(
     State(state): State<ApiState>,
     Query(params): Query<ShortestPathQuery>,
@@ -8722,6 +8998,13 @@ pub async fn get_shortest_path(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/graph/nodes/{nodeId}/multi-hop",
+    tag = "Master Data",
+    params(("nodeId" = String, Path, description = "节点ID")),
+    responses((status = 200, description = "多跳遍历成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn multi_hop_traversal(
     State(state): State<ApiState>,
     Path(node_id): Path<String>,
@@ -8739,6 +9022,12 @@ pub async fn multi_hop_traversal(
     Json(ApiResponse::success(result, "多跳遍历结果"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/graph/stats",
+    tag = "Master Data",
+    responses((status = 200, description = "获取图谱统计成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_graph_stats(State(state): State<ApiState>) -> Json<ApiResponse<GraphStats>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
@@ -8814,6 +9103,13 @@ pub async fn list_concepts(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/knowledge/concepts/{conceptId}",
+    tag = "Master Data",
+    params(("conceptId" = String, Path, description = "概念ID")),
+    responses((status = 200, description = "获取概念详情成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_concept(
     State(state): State<ApiState>,
     Path(concept_id): Path<String>,
@@ -8887,6 +9183,12 @@ pub async fn list_triples(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/knowledge/inference-rules",
+    tag = "Master Data",
+    responses((status = 200, description = "获取推理规则成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_inference_rules(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<InferenceRule>>> {
@@ -8899,6 +9201,12 @@ pub async fn list_inference_rules(
     Json(ApiResponse::success(rules, "推理规则列表"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/knowledge/inference",
+    tag = "Master Data",
+    responses((status = 200, description = "运行知识推理成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn run_inference(
     State(state): State<ApiState>,
     Json(req): Json<InferenceRequest>,
@@ -9085,6 +9393,12 @@ pub async fn run_inference(
 
 // ==================== 智能推荐 Handlers ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/recommendations/similar",
+    tag = "Master Data",
+    responses((status = 200, description = "获取相似实体成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_similar_entities(
     State(state): State<ApiState>,
     Query(params): Query<SimilarEntityQuery>,
@@ -9111,6 +9425,12 @@ pub async fn get_similar_entities(
     Json(ApiResponse::success(results, "相似实体推荐"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/recommendations/associations",
+    tag = "Master Data",
+    responses((status = 200, description = "获取关联推荐成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_association_recommendations(
     State(state): State<ApiState>,
     Query(params): Query<AssociationQuery>,
@@ -9137,6 +9457,12 @@ pub async fn get_association_recommendations(
     Json(ApiResponse::success(results, "关联推荐"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/recommendations/completions",
+    tag = "Master Data",
+    responses((status = 200, description = "获取补全建议成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_completion_suggestions(
     State(state): State<ApiState>,
     Query(params): Query<CompletionQuery>,
@@ -10169,6 +10495,12 @@ impl SyncEngineV2Store {
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/sync/v2/jobs",
+    tag = "Master Data",
+    responses((status = 200, description = "创建 V2 同步任务成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn create_sync_job_v2(
     State(state): State<ApiState>,
     Json(req): Json<CreateSyncJobV2Request>,
@@ -10230,6 +10562,12 @@ pub async fn create_sync_job_v2(
     Json(ApiResponse::success(job, "同步任务创建成功（V2）"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/sync/v2/jobs",
+    tag = "Master Data",
+    responses((status = 200, description = "获取 V2 同步任务列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_sync_jobs_v2(
     State(state): State<ApiState>,
     Query(params): Query<ListSyncJobsV2Params>,
@@ -10301,6 +10639,13 @@ pub async fn list_sync_jobs_v2(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/sync/v2/jobs/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "同步任务ID")),
+    responses((status = 200, description = "获取 V2 同步任务详情成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_sync_job_v2(
     State(state): State<ApiState>,
     Path(id): Path<String>,
@@ -10314,6 +10659,13 @@ pub async fn get_sync_job_v2(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/sync/v2/dead-letters/{id}/retry",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "死信ID")),
+    responses((status = 200, description = "重试 V2 死信成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn retry_dead_letter_v2(
     State(state): State<ApiState>,
     Path(id): Path<String>,
@@ -10354,6 +10706,12 @@ pub async fn retry_dead_letter_v2(
     Json(ApiResponse::success(updated_job, "死信已重试（V2）"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/sync/v2/dead-letters/batch-retry",
+    tag = "Master Data",
+    responses((status = 200, description = "批量重试 V2 死信成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn batch_retry_dead_letters(
     State(state): State<ApiState>,
     Json(req): Json<BatchRetryDeadLettersRequest>,
@@ -10400,6 +10758,12 @@ pub async fn batch_retry_dead_letters(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/sync/v2/stats",
+    tag = "Master Data",
+    responses((status = 200, description = "获取 V2 同步引擎统计成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn sync_engine_stats_v2(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<SyncEngineStatsV2>> {
@@ -10530,6 +10894,12 @@ impl ServiceRegistryStore {
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/services/register",
+    tag = "Master Data",
+    responses((status = 200, description = "注册 MDM 服务成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn mdm_service_register(
     State(state): State<ApiState>,
     Json(req): Json<MdmServiceRegisterRequest>,
@@ -10557,6 +10927,13 @@ pub async fn mdm_service_register(
     Json(ApiResponse::success(service, "服务注册成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/services/{serviceId}/deregister",
+    tag = "Master Data",
+    params(("serviceId" = String, Path, description = "服务ID")),
+    responses((status = 200, description = "注销 MDM 服务成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn mdm_service_deregister(
     State(state): State<ApiState>,
     Path(service_id): Path<String>,
@@ -10573,6 +10950,13 @@ pub async fn mdm_service_deregister(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/services/{serviceId}/heartbeat",
+    tag = "Master Data",
+    params(("serviceId" = String, Path, description = "服务ID")),
+    responses((status = 200, description = "MDM 服务心跳成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn mdm_service_heartbeat(
     State(state): State<ApiState>,
     Path(service_id): Path<String>,
@@ -10590,6 +10974,12 @@ pub async fn mdm_service_heartbeat(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/services",
+    tag = "Master Data",
+    responses((status = 200, description = "获取 MDM 服务列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn mdm_service_list(
     State(state): State<ApiState>,
     Query(params): Query<MdmServiceQuery>,
@@ -10619,6 +11009,13 @@ pub async fn mdm_service_list(
     Json(ApiResponse::success(filtered, "服务列表"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/services/{serviceId}/health",
+    tag = "Master Data",
+    params(("serviceId" = String, Path, description = "服务ID")),
+    responses((status = 200, description = "获取 MDM 服务健康状态成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn mdm_service_health(
     State(state): State<ApiState>,
     Path(service_id): Path<String>,
@@ -10741,6 +11138,12 @@ impl ApiGatewayStore {
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/gateway/route",
+    tag = "Master Data",
+    responses((status = 200, description = "MDM 网关路由成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn mdm_gateway_route(
     State(state): State<ApiState>,
     Json(req): Json<GatewayRouteRequest>,
@@ -10774,6 +11177,12 @@ pub async fn mdm_gateway_route(
     Json(ApiResponse::success(response, "网关路由成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/gateway/batch",
+    tag = "Master Data",
+    responses((status = 200, description = "MDM 网关批处理成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn mdm_gateway_batch(
     State(state): State<ApiState>,
     Json(req): Json<GatewayBatchRequest>,
@@ -10839,6 +11248,12 @@ pub async fn mdm_gateway_aggregate(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/gateway/stats",
+    tag = "Master Data",
+    responses((status = 200, description = "获取 MDM 网关统计成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn mdm_gateway_stats(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -11643,6 +12058,13 @@ fn predict_quality_internal(
 // ==================== 质量 AI handlers ====================
 
 /// POST /quality-ai/score/{id} — 单实体质量评分
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality-ai/score/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "实体ID")),
+    responses((status = 200, description = "质量 AI 评分成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn quality_ai_score_entity(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
@@ -11672,6 +12094,12 @@ pub async fn quality_ai_score_entity(
 }
 
 /// POST /quality-ai/batch-score — 批量评分
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality-ai/batch-score",
+    tag = "Master Data",
+    responses((status = 200, description = "质量 AI 批量评分成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn quality_ai_batch_score(
     State(state): State<ApiState>,
     Json(req): Json<BatchScoreRequest>,
@@ -11781,6 +12209,13 @@ pub async fn quality_ai_get_anomalies(
 }
 
 /// POST /quality-ai/predict/{id} — 质量预测
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/quality-ai/predict/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "实体ID")),
+    responses((status = 200, description = "质量预测成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn quality_ai_predict_quality(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
@@ -11800,6 +12235,12 @@ pub async fn quality_ai_predict_quality(
 }
 
 /// GET /quality-ai/stats — 质量 AI 统计
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/quality-ai/stats",
+    tag = "Master Data",
+    responses((status = 200, description = "获取质量 AI 统计成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn quality_ai_get_stats(
     State(state): State<ApiState>,
     Query(params): Query<QualityAiStatsQuery>,
@@ -12274,6 +12715,13 @@ async fn ensure_smart_matcher_initialized() {
 // ==================== 智能匹配 handlers ====================
 
 /// POST /matching/find-matches/{id} — 为指定实体查找匹配
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/matching/find-matches/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "实体ID")),
+    responses((status = 200, description = "查找匹配成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn matching_find_matches(
     State(state): State<ApiState>,
     Path(source_id): Path<String>,
@@ -12410,6 +12858,12 @@ pub async fn matching_find_duplicates(
 }
 
 /// GET /matching/duplicate-groups — 重复组列表
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/matching/duplicate-groups",
+    tag = "Master Data",
+    responses((status = 200, description = "获取重复组成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn matching_get_duplicate_groups(
     State(state): State<ApiState>,
     Query(params): Query<DuplicateGroupsQuery>,
@@ -12432,6 +12886,12 @@ pub async fn matching_get_duplicate_groups(
 }
 
 /// POST /matching/suggest-merge — 合并建议
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/matching/suggest-merge",
+    tag = "Master Data",
+    responses((status = 200, description = "生成合并建议成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn matching_suggest_merge(
     State(state): State<ApiState>,
     Json(req): Json<SuggestMergeRequest>,
@@ -13096,6 +13556,13 @@ async fn ensure_auto_classifier_initialized() {
 // ==================== 自动分类 handlers ====================
 
 /// POST /classification/classify/{id} — 分类单个实体
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/classification/classify/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "实体ID")),
+    responses((status = 200, description = "实体分类成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn classification_classify_entity(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
@@ -13119,6 +13586,12 @@ pub async fn classification_classify_entity(
 }
 
 /// POST /classification/batch-classify — 批量分类
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/classification/batch-classify",
+    tag = "Master Data",
+    responses((status = 200, description = "批量分类成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn classification_batch_classify(
     State(state): State<ApiState>,
     Json(req): Json<BatchClassifyRequest>,
@@ -13153,6 +13626,13 @@ pub async fn classification_batch_classify(
 }
 
 /// GET /classification/suggest-tags/{id} — 标签推荐
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/classification/suggest-tags/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "实体ID")),
+    responses((status = 200, description = "推荐标签成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn classification_suggest_tags(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
@@ -13178,6 +13658,12 @@ pub async fn classification_suggest_tags(
 }
 
 /// GET /classification/categories — 分类类别列表
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/classification/categories",
+    tag = "Master Data",
+    responses((status = 200, description = "获取分类目录成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn classification_list_categories(
     State(state): State<ApiState>,
     Query(params): Query<ListCategoriesQuery>,
@@ -13205,6 +13691,12 @@ pub async fn classification_list_categories(
 }
 
 /// POST /classification/learn-rule — 学习新规则
+#[utoipa::path(
+    post,
+    path = "/erp/master-data/classification/learn-rule",
+    tag = "Master Data",
+    responses((status = 200, description = "学习分类规则成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn classification_learn_rule(
     State(state): State<ApiState>,
     Json(req): Json<LearnRuleRequest>,
@@ -13236,6 +13728,12 @@ pub async fn classification_learn_rule(
 }
 
 /// GET /classification/stats — 分类统计
+#[utoipa::path(
+    get,
+    path = "/erp/master-data/classification/stats",
+    tag = "Master Data",
+    responses((status = 200, description = "获取分类统计成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn classification_get_stats(
     State(state): State<ApiState>,
     Query(params): Query<ClassificationStatsQuery>,

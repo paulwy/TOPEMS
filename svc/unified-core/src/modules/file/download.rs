@@ -17,6 +17,21 @@ use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 /// 下载文件
+#[utoipa::path(
+    get,
+    path = "/api/core/file/download/{id}",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    responses(
+        (status = 200, description = "文件下载成功"),
+        (status = 400, description = "无效的文件ID"),
+        (status = 403, description = "没有权限下载此文件"),
+        (status = 404, description = "文件不存在"),
+        (status = 500, description = "服务器错误"),
+    ),
+)]
 pub async fn download_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -156,6 +171,21 @@ pub async fn download_file(
 }
 
 /// 预览文件（在线查看）
+#[utoipa::path(
+    get,
+    path = "/api/core/file/preview/{id}",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    responses(
+        (status = 200, description = "文件预览成功"),
+        (status = 400, description = "无效的文件ID"),
+        (status = 403, description = "没有权限预览此文件"),
+        (status = 404, description = "文件不存在"),
+        (status = 500, description = "服务器错误"),
+    ),
+)]
 pub async fn preview_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -295,6 +325,21 @@ pub async fn preview_file(
 }
 
 /// 获取文件缩略图（仅图片）
+#[utoipa::path(
+    get,
+    path = "/api/core/file/thumbnail/{id}",
+    tag = "File",
+    params(
+        ("id" = String, Path, description = "文件ID"),
+    ),
+    responses(
+        (status = 200, description = "缩略图获取成功"),
+        (status = 400, description = "无效的文件ID或非图片文件"),
+        (status = 403, description = "没有权限访问此缩略图"),
+        (status = 404, description = "文件不存在"),
+        (status = 500, description = "服务器错误"),
+    ),
+)]
 pub async fn get_thumbnail(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

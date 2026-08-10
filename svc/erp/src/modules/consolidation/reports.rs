@@ -16,6 +16,12 @@ macro_rules! log_audit {
     ($($args:expr),*) => {};
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/reports",
+    tag = "Consolidation",
+    responses((status = 200, description = "获取合并报表列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_reports(
     State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
@@ -77,6 +83,13 @@ pub async fn list_reports(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/reports/{reportId}",
+    tag = "Consolidation",
+    params(("reportId" = String, Path, description = "报表ID")),
+    responses((status = 200, description = "获取合并报表详情成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
@@ -102,6 +115,12 @@ pub async fn get_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/consolidation/reports/generate",
+    tag = "Consolidation",
+    responses((status = 200, description = "生成合并报表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn generate_report(
     State(state): State<ApiState>,
     _headers: HeaderMap,
@@ -201,6 +220,13 @@ pub async fn generate_report(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/reports/{reportId}/lines",
+    tag = "Consolidation",
+    params(("reportId" = String, Path, description = "报表ID")),
+    responses((status = 200, description = "获取合并报表行项目成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_report_lines(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
@@ -336,6 +362,13 @@ pub async fn submit_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/consolidation/reports/{reportId}/approve",
+    tag = "Consolidation",
+    params(("reportId" = String, Path, description = "报表ID")),
+    responses((status = 200, description = "审批合并报表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn approve_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
@@ -406,6 +439,13 @@ pub async fn approve_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/consolidation/reports/{reportId}/publish",
+    tag = "Consolidation",
+    params(("reportId" = String, Path, description = "报表ID")),
+    responses((status = 200, description = "发布合并报表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn publish_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
@@ -441,6 +481,13 @@ pub async fn publish_report(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/consolidation/reports/{reportId}",
+    tag = "Consolidation",
+    params(("reportId" = String, Path, description = "报表ID")),
+    responses((status = 200, description = "删除合并报表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn delete_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,

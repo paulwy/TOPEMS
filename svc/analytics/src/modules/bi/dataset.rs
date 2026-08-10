@@ -94,7 +94,7 @@ pub fn create_routes() -> Router<AppState> {
 
 #[utoipa::path(
     get,
-    path = "/datasets",
+    path = "/api/bi/datasets",
     tag = "BI",
     responses(
         (status = 200, description = "List of datasets", body = serde_json::Value),
@@ -143,7 +143,7 @@ pub async fn list_datasets(
 
 #[utoipa::path(
     get,
-    path = "/datasets/{id}",
+    path = "/api/bi/datasets/{id}",
     tag = "BI",
     params(
         ("id" = uuid::Uuid, Path, description = "Dataset ID")
@@ -187,7 +187,7 @@ pub async fn get_dataset(
 
 #[utoipa::path(
     post,
-    path = "/datasets",
+    path = "/api/bi/datasets",
     tag = "BI",
     responses(
         (status = 200, description = "Dataset created", body = serde_json::Value),
@@ -241,7 +241,7 @@ pub async fn create_dataset(
 
 #[utoipa::path(
     put,
-    path = "/datasets/{id}",
+    path = "/api/bi/datasets/{id}",
     tag = "BI",
     params(
         ("id" = uuid::Uuid, Path, description = "Dataset ID")
@@ -292,7 +292,7 @@ pub async fn update_dataset(
 
 #[utoipa::path(
     delete,
-    path = "/datasets/{id}",
+    path = "/api/bi/datasets/{id}",
     tag = "BI",
     params(
         ("id" = uuid::Uuid, Path, description = "Dataset ID")
@@ -332,7 +332,7 @@ pub async fn delete_dataset(
 
 #[utoipa::path(
     post,
-    path = "/datasets/{id}/publish",
+    path = "/api/bi/datasets/{id}/publish",
     tag = "BI",
     params(
         ("id" = uuid::Uuid, Path, description = "Dataset ID")
@@ -376,7 +376,7 @@ pub async fn publish_dataset(
 
 #[utoipa::path(
     post,
-    path = "/datasets/{id}/refresh",
+    path = "/api/bi/datasets/{id}/refresh",
     tag = "BI",
     params(
         ("id" = uuid::Uuid, Path, description = "Dataset ID")
@@ -418,7 +418,18 @@ pub async fn refresh_dataset(
     }
 }
 
-async fn get_dataset_preview(
+#[utoipa::path(
+    get,
+    path = "/api/bi/datasets/{id}/preview",
+    tag = "BI",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Dataset ID")
+    ),
+    responses(
+        (status = 200, description = "Dataset preview", body = serde_json::Value),
+    ),
+)]
+pub async fn get_dataset_preview(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Query(params): Query<LimitQuery>,
@@ -461,7 +472,15 @@ async fn get_dataset_preview(
     }
 }
 
-async fn query_dataset(
+#[utoipa::path(
+    post,
+    path = "/api/bi/datasets/query",
+    tag = "BI",
+    responses(
+        (status = 200, description = "Dataset query result", body = serde_json::Value),
+    ),
+)]
+pub async fn query_dataset(
     State(_state): State<AppState>,
     Json(_params): Json<DatasetQueryParams>,
 ) -> Json<serde_json::Value> {
@@ -476,7 +495,15 @@ async fn query_dataset(
     }))
 }
 
-async fn test_sql_query(
+#[utoipa::path(
+    post,
+    path = "/api/bi/datasets/test-sql",
+    tag = "BI",
+    responses(
+        (status = 200, description = "SQL query test result", body = serde_json::Value),
+    ),
+)]
+pub async fn test_sql_query(
     State(_state): State<AppState>,
     Json(_req): Json<TestSqlQueryRequest>,
 ) -> Json<serde_json::Value> {
@@ -492,6 +519,6 @@ async fn test_sql_query(
 }
 
 #[derive(Debug, Deserialize)]
-struct LimitQuery {
+pub struct LimitQuery {
     pub limit: Option<i64>,
 }

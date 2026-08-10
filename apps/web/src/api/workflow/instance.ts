@@ -39,7 +39,7 @@ export const instanceApi = {
   },
 
   delete: (id: string) => {
-    return apiClient.workflow.delete(`/instances/${id}`);
+    return apiClient.workflow.post(`/instances/${id}/cancel`);
   },
 
   activateInstance: (id: string) => {
@@ -47,7 +47,7 @@ export const instanceApi = {
   },
 
   deleteInstance: (id: string) => {
-    return apiClient.workflow.delete(`/instances/${id}`);
+    return apiClient.workflow.post(`/instances/${id}/cancel`);
   },
 
   terminateInstance: (id: string, data?: { reason?: string }) => {

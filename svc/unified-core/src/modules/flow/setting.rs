@@ -6,6 +6,14 @@ use axum::{
     Json,
 };
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/settings",
+    tag = "Flow-Monitor",
+    responses(
+        (status = 200, description = "查询成功", body = serde_json::Value),
+    ),
+)]
 pub async fn list_settings(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("Flow setting list_settings called");
     Json(serde_json::json!({
@@ -15,6 +23,17 @@ pub async fn list_settings(State(_state): State<AppState>) -> Json<serde_json::V
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/settings/{id}",
+    tag = "Flow-Monitor",
+    params(
+        ("id" = String, Path, description = "设置ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = serde_json::Value),
+    ),
+)]
 pub async fn get_setting(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -27,6 +46,17 @@ pub async fn get_setting(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/settings/key/{key}",
+    tag = "Flow-Monitor",
+    params(
+        ("key" = String, Path, description = "设置键名"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = serde_json::Value),
+    ),
+)]
 pub async fn get_setting_by_key(
     State(_state): State<AppState>,
     Path(key): Path<String>,
@@ -39,6 +69,18 @@ pub async fn get_setting_by_key(
     }))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/core/flow/settings/{id}",
+    tag = "Flow-Monitor",
+    params(
+        ("id" = String, Path, description = "设置ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新成功", body = serde_json::Value),
+    ),
+)]
 pub async fn update_setting(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -56,6 +98,17 @@ pub async fn update_setting(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/settings/{id}/reset",
+    tag = "Flow-Monitor",
+    params(
+        ("id" = String, Path, description = "设置ID"),
+    ),
+    responses(
+        (status = 200, description = "重置成功", body = serde_json::Value),
+    ),
+)]
 pub async fn reset_setting(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -68,6 +121,15 @@ pub async fn reset_setting(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/settings/batch",
+    tag = "Flow-Monitor",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "批量更新成功", body = serde_json::Value),
+    ),
+)]
 pub async fn batch_update_settings(
     State(_state): State<AppState>,
     Json(payload): Json<serde_json::Value>,

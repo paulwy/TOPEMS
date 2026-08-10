@@ -44,7 +44,7 @@ export const aiApi = {
   },
 
   listTemplates: async (): Promise<ApiResponse<AITemplate[]>> => {
-    return apiClient.ai.get<AITemplate[]>('/ai/templates');
+    return apiClient.ai.get<AITemplate[]>('/templates');
   },
 
   // ========== 对话聊天增强模块 ==========

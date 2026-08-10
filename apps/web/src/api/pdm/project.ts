@@ -103,7 +103,8 @@ export const projectApi = {
     return apiClient.pdm.get<ProjectMember[]>(`/projects/${projectId}/members`);
   },
   addMember: async (data: AddProjectMemberRequest): Promise<ApiResponse<ProjectMember>> => {
-    return apiClient.pdm.post<ProjectMember>(`/projects/${data.project_id}/members`, {
+    const projectId = data.project_id;
+    return apiClient.pdm.post<ProjectMember>(`/projects/${projectId}/members`, {
       user_id: data.user_id,
       role: data.role,
     });
@@ -126,7 +127,8 @@ export const projectApi = {
     return apiClient.pdm.get<ProjectPhase[]>(`/projects/${projectId}/phases`);
   },
   createPhase: async (data: CreateProjectPhaseRequest): Promise<ApiResponse<ProjectPhase>> => {
-    return apiClient.pdm.post<ProjectPhase>(`/projects/${data.project_id}/phases`, data);
+    const projectId = data.project_id;
+    return apiClient.pdm.post<ProjectPhase>(`/projects/${projectId}/phases`, data);
   },
   updatePhaseById: async (
     projectId: string,

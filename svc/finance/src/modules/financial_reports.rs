@@ -8,6 +8,7 @@ use chrono::Utc;
 use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::Deserialize;
 use sqlx::Row;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::services::FinanceService;
@@ -69,7 +70,7 @@ async fn period_net_total(pool: &sqlx::PgPool, tenant_id: Uuid, period: &str) ->
 
 // ========== Phase 3: 报表项目明细 ==========
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct ItemDetailsQuery {
     pub report_type: Option<String>,
     pub report_id: Option<String>,
@@ -77,7 +78,18 @@ pub struct ItemDetailsQuery {
     pub period: Option<String>,
 }
 
-async fn get_report_item_details(
+#[utoipa::path(
+    get,
+    path = "/reports/item-details",
+    tag = "Report",
+    params(ItemDetailsQuery),
+    responses(
+        (status = 200, description = "获取报表项目明细成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_report_item_details(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ItemDetailsQuery>,
@@ -123,7 +135,7 @@ async fn get_report_item_details(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct ItemVouchersQuery {
     pub report_type: Option<String>,
     pub report_id: Option<String>,
@@ -133,7 +145,18 @@ pub struct ItemVouchersQuery {
     pub pagesize: Option<i64>,
 }
 
-async fn get_report_item_vouchers(
+#[utoipa::path(
+    get,
+    path = "/reports/item-vouchers",
+    tag = "Report",
+    params(ItemVouchersQuery),
+    responses(
+        (status = 200, description = "获取报表项目凭证明细成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_report_item_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ItemVouchersQuery>,
@@ -219,7 +242,7 @@ async fn get_report_item_vouchers(
 
 // ========== Phase 3: 报表对比分析 ==========
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct ComparisonQuery {
     pub report_type: Option<String>,
     pub org_id: Option<String>,
@@ -228,7 +251,18 @@ pub struct ComparisonQuery {
     pub currency_code: Option<String>,
 }
 
-async fn get_report_comparison(
+#[utoipa::path(
+    get,
+    path = "/reports/comparison",
+    tag = "Report",
+    params(ComparisonQuery),
+    responses(
+        (status = 200, description = "获取报表对比分析成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_report_comparison(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComparisonQuery>,
@@ -275,7 +309,7 @@ async fn get_report_comparison(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct TrendQuery {
     pub report_type: Option<String>,
     pub org_id: Option<String>,
@@ -285,7 +319,18 @@ pub struct TrendQuery {
     pub currency_code: Option<String>,
 }
 
-async fn get_report_trend(
+#[utoipa::path(
+    get,
+    path = "/reports/trend",
+    tag = "Report",
+    params(TrendQuery),
+    responses(
+        (status = 200, description = "获取报表趋势分析成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_report_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TrendQuery>,
@@ -336,7 +381,7 @@ async fn get_report_trend(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct YearOverYearQuery {
     pub report_type: Option<String>,
     pub org_id: Option<String>,
@@ -345,7 +390,18 @@ pub struct YearOverYearQuery {
     pub currency_code: Option<String>,
 }
 
-async fn get_report_year_over_year(
+#[utoipa::path(
+    get,
+    path = "/reports/year-over-year",
+    tag = "Report",
+    params(YearOverYearQuery),
+    responses(
+        (status = 200, description = "获取同比分析成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_report_year_over_year(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<YearOverYearQuery>,
@@ -393,7 +449,7 @@ async fn get_report_year_over_year(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct PeriodOverPeriodQuery {
     pub report_type: Option<String>,
     pub org_id: Option<String>,
@@ -402,7 +458,18 @@ pub struct PeriodOverPeriodQuery {
     pub currency_code: Option<String>,
 }
 
-async fn get_report_period_over_period(
+#[utoipa::path(
+    get,
+    path = "/reports/period-over-period",
+    tag = "Report",
+    params(PeriodOverPeriodQuery),
+    responses(
+        (status = 200, description = "获取环比分析成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_report_period_over_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PeriodOverPeriodQuery>,
@@ -452,7 +519,17 @@ async fn get_report_period_over_period(
 
 // ========== Phase 4: 多公司合并 ==========
 
-async fn generate_consolidated_report(
+#[utoipa::path(
+    post,
+    path = "/reports/consolidated/generate",
+    tag = "Report",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "生成合并报表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn generate_consolidated_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -502,14 +579,24 @@ async fn generate_consolidated_report(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct ConsolidatedReportQuery {
     pub report_type: Option<String>,
     pub period: Option<String>,
     pub currency_code: Option<String>,
 }
 
-async fn get_consolidated_report(
+#[utoipa::path(
+    get,
+    path = "/reports/consolidated/{consolidationId}",
+    tag = "Report",
+    params(("consolidationId" = String, Path, description = "合并报表ID"), ConsolidatedReportQuery),
+    responses(
+        (status = 200, description = "获取合并报表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_consolidated_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(consolidation_id): Path<String>,
@@ -542,7 +629,7 @@ async fn get_consolidated_report(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct EntityListQuery {
     pub parent_id: Option<String>,
     pub include_disabled: Option<bool>,
@@ -550,7 +637,17 @@ pub struct EntityListQuery {
     pub pagesize: Option<i64>,
 }
 
-async fn get_consolidation_entities(
+#[utoipa::path(
+    get,
+    path = "/reports/consolidated/entities",
+    tag = "Report",
+    params(EntityListQuery),
+    responses(
+        (status = 200, description = "获取合并实体列表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_consolidation_entities(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<EntityListQuery>,
@@ -637,7 +734,17 @@ async fn get_consolidation_entities(
     ))
 }
 
-async fn create_consolidation_entity(
+#[utoipa::path(
+    post,
+    path = "/reports/consolidated/entities",
+    tag = "Report",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "创建合并实体成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn create_consolidation_entity(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -661,7 +768,18 @@ async fn create_consolidation_entity(
     ))
 }
 
-async fn update_consolidation_entity(
+#[utoipa::path(
+    put,
+    path = "/reports/consolidated/entities/{entityId}",
+    tag = "Report",
+    params(("entityId" = String, Path, description = "实体ID")),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新合并实体成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn update_consolidation_entity(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(entity_id): Path<String>,
@@ -684,7 +802,17 @@ async fn update_consolidation_entity(
     ))
 }
 
-async fn delete_consolidation_entity(
+#[utoipa::path(
+    delete,
+    path = "/reports/consolidated/entities/{entityId}",
+    tag = "Report",
+    params(("entityId" = String, Path, description = "实体ID")),
+    responses(
+        (status = 200, description = "删除合并实体成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn delete_consolidation_entity(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(entity_id): Path<String>,
@@ -698,7 +826,7 @@ async fn delete_consolidation_entity(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct ElimListQuery {
     pub consolidation_id: Option<String>,
     pub period: Option<String>,
@@ -706,7 +834,17 @@ pub struct ElimListQuery {
     pub pagesize: Option<i64>,
 }
 
-async fn get_intercompany_elims(
+#[utoipa::path(
+    get,
+    path = "/reports/consolidated/elims",
+    tag = "Report",
+    params(ElimListQuery),
+    responses(
+        (status = 200, description = "获取内部交易抵消分录列表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_intercompany_elims(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ElimListQuery>,
@@ -749,7 +887,17 @@ async fn get_intercompany_elims(
     ))
 }
 
-async fn add_intercompany_elimination(
+#[utoipa::path(
+    post,
+    path = "/reports/consolidated/elims",
+    tag = "Report",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "创建内部交易抵消分录成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn add_intercompany_elimination(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -771,7 +919,7 @@ async fn add_intercompany_elimination(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct ConsolidatedExportQuery {
     pub report_type: Option<String>,
     pub period: Option<String>,
@@ -779,7 +927,7 @@ pub struct ConsolidatedExportQuery {
     pub format: Option<String>,
 }
 
-async fn export_consolidated_report(
+pub async fn export_consolidated_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(consolidation_id): Path<String>,
@@ -809,7 +957,17 @@ async fn export_consolidated_report(
 
 // ========== Phase 4: 批量导出 ==========
 
-async fn batch_export_reports(
+#[utoipa::path(
+    post,
+    path = "/reports/export/batch",
+    tag = "Report",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "批量导出报表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn batch_export_reports(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -870,7 +1028,7 @@ async fn batch_export_reports(
 
 // ========== Phase 4: 报表订阅 ==========
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct SubscriptionListQuery {
     pub report_type: Option<String>,
     pub isactive: Option<bool>,
@@ -878,7 +1036,17 @@ pub struct SubscriptionListQuery {
     pub pagesize: Option<i64>,
 }
 
-async fn get_report_subscriptions(
+#[utoipa::path(
+    get,
+    path = "/reports/subscriptions",
+    tag = "Report",
+    params(SubscriptionListQuery),
+    responses(
+        (status = 200, description = "获取报表订阅列表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_report_subscriptions(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<SubscriptionListQuery>,
@@ -950,7 +1118,17 @@ async fn get_report_subscriptions(
     ))
 }
 
-async fn create_report_subscription(
+#[utoipa::path(
+    post,
+    path = "/reports/subscriptions",
+    tag = "Report",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "创建报表订阅成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn create_report_subscription(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -998,7 +1176,19 @@ async fn create_report_subscription(
     ))
 }
 
-async fn update_report_subscription(
+#[utoipa::path(
+    put,
+    path = "/reports/subscriptions/{subscriptionId}",
+    tag = "Report",
+    params(("subscriptionId" = String, Path, description = "订阅ID")),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新报表订阅成功", body = ApiResponse<serde_json::Value>),
+        (status = 404, description = "报表订阅不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn update_report_subscription(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(subscription_id): Path<String>,
@@ -1044,7 +1234,18 @@ async fn update_report_subscription(
     ))
 }
 
-async fn delete_report_subscription(
+#[utoipa::path(
+    delete,
+    path = "/reports/subscriptions/{subscriptionId}",
+    tag = "Report",
+    params(("subscriptionId" = String, Path, description = "订阅ID")),
+    responses(
+        (status = 200, description = "删除报表订阅成功", body = ApiResponse<serde_json::Value>),
+        (status = 404, description = "报表订阅不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn delete_report_subscription(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(subscription_id): Path<String>,
@@ -1058,7 +1259,18 @@ async fn delete_report_subscription(
     ))
 }
 
-async fn send_report_now(
+#[utoipa::path(
+    post,
+    path = "/reports/subscriptions/{subscriptionId}/send-now",
+    tag = "Report",
+    params(("subscriptionId" = String, Path, description = "订阅ID")),
+    responses(
+        (status = 200, description = "立即发送报表订阅成功", body = ApiResponse<serde_json::Value>),
+        (status = 404, description = "报表订阅不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn send_report_now(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(subscription_id): Path<String>,
@@ -1073,13 +1285,24 @@ async fn send_report_now(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct SubscriptionHistoryQuery {
     pub page: Option<i64>,
     pub pagesize: Option<i64>,
 }
 
-async fn get_subscription_history(
+#[utoipa::path(
+    get,
+    path = "/reports/subscriptions/{subscriptionId}/history",
+    tag = "Report",
+    params(("subscriptionId" = String, Path, description = "订阅ID"), SubscriptionHistoryQuery),
+    responses(
+        (status = 200, description = "获取报表订阅发送历史成功", body = ApiResponse<serde_json::Value>),
+        (status = 404, description = "报表订阅不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_subscription_history(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(subscription_id): Path<String>,
@@ -1121,7 +1344,7 @@ async fn get_subscription_history(
 
 // ========== Phase 1: 报表生成 + 历史查询 ==========
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct GenerateReportRequest {
     pub org_id: Option<String>,
     pub period: String,
@@ -1132,14 +1355,14 @@ pub struct GenerateReportRequest {
     pub method: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct GetReportQuery {
     pub org_id: Option<String>,
     pub period: String,
     pub currency_code: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct HistoryReportQuery {
     pub org_id: Option<String>,
     pub start_period: String,
@@ -1287,7 +1510,17 @@ async fn fetch_history(
     Ok((items, total))
 }
 
-async fn generate_balance_sheet(
+#[utoipa::path(
+    post,
+    path = "/reports/balance-sheet/generate",
+    tag = "Report",
+    request_body = GenerateReportRequest,
+    responses(
+        (status = 200, description = "生成资产负债表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn generate_balance_sheet(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
@@ -1317,7 +1550,17 @@ async fn generate_balance_sheet(
     }
 }
 
-async fn get_balance_sheet(
+#[utoipa::path(
+    get,
+    path = "/reports/balance-sheet",
+    tag = "Report",
+    params(GetReportQuery),
+    responses(
+        (status = 200, description = "获取资产负债表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_balance_sheet(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetReportQuery>,
@@ -1351,7 +1594,17 @@ async fn get_balance_sheet(
     }
 }
 
-async fn get_balance_sheet_history(
+#[utoipa::path(
+    get,
+    path = "/reports/balance-sheet/history",
+    tag = "Report",
+    params(HistoryReportQuery),
+    responses(
+        (status = 200, description = "获取资产负债表历史成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_balance_sheet_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
@@ -1379,7 +1632,17 @@ async fn get_balance_sheet_history(
     }
 }
 
-async fn generate_income_statement(
+#[utoipa::path(
+    post,
+    path = "/reports/income-statement/generate",
+    tag = "Report",
+    request_body = GenerateReportRequest,
+    responses(
+        (status = 200, description = "生成利润表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn generate_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
@@ -1409,7 +1672,17 @@ async fn generate_income_statement(
     }
 }
 
-async fn get_income_statement(
+#[utoipa::path(
+    get,
+    path = "/reports/income-statement",
+    tag = "Report",
+    params(GetReportQuery),
+    responses(
+        (status = 200, description = "获取利润表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetReportQuery>,
@@ -1446,7 +1719,17 @@ async fn get_income_statement(
     }
 }
 
-async fn get_income_statement_history(
+#[utoipa::path(
+    get,
+    path = "/reports/income-statement/history",
+    tag = "Report",
+    params(HistoryReportQuery),
+    responses(
+        (status = 200, description = "获取利润表历史成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_income_statement_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
@@ -1474,7 +1757,17 @@ async fn get_income_statement_history(
     }
 }
 
-async fn generate_cash_flow(
+#[utoipa::path(
+    post,
+    path = "/reports/cash-flow/generate",
+    tag = "Report",
+    request_body = GenerateReportRequest,
+    responses(
+        (status = 200, description = "生成现金流量表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn generate_cash_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
@@ -1507,7 +1800,17 @@ async fn generate_cash_flow(
     }
 }
 
-async fn get_cash_flow(
+#[utoipa::path(
+    get,
+    path = "/reports/cash-flow",
+    tag = "Report",
+    params(GetReportQuery),
+    responses(
+        (status = 200, description = "获取现金流量表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_cash_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetReportQuery>,
@@ -1544,7 +1847,17 @@ async fn get_cash_flow(
     }
 }
 
-async fn get_cash_flow_history(
+#[utoipa::path(
+    get,
+    path = "/reports/cash-flow/history",
+    tag = "Report",
+    params(HistoryReportQuery),
+    responses(
+        (status = 200, description = "获取现金流量表历史成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_cash_flow_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
@@ -1574,7 +1887,7 @@ async fn get_cash_flow_history(
 
 // ========== Phase 2: 报表审批 ==========
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ApprovalRequest {
     pub report_type: String,
     pub report_id: String,
@@ -1582,7 +1895,19 @@ pub struct ApprovalRequest {
     pub reason: Option<String>,
 }
 
-async fn submit_report_for_approval(
+#[utoipa::path(
+    post,
+    path = "/reports/submit-approval",
+    tag = "Report",
+    request_body = ApprovalRequest,
+    responses(
+        (status = 200, description = "提交报表审批成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "报表不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn submit_report_for_approval(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
@@ -1607,7 +1932,19 @@ async fn submit_report_for_approval(
     }
 }
 
-async fn approve_report(
+#[utoipa::path(
+    post,
+    path = "/reports/approve",
+    tag = "Report",
+    request_body = ApprovalRequest,
+    responses(
+        (status = 200, description = "审批报表成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "报表不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn approve_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
@@ -1634,7 +1971,19 @@ async fn approve_report(
     }
 }
 
-async fn reject_report(
+#[utoipa::path(
+    post,
+    path = "/reports/reject",
+    tag = "Report",
+    request_body = ApprovalRequest,
+    responses(
+        (status = 200, description = "驳回报表成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "报表不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn reject_report(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
@@ -1660,7 +2009,19 @@ async fn reject_report(
     }
 }
 
-async fn lock_report(
+#[utoipa::path(
+    post,
+    path = "/reports/lock",
+    tag = "Report",
+    request_body = ApprovalRequest,
+    responses(
+        (status = 200, description = "锁定报表成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "报表不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn lock_report(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
@@ -1685,7 +2046,19 @@ async fn lock_report(
     }
 }
 
-async fn unlock_report(
+#[utoipa::path(
+    post,
+    path = "/reports/unlock",
+    tag = "Report",
+    request_body = ApprovalRequest,
+    responses(
+        (status = 200, description = "解锁报表成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "报表不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn unlock_report(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
@@ -1712,7 +2085,7 @@ async fn unlock_report(
 
 // ========== Phase 4: 单报表导出 ==========
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct ExportQuery {
     pub report_type: Option<String>,
     pub org_id: Option<String>,
@@ -1723,7 +2096,7 @@ pub struct ExportQuery {
     pub include_comparison: Option<bool>,
 }
 
-async fn export_report(
+pub async fn export_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ExportQuery>,

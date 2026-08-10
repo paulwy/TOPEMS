@@ -210,6 +210,91 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // ==================== PDM Projects ====================
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS pdm_projects (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
+            project_no VARCHAR(64) NOT NULL,
+            name VARCHAR(256) NOT NULL,
+            description TEXT,
+            status VARCHAR(32) DEFAULT 'planning',
+            phase VARCHAR(32) DEFAULT 'initiation',
+            start_date TIMESTAMP,
+            end_date TIMESTAMP,
+            manager_id VARCHAR(128),
+            manager_name VARCHAR(128),
+            budget DOUBLE PRECISION,
+            progress INT DEFAULT 0,
+            created_by VARCHAR(128),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            deleted_at TIMESTAMP,
+            CONSTRAINT uq_pdm_projects_tenant_no UNIQUE (tenant_id, project_no)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS pdm_project_members (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
+            project_id UUID NOT NULL REFERENCES pdm_projects(id) ON DELETE CASCADE,
+            user_id VARCHAR(128) NOT NULL,
+            user_name VARCHAR(128),
+            user_email VARCHAR(256),
+            role VARCHAR(32) NOT NULL,
+            joined_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            CONSTRAINT uq_pdm_project_members_user UNIQUE (tenant_id, project_id, user_id)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS pdm_project_phases (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
+            project_id UUID NOT NULL REFERENCES pdm_projects(id) ON DELETE CASCADE,
+            phase VARCHAR(64) NOT NULL,
+            name VARCHAR(256) NOT NULL,
+            description TEXT,
+            start_date TIMESTAMP,
+            end_date TIMESTAMP,
+            status VARCHAR(32) DEFAULT 'pending',
+            deliverables TEXT[] DEFAULT '{}',
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_projects_tenant_id ON pdm_projects(tenant_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_projects_status ON pdm_projects(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_projects_phase ON pdm_projects(phase)")
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_project_members_project ON pdm_project_members(project_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_project_phases_project ON pdm_project_phases(project_id)",
+    )
+    .execute(pool)
+    .await?;
+
     // ==================== Versions ====================
     sqlx::query(
         r#"
@@ -238,6 +323,53 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_versions_tenant_id ON pdm_versions(tenant_id)")
         .execute(pool)
         .await?;
+
+    // ==================== Document Versions ====================
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS pdm_document_versions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
+            document_id UUID NOT NULL REFERENCES pdm_documents(id) ON DELETE CASCADE,
+            document_type VARCHAR(64),
+            version_number VARCHAR(64) NOT NULL,
+            title VARCHAR(256) NOT NULL,
+            description TEXT,
+            status VARCHAR(32) DEFAULT 'draft',
+            file_url VARCHAR(1000),
+            filesize BIGINT,
+            file_type VARCHAR(128),
+            changes TEXT[] NOT NULL DEFAULT '{}',
+            created_by VARCHAR(128) NOT NULL DEFAULT 'system',
+            created_by_name VARCHAR(128),
+            reviewed_by VARCHAR(128),
+            approved_by VARCHAR(128),
+            published_at TIMESTAMP,
+            file_content BYTEA,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            deleted_at TIMESTAMP,
+            CONSTRAINT uq_pdm_document_versions_number UNIQUE (tenant_id, document_id, version_number)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_document_versions_document ON pdm_document_versions(document_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_document_versions_tenant_id ON pdm_document_versions(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_document_versions_status ON pdm_document_versions(status)",
+    )
+    .execute(pool)
+    .await?;
 
     // ==================== Configurations ====================
     sqlx::query(

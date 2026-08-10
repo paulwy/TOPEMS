@@ -646,7 +646,7 @@ pub async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse
 
 #[utoipa::path(
     post,
-    path = "/search",
+    path = "/api/ai/search",
     request_body = AiSearchRequest,
     tag = "ai",
     responses(

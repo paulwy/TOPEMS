@@ -8,9 +8,9 @@
 //! 的注解保留在各自模块中。
 
 use crate::modules::{
-    change_notice, configuration, document, material, pdm_plugin, product, production_batch,
-    production_formula, production_process, production_statistics, production_step, version,
-    workflow,
+    bom, change_notice, configuration, dashboard, document, document_version, material, pdm_plugin, product, project,
+    production_batch, production_formula, production_process, production_statistics, production_step,
+    version, workflow,
 };
 use utoipa::OpenApi;
 
@@ -67,6 +67,27 @@ fn _detailed_health() {}
         // === pdm_plugin（公共路由） ===
         pdm_plugin::get_plugin_info,
         pdm_plugin::plugin_health_check,
+        // === dashboard ===
+        dashboard::get_dashboard,
+        dashboard::api_health,
+        dashboard::import_data,
+        // === bom ===
+        bom::list_bom_versions,
+        bom::create_bom_version,
+        bom::get_bom_version,
+        bom::update_bom_version,
+        bom::delete_bom_version,
+        bom::activate_bom_version,
+        bom::archive_bom_version,
+        bom::list_bom_items,
+        bom::create_bom_item,
+        bom::get_bom_item,
+        bom::update_bom_item,
+        bom::delete_bom_item,
+        bom::batch_create_bom_items,
+        bom::compare_bom_versions,
+        bom::list_bom_comparisons,
+        bom::get_bom_comparison,
         // === product ===
         product::list_products,
         product::create_product,
@@ -87,13 +108,40 @@ fn _detailed_health() {}
         configuration::delete_configuration,
         // === document ===
         document::list_documents,
+        document::search_documents,
         document::create_document,
         document::get_document,
         document::update_document,
+        document::update_document_status,
         document::delete_document,
         document::start_document_approval,
         document::get_document_approval_history,
         document::list_pending_documents,
+        // === document_version ===
+        document_version::list_versions,
+        document_version::create_version,
+        document_version::get_version,
+        document_version::update_version,
+        document_version::delete_version,
+        document_version::publish_version,
+        document_version::upload_version,
+        document_version::download_version,
+        // === project ===
+        project::list_projects,
+        project::create_project,
+        project::get_project,
+        project::update_project,
+        project::delete_project,
+        project::update_project_status,
+        project::update_project_phase,
+        project::list_members,
+        project::add_member,
+        project::update_member,
+        project::remove_member,
+        project::list_phases,
+        project::create_phase,
+        project::update_phase,
+        project::delete_phase,
         // === version ===
         version::list_versions,
         version::create_version,
@@ -126,6 +174,7 @@ fn _detailed_health() {}
         production_batch::delete_batch,
         // === production_statistics ===
         production_statistics::list_statistics,
+        production_statistics::get_statistics_summary,
         production_statistics::get_statistics,
         // === change_notice ===
         change_notice::list_change_notices,

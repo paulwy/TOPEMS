@@ -21,7 +21,22 @@ use topems_shared_core::response::{PaginatedResponse, PaginationParams};
 
 // ==================== 费用报销（Expenses）====================
 
-async fn list_expenses(
+#[utoipa::path(
+    get,
+    path = "/expenses",
+    tag = "Expense",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态"),
+    ),
+    responses(
+        (status = 200, description = "获取费用列表成功", body = ApiResponse<PaginatedResponse<Value>>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn list_expenses(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -73,7 +88,17 @@ async fn list_expenses(
     }
 }
 
-async fn create_expense(
+#[utoipa::path(
+    post,
+    path = "/expenses",
+    tag = "Expense",
+    request_body = Value,
+    responses(
+        (status = 200, description = "创建费用成功", body = ApiResponse<Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn create_expense(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<Value>,
@@ -140,7 +165,18 @@ async fn create_expense(
     }
 }
 
-async fn get_expense(
+#[utoipa::path(
+    get,
+    path = "/expenses/{id}",
+    tag = "Expense",
+    params(("id" = Uuid, Path, description = "费用ID")),
+    responses(
+        (status = 200, description = "获取费用成功", body = ApiResponse<Value>),
+        (status = 404, description = "费用不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_expense(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -168,7 +204,19 @@ async fn get_expense(
     }
 }
 
-async fn update_expense(
+#[utoipa::path(
+    put,
+    path = "/expenses/{id}",
+    tag = "Expense",
+    params(("id" = Uuid, Path, description = "费用ID")),
+    request_body = Value,
+    responses(
+        (status = 200, description = "更新费用成功", body = ApiResponse<Value>),
+        (status = 404, description = "费用不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn update_expense(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -254,7 +302,17 @@ async fn update_expense(
     }
 }
 
-async fn delete_expense(
+#[utoipa::path(
+    delete,
+    path = "/expenses/{id}",
+    tag = "Expense",
+    params(("id" = Uuid, Path, description = "费用ID")),
+    responses(
+        (status = 200, description = "删除费用成功", body = ApiResponse<String>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn delete_expense(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -277,7 +335,22 @@ async fn delete_expense(
 
 // ==================== 预算（Budgets）====================
 
-async fn list_budgets(
+#[utoipa::path(
+    get,
+    path = "/budgets",
+    tag = "Budget",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态"),
+    ),
+    responses(
+        (status = 200, description = "获取预算列表成功", body = ApiResponse<PaginatedResponse<Value>>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn list_budgets(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -318,7 +391,17 @@ async fn list_budgets(
     }
 }
 
-async fn create_budget(
+#[utoipa::path(
+    post,
+    path = "/budgets",
+    tag = "Budget",
+    request_body = Value,
+    responses(
+        (status = 200, description = "创建预算成功", body = ApiResponse<Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn create_budget(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<Value>,
@@ -385,7 +468,18 @@ async fn create_budget(
     }
 }
 
-async fn get_budget(
+#[utoipa::path(
+    get,
+    path = "/budgets/{id}",
+    tag = "Budget",
+    params(("id" = Uuid, Path, description = "预算ID")),
+    responses(
+        (status = 200, description = "获取预算成功", body = ApiResponse<Value>),
+        (status = 404, description = "预算不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_budget(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -413,7 +507,19 @@ async fn get_budget(
     }
 }
 
-async fn update_budget(
+#[utoipa::path(
+    put,
+    path = "/budgets/{id}",
+    tag = "Budget",
+    params(("id" = Uuid, Path, description = "预算ID")),
+    request_body = Value,
+    responses(
+        (status = 200, description = "更新预算成功", body = ApiResponse<Value>),
+        (status = 404, description = "预算不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn update_budget(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -484,7 +590,17 @@ async fn update_budget(
     }
 }
 
-async fn delete_budget(
+#[utoipa::path(
+    delete,
+    path = "/budgets/{id}",
+    tag = "Budget",
+    params(("id" = Uuid, Path, description = "预算ID")),
+    responses(
+        (status = 200, description = "删除预算成功", body = ApiResponse<String>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn delete_budget(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -511,7 +627,22 @@ async fn delete_budget(
 
 // ==================== 应收（Receivables）====================
 
-async fn list_receivables(
+#[utoipa::path(
+    get,
+    path = "/receivables",
+    tag = "Receivable",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态"),
+    ),
+    responses(
+        (status = 200, description = "获取应收账款列表成功", body = ApiResponse<PaginatedResponse<Value>>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn list_receivables(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -563,7 +694,17 @@ async fn list_receivables(
     }
 }
 
-async fn create_receivable(
+#[utoipa::path(
+    post,
+    path = "/receivables",
+    tag = "Receivable",
+    request_body = Value,
+    responses(
+        (status = 200, description = "创建应收账款成功", body = ApiResponse<Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn create_receivable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<Value>,
@@ -633,7 +774,18 @@ async fn create_receivable(
     }
 }
 
-async fn get_receivable(
+#[utoipa::path(
+    get,
+    path = "/receivables/{id}",
+    tag = "Receivable",
+    params(("id" = Uuid, Path, description = "应收账款ID")),
+    responses(
+        (status = 200, description = "获取应收账款成功", body = ApiResponse<Value>),
+        (status = 404, description = "应收账款不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_receivable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -661,7 +813,18 @@ async fn get_receivable(
     }
 }
 
-async fn update_receivable(
+#[utoipa::path(
+    put,
+    path = "/receivables/{id}",
+    tag = "Receivable",
+    params(("id" = Uuid, Path, description = "应收账款ID")),
+    request_body = Value,
+    responses(
+        (status = 200, description = "更新应收账款成功", body = ApiResponse<Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn update_receivable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -723,7 +886,18 @@ async fn update_receivable(
     }
 }
 
-async fn delete_receivable(
+#[utoipa::path(
+    delete,
+    path = "/receivables/{id}",
+    tag = "Receivable",
+    params(("id" = Uuid, Path, description = "应收账款ID")),
+    responses(
+        (status = 200, description = "删除应收账款成功", body = ApiResponse<String>),
+        (status = 404, description = "应收账款不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn delete_receivable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -746,7 +920,22 @@ async fn delete_receivable(
 
 // ==================== 应付（Payables）====================
 
-async fn list_payables(
+#[utoipa::path(
+    get,
+    path = "/payables",
+    tag = "Payable",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态"),
+    ),
+    responses(
+        (status = 200, description = "获取应付账款列表成功", body = ApiResponse<PaginatedResponse<Value>>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn list_payables(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -798,7 +987,17 @@ async fn list_payables(
     }
 }
 
-async fn create_payable(
+#[utoipa::path(
+    post,
+    path = "/payables",
+    tag = "Payable",
+    request_body = Value,
+    responses(
+        (status = 200, description = "创建应付账款成功", body = ApiResponse<Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn create_payable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<Value>,
@@ -868,7 +1067,18 @@ async fn create_payable(
     }
 }
 
-async fn get_payable(
+#[utoipa::path(
+    get,
+    path = "/payables/{id}",
+    tag = "Payable",
+    params(("id" = Uuid, Path, description = "应付账款ID")),
+    responses(
+        (status = 200, description = "获取应付账款成功", body = ApiResponse<Value>),
+        (status = 404, description = "应付账款不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_payable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -896,7 +1106,18 @@ async fn get_payable(
     }
 }
 
-async fn update_payable(
+#[utoipa::path(
+    put,
+    path = "/payables/{id}",
+    tag = "Payable",
+    params(("id" = Uuid, Path, description = "应付账款ID")),
+    request_body = Value,
+    responses(
+        (status = 200, description = "更新应付账款成功", body = ApiResponse<Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn update_payable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -958,7 +1179,18 @@ async fn update_payable(
     }
 }
 
-async fn delete_payable(
+#[utoipa::path(
+    delete,
+    path = "/payables/{id}",
+    tag = "Payable",
+    params(("id" = Uuid, Path, description = "应付账款ID")),
+    responses(
+        (status = 200, description = "删除应付账款成功", body = ApiResponse<String>),
+        (status = 404, description = "应付账款不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn delete_payable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,

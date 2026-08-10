@@ -116,6 +116,14 @@ where
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory-alerts",
+    responses(
+        (status = 200, description = "list_alerts OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 /// 获取库存预警列表
 pub async fn list_alerts(
     State(state): State<ApiState>,
@@ -261,6 +269,17 @@ pub async fn list_alerts(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory-alerts/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_alert OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 /// 获取单个预警详情
 pub async fn get_alert(
     State(state): State<ApiState>,
@@ -351,6 +370,17 @@ pub async fn get_alert(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/inventory-alerts/{id}/acknowledge",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "acknowledge_alert OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 /// 确认预警
 pub async fn acknowledge_alert(
     State(state): State<ApiState>,
@@ -402,6 +432,14 @@ pub async fn acknowledge_alert(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory-alerts/statistics",
+    responses(
+        (status = 200, description = "get_alert_statistics OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 /// 获取预警统计信息
 pub async fn get_alert_statistics(
     State(state): State<ApiState>,
@@ -761,6 +799,14 @@ pub struct UpdateAlertRuleRequest {
     pub remarks: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory-alerts/rules",
+    responses(
+        (status = 200, description = "list_alert_rules OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 pub async fn list_alert_rules(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -843,6 +889,14 @@ pub async fn list_alert_rules(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/inventory-alerts/rules",
+    responses(
+        (status = 200, description = "create_alert_rule OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 pub async fn create_alert_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -932,6 +986,17 @@ pub async fn create_alert_rule(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory-alerts/rules/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_alert_rule OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 pub async fn get_alert_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -973,6 +1038,17 @@ pub async fn get_alert_rule(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/wms/inventory-alerts/rules/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "update_alert_rule OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 pub async fn update_alert_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1070,6 +1146,17 @@ pub async fn update_alert_rule(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/wms/inventory-alerts/rules/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "delete_alert_rule OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 pub async fn delete_alert_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1130,6 +1217,14 @@ pub async fn delete_alert_rule(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory-alerts/records",
+    responses(
+        (status = 200, description = "list_alert_records OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 pub async fn list_alert_records(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1222,6 +1317,17 @@ pub async fn list_alert_records(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/inventory-alerts/records/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_alert_record OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 pub async fn get_alert_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1273,6 +1379,17 @@ pub struct ConfirmAlertRecordRequest {
     pub notes: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/inventory-alerts/records/{id}/confirm",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "confirm_alert_record OK")
+    ),
+    tag = "WMS/inventory-alerts"
+)]
 pub async fn confirm_alert_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

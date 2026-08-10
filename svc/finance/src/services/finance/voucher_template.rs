@@ -23,7 +23,7 @@ pub struct VoucherTemplate {
     pub created_by: Option<String>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct VoucherTemplateLine {
     pub id: Uuid,
     pub template_id: Uuid,

@@ -508,18 +508,18 @@ describe('PDM Module API Tests', () => {
       expect(apiClient.pdm.get).toHaveBeenCalledWith('/materials/mat-001');
     });
 
-    it('listChangeOrders should call GET /change-orders', async () => {
+    it('listChangeOrders should call GET /change-notices', async () => {
       const { pdmApi } = await import('../index');
       await pdmApi.listChangeOrders();
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.get).toHaveBeenCalledWith('/change-orders');
+      expect(apiClient.pdm.get).toHaveBeenCalledWith('/change-notices');
     });
 
-    it('getChangeOrder should call GET /change-orders/:id', async () => {
+    it('getChangeOrder should call GET /change-notices/:id', async () => {
       const { pdmApi } = await import('../index');
       await pdmApi.getChangeOrder('co-001');
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.get).toHaveBeenCalledWith('/change-orders/co-001');
+      expect(apiClient.pdm.get).toHaveBeenCalledWith('/change-notices/co-001');
     });
 
     it('health should call GET /health', async () => {

@@ -122,7 +122,8 @@ export const documentApi = {
   createVersion: async (
     data: CreateDocumentVersionRequest
   ): Promise<ApiResponse<DocumentVersion>> => {
-    return apiClient.pdm.post<DocumentVersion>(`/documents/${data.document_id}/versions`, data);
+    const documentId = data.document_id;
+    return apiClient.pdm.post<DocumentVersion>(`/documents/${documentId}/versions`, data);
   },
   updateVersion: async (
     documentId: string,

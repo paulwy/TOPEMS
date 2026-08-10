@@ -6,6 +6,14 @@ use axum::{
     Json,
 };
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/templates",
+    tag = "Flow-Template",
+    responses(
+        (status = 200, description = "查询成功", body = serde_json::Value),
+    ),
+)]
 pub async fn list_templates(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("Flow template list_templates called");
     Json(serde_json::json!({
@@ -15,6 +23,15 @@ pub async fn list_templates(State(_state): State<AppState>) -> Json<serde_json::
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/templates",
+    tag = "Flow-Template",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "创建成功", body = serde_json::Value),
+    ),
+)]
 pub async fn create_template(
     State(_state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -27,6 +44,17 @@ pub async fn create_template(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/templates/{id}",
+    tag = "Flow-Template",
+    params(
+        ("id" = String, Path, description = "模板ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = serde_json::Value),
+    ),
+)]
 pub async fn get_template(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -39,6 +67,18 @@ pub async fn get_template(
     }))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/core/flow/templates/{id}",
+    tag = "Flow-Template",
+    params(
+        ("id" = String, Path, description = "模板ID"),
+    ),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新成功", body = serde_json::Value),
+    ),
+)]
 pub async fn update_template(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -56,6 +96,17 @@ pub async fn update_template(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/core/flow/templates/{id}",
+    tag = "Flow-Template",
+    params(
+        ("id" = String, Path, description = "模板ID"),
+    ),
+    responses(
+        (status = 200, description = "删除成功", body = serde_json::Value),
+    ),
+)]
 pub async fn delete_template(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -68,6 +119,17 @@ pub async fn delete_template(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/templates/{id}/copy",
+    tag = "Flow-Template",
+    params(
+        ("id" = String, Path, description = "模板ID"),
+    ),
+    responses(
+        (status = 200, description = "复制成功", body = serde_json::Value),
+    ),
+)]
 pub async fn copy_template(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -80,6 +142,15 @@ pub async fn copy_template(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/core/flow/templates/import",
+    tag = "Flow-Template",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "导入成功", body = serde_json::Value),
+    ),
+)]
 pub async fn import_template(
     State(_state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -92,6 +163,17 @@ pub async fn import_template(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/templates/{id}/export",
+    tag = "Flow-Template",
+    params(
+        ("id" = String, Path, description = "模板ID"),
+    ),
+    responses(
+        (status = 200, description = "导出成功", body = serde_json::Value),
+    ),
+)]
 pub async fn export_template(
     State(_state): State<AppState>,
     Path(id): Path<String>,

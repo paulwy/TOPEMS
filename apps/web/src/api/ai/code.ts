@@ -41,7 +41,7 @@ export const codeApi = {
       bug_description: string;
     }>
   > => {
-    return apiClient.ai.post('/code/fix-bug', data);
+    return apiClient.ai.post('/code/fix', data);
   },
 
   optimizeCode: async (data: {

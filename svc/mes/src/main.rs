@@ -13,73 +13,7 @@ use topems_shared_bootstrap::{
 };
 use topems_shared_core::health::SimpleHealthConfig;
 
-use modules::production_order::{
-    CreateFromErpRequest, CreateProductionOrderRequest, ErpSalesOrderInfo,
-    ListProductionOrdersResponse, ProductionOrderResponse, ProductionOrderSource,
-    UpdateProductionOrderRequest,
-};
-use modules::work_order::{CreateWorkOrderRequest, UpdateWorkOrderRequest, WorkOrderResponse};
-use modules::work_report::{
-    CreateWorkReportRequest, RejectWorkReportRequest, UpdateWorkReportRequest, WorkReportResponse,
-};
-
-#[derive(OpenApi)]
-#[openapi(
-    components(
-        schemas(
-            // work_order
-            CreateWorkOrderRequest,
-            UpdateWorkOrderRequest,
-            WorkOrderResponse,
-            // work_report
-            CreateWorkReportRequest,
-            UpdateWorkReportRequest,
-            RejectWorkReportRequest,
-            WorkReportResponse,
-            // production_order
-            ProductionOrderSource,
-            ErpSalesOrderInfo,
-            CreateFromErpRequest,
-            CreateProductionOrderRequest,
-            UpdateProductionOrderRequest,
-            ProductionOrderResponse,
-            ListProductionOrdersResponse,
-        ),
-    ),
-    paths(
-        modules::work_order::list_work_orders,
-        modules::work_order::create_work_order,
-        modules::work_order::get_work_order,
-        modules::work_report::list_work_reports,
-        modules::work_report::create_work_report,
-        modules::work_report::get_work_report,
-        modules::production_order::list_production_orders,
-        modules::production_order::create_production_order,
-        modules::production_order::get_production_order,
-    ),
-    tags(
-        (name = "MES", description = "生产执行系统 API"),
-        (name = "Health", description = "健康检查接口"),
-        (name = "ProductionOrder", description = "生产订单管理接口"),
-        (name = "WorkOrder", description = "工单管理接口"),
-        (name = "QualityManagement", description = "质量管理接口"),
-        (name = "InventoryManagement", description = "库存管理接口"),
-        (name = "EquipmentManagement", description = "设备管理接口"),
-        (name = "APSScheduling", description = "高级排程接口"),
-        (name = "ProductionCost", description = "生产成本核算接口"),
-        (name = "EnergyManagement", description = "能耗管理接口"),
-        (name = "AnomalyDetection", description = "生产异常预警接口"),
-    ),
-    info(
-        title = "TOPEMS-MES API",
-        version = "1.0.0",
-        description = "TOPEMS 生产执行系统 API 文档\n\n## 功能模块\n\n- **生产订单**: 生产订单创建、排程、进度跟踪\n- **工单管理**: 工单下发、报工、完工\n- **质量管理**: 质检标准、检验记录、不合格品处理\n- **库存管理**: 车间库存、物料领用\n- **设备管理**: 设备台账、维护保养、状态监控\n- **高级排程**: APS 排程优化\n- **生产成本**: 工单成本核算\n- **能耗管理**: 能源消耗监控",
-    ),
-    servers(
-        (url = "http://localhost:8030", description = "本地开发环境"),
-    )
-)]
-pub struct ApiDoc;
+use modules::openapi::MesApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -136,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
 
     // OpenAPI 文档
     let openapi_json = Some(
-        serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+        serde_json::to_string_pretty(&MesApiDoc::openapi()).unwrap_or_else(|e| {
             tracing::error!("Failed to serialize OpenAPI spec: {}", e);
             "{}".to_string()
         }),
@@ -166,7 +100,7 @@ mod openapi_extract_tests {
 
     #[test]
     fn extract_openapi_spec() {
-        let spec = ApiDoc::openapi();
+        let spec = MesApiDoc::openapi();
         let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
         std::fs::write("/tmp/topems-mes-openapi.json", json).expect("Failed to write spec");
         tracing::info!("OpenAPI spec written to /tmp/topems-mes-openapi.json");

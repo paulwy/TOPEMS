@@ -33,6 +33,14 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/office-supplies",
+    responses(
+        (status = 200, description = "list_supplies OK")
+    ),
+    tag = "ERP/office-supplies"
+)]
 pub async fn list_supplies(
     State(state): State<ApiState>,
     Query(params): Query<SupplyQueryParams>,
@@ -94,6 +102,15 @@ pub async fn list_supplies(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/office-supplies",
+    request_body = CreateOfficeSupplyRequest,
+    responses(
+        (status = 200, description = "create_supply OK")
+    ),
+    tag = "ERP/office-supplies"
+)]
 pub async fn create_supply(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -169,6 +186,17 @@ pub async fn create_supply(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/office-supplies/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_supply OK")
+    ),
+    tag = "ERP/office-supplies"
+)]
 pub async fn get_supply(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -193,6 +221,18 @@ pub async fn get_supply(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/office-supplies/{id}",
+    request_body = UpdateOfficeSupplyRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "update_supply OK")
+    ),
+    tag = "ERP/office-supplies"
+)]
 pub async fn update_supply(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -286,6 +326,17 @@ pub async fn update_supply(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/office-supplies/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "delete_supply OK")
+    ),
+    tag = "ERP/office-supplies"
+)]
 pub async fn delete_supply(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

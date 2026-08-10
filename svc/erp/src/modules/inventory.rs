@@ -3,7 +3,6 @@ use axum::{
     routing::*,
     Json, Router,
 };
-use utoipa::path;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -292,6 +291,12 @@ pub async fn delete_inventory(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/inventory/low-stock",
+    tag = "ERP/inventory",
+    responses((status = 200, description = "获取低库存列表成功", body = ApiResponse<Vec<Inventory>>))
+)]
 pub async fn get_low_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

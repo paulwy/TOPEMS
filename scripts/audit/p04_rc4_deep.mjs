@@ -18,17 +18,15 @@ import { join, extname, relative } from 'node:path';
 const ROOT = '/Users/xingzhai/TOPEMS';
 const OPENAPI_JSON = join(ROOT, 'docs/api/openapi-aggregated.json');
 const FRONTEND_API_DIR = join(ROOT, 'apps/web/src/api');
+const TRIAGE_RESULT_JSON = join(ROOT, 'docs/audit/p04-triage-result.json');
+const OUTPUT_JSON = join(ROOT, 'docs/audit/p04-rc4-deep-result.json');
 
 // Read the triage result JSON
-const triageResult = JSON.parse(readFileSync(
-  '/Users/xingzhai/.trae-cn/work/6a7892893c61e286885080ca/p04-triage-result.json', 'utf-8'
-));
+const triageResult = JSON.parse(readFileSync(TRIAGE_RESULT_JSON, 'utf-8'));
 
 // Get RC4 items from the JSON
 const rc4Items = [];
-const result = JSON.parse(readFileSync(
-  '/Users/xingzhai/.trae-cn/work/6a7892893c61e286885080ca/p04-triage-result.json', 'utf-8'
-));
+const result = triageResult;
 
 // Re-extract all RC4 items by re-running the diff
 // (The JSON only stored samples, so we need to re-run to get all RC4 items)
@@ -116,19 +114,95 @@ function walkTs(dir) {
   return results;
 }
 
+const NON_PATH_VARS = new Set([
+  'queryString', 'qs', 'params', 'searchParams', 'query', 'search',
+  'filter', 'sort', 'page', 'limit', 'offset',
+]);
+
+function findTemplateLiteralEnd(text, startIndex) {
+  let expressionDepth = 0;
+  for (let i = startIndex + 1; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (ch === '\\') {
+      i++;
+      continue;
+    }
+    if (ch === '$' && next === '{') {
+      expressionDepth++;
+      i++;
+      continue;
+    }
+    if (ch === '}' && expressionDepth > 0) {
+      expressionDepth--;
+      continue;
+    }
+    if (ch === '`' && expressionDepth === 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function findTemplateExpressionEnd(text, startIndex) {
+  let expressionDepth = 1;
+  for (let i = startIndex; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (ch === '\\') {
+      i++;
+      continue;
+    }
+    if (ch === '$' && next === '{') {
+      expressionDepth++;
+      i++;
+      continue;
+    }
+    if (ch === '}') {
+      expressionDepth--;
+      if (expressionDepth === 0) {
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+function templateExpressionToPath(rawExpression) {
+  const expression = rawExpression.trim();
+  const leadingIdentifier = expression.match(/^([A-Za-z_$][\w$]*)\b/)?.[1];
+  if (NON_PATH_VARS.has(expression) || NON_PATH_VARS.has(leadingIdentifier)) {
+    return '';
+  }
+  return `{${expression}}`;
+}
+
 function templateToPath(urlStr) {
-  return urlStr.replace(/\$\{([^}]+)\}/g, '{$1}');
+  let output = '';
+  for (let i = 0; i < urlStr.length; i++) {
+    if (urlStr[i] === '$' && urlStr[i + 1] === '{') {
+      const end = findTemplateExpressionEnd(urlStr, i + 2);
+      if (end === -1) {
+        output += urlStr.slice(i);
+        break;
+      }
+      output += templateExpressionToPath(urlStr.slice(i + 2, end));
+      i = end;
+      continue;
+    }
+    output += urlStr[i];
+  }
+  return output;
 }
 
 function extractUrlArg(text, startIndex) {
   let i = startIndex;
   while (i < text.length && /\s/.test(text[i])) i++;
   if (text[i] === '`') {
-    let end = i + 1;
-    while (end < text.length && text[end] !== '`') {
-      if (text[end] === '\\') end++;
-      end++;
-    }
+    const end = findTemplateLiteralEnd(text, i);
+    if (end === -1) return null;
     return templateToPath(text.slice(i + 1, end));
   } else if (text[i] === "'" || text[i] === '"') {
     const quote = text[i];
@@ -292,6 +366,12 @@ for (const item of allUndocumented) {
 }
 
 console.log(`  -> RC4a (missing utoipa): ${rc4SubCategories.RC4a_missing_utoipa.length}`);
+// TEMP: Print all finance RC4a items
+const financeRc4a = rc4SubCategories.RC4a_missing_utoipa.filter(i => i.service === 'finance');
+console.log(`  -> Finance RC4a items (${financeRc4a.length}):`);
+financeRc4a.forEach((item, i) => {
+  console.log(`    ${i+1}. [${item.method}] ${item.fullPath}  (${item.file}:${item.line})`);
+});
 console.log(`  -> RC4b (admin/system): ${rc4SubCategories.RC4b_admin_system.length}`);
 console.log(`  -> RC4c (query string): ${rc4SubCategories.RC4c_query_string.length}`);
 console.log(`  -> RC4d (truly unregistered): ${rc4SubCategories.RC4d_truly_unregistered.length}`);
@@ -338,10 +418,8 @@ const output = {
   },
 };
 
-writeFileSync(
-  '/Users/xingzhai/.trae-cn/work/6a7892893c61e286885080ca/p04-rc4-deep-result.json',
-  JSON.stringify(output, null, 2)
-);
+writeFileSync(OUTPUT_JSON, JSON.stringify(output, null, 2));
+console.log(`\nJSON result: ${OUTPUT_JSON}`);
 
 // Print summary table
 console.log('\n=== RC4 Sub-Category Summary ===\n');

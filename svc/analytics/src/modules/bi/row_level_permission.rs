@@ -132,6 +132,12 @@ pub struct FilteredDataResponse {
     pub page_size: i64,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/permissions/row-level",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing row-level permission rules");
 
@@ -185,6 +191,12 @@ pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/bi/permissions/row-level",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn create_permission_rule(
     State(state): State<AppState>,
     Json(req): Json<CreatePermissionRuleRequest>,
@@ -247,6 +259,12 @@ pub async fn create_permission_rule(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/permissions/row-level/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_permission_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -301,6 +319,12 @@ pub async fn get_permission_rule(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/bi/permissions/row-level/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn update_permission_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -367,6 +391,12 @@ pub async fn update_permission_rule(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/bi/permissions/row-level/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn delete_permission_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -400,6 +430,12 @@ pub async fn delete_permission_rule(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/bi/permissions/row-level/{id}/test",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn validate_permission(
     State(state): State<AppState>,
     Json(req): Json<ValidatePermissionRequest>,
@@ -650,6 +686,12 @@ pub async fn get_permission_rule_types(State(_state): State<AppState>) -> Json<s
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/permissions/check",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn check_permission(
     State(_state): State<AppState>,
     Query(params): Query<CheckPermissionQuery>,

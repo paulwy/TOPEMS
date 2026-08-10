@@ -515,6 +515,16 @@ pub async fn create_production_order(
     Json(ApiResponse::success(order, "生产工单创建成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/orders/from-erp",
+    tag = "ProductionOrder",
+    request_body = CreateFromErpRequest,
+    responses(
+        (status = 200, description = "从ERP创建生产订单成功", body = ApiResponse<ProductionOrderResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_from_erp(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -692,6 +702,19 @@ pub async fn get_production_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/orders/{id}",
+    tag = "ProductionOrder",
+    params(
+        ("id" = String, Path, description = "订单ID"),
+    ),
+    request_body = UpdateProductionOrderRequest,
+    responses(
+        (status = 200, description = "生产订单更新成功", body = ApiResponse<ProductionOrderResponse>),
+        (status = 404, description = "生产订单不存在"),
+    ),
+)]
 pub async fn update_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -779,6 +802,18 @@ pub async fn update_production_order(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/mes/orders/{id}",
+    tag = "ProductionOrder",
+    params(
+        ("id" = String, Path, description = "订单ID"),
+    ),
+    responses(
+        (status = 200, description = "生产订单删除成功"),
+        (status = 404, description = "生产订单不存在"),
+    ),
+)]
 pub async fn delete_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -819,6 +854,18 @@ pub async fn delete_production_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/orders/{id}/start",
+    tag = "ProductionOrder",
+    params(
+        ("id" = String, Path, description = "订单ID"),
+    ),
+    responses(
+        (status = 200, description = "生产订单开始成功", body = ApiResponse<ProductionOrderResponse>),
+        (status = 404, description = "生产订单不存在"),
+    ),
+)]
 pub async fn start_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -894,6 +941,18 @@ pub async fn start_production_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/orders/{id}/complete",
+    tag = "ProductionOrder",
+    params(
+        ("id" = String, Path, description = "订单ID"),
+    ),
+    responses(
+        (status = 200, description = "生产订单完成成功", body = ApiResponse<ProductionOrderResponse>),
+        (status = 404, description = "生产订单不存在"),
+    ),
+)]
 pub async fn complete_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -970,6 +1029,18 @@ pub async fn complete_production_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/orders/{id}/cancel",
+    tag = "ProductionOrder",
+    params(
+        ("id" = String, Path, description = "订单ID"),
+    ),
+    responses(
+        (status = 200, description = "生产订单取消成功", body = ApiResponse<ProductionOrderResponse>),
+        (status = 404, description = "生产订单不存在"),
+    ),
+)]
 pub async fn cancel_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1044,6 +1115,18 @@ pub async fn cancel_production_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mes/orders/{id}/release",
+    tag = "ProductionOrder",
+    params(
+        ("id" = String, Path, description = "订单ID"),
+    ),
+    responses(
+        (status = 200, description = "生产订单下达成功", body = ApiResponse<ProductionOrderResponse>),
+        (status = 404, description = "生产订单不存在"),
+    ),
+)]
 pub async fn release_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

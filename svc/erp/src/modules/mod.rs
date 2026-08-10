@@ -26,6 +26,7 @@ pub mod db_structure;
 pub mod demo_data;
 pub mod dict;
 pub mod erp_plugin;
+pub mod erp_finance_compat;
 pub mod fixed_asset;
 pub mod health;
 pub mod holidays;

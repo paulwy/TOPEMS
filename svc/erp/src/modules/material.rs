@@ -35,7 +35,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
-    path = "/materials",
+    path = "/erp/materials",
     tag = "ERP",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
@@ -129,6 +129,13 @@ pub async fn list_materials(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/materials/{id}",
+    tag = "ERP",
+    params(("id" = Uuid, Path, description = "物料ID")),
+    responses((status = 200, description = "获取物料成功", body = ApiResponse<Material>))
+)]
 pub async fn get_material(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -157,7 +164,7 @@ pub async fn get_material(
 
 #[utoipa::path(
     post,
-    path = "/materials",
+    path = "/erp/materials",
     tag = "ERP",
     request_body = CreateMaterialRequest,
     responses(
@@ -204,6 +211,14 @@ pub async fn create_material(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/materials/{id}",
+    tag = "ERP",
+    params(("id" = Uuid, Path, description = "物料ID")),
+    request_body = UpdateMaterialRequest,
+    responses((status = 200, description = "更新物料成功", body = ApiResponse<Material>))
+)]
 pub async fn update_material(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -243,6 +258,13 @@ pub async fn update_material(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/materials/{id}",
+    tag = "ERP",
+    params(("id" = Uuid, Path, description = "物料ID")),
+    responses((status = 200, description = "删除物料成功", body = ApiResponse<String>))
+)]
 pub async fn delete_material(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

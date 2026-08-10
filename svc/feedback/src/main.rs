@@ -4,6 +4,9 @@
 
 use axum::{routing::get, Router};
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
+use utoipa::OpenApi;
+
+use crate::openapi::FeedbackApiDoc;
 
 mod handlers;
 mod models;
@@ -42,7 +45,14 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = handlers::feedback_routes().with_state(ctx.db.clone());
 
     // ── 组装 Application ─────────────────────────────────────────────
-    let app = build_application(&ctx, &config, public_routes, protected_routes, None);
+    let openapi_json = Some(
+        serde_json::to_string_pretty(&FeedbackApiDoc::openapi()).unwrap_or_else(|e| {
+            tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+            "{}".to_string()
+        }),
+    );
+
+    let app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
 
     tracing::info!(
         "✅ Feedback Service is running at http://0.0.0.0:{} (prefix: {})",

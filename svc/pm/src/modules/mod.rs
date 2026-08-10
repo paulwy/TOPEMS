@@ -4,6 +4,7 @@ pub mod contract;
 pub mod document;
 pub mod notification;
 pub mod openapi;
+pub mod pm_compat;
 pub mod pm_plugin;
 pub mod project;
 pub mod project_approval;

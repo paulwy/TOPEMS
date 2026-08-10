@@ -44,6 +44,12 @@ pub struct ListAuditLogsQuery {
     pub page_size: Option<i64>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/audit-logs",
+    tag = "Audit",
+    responses((status = 200, description = "获取审计日志列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_audit_logs(
     State(state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
@@ -120,6 +126,13 @@ pub async fn list_audit_logs(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/audit-logs/{id}",
+    tag = "Audit",
+    params(("id" = Uuid, Path, description = "审计日志ID")),
+    responses((status = 200, description = "获取审计日志详情成功", body = ApiResponse<AuditLog>))
+)]
 pub async fn get_audit_log(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

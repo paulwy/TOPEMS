@@ -47,6 +47,14 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/vehicles/{id}/requests", get(get_vehicle_requests))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/vehicles",
+    responses(
+        (status = 200, description = "list_vehicles OK")
+    ),
+    tag = "ERP/vehicles"
+)]
 pub async fn list_vehicles(
     State(state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
@@ -108,6 +116,15 @@ pub async fn list_vehicles(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/vehicles",
+    request_body = CreateVehicleRequest,
+    responses(
+        (status = 200, description = "create_vehicle OK")
+    ),
+    tag = "ERP/vehicles"
+)]
 pub async fn create_vehicle(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -184,6 +201,17 @@ pub async fn create_vehicle(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/vehicles/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_vehicle OK")
+    ),
+    tag = "ERP/vehicles"
+)]
 pub async fn get_vehicle(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -208,6 +236,18 @@ pub async fn get_vehicle(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/vehicles/{id}",
+    request_body = UpdateVehicleRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "update_vehicle OK")
+    ),
+    tag = "ERP/vehicles"
+)]
 pub async fn update_vehicle(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -305,6 +345,17 @@ pub async fn update_vehicle(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/vehicles/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "delete_vehicle OK")
+    ),
+    tag = "ERP/vehicles"
+)]
 pub async fn delete_vehicle(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -363,6 +414,14 @@ pub async fn delete_vehicle(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/vehicle-requests",
+    responses(
+        (status = 200, description = "list_vehicle_requests OK")
+    ),
+    tag = "ERP/vehicle-requests"
+)]
 pub async fn list_vehicle_requests(
     State(state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
@@ -419,6 +478,15 @@ pub async fn list_vehicle_requests(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/vehicle-requests",
+    request_body = CreateVehicleRequestRequest,
+    responses(
+        (status = 200, description = "create_vehicle_request OK")
+    ),
+    tag = "ERP/vehicle-requests"
+)]
 pub async fn create_vehicle_request(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -527,6 +595,17 @@ pub async fn create_vehicle_request(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/vehicle-requests/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_vehicle_request OK")
+    ),
+    tag = "ERP/vehicle-requests"
+)]
 pub async fn get_vehicle_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -551,6 +630,18 @@ pub async fn get_vehicle_request(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/vehicle-requests/{id}",
+    request_body = UpdateVehicleRequestRequest,
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "update_vehicle_request OK")
+    ),
+    tag = "ERP/vehicle-requests"
+)]
 pub async fn update_vehicle_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -638,6 +729,17 @@ pub async fn update_vehicle_request(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/vehicle-requests/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "delete_vehicle_request OK")
+    ),
+    tag = "ERP/vehicle-requests"
+)]
 pub async fn delete_vehicle_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -696,6 +798,17 @@ pub async fn delete_vehicle_request(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/vehicles/{id}/requests",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_vehicle_requests OK")
+    ),
+    tag = "ERP/vehicle-requests"
+)]
 pub async fn get_vehicle_requests(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

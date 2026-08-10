@@ -7,7 +7,7 @@ use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::PgPool;
 use tracing::warn;
-use utoipa::IntoParams;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::models::{CreateVoucherRequest, VoucherLineRequest, VoucherType};
@@ -33,18 +33,18 @@ pub struct TemplatePathParams {
     pub template_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CopyTemplateRequest {
     pub new_code: Option<String>,
     pub new_name: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ToggleTemplateRequest {
     pub isactive: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct MatchTemplateRequest {
     pub source_module: Option<String>,
     pub source_type: Option<String>,
@@ -64,16 +64,16 @@ pub struct ExportQueryParams {
     pub format: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ToggleRuleRequest {
     pub isactive: bool,
 }
 
 #[utoipa::path(
     post,
-    path = "/voucher-templates/{template_id}/copy",
+    path = "/voucher-templates/{templateId}/copy",
     tag = "Voucher Template",
-    params(("template_id" = Uuid, Path, description = "模板ID")),
+    params(("templateId" = Uuid, Path, description = "模板ID")),
     request_body = CopyTemplateRequest,
     responses(
         (status = 200, description = "复制凭证模板成功", body = ApiResponse<serde_json::Value>),
@@ -130,9 +130,9 @@ pub async fn copy_template(
 
 #[utoipa::path(
     put,
-    path = "/voucher-templates/{template_id}/toggle",
+    path = "/voucher-templates/{templateId}/toggle",
     tag = "Voucher Template",
-    params(("template_id" = Uuid, Path, description = "模板ID")),
+    params(("templateId" = Uuid, Path, description = "模板ID")),
     request_body = ToggleTemplateRequest,
     responses(
         (status = 200, description = "启用/禁用凭证模板成功", body = ApiResponse<serde_json::Value>),
@@ -250,9 +250,9 @@ pub async fn match_template(
 
 #[utoipa::path(
     get,
-    path = "/voucher-templates/{template_id}/usage-stats",
+    path = "/voucher-templates/{templateId}/usage-stats",
     tag = "Voucher Template",
-    params(("template_id" = Uuid, Path, description = "模板ID"), UsageStatsQueryParams),
+    params(("templateId" = Uuid, Path, description = "模板ID"), UsageStatsQueryParams),
     responses(
         (status = 200, description = "获取模板使用统计成功", body = ApiResponse<serde_json::Value>),
         (status = 500, description = "服务器内部错误"),
@@ -286,9 +286,9 @@ pub async fn get_usage_stats(
 
 #[utoipa::path(
     get,
-    path = "/voucher-templates/{template_id}/export",
+    path = "/voucher-templates/{templateId}/export",
     tag = "Voucher Template",
-    params(("template_id" = Uuid, Path, description = "模板ID"), ExportQueryParams),
+    params(("templateId" = Uuid, Path, description = "模板ID"), ExportQueryParams),
     responses(
         (status = 200, description = "导出凭证模板成功"),
         (status = 500, description = "服务器内部错误"),
@@ -382,9 +382,9 @@ pub async fn import_template(
 
 #[utoipa::path(
     put,
-    path = "/voucher-generation-rules/{rule_id}/toggle",
+    path = "/voucher-generation-rules/{ruleId}/toggle",
     tag = "Voucher Generation Rule",
-    params(("rule_id" = Uuid, Path, description = "生成规则ID")),
+    params(("ruleId" = Uuid, Path, description = "生成规则ID")),
     request_body = ToggleRuleRequest,
     responses(
         (status = 200, description = "启用/禁用生成规则成功", body = ApiResponse<serde_json::Value>),
@@ -592,7 +592,7 @@ async fn resolve_source_amounts(
 
 // ========== 凭证自动生成 ==========
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct PreviewGenerationRequest {
     pub source_type: String,
     pub source_ids: Vec<String>,
@@ -679,7 +679,7 @@ pub async fn preview_generation(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct GenerateFromSourceRequest {
     pub source_type: String, // sale/purchase/payment
     pub source_ids: Vec<String>,
@@ -781,7 +781,7 @@ pub async fn generate_from_source(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct BatchGenerateRequest {
     pub rule_ids: Vec<Uuid>,
     pub start_date: Option<chrono::NaiveDate>,
@@ -837,7 +837,7 @@ pub async fn batch_generate(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AutoGenerateRequest {
     pub date: chrono::NaiveDate,
     pub rule_id: Option<Uuid>,
@@ -921,9 +921,9 @@ pub async fn auto_generate(
 
 #[utoipa::path(
     post,
-    path = "/voucher/generate/regenerate/{original_voucher_id}",
+    path = "/voucher/generate/regenerate/{originalVoucherId}",
     tag = "Voucher Generation",
-    params(("original_voucher_id" = Uuid, Path, description = "原始凭证ID")),
+    params(("originalVoucherId" = Uuid, Path, description = "原始凭证ID")),
     responses(
         (status = 200, description = "重新生成凭证成功", body = ApiResponse<serde_json::Value>),
         (status = 500, description = "服务器内部错误"),

@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use axum::{
     extract::DefaultBodyLimit,
-    routing::{delete, get, post, put},
+    routing::{delete, get, post},
     Router,
 };
 use axum_prometheus::{metrics_exporter_prometheus::PrometheusHandle, PrometheusMetricLayer};
@@ -55,6 +55,7 @@ pub fn create_routes(
 
     let protected_routes = Router::new()
         .route("/chat", post(ai_handlers::chat))
+        .route("/search", post(ai_handlers::ai_search))
         .route("/generate", post(ai_handlers::generate))
         .route("/validate", post(ai_handlers::validate))
         .route("/complete", post(ai_handlers::complete))

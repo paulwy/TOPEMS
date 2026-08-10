@@ -4,6 +4,15 @@ use topems_shared_core::response::ApiResponse;
 
 use super::models::{MonthlyData, StatisticsResponse, WorkflowStat};
 
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/statistics",
+    tag = "Flow-Monitor",
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<StatisticsResponse>),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn get_statistics(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<StatisticsResponse>> {

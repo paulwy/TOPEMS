@@ -15,6 +15,13 @@ macro_rules! log_audit {
     ($($args:expr),*) => {};
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/scopes/{scopeId}/companies",
+    tag = "Consolidation",
+    params(("scopeId" = String, Path, description = "合并范围ID")),
+    responses((status = 200, description = "获取合并范围公司成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_scope_companies(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
@@ -38,6 +45,12 @@ pub async fn list_scope_companies(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/consolidation/scopes/companies",
+    tag = "Consolidation",
+    responses((status = 200, description = "添加合并范围公司成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn add_scope_company(
     State(state): State<ApiState>,
     _headers: HeaderMap,
@@ -82,6 +95,13 @@ pub async fn add_scope_company(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/consolidation/scopes/companies/{companyId}",
+    tag = "Consolidation",
+    params(("companyId" = String, Path, description = "公司ID")),
+    responses((status = 200, description = "更新合并范围公司成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn update_scope_company(
     State(state): State<ApiState>,
     Path(company_id): Path<Uuid>,
@@ -127,6 +147,13 @@ pub async fn update_scope_company(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/consolidation/scopes/companies/{companyId}",
+    tag = "Consolidation",
+    params(("companyId" = String, Path, description = "公司ID")),
+    responses((status = 200, description = "移除合并范围公司成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn remove_scope_company(
     State(state): State<ApiState>,
     Path(company_id): Path<Uuid>,

@@ -26,6 +26,7 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/production-statistics", get(list_statistics))
+        .route("/statistics", get(get_statistics_summary))
         .route("/statistics/{id}", get(get_statistics))
 }
 
@@ -57,6 +58,23 @@ pub struct StatisticsDetail {
     pub total_batches: i64,
     pub total_quantity: Option<BigDecimal>,
     pub status_distribution: HashMap<String, i64>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PdmStatisticsSummary {
+    pub total_processes: i64,
+    pub active_processes: i64,
+    pub total_formulas: i64,
+    pub active_formulas: i64,
+    pub total_batches: i64,
+    pub planning_batches: i64,
+    pub in_progress_batches: i64,
+    pub completed_batches: i64,
+    pub cancelled_batches: i64,
+    pub total_steps: i64,
+    pub total_output_quantity: Option<BigDecimal>,
+    pub total_reject_quantity: i64,
+    pub average_pass_rate: BigDecimal,
 }
 
 #[utoipa::path(
@@ -122,6 +140,96 @@ pub async fn list_statistics(
         Err(e) => {
             tracing::error!("获取生产批次统计列表失败: {}", e);
             Json(ApiResponse::error(500, "获取生产批次统计列表失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/pdm/statistics",
+    tag = "pdm",
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_statistics_summary(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query_as::<_, (
+        i64,
+        i64,
+        i64,
+        i64,
+        i64,
+        i64,
+        i64,
+        i64,
+        i64,
+        i64,
+        Option<BigDecimal>,
+    )>(
+        r#"
+        SELECT
+            (SELECT COUNT(*) FROM pdm_production_processes WHERE tenant_id = $1) AS total_processes,
+            (SELECT COUNT(*) FROM pdm_production_processes WHERE tenant_id = $1 AND status = 'active') AS active_processes,
+            (SELECT COUNT(*) FROM pdm_production_formulas WHERE tenant_id = $1) AS total_formulas,
+            (SELECT COUNT(*) FROM pdm_production_formulas WHERE tenant_id = $1 AND status = 'active') AS active_formulas,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1) AS total_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status IN ('planning', 'pending')) AS planning_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status IN ('in_progress', 'processing')) AS in_progress_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status = 'completed') AS completed_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status = 'cancelled') AS cancelled_batches,
+            (SELECT COUNT(*) FROM pdm_production_steps WHERE tenant_id = $1) AS total_steps,
+            (SELECT COALESCE(SUM(quantity), 0) FROM pdm_production_batches WHERE tenant_id = $1) AS total_output_quantity
+        "#,
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok((
+            total_processes,
+            active_processes,
+            total_formulas,
+            active_formulas,
+            total_batches,
+            planning_batches,
+            in_progress_batches,
+            completed_batches,
+            cancelled_batches,
+            total_steps,
+            total_output_quantity,
+        )) => {
+            let summary = PdmStatisticsSummary {
+                total_processes,
+                active_processes,
+                total_formulas,
+                active_formulas,
+                total_batches,
+                planning_batches,
+                in_progress_batches,
+                completed_batches,
+                cancelled_batches,
+                total_steps,
+                total_output_quantity,
+                total_reject_quantity: 0,
+                average_pass_rate: BigDecimal::from(100),
+            };
+
+            match serde_json::to_value(summary) {
+                Ok(value) => Json(ApiResponse::success(value, "获取 PDM 统计汇总成功")),
+                Err(e) => {
+                    tracing::error!("序列化 PDM 统计汇总失败: {}", e);
+                    Json(ApiResponse::error(500, "获取 PDM 统计汇总失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("获取 PDM 统计汇总失败: {}", e);
+            Json(ApiResponse::error(500, "获取 PDM 统计汇总失败"))
         }
     }
 }

@@ -13,6 +13,12 @@ use super::models::{
     DashboardTemplateListResponse, DashboardTemplateResponse, UpdateDashboardTemplateRequest,
 };
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/dashboard/template",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing dashboard templates");
 
@@ -63,6 +69,12 @@ pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<ser
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/bi/dashboard/template",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn create_dashboard_template(
     State(state): State<AppState>,
     Json(req): Json<CreateDashboardTemplateRequest>,
@@ -116,6 +128,12 @@ pub async fn create_dashboard_template(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/bi/dashboard/template/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn get_dashboard_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -166,6 +184,12 @@ pub async fn get_dashboard_template(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/bi/dashboard/template/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn update_dashboard_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -230,6 +254,12 @@ pub async fn update_dashboard_template(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/bi/dashboard/template/{id}",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn delete_dashboard_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -265,6 +295,12 @@ pub async fn delete_dashboard_template(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/bi/dashboard/template/{template_id}/create",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
 pub async fn create_dashboard_from_template(
     State(state): State<AppState>,
     Path(template_id): Path<Uuid>,

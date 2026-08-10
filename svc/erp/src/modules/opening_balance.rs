@@ -79,6 +79,12 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/finance/accounts/opening-balances",
+    tag = "Finance",
+    responses((status = 200, description = "获取期初余额列表成功"))
+)]
 pub async fn list_opening_balances(
     State(state): State<ApiState>,
     Query(params): Query<OpeningBalanceParams>,
@@ -147,6 +153,12 @@ pub async fn list_opening_balances(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/finance/accounts/opening-balances",
+    tag = "Finance",
+    responses((status = 200, description = "期初余额创建成功"))
+)]
 pub async fn create_opening_balance(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -229,6 +241,13 @@ pub async fn create_opening_balance(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/finance/accounts/opening-balances/{id}",
+    tag = "Finance",
+    params(("id" = Uuid, Path, description = "期初余额ID")),
+    responses((status = 200, description = "获取期初余额成功"))
+)]
 pub async fn get_opening_balance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -253,6 +272,13 @@ pub async fn get_opening_balance(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/finance/accounts/opening-balances/{id}",
+    tag = "Finance",
+    params(("id" = Uuid, Path, description = "期初余额ID")),
+    responses((status = 200, description = "期初余额更新成功"))
+)]
 pub async fn update_opening_balance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -335,6 +361,13 @@ pub async fn update_opening_balance(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/finance/accounts/opening-balances/{id}",
+    tag = "Finance",
+    params(("id" = Uuid, Path, description = "期初余额ID")),
+    responses((status = 200, description = "期初余额删除成功"))
+)]
 pub async fn delete_opening_balance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -393,6 +426,12 @@ pub async fn delete_opening_balance(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/finance/accounts/opening-balances/batch",
+    tag = "Finance",
+    responses((status = 200, description = "期初余额批量导入完成"))
+)]
 pub async fn import_opening_balances(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -480,6 +519,12 @@ pub async fn import_opening_balances(
     Json(ApiResponse::success(result, "期初余额批量导入完成"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/finance/accounts/opening-balances/carry-forward",
+    tag = "Finance",
+    responses((status = 200, description = "期初余额结转完成"))
+)]
 pub async fn carry_forward_opening_balance(
     State(state): State<ApiState>,
     headers: HeaderMap,

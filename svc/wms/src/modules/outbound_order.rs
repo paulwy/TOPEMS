@@ -78,6 +78,12 @@ where
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/outbound-orders",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_outbound_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -148,6 +154,12 @@ pub async fn list_outbound_orders(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/outbound-orders",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -228,6 +240,12 @@ pub async fn create_outbound_order(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/outbound-orders/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -259,6 +277,12 @@ pub async fn get_outbound_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/wms/outbound-orders/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -363,6 +387,12 @@ pub async fn update_outbound_order(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/wms/outbound-orders/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -426,6 +456,12 @@ pub async fn delete_outbound_order(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/outbound-orders/{id}/items",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_outbound_order_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -493,6 +529,12 @@ pub async fn list_outbound_order_items(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/outbound-orders/{id}/items",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_outbound_order_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -596,6 +638,12 @@ pub async fn create_outbound_order_item(
     response
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/wms/outbound-orders/{id}/items/{item_id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_outbound_order_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -680,6 +728,12 @@ pub async fn update_outbound_order_item(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/wms/outbound-orders/{id}/items/{item_id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_outbound_order_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -742,6 +796,12 @@ pub async fn delete_outbound_order_item(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/outbound-orders/{id}/confirm",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn confirm_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -810,6 +870,12 @@ pub async fn confirm_outbound_order(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/outbound-orders/{id}/pick",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn pick_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -878,6 +944,12 @@ pub async fn pick_outbound_order(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/outbound-orders/{id}/pack",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn pack_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -947,6 +1019,12 @@ pub async fn pack_outbound_order(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/outbound-orders/{id}/ship",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn ship_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1167,6 +1245,12 @@ pub async fn ship_outbound_order(
     response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/outbound-orders/{id}/complete",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn complete_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

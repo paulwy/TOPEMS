@@ -700,7 +700,7 @@ pub struct ExportVoucherResponse {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ExportPaymentRequest {
     pub format: ExportFormat,
     pub status: Option<String>,
@@ -708,7 +708,7 @@ pub struct ExportPaymentRequest {
     pub end_date: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ExportPaymentResponse {
     pub file_name: String,
     pub format: ExportFormat,
@@ -809,7 +809,7 @@ pub struct PaymentItemRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ExecutePaymentRequest {
     pub bank_transaction_no: String,
     pub actual_payment_date: chrono::NaiveDate,
@@ -846,7 +846,7 @@ pub struct PaymentQueryParams {
     pub page_size: Option<i64>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct PaymentListResponse {
     pub items: Vec<PaymentResponse>,
     pub total: i64,
@@ -854,7 +854,7 @@ pub struct PaymentListResponse {
     pub page_size: i64,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct PaymentApprovalConfig {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -872,7 +872,7 @@ pub struct PaymentApprovalConfig {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct ApprovalNode {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -891,7 +891,7 @@ pub struct ApprovalNode {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateApprovalConfigRequest {
     pub name: String,
     pub description: Option<String>,
@@ -904,7 +904,7 @@ pub struct CreateApprovalConfigRequest {
     pub nodes: Option<Vec<CreateApprovalNodeRequest>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateApprovalNodeRequest {
     pub node_level: i32,
     pub node_name: String,
@@ -917,7 +917,7 @@ pub struct CreateApprovalNodeRequest {
     pub conditions: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ApprovalConfigResponse {
     pub id: Uuid,
     pub name: String,

@@ -93,6 +93,12 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/fixed-assets/depreciate", post(depreciate_assets))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/fixed-assets",
+    tag = "Assets",
+    responses((status = 200, description = "获取固定资产列表成功"))
+)]
 pub async fn list_fixed_assets(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -174,6 +180,12 @@ pub async fn list_fixed_assets(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/fixed-assets",
+    tag = "Assets",
+    responses((status = 200, description = "固定资产创建成功"))
+)]
 pub async fn create_fixed_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -281,6 +293,13 @@ pub async fn create_fixed_asset(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/fixed-assets/{id}",
+    tag = "Assets",
+    params(("id" = Uuid, Path, description = "固定资产ID")),
+    responses((status = 200, description = "获取固定资产成功"))
+)]
 pub async fn get_fixed_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -313,6 +332,13 @@ pub async fn get_fixed_asset(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/fixed-assets/{id}",
+    tag = "Assets",
+    params(("id" = Uuid, Path, description = "固定资产ID")),
+    responses((status = 200, description = "固定资产更新成功"))
+)]
 pub async fn update_fixed_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -439,6 +465,13 @@ pub async fn update_fixed_asset(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/fixed-assets/{id}",
+    tag = "Assets",
+    params(("id" = Uuid, Path, description = "固定资产ID")),
+    responses((status = 200, description = "固定资产删除成功"))
+)]
 pub async fn delete_fixed_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -508,6 +541,12 @@ pub struct DepreciateRequest {
     pub asset_ids: Option<Vec<Uuid>>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/fixed-assets/depreciate",
+    tag = "Assets",
+    responses((status = 200, description = "固定资产折旧完成"))
+)]
 pub async fn depreciate_assets(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

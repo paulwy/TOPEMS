@@ -16,6 +16,12 @@ macro_rules! log_audit {
     ($($args:expr),*) => {};
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/internal-transactions",
+    tag = "Consolidation",
+    responses((status = 200, description = "获取内部交易列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_internal_transactions(
     State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
@@ -67,6 +73,13 @@ pub async fn list_internal_transactions(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/internal-transactions/{transactionId}",
+    tag = "Consolidation",
+    params(("transactionId" = String, Path, description = "内部交易ID")),
+    responses((status = 200, description = "获取内部交易详情成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_internal_transaction(
     State(state): State<ApiState>,
     Path(transaction_id): Path<Uuid>,
@@ -87,6 +100,12 @@ pub async fn get_internal_transaction(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/consolidation/execute-elimination",
+    tag = "Consolidation",
+    responses((status = 200, description = "执行内部交易抵消成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn execute_elimination(
     State(state): State<ApiState>,
     _headers: HeaderMap,

@@ -1,7 +1,7 @@
 use axum::extract::{Extension, Json, Path, State};
 use chrono::Utc;
 use serde::Deserialize;
-use utoipa::IntoParams;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::services::finance::voucher_template::VoucherTemplateLine;
@@ -29,7 +29,7 @@ pub struct TemplatePathParams {
     pub template_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AddTemplateEntryRequest {
     pub description: Option<String>,
     pub account_code: String,
@@ -38,7 +38,7 @@ pub struct AddTemplateEntryRequest {
     pub sort_order: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateTemplateEntryRequest {
     pub description: Option<String>,
     pub account_code: Option<String>,
@@ -47,16 +47,16 @@ pub struct UpdateTemplateEntryRequest {
     pub sort_order: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ReorderEntriesRequest {
     pub entry_ids: Vec<Uuid>,
 }
 
 #[utoipa::path(
     get,
-    path = "/voucher-templates/{template_id}/entries",
+    path = "/voucher-templates/{templateId}/entries",
     tag = "Voucher Template",
-    params(("template_id" = Uuid, Path, description = "模板ID")),
+    params(("templateId" = Uuid, Path, description = "模板ID")),
     responses(
         (status = 200, description = "获取模板分录列表成功", body = ApiResponse<Vec<VoucherTemplateLine>>),
         (status = 404, description = "凭证模板不存在"),
@@ -88,9 +88,9 @@ pub async fn list_entries(
 
 #[utoipa::path(
     get,
-    path = "/voucher-templates/{template_id}/entries/{entry_id}",
+    path = "/voucher-templates/{templateId}/entries/{entryId}",
     tag = "Voucher Template",
-    params(("template_id" = Uuid, Path, description = "模板ID"), ("entry_id" = Uuid, Path, description = "条目ID")),
+    params(("templateId" = Uuid, Path, description = "模板ID"), ("entryId" = Uuid, Path, description = "条目ID")),
     responses(
         (status = 200, description = "获取模板分录详情成功", body = ApiResponse<VoucherTemplateLine>),
         (status = 404, description = "模板分录不存在"),
@@ -120,9 +120,9 @@ pub async fn get_entry(
 
 #[utoipa::path(
     post,
-    path = "/voucher-templates/{template_id}/entries",
+    path = "/voucher-templates/{templateId}/entries",
     tag = "Voucher Template",
-    params(("template_id" = Uuid, Path, description = "模板ID")),
+    params(("templateId" = Uuid, Path, description = "模板ID")),
     request_body = AddTemplateEntryRequest,
     responses(
         (status = 200, description = "新增模板分录成功", body = ApiResponse<VoucherTemplateLine>),
@@ -187,9 +187,9 @@ pub async fn create_entry(
 
 #[utoipa::path(
     put,
-    path = "/voucher-templates/{template_id}/entries/{entry_id}",
+    path = "/voucher-templates/{templateId}/entries/{entryId}",
     tag = "Voucher Template",
-    params(("template_id" = Uuid, Path, description = "模板ID"), ("entry_id" = Uuid, Path, description = "条目ID")),
+    params(("templateId" = Uuid, Path, description = "模板ID"), ("entryId" = Uuid, Path, description = "条目ID")),
     request_body = UpdateTemplateEntryRequest,
     responses(
         (status = 200, description = "更新模板分录成功", body = ApiResponse<VoucherTemplateLine>),
@@ -253,9 +253,9 @@ pub async fn update_entry(
 
 #[utoipa::path(
     delete,
-    path = "/voucher-templates/{template_id}/entries/{entry_id}",
+    path = "/voucher-templates/{templateId}/entries/{entryId}",
     tag = "Voucher Template",
-    params(("template_id" = Uuid, Path, description = "模板ID"), ("entry_id" = Uuid, Path, description = "条目ID")),
+    params(("templateId" = Uuid, Path, description = "模板ID"), ("entryId" = Uuid, Path, description = "条目ID")),
     responses(
         (status = 200, description = "删除模板分录成功", body = ApiResponse<serde_json::Value>),
         (status = 404, description = "模板分录不存在"),
@@ -292,9 +292,9 @@ pub async fn delete_entry(
 
 #[utoipa::path(
     put,
-    path = "/voucher-templates/{template_id}/entries/reorder",
+    path = "/voucher-templates/{templateId}/entries/reorder",
     tag = "Voucher Template",
-    params(("template_id" = Uuid, Path, description = "模板ID")),
+    params(("templateId" = Uuid, Path, description = "模板ID")),
     request_body = ReorderEntriesRequest,
     responses(
         (status = 200, description = "重新排序模板分录成功", body = ApiResponse<serde_json::Value>),

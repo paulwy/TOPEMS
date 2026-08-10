@@ -33,6 +33,12 @@ where
         .route("/batches/{id}/transfer-location", post(transfer_location))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/batches",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_batches(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -110,6 +116,12 @@ pub async fn list_batches(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/wms/batches",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -167,6 +179,12 @@ pub async fn create_batch(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/batches/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -199,6 +217,12 @@ pub async fn get_batch(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/wms/batches/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -274,6 +298,12 @@ pub async fn update_batch(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/wms/batches/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -306,6 +336,12 @@ pub async fn delete_batch(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/wms/batches/statistics",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_batch_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

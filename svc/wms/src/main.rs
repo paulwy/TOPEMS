@@ -104,3 +104,16 @@ async fn main() -> Result<()> {
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_openapi_spec() {
+        let spec = modules::openapi::WmsApiDoc::openapi();
+        let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
+        std::fs::write("/tmp/topems-wms-openapi.json", json).expect("Failed to write spec");
+        eprintln!("OpenAPI spec written to /tmp/topems-wms-openapi.json");
+    }
+}

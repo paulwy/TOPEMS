@@ -18,15 +18,15 @@ import type {
 
 export const chatApi = {
   chat: async (data: ChatRequest): Promise<ApiResponse<ChatResponse>> => {
-    return apiClient.ai.post<ChatResponse>('/ai/chat', data);
+    return apiClient.ai.post<ChatResponse>('/chat', data);
   },
 
   search: async (data: SearchRequest): Promise<ApiResponse<SearchResult>> => {
-    return apiClient.ai.post<SearchResult>('/ai/search', data);
+    return apiClient.ai.post<SearchResult>('/search', data);
   },
 
   generate: async (data: AIGenerateRequest): Promise<ApiResponse<AIGenerateResponse>> => {
-    return apiClient.ai.post<AIGenerateResponse>('/ai/generate', data);
+    return apiClient.ai.post<AIGenerateResponse>('/generate', data);
   },
 
   listConversations: async (): Promise<ApiResponse<Conversation[]>> => {
@@ -46,14 +46,14 @@ export const chatApi = {
   },
 
   validate: async (data: ValidateRequest): Promise<ApiResponse<ValidateResponse>> => {
-    return apiClient.ai.post<ValidateResponse>('/ai/validate', data);
+    return apiClient.ai.post<ValidateResponse>('/validate', data);
   },
 
   complete: async (data: CompleteRequest): Promise<ApiResponse<CompleteResponse>> => {
-    return apiClient.ai.post<CompleteResponse>('/ai/complete', data);
+    return apiClient.ai.post<CompleteResponse>('/complete', data);
   },
 
   summarize: async (data: SummarizeRequest): Promise<ApiResponse<SummarizeResponse>> => {
-    return apiClient.ai.post<SummarizeResponse>('/ai/summarize', data);
+    return apiClient.ai.post<SummarizeResponse>('/summarize', data);
   },
 };

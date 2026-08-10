@@ -2,13 +2,13 @@ use axum::{routing::*, Router};
 
 use super::ApiState;
 
-mod common;
-mod company_relations;
-mod elimination_rules;
-mod internal_transactions;
-mod reports;
-mod scope_companies;
-mod scopes;
+pub mod common;
+pub mod company_relations;
+pub mod elimination_rules;
+pub mod internal_transactions;
+pub mod reports;
+pub mod scope_companies;
+pub mod scopes;
 
 pub use common::{call_finance_core_approval, PaginationParams};
 

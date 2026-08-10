@@ -58,6 +58,12 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/db/changes", get(list_db_changes))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/db/tables",
+    tag = "ERP",
+    responses((status = 200, description = "获取数据库表列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_tables(
     State(state): State<ApiState>,
     Query(params): Query<TableQueryParams>,
@@ -88,6 +94,13 @@ pub async fn list_tables(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/db/tables/{tableName}",
+    tag = "ERP",
+    params(("tableName" = String, Path, description = "表名")),
+    responses((status = 200, description = "获取数据库表详情成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn get_table_detail(
     State(state): State<ApiState>,
     Path(table_name): Path<String>,
@@ -473,6 +486,12 @@ pub async fn execute_drop_column(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/db/changes",
+    tag = "ERP",
+    responses((status = 200, description = "获取数据库变更列表成功", body = ApiResponse<serde_json::Value>))
+)]
 pub async fn list_db_changes(
     State(state): State<ApiState>,
     Query(params): Query<DbChangeQueryParams>,
