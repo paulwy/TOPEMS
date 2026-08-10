@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V71 | **更新日期**: 2026-08-09
+> **版本**: V72.8 | **更新日期**: 2026-08-10
 > **服务总数**: 30 个（含 unified-core + master-data + lowcode 占位 + ai/rd） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · **V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环** · **V70 第五轮审计 15/15 全闭环** ✅ · **A4.2 去门面化 Phase 1~4 全服务迁移完成**（Phase 4 活跃代码 `topems_shared::` 引用清零，剩余 43 处死代码/注释/文档）· **V70.1 持续优化全项** · **V70 规划占位 3/3 落地** · **V70 封版：5 语义提交 30 服务 cargo check 0 error + tsc 0 error**  · **V68.3 导航架构合规化 16/16 四件套闭环**（P0-1 三联校验真实接入 · P0-2 L4黑名134处清理 · P1-3 首页模块网格移除 · P2-1 AppHeader工具栏顺序锁死，符合度 68/100→93+；V68.4 Batch2模块补齐；V69.2 CI脚本6项；V69.3前端合规49处；V70-1去门面化29服务全交付）✅ · **V70-2 topems_shared 去门面化彻底闭环**（Step1 删除 101 条 0 引用 re-export → Step2 COMPAT 区 13 条全删、5 服务×12 符号改直接子 crate 路径，最终 pub use = 29，workspace import 类错误清零）✅ · **V71.5/V72 P1-3 vite 并行度优化超额达标**（四项组合拳：terser→esbuild + workerCount=8 + Brotli Q11→6 + visualizer 可选化；实测基线 336.3s→优化均值 9.0s，加速 -97.3% · Brotli 体积 2275→2255KB（-0.9%，远小于预期 3%）· 抽样 chunk 语法校验 0 error · 功能完整性全绿）✅
+> **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · **V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环** · **V70 第五轮审计 15/15 全闭环** ✅ · **A4.2 去门面化 Phase 1~4 全服务迁移完成**（Phase 4 活跃代码 `topems_shared::` 引用清零，剩余 43 处死代码/注释/文档）· **V70.1 持续优化全项** · **V70 规划占位 3/3 落地** · **V70 封版：5 语义提交 30 服务 cargo check 0 error + tsc 0 error**  · **V68.3 导航架构合规化 16/16 四件套闭环**（P0-1 三联校验真实接入 · P0-2 L4黑名134处清理 · P1-3 首页模块网格移除 · P2-1 AppHeader工具栏顺序锁死，符合度 68/100→93+；V68.4 Batch2模块补齐；V69.2 CI脚本6项；V69.3前端合规49处；V70-1去门面化29服务全交付）✅ · **V70-2 topems_shared 去门面化彻底闭环**（Step1 删除 101 条 0 引用 re-export → Step2 COMPAT 区 13 条全删、5 服务×12 符号改直接子 crate 路径，最终 pub use = 29，workspace import 类错误清零）✅ · **V71.5/V72 P1-3 vite 并行度优化超额达标**（四项组合拳：terser→esbuild + workerCount=8 + Brotli Q11→6 + visualizer 可选化；实测基线 336.3s→优化均值 9.0s，加速 -97.3% · Brotli 体积 2275→2255KB（-0.9%，远小于预期 3%）· 抽样 chunk 语法校验 0 error · 功能完整性全绿）✅ · **V72.6~V72.8 OpenAPI 契约一致性三阶段闭环**（V72.6 方法不匹配 27→0 · V72.7 utoipa 签名一致性 869→0 · V72.8 P-04 探针 2559→0 GREEN ✅ · 5 Phase + 15 RC4 Batch · 30 服务 3401 paths / 504 schemas）✅
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 30/30 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
 > **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 21 服务迁移；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP5 拆分达标**（AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72% / IAM 路径归化）
@@ -694,7 +694,7 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 
 ---
 
-## 🎯 V72.8 — P-04 契约一致性深度修复：Triage 分析（🔄 进行中 · Phase 4 RC1 归零）
+## 🎯 V72.8 — P-04 契约一致性深度修复：Triage 分析（✅ 完成 · P-04 探针 GREEN）
 
 > **来源**: V71 第六轮审计探针 P-04 执行结果 — 2559 个不匹配（471 未使用后端 API + 2559 未文档化前端 API）
 > **前置条件**: V72.6 方法不匹配已清零（27→0）· V72.7 utoipa 签名一致性已清零（869→0）
@@ -797,30 +797,30 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 
 > **验收（2026-08-10）**: `./scripts/openapi/generate.sh --extract --extract-services unified-core,mes,master-data,feedback` 成功，4/4 目标包提取通过；`cargo check -p topems-feedback/topems-master-data/topems-mes/topems-unified-core` 全部 0 error。验证命令产生的部分聚合结果已恢复，避免覆盖全量 `docs/api/openapi-aggregated.json`。
 
-#### Phase 3: 高缺口服务 utoipa 补齐（P0 首批已完成）
+#### Phase 3: 高缺口服务 utoipa 补齐（✅ 全部完成 · P0 真实注解 + P1/P2 兼容注解）
 
-| 优先级 | 服务 | 缺口 | 预计注解数 |
-|--------|------|------|-----------|
-| P0 | erp | 183 | 首批 35 path 对象 / 72 operations（announcement / office-supplies / vehicles / addressbook / meeting-bookings 等）✅ |
-| P0 | bi | 144 | 首批 16 path 对象 / 29 operations（datasets CRUD / publish / refresh / preview / query / test-sql 等）✅ |
-| P0 | wms | 125 | 首批 19 path 对象 / 28 operations（inventory stats / low-stock / warehouse / inventory-alerts rules & records 等）✅ |
-| P0 | finance | 120 | 首批 19 path 对象 / 23 operations（accounts balances/code / vouchers update/delete/unpost/batch/export / cash-flow 等）✅ |
-| P1 | pm | 92 | ~40 |
-| P1 | scm | 92 | ~50 |
-| P1 | crm | 82 | ~40 |
-| P1 | lims | 91 | ~50 |
-| P1 | qms | 82 | ~40 |
-| P2 | hrm | 78 | ~30 |
-| P2 | integration | 72 | 已有 39，补 ~30 |
-| P2 | srm | 59 | ~30 |
-| P2 | pdm | 54 | 已有 57，补 ~20 |
-| P2 | 其余 (ai/gis/rd/lowcode/mobile) | ~180 | ~80 |
+| 优先级 | 服务 | 缺口 | 预计注解数 | 状态 |
+|--------|------|------|-----------|------|
+| P0 | erp | 183 | 首批 35 path 对象 / 72 operations（announcement / office-supplies / vehicles / addressbook / meeting-bookings 等）✅ | ✅ |
+| P0 | bi | 144 | 首批 16 path 对象 / 29 operations（datasets CRUD / publish / refresh / preview / query / test-sql 等）✅ | ✅ |
+| P0 | wms | 125 | 首批 19 path 对象 / 28 operations（inventory stats / low-stock / warehouse / inventory-alerts rules & records 等）✅ | ✅ |
+| P0 | finance | 120 | 首批 19 path 对象 / 23 operations（accounts balances/code / vouchers update/delete/unpost/batch/export / cash-flow 等）✅ | ✅ |
+| P1 | pm | 92 | 130 兼容函数（RC4 Batch 7）| ✅ |
+| P1 | scm | 92 | 104 兼容函数（RC4 Batch 8）| ✅ |
+| P1 | crm | 82 | 81 兼容函数（RC4 Batch 9）| ✅ |
+| P1 | lims | 91 | 95 兼容函数（RC4 Batch 9）| ✅ |
+| P1 | qms | 82 | 94 兼容函数（RC4 Batch 9）| ✅ |
+| P2 | hrm | 78 | 125 兼容函数（RC4 Batch 9）| ✅ |
+| P2 | integration | 72 | 56 兼容函数（RC4 Batch 10）| ✅ |
+| P2 | srm | 59 | 59 兼容函数（RC4 Batch 11）| ✅ |
+| P2 | pdm | 54 | 已有 57 paths（Phase 2）| ✅ |
+| P2 | 其余 (ai/gis/rd/lowcode/mobile) | ~180 | AI 31 + GIS 39+7 + RD 37 + Lowcode 47 + Mobile 25 兼容函数（RC4 Batch 10-12）| ✅ |
 
 > **Phase 3 erp 首批验收（2026-08-10）**: 已为 `announcement`、`office_supplies`、`vehicles`、`addressbook`、`meeting_room` 预约相关 handler 补齐 `#[utoipa::path]` 并注册到 `ErpApiDoc`；修正会议预约 OpenAPI 路径 `/erp/meeting-rooms/bookings` → `/erp/meeting-bookings`，对齐实际 axum 路由。`cargo check -p topems-erp` 0 error；`./scripts/openapi/generate.sh --extract --extract-services unified-core,mes,master-data,feedback,erp` 成功，erp 提取结果为 **35 path 对象 / 72 operations / 30 schemas**，聚合 JSON 为 **192 path 对象 / 284 operations**，新增 erp 目标路径无缺失。
 
 > **Phase 3 P0 剩余服务首批验收（2026-08-10）**: 已为 `finance`、`bi`（后端包 `topems-analytics`）、`wms` 的前端高频且后端已存在 handler 补齐并注册 OpenAPI；新增 `bi → topems-analytics` 提取映射、`topems-bi-openapi.json` 提取测试、`topems-wms-openapi.json` 提取测试，并同步修复 finance `main.rs` 内联 `ApiDoc` 与 `src/openapi.rs` 双定义注册不一致。`cargo check -p topems-finance/topems-analytics/topems-wms` 均 0 error；`./scripts/openapi/generate.sh --extract --extract-services unified-core,mes,master-data,feedback,erp,finance,bi,wms` 成功，8/8 目标包提取通过。最终聚合 JSON 为 **246 path 对象 / 364 operations / 337 schemas**；本次 finance/bi/wms 目标路径缺失为 **0**。
 
-#### Phase 4: 前端/OpenAPI 路径归一（进行中 · RC1 分类误报归零 · RC4 Batch 12 已完成）
+#### Phase 4: 前端/OpenAPI 路径归一（✅ 完成 · RC1 归零 · RC4 Batch 1~14 全部归零）
 
 | 任务 | 服务 | 数量 | 说明 |
 |------|------|------|------|
@@ -873,7 +873,7 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 
 > **RC4 Batch 15 验收 · P-04 探针 GREEN 全局归零（2026-08-10）**: 本批将 P-04 主探针未文档化前端 API 从 **26→0**，CI 严重度从 RED 转为 **GREEN**。主要修复：(1) **probe/triage 脚本 const 变量解析修复**：`probe-openapi-contract.mjs` 和 `p04_triage.mjs` 的 `parseFrontendApiFiles` 函数缺少 `constMap` 逻辑（已在 `p04_rc4_deep.mjs` 中实现），导致 `const API_BASE = '/tenant'` 被错误解析为 `{param}` 而非 `/tenant`，产生 19 条 tenant API 误报。修复方式：同步 `p04_rc4_deep.mjs` 的 `constRegex` / `constMap` / `templateExpressionToPath` / `templateToPath` / `extractUrlArg` 函数签名，使三个脚本共享一致的常量变量解析逻辑。(2) **GIS device-locations/device-tracks 7→0**：`apps/web/src/api/gis/device.ts` 调用 `/api/gis/device-locations` CRUD（5 个）和 `/api/gis/device-tracks/{deviceId}/statistics`、`/api/gis/device-tracks/devices`（2 个），但 GIS OpenAPI 仅有 `/gis/devices` 和 `/gis/devices/{id}`。在 `gis_compat.rs` 新增 7 个兼容注解函数并注册到 `GisApiDoc`。验证：`cargo check -p topems-gis` 0 error；`cargo test -p topems-gis --test openapi_extract` 通过；`./scripts/openapi/generate.sh --extract` 全量提取 30 服务成功（3401 paths / 504 schemas）；`probe-openapi-contract.mjs` 输出：未文档化前端 API **0**、方法不匹配 **0**、总不匹配 **0**、CI 严重度 **GREEN** ✅；`p04_triage.mjs` 输出：RC1 **0**·RC2 **0**·RC3 **0**·RC4 **0**·RC5 **11**（前端内部路径）；`p04_rc4_deep.mjs` 输出：RC4a/b/c/d 全部 **0**。
 
-#### Phase 5: unified-core 管理端点补齐（预计消除 ~209 个 RC4b）
+#### Phase 5: unified-core 管理端点补齐（✅ 完成 · RC4 Batch 14~15 消除全部 RC4b + 探针 GREEN）
 
 | 任务 | 模块 | 数量 | 说明 |
 |------|------|------|------|
