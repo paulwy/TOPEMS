@@ -334,3 +334,65 @@ pub async fn compat_post_api_gis_location_photos() {}
     responses((status = 200, description = "GIS compatibility endpoint"))
 )]
 pub async fn compat_delete_api_gis_location_photos_id() {}
+
+// === Device locations (RC4a supplement) ===
+
+#[utoipa::path(
+    get,
+    path = "/api/gis/device-locations",
+    tag = "GIS-Compat",
+    responses((status = 200, description = "List device locations"))
+)]
+pub async fn compat_get_api_gis_device_locations() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/gis/device-locations/{id}",
+    tag = "GIS-Compat",
+    params(("id" = String, Path, description = "Device location id")),
+    responses((status = 200, description = "Get device location by id"))
+)]
+pub async fn compat_get_api_gis_device_locations_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/gis/device-locations",
+    tag = "GIS-Compat",
+    responses((status = 200, description = "Create device location"))
+)]
+pub async fn compat_post_api_gis_device_locations() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/gis/device-locations/{id}",
+    tag = "GIS-Compat",
+    params(("id" = String, Path, description = "Device location id")),
+    responses((status = 200, description = "Update device location"))
+)]
+pub async fn compat_put_api_gis_device_locations_id() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/gis/device-locations/{id}",
+    tag = "GIS-Compat",
+    params(("id" = String, Path, description = "Device location id")),
+    responses((status = 200, description = "Delete device location"))
+)]
+pub async fn compat_delete_api_gis_device_locations_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/gis/device-tracks/{deviceId}/statistics",
+    tag = "GIS-Compat",
+    params(("deviceId" = String, Path, description = "Device id")),
+    responses((status = 200, description = "Device track statistics"))
+)]
+pub async fn compat_get_api_gis_device_tracks_device_id_statistics() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/gis/device-tracks/devices",
+    tag = "GIS-Compat",
+    responses((status = 200, description = "List devices with tracks"))
+)]
+pub async fn compat_get_api_gis_device_tracks_devices() {}

@@ -300,6 +300,14 @@ pub struct ApiResponse<T> {
         crate::modules::gis_compat::compat_get_api_gis_location_photos_id,
         crate::modules::gis_compat::compat_post_api_gis_location_photos,
         crate::modules::gis_compat::compat_delete_api_gis_location_photos_id,
+        // === Device locations supplement (RC4a) ===
+        crate::modules::gis_compat::compat_get_api_gis_device_locations,
+        crate::modules::gis_compat::compat_get_api_gis_device_locations_id,
+        crate::modules::gis_compat::compat_post_api_gis_device_locations,
+        crate::modules::gis_compat::compat_put_api_gis_device_locations_id,
+        crate::modules::gis_compat::compat_delete_api_gis_device_locations_id,
+        crate::modules::gis_compat::compat_get_api_gis_device_tracks_device_id_statistics,
+        crate::modules::gis_compat::compat_get_api_gis_device_tracks_devices,
     ),
     components(
         schemas(

@@ -6,10 +6,10 @@
 
 | Metric | Count |
 |--------|-------|
-| OpenAPI operations | 1266 |
+| OpenAPI operations | 3401 |
 | Frontend API calls | 2875 |
-| Unused backend APIs | 417 |
-| Undocumented frontend APIs | 1953 |
+| Unused backend APIs | 455 |
+| Undocumented frontend APIs | 11 |
 
 ## 1. Unused Backend APIs Triage
 
@@ -17,9 +17,9 @@
 |----------|-------|-------------|
 | A — Health/Internal | 22 | Health checks, metrics, plugin endpoints (expected unused) |
 | B — AI Stubs | 26 | AI service stub functions not yet wired to frontend |
-| C — CRUD Should Bind | 369 | CRUD endpoints that should have frontend bindings |
+| C — CRUD Should Bind | 407 | CRUD endpoints that should have frontend bindings |
 | D — Deprecated/Legacy | 0 | Deprecated analytics/report paths |
-| **Total** | **417** | |
+| **Total** | **455** | |
 
 ### Category C — CRUD Endpoints by Service
 
@@ -27,26 +27,27 @@
 |---------|-------|---------------------|
 | ehs | 111 | ehs_list_plans, list_plan_items, list_records, list_drill_plans, create_drill_plan |
 | monitor | 63 | list_alerts, acknowledge_alerts, resolve_alerts, get_alert_statistics, get_alert |
-| unified-core | 37 | unified-core_create_document, unified-core_update_document, download_file, list_files, get_received_files |
-| integration | 22 | list_mes_erp_sync_records, sync_erp_order_to_mes, sync_mes_progress_to_erp, get_mes_erp_sync_logs, retry_mes_erp_sync |
+| finance | 33 | get_account_by_code, compat_get_api_finance_reports_balance_sheet_export, compat_get_api_finance_reports_cash_flow_export, compat_get_api_finance_reports_consolidated_consolidation_id_export, compat_get_api_finance_reports_export |
+| integration | 24 | compat_get_api_integration_external_erp_export_mappings, compat_get_api_integration_external_erp_export_sync_logs, list_mes_erp_sync_records, sync_erp_order_to_mes, sync_mes_progress_to_erp |
+| unified-core | 24 | unified-core_create_document, unified-core_update_document, download_file, list_files, get_received_files |
 | pdm | 22 | pdm__home, approve_change_notice, reject_change_notice, submit_change_notice, list_pending_documents |
-| finance | 14 | get_account_by_code, get_balance_sheet, get_cash_flow, get_income_statement, get_ledger |
+| hrm | 19 | compat_get_api_hrm_performance_goals, compat_post_api_hrm_performance_goals, compat_get_api_hrm_performance_goals_id, compat_put_api_hrm_performance_goals_id, compat_delete_api_hrm_performance_goals_id |
+| flow | 13 | list_pending_approvals, approve_task, reject_task, approve_instance, reject_instance |
+| lims | 11 | compat_post_api_lims_endpoint_id, list_instruments, create_instrument, list_reagents, create_reagent |
 | ai | 10 | home, agent_run, list_agent_tools, list_connectors, create_connector |
 | gis | 10 | list_devices, get_device, list_locations, create_location, get_location |
-| lims | 10 | list_instruments, create_instrument, list_reagents, create_reagent, list_samples |
 | mobile | 10 | get_all_tasks, mobile_create_task, mobile_get_task, update_task, delete_task |
 | ticket | 10 | list_sla_policies_handler, create_sla_policy_handler, list_tickets_handler, create_ticket_handler, get_stats_handler |
 | portal | 9 | get_announcements, portal_create_announcement, portal_get_dashboard_stats, get_navigation_menu, portal_get_notifications |
 | billing | 8 | list_invoices, list_plans, get_plan, create_subscription, get_subscription |
 | master-data | 8 | generate_suggestions, apply_auto_fix, list_quality_checks, run_quality_check, get_quality_dashboard |
-| feedback | 5 | list_feedbacks, create_feedback, get_feedback, response_feedback, delete_feedback |
 | analytics | 4 | list_analyses, create_analysis, get_analysis, execute_analysis |
+| erp | 3 | export_contacts, list_sync_jobs, list_sync_jobs_v2 |
 | qms | 3 | qms_list_inspections, list_issues, list_standards |
 | wms | 3 | wms_list_alerts, wms_get_alert, acknowledge_alert |
 | communication | 2 | list_notifications, send_notification |
 | mes | 2 | list_wip_transfers, get_today_production_output |
-| rd | 2 | list_audit_logs, rd_list_projects |
-| erp | 1 | export_contacts |
+| rd | 2 | rd_list_audit_logs, rd_list_projects |
 | lowcode | 1 | get_designer_schema |
 | scm | 1 | reject_order |
 | search | 1 | search_handler |
@@ -110,81 +111,20 @@
 | RC1 — Prefix Mismatch | 0 | Frontend uses wrong API prefix (e.g. /api/v1/ vs /api/) |
 | RC2 — Missing utoipa | 0 | Backend route exists but lacks utoipa annotation |
 | RC3 — Param Format | 0 | :id vs {id} format mismatch |
-| RC4 — Unregistered | 1916 | Frontend calls non-existent backend route |
-| RC5 — Frontend Internal | 37 | Mock/local/test paths |
-| **Total** | **1953** | |
+| RC4 — Unregistered | 0 | Frontend calls non-existent backend route |
+| RC5 — Frontend Internal | 11 | Mock/local/test paths |
+| **Total** | **11** | |
 
 ### Undocumented Frontend APIs by Service
 
 | Service | Total | RC1 | RC2 | RC3 | RC4 | RC5 |
 |---------|-------|-----|-----|-----|-----|-----|
-| erp | 204 | 0 | 0 | 0 | 202 | 2 |
-| workflow | 139 | 0 | 0 | 0 | 138 | 1 |
-| core | 108 | 0 | 0 | 0 | 100 | 8 |
-| scm | 105 | 0 | 0 | 0 | 105 | 0 |
-| mes | 101 | 0 | 0 | 0 | 101 | 0 |
-| pm | 99 | 0 | 0 | 0 | 99 | 0 |
-| hrm | 95 | 0 | 0 | 0 | 95 | 0 |
-| lims | 94 | 0 | 0 | 0 | 91 | 3 |
-| qms | 94 | 0 | 0 | 0 | 94 | 0 |
-| crm | 91 | 0 | 0 | 0 | 91 | 0 |
-| finance | 76 | 0 | 0 | 0 | 76 | 0 |
-| ehs | 75 | 0 | 0 | 0 | 74 | 1 |
-| integration | 74 | 0 | 0 | 0 | 72 | 2 |
-| monitor | 69 | 0 | 0 | 0 | 68 | 1 |
-| srm | 59 | 0 | 0 | 0 | 59 | 0 |
-| iam | 53 | 0 | 0 | 0 | 53 | 0 |
-| bi | 49 | 0 | 0 | 0 | 49 | 0 |
-| lowcode | 49 | 0 | 0 | 0 | 47 | 2 |
-| gis | 46 | 0 | 0 | 0 | 39 | 7 |
-| rd | 43 | 0 | 0 | 0 | 39 | 4 |
-| wms | 36 | 0 | 0 | 0 | 36 | 0 |
-| ai | 33 | 0 | 0 | 0 | 31 | 2 |
-| im | 33 | 0 | 0 | 0 | 33 | 0 |
-| automation | 30 | 0 | 0 | 0 | 30 | 0 |
-| notification | 30 | 0 | 0 | 0 | 28 | 2 |
-| mobile | 27 | 0 | 0 | 0 | 25 | 2 |
-| mail | 13 | 0 | 0 | 0 | 13 | 0 |
-| master | 10 | 0 | 0 | 0 | 10 | 0 |
-| doc | 7 | 0 | 0 | 0 | 7 | 0 |
-| file | 7 | 0 | 0 | 0 | 7 | 0 |
-| migration | 3 | 0 | 0 | 0 | 3 | 0 |
-| portal | 1 | 0 | 0 | 0 | 1 | 0 |
-
-### RC4 — Unregistered Routes (Sample)
-
-| # | Service | Method | Path | File |
-|---|---------|--------|------|------|
-| 1 | core | GET | `/api/core/system/api-keys` | apps/web/src/api/admin/apiKeys.ts:24 |
-| 2 | core | POST | `/api/core/system/api-keys` | apps/web/src/api/admin/apiKeys.ts:28 |
-| 3 | core | DELETE | `/api/core/system/api-keys/{param}` | apps/web/src/api/admin/apiKeys.ts:32 |
-| 4 | erp | GET | `/api/erp/system/audit-logs` | apps/web/src/api/admin/auditLog.ts:25 |
-| 5 | erp | GET | `/api/erp/system/audit-logs/{param}` | apps/web/src/api/admin/auditLog.ts:29 |
-| 6 | erp | GET | `/api/erp/system/audit-logs/export` | apps/web/src/api/admin/auditLog.ts:42 |
-| 7 | core | GET | `/api/core/monitor/alerts` | apps/web/src/api/admin/monitoring.ts:165 |
-| 8 | core | GET | `/api/core/monitor/alerts/{param}` | apps/web/src/api/admin/monitoring.ts:169 |
-| 9 | core | POST | `/api/core/monitor/alerts/acknowledge` | apps/web/src/api/admin/monitoring.ts:173 |
-| 10 | core | POST | `/api/core/monitor/alerts/resolve` | apps/web/src/api/admin/monitoring.ts:180 |
-| 11 | core | POST | `/api/core/monitor/alerts/{param}/escalate` | apps/web/src/api/admin/monitoring.ts:190 |
-| 12 | core | POST | `/api/core/monitor/alerts/{param}/dismiss` | apps/web/src/api/admin/monitoring.ts:194 |
-| 13 | core | GET | `/api/core/monitor/alerts/statistics` | apps/web/src/api/admin/monitoring.ts:205 |
-| 14 | core | GET | `/api/core/monitor/alerts/export` | apps/web/src/api/admin/monitoring.ts:218 |
-| 15 | core | GET | `/api/core/monitor/rules` | apps/web/src/api/admin/monitoring.ts:240 |
-| 16 | core | GET | `/api/core/monitor/rules/{param}` | apps/web/src/api/admin/monitoring.ts:244 |
-| 17 | core | POST | `/api/core/monitor/rules` | apps/web/src/api/admin/monitoring.ts:248 |
-| 18 | core | PUT | `/api/core/monitor/rules/{param}` | apps/web/src/api/admin/monitoring.ts:255 |
-| 19 | core | DELETE | `/api/core/monitor/rules/{param}` | apps/web/src/api/admin/monitoring.ts:259 |
-| 20 | core | POST | `/api/core/monitor/rules/{param}/enable` | apps/web/src/api/admin/monitoring.ts:263 |
-| 21 | core | POST | `/api/core/monitor/rules/{param}/disable` | apps/web/src/api/admin/monitoring.ts:267 |
-| 22 | core | GET | `/api/core/monitor/health` | apps/web/src/api/admin/monitoring.ts:271 |
-| 23 | core | GET | `/api/core/monitor/metrics` | apps/web/src/api/admin/monitoring.ts:282 |
-| 24 | core | GET | `/api/core/audit/operations` | apps/web/src/api/admin/operationAudit.ts:77 |
-| 25 | core | GET | `/api/core/audit/operations/{param}` | apps/web/src/api/admin/operationAudit.ts:83 |
-| 26 | core | GET | `/api/core/audit/operations/stats` | apps/web/src/api/admin/operationAudit.ts:87 |
-| 27 | core | GET | `/api/core/audit/permission-changes` | apps/web/src/api/admin/permissionAudit.ts:148 |
-| 28 | core | GET | `/api/core/audit/permission-changes/{param}` | apps/web/src/api/admin/permissionAudit.ts:154 |
-| 29 | core | GET | `/api/core/audit/permission-changes/stats` | apps/web/src/api/admin/permissionAudit.ts:165 |
-| 30 | core | GET | `/api/core/audit/permission-changes/export` | apps/web/src/api/admin/permissionAudit.ts:183 |
+| rd | 4 | 0 | 0 | 0 | 0 | 4 |
+| core | 2 | 0 | 0 | 0 | 0 | 2 |
+| lowcode | 2 | 0 | 0 | 0 | 0 | 2 |
+| integration | 1 | 0 | 0 | 0 | 0 | 1 |
+| monitor | 1 | 0 | 0 | 0 | 0 | 1 |
+| workflow | 1 | 0 | 0 | 0 | 0 | 1 |
 
 ## 3. Recommendations
 
@@ -204,8 +144,8 @@
 
 ### Phase 4: CRUD Bindings (Category C)
 
-6. **Add frontend bindings for Category C (369) CRUD endpoints** — prioritize high-value services
+6. **Add frontend bindings for Category C (407) CRUD endpoints** — prioritize high-value services
 
 ### Phase 5: Unregistered Routes (RC4)
 
-7. **Triage RC4 (1916) unregistered routes** — determine if backend route needs to be created or frontend call should be removed
+7. **Triage RC4 (0) unregistered routes** — determine if backend route needs to be created or frontend call should be removed
