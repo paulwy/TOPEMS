@@ -25,8 +25,12 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { PageContainer } from '@/components/common';
+import { AICopilotRecommendations } from '@/components/ai/copilot';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useNotificationStore } from '@/store';
+import { useAIContext } from '@/hooks';
+import { writeAICopilotContext } from '@/lib/ai/copilotContext';
+import type { AIRecommendation } from '@/lib/ai/recommendations';
 
 interface StatCardProps {
   id: string;
@@ -442,6 +446,7 @@ export const AiDashboardPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { t } = useTranslation();
+  const { topRecommendations } = useAIContext();
 
   const stats: StatCardProps[] = useMemo(
     () => [
@@ -656,6 +661,19 @@ export const AiDashboardPage: React.FC = () => {
     }, 500);
   }, [addNotification, t]);
 
+  const handleRecommendationSelect = useCallback(
+    (recommendation: AIRecommendation) => {
+      writeAICopilotContext({
+        pathname: window.location.pathname,
+        source: 'dashboard',
+        intent: 'recommendation',
+        recommendationId: recommendation.id,
+      });
+      navigate(recommendation.action);
+    },
+    [navigate]
+  );
+
   const usageData = [120, 150, 130, 180, 160, 200, 190];
 
   return (
@@ -723,6 +741,44 @@ export const AiDashboardPage: React.FC = () => {
             >
               {t('ai.dashboard.button.view_prompts')}
             </Button>
+          </Box>
+        </Box>
+
+        {/* AI 推荐入口 TopN */}
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Box>
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 600 }}
+              >
+                AI 推荐入口 TopN
+              </Typography>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                根据当前页面上下文推荐最适合的 AI 能力入口
+              </Typography>
+            </Box>
+            <Chip
+              label={`Top ${topRecommendations.length}`}
+              color='primary'
+              size='small'
+              variant='outlined'
+            />
+          </Box>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+              gap: 2,
+            }}
+          >
+            <AICopilotRecommendations
+              recommendations={topRecommendations}
+              onSelect={handleRecommendationSelect}
+            />
           </Box>
         </Box>
 

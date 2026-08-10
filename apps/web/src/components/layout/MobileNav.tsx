@@ -22,6 +22,7 @@ import { lucideIcons } from '../../lib/iconMapping';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { AI_PATHS } from '@/modules/ai/config';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { writeAICopilotContext } from '@/lib/ai/copilotContext';
 
 function getNavigablePath(path: string): string | null {
   if (!path) return null;
@@ -394,16 +395,11 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             <IconButton
               size='small'
               onClick={() => {
-                try {
-                  window.localStorage.setItem(
-                    'ai-copilot-context',
-                    JSON.stringify({
-                      pathname: typeof window !== 'undefined' ? location.pathname : '/',
-                      moduleCode: 'shared',
-                      breadcrumbs: ['首页'],
-                    })
-                  );
-                } catch {}
+                writeAICopilotContext({
+                  pathname: location.pathname,
+                  source: 'mobile-nav',
+                  intent: 'chat',
+                });
                 navigate(AI_PATHS.root);
                 onClose();
               }}
