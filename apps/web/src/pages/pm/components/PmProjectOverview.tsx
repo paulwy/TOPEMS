@@ -39,14 +39,17 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
       }}
     >
       <Card>
-        <CardHeader sx={{ pb: 2 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontSize: '1.125rem' }}
-          >
-            {t('pm.project_detail.basic_info')}
-          </Typography>
-        </CardHeader>
+        <CardHeader
+          sx={{ pb: 2 }}
+          title={
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              {t('pm.project_detail.basic_info')}
+            </Typography>
+          }
+        />
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Box
             sx={{
@@ -154,14 +157,17 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
       </Card>
 
       <Card>
-        <CardHeader sx={{ pb: 2 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontSize: '1.125rem' }}
-          >
-            {t('pm.project_detail.key_indicators')}
-          </Typography>
-        </CardHeader>
+        <CardHeader
+          sx={{ pb: 2 }}
+          title={
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              {t('pm.project_detail.key_indicators')}
+            </Typography>
+          }
+        />
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Box>
             <Box
