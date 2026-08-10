@@ -4,6 +4,7 @@ import { Search, Sparkles, Briefcase } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
 import { AI_PATHS } from '@/modules/ai/config';
+import { writeAICopilotContext } from '@/lib/ai/copilotContext';
 
 export interface GlobalActionsProps {
   onSearchClick?: () => void;
@@ -40,16 +41,11 @@ export const GlobalActions: React.FC<GlobalActionsProps> = ({ onSearchClick }) =
           size='small'
           aria-label='AI'
           onClick={() => {
-            try {
-              window.localStorage.setItem(
-                'ai-copilot-context',
-                JSON.stringify({
-                  pathname: typeof window !== 'undefined' ? location.pathname : '/',
-                  moduleCode: 'shared',
-                  breadcrumbs: ['首页'],
-                })
-              );
-            } catch {}
+            writeAICopilotContext({
+              pathname: location.pathname,
+              source: 'global-action',
+              intent: 'chat',
+            });
             navigate(AI_PATHS.root);
           }}
           sx={{ ...buttonSx, color: 'primary.main' }}

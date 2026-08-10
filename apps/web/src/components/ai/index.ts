@@ -19,6 +19,7 @@ export type { AIAnalyzerProps, AnalysisResults } from './AIAnalyzer';
 export { DocumentManager } from './DocumentManager';
 export type { DocumentManagerProps } from './DocumentManager';
 export { FloatingAIHelper } from './FloatingAIHelper';
+export * from './copilot';
 export { AIToolsPanel } from './AIToolsPanel';
 export { ChatHistory } from './ChatHistory';
 export type { ChatSession, ChatMessage } from './ChatHistory';

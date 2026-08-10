@@ -193,6 +193,79 @@ test.describe('UI §15.3 行为铁律', () => {
     expect(aiContext).toMatchObject({
       pathname: '/dashboard',
       moduleCode: 'dashboard',
+      source: 'shortcut',
+      intent: 'chat',
     });
+  });
+
+  test('AI L2 FAB 必须打开 320×420 Copilot 浮窗', async ({ page }) => {
+    await page.getByRole('button', { name: 'AI助手' }).click();
+
+    const panel = page.locator('.ai-helper-panel');
+    await expect(panel).toBeVisible();
+
+    const size = await panel.evaluate((element) => {
+      const style = window.getComputedStyle(element);
+      return {
+        width: Math.round(Number.parseFloat(style.width)),
+        height: Math.round(Number.parseFloat(style.height)),
+      };
+    });
+    expect(size).toEqual({ width: 320, height: 420 });
+    await expect(panel.getByText('AI Copilot')).toBeVisible();
+  });
+
+  test('L3 选中文本气泡必须提供 4 项 AI 操作并写入上下文', async ({ page }) => {
+    await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.id = 'selection-bubble-fixture';
+      host.textContent = '这是一段用于验证 AI 选中文本气泡的测试内容';
+      host.style.position = 'fixed';
+      host.style.left = '240px';
+      host.style.top = '180px';
+      host.style.zIndex = '1';
+      host.style.fontSize = '16px';
+      host.style.background = 'white';
+      host.style.padding = '12px';
+      document.body.appendChild(host);
+
+      const range = document.createRange();
+      range.selectNodeContents(host);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+
+    const bubble = page.locator('.ai-selection-bubble');
+    await expect(bubble).toBeVisible();
+    await expect(bubble.getByRole('button', { name: /解释/ })).toBeVisible();
+    await expect(bubble.getByRole('button', { name: /总结/ })).toBeVisible();
+    await expect(bubble.getByRole('button', { name: /改写/ })).toBeVisible();
+    await expect(bubble.getByRole('button', { name: /生成待办/ })).toBeVisible();
+
+    await bubble.getByRole('button', { name: /总结/ }).click();
+    await expect(page).toHaveURL(/\/ai(\/dashboard)?$/);
+
+    const aiContext = await page.evaluate(() => {
+      const raw = window.localStorage.getItem('ai-copilot-context');
+      return raw ? JSON.parse(raw) : null;
+    });
+
+    expect(aiContext).toMatchObject({
+      source: 'selection',
+      intent: 'summarize',
+      selectedText: '这是一段用于验证 AI 选中文本气泡的测试内容',
+    });
+  });
+
+  test('AI 首页必须展示 TopN 推荐入口', async ({ page }) => {
+    await page.goto('/ai/dashboard', { waitUntil: 'networkidle' });
+
+    await expect(page.getByText('AI 推荐入口 TopN')).toBeVisible();
+    await expect(page.getByText('Top 3')).toBeVisible();
+    await expect(page.getByText('文档生成')).toBeVisible();
+    await expect(page.getByText('文本分析')).toBeVisible();
+    await expect(page.getByText('编码生成')).toBeVisible();
   });
 });

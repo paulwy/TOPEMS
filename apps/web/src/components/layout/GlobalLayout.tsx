@@ -24,12 +24,7 @@ import { DASHBOARD_PATHS, MOBILE_TAB_PATHS } from '@/routes/dashboard';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { DOC_PATHS } from '@/modules/doc/config';
 import { AI_PATHS } from '@/modules/ai/config';
-
-function getModuleFromPath(pathname: string): string | null {
-  const segments = pathname.split('/').filter(Boolean);
-  if (segments.length === 0) return null;
-  return segments[0];
-}
+import { getModuleFromPath, writeAICopilotContext } from '@/lib/ai/copilotContext';
 
 interface GlobalLayoutProps {
   children: React.ReactNode;
@@ -95,16 +90,12 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const openCommandPalette = useCallback(() => setCommandPaletteOpen(true), []);
   const closeCommandPalette = useCallback(() => setCommandPaletteOpen(false), []);
   const openAiCopilot = useCallback(() => {
-    try {
-      window.localStorage.setItem(
-        'ai-copilot-context',
-        JSON.stringify({
-          pathname: window.location.pathname || '/',
-          moduleCode: getModuleFromPath(window.location.pathname) || 'shared',
-          breadcrumbs: ['快捷键'],
-        })
-      );
-    } catch {}
+    writeAICopilotContext({
+      pathname: window.location.pathname || '/',
+      source: 'shortcut',
+      intent: 'chat',
+      breadcrumbs: ['快捷键'],
+    });
     navigate(AI_PATHS.root);
   }, [navigate]);
 
