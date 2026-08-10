@@ -1,4 +1,5 @@
 pub mod agent;
+pub mod ai_compat;
 pub mod ai_plugin;
 pub mod analysis;
 pub mod code_assistant;

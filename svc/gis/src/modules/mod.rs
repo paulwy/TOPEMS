@@ -2,6 +2,7 @@ pub mod business;
 pub mod device;
 pub mod factory_map;
 pub mod geodata;
+pub mod gis_compat;
 pub mod gis_plugin;
 pub mod import_export;
 pub mod location;
