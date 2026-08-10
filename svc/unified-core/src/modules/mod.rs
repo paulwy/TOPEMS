@@ -9,6 +9,7 @@
 
 pub mod audit;
 pub mod communication;
+pub mod core_compat;
 // V68.1 A2.3: dict 模块已合并到 svc/master-data/src/modules/dict/（主数据域）
 // pub mod dict;
 pub mod doc;

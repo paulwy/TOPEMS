@@ -139,6 +139,48 @@ use utoipa::OpenApi;
         modules::analytics_compat::compat_post_api_bi_widgets_widgetid_export,
         modules::analytics_compat::compat_get_api_bi_widgets_widgetid_fullscreen,
         modules::analytics_compat::compat_get_api_bi_moduleid,
+        // === RC4a gaps: data-analysis ===
+        modules::analytics_compat::compat_get_api_bi_data_analysis_sales_trend,
+        modules::analytics_compat::compat_get_api_bi_data_analysis_region_sales,
+        modules::analytics_compat::compat_get_api_bi_data_analysis_category_pivot,
+        modules::analytics_compat::compat_get_api_bi_data_analysis,
+        // === RC4a gaps: reports ===
+        modules::analytics_compat::compat_get_api_bi_reports,
+        modules::analytics_compat::compat_get_api_bi_reports_id,
+        modules::analytics_compat::compat_post_api_bi_reports,
+        modules::analytics_compat::compat_post_api_bi_reports_from_template,
+        modules::analytics_compat::compat_put_api_bi_reports_id,
+        modules::analytics_compat::compat_delete_api_bi_reports_id,
+        modules::analytics_compat::compat_post_api_bi_reports_id_export,
+        modules::analytics_compat::compat_post_api_bi_reports_id_run,
+        // === RC4a gaps: templates ===
+        modules::analytics_compat::compat_get_api_bi_templates,
+        modules::analytics_compat::compat_get_api_bi_templates_id,
+        modules::analytics_compat::compat_post_api_bi_templates,
+        modules::analytics_compat::compat_put_api_bi_templates_id,
+        modules::analytics_compat::compat_delete_api_bi_templates_id,
+        // === RC4a gaps: report-types ===
+        modules::analytics_compat::compat_get_api_bi_report_types,
+        // === RC4a gaps: schedules ===
+        modules::analytics_compat::compat_get_api_bi_schedules,
+        modules::analytics_compat::compat_get_api_bi_schedules_id,
+        modules::analytics_compat::compat_post_api_bi_schedules,
+        modules::analytics_compat::compat_put_api_bi_schedules_id,
+        modules::analytics_compat::compat_delete_api_bi_schedules_id,
+        modules::analytics_compat::compat_post_api_bi_schedules_id_execute,
+        modules::analytics_compat::compat_get_api_bi_schedules_id_history,
+        // === RC4a gaps: subscriptions ===
+        modules::analytics_compat::compat_get_api_bi_subscriptions,
+        modules::analytics_compat::compat_get_api_bi_subscriptions_id,
+        modules::analytics_compat::compat_post_api_bi_subscriptions,
+        modules::analytics_compat::compat_put_api_bi_subscriptions_id,
+        modules::analytics_compat::compat_delete_api_bi_subscriptions_id,
+        modules::analytics_compat::compat_post_api_bi_subscriptions_id_toggle,
+        modules::analytics_compat::compat_get_api_bi_subscriptions_user_user_id,
+        // === RC4a gaps: health & reports-center ===
+        modules::analytics_compat::compat_get_api_bi_health,
+        modules::analytics_compat::compat_get_api_bi_reports_center_stats,
+        modules::analytics_compat::compat_post_api_bi_reports_center_export_reporttype,
     ),
     components(
         schemas(
