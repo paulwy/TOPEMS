@@ -1466,18 +1466,23 @@ run_cli() {
             return $?
         fi
         cd "$CLI_DIR"
-        [ -f ".venv/bin/activate" ] && source .venv/bin/activate
+        # 创建虚拟环境（如果不存在）
+        if [ ! -f ".venv/bin/activate" ]; then
+            info "创建 Python 虚拟环境 .venv ..."
+            python3 -m venv .venv
+        fi
+        source .venv/bin/activate
         export PYTHONPATH="$CLI_DIR/src"
         # 检查依赖
         python3 -c "import yaml, click, rich" 2>/dev/null || {
             info "缺少 Python CLI 依赖，正在安装..."
-            pip3 install pyyaml click rich httpx --quiet
+            python3 -m pip install pyyaml click rich httpx --quiet
         }
         python3 -m topems_cli "$@"
     else
         error "Python CLI 未安装"
         echo "请运行以下命令安装:"
-        echo "  cd $CLI_DIR && python3 -m venv .venv && source .venv/bin/activate && pip3 install pyyaml click rich httpx"
+        echo "  cd $CLI_DIR && python3 -m venv .venv && source .venv/bin/activate && python3 -m pip install pyyaml click rich httpx"
         exit 1
     fi
 }
@@ -1803,7 +1808,7 @@ clean_project() {
         detail "后续建议:"
         detail "  Rust:    cargo build  (重建 target/)"
         detail "  前端:    pnpm install && pnpm build"
-        detail "  Python:  cd cli && python3 -m venv .venv && pip install -r requirements.txt"
+        detail "  Python:  cd cli && python3 -m venv .venv && source .venv/bin/activate && python3 -m pip install -e ."
     else
         warn "未执行任何清理操作。"
         echo "  使用 --dry-run 预览将清理的内容，或指定具体选项如 --rust --cache 等。"
