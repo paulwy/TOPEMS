@@ -1,0 +1,857 @@
+[
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 689,
+    "col": 31,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "maintenance_type: r.maintenance_type.clone(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 692,
+    "col": 43,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D2_DOUBLE_SOME_OPTION",
+    "problematic_line": "start_time: naive_to_utc(Some(r.start_time)),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 804,
+    "col": 31,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "maintenance_type: result.maintenance_type.clone(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 807,
+    "col": 43,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D2_DOUBLE_SOME_OPTION",
+    "problematic_line": "start_time: naive_to_utc(Some(result.start_time)),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 885,
+    "col": 31,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "maintenance_type: result.maintenance_type.clone(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 888,
+    "col": 43,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D2_DOUBLE_SOME_OPTION",
+    "problematic_line": "start_time: naive_to_utc(Some(result.start_time)),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 1006,
+    "col": 50,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "equipment_id: r.equipment_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 1009,
+    "col": 44,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "inspector: r.inspector.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 1012,
+    "col": 26,
+    "code": "E0599",
+    "msg": "`std::string::String` is not an iterator",
+    "type": "B2_STRING_MAP",
+    "problematic_line": "|                         .map(|d| Utc.from_utc_datetime(&d).to_rfc3339())"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 1025,
+    "col": 70,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D5_SERDE_FROM_VALUE",
+    "problematic_line": "items: r.items.and_then(|s| serde_json::from_str(&s).ok()),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 1124,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "equipment_id: r.equipment_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 1127,
+    "col": 40,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "inspector: r.inspector.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 1130,
+    "col": 22,
+    "code": "E0599",
+    "msg": "`std::string::String` is not an iterator",
+    "type": "B2_STRING_MAP",
+    "problematic_line": "|                     .map(|d| Utc.from_utc_datetime(&d).to_rfc3339())"
+  },
+  {
+    "filepath": "svc/mes/src/modules/equipment.rs",
+    "line": 1143,
+    "col": 66,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D5_SERDE_FROM_VALUE",
+    "problematic_line": "items: r.items.and_then(|s| serde_json::from_str(&s).ok()),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 323,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_code: r.product_code.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 324,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_name: r.product_name.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 328,
+    "col": 28,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "unit: Some(r.unit),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 332,
+    "col": 51,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D4_DATETIME_ARG_TYPE",
+    "problematic_line": "required_date: datetime_to_string(r.required_date),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 418,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_code: r.product_code.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 419,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_name: r.product_name.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 423,
+    "col": 28,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "unit: Some(r.unit),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 427,
+    "col": 51,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D4_DATETIME_ARG_TYPE",
+    "problematic_line": "required_date: datetime_to_string(r.required_date),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 517,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_code: r.product_code.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 518,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_name: r.product_name.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 522,
+    "col": 28,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "unit: Some(r.unit),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 526,
+    "col": 51,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D4_DATETIME_ARG_TYPE",
+    "problematic_line": "required_date: datetime_to_string(r.required_date),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 680,
+    "col": 54,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_code: r.product_code.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 681,
+    "col": 54,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_name: r.product_name.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 685,
+    "col": 36,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "unit: Some(r.unit),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 689,
+    "col": 59,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D4_DATETIME_ARG_TYPE",
+    "problematic_line": "required_date: datetime_to_string(r.required_date),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 745,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_code: r.product_code.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 746,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_name: r.product_name.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 750,
+    "col": 28,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "unit: Some(r.unit),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 754,
+    "col": 51,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D4_DATETIME_ARG_TYPE",
+    "problematic_line": "required_date: datetime_to_string(r.required_date),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 809,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_code: r.product_code.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 810,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_name: r.product_name.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 814,
+    "col": 28,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "unit: Some(r.unit),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/material_requirement.rs",
+    "line": 818,
+    "col": 51,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D4_DATETIME_ARG_TYPE",
+    "problematic_line": "required_date: datetime_to_string(r.required_date),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_flow.rs",
+    "line": 616,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "process_id: s.process_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_flow.rs",
+    "line": 619,
+    "col": 42,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for type `i32` in the current scope",
+    "type": "A4_I32_UNWRAP",
+    "problematic_line": "sequence: s.sequence.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_flow.rs",
+    "line": 751,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "process_id: s.process_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_flow.rs",
+    "line": 754,
+    "col": 42,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for type `i32` in the current scope",
+    "type": "A4_I32_UNWRAP",
+    "problematic_line": "sequence: s.sequence.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_flow.rs",
+    "line": 865,
+    "col": 30,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A2_UUID_UNWRAP_BARE",
+    "problematic_line": "s.process_id.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_flow.rs",
+    "line": 879,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "process_id: s.process_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_flow.rs",
+    "line": 882,
+    "col": 42,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for type `i32` in the current scope",
+    "type": "A4_I32_UNWRAP",
+    "problematic_line": "sequence: s.sequence.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_flow.rs",
+    "line": 1020,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "process_id: s.process_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_flow.rs",
+    "line": 1023,
+    "col": 42,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for type `i32` in the current scope",
+    "type": "A4_I32_UNWRAP",
+    "problematic_line": "sequence: s.sequence.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_route.rs",
+    "line": 538,
+    "col": 42,
+    "code": "E0599",
+    "msg": "`Uuid` is not an iterator",
+    "type": "B1_UUID_MAP",
+    "problematic_line": "route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_route.rs",
+    "line": 539,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "process_id: s.process_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_route.rs",
+    "line": 637,
+    "col": 42,
+    "code": "E0599",
+    "msg": "`Uuid` is not an iterator",
+    "type": "B1_UUID_MAP",
+    "problematic_line": "route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_route.rs",
+    "line": 638,
+    "col": 46,
+    "code": "E0599",
+    "msg": "`Uuid` is not an iterator",
+    "type": "B1_UUID_MAP",
+    "problematic_line": "process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_route.rs",
+    "line": 726,
+    "col": 42,
+    "code": "E0599",
+    "msg": "`Uuid` is not an iterator",
+    "type": "B1_UUID_MAP",
+    "problematic_line": "route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_route.rs",
+    "line": 727,
+    "col": 46,
+    "code": "E0599",
+    "msg": "`Uuid` is not an iterator",
+    "type": "B1_UUID_MAP",
+    "problematic_line": "process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_route.rs",
+    "line": 867,
+    "col": 42,
+    "code": "E0599",
+    "msg": "`Uuid` is not an iterator",
+    "type": "B1_UUID_MAP",
+    "problematic_line": "route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/process_route.rs",
+    "line": 868,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "process_id: s.process_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 304,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_code: r.product_code.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 305,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_name: r.product_name.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 308,
+    "col": 52,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "inspection_type: r.inspection_type.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 309,
+    "col": 46,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "C_BIGDECIMAL_NEED_SOME",
+    "problematic_line": "quantity: big_decimal_to_f64(r.quantity),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 310,
+    "col": 56,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "C_BIGDECIMAL_NEED_SOME",
+    "problematic_line": "qualified_quantity: big_decimal_to_f64(r.qualified_quantity),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 311,
+    "col": 58,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "C_BIGDECIMAL_NEED_SOME",
+    "problematic_line": "unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 422,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_code: r.product_code.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 423,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_name: r.product_name.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 426,
+    "col": 52,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "inspection_type: r.inspection_type.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 427,
+    "col": 46,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "C_BIGDECIMAL_NEED_SOME",
+    "problematic_line": "quantity: big_decimal_to_f64(r.quantity),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 428,
+    "col": 56,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "C_BIGDECIMAL_NEED_SOME",
+    "problematic_line": "qualified_quantity: big_decimal_to_f64(r.qualified_quantity),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 429,
+    "col": 58,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "C_BIGDECIMAL_NEED_SOME",
+    "problematic_line": "unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 530,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_code: r.product_code.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 531,
+    "col": 46,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "product_name: r.product_name.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 534,
+    "col": 52,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "inspection_type: r.inspection_type.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 535,
+    "col": 46,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "C_BIGDECIMAL_NEED_SOME",
+    "problematic_line": "quantity: big_decimal_to_f64(r.quantity),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 536,
+    "col": 56,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "C_BIGDECIMAL_NEED_SOME",
+    "problematic_line": "qualified_quantity: big_decimal_to_f64(r.qualified_quantity),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/inspection.rs",
+    "line": 537,
+    "col": 58,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "C_BIGDECIMAL_NEED_SOME",
+    "problematic_line": "unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/patrol.rs",
+    "line": 246,
+    "col": 40,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "inspector: r.inspector.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/patrol.rs",
+    "line": 335,
+    "col": 40,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "inspector: r.inspector.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/patrol.rs",
+    "line": 432,
+    "col": 40,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "inspector: r.inspector.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/patrol.rs",
+    "line": 544,
+    "col": 44,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "patrol_id: r.patrol_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/patrol.rs",
+    "line": 606,
+    "col": 40,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "patrol_id: r.patrol_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/patrol.rs",
+    "line": 676,
+    "col": 40,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "patrol_id: r.patrol_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/standard.rs",
+    "line": 213,
+    "col": 49,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A2_UUID_UNWRAP_BARE",
+    "problematic_line": "let standard_id = v.standard_id.unwrap_or_default();"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/standard.rs",
+    "line": 349,
+    "col": 44,
+    "code": "E0599",
+    "msg": "`Uuid` is not an iterator",
+    "type": "B1_UUID_MAP",
+    "problematic_line": "standard_id: v.standard_id.map(|u| u.to_string()).unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/standard.rs",
+    "line": 371,
+    "col": 55,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "inspection_type: standard.inspection_type.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/standard.rs",
+    "line": 488,
+    "col": 52,
+    "code": "E0599",
+    "msg": "`Uuid` is not an iterator",
+    "type": "B1_UUID_MAP",
+    "problematic_line": "standard_id: r.standard_id.map(|u| u.to_string()).unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/standard.rs",
+    "line": 518,
+    "col": 55,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "inspection_type: standard.inspection_type.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/standard.rs",
+    "line": 671,
+    "col": 52,
+    "code": "E0599",
+    "msg": "`Uuid` is not an iterator",
+    "type": "B1_UUID_MAP",
+    "problematic_line": "standard_id: r.standard_id.map(|u| u.to_string()).unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/standard.rs",
+    "line": 705,
+    "col": 48,
+    "code": "E0599",
+    "msg": "`Uuid` is not an iterator",
+    "type": "B1_UUID_MAP",
+    "problematic_line": "standard_id: v.standard_id.map(|u| u.to_string()).unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/quality_management/standard.rs",
+    "line": 729,
+    "col": 55,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `std::string::String` in the current scope",
+    "type": "A3_STRING_UNWRAP",
+    "problematic_line": "inspection_type: standard.inspection_type.unwrap_or_default(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/team.rs",
+    "line": 310,
+    "col": 28,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "team_code: r.team_code.clone(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/team.rs",
+    "line": 311,
+    "col": 28,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "team_name: r.team_name.clone(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/team.rs",
+    "line": 419,
+    "col": 20,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "team_code: result.team_code.clone(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/team.rs",
+    "line": 420,
+    "col": 20,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "team_name: result.team_name.clone(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/team.rs",
+    "line": 496,
+    "col": 28,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "team_code: r.team_code.clone(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/team.rs",
+    "line": 497,
+    "col": 28,
+    "code": "E0308",
+    "msg": "mismatched types",
+    "type": "D_OPT_TO_STRING_NEED_UNWRAP",
+    "problematic_line": "team_name: r.team_name.clone(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/team.rs",
+    "line": 587,
+    "col": 32,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "team_id: r.team_id.unwrap_or_default().to_string(),"
+  },
+  {
+    "filepath": "svc/mes/src/modules/team.rs",
+    "line": 660,
+    "col": 33,
+    "code": "E0599",
+    "msg": "no method named `unwrap_or_default` found for struct `Uuid` in the current scope",
+    "type": "A1_UUID_UNWRAP_TOSTRING",
+    "problematic_line": "team_id: result.team_id.unwrap_or_default().to_string(),"
+  }
+]
