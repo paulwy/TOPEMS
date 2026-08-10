@@ -27,9 +27,9 @@ const PmReportScheduleChart: React.FC<PmReportScheduleChartProps> = ({ stats }) 
 
   return (
     <Card sx={{ mb: 3 }}>
-      <CardHeader>
-        <Typography variant='h6'>{t('pm.pm_report_page.text_22fd66')}</Typography>
-      </CardHeader>
+      <CardHeader
+        title={<Typography variant='h6'>{t('pm.pm_report_page.text_22fd66')}</Typography>}
+      />
       <CardContent>
         <Box sx={{ height: 256 }}>
           <ResponsiveContainer

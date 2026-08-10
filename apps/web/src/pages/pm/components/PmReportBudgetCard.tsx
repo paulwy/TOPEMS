@@ -13,9 +13,9 @@ const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUt
 
   return (
     <Card sx={{ mb: 3 }}>
-      <CardHeader>
-        <Typography variant='h6'>{t('pm.pm_report_page.text_42acf5')}</Typography>
-      </CardHeader>
+      <CardHeader
+        title={<Typography variant='h6'>{t('pm.pm_report_page.text_42acf5')}</Typography>}
+      />
       <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography
