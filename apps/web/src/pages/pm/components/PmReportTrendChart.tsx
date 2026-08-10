@@ -25,9 +25,9 @@ const PmReportTrendChart: React.FC<PmReportTrendChartProps> = ({ data }) => {
 
   return (
     <Card sx={{ mb: 3 }}>
-      <CardHeader>
-        <Typography variant='h6'>{t('pm.pm_report_page.text_266064')}</Typography>
-      </CardHeader>
+      <CardHeader
+        title={<Typography variant='h6'>{t('pm.pm_report_page.text_266064')}</Typography>}
+      />
       <CardContent>
         <Box sx={{ height: 256 }}>
           <ResponsiveContainer

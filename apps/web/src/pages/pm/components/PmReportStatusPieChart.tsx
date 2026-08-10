@@ -17,9 +17,9 @@ const PmReportStatusPieChart: React.FC<PmReportStatusPieChartProps> = ({
 
   return (
     <Card>
-      <CardHeader>
-        <Typography variant='h6'>{t('pm.pm_report_page.text_068934')}</Typography>
-      </CardHeader>
+      <CardHeader
+        title={<Typography variant='h6'>{t('pm.pm_report_page.text_068934')}</Typography>}
+      />
       <CardContent>
         <Box sx={{ height: 256 }}>
           <ResponsiveContainer

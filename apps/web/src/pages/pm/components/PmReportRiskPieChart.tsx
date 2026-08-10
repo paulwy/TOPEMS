@@ -14,9 +14,9 @@ const PmReportRiskPieChart: React.FC<PmReportRiskPieChartProps> = ({ data, outer
 
   return (
     <Card>
-      <CardHeader>
-        <Typography variant='h6'>{t('pm.pm_report_page.text_99ce9e')}</Typography>
-      </CardHeader>
+      <CardHeader
+        title={<Typography variant='h6'>{t('pm.pm_report_page.text_99ce9e')}</Typography>}
+      />
       <CardContent>
         <Box sx={{ height: 256 }}>
           <ResponsiveContainer
