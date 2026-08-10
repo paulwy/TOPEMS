@@ -1,10 +1,17 @@
+<<<<<<< Updated upstream
 author: TOPEMS Team
+=======
+author: TOPEMS
+>>>>>>> Stashed changes
 category: System
 code: unified-core
 name: 统一核心服务
 description: TOPEMS 统一核心平台（Unified Core）：承载 IAM 认证授权、Flow 工作流引擎、File 文件存储、Doc 文档管理、Tenant 租户管理、Audit 审计日志、Monitor 系统监控等虚拟服务模块，共用 8000 端口通过 URL 路径区分
 version: 1.0.0
+<<<<<<< Updated upstream
 icon: admin_panel_settings
+=======
+>>>>>>> Stashed changes
 plugin_type: system
 dependencies: []
 deployment:

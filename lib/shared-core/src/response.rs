@@ -149,6 +149,7 @@ pub struct ListResponse<T> {
 
 impl<T> ListResponse<T> {
     pub fn new(items: Vec<T>, total: i64) -> Self {
+<<<<<<< Updated upstream
         Self {
             items,
             total,
@@ -171,6 +172,14 @@ impl<T> ListResponse<T> {
             page_size: Some(page_size),
             total_pages: Some(total_pages),
         }
+=======
+        Self { items, total, page: None, page_size: None, total_pages: None }
+    }
+
+    pub fn with_pagination(items: Vec<T>, total: i64, page: i64, page_size: i64) -> Self {
+        let total_pages = if total == 0 { 0 } else { (total - 1) / page_size.max(1) + 1 };
+        Self { items, total, page: Some(page), page_size: Some(page_size), total_pages: Some(total_pages) }
+>>>>>>> Stashed changes
     }
 
     pub fn from_parts(data: Vec<T>, count: i64) -> Self {
@@ -180,6 +189,7 @@ impl<T> ListResponse<T> {
 
 #[macro_export]
 macro_rules! list_resp {
+<<<<<<< Updated upstream
     ($vec:expr, $total:expr) => {
         $crate::response::ListResponse::new($vec, $total)
     };
@@ -426,4 +436,8 @@ mod tests {
         assert!(json.contains("\"pageSize\""));
         assert!(json.contains("\"totalPages\""));
     }
+=======
+    ($vec:expr, $total:expr) => { $crate::response::ListResponse::new($vec, $total) };
+    ($vec:expr, $total:expr, $page:expr, $page_size:expr) => { $crate::response::ListResponse::with_pagination($vec, $total, $page, $page_size) };
+>>>>>>> Stashed changes
 }

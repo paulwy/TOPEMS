@@ -10,7 +10,11 @@ use sqlx::Row;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
+<<<<<<< Updated upstream
 use topems_shared_core::response::ListResponse;
+=======
+use topems_shared::ListResponse;
+>>>>>>> Stashed changes
 
 #[derive(Debug, Deserialize)]
 pub struct ListDatasetQuery {
@@ -130,9 +134,13 @@ pub async fn list_datasets(
             .await
             .unwrap_or(0);
 
+<<<<<<< Updated upstream
             Json(ListResponse::with_pagination(
                 datasets, total, page, page_size,
             ))
+=======
+            Json(ListResponse::with_pagination(datasets, total, page, page_size))
+>>>>>>> Stashed changes
         }
         Err(e) => {
             warn!("获取数据集列表失败: {}", e);

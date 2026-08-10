@@ -2693,6 +2693,7 @@ pub struct ReceivableQueryParams {
     pub customer_id: Option<String>,
 }
 
+<<<<<<< Updated upstream
 #[utoipa::path(
     get,
     path = "/receivables",
@@ -2704,6 +2705,9 @@ pub struct ReceivableQueryParams {
     ),
 )]
 pub async fn list_receivables_handler(
+=======
+async fn list_receivables_handler(
+>>>>>>> Stashed changes
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReceivableQueryParams>,
@@ -2836,6 +2840,7 @@ pub struct PayableQueryParams {
     pub supplier_id: Option<String>,
 }
 
+<<<<<<< Updated upstream
 #[utoipa::path(
     get,
     path = "/payables",
@@ -2847,6 +2852,9 @@ pub struct PayableQueryParams {
     ),
 )]
 pub async fn list_payables_handler(
+=======
+async fn list_payables_handler(
+>>>>>>> Stashed changes
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PayableQueryParams>,

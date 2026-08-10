@@ -12,6 +12,10 @@ dependencies:
 runtime:
   port: 8052
   health_endpoint: /health
+<<<<<<< Updated upstream
   base_path: /api/ehs
+=======
+  base_path: /api/qa
+>>>>>>> Stashed changes
 deployment: {}
 permissions: {}

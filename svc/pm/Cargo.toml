@@ -23,6 +23,10 @@ tracing-subscriber.workspace = true
 dotenv.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
+<<<<<<< Updated upstream
+=======
+topems-shared = { path = "../../lib" }
+>>>>>>> Stashed changes
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 topems-shared-service-client = { path = "../../lib/shared-service-client" }
 utoipa.workspace = true
