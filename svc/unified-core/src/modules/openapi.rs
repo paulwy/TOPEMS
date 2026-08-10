@@ -624,6 +624,8 @@ pub struct Permission {
         crate::modules::core_compat::compat_get_api_core_monitor_slos_trend,
         crate::modules::core_compat::compat_post_api_core_monitor_slos_violations_id_resolve,
         // === RC4b IAM compatibility ===
+        crate::modules::core_compat::compat_post_api_core_iam_auth_login,
+        crate::modules::core_compat::compat_post_api_core_iam_auth_register,
         crate::modules::core_compat::compat_post_api_core_iam_auth_logout,
         crate::modules::core_compat::compat_post_api_core_iam_auth_refresh,
         crate::modules::core_compat::compat_get_api_core_iam_health,
