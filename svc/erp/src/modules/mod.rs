@@ -27,6 +27,7 @@ pub mod demo_data;
 pub mod dict;
 pub mod erp_finance_compat;
 pub mod erp_plugin;
+pub mod erp_system_compat;
 pub mod fixed_asset;
 pub mod health;
 pub mod holidays;

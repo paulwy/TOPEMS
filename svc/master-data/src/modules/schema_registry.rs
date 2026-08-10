@@ -24,13 +24,14 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sqlx::{FromRow, PgPool};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
 
 // ============ 数据模型 ============
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct SchemaDefinition {
     pub id: Uuid,
     pub name: String,
@@ -44,7 +45,7 @@ pub struct SchemaDefinition {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateSchemaRequest {
     pub name: String,
     pub title: String,
@@ -52,7 +53,7 @@ pub struct CreateSchemaRequest {
     pub schema_json: Value,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateSchemaRequest {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -60,7 +61,7 @@ pub struct UpdateSchemaRequest {
     pub is_active: Option<bool>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListSchemaQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -68,7 +69,7 @@ pub struct ListSchemaQuery {
     pub is_active: Option<bool>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListDataQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -77,6 +78,13 @@ pub struct ListDataQuery {
 
 // ============ Schema CRUD ============
 
+#[utoipa::path(
+    post,
+    path = "/api/master-data/schema-registry/schemas",
+    tag = "Schema Registry",
+    request_body = CreateSchemaRequest,
+    responses((status = 200, description = "创建 Schema 定义"))
+)]
 pub async fn create_schema(
     State(state): State<AppState>,
     Json(req): Json<CreateSchemaRequest>,
@@ -118,6 +126,13 @@ pub async fn create_schema(
     })))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/master-data/schema-registry/schemas/{id}",
+    tag = "Schema Registry",
+    params(("id" = Uuid, Path, description = "Schema ID")),
+    responses((status = 200, description = "获取 Schema 定义"))
+)]
 pub async fn get_schema(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -147,6 +162,18 @@ pub async fn get_schema(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/master-data/schema-registry/schemas",
+    tag = "Schema Registry",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键字"),
+        ("is_active" = Option<bool>, Query, description = "是否启用")
+    ),
+    responses((status = 200, description = "查询 Schema 定义列表"))
+)]
 pub async fn list_schemas(
     State(state): State<AppState>,
     Query(q): Query<ListSchemaQuery>,
@@ -203,6 +230,14 @@ pub async fn list_schemas(
     })))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/master-data/schema-registry/schemas/{id}",
+    tag = "Schema Registry",
+    params(("id" = Uuid, Path, description = "Schema ID")),
+    request_body = UpdateSchemaRequest,
+    responses((status = 200, description = "更新 Schema 定义"))
+)]
 pub async fn update_schema(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -248,6 +283,13 @@ pub async fn update_schema(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/master-data/schema-registry/schemas/{id}",
+    tag = "Schema Registry",
+    params(("id" = Uuid, Path, description = "Schema ID")),
+    responses((status = 200, description = "删除 Schema 定义"))
+)]
 pub async fn delete_schema(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -279,6 +321,14 @@ pub async fn delete_schema(
 
 // ============ 动态数据 CRUD ============
 
+#[utoipa::path(
+    post,
+    path = "/api/master-data/schema-registry/schemas/{schemaId}/data",
+    tag = "Schema Registry",
+    params(("schemaId" = Uuid, Path, description = "Schema ID")),
+    request_body = Value,
+    responses((status = 200, description = "创建动态数据记录"))
+)]
 pub async fn create_data(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -318,6 +368,18 @@ pub async fn create_data(
     })))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/master-data/schema-registry/schemas/{schemaId}/data",
+    tag = "Schema Registry",
+    params(
+        ("schemaId" = Uuid, Path, description = "Schema ID"),
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键字")
+    ),
+    responses((status = 200, description = "查询动态数据记录列表"))
+)]
 pub async fn list_data(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -395,6 +457,16 @@ pub async fn list_data(
     })))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/master-data/schema-registry/schemas/{schemaId}/data/{recordId}",
+    tag = "Schema Registry",
+    params(
+        ("schemaId" = Uuid, Path, description = "Schema ID"),
+        ("recordId" = Uuid, Path, description = "记录 ID")
+    ),
+    responses((status = 200, description = "获取动态数据记录"))
+)]
 pub async fn get_data(
     State(state): State<AppState>,
     Path((id, record_id)): Path<(Uuid, Uuid)>,
@@ -436,6 +508,17 @@ pub async fn get_data(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/master-data/schema-registry/schemas/{schemaId}/data/{recordId}",
+    tag = "Schema Registry",
+    params(
+        ("schemaId" = Uuid, Path, description = "Schema ID"),
+        ("recordId" = Uuid, Path, description = "记录 ID")
+    ),
+    request_body = Value,
+    responses((status = 200, description = "更新动态数据记录"))
+)]
 pub async fn update_data(
     State(state): State<AppState>,
     Path((id, record_id)): Path<(Uuid, Uuid)>,
@@ -478,6 +561,16 @@ pub async fn update_data(
     })))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/master-data/schema-registry/schemas/{schemaId}/data/{recordId}",
+    tag = "Schema Registry",
+    params(
+        ("schemaId" = Uuid, Path, description = "Schema ID"),
+        ("recordId" = Uuid, Path, description = "记录 ID")
+    ),
+    responses((status = 200, description = "删除动态数据记录"))
+)]
 pub async fn delete_data(
     State(state): State<AppState>,
     Path((id, record_id)): Path<(Uuid, Uuid)>,
