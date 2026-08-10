@@ -19,7 +19,7 @@ async fn main() -> anyhow::Result<()> {
         name: "topems-lowcode",
         port: 8088,
         port_env_var: Some("LOWCODE_PORT"),
-        max_db_connections: 0,
+        max_db_connections: 10,
         enable_events: false,
         enable_rls: false,
         enable_request_context: true,
