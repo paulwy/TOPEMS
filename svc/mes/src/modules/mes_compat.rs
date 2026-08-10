@@ -134,15 +134,6 @@ pub async fn compat_get_aps_orders_orderid_feasibility() {}
 // EquipmentOEE
 // ---------------------------------------------------------------------------
 
-#[utoipa::path(
-    get,
-    path = "/mes/equipment-oee/{equipmentId}/efficiency",
-    tag = "MES-Compat/EquipmentOEE",
-    params(("equipmentId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "MES compatibility endpoint"))
-)]
-pub async fn compat_get_equipment_oee_equipmentid_efficiency() {}
-
 // ---------------------------------------------------------------------------
 // Health
 // ---------------------------------------------------------------------------

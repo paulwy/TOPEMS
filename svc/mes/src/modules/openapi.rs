@@ -135,7 +135,6 @@ use crate::modules::work_report::{
         crate::modules::mes_compat::compat_get_aps_schedule_optimization_report,
         crate::modules::mes_compat::compat_get_aps_schedule_bottleneck_analysis,
         crate::modules::mes_compat::compat_get_aps_orders_orderid_feasibility,
-        crate::modules::mes_compat::compat_get_equipment_oee_equipmentid_efficiency,
         crate::modules::mes_compat::compat_get_health,
         crate::modules::mes_compat::compat_get_boms,
         crate::modules::mes_compat::compat_get_boms_id,

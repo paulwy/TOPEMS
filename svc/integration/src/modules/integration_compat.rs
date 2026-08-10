@@ -116,22 +116,6 @@ pub async fn compat_delete_api_integration_external_erp_connections_configid_com
 
 #[utoipa::path(
     get,
-    path = "/api/integration/external-erp/export/sync-logs",
-    tag = "Integration-Compat",
-    responses((status = 200, description = "Integration compatibility endpoint"))
-)]
-pub async fn compat_get_api_integration_external_erp_export_sync_logs() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/integration/external-erp/export/mappings",
-    tag = "Integration-Compat",
-    responses((status = 200, description = "Integration compatibility endpoint"))
-)]
-pub async fn compat_get_api_integration_external_erp_export_mappings() {}
-
-#[utoipa::path(
-    get,
     path = "/api/integration/external-erp/connections/{configId}/account-mappings",
     tag = "Integration-Compat",
     params(("configId" = String, Path, description = "id")),

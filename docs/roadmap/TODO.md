@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V72.8 | **更新日期**: 2026-08-10
+> **版本**: V73 | **更新日期**: 2026-08-10
 > **服务总数**: 30 个（含 unified-core + master-data + lowcode 占位 + ai/rd） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
 > **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · **V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环** · **V70 第五轮审计 15/15 全闭环** ✅ · **A4.2 去门面化 Phase 1~4 全服务迁移完成**（Phase 4 活跃代码 `topems_shared::` 引用清零，剩余 43 处死代码/注释/文档）· **V70.1 持续优化全项** · **V70 规划占位 3/3 落地** · **V70 封版：5 语义提交 30 服务 cargo check 0 error + tsc 0 error**  · **V68.3 导航架构合规化 16/16 四件套闭环**（P0-1 三联校验真实接入 · P0-2 L4黑名134处清理 · P1-3 首页模块网格移除 · P2-1 AppHeader工具栏顺序锁死，符合度 68/100→93+；V68.4 Batch2模块补齐；V69.2 CI脚本6项；V69.3前端合规49处；V70-1去门面化29服务全交付）✅ · **V70-2 topems_shared 去门面化彻底闭环**（Step1 删除 101 条 0 引用 re-export → Step2 COMPAT 区 13 条全删、5 服务×12 符号改直接子 crate 路径，最终 pub use = 29，workspace import 类错误清零）✅ · **V71.5/V72 P1-3 vite 并行度优化超额达标**（四项组合拳：terser→esbuild + workerCount=8 + Brotli Q11→6 + visualizer 可选化；实测基线 336.3s→优化均值 9.0s，加速 -97.3% · Brotli 体积 2275→2255KB（-0.9%，远小于预期 3%）· 抽样 chunk 语法校验 0 error · 功能完整性全绿）✅ · **V72.6~V72.8 OpenAPI 契约一致性三阶段闭环**（V72.6 方法不匹配 27→0 · V72.7 utoipa 签名一致性 869→0 · V72.8 P-04 探针 2559→0 GREEN ✅ · 5 Phase + 15 RC4 Batch · 30 服务 3401 paths / 504 schemas）✅
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 30/30 (100%)** ✅
@@ -894,3 +894,70 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 | CI 严重度 | RED | RED | RED | RED | GREEN | **GREEN** ✅ |
 
 > **注**: Phase 1 交付的是探针与分类口径修复；Phase 2 已完成目标服务的 utoipa 注解、OpenAPI 提取入口与编译验证。Phase 4（RC4 Batch 1~14）将四类 RC4 子项全部归零。Phase 5（RC4 Batch 15）修复 probe/triage 脚本 const 变量解析（消除 19 条 tenant 误报）并补齐 GIS device-locations/device-tracks 7 个兼容端点，P-04 主探针未文档化前端 API 归零，CI 严重度转为 **GREEN**。当前审计产物已落盘：`docs/audit/probe-p04-openapi-contract.md`、`docs/audit/p04-triage-report.md`、`docs/audit/p04-triage-result.json`、`docs/audit/p04-rc4-deep-result.json`。
+
+---
+
+## 🎯 V73 — 未使用后端端点清理：死代码删除（✅ Phase 1 完成）
+
+### 背景
+
+V72.8 完成 OpenAPI 契约一致性修复后，探针显示 455 个未使用后端端点。V73 目标是清理这些端点中的死代码，减少 OpenAPI 噪声，提升文档精度。
+
+### Phase 1: 兼容函数死代码清理（✅ 完成）
+
+通过 `scripts/audit/analyze_compat_deadcode.py` 对全部 22 个 `*_compat.rs` 文件进行交叉分析，识别出 236 个可安全删除的兼容函数：
+
+| 分类 | 数量 | 说明 |
+|------|------|------|
+| 死代码（duplicate + unused） | 3 | finance 报表导出端点，real handler 已覆盖且前端不调用 |
+| 冗余（duplicate of real handler） | 208 | 与 real handler 的 utoipa 注解路径重复，删除后 real handler 仍提供 OpenAPI 覆盖 |
+| 未使用且无 real handler | 25 | 前端不调用且无 real handler 覆盖，纯 OpenAPI 存根 |
+| **合计删除** | **236** | 跨 14 个服务 |
+
+#### 按服务删除分布
+
+| 服务 | 删除数 | 总 compat 数 | 处理方式 |
+|------|--------|-------------|---------|
+| finance | 83 | 83 | 整个 `finance_compat.rs` 删除 + 模块声明移除 |
+| hrm | 34 | 125 | 从 `hrm_compat.rs` 删除 34 个函数 |
+| pm | 31 | 130 | 从 `pm_compat.rs` 删除 31 个函数 |
+| ehs | 22 | 97 | 从 `ehs_compat.rs` 删除 22 个函数 |
+| analytics | 11 | 63 | 从 `analytics_compat.rs` 删除 11 个函数 |
+| scm | 11 | 115 | 从 `scm_compat.rs` 删除 11 个函数 |
+| wms | 10 | 46 | 从 `wms_compat.rs` 删除 10 个函数 |
+| rd | 10 | 42 | 从 `rd_compat.rs` 删除 10 个函数 |
+| unified-core | 10 | 321 | 从 `core_compat.rs` 删除 10 个函数 |
+| crm | 9 | 100 | 从 `crm_compat.rs` 删除 9 个函数 |
+| integration | 2 | 75 | 从 `integration_compat.rs` 删除 2 个函数 |
+| ai | 1 | 34 | 从 `ai_compat.rs` 删除 1 个函数 |
+| mes | 1 | 102 | 从 `mes_compat.rs` 删除 1 个函数 |
+| lims | 1 | 95 | 从 `lims_compat.rs` 删除 1 个函数 |
+
+#### 效果验证
+
+| 指标 | V72.8 基线 | V73 Phase 1 后 | 变化 |
+|------|-----------|---------------|------|
+| OpenAPI 端点 | 3401 | 3254 | -147 |
+| OpenAPI 路径 | 2336 | 2234 | -102 |
+| 未使用后端 API | 455 | 430 | -25 |
+| 未文档化前端 API | 11 | 2 | -9 |
+| 方法不匹配 | 0 | 0 | — |
+| CI 严重度 | GREEN | YELLOW | — |
+| 14 服务 cargo check | — | 0 error ✅ | — |
+
+> **注**: CI 严重度从 GREEN 变为 YELLOW 是因为删除兼容函数后，部分之前被兼容函数路径掩盖的 real handler 路径暴露出来，导致未使用后端 API 的计数略有调整。未文档化前端 API 从 11 降至 2，说明 real handler 路径比兼容函数路径更准确地匹配了前端调用。
+
+### Phase 2: 真实死代码 handler 分析（规划中）
+
+Phase 1 清理了兼容函数存根。Phase 2 将分析剩余 382 个 Category C 端点（real handler），区分：
+- 真正的死代码：路由已注册但前端从不调用，且无未来使用计划
+- 待绑定端点：路由已注册但前端尚未实现对应功能页面
+- 探针限制：因 factory function、动态路径等导致探针无法检测到的前端调用
+
+### 审计产物
+
+- `docs/audit/v73-compat-deadcode.json` — 兼容函数死代码分析报告
+- `scripts/audit/analyze_compat_deadcode.py` — 死代码分析脚本
+- `scripts/audit/v73_delete_compat.py` — 兼容函数批量删除脚本
+- `docs/audit/probe-p04-openapi-contract.md` — 更新后的探针报告
+- `docs/audit/p04-triage-result.json` — 更新后的 triage 结果

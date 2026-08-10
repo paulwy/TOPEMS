@@ -6,21 +6,21 @@
 
 | 指标 | 数值 |
 |------|------|
-| OpenAPI 端点总数 (method+path) | 3401 |
+| OpenAPI 端点总数 (method+path) | 3254 |
 | 前端 API 调用总数 (去重前) | 2875 |
 | 前端唯一路径数 | 1881 |
-| 已匹配端点数 | 2946 |
-| 未使用后端 API (OpenAPI 有/前端无) | 414 |
+| 已匹配端点数 | 2824 |
+| 未使用后端 API (OpenAPI 有/前端无) | 389 |
 | 未使用后端 API — 已豁免 | 41 |
-| 未文档化前端 API (前端有/OpenAPI 无) | 0 |
+| 未文档化前端 API (前端有/OpenAPI 无) | 2 |
 | 未文档化前端 API — 已豁免 | 11 |
 | 方法不匹配数 | 0 |
-| **总不匹配数** | **0** |
-| CI 严重度 | GREEN |
+| **总不匹配数** | **2** |
+| CI 严重度 | YELLOW |
 
 ## 1. 未使用后端 API（OpenAPI 有定义，前端未调用）
 
-共 414 个端点：
+共 389 个端点：
 
 | # | operationId | 方法 | 路径 | Tag | 备注 |
 |---|-------------|------|------|-----|------|
@@ -170,278 +170,258 @@
 | 144 | list_sync_jobs | GET | `/api/erp/master-data/sync/jobs` | erp | path exists in frontend but method not called |
 | 145 | list_sync_jobs_v2 | GET | `/api/erp/master-data/sync/v2/jobs` | erp | path exists in frontend but method not called |
 | 146 | get_account_by_code | GET | `/api/finance/accounts/code/{param}` | finance |  |
-| 147 | compat_get_api_finance_reports_balance_sheet_export | GET | `/api/finance/reports/balance-sheet/export` | finance |  |
-| 148 | compat_get_api_finance_reports_cash_flow_export | GET | `/api/finance/reports/cash-flow/export` | finance |  |
-| 149 | compat_get_api_finance_reports_consolidated_consolidation_id_export | GET | `/api/finance/reports/consolidated/{param}/export` | finance |  |
-| 150 | compat_get_api_finance_reports_export | GET | `/api/finance/reports/export` | finance |  |
-| 151 | compat_get_api_finance_reports_income_statement_export | GET | `/api/finance/reports/income-statement/export` | finance |  |
-| 152 | compat_get_api_finance_vouchers_export | GET | `/api/finance/vouchers/export` | finance |  |
-| 153 | get_balance_sheet | GET | `/api/finance/balance-sheet/{param}` | finance |  |
-| 154 | list_budgets | GET | `/api/finance/budgets` | finance |  |
-| 155 | create_budget | POST | `/api/finance/budgets` | finance |  |
-| 156 | get_budget | GET | `/api/finance/budgets/{param}` | finance |  |
-| 157 | update_budget | PUT | `/api/finance/budgets/{param}` | finance |  |
-| 158 | delete_budget | DELETE | `/api/finance/budgets/{param}` | finance |  |
-| 159 | get_cash_flow | GET | `/api/finance/cash-flow/{param}` | finance |  |
-| 160 | list_expenses | GET | `/api/finance/expenses` | finance |  |
-| 161 | create_expense | POST | `/api/finance/expenses` | finance |  |
-| 162 | get_expense | GET | `/api/finance/expenses/{param}` | finance |  |
-| 163 | update_expense | PUT | `/api/finance/expenses/{param}` | finance |  |
-| 164 | delete_expense | DELETE | `/api/finance/expenses/{param}` | finance |  |
-| 165 | get_income_statement | GET | `/api/finance/income-statement/{param}` | finance |  |
-| 166 | get_ledger | GET | `/api/finance/ledger` | finance |  |
-| 167 | batch_create_payables_handler | POST | `/api/finance/payables/batch` | finance |  |
-| 168 | batch_create_receivables_handler | POST | `/api/finance/receivables/batch` | finance |  |
-| 169 | export_balance_sheet_report | GET | `/api/finance/reports/balance-sheet/export` | finance |  |
-| 170 | export_cash_flow_report | GET | `/api/finance/reports/cash-flow/export` | finance |  |
-| 171 | export_income_statement_report | GET | `/api/finance/reports/income-statement/export` | finance |  |
-| 172 | get_trial_balance | GET | `/api/finance/trial-balance/{param}` | finance |  |
-| 173 | get_generation_rule_handler | GET | `/api/finance/voucher-generation-rules/{param}` | finance | path exists in frontend but method not called |
-| 174 | list_entries | GET | `/api/finance/voucher-templates/{param}/entries` | finance | path exists in frontend but method not called |
-| 175 | get_entry | GET | `/api/finance/voucher-templates/{param}/entries/{param}` | finance | path exists in frontend but method not called |
-| 176 | export_template | GET | `/api/finance/voucher-templates/{param}/export` | finance |  |
-| 177 | export_vouchers | POST | `/api/finance/vouchers/export` | finance |  |
-| 178 | unpost_voucher | POST | `/api/finance/vouchers/{param}/unpost` | finance |  |
-| 179 | list_pending_approvals | GET | `/api/core/flow/approvals/pending` | flow |  |
-| 180 | approve_task | POST | `/api/core/flow/approvals/{param}/approve` | flow |  |
-| 181 | reject_task | POST | `/api/core/flow/approvals/{param}/reject` | flow |  |
-| 182 | approve_instance | POST | `/api/core/flow/instances/{param}/approve` | flow |  |
-| 183 | reject_instance | POST | `/api/core/flow/instances/{param}/reject` | flow |  |
-| 184 | start_instance | POST | `/api/core/flow/instances/{param}/start` | flow |  |
-| 185 | list_workflows | GET | `/api/core/flow/workflows` | flow |  |
-| 186 | create_workflow | POST | `/api/core/flow/workflows` | flow |  |
-| 187 | get_workflow | GET | `/api/core/flow/workflows/{param}` | flow |  |
-| 188 | update_workflow | PUT | `/api/core/flow/workflows/{param}` | flow |  |
-| 189 | delete_workflow | DELETE | `/api/core/flow/workflows/{param}` | flow |  |
-| 190 | publish_workflow | POST | `/api/core/flow/workflows/{param}/publish` | flow |  |
-| 191 | unpublish_workflow | POST | `/api/core/flow/workflows/{param}/unpublish` | flow |  |
-| 192 | list_devices | GET | `/api/gis/devices` | gis |  |
-| 193 | get_device | GET | `/api/gis/devices/{param}` | gis |  |
-| 194 | list_locations | GET | `/api/gis/locations` | gis |  |
-| 195 | create_location | POST | `/api/gis/locations/create` | gis |  |
-| 196 | get_location | GET | `/api/gis/locations/{param}` | gis |  |
-| 197 | list_maps | GET | `/api/gis/maps` | gis |  |
-| 198 | create_map | POST | `/api/gis/maps/create` | gis |  |
-| 199 | get_map | GET | `/api/gis/maps/{param}` | gis |  |
-| 200 | update_map | PUT | `/api/gis/maps/{param}` | gis |  |
-| 201 | delete_map | DELETE | `/api/gis/maps/{param}` | gis |  |
-| 202 | compat_get_api_hrm_performance_goals | GET | `/api/hrm/performance-goals` | hrm |  |
-| 203 | compat_post_api_hrm_performance_goals | POST | `/api/hrm/performance-goals` | hrm |  |
-| 204 | compat_get_api_hrm_performance_goals_id | GET | `/api/hrm/performance-goals/{param}` | hrm |  |
-| 205 | compat_put_api_hrm_performance_goals_id | PUT | `/api/hrm/performance-goals/{param}` | hrm |  |
-| 206 | compat_delete_api_hrm_performance_goals_id | DELETE | `/api/hrm/performance-goals/{param}` | hrm |  |
-| 207 | compat_post_api_hrm_performance_reviews | POST | `/api/hrm/performance-reviews` | hrm | path exists in frontend but method not called |
-| 208 | compat_get_api_hrm_performance_reviews_id | GET | `/api/hrm/performance-reviews/{param}` | hrm |  |
-| 209 | compat_put_api_hrm_performance_reviews_id | PUT | `/api/hrm/performance-reviews/{param}` | hrm |  |
-| 210 | compat_delete_api_hrm_performance_reviews_id | DELETE | `/api/hrm/performance-reviews/{param}` | hrm |  |
-| 211 | compat_get_api_hrm_positions | GET | `/api/hrm/positions` | hrm |  |
-| 212 | compat_post_api_hrm_positions | POST | `/api/hrm/positions` | hrm |  |
-| 213 | compat_get_api_hrm_positions_id | GET | `/api/hrm/positions/{param}` | hrm |  |
-| 214 | compat_put_api_hrm_positions_id | PUT | `/api/hrm/positions/{param}` | hrm |  |
-| 215 | compat_delete_api_hrm_positions_id | DELETE | `/api/hrm/positions/{param}` | hrm |  |
-| 216 | compat_get_api_hrm_roles | GET | `/api/hrm/roles` | hrm |  |
-| 217 | compat_post_api_hrm_roles | POST | `/api/hrm/roles` | hrm |  |
-| 218 | compat_get_api_hrm_roles_id | GET | `/api/hrm/roles/{param}` | hrm |  |
-| 219 | compat_put_api_hrm_roles_id | PUT | `/api/hrm/roles/{param}` | hrm |  |
-| 220 | compat_delete_api_hrm_roles_id | DELETE | `/api/hrm/roles/{param}` | hrm |  |
-| 221 | compat_get_api_integration_external_erp_export_mappings | GET | `/api/integration/external-erp/export/mappings` | integration |  |
-| 222 | compat_get_api_integration_external_erp_export_sync_logs | GET | `/api/integration/external-erp/export/sync-logs` | integration |  |
-| 223 | list_mes_erp_sync_records | GET | `/api/integration/mes-erp/records` | integration |  |
-| 224 | sync_erp_order_to_mes | POST | `/api/integration/mes-erp/sync/erp-to-mes` | integration |  |
-| 225 | sync_mes_progress_to_erp | POST | `/api/integration/mes-erp/sync/mes-to-erp` | integration |  |
-| 226 | get_mes_erp_sync_logs | GET | `/api/integration/mes-erp/{param}/logs` | integration |  |
-| 227 | retry_mes_erp_sync | POST | `/api/integration/mes-erp/{param}/retry` | integration |  |
-| 228 | list_mes_qms_sync_api | GET | `/api/integration/mes-qms` | integration |  |
-| 229 | defect_handling_api | POST | `/api/integration/mes-qms/defect-handling` | integration |  |
-| 230 | get_mes_qms_stats_api | GET | `/api/integration/mes-qms/stats` | integration |  |
-| 231 | sync_quality_result_api | POST | `/api/integration/mes-qms/sync-result` | integration |  |
-| 232 | sync_trace_chain_api | POST | `/api/integration/mes-qms/sync-trace` | integration |  |
-| 233 | trigger_qms_inspection_api | POST | `/api/integration/mes-qms/trigger-inspection` | integration |  |
-| 234 | get_mes_qms_sync_api | GET | `/api/integration/mes-qms/{param}` | integration |  |
-| 235 | retry_mes_qms_sync_api | POST | `/api/integration/mes-qms/{param}/retry` | integration |  |
-| 236 | get_pending | GET | `/api/integration/sync/pending` | integration |  |
-| 237 | retry_failed | POST | `/api/integration/sync/retry-failed` | integration |  |
-| 238 | integration_get_statistics | GET | `/api/integration/sync/statistics` | integration |  |
-| 239 | create_task | POST | `/api/integration/sync/tasks` | integration |  |
-| 240 | integration_get_task | GET | `/api/integration/sync/tasks/{param}` | integration |  |
-| 241 | update_status | POST | `/api/integration/sync/tasks/{param}/status` | integration |  |
-| 242 | trigger_scm_wms | POST | `/api/integration/sync/trigger/scm-to-wms` | integration |  |
-| 243 | trigger_srm_scm | POST | `/api/integration/sync/trigger/srm-to-scm` | integration |  |
-| 244 | trigger_wms_crm | POST | `/api/integration/sync/trigger/wms-to-crm` | integration |  |
-| 245 | compat_post_api_lims_endpoint_id | POST | `/api/lims/{param}/{param}` | lims | path exists in frontend but method not called |
-| 246 | list_instruments | GET | `/api/lims/instruments` | lims |  |
-| 247 | create_instrument | POST | `/api/lims/instruments` | lims |  |
-| 248 | list_reagents | GET | `/api/lims/reagents` | lims |  |
-| 249 | create_reagent | POST | `/api/lims/reagents` | lims |  |
-| 250 | list_samples | GET | `/api/lims/samples` | lims |  |
-| 251 | register_sample | POST | `/api/lims/samples` | lims |  |
-| 252 | get_sample | GET | `/api/lims/samples/{param}` | lims |  |
-| 253 | lims_list_tasks | GET | `/api/lims/tasks` | lims |  |
-| 254 | lims_create_task | POST | `/api/lims/tasks` | lims |  |
-| 255 | lims_get_task | GET | `/api/lims/tasks/{param}` | lims |  |
-| 256 | get_designer_schema | GET | `/api/lowcode/designer/schema` | lowcode |  |
-| 257 | generate_suggestions | POST | `/api/master/quality-v51/ai/suggest` | master-data |  |
-| 258 | apply_auto_fix | POST | `/api/master/quality-v51/auto-fix/run` | master-data |  |
-| 259 | list_quality_checks | GET | `/api/master/quality-v51/checks` | master-data |  |
-| 260 | run_quality_check | POST | `/api/master/quality-v51/checks` | master-data |  |
-| 261 | get_quality_dashboard | GET | `/api/master/quality-v51/dashboard` | master-data |  |
-| 262 | list_quality_rules | GET | `/api/master/quality-v51/rules` | master-data |  |
-| 263 | create_quality_rule | POST | `/api/master/quality-v51/rules` | master-data |  |
-| 264 | get_quality_score | GET | `/api/master/quality-v51/score` | master-data |  |
-| 265 | list_wip_transfers | GET | `/api/mes/wips/{param}/transfers` | mes |  |
-| 266 | get_today_production_output | GET | `/api/mes/work-reports/today/output` | mes |  |
-| 267 | get_all_tasks | GET | `/api/mobile/mobile-tasks` | mobile |  |
-| 268 | mobile_create_task | POST | `/api/mobile/mobile-tasks` | mobile |  |
-| 269 | mobile_get_task | GET | `/api/mobile/mobile-tasks/{param}` | mobile |  |
-| 270 | update_task | PUT | `/api/mobile/mobile-tasks/{param}` | mobile |  |
-| 271 | delete_task | DELETE | `/api/mobile/mobile-tasks/{param}` | mobile |  |
-| 272 | get_all_patrol_records | GET | `/api/mobile/patrol-records` | mobile |  |
-| 273 | create_patrol_record | POST | `/api/mobile/patrol-records` | mobile |  |
-| 274 | get_patrol_record | GET | `/api/mobile/patrol-records/{param}` | mobile |  |
-| 275 | scan_barcode | POST | `/api/mobile/scan/barcode` | mobile |  |
-| 276 | get_dashboard_stats | GET | `/api/mobile/stats/dashboard` | mobile |  |
-| 277 | list_alerts | GET | `/api/monitor/alerts` | monitor |  |
-| 278 | acknowledge_alerts | POST | `/api/monitor/alerts/acknowledge` | monitor |  |
-| 279 | resolve_alerts | POST | `/api/monitor/alerts/resolve` | monitor |  |
-| 280 | get_alert_statistics | GET | `/api/monitor/alerts/statistics` | monitor |  |
-| 281 | get_alert | GET | `/api/monitor/alerts/{param}` | monitor |  |
-| 282 | update_alert | POST | `/api/monitor/alerts/{param}` | monitor |  |
-| 283 | get_alert_history | GET | `/api/monitor/alerts/{param}/history` | monitor |  |
-| 284 | get_alert_timeline | GET | `/api/monitor/alerts/{param}/timeline` | monitor |  |
-| 285 | list_business_metrics | GET | `/api/monitor/business-metrics` | monitor |  |
-| 286 | create_business_metric | POST | `/api/monitor/business-metrics` | monitor |  |
-| 287 | get_kpi_dashboard | GET | `/api/monitor/business-metrics/kpi` | monitor |  |
-| 288 | get_business_metric_summary | GET | `/api/monitor/business-metrics/summary` | monitor |  |
-| 289 | get_business_metric_trend | GET | `/api/monitor/business-metrics/trend` | monitor |  |
-| 290 | get_business_metric | GET | `/api/monitor/business-metrics/{param}` | monitor |  |
-| 291 | update_business_metric | PUT | `/api/monitor/business-metrics/{param}` | monitor |  |
-| 292 | delete_business_metric | DELETE | `/api/monitor/business-metrics/{param}` | monitor |  |
-| 293 | get_api_performance | GET | `/api/monitor/performance/api` | monitor |  |
-| 294 | export_performance_data | POST | `/api/monitor/performance/export` | monitor |  |
-| 295 | get_service_performance | GET | `/api/monitor/performance/services` | monitor |  |
-| 296 | get_slow_queries | GET | `/api/monitor/performance/slow-queries` | monitor |  |
-| 297 | get_performance_summary | GET | `/api/monitor/performance/summary` | monitor |  |
-| 298 | get_performance_trend | GET | `/api/monitor/performance/trend` | monitor |  |
-| 299 | list_rules | GET | `/api/monitor/rules` | monitor |  |
-| 300 | create_rule | POST | `/api/monitor/rules` | monitor |  |
-| 301 | get_rule | GET | `/api/monitor/rules/{param}` | monitor |  |
-| 302 | update_rule | PUT | `/api/monitor/rules/{param}` | monitor |  |
-| 303 | delete_rule | DELETE | `/api/monitor/rules/{param}` | monitor |  |
-| 304 | get_advanced_rule | GET | `/api/monitor/rules/{param}/advanced` | monitor |  |
-| 305 | update_advanced_rule | PUT | `/api/monitor/rules/{param}/advanced` | monitor |  |
-| 306 | disable_rule | POST | `/api/monitor/rules/{param}/disable` | monitor |  |
-| 307 | enable_rule | POST | `/api/monitor/rules/{param}/enable` | monitor |  |
-| 308 | get_escalation | GET | `/api/monitor/rules/{param}/escalation` | monitor |  |
-| 309 | update_escalation | PUT | `/api/monitor/rules/{param}/escalation` | monitor |  |
-| 310 | get_routing | GET | `/api/monitor/rules/{param}/routing` | monitor |  |
-| 311 | update_routing | PUT | `/api/monitor/rules/{param}/routing` | monitor |  |
-| 312 | get_scheduled_trigger | GET | `/api/monitor/rules/{param}/scheduled-trigger` | monitor |  |
-| 313 | update_scheduled_trigger | PUT | `/api/monitor/rules/{param}/scheduled-trigger` | monitor |  |
-| 314 | list_slos | GET | `/api/monitor/slos` | monitor |  |
-| 315 | create_slo | POST | `/api/monitor/slos` | monitor |  |
-| 316 | get_slo_budget | GET | `/api/monitor/slos/budget` | monitor |  |
-| 317 | get_slo_summary | GET | `/api/monitor/slos/summary` | monitor |  |
-| 318 | get_slo_trend | GET | `/api/monitor/slos/trend` | monitor |  |
-| 319 | list_slo_violations | GET | `/api/monitor/slos/violations` | monitor |  |
-| 320 | resolve_slo_violation | POST | `/api/monitor/slos/violations/{param}/resolve` | monitor |  |
-| 321 | get_slo | GET | `/api/monitor/slos/{param}` | monitor |  |
-| 322 | update_slo | PUT | `/api/monitor/slos/{param}` | monitor |  |
-| 323 | delete_slo | DELETE | `/api/monitor/slos/{param}` | monitor |  |
-| 324 | list_suppression_rules | GET | `/api/monitor/suppression` | monitor |  |
-| 325 | create_suppression_rule | POST | `/api/monitor/suppression` | monitor |  |
-| 326 | get_suppression_rule | GET | `/api/monitor/suppression/{param}` | monitor |  |
-| 327 | update_suppression_rule | PUT | `/api/monitor/suppression/{param}` | monitor |  |
-| 328 | delete_suppression_rule | DELETE | `/api/monitor/suppression/{param}` | monitor |  |
-| 329 | monitor_list_templates | GET | `/api/monitor/templates` | monitor |  |
-| 330 | monitor_create_template | POST | `/api/monitor/templates` | monitor |  |
-| 331 | monitor_get_template | GET | `/api/monitor/templates/{param}` | monitor |  |
-| 332 | monitor_update_template | PUT | `/api/monitor/templates/{param}` | monitor |  |
-| 333 | monitor_delete_template | DELETE | `/api/monitor/templates/{param}` | monitor |  |
-| 334 | list_thresholds | GET | `/api/monitor/thresholds` | monitor |  |
-| 335 | create_threshold | POST | `/api/monitor/thresholds` | monitor |  |
-| 336 | evaluate_thresholds | POST | `/api/monitor/thresholds/evaluate` | monitor |  |
-| 337 | get_threshold | GET | `/api/monitor/thresholds/{param}` | monitor |  |
-| 338 | update_threshold | PUT | `/api/monitor/thresholds/{param}` | monitor |  |
-| 339 | delete_threshold | DELETE | `/api/monitor/thresholds/{param}` | monitor |  |
-| 340 | pdm__home | GET | `/api/pdm` | pdm |  |
-| 341 | approve_change_notice | POST | `/api/pdm/change-notices/{param}/approve` | pdm |  |
-| 342 | reject_change_notice | POST | `/api/pdm/change-notices/{param}/reject` | pdm |  |
-| 343 | submit_change_notice | POST | `/api/pdm/change-notices/{param}/submit` | pdm |  |
-| 344 | list_pending_documents | GET | `/api/pdm/documents/pending-approval` | pdm |  |
-| 345 | get_document_approval_history | GET | `/api/pdm/documents/{param}/approval-history` | pdm |  |
-| 346 | start_document_approval | POST | `/api/pdm/documents/{param}/approve` | pdm |  |
-| 347 | pdm_get_statistics | GET | `/api/pdm/statistics/{param}` | pdm |  |
-| 348 | pdm_list_versions_api_pdm_versions | GET | `/api/pdm/versions` | pdm |  |
-| 349 | pdm_create_version_api_pdm_versions | POST | `/api/pdm/versions` | pdm |  |
-| 350 | pdm_get_version_api_pdm_versions_{id} | GET | `/api/pdm/versions/{param}` | pdm |  |
-| 351 | pdm_update_version_api_pdm_versions_{id} | PUT | `/api/pdm/versions/{param}` | pdm |  |
-| 352 | pdm_delete_version_api_pdm_versions_{id} | DELETE | `/api/pdm/versions/{param}` | pdm |  |
-| 353 | list_workflow_instances | GET | `/api/pdm/workflow-instances` | pdm |  |
-| 354 | get_workflow_instance | GET | `/api/pdm/workflow-instances/{param}` | pdm |  |
-| 355 | advance_workflow | POST | `/api/pdm/workflow-instances/{param}/advance` | pdm |  |
-| 356 | pdm_list_workflows | GET | `/api/pdm/workflows` | pdm |  |
-| 357 | pdm_create_workflow | POST | `/api/pdm/workflows` | pdm |  |
-| 358 | start_workflow | POST | `/api/pdm/workflows/start` | pdm |  |
-| 359 | pdm_get_workflow | GET | `/api/pdm/workflows/{param}` | pdm |  |
-| 360 | pdm_update_workflow | PUT | `/api/pdm/workflows/{param}` | pdm |  |
-| 361 | pdm_delete_workflow | DELETE | `/api/pdm/workflows/{param}` | pdm |  |
-| 362 | get_announcements | GET | `/api/portal/announcements` | portal |  |
-| 363 | portal_create_announcement | POST | `/api/portal/announcements` | portal |  |
-| 364 | portal_get_dashboard_stats | GET | `/api/portal/dashboard/stats` | portal |  |
-| 365 | get_navigation_menu | GET | `/api/portal/navigation/menu` | portal |  |
-| 366 | portal_get_notifications | GET | `/api/portal/notifications` | portal |  |
-| 367 | list_services | GET | `/api/portal/services` | portal |  |
-| 368 | get_todos | GET | `/api/portal/todos` | portal |  |
-| 369 | add_todo | POST | `/api/portal/todos` | portal |  |
-| 370 | get_user_info | GET | `/api/portal/user` | portal |  |
-| 371 | qms_list_inspections | GET | `/api/qms/checks` | qms | path exists in frontend but method not called |
-| 372 | list_issues | GET | `/api/qms/issues` | qms | path exists in frontend but method not called |
-| 373 | list_standards | GET | `/api/qms/standards` | qms | path exists in frontend but method not called |
-| 374 | rd_list_audit_logs | GET | `/api/rd/audit-logs` | rd |  |
-| 375 | rd_list_projects | GET | `/api/rd/projects` | rd | path exists in frontend but method not called |
-| 376 | reject_order | POST | `/api/scm/purchase-orders/{param}/reject` | scm |  |
-| 377 | search_handler | GET | `/api/search` | search |  |
-| 378 | list_sla_policies_handler | GET | `/api/ticket/sla-policies` | ticket |  |
-| 379 | create_sla_policy_handler | POST | `/api/ticket/sla-policies` | ticket |  |
-| 380 | list_tickets_handler | GET | `/api/ticket/tickets` | ticket |  |
-| 381 | create_ticket_handler | POST | `/api/ticket/tickets` | ticket |  |
-| 382 | get_stats_handler | GET | `/api/ticket/tickets/stats` | ticket |  |
-| 383 | get_ticket_handler | GET | `/api/ticket/tickets/{param}` | ticket |  |
-| 384 | update_ticket_handler | PUT | `/api/ticket/tickets/{param}` | ticket |  |
-| 385 | delete_ticket_handler | DELETE | `/api/ticket/tickets/{param}` | ticket |  |
-| 386 | list_comments_handler | GET | `/api/ticket/tickets/{param}/comments` | ticket |  |
-| 387 | add_comment_handler | POST | `/api/ticket/tickets/{param}/comments` | ticket |  |
-| 388 | unified-core_create_document | POST | `/api/core/doc/documents` | unified-core | path exists in frontend but method not called |
-| 389 | unified-core_update_document | PUT | `/api/core/doc/documents/{param}` | unified-core | path exists in frontend but method not called |
-| 390 | download_file | GET | `/api/core/file/download/{param}` | unified-core |  |
-| 391 | list_files | GET | `/api/core/file/files` | unified-core |  |
-| 392 | get_received_files | GET | `/api/core/file/files/received` | unified-core |  |
-| 393 | search_files | GET | `/api/core/file/files/search` | unified-core |  |
-| 394 | list_starred_files | GET | `/api/core/file/files/starred` | unified-core |  |
-| 395 | update_file | PUT | `/api/core/file/files/{param}` | unified-core | path exists in frontend but method not called |
-| 396 | copy_file | POST | `/api/core/file/files/{param}/copy` | unified-core |  |
-| 397 | move_file | POST | `/api/core/file/files/{param}/move` | unified-core |  |
-| 398 | set_file_permission | POST | `/api/core/file/files/{param}/permission` | unified-core |  |
-| 399 | set_file_permissions | POST | `/api/core/file/files/{param}/permissions` | unified-core | path exists in frontend but method not called |
-| 400 | get_file_shares | GET | `/api/core/file/files/{param}/shares` | unified-core |  |
-| 401 | star_file | POST | `/api/core/file/files/{param}/star` | unified-core |  |
-| 402 | unstar_file | POST | `/api/core/file/files/{param}/unstar` | unified-core |  |
-| 403 | preview_file | GET | `/api/core/file/preview/{param}` | unified-core |  |
-| 404 | delete_share | DELETE | `/api/core/file/shares/{param}` | unified-core |  |
-| 405 | get_file_stats | GET | `/api/core/file/stats` | unified-core |  |
-| 406 | get_thumbnail | GET | `/api/core/file/thumbnail/{param}` | unified-core |  |
-| 407 | upload_multiple | POST | `/api/core/file/upload/multiple` | unified-core |  |
-| 408 | login | POST | `/api/unified-core/iam/auth/login` | unified-core |  |
-| 409 | register | POST | `/api/unified-core/iam/auth/register` | unified-core |  |
-| 410 | list_users | GET | `/api/unified-core/users` | unified-core |  |
-| 411 | create_user | POST | `/api/unified-core/users` | unified-core |  |
-| 412 | wms_list_alerts | GET | `/api/wms/inventory-alerts` | wms |  |
-| 413 | wms_get_alert | GET | `/api/wms/inventory-alerts/{param}` | wms |  |
-| 414 | acknowledge_alert | POST | `/api/wms/inventory-alerts/{param}/acknowledge` | wms |  |
+| 147 | get_balance_sheet | GET | `/api/finance/balance-sheet/{param}` | finance |  |
+| 148 | list_budgets | GET | `/api/finance/budgets` | finance |  |
+| 149 | create_budget | POST | `/api/finance/budgets` | finance |  |
+| 150 | get_budget | GET | `/api/finance/budgets/{param}` | finance |  |
+| 151 | update_budget | PUT | `/api/finance/budgets/{param}` | finance |  |
+| 152 | delete_budget | DELETE | `/api/finance/budgets/{param}` | finance |  |
+| 153 | get_cash_flow | GET | `/api/finance/cash-flow/{param}` | finance |  |
+| 154 | list_expenses | GET | `/api/finance/expenses` | finance |  |
+| 155 | create_expense | POST | `/api/finance/expenses` | finance |  |
+| 156 | get_expense | GET | `/api/finance/expenses/{param}` | finance |  |
+| 157 | update_expense | PUT | `/api/finance/expenses/{param}` | finance |  |
+| 158 | delete_expense | DELETE | `/api/finance/expenses/{param}` | finance |  |
+| 159 | get_income_statement | GET | `/api/finance/income-statement/{param}` | finance |  |
+| 160 | get_ledger | GET | `/api/finance/ledger` | finance |  |
+| 161 | batch_create_payables_handler | POST | `/api/finance/payables/batch` | finance |  |
+| 162 | batch_create_receivables_handler | POST | `/api/finance/receivables/batch` | finance |  |
+| 163 | export_balance_sheet_report | GET | `/api/finance/reports/balance-sheet/export` | finance |  |
+| 164 | export_cash_flow_report | GET | `/api/finance/reports/cash-flow/export` | finance |  |
+| 165 | export_income_statement_report | GET | `/api/finance/reports/income-statement/export` | finance |  |
+| 166 | get_trial_balance | GET | `/api/finance/trial-balance/{param}` | finance |  |
+| 167 | get_generation_rule_handler | GET | `/api/finance/voucher-generation-rules/{param}` | finance | path exists in frontend but method not called |
+| 168 | list_entries | GET | `/api/finance/voucher-templates/{param}/entries` | finance | path exists in frontend but method not called |
+| 169 | get_entry | GET | `/api/finance/voucher-templates/{param}/entries/{param}` | finance | path exists in frontend but method not called |
+| 170 | export_template | GET | `/api/finance/voucher-templates/{param}/export` | finance |  |
+| 171 | export_vouchers | POST | `/api/finance/vouchers/export` | finance |  |
+| 172 | unpost_voucher | POST | `/api/finance/vouchers/{param}/unpost` | finance |  |
+| 173 | list_pending_approvals | GET | `/api/core/flow/approvals/pending` | flow |  |
+| 174 | approve_task | POST | `/api/core/flow/approvals/{param}/approve` | flow |  |
+| 175 | reject_task | POST | `/api/core/flow/approvals/{param}/reject` | flow |  |
+| 176 | approve_instance | POST | `/api/core/flow/instances/{param}/approve` | flow |  |
+| 177 | reject_instance | POST | `/api/core/flow/instances/{param}/reject` | flow |  |
+| 178 | start_instance | POST | `/api/core/flow/instances/{param}/start` | flow |  |
+| 179 | list_workflows | GET | `/api/core/flow/workflows` | flow |  |
+| 180 | create_workflow | POST | `/api/core/flow/workflows` | flow |  |
+| 181 | get_workflow | GET | `/api/core/flow/workflows/{param}` | flow |  |
+| 182 | update_workflow | PUT | `/api/core/flow/workflows/{param}` | flow |  |
+| 183 | delete_workflow | DELETE | `/api/core/flow/workflows/{param}` | flow |  |
+| 184 | publish_workflow | POST | `/api/core/flow/workflows/{param}/publish` | flow |  |
+| 185 | unpublish_workflow | POST | `/api/core/flow/workflows/{param}/unpublish` | flow |  |
+| 186 | list_devices | GET | `/api/gis/devices` | gis |  |
+| 187 | get_device | GET | `/api/gis/devices/{param}` | gis |  |
+| 188 | list_locations | GET | `/api/gis/locations` | gis |  |
+| 189 | create_location | POST | `/api/gis/locations/create` | gis |  |
+| 190 | get_location | GET | `/api/gis/locations/{param}` | gis |  |
+| 191 | list_maps | GET | `/api/gis/maps` | gis |  |
+| 192 | create_map | POST | `/api/gis/maps/create` | gis |  |
+| 193 | get_map | GET | `/api/gis/maps/{param}` | gis |  |
+| 194 | update_map | PUT | `/api/gis/maps/{param}` | gis |  |
+| 195 | delete_map | DELETE | `/api/gis/maps/{param}` | gis |  |
+| 196 | compat_get_api_integration_external_erp_export_mappings | GET | `/api/integration/external-erp/export/mappings` | integration |  |
+| 197 | compat_get_api_integration_external_erp_export_sync_logs | GET | `/api/integration/external-erp/export/sync-logs` | integration |  |
+| 198 | list_mes_erp_sync_records | GET | `/api/integration/mes-erp/records` | integration |  |
+| 199 | sync_erp_order_to_mes | POST | `/api/integration/mes-erp/sync/erp-to-mes` | integration |  |
+| 200 | sync_mes_progress_to_erp | POST | `/api/integration/mes-erp/sync/mes-to-erp` | integration |  |
+| 201 | get_mes_erp_sync_logs | GET | `/api/integration/mes-erp/{param}/logs` | integration |  |
+| 202 | retry_mes_erp_sync | POST | `/api/integration/mes-erp/{param}/retry` | integration |  |
+| 203 | list_mes_qms_sync_api | GET | `/api/integration/mes-qms` | integration |  |
+| 204 | defect_handling_api | POST | `/api/integration/mes-qms/defect-handling` | integration |  |
+| 205 | get_mes_qms_stats_api | GET | `/api/integration/mes-qms/stats` | integration |  |
+| 206 | sync_quality_result_api | POST | `/api/integration/mes-qms/sync-result` | integration |  |
+| 207 | sync_trace_chain_api | POST | `/api/integration/mes-qms/sync-trace` | integration |  |
+| 208 | trigger_qms_inspection_api | POST | `/api/integration/mes-qms/trigger-inspection` | integration |  |
+| 209 | get_mes_qms_sync_api | GET | `/api/integration/mes-qms/{param}` | integration |  |
+| 210 | retry_mes_qms_sync_api | POST | `/api/integration/mes-qms/{param}/retry` | integration |  |
+| 211 | get_pending | GET | `/api/integration/sync/pending` | integration |  |
+| 212 | retry_failed | POST | `/api/integration/sync/retry-failed` | integration |  |
+| 213 | integration_get_statistics | GET | `/api/integration/sync/statistics` | integration |  |
+| 214 | create_task | POST | `/api/integration/sync/tasks` | integration |  |
+| 215 | integration_get_task | GET | `/api/integration/sync/tasks/{param}` | integration |  |
+| 216 | update_status | POST | `/api/integration/sync/tasks/{param}/status` | integration |  |
+| 217 | trigger_scm_wms | POST | `/api/integration/sync/trigger/scm-to-wms` | integration |  |
+| 218 | trigger_srm_scm | POST | `/api/integration/sync/trigger/srm-to-scm` | integration |  |
+| 219 | trigger_wms_crm | POST | `/api/integration/sync/trigger/wms-to-crm` | integration |  |
+| 220 | compat_post_api_lims_endpoint_id | POST | `/api/lims/{param}/{param}` | lims | path exists in frontend but method not called |
+| 221 | list_instruments | GET | `/api/lims/instruments` | lims |  |
+| 222 | create_instrument | POST | `/api/lims/instruments` | lims |  |
+| 223 | list_reagents | GET | `/api/lims/reagents` | lims |  |
+| 224 | create_reagent | POST | `/api/lims/reagents` | lims |  |
+| 225 | list_samples | GET | `/api/lims/samples` | lims |  |
+| 226 | register_sample | POST | `/api/lims/samples` | lims |  |
+| 227 | get_sample | GET | `/api/lims/samples/{param}` | lims |  |
+| 228 | lims_list_tasks | GET | `/api/lims/tasks` | lims |  |
+| 229 | lims_create_task | POST | `/api/lims/tasks` | lims |  |
+| 230 | lims_get_task | GET | `/api/lims/tasks/{param}` | lims |  |
+| 231 | get_designer_schema | GET | `/api/lowcode/designer/schema` | lowcode |  |
+| 232 | generate_suggestions | POST | `/api/master/quality-v51/ai/suggest` | master-data |  |
+| 233 | apply_auto_fix | POST | `/api/master/quality-v51/auto-fix/run` | master-data |  |
+| 234 | list_quality_checks | GET | `/api/master/quality-v51/checks` | master-data |  |
+| 235 | run_quality_check | POST | `/api/master/quality-v51/checks` | master-data |  |
+| 236 | get_quality_dashboard | GET | `/api/master/quality-v51/dashboard` | master-data |  |
+| 237 | list_quality_rules | GET | `/api/master/quality-v51/rules` | master-data |  |
+| 238 | create_quality_rule | POST | `/api/master/quality-v51/rules` | master-data |  |
+| 239 | get_quality_score | GET | `/api/master/quality-v51/score` | master-data |  |
+| 240 | list_wip_transfers | GET | `/api/mes/wips/{param}/transfers` | mes |  |
+| 241 | get_today_production_output | GET | `/api/mes/work-reports/today/output` | mes |  |
+| 242 | get_all_tasks | GET | `/api/mobile/mobile-tasks` | mobile |  |
+| 243 | mobile_create_task | POST | `/api/mobile/mobile-tasks` | mobile |  |
+| 244 | mobile_get_task | GET | `/api/mobile/mobile-tasks/{param}` | mobile |  |
+| 245 | update_task | PUT | `/api/mobile/mobile-tasks/{param}` | mobile |  |
+| 246 | delete_task | DELETE | `/api/mobile/mobile-tasks/{param}` | mobile |  |
+| 247 | get_all_patrol_records | GET | `/api/mobile/patrol-records` | mobile |  |
+| 248 | create_patrol_record | POST | `/api/mobile/patrol-records` | mobile |  |
+| 249 | get_patrol_record | GET | `/api/mobile/patrol-records/{param}` | mobile |  |
+| 250 | scan_barcode | POST | `/api/mobile/scan/barcode` | mobile |  |
+| 251 | get_dashboard_stats | GET | `/api/mobile/stats/dashboard` | mobile |  |
+| 252 | list_alerts | GET | `/api/monitor/alerts` | monitor |  |
+| 253 | acknowledge_alerts | POST | `/api/monitor/alerts/acknowledge` | monitor |  |
+| 254 | resolve_alerts | POST | `/api/monitor/alerts/resolve` | monitor |  |
+| 255 | get_alert_statistics | GET | `/api/monitor/alerts/statistics` | monitor |  |
+| 256 | get_alert | GET | `/api/monitor/alerts/{param}` | monitor |  |
+| 257 | update_alert | POST | `/api/monitor/alerts/{param}` | monitor |  |
+| 258 | get_alert_history | GET | `/api/monitor/alerts/{param}/history` | monitor |  |
+| 259 | get_alert_timeline | GET | `/api/monitor/alerts/{param}/timeline` | monitor |  |
+| 260 | list_business_metrics | GET | `/api/monitor/business-metrics` | monitor |  |
+| 261 | create_business_metric | POST | `/api/monitor/business-metrics` | monitor |  |
+| 262 | get_kpi_dashboard | GET | `/api/monitor/business-metrics/kpi` | monitor |  |
+| 263 | get_business_metric_summary | GET | `/api/monitor/business-metrics/summary` | monitor |  |
+| 264 | get_business_metric_trend | GET | `/api/monitor/business-metrics/trend` | monitor |  |
+| 265 | get_business_metric | GET | `/api/monitor/business-metrics/{param}` | monitor |  |
+| 266 | update_business_metric | PUT | `/api/monitor/business-metrics/{param}` | monitor |  |
+| 267 | delete_business_metric | DELETE | `/api/monitor/business-metrics/{param}` | monitor |  |
+| 268 | get_api_performance | GET | `/api/monitor/performance/api` | monitor |  |
+| 269 | export_performance_data | POST | `/api/monitor/performance/export` | monitor |  |
+| 270 | get_service_performance | GET | `/api/monitor/performance/services` | monitor |  |
+| 271 | get_slow_queries | GET | `/api/monitor/performance/slow-queries` | monitor |  |
+| 272 | get_performance_summary | GET | `/api/monitor/performance/summary` | monitor |  |
+| 273 | get_performance_trend | GET | `/api/monitor/performance/trend` | monitor |  |
+| 274 | list_rules | GET | `/api/monitor/rules` | monitor |  |
+| 275 | create_rule | POST | `/api/monitor/rules` | monitor |  |
+| 276 | get_rule | GET | `/api/monitor/rules/{param}` | monitor |  |
+| 277 | update_rule | PUT | `/api/monitor/rules/{param}` | monitor |  |
+| 278 | delete_rule | DELETE | `/api/monitor/rules/{param}` | monitor |  |
+| 279 | get_advanced_rule | GET | `/api/monitor/rules/{param}/advanced` | monitor |  |
+| 280 | update_advanced_rule | PUT | `/api/monitor/rules/{param}/advanced` | monitor |  |
+| 281 | disable_rule | POST | `/api/monitor/rules/{param}/disable` | monitor |  |
+| 282 | enable_rule | POST | `/api/monitor/rules/{param}/enable` | monitor |  |
+| 283 | get_escalation | GET | `/api/monitor/rules/{param}/escalation` | monitor |  |
+| 284 | update_escalation | PUT | `/api/monitor/rules/{param}/escalation` | monitor |  |
+| 285 | get_routing | GET | `/api/monitor/rules/{param}/routing` | monitor |  |
+| 286 | update_routing | PUT | `/api/monitor/rules/{param}/routing` | monitor |  |
+| 287 | get_scheduled_trigger | GET | `/api/monitor/rules/{param}/scheduled-trigger` | monitor |  |
+| 288 | update_scheduled_trigger | PUT | `/api/monitor/rules/{param}/scheduled-trigger` | monitor |  |
+| 289 | list_slos | GET | `/api/monitor/slos` | monitor |  |
+| 290 | create_slo | POST | `/api/monitor/slos` | monitor |  |
+| 291 | get_slo_budget | GET | `/api/monitor/slos/budget` | monitor |  |
+| 292 | get_slo_summary | GET | `/api/monitor/slos/summary` | monitor |  |
+| 293 | get_slo_trend | GET | `/api/monitor/slos/trend` | monitor |  |
+| 294 | list_slo_violations | GET | `/api/monitor/slos/violations` | monitor |  |
+| 295 | resolve_slo_violation | POST | `/api/monitor/slos/violations/{param}/resolve` | monitor |  |
+| 296 | get_slo | GET | `/api/monitor/slos/{param}` | monitor |  |
+| 297 | update_slo | PUT | `/api/monitor/slos/{param}` | monitor |  |
+| 298 | delete_slo | DELETE | `/api/monitor/slos/{param}` | monitor |  |
+| 299 | list_suppression_rules | GET | `/api/monitor/suppression` | monitor |  |
+| 300 | create_suppression_rule | POST | `/api/monitor/suppression` | monitor |  |
+| 301 | get_suppression_rule | GET | `/api/monitor/suppression/{param}` | monitor |  |
+| 302 | update_suppression_rule | PUT | `/api/monitor/suppression/{param}` | monitor |  |
+| 303 | delete_suppression_rule | DELETE | `/api/monitor/suppression/{param}` | monitor |  |
+| 304 | monitor_list_templates | GET | `/api/monitor/templates` | monitor |  |
+| 305 | monitor_create_template | POST | `/api/monitor/templates` | monitor |  |
+| 306 | monitor_get_template | GET | `/api/monitor/templates/{param}` | monitor |  |
+| 307 | monitor_update_template | PUT | `/api/monitor/templates/{param}` | monitor |  |
+| 308 | monitor_delete_template | DELETE | `/api/monitor/templates/{param}` | monitor |  |
+| 309 | list_thresholds | GET | `/api/monitor/thresholds` | monitor |  |
+| 310 | create_threshold | POST | `/api/monitor/thresholds` | monitor |  |
+| 311 | evaluate_thresholds | POST | `/api/monitor/thresholds/evaluate` | monitor |  |
+| 312 | get_threshold | GET | `/api/monitor/thresholds/{param}` | monitor |  |
+| 313 | update_threshold | PUT | `/api/monitor/thresholds/{param}` | monitor |  |
+| 314 | delete_threshold | DELETE | `/api/monitor/thresholds/{param}` | monitor |  |
+| 315 | pdm__home | GET | `/api/pdm` | pdm |  |
+| 316 | approve_change_notice | POST | `/api/pdm/change-notices/{param}/approve` | pdm |  |
+| 317 | reject_change_notice | POST | `/api/pdm/change-notices/{param}/reject` | pdm |  |
+| 318 | submit_change_notice | POST | `/api/pdm/change-notices/{param}/submit` | pdm |  |
+| 319 | list_pending_documents | GET | `/api/pdm/documents/pending-approval` | pdm |  |
+| 320 | get_document_approval_history | GET | `/api/pdm/documents/{param}/approval-history` | pdm |  |
+| 321 | start_document_approval | POST | `/api/pdm/documents/{param}/approve` | pdm |  |
+| 322 | pdm_get_statistics | GET | `/api/pdm/statistics/{param}` | pdm |  |
+| 323 | pdm_list_versions_api_pdm_versions | GET | `/api/pdm/versions` | pdm |  |
+| 324 | pdm_create_version_api_pdm_versions | POST | `/api/pdm/versions` | pdm |  |
+| 325 | pdm_get_version_api_pdm_versions_{id} | GET | `/api/pdm/versions/{param}` | pdm |  |
+| 326 | pdm_update_version_api_pdm_versions_{id} | PUT | `/api/pdm/versions/{param}` | pdm |  |
+| 327 | pdm_delete_version_api_pdm_versions_{id} | DELETE | `/api/pdm/versions/{param}` | pdm |  |
+| 328 | list_workflow_instances | GET | `/api/pdm/workflow-instances` | pdm |  |
+| 329 | get_workflow_instance | GET | `/api/pdm/workflow-instances/{param}` | pdm |  |
+| 330 | advance_workflow | POST | `/api/pdm/workflow-instances/{param}/advance` | pdm |  |
+| 331 | pdm_list_workflows | GET | `/api/pdm/workflows` | pdm |  |
+| 332 | pdm_create_workflow | POST | `/api/pdm/workflows` | pdm |  |
+| 333 | start_workflow | POST | `/api/pdm/workflows/start` | pdm |  |
+| 334 | pdm_get_workflow | GET | `/api/pdm/workflows/{param}` | pdm |  |
+| 335 | pdm_update_workflow | PUT | `/api/pdm/workflows/{param}` | pdm |  |
+| 336 | pdm_delete_workflow | DELETE | `/api/pdm/workflows/{param}` | pdm |  |
+| 337 | get_announcements | GET | `/api/portal/announcements` | portal |  |
+| 338 | portal_create_announcement | POST | `/api/portal/announcements` | portal |  |
+| 339 | portal_get_dashboard_stats | GET | `/api/portal/dashboard/stats` | portal |  |
+| 340 | get_navigation_menu | GET | `/api/portal/navigation/menu` | portal |  |
+| 341 | portal_get_notifications | GET | `/api/portal/notifications` | portal |  |
+| 342 | list_services | GET | `/api/portal/services` | portal |  |
+| 343 | get_todos | GET | `/api/portal/todos` | portal |  |
+| 344 | add_todo | POST | `/api/portal/todos` | portal |  |
+| 345 | get_user_info | GET | `/api/portal/user` | portal |  |
+| 346 | qms_list_inspections | GET | `/api/qms/checks` | qms | path exists in frontend but method not called |
+| 347 | list_issues | GET | `/api/qms/issues` | qms | path exists in frontend but method not called |
+| 348 | list_standards | GET | `/api/qms/standards` | qms | path exists in frontend but method not called |
+| 349 | rd_list_audit_logs | GET | `/api/rd/audit-logs` | rd |  |
+| 350 | rd_list_projects | GET | `/api/rd/projects` | rd | path exists in frontend but method not called |
+| 351 | reject_order | POST | `/api/scm/purchase-orders/{param}/reject` | scm |  |
+| 352 | search_handler | GET | `/api/search` | search |  |
+| 353 | list_sla_policies_handler | GET | `/api/ticket/sla-policies` | ticket |  |
+| 354 | create_sla_policy_handler | POST | `/api/ticket/sla-policies` | ticket |  |
+| 355 | list_tickets_handler | GET | `/api/ticket/tickets` | ticket |  |
+| 356 | create_ticket_handler | POST | `/api/ticket/tickets` | ticket |  |
+| 357 | get_stats_handler | GET | `/api/ticket/tickets/stats` | ticket |  |
+| 358 | get_ticket_handler | GET | `/api/ticket/tickets/{param}` | ticket |  |
+| 359 | update_ticket_handler | PUT | `/api/ticket/tickets/{param}` | ticket |  |
+| 360 | delete_ticket_handler | DELETE | `/api/ticket/tickets/{param}` | ticket |  |
+| 361 | list_comments_handler | GET | `/api/ticket/tickets/{param}/comments` | ticket |  |
+| 362 | add_comment_handler | POST | `/api/ticket/tickets/{param}/comments` | ticket |  |
+| 363 | unified-core_create_document | POST | `/api/core/doc/documents` | unified-core | path exists in frontend but method not called |
+| 364 | unified-core_update_document | PUT | `/api/core/doc/documents/{param}` | unified-core | path exists in frontend but method not called |
+| 365 | download_file | GET | `/api/core/file/download/{param}` | unified-core |  |
+| 366 | list_files | GET | `/api/core/file/files` | unified-core |  |
+| 367 | get_received_files | GET | `/api/core/file/files/received` | unified-core |  |
+| 368 | search_files | GET | `/api/core/file/files/search` | unified-core |  |
+| 369 | list_starred_files | GET | `/api/core/file/files/starred` | unified-core |  |
+| 370 | update_file | PUT | `/api/core/file/files/{param}` | unified-core | path exists in frontend but method not called |
+| 371 | copy_file | POST | `/api/core/file/files/{param}/copy` | unified-core |  |
+| 372 | move_file | POST | `/api/core/file/files/{param}/move` | unified-core |  |
+| 373 | set_file_permission | POST | `/api/core/file/files/{param}/permission` | unified-core |  |
+| 374 | set_file_permissions | POST | `/api/core/file/files/{param}/permissions` | unified-core | path exists in frontend but method not called |
+| 375 | get_file_shares | GET | `/api/core/file/files/{param}/shares` | unified-core |  |
+| 376 | star_file | POST | `/api/core/file/files/{param}/star` | unified-core |  |
+| 377 | unstar_file | POST | `/api/core/file/files/{param}/unstar` | unified-core |  |
+| 378 | preview_file | GET | `/api/core/file/preview/{param}` | unified-core |  |
+| 379 | delete_share | DELETE | `/api/core/file/shares/{param}` | unified-core |  |
+| 380 | get_file_stats | GET | `/api/core/file/stats` | unified-core |  |
+| 381 | get_thumbnail | GET | `/api/core/file/thumbnail/{param}` | unified-core |  |
+| 382 | upload_multiple | POST | `/api/core/file/upload/multiple` | unified-core |  |
+| 383 | login | POST | `/api/unified-core/iam/auth/login` | unified-core |  |
+| 384 | register | POST | `/api/unified-core/iam/auth/register` | unified-core |  |
+| 385 | list_users | GET | `/api/unified-core/users` | unified-core |  |
+| 386 | create_user | POST | `/api/unified-core/users` | unified-core |  |
+| 387 | wms_list_alerts | GET | `/api/wms/inventory-alerts` | wms |  |
+| 388 | wms_get_alert | GET | `/api/wms/inventory-alerts/{param}` | wms |  |
+| 389 | acknowledge_alert | POST | `/api/wms/inventory-alerts/{param}/acknowledge` | wms |  |
 
 ## 2. 未文档化前端 API（前端有调用，OpenAPI 无定义）
 
-> 无发现。所有前端 API 调用均在 OpenAPI 中有定义。
+共 2 个调用：
+
+| # | 方法 | 完整路径 | 服务 | 文件 | 行号 |
+|---|------|----------|------|------|------|
+| 1 | POST | `/api/core/iam/auth/register` | iam | apps/web/src/api/iam/auth.ts | 19 |
+| 2 | POST | `/api/core/iam/auth/login` | iam | apps/web/src/api/iam/auth.ts | 26 |
 
 ## 3. 方法不匹配（路径匹配但 HTTP 方法不一致）
 

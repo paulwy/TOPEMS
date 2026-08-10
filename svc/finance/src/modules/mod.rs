@@ -5,7 +5,6 @@ mod compliance_v51;
 mod cqrs_routes;
 pub mod decision_v60;
 mod event_routes;
-pub mod finance_compat;
 pub mod financial_reports;
 mod forecast_v53;
 mod forecasting;

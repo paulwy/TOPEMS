@@ -231,17 +231,6 @@ pub struct ApiResponse<T> {
         crate::modules::scm_compat::compat_post_sync_srm_synctype,
         crate::modules::scm_compat::compat_post_sync_wms_synctype,
         // === SCM-Compat: missing purchase-orders & suppliers endpoints ===
-        crate::modules::scm_compat::compat_get_api_scm_purchase_orders,
-        crate::modules::scm_compat::compat_post_api_scm_purchase_orders,
-        crate::modules::scm_compat::compat_get_api_scm_purchase_orders_id,
-        crate::modules::scm_compat::compat_put_api_scm_purchase_orders_id,
-        crate::modules::scm_compat::compat_delete_api_scm_purchase_orders_id,
-        crate::modules::scm_compat::compat_post_api_scm_purchase_orders_id_approve,
-        crate::modules::scm_compat::compat_get_api_scm_suppliers,
-        crate::modules::scm_compat::compat_post_api_scm_suppliers,
-        crate::modules::scm_compat::compat_get_api_scm_suppliers_id,
-        crate::modules::scm_compat::compat_put_api_scm_suppliers_id,
-        crate::modules::scm_compat::compat_delete_api_scm_suppliers_id,
     ),
     components(
         schemas(

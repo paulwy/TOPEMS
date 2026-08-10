@@ -6,33 +6,6 @@
 #![allow(dead_code, clippy::empty_loop)]
 
 #[utoipa::path(
-    delete,
-    path = "/api/bi/annotations/{annotationId}",
-    tag = "BI-Compat",
-    params(("annotationId" = String, Path, description = "id")),
-    responses((status = 200, description = "BI compatibility endpoint"))
-)]
-pub async fn compat_delete_api_bi_annotations_annotationid() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/bi/dashboard/template/{templateId}/create",
-    tag = "BI-Compat",
-    params(("templateId" = String, Path, description = "id")),
-    responses((status = 200, description = "BI compatibility endpoint"))
-)]
-pub async fn compat_post_api_bi_dashboard_template_templateid_create() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/bi/dashboard/user/{ownerId}",
-    tag = "BI-Compat",
-    params(("ownerId" = String, Path, description = "id")),
-    responses((status = 200, description = "BI compatibility endpoint"))
-)]
-pub async fn compat_get_api_bi_dashboard_user_ownerid() {}
-
-#[utoipa::path(
     get,
     path = "/api/bi/dashboards/{dashboardId}/links",
     tag = "BI-Compat",
@@ -40,15 +13,6 @@ pub async fn compat_get_api_bi_dashboard_user_ownerid() {}
     responses((status = 200, description = "BI compatibility endpoint"))
 )]
 pub async fn compat_get_api_bi_dashboards_dashboardid_links() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/bi/dashboards/{dashboardId}/links",
-    tag = "BI-Compat",
-    params(("dashboardId" = String, Path, description = "id")),
-    responses((status = 200, description = "BI compatibility endpoint"))
-)]
-pub async fn compat_put_api_bi_dashboards_dashboardid_links() {}
 
 #[utoipa::path(
     get,
@@ -176,39 +140,12 @@ pub async fn compat_post_api_bi_report_reportid_schedules() {}
 
 #[utoipa::path(
     get,
-    path = "/api/bi/widget/dashboard/{dashboardId}",
-    tag = "BI-Compat",
-    params(("dashboardId" = String, Path, description = "id")),
-    responses((status = 200, description = "BI compatibility endpoint"))
-)]
-pub async fn compat_get_api_bi_widget_dashboard_dashboardid() {}
-
-#[utoipa::path(
-    get,
     path = "/api/bi/widgets/{widgetId}/annotations",
     tag = "BI-Compat",
     params(("widgetId" = String, Path, description = "id")),
     responses((status = 200, description = "BI compatibility endpoint"))
 )]
 pub async fn compat_get_api_bi_widgets_widgetid_annotations() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/bi/widgets/{widgetId}/annotations",
-    tag = "BI-Compat",
-    params(("widgetId" = String, Path, description = "id")),
-    responses((status = 200, description = "BI compatibility endpoint"))
-)]
-pub async fn compat_post_api_bi_widgets_widgetid_annotations() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/bi/widgets/{widgetId}/drilldown",
-    tag = "BI-Compat",
-    params(("widgetId" = String, Path, description = "id")),
-    responses((status = 200, description = "BI compatibility endpoint"))
-)]
-pub async fn compat_get_api_bi_widgets_widgetid_drilldown() {}
 
 #[utoipa::path(
     put,
@@ -218,42 +155,6 @@ pub async fn compat_get_api_bi_widgets_widgetid_drilldown() {}
     responses((status = 200, description = "BI compatibility endpoint"))
 )]
 pub async fn compat_put_api_bi_widgets_widgetid_drilldown() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/bi/widgets/{widgetId}/drilldown/execute",
-    tag = "BI-Compat",
-    params(("widgetId" = String, Path, description = "id")),
-    responses((status = 200, description = "BI compatibility endpoint"))
-)]
-pub async fn compat_post_api_bi_widgets_widgetid_drilldown_execute() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/bi/widgets/{widgetId}/export",
-    tag = "BI-Compat",
-    params(("widgetId" = String, Path, description = "id")),
-    responses((status = 200, description = "BI compatibility endpoint"))
-)]
-pub async fn compat_post_api_bi_widgets_widgetid_export() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/bi/widgets/{widgetId}/fullscreen",
-    tag = "BI-Compat",
-    params(("widgetId" = String, Path, description = "id")),
-    responses((status = 200, description = "BI compatibility endpoint"))
-)]
-pub async fn compat_get_api_bi_widgets_widgetid_fullscreen() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/bi/{moduleId}",
-    tag = "BI-Compat",
-    params(("moduleId" = String, Path, description = "id")),
-    responses((status = 200, description = "BI compatibility endpoint"))
-)]
-pub async fn compat_get_api_bi_moduleid() {}
 
 // === data-analysis (RC4a gaps) ===
 

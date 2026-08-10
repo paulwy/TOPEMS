@@ -306,14 +306,6 @@ pub async fn compat_post_api_ai_vector_index_documentid() {}
 
 #[utoipa::path(
     get,
-    path = "/api/ai/health",
-    tag = "AI-Compat",
-    responses((status = 200, description = "AI compatibility endpoint"))
-)]
-pub async fn compat_get_api_ai_health() {}
-
-#[utoipa::path(
-    get,
     path = "/api/ai/models/{modelId}/config",
     tag = "AI-Compat",
     params(("modelId" = String, Path, description = "modelId")),

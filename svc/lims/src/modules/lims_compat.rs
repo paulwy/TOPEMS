@@ -799,15 +799,6 @@ pub async fn compat_delete_api_lims_endpoint_id() {}
 pub async fn compat_get_api_lims_endpoint_id() {}
 
 #[utoipa::path(
-    post,
-    path = "/api/lims/{endpoint}/{id}",
-    tag = "LIMS-Compat",
-    params(("endpoint" = String, Path, description = "id"), ("id" = String, Path, description = "id")),
-    responses((status = 200, description = "LIMS compatibility endpoint"))
-)]
-pub async fn compat_post_api_lims_endpoint_id() {}
-
-#[utoipa::path(
     put,
     path = "/api/lims/{endpoint}/{id}",
     tag = "LIMS-Compat",

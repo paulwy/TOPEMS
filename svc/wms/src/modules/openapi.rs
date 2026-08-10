@@ -182,15 +182,6 @@ pub struct OutboundOrder {
         crate::modules::wms_compat::compat_post_api_wms_batches_id_adjust_quantity,
         crate::modules::wms_compat::compat_post_api_wms_batches_id_transfer_location,
         crate::modules::wms_compat::compat_get_api_wms_dashboard,
-        crate::modules::wms_compat::compat_get_api_wms_inbound_orders_order_id_items,
-        crate::modules::wms_compat::compat_post_api_wms_inbound_orders_order_id_items,
-        crate::modules::wms_compat::compat_put_api_wms_inbound_orders_order_id_items_item_id,
-        crate::modules::wms_compat::compat_delete_api_wms_inbound_orders_order_id_items_item_id,
-        crate::modules::wms_compat::compat_get_api_wms_outbound_orders_order_id_items,
-        crate::modules::wms_compat::compat_post_api_wms_outbound_orders_order_id_items,
-        crate::modules::wms_compat::compat_put_api_wms_outbound_orders_order_id_items_item_id,
-        crate::modules::wms_compat::compat_delete_api_wms_outbound_orders_order_id_items_item_id,
-        crate::modules::wms_compat::compat_get_api_wms_wave_picks_wave_id_items,
         crate::modules::wms_compat::compat_get_api_wms_smart_replenishment_suggestions,
         crate::modules::wms_compat::compat_get_api_wms_smart_replenishment_suggestions_id,
         crate::modules::wms_compat::compat_post_api_wms_smart_replenishment_suggestions_generate,
@@ -221,7 +212,6 @@ pub struct OutboundOrder {
         crate::modules::wms_compat::compat_post_api_wms_sync_scm,
         crate::modules::wms_compat::compat_post_api_wms_sync_scm_inventory,
         crate::modules::wms_compat::compat_post_api_wms_sync_scm_orders,
-        crate::modules::wms_compat::compat_get_api_wms_transfers_transfer_id_items,
     ),
     components(
         schemas(

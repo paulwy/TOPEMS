@@ -542,14 +542,6 @@ pub struct Permission {
         crate::modules::core_compat::compat_get_api_communication_notification_notifications_id,
         crate::modules::core_compat::compat_post_api_communication_im_rooms_data_chat_id_messages,
         // === core_compat doc/notification supplement (RC4a remaining) ===
-        crate::modules::core_compat::compat_get_api_core_doc_documents_id,
-        crate::modules::core_compat::compat_delete_api_core_doc_documents_id,
-        crate::modules::core_compat::compat_get_api_core_doc_folders_id,
-        crate::modules::core_compat::compat_put_api_core_doc_folders_id,
-        crate::modules::core_compat::compat_delete_api_core_doc_folders_id,
-        crate::modules::core_compat::compat_get_api_core_doc_templates_id,
-        crate::modules::core_compat::compat_put_api_core_doc_templates_id,
-        crate::modules::core_compat::compat_delete_api_core_doc_templates_id,
         crate::modules::core_compat::compat_get_api_communication_notification_notifications_archive_config,
         crate::modules::core_compat::compat_put_api_communication_notification_notifications_archive_config,
         // === RC4b core system/admin compatibility ===
@@ -632,8 +624,6 @@ pub struct Permission {
         crate::modules::core_compat::compat_get_api_core_monitor_slos_trend,
         crate::modules::core_compat::compat_post_api_core_monitor_slos_violations_id_resolve,
         // === RC4b IAM compatibility ===
-        crate::modules::core_compat::compat_post_api_core_iam_auth_register,
-        crate::modules::core_compat::compat_post_api_core_iam_auth_login,
         crate::modules::core_compat::compat_post_api_core_iam_auth_logout,
         crate::modules::core_compat::compat_post_api_core_iam_auth_refresh,
         crate::modules::core_compat::compat_get_api_core_iam_health,

@@ -73,8 +73,6 @@ use utoipa::OpenApi;
         crate::modules::integration_compat::compat_post_api_integration_external_erp_connections_configid_company_mappings,
         crate::modules::integration_compat::compat_put_api_integration_external_erp_connections_configid_company_mappings_mappingid,
         crate::modules::integration_compat::compat_delete_api_integration_external_erp_connections_configid_company_mappings_mappingid,
-        crate::modules::integration_compat::compat_get_api_integration_external_erp_export_sync_logs,
-        crate::modules::integration_compat::compat_get_api_integration_external_erp_export_mappings,
         crate::modules::integration_compat::compat_get_api_integration_external_erp_connections_configid_account_mappings,
         crate::modules::integration_compat::compat_post_api_integration_external_erp_connections_configid_account_mappings_batch,
         crate::modules::integration_compat::compat_put_api_integration_external_erp_connections_configid_account_mappings_mappingid,

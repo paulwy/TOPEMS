@@ -496,60 +496,6 @@ pub async fn compat_get_projects_projectid_acceptance_records() {}
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/{projectId}/approval",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_approval() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/pm/projects/{projectId}/approval",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_post_projects_projectid_approval() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/pm/projects/{projectId}/approval/action",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_post_projects_projectid_approval_action() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/pm/projects/{projectId}/benefits",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_benefits() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/pm/projects/{projectId}/benefits",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_post_projects_projectid_benefits() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/pm/projects/{projectId}/benefits/analysis",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_benefits_analysis() {}
-
-#[utoipa::path(
-    get,
     path = "/api/pm/projects/{projectId}/budgets",
     tag = "PM-Compat",
     params(("projectId" = String, Path, description = "路径参数")),
@@ -622,51 +568,6 @@ pub async fn compat_post_projects_projectid_documents() {}
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/{projectId}/expenses",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_expenses() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/pm/projects/{projectId}/expenses",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_post_projects_projectid_expenses() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/pm/projects/{projectId}/expenses/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_delete_projects_projectid_expenses_id() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/pm/projects/{projectId}/expenses/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_expenses_id() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/pm/projects/{projectId}/expenses/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_put_projects_projectid_expenses_id() {}
-
-#[utoipa::path(
-    get,
     path = "/api/pm/projects/{projectId}/folders",
     tag = "PM-Compat",
     params(("projectId" = String, Path, description = "路径参数")),
@@ -682,96 +583,6 @@ pub async fn compat_get_projects_projectid_folders() {}
     responses((status = 200, description = "PM compatibility endpoint"))
 )]
 pub async fn compat_post_projects_projectid_folders() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/pm/projects/{projectId}/members",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_members() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/pm/projects/{projectId}/members",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_post_projects_projectid_members() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/pm/projects/{projectId}/members/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_delete_projects_projectid_members_id() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/pm/projects/{projectId}/members/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_members_id() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/pm/projects/{projectId}/members/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_put_projects_projectid_members_id() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/pm/projects/{projectId}/milestones",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_milestones() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/pm/projects/{projectId}/milestones",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_post_projects_projectid_milestones() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/pm/projects/{projectId}/milestones/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_delete_projects_projectid_milestones_id() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/pm/projects/{projectId}/milestones/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_milestones_id() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/pm/projects/{projectId}/milestones/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_put_projects_projectid_milestones_id() {}
 
 #[utoipa::path(
     get,
@@ -799,51 +610,6 @@ pub async fn compat_post_projects_projectid_notification_settings() {}
     responses((status = 200, description = "PM compatibility endpoint"))
 )]
 pub async fn compat_get_projects_projectid_notifications() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/pm/projects/{projectId}/phases",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_phases() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/pm/projects/{projectId}/phases",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_post_projects_projectid_phases() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/pm/projects/{projectId}/phases/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_delete_projects_projectid_phases_id() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/pm/projects/{projectId}/phases/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_phases_id() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/pm/projects/{projectId}/phases/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_put_projects_projectid_phases_id() {}
 
 #[utoipa::path(
     get,
@@ -889,51 +655,6 @@ pub async fn compat_post_projects_projectid_reports() {}
     responses((status = 200, description = "PM compatibility endpoint"))
 )]
 pub async fn compat_post_projects_projectid_reports_generate() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/pm/projects/{projectId}/resources",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_resources() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/pm/projects/{projectId}/resources",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_post_projects_projectid_resources() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/pm/projects/{projectId}/resources/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_delete_projects_projectid_resources_id() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/pm/projects/{projectId}/resources/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_get_projects_projectid_resources_id() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/pm/projects/{projectId}/resources/{id}",
-    tag = "PM-Compat",
-    params(("projectId" = String, Path, description = "路径参数"), ("id" = String, Path, description = "路径参数")),
-    responses((status = 200, description = "PM compatibility endpoint"))
-)]
-pub async fn compat_put_projects_projectid_resources_id() {}
 
 #[utoipa::path(
     get,
