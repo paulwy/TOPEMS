@@ -57,87 +57,6 @@ pub async fn compat_get_api_wms_dashboard() {}
 
 #[utoipa::path(
     get,
-    path = "/api/wms/inbound-orders/{order_id}/items",
-    tag = "WMS-Compat",
-    params(("order_id" = String, Path, description = "id")),
-    responses((status = 200, description = "WMS compatibility endpoint"))
-)]
-pub async fn compat_get_api_wms_inbound_orders_order_id_items() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/wms/inbound-orders/{order_id}/items",
-    tag = "WMS-Compat",
-    params(("order_id" = String, Path, description = "id")),
-    responses((status = 200, description = "WMS compatibility endpoint"))
-)]
-pub async fn compat_post_api_wms_inbound_orders_order_id_items() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/wms/inbound-orders/{order_id}/items/{item_id}",
-    tag = "WMS-Compat",
-    params(("order_id" = String, Path, description = "id"), ("item_id" = String, Path, description = "id")),
-    responses((status = 200, description = "WMS compatibility endpoint"))
-)]
-pub async fn compat_put_api_wms_inbound_orders_order_id_items_item_id() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/wms/inbound-orders/{order_id}/items/{item_id}",
-    tag = "WMS-Compat",
-    params(("order_id" = String, Path, description = "id"), ("item_id" = String, Path, description = "id")),
-    responses((status = 200, description = "WMS compatibility endpoint"))
-)]
-pub async fn compat_delete_api_wms_inbound_orders_order_id_items_item_id() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/wms/outbound-orders/{order_id}/items",
-    tag = "WMS-Compat",
-    params(("order_id" = String, Path, description = "id")),
-    responses((status = 200, description = "WMS compatibility endpoint"))
-)]
-pub async fn compat_get_api_wms_outbound_orders_order_id_items() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/wms/outbound-orders/{order_id}/items",
-    tag = "WMS-Compat",
-    params(("order_id" = String, Path, description = "id")),
-    responses((status = 200, description = "WMS compatibility endpoint"))
-)]
-pub async fn compat_post_api_wms_outbound_orders_order_id_items() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/wms/outbound-orders/{order_id}/items/{item_id}",
-    tag = "WMS-Compat",
-    params(("order_id" = String, Path, description = "id"), ("item_id" = String, Path, description = "id")),
-    responses((status = 200, description = "WMS compatibility endpoint"))
-)]
-pub async fn compat_put_api_wms_outbound_orders_order_id_items_item_id() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/wms/outbound-orders/{order_id}/items/{item_id}",
-    tag = "WMS-Compat",
-    params(("order_id" = String, Path, description = "id"), ("item_id" = String, Path, description = "id")),
-    responses((status = 200, description = "WMS compatibility endpoint"))
-)]
-pub async fn compat_delete_api_wms_outbound_orders_order_id_items_item_id() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/wms/wave-picks/{wave_id}/items",
-    tag = "WMS-Compat",
-    params(("wave_id" = String, Path, description = "id")),
-    responses((status = 200, description = "WMS compatibility endpoint"))
-)]
-pub async fn compat_get_api_wms_wave_picks_wave_id_items() {}
-
-#[utoipa::path(
-    get,
     path = "/api/wms/smart-replenishment/suggestions",
     tag = "WMS-Compat",
     responses((status = 200, description = "WMS compatibility endpoint"))
@@ -392,12 +311,3 @@ pub async fn compat_post_api_wms_sync_scm_inventory() {}
     responses((status = 200, description = "WMS compatibility endpoint"))
 )]
 pub async fn compat_post_api_wms_sync_scm_orders() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/wms/transfers/{transfer_id}/items",
-    tag = "WMS-Compat",
-    params(("transfer_id" = String, Path, description = "id")),
-    responses((status = 200, description = "WMS compatibility endpoint"))
-)]
-pub async fn compat_get_api_wms_transfers_transfer_id_items() {}

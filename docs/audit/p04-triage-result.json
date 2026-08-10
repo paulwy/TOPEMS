@@ -1,12 +1,12 @@
 {
   "summary": {
-    "totalOpenApiOps": 3401,
+    "totalOpenApiOps": 3254,
     "totalFrontendCalls": 2875,
-    "unusedBackendTotal": 455,
-    "undocumentedFrontendTotal": 11
+    "unusedBackendTotal": 430,
+    "undocumentedFrontendTotal": 13
   },
   "unusedBackend": {
-    "total": 455,
+    "total": 430,
     "categories": {
       "A_health_internal": {
         "count": 22,
@@ -356,7 +356,7 @@
         ]
       },
       "C_crud_should_bind": {
-        "count": 407,
+        "count": 382,
         "byService": {
           "ai": {
             "count": 10,
@@ -1370,55 +1370,13 @@
             ]
           },
           "finance": {
-            "count": 33,
+            "count": 27,
             "items": [
               {
                 "operationId": "get_account_by_code",
                 "method": "GET",
                 "path": "/finance/accounts/code/{code}",
                 "normalizedPath": "/api/finance/accounts/code/{param}",
-                "tag": "finance"
-              },
-              {
-                "operationId": "compat_get_api_finance_reports_balance_sheet_export",
-                "method": "GET",
-                "path": "/api/finance/reports/balance-sheet/export",
-                "normalizedPath": "/api/finance/reports/balance-sheet/export",
-                "tag": "finance"
-              },
-              {
-                "operationId": "compat_get_api_finance_reports_cash_flow_export",
-                "method": "GET",
-                "path": "/api/finance/reports/cash-flow/export",
-                "normalizedPath": "/api/finance/reports/cash-flow/export",
-                "tag": "finance"
-              },
-              {
-                "operationId": "compat_get_api_finance_reports_consolidated_consolidation_id_export",
-                "method": "GET",
-                "path": "/api/finance/reports/consolidated/{consolidation_id}/export",
-                "normalizedPath": "/api/finance/reports/consolidated/{param}/export",
-                "tag": "finance"
-              },
-              {
-                "operationId": "compat_get_api_finance_reports_export",
-                "method": "GET",
-                "path": "/api/finance/reports/export",
-                "normalizedPath": "/api/finance/reports/export",
-                "tag": "finance"
-              },
-              {
-                "operationId": "compat_get_api_finance_reports_income_statement_export",
-                "method": "GET",
-                "path": "/api/finance/reports/income-statement/export",
-                "normalizedPath": "/api/finance/reports/income-statement/export",
-                "tag": "finance"
-              },
-              {
-                "operationId": "compat_get_api_finance_vouchers_export",
-                "method": "GET",
-                "path": "/api/finance/vouchers/export",
-                "normalizedPath": "/api/finance/vouchers/export",
                 "tag": "finance"
               },
               {
@@ -1776,145 +1734,6 @@
                 "path": "/gis/maps/{id}",
                 "normalizedPath": "/api/gis/maps/{param}",
                 "tag": "gis"
-              }
-            ]
-          },
-          "hrm": {
-            "count": 19,
-            "items": [
-              {
-                "operationId": "compat_get_api_hrm_performance_goals",
-                "method": "GET",
-                "path": "/api/hrm/performance-goals",
-                "normalizedPath": "/api/hrm/performance-goals",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_post_api_hrm_performance_goals",
-                "method": "POST",
-                "path": "/api/hrm/performance-goals",
-                "normalizedPath": "/api/hrm/performance-goals",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_get_api_hrm_performance_goals_id",
-                "method": "GET",
-                "path": "/api/hrm/performance-goals/{id}",
-                "normalizedPath": "/api/hrm/performance-goals/{param}",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_put_api_hrm_performance_goals_id",
-                "method": "PUT",
-                "path": "/api/hrm/performance-goals/{id}",
-                "normalizedPath": "/api/hrm/performance-goals/{param}",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_delete_api_hrm_performance_goals_id",
-                "method": "DELETE",
-                "path": "/api/hrm/performance-goals/{id}",
-                "normalizedPath": "/api/hrm/performance-goals/{param}",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_post_api_hrm_performance_reviews",
-                "method": "POST",
-                "path": "/api/hrm/performance-reviews",
-                "normalizedPath": "/api/hrm/performance-reviews",
-                "tag": "hrm",
-                "note": "path exists in frontend but method not called"
-              },
-              {
-                "operationId": "compat_get_api_hrm_performance_reviews_id",
-                "method": "GET",
-                "path": "/api/hrm/performance-reviews/{id}",
-                "normalizedPath": "/api/hrm/performance-reviews/{param}",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_put_api_hrm_performance_reviews_id",
-                "method": "PUT",
-                "path": "/api/hrm/performance-reviews/{id}",
-                "normalizedPath": "/api/hrm/performance-reviews/{param}",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_delete_api_hrm_performance_reviews_id",
-                "method": "DELETE",
-                "path": "/api/hrm/performance-reviews/{id}",
-                "normalizedPath": "/api/hrm/performance-reviews/{param}",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_get_api_hrm_positions",
-                "method": "GET",
-                "path": "/api/hrm/positions",
-                "normalizedPath": "/api/hrm/positions",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_post_api_hrm_positions",
-                "method": "POST",
-                "path": "/api/hrm/positions",
-                "normalizedPath": "/api/hrm/positions",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_get_api_hrm_positions_id",
-                "method": "GET",
-                "path": "/api/hrm/positions/{id}",
-                "normalizedPath": "/api/hrm/positions/{param}",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_put_api_hrm_positions_id",
-                "method": "PUT",
-                "path": "/api/hrm/positions/{id}",
-                "normalizedPath": "/api/hrm/positions/{param}",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_delete_api_hrm_positions_id",
-                "method": "DELETE",
-                "path": "/api/hrm/positions/{id}",
-                "normalizedPath": "/api/hrm/positions/{param}",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_get_api_hrm_roles",
-                "method": "GET",
-                "path": "/api/hrm/roles",
-                "normalizedPath": "/api/hrm/roles",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_post_api_hrm_roles",
-                "method": "POST",
-                "path": "/api/hrm/roles",
-                "normalizedPath": "/api/hrm/roles",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_get_api_hrm_roles_id",
-                "method": "GET",
-                "path": "/api/hrm/roles/{id}",
-                "normalizedPath": "/api/hrm/roles/{param}",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_put_api_hrm_roles_id",
-                "method": "PUT",
-                "path": "/api/hrm/roles/{id}",
-                "normalizedPath": "/api/hrm/roles/{param}",
-                "tag": "hrm"
-              },
-              {
-                "operationId": "compat_delete_api_hrm_roles_id",
-                "method": "DELETE",
-                "path": "/api/hrm/roles/{id}",
-                "normalizedPath": "/api/hrm/roles/{param}",
-                "tag": "hrm"
               }
             ]
           },
@@ -3374,7 +3193,7 @@
     }
   },
   "undocumentedFrontend": {
-    "total": 11,
+    "total": 13,
     "rootCauses": {
       "RC1_prefix_mismatch": {
         "count": 0,
@@ -3393,10 +3212,46 @@
         "sample": []
       },
       "RC4_unregistered": {
-        "count": 0,
-        "byService": {},
-        "items": [],
-        "sample": []
+        "count": 2,
+        "byService": {
+          "iam": 2
+        },
+        "items": [
+          {
+            "service": "iam",
+            "method": "POST",
+            "url": "/auth/register",
+            "fullPath": "/api/core/iam/auth/register",
+            "file": "apps/web/src/api/iam/auth.ts",
+            "line": 19
+          },
+          {
+            "service": "iam",
+            "method": "POST",
+            "url": "/auth/login",
+            "fullPath": "/api/core/iam/auth/login",
+            "file": "apps/web/src/api/iam/auth.ts",
+            "line": 26
+          }
+        ],
+        "sample": [
+          {
+            "service": "iam",
+            "method": "POST",
+            "url": "/auth/register",
+            "fullPath": "/api/core/iam/auth/register",
+            "file": "apps/web/src/api/iam/auth.ts",
+            "line": 19
+          },
+          {
+            "service": "iam",
+            "method": "POST",
+            "url": "/auth/login",
+            "fullPath": "/api/core/iam/auth/login",
+            "file": "apps/web/src/api/iam/auth.ts",
+            "line": 26
+          }
+        ]
       },
       "RC5_frontend_internal": {
         "count": 11,
@@ -3502,6 +3357,7 @@
     },
     "byService": {
       "core": 2,
+      "iam": 2,
       "integration": 1,
       "lowcode": 2,
       "monitor": 1,

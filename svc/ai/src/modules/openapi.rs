@@ -628,7 +628,6 @@ fn _vector_clear() {}
         crate::modules::ai_compat::compat_delete_api_ai_vector_collections_id,
         crate::modules::ai_compat::compat_post_api_ai_vector_index_documentid,
         // === ai_compat supplement (OpenAPI-only) ===
-        crate::modules::ai_compat::compat_get_api_ai_health,
         crate::modules::ai_compat::compat_get_api_ai_models_modelid_config,
         crate::modules::ai_compat::compat_put_api_ai_models_modelid_config,
     ),

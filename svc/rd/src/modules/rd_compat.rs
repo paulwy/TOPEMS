@@ -277,48 +277,6 @@ pub async fn compat_delete_api_rd_materials_batch() {}
 pub async fn compat_post_api_rd_materials_import() {}
 
 #[utoipa::path(
-    post,
-    path = "/api/rd/projects/batch",
-    tag = "RD-Compat",
-    responses((status = 200, description = "RD compatibility endpoint"))
-)]
-pub async fn compat_post_api_rd_projects_batch() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/rd/projects/batch",
-    tag = "RD-Compat",
-    responses((status = 200, description = "RD compatibility endpoint"))
-)]
-pub async fn compat_delete_api_rd_projects_batch() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/rd/projects/import",
-    tag = "RD-Compat",
-    responses((status = 200, description = "RD compatibility endpoint"))
-)]
-pub async fn compat_post_api_rd_projects_import() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/rd/projects/{id}/dashboard",
-    tag = "RD-Compat",
-    params(("id" = String, Path, description = "id")),
-    responses((status = 200, description = "RD compatibility endpoint"))
-)]
-pub async fn compat_get_api_rd_projects_id_dashboard() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/rd/projects/{id}/gantt",
-    tag = "RD-Compat",
-    params(("id" = String, Path, description = "id")),
-    responses((status = 200, description = "RD compatibility endpoint"))
-)]
-pub async fn compat_get_api_rd_projects_id_gantt() {}
-
-#[utoipa::path(
     get,
     path = "/api/rd/statistics",
     tag = "RD-Compat",
@@ -327,47 +285,3 @@ pub async fn compat_get_api_rd_projects_id_gantt() {}
 pub async fn compat_get_api_rd_statistics() {}
 
 // ===== RD-Compat: missing project & audit-log endpoints (path prefix mismatch) =====
-
-#[utoipa::path(
-    get,
-    path = "/api/rd/projects/{id}",
-    tag = "RD-Compat",
-    params(("id" = String, Path, description = "id")),
-    responses((status = 200, description = "RD compatibility endpoint"))
-)]
-pub async fn compat_get_api_rd_projects_id() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/rd/projects",
-    tag = "RD-Compat",
-    responses((status = 200, description = "RD compatibility endpoint"))
-)]
-pub async fn compat_post_api_rd_projects() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/rd/projects/{id}",
-    tag = "RD-Compat",
-    params(("id" = String, Path, description = "id")),
-    responses((status = 200, description = "RD compatibility endpoint"))
-)]
-pub async fn compat_put_api_rd_projects_id() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/rd/projects/{id}",
-    tag = "RD-Compat",
-    params(("id" = String, Path, description = "id")),
-    responses((status = 200, description = "RD compatibility endpoint"))
-)]
-pub async fn compat_delete_api_rd_projects_id() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/rd/audit-logs/{id}",
-    tag = "RD-Compat",
-    params(("id" = String, Path, description = "id")),
-    responses((status = 200, description = "RD compatibility endpoint"))
-)]
-pub async fn compat_get_api_rd_audit_logs_id() {}

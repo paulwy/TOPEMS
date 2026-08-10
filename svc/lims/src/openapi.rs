@@ -118,7 +118,6 @@ use crate::modules::{
         crate::modules::lims_compat::compat_post_api_lims_uncertainty_type_b,
         crate::modules::lims_compat::compat_delete_api_lims_endpoint_id,
         crate::modules::lims_compat::compat_get_api_lims_endpoint_id,
-        crate::modules::lims_compat::compat_post_api_lims_endpoint_id,
         crate::modules::lims_compat::compat_put_api_lims_endpoint_id,
     ),
     components(

@@ -65,22 +65,6 @@ pub async fn compat_post_api_crm_billing_id_notify() {}
 pub async fn compat_post_api_crm_billing_id_paid() {}
 
 #[utoipa::path(
-    get,
-    path = "/api/crm/contacts",
-    tag = "CRM-Compat",
-    responses((status = 200, description = "CRM compatibility endpoint"))
-)]
-pub async fn compat_get_api_crm_contacts() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/crm/contacts",
-    tag = "CRM-Compat",
-    responses((status = 200, description = "CRM compatibility endpoint"))
-)]
-pub async fn compat_post_api_crm_contacts() {}
-
-#[utoipa::path(
     post,
     path = "/api/crm/contacts/batch-delete",
     tag = "CRM-Compat",
@@ -165,49 +149,6 @@ pub async fn compat_get_api_crm_customerscoring_id() {}
     responses((status = 200, description = "CRM compatibility endpoint"))
 )]
 pub async fn compat_put_api_crm_customerscoring_id() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/crm/customers",
-    tag = "CRM-Compat",
-    responses((status = 200, description = "CRM compatibility endpoint"))
-)]
-pub async fn compat_get_api_crm_customers() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/crm/customers",
-    tag = "CRM-Compat",
-    responses((status = 200, description = "CRM compatibility endpoint"))
-)]
-pub async fn compat_post_api_crm_customers() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/crm/customers/{id}",
-    tag = "CRM-Compat",
-    params(("id" = String, Path, description = "id")),
-    responses((status = 200, description = "CRM compatibility endpoint"))
-)]
-pub async fn compat_get_api_crm_customers_id() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/crm/customers/{id}",
-    tag = "CRM-Compat",
-    params(("id" = String, Path, description = "id")),
-    responses((status = 200, description = "CRM compatibility endpoint"))
-)]
-pub async fn compat_put_api_crm_customers_id() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/crm/customers/{id}",
-    tag = "CRM-Compat",
-    params(("id" = String, Path, description = "id")),
-    responses((status = 200, description = "CRM compatibility endpoint"))
-)]
-pub async fn compat_delete_api_crm_customers_id() {}
 
 #[utoipa::path(
     post,
@@ -319,22 +260,6 @@ pub async fn compat_get_api_crm_interactions_id() {}
     responses((status = 200, description = "CRM compatibility endpoint"))
 )]
 pub async fn compat_put_api_crm_interactions_id() {}
-
-#[utoipa::path(
-    get,
-    path = "/api/crm/opportunities",
-    tag = "CRM-Compat",
-    responses((status = 200, description = "CRM compatibility endpoint"))
-)]
-pub async fn compat_get_api_crm_opportunities() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/crm/opportunities",
-    tag = "CRM-Compat",
-    responses((status = 200, description = "CRM compatibility endpoint"))
-)]
-pub async fn compat_post_api_crm_opportunities() {}
 
 #[utoipa::path(
     post,

@@ -4,24 +4,6 @@
 //! not represented by concrete utoipa handlers yet.
 
 #[utoipa::path(
-    post,
-    path = "/api/ehs/checks/plans/{planId}/items",
-    tag = "EHS-Compat",
-    params(("planId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_checks_plans_planid_items() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/ehs/checks/plans/{planId}/items/{itemId}",
-    tag = "EHS-Compat",
-    params(("planId" = String, Path, description = "id"), ("itemId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_delete_api_ehs_checks_plans_planid_items_itemid() {}
-
-#[utoipa::path(
     delete,
     path = "/api/ehs/checks/{id}",
     tag = "EHS-Compat",
@@ -265,24 +247,6 @@ pub async fn compat_get_api_ehs_hazardous_materials_msds_id() {}
 pub async fn compat_put_api_ehs_hazardous_materials_msds_id() {}
 
 #[utoipa::path(
-    get,
-    path = "/api/ehs/hazardous-materials/{materialId}/msds",
-    tag = "EHS-Compat",
-    params(("materialId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_get_api_ehs_hazardous_materials_materialid_msds() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/hazards/{hazardId}/assessments",
-    tag = "EHS-Compat",
-    params(("hazardId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_hazards_hazardid_assessments() {}
-
-#[utoipa::path(
     put,
     path = "/api/ehs/hazards/{hazardId}/assessments/{assessmentId}",
     tag = "EHS-Compat",
@@ -290,132 +254,6 @@ pub async fn compat_post_api_ehs_hazards_hazardid_assessments() {}
     responses((status = 200, description = "EHS compatibility endpoint"))
 )]
 pub async fn compat_put_api_ehs_hazards_hazardid_assessments_assessmentid() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/hazards/{hazardId}/controls",
-    tag = "EHS-Compat",
-    params(("hazardId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_hazards_hazardid_controls() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/ehs/hazards/{hazardId}/controls/{measureId}",
-    tag = "EHS-Compat",
-    params(("hazardId" = String, Path, description = "id"), ("measureId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_delete_api_ehs_hazards_hazardid_controls_measureid() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/ehs/hazards/{hazardId}/controls/{measureId}",
-    tag = "EHS-Compat",
-    params(("hazardId" = String, Path, description = "id"), ("measureId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_put_api_ehs_hazards_hazardid_controls_measureid() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/hazards/{riskId}/assessments",
-    tag = "EHS-Compat",
-    params(("riskId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_hazards_riskid_assessments() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/hazards/{riskId}/controls",
-    tag = "EHS-Compat",
-    params(("riskId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_hazards_riskid_controls() {}
-
-#[utoipa::path(
-    delete,
-    path = "/api/ehs/hazards/{riskId}/controls/{measureId}",
-    tag = "EHS-Compat",
-    params(("riskId" = String, Path, description = "id"), ("measureId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_delete_api_ehs_hazards_riskid_controls_measureid() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/ehs/hazards/{riskId}/controls/{measureId}",
-    tag = "EHS-Compat",
-    params(("riskId" = String, Path, description = "id"), ("measureId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_put_api_ehs_hazards_riskid_controls_measureid() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/incidents/{accidentId}/investigation",
-    tag = "EHS-Compat",
-    params(("accidentId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_incidents_accidentid_investigation() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/ehs/incidents/{accidentId}/investigation",
-    tag = "EHS-Compat",
-    params(("accidentId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_put_api_ehs_incidents_accidentid_investigation() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/incidents/{accidentId}/investigation/complete",
-    tag = "EHS-Compat",
-    params(("accidentId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_incidents_accidentid_investigation_complete() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/incidents/{accidentId}/review",
-    tag = "EHS-Compat",
-    params(("accidentId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_incidents_accidentid_review() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/incidents/{accidentId}/treatment",
-    tag = "EHS-Compat",
-    params(("accidentId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_incidents_accidentid_treatment() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/ehs/incidents/{accidentId}/treatment/actions/{actionId}",
-    tag = "EHS-Compat",
-    params(("accidentId" = String, Path, description = "id"), ("actionId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_put_api_ehs_incidents_accidentid_treatment_actions_actionid() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/incidents/{accidentId}/treatment/complete",
-    tag = "EHS-Compat",
-    params(("accidentId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_incidents_accidentid_treatment_complete() {}
 
 #[utoipa::path(
     post,
@@ -434,42 +272,6 @@ pub async fn compat_post_api_ehs_incidents_incidentid_actions() {}
     responses((status = 200, description = "EHS compatibility endpoint"))
 )]
 pub async fn compat_put_api_ehs_incidents_incidentid_actions_actionid() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/issues/{issueId}/rectification",
-    tag = "EHS-Compat",
-    params(("issueId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_issues_issueid_rectification() {}
-
-#[utoipa::path(
-    put,
-    path = "/api/ehs/issues/{issueId}/rectification",
-    tag = "EHS-Compat",
-    params(("issueId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_put_api_ehs_issues_issueid_rectification() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/issues/{issueId}/rectification/submit",
-    tag = "EHS-Compat",
-    params(("issueId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_issues_issueid_rectification_submit() {}
-
-#[utoipa::path(
-    post,
-    path = "/api/ehs/issues/{issueId}/verification",
-    tag = "EHS-Compat",
-    params(("issueId" = String, Path, description = "id")),
-    responses((status = 200, description = "EHS compatibility endpoint"))
-)]
-pub async fn compat_post_api_ehs_issues_issueid_verification() {}
 
 #[utoipa::path(
     delete,
