@@ -10,6 +10,22 @@ import SupplierManagementPage from '../erp/SupplierManagementPage';
 import { erpApi } from '@/api/erp';
 import { useNotificationStore, useAuthStore } from '@/store';
 
+vi.hoisted(() => {
+  const storage = {
+    getItem: vi.fn(() => null),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+    clear: vi.fn(),
+    key: vi.fn(() => null),
+    length: 0,
+  };
+
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: storage,
+    configurable: true,
+  });
+});
+
 vi.mock('@/api/erp', () => ({
   erpApi: {
     salesOrders: {
