@@ -32,6 +32,7 @@
     "install:all": "./scripts/install-deps.sh",
     "generate:tokens": "tsx scripts/generate-tokens.ts",
     "check:design-system": "bash scripts/check-design-system.sh",
+    "check:design-tokens": "node scripts/check-design-tokens.mjs",
     "gen:types": "node scripts/openapi/gen-types.mjs",
     "gen:api-docs": "bash scripts/openapi/generate.sh"
   },
