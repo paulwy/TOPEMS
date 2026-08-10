@@ -25,7 +25,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), TopemsError> {
             END IF;
         END $$;
     "#;
-    sqlx::query(create_types).execute(pool).await?;
+    sqlx::raw_sql(create_types).execute(pool).await?;
 
     let create_tables = vec![
         "CREATE TABLE IF NOT EXISTS core_finance_accounts (
@@ -186,7 +186,7 @@ pub async fn init_reconciliation_tables(pool: &PgPool) -> Result<(), TopemsError
             END IF;
         END $$;
     "#;
-    sqlx::query(create_types).execute(pool).await?;
+    sqlx::raw_sql(create_types).execute(pool).await?;
 
     let create_tables = vec![
         "CREATE TABLE IF NOT EXISTS core_finance_reconciliation_sessions (
@@ -255,7 +255,7 @@ pub async fn init_aux_tables(pool: &PgPool) -> Result<(), TopemsError> {
             END IF;
         END $$;
     "#;
-    sqlx::query(create_types).execute(pool).await?;
+    sqlx::raw_sql(create_types).execute(pool).await?;
 
     let create_tables = vec![
         "CREATE TABLE IF NOT EXISTS core_finance_aux_accounts (
