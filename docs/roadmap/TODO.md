@@ -947,17 +947,37 @@ V72.8 完成 OpenAPI 契约一致性修复后，探针显示 455 个未使用后
 
 > **注**: CI 严重度从 GREEN 变为 YELLOW 是因为删除兼容函数后，部分之前被兼容函数路径掩盖的 real handler 路径暴露出来，导致未使用后端 API 的计数略有调整。未文档化前端 API 从 11 降至 2，说明 real handler 路径比兼容函数路径更准确地匹配了前端调用。
 
-### Phase 2: 真实死代码 handler 分析（规划中）
+### Phase 2: 真实死代码 handler 分析（✅ 完成 · 无可删 real handler）
 
-Phase 1 清理了兼容函数存根。Phase 2 将分析剩余 382 个 Category C 端点（real handler），区分：
-- 真正的死代码：路由已注册但前端从不调用，且无未来使用计划
-- 待绑定端点：路由已注册但前端尚未实现对应功能页面
-- 探针限制：因 factory function、动态路径等导致探针无法检测到的前端调用
+Phase 2 基于 `scripts/audit/v73_real_handler_triage.py` 对剩余 Category C 端点进行二次核验，补充了 route 注册证据、前端强/弱引用证据和服务维度统计。最初标记的 2 个“真正死代码”经复核均为误判：`lowcode` 的 `/api/lowcode/designer/schema` 已在 `public_routes()` 注册；`pdm` 的 `/api/pdm` 对应 `main.rs` public `/` route，OpenAPI 中 `_home` 是 bin-only handler 的占位注解。
+
+| 分类 | 数量 | 结论 |
+|------|------|------|
+| 真正死代码 | 0 | 无可安全删除的 real handler |
+| 待绑定端点 | 332 | real handler 已注册，但当前前端未发现调用证据 |
+| 探针限制误报 | 47 | 前端存在真实调用证据，当前 P-04 探针未识别 |
+| compat 残留 | 0 | 重新聚合后已归零 |
+
+#### Phase 2 复测指标
+
+| 指标 | V73 Phase 1 后 | Phase 2 复测后 |
+|------|---------------|----------------|
+| OpenAPI 端点 | 3254 | 3165 |
+| OpenAPI 路径 | 2234 | 2179 |
+| 未使用后端 API | 430 | 427（主探针有效 386） |
+| 未文档化前端 API | 2 | 18（主探针有效 7） |
+| 方法不匹配 | 0 | 0 |
+| CI 严重度 | YELLOW | RED |
+
+> **注**: Phase 2 没有删除业务端点，而是修正审计脚本误判并重新生成 OpenAPI。当前 RED 主要来自 7 条未文档化前端 API（IAM 登录/注册、RD 项目批量/导入/看板/Gantt），以及 47 条探针解析限制（多行泛型、嵌套泛型、`createCrudApi` 工厂模式等）。
 
 ### 审计产物
 
 - `docs/audit/v73-compat-deadcode.json` — 兼容函数死代码分析报告
 - `scripts/audit/analyze_compat_deadcode.py` — 死代码分析脚本
 - `scripts/audit/v73_delete_compat.py` — 兼容函数批量删除脚本
+- `scripts/audit/v73_real_handler_triage.py` — real handler 二次分类脚本
+- `docs/audit/v73-real-handler-triage.md` — real handler 分类报告
+- `docs/audit/v73-real-handler-triage.json` — real handler 分类结构化结果
 - `docs/audit/probe-p04-openapi-contract.md` — 更新后的探针报告
 - `docs/audit/p04-triage-result.json` — 更新后的 triage 结果

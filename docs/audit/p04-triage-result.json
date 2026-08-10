@@ -1,12 +1,12 @@
 {
   "summary": {
-    "totalOpenApiOps": 3254,
+    "totalOpenApiOps": 3165,
     "totalFrontendCalls": 2875,
-    "unusedBackendTotal": 430,
-    "undocumentedFrontendTotal": 13
+    "unusedBackendTotal": 427,
+    "undocumentedFrontendTotal": 18
   },
   "unusedBackend": {
-    "total": 430,
+    "total": 427,
     "categories": {
       "A_health_internal": {
         "count": 22,
@@ -356,7 +356,7 @@
         ]
       },
       "C_crud_should_bind": {
-        "count": 382,
+        "count": 379,
         "byService": {
           "ai": {
             "count": 10,
@@ -1738,22 +1738,8 @@
             ]
           },
           "integration": {
-            "count": 24,
+            "count": 22,
             "items": [
-              {
-                "operationId": "compat_get_api_integration_external_erp_export_mappings",
-                "method": "GET",
-                "path": "/api/integration/external-erp/export/mappings",
-                "normalizedPath": "/api/integration/external-erp/export/mappings",
-                "tag": "integration"
-              },
-              {
-                "operationId": "compat_get_api_integration_external_erp_export_sync_logs",
-                "method": "GET",
-                "path": "/api/integration/external-erp/export/sync-logs",
-                "normalizedPath": "/api/integration/external-erp/export/sync-logs",
-                "tag": "integration"
-              },
               {
                 "operationId": "list_mes_erp_sync_records",
                 "method": "GET",
@@ -1911,16 +1897,8 @@
             ]
           },
           "lims": {
-            "count": 11,
+            "count": 10,
             "items": [
-              {
-                "operationId": "compat_post_api_lims_endpoint_id",
-                "method": "POST",
-                "path": "/api/lims/{endpoint}/{id}",
-                "normalizedPath": "/api/lims/{param}/{param}",
-                "tag": "lims",
-                "note": "path exists in frontend but method not called"
-              },
               {
                 "operationId": "list_instruments",
                 "method": "GET",
@@ -3193,7 +3171,7 @@
     }
   },
   "undocumentedFrontend": {
-    "total": 13,
+    "total": 18,
     "rootCauses": {
       "RC1_prefix_mismatch": {
         "count": 0,
@@ -3212,9 +3190,10 @@
         "sample": []
       },
       "RC4_unregistered": {
-        "count": 2,
+        "count": 7,
         "byService": {
-          "iam": 2
+          "iam": 2,
+          "rd": 5
         },
         "items": [
           {
@@ -3232,6 +3211,46 @@
             "fullPath": "/api/core/iam/auth/login",
             "file": "apps/web/src/api/iam/auth.ts",
             "line": 26
+          },
+          {
+            "service": "rd",
+            "method": "POST",
+            "url": "/projects/batch",
+            "fullPath": "/api/rd/projects/batch",
+            "file": "apps/web/src/api/rd/project.ts",
+            "line": 59
+          },
+          {
+            "service": "rd",
+            "method": "DELETE",
+            "url": "/projects/batch",
+            "fullPath": "/api/rd/projects/batch",
+            "file": "apps/web/src/api/rd/project.ts",
+            "line": 65
+          },
+          {
+            "service": "rd",
+            "method": "POST",
+            "url": "/projects/import",
+            "fullPath": "/api/rd/projects/import",
+            "file": "apps/web/src/api/rd/project.ts",
+            "line": 75
+          },
+          {
+            "service": "rd",
+            "method": "GET",
+            "url": "/projects/{id}/dashboard",
+            "fullPath": "/api/rd/projects/{param}/dashboard",
+            "file": "apps/web/src/api/rd/project.ts",
+            "line": 83
+          },
+          {
+            "service": "rd",
+            "method": "GET",
+            "url": "/projects/{id}/gantt",
+            "fullPath": "/api/rd/projects/{param}/gantt",
+            "file": "apps/web/src/api/rd/project.ts",
+            "line": 87
           }
         ],
         "sample": [
@@ -3250,6 +3269,46 @@
             "fullPath": "/api/core/iam/auth/login",
             "file": "apps/web/src/api/iam/auth.ts",
             "line": 26
+          },
+          {
+            "service": "rd",
+            "method": "POST",
+            "url": "/projects/batch",
+            "fullPath": "/api/rd/projects/batch",
+            "file": "apps/web/src/api/rd/project.ts",
+            "line": 59
+          },
+          {
+            "service": "rd",
+            "method": "DELETE",
+            "url": "/projects/batch",
+            "fullPath": "/api/rd/projects/batch",
+            "file": "apps/web/src/api/rd/project.ts",
+            "line": 65
+          },
+          {
+            "service": "rd",
+            "method": "POST",
+            "url": "/projects/import",
+            "fullPath": "/api/rd/projects/import",
+            "file": "apps/web/src/api/rd/project.ts",
+            "line": 75
+          },
+          {
+            "service": "rd",
+            "method": "GET",
+            "url": "/projects/{id}/dashboard",
+            "fullPath": "/api/rd/projects/{param}/dashboard",
+            "file": "apps/web/src/api/rd/project.ts",
+            "line": 83
+          },
+          {
+            "service": "rd",
+            "method": "GET",
+            "url": "/projects/{id}/gantt",
+            "fullPath": "/api/rd/projects/{param}/gantt",
+            "file": "apps/web/src/api/rd/project.ts",
+            "line": 87
           }
         ]
       },
@@ -3361,7 +3420,7 @@
       "integration": 1,
       "lowcode": 2,
       "monitor": 1,
-      "rd": 4,
+      "rd": 9,
       "workflow": 1
     }
   }

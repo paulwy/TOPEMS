@@ -6,10 +6,10 @@
 
 | Metric | Count |
 |--------|-------|
-| OpenAPI operations | 3254 |
+| OpenAPI operations | 3165 |
 | Frontend API calls | 2875 |
-| Unused backend APIs | 430 |
-| Undocumented frontend APIs | 13 |
+| Unused backend APIs | 427 |
+| Undocumented frontend APIs | 18 |
 
 ## 1. Unused Backend APIs Triage
 
@@ -17,9 +17,9 @@
 |----------|-------|-------------|
 | A — Health/Internal | 22 | Health checks, metrics, plugin endpoints (expected unused) |
 | B — AI Stubs | 26 | AI service stub functions not yet wired to frontend |
-| C — CRUD Should Bind | 382 | CRUD endpoints that should have frontend bindings |
+| C — CRUD Should Bind | 379 | CRUD endpoints that should have frontend bindings |
 | D — Deprecated/Legacy | 0 | Deprecated analytics/report paths |
-| **Total** | **430** | |
+| **Total** | **427** | |
 
 ### Category C — CRUD Endpoints by Service
 
@@ -28,13 +28,13 @@
 | ehs | 111 | ehs_list_plans, list_plan_items, list_records, list_drill_plans, create_drill_plan |
 | monitor | 63 | list_alerts, acknowledge_alerts, resolve_alerts, get_alert_statistics, get_alert |
 | finance | 27 | get_account_by_code, get_balance_sheet, list_budgets, create_budget, get_budget |
-| integration | 24 | compat_get_api_integration_external_erp_export_mappings, compat_get_api_integration_external_erp_export_sync_logs, list_mes_erp_sync_records, sync_erp_order_to_mes, sync_mes_progress_to_erp |
 | unified-core | 24 | unified-core_create_document, unified-core_update_document, download_file, list_files, get_received_files |
+| integration | 22 | list_mes_erp_sync_records, sync_erp_order_to_mes, sync_mes_progress_to_erp, get_mes_erp_sync_logs, retry_mes_erp_sync |
 | pdm | 22 | pdm__home, approve_change_notice, reject_change_notice, submit_change_notice, list_pending_documents |
 | flow | 13 | list_pending_approvals, approve_task, reject_task, approve_instance, reject_instance |
-| lims | 11 | compat_post_api_lims_endpoint_id, list_instruments, create_instrument, list_reagents, create_reagent |
 | ai | 10 | home, agent_run, list_agent_tools, list_connectors, create_connector |
 | gis | 10 | list_devices, get_device, list_locations, create_location, get_location |
+| lims | 10 | list_instruments, create_instrument, list_reagents, create_reagent, list_samples |
 | mobile | 10 | get_all_tasks, mobile_create_task, mobile_get_task, update_task, delete_task |
 | ticket | 10 | list_sla_policies_handler, create_sla_policy_handler, list_tickets_handler, create_ticket_handler, get_stats_handler |
 | portal | 9 | get_announcements, portal_create_announcement, portal_get_dashboard_stats, get_navigation_menu, portal_get_notifications |
@@ -110,15 +110,15 @@
 | RC1 — Prefix Mismatch | 0 | Frontend uses wrong API prefix (e.g. /api/v1/ vs /api/) |
 | RC2 — Missing utoipa | 0 | Backend route exists but lacks utoipa annotation |
 | RC3 — Param Format | 0 | :id vs {id} format mismatch |
-| RC4 — Unregistered | 2 | Frontend calls non-existent backend route |
+| RC4 — Unregistered | 7 | Frontend calls non-existent backend route |
 | RC5 — Frontend Internal | 11 | Mock/local/test paths |
-| **Total** | **13** | |
+| **Total** | **18** | |
 
 ### Undocumented Frontend APIs by Service
 
 | Service | Total | RC1 | RC2 | RC3 | RC4 | RC5 |
 |---------|-------|-----|-----|-----|-----|-----|
-| rd | 4 | 0 | 0 | 0 | 0 | 4 |
+| rd | 9 | 0 | 0 | 0 | 5 | 4 |
 | core | 2 | 0 | 0 | 0 | 0 | 2 |
 | iam | 2 | 0 | 0 | 0 | 2 | 0 |
 | lowcode | 2 | 0 | 0 | 0 | 0 | 2 |
@@ -132,6 +132,11 @@
 |---|---------|--------|------|------|
 | 1 | iam | POST | `/api/core/iam/auth/register` | apps/web/src/api/iam/auth.ts:19 |
 | 2 | iam | POST | `/api/core/iam/auth/login` | apps/web/src/api/iam/auth.ts:26 |
+| 3 | rd | POST | `/api/rd/projects/batch` | apps/web/src/api/rd/project.ts:59 |
+| 4 | rd | DELETE | `/api/rd/projects/batch` | apps/web/src/api/rd/project.ts:65 |
+| 5 | rd | POST | `/api/rd/projects/import` | apps/web/src/api/rd/project.ts:75 |
+| 6 | rd | GET | `/api/rd/projects/{param}/dashboard` | apps/web/src/api/rd/project.ts:83 |
+| 7 | rd | GET | `/api/rd/projects/{param}/gantt` | apps/web/src/api/rd/project.ts:87 |
 
 ## 3. Recommendations
 
@@ -151,8 +156,8 @@
 
 ### Phase 4: CRUD Bindings (Category C)
 
-6. **Add frontend bindings for Category C (382) CRUD endpoints** — prioritize high-value services
+6. **Add frontend bindings for Category C (379) CRUD endpoints** — prioritize high-value services
 
 ### Phase 5: Unregistered Routes (RC4)
 
-7. **Triage RC4 (2) unregistered routes** — determine if backend route needs to be created or frontend call should be removed
+7. **Triage RC4 (7) unregistered routes** — determine if backend route needs to be created or frontend call should be removed
