@@ -1,153 +1,24 @@
 {
-  "rc4_total": 1405,
+  "rc4_total": 527,
   "subCategories": {
     "RC4a_missing_utoipa": {
-      "count": 1155,
+      "count": 281,
       "byService": {
-        "ai": 33,
-        "bi": 64,
-        "crm": 91,
+        "ai": 2,
+        "bi": 35,
+        "crm": 19,
         "core": 60,
         "doc": 15,
-        "ehs": 97,
+        "ehs": 20,
         "notification": 30,
-        "integration": 72,
         "file": 7,
-        "gis": 39,
-        "hrm": 95,
         "im": 33,
-        "lims": 91,
-        "lowcode": 47,
+        "integration": 19,
         "mail": 13,
-        "mes": 102,
         "mobile": 27,
-        "qms": 94,
-        "rd": 39,
-        "portal": 1,
-        "srm": 59,
-        "wms": 46
+        "portal": 1
       },
       "sample": [
-        {
-          "service": "ai",
-          "method": "GET",
-          "url": "/conversations",
-          "fullPath": "/api/ai/conversations",
-          "file": "apps/web/src/api/ai/chat.ts",
-          "line": 33
-        },
-        {
-          "service": "ai",
-          "method": "GET",
-          "url": "/conversations/{id}",
-          "fullPath": "/api/ai/conversations/{id}",
-          "file": "apps/web/src/api/ai/chat.ts",
-          "line": 37
-        },
-        {
-          "service": "ai",
-          "method": "POST",
-          "url": "/conversations",
-          "fullPath": "/api/ai/conversations",
-          "file": "apps/web/src/api/ai/chat.ts",
-          "line": 41
-        },
-        {
-          "service": "ai",
-          "method": "DELETE",
-          "url": "/conversations/{id}",
-          "fullPath": "/api/ai/conversations/{id}",
-          "file": "apps/web/src/api/ai/chat.ts",
-          "line": 45
-        },
-        {
-          "service": "ai",
-          "method": "POST",
-          "url": "/documents/{id}/translate",
-          "fullPath": "/api/ai/documents/{id}/translate",
-          "file": "apps/web/src/api/ai/documents.ts",
-          "line": 80
-        },
-        {
-          "service": "ai",
-          "method": "POST",
-          "url": "/documents/{id}/ocr",
-          "fullPath": "/api/ai/documents/{id}/ocr",
-          "file": "apps/web/src/api/ai/documents.ts",
-          "line": 93
-        },
-        {
-          "service": "ai",
-          "method": "POST",
-          "url": "/documents/{id}/classify",
-          "fullPath": "/api/ai/documents/{id}/classify",
-          "file": "apps/web/src/api/ai/documents.ts",
-          "line": 106
-        },
-        {
-          "service": "ai",
-          "method": "POST",
-          "url": "/documents/{id}/entities",
-          "fullPath": "/api/ai/documents/{id}/entities",
-          "file": "apps/web/src/api/ai/documents.ts",
-          "line": 123
-        },
-        {
-          "service": "ai",
-          "method": "PUT",
-          "url": "/conversations/{id}",
-          "fullPath": "/api/ai/conversations/{id}",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 59
-        },
-        {
-          "service": "ai",
-          "method": "GET",
-          "url": "/conversations/{id}/messages",
-          "fullPath": "/api/ai/conversations/{id}/messages",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 73
-        },
-        {
-          "service": "ai",
-          "method": "POST",
-          "url": "/conversations/{conversationId}/messages/{messageId}/regenerate",
-          "fullPath": "/api/ai/conversations/{conversationId}/messages/{messageId}/regenerate",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 80
-        },
-        {
-          "service": "ai",
-          "method": "GET",
-          "url": "/dashboard/stats",
-          "fullPath": "/api/ai/dashboard/stats",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 99
-        },
-        {
-          "service": "ai",
-          "method": "GET",
-          "url": "/dashboard/activity-trend",
-          "fullPath": "/api/ai/dashboard/activity-trend",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 119
-        },
-        {
-          "service": "ai",
-          "method": "GET",
-          "url": "/dashboard/feature-usage",
-          "fullPath": "/api/ai/dashboard/feature-usage",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 132
-        },
-        {
-          "service": "ai",
-          "method": "GET",
-          "url": "/models",
-          "fullPath": "/api/ai/models",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 154
-        },
         {
           "service": "ai",
           "method": "GET",
@@ -165,108 +36,228 @@
           "line": 184
         },
         {
-          "service": "ai",
+          "service": "bi",
           "method": "GET",
-          "url": "/models/usage",
-          "fullPath": "/api/ai/models/usage",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 212
+          "url": "/data-analysis/sales-trend",
+          "fullPath": "/api/bi/data-analysis/sales-trend",
+          "file": "apps/web/src/api/bi/dataAnalysis.ts",
+          "line": 41
         },
         {
-          "service": "ai",
+          "service": "bi",
           "method": "GET",
-          "url": "/prompts/templates",
-          "fullPath": "/api/ai/prompts/templates",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 239
-        },
-        {
-          "service": "ai",
-          "method": "GET",
-          "url": "/prompts/templates/{id}",
-          "fullPath": "/api/ai/prompts/templates/{id}",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 254
-        },
-        {
-          "service": "ai",
-          "method": "POST",
-          "url": "/prompts/templates",
-          "fullPath": "/api/ai/prompts/templates",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 258
-        },
-        {
-          "service": "ai",
-          "method": "PUT",
-          "url": "/prompts/templates/{id}",
-          "fullPath": "/api/ai/prompts/templates/{id}",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 265
-        },
-        {
-          "service": "ai",
-          "method": "DELETE",
-          "url": "/prompts/templates/{id}",
-          "fullPath": "/api/ai/prompts/templates/{id}",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 269
-        },
-        {
-          "service": "ai",
-          "method": "POST",
-          "url": "/prompts/templates/{id}/favorite",
-          "fullPath": "/api/ai/prompts/templates/{id}/favorite",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 280
-        },
-        {
-          "service": "ai",
-          "method": "GET",
-          "url": "/prompts/categories",
-          "fullPath": "/api/ai/prompts/categories",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 292
-        },
-        {
-          "service": "ai",
-          "method": "POST",
-          "url": "/prompts/templates/{id}/use",
-          "fullPath": "/api/ai/prompts/templates/{id}/use",
-          "file": "apps/web/src/api/ai/index.ts",
-          "line": 304
-        },
-        {
-          "service": "ai",
-          "method": "POST",
-          "url": "/recommendations",
-          "fullPath": "/api/ai/recommendations",
-          "file": "apps/web/src/api/ai/recommendation.ts",
-          "line": 22
-        },
-        {
-          "service": "ai",
-          "method": "GET",
-          "url": "/recommendations/personalized?type={type}&limit=",
-          "fullPath": "/api/ai/recommendations/personalized",
-          "file": "apps/web/src/api/ai/recommendation.ts",
-          "line": 39
-        },
-        {
-          "service": "ai",
-          "method": "POST",
-          "url": "/recommendations/feedback",
-          "fullPath": "/api/ai/recommendations/feedback",
-          "file": "apps/web/src/api/ai/recommendation.ts",
+          "url": "/data-analysis/region-sales",
+          "fullPath": "/api/bi/data-analysis/region-sales",
+          "file": "apps/web/src/api/bi/dataAnalysis.ts",
           "line": 47
         },
         {
-          "service": "ai",
+          "service": "bi",
           "method": "GET",
-          "url": "/vector/collections",
-          "fullPath": "/api/ai/vector/collections",
-          "file": "apps/web/src/api/ai/vector.ts",
-          "line": 39
+          "url": "/data-analysis/category-pivot",
+          "fullPath": "/api/bi/data-analysis/category-pivot",
+          "file": "apps/web/src/api/bi/dataAnalysis.ts",
+          "line": 53
+        },
+        {
+          "service": "bi",
+          "method": "GET",
+          "url": "/data-analysis",
+          "fullPath": "/api/bi/data-analysis",
+          "file": "apps/web/src/api/bi/dataAnalysis.ts",
+          "line": 59
+        },
+        {
+          "service": "crm",
+          "method": "GET",
+          "url": "/customers/{customerId}/finance",
+          "fullPath": "/api/crm/customers/{customerId}/finance",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 75
+        },
+        {
+          "service": "crm",
+          "method": "PUT",
+          "url": "/customers/{customerId}/finance",
+          "fullPath": "/api/crm/customers/{customerId}/finance",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 83
+        },
+        {
+          "service": "crm",
+          "method": "GET",
+          "url": "/invoices/{invoiceId}",
+          "fullPath": "/api/crm/invoices/{invoiceId}",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 109
+        },
+        {
+          "service": "crm",
+          "method": "POST",
+          "url": "/invoices",
+          "fullPath": "/api/crm/invoices",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 115
+        },
+        {
+          "service": "crm",
+          "method": "PUT",
+          "url": "/invoices/{invoiceId}",
+          "fullPath": "/api/crm/invoices/{invoiceId}",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 121
+        },
+        {
+          "service": "crm",
+          "method": "DELETE",
+          "url": "/invoices/{invoiceId}",
+          "fullPath": "/api/crm/invoices/{invoiceId}",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 130
+        },
+        {
+          "service": "crm",
+          "method": "POST",
+          "url": "/invoices/{invoiceId}/issue",
+          "fullPath": "/api/crm/invoices/{invoiceId}/issue",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 136
+        },
+        {
+          "service": "crm",
+          "method": "POST",
+          "url": "/invoices/{invoiceId}/cancel",
+          "fullPath": "/api/crm/invoices/{invoiceId}/cancel",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 144
+        },
+        {
+          "service": "crm",
+          "method": "POST",
+          "url": "/invoices/{invoiceId}/red-flush",
+          "fullPath": "/api/crm/invoices/{invoiceId}/red-flush",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 153
+        },
+        {
+          "service": "crm",
+          "method": "GET",
+          "url": "/collections/{recordId}",
+          "fullPath": "/api/crm/collections/{recordId}",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 178
+        },
+        {
+          "service": "crm",
+          "method": "POST",
+          "url": "/collections",
+          "fullPath": "/api/crm/collections",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 186
+        },
+        {
+          "service": "crm",
+          "method": "POST",
+          "url": "/collections/{recordId}/confirm",
+          "fullPath": "/api/crm/collections/{recordId}/confirm",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 192
+        },
+        {
+          "service": "crm",
+          "method": "POST",
+          "url": "/collections/batch-confirm",
+          "fullPath": "/api/crm/collections/batch-confirm",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 200
+        },
+        {
+          "service": "crm",
+          "method": "GET",
+          "url": "/reports/receivable-aging",
+          "fullPath": "/api/crm/reports/receivable-aging",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 212
+        },
+        {
+          "service": "crm",
+          "method": "GET",
+          "url": "/reports/receivable-summary",
+          "fullPath": "/api/crm/reports/receivable-summary",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 220
+        },
+        {
+          "service": "crm",
+          "method": "GET",
+          "url": "/reports/overdue-receivables",
+          "fullPath": "/api/crm/reports/overdue-receivables",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 234
+        },
+        {
+          "service": "crm",
+          "method": "GET",
+          "url": "/invoices/export",
+          "fullPath": "/api/crm/invoices/export",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 249
+        },
+        {
+          "service": "crm",
+          "method": "GET",
+          "url": "/collections/export",
+          "fullPath": "/api/crm/collections/export",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 263
+        },
+        {
+          "service": "crm",
+          "method": "GET",
+          "url": "/reports/receivable-aging/export",
+          "fullPath": "/api/crm/reports/receivable-aging/export",
+          "file": "apps/web/src/api/crmFinance/index.ts",
+          "line": 277
+        },
+        {
+          "service": "core",
+          "method": "GET",
+          "url": "/dict/types",
+          "fullPath": "/api/core/dict/types",
+          "file": "apps/web/src/api/dict/dict.ts",
+          "line": 28
+        },
+        {
+          "service": "core",
+          "method": "GET",
+          "url": "/dict/types/{code}",
+          "fullPath": "/api/core/dict/types/{code}",
+          "file": "apps/web/src/api/dict/dict.ts",
+          "line": 32
+        },
+        {
+          "service": "core",
+          "method": "POST",
+          "url": "/dict/types",
+          "fullPath": "/api/core/dict/types",
+          "file": "apps/web/src/api/dict/dict.ts",
+          "line": 41
+        },
+        {
+          "service": "core",
+          "method": "PUT",
+          "url": "/dict/types/{code}",
+          "fullPath": "/api/core/dict/types/{code}",
+          "file": "apps/web/src/api/dict/dict.ts",
+          "line": 48
+        },
+        {
+          "service": "core",
+          "method": "DELETE",
+          "url": "/dict/types/{code}",
+          "fullPath": "/api/core/dict/types/{code}",
+          "file": "apps/web/src/api/dict/dict.ts",
+          "line": 52
         }
       ]
     },

@@ -26,6 +26,7 @@ pub mod stock_take;
 pub mod transfer_order;
 pub mod warehouse;
 pub mod wave_pick;
+pub mod wms_compat;
 pub mod wms_plugin;
 
 #[derive(Clone)]
