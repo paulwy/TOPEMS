@@ -27,14 +27,17 @@ const PmProjectGantt: React.FC<PmProjectGanttProps> = ({
 
   return (
     <Card>
-      <CardHeader sx={{ pb: 2 }}>
-        <Typography
-          variant='h6'
-          sx={{ fontSize: '1.125rem' }}
-        >
-          {t('pm.projectdetail.project_gantt')}
-        </Typography>
-      </CardHeader>
+      <CardHeader
+        sx={{ pb: 2 }}
+        title={
+          <Typography
+            variant='h6'
+            sx={{ fontSize: '1.125rem' }}
+          >
+            {t('pm.projectdetail.project_gantt')}
+          </Typography>
+        }
+      />
       <CardContent>
         {hasProject ? (
           <GanttChart

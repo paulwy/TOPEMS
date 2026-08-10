@@ -39,19 +39,22 @@ const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDat
           alignItems: 'center',
           justifyContent: 'space-between',
         }}
-      >
-        <Typography
-          variant='h6'
-          sx={{ fontSize: '1.125rem' }}
-        >
-          {t('pm.project_detail.phase_list')}
-        </Typography>
-        <ActionButton
-          label={t('pm.project_detail.add_phase')}
-          variant='secondary'
-          size='small'
-        />
-      </CardHeader>
+        title={
+          <Typography
+            variant='h6'
+            sx={{ fontSize: '1.125rem' }}
+          >
+            {t('pm.project_detail.phase_list')}
+          </Typography>
+        }
+        action={
+          <ActionButton
+            label={t('pm.project_detail.add_phase')}
+            variant='secondary'
+            size='small'
+          />
+        }
+      />
       <CardContent sx={{ p: 0 }}>
         <Box sx={{ overflowX: 'auto' }}>
           <Table>

@@ -43,19 +43,22 @@ const PmProjectMilestone: React.FC<PmProjectMilestoneProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
         }}
-      >
-        <Typography
-          variant='h6'
-          sx={{ fontSize: '1.125rem' }}
-        >
-          {t('pm.project_detail.milestone_list')}
-        </Typography>
-        <ActionButton
-          label={t('pm.project_detail.add_milestone')}
-          variant='secondary'
-          size='small'
-        />
-      </CardHeader>
+        title={
+          <Typography
+            variant='h6'
+            sx={{ fontSize: '1.125rem' }}
+          >
+            {t('pm.project_detail.milestone_list')}
+          </Typography>
+        }
+        action={
+          <ActionButton
+            label={t('pm.project_detail.add_milestone')}
+            variant='secondary'
+            size='small'
+          />
+        }
+      />
       <CardContent sx={{ p: 0 }}>
         <Box sx={{ overflowX: 'auto' }}>
           <Table>

@@ -28,14 +28,17 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
       }}
     >
       <Card>
-        <CardHeader sx={{ pb: 2 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontSize: '1.125rem' }}
-          >
-            {t('pm.projectdetail.budget_execution')}
-          </Typography>
-        </CardHeader>
+        <CardHeader
+          sx={{ pb: 2 }}
+          title={
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              {t('pm.projectdetail.budget_execution')}
+            </Typography>
+          }
+        />
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Box
             sx={{
@@ -144,14 +147,17 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
       </Card>
 
       <Card>
-        <CardHeader sx={{ pb: 2 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontSize: '1.125rem' }}
-          >
-            {t('pm.projectdetail.revenue_and_profit')}
-          </Typography>
-        </CardHeader>
+        <CardHeader
+          sx={{ pb: 2 }}
+          title={
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              {t('pm.projectdetail.revenue_and_profit')}
+            </Typography>
+          }
+        />
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Box
             sx={{
@@ -246,19 +252,22 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
             alignItems: 'center',
             justifyContent: 'space-between',
           }}
-        >
-          <Typography
-            variant='h6'
-            sx={{ fontSize: '1.125rem' }}
-          >
-            {t('pm.projectdetail.cost_composition')}
-          </Typography>
-          <ActionButton
-            label={t('pm.projectdetail.view_detail')}
-            variant='secondary'
-            size='small'
-          />
-        </CardHeader>
+          title={
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              {t('pm.projectdetail.cost_composition')}
+            </Typography>
+          }
+          action={
+            <ActionButton
+              label={t('pm.projectdetail.view_detail')}
+              variant='secondary'
+              size='small'
+            />
+          }
+        />
         <CardContent>
           <Box
             sx={{
@@ -342,14 +351,17 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
       </Card>
 
       <Card>
-        <CardHeader sx={{ pb: 2 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontSize: '1.125rem' }}
-          >
-            {t('pm.projectdetail.cost_center_info')}
-          </Typography>
-        </CardHeader>
+        <CardHeader
+          sx={{ pb: 2 }}
+          title={
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              {t('pm.projectdetail.cost_center_info')}
+            </Typography>
+          }
+        />
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Box
             sx={{
@@ -424,14 +436,17 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
       </Card>
 
       <Card>
-        <CardHeader sx={{ pb: 2 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontSize: '1.125rem' }}
-          >
-            {t('pm.projectdetail.quick_actions')}
-          </Typography>
-        </CardHeader>
+        <CardHeader
+          sx={{ pb: 2 }}
+          title={
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              {t('pm.projectdetail.quick_actions')}
+            </Typography>
+          }
+        />
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <ActionButton
             label={t('pm.projectdetail.view_cost_detail')}
