@@ -7,6 +7,7 @@ use crate::models::{
     CONFIG, DOCUMENTS, VECTORS,
 };
 use std::fs;
+use tracing;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tracing;

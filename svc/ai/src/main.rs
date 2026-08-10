@@ -25,8 +25,15 @@ use services::{
     AnalysisConfig, AnalysisService, Database, DocumentService, MultimodalService, QAConfig,
     QAService, RecommendationService, VectorService,
 };
+<<<<<<< Updated upstream
 use topems_shared_ai::ai_client::{AIModelConfig, AIProviderType};
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
+=======
+use topems_shared::ai_client::{AIModelConfig, AIProviderType};
+use topems_shared_bootstrap::{
+    bootstrap_service, resolve_port, run, Application, ServiceConfig,
+};
+>>>>>>> Stashed changes
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

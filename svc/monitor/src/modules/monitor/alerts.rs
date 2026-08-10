@@ -61,7 +61,14 @@ impl NotificationClient {
         });
 
         reqwest::Client::new()
+<<<<<<< Updated upstream:svc/monitor/src/modules/monitor/alerts.rs
             .post(format!("{}/api/communication/push/send", self.base_url))
+=======
+            .post(format!(
+                "{}/api/communication/push/send",
+                self.base_url
+            ))
+>>>>>>> Stashed changes:svc/unified-core/src/modules/monitor/alerts.rs
             .json(&payload)
             .send()
             .await?;

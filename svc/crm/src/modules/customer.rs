@@ -15,10 +15,16 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
+<<<<<<< Updated upstream
 use topems_shared::{ApiResponse, ListResponse};
 use topems_shared_core::response::api_error;
 use topems_shared_event::event::MasterDataAction;
 use topems_shared_service_client::service_client::CreateInstanceRequest;
+=======
+use topems_shared::event::MasterDataAction;
+use topems_shared::service_client::CreateInstanceRequest;
+use topems_shared::{api_error, ApiResponse, ListResponse};
+>>>>>>> Stashed changes
 
 #[derive(Debug, Deserialize)]
 pub struct CustomerPaginationParams {

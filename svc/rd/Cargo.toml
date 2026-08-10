@@ -25,6 +25,10 @@ thiserror.workspace = true
 anyhow.workspace = true
 bcrypt.workspace = true
 reqwest.workspace = true
+<<<<<<< Updated upstream
+=======
+topems-shared = { path = "../../lib" }
+>>>>>>> Stashed changes
 topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 utoipa.workspace = true
 csv.workspace = true

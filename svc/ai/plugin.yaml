@@ -1,10 +1,17 @@
+<<<<<<< Updated upstream
 author: TOPEMS Team
+=======
+author: TOPEMS
+>>>>>>> Stashed changes
 category: AI
 code: ai
 name: AI 智能服务
 description: AI 智能服务 - 向量数据库、文档分析、QA问答、智能生成
 version: 1.0.0
+<<<<<<< Updated upstream
 icon: auto_awesome
+=======
+>>>>>>> Stashed changes
 plugin_type: ai
 dependencies: []
 deployment: {}

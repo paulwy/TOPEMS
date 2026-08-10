@@ -1,10 +1,17 @@
+<<<<<<< Updated upstream
 author: TOPEMS Team
+=======
+author: TOPEMS
+>>>>>>> Stashed changes
 category: Finance
 code: billing
 name: 计费服务
 description: 计费服务 - 账单管理、费用核算、支付处理
 version: 1.0.0
+<<<<<<< Updated upstream
 icon: payments
+=======
+>>>>>>> Stashed changes
 plugin_type: service
 dependencies: []
 deployment: {}

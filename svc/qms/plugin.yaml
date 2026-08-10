@@ -1,10 +1,17 @@
+<<<<<<< Updated upstream
 author: TOPEMS Team
+=======
+author: TOPEMS
+>>>>>>> Stashed changes
 category: Quality
 code: qms
 name: 质量管理体系
 description: QMS 质量管理体系系统，包含质量计划、来料检验（IQC）、过程检验（IPQC）、成品检验（FQC）、不合格品管理、纠正预防措施（CAPA）、质量追溯、供应商质量管理等模块
 version: 1.0.0
+<<<<<<< Updated upstream
 icon: task_alt
+=======
+>>>>>>> Stashed changes
 plugin_type: business
 dependencies:
   - unified-core
@@ -13,6 +20,10 @@ dependencies:
 runtime:
   port: 8050
   health_endpoint: /health
+<<<<<<< Updated upstream
   base_path: /api/qms
+=======
+  base_path: /api/qa
+>>>>>>> Stashed changes
 deployment: {}
 permissions: {}
