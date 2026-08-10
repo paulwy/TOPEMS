@@ -24,8 +24,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { navigationRegistryV2 } from '@/lib/navigation';
-import type { NavItem, ModuleCardConfig } from '@/lib/navigation/types';
-import { SUITE_GROUPS } from '@/lib/navigation/types';
+import type { NavItem, ModuleCardConfig, NavGroup } from '@/lib/navigation/types';
+import { NAV_GROUPS, SUITE_GROUPS } from '@/lib/navigation/types';
 
 import {
   ChevronLeft,
@@ -134,6 +134,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [, setRecentVisits] = useState<Array<NavItem>>([]);
   const [favoritesAnchorEl, setFavoritesAnchorEl] = useState<HTMLElement | null>(null);
+  const [collapsedModuleAnchorEl, setCollapsedModuleAnchorEl] = useState<HTMLElement | null>(null);
+  const [collapsedModuleCode, setCollapsedModuleCode] = useState<string | null>(null);
+  const collapsedPopoverCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 加载收藏和最近访问
   useEffect(() => {
@@ -300,6 +303,19 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     return navigationRegistryV2.getSidebarNavItems(currentModule, checkPermission);
   }, [currentModule, checkPermission]);
 
+  const collapsedModule = useMemo(() => {
+    if (!collapsedModuleCode) return null;
+    return navigationRegistryV2.getModule(collapsedModuleCode);
+  }, [collapsedModuleCode]);
+
+  const collapsedModuleGroups = useMemo(() => {
+    if (!collapsedModuleCode) return [] as Array<[NavGroup, NavItem[]]>;
+    const grouped = navigationRegistryV2.getSidebarNavGrouped(collapsedModuleCode, checkPermission);
+    return Object.entries(NAV_GROUPS)
+      .map(([groupKey]) => [groupKey as NavGroup, grouped[groupKey as NavGroup] || []] as const)
+      .filter(([, items]) => items.length > 0);
+  }, [collapsedModuleCode, checkPermission]);
+
   // ---- 最终渲染的导航项 ----
   const isModuleMode = currentModule !== null;
   const displayNavItems = isModuleMode ? moduleNavItems : [];
@@ -338,6 +354,36 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       outlineOffset: -2,
     },
   });
+
+  const clearCollapsedPopoverCloseTimer = () => {
+    if (collapsedPopoverCloseTimer.current) {
+      clearTimeout(collapsedPopoverCloseTimer.current);
+      collapsedPopoverCloseTimer.current = null;
+    }
+  };
+
+  const openCollapsedModulePopover = (moduleCode: string, anchorEl: HTMLElement) => {
+    clearCollapsedPopoverCloseTimer();
+    setCollapsedModuleCode(moduleCode);
+    setCollapsedModuleAnchorEl(anchorEl);
+  };
+
+  const scheduleCollapsedModulePopoverClose = () => {
+    clearCollapsedPopoverCloseTimer();
+    collapsedPopoverCloseTimer.current = setTimeout(() => {
+      setCollapsedModuleAnchorEl(null);
+      setCollapsedModuleCode(null);
+    }, 140);
+  };
+
+  const navigateFromCollapsedPopover = (path?: string) => {
+    if (!path) return;
+    const navigablePath = getNavigablePath(path);
+    if (!navigablePath) return;
+    navigate(navigablePath);
+    setCollapsedModuleAnchorEl(null);
+    setCollapsedModuleCode(null);
+  };
 
   return (
     <Paper
@@ -552,6 +598,158 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         )}
       </Popover>
 
+      {/* ---- 折叠态模块子树弹窗：L2 hover → L3/L4 全显 ---- */}
+      <Popover
+        open={collapsed && Boolean(collapsedModuleAnchorEl) && collapsedModuleGroups.length > 0}
+        anchorEl={collapsedModuleAnchorEl}
+        onClose={() => {
+          setCollapsedModuleAnchorEl(null);
+          setCollapsedModuleCode(null);
+        }}
+        anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'center', horizontal: 'left' }}
+        disableRestoreFocus
+        sx={{
+          pointerEvents: 'none',
+          '& .MuiPaper-root': {
+            pointerEvents: 'auto',
+            width: 320,
+            maxHeight: 'min(72vh, 640px)',
+            ml: 1,
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 12px 36px rgba(15, 23, 42, 0.16)',
+            overflow: 'hidden',
+          },
+        }}
+        slotProps={{
+          paper: {
+            onMouseEnter: clearCollapsedPopoverCloseTimer,
+            onMouseLeave: scheduleCollapsedModulePopoverClose,
+          },
+        }}
+      >
+        <Box sx={{ p: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {collapsedModule?.icon && renderIcon(collapsedModule.icon, 18)}
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontSize: '0.9375rem', fontWeight: 700, color: 'text.primary' }}>
+                {collapsedModule?.name || collapsedModuleCode}
+              </Typography>
+              <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                悬浮展开完整菜单
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            maxHeight: 'calc(min(72vh, 640px) - 64px)',
+            overflowY: 'auto',
+            py: 1,
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'divider transparent',
+          }}
+        >
+          {collapsedModuleGroups.map(([groupKey, items]) => {
+            const groupInfo = NAV_GROUPS[groupKey];
+            return (
+              <Box
+                key={groupKey}
+                sx={{ px: 1, '& + &': { mt: 0.75 } }}
+              >
+                <Typography
+                  sx={{
+                    px: 1,
+                    py: 0.75,
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: 'text.secondary',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  {groupInfo.label}
+                </Typography>
+                {items.map((navItem) => {
+                  const itemActive = Boolean(
+                    navItem.path === location.pathname ||
+                      (navItem.path && location.pathname.startsWith(`${navItem.path}/`))
+                  );
+                  return (
+                    <Box
+                      key={navItem.code}
+                      component='button'
+                      type='button'
+                      role='menuitem'
+                      onClick={() => navigateFromCollapsedPopover(navItem.path)}
+                      sx={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        px: 1,
+                        py: 0.875,
+                        border: 0,
+                        borderRadius: 1,
+                        bgcolor: itemActive ? 'primary.50' : 'transparent',
+                        color: itemActive ? 'primary.main' : 'text.primary',
+                        textAlign: 'left',
+                        cursor: navItem.path ? 'pointer' : 'default',
+                        '&:hover': {
+                          bgcolor: itemActive ? 'primary.50' : 'action.hover',
+                        },
+                      }}
+                    >
+                      {navItem.icon ? (
+                        renderIcon(navItem.icon, 16)
+                      ) : (
+                        <Box
+                          sx={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: '50%',
+                            bgcolor: itemActive ? 'primary.main' : 'divider',
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '0.875rem',
+                            fontWeight: itemActive ? 700 : 500,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {navItem.label}
+                        </Typography>
+                        {navItem.path && (
+                          <Typography
+                            sx={{
+                              fontSize: '0.6875rem',
+                              color: 'text.secondary',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {navItem.path}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+            );
+          })}
+        </Box>
+      </Popover>
+
       {/* ---- 1. 导航菜单 ---- */}
       <Box
         sx={{
@@ -650,6 +848,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   )}
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     {items.map((item: NavItem, index: number) => {
+                      const itemModuleCode = item.moduleCode || item.code;
+                      const itemHasPopoverTree =
+                        navigationRegistryV2.getSidebarNavItems(itemModuleCode, checkPermission)
+                          .length > 0;
                       const isActive = Boolean(
                         item.path === location.pathname ||
                         (item.path && location.pathname.startsWith(`${item.path}/`))
@@ -661,6 +863,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                           tabIndex={0}
                           key={item.code || `${item.label}-${index}`}
                           onClick={() => item.path && navigate(item.path)}
+                          onMouseEnter={(e) => {
+                            if (collapsed && itemHasPopoverTree) {
+                              openCollapsedModulePopover(itemModuleCode, e.currentTarget);
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            if (collapsed && itemHasPopoverTree) {
+                              scheduleCollapsedModulePopoverClose();
+                            }
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
@@ -731,6 +943,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                           title={item.label}
                           placement='right'
                           arrow
+                          disableHoverListener={itemHasPopoverTree}
                         >
                           {NavButton}
                         </Tooltip>
