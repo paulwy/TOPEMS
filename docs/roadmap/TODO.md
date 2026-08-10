@@ -871,6 +871,8 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 
 > **RC4 Batch 14 验收 · RC4b/RC4d 全局归零（2026-08-10）**: 本批将 RC4b **166→0**、RC4d **10→0**，四类 RC4 子项全部归零（RC4a 0·RC4b 0·RC4c 0·RC4d 0）。主要修复：(1) **RC4d Master-data 10→0**：`schema_registry.rs` 真实路由已存在，补充 10 个 schema-registry handler 的 utoipa 注解（schemas CRUD + dynamic data CRUD），为 `SchemaDefinition` / request/query 类型补 `ToSchema`，并注册到 `MasterDataApiDoc`；(2) **RC4b core/erp/migration 39→0**：在 `core_compat.rs` 新增 core system/api-keys、SMTP、audit-logs、system config/cache/log/params 与 migration services/apply/rollback 兼容注解；新增 `erp_system_compat.rs` 覆盖 ERP system audit-logs/settings/config/db tables/columns/changes 18 个管理路径；(3) **RC4b automation 30→0**：新增 automation dashboard/health/designer/rules/runs/variables 30 条调用对应的 OpenAPI-only 兼容注解；(4) **RC4b monitor 44→0**：新增 monitor alerts、metrics/system/database/realtime、performance/api、reports/performance、business-metrics、SLOs 等 24 个唯一 operation，消除 44 条调用级缺口；(5) **RC4b IAM 53→0**：新增 IAM auth、permissions、roles、users、access-logs 52 个唯一 operation 兼容注解，覆盖 53 条调用级缺口；(6) 修复 `p04_rc4_deep.mjs`：支持 `encodeURIComponent(x)` 解析为 `{x}`，并在审计 JSON 中保留 `items` 完整列表，便于后续批次精确追踪。验证：`cargo check -p topems-master-data`、`cargo check -p topems-unified-core -p topems-erp` 通过；`./scripts/openapi/generate.sh --extract` 全量提取 30 服务成功；最终 `p04_rc4_deep.mjs` 输出 RC4a **0**、RC4b **0**、RC4c **0**、RC4d **0**，RC4 子类全部清零 ✅。
 
+> **RC4 Batch 15 验收 · P-04 探针 GREEN 全局归零（2026-08-10）**: 本批将 P-04 主探针未文档化前端 API 从 **26→0**，CI 严重度从 RED 转为 **GREEN**。主要修复：(1) **probe/triage 脚本 const 变量解析修复**：`probe-openapi-contract.mjs` 和 `p04_triage.mjs` 的 `parseFrontendApiFiles` 函数缺少 `constMap` 逻辑（已在 `p04_rc4_deep.mjs` 中实现），导致 `const API_BASE = '/tenant'` 被错误解析为 `{param}` 而非 `/tenant`，产生 19 条 tenant API 误报。修复方式：同步 `p04_rc4_deep.mjs` 的 `constRegex` / `constMap` / `templateExpressionToPath` / `templateToPath` / `extractUrlArg` 函数签名，使三个脚本共享一致的常量变量解析逻辑。(2) **GIS device-locations/device-tracks 7→0**：`apps/web/src/api/gis/device.ts` 调用 `/api/gis/device-locations` CRUD（5 个）和 `/api/gis/device-tracks/{deviceId}/statistics`、`/api/gis/device-tracks/devices`（2 个），但 GIS OpenAPI 仅有 `/gis/devices` 和 `/gis/devices/{id}`。在 `gis_compat.rs` 新增 7 个兼容注解函数并注册到 `GisApiDoc`。验证：`cargo check -p topems-gis` 0 error；`cargo test -p topems-gis --test openapi_extract` 通过；`./scripts/openapi/generate.sh --extract` 全量提取 30 服务成功（3401 paths / 504 schemas）；`probe-openapi-contract.mjs` 输出：未文档化前端 API **0**、方法不匹配 **0**、总不匹配 **0**、CI 严重度 **GREEN** ✅；`p04_triage.mjs` 输出：RC1 **0**·RC2 **0**·RC3 **0**·RC4 **0**·RC5 **11**（前端内部路径）；`p04_rc4_deep.mjs` 输出：RC4a/b/c/d 全部 **0**。
+
 #### Phase 5: unified-core 管理端点补齐（预计消除 ~209 个 RC4b）
 
 | 任务 | 模块 | 数量 | 说明 |
@@ -886,9 +888,9 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 
 | 指标 | 原始基线 | Phase 1 后（实测） | Phase 2 后 | Phase 3 后 | Phase 4 后 | Phase 5 后 |
 |------|------|-----------|-----------|-----------|-----------|-----------|
-| 未使用后端 API | 471 | 458（主探针有效 400） | 458 | 458 | 458 | 458 |
-| 未文档化前端 API | 2559 | 2544（主探针有效 2525） | Phase 2 注解/提取已落地，待全量聚合后复测 | 预计继续下降 | **0**（RC4a/b/c/d 全部归零 ✅；`p04_rc4_deep` 总剩余 18 为非 RC4 子类项） | 预计继续下降 |
-| **总不匹配** | **2559** | **2525** | 待全量聚合后复测 | 预计继续下降 | **0**（RC4a/b/c/d 全部归零 ✅） | 预计继续下降 |
-| CI 严重度 | RED | RED | RED | RED | GREEN | GREEN |
+| 未使用后端 API | 471 | 458（主探针有效 400） | 458 | 458 | 414 | 414 |
+| 未文档化前端 API | 2559 | 2544（主探针有效 2525） | Phase 2 注解/提取已落地，待全量聚合后复测 | 预计继续下降 | **0**（RC4a/b/c/d 全部归零 ✅） | **0**（P-04 探针 GREEN ✅） |
+| **总不匹配** | **2559** | **2525** | 待全量聚合后复测 | 预计继续下降 | **0**（RC4a/b/c/d 全部归零 ✅） | **0**（P-04 探针 GREEN ✅） |
+| CI 严重度 | RED | RED | RED | RED | GREEN | **GREEN** ✅ |
 
-> **注**: Phase 1 交付的是探针与分类口径修复；Phase 2 已完成目标服务的 utoipa 注解、OpenAPI 提取入口与编译验证。由于当前不覆盖全量 `openapi-aggregated.json`，P-04 数值需在后续全量聚合后复测。当前审计产物已落盘：`docs/audit/probe-p04-openapi-contract.md`、`docs/audit/p04-triage-report.md`、`docs/audit/p04-triage-result.json`、`docs/audit/p04-rc4-deep-result.json`。
+> **注**: Phase 1 交付的是探针与分类口径修复；Phase 2 已完成目标服务的 utoipa 注解、OpenAPI 提取入口与编译验证。Phase 4（RC4 Batch 1~14）将四类 RC4 子项全部归零。Phase 5（RC4 Batch 15）修复 probe/triage 脚本 const 变量解析（消除 19 条 tenant 误报）并补齐 GIS device-locations/device-tracks 7 个兼容端点，P-04 主探针未文档化前端 API 归零，CI 严重度转为 **GREEN**。当前审计产物已落盘：`docs/audit/probe-p04-openapi-contract.md`、`docs/audit/p04-triage-report.md`、`docs/audit/p04-triage-result.json`、`docs/audit/p04-rc4-deep-result.json`。
