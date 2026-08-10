@@ -531,6 +531,25 @@ pub struct VehicleRequest {
         crate::modules::consolidation::company_relations::delete_company_relation,
         crate::modules::consolidation::company_relations::get_company_financial_data,
         crate::modules::consolidation::company_relations::get_company_tree,
+        // RC4b ERP system/admin compatibility
+        crate::modules::erp_system_compat::compat_get_api_erp_system_audit_logs,
+        crate::modules::erp_system_compat::compat_get_api_erp_system_audit_logs_id,
+        crate::modules::erp_system_compat::compat_get_api_erp_system_audit_logs_export,
+        crate::modules::erp_system_compat::compat_get_api_erp_system_settings,
+        crate::modules::erp_system_compat::compat_post_api_erp_system_settings,
+        crate::modules::erp_system_compat::compat_get_api_erp_system_settings_key,
+        crate::modules::erp_system_compat::compat_put_api_erp_system_settings_key,
+        crate::modules::erp_system_compat::compat_delete_api_erp_system_settings_key,
+        crate::modules::erp_system_compat::compat_put_api_erp_system_settings_batch,
+        crate::modules::erp_system_compat::compat_get_api_erp_system_config,
+        crate::modules::erp_system_compat::compat_put_api_erp_system_config,
+        crate::modules::erp_system_compat::compat_get_api_erp_system_db_tables,
+        crate::modules::erp_system_compat::compat_get_api_erp_system_db_tables_tablename,
+        crate::modules::erp_system_compat::compat_post_api_erp_system_db_columns_preview,
+        crate::modules::erp_system_compat::compat_post_api_erp_system_db_columns,
+        crate::modules::erp_system_compat::compat_put_api_erp_system_db_columns_tablename_columnname,
+        crate::modules::erp_system_compat::compat_delete_api_erp_system_db_columns_tablename_columnname,
+        crate::modules::erp_system_compat::compat_get_api_erp_system_db_changes,
     ),
     components(
         schemas(
@@ -577,6 +596,7 @@ pub struct VehicleRequest {
         (name = "Dict", description = "数据字典接口"),
         (name = "Master Data", description = "主数据管理接口"),
         (name = "Consolidation", description = "合并报表接口"),
+        (name = "ERP-System-Compat", description = "ERP system/admin compatibility OpenAPI endpoints"),
     ),
     info(
         title = "TOPEMS-ERP API",

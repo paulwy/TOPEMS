@@ -172,6 +172,10 @@ function findTemplateExpressionEnd(text, startIndex) {
 
 function templateExpressionToPath(rawExpression, constMap) {
   const expression = rawExpression.trim();
+  const encodedIdentifier = expression.match(/^encodeURIComponent\(([^)]+)\)$/)?.[1]?.trim();
+  if (encodedIdentifier) {
+    return templateExpressionToPath(encodedIdentifier, constMap);
+  }
   const leadingIdentifier = expression.match(/^([A-Za-z_$][\w$]*)\b/)?.[1];
   if (NON_PATH_VARS.has(expression) || NON_PATH_VARS.has(leadingIdentifier)) {
     return '';
@@ -407,21 +411,25 @@ const output = {
     RC4a_missing_utoipa: {
       count: rc4SubCategories.RC4a_missing_utoipa.length,
       byService: subCategoryByService.RC4a_missing_utoipa,
+      items: rc4SubCategories.RC4a_missing_utoipa,
       sample: rc4SubCategories.RC4a_missing_utoipa.slice(0, 30),
     },
     RC4b_admin_system: {
       count: rc4SubCategories.RC4b_admin_system.length,
       byService: subCategoryByService.RC4b_admin_system,
+      items: rc4SubCategories.RC4b_admin_system,
       sample: rc4SubCategories.RC4b_admin_system.slice(0, 30),
     },
     RC4c_query_string: {
       count: rc4SubCategories.RC4c_query_string.length,
       byService: subCategoryByService.RC4c_query_string,
+      items: rc4SubCategories.RC4c_query_string,
       sample: rc4SubCategories.RC4c_query_string.slice(0, 20),
     },
     RC4d_truly_unregistered: {
       count: rc4SubCategories.RC4d_truly_unregistered.length,
       byService: subCategoryByService.RC4d_truly_unregistered,
+      items: rc4SubCategories.RC4d_truly_unregistered,
       sample: rc4SubCategories.RC4d_truly_unregistered.slice(0, 50),
     },
   },

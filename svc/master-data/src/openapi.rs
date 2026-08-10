@@ -10,6 +10,9 @@ use crate::modules::quality_v51::{
     GovernanceInsight, GovernanceSuggestion, QualityCheckV51, QualityDashboard, QualityRule,
     QualityScore, QualityStatus, RunQualityCheckRequest,
 };
+use crate::modules::schema_registry::{
+    CreateSchemaRequest, ListDataQuery, ListSchemaQuery, SchemaDefinition, UpdateSchemaRequest,
+};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -27,6 +30,11 @@ use crate::modules::quality_v51::{
             CreateQualityRuleRequest,
             AutoFixRequest,
             GenerateSuggestionsRequest,
+            SchemaDefinition,
+            CreateSchemaRequest,
+            UpdateSchemaRequest,
+            ListSchemaQuery,
+            ListDataQuery,
         ),
     ),
     paths(
@@ -51,6 +59,17 @@ use crate::modules::quality_v51::{
         crate::modules::dict::handlers::delete_dict_item,
         crate::modules::dict::handlers::batch_create_dict_items,
         crate::modules::dict::handlers::export_dict_items,
+        // ===== Schema Registry =====
+        crate::modules::schema_registry::create_schema,
+        crate::modules::schema_registry::list_schemas,
+        crate::modules::schema_registry::get_schema,
+        crate::modules::schema_registry::update_schema,
+        crate::modules::schema_registry::delete_schema,
+        crate::modules::schema_registry::create_data,
+        crate::modules::schema_registry::list_data,
+        crate::modules::schema_registry::get_data,
+        crate::modules::schema_registry::update_data,
+        crate::modules::schema_registry::delete_data,
     ),
     tags(
         (name = "quality_v51", description = "数据质量闭环 + 自动修复 + AI 治理 API"),
@@ -64,6 +83,7 @@ use crate::modules::quality_v51::{
         (name = "ai_governance_v59", description = "AI 治理 + 智能匹配 + 自动分类 API"),
         (name = "metadata_v60", description = "元数据管理 + 血缘增强 + 生命周期 API"),
         (name = "Dict", description = "字典管理 - 字典类型与字典项CRUD"),
+        (name = "Schema Registry", description = "Schema Registry - 元数据驱动动态 API"),
     ),
     info(
         title = "TOPEMS Master Data API",

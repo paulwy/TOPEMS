@@ -1700,3 +1700,452 @@ pub async fn compat_get_api_communication_notification_notifications_id() {}
     responses((status = 200, description = "IM compatibility endpoint"))
 )]
 pub async fn compat_post_api_communication_im_rooms_data_chat_id_messages() {}
+
+// ========== RC4b · Core system/admin compatibility ==========
+
+#[utoipa::path(
+    get,
+    path = "/api/core/system/api-keys",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_system_api_keys() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/system/api-keys",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_system_api_keys() {}
+
+#[utoipa::path(
+    delete,
+    path = "/api/core/system/api-keys/{id}",
+    tag = "Core-System-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_delete_api_core_system_api_keys_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/system/settings/smtp",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_system_settings_smtp() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/core/system/settings/smtp",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_put_api_core_system_settings_smtp() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/system/audit-logs",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_system_audit_logs() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/system/audit-logs/{id}",
+    tag = "Core-System-Compat",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_system_audit_logs_id() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/system/audit-logs/export",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_system_audit_logs_export() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/system/config",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_system_config() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/core/system/config",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_put_api_core_system_config() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/system/cache/config",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_system_cache_config() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/core/system/cache/config",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_put_api_core_system_cache_config() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/system/cache/clear",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_system_cache_clear() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/system/cache/stats",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_system_cache_stats() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/system/log/config",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_system_log_config() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/core/system/log/config",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_put_api_core_system_log_config() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/system/params",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_system_params() {}
+
+#[utoipa::path(
+    put,
+    path = "/api/core/system/params",
+    tag = "Core-System-Compat",
+    responses((status = 200, description = "Core system compatibility endpoint"))
+)]
+pub async fn compat_put_api_core_system_params() {}
+
+// ========== RC4b · Migration compatibility ==========
+
+#[utoipa::path(
+    get,
+    path = "/api/core/migration/migrations/services",
+    tag = "Migration-Compat",
+    responses((status = 200, description = "Migration compatibility endpoint"))
+)]
+pub async fn compat_get_api_core_migration_migrations_services() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/migration/migrations/services/{serviceName}/apply",
+    tag = "Migration-Compat",
+    params(("serviceName" = String, Path, description = "serviceName")),
+    responses((status = 200, description = "Migration compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_migration_migrations_services_servicename_apply() {}
+
+#[utoipa::path(
+    post,
+    path = "/api/core/migration/migrations/services/{serviceName}/rollback",
+    tag = "Migration-Compat",
+    params(("serviceName" = String, Path, description = "serviceName")),
+    responses((status = 200, description = "Migration compatibility endpoint"))
+)]
+pub async fn compat_post_api_core_migration_migrations_services_servicename_rollback() {}
+
+// ========== RC4b · Automation compatibility ==========
+
+#[utoipa::path(get, path = "/api/core/automation/dashboard/stats", tag = "Automation-Compat", responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_dashboard_stats() {}
+
+#[utoipa::path(get, path = "/api/core/automation/health", tag = "Automation-Compat", responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_health() {}
+
+#[utoipa::path(get, path = "/api/core/automation/designer/canvas/{ruleId}", tag = "Automation-Compat", params(("ruleId" = String, Path, description = "ruleId")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_designer_canvas_ruleid() {}
+
+#[utoipa::path(put, path = "/api/core/automation/designer/canvas/{ruleId}", tag = "Automation-Compat", params(("ruleId" = String, Path, description = "ruleId")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_put_api_core_automation_designer_canvas_ruleid() {}
+
+#[utoipa::path(get, path = "/api/core/automation/designer/resources", tag = "Automation-Compat", responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_designer_resources() {}
+
+#[utoipa::path(post, path = "/api/core/automation/designer/canvas/{ruleId}/sync-to-rule", tag = "Automation-Compat", params(("ruleId" = String, Path, description = "ruleId")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_designer_canvas_ruleid_sync_to_rule() {}
+
+#[utoipa::path(post, path = "/api/core/automation/designer/canvas/{ruleId}/sync-from-rule", tag = "Automation-Compat", params(("ruleId" = String, Path, description = "ruleId")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_designer_canvas_ruleid_sync_from_rule() {}
+
+#[utoipa::path(get, path = "/api/core/automation/rules", tag = "Automation-Compat", responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_rules() {}
+
+#[utoipa::path(post, path = "/api/core/automation/rules", tag = "Automation-Compat", responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_rules() {}
+
+#[utoipa::path(get, path = "/api/core/automation/rules/{id}", tag = "Automation-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_rules_id() {}
+
+#[utoipa::path(put, path = "/api/core/automation/rules/{id}", tag = "Automation-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_put_api_core_automation_rules_id() {}
+
+#[utoipa::path(delete, path = "/api/core/automation/rules/{id}", tag = "Automation-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_delete_api_core_automation_rules_id() {}
+
+#[utoipa::path(get, path = "/api/core/automation/rules/by-code/{code}", tag = "Automation-Compat", params(("code" = String, Path, description = "code")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_rules_by_code_code() {}
+
+#[utoipa::path(post, path = "/api/core/automation/rules/{id}/enable", tag = "Automation-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_rules_id_enable() {}
+
+#[utoipa::path(post, path = "/api/core/automation/rules/{id}/disable", tag = "Automation-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_rules_id_disable() {}
+
+#[utoipa::path(post, path = "/api/core/automation/rules/{id}/duplicate", tag = "Automation-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_rules_id_duplicate() {}
+
+#[utoipa::path(post, path = "/api/core/automation/rules/{id}/trigger", tag = "Automation-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_rules_id_trigger() {}
+
+#[utoipa::path(get, path = "/api/core/automation/runs", tag = "Automation-Compat", responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_runs() {}
+
+#[utoipa::path(get, path = "/api/core/automation/runs/{id}", tag = "Automation-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_runs_id() {}
+
+#[utoipa::path(post, path = "/api/core/automation/runs/{id}/retry", tag = "Automation-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_runs_id_retry() {}
+
+#[utoipa::path(post, path = "/api/core/automation/runs/{id}/cancel", tag = "Automation-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_runs_id_cancel() {}
+
+#[utoipa::path(get, path = "/api/core/automation/runs/{id}/logs", tag = "Automation-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_runs_id_logs() {}
+
+#[utoipa::path(post, path = "/api/core/automation/runs/purge", tag = "Automation-Compat", responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_runs_purge() {}
+
+#[utoipa::path(get, path = "/api/core/automation/variables", tag = "Automation-Compat", responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_variables() {}
+
+#[utoipa::path(post, path = "/api/core/automation/variables", tag = "Automation-Compat", responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_variables() {}
+
+#[utoipa::path(get, path = "/api/core/automation/variables/{key}", tag = "Automation-Compat", params(("key" = String, Path, description = "key")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_variables_key() {}
+
+#[utoipa::path(put, path = "/api/core/automation/variables/{key}", tag = "Automation-Compat", params(("key" = String, Path, description = "key")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_put_api_core_automation_variables_key() {}
+
+#[utoipa::path(delete, path = "/api/core/automation/variables/{key}", tag = "Automation-Compat", params(("key" = String, Path, description = "key")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_delete_api_core_automation_variables_key() {}
+
+#[utoipa::path(get, path = "/api/core/automation/variables/{key}/reveal", tag = "Automation-Compat", params(("key" = String, Path, description = "key")), responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_get_api_core_automation_variables_key_reveal() {}
+
+#[utoipa::path(post, path = "/api/core/automation/variables/bulk-import", tag = "Automation-Compat", responses((status = 200, description = "Automation compatibility endpoint")))]
+pub async fn compat_post_api_core_automation_variables_bulk_import() {}
+
+// ========== RC4b · Monitor compatibility ==========
+
+#[utoipa::path(put, path = "/api/core/monitor/alerts/{id}/acknowledge", tag = "Monitor-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_put_api_core_monitor_alerts_id_acknowledge() {}
+
+#[utoipa::path(put, path = "/api/core/monitor/alerts/{id}/resolve", tag = "Monitor-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_put_api_core_monitor_alerts_id_resolve() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/metrics/system", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_metrics_system() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/performance/api", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_performance_api() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/metrics/database", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_metrics_database() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/reports/performance", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_reports_performance() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/metrics/realtime", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_metrics_realtime() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/business-metrics", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_business_metrics() {}
+
+#[utoipa::path(post, path = "/api/core/monitor/business-metrics", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_post_api_core_monitor_business_metrics() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/business-metrics/{id}", tag = "Monitor-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_business_metrics_id() {}
+
+#[utoipa::path(put, path = "/api/core/monitor/business-metrics/{id}", tag = "Monitor-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_put_api_core_monitor_business_metrics_id() {}
+
+#[utoipa::path(delete, path = "/api/core/monitor/business-metrics/{id}", tag = "Monitor-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_delete_api_core_monitor_business_metrics_id() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/business-metrics/summary", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_business_metrics_summary() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/business-metrics/trend", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_business_metrics_trend() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/business-metrics/kpi", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_business_metrics_kpi() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/slos", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_slos() {}
+
+#[utoipa::path(post, path = "/api/core/monitor/slos", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_post_api_core_monitor_slos() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/slos/{id}", tag = "Monitor-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_slos_id() {}
+
+#[utoipa::path(put, path = "/api/core/monitor/slos/{id}", tag = "Monitor-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_put_api_core_monitor_slos_id() {}
+
+#[utoipa::path(delete, path = "/api/core/monitor/slos/{id}", tag = "Monitor-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_delete_api_core_monitor_slos_id() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/slos/summary", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_slos_summary() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/slos/budget", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_slos_budget() {}
+
+#[utoipa::path(get, path = "/api/core/monitor/slos/trend", tag = "Monitor-Compat", responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_get_api_core_monitor_slos_trend() {}
+
+#[utoipa::path(post, path = "/api/core/monitor/slos/violations/{id}/resolve", tag = "Monitor-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "Monitor compatibility endpoint")))]
+pub async fn compat_post_api_core_monitor_slos_violations_id_resolve() {}
+
+// ========== RC4b · IAM compatibility ==========
+
+#[utoipa::path(post, path = "/api/core/iam/auth/register", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_auth_register() {}
+#[utoipa::path(post, path = "/api/core/iam/auth/login", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_auth_login() {}
+#[utoipa::path(post, path = "/api/core/iam/auth/logout", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_auth_logout() {}
+#[utoipa::path(post, path = "/api/core/iam/auth/refresh", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_auth_refresh() {}
+#[utoipa::path(get, path = "/api/core/iam/health", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_health() {}
+#[utoipa::path(post, path = "/api/core/iam/auth/forgot-password", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_auth_forgot_password() {}
+#[utoipa::path(post, path = "/api/core/iam/auth/reset-password", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_auth_reset_password() {}
+#[utoipa::path(get, path = "/api/core/iam/auth/password-policy", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_auth_password_policy() {}
+#[utoipa::path(put, path = "/api/core/iam/auth/password-policy", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_put_api_core_iam_auth_password_policy() {}
+#[utoipa::path(get, path = "/api/core/iam/auth/sessions", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_auth_sessions() {}
+#[utoipa::path(delete, path = "/api/core/iam/auth/sessions/{sessionId}", tag = "IAM-Compat", params(("sessionId" = String, Path, description = "sessionId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_delete_api_core_iam_auth_sessions_sessionid() {}
+#[utoipa::path(post, path = "/api/core/iam/auth/sessions/revoke-all", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_auth_sessions_revoke_all() {}
+#[utoipa::path(get, path = "/api/core/iam/auth/security-settings", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_auth_security_settings() {}
+#[utoipa::path(put, path = "/api/core/iam/auth/security-settings", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_put_api_core_iam_auth_security_settings() {}
+#[utoipa::path(get, path = "/api/core/iam/permissions", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_permissions() {}
+#[utoipa::path(post, path = "/api/core/iam/permissions", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_permissions() {}
+#[utoipa::path(put, path = "/api/core/iam/permissions/{permissionId}", tag = "IAM-Compat", params(("permissionId" = String, Path, description = "permissionId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_put_api_core_iam_permissions_permissionid() {}
+#[utoipa::path(delete, path = "/api/core/iam/permissions/{permissionId}", tag = "IAM-Compat", params(("permissionId" = String, Path, description = "permissionId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_delete_api_core_iam_permissions_permissionid() {}
+#[utoipa::path(get, path = "/api/core/iam/roles", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_roles() {}
+#[utoipa::path(post, path = "/api/core/iam/roles", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_roles() {}
+#[utoipa::path(get, path = "/api/core/iam/roles/{id}", tag = "IAM-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_roles_id() {}
+#[utoipa::path(put, path = "/api/core/iam/roles/{roleId}", tag = "IAM-Compat", params(("roleId" = String, Path, description = "roleId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_put_api_core_iam_roles_roleid() {}
+#[utoipa::path(delete, path = "/api/core/iam/roles/{id}", tag = "IAM-Compat", params(("id" = String, Path, description = "id")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_delete_api_core_iam_roles_id() {}
+#[utoipa::path(get, path = "/api/core/iam/roles/{roleId}/permissions", tag = "IAM-Compat", params(("roleId" = String, Path, description = "roleId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_roles_roleid_permissions() {}
+#[utoipa::path(post, path = "/api/core/iam/roles/{roleId}/permissions", tag = "IAM-Compat", params(("roleId" = String, Path, description = "roleId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_roles_roleid_permissions() {}
+#[utoipa::path(delete, path = "/api/core/iam/roles/{roleId}/permissions/{permissionId}", tag = "IAM-Compat", params(("roleId" = String, Path, description = "roleId"), ("permissionId" = String, Path, description = "permissionId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_delete_api_core_iam_roles_roleid_permissions_permissionid() {}
+#[utoipa::path(get, path = "/api/core/iam/users/me", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_users_me() {}
+#[utoipa::path(put, path = "/api/core/iam/users/me", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_put_api_core_iam_users_me() {}
+#[utoipa::path(get, path = "/api/core/iam/users/me/permissions", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_users_me_permissions() {}
+#[utoipa::path(post, path = "/api/core/iam/users/me/permissions/check", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_users_me_permissions_check() {}
+#[utoipa::path(post, path = "/api/core/iam/users/me/password", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_users_me_password() {}
+#[utoipa::path(post, path = "/api/core/iam/users/me/avatar", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_users_me_avatar() {}
+#[utoipa::path(get, path = "/api/core/iam/users/me/preferences", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_users_me_preferences() {}
+#[utoipa::path(put, path = "/api/core/iam/users/me/preferences", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_put_api_core_iam_users_me_preferences() {}
+#[utoipa::path(get, path = "/api/core/iam/users", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_users() {}
+#[utoipa::path(post, path = "/api/core/iam/users", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_users() {}
+#[utoipa::path(get, path = "/api/core/iam/users/{userId}", tag = "IAM-Compat", params(("userId" = String, Path, description = "userId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_users_userid() {}
+#[utoipa::path(put, path = "/api/core/iam/users/{userId}", tag = "IAM-Compat", params(("userId" = String, Path, description = "userId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_put_api_core_iam_users_userid() {}
+#[utoipa::path(delete, path = "/api/core/iam/users/{userId}", tag = "IAM-Compat", params(("userId" = String, Path, description = "userId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_delete_api_core_iam_users_userid() {}
+#[utoipa::path(get, path = "/api/core/iam/users/{userId}/permissions", tag = "IAM-Compat", params(("userId" = String, Path, description = "userId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_users_userid_permissions() {}
+#[utoipa::path(get, path = "/api/core/iam/users/{userId}/roles", tag = "IAM-Compat", params(("userId" = String, Path, description = "userId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_users_userid_roles() {}
+#[utoipa::path(post, path = "/api/core/iam/users/{userId}/roles/{roleId}", tag = "IAM-Compat", params(("userId" = String, Path, description = "userId"), ("roleId" = String, Path, description = "roleId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_users_userid_roles_roleid() {}
+#[utoipa::path(delete, path = "/api/core/iam/users/{userId}/roles/{roleId}", tag = "IAM-Compat", params(("userId" = String, Path, description = "userId"), ("roleId" = String, Path, description = "roleId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_delete_api_core_iam_users_userid_roles_roleid() {}
+#[utoipa::path(get, path = "/api/core/iam/users/{userId}/effective-permissions", tag = "IAM-Compat", params(("userId" = String, Path, description = "userId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_users_userid_effective_permissions() {}
+#[utoipa::path(post, path = "/api/core/iam/users/batch-delete", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_users_batch_delete() {}
+#[utoipa::path(put, path = "/api/core/iam/users/batch-update", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_put_api_core_iam_users_batch_update() {}
+#[utoipa::path(get, path = "/api/core/iam/users/check-email", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_users_check_email() {}
+#[utoipa::path(get, path = "/api/core/iam/users/check-username", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_users_check_username() {}
+#[utoipa::path(get, path = "/api/core/iam/users/{userId}/login-history", tag = "IAM-Compat", params(("userId" = String, Path, description = "userId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_users_userid_login_history() {}
+#[utoipa::path(get, path = "/api/core/iam/access-logs", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_access_logs() {}
+#[utoipa::path(post, path = "/api/core/iam/access-logs", tag = "IAM-Compat", responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_post_api_core_iam_access_logs() {}
+#[utoipa::path(get, path = "/api/core/iam/access-logs/user/{userId}", tag = "IAM-Compat", params(("userId" = String, Path, description = "userId")), responses((status = 200, description = "IAM compatibility endpoint")))]
+pub async fn compat_get_api_core_iam_access_logs_user_userid() {}
