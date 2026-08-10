@@ -6,6 +6,22 @@ import SystemSettingsPage from '../admin/SystemSettingsPage';
 import { adminApi } from '@/api/admin';
 import { useNotificationStore, useAuthStore } from '@/store';
 
+vi.hoisted(() => {
+  const storage = {
+    getItem: vi.fn(() => null),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+    clear: vi.fn(),
+    key: vi.fn(() => null),
+    length: 0,
+  };
+
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: storage,
+    configurable: true,
+  });
+});
+
 vi.mock('@/api/admin', () => ({
   adminApi: {
     system: {
