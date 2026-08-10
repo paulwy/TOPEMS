@@ -23,6 +23,7 @@ import { Home, ListTodo, ScanLine, CheckSquare, User } from 'lucide-react';
 import { DASHBOARD_PATHS, MOBILE_TAB_PATHS } from '@/routes/dashboard';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { DOC_PATHS } from '@/modules/doc/config';
+import { AI_PATHS } from '@/modules/ai/config';
 
 function getModuleFromPath(pathname: string): string | null {
   const segments = pathname.split('/').filter(Boolean);
@@ -93,6 +94,19 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const openCommandPalette = useCallback(() => setCommandPaletteOpen(true), []);
   const closeCommandPalette = useCallback(() => setCommandPaletteOpen(false), []);
+  const openAiCopilot = useCallback(() => {
+    try {
+      window.localStorage.setItem(
+        'ai-copilot-context',
+        JSON.stringify({
+          pathname: window.location.pathname || '/',
+          moduleCode: getModuleFromPath(window.location.pathname) || 'shared',
+          breadcrumbs: ['快捷键'],
+        })
+      );
+    } catch {}
+    navigate(AI_PATHS.root);
+  }, [navigate]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -104,6 +118,13 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         openCommandPalette();
+        return;
+      }
+
+      // Cmd/Ctrl + Space: 唤起 AI Copilot
+      if ((e.metaKey || e.ctrlKey) && e.key === ' ') {
+        e.preventDefault();
+        openAiCopilot();
         return;
       }
 
@@ -154,6 +175,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   }, [
     openCommandPalette,
     closeCommandPalette,
+    openAiCopilot,
     commandPaletteOpen,
     mobileMenuOpen,
     toggleSidebarCollapsed,
