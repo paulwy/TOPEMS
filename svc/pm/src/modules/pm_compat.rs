@@ -887,3 +887,51 @@ pub async fn compat_post_settlements_settlementid_items() {}
     responses((status = 200, description = "PM compatibility endpoint"))
 )]
 pub async fn compat_get_statistics() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/pm/statistics/projects",
+    tag = "PM-Compat",
+    responses((status = 200, description = "PM compatibility endpoint"))
+)]
+pub async fn compat_get_statistics_projects() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/pm/statistics/contracts",
+    tag = "PM-Compat",
+    responses((status = 200, description = "PM compatibility endpoint"))
+)]
+pub async fn compat_get_statistics_contracts() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/pm/statistics/budget",
+    tag = "PM-Compat",
+    responses((status = 200, description = "PM compatibility endpoint"))
+)]
+pub async fn compat_get_statistics_budget() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/pm/statistics/risks",
+    tag = "PM-Compat",
+    responses((status = 200, description = "PM compatibility endpoint"))
+)]
+pub async fn compat_get_statistics_risks() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/pm/statistics/tasks",
+    tag = "PM-Compat",
+    responses((status = 200, description = "PM compatibility endpoint"))
+)]
+pub async fn compat_get_statistics_tasks() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/pm/statistics/dashboard",
+    tag = "PM-Compat",
+    responses((status = 200, description = "PM compatibility endpoint"))
+)]
+pub async fn compat_get_statistics_dashboard() {}
