@@ -419,6 +419,47 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Geofences table (for IM geofence sync)
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS gis.geofences (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            chat_id UUID,
+            creator_id UUID,
+            shape_type VARCHAR(50) NOT NULL,
+            coordinates JSONB NOT NULL,
+            radius DOUBLE PRECISION,
+            event_types JSONB DEFAULT '["enter"]',
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            trigger_cooldown INTEGER DEFAULT 300,
+            notify_channels JSONB DEFAULT '["notification"]',
+            notify_users JSONB DEFAULT '[]',
+            gis_fence_id UUID,
+            start_at TIMESTAMP WITH TIME ZONE,
+            end_at TIMESTAMP WITH TIME ZONE,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create indexes for geofences
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_gis_geofences_chat_id ON gis.geofences(chat_id)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_gis_geofences_status ON gis.geofences(status)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_gis_geofences_coordinates ON gis.geofences USING GIN (coordinates)")
+        .execute(pool)
+        .await?;
+
     tracing::info!("✅ GIS 数据库表初始化完成");
 
     Ok(())

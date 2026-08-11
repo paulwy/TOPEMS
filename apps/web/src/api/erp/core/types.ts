@@ -381,3 +381,59 @@ export interface UpdateCustomerRequest {
   industry?: string;
   remark?: string;
 }
+
+// ============ Production Orders (ERP V137) ============
+
+export interface ProductionOrder {
+  id: string;
+  order_no: string;
+  product_id?: string;
+  product_name: string;
+  product_code: string;
+  quantity: number;
+  completed_quantity?: number;
+  status: 'draft' | 'planned' | 'in_progress' | 'completed' | 'cancelled';
+  source?: string;
+  source_order_id?: string;
+  source_order_number?: string;
+  planned_start_date?: string;
+  planned_end_date?: string;
+  actual_start_date?: string;
+  actual_end_date?: string;
+  workshop_id?: string;
+  workshop_name?: string;
+  priority?: number;
+  remark?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateProductionOrderRequest {
+  product_id?: string;
+  product_name: string;
+  product_code: string;
+  quantity: number;
+  planned_start_date?: string;
+  planned_end_date?: string;
+  workshop_id?: string;
+  priority?: number;
+  remark?: string;
+}
+
+export interface UpdateProductionOrderRequest {
+  product_name?: string;
+  product_code?: string;
+  quantity?: number;
+  planned_start_date?: string;
+  planned_end_date?: string;
+  workshop_id?: string;
+  priority?: number;
+  remark?: string;
+}
+
+export interface UpdateProductionProgressRequest {
+  completed_quantity?: number;
+  status?: string;
+  actual_start_date?: string;
+  actual_end_date?: string;
+}

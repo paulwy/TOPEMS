@@ -52,13 +52,13 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
     { name: '进行中', value: stats.active_projects, fill: 'primary.main' },
     { name: '已完成', value: stats.completed_projects, fill: 'success.main' },
     { name: '已取消', value: stats.cancelled_projects, fill: 'error.main' },
-  ].filter((d) => d.value > 0);
+  ].filter((d) => (d.value ?? 0) > 0);
 
   const riskData = [
-    { name: '高风险', value: stats.high_risk_projects, fill: 'error.main' },
-    { name: '中风险', value: stats.medium_risk_projects, fill: 'warning.main' },
-    { name: '低风险', value: stats.low_risk_projects, fill: 'success.main' },
-  ].filter((d) => d.value > 0);
+    { name: '高风险', value: stats.high_risk_projects ?? 0, fill: 'error.main' },
+    { name: '中风险', value: stats.medium_risk_projects ?? 0, fill: 'warning.main' },
+    { name: '低风险', value: stats.low_risk_projects ?? 0, fill: 'success.main' },
+  ].filter((d) => (d.value ?? 0) > 0);
 
   const trendData = benefits.slice(0, 6).map((b, index) => ({
     month: `第${index + 1}期`,
@@ -477,9 +477,9 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
             >
               <BarChart
                 data={[
-                  { name: '准时', value: stats.on_time_projects },
-                  { name: '延迟', value: stats.delayed_projects },
-                ].filter((d) => d.value > 0)}
+                  { name: '准时', value: stats.on_time_projects ?? 0 },
+                  { name: '延迟', value: stats.delayed_projects ?? 0 },
+                ].filter((d) => (d.value ?? 0) > 0)}
               >
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='name' />

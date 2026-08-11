@@ -23,6 +23,13 @@ export const DEFAULT_STATS: PmStatistics = {
   total_budget: 0,
   spent_budget: 0,
   budget_usage_rate: 0,
+  total_risks: 0,
+  open_risks: 0,
+  closed_risks: 0,
+  total_tasks: 0,
+  pending_tasks: 0,
+  in_progress_tasks: 0,
+  completed_tasks: 0,
   on_time_projects: 0,
   delayed_projects: 0,
   average_progress: 0,
@@ -159,7 +166,7 @@ export const usePmReport = (): UsePmReportReturn => {
       {
         id: 'high-risk',
         title: t('pm.pm_report_page.title_271379'),
-        value: stats.high_risk_projects,
+        value: stats.high_risk_projects ?? 0,
         icon: <AlertTriangle size={20} />,
         color: 'error',
       },
@@ -200,20 +207,20 @@ export const usePmReport = (): UsePmReportReturn => {
       [
         {
           name: t('pm.pm_report_page.name_4433e7'),
-          value: stats.high_risk_projects,
+          value: stats.high_risk_projects ?? 0,
           fill: 'error.main',
         },
         {
           name: t('pm.pm_report_page.name_8a8992'),
-          value: stats.medium_risk_projects,
+          value: stats.medium_risk_projects ?? 0,
           fill: 'warning.main',
         },
         {
           name: t('pm.pm_report_page.name_b56976'),
-          value: stats.low_risk_projects,
+          value: stats.low_risk_projects ?? 0,
           fill: 'success.main',
         },
-      ].filter((d) => d.value > 0),
+      ].filter((d) => (d.value ?? 0) > 0),
     [stats, t]
   );
 

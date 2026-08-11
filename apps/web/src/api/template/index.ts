@@ -1,6 +1,38 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import { templateVersionApi } from './version';
+import type {
+  TemplateVersion,
+  CreateVersionRequest,
+  UpdateVersionRequest,
+  VersionDiff,
+  VersionCompareRequest,
+  VersionHistoryEntry,
+} from './version';
+
+import { templateApprovalApi } from './approval';
+import type {
+  ApprovalStatus as TemplateApprovalStatus,
+  ApprovalType,
+  ApprovalRequest,
+  CreateApprovalRequest,
+  ApproveRequest,
+  RejectRequest,
+} from './approval';
+
+import { templateAssignmentApi } from './assignment';
+import type {
+  AssignmentScope,
+  AssignmentStatus,
+  TemplateAssignment,
+  CreateAssignmentRequest,
+  UsageStats,
+  TopTemplate,
+  TemplateDependency,
+  CloneTemplateRequest,
+} from './assignment';
+
 export type TemplateType = 'workflow' | 'document' | 'form' | 'report' | 'notification';
 
 export type VariableType =
@@ -106,6 +138,8 @@ export interface PaginatedResult<T> {
 }
 
 export const templateApi = {
+  // ==================== 核心 CRUD ====================
+
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Template>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
@@ -164,6 +198,65 @@ export const templateApi = {
   async toggleStatus(id: string): Promise<ApiResponse<Template>> {
     return await apiClient.doc.put(`/templates/${id}/toggle-status`);
   },
+
+  // ==================== 子域：版本管理 ====================
+
+  versions: templateVersionApi,
+
+  // ==================== 子域：审批流 ====================
+
+  approvals: templateApprovalApi,
+
+  // ==================== 子域：分配与统计 ====================
+
+  assignments: templateAssignmentApi,
+
+  // ==================== 顶层快捷方法 ====================
+
+  // 版本快捷方法
+  listVersions: templateVersionApi.listVersions,
+  createVersion: templateVersionApi.createVersion,
+  activateVersion: templateVersionApi.activateVersion,
+  rollbackVersion: templateVersionApi.rollbackVersion,
+  getVersionDiff: templateVersionApi.getVersionDiff,
+
+  // 审批快捷方法
+  submitForApproval: templateApprovalApi.createApproval,
+  listMyPendingApprovals: templateApprovalApi.listMyPending,
+  listMySubmittedApprovals: templateApprovalApi.listMySubmitted,
+
+  // 分配快捷方法
+  assignToUsers: templateAssignmentApi.createAssignment,
+  getUsage: templateAssignmentApi.getTemplateUsage,
+  getTopTemplates: templateAssignmentApi.getTopTemplates,
+  clone: templateAssignmentApi.cloneTemplate,
+  export: templateAssignmentApi.exportTemplate,
+  import: templateAssignmentApi.importTemplate,
+};
+
+// ==================== 类型导出 ====================
+
+export type {
+  TemplateVersion,
+  CreateVersionRequest,
+  UpdateVersionRequest,
+  VersionDiff,
+  VersionCompareRequest,
+  VersionHistoryEntry,
+  TemplateApprovalStatus,
+  ApprovalType,
+  ApprovalRequest,
+  CreateApprovalRequest,
+  ApproveRequest,
+  RejectRequest,
+  AssignmentScope,
+  AssignmentStatus,
+  TemplateAssignment,
+  CreateAssignmentRequest,
+  UsageStats,
+  TopTemplate,
+  TemplateDependency,
+  CloneTemplateRequest,
 };
 
 export default templateApi;

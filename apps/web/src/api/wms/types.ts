@@ -855,65 +855,54 @@ export interface InventoryStatisticsParams {
 
 export interface WavePick {
   id: string;
-  wave_number: string;
+  wave_pick_number: string;
+  wave_pick_type: string;
   warehouse_id: string;
   warehouse_name?: string;
-  wave_type: string;
   status: string;
   priority?: string;
-  total_orders: number;
-  totalitems: number;
+  assigned_to?: string;
+  assigned_user_name?: string;
+  batch_id?: string;
+  start_time?: string;
+  end_time?: string;
+  total_items: number;
+  picked_items: number;
   total_quantity: number;
-  picked_orders?: number;
-  pickeditems?: number;
-  picked_quantity?: number;
-  picker_id?: string;
-  picker_name?: string;
-  zone_id?: string;
-  zone_name?: string;
-  started_at?: string;
-  completed_at?: string;
+  picked_quantity: number;
   remarks?: string;
-  created_by?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface WavePickItem {
   id: string;
-  wave_id: string;
-  order_id: string;
-  order_number?: string;
-  line_number: number;
-  sku: string;
+  wave_pick_id: string;
+  outbound_order_id?: string;
+  outbound_order_number?: string;
+  material_code: string;
   material_name: string;
-  specification?: string;
-  batch_number?: string;
-  unit: string;
-  required_quantity: number;
-  picked_quantity: number;
   location_id?: string;
   location_code?: string;
+  planned_quantity: number;
+  picked_quantity: number;
   status: string;
-  picked_by?: string;
-  picked_at?: string;
+  remarks?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateWavePickRequest {
+  wave_pick_number: string;
+  wave_pick_type: string;
   warehouse_id: string;
-  wave_type?: string;
   priority?: string;
-  zone_id?: string;
-  order_ids?: string[];
-  order_count?: number;
+  batch_id?: string;
   remarks?: string;
 }
 
 export interface AssignWavePickRequest {
-  picker_id: string;
-  picker_name?: string;
+  assigned_to: string;
 }
 
 export interface Batch {

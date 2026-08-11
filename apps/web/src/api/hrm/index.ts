@@ -12,6 +12,9 @@ import { payrollApi, payrollItemApi, salaryAdjustmentApi } from './payroll';
 import { performanceReviewApi, performanceGoalApi } from './performance';
 import { contractApi, contractRenewalApi } from './contract';
 import { trainingPlanApi, trainingCourseApi, trainingRecordApi } from './training';
+import { hrmReportsApi } from './hrmReports';
+import { hrmAuditApi } from './hrmAudit';
+import { hrmSetupApi } from './hrmSetup';
 
 export * from './types';
 
@@ -26,6 +29,9 @@ export { payrollApi, payrollItemApi, salaryAdjustmentApi } from './payroll';
 export { performanceReviewApi, performanceGoalApi } from './performance';
 export { contractApi, contractRenewalApi } from './contract';
 export { trainingPlanApi, trainingCourseApi, trainingRecordApi } from './training';
+export { hrmReportsApi } from './hrmReports';
+export { hrmAuditApi } from './hrmAudit';
+export { hrmSetupApi } from './hrmSetup';
 
 export const hrmApi = {
   dashboard: hrmDashboardApi,
@@ -50,6 +56,9 @@ export const hrmApi = {
   trainingPlans: trainingPlanApi,
   trainingCourses: trainingCourseApi,
   trainingRecords: trainingRecordApi,
+  reports: hrmReportsApi,
+  audit: hrmAuditApi,
+  setup: hrmSetupApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.hrm.get('/health');

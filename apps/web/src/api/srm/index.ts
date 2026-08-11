@@ -1,6 +1,45 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import {
+  supplierCategoryApi,
+  type SupplierCategory,
+  type CreateSupplierCategoryRequest,
+  type UpdateSupplierCategoryRequest,
+  type SupplierCategoryQuery,
+  type SupplierCategoryNode,
+} from './supplierCategory';
+
+import {
+  supplierProductApi,
+  type SupplierProduct,
+  type CreateSupplierProductRequest,
+  type UpdateSupplierProductRequest,
+  type SupplierProductQuery,
+} from './supplierProduct';
+
+import {
+  tenderApi,
+  type Tender,
+  type CreateTenderRequest,
+  type UpdateTenderRequest,
+  type TenderBid,
+  type CreateTenderBidRequest,
+  type TenderAward,
+  type AwardTenderRequest,
+} from './tender';
+
+import {
+  bidPriceApi,
+  type BidRequest,
+  type CreateBidRequest,
+  type UpdateBidRequest,
+  type Bid,
+  type CreateBidRequestBid,
+  type UpdateBidRequestBid,
+  type BidComparison,
+} from './bidPrice';
+
 export interface Supplier {
   id: string;
   supplier_no: string;
@@ -749,9 +788,78 @@ export const srmApi = {
   awardBidding: async (id: string, supplierId: string): Promise<ApiResponse<Bidding>> => {
     return apiClient.srm.post(`/biddings/${id}/award`, { supplier_id: supplierId });
   },
-  listBiddingSuppliers: async (biddingId: string): Promise<ApiResponse<any[]>> => {
+  listBiddingSuppliers: async (biddingId: string): Promise<ApiResponse<unknown[]>> => {
     return apiClient.srm.get(`/biddings/${biddingId}/suppliers`);
   },
+
+  // Supplier Categories
+  listCategories: supplierCategoryApi.listCategories,
+  listAllCategories: supplierCategoryApi.listAllCategories,
+  getCategory: supplierCategoryApi.getCategory,
+  createCategory: supplierCategoryApi.createCategory,
+  updateCategory: supplierCategoryApi.updateCategory,
+  deleteCategory: supplierCategoryApi.deleteCategory,
+  buildCategoryTree: supplierCategoryApi.buildTree,
+
+  // Supplier Products
+  listProducts: supplierProductApi.listProducts,
+  listSupplierProducts: supplierProductApi.listSupplierProducts,
+  getProduct: supplierProductApi.getProduct,
+  createProduct: supplierProductApi.createProduct,
+  updateProduct: supplierProductApi.updateProduct,
+  deleteProduct: supplierProductApi.deleteProduct,
+
+  // Tenders
+  listTenders: tenderApi.listTenders,
+  getTender: tenderApi.getTender,
+  createTender: tenderApi.createTender,
+  updateTender: tenderApi.updateTender,
+  deleteTender: tenderApi.deleteTender,
+  listTenderBids: tenderApi.listTenderBids,
+  createTenderBid: tenderApi.createTenderBid,
+  awardTender: tenderApi.awardTender,
+  listTenderAwards: tenderApi.listTenderAwards,
+
+  // Bid Requests & Bids
+  listBidRequests: bidPriceApi.listBidRequests,
+  getBidRequest: bidPriceApi.getBidRequest,
+  createBidRequest: bidPriceApi.createBidRequest,
+  updateBidRequest: bidPriceApi.updateBidRequest,
+  deleteBidRequest: bidPriceApi.deleteBidRequest,
+  listBidRequestBids: bidPriceApi.listBidRequestBids,
+  createBid: bidPriceApi.createBid,
+  getBid: bidPriceApi.getBid,
+  updateBid: bidPriceApi.updateBid,
+  deleteBid: bidPriceApi.deleteBid,
+  getBidComparison: bidPriceApi.getBidComparison,
+};
+
+export { supplierCategoryApi, supplierProductApi, tenderApi, bidPriceApi };
+
+export type {
+  SupplierCategory,
+  CreateSupplierCategoryRequest,
+  UpdateSupplierCategoryRequest,
+  SupplierCategoryQuery,
+  SupplierCategoryNode,
+  SupplierProduct,
+  CreateSupplierProductRequest,
+  UpdateSupplierProductRequest,
+  SupplierProductQuery,
+  Tender,
+  CreateTenderRequest,
+  UpdateTenderRequest,
+  TenderBid,
+  CreateTenderBidRequest,
+  TenderAward,
+  AwardTenderRequest,
+  BidRequest,
+  CreateBidRequest,
+  UpdateBidRequest,
+  Bid,
+  CreateBidRequestBid,
+  UpdateBidRequestBid,
+  BidComparison,
 };
 
 export default srmApi;

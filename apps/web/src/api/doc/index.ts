@@ -2,6 +2,41 @@ import apiClient, { downloadBlob } from '../client';
 import type { ApiResponse } from '../client';
 import config from '../../config/runtime';
 
+import { docWorkspaceApi } from './workspace';
+import type {
+  DocWorkspace,
+  CreateWorkspaceRequest,
+  UpdateWorkspaceRequest,
+  DocTreeNode,
+  MoveItemsRequest,
+  CopyItemsRequest,
+  TrashItem,
+  WorkspaceStats,
+} from './workspace';
+
+import { docCollaborationApi } from './collaboration';
+import type {
+  CollaboratorPermission,
+  Collaborator,
+  AddCollaboratorRequest,
+  UpdateCollaboratorRequest,
+  Comment,
+  CreateCommentRequest,
+  ActivityRecord,
+  ShareLink,
+  CreateShareLinkRequest,
+} from './collaboration';
+
+import { docVersionApi } from './versionControl';
+import type {
+  DocumentStatus,
+  DocumentVersion,
+  CreateVersionRequest as CreateDocVersionRequest,
+  UpdateVersionRequest as UpdateDocVersionRequest,
+  DocumentDiff,
+  DocumentLock,
+} from './versionControl';
+
 export interface FileMetadata {
   id: string;
   name: string;
@@ -77,6 +112,8 @@ export interface DocDashboardStats {
 }
 
 export const docApi = {
+  // ==================== 核心 CRUD ====================
+
   list: async (folderId?: string): Promise<ApiResponse<FileListResponse>> => {
     const params = folderId ? { folder_id: folderId } : {};
     return apiClient.doc.get<FileListResponse>('/documents', { params });
@@ -107,6 +144,8 @@ export const docApi = {
     return apiClient.doc.delete<void>(`/documents/${id}`);
   },
 
+  // ==================== 文件夹 ====================
+
   listFolders: async (parentId?: string): Promise<ApiResponse<ListFoldersData>> => {
     const params = parentId ? { parentId } : {};
     return apiClient.doc.get<ListFoldersData>('/folders', { params });
@@ -128,6 +167,8 @@ export const docApi = {
     return apiClient.doc.delete<void>(`/folders/${id}`);
   },
 
+  // ==================== 版本（兼容保留） ====================
+
   getVersions: async (fileId: string): Promise<ApiResponse<FileVersion[]>> => {
     return apiClient.doc.get<FileVersion[]>(`/documents/${fileId}/versions`);
   },
@@ -140,6 +181,45 @@ export const docApi = {
     return apiClient.doc.post<FileMetadata>(`/documents/${fileId}/versions/${version}/restore`);
   },
 
+  // ==================== 子域：工作区 ====================
+
+  workspaces: docWorkspaceApi,
+
+  // ==================== 子域：协作 ====================
+
+  collaboration: docCollaborationApi,
+
+  // ==================== 子域：版本控制 ====================
+
+  versionControl: docVersionApi,
+
+  // ==================== 顶层快捷方法 ====================
+
+  // 工作区快捷方法
+  listWorkspaces: docWorkspaceApi.listWorkspaces,
+  createWorkspace: docWorkspaceApi.createWorkspace,
+  getWorkspaceTree: docWorkspaceApi.getWorkspaceTree,
+  moveItems: docWorkspaceApi.moveItems,
+  emptyTrash: docWorkspaceApi.emptyTrash,
+  searchWorkspace: docWorkspaceApi.searchWorkspace,
+
+  // 协作快捷方法
+  addCollaborators: docCollaborationApi.addCollaborators,
+  listComments: docCollaborationApi.listComments,
+  createComment: docCollaborationApi.createComment,
+  createShareLink: docCollaborationApi.createShareLink,
+  listActivities: docCollaborationApi.listActivities,
+
+  // 版本控制快捷方法
+  listDocVersions: docVersionApi.listVersions,
+  createDocVersion: docVersionApi.createVersion,
+  publishVersion: docVersionApi.publishVersion,
+  getDiff: docVersionApi.getDiff,
+  acquireLock: docVersionApi.acquireLock,
+  releaseLock: docVersionApi.releaseLock,
+
+  // ==================== 仪表盘 ====================
+
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.doc.get<string>('/health');
   },
@@ -147,6 +227,34 @@ export const docApi = {
   getDashboard: async (): Promise<ApiResponse<DocDashboardStats>> => {
     return apiClient.doc.get<DocDashboardStats>('/dashboard');
   },
+};
+
+// ==================== 类型导出 ====================
+
+export type {
+  DocWorkspace,
+  CreateWorkspaceRequest,
+  UpdateWorkspaceRequest,
+  DocTreeNode,
+  MoveItemsRequest,
+  CopyItemsRequest,
+  TrashItem,
+  WorkspaceStats,
+  CollaboratorPermission,
+  Collaborator,
+  AddCollaboratorRequest,
+  UpdateCollaboratorRequest,
+  Comment,
+  CreateCommentRequest,
+  ActivityRecord,
+  ShareLink,
+  CreateShareLinkRequest,
+  DocumentStatus,
+  DocumentVersion,
+  CreateDocVersionRequest,
+  UpdateDocVersionRequest,
+  DocumentDiff,
+  DocumentLock,
 };
 
 export default docApi;

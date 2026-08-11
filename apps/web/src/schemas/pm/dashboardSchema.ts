@@ -49,7 +49,7 @@ export function usePmDashboardSchema(): DashboardSchema {
       title: '逾期',
       value: () => {
         const stats = window.__pmStats;
-        return stats?.delayed_projects.toLocaleString() ?? '-';
+        return stats?.delayed_projects?.toLocaleString() ?? '-';
       },
       icon: 'AlertCircle',
       color: 'error',

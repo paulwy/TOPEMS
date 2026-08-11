@@ -9,16 +9,22 @@ import { documentApprovalApi } from './documentApproval';
 import { changeNoticeActionApi } from './changeNoticeAction';
 import { workflowApi } from './workflow';
 import { pdmVersionApi } from './pdmVersion';
+import { pdmMaterialApi } from './pdmMaterial';
+import { pdmProductApi } from './pdmProduct';
 
 export * from './bom';
 export * from './project';
 export * from './document';
+export * from './pdmMaterial';
+export * from './pdmProduct';
 
 export { pdmDashboardApi } from './dashboard';
 export { documentApprovalApi } from './documentApproval';
 export { changeNoticeActionApi } from './changeNoticeAction';
 export { workflowApi } from './workflow';
 export { pdmVersionApi } from './pdmVersion';
+export { pdmMaterialApi } from './pdmMaterial';
+export { pdmProductApi } from './pdmProduct';
 
 export type Document = PdmDocument;
 

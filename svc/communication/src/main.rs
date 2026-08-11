@@ -2,6 +2,7 @@ use axum::{routing::delete, routing::get, routing::post, routing::put, Router};
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 mod im;
+mod im_location;
 mod mail;
 mod models;
 mod notification;
@@ -28,6 +29,11 @@ async fn main() -> anyhow::Result<()> {
     // 初始化数据库表
     if let Err(e) = init_database(&ctx.db).await {
         tracing::warn!("Database initialization warning: {}", e);
+    }
+
+    // 初始化位置与地理围栏表
+    if let Err(e) = im_location::register_geofence_tables(&ctx.db).await {
+        tracing::warn!("Geofence table initialization warning: {}", e);
     }
 
     // ===== 通知读取路由（需要认证） =====
@@ -156,7 +162,18 @@ async fn main() -> anyhow::Result<()> {
             "/im/notifications/{user_id}",
             get(im::list_im_notifications),
         )
-        .route("/im/project-groups", get(im::list_project_groups));
+        .route("/im/project-groups", get(im::list_project_groups))
+        // Location & Geofence read endpoints
+        .nest(
+            "/im",
+            Router::new()
+                .route(
+                    "/locations/rooms/{chat_id}/messages",
+                    get(im_location::list_location_messages),
+                )
+                .route("/locations/geofences", get(im_location::list_geofences))
+                .route("/locations/geofences/{id}", get(im_location::get_geofence)),
+        );
 
     let im_write = Router::new()
         .route("/im/rooms", post(im::create_room))
@@ -176,7 +193,26 @@ async fn main() -> anyhow::Result<()> {
         .route("/im/contact-groups", post(im::create_contact_group))
         .route("/im/contact-groups/{id}", put(im::update_contact_group))
         .route("/im/contact-groups/{id}", delete(im::delete_contact_group))
-        .route("/im/project-groups", post(im::create_project_group));
+        .route("/im/project-groups", post(im::create_project_group))
+        // Location & Geofence write endpoints
+        .nest(
+            "/im",
+            Router::new()
+                .route(
+                    "/locations/message",
+                    post(im_location::send_location_message),
+                )
+                .route("/locations/geofences", post(im_location::create_geofence))
+                .route(
+                    "/locations/geofences/{id}",
+                    put(im_location::update_geofence),
+                )
+                .route(
+                    "/locations/geofences/{id}",
+                    delete(im_location::delete_geofence),
+                )
+                .route("/pois/search", post(im_location::unified_search_pois)),
+        );
 
     // ===== 邮件路由（需要认证） =====
     let mail_read = Router::new()

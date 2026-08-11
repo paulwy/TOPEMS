@@ -32,7 +32,7 @@ export const inventoryApi = {
    * 注意：operationId 经 aggregate.py 去重为 wms_list_inventory（与 erp_list_inventory 区分）
    */
   list: async (
-    params?: AdaptedQuery<'wms_list_inventory'> | PaginationParams,
+    params?: AdaptedQuery<'wms_list_inventory'> | PaginationParams
   ): Promise<TypedPaginatedResponse<InventoryItem>> => {
     return apiClient.wms.get('/inventory', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -50,12 +50,9 @@ export const inventoryApi = {
    * V72.5 第二批 绑定样板：wms_create_inventory operation（openapi: POST /api/wms/inventory）
    */
   create: async (
-    data: AdaptedRequestBody<'wms_create_inventory'> | CreateInventoryItemRequest,
+    data: AdaptedRequestBody<'wms_create_inventory'> | CreateInventoryItemRequest
   ): Promise<TypedApiResponse<InventoryItem, 'wms_create_inventory'>> => {
-    return apiClient.wms.post(
-      '/inventory',
-      toOpenApiRequestBody(data as Record<string, unknown>),
-    );
+    return apiClient.wms.post('/inventory', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 
   update: async (

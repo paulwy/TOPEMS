@@ -682,11 +682,108 @@ export interface PmStatistics {
   spent_budget: number;
   budget_usage_rate: number;
 
-  on_time_projects: number;
-  delayed_projects: number;
-  average_progress: number;
+  total_risks: number;
+  open_risks: number;
+  closed_risks: number;
 
-  high_risk_projects: number;
-  medium_risk_projects: number;
-  low_risk_projects: number;
+  total_tasks: number;
+  pending_tasks: number;
+  in_progress_tasks: number;
+  completed_tasks: number;
+
+  on_time_projects?: number;
+  delayed_projects?: number;
+  average_progress?: number;
+  high_risk_projects?: number;
+  medium_risk_projects?: number;
+  low_risk_projects?: number;
+}
+
+export interface StatusCount {
+  status: string;
+  count: number;
+}
+
+export interface TypeCount {
+  type: string;
+  count: number;
+}
+
+export interface LeaderCount {
+  leader: string;
+  count: number;
+}
+
+export interface CategoryCount {
+  category: string;
+  total: number;
+  spent: number;
+}
+
+export interface LevelCount {
+  level: string;
+  count: number;
+}
+
+export interface PriorityCount {
+  priority: string;
+  count: number;
+}
+
+export interface ProjectStatistics {
+  total_projects: number;
+  by_status: StatusCount[];
+  by_type: TypeCount[];
+  by_leader: LeaderCount[];
+  average_progress: number;
+  on_time_rate: number;
+  high_risk_count: number;
+}
+
+export interface ContractStatistics {
+  total_contracts: number;
+  by_status: StatusCount[];
+  by_type: TypeCount[];
+  total_amount: number;
+  avg_amount: number;
+}
+
+export interface BudgetStatistics {
+  total_budget: number;
+  allocated_budget: number;
+  spent_budget: number;
+  remaining_budget: number;
+  budget_usage_rate: number;
+  by_category: CategoryCount[];
+}
+
+export interface RiskStatistics {
+  total_risks: number;
+  open_risks: number;
+  closed_risks: number;
+  by_level: LevelCount[];
+  by_category: CategoryCount[];
+}
+
+export interface TaskStatistics {
+  total_tasks: number;
+  by_status: StatusCount[];
+  by_priority: PriorityCount[];
+  completion_rate: number;
+  overdue_count: number;
+}
+
+export interface DashboardOverview {
+  projects: ProjectStatistics;
+  contracts: ContractStatistics;
+  budget: BudgetStatistics;
+  risks: RiskStatistics;
+  tasks: TaskStatistics;
+}
+
+export interface StatisticsQuery {
+  start_date?: string;
+  end_date?: string;
+  status?: string;
+  limit?: number;
 }

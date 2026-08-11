@@ -40,10 +40,10 @@ mod shared;
 use db::schema::init_tables;
 
 #[derive(Clone)]
-struct AppState {
-    pool: sqlx::PgPool,
-    auth_state: AuthState,
-    ws_manager: Arc<modules::websocket::WebSocketManager>,
+pub(crate) struct AppState {
+    pub(crate) pool: sqlx::PgPool,
+    pub(crate) auth_state: AuthState,
+    pub(crate) ws_manager: Arc<modules::websocket::WebSocketManager>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -269,7 +269,16 @@ async fn main() -> Result<()> {
             "/ws/gis/device/{device_code}",
             get(modules::websocket::websocket_device_handler),
         )
-        .route("/ws/gis", get(modules::websocket::websocket_handler));
+        .route("/ws/gis", get(modules::websocket::websocket_handler))
+        // Geofence public endpoints
+        .route(
+            "/fences",
+            axum::routing::get(modules::geofence::list_geofences),
+        )
+        .route(
+            "/fences/{id}",
+            axum::routing::get(modules::geofence::get_geofence),
+        );
 
     // Protected API (auth + rate limit)
     let protected_api = Router::new()
@@ -469,6 +478,19 @@ async fn main() -> Result<()> {
         .route(
             "/devices/{id}/history",
             axum::routing::get(modules::device::get_device_history),
+        )
+        // Geofence protected write endpoints
+        .route(
+            "/fences",
+            axum::routing::post(modules::geofence::create_geofence),
+        )
+        .route(
+            "/fences/{id}",
+            axum::routing::put(modules::geofence::update_geofence),
+        )
+        .route(
+            "/fences/{id}",
+            axum::routing::delete(modules::geofence::delete_geofence),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),

@@ -1,0 +1,752 @@
+use axum::{
+    extract::{Path, Query, State},
+    http::StatusCode,
+    Json, Router,
+};
+use serde::{Deserialize, Serialize};
+use sqlx::{FromRow, PgPool, Row};
+use uuid::Uuid;
+
+use topems_shared_core::response::ApiResponse;
+
+#[derive(Debug, FromRow, Serialize, Deserialize)]
+pub struct LocationMessage {
+    pub id: Uuid,
+    pub chat_id: Uuid,
+    pub sender_id: Uuid,
+    pub sender_name: Option<String>,
+    pub location_type: String,
+    pub coordinates: serde_json::Value,
+    pub address: Option<String>,
+    pub place_name: Option<String>,
+    pub place_id: Option<String>,
+    pub gis_location_id: Option<Uuid>,
+    pub gis_location_code: Option<String>,
+    pub gis_map_id: Option<Uuid>,
+    pub gis_map_name: Option<String>,
+    pub map_provider: String,
+    pub static_map_url: Option<String>,
+    pub map_zoom: i32,
+    pub map_bearing: Option<f64>,
+    pub map_tilt: Option<f64>,
+    pub poi_types: Option<Vec<String>>,
+    pub description: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+pub struct SendLocationRequest {
+    pub chat_id: Uuid,
+    pub location_type: String,
+    pub coordinates: serde_json::Value,
+    pub place_name: Option<String>,
+    pub place_id: Option<String>,
+    pub gis_location_id: Option<Uuid>,
+    pub gis_map_id: Option<Uuid>,
+    pub address: Option<String>,
+    pub description: Option<String>,
+    pub map_provider: Option<String>,
+    pub static_map: Option<bool>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct ImGeofence {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub chat_id: Uuid,
+    pub creator_id: Uuid,
+    pub creator_name: Option<String>,
+    pub shape_type: String,
+    pub coordinates: serde_json::Value,
+    pub radius: Option<f64>,
+    pub event_types: serde_json::Value,
+    pub status: String,
+    pub trigger_cooldown: i32,
+    pub notify_channels: serde_json::Value,
+    pub notify_users: serde_json::Value,
+    pub gis_fence_id: Option<Uuid>,
+    pub start_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub end_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateImGeofenceRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub chat_id: Uuid,
+    pub shape_type: String,
+    pub coordinates: serde_json::Value,
+    pub radius: Option<f64>,
+    pub event_types: Option<Vec<String>>,
+    pub trigger_cooldown: Option<i32>,
+    pub notify_channels: Option<Vec<String>>,
+    pub notify_users: Option<Vec<String>>,
+    pub sync_to_gis: Option<bool>,
+    pub start_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub end_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+pub struct UpdateImGeofenceRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub coordinates: Option<serde_json::Value>,
+    pub radius: Option<f64>,
+    pub event_types: Option<Vec<String>>,
+    pub status: Option<String>,
+    pub sync_to_gis: Option<bool>,
+    pub start_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub end_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GeofenceQuery {
+    pub chat_id: Option<String>,
+    pub status: Option<String>,
+    pub shape_type: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GeofenceSyncResult {
+    pub geofence: ImGeofence,
+    pub gis_sync_status: String,
+    pub gis_fence_id: Option<Uuid>,
+    pub gis_error: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+pub struct SearchPoiRequest {
+    pub keyword: String,
+    pub coordinates: Option<serde_json::Value>,
+    pub radius: Option<f64>,
+    pub include_gis: Option<bool>,
+    pub gis_types: Option<Vec<String>>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UnifiedPoiItem {
+    pub id: String,
+    pub name: String,
+    pub category: String,
+    pub coordinates: serde_json::Value,
+    pub address: Option<String>,
+    pub map_provider: String,
+    pub gis_location_id: Option<Uuid>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UnifiedPoiResult {
+    pub items: Vec<UnifiedPoiItem>,
+    pub gis_results_count: i32,
+    pub third_party_results_count: i32,
+    pub total: i32,
+    pub providers_used: Vec<String>,
+}
+
+pub async fn send_location_message(
+    State(pool): State<PgPool>,
+    Json(payload): Json<SendLocationRequest>,
+) -> Json<ApiResponse<LocationMessage>> {
+    let map_provider = payload.map_provider.unwrap_or_else(|| "osm".to_string());
+
+    match sqlx::query_as::<_, LocationMessage>(
+        r#"
+        INSERT INTO core_location_messages (
+            chat_id, sender_id, location_type, coordinates,
+            address, place_name, place_id, gis_location_id,
+            gis_map_id, map_provider, description
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING *
+        "#,
+    )
+    .bind(&payload.chat_id)
+    .bind(Uuid::nil())
+    .bind(&payload.location_type)
+    .bind(&payload.coordinates)
+    .bind(&payload.address)
+    .bind(&payload.place_name)
+    .bind(&payload.place_id)
+    .bind(payload.gis_location_id)
+    .bind(payload.gis_map_id)
+    .bind(&map_provider)
+    .bind(&payload.description)
+    .fetch_one(&pool)
+    .await
+    {
+        Ok(msg) => Json(ApiResponse::success(msg, "发送位置消息成功")),
+        Err(e) => {
+            tracing::error!("Failed to send location message: {}", e);
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                &format!("发送位置消息失败: {}", e),
+            ))
+        }
+    }
+}
+
+pub async fn list_location_messages(
+    State(pool): State<PgPool>,
+    Path(chat_id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match sqlx::query_as::<_, LocationMessage>(
+        "SELECT * FROM core_location_messages WHERE chat_id = $1 ORDER BY created_at DESC LIMIT 50",
+    )
+    .bind(chat_id)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(messages) => Json(ApiResponse::success(
+            serde_json::json!({
+                "items": messages,
+                "total": messages.len()
+            }),
+            "获取位置消息列表成功",
+        )),
+        Err(e) => Json(ApiResponse::error(
+            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            &format!("数据库查询失败: {}", e),
+        )),
+    }
+}
+
+pub async fn create_geofence(
+    State(pool): State<PgPool>,
+    Json(payload): Json<CreateImGeofenceRequest>,
+) -> Json<ApiResponse<GeofenceSyncResult>> {
+    let event_types = serde_json::json!(payload
+        .event_types
+        .unwrap_or_else(|| vec!["enter".to_string()]));
+    let notify_channels = serde_json::json!(payload
+        .notify_channels
+        .unwrap_or_else(|| vec!["notification".to_string()]));
+    let notify_users = serde_json::json!(payload.notify_users.unwrap_or_default());
+
+    let created = match sqlx::query_as::<_, ImGeofence>(
+        r#"
+        INSERT INTO core_geofences (
+            name, description, chat_id, creator_id, shape_type,
+            coordinates, radius, event_types, trigger_cooldown,
+            notify_channels, notify_users, status, start_at, end_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
+        RETURNING *
+        "#,
+    )
+    .bind(&payload.name)
+    .bind(&payload.description)
+    .bind(&payload.chat_id)
+    .bind(Uuid::nil())
+    .bind(&payload.shape_type)
+    .bind(&payload.coordinates)
+    .bind(payload.radius)
+    .bind(&event_types)
+    .bind(payload.trigger_cooldown.unwrap_or(300))
+    .bind(&notify_channels)
+    .bind(&notify_users)
+    .bind(payload.start_at)
+    .bind(payload.end_at)
+    .fetch_one(&pool)
+    .await
+    {
+        Ok(g) => g,
+        Err(e) => {
+            tracing::error!("Failed to create geofence: {}", e);
+            return Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                &format!("创建地理围栏失败: {}", e),
+            ));
+        }
+    };
+
+    let sync_to_gis = payload.sync_to_gis.unwrap_or(false);
+    let mut sync_result = GeofenceSyncResult {
+        geofence: created.clone(),
+        gis_sync_status: "not_supported".to_string(),
+        gis_fence_id: None,
+        gis_error: None,
+    };
+
+    if sync_to_gis {
+        match sync_geofence_to_gis_internal(&created).await {
+            Ok(Some(gis_id)) => {
+                sync_result.gis_sync_status = "synced".to_string();
+                sync_result.gis_fence_id = Some(gis_id);
+
+                let _ = sqlx::query("UPDATE core_geofences SET gis_fence_id = $1 WHERE id = $2")
+                    .bind(gis_id)
+                    .bind(created.id)
+                    .execute(&pool)
+                    .await;
+
+                sync_result.geofence.gis_fence_id = Some(gis_id);
+            }
+            Ok(None) => {
+                sync_result.gis_sync_status = "pending".to_string();
+                sync_result.gis_error = Some("GIS 围栏服务尚未实现，待同步".to_string());
+            }
+            Err(e) => {
+                sync_result.gis_sync_status = "failed".to_string();
+                sync_result.gis_error = Some(format!("GIS 同步失败: {}", e));
+            }
+        }
+    }
+
+    Json(ApiResponse::success(sync_result, "创建地理围栏成功"))
+}
+
+pub async fn get_geofence(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ImGeofence>> {
+    match sqlx::query_as::<_, ImGeofence>("SELECT * FROM core_geofences WHERE id = $1")
+        .bind(id)
+        .fetch_one(&pool)
+        .await
+    {
+        Ok(g) => Json(ApiResponse::success(g, "获取地理围栏成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理围栏未找到")),
+        Err(e) => Json(ApiResponse::error(
+            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            &format!("数据库查询失败: {}", e),
+        )),
+    }
+}
+
+pub async fn list_geofences(
+    State(pool): State<PgPool>,
+    Query(params): Query<GeofenceQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut sql = String::from("SELECT * FROM core_geofences WHERE 1=1");
+    let mut bind_chat_id: Option<Uuid> = None;
+    let mut bind_status: Option<String> = None;
+    let mut bind_shape_type: Option<String> = None;
+    let mut placeholder_idx = 1usize;
+
+    if let Some(ref chat_id_str) = params.chat_id {
+        if let Ok(uid) = Uuid::parse_str(chat_id_str) {
+            sql.push_str(&format!(" AND chat_id = ${placeholder_idx}"));
+            bind_chat_id = Some(uid);
+            placeholder_idx += 1;
+        }
+    }
+
+    if let Some(ref status) = params.status {
+        sql.push_str(&format!(" AND status = ${placeholder_idx}"));
+        bind_status = Some(status.clone());
+        placeholder_idx += 1;
+    }
+
+    if let Some(ref shape_type) = params.shape_type {
+        sql.push_str(&format!(" AND shape_type = ${placeholder_idx}"));
+        bind_shape_type = Some(shape_type.clone());
+    }
+
+    sql.push_str(" ORDER BY created_at DESC");
+
+    let mut query = sqlx::query_as::<_, ImGeofence>(&sql);
+    if let Some(uid) = bind_chat_id {
+        query = query.bind(uid);
+    }
+    if let Some(ref st) = bind_status {
+        query = query.bind(st);
+    }
+    if let Some(ref shp) = bind_shape_type {
+        query = query.bind(shp);
+    }
+
+    let result = query.fetch_all(&pool).await;
+
+    match result {
+        Ok(geofences) => Json(ApiResponse::success(
+            serde_json::json!({
+                "items": geofences,
+                "total": geofences.len()
+            }),
+            "获取地理围栏列表成功",
+        )),
+        Err(e) => Json(ApiResponse::error(
+            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            &format!("数据库查询失败: {}", e),
+        )),
+    }
+}
+
+pub async fn update_geofence(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateImGeofenceRequest>,
+) -> Json<ApiResponse<GeofenceSyncResult>> {
+    let current =
+        match sqlx::query_as::<_, ImGeofence>("SELECT * FROM core_geofences WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await
+        {
+            Ok(g) => g,
+            Err(sqlx::Error::RowNotFound) => {
+                return Json(ApiResponse::error(404, "地理围栏未找到"));
+            }
+            Err(e) => {
+                return Json(ApiResponse::error(
+                    StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                    &format!("数据库查询失败: {}", e),
+                ));
+            }
+        };
+
+    let name = payload.name.unwrap_or(current.name);
+    let description = payload.description.or(current.description);
+    let coordinates = payload.coordinates.unwrap_or(current.coordinates);
+    let radius = payload.radius.or(current.radius);
+    let event_types = payload
+        .event_types
+        .map(|v| serde_json::json!(v))
+        .unwrap_or(current.event_types);
+    let status = payload.status.unwrap_or_else(|| current.status.clone());
+
+    let updated = match sqlx::query_as::<_, ImGeofence>(
+        r#"
+        UPDATE core_geofences
+        SET name = $1, description = $2, coordinates = $3, radius = $4,
+            event_types = $5, status = $6, updated_at = NOW()
+        WHERE id = $7
+        RETURNING *
+        "#,
+    )
+    .bind(&name)
+    .bind(&description)
+    .bind(&coordinates)
+    .bind(radius)
+    .bind(&event_types)
+    .bind(&status)
+    .bind(id)
+    .fetch_one(&pool)
+    .await
+    {
+        Ok(g) => g,
+        Err(e) => {
+            tracing::error!("Failed to update geofence: {}", e);
+            return Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                &format!("数据库更新失败: {}", e),
+            ));
+        }
+    };
+
+    let sync_to_gis = payload.sync_to_gis.unwrap_or(false);
+    let mut sync_result = GeofenceSyncResult {
+        geofence: updated.clone(),
+        gis_sync_status: "not_supported".to_string(),
+        gis_fence_id: updated.gis_fence_id,
+        gis_error: None,
+    };
+
+    if sync_to_gis {
+        match sync_geofence_to_gis_internal(&updated).await {
+            Ok(Some(gis_id)) => {
+                sync_result.gis_sync_status = "synced".to_string();
+                sync_result.gis_fence_id = Some(gis_id);
+            }
+            Ok(None) => {
+                sync_result.gis_sync_status = "pending".to_string();
+                sync_result.gis_error = Some("GIS 围栏服务尚未实现".to_string());
+            }
+            Err(e) => {
+                sync_result.gis_sync_status = "failed".to_string();
+                sync_result.gis_error = Some(format!("GIS 同步失败: {}", e));
+            }
+        }
+    }
+
+    Json(ApiResponse::success(sync_result, "更新地理围栏成功"))
+}
+
+pub async fn delete_geofence(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<bool>> {
+    match sqlx::query("DELETE FROM core_geofences WHERE id = $1")
+        .bind(id)
+        .execute(&pool)
+        .await
+    {
+        Ok(result) => {
+            if result.rows_affected() > 0 {
+                Json(ApiResponse::success(true, "删除地理围栏成功"))
+            } else {
+                Json(ApiResponse::error(404, "地理围栏未找到"))
+            }
+        }
+        Err(e) => Json(ApiResponse::error(
+            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            &format!("数据库删除失败: {}", e),
+        )),
+    }
+}
+
+pub async fn unified_search_pois(
+    State(pool): State<PgPool>,
+    Json(payload): Json<SearchPoiRequest>,
+) -> Json<ApiResponse<UnifiedPoiResult>> {
+    let mut items: Vec<UnifiedPoiItem> = Vec::new();
+    let mut gis_count: i32 = 0;
+    let mut third_party_count: i32 = 0;
+    let mut providers: Vec<String> = Vec::new();
+
+    let include_gis = payload.include_gis.unwrap_or(true);
+    let keyword = format!("%{}%", payload.keyword);
+
+    if include_gis {
+        if let Ok(gis_results) = sqlx::query(
+            "SELECT id, name, business_type, position, address FROM business_locations WHERE business_name ILIKE $1 OR business_code ILIKE $1",
+        )
+        .bind(&keyword)
+        .fetch_all(&pool)
+        .await
+        {
+            for row in gis_results {
+                let id: Uuid = row.try_get("id").unwrap_or_default();
+                let name: String = row.try_get("name").unwrap_or_default();
+                let business_type: Option<String> = row.try_get("business_type").ok();
+                let position: serde_json::Value = row.try_get("position").unwrap_or(serde_json::json!({}));
+                let address: Option<String> = row.try_get("address").ok();
+
+                items.push(UnifiedPoiItem {
+                    id: format!("gis-{}", id),
+                    name,
+                    category: business_type.unwrap_or_else(|| "business".to_string()),
+                    coordinates: position,
+                    address,
+                    map_provider: "gis".to_string(),
+                    gis_location_id: Some(id),
+                });
+                gis_count += 1;
+            }
+        }
+
+        if let Ok(warehouses) = sqlx::query(
+            "SELECT id, warehouse_name, position FROM warehouse_locations WHERE warehouse_name ILIKE $1",
+        )
+        .bind(&keyword)
+        .fetch_all(&pool)
+        .await
+        {
+            for row in warehouses {
+                let id: Uuid = row.try_get("id").unwrap_or_default();
+                let name: String = row.try_get("warehouse_name").unwrap_or_default();
+                let position: serde_json::Value = row.try_get("position").unwrap_or(serde_json::json!({}));
+
+                items.push(UnifiedPoiItem {
+                    id: format!("gis-{}", id),
+                    name,
+                    category: "warehouse".to_string(),
+                    coordinates: position,
+                    address: None,
+                    map_provider: "gis".to_string(),
+                    gis_location_id: Some(id),
+                });
+                gis_count += 1;
+            }
+        }
+
+        if !providers.contains(&"gis".to_string()) {
+            providers.push("gis".to_string());
+        }
+    }
+
+    if let Ok(device_results) = sqlx::query(
+        "SELECT id, device_name, position FROM device_locations WHERE device_name ILIKE $1 OR device_code ILIKE $1",
+    )
+    .bind(&keyword)
+    .fetch_all(&pool)
+    .await
+    {
+        for row in device_results {
+            let id: Uuid = row.try_get("id").unwrap_or_default();
+            let name: String = row.try_get("device_name").unwrap_or_default();
+            let position: serde_json::Value = row.try_get("position").unwrap_or(serde_json::json!({}));
+
+            items.push(UnifiedPoiItem {
+                id: format!("device-{}", id),
+                name,
+                category: "device".to_string(),
+                coordinates: position,
+                address: None,
+                map_provider: "gis".to_string(),
+                gis_location_id: None,
+            });
+            third_party_count += 1;
+        }
+    }
+
+    if !providers.contains(&"amap".to_string()) {
+        providers.push("amap".to_string());
+    }
+
+    let result = UnifiedPoiResult {
+        items,
+        gis_results_count: gis_count,
+        third_party_results_count: third_party_count,
+        total: gis_count + third_party_count,
+        providers_used: providers,
+    };
+
+    Json(ApiResponse::success(result, "POI 搜索完成"))
+}
+
+async fn sync_geofence_to_gis_internal(geofence: &ImGeofence) -> Result<Option<Uuid>, String> {
+    let gis_service_url =
+        std::env::var("GIS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8071".to_string());
+
+    let client = reqwest::Client::new();
+
+    let gis_fence_data = serde_json::json!({
+        "name": geofence.name,
+        "description": geofence.description,
+        "shape_type": geofence.shape_type,
+        "coordinates": geofence.coordinates,
+        "radius": geofence.radius,
+        "status": geofence.status,
+    });
+
+    let endpoint = if let Some(gis_id) = geofence.gis_fence_id {
+        format!("{}/api/gis/fences/{}", gis_service_url, gis_id)
+    } else {
+        format!("{}/api/gis/fences", gis_service_url)
+    };
+
+    let response = if geofence.gis_fence_id.is_some() {
+        client.put(&endpoint).json(&gis_fence_data).send().await
+    } else {
+        client.post(&endpoint).json(&gis_fence_data).send().await
+    };
+
+    match response {
+        Ok(resp) => {
+            if resp.status().is_success() {
+                let body: serde_json::Value = resp.json().await.unwrap_or_default();
+                let gis_id = body["data"]["id"]
+                    .as_str()
+                    .and_then(|s| Uuid::parse_str(s).ok());
+                Ok(gis_id)
+            } else {
+                Err(format!("GIS 服务返回错误状态: {}", resp.status()))
+            }
+        }
+        Err(e) => Err(format!("请求 GIS 服务失败: {}", e)),
+    }
+}
+
+#[allow(dead_code)]
+pub fn create_location_routes() -> Router<PgPool> {
+    Router::new()
+        // Location messages
+        .route(
+            "/locations/message",
+            axum::routing::post(send_location_message),
+        )
+        .route(
+            "/locations/rooms/{chat_id}/messages",
+            axum::routing::get(list_location_messages),
+        )
+        // Geofence CRUD
+        .route("/locations/geofences", axum::routing::post(create_geofence))
+        .route("/locations/geofences", axum::routing::get(list_geofences))
+        .route(
+            "/locations/geofences/{id}",
+            axum::routing::get(get_geofence),
+        )
+        .route(
+            "/locations/geofences/{id}",
+            axum::routing::put(update_geofence),
+        )
+        .route(
+            "/locations/geofences/{id}",
+            axum::routing::delete(delete_geofence),
+        )
+        // POI unified search
+        .route("/pois/search", axum::routing::post(unified_search_pois))
+}
+
+pub async fn register_geofence_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_location_messages (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            chat_id UUID NOT NULL,
+            sender_id UUID NOT NULL,
+            sender_name VARCHAR(255),
+            location_type VARCHAR(50) NOT NULL,
+            coordinates JSONB NOT NULL,
+            address TEXT,
+            place_name VARCHAR(255),
+            place_id VARCHAR(255),
+            gis_location_id UUID,
+            gis_location_code VARCHAR(100),
+            gis_map_id UUID,
+            gis_map_name VARCHAR(255),
+            map_provider VARCHAR(50) NOT NULL DEFAULT 'osm',
+            static_map_url TEXT,
+            map_zoom INTEGER DEFAULT 15,
+            map_bearing DOUBLE PRECISION,
+            map_tilt DOUBLE PRECISION,
+            poi_types JSONB,
+            description TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_geofences (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            chat_id UUID NOT NULL,
+            creator_id UUID NOT NULL,
+            creator_name VARCHAR(255),
+            shape_type VARCHAR(50) NOT NULL,
+            coordinates JSONB NOT NULL,
+            radius DOUBLE PRECISION,
+            event_types JSONB DEFAULT '["enter"]',
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            trigger_cooldown INTEGER DEFAULT 300,
+            notify_channels JSONB DEFAULT '["notification"]',
+            notify_users JSONB DEFAULT '[]',
+            gis_fence_id UUID,
+            start_at TIMESTAMP WITH TIME ZONE,
+            end_at TIMESTAMP WITH TIME ZONE,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_location_messages_chat ON core_location_messages(chat_id)",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_geofences_chat ON core_geofences(chat_id)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_geofences_status ON core_geofences(status)")
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}

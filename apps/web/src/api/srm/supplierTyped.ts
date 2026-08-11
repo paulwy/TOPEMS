@@ -31,7 +31,7 @@ export const supplierTypedApi = {
    * Query Params: { page, pageSize, search, status, category, sortBy, sortOrder }（AdaptedQuery 后 camelCase）
    */
   list: async (
-    params?: AdaptedQuery<'srm_list_suppliers'>,
+    params?: AdaptedQuery<'srm_list_suppliers'>
   ): Promise<TypedPaginatedResponse<Supplier>> => {
     return apiClient.srm.get('/suppliers', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -50,12 +50,9 @@ export const supplierTypedApi = {
    * Request Body: CreateSupplierRequest schema（发送前 adaptReverse → snake_case）
    */
   create: async (
-    data: AdaptedRequestBody<'srm_create_supplier'> | CreateSupplierRequest,
+    data: AdaptedRequestBody<'srm_create_supplier'> | CreateSupplierRequest
   ): Promise<TypedApiResponse<Supplier, 'srm_create_supplier'>> => {
-    return apiClient.srm.post(
-      '/suppliers',
-      toOpenApiRequestBody(data as Record<string, unknown>),
-    );
+    return apiClient.srm.post('/suppliers', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 
   /**
@@ -63,11 +60,11 @@ export const supplierTypedApi = {
    */
   update: async (
     id: string,
-    data: AdaptedRequestBody<'srm_update_supplier'> | CreateSupplierRequest,
+    data: AdaptedRequestBody<'srm_update_supplier'> | CreateSupplierRequest
   ): Promise<TypedApiResponse<Supplier, 'srm_update_supplier'>> => {
     return apiClient.srm.put(
       `/suppliers/${id}`,
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 

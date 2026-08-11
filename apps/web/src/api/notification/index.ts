@@ -1,7 +1,20 @@
-import axios from 'axios';
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import { apiLogger } from '@/utils/logger';
+
+import { templateApi } from './template';
+import { configApi } from './config';
+import { batchApi } from './batch';
+import { pushConfigApi } from './pushConfig';
+import { imApi } from './im';
+import { mailApi } from './mail';
+import { preferenceApi } from './preference';
+import { deliveryApi } from './delivery';
+import { webhookApi } from './webhook';
+import { subscriptionApi } from './subscription';
+import { channelApi } from './channel';
+import { groupApi } from './group';
+import { digestApi } from './digest';
 
 const unregisterServiceWorker = async (): Promise<void> => {
   if ('serviceWorker' in navigator) {
@@ -400,6 +413,7 @@ export const notificationServiceApi = {
 };
 
 export const notificationApi = {
+  // 基础通知操作
   get: async (id: string): Promise<ApiResponse<Notification>> => {
     return await apiClient.notification.get<Notification>(`/notifications/${id}`);
   },
@@ -409,6 +423,275 @@ export const notificationApi = {
   markUnread: async (id: string): Promise<ApiResponse<Notification>> => {
     return await apiClient.notification.put<Notification>(`/notifications/${id}/unread`);
   },
+
+  // 模板子域
+  listTemplates: templateApi.listTemplates,
+  getTemplate: templateApi.getTemplate,
+  createTemplate: templateApi.createTemplate,
+  updateTemplate: templateApi.updateTemplate,
+  deleteTemplate: templateApi.deleteTemplate,
+  renderTemplate: templateApi.renderTemplate,
+  testTemplate: templateApi.testTemplate,
+  getTemplateVersions: templateApi.getTemplateVersions,
+  cloneTemplate: templateApi.cloneTemplate,
+  getTemplateVariables: templateApi.getTemplateVariables,
+  updateTemplateStatus: templateApi.updateTemplateStatus,
+  batchUpdateTemplateStatus: templateApi.batchUpdateTemplateStatus,
+
+  // 批量操作子域
+  sendNotification: batchApi.sendNotification,
+  broadcastNotification: batchApi.broadcastNotification,
+  broadcastWithTemplate: batchApi.broadcastWithTemplate,
+  getBulkProgress: batchApi.getBulkProgress,
+  bulkMarkAsRead: batchApi.bulkMarkAsRead,
+  bulkMarkAsReadByCondition: batchApi.bulkMarkAsReadByCondition,
+  bulkMarkAsUnread: batchApi.bulkMarkAsUnread,
+  bulkDeleteNotifications: batchApi.bulkDeleteNotifications,
+  bulkDeleteByCondition: batchApi.bulkDeleteByCondition,
+  bulkArchive: batchApi.bulkArchive,
+  bulkUnarchive: batchApi.bulkUnarchive,
+  bulkDeleteAll: batchApi.bulkDeleteAll,
+
+  // 推送配置子域
+  getPushConfig: pushConfigApi.getConfig,
+  updatePushConfig: pushConfigApi.updateConfig,
+  listPushChannels: pushConfigApi.listChannels,
+  createPushChannel: pushConfigApi.createChannel,
+  updatePushChannel: pushConfigApi.updateChannel,
+  deletePushChannel: pushConfigApi.deleteChannel,
+  getPushPreferences: pushConfigApi.getPreferences,
+  updatePushPreferences: pushConfigApi.updatePreferences,
+  testPush: pushConfigApi.testPush,
+  enablePushChannel: pushConfigApi.enableChannel,
+  disablePushChannel: pushConfigApi.disableChannel,
+  setQuietHours: pushConfigApi.setQuietHours,
+  clearQuietHours: pushConfigApi.clearQuietHours,
+
+  // 用户偏好子域
+  getMyPreferences: preferenceApi.getMyPreferences,
+  updateMyPreferences: preferenceApi.updateMyPreferences,
+  getCategoryPreferences: preferenceApi.getCategoryPreferences,
+  updateCategoryPreference: preferenceApi.updateCategoryPreference,
+  enableCategory: preferenceApi.enableCategory,
+  disableCategory: preferenceApi.disableCategory,
+  setCategoryChannels: preferenceApi.setCategoryChannels,
+  setGlobalMute: preferenceApi.setGlobalMute,
+  cancelGlobalMute: preferenceApi.cancelGlobalMute,
+  getQuietHours: preferenceApi.getQuietHours,
+  updateQuietHours: preferenceApi.updateQuietHours,
+  resetPreferences: preferenceApi.resetPreferences,
+  getDefaultPreferences: preferenceApi.getDefaultPreferences,
+  setDefaultChannels: preferenceApi.setDefaultChannels,
+
+  // 送达追踪子域
+  listDeliveries: deliveryApi.listDeliveries,
+  getDelivery: deliveryApi.getDelivery,
+  retryDelivery: deliveryApi.retryDelivery,
+  getBatchDeliveries: deliveryApi.getBatchDeliveries,
+  getUserDeliveries: deliveryApi.getUserDeliveries,
+  getDeliveryStats: deliveryApi.getDeliveryStats,
+  getFailedDeliveries: deliveryApi.getFailedDeliveries,
+  retryAllFailed: deliveryApi.retryAllFailed,
+  getChannelDeliveries: deliveryApi.getChannelDeliveries,
+  deleteDelivery: deliveryApi.deleteDelivery,
+
+  // Webhook 集成子域
+  listWebhooks: webhookApi.listWebhooks,
+  createWebhook: webhookApi.createWebhook,
+  getWebhook: webhookApi.getWebhook,
+  updateWebhook: webhookApi.updateWebhook,
+  deleteWebhook: webhookApi.deleteWebhook,
+  testWebhook: webhookApi.testWebhook,
+  getWebhookEvents: webhookApi.getWebhookEvents,
+  enableWebhook: webhookApi.enableWebhook,
+  disableWebhook: webhookApi.disableWebhook,
+  rotateWebhookSecret: webhookApi.rotateWebhookSecret,
+  getEventDeliveries: webhookApi.getEventDeliveries,
+
+  // 订阅管理子域
+  listSubscriptions: subscriptionApi.listSubscriptions,
+  getSubscription: subscriptionApi.getSubscription,
+  createSubscription: subscriptionApi.createSubscription,
+  updateSubscription: subscriptionApi.updateSubscription,
+  deleteSubscription: subscriptionApi.deleteSubscription,
+  pauseSubscription: subscriptionApi.pauseSubscription,
+  resumeSubscription: subscriptionApi.resumeSubscription,
+  getMySubscriptions: subscriptionApi.getMySubscriptions,
+  subscribeToEvent: subscriptionApi.subscribeToEvent,
+  listEventTypes: subscriptionApi.listEventTypes,
+
+  // 渠道与 Provider 子域
+  listChannels: channelApi.listChannels,
+  createChannel: channelApi.createChannel,
+  updateChannel: channelApi.updateChannel,
+  deleteChannel: channelApi.deleteChannel,
+  testChannel: channelApi.testChannel,
+  getChannelMetrics: channelApi.getChannelMetrics,
+  listProviders: channelApi.listProviders,
+  createProvider: channelApi.createProvider,
+  testProvider: channelApi.testProvider,
+
+  // 分组与话题子域
+  listGroups: groupApi.listGroups,
+  createGroup: groupApi.createGroup,
+  updateGroup: groupApi.updateGroup,
+  deleteGroup: groupApi.deleteGroup,
+  listGroupMembers: groupApi.listGroupMembers,
+  addGroupMembers: groupApi.addGroupMembers,
+  broadcastToGroup: groupApi.broadcastToGroup,
+  listTopics: groupApi.listTopics,
+  subscribeToTopic: groupApi.subscribeToTopic,
+  getMyTopics: groupApi.getMyTopics,
+
+  // 摘要与定时通知子域
+  listDigests: digestApi.listDigests,
+  createDigest: digestApi.createDigest,
+  sendDigest: digestApi.sendDigest,
+  getDigestHistory: digestApi.getDigestHistory,
+  listScheduled: digestApi.listScheduled,
+  createScheduled: digestApi.createScheduled,
+  sendScheduledNow: digestApi.sendScheduledNow,
+  getMyScheduled: digestApi.getMyScheduled,
 };
+
+export {
+  templateApi,
+  configApi,
+  batchApi,
+  pushConfigApi,
+  imApi,
+  mailApi,
+  preferenceApi,
+  deliveryApi,
+  webhookApi,
+  subscriptionApi,
+  channelApi,
+  groupApi,
+  digestApi,
+};
+
+export type {
+  SendNotificationRequest,
+  BroadcastNotificationRequest,
+  SendResult,
+  BatchResult,
+  BulkActionResponse,
+  BulkArchiveRequest,
+  BroadcastWithTemplateRequest,
+  BulkProgress,
+} from './batch';
+
+export type {
+  PushConfig,
+  PushChannel,
+  PushPreference,
+  PushChannelType,
+  PushStatus,
+  TestPushRequest,
+  TestPushResponse,
+} from './pushConfig';
+
+export type {
+  TestTemplateRequest,
+  TestTemplateResponse,
+  TemplateVersion,
+  TemplateCloneRequest,
+} from './template';
+
+export type {
+  ChatRoom,
+  ChatMessage,
+  ChatMember,
+  Contact,
+  ContactGroup,
+  ProjectGroup,
+  ImNotification,
+  OnlineStatus,
+  SendMessageRequest,
+  CreateRoomRequest,
+  AddContactRequest,
+} from './im';
+
+export type {
+  Email,
+  EmailTemplate,
+  SendEmailRequest,
+  CreateEmailTemplateRequest,
+  UpdateEmailTemplateRequest,
+  SendWithTemplateRequest,
+} from './mail';
+
+export type {
+  NotificationCategory,
+  DeliveryChannel,
+  CategoryPreference,
+  QuietHours,
+  GlobalMute,
+  UserPreferences,
+  UpdatePreferenceRequest,
+  CategoryPreferenceResponse,
+} from './preference';
+
+export type {
+  DeliveryStatus,
+  DeliveryRecord,
+  DeliveryListQuery,
+  DeliveryListResponse,
+  DeliveryStats,
+  RetryDeliveryResponse,
+} from './delivery';
+
+export type {
+  WebhookEventType,
+  WebhookStatus,
+  WebhookConfig,
+  CreateWebhookRequest,
+  UpdateWebhookRequest,
+  WebhookDelivery,
+  WebhookEvent,
+  TestWebhookResponse,
+  WebhookListResponse,
+  WebhookEventListResponse,
+} from './webhook';
+
+export type {
+  SubscriptionStatus,
+  NotificationSubscription,
+  CreateSubscriptionRequest,
+  UpdateSubscriptionRequest,
+  SubscriptionListQuery,
+} from './subscription';
+
+export type {
+  ChannelType,
+  ChannelStatus,
+  ProviderStatus,
+  NotificationChannel,
+  NotificationProvider,
+  CreateChannelRequest,
+  UpdateChannelRequest,
+  ChannelMetrics,
+} from './channel';
+
+export type {
+  GroupType,
+  TopicStatus,
+  NotificationGroup,
+  NotificationTopic,
+  GroupMember,
+  CreateGroupRequest,
+  CreateTopicRequest,
+} from './group';
+
+export type {
+  DigestFrequency,
+  DigestStatus,
+  ScheduleStatus,
+  NotificationDigest,
+  ScheduledNotification,
+  DigestHistory,
+  CreateDigestRequest,
+  CreateScheduledRequest,
+} from './digest';
 
 export default notificationServiceApi;
