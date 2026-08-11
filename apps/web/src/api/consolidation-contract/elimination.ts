@@ -1,157 +1,33 @@
-/**
- * 抵消规则管理 API 契约
- */
+import { apiClient } from '../client';
+import type { ApiResponse } from '../client';
+import type {
+  EliminationRule,
+  CreateEliminationRuleRequest,
+  UpdateEliminationRuleRequest,
+  EliminationRuleQuery,
+  ConsolidationPaginatedResponse,
+} from './types';
 
-export const eliminationRuleApiContract = {
-  /**
-   * 获取抵消规则列表
-   * GET /api/consolidation/elimination-rules
-   */
-  list: {
-    method: 'GET',
-    path: '/api/consolidation/elimination-rules',
-    queryParams: {
-      scope_id: 'uuid 合并范围ID(必填)',
-      type: 'string? 规则类型',
-      status: 'string? 状态',
-      keyword: 'string? 关键字搜索',
-      page: 'number? 页码',
-      pagesize: 'number? 每页条数',
-    },
-    response: {
-      code: 200,
-      data: {
-        items: [
-          {
-            id: 'uuid',
-            scope_id: 'uuid',
-            code: 'string',
-            name: 'string',
-            type: 'EliminationRuleType',
-            description: 'string?',
-            status: 'active | inactive | draft',
-            direction: 'debit | credit | both',
-            auto_elimination: 'boolean',
-            priority: 'number',
-            created_at: 'ISO8601',
-            updated_at: 'ISO8601',
-          },
-        ],
-        total: 'number',
-        page: 'number',
-        pagesize: 'number',
-      },
-    },
+export const eliminationRuleApi = {
+  list: (query: EliminationRuleQuery): Promise<ConsolidationPaginatedResponse<EliminationRule>> => {
+    return apiClient.erp.get('/consolidation/elimination-rules', { params: query });
   },
 
-  /**
-   * 获取抵消规则详情
-   * GET /api/consolidation/elimination-rules/:ruleId
-   */
-  get: {
-    method: 'GET',
-    path: '/api/consolidation/elimination-rules/:ruleId',
-    pathParams: {
-      ruleId: 'uuid 抵消规则ID',
-    },
-    response: {
-      code: 200,
-      data: {
-        id: 'uuid',
-        scope_id: 'uuid',
-        code: 'string',
-        name: 'string',
-        type: 'EliminationRuleType',
-        description: 'string?',
-        status: 'string',
-        direction: 'string',
-        debit_account_codes: 'string[]?',
-        credit_account_codes: 'string[]?',
-        company_pairs: 'Array?',
-        auto_elimination: 'boolean',
-        priority: 'number',
-        created_at: 'ISO8601',
-        updated_at: 'ISO8601',
-      },
-    },
+  get: (ruleId: string): Promise<ApiResponse<EliminationRule>> => {
+    return apiClient.erp.get(`/consolidation/elimination-rules/${ruleId}`);
   },
 
-  /**
-   * 创建抵消规则
-   * POST /api/consolidation/elimination-rules
-   */
-  create: {
-    method: 'POST',
-    path: '/api/consolidation/elimination-rules',
-    body: {
-      scope_id: 'uuid 合并范围ID(必填)',
-      code: 'string 规则编码(必填,唯一)',
-      name: 'string 规则名称(必填)',
-      type: 'string 规则类型(必填)',
-      description: 'string? 说明',
-      status: 'string? 状态(默认active)',
-      direction: 'string? 抵消方向(默认both)',
-      debit_account_codes: 'string[]? 借方科目',
-      credit_account_codes: 'string[]? 贷方科目',
-      company_pairs: 'Array? 关联公司组',
-      auto_elimination: 'boolean? 自动抵消(默认true)',
-      priority: 'number? 优先级(默认100)',
-    },
-    response: {
-      code: 201,
-      data: {
-        id: 'uuid',
-        scope_id: 'uuid',
-        code: 'string',
-        name: 'string',
-        type: 'string',
-        created_at: 'ISO8601',
-      },
-    },
+  create: (data: CreateEliminationRuleRequest): Promise<ApiResponse<EliminationRule>> => {
+    return apiClient.erp.post('/consolidation/elimination-rules', data);
   },
 
-  /**
-   * 更新抵消规则
-   * PUT /api/consolidation/elimination-rules/:ruleId
-   */
-  update: {
-    method: 'PUT',
-    path: '/api/consolidation/elimination-rules/:ruleId',
-    pathParams: {
-      ruleId: 'uuid 抵消规则ID',
-    },
-    body: {
-      name: 'string? 规则名称',
-      description: 'string? 说明',
-      status: 'string? 状态',
-      direction: 'string? 抵消方向',
-      debit_account_codes: 'string[]? 借方科目',
-      credit_account_codes: 'string[]? 贷方科目',
-      company_pairs: 'Array? 关联公司组',
-      auto_elimination: 'boolean? 自动抵消',
-      priority: 'number? 优先级',
-    },
-    response: {
-      code: 200,
-      data: {
-        id: 'uuid',
-        updated_at: 'ISO8601',
-      },
-    },
+  update: (ruleId: string, data: UpdateEliminationRuleRequest): Promise<ApiResponse<EliminationRule>> => {
+    return apiClient.erp.put(`/consolidation/elimination-rules/${ruleId}`, data);
   },
 
-  /**
-   * 删除抵消规则
-   * DELETE /api/consolidation/elimination-rules/:ruleId
-   */
-  delete: {
-    method: 'DELETE',
-    path: '/api/consolidation/elimination-rules/:ruleId',
-    pathParams: {
-      ruleId: 'uuid 抵消规则ID',
-    },
-    response: {
-      code: 204,
-    },
+  delete: (ruleId: string): Promise<ApiResponse<void>> => {
+    return apiClient.erp.delete(`/consolidation/elimination-rules/${ruleId}`);
   },
 };
+
+export default eliminationRuleApi;

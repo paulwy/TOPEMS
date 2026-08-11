@@ -54,7 +54,7 @@ export { integrationApi } from './integration';
 export { automationApi } from './automation';
 export { externalErpApi } from './external-erp';
 export { lowcodeApi } from './lowcode';
-export { consolidationContract } from './consolidation-contract';
+export { consolidationContractApi as consolidationContract } from './consolidation-contract';
 export * as consolidationApi from './consolidation';
 
 // Domain modules - Platform APIs
