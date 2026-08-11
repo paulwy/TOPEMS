@@ -20,6 +20,7 @@ PM（项目管理）模块是TOPEMS平台的核心模块之一，提供项目计
 | 进度管理 | 甘特图、里程碑、进度跟踪 | ✅ |
 | 团队协作 | 团队管理、消息通知、文档共享 | ✅ |
 | 报表分析 | 项目报表、资源利用率、成本分析 | ✅ |
+| 统计仪表板 | 项目/合同/预算/风险/任务多维统计 | ✅ |
 
 ### 1.2 架构设计
 
@@ -30,20 +31,30 @@ PM（项目管理）模块是TOPEMS平台的核心模块之一，提供项目计
 │  前端层 (React + TypeScript)                               │
 │  ├── pages/                                                │
 │  │   └── PmPage.tsx         # PM主页面                   │
-│  └── components/                                           │
+│  ├── components/                                           │
+│  │   └── pm/                                               │
+│  │       ├── GanttChart.tsx  # 甘特图组件                │
+│  │       └── TaskCard.tsx    # 任务卡片                  │
+│  ├── hooks/                                                │
+│  │   └── usePmReport.tsx     # 报表数据 Hook              │
+│  └── schemas/                                              │
 │      └── pm/                                               │
-│          ├── GanttChart.tsx  # 甘特图组件                │
-│          └── TaskCard.tsx    # 任务卡片                  │
+│          └── dashboardSchema.ts # 仪表板数据校验          │
 ├─────────────────────────────────────────────────────────────┤
 │  API层 (TypeScript)                                        │
-│  └── pm.ts                # PM API客户端                   │
+│  └── api/pm/                                              │
+│      ├── index.ts           # PM API聚合导出             │
+│      ├── types.ts           # PM类型定义                  │
+│      ├── statistics.ts      # 统计API                    │
+│      └── dashboard.ts       # 仪表板API                  │
 ├─────────────────────────────────────────────────────────────┤
 │  后端服务 (Rust + PostgreSQL)                              │
 │  ├── main.rs              # 服务入口                       │
-│  ├── api/                 # API路由                       │
+│  ├── modules/              # 业务模块                    │
 │  │   ├── project.rs        # 项目管理                      │
 │  │   ├── task.rs           # 任务管理                      │
 │  │   ├── resource.rs       # 资源管理                      │
+│  │   ├── statistics.rs     # 统计接口（V176扩展）           │
 │  │   └── report.rs         # 报表管理                      │
 │  └── models/              # 数据模型                      │
 └─────────────────────────────────────────────────────────────┘
@@ -210,8 +221,136 @@ interface ProgressUpdate {
 | 获取资源利用率 | GET | `/api/v1/pm/reports/resources` |
 | 获取任务统计 | GET | `/api/v1/pm/reports/tasks` |
 
+### 3.6 统计接口（V176 新增）
+
+| 接口 | 方法 | 路径 |
+|------|------|------|
+| 获取聚合统计 | GET | `/api/v1/pm/statistics` |
+| 获取项目统计 | GET | `/api/v1/pm/statistics/projects` |
+| 获取合同统计 | GET | `/api/v1/pm/statistics/contracts` |
+| 获取预算统计 | GET | `/api/v1/pm/statistics/budget` |
+| 获取风险统计 | GET | `/api/v1/pm/statistics/risks` |
+| 获取任务统计 | GET | `/api/v1/pm/statistics/tasks` |
+
+### 3.7 仪表板接口（V176 新增）
+
+| 接口 | 方法 | 路径 |
+|------|------|------|
+| 获取仪表板概览 | GET | `/api/v1/pm/statistics/dashboard` |
+
 ---
 
-**文档版本**: v1.0.0  
-**最后更新**: 2024-06-11  
+## 4. 统计数据模型（V176 新增）
+
+### 4.1 项目统计
+
+```typescript
+interface ProjectStatistics {
+  total_projects: number;
+  by_status: StatusCount[];
+  by_type: TypeCount[];
+  by_leader: LeaderCount[];
+  average_progress: number;
+  on_time_rate: number;
+  high_risk_count: number;
+}
+
+interface StatusCount {
+  status: string;
+  count: number;
+}
+
+interface TypeCount {
+  type: string;
+  count: number;
+}
+
+interface LeaderCount {
+  leader_id: string;
+  leader_name: string;
+  count: number;
+}
+```
+
+### 4.2 合同统计
+
+```typescript
+interface ContractStatistics {
+  total_contracts: number;
+  by_status: StatusCount[];
+  by_type: TypeCount[];
+  total_amount: number;
+  avg_amount: number;
+}
+```
+
+### 4.3 预算统计
+
+```typescript
+interface BudgetStatistics {
+  total_budget: number;
+  allocated_budget: number;
+  spent_budget: number;
+  remaining_budget: number;
+  utilization_rate: number;
+  by_category: CategoryCount[];
+}
+
+interface CategoryCount {
+  category: string;
+  total: number;
+  spent: number;
+}
+```
+
+### 4.4 风险统计
+
+```typescript
+interface RiskStatistics {
+  total_risks: number;
+  by_level: LevelCount[];
+  by_category: CategoryCount[];
+  open_risks: number;
+  closed_risks: number;
+}
+
+interface LevelCount {
+  level: string;
+  count: number;
+}
+```
+
+### 4.5 任务统计
+
+```typescript
+interface TaskStatistics {
+  total_tasks: number;
+  by_status: StatusCount[];
+  by_priority: PriorityCount[];
+  completion_rate: number;
+  overdue_count: number;
+}
+
+interface PriorityCount {
+  priority: string;
+  count: number;
+}
+```
+
+### 4.6 仪表板概览
+
+```typescript
+interface DashboardOverview {
+  project_statistics: ProjectStatistics;
+  contract_statistics: ContractStatistics;
+  budget_statistics: BudgetStatistics;
+  risk_statistics: RiskStatistics;
+  task_statistics: TaskStatistics;
+}
+```
+
+---
+
+**文档版本**: v2.0.0  
+**最后更新**: 2026-08-11  
 **作者**: TOPEMS开发团队

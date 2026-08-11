@@ -10,6 +10,48 @@
 
 ---
 
+## [5.14.3] - 2026-08-11
+
+### 🎉 重大变更
+- **PM 统计子域扩展 (V176)** - 新增 6 个细分统计接口 + 1 个仪表板聚合接口
+- **多模块 API 绑定全面扩展** - 覆盖 Finance/CRM/HRM/EHS/PDM/Master-data/IM 等模块
+- **前端 API 函数总数**: 6,465 个（+7）
+
+### ✨ 新功能
+- **PM 统计细分接口**:
+  - `getProjectStatistics` — 项目统计（按状态/类型/负责人分组、平均进度、准时率、高风险数）
+  - `getContractStatistics` — 合同统计（按状态/类型分组、总金额、平均金额）
+  - `getBudgetStatistics` — 预算统计（总/分配/支出/剩余/使用率+按类别分组）
+  - `getRiskStatistics` — 风险统计（按等级/类别分组、开闭风险数）
+  - `getTaskStatistics` — 任务统计（按状态/优先级分组、完成率、逾期数）
+  - `getDashboard` — 仪表板聚合（一次返回全部分统计）
+- **Finance 风控模块**:
+  - risk_v54: 实时风险监测 dashboard/alerts/acknowledge/resolve + 交易反欺诈 score/rules + 合规自动审查
+  - risk_v59: 实时反欺诈 analyze/decision/signals/device + 信用评分 score/profile/models + 压力测试
+- **CRM 扩展**: audit log、sales funnel、customer profile
+- **HRM 扩展**: setup wizard、reports、audit
+- **EHS 扩展**: emergency drill/plan、environmental compliance、health monitoring、safety training
+- **PDM 扩展**: material、product 管理
+- **Master-data 扩展**: 21 子域 (V54-V79) 覆盖 governance/security/lifecycle/federation 等
+- **IM 扩展**: 26 Phase 即时通讯功能
+- **Mobile/Notification/Billing/Feedback/Ticket/WMS/Monitor** 等模块深度扩展
+
+### 🔧 改进
+- **后端 statistics.rs 扩展**: 7 路由 + 6 细分 Handler，从数据库查询真实统计数据
+- **前端类型定义扩展**: 新增 13 个 TypeScript 类型（ProjectStatistics/ContractStatistics/DashboardOverview 等）
+- **仪表板聚合优化**: 一次 API 调用返回项目/合同/预算/风险/任务全维度统计
+
+### 📊 测试覆盖
+- PM statistics: 15/15 集成测试通过 ✅
+- Finance risk: 39/39 集成测试通过 ✅
+- PDM material/product: 14/14 集成测试通过 ✅
+- tsc 0 error ✅
+
+### 📝 破坏性变更
+- 无（所有 API 向后兼容，新增接口为纯增量）
+
+---
+
 ## [5.14.2] - 2026-08-06
 
 ### 🎉 重大变更
