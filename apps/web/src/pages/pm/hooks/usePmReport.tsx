@@ -4,8 +4,17 @@ import { Calendar, CheckCircle, AlertTriangle, DollarSign } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import { pmApi } from '@/api/pm';
-import type { PmStatistics, ProjectBenefit } from '@/api/pm';
+import { pmApi, pmStatisticsApi, dashboardApi } from '@/api/pm';
+import type {
+  PmStatistics,
+  ProjectStatistics,
+  ContractStatistics,
+  BudgetStatistics,
+  RiskStatistics,
+  TaskStatistics,
+  DashboardOverview,
+  ProjectBenefit,
+} from '@/api/pm';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -76,6 +85,12 @@ export interface UsePmReportReturn {
   navigate: ReturnType<typeof useNavigate>;
   params: ReturnType<typeof useParams<{ projectId?: string }>>;
   t: (key: string, options?: Record<string, unknown>) => string;
+  projectStatistics: ProjectStatistics | null;
+  contractStatistics: ContractStatistics | null;
+  budgetStatistics: BudgetStatistics | null;
+  riskStatistics: RiskStatistics | null;
+  taskStatistics: TaskStatistics | null;
+  dashboard: DashboardOverview | null;
 }
 
 export const usePmReport = (): UsePmReportReturn => {
@@ -116,16 +131,116 @@ export const usePmReport = (): UsePmReportReturn => {
   const error =
     statsQuery.isError || benefitsQuery.isError ? t('pm.pm_report_page.text_ca2c36') : '';
 
+  const projectStatsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.PM.STATISTICS_PROJECTS, selectedPeriod],
+    queryFn: async () => {
+      const response = await pmStatisticsApi.getProjectStatistics();
+      if (response.success && response.data) {
+        return response.data as ProjectStatistics;
+      }
+      return null;
+    },
+    enabled: true,
+  });
+
+  const contractStatsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.PM.STATISTICS_CONTRACTS, selectedPeriod],
+    queryFn: async () => {
+      const response = await pmStatisticsApi.getContractStatistics();
+      if (response.success && response.data) {
+        return response.data as ContractStatistics;
+      }
+      return null;
+    },
+    enabled: true,
+  });
+
+  const budgetStatsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.PM.STATISTICS_BUDGET, selectedPeriod],
+    queryFn: async () => {
+      const response = await pmStatisticsApi.getBudgetStatistics();
+      if (response.success && response.data) {
+        return response.data as BudgetStatistics;
+      }
+      return null;
+    },
+    enabled: true,
+  });
+
+  const riskStatsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.PM.STATISTICS_RISKS, selectedPeriod],
+    queryFn: async () => {
+      const response = await pmStatisticsApi.getRiskStatistics();
+      if (response.success && response.data) {
+        return response.data as RiskStatistics;
+      }
+      return null;
+    },
+    enabled: true,
+  });
+
+  const taskStatsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.PM.STATISTICS_TASKS, selectedPeriod],
+    queryFn: async () => {
+      const response = await pmStatisticsApi.getTaskStatistics();
+      if (response.success && response.data) {
+        return response.data as TaskStatistics;
+      }
+      return null;
+    },
+    enabled: true,
+  });
+
+  const dashboardQuery = useQuery({
+    queryKey: [...QUERY_KEYS.PM.STATISTICS_DASHBOARD],
+    queryFn: async () => {
+      const response = await dashboardApi.getDashboard();
+      if (response.success && response.data) {
+        return response.data as DashboardOverview;
+      }
+      return null;
+    },
+    enabled: true,
+  });
+
+  const projectStatistics = projectStatsQuery.data ?? null;
+  const contractStatistics = contractStatsQuery.data ?? null;
+  const budgetStatistics = budgetStatsQuery.data ?? null;
+  const riskStatistics = riskStatsQuery.data ?? null;
+  const taskStatistics = taskStatsQuery.data ?? null;
+  const dashboard = dashboardQuery.data ?? null;
+
   const loadReportData = useCallback(() => {
     statsQuery.refetch();
     benefitsQuery.refetch();
-  }, [statsQuery, benefitsQuery]);
+    projectStatsQuery.refetch();
+    contractStatsQuery.refetch();
+    budgetStatsQuery.refetch();
+    riskStatsQuery.refetch();
+    taskStatsQuery.refetch();
+    dashboardQuery.refetch();
+  }, [
+    statsQuery,
+    benefitsQuery,
+    projectStatsQuery,
+    contractStatsQuery,
+    budgetStatsQuery,
+    riskStatsQuery,
+    taskStatsQuery,
+    dashboardQuery,
+  ]);
 
   const handleExport = useCallback(() => {
     const reportData = {
       generatedAt: new Date().toISOString(),
       statistics: stats,
       benefits,
+      projectStatistics,
+      contractStatistics,
+      budgetStatistics,
+      riskStatistics,
+      taskStatistics,
+      dashboard,
     };
     const blob = new Blob([JSON.stringify(reportData, null, 2)], {
       type: 'application/json',
@@ -138,7 +253,16 @@ export const usePmReport = (): UsePmReportReturn => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [stats, benefits]);
+  }, [
+    stats,
+    benefits,
+    projectStatistics,
+    contractStatistics,
+    budgetStatistics,
+    riskStatistics,
+    taskStatistics,
+    dashboard,
+  ]);
 
   const statCards: StatCard[] = useMemo(
     () => [
@@ -277,6 +401,12 @@ export const usePmReport = (): UsePmReportReturn => {
     navigate,
     params,
     t,
+    projectStatistics,
+    contractStatistics,
+    budgetStatistics,
+    riskStatistics,
+    taskStatistics,
+    dashboard,
   };
 };
 
