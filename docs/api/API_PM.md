@@ -1,7 +1,7 @@
 # TOPEMS-PM 项目管理服务 API 文档
 
-**版本**: v2
-**更新日期**: 2026-08-14
+**版本**: v3
+**更新日期**: 2026-08-11
 **服务地址**: `http://localhost:8023`
 
 ---
@@ -19,7 +19,9 @@
 7. [项目风险 API](#7-项目风险-api)
 8. [项目审批 API](#8-项目审批-api)
 9. [项目报表 API](#9-项目报表-api)
-10. [健康检查 API](#10-健康检查-api)
+10. [项目统计 API](#10-项目统计-api)
+11. [仪表板 API](#11-仪表板-api)
+12. [健康检查 API](#12-健康检查-api)
 
 ---
 
@@ -333,17 +335,204 @@ GET /api/pm/reports/project/{project_id}
 }
 ```
 
-### 9.2 获取项目统计
+### 9.2 获取项目报表列表
 
 ```
-GET /api/pm/reports/statistics?period=2026-08
+GET /api/pm/reports?page=1&page_size=20
 ```
 
 ---
 
-## 10. 健康检查 API
+## 10. 项目统计 API
 
-### 10.1 基础健康检查
+### 10.1 获取聚合统计
+
+```
+GET /api/pm/statistics?start_date=2026-01-01&end_date=2026-12-31
+```
+
+**响应示例**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "total_projects": 50,
+    "active_projects": 20,
+    "completed_projects": 25,
+    "total_tasks": 500,
+    "pending_tasks": 100,
+    "in_progress_tasks": 200,
+    "completed_tasks": 200,
+    "total_budget": 10000000,
+    "used_budget": 4500000,
+    "total_risks": 30,
+    "open_risks": 10,
+    "closed_risks": 20
+  }
+}
+```
+
+### 10.2 获取项目统计
+
+```
+GET /api/pm/statistics/projects?start_date=2026-01-01&end_date=2026-12-31
+```
+
+**响应示例**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "total_projects": 50,
+    "by_status": [{"status": "active", "count": 20}, {"status": "completed", "count": 25}],
+    "by_type": [{"type": "development", "count": 30}, {"type": "research", "count": 15}],
+    "by_leader": [{"leader_id": "uuid", "leader_name": "张三", "count": 10}],
+    "average_progress": 45.5,
+    "on_time_rate": 0.85,
+    "high_risk_count": 5
+  }
+}
+```
+
+### 10.3 获取合同统计
+
+```
+GET /api/pm/statistics/contracts?start_date=2026-01-01&end_date=2026-12-31
+```
+
+**响应示例**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "total_contracts": 30,
+    "by_status": [{"status": "active", "count": 20}, {"status": "completed", "count": 10}],
+    "by_type": [{"type": "fixed_price", "count": 15}, {"type": "time_material", "count": 10}],
+    "total_amount": 5000000,
+    "avg_amount": 166666
+  }
+}
+```
+
+### 10.4 获取预算统计
+
+```
+GET /api/pm/statistics/budget?start_date=2026-01-01&end_date=2026-12-31
+```
+
+**响应示例**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "total_budget": 10000000,
+    "allocated_budget": 8000000,
+    "spent_budget": 4500000,
+    "remaining_budget": 5500000,
+    "utilization_rate": 0.56,
+    "by_category": [{"category": "development", "total": 5000000, "spent": 2500000}]
+  }
+}
+```
+
+### 10.5 获取风险统计
+
+```
+GET /api/pm/statistics/risks?start_date=2026-01-01&end_date=2026-12-31
+```
+
+**响应示例**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "total_risks": 30,
+    "by_level": [{"level": "high", "count": 5}, {"level": "medium", "count": 10}, {"level": "low", "count": 15}],
+    "by_category": [{"category": "technical", "count": 10}, {"category": "schedule", "count": 8}],
+    "open_risks": 10,
+    "closed_risks": 20
+  }
+}
+```
+
+### 10.6 获取任务统计
+
+```
+GET /api/pm/statistics/tasks?start_date=2026-01-01&end_date=2026-12-31
+```
+
+**响应示例**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "total_tasks": 500,
+    "by_status": [{"status": "pending", "count": 100}, {"status": "in_progress", "count": 200}, {"status": "completed", "count": 200}],
+    "by_priority": [{"priority": "high", "count": 50}, {"priority": "medium", "count": 200}],
+    "completion_rate": 0.4,
+    "overdue_count": 15
+  }
+}
+```
+
+---
+
+## 11. 仪表板 API
+
+### 11.1 获取仪表板概览
+
+```
+GET /api/pm/statistics/dashboard
+```
+
+**响应示例**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "project_statistics": {
+      "total_projects": 50,
+      "active_projects": 20,
+      "completed_projects": 25,
+      "average_progress": 45.5,
+      "on_time_rate": 0.85
+    },
+    "contract_statistics": {
+      "total_contracts": 30,
+      "total_amount": 5000000,
+      "active_contracts": 20
+    },
+    "budget_statistics": {
+      "total_budget": 10000000,
+      "spent_budget": 4500000,
+      "utilization_rate": 0.56
+    },
+    "risk_statistics": {
+      "total_risks": 30,
+      "open_risks": 10,
+      "high_level_count": 5
+    },
+    "task_statistics": {
+      "total_tasks": 500,
+      "completion_rate": 0.4,
+      "overdue_count": 15
+    }
+  }
+}
+```
+
+---
+
+## 12. 健康检查 API
+
+### 12.1 基础健康检查
 
 ```
 GET /health
@@ -351,5 +540,5 @@ GET /health
 
 ---
 
-**版本**: 2.0.0
-**最后更新**: 2026-08-14
+**版本**: 3.0.0
+**最后更新**: 2026-08-11
