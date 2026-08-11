@@ -238,6 +238,35 @@ export const ticketApi = {
 
   deleteSlaPolicy: (id: string) =>
     portal.delete<{ data: { deleted: boolean } }>(`/sla-policies/${id}`),
+
+  // ==================== 直接访问 ticket 服务（不经过 BFF） ====================
+
+  assignTicket: (id: string, assigneeId: string) =>
+    apiClient.ticket.post<{ data: Ticket }>(`/tickets/${id}/assign`, {
+      assignee_id: assigneeId,
+    }),
+
+  resolveTicket: (id: string, resolution?: string) =>
+    apiClient.ticket.post<{ data: Ticket }>(`/tickets/${id}/resolve`, {
+      resolution,
+    }),
+
+  closeTicket: (id: string, reason?: string) =>
+    apiClient.ticket.post<{ data: Ticket }>(`/tickets/${id}/close`, { reason }),
+
+  batchUpdate: (data: {
+    ids: string[];
+    status?: string;
+    priority?: string;
+    assignee_id?: string;
+  }) =>
+    apiClient.ticket.post<{ data: { updated_count: number } }>('/tickets/batch-update', data),
+
+  exportTickets: (params?: { status?: string; format?: 'csv' | 'xlsx' }) =>
+    apiClient.ticket.get<Blob>('/tickets/export', { ...params, responseType: 'blob' }),
+
+  getMyTickets: (params?: { status?: string; page?: number; page_size?: number }) =>
+    apiClient.ticket.get<{ data: TicketListResponse }>('/tickets/my', { params }),
 };
 
 export default ticketApi;

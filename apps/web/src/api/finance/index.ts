@@ -14,6 +14,8 @@ import { settlementCenterApi } from './settlementCenter';
 import { expenseApi } from './expense';
 import { budgetApi } from './budget';
 import { reconciliationApi } from './reconciliation';
+import { riskApi } from './risk';
+import { taxApi } from './tax';
 
 export { accountApi } from './account';
 export { voucherApi } from './voucher';
@@ -29,6 +31,8 @@ export { settlementCenterApi } from './settlementCenter';
 export { expenseApi } from './expense';
 export { budgetApi } from './budget';
 export { reconciliationApi } from './reconciliation';
+export { riskApi } from './risk';
+export { taxApi } from './tax';
 
 export interface FinanceDashboardStats {
   total_vouchers: number;
@@ -60,6 +64,8 @@ export const financeApi = {
   expense: expenseApi,
   budget: budgetApi,
   reconciliation: reconciliationApi,
+  risk: riskApi,
+  tax: taxApi,
 
   async getDashboard(): Promise<ApiResponse<FinanceDashboardStats>> {
     return apiClient.finance.get<FinanceDashboardStats>('/dashboard');

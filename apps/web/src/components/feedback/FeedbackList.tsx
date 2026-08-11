@@ -309,9 +309,9 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
         <CardContent>
           <DataTable
             columns={columns}
-            data={data?.items || []}
+            data={data?.data?.items || []}
             loading={isLoading}
-            totalItems={data?.total || 0}
+            totalItems={data?.data?.total || 0}
             currentPage={filters.page || 1}
             pageSize={filters.pageSize || 10}
             onPageChange={(page) => setFilters((prev) => ({ ...prev, page }))}
