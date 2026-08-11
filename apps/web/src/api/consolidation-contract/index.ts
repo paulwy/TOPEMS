@@ -1,24 +1,24 @@
-import { consolidationScopeApiContract, consolidationScopeCompanyApiContract } from './scope';
-import { eliminationRuleApiContract } from './elimination';
-import { internalTransactionApiContract } from './transaction';
-import { consolidationReportApiContract } from './report';
-import { companyRelationApiContract } from './company';
+import { consolidationScopeApi, consolidationScopeCompanyApi } from './scope';
+import { eliminationRuleApi } from './elimination';
+import { internalTransactionApi } from './transaction';
+import { consolidationReportApi } from './report';
+import { companyRelationApi } from './company';
 
 export * from './types';
 
-export { consolidationScopeApiContract, consolidationScopeCompanyApiContract } from './scope';
-export { eliminationRuleApiContract } from './elimination';
-export { internalTransactionApiContract } from './transaction';
-export { consolidationReportApiContract } from './report';
-export { companyRelationApiContract } from './company';
+export { consolidationScopeApi, consolidationScopeCompanyApi } from './scope';
+export { eliminationRuleApi } from './elimination';
+export { internalTransactionApi } from './transaction';
+export { consolidationReportApi } from './report';
+export { companyRelationApi } from './company';
 
-export const consolidationContract = {
-  scopes: consolidationScopeApiContract,
-  scopeCompanies: consolidationScopeCompanyApiContract,
-  eliminationRules: eliminationRuleApiContract,
-  internalTransactions: internalTransactionApiContract,
-  reports: consolidationReportApiContract,
-  companyRelations: companyRelationApiContract,
+export const consolidationContractApi = {
+  scopes: consolidationScopeApi,
+  scopeCompanies: consolidationScopeCompanyApi,
+  eliminationRules: eliminationRuleApi,
+  internalTransactions: internalTransactionApi,
+  reports: consolidationReportApi,
+  companyRelations: companyRelationApi,
 };
 
-export default consolidationContract;
+export default consolidationContractApi;
