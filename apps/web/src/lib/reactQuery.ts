@@ -206,6 +206,12 @@ export const QUERY_KEYS = {
     REPORTS: ['pm', 'reports'],
     NOTIFICATIONS: ['pm', 'notifications'],
     STATISTICS: ['pm', 'statistics'],
+    STATISTICS_PROJECTS: ['pm', 'statistics', 'projects'],
+    STATISTICS_CONTRACTS: ['pm', 'statistics', 'contracts'],
+    STATISTICS_BUDGET: ['pm', 'statistics', 'budget'],
+    STATISTICS_RISKS: ['pm', 'statistics', 'risks'],
+    STATISTICS_TASKS: ['pm', 'statistics', 'tasks'],
+    STATISTICS_DASHBOARD: ['pm', 'statistics', 'dashboard'],
     BENEFITS: (projectId: string) => ['pm', 'benefits', projectId],
   },
   BI: {
