@@ -18,6 +18,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V67.2] - 2026-08-11
+
+### Changed - 导航架构里程碑（V178~V182 八提交聚合）
+- 导航三联校验综合覆盖率：95.4% → 100.0%（V179→V182），1050/1050 全绿
+- 第一联·页面文件匹配：302/350 (86.3%) → 350/350 (100.0%)，总缺失 48 → 34 → 0
+- workflow 模块三联校验 39/39 = 100% 闭环封版（页面/路由/权限各 13/13）
+- verify_navigation 脚本 10 类命名变体规则系统化落地覆盖 17 模块 34 项
+- 项目版本：5.14.0 → 5.15.0（导航架构合规化里程碑）
+
+### Fixed
+- **web(PM)**: usePmReport 返回类型补齐 6 个缺失属性（projectStatistics/contractStatistics/budgetStatistics/riskStatistics/taskStatistics/dashboard），tsc --noEmit 清零
+- **pm(backend)**: statistics.rs 13 个编译错误清零 — 全量 struct Default trait 实现、`#[utoipa::path]` 宏注册（修复 `__path_get_statistics` 未定义）、f64 与 int 比较修正、`ApiResponse<ProjectStatistics>` 泛型类型修正、`path` 歧义消除移除隐式 import
+- **navigation(asset)**: Asset Module navItems 6 条 permission 字段补齐，第三联权限定义覆盖率 338/350 → 350/350
+- **navigation(lowcode)**: Lowcode Module navItems 3 条 permission 字段补齐
+- **navigation(oa)**: OA Module navItems 3 条 permission 字段补齐
+- **verify_navigation V1**: pagePathToFile 候选路径生成新增 `XxxPage/index.tsx` 目录式 + 复数→单数变体，修复 workflow-templates（单数）/workflow-settings（目录式）误报 2 项
+- **verify_navigation V2**: 系统化增强 7 项规则：
+  1. ABBREV_DICT 缩写词典（statistics→Stats 等）
+  2. toSingular 单数变体规则（`-ies→y` / `-ses→s` / `-s` 去尾，覆盖 categories→category 等）
+  3. 6 类候选路径生成：目录式 index / 单数变体候选族 9 种 / 路径缩略 -management / 缩写词典候选 / 复合末段取后半段 / 模块根 index 兜底
+  4. findFuzzyPageMatch 单数变体降权模糊匹配（覆盖语义扩展类 prompts→PromptLibrary 等）
+  5. 单数变体精确匹配 +20 分（覆盖 Management/List 类）
+  → 修复全局 34 项脚本盲点，清零第一联全部缺失
+
+### Docs
+- TODO.md V178：健康修复专项（usePmReport + statistics.rs 双模块编译清零）
+- TODO.md V179：导航三联权限闭环，第三联 12 条 permission 补齐，350/350 = 100%
+- TODO.md V180：verify_navigation 脚本增强 + workflow 2 项清零，第一联 90.3%
+- TODO.md V181：workflow 模块页面骨架闭环封版 39/39 = 100%
+- TODO.md V182：全局 34 项清零 + 导航三联校验 100% 全绿里程碑（7 版本迭代终点）
+
+---
+
 ## [V67.1] - 2026-08-08
 
 ### Changed - 架构治理

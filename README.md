@@ -2,7 +2,7 @@
 
 > 统一身份认证与授权管理、文档管理、AI协作、流程自动化、数据分析、质量管理、供应链管理
 
-![Version](https://img.shields.io/badge/version-5.14.0-blue)
+![Version](https://img.shields.io/badge/version-5.15.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Rust](https://img.shields.io/badge/rust-1.75-orange)
 ![React](https://img.shields.io/badge/react-19-blue)
