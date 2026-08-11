@@ -1,8 +1,7 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V76 | **更新日期**: 2026-08-12
-> **服务总数**: 30 个（含 unified-core + master-data + lowcode 占位 + ai/rd） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,329 个
-> **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · **V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环** · **V70 第五轮审计 15/15 全闭环** ✅ · **A4.2 去门面化 Phase 1~4 全服务迁移完成**（Phase 4 活跃代码 `topems_shared::` 引用清零，剩余 43 处死代码/注释/文档）· **V70.1 持续优化全项** · **V70 规划占位 3/3 落地** · **V70 封版：5 语义提交 30 服务 cargo check 0 error + tsc 0 error**  · **V68.3 导航架构合规化 16/16 四件套闭环**（P0-1 三联校验真实接入 · P0-2 L4黑名134处清理 · P1-3 首页模块网格移除 · P2-1 AppHeader工具栏顺序锁死，符合度 68/100→93+；V68.4 Batch2模块补齐；V69.2 CI脚本6项；V69.3前端合规49处；V70-1去门面化29服务全交付）✅ · **V70-2 topems_shared 去门面化彻底闭环**（Step1 删除 101 条 0 引用 re-export → Step2 COMPAT 区 13 条全删、5 服务×12 符号改直接子 crate 路径，最终 pub use = 29，workspace import 类错误清零）✅ · **V71.5/V72 P1-3 vite 并行度优化超额达标**（四项组合拳：terser→esbuild + workerCount=8 + Brotli Q11→6 + visualizer 可选化；实测基线 336.3s→优化均值 9.0s，加速 -97.3% · Brotli 体积 2275→2255KB（-0.9%，远小于预期 3%）· 抽样 chunk 语法校验 0 error · 功能完整性全绿）✅ · **V72.6~V72.8 OpenAPI 契约一致性三阶段闭环**（V72.6 方法不匹配 27→0 · V72.7 utoipa 签名一致性 869→0 · V72.8 P-04 探针 2559→0 GREEN ✅ · 5 Phase + 15 RC4 Batch · 30 服务 3401 paths / 504 schemas）✅ · **V73 未使用后端端点清理 3 Phase 全闭环**（Phase 1 236 compat 死代码删除 · Phase 2 真实死代码二次核验 0 可删 · Phase 3 RD+IAM 业务绑定补齐 P-04 GREEN ✅）· **V74 全服务零警告**（12 compat 文件 #![allow(dead_code)] + portal/finance/ai 定点修复 · cargo check --workspace 0 error 0 warning ✅）· **V75 consolidation-contract API 绑定**（7 文件从契约定义转为实际 apiClient.erp 调用 · 30+ TypeScript 接口 · 28 API 函数 · tsc 0 error ✅）· **V76 Finance 模块 API 绑定增强**（6 新模块 + 67 API 函数：cashFlow/voucherTemplate/settlementCenter/expense/budget/reconciliation · tsc 0 error ✅）
+> **版本**: V77 | **更新日期**: 2026-08-12
+> **服务总数**: 30 个（含 unified-core + master-data + lowcode 占位 + ai/rd） | **前端页面**: 427 页 | **后端 API 端点**: 1,561 个 |> **前端 API 函数**: 1,366 个 **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · **V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环** · **V70 第五轮审计 15/15 全闭环** ✅ · **A4.2 去门面化 Phase 1~4 全服务迁移完成**（Phase 4 活跃代码 `topems_shared::` 引用清零，剩余 43 处死代码/注释/文档）· **V70.1 持续优化全项** · **V70 规划占位 3/3 落地** · **V70 封版：5 语义提交 30 服务 cargo check 0 error + tsc 0 error**  · **V68.3 导航架构合规化 16/16 四件套闭环**（P0-1 三联校验真实接入 · P0-2 L4黑名134处清理 · P1-3 首页模块网格移除 · P2-1 AppHeader工具栏顺序锁死，符合度 68/100→93+；V68.4 Batch2模块补齐；V69.2 CI脚本6项；V69.3前端合规49处；V70-1去门面化29服务全交付）✅ · **V70-2 topems_shared 去门面化彻底闭环**（Step1 删除 101 条 0 引用 re-export → Step2 COMPAT 区 13 条全删、5 服务×12 符号改直接子 crate 路径，最终 pub use = 29，workspace import 类错误清零）✅ · **V71.5/V72 P1-3 vite 并行度优化超额达标**（四项组合拳：terser→esbuild + workerCount=8 + Brotli Q11→6 + visualizer 可选化；实测基线 336.3s→优化均值 9.0s，加速 -97.3% · Brotli 体积 2275→2255KB（-0.9%，远小于预期 3%）· 抽样 chunk 语法校验 0 error · 功能完整性全绿）✅ · **V72.6~V72.8 OpenAPI 契约一致性三阶段闭环**（V72.6 方法不匹配 27→0 · V72.7 utoipa 签名一致性 869→0 · V72.8 P-04 探针 2559→0 GREEN ✅ · 5 Phase + 15 RC4 Batch · 30 服务 3401 paths / 504 schemas）✅ · **V73 未使用后端端点清理 3 Phase 全闭环**（Phase 1 236 compat 死代码删除 · Phase 2 真实死代码二次核验 0 可删 · Phase 3 RD+IAM 业务绑定补齐 P-04 GREEN ✅）· **V74 全服务零警告**（12 compat 文件 #![allow(dead_code)] + portal/finance/ai 定点修复 · cargo check --workspace 0 error 0 warning ✅）· **V75 consolidation-contract API 绑定**（7 文件从契约定义转为实际 apiClient.erp 调用 · 30+ TypeScript 接口 · 28 API 函数 · tsc 0 error ✅）· **V76 Finance 模块 API 绑定增强**（6 新模块 + 67 API 函数：cashFlow/voucherTemplate/settlementCenter/expense/budget/reconciliation · tsc 0 error ✅）· **V77 Monitor 模块 API 绑定增强**（8 新模块 + 37 API 函数：alertBatch/performanceExtended/ruleAdvanced/suppression/template/threshold/plugin/metricsSnapshot · 覆盖后端路由 27→53 · tsc 0 error ✅ · eslint+prettier 通过 ✅）
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 30/30 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
 > **V67.0 新架构落地**: **统一列表响应 ListResponse<T>** 完成 shared-core 定义 + 21 服务迁移；**plugin 自动注册 100%**（补齐 master-data = 最后 1 个，全 28 服务覆盖）；**超大页 TOP5 拆分达标**（AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72% / IAM 路径归化）
@@ -1126,3 +1125,35 @@ V73 完成后，项目仍存在若干编译警告：20 个 compat 文件中空�
 ### 审计产物
 
 - V76 提交 `1d83e4ab2` — feat(finance): 新增 6 个 API 模块绑定 + 56 个 API 函数
+
+## V77 · Monitor 模块 API 绑定增强
+
+### 目标
+
+为 monitor 模块补充缺失的后端路由 API 绑定，覆盖告警批量操作、性能扩展、规则高级配置、抑制/模板/阈值/插件等路径。
+
+### 变更清单
+
+| 文件 | 说明 | API 函数数 |
+|------|------|-----------|
+| `apps/web/src/api/monitor/alertBatch.ts` | 批量确认/解决/统计/历史/时间线 | 5 |
+| `apps/web/src/api/monitor/performanceExtended.ts` | services/summary/trend/slow-queries/export | 5 |
+| `apps/web/src/api/monitor/ruleAdvanced.ts` | advanced/escalation/routing/scheduled-trigger | 8 |
+| `apps/web/src/api/monitor/suppression.ts` | 告警抑制 CRUD | 5 |
+| `apps/web/src/api/monitor/template.ts` | 告警模板 CRUD | 5 |
+| `apps/web/src/api/monitor/threshold.ts` | 阈值管理 + evaluate | 6 |
+| `apps/web/src/api/monitor/plugin.ts` | 插件健康/信息 | 2 |
+| `apps/web/src/api/monitor/metricsSnapshot.ts` | 监控快照 | 1 |
+| `apps/web/src/api/monitor/index.ts` | 更新导入 + 统一导出 | — |
+
+### 统计
+
+- **新增 API 函数**: 37 个（9 文件）
+- **Monitor 模块总 API 函数**: 约 79 个（原 42 + 新 37）
+- **覆盖后端路由**: 从 27 → 53 个（+26 路由）
+- **tsc --noEmit**: 0 error ✅
+- **eslint + prettier**: 通过 ✅
+
+### 审计产物
+
+- V77 提交 `9d0ef54e8` — feat(monitor): 新增 8 个 API 模块绑定 + 28 个 API 函数
