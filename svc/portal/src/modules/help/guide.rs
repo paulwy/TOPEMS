@@ -88,6 +88,7 @@ pub struct CreateLessonRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct CompleteLessonRequest {
     pub lesson_id: Uuid,
 }

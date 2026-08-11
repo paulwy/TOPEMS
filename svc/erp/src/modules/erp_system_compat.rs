@@ -3,6 +3,7 @@
 //! These functions register frontend admin/system API calls that are managed
 //! through ERP compatibility paths.
 
+#![allow(dead_code)]
 #[utoipa::path(
     get,
     path = "/api/erp/system/audit-logs",

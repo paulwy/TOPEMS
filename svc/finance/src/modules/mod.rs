@@ -3842,8 +3842,8 @@ pub async fn import_vouchers_general(
     ),
 )]
 pub async fn import_vouchers_u8(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let import_id = Uuid::new_v4();
@@ -3873,8 +3873,8 @@ pub async fn import_vouchers_u8(
     ),
 )]
 pub async fn get_current_period(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let now = Utc::now();
     Json(ApiResponse::success(
@@ -3898,8 +3898,8 @@ pub async fn get_current_period(
     ),
 )]
 pub async fn list_periods(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<PeriodListQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let now = Utc::now();
@@ -4008,8 +4008,8 @@ pub async fn close_period_v2(
     ),
 )]
 pub async fn close_income_period(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
     Json(req): Json<PeriodActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = req.period.unwrap_or_default();
@@ -4031,8 +4031,8 @@ pub async fn close_income_period(
     ),
 )]
 pub async fn year_end_close_v2(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
     Json(req): Json<PeriodActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let year = req.year.unwrap_or(Utc::now().year());

@@ -3,6 +3,7 @@
 //! OpenAPI-only contract entries for frontend `/api/qms/*` calls
 //! not represented by concrete utoipa handlers yet.
 
+#![allow(dead_code)]
 #[utoipa::path(
     post,
     path = "/api/qms/actions",

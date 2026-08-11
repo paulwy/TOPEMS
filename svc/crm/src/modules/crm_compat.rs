@@ -3,6 +3,7 @@
 //! OpenAPI-only contract entries for frontend `/api/crm/*` calls
 //! not represented by concrete utoipa handlers yet.
 
+#![allow(dead_code)]
 #[utoipa::path(
     get,
     path = "/api/crm/billing",

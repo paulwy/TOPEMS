@@ -3,6 +3,7 @@
 //! These functions provide utoipa annotations for frontend API calls
 //! that are not yet covered by real backend handlers.
 
+#![allow(dead_code)]
 #[utoipa::path(
     get,
     path = "/api/portal/search/suggestions",

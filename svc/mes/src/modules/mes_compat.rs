@@ -11,6 +11,7 @@
 // Anomaly
 // ---------------------------------------------------------------------------
 
+#![allow(dead_code)]
 #[utoipa::path(
     get,
     path = "/mes/anomaly/alerts",
