@@ -131,6 +131,14 @@ function buildPageFileCache() {
   _pageFileCache.built = true;
 }
 
+// V182 缩写词典：覆盖 statistics→Stats 这类无法机械推导的缩写变体
+const ABBREV_DICT = {
+  statistics: 'Stats',
+  notifications: 'Notification',
+  configs: 'Config',
+  settings: 'Setting',
+};
+
 function pagePathToFile(pagePath) {
   if (!pagePath || typeof pagePath !== 'string') {
     return { candidates: [], foundIndex: -1, matched: null };
@@ -146,6 +154,27 @@ function pagePathToFile(pagePath) {
   const lastSegment = cleanSegments.length > 0 ? cleanSegments[cleanSegments.length - 1] : '';
   const lastPascal = lastSegment === '__param__' ? 'Detail' : toPascal(lastSegment);
   const lastKebab = lastSegment === '__param__' ? 'detail' : toKebab(lastSegment);
+
+  // V182: 单数变体（复数末段去 s，-ies → y）
+  const isPlural = lastSegment.endsWith('s') && lastSegment.length > 1 && lastSegment !== '__param__';
+  function toSingular(s) {
+    if (s.endsWith('ies') && s.length > 3) return s.slice(0, -3) + 'y';
+    if (s.endsWith('ses') && s.length > 3) return s.slice(0, -2);
+    if (s.endsWith('s') && !s.endsWith('ss')) return s.slice(0, -1);
+    return s;
+  }
+  const singularSegment = isPlural ? toSingular(lastSegment) : lastSegment;
+  const singularPascal = lastSegment === '__param__' ? 'Detail' : toPascal(singularSegment);
+  const singularKebab = lastSegment === '__param__' ? 'detail' : toKebab(singularSegment);
+
+  // V182: 路径缩略 - 去掉 -management 等业务后缀
+  const bizSuffixes = ['-management', '-mgmt'];
+  const lastKebabStripped = bizSuffixes.reduce((s, suf) => s.replace(suf, ''), lastKebab);
+  const lastPascalStripped = toPascal(lastKebabStripped);
+
+  // V182: 缩写词典查找
+  const abbrevKey = lastSegment.toLowerCase();
+  const abbrevPascal = ABBREV_DICT[abbrevKey] || null;
 
   const candidates = [];
 
@@ -180,6 +209,59 @@ function pagePathToFile(pagePath) {
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${lastPascal}AlertPage.tsx`));
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${lastPascal}RulesPage.tsx`));
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${lastPascal}RunsPage.tsx`));
+    // V182: 目录式候选 - ${lastPascal}Page/index.tsx（覆盖 DocumentsPage/, MailPage/, GisPage/ 等）
+    candidates.push(join(PAGES_ROOT, ...parentDirs, `${lastPascal}Page`, 'index.tsx'));
+
+    // V182: 单数变体候选（覆盖 work-stations→WorkStationPage, process-routes→ProcessRoutePage,
+    // transfers→TransferPage, announcements→AnnouncementPage 等）
+    if (isPlural) {
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${singularPascal}Page.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${singularPascal}Page`, 'index.tsx'));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${singularPascal}ManagementPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${singularPascal}ListPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${singularPascal}DetailPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${singularPascal}DashboardPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${singularPascal}ConfigPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${singularPascal}OverviewPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${singularPascal}CenterPage.tsx`));
+    }
+
+    // V182: 路径缩略候选 - 去掉 -management 后缀（覆盖 voucher-management→VoucherPage,
+    // vehicle-management→VehiclePage, location-management→LocationPage 等）
+    if (lastPascalStripped !== lastPascal) {
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${lastPascalStripped}Page.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${lastPascalStripped}Page`, 'index.tsx'));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${lastPascalStripped}ManagementPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${lastPascalStripped}ListPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${lastPascalStripped}DashboardPage.tsx`));
+    }
+
+    // V182: 缩写词典候选（覆盖 statistics→StatsPage 等）
+    if (abbrevPascal) {
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${abbrevPascal}Page.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${abbrevPascal}Page`, 'index.tsx'));
+      // 模块前缀版本（如 NotificationStatsPage）
+      const modulePascalAbbrev = toPascal(moduleDir) + abbrevPascal;
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascalAbbrev}Page.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascalAbbrev}Page`, 'index.tsx'));
+    }
+
+    // V182: 复合末段取后半段候选（覆盖 supplier-evaluation→EvaluationPage 这类前缀+核心词命名）
+    if (lastSegment.includes('-')) {
+      const parts = lastSegment.split('-');
+      const tailPart = parts[parts.length - 1];
+      const tailPascal = toPascal(tailPart);
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${tailPascal}Page.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${tailPascal}Page`, 'index.tsx'));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${tailPascal}ManagementPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${tailPascal}ListPage.tsx`));
+      // 模块前缀版本（如 scm-supplier-evaluation → ScmEvaluationPage）
+      const modulePascalTail = toPascal(moduleDir) + tailPascal;
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascalTail}Page.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascalTail}Page`, 'index.tsx'));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascalTail}ManagementPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascalTail}ListPage.tsx`));
+    }
   }
 
   if (cleanSegments.length > 1 && moduleDir) {
@@ -194,12 +276,19 @@ function pagePathToFile(pagePath) {
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${lastPascal}DetailPage.tsx`));
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${lastPascal}ListPage.tsx`));
     // 单数变体：去除末尾 s（如 templates → template）
-    if (lastSegment.endsWith('s') && lastSegment.length > 1) {
-      const singular = lastSegment.slice(0, -1);
-      const singularPascal = toPascal(singular);
+    if (isPlural) {
       candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${singularPascal}Page.tsx`));
       candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${singularPascal}Page/index.tsx`));
+      // V182: 模块前缀+单数 Management/List 变体（覆盖 mobile-tasks→MobileTaskListPage 等）
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${singularPascal}ManagementPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${singularPascal}ListPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${singularPascal}DetailPage.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${singularPascal}DashboardPage.tsx`));
     }
+
+    // V182: 模块根 index 兜底（覆盖 gis/map→gis/index.tsx 这种直接复用模块 index 的情况）
+    candidates.push(join(PAGES_ROOT, moduleDir, 'index.tsx'));
+    candidates.push(join(PAGES_ROOT, moduleDir, 'index.ts'));
   }
 
   if (cleanSegments.length > 0) {
@@ -241,20 +330,35 @@ function pagePathToFile(pagePath) {
 
 function findFuzzyPageMatch(moduleDir, lastKebab, lastPascal, cleanSegments) {
   buildPageFileCache();
-  
+
   const dirFiles = _pageFileCache.byDir.get(moduleDir) || [];
   let bestScore = 0;
   let bestMatch = null;
+
+  // V182: 单数变体 - 复数末段去 s（-ies→y, -ses→s），用于模糊匹配兜底
+  const isPlural = lastKebab.endsWith('s') && lastKebab.length > 1;
+  function toSingularFuzzy(s) {
+    if (s.endsWith('ies') && s.length > 3) return s.slice(0, -3) + 'y';
+    if (s.endsWith('ses') && s.length > 3) return s.slice(0, -2);
+    if (s.endsWith('s') && !s.endsWith('ss')) return s.slice(0, -1);
+    return s;
+  }
+  const singularKebab = isPlural ? toSingularFuzzy(lastKebab) : lastKebab;
+  const singularPascalLower = isPlural ? toSingularFuzzy(lastPascal.toLowerCase()) : lastPascal.toLowerCase();
 
   for (const filePath of dirFiles) {
     const fileName = filePath.split('/').pop().replace(/\.(tsx|ts)$/i, '').toLowerCase();
     const fullKebab = cleanSegments.map(s => toKebab(s)).join('-');
     const fullPascal = cleanSegments.map(s => toPascal(s)).join('').toLowerCase();
     const fnLower = fileName.toLowerCase();
-    
+
     let score = 0;
+    // V182: 同时尝试复数和单数变体匹配（覆盖 prompts→promptlibrary 这类语义扩展）
     if (fnLower.includes(lastKebab) || fnLower.includes(lastPascal.toLowerCase())) {
       score += 10;
+    } else if (isPlural && (fnLower.includes(singularKebab) || fnLower.includes(singularPascalLower))) {
+      // 单数变体降权匹配（+8 而非 +10），避免误匹配
+      score += 8;
     }
     if (moduleDir && fnLower.includes(toPascal(moduleDir).toLowerCase())) {
       score += 5;
@@ -265,8 +369,17 @@ function findFuzzyPageMatch(moduleDir, lastKebab, lastPascal, cleanSegments) {
     if (fnLower.includes('dashboard') && lastKebab.includes('dashboard')) {
       score += 3;
     }
-    if (fnLower === lastPascal.toLowerCase() + 'page' || 
+    if (fnLower === lastPascal.toLowerCase() + 'page' ||
         fnLower === (toPascal(moduleDir) + lastPascal + 'Page').toLowerCase()) {
+      score += 20;
+    }
+    // V182: 单数变体精确匹配（覆盖 mobile-tasks→MobileTaskListPage, qms-standards→QmsStandardListPage 等）
+    if (isPlural && (fnLower === singularPascalLower + 'page' ||
+        fnLower === (toPascal(moduleDir) + singularPascalLower + 'Page').toLowerCase() ||
+        fnLower === singularPascalLower + 'listpage' ||
+        fnLower === (toPascal(moduleDir) + singularPascalLower + 'ListPage').toLowerCase() ||
+        fnLower === singularPascalLower + 'managementpage' ||
+        fnLower === (toPascal(moduleDir) + singularPascalLower + 'ManagementPage').toLowerCase())) {
       score += 20;
     }
     if (fnLower === lastPascal.toLowerCase() + 'managementpage' ||
