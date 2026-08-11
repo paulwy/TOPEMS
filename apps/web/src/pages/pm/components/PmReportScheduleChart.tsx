@@ -21,9 +21,9 @@ const PmReportScheduleChart: React.FC<PmReportScheduleChartProps> = ({ stats }) 
   const { t } = useTranslation();
 
   const data = [
-    { name: t('pm.pm_report_page.name_27ff5f'), value: stats.on_time_projects },
-    { name: t('pm.pm_report_page.name_db732e'), value: stats.delayed_projects },
-  ].filter((d) => d.value > 0);
+    { name: t('pm.pm_report_page.name_27ff5f'), value: stats.on_time_projects ?? 0 },
+    { name: t('pm.pm_report_page.name_db732e'), value: stats.delayed_projects ?? 0 },
+  ].filter((d) => (d.value ?? 0) > 0);
 
   return (
     <Card sx={{ mb: 3 }}>

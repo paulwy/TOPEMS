@@ -11,6 +11,9 @@ import { salesForecastApi } from './forecast';
 import { billingApi } from './billing';
 import { customerSegmentationApi, customerRecommendationApi } from './segmentation';
 import { returnsApi } from './returns';
+import { crmAuditApi } from './crmAudit';
+import { salesFunnelApi } from './salesFunnel';
+import { customerProfileApi } from './customerProfile';
 
 export * from './types';
 
@@ -24,6 +27,9 @@ export { salesForecastApi } from './forecast';
 export { billingApi } from './billing';
 export { customerSegmentationApi, customerRecommendationApi } from './segmentation';
 export { returnsApi } from './returns';
+export { crmAuditApi } from './crmAudit';
+export { salesFunnelApi } from './salesFunnel';
+export { customerProfileApi } from './customerProfile';
 
 export const crmApi = {
   dashboard: crmDashboardApi,
@@ -38,6 +44,9 @@ export const crmApi = {
   customerSegmentation: customerSegmentationApi,
   customerRecommendation: customerRecommendationApi,
   returns: returnsApi,
+  audit: crmAuditApi,
+  salesFunnel: salesFunnelApi,
+  customerProfile: customerProfileApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.crm.get('/health');

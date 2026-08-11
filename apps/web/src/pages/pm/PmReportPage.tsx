@@ -55,6 +55,13 @@ const DEFAULT_STATS: PmStatistics = {
   total_budget: 0,
   spent_budget: 0,
   budget_usage_rate: 0,
+  total_risks: 0,
+  open_risks: 0,
+  closed_risks: 0,
+  total_tasks: 0,
+  pending_tasks: 0,
+  in_progress_tasks: 0,
+  completed_tasks: 0,
   on_time_projects: 0,
   delayed_projects: 0,
   average_progress: 0,
@@ -148,7 +155,7 @@ const PmReportPage: React.FC = () => {
       {
         id: 'high-risk',
         title: '高风险项目',
-        value: stats.high_risk_projects,
+        value: stats.high_risk_projects ?? 0,
         icon: <AlertTriangle size={20} />,
         color: 'error',
       },
@@ -164,17 +171,17 @@ const PmReportPage: React.FC = () => {
         { name: '进行中', value: stats.active_projects, fill: 'primary.main' },
         { name: '已完成', value: stats.completed_projects, fill: 'success.main' },
         { name: '已取消', value: stats.cancelled_projects, fill: 'error.main' },
-      ].filter((d) => d.value > 0),
+      ].filter((d) => (d.value ?? 0) > 0),
     [stats]
   );
 
   const riskData = useMemo(
     () =>
       [
-        { name: '高风险', value: stats.high_risk_projects, fill: 'error.main' },
-        { name: '中风险', value: stats.medium_risk_projects, fill: 'warning.main' },
-        { name: '低风险', value: stats.low_risk_projects, fill: 'success.main' },
-      ].filter((d) => d.value > 0),
+        { name: '高风险', value: stats.high_risk_projects ?? 0, fill: 'error.main' },
+        { name: '中风险', value: stats.medium_risk_projects ?? 0, fill: 'warning.main' },
+        { name: '低风险', value: stats.low_risk_projects ?? 0, fill: 'success.main' },
+      ].filter((d) => (d.value ?? 0) > 0),
     [stats]
   );
 
@@ -401,9 +408,9 @@ const PmReportPage: React.FC = () => {
             >
               <BarChart
                 data={[
-                  { name: '准时', value: stats.on_time_projects },
-                  { name: '延迟', value: stats.delayed_projects },
-                ].filter((d) => d.value > 0)}
+                  { name: '准时', value: stats.on_time_projects ?? 0 },
+                  { name: '延迟', value: stats.delayed_projects ?? 0 },
+                ].filter((d) => (d.value ?? 0) > 0)}
               >
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='name' />
@@ -757,9 +764,9 @@ const PmReportPage: React.FC = () => {
               >
                 <BarChart
                   data={[
-                    { name: '准时', value: stats.on_time_projects },
-                    { name: '延迟', value: stats.delayed_projects },
-                  ].filter((d) => d.value > 0)}
+                    { name: '准时', value: stats.on_time_projects ?? 0 },
+                    { name: '延迟', value: stats.delayed_projects ?? 0 },
+                  ].filter((d) => (d.value ?? 0) > 0)}
                 >
                   <CartesianGrid strokeDasharray='3 3' />
                   <XAxis dataKey='name' />

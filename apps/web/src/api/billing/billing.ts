@@ -97,7 +97,9 @@ export const billingApi = {
     return apiClient.billing.get(`/plans/${id}`);
   },
 
-  createPlan: async (data: Omit<BillingPlan, 'id' | 'created_at'>): Promise<ApiResponse<BillingPlan>> => {
+  createPlan: async (
+    data: Omit<BillingPlan, 'id' | 'created_at'>
+  ): Promise<ApiResponse<BillingPlan>> => {
     return apiClient.billing.post('/plans', data);
   },
 
@@ -124,17 +126,23 @@ export const billingApi = {
     return apiClient.billing.post('/subscriptions', data);
   },
 
-  changePlan: async (subscriptionId: string, data: {
-    new_plan_id: string;
-    prorate?: boolean;
-  }): Promise<ApiResponse<Subscription>> => {
+  changePlan: async (
+    subscriptionId: string,
+    data: {
+      new_plan_id: string;
+      prorate?: boolean;
+    }
+  ): Promise<ApiResponse<Subscription>> => {
     return apiClient.billing.post(`/subscriptions/${subscriptionId}/change-plan`, data);
   },
 
-  cancelSubscription: async (subscriptionId: string, data?: {
-    reason?: string;
-    cancel_at_period_end?: boolean;
-  }): Promise<ApiResponse<Subscription>> => {
+  cancelSubscription: async (
+    subscriptionId: string,
+    data?: {
+      reason?: string;
+      cancel_at_period_end?: boolean;
+    }
+  ): Promise<ApiResponse<Subscription>> => {
     return apiClient.billing.post(`/subscriptions/${subscriptionId}/cancel`, data || {});
   },
 
@@ -165,9 +173,12 @@ export const billingApi = {
     return apiClient.billing.post('/invoices', data);
   },
 
-  markInvoicePaid: async (id: string, data?: {
-    payment_date?: string;
-  }): Promise<ApiResponse<Invoice>> => {
+  markInvoicePaid: async (
+    id: string,
+    data?: {
+      payment_date?: string;
+    }
+  ): Promise<ApiResponse<Invoice>> => {
     return apiClient.billing.post(`/invoices/${id}/mark-paid`, data || {});
   },
 
@@ -197,10 +208,13 @@ export const billingApi = {
     return apiClient.billing.get('/payments', { params });
   },
 
-  refundPayment: async (id: string, data?: {
-    amount?: number;
-    reason?: string;
-  }): Promise<ApiResponse<PaymentRecord>> => {
+  refundPayment: async (
+    id: string,
+    data?: {
+      amount?: number;
+      reason?: string;
+    }
+  ): Promise<ApiResponse<PaymentRecord>> => {
     return apiClient.billing.post(`/payments/${id}/refund`, data || {});
   },
 

@@ -13,10 +13,15 @@ import type {
   UpdateMemberRoleRequest,
   TenantContext,
 } from './types';
+import { tenantConfigApi } from './config';
+import { tenantSecurityApi } from './security';
+import { tenantAnalyticsApi } from './analytics';
 
 const API_BASE = '/tenant';
 
 export const tenantApi = {
+  // ==================== 基础 CRUD ====================
+
   listTenants: async (params?: {
     page?: number;
     pageSize?: number;
@@ -58,6 +63,8 @@ export const tenantApi = {
     return apiClient.core.post(`${API_BASE}/${tenantId}/suspend`);
   },
 
+  // ==================== 成员管理 ====================
+
   getTenantUsers: async (
     tenantId: string,
     params?: {
@@ -92,6 +99,8 @@ export const tenantApi = {
     return apiClient.core.put(`${API_BASE}/${tenantId}/users/${userId}/role`, data);
   },
 
+  // ==================== 统计与账单 ====================
+
   getTenantStats: async (tenantId: string): Promise<ApiResponse<TenantStats>> => {
     return apiClient.core.get(`${API_BASE}/${tenantId}/stats`);
   },
@@ -108,6 +117,8 @@ export const tenantApi = {
     return apiClient.core.get(`${API_BASE}/${tenantId}/invoices`);
   },
 
+  // ==================== 上下文 ====================
+
   getCurrentTenantContext: async (): Promise<ApiResponse<TenantContext>> => {
     return apiClient.core.get(`${API_BASE}/context`);
   },
@@ -119,6 +130,102 @@ export const tenantApi = {
   switchTenant: async (tenantId: string): Promise<ApiResponse<TenantContext>> => {
     return apiClient.core.post(`${API_BASE}/switch`, { tenant_id: tenantId });
   },
+
+  // ==================== 子模块聚合 ====================
+
+  /** 租户配置管理（设置、品牌、功能开关、域名、邮件、集成、Webhook） */
+  config: tenantConfigApi,
+
+  /** 租户安全管理（安全设置、密码策略、2FA、API Key、审计日志、会话、IP 白名单） */
+  security: tenantSecurityApi,
+
+  /** 租户分析与账单（概览、使用、API 分析、用户统计、实时监控、订阅、发票） */
+  analytics: tenantAnalyticsApi,
+
+  // ==================== 顶层快捷方法 ====================
+
+  // Config 快捷方法
+  getSettings: tenantConfigApi.getSettings,
+  updateSettings: tenantConfigApi.updateSettings,
+  getBranding: tenantConfigApi.getBranding,
+  updateBranding: tenantConfigApi.updateBranding,
+  listFeatures: tenantConfigApi.listFeatures,
+  enableFeature: tenantConfigApi.enableFeature,
+  disableFeature: tenantConfigApi.disableFeature,
+  listDomains: tenantConfigApi.listDomains,
+  addDomain: tenantConfigApi.addDomain,
+  listIntegrations: tenantConfigApi.listIntegrations,
+  listWebhooks: tenantConfigApi.listWebhooks,
+  createWebhook: tenantConfigApi.createWebhook,
+
+  // Security 快捷方法
+  getSecuritySettings: tenantSecurityApi.getSecuritySettings,
+  updateSecuritySettings: tenantSecurityApi.updateSecuritySettings,
+  getPasswordPolicy: tenantSecurityApi.getPasswordPolicy,
+  enable2FA: tenantSecurityApi.enable2FA,
+  disable2FA: tenantSecurityApi.disable2FA,
+  listApiKeys: tenantSecurityApi.listApiKeys,
+  generateApiKey: tenantSecurityApi.generateApiKey,
+  listAuditLogs: tenantSecurityApi.listAuditLogs,
+  listSessions: tenantSecurityApi.listSessions,
+
+  // Analytics 快捷方法
+  getOverview: tenantAnalyticsApi.getOverview,
+  getUsage: tenantAnalyticsApi.getUsage,
+  getApiUsageStats: tenantAnalyticsApi.getApiUsageStats,
+  getRealTimeMetrics: tenantAnalyticsApi.getRealTimeMetrics,
+  getSubscription: tenantAnalyticsApi.getSubscription,
+  listInvoices: tenantAnalyticsApi.listInvoices,
+  changePlan: tenantAnalyticsApi.changePlan,
 };
 
 export default tenantApi;
+export { tenantConfigApi, tenantSecurityApi, tenantAnalyticsApi };
+// Config types
+export type {
+  TenantSettingsFull,
+  GeneralSettings,
+  BrandingSettings,
+  EmailSettings,
+  IntegrationSettings,
+  TenantFeature,
+  TenantDomain,
+  CreateDomainRequest,
+  UpdateEmailConfigRequest,
+  Integration,
+  CreateIntegrationRequest,
+  UpdateIntegrationRequest,
+  Webhook,
+  CreateWebhookRequest,
+  UpdateWebhookRequest,
+} from './config';
+
+// Security types
+export type {
+  TenantSecurity,
+  SsoConfig,
+  PasswordPolicy,
+  CreatePasswordPolicyRequest,
+  ApiKey,
+  GenerateApiKeyRequest,
+  GenerateApiKeyResponse,
+  AuditLog,
+  Session,
+  IpWhitelistEntry,
+  CreateIpWhitelistRequest,
+} from './security';
+
+// Analytics types
+export type {
+  AnalyticsOverview,
+  UsageData,
+  ActivityEvent,
+  ApiUsageStats,
+  TopEndpoint,
+  UserStats,
+  RealTimeMetrics,
+  BillingSubscription,
+  BillingInvoice,
+  PaymentMethod,
+  ChangePlanRequest,
+} from './analytics';

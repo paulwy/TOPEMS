@@ -2,6 +2,41 @@ import apiClient, { downloadBlob } from '../client';
 import type { ApiResponse } from '../client';
 import config from '../../config/runtime';
 
+import { fileStorageApi } from './storage';
+import type {
+  StorageBucket,
+  CreateBucketRequest,
+  FileCategory,
+  CreateCategoryRequest,
+  StorageUsage,
+  RetentionPolicy,
+} from './storage';
+
+import { fileImageApi } from './image';
+import type {
+  ThumbnailSize,
+  ImageFormat,
+  ThumbnailOptions,
+  Thumbnail,
+  ImageMetadata,
+  ConvertRequest,
+  CompressRequest,
+  CropRequest,
+  ResizeRequest,
+} from './image';
+
+import { fileScanApi } from './scan';
+import type {
+  ScanStatus,
+  ThreatSeverity,
+  ScanResult,
+  Threat,
+  ScanRule,
+  CreateScanRuleRequest,
+  QuarantineItem,
+  ScanStats,
+} from './scan';
+
 export interface FileMetadata {
   id: string;
   filename: string;
@@ -78,6 +113,8 @@ export interface ExportRequest {
 }
 
 export const fileApi = {
+  // ==================== 核心 CRUD ====================
+
   async upload(
     file: File,
     options?: {
@@ -135,6 +172,8 @@ export const fileApi = {
     return apiClient.file.delete<string>(`/files/${id}`);
   },
 
+  // ==================== 分享与权限 ====================
+
   async share(id: string, request: ShareFileRequest): Promise<ApiResponse<FilePermission>> {
     return apiClient.file.post<FilePermission>(`/files/${id}/share`, request);
   },
@@ -162,14 +201,54 @@ export const fileApi = {
     return apiClient.file.get<FileStats>('/files/stats');
   },
 
-  async export(request: ExportRequest): Promise<ApiResponse<any>> {
+  async export(request: ExportRequest): Promise<ApiResponse<unknown>> {
     return apiClient.file.post('/files/export', request);
   },
 
   async health(): Promise<ApiResponse<string>> {
     return apiClient.file.get<string>('/health');
   },
+
+  // ==================== 子域：存储管理 ====================
+
+  storage: fileStorageApi,
+
+  // ==================== 子域：图像处理 ====================
+
+  image: fileImageApi,
+
+  // ==================== 子域：安全扫描 ====================
+
+  scan: fileScanApi,
+
+  // ==================== 顶层快捷方法 ====================
+
+  // 存储快捷方法
+  listBuckets: fileStorageApi.listBuckets,
+  createBucket: fileStorageApi.createBucket,
+  listCategories: fileStorageApi.listCategories,
+  getStorageUsage: fileStorageApi.getStorageUsage,
+  cleanupStorage: fileStorageApi.cleanupStorage,
+  listRetentionPolicies: fileStorageApi.listRetentionPolicies,
+
+  // 图像处理快捷方法
+  generateThumbnail: fileImageApi.generateThumbnail,
+  convertImage: fileImageApi.convert,
+  compressImage: fileImageApi.compress,
+  resizeImage: fileImageApi.resize,
+  getImageMetadata: fileImageApi.getMetadata,
+  batchProcess: fileImageApi.batchProcess,
+
+  // 安全扫描快捷方法
+  scanFile: fileScanApi.scanFile,
+  getScanResult: fileScanApi.getScanResult,
+  batchScan: fileScanApi.batchScan,
+  listScanRules: fileScanApi.listScanRules,
+  listQuarantine: fileScanApi.listQuarantine,
+  getScanStats: fileScanApi.getScanStats,
 };
+
+// ==================== 常量 ====================
 
 export const VISIBILITY_OPTIONS = [
   { value: 'private', label: '私有', description: '只有所有者可以访问' },
@@ -188,6 +267,8 @@ export const PRINCIPAL_TYPE_OPTIONS = [
   { value: 'group', label: '用户组' },
   { value: 'department', label: '部门' },
 ];
+
+// ==================== 工具函数 ====================
 
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -208,5 +289,33 @@ export function getFileIcon(contentType: string): string {
   if (contentType.includes('audio/')) return 'audio';
   return 'file';
 }
+
+// ==================== 类型导出 ====================
+
+export type {
+  StorageBucket,
+  CreateBucketRequest,
+  FileCategory,
+  CreateCategoryRequest,
+  StorageUsage,
+  RetentionPolicy,
+  ThumbnailSize,
+  ImageFormat,
+  ThumbnailOptions,
+  Thumbnail,
+  ImageMetadata,
+  ConvertRequest,
+  CompressRequest,
+  CropRequest,
+  ResizeRequest,
+  ScanStatus,
+  ThreatSeverity,
+  ScanResult,
+  Threat,
+  ScanRule,
+  CreateScanRuleRequest,
+  QuarantineItem,
+  ScanStats,
+};
 
 export default fileApi;

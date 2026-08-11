@@ -11,6 +11,11 @@ import { templateApi } from './template';
 import { thresholdApi } from './threshold';
 import { pluginApi } from './plugin';
 import { metricsSnapshotApi } from './metricsSnapshot';
+import { alertApi } from './alert';
+import { routingApi } from './routing';
+import { dashboardApi } from './dashboard';
+import { sloApi } from './slo';
+import { businessMetricApi } from './businessMetric';
 
 export interface SystemMetrics {
   cpu_usage: number;
@@ -318,4 +323,56 @@ export {
   thresholdApi,
   pluginApi,
   metricsSnapshotApi,
+  alertApi,
+  routingApi,
+  dashboardApi,
+  sloApi,
+  businessMetricApi,
 };
+
+export type {
+  AlertDetail,
+  AlertStatistics,
+  AlertHistoryEvent,
+  AlertTimelinePoint,
+  AlertSeverity,
+  AlertStatus,
+} from './alert';
+
+export type {
+  RoutingConfig,
+  EscalationLevel,
+  AdvancedConfig,
+  ScheduledTrigger,
+  RoutingChannel,
+  EscalationTargetType,
+} from './routing';
+
+export type {
+  PerformanceSummary,
+  PerformanceTrendPoint,
+  ServicePerformance,
+  SlowQuery,
+  RealtimeMetrics,
+} from './dashboard';
+
+export type {
+  Slo,
+  SloSummary,
+  SloBudget,
+  SloTrendPoint,
+  SloViolation,
+  SloType,
+  SloDirection,
+  SloStatus,
+  SloBudgetStatus,
+} from './slo';
+
+export type {
+  BusinessMetric,
+  MetricSummary,
+  MetricTrendPoint,
+  KpiDashboard,
+  MetricType,
+  MetricAggregation,
+} from './businessMetric';

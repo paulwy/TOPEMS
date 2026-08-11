@@ -3,14 +3,26 @@ import { wmsDashboardApi } from './dashboard';
 import { warehouseApi } from './warehouse';
 import { locationApi } from './location';
 import { inboundOrderApi } from './inbound';
-import { outboundOrderApi, wavePickApi } from './outbound';
+import { outboundOrderApi } from './outbound';
+import { wavePickApi } from './wavePick';
 import { stockTakeApi } from './stocktake';
+import { cycleCountApi } from './cycleCount';
+import { discrepancyApi } from './discrepancy';
 import { transferApi } from './transfer';
 import { smartReplenishmentApi } from './replenishment';
 import { syncRecordApi, syncApi } from './sync';
 import { auditLogApi } from './audit';
 import { batchApi } from './batch';
 import { serialNumberApi } from './serialNumber';
+import { inventoryAlertApi } from './inventoryAlert';
+import { inventoryMovementApi } from './inventoryMovement';
+import { advancedReplenishmentApi } from './smartReplenishment';
+import { slottingApi } from './slotting';
+import { kittingApi } from './kitting';
+import { laborApi } from './labor';
+import { pickingApi } from './picking';
+import { putawayApi } from './putaway';
+import { manifestApi } from './manifest';
 
 export * from './types';
 
@@ -27,11 +39,20 @@ export * from './location';
 export { inboundOrderApi } from './inbound';
 export * from './inbound';
 
-export { outboundOrderApi, wavePickApi } from './outbound';
+export { outboundOrderApi } from './outbound';
 export * from './outbound';
+
+export { wavePickApi } from './wavePick';
+export * from './wavePick';
 
 export { stockTakeApi } from './stocktake';
 export * from './stocktake';
+
+export { cycleCountApi } from './cycleCount';
+export * from './cycleCount';
+
+export { discrepancyApi } from './discrepancy';
+export * from './discrepancy';
 
 export { transferApi } from './transfer';
 export * from './transfer';
@@ -51,12 +72,114 @@ export * from './batch';
 export { serialNumberApi } from './serialNumber';
 export * from './serialNumber';
 
+export { inventoryAlertApi } from './inventoryAlert';
+export type {
+  InventoryAlert,
+  AlertSummary,
+  AlertStatistics,
+  InventoryAlertRule,
+  CreateAlertRuleRequest,
+  UpdateAlertRuleRequest,
+  InventoryAlertRecord,
+  AlertQueryParams,
+} from './inventoryAlert';
+
+export { inventoryMovementApi } from './inventoryMovement';
+export type {
+  InventoryMovement,
+  CreateInventoryMovementRequest,
+  InventoryMovementQueryParams,
+} from './inventoryMovement';
+
+export { advancedReplenishmentApi } from './smartReplenishment';
+
+export { slottingApi } from './slotting';
+export type {
+  SlottingSuggestion,
+  SlottingZone,
+  SlottingRule,
+  SlottingImpactAnalysis,
+  SlottingStrategy,
+} from './slotting';
+
+export { kittingApi } from './kitting';
+export type {
+  KittingOrder,
+  BillOfMaterials,
+  CreateKittingOrderRequest,
+  KittingStatus,
+} from './kitting';
+
+export { laborApi } from './labor';
+export type {
+  LaborEfficiency,
+  ProductivityMetric,
+  Workload,
+  PerformanceDashboard,
+  Shift,
+} from './labor';
+
+export { pickingApi } from './picking';
+export type {
+  PickingTask,
+  PickingTaskLine,
+  PickingList,
+  PickingStrategyConfig,
+  PickingStatistics,
+  PickingTaskStatus,
+  PickingStrategy,
+  ShortPickReason,
+  CreatePickingTaskRequest,
+  AssignPickingTaskRequest,
+  PickLineRequest,
+  ShortPickLineRequest,
+  CreatePickingListRequest,
+  CreatePickingStrategyRequest,
+} from './picking';
+
+export { putawayApi } from './putaway';
+export type {
+  PutawayPlan,
+  PutawayPlanItem,
+  PutawaySuggestion,
+  PutawayRule,
+  PutawayTask,
+  PutawayStatistics,
+  PutawayPlanStatus,
+  PutawayStrategy,
+  PutawayTaskStatus,
+  CreatePutawayPlanRequest,
+  ExecutePutawayPlanRequest,
+  ConfirmPutawayItemRequest,
+  CreatePutawayRuleRequest,
+  CreatePutawayTaskRequest,
+} from './putaway';
+
+export { manifestApi } from './manifest';
+export type {
+  Manifest,
+  ManifestItem,
+  Carrier,
+  ManifestLabel,
+  ManifestStatistics,
+  ManifestStatus,
+  CarrierType,
+  LabelStatus,
+  CreateManifestRequest,
+  UpdateManifestRequest,
+  AddManifestItemRequest,
+  BatchCreateManifestRequest,
+  CreateCarrierRequest,
+} from './manifest';
+
 export const wmsApi = {
   dashboard: wmsDashboardApi,
   inventory: inventoryApi,
   inboundOrders: inboundOrderApi,
   outboundOrders: outboundOrderApi,
   stockTakes: stockTakeApi,
+  cycleCounts: cycleCountApi,
+  discrepancies: discrepancyApi,
   warehouses: warehouseApi,
   inventoryAlerts: inventoryAlertsApi,
   smartReplenishment: smartReplenishmentApi,
@@ -69,6 +192,15 @@ export const wmsApi = {
   wavePicks: wavePickApi,
   batches: batchApi,
   serialNumbers: serialNumberApi,
+  inventoryAlert: inventoryAlertApi,
+  inventoryMovements: inventoryMovementApi,
+  advancedReplenishment: advancedReplenishmentApi,
+  slotting: slottingApi,
+  kitting: kittingApi,
+  labor: laborApi,
+  picking: pickingApi,
+  putaway: putawayApi,
+  manifests: manifestApi,
 };
 
 export default wmsApi;

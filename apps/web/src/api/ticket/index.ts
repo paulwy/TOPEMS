@@ -1,245 +1,82 @@
+/**
+ * Ticket · 工单管理 API 绑定
+ *
+ * 后端: svc/ticket/src/handlers.rs
+ * 路由:
+ *   GET    /tickets
+ *   POST   /tickets
+ *   GET    /tickets/{id}
+ *   PUT    /tickets/{id}
+ *   DELETE /tickets/{id}
+ *   GET    /tickets/stats
+ *   GET    /tickets/sla-stats
+ *   ... 详见子模块文件
+ */
+
 import { apiClient } from '../client';
+import { slaApi } from './sla';
+import { commentApi } from './comment';
+import { dashboardApi } from './dashboard';
+import { workflowApi } from './workflow';
+import { attachmentApi } from './attachment';
+import { batchApi } from './batch';
+import type {
+  Ticket,
+  TicketListResponse,
+  TicketQuery,
+  CreateTicketRequest,
+  UpdateTicketRequest,
+} from './types';
 
-export interface Ticket {
-  id: string;
-  ticket_no: string;
-  tenant_id: string;
-  title: string;
-  description?: string;
-  ticket_type: string;
-  severity: string;
-  status: string;
-  source_service: string;
-  source_business_id?: string;
-  assignee_id?: string;
-  reporter_id?: string;
-  sla_due_at?: string;
-  resolved_at?: string;
-  closed_at?: string;
-  created_at: string;
-  updated_at: string;
-  tags?: string[];
-  metadata?: Record<string, unknown>;
-}
+export type {
+  Ticket,
+  TicketComment,
+  AddCommentRequest,
+  TicketActivity,
+  TicketListResponse,
+  TicketStats,
+  CreateTicketRequest,
+  UpdateTicketRequest,
+  TicketQuery,
+  TicketSlaInfo,
+  SlaEscalationEvent,
+  TicketSlaPolicy,
+  TicketSlaStats,
+  CreateSlaPolicyRequest,
+  UpdateSlaPolicyRequest,
+} from './types';
 
-export interface TicketComment {
-  id: string;
-  ticket_id: string;
-  tenant_id: string;
-  user_id: string;
-  user_name?: string;
-  content: string;
-  is_internal: boolean;
-  created_at: string;
-}
-
-export interface TicketActivity {
-  id: string;
-  ticket_id: string;
-  tenant_id: string;
-  user_id?: string;
-  action: string;
-  from_value?: string;
-  to_value?: string;
-  created_at: string;
-}
-
-export interface TicketListResponse {
-  items: Ticket[];
-  total: number;
-  page: number;
-  page_size: number;
-}
-
-export interface TicketStats {
-  total: number;
-  open: number;
-  in_progress: number;
-  pending: number;
-  resolved: number;
-  closed: number;
-  sla_breached: number;
-  bySeverity: Array<{ severity: string; count: number }>;
-  byType: Array<{ ticket_type: string; count: number }>;
-  by_source: Array<{ source_service: string; count: number }>;
-}
-
-export interface CreateTicketRequest {
-  title: string;
-  description?: string;
-  ticket_type: string;
-  severity?: string;
-  source_service: string;
-  source_business_id?: string;
-  assignee_id?: string;
-  sla_hours?: number;
-  tags?: string[];
-  metadata?: Record<string, unknown>;
-}
-
-export interface UpdateTicketRequest {
-  title?: string;
-  description?: string;
-  severity?: string;
-  status?: string;
-  assignee_id?: string;
-  tags?: string[];
-  metadata?: Record<string, unknown>;
-}
-
-export interface TicketQuery {
-  status?: string;
-  severity?: string;
-  ticket_type?: string;
-  assignee_id?: string;
-  reporter_id?: string;
-  source_service?: string;
-  sla_breached?: boolean;
-  page?: number;
-  page_size?: number;
-}
-
-export interface TicketSlaInfo {
-  sla_due_at?: string;
-  response_due_at?: string;
-  is_breached: boolean;
-  response_breached: boolean;
-  time_remaining_minutes?: number;
-  response_time_remaining_minutes?: number;
-  current_escalation_level: number;
-  escalation_history: SlaEscalationEvent[];
-  policy_name?: string;
-  resolution_hours?: number;
-  response_hours?: number;
-}
-
-export interface SlaEscalationEvent {
-  id: string;
-  ticket_id: string;
-  tenant_id: string;
-  level: number;
-  escalation_time: string;
-  escalated_to?: string;
-  reason?: string;
-  created_at: string;
-}
-
-export interface TicketSlaPolicy {
-  id: string;
-  tenant_id: string;
-  name: string;
-  description?: string;
-  ticket_type?: string;
-  severity?: string;
-  response_hours: number;
-  resolution_hours: number;
-  escalation_levels: number;
-  escalation_hours_1?: number;
-  escalation_hours_2?: number;
-  escalation_hours_3?: number;
-  working_hours_only: boolean;
-  business_hours_start?: string;
-  business_hours_end?: string;
-  weekend_excluded: boolean;
-  is_default: boolean;
-  isActive: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TicketSlaStats {
-  total: number;
-  on_time: number;
-  breached: number;
-  breach_rate: number;
-  avg_resolution_minutes?: number;
-  avg_response_minutes?: number;
-  bySeverity: Array<{ severity: string; total: number; breached: number; breach_rate: number }>;
-  byType: Array<{ ticket_type: string; total: number; breached: number; breach_rate: number }>;
-  breach_trend: Array<{ date: string; total: number; breached: number }>;
-}
-
-export interface CreateSlaPolicyRequest {
-  name: string;
-  description?: string;
-  ticket_type?: string;
-  severity?: string;
-  response_hours: number;
-  resolution_hours: number;
-  escalation_levels: number;
-  escalation_hours_1?: number;
-  escalation_hours_2?: number;
-  escalation_hours_3?: number;
-  working_hours_only?: boolean;
-  business_hours_start?: string;
-  business_hours_end?: string;
-  weekend_excluded?: boolean;
-  is_default?: boolean;
-}
-
-export interface UpdateSlaPolicyRequest {
-  name?: string;
-  description?: string;
-  response_hours?: number;
-  resolution_hours?: number;
-  escalation_levels?: number;
-  escalation_hours_1?: number;
-  escalation_hours_2?: number;
-  escalation_hours_3?: number;
-  working_hours_only?: boolean;
-  weekend_excluded?: boolean;
-  is_default?: boolean;
-  isActive?: boolean;
-}
-
-// 使用 Portal BFF 代理（推荐）
-const portal = apiClient.portal;
+export type { DashboardSummary, TrendPoint, AssigneeLoad } from './dashboard';
+export type {
+  TicketTransition,
+  TicketWorkflow,
+  WorkflowStatus,
+  WorkflowTransition,
+  CreateTicketTransitionRequest,
+  CreateWorkflowRequest,
+} from './workflow';
+export type { TicketAttachment, UploadAttachmentRequest } from './attachment';
+export type { TicketTag, BatchUpdateRequest, BatchResult } from './batch';
 
 export const ticketApi = {
+  // 基础工单操作（推荐通过 BFF）
   listTickets: (query?: TicketQuery) =>
-    portal.get<{ data: TicketListResponse }>('/tickets', { params: query }),
+    apiClient.portal.get<{ data: TicketListResponse }>('/tickets', { params: query }),
 
-  getTicket: (id: string) => portal.get<{ data: Ticket }>(`/tickets/${id}`),
+  getTicket: (id: string) => apiClient.portal.get<{ data: Ticket }>(`/tickets/${id}`),
 
-  createTicket: (data: CreateTicketRequest) => portal.post<{ data: Ticket }>('/tickets', data),
+  createTicket: (data: CreateTicketRequest) =>
+    apiClient.portal.post<{ data: Ticket }>('/tickets', data),
 
   updateTicket: (id: string, data: UpdateTicketRequest) =>
-    portal.put<{ data: Ticket }>(`/tickets/${id}`, data),
+    apiClient.portal.put<{ data: Ticket }>(`/tickets/${id}`, data),
 
-  getComments: (id: string) => portal.get<{ data: TicketComment[] }>(`/tickets/${id}/comments`),
+  deleteTicket: (id: string) =>
+    apiClient.portal.delete<{ data: { deleted: boolean } }>(`/tickets/${id}`),
 
-  addComment: (id: string, content: string, isInternal?: boolean) =>
-    portal.post<{ data: TicketComment }>(`/tickets/${id}/comments`, {
-      content,
-      is_internal: isInternal ?? false,
-    }),
+  getStats: dashboardApi.getStats,
 
-  getStats: () => portal.get<{ data: TicketStats }>('/tickets/stats'),
-
-  getActivities: (id: string) =>
-    portal.get<{ data: TicketActivity[] }>(`/tickets/${id}/activities`),
-
-  getTicketSla: (id: string) => portal.get<{ data: TicketSlaInfo }>(`/tickets/${id}/sla`),
-
-  triggerSlaEscalation: (id: string) =>
-    portal.post<{ data: SlaEscalationEvent[] }>(`/tickets/${id}/sla`, {}),
-
-  getSlaStats: () => portal.get<{ data: TicketSlaStats }>('/tickets/sla-stats'),
-
-  listSlaPolicies: () => portal.get<{ data: TicketSlaPolicy[] }>('/sla-policies'),
-
-  getSlaPolicy: (id: string) => portal.get<{ data: TicketSlaPolicy }>(`/sla-policies/${id}`),
-
-  createSlaPolicy: (data: CreateSlaPolicyRequest) =>
-    portal.post<{ data: TicketSlaPolicy }>('/sla-policies', data),
-
-  updateSlaPolicy: (id: string, data: UpdateSlaPolicyRequest) =>
-    portal.put<{ data: TicketSlaPolicy }>(`/sla-policies/${id}`, data),
-
-  deleteSlaPolicy: (id: string) =>
-    portal.delete<{ data: { deleted: boolean } }>(`/sla-policies/${id}`),
-
-  // ==================== 直接访问 ticket 服务（不经过 BFF） ====================
+  // ==================== 直接访问 ticket 服务 ====================
 
   assignTicket: (id: string, assigneeId: string) =>
     apiClient.ticket.post<{ data: Ticket }>(`/tickets/${id}/assign`, {
@@ -259,14 +96,62 @@ export const ticketApi = {
     status?: string;
     priority?: string;
     assignee_id?: string;
-  }) =>
-    apiClient.ticket.post<{ data: { updated_count: number } }>('/tickets/batch-update', data),
-
-  exportTickets: (params?: { status?: string; format?: 'csv' | 'xlsx' }) =>
-    apiClient.ticket.get<Blob>('/tickets/export', { ...params, responseType: 'blob' }),
+  }) => apiClient.ticket.post<{ data: { updated_count: number } }>('/tickets/batch-update', data),
 
   getMyTickets: (params?: { status?: string; page?: number; page_size?: number }) =>
     apiClient.ticket.get<{ data: TicketListResponse }>('/tickets/my', { params }),
+
+  // SLA 子域
+  sla: slaApi,
+  getTicketSla: slaApi.getTicketSla,
+  triggerSlaEscalation: slaApi.triggerSlaEscalation,
+  getSlaStats: slaApi.getSlaStats,
+  listSlaPolicies: slaApi.listSlaPolicies,
+  getSlaPolicy: slaApi.getSlaPolicy,
+  createSlaPolicy: slaApi.createSlaPolicy,
+  updateSlaPolicy: slaApi.updateSlaPolicy,
+  deleteSlaPolicy: slaApi.deleteSlaPolicy,
+
+  // 评论与活动子域
+  comments: commentApi,
+  getComments: commentApi.listComments,
+  addComment: (id: string, content: string) => commentApi.addComment(id, { content }),
+  getActivities: commentApi.listActivities,
+
+  // 统计与看板子域
+  dashboard: dashboardApi,
+
+  // 工单流转与自动化子域
+  workflow: workflowApi,
+  listTransitions: workflowApi.listTransitions,
+  performTransition: workflowApi.performTransition,
+  approveTicket: workflowApi.approveTicket,
+  rejectTicket: workflowApi.rejectTicket,
+  escalateTicket: workflowApi.escalateTicket,
+  reassignTicket: workflowApi.reassignTicket,
+  listWorkflows: workflowApi.listWorkflows,
+  createWorkflow: workflowApi.createWorkflow,
+  deleteWorkflow: workflowApi.deleteWorkflow,
+
+  // 附件子域
+  attachments: attachmentApi,
+  listAttachments: attachmentApi.listAttachments,
+  uploadAttachment: attachmentApi.uploadAttachment,
+  deleteAttachment: attachmentApi.deleteAttachment,
+  downloadAttachment: attachmentApi.downloadAttachment,
+
+  // 批量操作与标签子域
+  batch: batchApi,
+  batchAssign: batchApi.batchAssign,
+  batchClose: batchApi.batchClose,
+  batchDelete: batchApi.batchDelete,
+  batchEscalate: batchApi.batchEscalate,
+  listTags: batchApi.listTags,
+  createTag: batchApi.createTag,
+  addTagToTicket: batchApi.addTagToTicket,
+  removeTagFromTicket: batchApi.removeTagFromTicket,
 };
+
+export { slaApi, commentApi, dashboardApi, workflowApi, attachmentApi, batchApi };
 
 export default ticketApi;

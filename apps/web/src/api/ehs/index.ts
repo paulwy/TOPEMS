@@ -4,10 +4,14 @@ import type { ApiResponse } from '../client';
 import { accidentApi } from './accident';
 import { complianceApi } from './compliance';
 import { ehsDashboardApi } from './dashboard';
+import { emergencyDrillApi } from './emergencyDrill';
 import { emergencyApi } from './emergency';
+import { emergencyPlanApi } from './emergencyPlan';
 import { environmentApi } from './environment';
+import { environmentalComplianceApi } from './environmentalCompliance';
 import { hazardApi } from './hazard';
 import { hazardousMaterialApi } from './hazardousMaterial';
+import { healthMonitoringApi } from './healthMonitoring';
 import { incidentApi } from './incident';
 import { inspectionApi } from './inspection';
 import { occupationalDiseaseApi } from './occupationalDisease';
@@ -15,6 +19,7 @@ import { occupationalHealthApi } from './occupationalHealth';
 import { riskApi } from './risk';
 import { safetyCheckApi } from './safetyCheck';
 import { safetyIssueApi } from './safetyIssue';
+import { safetyTrainingApi } from './safetyTraining';
 import { syncApi } from './sync';
 import { trainingApi } from './training';
 
@@ -23,10 +28,14 @@ export * from './types';
 export { accidentApi } from './accident';
 export { complianceApi } from './compliance';
 export { ehsDashboardApi } from './dashboard';
+export { emergencyDrillApi } from './emergencyDrill';
 export { emergencyApi } from './emergency';
+export { emergencyPlanApi } from './emergencyPlan';
 export { environmentApi } from './environment';
+export { environmentalComplianceApi } from './environmentalCompliance';
 export { hazardApi } from './hazard';
 export { hazardousMaterialApi } from './hazardousMaterial';
+export { healthMonitoringApi } from './healthMonitoring';
 export { incidentApi } from './incident';
 export { inspectionApi } from './inspection';
 export { occupationalDiseaseApi } from './occupationalDisease';
@@ -34,6 +43,7 @@ export { occupationalHealthApi } from './occupationalHealth';
 export { riskApi } from './risk';
 export { safetyCheckApi } from './safetyCheck';
 export { safetyIssueApi } from './safetyIssue';
+export { safetyTrainingApi } from './safetyTraining';
 export { syncApi } from './sync';
 export { trainingApi } from './training';
 
@@ -44,15 +54,20 @@ export const ehsApi = {
   safetyIssues: safetyIssueApi,
   safetyChecks: safetyCheckApi,
   emergency: emergencyApi,
+  emergencyDrill: emergencyDrillApi,
+  emergencyPlan: emergencyPlanApi,
   incidents: incidentApi,
   accidents: accidentApi,
   risks: riskApi,
   environment: environmentApi,
+  environmentalCompliance: environmentalComplianceApi,
   training: trainingApi,
   occupationalHealth: occupationalHealthApi,
   occupationalDiseases: occupationalDiseaseApi,
   hazardousMaterials: hazardousMaterialApi,
+  healthMonitoring: healthMonitoringApi,
   compliance: complianceApi,
+  safetyTraining: safetyTrainingApi,
   sync: syncApi,
 
   listHazards: hazardApi.listHazards,
@@ -100,11 +115,40 @@ export const ehsApi = {
   createPlan: emergencyApi.createPlan,
   updatePlan: emergencyApi.updatePlan,
   deletePlan: emergencyApi.deletePlan,
+  listEmergencyPlans: emergencyPlanApi.listPlans,
+  getEmergencyPlan: emergencyPlanApi.getPlan,
+  createEmergencyPlan: emergencyPlanApi.createPlan,
+  updateEmergencyPlan: emergencyPlanApi.updatePlan,
+  deleteEmergencyPlan: emergencyPlanApi.deletePlan,
+  listPlanCategories: emergencyPlanApi.listPlanCategories,
+  listPlanSupplies: emergencyPlanApi.listPlanSupplies,
+  addPlanSupply: emergencyPlanApi.addPlanSupply,
+  deletePlanSupply: emergencyPlanApi.deletePlanSupply,
+  listPlanVersions: emergencyPlanApi.listPlanVersions,
+  createPlanVersion: emergencyPlanApi.createPlanVersion,
+  submitPlanApproval: emergencyPlanApi.submitPlanApproval,
+  approvePlan: emergencyPlanApi.approvePlan,
   listDrills: emergencyApi.listDrills,
   getDrill: emergencyApi.getDrill,
   createDrill: emergencyApi.createDrill,
   updateDrill: emergencyApi.updateDrill,
   deleteDrill: emergencyApi.deleteDrill,
+  listDrillPlans: emergencyDrillApi.listDrillPlans,
+  getDrillPlan: emergencyDrillApi.getDrillPlan,
+  createDrillPlan: emergencyDrillApi.createDrillPlan,
+  updateDrillPlan: emergencyDrillApi.updateDrillPlan,
+  deleteDrillPlan: emergencyDrillApi.deleteDrillPlan,
+  listDrillRecords: emergencyDrillApi.listDrillRecords,
+  getDrillRecord: emergencyDrillApi.getDrillRecord,
+  createDrillRecord: emergencyDrillApi.createDrillRecord,
+  updateDrillRecord: emergencyDrillApi.updateDrillRecord,
+  deleteDrillRecord: emergencyDrillApi.deleteDrillRecord,
+  createDrillEvaluation: emergencyDrillApi.createDrillEvaluation,
+  listDrillProblems: emergencyDrillApi.listDrillProblems,
+  createDrillProblem: emergencyDrillApi.createDrillProblem,
+  updateDrillProblem: emergencyDrillApi.updateDrillProblem,
+  listDrillTypes: emergencyDrillApi.listDrillTypes,
+  getDrillStatistics: emergencyDrillApi.getDrillStatistics,
   listIncidents: incidentApi.listIncidents,
   getIncident: incidentApi.getIncident,
   createIncident: incidentApi.createIncident,
@@ -146,6 +190,12 @@ export const ehsApi = {
   listEnvironmentMonitorRecords: environmentApi.listEnvironmentMonitorRecords,
   getEnvironmentMonitorRecord: environmentApi.getEnvironmentMonitorRecord,
   createEnvironmentMonitorRecord: environmentApi.createEnvironmentMonitorRecord,
+  listSafetyTrainings: safetyTrainingApi.listTrainings,
+  getSafetyTraining: safetyTrainingApi.getTraining,
+  createSafetyTraining: safetyTrainingApi.createTraining,
+  updateSafetyTraining: safetyTrainingApi.updateTraining,
+  deleteSafetyTraining: safetyTrainingApi.deleteTraining,
+  getSafetyTrainingStatistics: safetyTrainingApi.getTrainingStatistics,
   listTrainingPlans: trainingApi.listTrainingPlans,
   getTrainingPlan: trainingApi.getTrainingPlan,
   createTrainingPlan: trainingApi.createTrainingPlan,
@@ -246,6 +296,39 @@ export const ehsApi = {
   createEnvironmentalEvent: complianceApi.createEnvironmentalEvent,
   updateEnvironmentalEvent: complianceApi.updateEnvironmentalEvent,
   deleteEnvironmentalEvent: complianceApi.deleteEnvironmentalEvent,
+  listEnvComplianceRegulations: environmentalComplianceApi.listRegulations,
+  getEnvComplianceRegulation: environmentalComplianceApi.getRegulation,
+  createEnvComplianceRegulation: environmentalComplianceApi.createRegulation,
+  updateEnvComplianceRegulation: environmentalComplianceApi.updateRegulation,
+  deleteEnvComplianceRegulation: environmentalComplianceApi.deleteRegulation,
+  listEnvRegulationCategories: environmentalComplianceApi.listRegulationCategories,
+  listEnvComplianceEvaluations: environmentalComplianceApi.listEvaluations,
+  getEnvComplianceEvaluation: environmentalComplianceApi.getEvaluation,
+  createEnvComplianceEvaluation: environmentalComplianceApi.createEvaluation,
+  updateEnvComplianceEvaluation: environmentalComplianceApi.updateEvaluation,
+  deleteEnvComplianceEvaluation: environmentalComplianceApi.deleteEvaluation,
+  listEnvMonitorRecords: environmentalComplianceApi.listMonitorRecords,
+  getEnvMonitorRecord: environmentalComplianceApi.getMonitorRecord,
+  createEnvMonitorRecord: environmentalComplianceApi.createMonitorRecord,
+  deleteEnvMonitorRecord: environmentalComplianceApi.deleteMonitorRecord,
+  listEnvMonitorTypes: environmentalComplianceApi.listMonitorTypes,
+  listEnvDischargePermits: environmentalComplianceApi.listPermits,
+  getEnvDischargePermit: environmentalComplianceApi.getPermit,
+  createEnvDischargePermit: environmentalComplianceApi.createPermit,
+  updateEnvDischargePermit: environmentalComplianceApi.updatePermit,
+  deleteEnvDischargePermit: environmentalComplianceApi.deletePermit,
+  listEnvIncidents: environmentalComplianceApi.listIncidents,
+  getEnvIncident: environmentalComplianceApi.getIncident,
+  createEnvIncident: environmentalComplianceApi.createIncident,
+  updateEnvIncident: environmentalComplianceApi.updateIncident,
+  deleteEnvIncident: environmentalComplianceApi.deleteIncident,
+  getEnvComplianceStatistics: environmentalComplianceApi.getComplianceStatistics,
+  listHealthMonitorRecords: healthMonitoringApi.listHealthRecords,
+  getHealthMonitorRecord: healthMonitoringApi.getHealthRecord,
+  createHealthMonitorRecord: healthMonitoringApi.createHealthRecord,
+  updateHealthMonitorRecord: healthMonitoringApi.updateHealthRecord,
+  deleteHealthMonitorRecord: healthMonitoringApi.deleteHealthRecord,
+  getHealthMonitorStatistics: healthMonitoringApi.getHealthStatistics,
   listSyncRecords: syncApi.listSyncRecords,
   getSyncRecord: syncApi.getSyncRecord,
   createSync: syncApi.createSync,

@@ -20,6 +20,7 @@ import { documentApi, documentVersionApi, documentFolderApi } from './document';
 import { reportApi, reportTemplateApi } from './report';
 import { notificationApi, notificationSettingApi, notificationTypeApi } from './notification';
 import { dashboardApi } from './dashboard';
+import { pmStatisticsApi } from './statistics';
 
 export * from './types';
 
@@ -43,6 +44,7 @@ export { documentApi, documentVersionApi, documentFolderApi } from './document';
 export { reportApi, reportTemplateApi } from './report';
 export { notificationApi, notificationSettingApi, notificationTypeApi } from './notification';
 export { dashboardApi } from './dashboard';
+export { pmStatisticsApi } from './statistics';
 
 export const pmApi = {
   projects: projectApi,
@@ -98,6 +100,8 @@ export const pmApi = {
   },
 
   getStatistics: dashboardApi.getStatistics,
+
+  statistics: pmStatisticsApi,
 };
 
 export default pmApi;
