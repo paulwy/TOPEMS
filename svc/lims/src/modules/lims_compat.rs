@@ -3,6 +3,7 @@
 //! OpenAPI-only contract entries for frontend `/api/lims/*` calls
 //! not represented by concrete utoipa handlers yet.
 
+#![allow(dead_code)]
 #[utoipa::path(
     get,
     path = "/api/lims/audit-logs/{id}",

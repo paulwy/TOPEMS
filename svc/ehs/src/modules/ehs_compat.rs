@@ -3,6 +3,7 @@
 //! OpenAPI-only contract entries for frontend `/api/ehs/*` calls
 //! not represented by concrete utoipa handlers yet.
 
+#![allow(dead_code)]
 #[utoipa::path(
     delete,
     path = "/api/ehs/checks/{id}",

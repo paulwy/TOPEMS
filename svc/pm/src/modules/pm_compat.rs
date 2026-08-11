@@ -4,6 +4,7 @@
 //! `/api/pm/*` calls that are not represented by concrete utoipa
 //! handlers yet. They do not alter runtime routing behavior.
 
+#![allow(dead_code)]
 #[utoipa::path(
     delete,
     path = "/api/pm/acceptance-items/{id}",
