@@ -3,6 +3,14 @@ import type { ApiResponse } from '../client';
 import type { PaginatedResponse } from '@topems/shared-types';
 import { apiLogger } from '../../utils/logger';
 import type { CrudOperations } from '@/hooks/useCrudQueries';
+import { alertBatchApi } from './alertBatch';
+import { performanceExtendedApi } from './performanceExtended';
+import { ruleAdvancedApi } from './ruleAdvanced';
+import { suppressionApi } from './suppression';
+import { templateApi } from './template';
+import { thresholdApi } from './threshold';
+import { pluginApi } from './plugin';
+import { metricsSnapshotApi } from './metricsSnapshot';
 
 export interface SystemMetrics {
   cpu_usage: number;
@@ -299,4 +307,15 @@ export const alertCrudApi: CrudOperations<Alert, AlertQueryParams> = {
   delete: (() => {
     throw new Error('Not implemented');
   }) as unknown as CrudOperations<Alert, AlertQueryParams>['delete'],
+};
+
+export {
+  alertBatchApi,
+  performanceExtendedApi,
+  ruleAdvancedApi,
+  suppressionApi,
+  templateApi,
+  thresholdApi,
+  pluginApi,
+  metricsSnapshotApi,
 };
