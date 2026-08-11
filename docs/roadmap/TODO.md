@@ -1243,6 +1243,25 @@ V73 完成后，项目仍存在若干编译警告：20 个 compat 文件中空�
 - **tsc --noEmit**: 0 error ✅
 - **eslint + prettier**: 通过 ✅
 
+### V80 扩展 · master-data 剩余模块（Lineage/Governance/AI Governance/Metadata）
+
+在 V80 基础上继续补充 master-data 模块的剩余 4 个子模块，覆盖 V52/V58/V59/V60 版本路由。
+
+| 文件 | 说明 | API 函数数 |
+|------|------|-----------|
+| `apps/web/src/api/master/lineage.ts` | 数据血缘追踪、影响分析、变更传播 (V52) | 15 |
+| `apps/web/src/api/master/governance.ts` | 治理成熟度评估、工作流管理、数据产品化 (V58) | 20 |
+| `apps/web/src/api/master/aiGovernance.ts` | AI 治理分析、智能匹配、自动分类 (V59) | 17 |
+| `apps/web/src/api/master/metadata.ts` | 元数据 CRUD、血缘增强、生命周期管理 (V60) | 20 |
+| `apps/web/src/api/master/index.ts` | 更新导出 + masterApi 聚合所有 7 个子模块 | — |
+
+- **新增 API 函数**: 72 个（5 文件）
+- **master 模块总 API 函数**: 115 个（schemaRegistry 10 + dictionary 12 + quality 21 + lineage 15 + governance 20 + aiGovernance 17 + metadata 20）
+- **覆盖后端路由**: `/lineage-v52/*` + `/mdm-v58/*` + `/mdm-v59/*` + `/mdm-v60/*`（70+ 个端点路径）
+- **tsc --noEmit**: 0 error ✅
+- **eslint + prettier**: 通过 ✅
+
 ### 审计产物
 
 - V80 提交 `eaa6a76a0` — feat(master-data): 新增 dictionary + quality API 绑定 33 个函数
+- V80 扩展提交 `ec192bd04` — feat(master-data): 新增 lineage/governance/aiGovernance/metadata API 绑定 72 个函数
