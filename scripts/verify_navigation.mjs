@@ -188,10 +188,18 @@ function pagePathToFile(pagePath) {
     );
     const modulePascal = toPascal(moduleDir);
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${lastPascal}Page.tsx`));
+    candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${lastPascal}Page/index.tsx`));
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${lastPascal}ManagementPage.tsx`));
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${lastPascal}DashboardPage.tsx`));
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${lastPascal}DetailPage.tsx`));
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${lastPascal}ListPage.tsx`));
+    // 单数变体：去除末尾 s（如 templates → template）
+    if (lastSegment.endsWith('s') && lastSegment.length > 1) {
+      const singular = lastSegment.slice(0, -1);
+      const singularPascal = toPascal(singular);
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${singularPascal}Page.tsx`));
+      candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${singularPascal}Page/index.tsx`));
+    }
   }
 
   if (cleanSegments.length > 0) {
