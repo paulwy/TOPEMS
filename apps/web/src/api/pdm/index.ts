@@ -5,12 +5,20 @@ import type { PdmDocument } from './document';
 import { pdmDashboardApi } from './dashboard';
 import { bomApi } from './bom';
 import { documentApi } from './document';
+import { documentApprovalApi } from './documentApproval';
+import { changeNoticeActionApi } from './changeNoticeAction';
+import { workflowApi } from './workflow';
+import { pdmVersionApi } from './pdmVersion';
 
 export * from './bom';
 export * from './project';
 export * from './document';
 
 export { pdmDashboardApi } from './dashboard';
+export { documentApprovalApi } from './documentApproval';
+export { changeNoticeActionApi } from './changeNoticeAction';
+export { workflowApi } from './workflow';
+export { pdmVersionApi } from './pdmVersion';
 
 export type Document = PdmDocument;
 
@@ -494,6 +502,18 @@ export const pdmApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+
+  // Document Approval
+  ...documentApprovalApi,
+
+  // Change Notice Actions
+  ...changeNoticeActionApi,
+
+  // Workflows
+  ...workflowApi,
+
+  // Versions
+  ...pdmVersionApi,
 };
 
 export default pdmApi;
