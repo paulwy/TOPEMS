@@ -1338,6 +1338,240 @@ db_migrate() {
     success "数据库迁移完成"
 }
 
+# ==============================================================================
+# Schema 防御自检（V69.2）
+#
+# 退出码语义：
+#   0 = 全部通过（0 WARN / 0 ERROR）
+#   1 = 有警告（存在 仍缺失 X 列 的 WARN）
+#   2 = 有错误（编译失败 / 服务启动失败 / 没找到 defense 日志 等）
+# ==============================================================================
+
+# 跨平台 timeout 包装：优先系统 timeout(Linux) / gtimeout(macOS brew coreutils)，
+# 均不可用时用 bash 后台进程 + sleep + TERM/KILL 兜底模拟。
+#
+# 用法: _timeout <seconds> <cmd...>
+# 始终将 stdout/stderr 捕获到当前 shell 中；到达秒数强制终止。
+_timeout() {
+    local secs="$1"; shift
+    if command -v timeout >/dev/null 2>&1; then
+        timeout --kill-after=2 "$secs" "$@"
+        return $?
+    fi
+    if command -v gtimeout >/dev/null 2>&1; then
+        gtimeout --kill-after=2 "$secs" "$@"
+        return $?
+    fi
+    # Bash 原生兜底：后台跑 + sleep + TERM（2秒后补KILL）
+    local pid
+    ( "$@" ) &
+    pid=$!
+    (
+        sleep "$secs"
+        if kill -0 "$pid" 2>/dev/null; then
+            kill -TERM "$pid" 2>/dev/null || true
+            sleep 2
+            if kill -0 "$pid" 2>/dev/null; then
+                kill -9 "$pid" 2>/dev/null || true
+            fi
+        fi
+    ) &
+    local watcher=$!
+    wait "$pid" 2>/dev/null
+    local rc=$?
+    wait "$watcher" 2>/dev/null || true
+    # TERM/KILL 子进程时 wait 返回 128+sig 或其它，但我们只关心程序跑完没
+    return $rc
+}
+
+defense_check_color() {
+    # 根据退出码染色打印
+    local code="$1"
+    local svc="$2"
+    local detail="$3"
+    case "$code" in
+        0) success "[✓ PASS] $svc  —  $detail" ;;
+        1) warning "[⚠ WARN] $svc  —  $detail" ;;
+        *) error   "[✗ FAIL] $svc  —  $detail" ;;
+    esac
+}
+
+# 单个服务的 defense-check：
+#   1) 先尝试 cargo check（缺则 warn 不中断）
+#   2) 启动该服务 10 秒捕获启动日志
+#   3) grep [svc schema 自检] 和 仍缺失列 关键字
+#   返回: 0/1/2
+db_defense_check() {
+    local svc="$1"
+    if [ -z "$svc" ]; then
+        error "用法: topems.sh db defense-check <service>  例如: topems db defense-check ehs"
+        echo "示例: ./scripts/topems.sh db defense-check gis"
+        echo "      ./scripts/topems.sh db defense-check-all"
+        exit 2
+    fi
+
+    local svc_dir="$PROJECT_ROOT/svc/$svc"
+    if [ ! -d "$svc_dir" ]; then
+        defense_check_color 2 "$svc" "目录 svc/$svc 不存在（请确认拼写）"
+        return 2
+    fi
+
+    local rc=0
+    local detail_parts=()
+
+    # 阶段A: 编译存在性（强制项，但失败不退出）
+    # 优先方案：预热后 target/debug/<pkg> 已存在 → 跳过 cargo check，复用已编译的二进制
+    # 兜底方案：target 下缺失 → 用 cargo check -p 在 PROJECT_ROOT 下跑（共用 workspace target）
+    local pkg_name="topems-${svc}"
+    local bin_path="$PROJECT_ROOT/target/debug/${pkg_name}"
+    info "[$svc] 编译检查..."
+    if [ -x "$bin_path" ]; then
+        detail_parts+=("build=SKIP（预热二进制已就绪 ${bin_path}）")
+    elif (cd "$PROJECT_ROOT" && cargo check --offline -p "$pkg_name" 2>&1) \
+        >/tmp/defense-check-${svc}-build.log 2>&1; then
+        detail_parts+=("build=OK")
+    else
+        detail_parts+=("build=FAIL（见 /tmp/defense-check-${svc}-build.log）")
+        rc=2
+    fi
+
+    # 阶段B: 捕获 15 秒启动日志，grep schema 自检段
+    # 直接运行 target/debug/<pkg>（不经过 cargo run），避免每次再触发重编译耗时
+    local log_tmp="/tmp/defense-check-${svc}-start.log"
+    info "[$svc] 启动 15s 捕获 schema 自检日志（需要 DB 已运行）..."
+    load_env 2>/dev/null || true
+    if [ -x "$bin_path" ]; then
+        (_timeout 15 "$bin_path" || true) > "$log_tmp" 2>&1 || true
+    else
+        (_timeout 15 "$SHELL" -c "cd '$PROJECT_ROOT' && cargo run --offline -p '$pkg_name' 2>&1" || true) \
+            > "$log_tmp" 2>&1 || true
+    fi
+
+    # grep 迁移日志
+    local stage1_line
+    stage1_line=$(grep -E "增量迁移.*完成.*张表" "$log_tmp" 2>/dev/null | tail -1 || true)
+    local stage2_line
+    stage2_line=$(grep -E "schema 自检.*完成" "$log_tmp" 2>/dev/null | tail -1 || true)
+    local warn_lines
+    warn_lines=$(grep -E "仍缺失.*列" "$log_tmp" 2>/dev/null || true)
+
+    if [ -z "$stage1_line" ] && [ -z "$stage2_line" ] && [ $rc -ne 2 ]; then
+        # 既没 build 失败，也没自检日志 —— 说明该服务还没落地 TABLE_DEFS 防御
+        detail_parts+=("defense=N/A（该服务尚未实现 TABLE_DEFS + 两阶段自检，请纳入下一批推进）")
+        rc=1
+    else
+        # 统计表数 / 列数
+        local t_count c_count
+        t_count=$(echo "$stage1_line" | grep -oE "[0-9]+ 张表" | grep -oE "[0-9]+" | head -1)
+        c_count=$(echo "$stage1_line" | grep -oE "[0-9]+ 列" | grep -oE "[0-9]+" | head -1)
+        [ -z "$t_count" ] && t_count=0
+        [ -z "$c_count" ] && c_count=0
+        local miss_count
+        miss_count=$(printf '%s' "$warn_lines" | grep -c "仍缺失" 2>/dev/null || true)
+        [ -z "$miss_count" ] && miss_count=0
+
+        detail_parts+=("tables=$t_count cols=$c_count missing-tables=$miss_count")
+        if [ "$miss_count" -gt 0 ] && [ $rc -eq 0 ]; then
+            rc=1
+        fi
+    fi
+
+    # 输出最终染色行 + 明细（WARN 时附具体缺列表）
+    defense_check_color $rc "$svc" "$(IFS=" | "; echo "${detail_parts[*]}")"
+    if [ $rc -eq 1 ] && [ -n "$warn_lines" ]; then
+        echo "$warn_lines" | sed 's/^/         └─  /'
+    fi
+    return $rc
+}
+
+db_defense_check_all() {
+    info "全量 Schema 防御自检：遍历 svc/*（无需 DB / 无需前台启动）"
+    echo "===================================================================="
+    local total=0 pass=0 warn=0 fail=0
+    # 第1批（已落地，P0）
+    for svc in gis ehs portal finance; do
+        total=$((total + 1))
+        if db_defense_check "$svc"; then pass=$((pass + 1))
+        else
+            local exit_code=$?
+            local rc=$exit_code
+            case "$rc" in
+                1) warn=$((warn + 1)) ;;
+                *) fail=$((fail + 1)) ;;
+            esac
+        fi
+        echo "--------------------------------------------------------------------"
+    done
+    echo
+    info "第1批（核心4服务）汇总：通过 $pass / 警告 $warn / 失败 $fail （共 ${total} 服务）"
+    echo
+    # 第2批（高频业务10服务 — V69.3 shared-db 抽象，已落地）
+    local b2_total=0 b2_pass=0 b2_warn=0 b2_fail=0
+    for svc in erp hrm crm pm scm wms srm pdm mes qms; do
+        b2_total=$((b2_total + 1)); total=$((total + 1))
+        if db_defense_check "$svc"; then pass=$((pass + 1)); b2_pass=$((b2_pass + 1))
+        else
+            local exit_code=$?
+            local rc=$exit_code
+            case "$rc" in
+                1) warn=$((warn + 1)); b2_warn=$((b2_warn + 1)) ;;
+                *) fail=$((fail + 1)); b2_fail=$((b2_fail + 1)) ;;
+            esac
+        fi
+        echo "--------------------------------------------------------------------"
+    done
+    echo
+    info "第2批（高频业务10服务）汇总：通过 $b2_pass / 警告 $b2_warn / 失败 $b2_fail （共 ${b2_total} 服务）"
+    echo
+    # 第3批（业务7服务 — V69.3 shared-db 抽象，已落地）
+    local batch3="ai billing rd ticket feedback plugin-registry mobile"
+    local b3_total=0 b3_pass=0 b3_warn=0 b3_fail=0
+    for svc in $batch3; do
+        b3_total=$((b3_total + 1)); total=$((total + 1))
+        if db_defense_check "$svc"; then pass=$((pass + 1)); b3_pass=$((b3_pass + 1))
+        else
+            local exit_code=$?
+            local rc=$exit_code
+            case "$rc" in
+                1) warn=$((warn + 1)); b3_warn=$((b3_warn + 1)) ;;
+                *) fail=$((fail + 1)); b3_fail=$((b3_fail + 1)) ;;
+            esac
+        fi
+        echo "--------------------------------------------------------------------"
+    done
+    echo
+    info "第3批（业务7服务 — V69.3 shared-db 抽象）汇总：通过 $b3_pass / 警告 $b3_warn / 失败 $b3_fail （共 ${b3_total} 服务）"
+    echo
+    # 第4批（平台5服务 — V69.3 shared-db 抽象，已落地）
+    local batch4="unified-core integration master-data communication analytics"
+    local b4_total=0 b4_pass=0 b4_warn=0 b4_fail=0
+    for svc in $batch4; do
+        b4_total=$((b4_total + 1)); total=$((total + 1))
+        if db_defense_check "$svc"; then pass=$((pass + 1)); b4_pass=$((b4_pass + 1))
+        else
+            local exit_code=$?
+            local rc=$exit_code
+            case "$rc" in
+                1) warn=$((warn + 1)); b4_warn=$((b4_warn + 1)) ;;
+                *) fail=$((fail + 1)); b4_fail=$((b4_fail + 1)) ;;
+            esac
+        fi
+        echo "--------------------------------------------------------------------"
+    done
+    echo
+    info "第4批（平台5服务 — V69.3 shared-db 抽象）汇总：通过 $b4_pass / 警告 $b4_warn / 失败 $b4_fail （共 ${b4_total} 服务）"
+    echo
+    # 骨架服务（无 DB 表，跳过）— lowcode / monitor / search
+    info "骨架服务（无 DB 表，已排除）：lowcode monitor search"
+    echo "===================================================================="
+    info "全量汇总（共 ${total} 服务）：通过 $pass / 警告 $warn / 失败 $fail"
+    echo "Exit codes: 0=全通过  1=有警告(缺列)  2=有错误(build/启动)"
+    local overall=0
+    [ $warn -gt 0 ] && overall=1
+    [ $fail -gt 0 ] && overall=2
+    return $overall
+}
+
 # 备份数据库
 db_backup() {
     local backup_dir="$PROJECT_ROOT/backups"
@@ -1933,6 +2167,13 @@ WebSocket:
   topems run                  一键运行（数据库+所有服务）
   topems db status            查看数据库状态
   topems db backup            备份数据库
+  topems db defense-check <svc>   单服务 Schema 防御自检（build+启动10s+grep自检日志）
+                                        染色输出 ✓/⚠/✗；exit 0/1/2
+  topems db defense-check-all       全量 Schema 防御自检（4 批共 26 服务）
+                                        第1批 核心4: gis ehs portal finance
+                                        第2批 业务10: erp hrm crm pm scm wms srm pdm mes qms
+                                        第3批 业务7: ai billing rd ticket feedback plugin-registry mobile
+                                        第4批 平台5: unified-core integration master-data communication analytics
   topems dev                  启动开发环境
   topems reset-password       重置 admin 密码为 admin123
   topems reset-password admin newpass123  重置 admin 密码为 newpass123
@@ -2078,9 +2319,15 @@ case "${1:-help}" in
             reset)
                 db_reset
                 ;;
+            defense-check)
+                db_defense_check "$3"
+                ;;
+            defense-check-all)
+                db_defense_check_all
+                ;;
             *)
                 error "未知数据库命令: $2"
-                echo "可用命令: start, stop, status, migrate, backup, restore, reset"
+                echo "可用命令: start, stop, status, migrate, backup, restore, reset, defense-check, defense-check-all"
                 exit 1
                 ;;
         esac
