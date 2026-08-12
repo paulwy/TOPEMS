@@ -166,6 +166,7 @@ async fn health() -> ServiceHealth {
     build_health_response("topems-integration", true)
 }
 
+#[allow(dead_code)]
 async fn check_service_health(url: &str) -> bool {
     let client = reqwest::Client::new();
     match client

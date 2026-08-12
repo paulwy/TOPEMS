@@ -840,6 +840,7 @@ jobs:
       - design-system-check
       - frontend-audit
       - security-scan
+      - schema-defense-gate
     if: always()
     steps:
       - name: Check all jobs passed or skipped
@@ -851,6 +852,7 @@ jobs:
           echo "| Rust Lint | ${{ needs.rust-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Tests | ${{ needs.rust-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Security Audit | ${{ needs.rust-audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Schema Defense Gate（26 services · strict） | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Lint | ${{ needs.frontend-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Type Check | ${{ needs.frontend-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Tests (9 shards) | ${{ needs.frontend-test.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -875,7 +877,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.security-scan.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.security-scan.result }}"
 
           FAILED=false
           for result in $RESULTS; do
@@ -891,3 +893,202 @@ jobs:
           else
             echo "✅ **All quality checks passed (or skipped due to path filter).**" >> $GITHUB_STEP_SUMMARY
           fi
+
+  # ==========================================================================
+  # Schema Defense Gate（V69.4 · 四批 26 服务全覆盖 · 严格模式）
+  #
+  # 作用：26 服务（4 批全覆盖）启动后跑
+  #       ./scripts/topems.sh db defense-check-all
+  #       自动解析两阶段自检日志 + 缺列数；任何 1 列缺失 / 1 服务 build 失败
+  #       → 直接标红 FAIL，并阻断合并。
+  #
+  # 退出码与门控行为（SCHEMA_DEFENSE_VERIFY_STRICT=true）：
+  #   0 → ✅ 全通过（0 WARN / 0 ERROR）→ 放行
+  #   1 → ⚠️ 有警告（存在缺列或 defense=N/A 服务）→ ❌ 阻断
+  #   2 → ❌ 有错误（cargo build 失败 / 服务启动失败 / DB 连不上）→ ❌ 阻断
+  #
+  # 本地复现：
+  #   source .env && cargo build --offline \
+  #       -p topems-gis -p topems-ehs -p topems-portal -p topems-finance \
+  #       -p topems-erp -p topems-hrm -p topems-crm -p topems-pm \
+  #       -p topems-scm -p topems-wms -p topems-srm -p topems-pdm \
+  #       -p topems-mes -p topems-qms -p topems-ai -p topems-billing \
+  #       -p topems-rd -p topems-ticket -p topems-feedback \
+  #       -p topems-plugin-registry -p topems-mobile \
+  #       -p topems-unified-core -p topems-integration -p topems-master-data \
+  #       -p topems-communication -p topems-analytics
+  #   SCHEMA_DEFENSE_VERIFY_STRICT=true bash scripts/topems.sh db defense-check-all
+  #
+  # 依赖：Postgres 16 services 声明 + Rust nightly-2026-07-01 + sqlx
+  #       单服务二进制编译 + 启动 + 自检合计 ≤ 2 min，26 服务整体 ≤ 90 min（含缓存命中）。
+  # ==========================================================================
+  schema-defense-gate:
+    name: Schema Defense Gate（26 services · strict mode）
+    needs: [changes, rust-lint]
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      SCHEMA_DEFENSE_VERIFY_STRICT: "true"
+      SQLX_OFFLINE: "false"
+      DATABASE_URL: "postgresql://topems_test:topems_test_secret@localhost:5432/topems_defense"
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: topems_test
+          POSTGRES_PASSWORD: topems_test_secret
+          POSTGRES_DB: topems_defense
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U topems_test -d topems_defense"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-01
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Cache Rust deps
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "rust-schema-defense-nightly-2026-07-01"
+
+      - name: Install pg extensions + create schemas（4 批 19 schema + public 默认）
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          export PGPASSWORD=topems_test_secret
+          for ext in uuid-ossp pg_trgm vector; do
+            psql -h localhost -U topems_test -d topems_defense \
+              -c "CREATE EXTENSION IF NOT EXISTS \"$ext\";"
+          done
+          # 19 个非 public schema（billing/ticket/feedback/plugin-registry/unified-core/master-data/communication 共用 public）
+          for schema in \
+            gis ehs portal finance \
+            erp hrm crm pm scm wms srm pdm mes qms \
+            ai mobile integration \
+            bi rs; do
+            psql -h localhost -U topems_test -d topems_defense \
+              -c "CREATE SCHEMA IF NOT EXISTS $schema;"
+          done
+
+      - name: Prebuild 26 binaries（避免 defense-check-all 内逐个编译超时）
+        run: |
+          cargo build --offline \
+            -p topems-gis \
+            -p topems-ehs \
+            -p topems-portal \
+            -p topems-finance \
+            -p topems-erp \
+            -p topems-hrm \
+            -p topems-crm \
+            -p topems-pm \
+            -p topems-scm \
+            -p topems-wms \
+            -p topems-srm \
+            -p topems-pdm \
+            -p topems-mes \
+            -p topems-qms \
+            -p topems-ai \
+            -p topems-billing \
+            -p topems-rd \
+            -p topems-ticket \
+            -p topems-feedback \
+            -p topems-plugin-registry \
+            -p topems-mobile \
+            -p topems-unified-core \
+            -p topems-integration \
+            -p topems-master-data \
+            -p topems-communication \
+            -p topems-analytics
+
+      - name: Run schema defense（26 services · strict，V69.3 + V69.4 四批全覆盖）
+        id: defense
+        run: |
+          set +e
+          bash scripts/topems.sh db defense-check-all | tee /tmp/defense-all.log
+          RC=${PIPESTATUS[0]}
+          set -e
+
+          # 从日志中提取四批汇总行 + 全量汇总行写进 Step Summary
+          B1=$(grep -E "第1批.*汇总：通过" /tmp/defense-all.log 2>/dev/null || echo "")
+          B2=$(grep -E "第2批.*汇总：通过" /tmp/defense-all.log 2>/dev/null || echo "")
+          B3=$(grep -E "第3批.*汇总：通过" /tmp/defense-all.log 2>/dev/null || echo "")
+          B4=$(grep -E "第4批.*汇总：通过" /tmp/defense-all.log 2>/dev/null || echo "")
+          TOTAL=$(grep -E "全量汇总.*共 2[0-9] 服务" /tmp/defense-all.log 2>/dev/null || echo "")
+
+          extract_counts() {
+              local line="$1"
+              echo "$line" | grep -oE "通过 [0-9]+" | grep -oE "[0-9]+" || echo 0
+          }
+          PASS_COUNT=$(extract_counts "$TOTAL")
+          WARN_COUNT=$(echo "$TOTAL" | grep -oE "警告 [0-9]+" | grep -oE "[0-9]+" || echo 0)
+          FAIL_COUNT=$(echo "$TOTAL" | grep -oE "失败 [0-9]+" | grep -oE "[0-9]+" || echo 0)
+
+          {
+            echo "## Schema Defense Gate（26 services · strict）"
+            echo ""
+            echo "| 批次 | 通过 | 警告 | 失败 | 详情 |"
+            echo "|------|------|------|------|------|"
+            for batch_line in "$B1" "$B2" "$B3" "$B4"; do
+              [ -z "$batch_line" ] && continue
+              bp=$(echo "$batch_line" | grep -oE "通过 [0-9]+" | grep -oE "[0-9]+" || echo 0)
+              bw=$(echo "$batch_line" | grep -oE "警告 [0-9]+" | grep -oE "[0-9]+" || echo 0)
+              bf=$(echo "$batch_line" | grep -oE "失败 [0-9]+" | grep -oE "[0-9]+" || echo 0)
+              bname=$(echo "$batch_line" | sed -E 's/.*(第[1-4]批[^（]*).*/\1/' || echo "-")
+              echo "| $bname | $bp | $bw | $bf | $batch_line |"
+            done
+            echo ""
+            echo "| 服务 | 状态 | 详情 |"
+            echo "|------|------|------|"
+            # 解析每个服务的 PASS/WARN/FAIL 染色行，去掉 ANSI 颜色码后转 Markdown
+            grep -E "\[✓ PASS\]|\[⚠ WARN\]|\[✗ FAIL\]" /tmp/defense-all.log 2>/dev/null \
+              | sed -E 's/\x1B\[[0-9;]*m//g' \
+              | sed -E 's/.*\[✓ PASS\] ([^ ]+)  —  (.*)/| \1 | ✅ PASS | \2 |/' \
+              | sed -E 's/.*\[⚠ WARN\] ([^ ]+)  —  (.*)/| \1 | ⚠️ WARN | \2 |/' \
+              | sed -E 's/.*\[✗ FAIL\] ([^ ]+)  —  (.*)/| \1 | ❌ FAIL | \2 |/'
+            echo ""
+            echo "### 汇总（全量 26 服务）"
+            echo ""
+            echo "| 指标 | 值 |"
+            echo "|------|----|"
+            echo "| 通过 | $PASS_COUNT |"
+            echo "| 警告 | $WARN_COUNT |"
+            echo "| 失败 | $FAIL_COUNT |"
+            echo "| 退出码 | $RC |"
+            echo ""
+            if [ -n "$TOTAL" ]; then
+              echo "> **$TOTAL**"
+              echo ""
+            fi
+            if [ "$RC" -ne 0 ]; then
+              echo "> 📘 规范文档: docs/development/backend/database-development.md"
+              echo "> 📋 本地复现: \`SCHEMA_DEFENSE_VERIFY_STRICT=true bash scripts/topems.sh db defense-check-all\`"
+            fi
+          } >> $GITHUB_STEP_SUMMARY
+
+          case "$RC" in
+            0)
+              echo "✅ Schema Defense: 26 services ALL PASSED ($PASS_COUNT 通过 / $WARN_COUNT 警告 / $FAIL_COUNT 失败)"
+              exit 0
+              ;;
+            1)
+              echo "::warning title=Schema Defense::有警告（$WARN_COUNT 服务缺列或尚未接入 TABLE_DEFS），严格模式下阻断合并。本地复现见 Step Summary 命令。"
+              echo "❌ Schema Defense: 有警告 $WARN_COUNT · strict 模式阻断"
+              exit 1
+              ;;
+            *)
+              echo "::error title=Schema Defense::有错误（$FAIL_COUNT 服务 build/启动失败）。请修复后再提交。"
+              echo "❌ Schema Defense: 有错误 $FAIL_COUNT · strict 模式阻断 (exit=$RC)"
+              exit 2
+              ;;
+          esac

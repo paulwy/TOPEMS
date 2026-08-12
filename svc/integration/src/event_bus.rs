@@ -335,6 +335,7 @@ impl ConversionEventHandler {
 // ==================== Event Webhook ====================
 
 /// Webhook 发送器
+#[allow(dead_code)]
 pub struct WebhookSender {
     client: reqwest::Client,
 }

@@ -9,7 +9,7 @@ use sqlx::Row;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::models::PurchaseOrder;
+use crate::models::purchase_order::PurchaseOrder;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize, Serialize)]

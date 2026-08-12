@@ -323,3 +323,115 @@ def db_drop():
         console.print(f"[green]✓ 数据库 {cfg['database']} 已删除[/green]")
     else:
         console.print(f"[red]错误: {stderr}[/red]")
+
+
+# ==============================================================================
+# Schema 防御自检（V69.2）
+# ==============================================================================
+
+@db.group(name="schema-defense")
+def schema_defense():
+    """Schema 防御体系：增量迁移 + 一致性自检（对应 docs/development/backend/database-development.md）"""
+    pass
+
+
+# 26 服务覆盖率追踪表（与 database-development.md 附录A保持一致，
+# 真实状态请以 `schema-defense audit` 实际跑取为准）
+_COVERAGE = [
+    # (批次, 服务名, 状态emoji, 说明)
+    # ---------- 第 1 批：核心 4 服务（V69.2 首发） ----------
+    ("第1批·核心4", "gis",              "✅", "V69.2 首发（18表）— schema=gis"),
+    ("第1批·核心4", "ehs",              "✅", "V69.2 首发（43表，内联）— schema=ehs"),
+    ("第1批·核心4", "portal",           "✅", "V69.2 首发（115表 20文件）— schema=portal"),
+    ("第1批·核心4", "finance",          "✅", "V69.2 首发（66表 10文件）— schema=finance"),
+    # ---------- 第 2 批：高频业务 10 服务（V69.3 落地） ----------
+    ("第2批·业务10", "erp",              "✅", "V69.3 落地（30表/464列）— schema=erp"),
+    ("第2批·业务10", "hrm",              "✅", "V69.3 落地（17表/301列）— schema=hrm"),
+    ("第2批·业务10", "crm",              "✅", "V69.3 落地（10表/188列）— schema=crm"),
+    ("第2批·业务10", "pm",               "✅", "V69.3 落地（17表/220列）— schema=pm"),
+    ("第2批·业务10", "scm",              "✅", "V69.3 落地（12表/224列）— schema=scm"),
+    ("第2批·业务10", "wms",              "✅", "V69.3 落地（29表/864列）— schema=wms"),
+    ("第2批·业务10", "srm",              "✅", "V69.3 落地（8表/114列）— schema=srm"),
+    ("第2批·业务10", "pdm",              "✅", "V69.3 落地（18表/213列）— schema=pdm"),
+    ("第2批·业务10", "mes",              "✅", "V69.3 落地（10表/314列）— schema=mes"),
+    ("第2批·业务10", "qms",              "✅", "V69.3 落地（33表/564列）— schema=qms"),
+    # ---------- 第 3 批：业务 7 服务（V69.3 落地） ----------
+    ("第3批·业务7", "ai",               "✅", "V69.3 落地（4表/54列）— schema=ai"),
+    ("第3批·业务7", "billing",          "✅", "V69.3 落地（4表/53列）— schema=public"),
+    ("第3批·业务7", "rd",               "✅", "V69.3 落地（4表/64列）— schema=rs"),
+    ("第3批·业务7", "ticket",           "✅", "V69.3 落地（5表/59列）— schema=public"),
+    ("第3批·业务7", "feedback",         "✅", "V69.3 落地（1表/13列）— schema=public"),
+    ("第3批·业务7", "plugin-registry",  "✅", "V69.3 落地（8表/89列）— schema=public"),
+    ("第3批·业务7", "mobile",           "✅", "V69.3 落地（10表/114列）— schema=mobile"),
+    # ---------- 第 4 批：平台 5 服务（V69.4 修复后落地） ----------
+    ("第4批·平台5", "unified-core",     "✅", "V69.4 修复补齐（30表/290列，含复合PK）— schema=public"),
+    ("第4批·平台5", "integration",      "✅", "V69.4 重写TABLE_DEFS（9表/132列）— schema=integration"),
+    ("第4批·平台5", "master-data",      "✅", "V69.3 落地（4表/32列）— schema=public"),
+    ("第4批·平台5", "communication",    "✅", "V69.4 补齐deleted_at（9表/96列，含复合PK）— schema=public"),
+    ("第4批·平台5", "analytics",        "✅", "V69.4 重写TABLE_DEFS（16表/194列）— schema=bi"),
+    # ---------- 骨架服务（无 DB 表，已排除防御检查） ----------
+    ("骨架·排除", "lowcode",          "🚫", "无DB表，已排除 — 低代码平台前端为主"),
+    ("骨架·排除", "monitor",          "🚫", "无DB表，已排除 — 运行时监控组件"),
+    ("骨架·排除", "search",           "🚫", "无DB表，已排除 — 搜索引擎适配层"),
+]
+
+
+@schema_defense.command(name="status")
+def schema_defense_status():
+    """打印 Schema 防御覆盖率追踪表（26 服务 + 3 骨架）"""
+    console.print("[bold]🛡️  Schema 防御覆盖率追踪表（V69.4，静态快照）[/bold]")
+    console.print("[dim]真实合规性请运行：[/dim]schema-defense audit all")
+    console.print()
+
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("批次", style="cyan", no_wrap=True)
+    table.add_column("服务", style="bold yellow")
+    table.add_column("状态", justify="center")
+    table.add_column("说明")
+
+    for row in _COVERAGE:
+        table.add_row(*row)
+
+    console.print(table)
+
+    # 底部汇总：按防御服务（排除骨架）统计
+    defense_rows = [r for r in _COVERAGE if r[2] != "🚫"]
+    skeleton_rows = [r for r in _COVERAGE if r[2] == "🚫"]
+    done = sum(1 for r in defense_rows if r[2] == "✅")
+    total = len(defense_rows)
+    pct = int(done / total * 100) if total > 0 else 0
+    console.print()
+    console.print(
+        f"[bold]合计（防御服务）：[/bold] 已防御 [green]{done}[/green]/[yellow]{total}[/yellow] 服务 "
+        f"≈ [bold green]{pct}%[/bold green]  |  骨架排除 [dim]{len(skeleton_rows)} 服务（lowcode/monitor/search）[/dim]"
+    )
+    if done == total and total == 26:
+        console.print("[bold green]🎯 26/26 = 100% 全量覆盖目标已达成（V69.3 + V69.4）[/bold green]")
+    console.print(
+        "[dim]规范文档: docs/development/backend/database-development.md[/dim]"
+    )
+
+
+@schema_defense.command(name="audit")
+@click.argument("target", required=False, default="all")
+def schema_defense_audit(target: str):
+    """实际跑 defense-check：<service> 单服务 / all（默认）全量 / core4（gis+ehs+portal+finance）"""
+    project_root = Path(__file__).parent.parent.parent.parent.parent
+    topems_sh = project_root / "scripts" / "topems.sh"
+    if not topems_sh.exists():
+        console.print(f"[red]✗ 找不到脚本: {topems_sh}[/red]")
+        return
+
+    if target in ("all", "defense-check-all"):
+        cmd = [str(topems_sh), "db", "defense-check-all"]
+    elif target == "core4":
+        cmd = [str(topems_sh), "db", "defense-check-all"]
+        console.print("[dim]core4 快捷方式：当前 defense-check-all 已覆盖 core4~core4+4 批共 26 服务，实际执行全量检查。[/dim]")
+    else:
+        cmd = [str(topems_sh), "db", "defense-check", target]
+
+    console.print(f"[bold]执行: {' '.join(cmd)}[/bold]")
+    console.print()
+
+    result = subprocess.run(cmd, cwd=str(project_root))
+    raise SystemExit(result.returncode)
