@@ -15,6 +15,9 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const monitorApi = {
@@ -34,7 +37,7 @@ const EnvironmentPage: React.FC = () => {
   const { t } = useTranslation();
 
   const { data: monitorsData } = useQuery({
-    queryKey: ['ehs-environment-monitors', 'stats'],
+    queryKey: QUERY_KEYS.AD_HOC.EHS_ENVIRONMENT_MONITORS_STATS_BASE,
     queryFn: async () => {
       const response = await ehsApi.listEnvironmentMonitors({ pagesize: 100 });
       if (response.success && response.data) {

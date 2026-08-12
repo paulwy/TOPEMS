@@ -11,6 +11,8 @@ import { useNetworkStatus } from './useNetworkStatus';
 import { saveCacheEntry, getCacheEntry } from '@/services/offlineStorage';
 import type { ServiceName } from '@/lib/apiClient';
 
+import { CACHE_DURATIONS } from '@/lib/reactQuery';
+
 interface OfflineConfig {
   service?: ServiceName;
   endpoint?: string;
@@ -62,7 +64,8 @@ export function useOfflineQuery<TQueryFnData = unknown, TError = unknown, TData 
   return useQuery({
     ...queryOptions,
     queryFn: enhancedQueryFn,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 }
 
 export function useOfflineMutation<TData = unknown, TError = unknown, TVariables = void>(

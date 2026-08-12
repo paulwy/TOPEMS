@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 const SrmDashboardPage: React.FC = () => {
   const { t } = useTranslation();
-  const { data: statistics, isLoading: loading } = useQuery({
+  const { data: statistics, isPending: loading} = useQuery({
     queryKey: QUERY_KEYS.SRM.STATISTICS,
     queryFn: async () => {
       const response = await srmApi.getDetailedStatistics();

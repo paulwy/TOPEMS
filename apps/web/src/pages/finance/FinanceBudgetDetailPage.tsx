@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
@@ -140,7 +140,8 @@ const FinanceBudgetDetailPage: React.FC = () => {
         updatedAt: budgetData.updated_at,
       };
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const budget = budgetQuery.data ?? null;
   const loading = budgetQuery.isLoading;

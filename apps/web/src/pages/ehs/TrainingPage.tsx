@@ -15,7 +15,7 @@ import type {
   CreateTrainingRecordRequest,
   CreateTrainingCertificateRequest,
 } from '@/api/ehs';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
@@ -89,7 +89,8 @@ const TrainingPage: React.FC = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const records = (recordsData as TrainingRecord[]) || [];
 
   const { data: certificatesData } = useQuery({
@@ -102,7 +103,8 @@ const TrainingPage: React.FC = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const certificates = (certificatesData as TrainingCertificate[]) || [];
 
   const statsContent = (_rows: any[], total: number) => (

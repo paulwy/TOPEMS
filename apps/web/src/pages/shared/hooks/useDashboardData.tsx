@@ -347,7 +347,10 @@ export const useDashboardData = () => {
         await completeTodoGql(id);
         queryClient.invalidateQueries({
           queryKey: [...QUERY_KEYS.DASHBOARD.TODOS, 'bff-graphql'],
-        });
+        
+  exact: false,
+  refetchType: 'active',
+});
       } catch (err) {
         apiLogger.error('BFF Mutation complete todo failed:', err);
       }

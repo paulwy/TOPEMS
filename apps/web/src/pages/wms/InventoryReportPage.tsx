@@ -12,12 +12,15 @@ import { useTranslation } from 'react-i18next';
 
 import InventoryReportFilters, { TabPanel } from './components/InventoryReportFilters';
 import InventoryReportSummary from './components/InventoryReportSummary';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 import {
   InventoryReportABCOverview,
   InventoryReportTurnoverSummary,
   InventoryReportValueDistribution,
 } from './components/InventoryReportChart';
 import {
+
   InventoryReportABCTable,
   InventoryReportTurnoverTable,
   InventoryReportValueByWarehouseTable,
@@ -32,7 +35,7 @@ const InventoryReportPage: React.FC = () => {
   const [warehouseFilter, setWarehouseFilter] = useState<string>('');
 
   const warehousesQuery = useQuery({
-    queryKey: ['wms-warehouses'],
+    queryKey: QUERY_KEYS.AD_HOC.WMS_WAREHOUSES_BASE,
     queryFn: async () => {
       const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
       if (response.success && response.data) {
@@ -51,7 +54,7 @@ const InventoryReportPage: React.FC = () => {
   }, [warehousesQuery.isError, warehousesQuery.error]);
 
   const statisticsQuery = useQuery({
-    queryKey: ['wms-inventory-statistics', warehouseFilter],
+    queryKey: [...QUERY_KEYS.AD_HOC.WMS_INVENTORY_STATISTICS_BASE, warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
@@ -79,7 +82,7 @@ const InventoryReportPage: React.FC = () => {
   }, [statisticsQuery.isError, statisticsQuery.error, addNotification]);
 
   const abcAnalysisQuery = useQuery({
-    queryKey: ['wms-abc-analysis', warehouseFilter],
+    queryKey: [...QUERY_KEYS.AD_HOC.WMS_ABC_ANALYSIS_BASE, warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
@@ -113,7 +116,7 @@ const InventoryReportPage: React.FC = () => {
   }, [abcAnalysisQuery.isError, abcAnalysisQuery.error, addNotification]);
 
   const turnoverQuery = useQuery({
-    queryKey: ['wms-turnover-analysis', warehouseFilter],
+    queryKey: [...QUERY_KEYS.AD_HOC.WMS_TURNOVER_ANALYSIS_BASE, warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         period_type: 'month',
@@ -145,7 +148,7 @@ const InventoryReportPage: React.FC = () => {
   }, [turnoverQuery.isError, turnoverQuery.error, addNotification]);
 
   const valueByWarehouseQuery = useQuery({
-    queryKey: ['wms-value-by-warehouse', warehouseFilter],
+    queryKey: [...QUERY_KEYS.AD_HOC.WMS_VALUE_BY_WAREHOUSE_BASE, warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.category_id = warehouseFilter;

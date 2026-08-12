@@ -23,6 +23,8 @@ import { ModeToggle } from '@/components/theme/ModeToggle';
 import { designTokens } from '@/theme/tokens';
 import { AUTH_PATHS } from '@/routes/auth';
 
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const requestResetSchema = z.object({
@@ -76,6 +78,12 @@ const ForgotPasswordPage: React.FC = () => {
       return await authApi.requestPasswordReset({ email: values.email });
     },
     onSuccess: (response) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       apiLogger.info('密码重置请求响应:', response);
       if (response.success) {
         setEmailSent(true);
@@ -110,6 +118,12 @@ const ForgotPasswordPage: React.FC = () => {
       });
     },
     onSuccess: (response) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       apiLogger.info('密码重置响应:', response);
       if (response.success) {
         setResetSuccess(true);

@@ -11,6 +11,8 @@ import { crmApi } from '@/api/crm';
 import type { BillingRecord } from '@/api/crm';
 import { billingSchema } from '@/schemas/crm';
 
+import { CACHE_DURATIONS, QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 interface BillingStats {
   total_amount: number;
   paid_amount: number;
@@ -95,8 +97,8 @@ const CRMBillingPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('overview');
 
-  const { data: stats, isLoading: statsLoading } = useQuery<BillingStats>({
-    queryKey: ['crm', 'billing', 'stats'],
+  const { data: stats, isPending: statsLoading} = useQuery<BillingStats>({
+    queryKey: QUERY_KEYS.AD_HOC.CRM_BILLING_STATS_BASE,
     queryFn: async () => {
       const response = await crmApi.billing.list();
       const items = response.data?.items || [];
@@ -117,14 +119,21 @@ const CRMBillingPage: React.FC = () => {
         overdue_count: items.filter((r) => r.status === 'overdue').length,
       };
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const markPaidMutation = useMutation({
     mutationFn: (id: string) => crmApi.billing.markPaid(id),
     onSuccess: () => {
       addNotification({ type: 'success', message: t('crm.billing.msg_marked_paid') });
-      queryClient.invalidateQueries({ queryKey: ['crm', 'billing'] });
-      queryClient.invalidateQueries({ queryKey: ['crm', 'billing', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_BILLING_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_BILLING_STATS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({ type: 'error', message: t('crm.billing.msg_action_fail') });
@@ -134,6 +143,12 @@ const CRMBillingPage: React.FC = () => {
   const sendNotificationMutation = useMutation({
     mutationFn: (id: string) => crmApi.billing.sendNotification(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.CRM_BILLING_STATS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({ type: 'success', message: t('crm.billing.msg_notification_sent') });
     },
     onError: () => {

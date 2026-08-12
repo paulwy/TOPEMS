@@ -8,6 +8,8 @@ import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface ConfirmDialogConfig {
   title: string;
   message: string;
@@ -48,7 +50,7 @@ export function useDictionaryManagement() {
   }, []);
 
   const dictTypesQuery = useQuery({
-    queryKey: ['system', 'dict-types', 'list'],
+    queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE,
     queryFn: async () => {
       const res = await dictTypeApi.list();
       if (res.success && res.data) {
@@ -58,7 +60,8 @@ export function useDictionaryManagement() {
         res.message || t('admin.dictionary_management.failed_to_load_dictionary_types')
       );
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.LONG,});
 
   const dictTypes = dictTypesQuery.data || [];
   const typesLoading = dictTypesQuery.isLoading;
@@ -77,7 +80,10 @@ export function useDictionaryManagement() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['system', 'dict-types', 'list'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         title: t('admin.dictionary_management.success'),
         message: t('admin.dictionary_management.dictionary_type_created_successfully'),
@@ -104,7 +110,10 @@ export function useDictionaryManagement() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['system', 'dict-types', 'list'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         title: t('admin.dictionary_management.success'),
         message: t('admin.dictionary_management.dictionary_type_updated_successfully'),
@@ -131,7 +140,10 @@ export function useDictionaryManagement() {
       return id;
     },
     onSuccess: (id) => {
-      queryClient.invalidateQueries({ queryKey: ['system', 'dict-types', 'list'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         title: t('admin.dictionary_management.success'),
         message: t('admin.dictionary_management.dictionary_type_deleted_successfully'),
@@ -174,7 +186,10 @@ export function useDictionaryManagement() {
       return toggleDictItemStatus(id, status);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dict-item', 'list'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         title: t('admin.dictionary_management.success'),
         message: t('admin.dictionary_management.status_toggled_successfully'),
@@ -201,7 +216,10 @@ export function useDictionaryManagement() {
 
   const handleExport = useCallback(() => {
     if (!selectedType) return;
-    queryClient.invalidateQueries({ queryKey: ['dict-item', 'list'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     addNotification({
       title: t('admin.dictionary_management.success'),
       message: t('admin.dictionary_management.dictionary_items_exported_successfully'),
@@ -245,7 +263,10 @@ export function useDictionaryManagement() {
               }),
         type: successCount === items.length ? 'success' : 'warning',
       });
-      queryClient.invalidateQueries({ queryKey: ['dict-item', 'list'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowImportModal(false);
       setImportFile(null);
     } catch (err: unknown) {

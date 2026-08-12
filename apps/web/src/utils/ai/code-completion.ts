@@ -1,3 +1,5 @@
+import { CACHE_DURATIONS, QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 /**
  * V47.0 前端 AI 增强 — 智能代码补全引擎
  *
@@ -176,10 +178,11 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
     description: '创建 TanStack Query 数据查询钩子',
     language: 'typescript',
     prefix: 'useQuery',
-    body: `const { data, isLoading, error } = useQuery({
-  queryKey: ['\${1:key}'],
+    body: `const { data, isPending, error } = useQuery({
+  queryKey: QUERY_KEYS.AD_HOC.1_KEY_BASE,
   queryFn: () => \${2:fetchFn}(),
-});`,
+
+        staleTime: CACHE_DURATIONS.MEDIUM,});`,
     placeholders: ['key', 'fetchFn'],
     category: 'react',
   },
@@ -192,6 +195,12 @@ export function \${1:ComponentName}({ \${2:children} }: \${1:ComponentName}Props
     body: `const { mutate, isPending } = useMutation({
   mutationFn: (\${1:vars}) => \${2:apiFn}(\${1:vars}),
   onSuccess: (data) => {
+    
+    queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.1_KEY_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
     \${0}
   },
 });`,

@@ -52,7 +52,7 @@ import {
 } from '@/components/templates';
 import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { monitorApi, type SystemMetrics, type DatabaseMetrics } from '@/api/monitor';
 
 const ct = designTokens.colors;
@@ -348,7 +348,8 @@ export const MonitorDashboardPage: React.FC = () => {
       const res = await monitorApi.getSystemMetrics();
       return res.data;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const serviceHealthQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.HEALTH, timeRange],
@@ -356,7 +357,8 @@ export const MonitorDashboardPage: React.FC = () => {
       const res = await monitorApi.getServiceHealth();
       return res.data ?? [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const alertsQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.ALERTS, timeRange],
@@ -364,7 +366,8 @@ export const MonitorDashboardPage: React.FC = () => {
       const res = await monitorApi.listAlerts({ pagesize: 10, status: 'active' });
       return res.data?.items ?? [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const apiPerformanceQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.PERFORMANCE, timeRange],
@@ -372,7 +375,8 @@ export const MonitorDashboardPage: React.FC = () => {
       const res = await monitorApi.getApiPerformance();
       return res.data ?? [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const dbMetricsQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.DATABASE, timeRange],
@@ -380,7 +384,8 @@ export const MonitorDashboardPage: React.FC = () => {
       const res = await monitorApi.getDatabaseMetrics();
       return res.data;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const loading =
     systemMetricsQuery.isFetching ||

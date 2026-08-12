@@ -13,6 +13,9 @@ import { designTokens } from '@/theme/tokens';
 import EmployeeDetailDialog from './components/EmployeeDetailDialog';
 import type { EmployeeListParams } from './types';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const HrmEmployeePage: React.FC = () => {
@@ -63,7 +66,10 @@ const HrmEmployeePage: React.FC = () => {
             message: '员工更新成功',
             type: 'success',
           });
-          queryClient.invalidateQueries({ queryKey: ['hrm', 'employees'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_EMPLOYEES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
           return res.data as Employee;
         }
         throw new Error(res.message || '更新失败');

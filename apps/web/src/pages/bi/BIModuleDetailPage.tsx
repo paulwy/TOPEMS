@@ -57,6 +57,9 @@ import { BI_PATHS } from '@/modules/bi/config';
 
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const moduleConfig: Record<string, { name: string; icon: string; color: string }> = {
@@ -289,7 +292,7 @@ const BIModuleDetailPage = () => {
   };
 
   const moduleDataQuery = useQuery<ModuleData>({
-    queryKey: ['bi-module-detail', moduleId || 'rs'],
+    queryKey: [...QUERY_KEYS.AD_HOC.BI_MODULE_DETAIL_BASE, moduleId || 'rs'],
     queryFn: async () => {
       const modId = moduleId || 'rs';
       const fallback = getFallbackData(modId);

@@ -185,7 +185,10 @@ const InspectionTaskPage: React.FC = () => {
       });
       if (response.success) {
         addNotification({ title: '成功', message: '检验步骤已完成', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASKS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASKS ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         addNotification({
           title: '错误',

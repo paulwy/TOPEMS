@@ -25,7 +25,7 @@ const AuditLogPage: React.FC = () => {
   const {
     filteredLogs,
     totalCount,
-    isLoading,
+    isPending,
     filters,
     updateFilter,
     clearFilters,
@@ -227,7 +227,7 @@ const AuditLogPage: React.FC = () => {
       <AuditLogTable
         logs={filteredLogs}
         totalCount={totalCount}
-        isLoading={isLoading}
+        isPending={isPending}
         pagination={pagination}
         setPagination={setPagination}
         onViewDetail={handleViewDetail}

@@ -68,7 +68,10 @@ const RsTestPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.TEST_CASES });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.TEST_CASES ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: '执行成功',

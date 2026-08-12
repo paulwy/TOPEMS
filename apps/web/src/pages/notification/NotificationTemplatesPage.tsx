@@ -34,6 +34,9 @@ import { apiLogger } from '@/utils/logger';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { ConfirmDialog } from '@topems/shared-components';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const NotificationTemplatesPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -145,7 +148,10 @@ const NotificationTemplatesPage: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: any) => createTemplate(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification-templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
@@ -223,7 +229,10 @@ const NotificationTemplatesPage: React.FC = () => {
         message: `模板「${deleteTarget.name}」已删除`,
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['notification-templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     } catch (_err: unknown) {
       const errorMsg = extractErrorMessage(_err, '删除失败');
       addNotification({ title: '失败', message: errorMsg, type: 'error' });

@@ -7,6 +7,9 @@ import { workflowApi } from '@/api/workflow';
 import { useNotificationStore, useAuthStore } from '../../../store';
 import { apiLogger } from '@/utils/logger';
 
+
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 interface ApprovalDetails {
   approval: Approval;
   records: ApprovalRecord[];
@@ -50,7 +53,7 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
   const [delegateReason, setDelegateReason] = useState('');
 
   const detailsQuery = useQuery<ApprovalDetails | null>({
-    queryKey: ['workflow-approval-details', id],
+    queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE, id],
     queryFn: async () => {
       if (!id) return null;
 
@@ -94,7 +97,10 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
   }, [detailsQuery.isError, detailsQuery.error, addNotification, t]);
 
   const invalidateApprovalQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ['workflow-approval-details', id] });
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE, id] ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   const processApprovalMutation = useMutation({
@@ -106,6 +112,12 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
         actor_name: user?.fullName || user?.username || 'Current User',
       }),
     onSuccess: (_data, variables) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateApprovalQueries();
       addNotification({
         title: t('common.success'),
@@ -141,6 +153,12 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
         delegate_to_name: params.delegateTo,
       }),
     onSuccess: (_data, variables) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateApprovalQueries();
       addNotification({
         title: t('common.success'),

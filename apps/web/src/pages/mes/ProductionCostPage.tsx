@@ -32,6 +32,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ProductionCostPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [periodType, setPeriodType] = useState<'month' | 'quarter' | 'year'>('month');
@@ -39,19 +41,22 @@ const ProductionCostPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const periodCostReport = useQuery({
-    queryKey: ['periodCostReport', periodType],
+    queryKey: [...QUERY_KEYS.AD_HOC.PERIODCOSTREPORT_BASE, periodType],
     queryFn: () => productionCostApi.getPeriodCostReport({ period_type: periodType }),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const costTrend = useQuery({
-    queryKey: ['costTrend'],
+    queryKey: QUERY_KEYS.AD_HOC.COSTTREND_BASE,
     queryFn: () => productionCostApi.getCostTrend({ period_type: 'month' }),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const costForecast = useQuery({
-    queryKey: ['costForecast'],
+    queryKey: QUERY_KEYS.AD_HOC.COSTFORECAST_BASE,
     queryFn: () => productionCostApi.getCostForecast({ months: 3 }),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const [workOrderCost, setWorkOrderCost] = useState<WorkOrderCostResult | null>(null);
   const [loadingWorkOrder, setLoadingWorkOrder] = useState(false);

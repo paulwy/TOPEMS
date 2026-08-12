@@ -15,7 +15,7 @@ import {
   type ProcessFlowStep,
   type CapacityAnalysis,
 } from '@/api/mes/processFlow';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 
@@ -48,7 +48,8 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const { data: capacityData } = useQuery({
     queryKey: [...QUERY_KEYS.MES.PROCESS_FLOWS, flowId, 'capacity'],
@@ -59,7 +60,8 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
       }
       return null;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const steps = (stepsData as ProcessFlowStep[]) || [];
   const capacity = capacityData as CapacityAnalysis | null;

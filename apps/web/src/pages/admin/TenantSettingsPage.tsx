@@ -44,7 +44,8 @@ import { PageContainer, Grid } from '@/components/common';
 import { tenantApi } from '@/api/tenant';
 import { logger } from '@/utils/logger';
 import type { Tenant, TenantUser, TenantRole } from '@/api/tenant/types';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 const roleLabels: Record<TenantRole, string> = {
   owner: '所有者',
@@ -57,7 +58,7 @@ const roleLabels: Record<TenantRole, string> = {
 const TenantSettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
-  const { data: tenant, isLoading: loading } = useQuery<Tenant | null>({
+  const { data: tenant, isPending: loading} = useQuery<Tenant | null>({
     queryKey: QUERY_KEYS.TENANT.CURRENT,
     queryFn: async () => {
       const contextRes = await tenantApi.getCurrentTenantContext();
@@ -70,7 +71,8 @@ const TenantSettingsPage: React.FC = () => {
       }
       return tenantRes.data;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.LONG,});
 
   const { data: members = [] } = useQuery<TenantUser[]>({
     queryKey: QUERY_KEYS.TENANT.USERS,
@@ -83,7 +85,8 @@ const TenantSettingsPage: React.FC = () => {
       return res.data.items;
     },
     enabled: !!tenant,
-  });
+  
+      staleTime: CACHE_DURATIONS.LONG,});
 
   const [activeSection, setActiveSection] = useState('general');
   const [saving, setSaving] = useState(false);
@@ -133,7 +136,10 @@ const TenantSettingsPage: React.FC = () => {
           },
         },
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.CURRENT });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.CURRENT ,
+  exact: false,
+  refetchType: 'active',
+});
     } catch (error) {
       logger.error('Failed to save settings:', error);
     } finally {
@@ -157,7 +163,10 @@ const TenantSettingsPage: React.FC = () => {
           },
         },
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.CURRENT });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.CURRENT ,
+  exact: false,
+  refetchType: 'active',
+});
     } catch (error) {
       logger.error('Failed to save security settings:', error);
     } finally {
@@ -172,7 +181,10 @@ const TenantSettingsPage: React.FC = () => {
       if (res.success) {
         setShowInviteDialog(false);
         setInviteForm({ email: '', role: 'member' });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.USERS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.USERS ,
+  exact: false,
+  refetchType: 'active',
+});
       }
     } catch (error) {
       logger.error('Failed to invite member:', error);
@@ -183,7 +195,10 @@ const TenantSettingsPage: React.FC = () => {
     if (!tenant) return;
     try {
       await tenantApi.removeMember(tenant.id, userId);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.USERS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.USERS ,
+  exact: false,
+  refetchType: 'active',
+});
     } catch (error) {
       logger.error('Failed to remove member:', error);
     }

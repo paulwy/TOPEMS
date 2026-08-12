@@ -6,6 +6,7 @@ import type { NotificationStats } from '@/api/notification';
 import { getMyNotificationStats, notificationServiceApi } from '@/api/notification';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { designTokens } from '@/theme/tokens';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
@@ -20,7 +21,7 @@ const NotificationStatsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [timeRange, setTimeRange] = useState('week');
 
-  const { data: stats, isLoading: statsLoading } = useQuery<NotificationStats>({
+  const { data: stats, isPending: statsLoading} = useQuery<NotificationStats>({
     queryKey: QUERY_KEYS.NOTIFICATION.STATS,
     queryFn: async () => {
       const res = await getMyNotificationStats();
@@ -60,8 +61,14 @@ const NotificationStatsPage: React.FC = () => {
   const loading = statsLoading;
 
   const loadData = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.STATS });
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.SERVICE_HEALTH });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.STATS ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.SERVICE_HEALTH ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   const getTypeStats = () => {

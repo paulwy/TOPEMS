@@ -44,7 +44,10 @@ export default function ProductPage() {
           data as Parameters<typeof pdmApi.createProduct>[0]
         );
         if (!response.success) throw new Error(response.message || '创建失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS ,
+  exact: false,
+  refetchType: 'active',
+});
         return (response.data ?? {}) as Product;
       },
       update: async (id, data) => {
@@ -53,13 +56,19 @@ export default function ProductPage() {
           data as Parameters<typeof pdmApi.updateProduct>[1]
         );
         if (!response.success) throw new Error(response.message || '更新失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS ,
+  exact: false,
+  refetchType: 'active',
+});
         return (response.data ?? {}) as Product;
       },
       delete: async (id) => {
         const response = await pdmApi.deleteProduct(id);
         if (!response.success) throw new Error(response.message || '删除失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS ,
+  exact: false,
+  refetchType: 'active',
+});
       },
     }),
     [queryClient]

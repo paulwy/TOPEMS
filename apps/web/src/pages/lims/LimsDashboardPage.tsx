@@ -7,12 +7,15 @@ import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import { useLimsDashboardSchema } from '@/schemas/lims';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const LimsDashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const schema = useLimsDashboardSchema();
 
-  const { isLoading: loading } = useQuery({
-    queryKey: ['lims-dashboard'],
+  const { isPending: loading} = useQuery({
+    queryKey: QUERY_KEYS.AD_HOC.LIMS_DASHBOARD_BASE,
     queryFn: async () => {
       await schema.loader?.();
       return window.__limsStats ?? null;

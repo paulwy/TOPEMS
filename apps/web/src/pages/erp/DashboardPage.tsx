@@ -22,6 +22,9 @@ import type { ErpDashboardStats } from '@/api/erp';
 import { ERP_PATHS } from '@/modules/erp/config';
 import { LazyChart } from '@/components/charts';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const iconMap: Record<string, React.ReactNode> = {
   TrendingUp: <TrendingUp size={24} />,
   FileText: <FileText size={24} />,
@@ -43,8 +46,8 @@ const getGreeting = (): string => {
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const { data: statsData, isLoading: loading } = useQuery<ErpDashboardStats | null>({
-    queryKey: ['erp-dashboard'],
+  const { data: statsData, isPending: loading} = useQuery<ErpDashboardStats | null>({
+    queryKey: QUERY_KEYS.AD_HOC.ERP_DASHBOARD_BASE,
     queryFn: async () => {
       const response = await erpApi.getDashboard();
       if (response.success && response.data) {

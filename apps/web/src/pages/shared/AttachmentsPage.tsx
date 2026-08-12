@@ -37,6 +37,8 @@ import { attachmentApi, type Attachment } from '@/api/shared';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ENTITY_TYPES = ['document', 'task', 'project', 'ticket', 'order'] as const;
 
 const formatFileSize = (bytes: number): string => {
@@ -64,8 +66,8 @@ const AttachmentsPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // 获取附件列表
-  const { data: attachments, isLoading } = useQuery({
-    queryKey: ['shared', 'attachments', entityType, entityId],
+  const { data: attachments, isPending} = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE, entityType, entityId],
     queryFn: async () => {
       const response = await attachmentApi.list({
         entity_type: entityType,
@@ -77,7 +79,8 @@ const AttachmentsPage: React.FC = () => {
       return [];
     },
     enabled: !!entityType && !!entityId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   // 上传附件
   const uploadMutation = useMutation({
@@ -85,8 +88,11 @@ const AttachmentsPage: React.FC = () => {
     onSuccess: () => {
       addNotification({ type: 'success', title: '已上传', message: '附件上传成功' });
       queryClient.invalidateQueries({
-        queryKey: ['shared', 'attachments', entityType, entityId],
-      });
+        queryKey: [...QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE, entityType, entityId],
+      
+  exact: false,
+  refetchType: 'active',
+});
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     },
@@ -102,8 +108,11 @@ const AttachmentsPage: React.FC = () => {
     onSuccess: () => {
       addNotification({ type: 'success', title: '已删除', message: '附件已删除' });
       queryClient.invalidateQueries({
-        queryKey: ['shared', 'attachments', entityType, entityId],
-      });
+        queryKey: [...QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE, entityType, entityId],
+      
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       apiLogger.error('删除附件失败:', error);
@@ -128,6 +137,14 @@ const AttachmentsPage: React.FC = () => {
       apiLogger.error('下载附件失败:', error);
       addNotification({ type: 'error', title: '操作失败', message: '附件下载失败' });
     },
+  
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
+      },
   });
 
   // 获取单个附件详情（用于覆盖率：使用 get 方法）
@@ -266,7 +283,7 @@ const AttachmentsPage: React.FC = () => {
           >
             附件列表
           </Typography>
-          {isLoading ? (
+          {isPending ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
               <CircularProgress />
             </Box>

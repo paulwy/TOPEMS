@@ -9,6 +9,9 @@ import {
 import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface NotificationSetting {
   key: string;
   label: string;
@@ -67,7 +70,7 @@ const NotificationSettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const settingsQuery = useQuery<NotificationSetting[]>({
-    queryKey: ['notification-settings'],
+    queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_SETTINGS_BASE,
     queryFn: async () => {
       const stored = localStorage.getItem('notification_settings');
       if (stored) {
@@ -93,7 +96,10 @@ const NotificationSettingsPage: React.FC = () => {
       return settings;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification-settings'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_SETTINGS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '成功', message: '通知设置保存成功', type: 'success' });
     },
     onError: (err: unknown) => {
@@ -117,7 +123,10 @@ const NotificationSettingsPage: React.FC = () => {
       return defaultNotificationSettings;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification-settings'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_SETTINGS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '已重置', message: '通知设置已恢复默认值', type: 'info' });
     },
     onError: (err: unknown) => {

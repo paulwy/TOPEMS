@@ -7,6 +7,9 @@ import { usePluginStore } from '@/store/pluginStore';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export type SortOption = 'popular' | 'rating' | 'newest' | 'price';
 export type ViewMode = 'grid' | 'list';
 
@@ -51,7 +54,7 @@ export const usePluginMarketplace = (): UsePluginMarketplaceReturn => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const pluginsQuery = useQuery({
-    queryKey: ['marketplace-plugins'],
+    queryKey: QUERY_KEYS.AD_HOC.MARKETPLACE_PLUGINS_BASE,
     queryFn: async () => {
       await fetchMarketplacePlugins();
       return marketplacePlugins;
@@ -61,7 +64,7 @@ export const usePluginMarketplace = (): UsePluginMarketplaceReturn => {
   });
 
   const healthQuery = useQuery({
-    queryKey: ['marketplace-health'],
+    queryKey: QUERY_KEYS.AD_HOC.MARKETPLACE_HEALTH_BASE,
     queryFn: async () => {
       await fetchHealthStatus();
       return healthStatus;

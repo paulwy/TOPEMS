@@ -15,7 +15,10 @@
  *     await supplierApi.update(id, data);
  *   },
  *   onSuccess: () => {
- *     queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+ *     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SUPPLIERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
  *   },
  * });
  *
@@ -43,6 +46,9 @@ import { useState, useCallback } from 'react';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
+
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 export type CrudFormMode = 'create' | 'view' | 'edit';
 

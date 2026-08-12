@@ -6,6 +6,9 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useCrudMutations } from '@/hooks';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export function useTemplateManagement() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -20,7 +23,7 @@ export function useTemplateManagement() {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
   const templatesQuery = useQuery({
-    queryKey: ['templates', searchQuery, selectedCategory],
+    queryKey: [...QUERY_KEYS.AD_HOC.TEMPLATES_BASE, searchQuery, selectedCategory],
     queryFn: async () => {
       const response = await templateApi.list({ search: searchQuery, category: selectedCategory });
       if (!response.success || !response.data) {
@@ -32,7 +35,7 @@ export function useTemplateManagement() {
   });
 
   const categoriesQuery = useQuery({
-    queryKey: ['template-categories'],
+    queryKey: QUERY_KEYS.AD_HOC.TEMPLATE_CATEGORIES_BASE,
     queryFn: async () => {
       const response = await templateApi.listCategories();
       if (!response.success || !response.data) {
@@ -95,7 +98,10 @@ export function useTemplateManagement() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: t('report.template_management_page.success_title'),
@@ -121,7 +127,10 @@ export function useTemplateManagement() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: t('report.template_management_page.success_title'),

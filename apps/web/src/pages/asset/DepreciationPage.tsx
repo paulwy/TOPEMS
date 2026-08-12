@@ -23,6 +23,9 @@ import { fixedAssetApi } from '@/api/erp';
 import type { FixedAsset } from '@/api/erp';
 import { apiLogger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const DepreciationPage: React.FC = () => {
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
@@ -51,7 +54,10 @@ const DepreciationPage: React.FC = () => {
             count: result.data.depreciated_count,
           }),
         });
-        queryClient.invalidateQueries({ queryKey: ['fixed-assets'] });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.FIXED_ASSETS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         setShowDepreciateDialog(false);
         setDepreciatePeriod('');
         setSelectedIds([]);

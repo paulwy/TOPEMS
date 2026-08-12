@@ -12,6 +12,7 @@ import { CRM_PATHS } from '@/modules/crm/config';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
@@ -40,7 +41,10 @@ const ContactDetailPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (contactId: string) => crmApi.contacts.delete(contactId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.CONTACTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.CONTACTS ,
+  exact: false,
+  refetchType: 'active',
+});
       navigate(CRM_PATHS.contacts);
     },
   });

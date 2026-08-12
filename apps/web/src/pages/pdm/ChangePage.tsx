@@ -12,6 +12,7 @@ import type { ChangeOrder, CreateChangeOrderRequest } from '@/api/pdm';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
@@ -85,7 +86,10 @@ export const ChangePage: React.FC = () => {
       pdmApi.updateChangeOrder(id, { status: 'approved' } as Partial<CreateChangeOrderRequest>),
     onSuccess: () => {
       addNotification({ title: '成功', message: '变更单已批准', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({ title: '错误', message: '批准失败', type: 'error' });
@@ -97,7 +101,10 @@ export const ChangePage: React.FC = () => {
       pdmApi.updateChangeOrder(id, { status: 'rejected' } as Partial<CreateChangeOrderRequest>),
     onSuccess: () => {
       addNotification({ title: '成功', message: '变更单已驳回', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({ title: '错误', message: '驳回失败', type: 'error' });

@@ -14,6 +14,8 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const baseAdapter = createCrudPageAdapter<Material, CreateMaterialRequest, UpdateMaterialRequest>({
   list: materialApi.listMaterials,
   create: materialApi.createMaterial,
@@ -44,9 +46,10 @@ const RsMaterialListPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const { data: materialsResp } = useQuery({
-    queryKey: ['rd', 'materials', 'stats'],
+    queryKey: QUERY_KEYS.AD_HOC.RD_MATERIALS_STATS_BASE,
     queryFn: async () => materialApi.listMaterials({ pagesize: 500 }),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const importMaterialMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -57,7 +60,10 @@ const RsMaterialListPage: React.FC = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['rd', 'materials'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.RD_MATERIALS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       const { success, failed } = data;
       if (failed === 0) {
         addNotification({

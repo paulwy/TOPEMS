@@ -7,7 +7,7 @@ import { equipmentOeeSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { OeeRecord, OeeStatistics } from '@/api/mes';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Gauge, Activity, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
@@ -46,7 +46,8 @@ const EquipmentOEEPage: React.FC = () => {
       }
       return null;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const renderDetailContent = (row: Record<string, unknown>) => {
     const record = row as unknown as OeeRecord;

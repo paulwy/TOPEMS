@@ -30,6 +30,8 @@ import { apiLogger } from '@/utils/logger';
 import { SCM_PATHS } from '@/modules/scm/config';
 import { designTokens } from '@/theme/tokens';
 
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter<MrpPlan, CreateMrpPlanRequest, UpdateMrpPlanRequest>(
@@ -50,11 +52,20 @@ const MrpPlanPage: React.FC = () => {
   const [calculationResult, setCalculationResult] = useState<MrpCalculationResult | null>(null);
   const [showResultDialog, setShowResultDialog] = useState(false);
 
-  const invalidatePlans = () => queryClient.invalidateQueries({ queryKey: [mrpPlanSchema.entity] });
+  const invalidatePlans = () => queryClient.invalidateQueries({ queryKey: [mrpPlanSchema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
 
   const calculateMutation = useMutation({
     mutationFn: (id: string) => scmApi.mrpPlans.calculate(id),
     onSuccess: (data) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SCM.OVERVIEW,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidatePlans();
       if (data.success && data.data) {
         setCalculationResult(data.data);

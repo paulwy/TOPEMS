@@ -11,6 +11,9 @@ import { StatsPageTemplate, type TableColumn } from '@/components/templates/Stat
 import { apiClient } from '@/api/client';
 import { PageContainer } from '@/components/common';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface RsReportData {
   projects: {
     total: number;
@@ -66,7 +69,7 @@ const defaultReportData: RsReportData = {
 
 const RsReportPage: React.FC = () => {
   const reportQuery = useQuery<RsReportData>({
-    queryKey: ['rd-report-summary'],
+    queryKey: QUERY_KEYS.AD_HOC.RD_REPORT_SUMMARY_BASE,
     queryFn: async () => {
       const response = await apiClient.rd.get<RsReportData>('/reports/summary');
       if (response.success && response.data) return response.data;

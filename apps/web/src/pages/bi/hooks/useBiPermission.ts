@@ -6,7 +6,10 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { logger } from '@/utils/logger';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 import {
+
   listRowLevelPermissions,
   createRowLevelPermission,
   updateRowLevelPermission,
@@ -84,7 +87,7 @@ export const useBiPermission = (): UseBiPermissionResult => {
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
   const rowPermissionsQuery = useQuery<RowLevelPermission[]>({
-    queryKey: ['bi-row-permissions'],
+    queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE,
     queryFn: async () => {
       const res = await listRowLevelPermissions();
       if (res.success && res.data) {
@@ -96,7 +99,7 @@ export const useBiPermission = (): UseBiPermissionResult => {
   });
 
   const dataPermissionsQuery = useQuery<DataPermissionRule[]>({
-    queryKey: ['bi-data-permissions'],
+    queryKey: QUERY_KEYS.AD_HOC.BI_DATA_PERMISSIONS_BASE,
     queryFn: async () => {
       const res = await listDataPermissions();
       if (res.success && res.data) {
@@ -134,7 +137,10 @@ export const useBiPermission = (): UseBiPermissionResult => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-row-permissions'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setDialogOpen(false);
     },
     onError: (error: unknown) => {
@@ -146,7 +152,10 @@ export const useBiPermission = (): UseBiPermissionResult => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteRowLevelPermission(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-row-permissions'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error('Failed to delete permission:', error);
@@ -157,7 +166,10 @@ export const useBiPermission = (): UseBiPermissionResult => {
     mutationFn: (item: RowLevelPermission) =>
       updateRowLevelPermission(item.id, { isEnabled: !item.isEnabled }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-row-permissions'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error('Failed to toggle permission:', error);

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Play, Square, Trash2, Download } from 'lucide-react';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
@@ -156,7 +156,10 @@ export function usePluginManagement(): UsePluginManagementReturn {
   const [uninstallTarget, setUninstallTarget] = useState<UninstallTarget | null>(null);
 
   const loadPlugins = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.PLUGINS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.PLUGINS ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient]);
 
   const apiAdapter: CrudApiAdapter = useMemo(
@@ -216,6 +219,12 @@ export function usePluginManagement(): UsePluginManagementReturn {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         title: t('admin.plugin_management.enabled_successfully'),
         message: t('admin.plugin_management_page.text_773966', { pluginCode }),
@@ -239,6 +248,12 @@ export function usePluginManagement(): UsePluginManagementReturn {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         title: t('admin.plugin_management.disabled_successfully'),
         message: t('admin.plugin_management_page.text_c0f589', { pluginCode }),
@@ -262,6 +277,12 @@ export function usePluginManagement(): UsePluginManagementReturn {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         title: t('admin.plugin_management.upgraded_successfully'),
         message: t('admin.plugin_management_page.text_b13651', { pluginCode }),
@@ -285,6 +306,12 @@ export function usePluginManagement(): UsePluginManagementReturn {
       return { pluginCode, tier };
     },
     onSuccess: ({ pluginCode, tier }) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         title: t('admin.plugin_management.operation_successful'),
         message:
@@ -315,7 +342,14 @@ export function usePluginManagement(): UsePluginManagementReturn {
       if (!success) throw new Error(t('admin.plugin_management.install_failed'));
       return pluginCode;
     },
-  });
+  
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+          exact: false,
+          refetchType: 'active',
+        });
+      },});
 
   const allMarketplacePlugins: MarketplacePlugin[] = useMemo(
     () =>

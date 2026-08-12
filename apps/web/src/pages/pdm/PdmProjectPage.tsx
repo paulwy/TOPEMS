@@ -38,6 +38,7 @@ import {
   type CreatePdmProjectRequest,
 } from '@/api/pdm/project';
 import { designTokens } from '@/theme/tokens';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
@@ -139,7 +140,10 @@ const PdmProjectPage: React.FC = () => {
       addNotification({ title: '成功', message: '成员移除成功', type: 'success' });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.PDM.PROJECT_MEMBERS(variables.projectId),
-      });
+      
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({ title: '错误', message: '移除成员失败', type: 'error' });
@@ -157,7 +161,10 @@ const PdmProjectPage: React.FC = () => {
       setMemberDialogOpen(false);
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.PDM.PROJECT_MEMBERS(selectedProjectId || ''),
-      });
+      
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({ title: '错误', message: '添加成员失败', type: 'error' });

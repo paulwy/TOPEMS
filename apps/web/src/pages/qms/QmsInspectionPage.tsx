@@ -116,7 +116,10 @@ const QmsInspectionPage: React.FC = () => {
     },
     onSuccess: () => {
       addNotification({ title: '成功', message: '检验分配成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowAssignModal(false);
     },
     onError: (err: unknown) => {
@@ -138,7 +141,10 @@ const QmsInspectionPage: React.FC = () => {
     },
     onSuccess: () => {
       addNotification({ title: '成功', message: '检验结果提交成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowSubmitModal(false);
     },
     onError: (err: unknown) => {
@@ -173,7 +179,10 @@ const QmsInspectionPage: React.FC = () => {
             ? '审核驳回'
             : '返工';
       addNotification({ title: '成功', message: `${actionText}成功`, type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowAuditModal(false);
     },
     onError: (err: unknown) => {

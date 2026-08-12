@@ -16,7 +16,8 @@ import type {
   ProjectBenefit,
 } from '@/api/pm';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 export const DEFAULT_STATS: PmStatistics = {
   total_projects: 0,
@@ -108,7 +109,8 @@ export const usePmReport = (): UsePmReportReturn => {
       }
       return DEFAULT_STATS;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const benefitsQuery = useQuery({
     queryKey: [
@@ -123,7 +125,8 @@ export const usePmReport = (): UsePmReportReturn => {
       }
       return [] as ProjectBenefit[];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const stats = statsQuery.data ?? DEFAULT_STATS;
   const benefits = benefitsQuery.data ?? [];
@@ -141,7 +144,8 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const contractStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_CONTRACTS, selectedPeriod],
@@ -153,7 +157,8 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const budgetStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_BUDGET, selectedPeriod],
@@ -165,7 +170,8 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const riskStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_RISKS, selectedPeriod],
@@ -177,7 +183,8 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const taskStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_TASKS, selectedPeriod],
@@ -189,7 +196,8 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const dashboardQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_DASHBOARD],
@@ -201,7 +209,8 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const projectStatistics = projectStatsQuery.data ?? null;
   const contractStatistics = contractStatsQuery.data ?? null;

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { z } from 'zod';
 import { User, Mail, MapPin, Briefcase } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
@@ -59,7 +59,8 @@ const HrmEmployeeEditPage: React.FC = () => {
       }
       return res.data;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const departmentsQuery = useQuery<Department[]>({
     queryKey: QUERY_KEYS.HRM.DEPARTMENTS,
@@ -70,7 +71,8 @@ const HrmEmployeeEditPage: React.FC = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const positionsQuery = useQuery<Position[]>({
     queryKey: QUERY_KEYS.HRM.POSITION,
@@ -81,7 +83,8 @@ const HrmEmployeeEditPage: React.FC = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const employee = employeeQuery.data ?? null;
   const departments = departmentsQuery.data || [];
@@ -101,9 +104,15 @@ const HrmEmployeeEditPage: React.FC = () => {
     },
     onSuccess: () => {
       success(t('hrm.hrm_employee_edit_page.update_1'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEES });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEES ,
+  exact: false,
+  refetchType: 'active',
+});
       if (id) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEE(id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEE(id) ,
+  exact: false,
+  refetchType: 'active',
+});
         navigate(HRM_PATHS.employeeDetail.replace(':id', id));
       }
     },

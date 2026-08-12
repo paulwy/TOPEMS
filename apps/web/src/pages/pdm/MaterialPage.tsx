@@ -63,7 +63,10 @@ export default function MaterialPage() {
           data as unknown as Parameters<typeof pdmApi.createMaterial>[0]
         );
         if (!response.success) throw new Error(response.message || '创建失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS ,
+  exact: false,
+  refetchType: 'active',
+});
         return (response.data ?? {}) as unknown as Record<string, unknown>;
       },
       update: async (id, data) => {
@@ -72,13 +75,19 @@ export default function MaterialPage() {
           data as unknown as Parameters<typeof pdmApi.updateMaterial>[1]
         );
         if (!response.success) throw new Error(response.message || '更新失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS ,
+  exact: false,
+  refetchType: 'active',
+});
         return (response.data ?? {}) as unknown as Record<string, unknown>;
       },
       delete: async (id) => {
         const response = await pdmApi.deleteMaterial(id);
         if (!response.success) throw new Error(response.message || '删除失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS ,
+  exact: false,
+  refetchType: 'active',
+});
       },
     }),
     [queryClient]

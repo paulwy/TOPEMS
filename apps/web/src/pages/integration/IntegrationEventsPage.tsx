@@ -131,7 +131,10 @@ export const IntegrationEventsPage: React.FC = () => {
           message: '重试任务已提交',
           type: 'success',
         });
-        void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY });
+        void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY ,
+  exact: false,
+  refetchType: 'active',
+});
       } catch (err) {
         addNotification({
           title: '失败',

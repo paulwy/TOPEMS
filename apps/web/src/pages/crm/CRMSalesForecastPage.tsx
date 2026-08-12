@@ -15,7 +15,8 @@ import type {
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -34,7 +35,8 @@ const CRMSalesForecastPage: React.FC = () => {
       });
       return response.data?.items || [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const forecasts = forecastsQuery.data || [];
 
@@ -58,7 +60,10 @@ const CRMSalesForecastPage: React.FC = () => {
         title: t('crm.salesForecast.title_success'),
         message: t('crm.salesForecast.msg_generate_success'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.SALES_FORECAST });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.SALES_FORECAST ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       apiLogger.error(t('crm.salesForecast.log_generate_fail'), error);

@@ -32,7 +32,8 @@ import type {
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -113,7 +114,10 @@ export const BomPage: React.FC = () => {
     mutationFn: (id: string) => bomApi.activateVersion(id),
     onSuccess: () => {
       addNotification({ title: '成功', message: 'BOM版本已激活', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({ title: '错误', message: '激活失败', type: 'error' });
@@ -124,7 +128,10 @@ export const BomPage: React.FC = () => {
     mutationFn: (id: string) => bomApi.archiveVersion(id),
     onSuccess: () => {
       addNotification({ title: '成功', message: 'BOM版本已归档', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({ title: '错误', message: '归档失败', type: 'error' });
@@ -135,6 +142,12 @@ export const BomPage: React.FC = () => {
     mutationFn: ({ versionA, versionB }: { versionA: string; versionB: string }) =>
       bomApi.compareVersions(versionA, versionB),
     onSuccess: (response) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,
+          exact: false,
+          refetchType: 'active',
+        });
       if (response.success && response.data) {
         addNotification({
           title: '对比完成',

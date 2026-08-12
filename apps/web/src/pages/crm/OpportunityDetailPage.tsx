@@ -11,6 +11,7 @@ import { CRM_PATHS } from '@/modules/crm/config';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
@@ -39,7 +40,10 @@ const OpportunityDetailPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (opportunityId: string) => crmApi.opportunities.delete(opportunityId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.OPPORTUNITIES });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.OPPORTUNITIES ,
+  exact: false,
+  refetchType: 'active',
+});
       navigate(CRM_PATHS.opportunities);
     },
   });

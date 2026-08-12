@@ -158,7 +158,10 @@ export const WorkflowApprovalsPage: React.FC = () => {
       const task = row as unknown as ApprovalTask;
       try {
         await approvalTaskApi.approveTask(task.id, { comment: '' });
-        queryClient.invalidateQueries({ queryKey: [workflowApprovalSchema.entity] });
+        queryClient.invalidateQueries({ queryKey: [workflowApprovalSchema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
         addNotification({
           title: '审批成功',
           message: `已通过「${task.title}」的审批`,
@@ -186,7 +189,10 @@ export const WorkflowApprovalsPage: React.FC = () => {
     if (!selectedTask) return;
     try {
       await approvalTaskApi.rejectTask(selectedTask.id, { comment: rejectReason });
-      queryClient.invalidateQueries({ queryKey: [workflowApprovalSchema.entity] });
+      queryClient.invalidateQueries({ queryKey: [workflowApprovalSchema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
       setRejectDialogOpen(false);
       setSelectedTask(null);
       addNotification({

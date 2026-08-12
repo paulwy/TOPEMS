@@ -8,6 +8,9 @@
 import type { EntitySchema } from '@/schema';
 import { crmApi } from '@/api/crm';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export const recommendationSchema: EntitySchema = {
   entity: 'crm_recommendation',
   title: '客户推荐',
@@ -82,7 +85,7 @@ export const recommendationSchema: EntitySchema = {
         }
         return [];
       },
-      queryKey: ['crm', 'customers', 'recommendation-form'],
+      queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMERS_RECOMMENDATION_FORM_BASE,
     },
   ],
 };

@@ -48,6 +48,9 @@ import { ERP_PATHS } from '@/modules/erp/config';
 import { auditApi, type AuditLog } from '@/api/erp/audit';
 import { extractErrorMessage } from '@/utils/errors';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const AuditLogPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -66,16 +69,7 @@ const AuditLogPage: React.FC = () => {
   const [currentLog, setCurrentLog] = useState<AuditLog | null>(null);
 
   const logsQuery = useQuery<{ items: AuditLog[]; total: number }>({
-    queryKey: [
-      'erp-audit-logs',
-      page,
-      rowsPerPage,
-      typeFilter,
-      moduleFilter,
-      operatorFilter,
-      statusFilter,
-      dateRange,
-    ],
+    queryKey: [...QUERY_KEYS.AD_HOC.ERP_AUDIT_LOGS_BASE, page, rowsPerPage, typeFilter, moduleFilter, operatorFilter, statusFilter, dateRange],
     queryFn: async () => {
       const params = {
         page: page + 1,

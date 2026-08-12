@@ -47,6 +47,9 @@ import { workflowApi } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
 import { LazyChart } from '@/components/charts';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 type TimeRange = 'today' | 'week' | 'month' | 'quarter' | 'year';
@@ -126,7 +129,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const statisticsQuery = useQuery<StatisticsResponse | null>({
-    queryKey: ['workflow-statistics', timeRange],
+    queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_STATISTICS_BASE, timeRange],
     queryFn: async () => {
       const res = await workflowApi.getStatistics();
       if (res.success && res.data) {

@@ -80,7 +80,10 @@ const TransferPage: React.FC = () => {
         title: t('asset.transfer_page.success'),
         message: t('asset.transfer_page.submit'),
       });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.ASSETS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.ASSETS] ,
+  exact: false,
+  refetchType: 'active',
+});
       navigate(ASSET_PATHS.list);
     },
     onError: (error) => {

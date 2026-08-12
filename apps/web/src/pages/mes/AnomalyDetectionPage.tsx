@@ -45,6 +45,8 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const SEVERITY_CONFIG = {
   critical: { color: 'error' as const, icon: <AlertCircle size={16} />, label: '严重' },
   warning: { color: 'warning' as const, icon: <AlertTriangle size={16} />, label: '警告' },
@@ -80,40 +82,50 @@ const AnomalyDetectionPage: React.FC = () => {
 
   // Summary query
   const summaryQuery = useQuery({
-    queryKey: ['anomaly-summary'],
+    queryKey: QUERY_KEYS.AD_HOC.ANOMALY_SUMMARY_BASE,
     queryFn: () => anomalyDetectionApi.getSummary(),
     refetchInterval: 30000,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   // Alerts query
   const alertsQuery = useQuery({
-    queryKey: ['anomaly-alerts', severityFilter, typeFilter],
+    queryKey: [...QUERY_KEYS.AD_HOC.ANOMALY_ALERTS_BASE, severityFilter, typeFilter],
     queryFn: () =>
       anomalyDetectionApi.getAlerts({
         severity: severityFilter || undefined,
         anomaly_type: typeFilter || undefined,
       }),
     refetchInterval: 30000,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   // Rules query
   const rulesQuery = useQuery({
-    queryKey: ['anomaly-rules'],
+    queryKey: QUERY_KEYS.AD_HOC.ANOMALY_RULES_BASE,
     queryFn: () => anomalyDetectionApi.getRules(),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   // Trend query
   const trendQuery = useQuery({
-    queryKey: ['anomaly-trend'],
+    queryKey: QUERY_KEYS.AD_HOC.ANOMALY_TREND_BASE,
     queryFn: () => anomalyDetectionApi.getTrend(),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   // Scan mutation
   const scanMutation = useMutation({
     mutationFn: () => anomalyDetectionApi.triggerScan(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['anomaly-summary'] });
-      queryClient.invalidateQueries({ queryKey: ['anomaly-alerts'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_SUMMARY_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_ALERTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '扫描完成', message: '异常扫描已触发', type: 'success' });
     },
     onError: () => {
@@ -126,7 +138,10 @@ const AnomalyDetectionPage: React.FC = () => {
     mutationFn: ({ ruleId, req }: { ruleId: string; req: Record<string, unknown> }) =>
       anomalyDetectionApi.updateRule(req),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['anomaly-rules'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_RULES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '成功', message: '规则已更新', type: 'success' });
       setEditingRule(null);
     },
@@ -136,9 +151,18 @@ const AnomalyDetectionPage: React.FC = () => {
   });
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['anomaly-summary'] });
-    queryClient.invalidateQueries({ queryKey: ['anomaly-alerts'] });
-    queryClient.invalidateQueries({ queryKey: ['anomaly-trend'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_SUMMARY_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_ALERTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_TREND_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     addNotification({ title: '成功', message: '数据已刷新', type: 'success' });
   };
 

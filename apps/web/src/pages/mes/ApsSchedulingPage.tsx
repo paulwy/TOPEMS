@@ -42,6 +42,9 @@ import type {
 } from '@/api/mes';
 import { apsApi } from '@/api/mes';
 
+
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 const riskColorMap: Record<string, string> = {
   low: '#4caf50',
   medium: '#ff9800',
@@ -68,6 +71,12 @@ const ApsSchedulingPage: React.FC = () => {
   const scheduleMutation = useMutation({
     mutationFn: apsApi.schedule,
     onSuccess: (res) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.APS_OPTIMIZATION_REPORT_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       if (res.success && res.data) {
         setScheduleResult(res.data);
         addNotification({
@@ -91,14 +100,14 @@ const ApsSchedulingPage: React.FC = () => {
       }),
   });
 
-  const { data: optimizationReport, isLoading: reportLoading } = useQuery({
-    queryKey: ['aps', 'optimization-report'],
+  const { data: optimizationReport, isPending: reportLoading} = useQuery({
+    queryKey: QUERY_KEYS.AD_HOC.APS_OPTIMIZATION_REPORT_BASE,
     queryFn: apsApi.getOptimizationReport,
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: bottleneckAnalysis, isLoading: bottleneckLoading } = useQuery({
-    queryKey: ['aps', 'bottleneck-analysis'],
+  const { data: bottleneckAnalysis, isPending: bottleneckLoading} = useQuery({
+    queryKey: QUERY_KEYS.AD_HOC.APS_BOTTLENECK_ANALYSIS_BASE,
     queryFn: () => apsApi.getBottleneckAnalysis('7d'),
     staleTime: 5 * 60 * 1000,
   });

@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { pmApi } from '@/api/pm';
 import type { Project, ProjectPhase, ProjectMilestone, GanttPhase, GanttMilestone } from '@/api/pm';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 export interface UsePmProjectDetailReturn {
@@ -123,11 +124,20 @@ export const usePmProjectDetail = (): UsePmProjectDetailReturn => {
   );
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECT(id || '') });
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'phases'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECT(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'phases'] ,
+  exact: false,
+  refetchType: 'active',
+});
     queryClient.invalidateQueries({
       queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'milestones'],
-    });
+    
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   return {

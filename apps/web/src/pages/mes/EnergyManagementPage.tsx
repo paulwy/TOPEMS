@@ -33,34 +33,43 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const EnergyManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const realTimeConsumption = useQuery({
-    queryKey: ['realTimeConsumption'],
+    queryKey: QUERY_KEYS.AD_HOC.REALTIMECONSUMPTION_BASE,
     queryFn: () => energyManagementApi.getRealTimeConsumption(),
     refetchInterval: 10000,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const energyReport = useQuery({
-    queryKey: ['energyReport'],
+    queryKey: QUERY_KEYS.AD_HOC.ENERGYREPORT_BASE,
     queryFn: () => energyManagementApi.getEnergyReport(),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const energyForecast = useQuery({
-    queryKey: ['energyForecast'],
+    queryKey: QUERY_KEYS.AD_HOC.ENERGYFORECAST_BASE,
     queryFn: () => energyManagementApi.getEnergyForecast({ months: 3 }),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const energyAlerts = useQuery({
-    queryKey: ['energyAlerts'],
+    queryKey: QUERY_KEYS.AD_HOC.ENERGYALERTS_BASE,
     queryFn: () => energyManagementApi.getEnergyAlerts(),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['realTimeConsumption'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.REALTIMECONSUMPTION_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     addNotification({ title: '成功', message: '数据已刷新', type: 'success' });
   };
 

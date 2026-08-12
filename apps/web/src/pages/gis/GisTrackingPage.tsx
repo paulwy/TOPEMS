@@ -30,7 +30,8 @@ import { PageContainer } from '@/components/common';
 import { gisApi } from '@/api/gis';
 import type { DevicePoint, DeviceLocationRecord } from '@/api/gis';
 import { designTokens } from '@/theme/tokens';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -43,7 +44,7 @@ export const GisTrackingPage: React.FC = () => {
 
   const {
     data: devices = [],
-    isLoading: loading,
+    isPending: loading,
     error: devicesError,
   } = useQuery<DevicePoint[]>({
     queryKey: QUERY_KEYS.GIS.DEVICE_POINTS,
@@ -54,9 +55,10 @@ export const GisTrackingPage: React.FC = () => {
       }
       throw new Error('加载设备列表失败');
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
-  const { data: trackHistory = [], isLoading: trackLoading } = useQuery<DeviceLocationRecord[]>({
+  const { data: trackHistory = [], isPending: trackLoading} = useQuery<DeviceLocationRecord[]>({
     queryKey: QUERY_KEYS.GIS.DEVICE_TRACK(selectedDevice || 'none'),
     queryFn: async () => {
       if (!selectedDevice) return [];
@@ -67,7 +69,8 @@ export const GisTrackingPage: React.FC = () => {
       throw new Error('加载轨迹数据失败');
     },
     enabled: !!selectedDevice,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const error = devicesError
     ? devicesError instanceof Error

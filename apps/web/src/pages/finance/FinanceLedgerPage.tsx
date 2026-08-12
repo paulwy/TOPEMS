@@ -9,6 +9,9 @@ import { FileText, Calculator, Wallet, TrendingUp, TrendingDown } from 'lucide-r
 import { designTokens } from '@/theme/tokens';
 import type { Account } from '@/types/finance';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const ledgerApiAdapter: CrudApiAdapter = {
@@ -53,7 +56,7 @@ const ledgerApiAdapter: CrudApiAdapter = {
 
 const LedgerStats: React.FC = () => {
   const { data: accounts = [] } = useQuery({
-    queryKey: ['finance-ledger-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.FINANCE_LEDGER_STATS_BASE,
     queryFn: async () => {
       const response = await accountApi.list({ pagesize: 200 });
       if (response.success && response.data) {

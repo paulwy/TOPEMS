@@ -10,6 +10,9 @@ import { FileText, CheckCircle, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter(mesApi.workReports, {
@@ -30,7 +33,10 @@ const WorkReportPage: React.FC = () => {
             title: '审核成功',
             message: '工作报告已审核通过',
           });
-          queryClient.invalidateQueries({ queryKey: ['mes_work_report'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_WORK_REPORT_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         } else {
           addNotification({
             type: 'error',
@@ -59,7 +65,10 @@ const WorkReportPage: React.FC = () => {
             title: '驳回成功',
             message: '工作报告已驳回',
           });
-          queryClient.invalidateQueries({ queryKey: ['mes_work_report'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_WORK_REPORT_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         } else {
           addNotification({
             type: 'error',

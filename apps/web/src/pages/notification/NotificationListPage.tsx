@@ -19,6 +19,8 @@ import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter, type CrudTab } from '@/components/templates/CrudPage';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 type NotificationTab = 'all' | 'unread' | 'read' | 'important';
 
 export const NotificationListPage: React.FC = () => {
@@ -28,7 +30,7 @@ export const NotificationListPage: React.FC = () => {
   const [importantFilter, setImportantFilter] = useState<string>('all');
 
   const { data: allNotifications = [] } = useQuery<Notification[]>({
-    queryKey: ['notifications-all'],
+    queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE,
     queryFn: async () => {
       const response = await getNotifications(1, 100);
       if (response.success && response.data?.notifications) {
@@ -36,7 +38,8 @@ export const NotificationListPage: React.FC = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.SHORT,});
 
   const stats = useMemo(() => {
     const notifications = allNotifications as Notification[];
@@ -85,40 +88,70 @@ export const NotificationListPage: React.FC = () => {
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => markAsRead(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications-all'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteNotification(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications-all'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
   const markAllAsReadMutation = useMutation({
     mutationFn: () => markAllAsRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications-all'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
   const bulkMarkReadMutation = useMutation({
     mutationFn: (ids: string[]) => bulkMarkAsRead(ids),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications-all'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
   const bulkDeleteMutation = useMutation({
     mutationFn: (ids: string[]) => bulkDeleteNotifications(ids),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications-all'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 

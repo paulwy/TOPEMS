@@ -53,6 +53,8 @@ import type {
 } from '@/schema';
 import { getColumns } from '@/schema';
 
+import { CACHE_DURATIONS } from '@/lib/reactQuery';
+
 // ============ 图标解析 ============
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -997,14 +999,15 @@ export interface DashboardPageProps {
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ schema, queryKey }) => {
-  const { isLoading } = useQuery({
+  const { isPending} = useQuery({
     queryKey: queryKey || ['dashboard', schema.title],
     queryFn: async () => {
       if (schema.loader) return schema.loader();
       return null;
     },
     enabled: !!schema.loader,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const resolvedStatCards = useMemo<StatCardConfig[] | undefined>(() => {
     if (!schema.statCards) return;
@@ -1014,9 +1017,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ schema, queryKey }
       icon: resolveIcon(sc.icon),
       color: sc.color,
       trend: sc.trend,
-      loading: isLoading,
+      loading: isPending,
     }));
-  }, [schema.statCards, isLoading]);
+  }, [schema.statCards, isPending]);
 
   const resolvedCharts = useMemo<ChartCard[] | undefined>(() => {
     if (!schema.charts) return;
@@ -1029,10 +1032,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ schema, queryKey }
         type: ch.type,
         data: rawData,
         height: ch.height,
-        loading: isLoading,
+        loading: isPending,
       } as ChartCard;
     });
-  }, [schema.charts, isLoading]);
+  }, [schema.charts, isPending]);
 
   const resolvedTable = useMemo<DataTableConfig | undefined>(() => {
     if (!schema.table) return;
@@ -1067,10 +1070,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ schema, queryKey }
       title: schema.table.title,
       columns,
       data: rawData,
-      loading: isLoading,
+      loading: isPending,
       searchable: schema.table.searchable ?? true,
     };
-  }, [schema.table, isLoading]);
+  }, [schema.table, isPending]);
 
   return (
     <DashboardTemplate
@@ -1079,7 +1082,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ schema, queryKey }
       statCards={resolvedStatCards}
       charts={resolvedCharts}
       table={resolvedTable}
-      loading={isLoading}
+      loading={isPending}
     />
   );
 };

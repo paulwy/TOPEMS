@@ -24,7 +24,8 @@ import { settingSchema } from '@/schemas/rd';
 import type { EntitySchema } from '@/schema';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 interface SettingItem extends Record<string, unknown> {
   id: string;
@@ -89,7 +90,8 @@ const RsSettingsPage: React.FC = () => {
       }
       return response.data;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const statistics = statisticsQuery.data || null;
   const loading = statisticsQuery.isLoading;

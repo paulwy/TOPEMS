@@ -12,6 +12,7 @@ import {
   InputLabel,
   Select,
 } from '@mui/material';
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 import { User, FileText, FlaskConical, Database, Download, Calendar, X } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -468,6 +469,12 @@ const AuditLogPage: React.FC = () => {
       return api.exportAuditLogs(params);
     },
     onSuccess: (blob: unknown) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+          exact: false,
+          refetchType: 'active',
+        });
       apiLogger.debug('导出审计日志成功，blob size:', (blob as Blob)?.size);
       const url = window.URL.createObjectURL(blob as Blob);
       const a = document.createElement('a');

@@ -36,6 +36,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const HELP_CATEGORIES = [
   {
     id: 'getting-started',
@@ -107,7 +110,7 @@ export const HelpCenterPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const faqsQuery = useQuery<Faq[]>({
-    queryKey: ['help-center-faqs'],
+    queryKey: QUERY_KEYS.AD_HOC.HELP_CENTER_FAQS_BASE,
     queryFn: async () => {
       const response = await helpApi.listFaqs({ page: 1, page_size: 4 });
       if (response.success && response.data) {
@@ -120,7 +123,7 @@ export const HelpCenterPage: React.FC = () => {
   const faqs = faqsQuery.data || [];
 
   const guidesQuery = useQuery<Guide[]>({
-    queryKey: ['help-center-guides'],
+    queryKey: QUERY_KEYS.AD_HOC.HELP_CENTER_GUIDES_BASE,
     queryFn: async () => {
       const response = await helpApi.listGuides({ page: 1, page_size: 6 });
       if (response.success && response.data) {

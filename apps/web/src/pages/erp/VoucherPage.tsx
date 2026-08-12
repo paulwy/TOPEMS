@@ -20,6 +20,9 @@ import { voucherApi } from '@/api/erp';
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 // ============ 统计卡片 ============
 
 interface VoucherStatsData {
@@ -31,8 +34,8 @@ interface VoucherStatsData {
 }
 
 function VoucherStats() {
-  const { data: stats, isLoading } = useQuery<VoucherStatsData>({
-    queryKey: ['erp-voucher-stats'],
+  const { data: stats, isPending} = useQuery<VoucherStatsData>({
+    queryKey: QUERY_KEYS.AD_HOC.ERP_VOUCHER_STATS_BASE,
     queryFn: async () => {
       const response = await voucherApi.list({ page: 1, pagesize: 100 });
       if (!response.success) throw new Error('加载凭证统计失败');
@@ -80,7 +83,7 @@ function VoucherStats() {
               >
                 {card.label}
               </Typography>
-              <Typography variant='h6'>{isLoading ? '...' : card.value}</Typography>
+              <Typography variant='h6'>{isPending ? '...' : card.value}</Typography>
             </Box>
           </CardContent>
         </Card>

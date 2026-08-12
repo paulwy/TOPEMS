@@ -1,5 +1,8 @@
 import type { EntitySchema } from '@/schema';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export const stockTakeSchema: EntitySchema = {
   entity: 'wms_stock_take',
   title: '盘点单',
@@ -163,7 +166,7 @@ export const stockTakeSchema: EntitySchema = {
         }
         return [];
       },
-      queryKey: ['warehouse-options'],
+      queryKey: QUERY_KEYS.AD_HOC.WAREHOUSE_OPTIONS_BASE,
     },
   ],
 };

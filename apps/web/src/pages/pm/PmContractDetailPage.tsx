@@ -22,6 +22,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { PM_PATHS } from '@/modules/pm/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
@@ -507,11 +508,20 @@ const PmContractDetailPage: React.FC = () => {
   }, [contract]);
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.CONTRACT(id || '') });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.CONTRACT(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
     queryClient.invalidateQueries({
       queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'milestones'],
-    });
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'payments'] });
+    
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'payments'] ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   return (

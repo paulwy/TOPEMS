@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { AlertTriangle, MapPin, Users, Shield, Clock, Plus, Trash2 } from 'lucide-react';
 import {
   Dialog,
@@ -71,7 +71,7 @@ const EhsHazardDetailPage: React.FC = () => {
 
   const {
     data: hazard,
-    isLoading: hazardLoading,
+    isPending: hazardLoading,
     error: hazardQueryError,
   } = useQuery({
     queryKey: QUERY_KEYS.EHS.HAZARD(id || ''),
@@ -110,7 +110,8 @@ const EhsHazardDetailPage: React.FC = () => {
       }
       throw new Error(response.message || t('ehs.ehs_hazard_detail_page.detail'));
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const { data: assessmentsData } = useQuery({
     queryKey: QUERY_KEYS.EHS.HAZARD_RISK_ASSESSMENTS(id || ''),
@@ -123,7 +124,8 @@ const EhsHazardDetailPage: React.FC = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const assessments = (assessmentsData as RiskAssessment[]) || [];
 
   const { data: controlsData } = useQuery({
@@ -137,7 +139,8 @@ const EhsHazardDetailPage: React.FC = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const controls = (controlsData as ControlMeasure[]) || [];
 
   const loading = hazardLoading;
@@ -172,7 +175,10 @@ const EhsHazardDetailPage: React.FC = () => {
       ehsApi.updateHazard(variables.id, variables.data),
     onSuccess: () => {
       success(t('ehs.ehs_hazard_detail_page.update'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD(id || '') });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowEditModal(false);
     },
     onError: (err: unknown) => {
@@ -212,7 +218,10 @@ const EhsHazardDetailPage: React.FC = () => {
     }) => ehsApi.createControlMeasure(variables.hazardId, variables.data),
     onSuccess: () => {
       success(t('ehs.ehs_hazard_detail_page.success'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowControlModal(false);
       setControlFormData({
         measure_type: 'engineering',
@@ -255,7 +264,10 @@ const EhsHazardDetailPage: React.FC = () => {
       ehsApi.deleteControlMeasure(variables.hazardId, variables.measureId),
     onSuccess: () => {
       success(t('ehs.ehs_hazard_detail_page.delete_success'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
       setDeleteDialogOpen(false);
       setDeletingMeasureId(null);
     },

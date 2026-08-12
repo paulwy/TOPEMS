@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { apiLogger } from '@/utils/logger';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { ehsApi } from '@/api/ehs';
 import type { Hazard, RiskAssessment, ControlMeasure, SafetyHazard } from '@/api/ehs';
 import { useNotification } from '@/hooks/useNotification';
@@ -102,7 +102,7 @@ export const useEhsHazardDetail = (id: string | undefined): UseEhsHazardDetailRe
 
   const {
     data: hazard,
-    isLoading: hazardLoading,
+    isPending: hazardLoading,
     error: hazardQueryError,
   } = useQuery({
     queryKey: QUERY_KEYS.EHS.HAZARD(id || ''),
@@ -141,7 +141,8 @@ export const useEhsHazardDetail = (id: string | undefined): UseEhsHazardDetailRe
       }
       throw new Error(response.message || t('ehs.ehs_hazard_detail_page.detail'));
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const { data: assessmentsData } = useQuery({
     queryKey: QUERY_KEYS.EHS.HAZARD_RISK_ASSESSMENTS(id || ''),
@@ -154,7 +155,8 @@ export const useEhsHazardDetail = (id: string | undefined): UseEhsHazardDetailRe
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const assessments = (assessmentsData as RiskAssessment[]) || [];
 
   const { data: controlsData } = useQuery({
@@ -168,7 +170,8 @@ export const useEhsHazardDetail = (id: string | undefined): UseEhsHazardDetailRe
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const controls = (controlsData as ControlMeasure[]) || [];
 
   const loading = hazardLoading;
@@ -194,7 +197,10 @@ export const useEhsHazardDetail = (id: string | undefined): UseEhsHazardDetailRe
       ehsApi.updateHazard(variables.id, variables.data),
     onSuccess: () => {
       success(t('ehs.ehs_hazard_detail_page.update'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD(id || '') });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowEditModal(false);
     },
     onError: (err: unknown) => {
@@ -229,7 +235,10 @@ export const useEhsHazardDetail = (id: string | undefined): UseEhsHazardDetailRe
     }) => ehsApi.createControlMeasure(variables.hazardId, variables.data),
     onSuccess: () => {
       success(t('ehs.ehs_hazard_detail_page.success'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowControlModal(false);
       setControlFormData({ ...initialControlFormData });
     },
@@ -267,7 +276,10 @@ export const useEhsHazardDetail = (id: string | undefined): UseEhsHazardDetailRe
       ehsApi.deleteControlMeasure(variables.hazardId, variables.measureId),
     onSuccess: () => {
       success(t('ehs.ehs_hazard_detail_page.delete_success'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
       setDeleteDialogOpen(false);
       setDeletingMeasureId(null);
     },

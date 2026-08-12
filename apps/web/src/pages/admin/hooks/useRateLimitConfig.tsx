@@ -8,6 +8,9 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 export interface RateLimitRule {
@@ -129,7 +132,7 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
   const [newEnforcePath, setNewEnforcePath] = useState('');
 
   const configQuery = useQuery({
-    queryKey: ['admin-rate-limit-config'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE,
     queryFn: async () => {
       const res = await apiClient.core.get<RateLimitConfig>('/api/core/iam/v1/rate-limit/config');
       if (res.success && res.data) {
@@ -141,7 +144,7 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
   });
 
   const antiReplayQuery = useQuery({
-    queryKey: ['admin-anti-replay-config'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_ANTI_REPLAY_CONFIG_BASE,
     queryFn: async () => {
       const res = await apiClient.core.get<AntiReplayConfig>(
         '/api/core/iam/v1/rate-limit/config/anti-replay'
@@ -181,7 +184,10 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
           message: t('admin.rate_limit_config.rate_limit_configuration_updated'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: ['admin-rate-limit-config'] });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         addNotification({
           title: t('admin.rate_limit_config.save_failed'),
@@ -219,7 +225,10 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
           message: t('admin.rate_limit_config.anti_replay_configuration_updated'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: ['admin-anti-replay-config'] });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_ANTI_REPLAY_CONFIG_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         addNotification({
           title: t('admin.rate_limit_config.save_failed'),
@@ -258,7 +267,10 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
           message: t('admin.rate_limit_config.rate_limit_configuration_reset_to_default'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: ['admin-rate-limit-config'] });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       }
     },
   });

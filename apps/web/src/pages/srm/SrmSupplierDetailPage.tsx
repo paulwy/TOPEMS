@@ -8,6 +8,7 @@ import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { useQuery } from '@tanstack/react-query';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const SrmSupplierDetailPage: React.FC = () => {

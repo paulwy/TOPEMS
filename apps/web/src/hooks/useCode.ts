@@ -3,6 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryClient, QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 
 // ============================================
 // 一、编码规则类型定义
@@ -197,7 +198,7 @@ const codeApi = {
  */
 export function useNextCode(entityType: EntityType, module?: ModuleType) {
   return useQuery({
-    queryKey: ['next-code', entityType, module],
+    queryKey: [...QUERY_KEYS.AD_HOC.NEXT_CODE_BASE, entityType, module],
     queryFn: () => codeApi.getNextCode({ entity_type: entityType, module }),
     staleTime: 0, // 每次都获取新的编码
     enabled: !!entityType,
@@ -216,6 +217,14 @@ export function useBatchNextCodes() {
         module?: ModuleType;
       }[]
     ) => codeApi.batchGetNextCodes(requests),
+  
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
+      },
   });
 }
 
@@ -225,6 +234,14 @@ export function useBatchNextCodes() {
 export function useValidateCode() {
   return useMutation({
     mutationFn: (params: { entity_type: EntityType; code: string }) => codeApi.validateCode(params),
+  
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
+      },
   });
 }
 
@@ -238,7 +255,10 @@ export function useReserveCodes() {
     mutationFn: (params: { entity_type: EntityType; quantity: number; reserve_days?: number }) =>
       codeApi.reserveCodes(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['code-reservations'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 }
@@ -252,7 +272,10 @@ export function useReleaseCodes() {
   return useMutation({
     mutationFn: (reservationId: string) => codeApi.releaseCodes(reservationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['code-reservations'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 }
@@ -262,7 +285,7 @@ export function useReleaseCodes() {
  */
 export function useCodeRules(params?: { module?: ModuleType; entity_type?: EntityType }) {
   return useQuery({
-    queryKey: ['code-rules', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.CODE_RULES_BASE, params],
     queryFn: () => codeApi.getRules(params),
     staleTime: 30 * 60 * 1000, // 30分钟
   });
@@ -273,10 +296,11 @@ export function useCodeRules(params?: { module?: ModuleType; entity_type?: Entit
  */
 export function useCodeRule(id: string) {
   return useQuery({
-    queryKey: ['code-rule', id],
+    queryKey: [...QUERY_KEYS.AD_HOC.CODE_RULE_BASE, id],
     queryFn: () => codeApi.getRule(id),
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 }
 
 /**
@@ -286,6 +310,14 @@ export function usePreviewCode() {
   return useMutation({
     mutationFn: ({ ruleId, variables }: { ruleId: string; variables?: Record<string, string> }) =>
       codeApi.previewCode(ruleId, variables),
+  
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
+      },
   });
 }
 

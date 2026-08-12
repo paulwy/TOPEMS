@@ -9,6 +9,9 @@ import { dataSourceCrudApi, testDataSource, refreshDataSource } from '@/api/bi';
 import type { DataSource } from '@/api/bi';
 import { logger } from '@/utils/logger';
 
+
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 const BIDataSourcePage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -16,6 +19,12 @@ const BIDataSourcePage: React.FC = () => {
   const testConnectionMutation = useMutation({
     mutationFn: (id: string) => testDataSource(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.BI_DATA_SOURCE_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       logger.info('Connection test successful');
     },
   });
@@ -23,7 +32,10 @@ const BIDataSourcePage: React.FC = () => {
   const refreshMutation = useMutation({
     mutationFn: (id: string) => refreshDataSource(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi_data_source'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_DATA_SOURCE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       logger.info('Sync successful');
     },
   });

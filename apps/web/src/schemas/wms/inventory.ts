@@ -1,5 +1,8 @@
 import type { EntitySchema } from '@/schema';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export const inventorySchema: EntitySchema = {
   entity: 'wms_inventory',
   title: '库存管理',
@@ -213,7 +216,7 @@ export const inventorySchema: EntitySchema = {
         }
         return [];
       },
-      queryKey: ['warehouse-options'],
+      queryKey: QUERY_KEYS.AD_HOC.WAREHOUSE_OPTIONS_BASE,
     },
   ],
 };

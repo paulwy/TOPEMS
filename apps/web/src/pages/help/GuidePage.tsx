@@ -32,6 +32,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface GuideCategory {
   id: string;
   name: string;
@@ -53,7 +56,7 @@ export const GuidePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const guidesQuery = useQuery<Guide[]>({
-    queryKey: ['help-guides', selectedCategory],
+    queryKey: [...QUERY_KEYS.AD_HOC.HELP_GUIDES_BASE, selectedCategory],
     queryFn: async () => {
       const params = {
         category: selectedCategory === 'all' ? undefined : selectedCategory,
@@ -72,7 +75,7 @@ export const GuidePage: React.FC = () => {
   const loading = guidesQuery.isLoading;
 
   const categoriesQuery = useQuery<string[]>({
-    queryKey: ['help-guide-categories'],
+    queryKey: QUERY_KEYS.AD_HOC.HELP_GUIDE_CATEGORIES_BASE,
     queryFn: async () => {
       const response = await helpApi.getGuideCategories();
       if (response.success && response.data) {

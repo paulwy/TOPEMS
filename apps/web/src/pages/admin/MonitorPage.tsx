@@ -26,12 +26,15 @@ import {
 import { PageContainer } from '@/components';
 import { getStatusColor } from '@/utils/status';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const MonitorPage: React.FC = () => {
   const theme = useTheme();
   const { addNotification } = useNotificationStore();
 
   const systemMetricsQuery = useQuery<SystemMetrics | null>({
-    queryKey: ['admin-monitor-system-metrics'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITOR_SYSTEM_METRICS_BASE,
     queryFn: async () => {
       const res = await monitorApi.getSystemMetrics();
       return res.success && res.data ? res.data : null;
@@ -41,7 +44,7 @@ const MonitorPage: React.FC = () => {
   });
 
   const serviceHealthQuery = useQuery<ServiceHealth[]>({
-    queryKey: ['admin-monitor-service-health'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITOR_SERVICE_HEALTH_BASE,
     queryFn: async () => {
       const res = await monitorApi.getServiceHealth();
       return res.success && res.data ? res.data : [];
@@ -51,7 +54,7 @@ const MonitorPage: React.FC = () => {
   });
 
   const alertsQuery = useQuery<Alert[]>({
-    queryKey: ['admin-monitor-alerts'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITOR_ALERTS_BASE,
     queryFn: async () => {
       const res = await monitorApi.listAlerts({ pagesize: 20 });
       return res.success && res.data ? res.data.items : [];

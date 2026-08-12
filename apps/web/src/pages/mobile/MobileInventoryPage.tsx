@@ -47,6 +47,9 @@ import { useQuery } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const MobileInventoryPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -57,7 +60,7 @@ const MobileInventoryPage: React.FC = () => {
   const tabs = ['库存', '盘点', '入库', '出库'];
 
   const itemsQuery = useQuery<InventoryItem[]>({
-    queryKey: ['mobile-inventory-items'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_ITEMS_BASE,
     queryFn: async () => {
       const mockItems: InventoryItem[] = [
         {
@@ -141,7 +144,7 @@ const MobileInventoryPage: React.FC = () => {
   const inventoryItems = itemsQuery.data ?? [];
 
   const stocktakeQuery = useQuery<StocktakeTask[]>({
-    queryKey: ['mobile-inventory-stocktake'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_STOCKTAKE_BASE,
     queryFn: async () => {
       const mockStocktakeTasks: StocktakeTask[] = [
         {
@@ -185,7 +188,7 @@ const MobileInventoryPage: React.FC = () => {
   const stocktakeTasks = stocktakeQuery.data ?? [];
 
   const inboundQuery = useQuery<InboundOrder[]>({
-    queryKey: ['mobile-inventory-inbound'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_INBOUND_BASE,
     queryFn: async () => {
       const mockInboundOrders: InboundOrder[] = [
         {
@@ -229,7 +232,7 @@ const MobileInventoryPage: React.FC = () => {
   const inboundOrders = inboundQuery.data ?? [];
 
   const outboundQuery = useQuery<OutboundOrder[]>({
-    queryKey: ['mobile-inventory-outbound'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_OUTBOUND_BASE,
     queryFn: async () => {
       const mockOutboundOrders: OutboundOrder[] = [
         {

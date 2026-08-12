@@ -45,6 +45,9 @@ import { logger } from '@/utils/logger';
 
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface VisualizationComponent {
   id: string;
   type: 'bar' | 'line' | 'pie' | 'gauge' | 'table' | 'text' | 'image' | 'metric';
@@ -156,7 +159,7 @@ const BIVisualizationPage = () => {
   const [, setIsDragging] = useState(false);
 
   const widgetsQuery = useQuery<CanvasComponent[]>({
-    queryKey: ['bi-widgets'],
+    queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE,
     queryFn: async () => {
       const res = await fetchWidgets();
       if (res.success && res.data) {
@@ -192,7 +195,10 @@ const BIVisualizationPage = () => {
   const createMutation = useMutation({
     mutationFn: (data: Partial<Widget>) => createWidget(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-widgets'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (e: unknown) => {
       logger.error('Failed to create widget:', e);
@@ -202,7 +208,10 @@ const BIVisualizationPage = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteWidget(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-widgets'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (e: unknown) => {
       logger.error('Failed to delete widget:', e);
@@ -213,7 +222,10 @@ const BIVisualizationPage = () => {
     mutationFn: ({ id, widgetData }: { id: string; widgetData: Partial<Widget> }) =>
       updateWidget(id, widgetData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-widgets'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (e: unknown) => {
       logger.error('Failed to update widget:', e);

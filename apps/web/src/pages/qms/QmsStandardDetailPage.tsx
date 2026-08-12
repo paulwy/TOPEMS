@@ -23,7 +23,7 @@ import { qmsApi } from '@/api/qms';
 import type { QualityStandard, StandardRevision, CreateQualityStandardRequest } from '@/api/qms';
 import { useCrudMutations } from '@/hooks';
 import { designTokens } from '@/theme/tokens';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
 
 const ct = designTokens.colors;
@@ -33,7 +33,7 @@ const QmsStandardDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: standard, isLoading: loading } = useQuery<QualityStandard | null>({
+  const { data: standard, isPending: loading} = useQuery<QualityStandard | null>({
     queryKey: QUERY_KEYS.QMS.STANDARD(id || ''),
     queryFn: async () => {
       if (!id) return null;
@@ -44,7 +44,8 @@ const QmsStandardDetailPage: React.FC = () => {
       return (res.data as QualityStandard) ?? null;
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const { data: revisions = [] } = useQuery<StandardRevision[]>({
     queryKey: QUERY_KEYS.QMS.STANDARD_REVISIONS(id || ''),
@@ -59,7 +60,8 @@ const QmsStandardDetailPage: React.FC = () => {
       return Array.isArray(revisionsData) ? revisionsData : revisionsData.revisions || [];
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
@@ -159,13 +161,19 @@ const QmsStandardDetailPage: React.FC = () => {
     onUpdateSuccess: () => {
       setShowEditModal(false);
       if (standard) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.STANDARD(standard.id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.STANDARD(standard.id) ,
+  exact: false,
+  refetchType: 'active',
+});
       }
     },
     onCreateSuccess: () => {
       setShowRevisionModal(false);
       if (standard) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.STANDARD_REVISIONS(standard.id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.STANDARD_REVISIONS(standard.id) ,
+  exact: false,
+  refetchType: 'active',
+});
       }
       navigate(QMS_PATHS.standards);
     },

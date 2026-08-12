@@ -10,6 +10,8 @@ import { DOC_PATHS } from '@/modules/doc/config';
 import { formatFileSize } from '../utils';
 import type { FileItem, DisplayItem, SortField, SortOrder, ViewMode } from '../types';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface PreviewingFile {
   id: string;
   name: string;
@@ -58,7 +60,7 @@ export const useDocumentsPage = () => {
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const { data: folders = [] } = useQuery<FolderType[]>({
-    queryKey: ['doc-folders'],
+    queryKey: QUERY_KEYS.AD_HOC.DOC_FOLDERS_BASE,
     queryFn: async () => {
       const response = await docApi.listFolders();
       if (response.success && response.data?.folders) {
@@ -66,10 +68,11 @@ export const useDocumentsPage = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
-  const { data: files = [], isLoading: filesLoading } = useQuery<FileItem[]>({
-    queryKey: ['doc-files', selectedFolderId],
+  const { data: files = [], isPending: filesLoading} = useQuery<FileItem[]>({
+    queryKey: [...QUERY_KEYS.AD_HOC.DOC_FILES_BASE, selectedFolderId],
     queryFn: async () => {
       const response = await docApi.list(selectedFolderId || undefined);
       if (response.success && response.data?.files) {
@@ -88,20 +91,30 @@ export const useDocumentsPage = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => docApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['doc-files'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
   const deleteFolderMutation = useMutation({
     mutationFn: (id: string) => docApi.deleteFolder(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['doc-folders'] });
-      queryClient.invalidateQueries({ queryKey: ['doc-files'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FOLDERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
@@ -109,14 +122,20 @@ export const useDocumentsPage = () => {
     mutationFn: ({ file, folderId }: { file: File; folderId?: string }) =>
       docApi.upload(file, folderId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['doc-files'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
   const createFolderMutation = useMutation({
     mutationFn: (data: { name: string; parentId?: string }) => docApi.createFolder(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['doc-folders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FOLDERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
@@ -272,8 +291,14 @@ export const useDocumentsPage = () => {
   }, []);
 
   const handleCreateFolderSuccess = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['doc-folders'] });
-    queryClient.invalidateQueries({ queryKey: ['doc-files'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FOLDERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient]);
 
   const toggleFileSelect = useCallback((fileId: string) => {

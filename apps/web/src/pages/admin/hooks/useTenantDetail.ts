@@ -5,7 +5,10 @@ import { useParams } from 'react-router-dom';
 import { useConfirmDialog } from '@/hooks';
 import { tenantApi } from '@/api/tenant';
 import { logger } from '@/utils/logger';
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 import type {
+
   Tenant,
   TenantUser,
   TenantStats,
@@ -28,7 +31,7 @@ export const useTenantDetail = () => {
   } = useConfirmDialog();
 
   const tenantQuery = useQuery<Tenant | null>({
-    queryKey: ['admin-tenant', tenantId],
+    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE, tenantId],
     queryFn: async () => {
       if (!tenantId) return null;
       const res = await tenantApi.getTenant(tenantId);
@@ -39,7 +42,7 @@ export const useTenantDetail = () => {
   });
 
   const statsQuery = useQuery<TenantStats | null>({
-    queryKey: ['admin-tenant-stats', tenantId],
+    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_TENANT_STATS_BASE, tenantId],
     queryFn: async () => {
       if (!tenantId) return null;
       const res = await tenantApi.getTenantStats(tenantId);
@@ -50,7 +53,7 @@ export const useTenantDetail = () => {
   });
 
   const usersQuery = useQuery<{ items: TenantUser[] }>({
-    queryKey: ['admin-tenant-users', tenantId],
+    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_TENANT_USERS_BASE, tenantId],
     queryFn: async () => {
       if (!tenantId) return { items: [] };
       const res = await tenantApi.getTenantUsers(tenantId, { pageSize: 100 });
@@ -64,7 +67,7 @@ export const useTenantDetail = () => {
   });
 
   const invoicesQuery = useQuery<TenantInvoice[]>({
-    queryKey: ['admin-tenant-invoices', tenantId],
+    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_TENANT_INVOICES_BASE, tenantId],
     queryFn: async () => {
       if (!tenantId) return [];
       const res = await tenantApi.getInvoices(tenantId);
@@ -105,12 +108,21 @@ export const useTenantDetail = () => {
     }
   }, [invoicesQuery.isError, invoicesQuery.error]);
 
-  const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: ['admin-tenant-users'] });
+  const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_USERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
 
   const inviteMemberMutation = useMutation({
     mutationFn: (params: { tenantId: string; data: { email: string; role: TenantRole } }) =>
       tenantApi.inviteMember(params.tenantId, params.data),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateUsers();
       setShowInviteDialog(false);
       setInviteForm({ email: '', role: 'member' });
@@ -124,6 +136,12 @@ export const useTenantDetail = () => {
     mutationFn: (params: { tenantId: string; userId: string }) =>
       tenantApi.removeMember(params.tenantId, params.userId),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateUsers();
       setConfirmDialogClosed();
     },
@@ -136,6 +154,12 @@ export const useTenantDetail = () => {
     mutationFn: (params: { tenantId: string; userId: string; role: TenantRole }) =>
       tenantApi.updateMemberRole(params.tenantId, params.userId, { role: params.role }),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateUsers();
     },
     onError: (error: unknown) => {

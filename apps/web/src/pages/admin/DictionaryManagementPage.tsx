@@ -41,6 +41,8 @@ import { apiLogger } from '@/utils/logger';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { ConfirmDialog } from '@topems/shared-components';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 interface DictionaryManagementPageProps {
   onNavigate?: (page: string) => void;
 }
@@ -91,7 +93,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   );
 
   const dictTypesQuery = useQuery({
-    queryKey: ['system', 'dict-types', 'list'],
+    queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE,
     queryFn: async () => {
       const res = await dictTypeApi.list();
       if (res.success && res.data) {
@@ -99,7 +101,8 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       }
       throw new Error(res.message || '加载字典类型失败');
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.LONG,});
 
   const dictTypes = dictTypesQuery.data || [];
   const typesLoading = dictTypesQuery.isLoading;
@@ -117,7 +120,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['system', 'dict-types', 'list'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '成功', message: '字典类型创建成功', type: 'success' });
       setShowTypeModal(false);
       setNewType({ code: '', name: '', category: 'business', description: '', status: 'active' });
@@ -139,7 +145,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['system', 'dict-types', 'list'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '成功', message: '字典类型更新成功', type: 'success' });
       setShowTypeModal(false);
       setEditingType(null);
@@ -161,7 +170,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       return id;
     },
     onSuccess: (id) => {
-      queryClient.invalidateQueries({ queryKey: ['system', 'dict-types', 'list'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '成功', message: '字典类型删除成功', type: 'success' });
       if (selectedType?.id === id) {
         setSelectedType(null);
@@ -200,7 +212,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       return toggleDictItemStatus(id, status);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dict-item', 'list'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '成功', message: '状态切换成功', type: 'success' });
     },
     onError: (err: unknown) => {
@@ -223,7 +238,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
 
   const handleExport = useCallback(() => {
     if (!selectedType) return;
-    queryClient.invalidateQueries({ queryKey: ['dict-item', 'list'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     addNotification({ title: '成功', message: '字典项导出成功', type: 'success' });
     setShowExportModal(false);
   }, [selectedType, addNotification, queryClient]);
@@ -256,7 +274,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
             : `成功导入 ${successCount} 条，失败 ${items.length - successCount} 条`,
         type: successCount === items.length ? 'success' : 'warning',
       });
-      queryClient.invalidateQueries({ queryKey: ['dict-item', 'list'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowImportModal(false);
       setImportFile(null);
     } catch (err: unknown) {

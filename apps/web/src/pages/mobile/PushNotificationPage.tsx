@@ -9,6 +9,9 @@ import { mobileApi, type PushConfig, type PushTemplate, type ListResponse } from
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const defaultPushConfig: PushConfig = {
   enabled: true,
   sound_enabled: true,
@@ -24,7 +27,7 @@ const PushNotificationPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const configQuery = useQuery<PushConfig>({
-    queryKey: ['mobile-push-config'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_PUSH_CONFIG_BASE,
     queryFn: async () => {
       const res = await mobileApi.getPushConfig();
       if (res.success && res.data) return res.data;
@@ -35,7 +38,7 @@ const PushNotificationPage: React.FC = () => {
   const config = configQuery.data ?? defaultPushConfig;
 
   const templatesQuery = useQuery<PushTemplate[]>({
-    queryKey: ['mobile-push-templates'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_PUSH_TEMPLATES_BASE,
     queryFn: async () => {
       const res = await mobileApi.listPushTemplates();
       if (res.success && res.data) return res.data.items || [];
@@ -63,7 +66,10 @@ const PushNotificationPage: React.FC = () => {
   const updateConfigMutation = useMutation({
     mutationFn: (data: Partial<PushConfig>) => mobileApi.updatePushConfig(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mobile-push-config'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_PUSH_CONFIG_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       logger.error('更新推送配置失败:', err);
@@ -79,7 +85,10 @@ const PushNotificationPage: React.FC = () => {
     mutationFn: (params: { id: string; data: Partial<PushTemplate> }) =>
       mobileApi.updatePushTemplate(params.id, params.data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mobile-push-templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_PUSH_TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       logger.error('更新推送模板失败:', err);

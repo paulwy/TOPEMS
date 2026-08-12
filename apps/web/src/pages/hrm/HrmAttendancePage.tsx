@@ -24,6 +24,9 @@ import { attendanceSchema, leaveSchema } from '@/schemas/hrm';
 import { attendanceApi, leaveApi } from '@/api/hrm';
 import { apiLogger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const attendanceAdapter = createCrudPageAdapter(attendanceApi);
 const leaveAdapter = createCrudPageAdapter(leaveApi);
 
@@ -56,7 +59,10 @@ const HrmAttendancePage: React.FC = () => {
             : t('hrm.hrm_attendance_page.text_81233d'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['hrm-leaves'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_LEAVES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({
@@ -214,7 +220,7 @@ const StatisticsChips: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
   const { t } = useTranslation();
 
   const { data: records = [] } = useQuery({
-    queryKey: ['hrm-attendance-records', selectedDate],
+    queryKey: [...QUERY_KEYS.AD_HOC.HRM_ATTENDANCE_RECORDS_BASE, selectedDate],
     queryFn: async () => {
       const res = await attendanceApi.list({ date: selectedDate, pagesize: 100 });
       if (res.code === 200) {
@@ -309,8 +315,8 @@ const StatisticsChips: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
 const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate }) => {
   const { t } = useTranslation();
 
-  const { data: records = [], isLoading } = useQuery({
-    queryKey: ['hrm-attendance-records', selectedDate],
+  const { data: records = [], isPending} = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.HRM_ATTENDANCE_RECORDS_BASE, selectedDate],
     queryFn: async () => {
       const res = await attendanceApi.list({ date: selectedDate, pagesize: 100 });
       if (res.code === 200) {
@@ -322,7 +328,7 @@ const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate })
   });
 
   const { data: leaves = [] } = useQuery({
-    queryKey: ['hrm-leave-requests'],
+    queryKey: QUERY_KEYS.AD_HOC.HRM_LEAVE_REQUESTS_BASE,
     queryFn: async () => {
       const res = await leaveApi.list({ pagesize: 100 });
       if (res.code === 200) {
@@ -412,7 +418,7 @@ const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate })
     },
   ];
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
         <Typography color='text.secondary'>加载中...</Typography>

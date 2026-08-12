@@ -9,6 +9,9 @@ import { Box, Card, CardContent, Typography, Rating, Chip } from '@mui/material'
 import { FileText, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 interface SupplierEvaluation {
@@ -152,7 +155,7 @@ const customColumns: ColumnDef[] = [
 
 const EvaluationStats: React.FC = () => {
   const { data: evaluations = [] } = useQuery({
-    queryKey: ['srm-evaluations-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.SRM_EVALUATIONS_STATS_BASE,
     queryFn: async () => {
       const response = await srmApi.listEvaluations();
       if (response.success && response.data) return response.data;

@@ -24,6 +24,7 @@ import { ActionButton, StatusBadge, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { PM_PATHS } from '@/modules/pm/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
@@ -1175,9 +1176,18 @@ const PmProjectDetailPage: React.FC = () => {
   ]);
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECT(id || '') });
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'phases'] });
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'milestones'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECT(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'phases'] ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'milestones'] ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   return (

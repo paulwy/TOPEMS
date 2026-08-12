@@ -24,6 +24,9 @@ import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery } from '@tanstack/react-query';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 interface InstanceDetails {
@@ -38,7 +41,7 @@ const FlowInstanceDetailPage: React.FC = () => {
   const theme = useTheme();
 
   const detailsQuery = useQuery<InstanceDetails | null>({
-    queryKey: ['workflow-instance-details', id],
+    queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_INSTANCE_DETAILS_BASE, id],
     queryFn: async (): Promise<InstanceDetails | null> => {
       if (!id) return null;
       const response = await workflowApi.getInstanceDetails(id);

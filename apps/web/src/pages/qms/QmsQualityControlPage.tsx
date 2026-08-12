@@ -10,6 +10,8 @@ import { qmsApi } from '@/api/qms';
 import type { QualityIssue, AuditPlan, CreateQualityIssueRequest } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 function extractListData<T>(response: unknown): T[] {
@@ -150,14 +152,16 @@ const auditAdapter = createCrudPageAdapter({
 
 const QmsQualityControlPage: React.FC = () => {
   const { data: issuesResp } = useQuery({
-    queryKey: ['qms', 'quality-control', 'stats', 'issues'],
+    queryKey: QUERY_KEYS.AD_HOC.QMS_QUALITY_CONTROL_STATS_ISSUES_BASE,
     queryFn: async () => qmsApi.listIssues(),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const { data: auditsResp } = useQuery({
-    queryKey: ['qms', 'quality-control', 'stats', 'audits'],
+    queryKey: QUERY_KEYS.AD_HOC.QMS_QUALITY_CONTROL_STATS_AUDITS_BASE,
     queryFn: async () => qmsApi.listAuditPlans(),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const stats: QualityControlStats = useMemo(() => {
     const issues = extractListData<QualityIssue>(issuesResp);

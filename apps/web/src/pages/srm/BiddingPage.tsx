@@ -19,7 +19,7 @@ import CrudPage, { type RowAction } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { biddingSchema } from '@/schemas/srm';
 import { srmApi, type Bidding } from '@/api/srm';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
 const BiddingPage: React.FC = () => {
@@ -37,12 +37,21 @@ const BiddingPage: React.FC = () => {
   });
 
   const invalidateBiddings = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.BIDDING });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.BIDDING ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   const publishMutation = useMutation({
     mutationFn: async (id: string) => srmApi.publishBidding(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SRM.STATISTICS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({ type: 'success', title: '发布成功', message: '招标项目已发布' });
       invalidateBiddings();
     },
@@ -54,6 +63,12 @@ const BiddingPage: React.FC = () => {
   const openBiddingMutation = useMutation({
     mutationFn: async (id: string) => srmApi.openBidding(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SRM.STATISTICS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({ type: 'success', title: '开标成功', message: '招标项目已开标' });
       invalidateBiddings();
     },
@@ -66,6 +81,12 @@ const BiddingPage: React.FC = () => {
     mutationFn: async (params: { biddingId: string; supplierId: string }) =>
       srmApi.awardBidding(params.biddingId, params.supplierId),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SRM.STATISTICS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({ type: 'success', title: '定标成功', message: '已完成定标' });
       invalidateBiddings();
       setShowSupplierDialog(false);

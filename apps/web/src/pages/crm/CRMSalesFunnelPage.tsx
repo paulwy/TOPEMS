@@ -9,6 +9,9 @@ import type { ChartConfig } from '@/components/templates/StatsPageTemplate';
 import apiClient from '@/api/client';
 import { PageContainer } from '@/components/common';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface FunnelStage {
   stage: string;
   count: number;
@@ -48,7 +51,7 @@ const CRMSalesFunnelPage: React.FC = () => {
   );
 
   const funnelQuery = useQuery<{ metrics: FunnelMetrics | null; stages: FunnelStage[] }>({
-    queryKey: ['crm-sales-funnel'],
+    queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_FUNNEL_BASE,
     queryFn: async () => {
       const [metricsRes, stagesRes] = await Promise.allSettled([
         apiClient.crm.get('/sales-funnel/metrics'),

@@ -21,12 +21,12 @@
  * // 1) 替代 useCrudOperations（最常见）
  * const adapter = createCrudOperationsAdapter(datasetCrudApi);
  * const { data, loading, create, update, delete: remove, pagination } =
- *   useCrudUnified<Dataset>({ adapter, queryKey: ['bi', 'datasets'] });
+ *   useCrudUnified<Dataset>({ adapter, queryKey: QUERY_KEYS.AD_HOC.BI_DATASETS_BASE });
  *
  * // 2) 替代 useCrudQueries（axios + basePath）
  * const adapter = createAxiosAdapter(mesApi, '/api/mes/work-orders');
  * const { data, loading, create, update } =
- *   useCrudUnified<WorkOrder>({ adapter, queryKey: ['mes', 'work-orders'] });
+ *   useCrudUnified<WorkOrder>({ adapter, queryKey: QUERY_KEYS.AD_HOC.MES_WORK_ORDERS_BASE });
  *
  * // 3) 仅 mutations（替代 useCrudMutations）
  * const adapter = createFunctionAdapter({
@@ -50,8 +50,11 @@ import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 // ============ 从 shared-types 导入统一 CRUD 类型（并重新导出以保持兼容） ============
 import type {
+
   CrudListParams as _CrudListParams,
   CrudListResult as _CrudListResult,
   CrudAdapter as _CrudAdapter,
@@ -409,7 +412,10 @@ export function useCrudUnified<
       if (params) {
         setExtraParams(params);
       }
-      queryClient.invalidateQueries({ queryKey: [...queryKey, 'list'] });
+      queryClient.invalidateQueries({ queryKey: [...queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     [queryClient, queryKey]
   );
@@ -445,7 +451,10 @@ export function useCrudUnified<
 
   // ---- refresh ----
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey });
+    queryClient.invalidateQueries({ queryKey ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient, queryKey]);
 
   // ---- 通知辅助 ----
@@ -481,7 +490,10 @@ export function useCrudUnified<
       return adapter.create(item);
     },
     onSuccess: (newItem) => {
-      queryClient.invalidateQueries({ queryKey: [...queryKey, 'list'] });
+      queryClient.invalidateQueries({ queryKey: [...queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(msgCreate);
       if (newItem) onCreateSuccess?.(newItem);
     },
@@ -494,8 +506,14 @@ export function useCrudUnified<
       return adapter.update({ id, data: item });
     },
     onSuccess: (updatedItem, variables) => {
-      queryClient.invalidateQueries({ queryKey: [...queryKey, 'list'] });
-      queryClient.invalidateQueries({ queryKey: [...queryKey, 'detail', variables.id] });
+      queryClient.invalidateQueries({ queryKey: [...queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: [...queryKey, 'detail', variables.id] ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(msgUpdate);
       if (updatedItem) onUpdateSuccess?.(updatedItem, variables.id);
     },
@@ -508,7 +526,10 @@ export function useCrudUnified<
       await adapter.delete(id);
     },
     onSuccess: (_data, id) => {
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(msgDelete);
       onDeleteSuccess?.(id);
     },
@@ -521,7 +542,10 @@ export function useCrudUnified<
       await Promise.all(ids.map((id) => adapter.delete(id)));
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(
         entityName
           ? `已删除 ${variables.length} 个${entityName}`

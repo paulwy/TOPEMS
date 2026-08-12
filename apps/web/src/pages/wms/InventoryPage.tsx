@@ -6,13 +6,14 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Typography, Card, CardContent, Stack } from '@mui/material';
 import { Package, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const InventoryStats: React.FC = () => {
   const { data: stats } = useQuery({
-    queryKey: ['wms-inventory-alert-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.WMS_INVENTORY_ALERT_STATS_BASE,
     queryFn: async () => {
       const response = await wmsApi.inventoryAlerts.getStatistics();
       if (response.success && response.data) {

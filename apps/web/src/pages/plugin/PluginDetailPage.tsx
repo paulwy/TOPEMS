@@ -46,6 +46,9 @@ import { logger } from '@/utils/logger';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const PluginDetailPage: React.FC = () => {
   const { t } = useTranslation();
   const { pluginCode } = useParams<{ pluginCode: string }>();
@@ -67,7 +70,7 @@ const PluginDetailPage: React.FC = () => {
   );
 
   const pluginQuery = useQuery({
-    queryKey: ['plugin-detail', pluginCode],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_DETAIL_BASE, pluginCode],
     queryFn: async () => {
       if (!pluginCode) throw new Error(t('plugin.message.plugin_code_empty'));
       const res = await getPlugin(pluginCode);
@@ -81,7 +84,7 @@ const PluginDetailPage: React.FC = () => {
   });
 
   const versionsQuery = useQuery({
-    queryKey: ['plugin-versions', pluginCode],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_VERSIONS_BASE, pluginCode],
     queryFn: async () => {
       if (!pluginCode) return [];
       const res = await getPluginVersions(pluginCode);
@@ -95,7 +98,7 @@ const PluginDetailPage: React.FC = () => {
   });
 
   const reviewsQuery = useQuery({
-    queryKey: ['plugin-reviews', pluginCode],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, pluginCode],
     queryFn: async () => {
       if (!pluginCode) return { reviews: [], average_rating: 0 };
       const res = await getPluginReviews(pluginCode);
@@ -109,7 +112,7 @@ const PluginDetailPage: React.FC = () => {
   });
 
   const healthQuery = useQuery({
-    queryKey: ['plugin-health', pluginCode],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_HEALTH_BASE, pluginCode],
     queryFn: async () => {
       await fetchHealthStatus();
       return healthStatus;
@@ -163,7 +166,10 @@ const PluginDetailPage: React.FC = () => {
       setRating(0);
       setReviewTitle('');
       setReviewContent('');
-      queryClient.invalidateQueries({ queryKey: ['plugin-reviews', pluginCode] });
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, pluginCode] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error('提交评价失败:', error);

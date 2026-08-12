@@ -1,6 +1,9 @@
 import type { EntitySchema } from '@/schema';
 import { departmentApi, companyApi } from '@/api/hrm';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const STATUS_OPTIONS = [
   { value: 'active', label: '启用' },
   { value: 'inactive', label: '停用' },
@@ -138,7 +141,7 @@ export const departmentSchema: EntitySchema = {
   dynamicOptions: [
     {
       field: 'org_id',
-      queryKey: ['hrm', 'companies'],
+      queryKey: QUERY_KEYS.AD_HOC.HRM_COMPANIES_BASE,
       loader: async () => {
         const res = await companyApi.list({ pagesize: 100 });
         if (res.success && res.data) {
@@ -152,7 +155,7 @@ export const departmentSchema: EntitySchema = {
     },
     {
       field: 'parentId',
-      queryKey: ['hrm', 'departments'],
+      queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_BASE,
       loader: async () => {
         const res = await departmentApi.list({ pagesize: 200 });
         if (res.success && res.data) {

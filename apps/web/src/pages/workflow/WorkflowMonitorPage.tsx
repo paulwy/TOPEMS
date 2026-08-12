@@ -14,6 +14,9 @@ import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { monitorApi } from '@/api/workflow/monitor';
 import { workflowMonitorSchema } from '@/schemas/workflow';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 type ExceptionType = 'timeout' | 'error' | 'stuck';
 
 interface WorkflowException {
@@ -79,7 +82,7 @@ export const WorkflowMonitorPage: React.FC = () => {
   const { confirmOpen, confirmConfig, openConfirm, closeConfirm } = useConfirmDialog();
 
   const { data: errorData = [] } = useQuery({
-    queryKey: ['workflow-monitor-error-instances'],
+    queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_MONITOR_ERROR_INSTANCES_BASE,
     queryFn: async () => {
       const res = await monitorApi.getErrorInstances();
       return res.data?.items || [];
@@ -88,7 +91,7 @@ export const WorkflowMonitorPage: React.FC = () => {
   });
 
   const { data: overdueData = [] } = useQuery({
-    queryKey: ['workflow-monitor-overdue-instances'],
+    queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_MONITOR_OVERDUE_INSTANCES_BASE,
     queryFn: async () => {
       const res = await monitorApi.getOverdueInstances();
       return res.data?.items || [];
@@ -144,9 +147,18 @@ export const WorkflowMonitorPage: React.FC = () => {
             if (!res.success) {
               throw new Error(res.message || '重试失败');
             }
-            queryClient.invalidateQueries({ queryKey: ['workflow-monitor-error-instances'] });
-            queryClient.invalidateQueries({ queryKey: ['workflow-monitor-overdue-instances'] });
-            queryClient.invalidateQueries({ queryKey: [workflowMonitorSchema.entity] });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_MONITOR_ERROR_INSTANCES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_MONITOR_OVERDUE_INSTANCES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+            queryClient.invalidateQueries({ queryKey: [workflowMonitorSchema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
             addNotification({
               title: '重试成功',
               message: `实例 ${instanceId} 已重新执行`,

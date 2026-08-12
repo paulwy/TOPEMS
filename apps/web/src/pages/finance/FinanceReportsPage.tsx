@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 import {
   TrendingUp,
@@ -63,7 +63,8 @@ const FinanceReportsPage: React.FC = () => {
         departmentSummaries: departments.success && departments.data ? departments.data : [],
       };
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const businessOverview = reportsQuery.data?.businessOverview ?? null;
   const projectSummaries = reportsQuery.data?.projectSummaries ?? [];

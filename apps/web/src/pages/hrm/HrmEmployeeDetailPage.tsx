@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Box, Typography, InputLabel, Avatar } from '@mui/material';
 import { User, Briefcase } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -36,7 +36,8 @@ const HrmEmployeeDetailPage: React.FC = () => {
       }
       return res.data;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const employee = employeeQuery.data ?? null;
   const loading = employeeQuery.isLoading;

@@ -17,7 +17,6 @@ import ReportViewer from '../ReportViewer';
 import { ExportModal } from '@/components/export';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-import { QUERY_KEYS } from '@/lib/reactQuery';
 
 import LoadingState from './components/LoadingState';
 import ServiceDownState from './components/ServiceDownState';
@@ -30,6 +29,8 @@ import ReportList from './components/ReportList';
 import TemplateList from './components/TemplateList';
 import TemplateFormDialog from './components/TemplateFormDialog';
 import { getModuleFromReportType } from './utils';
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -283,7 +284,10 @@ const ReportPage: React.FC = () => {
     onSuccess: (response) => {
       if (response.success) {
         showNotification('success', '报表删除成功');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         showNotification('error', response.message || '删除失败');
       }
@@ -315,7 +319,10 @@ const ReportPage: React.FC = () => {
       if (response.success) {
         showNotification('success', '模板创建成功');
         setShowCreateTemplateModal(false);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES ,
+  exact: false,
+  refetchType: 'active',
+});
         resetTemplateForm();
       } else {
         showNotification('error', response.message || '创建失败');
@@ -334,7 +341,10 @@ const ReportPage: React.FC = () => {
         showNotification('success', '模板更新成功');
         setShowEditTemplateModal(false);
         setSelectedTemplate(null);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES ,
+  exact: false,
+  refetchType: 'active',
+});
         resetTemplateForm();
       } else {
         showNotification('error', response.message || '更新失败');
@@ -350,7 +360,10 @@ const ReportPage: React.FC = () => {
     onSuccess: (response) => {
       if (response.success) {
         showNotification('success', '模板删除成功');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         showNotification('error', response.message || '删除失败');
       }
@@ -372,7 +385,10 @@ const ReportPage: React.FC = () => {
       if (response.success) {
         showNotification('success', '报表创建成功');
         setShowCreateReportFromTemplateModal(false);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         showNotification('error', response.message || '创建失败');
       }
@@ -572,7 +588,10 @@ const ReportPage: React.FC = () => {
           onClose={() => setShowBuilder(false)}
           reportTypes={reportTypes}
           onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS ,
+  exact: false,
+  refetchType: 'active',
+});
             setShowBuilder(false);
             showNotification('success', '报表生成成功');
           }}

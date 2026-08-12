@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { ClipboardCheck, FileText, CheckCircle, AlertCircle, Play, Plus } from 'lucide-react';
 import {
   Dialog,
@@ -68,7 +68,7 @@ const LimsTaskDetailPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const { data: detailData, isLoading: loading } = useQuery({
+  const { data: detailData, isPending: loading} = useQuery({
     queryKey: QUERY_KEYS.LIMS.TASK(id || ''),
     queryFn: async () => {
       if (!id) return null;
@@ -113,7 +113,8 @@ const LimsTaskDetailPage: React.FC = () => {
       return { task, records, process };
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.SHORT,});
 
   const task = detailData?.task || null;
   const records = detailData?.records || [];
@@ -129,10 +130,19 @@ const LimsTaskDetailPage: React.FC = () => {
     },
     onSuccess: () => {
       if (id) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASK(id) });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.RECORDS_BY_TASK(id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASK(id) ,
+  exact: false,
+  refetchType: 'active',
+});
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.RECORDS_BY_TASK(id) ,
+  exact: false,
+  refetchType: 'active',
+});
       }
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASKS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASKS ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowRecordModal(false);
     },
     onError: (error: unknown) => {

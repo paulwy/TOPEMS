@@ -13,6 +13,8 @@ import type { CreateProjectRequest } from '@/api/pm';
 import { PageContainer } from '@/components/common';
 import { PM_PATHS } from '@/modules/pm/config';
 
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 const PmTemplatePage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -23,6 +25,12 @@ const PmTemplatePage: React.FC = () => {
   const createProjectMutation = useMutation({
     mutationFn: (data: CreateProjectRequest) => pmApi.projects.create(data),
     onSuccess: (response) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PM.PROJECTS,
+          exact: false,
+          refetchType: 'active',
+        });
       if (response.success) {
         navigate(PM_PATHS.projects);
       }

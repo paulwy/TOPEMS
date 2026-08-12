@@ -26,7 +26,7 @@ import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityOverview } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
 
 const ct = designTokens.colors;
@@ -35,7 +35,7 @@ const QmsDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const {
     data: overview,
-    isLoading: loading,
+    isPending: loading,
     refetch: loadDashboardData,
   } = useQuery<QualityOverview | null>({
     queryKey: QUERY_KEYS.QMS.DASHBOARD,
@@ -49,7 +49,8 @@ const QmsDashboardPage: React.FC = () => {
       }
       return overviewRes.data ?? null;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const stats: StatCard[] = [
     {

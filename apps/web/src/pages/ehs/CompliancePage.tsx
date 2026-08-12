@@ -9,6 +9,8 @@ import { regulationSchema, assessmentSchema, permitSchema } from '@/schemas/ehs'
 import { ehsApi } from '@/api/ehs';
 import { designTokens } from '@/theme/tokens';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 function extractListData<T>(response: unknown): T[] {
@@ -138,19 +140,22 @@ const permitAdapter = createCrudPageAdapter({
 
 const CompliancePage: React.FC = () => {
   const { data: regulationsResp } = useQuery({
-    queryKey: ['ehs', 'compliance', 'stats', 'regulations'],
+    queryKey: QUERY_KEYS.AD_HOC.EHS_COMPLIANCE_STATS_REGULATIONS_BASE,
     queryFn: async () => ehsApi.listEnvironmentalRegulations({ pagesize: 500 }),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const { data: assessmentsResp } = useQuery({
-    queryKey: ['ehs', 'compliance', 'stats', 'assessments'],
+    queryKey: QUERY_KEYS.AD_HOC.EHS_COMPLIANCE_STATS_ASSESSMENTS_BASE,
     queryFn: async () => ehsApi.listComplianceAssessments({ pagesize: 500 }),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const { data: permitsResp } = useQuery({
-    queryKey: ['ehs', 'compliance', 'stats', 'permits'],
+    queryKey: QUERY_KEYS.AD_HOC.EHS_COMPLIANCE_STATS_PERMITS_BASE,
     queryFn: async () => ehsApi.listDischargePermits({ pagesize: 500 }),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const stats: ComplianceStats = useMemo(() => {
     const regulations = extractListData<any>(regulationsResp);

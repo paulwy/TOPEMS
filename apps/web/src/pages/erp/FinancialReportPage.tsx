@@ -44,6 +44,7 @@ import type {
 } from '@/api/erp/types';
 import { apiLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const FinancialReportPage: React.FC = () => {
@@ -122,7 +123,10 @@ const FinancialReportPage: React.FC = () => {
   }, [cashFlowQuery.isError, cashFlowQuery.error, addNotification]);
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['erp', 'financial-reports'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ERP_FINANCIAL_REPORTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   const formatCurrency = (amount: number) =>

@@ -12,6 +12,7 @@ import type {
   ProductionBatch,
 } from '@/api/pdm';
 import { designTokens } from '@/theme/tokens';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
@@ -48,7 +49,7 @@ const adaptBatch = (item: { [key: string]: unknown }) => ({
 const PdmStatsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
-  const { data: processRes, isLoading: processesLoading } = useQuery<ProductionProcess[]>({
+  const { data: processRes, isPending: processesLoading} = useQuery<ProductionProcess[]>({
     queryKey: QUERY_KEYS.PDM.PROCESSES,
     queryFn: async (): Promise<ProductionProcess[]> => {
       const response = await pdmApi.listProcesses();
@@ -64,7 +65,7 @@ const PdmStatsPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: stepRes, isLoading: stepsLoading } = useQuery<ProductionStep[]>({
+  const { data: stepRes, isPending: stepsLoading} = useQuery<ProductionStep[]>({
     queryKey: QUERY_KEYS.PDM.STEPS,
     queryFn: async (): Promise<ProductionStep[]> => {
       const response = await pdmApi.listSteps();
@@ -80,7 +81,7 @@ const PdmStatsPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: formulaRes, isLoading: formulasLoading } = useQuery<ProductionFormula[]>({
+  const { data: formulaRes, isPending: formulasLoading} = useQuery<ProductionFormula[]>({
     queryKey: QUERY_KEYS.PDM.FORMULAS,
     queryFn: async (): Promise<ProductionFormula[]> => {
       const response = await pdmApi.listFormulas();
@@ -96,7 +97,7 @@ const PdmStatsPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: batchRes, isLoading: batchesLoading } = useQuery<ProductionBatch[]>({
+  const { data: batchRes, isPending: batchesLoading} = useQuery<ProductionBatch[]>({
     queryKey: QUERY_KEYS.PDM.BATCHES,
     queryFn: async (): Promise<ProductionBatch[]> => {
       const response = await pdmApi.listBatches();
@@ -119,10 +120,22 @@ const PdmStatsPage: React.FC = () => {
   const loading = processesLoading || stepsLoading || formulasLoading || batchesLoading;
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROCESSES });
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.STEPS });
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS });
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROCESSES ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.STEPS ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   const stats = {

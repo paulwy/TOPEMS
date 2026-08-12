@@ -9,11 +9,14 @@ import { Download, Check, Package, ClipboardCheck } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const InboundStats: React.FC = () => {
   const { data: orders = [] } = useQuery({
-    queryKey: ['wms-inbound-orders-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.WMS_INBOUND_ORDERS_STATS_BASE,
     queryFn: async () => {
       const response = await wmsApi.inboundOrders.list({ page: 1, pagesize: 100 });
       if (response.success && response.data) {
@@ -149,7 +152,10 @@ export default function InboundPage() {
         const response = await wmsApi.inboundOrders.confirm(id);
         if (response.success) {
           addNotification({ type: 'success', title: '成功', message: '入库单已确认' });
-          queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_INBOUND_ORDERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         }
       } catch {
         addNotification({ type: 'error', title: '失败', message: '确认入库单失败' });
@@ -164,7 +170,10 @@ export default function InboundPage() {
         const response = await wmsApi.inboundOrders.complete(id);
         if (response.success) {
           addNotification({ type: 'success', title: '成功', message: '入库单已完成' });
-          queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_INBOUND_ORDERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         }
       } catch {
         addNotification({ type: 'error', title: '失败', message: '完成入库单失败' });

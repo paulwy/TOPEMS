@@ -32,13 +32,16 @@ import {
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 export const NotificationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const dashboardQuery = useQuery<boolean>({
-    queryKey: ['notification-dashboard'],
+    queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_DASHBOARD_BASE,
     queryFn: async () => true,
     staleTime: 5 * 60 * 1000,
   });

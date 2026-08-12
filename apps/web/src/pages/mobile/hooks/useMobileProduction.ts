@@ -9,6 +9,9 @@ import { useAuthStore, useNotificationStore } from '@/store';
 import { type ProductionOrder, type WorkReport, type Equipment } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface ReportForm {
   quantity: number;
   good_quantity: number;
@@ -33,7 +36,7 @@ export const useMobileProduction = () => {
 
   // Queries
   const ordersQuery = useQuery<ProductionOrder[]>({
-    queryKey: ['mobile-production-orders', user?.fullName],
+    queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_PRODUCTION_ORDERS_BASE, user?.fullName],
     queryFn: async () => {
       const mockOrders: ProductionOrder[] = [
         {
@@ -102,7 +105,7 @@ export const useMobileProduction = () => {
   });
 
   const reportsQuery = useQuery<WorkReport[]>({
-    queryKey: ['mobile-production-reports', user?.fullName],
+    queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_PRODUCTION_REPORTS_BASE, user?.fullName],
     queryFn: async () => {
       const mockReports: WorkReport[] = [
         {
@@ -154,7 +157,7 @@ export const useMobileProduction = () => {
   });
 
   const equipmentQuery = useQuery<Equipment[]>({
-    queryKey: ['mobile-production-equipment'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_PRODUCTION_EQUIPMENT_BASE,
     queryFn: async () => {
       const mockEquipment: Equipment[] = [
         {

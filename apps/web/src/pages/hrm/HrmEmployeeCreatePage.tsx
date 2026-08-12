@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { z } from 'zod';
 import { User, Mail, MapPin, Briefcase } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
@@ -47,7 +47,8 @@ const HrmEmployeeCreatePage: React.FC = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const positionsQuery = useQuery<Position[]>({
     queryKey: QUERY_KEYS.HRM.POSITION,
@@ -58,7 +59,8 @@ const HrmEmployeeCreatePage: React.FC = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const departments = departmentsQuery.data || [];
   const positions = positionsQuery.data || [];
@@ -77,7 +79,10 @@ const HrmEmployeeCreatePage: React.FC = () => {
     },
     onSuccess: () => {
       success(t('hrm.hrm_employee_create_page.create_1'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEES });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEES ,
+  exact: false,
+  refetchType: 'active',
+});
       navigate(HRM_PATHS.employees);
     },
     onError: (err: Error) => {

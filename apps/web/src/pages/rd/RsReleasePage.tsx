@@ -70,8 +70,14 @@ const RsReleasePage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.RELEASES });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.DEPLOYS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.RELEASES ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.DEPLOYS ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error('创建发布失败:', error);

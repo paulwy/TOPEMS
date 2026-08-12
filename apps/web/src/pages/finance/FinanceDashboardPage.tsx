@@ -19,14 +19,17 @@ import type { StatCardConfig, ChartConfig } from '@/components/templates/Dashboa
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const FinanceDashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const { data: statsData, isLoading: loading } = useQuery<FinanceDashboardStats | null>({
-    queryKey: ['finance-dashboard'],
+  const { data: statsData, isPending: loading} = useQuery<FinanceDashboardStats | null>({
+    queryKey: QUERY_KEYS.AD_HOC.FINANCE_DASHBOARD_BASE,
     queryFn: async () => {
       const response = await financeApi.getDashboard();
       if (response.success && response.data) {

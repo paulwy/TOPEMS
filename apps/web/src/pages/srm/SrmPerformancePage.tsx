@@ -9,6 +9,9 @@ import { Box, Card, CardContent, Typography, Chip, Rating } from '@mui/material'
 import { TrendingUp, TrendingDown, Award, Target, BarChart3 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 interface SupplierPerformance {
@@ -199,7 +202,7 @@ const customColumns: ColumnDef[] = [
 
 const PerformanceStats: React.FC = () => {
   const summaryQuery = useQuery<PerformanceSummary | null>({
-    queryKey: ['srm-performance-summary'],
+    queryKey: QUERY_KEYS.AD_HOC.SRM_PERFORMANCE_SUMMARY_BASE,
     queryFn: async () => {
       const response = await srmApi.getPerformanceSummary();
       if (response.success && response.data) return response.data;

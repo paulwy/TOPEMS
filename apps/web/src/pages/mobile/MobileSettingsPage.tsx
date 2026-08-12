@@ -9,6 +9,9 @@ import {
 import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface MobileSetting {
   key: string;
   label: string;
@@ -53,7 +56,7 @@ const MobileSettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const settingsQuery = useQuery<MobileSetting[]>({
-    queryKey: ['mobile-settings'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_SETTINGS_BASE,
     queryFn: async () => {
       const stored = localStorage.getItem('mobile_settings');
       if (stored) {
@@ -79,7 +82,10 @@ const MobileSettingsPage: React.FC = () => {
       return settings;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mobile-settings'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_SETTINGS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '成功', message: '移动应用设置保存成功', type: 'success' });
     },
     onError: (err: unknown) => {
@@ -103,7 +109,10 @@ const MobileSettingsPage: React.FC = () => {
       return defaultMobileSettings;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mobile-settings'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_SETTINGS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '已重置', message: '设置已恢复默认值', type: 'info' });
     },
     onError: (err: unknown) => {

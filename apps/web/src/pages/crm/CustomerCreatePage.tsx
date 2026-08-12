@@ -10,6 +10,7 @@ import { crmApi } from '@/api/crm';
 import { logger } from '@/utils/logger';
 import { CRM_PATHS } from '@/modules/crm/config';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const CustomerCreatePage: React.FC = () => {
@@ -73,7 +74,10 @@ const CustomerCreatePage: React.FC = () => {
         notes: data.description?.trim() || undefined,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.CUSTOMERS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.CUSTOMERS ,
+  exact: false,
+  refetchType: 'active',
+});
       navigate(CRM_PATHS.customers);
     },
   });

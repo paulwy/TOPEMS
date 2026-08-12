@@ -17,6 +17,9 @@ import type {
 import { apiLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface UseInventoryReportReturn {
   currentTab: number;
   setCurrentTab: (tab: number) => void;
@@ -45,7 +48,7 @@ export const useInventoryReport = (): UseInventoryReportReturn => {
   const [warehouseFilter, setWarehouseFilter] = useState<string>('');
 
   const warehousesQuery = useQuery({
-    queryKey: ['wms-warehouses'],
+    queryKey: QUERY_KEYS.AD_HOC.WMS_WAREHOUSES_BASE,
     queryFn: async () => {
       const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
       if (response.success && response.data) {
@@ -64,7 +67,7 @@ export const useInventoryReport = (): UseInventoryReportReturn => {
   }, [warehousesQuery.isError, warehousesQuery.error]);
 
   const statisticsQuery = useQuery({
-    queryKey: ['wms-inventory-statistics', warehouseFilter],
+    queryKey: [...QUERY_KEYS.AD_HOC.WMS_INVENTORY_STATISTICS_BASE, warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
@@ -93,7 +96,7 @@ export const useInventoryReport = (): UseInventoryReportReturn => {
   }, [statisticsQuery.isError, statisticsQuery.error, addNotification]);
 
   const abcAnalysisQuery = useQuery({
-    queryKey: ['wms-abc-analysis', warehouseFilter],
+    queryKey: [...QUERY_KEYS.AD_HOC.WMS_ABC_ANALYSIS_BASE, warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
@@ -129,7 +132,7 @@ export const useInventoryReport = (): UseInventoryReportReturn => {
   }, [abcAnalysisQuery.isError, abcAnalysisQuery.error, addNotification]);
 
   const turnoverQuery = useQuery({
-    queryKey: ['wms-turnover-analysis', warehouseFilter],
+    queryKey: [...QUERY_KEYS.AD_HOC.WMS_TURNOVER_ANALYSIS_BASE, warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         period_type: 'month',
@@ -162,7 +165,7 @@ export const useInventoryReport = (): UseInventoryReportReturn => {
   }, [turnoverQuery.isError, turnoverQuery.error, addNotification]);
 
   const valueByWarehouseQuery = useQuery({
-    queryKey: ['wms-value-by-warehouse', warehouseFilter],
+    queryKey: [...QUERY_KEYS.AD_HOC.WMS_VALUE_BY_WAREHOUSE_BASE, warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.category_id = warehouseFilter;

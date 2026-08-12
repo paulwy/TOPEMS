@@ -35,6 +35,9 @@ import { apiLogger } from '@/utils/logger';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 const FlowVersionHistoryPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -53,7 +56,7 @@ const FlowVersionHistoryPage: React.FC = () => {
   });
 
   const workflowQuery = useQuery<Workflow | null>({
-    queryKey: ['workflow-version-workflow', id],
+    queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE, id],
     queryFn: async () => {
       if (!id) return null;
       const workflowResponse = await workflowApi.getWorkflow(id);
@@ -69,7 +72,7 @@ const FlowVersionHistoryPage: React.FC = () => {
   const workflow = workflowQuery.data ?? null;
 
   const versionsQuery = useQuery<WorkflowVersion[]>({
-    queryKey: ['workflow-versions', id],
+    queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_VERSIONS_BASE, id],
     queryFn: async () => {
       if (!id) return [];
       const versionsResponse = await workflowApi.getVersions(id);
@@ -109,8 +112,14 @@ const FlowVersionHistoryPage: React.FC = () => {
   ]);
 
   const invalidateVersionQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ['workflow-versions', id] });
-    queryClient.invalidateQueries({ queryKey: ['workflow-version-workflow', id] });
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_VERSIONS_BASE, id] ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE, id] ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   const createVersionMutation = useMutation({
@@ -128,6 +137,12 @@ const FlowVersionHistoryPage: React.FC = () => {
       });
     },
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateVersionQueries();
       addNotification({
         title: '成功',
@@ -150,6 +165,12 @@ const FlowVersionHistoryPage: React.FC = () => {
   const activateVersionMutation = useMutation({
     mutationFn: (versionId: string) => workflowApi.activateVersion(id!, versionId),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateVersionQueries();
       addNotification({
         title: '成功',
@@ -175,6 +196,12 @@ const FlowVersionHistoryPage: React.FC = () => {
         rolled_back_by: 'current-user',
       }),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateVersionQueries();
       addNotification({
         title: '成功',
@@ -194,6 +221,12 @@ const FlowVersionHistoryPage: React.FC = () => {
   const deleteVersionMutation = useMutation({
     mutationFn: (versionId: string) => workflowApi.deleteVersion(id!, versionId),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateVersionQueries();
       addNotification({
         title: '成功',

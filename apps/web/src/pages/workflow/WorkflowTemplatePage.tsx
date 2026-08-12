@@ -153,7 +153,10 @@ const WorkflowTemplatePage: React.FC = () => {
             isactive: false,
             data: workflow.data,
           } as Partial<Workflow>);
-          queryClient.invalidateQueries({ queryKey: [workflowTemplateSchema.entity] });
+          queryClient.invalidateQueries({ queryKey: [workflowTemplateSchema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
           addNotification({
             type: 'success',
             title: '复制成功',

@@ -132,7 +132,10 @@ const AccountingManagementPage: React.FC = () => {
         title: '结转成功',
         message: '期初余额已结转',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ERP.OPENING_BALANCES });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ERP.OPENING_BALANCES ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({

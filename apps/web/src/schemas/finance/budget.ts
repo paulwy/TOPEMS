@@ -3,6 +3,9 @@ import type { EntitySchema } from '@/schema';
 import { departmentApi } from '@/api/hrm';
 import type { Department } from '@/api/hrm';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 async function loadDepartments(): Promise<{ value: string; label: string }[]> {
   try {
     const res = await departmentApi.list();
@@ -319,7 +322,7 @@ export const budgetSchema: EntitySchema = {
     {
       field: 'department_id',
       loader: loadDepartments,
-      queryKey: ['finance-budget', 'departments'],
+      queryKey: QUERY_KEYS.AD_HOC.FINANCE_BUDGET_DEPARTMENTS_BASE,
     },
   ],
 };

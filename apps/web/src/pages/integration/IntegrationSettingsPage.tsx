@@ -28,6 +28,8 @@ import { SettingsPageTemplate, type SettingSection } from '@/components/template
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 interface IntegrationConfig {
   id: string;
   name: string;
@@ -94,6 +96,12 @@ export const IntegrationSettingsPage: React.FC = () => {
       return config;
     },
     onSuccess: (config) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.INTEGRATION.CONNECTORS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         title: '连接测试成功',
         message: `成功连接到「${config.name}」系统`,
@@ -117,6 +125,12 @@ export const IntegrationSettingsPage: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     },
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.INTEGRATION.CONNECTORS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         title: '保存成功',
         message: '全局设置已保存',

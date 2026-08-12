@@ -38,6 +38,9 @@ import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const ModuleCard = ({
@@ -267,7 +270,7 @@ const BIAnalyticsPage = () => {
     overview: any;
     modulesData: Record<string, unknown>;
   }>({
-    queryKey: ['bi-analytics-overview'],
+    queryKey: QUERY_KEYS.AD_HOC.BI_ANALYTICS_OVERVIEW_BASE,
     queryFn: async () => {
       const res = await fetchAnalyticsOverview();
       const overview = res.success && res.data ? res.data : null;

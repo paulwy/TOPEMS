@@ -27,6 +27,9 @@ import { useQuery } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface StatCard {
   id: string;
   label: string;
@@ -65,7 +68,7 @@ const MobileWorkbenchPage: React.FC = () => {
     workbenchItems: WorkbenchItem[];
     unreadCount: number;
   }>({
-    queryKey: ['mobile-workbench'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_WORKBENCH_BASE,
     queryFn: async () => {
       const workbenchData: MobileWorkbenchData = {
         pending_tasks: 8,

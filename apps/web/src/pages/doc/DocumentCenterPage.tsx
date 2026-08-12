@@ -36,6 +36,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
@@ -161,7 +162,10 @@ const DocumentCenterPage: React.FC = () => {
       return res;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '删除成功', message: '文件已删除', type: 'success' });
     },
     onError: (err: unknown) => {
@@ -177,7 +181,10 @@ const DocumentCenterPage: React.FC = () => {
       }
     },
     onSuccess: (_data, files) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         title: '上传成功',
         message: `成功上传 ${files.length} 个文件`,
@@ -199,8 +206,14 @@ const DocumentCenterPage: React.FC = () => {
       return res;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.VERSIONS(variables.fileId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.VERSIONS(variables.fileId) ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '恢复成功', message: '已恢复到版本', type: 'success' });
     },
     onError: (err: unknown) => {
@@ -245,8 +258,14 @@ const DocumentCenterPage: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS });
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.FOLDERS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.FOLDERS ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   const handleToggleFavorite = (docId: string) => {

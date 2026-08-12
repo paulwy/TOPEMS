@@ -30,6 +30,9 @@ import { getErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
@@ -123,7 +126,7 @@ export const MonitorMetricsPage: React.FC = () => {
   const timeLabels = useMemo(() => generateTimeLabels(timeRange), [timeRange]);
 
   const metricsQuery = useQuery<boolean>({
-    queryKey: ['monitor-metrics', timeRange, selectedService, activeCategory],
+    queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_METRICS_BASE, timeRange, selectedService, activeCategory],
     queryFn: async () => true,
     staleTime: 5 * 60 * 1000,
   });

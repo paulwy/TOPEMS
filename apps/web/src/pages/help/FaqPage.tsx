@@ -24,6 +24,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface FaqCategories {
   id: string;
   name: string;
@@ -56,7 +59,7 @@ export const FaqPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const faqsQuery = useQuery<Faq[]>({
-    queryKey: ['help-faqs', selectedCategory, searchQuery],
+    queryKey: [...QUERY_KEYS.AD_HOC.HELP_FAQS_BASE, selectedCategory, searchQuery],
     queryFn: async () => {
       const params = {
         category: selectedCategory === 'all' ? undefined : selectedCategory,
@@ -76,7 +79,7 @@ export const FaqPage: React.FC = () => {
   const loading = faqsQuery.isLoading;
 
   const categoriesQuery = useQuery<string[]>({
-    queryKey: ['help-faq-categories'],
+    queryKey: QUERY_KEYS.AD_HOC.HELP_FAQ_CATEGORIES_BASE,
     queryFn: async () => {
       const response = await helpApi.getFaqCategories();
       if (response.success && response.data) {

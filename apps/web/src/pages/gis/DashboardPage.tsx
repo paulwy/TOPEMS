@@ -10,6 +10,9 @@ import { gisApi } from '@/api/gis';
 import type { GisStatistics } from '@/api/gis';
 import { LazyChart } from '@/components/charts';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText size={24} />,
   Activity: <Activity size={24} />,
@@ -28,8 +31,8 @@ const getGreeting = (): string => {
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const { data: statistics, isLoading: loading } = useQuery<GisStatistics | null>({
-    queryKey: ['gis-dashboard'],
+  const { data: statistics, isPending: loading} = useQuery<GisStatistics | null>({
+    queryKey: QUERY_KEYS.AD_HOC.GIS_DASHBOARD_BASE,
     queryFn: async () => {
       const response = await gisApi.getStatistics();
       if (response.success && response.data) {

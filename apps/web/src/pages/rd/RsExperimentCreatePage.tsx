@@ -7,7 +7,7 @@ import { rdApi, formulaApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { Project, Formula, CreateExperimentRequest, UpdateExperimentRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 
 const experimentTypes = ['活性测试', '稳定性测试', '配方优化', '工艺验证', '性能评估', '其他'];
@@ -30,7 +30,8 @@ const RsExperimentCreatePage: React.FC = () => {
       }
       return response.data.projects || [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const formulasQuery = useQuery({
     queryKey: QUERY_KEYS.RD.FORMULAS,
@@ -41,7 +42,8 @@ const RsExperimentCreatePage: React.FC = () => {
       }
       return response.data || [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const experimentQuery = useQuery({
     queryKey: QUERY_KEYS.RD.EXPERIMENT(id || ''),
@@ -53,7 +55,8 @@ const RsExperimentCreatePage: React.FC = () => {
       return response.data;
     },
     enabled: isEdit && !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const submitMutation = useMutation({
     mutationFn: async (params: {
@@ -81,7 +84,10 @@ const RsExperimentCreatePage: React.FC = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.EXPERIMENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.EXPERIMENTS ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: isEdit ? '更新成功' : '创建成功',

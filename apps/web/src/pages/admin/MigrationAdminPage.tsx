@@ -27,6 +27,9 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import { migrationSchema } from '@/schemas/admin';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface ServiceStatusMap {
   [serviceName: string]: MigrationStatus;
 }
@@ -49,7 +52,7 @@ const MigrationAdminPage: React.FC = () => {
   } = useConfirmDialog();
 
   const servicesQuery = useQuery({
-    queryKey: ['migration-services'],
+    queryKey: QUERY_KEYS.AD_HOC.MIGRATION_SERVICES_BASE,
     queryFn: async () => {
       const data = await migrationApi.listServices();
       return data;
@@ -58,7 +61,7 @@ const MigrationAdminPage: React.FC = () => {
   });
 
   const statusQuery = useQuery({
-    queryKey: ['migration-status', servicesQuery.data?.map((s) => s.name) || []],
+    queryKey: [...QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE, servicesQuery.data?.map((s) => s.name) || []],
     queryFn: async () => {
       const services = servicesQuery.data || [];
       if (services.length === 0) return {};
@@ -110,7 +113,10 @@ const MigrationAdminPage: React.FC = () => {
         }),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['migration-status'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown, serviceName) => {
       apiLogger.error(t('admin:migration_admin_page.apply_failed_log'), error);
@@ -137,7 +143,10 @@ const MigrationAdminPage: React.FC = () => {
         }),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['migration-status'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown, serviceName) => {
       apiLogger.error(t('admin:migration_admin_page.rollback_failed_log'), error);
@@ -174,7 +183,10 @@ const MigrationAdminPage: React.FC = () => {
     setActiveService(service);
     setStatusDialogOpen(true);
     if (!statusMap[service.name]) {
-      queryClient.invalidateQueries({ queryKey: ['migration-status'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     }
   };
 
@@ -208,7 +220,10 @@ const MigrationAdminPage: React.FC = () => {
           }
         }
 
-        queryClient.invalidateQueries({ queryKey: ['migration-status'] });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
 
         addNotification({
           title:

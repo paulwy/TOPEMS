@@ -7,6 +7,9 @@ import { usePluginStore } from '@/store/pluginStore';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export function usePluginDetail() {
   const { t } = useTranslation();
   const { pluginCode } = useParams<{ pluginCode: string }>();
@@ -27,7 +30,7 @@ export function usePluginDetail() {
   );
 
   const pluginQuery = useQuery({
-    queryKey: ['plugin-detail', pluginCode],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_DETAIL_BASE, pluginCode],
     queryFn: async () => {
       if (!pluginCode) throw new Error(t('plugin.message.plugin_code_empty'));
       const res = await getPlugin(pluginCode);
@@ -41,7 +44,7 @@ export function usePluginDetail() {
   });
 
   const versionsQuery = useQuery({
-    queryKey: ['plugin-versions', pluginCode],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_VERSIONS_BASE, pluginCode],
     queryFn: async () => {
       if (!pluginCode) return [];
       const res = await getPluginVersions(pluginCode);
@@ -55,7 +58,7 @@ export function usePluginDetail() {
   });
 
   const reviewsQuery = useQuery({
-    queryKey: ['plugin-reviews', pluginCode],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, pluginCode],
     queryFn: async () => {
       if (!pluginCode) return { reviews: [], average_rating: 0 };
       const res = await getPluginReviews(pluginCode);
@@ -69,7 +72,7 @@ export function usePluginDetail() {
   });
 
   const healthQuery = useQuery({
-    queryKey: ['plugin-health', pluginCode],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_HEALTH_BASE, pluginCode],
     queryFn: async () => {
       await fetchHealthStatus();
       return healthStatus;
@@ -130,7 +133,10 @@ export function usePluginDetail() {
       setRating(0);
       setReviewTitle('');
       setReviewContent('');
-      queryClient.invalidateQueries({ queryKey: ['plugin-reviews', pluginCode] });
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, pluginCode] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error(t('plugin.detail_page.log.submit_review_failed'), error);

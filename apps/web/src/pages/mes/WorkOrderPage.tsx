@@ -8,6 +8,9 @@ import { mesApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';
 import { Play, Pause, CheckCircle, XCircle } from 'lucide-react';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const apiAdapter = createCrudPageAdapter(mesApi.workOrders, {
   itemsField: 'work_orders',
 });
@@ -45,7 +48,10 @@ export default function WorkOrderPage() {
             title: '状态更新成功',
             message: `工单状态已更新为"${response.data?.status ?? ''}"`,
           });
-          queryClient.invalidateQueries({ queryKey: ['mes_work_order'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_WORK_ORDER_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         } else {
           addNotification({
             type: 'error',

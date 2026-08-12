@@ -63,6 +63,9 @@ import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const BiPermissionPage = () => {
@@ -86,7 +89,7 @@ const BiPermissionPage = () => {
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const rowPermissionsQuery = useQuery<RowLevelPermission[]>({
-    queryKey: ['bi-row-permissions'],
+    queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE,
     queryFn: async () => {
       const res = await listRowLevelPermissions();
       if (res.success && res.data) {
@@ -98,7 +101,7 @@ const BiPermissionPage = () => {
   });
 
   const dataPermissionsQuery = useQuery<DataPermissionRule[]>({
-    queryKey: ['bi-data-permissions'],
+    queryKey: QUERY_KEYS.AD_HOC.BI_DATA_PERMISSIONS_BASE,
     queryFn: async () => {
       const res = await listDataPermissions();
       if (res.success && res.data) {
@@ -136,7 +139,10 @@ const BiPermissionPage = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-row-permissions'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setDialogOpen(false);
     },
     onError: (error: unknown) => {
@@ -148,7 +154,10 @@ const BiPermissionPage = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteRowLevelPermission(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-row-permissions'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error('Failed to delete permission:', error);
@@ -159,7 +168,10 @@ const BiPermissionPage = () => {
     mutationFn: (item: RowLevelPermission) =>
       updateRowLevelPermission(item.id, { isEnabled: !item.isEnabled }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-row-permissions'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error('Failed to toggle permission:', error);

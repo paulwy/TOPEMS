@@ -9,6 +9,9 @@ import type { EntitySchema } from '@/schema';
 import { accountApi } from '@/api/finance/account';
 import i18n from '@/i18n';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 /**
  * 加载可用的上级科目（仅总账科目）
  */
@@ -338,7 +341,7 @@ export const accountSchema: EntitySchema = {
     {
       field: 'parentId',
       loader: loadParentAccounts,
-      queryKey: ['admin-accounts', 'parents'],
+      queryKey: QUERY_KEYS.AD_HOC.ADMIN_ACCOUNTS_PARENTS_BASE,
     },
   ],
 };

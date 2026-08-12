@@ -9,11 +9,14 @@ import { Upload, Check, ClipboardList, Truck, Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const OutboundStats: React.FC = () => {
   const { data: orders = [] } = useQuery({
-    queryKey: ['wms-outbound-orders-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_STATS_BASE,
     queryFn: async () => {
       const response = await wmsApi.outboundOrders.list({ page: 1, pagesize: 100 });
       if (response.success && response.data) {
@@ -151,7 +154,10 @@ export default function OutboundPage() {
         const response = await wmsApi.outboundOrders.confirm(id);
         if (response.success) {
           addNotification({ type: 'success', title: '成功', message: '出库单已确认' });
-          queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         }
       } catch {
         addNotification({ type: 'error', title: '失败', message: '确认出库单失败' });
@@ -166,7 +172,10 @@ export default function OutboundPage() {
         const response = await wmsApi.outboundOrders.pick(id);
         if (response.success) {
           addNotification({ type: 'success', title: '成功', message: '已开始拣货' });
-          queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         }
       } catch {
         addNotification({ type: 'error', title: '失败', message: '拣货失败' });
@@ -181,7 +190,10 @@ export default function OutboundPage() {
         const response = await wmsApi.outboundOrders.ship(id, []);
         if (response.success) {
           addNotification({ type: 'success', title: '成功', message: '出库单已发货' });
-          queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         }
       } catch {
         addNotification({ type: 'error', title: '失败', message: '发货失败' });
@@ -196,7 +208,10 @@ export default function OutboundPage() {
         const response = await wmsApi.outboundOrders.complete(id);
         if (response.success) {
           addNotification({ type: 'success', title: '成功', message: '出库单已完成' });
-          queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         }
       } catch {
         addNotification({ type: 'error', title: '失败', message: '完成出库单失败' });

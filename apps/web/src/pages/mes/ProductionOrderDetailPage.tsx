@@ -10,7 +10,7 @@ import {
 import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Package, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
@@ -30,7 +30,7 @@ const ProductionOrderDetailPage: React.FC = () => {
 
   const {
     data: order,
-    isLoading: orderLoading,
+    isPending: orderLoading,
     error: orderError,
   } = useQuery<ProductionOrder | null>({
     queryKey: id ? QUERY_KEYS.MES.PRODUCTION_ORDER(id) : ['mes', 'production-order', 'null'],
@@ -43,7 +43,8 @@ const ProductionOrderDetailPage: React.FC = () => {
       throw new Error(res.message || t('mes.production_order_detail_page.fail'));
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const { data: recordsData } = useQuery({
     queryKey: [...QUERY_KEYS.MES.PRODUCTION_RECORDS, { order_id: id }],
@@ -55,7 +56,8 @@ const ProductionOrderDetailPage: React.FC = () => {
       return [];
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const { data: qualityRecordsData } = useQuery<QualityRecord[]>({
     queryKey: id
@@ -69,7 +71,8 @@ const ProductionOrderDetailPage: React.FC = () => {
       return [];
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const records = recordsData || [];
   const qualityRecords = qualityRecordsData || [];

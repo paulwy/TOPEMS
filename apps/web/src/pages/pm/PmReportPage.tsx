@@ -39,7 +39,8 @@ import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 import { PM_PATHS } from '@/modules/pm/config';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 const DEFAULT_STATS: PmStatistics = {
   total_projects: 0,
@@ -84,7 +85,8 @@ const PmReportPage: React.FC = () => {
       }
       return DEFAULT_STATS;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const benefitsQuery = useQuery({
     queryKey: [
@@ -99,7 +101,8 @@ const PmReportPage: React.FC = () => {
       }
       return [] as ProjectBenefit[];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const stats = statsQuery.data ?? DEFAULT_STATS;
   const benefits = benefitsQuery.data ?? [];
