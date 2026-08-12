@@ -15,7 +15,7 @@ import { syncApi } from './sync';
 import { correctiveActionApi } from './correctiveAction';
 import { auditApi } from './audit';
 import { apqpApi } from './apqp';
-import type { QmsStatistics } from './types';
+import type { QmsStatistics, ApprovalRequest, ApprovalResponse, ApprovalEntityType } from './types';
 
 export * from './types';
 export * from './adapters';
@@ -297,6 +297,83 @@ export const qmsApi = {
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.qms.get<string>('/health');
+  },
+};
+
+// ============================================================================
+// 通用审批 API — 调用 /api/qms/{entityType}/{id}/{action} 端点
+// 支持 approve / reject / rework / cancel 四种审批动作
+// ============================================================================
+export const qmsApprovalApi = {
+  approve: async (
+    entityType: ApprovalEntityType,
+    id: string,
+    data: { operator: string; comment?: string; next_status?: string }
+  ): Promise<ApiResponse<ApprovalResponse>> => {
+    return apiClient.qms.post<ApprovalResponse>(
+      `/${entityType}/${id}/approve`,
+      data
+    );
+  },
+
+  reject: async (
+    entityType: ApprovalEntityType,
+    id: string,
+    data: { operator: string; comment?: string }
+  ): Promise<ApiResponse<ApprovalResponse>> => {
+    return apiClient.qms.post<ApprovalResponse>(
+      `/${entityType}/${id}/reject`,
+      data
+    );
+  },
+
+  rework: async (
+    entityType: ApprovalEntityType,
+    id: string,
+    data: { operator: string; comment?: string; next_status?: string }
+  ): Promise<ApiResponse<ApprovalResponse>> => {
+    return apiClient.qms.post<ApprovalResponse>(
+      `/${entityType}/${id}/rework`,
+      data
+    );
+  },
+
+  cancel: async (
+    entityType: ApprovalEntityType,
+    id: string,
+    data: { operator: string; comment?: string }
+  ): Promise<ApiResponse<ApprovalResponse>> => {
+    return apiClient.qms.post<ApprovalResponse>(
+      `/${entityType}/${id}/cancel`,
+      data
+    );
+  },
+
+  /**
+   * 通用审批入口 — 根据 ApprovalRequest.action 分发到对应端点
+   */
+  process: async (request: ApprovalRequest): Promise<ApiResponse<ApprovalResponse>> => {
+    const { entityType, entityId, action, operator, comment, nextStatus } = request;
+    switch (action) {
+      case 'approve':
+        return qmsApprovalApi.approve(entityType, entityId, {
+          operator,
+          comment,
+          next_status: nextStatus,
+        });
+      case 'reject':
+        return qmsApprovalApi.reject(entityType, entityId, { operator, comment });
+      case 'rework':
+        return qmsApprovalApi.rework(entityType, entityId, {
+          operator,
+          comment,
+          next_status: nextStatus,
+        });
+      case 'cancel':
+        return qmsApprovalApi.cancel(entityType, entityId, { operator, comment });
+      default:
+        throw new Error(`Unsupported approval action: ${String(action)}`);
+    }
   },
 };
 

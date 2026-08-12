@@ -1417,3 +1417,307 @@ export interface ActionItem {
   createdAt: string;
   updatedAt: string;
 }
+
+// ============================================================================
+// Audit Frontend (camelCase) Types — 双套模式补全
+// ============================================================================
+// 现有 AuditPlan / AuditTask / AuditFinding 为 snake_case 单套（Backend），
+// 以下追加 camelCase Frontend 版本，与 SPC/QualityCost/EightD/FMEA 双套模式一致。
+export interface AuditPlanFrontend {
+  id: string;
+  planNo: string;
+  title: string;
+  description?: string;
+  auditType: string;
+  status: string;
+  auditor: string;
+  auditors: string[];
+  startDate: string;
+  endDate: string;
+  departments: string[];
+  plannedDate: string;
+  scope?: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAuditPlanRequest {
+  planNo: string;
+  title: string;
+  description?: string;
+  auditType: string;
+  auditor: string;
+  auditors?: string[];
+  startDate: string;
+  endDate: string;
+  departments?: string[];
+  plannedDate?: string;
+  scope?: string;
+  createdBy?: string;
+}
+
+export interface CreateAuditPlanRequestBackend {
+  plan_no: string;
+  title: string;
+  description?: string;
+  audit_type: string;
+  auditor: string;
+  auditors?: string[];
+  start_date: string;
+  end_date: string;
+  departments?: string[];
+  planned_date?: string;
+  scope?: string;
+  created_by?: string;
+}
+
+export interface AuditTaskFrontend {
+  id: string;
+  planId: string;
+  taskNo: string;
+  title: string;
+  description?: string;
+  status: string;
+  assignedTo: string;
+  assignee: string;
+  priority: string;
+  dueDate?: string;
+  completedAt?: string;
+  findingsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAuditTaskRequest {
+  planId: string;
+  title: string;
+  description?: string;
+  assignedTo: string;
+  assignee?: string;
+  priority?: string;
+  dueDate?: string;
+}
+
+export interface CreateAuditTaskRequestBackend {
+  plan_id: string;
+  title: string;
+  description?: string;
+  assigned_to: string;
+  assignee?: string;
+  priority?: string;
+  due_date?: string;
+}
+
+export interface AuditFindingFrontend {
+  id: string;
+  taskId: string;
+  findingNo: string;
+  title: string;
+  description: string;
+  severity: string;
+  category: string;
+  status: string;
+  recommendation?: string;
+  assignedTo?: string;
+  dueDate?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAuditFindingRequest {
+  taskId: string;
+  title: string;
+  description: string;
+  severity: string;
+  category: string;
+  recommendation?: string;
+  assignedTo?: string;
+  dueDate?: string;
+}
+
+export interface CreateAuditFindingRequestBackend {
+  task_id: string;
+  title: string;
+  description: string;
+  severity: string;
+  category: string;
+  recommendation?: string;
+  assigned_to?: string;
+  due_date?: string;
+}
+
+// ============================================================================
+// APQP Frontend (camelCase) Types — 双套模式补全
+// ============================================================================
+// 现有 ApqpProject / ApqpPhase / ApqpTask / ApqpRisk / ApqpApproval 为 snake_case
+// 单套（Backend），以下追加 camelCase Frontend 版本。
+export interface ApqpProjectFrontend {
+  id: string;
+  projectNo: string;
+  projectName: string;
+  productId?: string;
+  productName?: string;
+  customer?: string;
+  description?: string;
+  status: string;
+  currentPhase?: string;
+  leader?: string;
+  team?: string;
+  startDate?: string;
+  targetDate?: string;
+  actualEndDate?: string;
+  progress: number;
+  riskLevel?: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateApqpProjectFrontendRequest {
+  projectNo: string;
+  projectName: string;
+  productId?: string;
+  productName?: string;
+  customer?: string;
+  description?: string;
+  leader?: string;
+  team?: string;
+  startDate?: string;
+  targetDate?: string;
+  createdBy?: string;
+}
+
+export interface CreateApqpProjectBackendRequest {
+  project_no: string;
+  project_name: string;
+  product_id?: string;
+  product_name?: string;
+  customer?: string;
+  description?: string;
+  leader?: string;
+  team?: string;
+  start_date?: string;
+  target_date?: string;
+  created_by?: string;
+}
+
+export interface ApqpPhaseFrontend {
+  id: string;
+  projectId: string;
+  phaseCode: string;
+  phaseName: string;
+  description?: string;
+  status: string;
+  startDate?: string;
+  endDate?: string;
+  actualStartDate?: string;
+  actualEndDate?: string;
+  progress: number;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApqpTaskFrontend {
+  id: string;
+  projectId: string;
+  phaseId: string;
+  taskName: string;
+  description?: string;
+  taskType?: string;
+  deliverable?: string;
+  status: string;
+  assignee?: string;
+  dueDate?: string;
+  completedAt?: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApqpRiskFrontend {
+  id: string;
+  projectId: string;
+  riskName: string;
+  description?: string;
+  riskCategory?: string;
+  severity: number;
+  occurrence: number;
+  detection: number;
+  rpn: number;
+  status: string;
+  mitigationPlan?: string;
+  responsible?: string;
+  targetDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApqpApprovalFrontend {
+  id: string;
+  projectId: string;
+  approvalType: string;
+  status: string;
+  applicant?: string;
+  approver?: string;
+  comment?: string;
+  submittedAt?: string;
+  approvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================================================
+// 通用审批 DTO（Frontend camelCase）
+// ============================================================================
+export type ApprovalAction = 'approve' | 'reject' | 'rework' | 'cancel';
+
+export type ApprovalEntityType =
+  | 'inspection'
+  | 'issue'
+  | 'corrective_action'
+  | 'audit_plan'
+  | 'audit_finding'
+  | 'eight_d_report'
+  | 'apqp_project'
+  | 'apqp_approval';
+
+export interface ApprovalRequest {
+  entityType: ApprovalEntityType;
+  entityId: string;
+  action: ApprovalAction;
+  operator: string;
+  comment?: string;
+  nextStatus?: string;
+}
+
+export interface ApprovalResponse {
+  id: string;
+  entityType: ApprovalEntityType;
+  entityId: string;
+  action: ApprovalAction;
+  status: string;
+  operator: string;
+  comment?: string;
+  processedAt: string;
+  createdAt: string;
+}
+
+// ============================================================================
+// BI 聚合类型补充（QualityTrendItem / DefectDistribution 单独导出）
+// ============================================================================
+export interface QualityTrendItem {
+  date: string;
+  passRate: number;
+  defectCount: number;
+  issueCount: number;
+  inspectionCount: number;
+}
+
+export interface DefectDistribution {
+  category: string;
+  count: number;
+  percentage: number;
+}
