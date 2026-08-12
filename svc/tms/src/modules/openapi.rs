@@ -1,0 +1,66 @@
+// TMS 服务 OpenAPI 文档
+use utoipa::OpenApi;
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        crate::modules::vehicle::list_vehicles,
+        crate::modules::vehicle::get_vehicle,
+        crate::modules::vehicle::create_vehicle,
+        crate::modules::vehicle::update_vehicle,
+        crate::modules::vehicle::delete_vehicle,
+        crate::modules::driver::list_drivers,
+        crate::modules::driver::get_driver,
+        crate::modules::driver::create_driver,
+        crate::modules::driver::update_driver,
+        crate::modules::driver::delete_driver,
+        crate::modules::carrier::list_carriers,
+        crate::modules::carrier::get_carrier,
+        crate::modules::carrier::create_carrier,
+        crate::modules::carrier::update_carrier,
+        crate::modules::carrier::delete_carrier,
+        crate::modules::route::list_routes,
+        crate::modules::route::get_route,
+        crate::modules::route::create_route,
+        crate::modules::route::update_route,
+        crate::modules::route::delete_route,
+        crate::modules::shipment::list_shipments,
+        crate::modules::shipment::get_shipment,
+        crate::modules::shipment::create_shipment,
+        crate::modules::shipment::update_shipment,
+        crate::modules::shipment::delete_shipment,
+        crate::modules::shipment::dispatch_shipment,
+        crate::modules::shipment::arrive_shipment,
+        crate::modules::shipment::cancel_shipment,
+    ),
+    components(schemas(
+        crate::modules::vehicle::Vehicle,
+        crate::modules::vehicle::CreateVehicleRequest,
+        crate::modules::vehicle::UpdateVehicleRequest,
+        crate::modules::driver::Driver,
+        crate::modules::driver::CreateDriverRequest,
+        crate::modules::driver::UpdateDriverRequest,
+        crate::modules::carrier::Carrier,
+        crate::modules::carrier::CreateCarrierRequest,
+        crate::modules::carrier::UpdateCarrierRequest,
+        crate::modules::route::Route,
+        crate::modules::route::CreateRouteRequest,
+        crate::modules::route::UpdateRouteRequest,
+        crate::modules::shipment::Shipment,
+        crate::modules::shipment::CreateShipmentRequest,
+        crate::modules::shipment::UpdateShipmentRequest,
+    )),
+    tags(
+        (name = "TMS - Vehicle", description = "车辆管理 API"),
+        (name = "TMS - Driver", description = "司机管理 API"),
+        (name = "TMS - Carrier", description = "承运商管理 API"),
+        (name = "TMS - Route", description = "路线管理 API"),
+        (name = "TMS - Shipment", description = "运单管理 API"),
+    ),
+    info(
+        title = "TOPEMS TMS API",
+        version = "1.0.0",
+        description = "运输管理系统 API - 包含车辆管理、司机管理、承运商管理、运单管理、路线管理等功能"
+    )
+)]
+pub struct TmsApiDoc;
