@@ -4,7 +4,7 @@ import pytest
 from click.testing import CliRunner
 from pathlib import Path
 
-from topems_cli.commands.test import test
+from topems_cli.commands.test import test, run_vitest, run_tsc, run_cargo_test
 
 
 class TestTestCommand:
@@ -19,15 +19,62 @@ class TestTestCommand:
         result = runner.invoke(test, ['--help'])
         assert result.exit_code == 0
 
-    def test_test_unit_help(self, runner):
-        """测试 test unit --help"""
-        result = runner.invoke(test, ['unit', '--help'])
-        assert result.exit_code == 0
-
     def test_test_all_help(self, runner):
         """测试 test --all --help"""
         result = runner.invoke(test, ['--all', '--help'])
         assert result.exit_code == 0
+
+    def test_test_has_frontend_option(self, runner):
+        """测试 test 命令包含 --frontend 选项"""
+        result = runner.invoke(test, ['--help'])
+        assert result.exit_code == 0
+        assert '--frontend' in result.output
+        assert 'vitest' in result.output
+
+    def test_test_has_typecheck_option(self, runner):
+        """测试 test 命令包含 --typecheck 选项"""
+        result = runner.invoke(test, ['--help'])
+        assert result.exit_code == 0
+        assert '--typecheck' in result.output
+        assert 'TypeScript' in result.output
+
+    def test_test_has_backend_option(self, runner):
+        """测试 test 命令包含 --backend 选项"""
+        result = runner.invoke(test, ['--help'])
+        assert result.exit_code == 0
+        assert '--backend' in result.output
+
+
+class TestTestFunctions:
+    """test 命令辅助函数测试"""
+
+    def test_run_vitest_signature(self):
+        """测试 run_vitest 函数签名"""
+        # 函数应该存在且可调用
+        assert callable(run_vitest)
+
+    def test_run_tsc_signature(self):
+        """测试 run_tsc 函数签名"""
+        assert callable(run_tsc)
+
+    def test_run_cargo_test_signature(self):
+        """测试 run_cargo_test 函数签名"""
+        assert callable(run_cargo_test)
+
+    def test_run_vitest_returns_tuple(self):
+        """测试 run_vitest 返回元组 (returncode, output)"""
+        # 在不存在的目录运行应返回错误码
+        returncode, output = run_vitest(cwd="/nonexistent/path/xyz")
+        assert isinstance(returncode, int)
+        assert isinstance(output, str)
+        assert returncode != 0
+
+    def test_run_tsc_returns_tuple(self):
+        """测试 run_tsc 返回元组 (returncode, output)"""
+        returncode, output = run_tsc(cwd="/nonexistent/path/xyz")
+        assert isinstance(returncode, int)
+        assert isinstance(output, str)
+        assert returncode != 0
 
 
 class TestTestIntegration:
@@ -48,3 +95,9 @@ class TestTestIntegration:
         topems_root = Path(__file__).parent.parent.parent
         cargo_toml = topems_root / "Cargo.toml"
         assert cargo_toml.exists()
+
+    def test_dev_and_doctor_tests_exist(self):
+        """测试 dev 和 doctor 命令测试文件存在"""
+        cli_tests = Path(__file__).parent
+        assert (cli_tests / "test_commands_dev.py").exists()
+        assert (cli_tests / "test_commands_doctor.py").exists()

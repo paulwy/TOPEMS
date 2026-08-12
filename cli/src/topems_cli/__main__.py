@@ -32,6 +32,8 @@ from .commands.test import test
 from .commands.cleanup import cleanup
 from .commands.build import build
 from .commands.db import db
+from .commands.dev import dev
+from .commands.doctor import doctor
 
 main.add_command(start, name="start")
 main.add_command(stop, name="stop")
@@ -41,6 +43,8 @@ main.add_command(test, name="test")
 main.add_command(cleanup, name="cleanup")
 main.add_command(build, name="build")
 main.add_command(db, name="db")
+main.add_command(dev, name="dev")
+main.add_command(doctor, name="doctor")
 
 # Docker 命令只在 Docker 可用时注册
 from .docker import get_docker_manager
