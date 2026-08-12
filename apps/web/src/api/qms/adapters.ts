@@ -52,6 +52,26 @@ import type {
   SyncRecord,
   ActionItemBackend,
   ActionItem,
+  AuditPlan,
+  AuditPlanFrontend,
+  CreateAuditPlanRequest,
+  CreateAuditPlanRequestBackend,
+  AuditTask,
+  AuditTaskFrontend,
+  AuditFinding,
+  AuditFindingFrontend,
+  ApqpProject,
+  ApqpProjectFrontend,
+  CreateApqpProjectFrontendRequest,
+  CreateApqpProjectBackendRequest,
+  ApqpPhase,
+  ApqpPhaseFrontend,
+  ApqpTask,
+  ApqpTaskFrontend,
+  ApqpRisk,
+  ApqpRiskFrontend,
+  ApqpApproval,
+  ApqpApprovalFrontend,
 } from './types';
 
 // Quality Standard adapters
@@ -528,4 +548,184 @@ export const adaptActionItemToFrontend = (backend: ActionItemBackend): ActionIte
   remark: backend.remark,
   createdAt: backend.created_at,
   updatedAt: backend.updated_at,
+});
+
+// ============================================================================
+// Audit adapters — snake_case Backend → camelCase Frontend
+// ============================================================================
+export const adaptAuditPlanToFrontend = (backend: AuditPlan): AuditPlanFrontend => ({
+  id: backend.id,
+  planNo: backend.plan_no,
+  title: backend.title,
+  description: backend.description,
+  auditType: backend.audit_type,
+  status: backend.status,
+  auditor: backend.auditor,
+  auditors: backend.auditors || [],
+  startDate: backend.start_date,
+  endDate: backend.end_date,
+  departments: backend.departments || [],
+  plannedDate: backend.planned_date,
+  scope: backend.scope,
+  createdBy: backend.auditor,
+  createdAt: backend.created_at,
+  updatedAt: backend.updated_at,
+});
+
+export const adaptAuditPlanToBackend = (
+  frontend: CreateAuditPlanRequest
+): CreateAuditPlanRequestBackend => ({
+  plan_no: frontend.planNo,
+  title: frontend.title,
+  description: frontend.description,
+  audit_type: frontend.auditType,
+  auditor: frontend.auditor,
+  auditors: frontend.auditors,
+  start_date: frontend.startDate,
+  end_date: frontend.endDate,
+  departments: frontend.departments,
+  planned_date: frontend.plannedDate,
+  scope: frontend.scope,
+  created_by: frontend.createdBy,
+});
+
+export const adaptAuditTaskToFrontend = (backend: AuditTask): AuditTaskFrontend => ({
+  id: backend.id,
+  planId: backend.plan_id,
+  taskNo: backend.task_no,
+  title: backend.title,
+  description: backend.description,
+  status: backend.status,
+  assignedTo: backend.assigned_to,
+  assignee: backend.assignee,
+  priority: backend.priority,
+  dueDate: backend.due_date,
+  completedAt: backend.completed_at,
+  findingsCount: backend.findings_count,
+  createdAt: backend.created_at,
+  updatedAt: backend.updated_at,
+});
+
+export const adaptAuditFindingToFrontend = (backend: AuditFinding): AuditFindingFrontend => ({
+  id: backend.id,
+  taskId: backend.task_id,
+  findingNo: backend.finding_no,
+  title: backend.title,
+  description: backend.description,
+  severity: backend.severity,
+  category: backend.category,
+  status: backend.status,
+  recommendation: backend.recommendation,
+  assignedTo: backend.assigned_to,
+  dueDate: backend.due_date,
+  resolvedAt: backend.resolved_at,
+  createdAt: backend.created_at,
+  updatedAt: backend.updated_at,
+});
+
+// ============================================================================
+// APQP adapters — snake_case Backend → camelCase Frontend
+// ============================================================================
+export const adaptApqpProjectToFrontend = (backend: ApqpProject): ApqpProjectFrontend => ({
+  id: backend.id,
+  projectNo: backend.project_no,
+  projectName: backend.project_name,
+  productId: backend.product_id,
+  productName: backend.product_name,
+  customer: backend.customer,
+  description: backend.description,
+  status: backend.status || 'concept',
+  currentPhase: backend.current_phase,
+  leader: backend.leader,
+  team: backend.team,
+  startDate: backend.start_date,
+  targetDate: backend.target_date,
+  actualEndDate: backend.actualEndDate,
+  progress: backend.progress ?? 0,
+  riskLevel: backend.risklevel,
+  createdBy: backend.created_by,
+  createdAt: backend.created_at || '',
+  updatedAt: backend.updated_at || '',
+});
+
+export const adaptApqpProjectToBackend = (
+  frontend: CreateApqpProjectFrontendRequest
+): CreateApqpProjectBackendRequest => ({
+  project_no: frontend.projectNo,
+  project_name: frontend.projectName,
+  product_id: frontend.productId,
+  product_name: frontend.productName,
+  customer: frontend.customer,
+  description: frontend.description,
+  leader: frontend.leader,
+  team: frontend.team,
+  start_date: frontend.startDate,
+  target_date: frontend.targetDate,
+  created_by: frontend.createdBy,
+});
+
+export const adaptApqpPhaseToFrontend = (backend: ApqpPhase): ApqpPhaseFrontend => ({
+  id: backend.id,
+  projectId: backend.project_id,
+  phaseCode: backend.phase_code,
+  phaseName: backend.phase_name,
+  description: backend.description,
+  status: backend.status || 'pending',
+  startDate: backend.start_date,
+  endDate: backend.end_date,
+  actualStartDate: backend.actualStartDate,
+  actualEndDate: backend.actualEndDate,
+  progress: backend.progress ?? 0,
+  sortOrder: backend.sort_order ?? 0,
+  createdAt: backend.created_at || '',
+  updatedAt: backend.updated_at || '',
+});
+
+export const adaptApqpTaskToFrontend = (backend: ApqpTask): ApqpTaskFrontend => ({
+  id: backend.id,
+  projectId: backend.project_id,
+  phaseId: backend.phase_id,
+  taskName: backend.task_name,
+  description: backend.description,
+  taskType: backend.task_type,
+  deliverable: backend.deliverable,
+  status: backend.status || 'pending',
+  assignee: backend.assignee,
+  dueDate: backend.due_date,
+  completedAt: backend.completed_at,
+  sortOrder: backend.sort_order ?? 0,
+  createdAt: backend.created_at || '',
+  updatedAt: backend.updated_at || '',
+});
+
+export const adaptApqpRiskToFrontend = (backend: ApqpRisk): ApqpRiskFrontend => ({
+  id: backend.id,
+  projectId: backend.project_id,
+  riskName: backend.risk_name,
+  description: backend.description,
+  riskCategory: backend.risk_category,
+  severity: backend.severity ?? 0,
+  occurrence: backend.occurrence ?? 0,
+  detection: backend.detection ?? 0,
+  rpn: backend.rpn ?? 0,
+  status: backend.status || 'open',
+  mitigationPlan: backend.mitigation_plan,
+  responsible: backend.responsible,
+  targetDate: backend.target_date,
+  createdAt: backend.created_at || '',
+  updatedAt: backend.updated_at || '',
+});
+
+export const adaptApqpApprovalToFrontend = (backend: ApqpApproval): ApqpApprovalFrontend => ({
+  id: backend.id,
+  projectId: backend.project_id,
+  approvalType: backend.approval_type,
+  status: backend.status || 'pending',
+  applicant: backend.applicant,
+  approver: backend.approver,
+  comment: backend.comment,
+  submittedAt: backend.submitted_at,
+  approvedAt: backend.approved_at,
+  createdAt: backend.created_at || '',
+  updatedAt: backend.created_at || '',
 });
