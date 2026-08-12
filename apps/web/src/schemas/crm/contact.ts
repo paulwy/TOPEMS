@@ -1,13 +1,39 @@
-/**
- * 联系人管理 Schema — 驱动 ContactManagementPage 的完整 CRUD
- */
-
+import { z } from 'zod';
 import type { EntitySchema } from '@/schema';
+import { commonAuditSchema } from './_shared';
+import { approvalStatus } from './customer';
 
-export const contactSchema: EntitySchema = {
-  entity: 'contact',
+export const contactStatus = z.enum(['active', 'inactive']);
+
+export const contactZodSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  customerId: z.string().uuid().optional(),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().max(100).optional(),
+  email: z.string().email().max(100).optional().or(z.literal('')),
+  phone: z.string().max(50).optional(),
+  position: z.string().max(100).optional(),
+  status: contactStatus.default('active'),
+  notes: z.string().optional(),
+  approvalStatus: approvalStatus.default('none'),
+}).merge(commonAuditSchema);
+
+export type Contact = z.infer<typeof contactZodSchema>;
+export type ContactStatus = z.infer<typeof contactStatus>;
+
+export const createContactSchema = contactZodSchema.omit({ id: true, tenantId: true, approvalStatus: true, createdAt: true, updatedAt: true, deletedAt: true });
+export type CreateContactRequest = z.infer<typeof createContactSchema>;
+
+export const updateContactSchema = createContactSchema.partial();
+export type UpdateContactRequest = z.infer<typeof updateContactSchema>;
+
+export const contactSchema: EntitySchema<Contact> = {
+  entity: 'crm_contact',
   title: '联系人管理',
   description: '管理联系人信息，包括姓名、联系方式、职位等',
+  softDelete: true,
+  actions: ['create', 'edit', 'detail', 'delete'],
 
   api: {
     module: 'crm',
@@ -16,7 +42,7 @@ export const contactSchema: EntitySchema = {
 
   fields: [
     {
-      name: 'first_name',
+      name: 'firstName',
       label: '名',
       type: 'text',
       required: true,
@@ -24,7 +50,7 @@ export const contactSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
-      name: 'last_name',
+      name: 'lastName',
       label: '姓',
       type: 'text',
       listWidth: 80,
@@ -52,6 +78,13 @@ export const contactSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 100 }],
     },
     {
+      name: 'customerId',
+      label: '客户ID',
+      type: 'text',
+      showInList: false,
+      showInDetail: false,
+    },
+    {
       name: 'status',
       label: '状态',
       type: 'select',
@@ -67,11 +100,21 @@ export const contactSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
-      name: 'customer_id',
-      label: '客户ID',
-      type: 'text',
-      showInList: false,
-      showInDetail: false,
+      name: 'approvalStatus',
+      label: '审批状态',
+      type: 'select',
+      defaultValue: 'none',
+      readonly: true,
+      options: {
+        type: 'static',
+        options: [
+          { value: 'none', label: '未发起' },
+          { value: 'pending', label: '审批中' },
+          { value: 'approved', label: '已通过' },
+          { value: 'rejected', label: '已驳回' },
+        ],
+      },
+      listWidth: 100,
     },
     {
       name: 'notes',
@@ -79,11 +122,18 @@ export const contactSchema: EntitySchema = {
       type: 'textarea',
       showInList: false,
     },
+    {
+      name: 'createdAt',
+      label: '创建时间',
+      type: 'datetime',
+      readonly: true,
+      listWidth: 160,
+    },
   ],
 
   list: {
-    columns: ['first_name', 'last_name', 'email', 'phone', 'position', 'status'],
-    searchFields: ['first_name', 'last_name', 'email'],
+    columns: ['firstName', 'lastName', 'email', 'phone', 'position', 'status', 'approvalStatus'],
+    searchFields: ['firstName', 'lastName', 'email'],
     pageSize: 20,
     statusBadge: {
       field: 'status',
@@ -110,12 +160,10 @@ export const contactSchema: EntitySchema = {
     ],
   },
 
-  actions: ['create', 'edit', 'detail', 'delete'],
-
   formSections: [
     {
       title: '基本信息',
-      fields: ['first_name', 'last_name', 'email', 'phone', 'position'],
+      fields: ['firstName', 'lastName', 'email', 'phone', 'position', 'customerId'],
     },
     {
       title: '其他',

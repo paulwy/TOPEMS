@@ -16,6 +16,10 @@ pub enum CrmPermission {
     OpportunityWrite,
     InteractionRead,
     InteractionWrite,
+    ReturnRead,
+    ReturnWrite,
+    BillingRead,
+    BillingWrite,
     All,
 }
 
@@ -44,6 +48,18 @@ impl CrmPermission {
                 SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Read)
             }
             CrmPermission::InteractionWrite => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Write)
+            }
+            CrmPermission::ReturnRead => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Read)
+            }
+            CrmPermission::ReturnWrite => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Write)
+            }
+            CrmPermission::BillingRead => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Read)
+            }
+            CrmPermission::BillingWrite => {
                 SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Write)
             }
             CrmPermission::All => {
@@ -85,6 +101,10 @@ mod tests {
             CrmPermission::OpportunityWrite,
             CrmPermission::InteractionRead,
             CrmPermission::InteractionWrite,
+            CrmPermission::ReturnRead,
+            CrmPermission::ReturnWrite,
+            CrmPermission::BillingRead,
+            CrmPermission::BillingWrite,
             CrmPermission::All,
         ];
         for v in &variants {
@@ -102,6 +122,7 @@ mod tests {
         let c = CrmPermission::CustomerWrite;
         assert_ne!(a, c);
         assert_ne!(CrmPermission::All, CrmPermission::ContactRead);
+        assert_ne!(CrmPermission::ReturnRead, CrmPermission::BillingRead);
     }
 
     #[test]
@@ -111,6 +132,8 @@ mod tests {
             CrmPermission::ContactRead,
             CrmPermission::OpportunityRead,
             CrmPermission::InteractionRead,
+            CrmPermission::ReturnRead,
+            CrmPermission::BillingRead,
         ];
         for p in &read_perms {
             let shared = p.to_shared();
@@ -123,6 +146,8 @@ mod tests {
             CrmPermission::ContactWrite,
             CrmPermission::OpportunityWrite,
             CrmPermission::InteractionWrite,
+            CrmPermission::ReturnWrite,
+            CrmPermission::BillingWrite,
         ];
         for p in &write_perms {
             let shared = p.to_shared();
@@ -146,6 +171,10 @@ mod tests {
             CrmPermission::OpportunityWrite,
             CrmPermission::InteractionRead,
             CrmPermission::InteractionWrite,
+            CrmPermission::ReturnRead,
+            CrmPermission::ReturnWrite,
+            CrmPermission::BillingRead,
+            CrmPermission::BillingWrite,
             CrmPermission::All,
         ];
         for v in &all {
@@ -170,5 +199,8 @@ mod tests {
             CrmPermission::InteractionRead,
             CrmPermission::InteractionWrite
         );
+        assert_ne!(CrmPermission::ReturnRead, CrmPermission::ReturnWrite);
+        assert_ne!(CrmPermission::BillingRead, CrmPermission::BillingWrite);
+        assert_ne!(CrmPermission::ReturnRead, CrmPermission::BillingRead);
     }
 }

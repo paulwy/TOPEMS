@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { customerScoringSchema } from '@/schemas/crm';
-import { crmApi } from '@/api/crm';
+import { crmApi, useCrmMock, type ScoringData, type Period } from '@/api/crm';
 import type { CustomerScore, ScoreFactor } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -118,6 +118,8 @@ const CRMCustomerScoringPage: React.FC = () => {
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
+  const [period] = React.useState<Period>('MTD');
+  const { data: mockScoring, mockEnabled } = useCrmMock<ScoringData>({ period });
 
   // ============ API 适配器 ============
 
@@ -274,15 +276,40 @@ const CRMCustomerScoringPage: React.FC = () => {
 
   const headerContent = (rows: unknown[], _total: number) => {
     const scores = rows as CustomerScore[];
-    const gradeDistribution = {
+    const fromList = {
       A: scores.filter((s) => s.scorelevel === 'A').length,
       B: scores.filter((s) => s.scorelevel === 'B').length,
       C: scores.filter((s) => s.scorelevel === 'C').length,
       D: scores.filter((s) => s.scorelevel === 'D').length,
     };
+    const gradeDistribution = mockEnabled ? mockScoring.distribution : fromList;
+
+    const rfm = mockScoring.rfm;
+    const rfmLabels: Array<{ key: keyof typeof rfm; label: string; color: string; bgColor: string }> = [
+      { key: 'recencyHigh', label: t('crm.customerScoring.rfm_recency_high') || '高新近', color: 'success.main', bgColor: 'success.light' },
+      { key: 'recencyMedium', label: t('crm.customerScoring.rfm_recency_med') || '中新近', color: 'primary.main', bgColor: 'primary.light' },
+      { key: 'recencyLow', label: t('crm.customerScoring.rfm_recency_low') || '低新近', color: 'warning.main', bgColor: 'warning.light' },
+      { key: 'frequencyHigh', label: t('crm.customerScoring.rfm_freq_high') || '高频', color: 'success.main', bgColor: 'success.light' },
+      { key: 'frequencyMedium', label: t('crm.customerScoring.rfm_freq_med') || '中频', color: 'primary.main', bgColor: 'primary.light' },
+      { key: 'frequencyLow', label: t('crm.customerScoring.rfm_freq_low') || '低频', color: 'warning.main', bgColor: 'warning.light' },
+      { key: 'monetaryHigh', label: t('crm.customerScoring.rfm_mon_high') || '高价值', color: 'success.main', bgColor: 'success.light' },
+      { key: 'monetaryMedium', label: t('crm.customerScoring.rfm_mon_med') || '中价值', color: 'primary.main', bgColor: 'primary.light' },
+      { key: 'monetaryLow', label: t('crm.customerScoring.rfm_mon_low') || '低价值', color: 'warning.main', bgColor: 'warning.light' },
+    ];
 
     return (
       <Box sx={{ mb: 2 }}>
+        {mockEnabled && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Chip
+              label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+              color='warning'
+              size='small'
+              variant='outlined'
+              sx={{ fontWeight: 600 }}
+            />
+          </Box>
+        )}
         <Box
           sx={{
             display: 'grid',
@@ -319,6 +346,26 @@ const CRMCustomerScoringPage: React.FC = () => {
             bgColor='error.light'
           />
         </Box>
+        {mockEnabled && (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(3, 1fr)', md: 'repeat(9, 1fr)' },
+              gap: 1.5,
+              mb: 3,
+            }}
+          >
+            {rfmLabels.map(({ key, label, color, bgColor }) => (
+              <StatCard
+                key={key}
+                label={label}
+                value={rfm[key]}
+                color={color}
+                bgColor={bgColor}
+              />
+            ))}
+          </Box>
+        )}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             variant='contained'

@@ -1,13 +1,46 @@
-/**
- * 商机管理 Schema — 驱动 OpportunityManagementPage 的完整 CRUD
- */
-
 import React from 'react';
+import { z } from 'zod';
 import type { EntitySchema } from '@/schema';
+import { commonAuditSchema } from './_shared';
 
-export const opportunitySchema: EntitySchema = {
-  entity: 'opportunity',
+export const oppStage = z.enum(['draft', 'lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost', 'closed']);
+export const oppPriority = z.enum(['high', 'medium', 'low']);
+export const oppStatus = z.enum(['open', 'won', 'lost', 'archived']);
+
+export const opportunityZodSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  oppNo: z.string().max(64),
+  title: z.string().min(2).max(200),
+  customerId: z.string().uuid().optional(),
+  customerName: z.string().max(120).optional(),
+  stage: oppStage.default('draft'),
+  priority: oppPriority.default('medium'),
+  amount: z.coerce.number().optional(),
+  winRate: z.coerce.number().int().min(0).max(100).optional(),
+  closeDate: z.coerce.date().optional(),
+  ownerId: z.string().uuid().optional(),
+  status: oppStatus.default('open'),
+  description: z.string().optional(),
+}).merge(commonAuditSchema);
+
+export type Opportunity = z.infer<typeof opportunityZodSchema>;
+export type OppStage = z.infer<typeof oppStage>;
+export type OppPriority = z.infer<typeof oppPriority>;
+export type OppStatus = z.infer<typeof oppStatus>;
+
+export const createOpportunitySchema = opportunityZodSchema.omit({ id: true, tenantId: true, stage: true, status: true, createdAt: true, updatedAt: true, deletedAt: true });
+export type CreateOpportunityRequest = z.infer<typeof createOpportunitySchema>;
+
+export const updateOpportunitySchema = createOpportunitySchema.partial();
+export type UpdateOpportunityRequest = z.infer<typeof updateOpportunitySchema>;
+
+export const opportunitySchema: EntitySchema<Opportunity> = {
+  entity: 'crm_opportunity',
   title: '商机管理',
+  description: '管理商机全生命周期，含阶段推进与赢率追踪',
+  softDelete: true,
+  actions: ['create', 'edit', 'detail', 'delete'],
 
   api: {
     module: 'crm',
@@ -16,7 +49,7 @@ export const opportunitySchema: EntitySchema = {
 
   fields: [
     {
-      name: 'opp_no',
+      name: 'oppNo',
       label: '商机编号',
       type: 'text',
       required: true,
@@ -29,16 +62,17 @@ export const opportunitySchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 180,
+      validation: [{ type: 'minLength', value: 2 }, { type: 'maxLength', value: 200 }],
     },
     {
-      name: 'customer_id',
+      name: 'customerId',
       label: '客户ID',
       type: 'text',
       showInList: false,
       showInDetail: false,
     },
     {
-      name: 'customer_name',
+      name: 'customerName',
       label: '客户名称',
       type: 'text',
       listWidth: 160,
@@ -47,15 +81,18 @@ export const opportunitySchema: EntitySchema = {
       name: 'stage',
       label: '商机阶段',
       type: 'select',
+      defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
+          { value: 'draft', label: '草稿' },
           { value: 'lead', label: '线索' },
           { value: 'qualified', label: '已确认' },
           { value: 'proposal', label: '方案阶段' },
           { value: 'negotiation', label: '谈判阶段' },
           { value: 'won', label: '已赢单' },
           { value: 'lost', label: '已输单' },
+          { value: 'closed', label: '已关闭' },
         ],
       },
       listWidth: 120,
@@ -65,6 +102,7 @@ export const opportunitySchema: EntitySchema = {
       name: 'priority',
       label: '优先级',
       type: 'select',
+      defaultValue: 'medium',
       options: {
         type: 'static',
         options: [
@@ -89,14 +127,20 @@ export const opportunitySchema: EntitySchema = {
         ),
     },
     {
-      name: 'close_date',
+      name: 'winRate',
+      label: '赢率(%)',
+      type: 'number',
+      listWidth: 100,
+    },
+    {
+      name: 'closeDate',
       label: '预计成交日期',
       type: 'date',
       listWidth: 120,
     },
     {
-      name: 'owner',
-      label: '负责人',
+      name: 'ownerId',
+      label: '负责人ID',
       type: 'text',
       showInList: false,
     },
@@ -123,11 +167,18 @@ export const opportunitySchema: EntitySchema = {
       type: 'textarea',
       showInList: false,
     },
+    {
+      name: 'createdAt',
+      label: '创建时间',
+      type: 'datetime',
+      readonly: true,
+      listWidth: 160,
+    },
   ],
 
   list: {
-    columns: ['opp_no', 'title', 'customer_name', 'stage', 'amount', 'close_date', 'status'],
-    searchFields: ['opp_no', 'title', 'customer_name'],
+    columns: ['oppNo', 'title', 'customerName', 'stage', 'priority', 'amount', 'winRate', 'closeDate', 'status'],
+    searchFields: ['oppNo', 'title', 'customerName'],
     pageSize: 10,
     statusBadge: {
       field: 'status',
@@ -151,12 +202,14 @@ export const opportunitySchema: EntitySchema = {
         type: 'select',
         options: [
           { label: '全部', value: 'all' },
+          { label: '草稿', value: 'draft' },
           { label: '线索', value: 'lead' },
           { label: '已确认', value: 'qualified' },
           { label: '方案阶段', value: 'proposal' },
           { label: '谈判阶段', value: 'negotiation' },
           { label: '已赢单', value: 'won' },
           { label: '已输单', value: 'lost' },
+          { label: '已关闭', value: 'closed' },
         ],
       },
       {
@@ -174,20 +227,18 @@ export const opportunitySchema: EntitySchema = {
     ],
   },
 
-  actions: ['create', 'edit', 'detail', 'delete'],
-
   formSections: [
     {
       title: '基本信息',
-      fields: ['opp_no', 'title', 'customer_id', 'customer_name'],
+      fields: ['oppNo', 'title', 'customerId', 'customerName'],
     },
     {
       title: '阶段与金额',
-      fields: ['stage', 'priority', 'amount', 'close_date'],
+      fields: ['stage', 'priority', 'amount', 'winRate', 'closeDate'],
     },
     {
       title: '其他',
-      fields: ['owner', 'status', 'description'],
+      fields: ['ownerId', 'status', 'description'],
     },
   ],
 

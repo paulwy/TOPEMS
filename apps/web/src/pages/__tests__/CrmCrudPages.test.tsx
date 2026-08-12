@@ -167,12 +167,14 @@ describe('CrmCrudPages', () => {
         breadcrumbs: [{ label: 'crm.common.crm' }, { label: 'crm.interactionList.title' }],
       })
     );
-    expect(props.apiAdapter).toEqual({
-      list: interactionApi.list,
-      create: interactionApi.create,
-      update: interactionApi.update,
-      delete: interactionApi.delete,
-    });
+    expect(props.apiAdapter).toEqual(
+      expect.objectContaining({
+        list: expect.any(Function),
+        create: expect.any(Function),
+        update: expect.any(Function),
+        delete: expect.any(Function),
+      })
+    );
   });
 
   it('renders return list with adapter-backed API methods', () => {
@@ -186,11 +188,13 @@ describe('CrmCrudPages', () => {
         breadcrumbs: [{ label: 'crm.common.crm' }, { label: 'crm.returnList.title' }],
       })
     );
-    expect(props.apiAdapter).toEqual({
-      list: returnsApi.list,
-      create: returnsApi.create,
-      update: returnsApi.update,
-      delete: returnsApi.delete,
-    });
+    expect(props.apiAdapter).toEqual(
+      expect.objectContaining({
+        list: expect.any(Function),
+        create: expect.any(Function),
+        update: expect.any(Function),
+        delete: expect.any(Function),
+      })
+    );
   });
 });

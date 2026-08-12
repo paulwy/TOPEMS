@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
-import { Box, Typography, Card, CardContent, LinearProgress, Chip } from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Box, Typography, Card, CardContent, LinearProgress, Chip, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { TrendingUp, Users, Target, DollarSign } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -8,35 +8,17 @@ import { StatsPageTemplate, type StatsStatCard } from '@/components/templates';
 import type { ChartConfig } from '@/components/templates/StatsPageTemplate';
 import apiClient from '@/api/client';
 import { PageContainer } from '@/components/common';
+import { useCrmMock, type FunnelData, type Period } from '@/api/crm';
 
-
-import { QUERY_KEYS } from '@/lib/reactQuery';
-
-interface FunnelStage {
-  stage: string;
-  count: number;
-  total_value: number;
-  avg_value: number;
-  probability?: number;
-}
-
-interface FunnelMetrics {
-  total_opportunities: number;
-  total_value: number;
-  avg_value: number;
-  conversion_rate: number;
-  weighted_value: number;
-}
-
-interface ChartDataItem {
-  name: string;
-  value: number;
-  color: string;
-}
+type FunnelViewMode = 'count' | 'weighted';
 
 const CRMSalesFunnelPage: React.FC = () => {
   const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const [viewMode, setViewMode] = useState<FunnelViewMode>('count');
+  const [period, setPeriod] = useState<Period>('MTD');
+
+  const { data: mockData, mockEnabled } = useCrmMock<FunnelData>({ period });
 
   const stageLabelMap = useMemo<Record<string, string>>(
     () => ({
@@ -44,73 +26,77 @@ const CRMSalesFunnelPage: React.FC = () => {
       qualified: t('crm.salesFunnel.stage_qualified'),
       proposal: t('crm.salesFunnel.stage_proposal'),
       negotiation: t('crm.salesFunnel.stage_negotiation'),
-      closed_won: t('crm.salesFunnel.stage_closed_won'),
-      closed_lost: t('crm.salesFunnel.stage_closed_lost'),
+      won: t('crm.salesFunnel.stage_closed_won'),
+      lost: t('crm.salesFunnel.stage_closed_lost'),
+      closed: t('crm.salesFunnel.stage_closed'),
     }),
     [t]
   );
 
-  const funnelQuery = useQuery<{ metrics: FunnelMetrics | null; stages: FunnelStage[] }>({
-    queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_FUNNEL_BASE,
+  const funnelQuery = useQuery<FunnelData>({
+    queryKey: ['crm-sales-funnel', period],
     queryFn: async () => {
       const [metricsRes, stagesRes] = await Promise.allSettled([
         apiClient.crm.get('/sales-funnel/metrics'),
         apiClient.crm.get('/sales-funnel'),
       ]);
-      let metrics: FunnelMetrics | null = null;
-      let stages: FunnelStage[] = [];
+      let metrics: FunnelData['metrics'] | null = null;
+      let stages: FunnelData['stages'] = [];
       if (metricsRes.status === 'fulfilled' && metricsRes.value.success) {
-        metrics = metricsRes.value.data as FunnelMetrics;
+        metrics = metricsRes.value.data as FunnelData['metrics'];
       }
       if (stagesRes.status === 'fulfilled' && stagesRes.value.success) {
-        const data = (stagesRes.value.data as { stages?: FunnelStage[] }) || {};
+        const data = (stagesRes.value.data as { stages?: FunnelData['stages'] }) || {};
         stages = data.stages || [];
       }
-      return { metrics, stages };
+      return { stages, metrics: metrics! };
     },
     staleTime: 5 * 60 * 1000,
+    initialData: mockEnabled ? mockData : undefined,
+    enabled: !mockEnabled,
   });
 
-  const metrics = funnelQuery.data?.metrics ?? null;
-  const stages = funnelQuery.data?.stages ?? [];
-  const loading = funnelQuery.isLoading;
+  const merged = mockEnabled ? mockData : funnelQuery.data;
+  const metrics = merged?.metrics ?? null;
+  const stages = merged?.stages ?? [];
+  const loading = !mockEnabled && funnelQuery.isLoading;
 
   useEffect(() => {
-    if (funnelQuery.isError) {
+    if (!mockEnabled && funnelQuery.isError) {
       addNotification({
         type: 'error',
         title: t('crm.salesFunnel.title_load_fail'),
         message: t('crm.salesFunnel.msg_load_fail'),
       });
     }
-  }, [funnelQuery.isError, addNotification, t]);
+  }, [funnelQuery.isError, addNotification, t, mockEnabled]);
 
   const stats: StatsStatCard[] = [
     {
       id: 'total',
       title: t('crm.salesFunnel.stat_total'),
-      value: metrics?.total_opportunities ?? 0,
+      value: metrics?.totalOpportunities ?? 0,
       icon: <Users size={20} />,
       color: 'primary',
     },
     {
       id: 'value',
       title: t('crm.salesFunnel.stat_total_value'),
-      value: `¥${Math.round(Number(metrics?.total_value ?? 0)).toLocaleString()}`,
+      value: `¥${Math.round(Number(metrics?.totalValue ?? 0)).toLocaleString()}`,
       icon: <DollarSign size={20} />,
       color: 'success',
     },
     {
       id: 'avg',
       title: t('crm.salesFunnel.stat_avg_value'),
-      value: `¥${Math.round(Number(metrics?.avg_value ?? 0)).toLocaleString()}`,
+      value: `¥${Math.round(Number(metrics?.avgValue ?? 0)).toLocaleString()}`,
       icon: <Target size={20} />,
       color: 'info',
     },
     {
       id: 'conversion',
       title: t('crm.salesFunnel.stat_conversion'),
-      value: `${(metrics?.conversion_rate ?? 0).toFixed(1)}%`,
+      value: `${(metrics?.conversionRate ?? 0).toFixed(1)}%`,
       icon: <TrendingUp size={20} />,
       color: 'warning',
     },
@@ -123,18 +109,25 @@ const CRMSalesFunnelPage: React.FC = () => {
       type: 'bar' as const,
       dataKey: 'value',
       nameKey: 'name',
-      data: stages.flatMap((stage) => [
-        {
-          name: `${stageLabelMap[stage.stage] || stage.stage}${t('crm.salesFunnel.chart_suffix_count')}`,
-          value: stage.count,
-          color: 'primary.main',
-        },
-        {
-          name: `${stageLabelMap[stage.stage] || stage.stage}${t('crm.salesFunnel.chart_suffix_value')}`,
-          value: Math.round(Number(stage.total_value) / 10000),
-          color: 'success.main',
-        },
-      ]),
+      data: stages.flatMap((stage) => {
+        const label = stageLabelMap[stage.stage] || stage.stage;
+        if (viewMode === 'count') {
+          return [
+            {
+              name: `${label}${t('crm.salesFunnel.chart_suffix_count')}`,
+              value: stage.count,
+              color: 'primary.main',
+            },
+          ];
+        }
+        return [
+          {
+            name: `${label}${t('crm.salesFunnel.chart_suffix_value')}`,
+            value: Math.round(Number(stage.amount) / 10000),
+            color: 'success.main',
+          },
+        ];
+      }),
     },
   ];
 
@@ -145,6 +138,30 @@ const CRMSalesFunnelPage: React.FC = () => {
       maxWidth='xl'
       autoTitle
       autoBreadcrumbs
+      headerActions={
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {mockEnabled && (
+            <Chip
+              label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+              color='warning'
+              size='small'
+              variant='outlined'
+              sx={{ fontWeight: 600 }}
+            />
+          )}
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, v) => v && setViewMode(v)}
+            size='small'
+          >
+            <ToggleButton value='count'>{t('crm.salesFunnel.view_count') || '按数量'}</ToggleButton>
+            <ToggleButton value='weighted'>
+              {t('crm.salesFunnel.view_weighted') || '按金额'}
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+      }
     >
       <StatsPageTemplate
         title={t('crm.salesFunnel.template_title')}
@@ -153,19 +170,16 @@ const CRMSalesFunnelPage: React.FC = () => {
         loading={loading}
         onRefresh={() => funnelQuery.refetch()}
         timeRangeOptions={[
-          { value: 'month', label: t('crm.salesFunnel.range_month') },
-          { value: 'quarter', label: t('crm.salesFunnel.range_quarter') },
-          { value: 'year', label: t('crm.salesFunnel.range_year') },
-          { value: 'all', label: t('crm.salesFunnel.range_all') },
+          { value: 'MTD', label: t('crm.period.mtd') || '本月' },
+          { value: 'QTD', label: t('crm.period.qtd') || '本季度' },
+          { value: 'YTD', label: t('crm.period.ytd') || '本年' },
+          { value: 'ROLLING_12M', label: t('crm.period.r12') || '近12月' },
         ]}
+        onTimeRangeChange={(v) => setPeriod(v as Period)}
       />
 
-      {/* 漏斗阶段详情 */}
       <Box sx={{ mt: 4 }}>
-        <Typography
-          variant='h6'
-          sx={{ fontWeight: 600, mb: 2 }}
-        >
+        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
           {t('crm.salesFunnel.section_detail')}
         </Typography>
         <Box
@@ -176,25 +190,18 @@ const CRMSalesFunnelPage: React.FC = () => {
           }}
         >
           {stages.map((stage, idx) => {
-            const max = Math.max(...stages.map((s) => s.count), 1);
+            const max = Math.max(...stages.map((s) => (viewMode === 'count' ? s.count : s.amount)), 1);
+            const progressValue =
+              viewMode === 'count' ? (stage.count / max) * 100 : (stage.amount / max) * 100;
             return (
-              <Card
-                key={stage.stage}
-                variant='outlined'
-              >
+              <Card key={stage.stage} variant='outlined'>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                     <Box>
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
+                      <Typography variant='caption' color='text.secondary'>
                         {t('crm.salesFunnel.stage_index', { index: idx + 1 })}
                       </Typography>
-                      <Typography
-                        variant='h6'
-                        sx={{ fontWeight: 600 }}
-                      >
+                      <Typography variant='h6' sx={{ fontWeight: 600 }}>
                         {stageLabelMap[stage.stage] || stage.stage}
                       </Typography>
                     </Box>
@@ -207,40 +214,23 @@ const CRMSalesFunnelPage: React.FC = () => {
                     )}
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 700 }}
-                      color='primary.main'
-                    >
-                      {stage.count}
+                    <Typography variant='h4' sx={{ fontWeight: 700 }} color='primary.main'>
+                      {viewMode === 'count' ? stage.count : `¥${Math.round(stage.amount).toLocaleString()}`}
                     </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {t('crm.salesFunnel.text_opportunity_count')}
+                    <Typography variant='body2' color='text.secondary'>
+                      {viewMode === 'count'
+                        ? t('crm.salesFunnel.text_opportunity_count')
+                        : t('crm.salesFunnel.text_total_value', { value: '' }).trim()}
                     </Typography>
                   </Box>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {t('crm.salesFunnel.text_total_value', {
-                      value: Math.round(Number(stage.total_value)).toLocaleString(),
-                    })}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    sx={{ mb: 2 }}
-                  >
+                  <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
                     {t('crm.salesFunnel.text_avg_value', {
-                      value: Math.round(Number(stage.avg_value)).toLocaleString(),
+                      value: Math.round(Number(stage.avgValue ?? stage.amount / Math.max(stage.count, 1))).toLocaleString(),
                     })}
                   </Typography>
                   <LinearProgress
                     variant='determinate'
-                    value={(stage.count / max) * 100}
+                    value={progressValue}
                     sx={{ height: 6, borderRadius: 3 }}
                   />
                 </CardContent>

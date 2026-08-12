@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Button, Chip } from '@mui/material';
 import { Plus, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { crmApi } from '@/api/crm';
+import { crmApi, useCrmMock, type ForecastData, type Period } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
@@ -23,6 +23,8 @@ const ct = designTokens.colors;
 const CRMSalesForecastPage: React.FC = () => {
   const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState('monthly');
+  const [period, setPeriod] = useState<Period>('MTD');
+  const { data: mockForecast, mockEnabled } = useCrmMock<ForecastData>({ period });
 
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
@@ -39,6 +41,18 @@ const CRMSalesForecastPage: React.FC = () => {
       staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const forecasts = forecastsQuery.data || [];
+  const series = mockForecast?.series;
+  const mockForecastRows = series
+    ? series.actual.map((a, i) => ({
+        period: a.month,
+        predicted_amount: series.weightedPipeline[i]?.value ?? 0,
+        actual_amount: a.value,
+        confidencelevel: 0.72,
+        status: i < series.actual.length - 1 ? 'completed' : 'generated',
+        trend: '↑',
+      }))
+    : [];
+  const displayForecasts = mockEnabled ? (mockForecastRows as unknown as typeof forecasts) : forecasts;
 
   const generateMutation = useMutation({
     mutationFn: async () => {
@@ -80,10 +94,14 @@ const CRMSalesForecastPage: React.FC = () => {
   };
 
   const loading =
-    forecastsQuery.isLoading || forecastsQuery.isFetching || generateMutation.isPending;
+    (!mockEnabled && (forecastsQuery.isLoading || forecastsQuery.isFetching)) ||
+    generateMutation.isPending;
 
-  const summary = useMemo(
-    () => ({
+  const summary = useMemo(() => {
+    if (mockEnabled && mockForecast) {
+      return mockForecast.summary;
+    }
+    return {
       totalPredicted: forecasts.reduce((sum, f) => sum + f.predicted_amount, 0),
       totalActual: forecasts.reduce((sum, f) => sum + (f.actual_amount || 0), 0),
       averageConfidence:
@@ -93,9 +111,8 @@ const CRMSalesForecastPage: React.FC = () => {
             )
           : 0,
       completedCount: forecasts.filter((f) => f.status === 'completed').length,
-    }),
-    [forecasts]
-  );
+    };
+  }, [forecasts, mockEnabled, mockForecast]);
 
   const statCards = useMemo<StatCard[]>(
     () => [
@@ -131,18 +148,46 @@ const CRMSalesForecastPage: React.FC = () => {
     [summary, forecasts.length, t]
   );
 
-  const charts = useMemo<ChartConfig[]>(
-    () => [
+  const charts = useMemo<ChartConfig[]>(() => {
+    const comparisonData =
+      mockEnabled && series
+        ? series.actual.flatMap((a, i) => [
+            { name: a.month, value: a.value * 10_000, type: 'actual' as const },
+            {
+              name: a.month,
+              value: (series.weightedPipeline[i]?.value ?? 0) * 10_000,
+              type: 'weighted' as const,
+            },
+            {
+              name: a.month,
+              value: (series.target[i]?.value ?? 0) * 10_000,
+              type: 'target' as const,
+            },
+          ])
+        : forecasts.flatMap((f) => [
+            { name: f.period, value: f.predicted_amount, type: 'predicted' },
+            { name: f.period, value: f.actual_amount || 0, type: 'actual' },
+          ]);
+
+    const confidenceData =
+      mockEnabled && series
+        ? series.actual.map((a, i) => ({
+            name: a.month,
+            value: 65 + Math.round((i % 5) * 6),
+          }))
+        : forecasts.map((f) => ({
+            name: f.period,
+            value: Math.round(f.confidencelevel * 100),
+          }));
+
+    return [
       {
-        id: 'forecast-comparison',
+        id: 'forecast-three-line',
         title: t('crm.salesForecast.chart_comparison'),
-        type: 'bar',
+        type: 'line',
         dataKey: 'value',
         nameKey: 'name',
-        data: forecasts.flatMap((f) => [
-          { name: f.period, value: f.predicted_amount, type: 'predicted' },
-          { name: f.period, value: f.actual_amount || 0, type: 'actual' },
-        ]),
+        data: comparisonData,
         height: 288,
       },
       {
@@ -151,15 +196,11 @@ const CRMSalesForecastPage: React.FC = () => {
         type: 'line',
         dataKey: 'value',
         nameKey: 'name',
-        data: forecasts.map((f) => ({
-          name: f.period,
-          value: Math.round(f.confidencelevel * 100),
-        })),
+        data: confidenceData,
         height: 288,
       },
-    ],
-    [forecasts, t]
-  );
+    ];
+  }, [forecasts, t, mockEnabled, series]);
 
   const tableColumns: TableColumn[] = [
     { id: 'period', label: t('crm.salesForecast.col_period'), field: 'period' },
@@ -186,11 +227,11 @@ const CRMSalesForecastPage: React.FC = () => {
         id: 'forecast-list',
         title: t('crm.salesForecast.table_title'),
         columns: tableColumns,
-        data: forecasts.map((forecast) => ({
+        data: displayForecasts.map((forecast) => ({
           period: forecast.period,
-          predicted: `¥${forecast.predicted_amount.toLocaleString()}`,
-          actual: forecast.actual_amount ? `¥${forecast.actual_amount.toLocaleString()}` : '-',
-          confidence: `${Math.round(forecast.confidencelevel * 100)}%`,
+          predicted: `¥${Number(forecast.predicted_amount || 0).toLocaleString()}`,
+          actual: forecast.actual_amount ? `¥${Number(forecast.actual_amount).toLocaleString()}` : '-',
+          confidence: `${Math.round((forecast.confidencelevel || 0) * 100)}%`,
           trend: forecast.trend,
           status:
             forecast.status === 'completed'
@@ -202,17 +243,27 @@ const CRMSalesForecastPage: React.FC = () => {
         loading,
       },
     ],
-    [forecasts, loading, t]
+    [displayForecasts, loading, t]
   );
 
   const timeRangeOptions = [
-    { label: t('crm.salesForecast.range_monthly'), value: 'monthly' },
-    { label: t('crm.salesForecast.range_quarterly'), value: 'quarterly' },
-    { label: t('crm.salesForecast.range_yearly'), value: 'yearly' },
+    { label: t('crm.period.mtd') || '本月', value: 'MTD' },
+    { label: t('crm.period.qtd') || '本季度', value: 'QTD' },
+    { label: t('crm.period.ytd') || '本年', value: 'YTD' },
+    { label: t('crm.period.r12') || '近12月', value: 'ROLLING_12M' },
   ];
 
   const customToolbar = (
-    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 2 }}>
+      {mockEnabled && (
+        <Chip
+          label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+          color='warning'
+          size='small'
+          variant='outlined'
+          sx={{ fontWeight: 600 }}
+        />
+      )}
       <Button
         variant='contained'
         startIcon={<Plus />}
@@ -242,8 +293,8 @@ const CRMSalesForecastPage: React.FC = () => {
         tables={tables}
         loading={loading}
         timeRangeOptions={timeRangeOptions}
-        timeRange={timeRange}
-        onTimeRangeChange={setTimeRange}
+        timeRange={period}
+        onTimeRangeChange={(v) => setPeriod(v as Period)}
         onRefresh={() => forecastsQuery.refetch()}
         showExport={false}
         showRefresh={true}

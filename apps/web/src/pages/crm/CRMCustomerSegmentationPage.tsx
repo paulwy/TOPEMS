@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Box, Typography, Chip, Paper } from '@mui/material';
 import { Users, Tag, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { customerSegmentationSchema } from '@/schemas/crm';
-import { crmApi } from '@/api/crm';
+import { crmApi, useCrmMock, type SegmentationData, type Period } from '@/api/crm';
 import type { CustomerSegment, CreateSegmentRequest, SegmentCriteria } from '@/api/crm';
 import { CRM_PATHS } from '@/modules/crm/config';
 
@@ -16,6 +16,8 @@ import { CRM_PATHS } from '@/modules/crm/config';
 const CRMCustomerSegmentationPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [period] = React.useState<Period>('MTD');
+  const { data: mockSeg, mockEnabled } = useCrmMock<SegmentationData>({ period });
 
   // ============ API 适配器 ============
 
@@ -202,124 +204,231 @@ const CRMCustomerSegmentationPage: React.FC = () => {
   const headerContent = useCallback(
     (rows: unknown[], _total: number) => {
       const segments = rows as CustomerSegment[];
-      const totalCustomers = segments.reduce((sum, s) => sum + (s.customer_count || 0), 0);
-      const avgCustomers = segments.length > 0 ? Math.round(totalCustomers / segments.length) : 0;
+      const realSummary = {
+        totalSegments: _total,
+        coveredCustomers: segments.reduce((sum, s) => sum + (s.customer_count || 0), 0),
+        avgCustomers:
+          segments.length > 0
+            ? Math.round(segments.reduce((sum, s) => sum + (s.customer_count || 0), 0) / segments.length)
+            : 0,
+      };
+      const summary = mockEnabled ? mockSeg.summary : realSummary;
+
+      const quadrants = mockSeg.quadrants;
+      const quadrantColors: Record<number, string> = {
+        0: 'success.main',
+        1: 'primary.main',
+        2: 'warning.main',
+        3: 'error.main',
+      };
 
       return (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          <Box sx={{ bgcolor: 'primary.50', borderRadius: 3, p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 3,
-                  bgcolor: 'primary.main',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Tag
-                  size={24}
-                  color='white'
-                />
+        <Box sx={{ mb: 3 }}>
+          {mockEnabled && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Chip
+                label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+                color='warning'
+                size='small'
+                variant='outlined'
+                sx={{ fontWeight: 600 }}
+              />
+            </Box>
+          )}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+              gap: 2,
+              mb: 3,
+            }}
+          >
+            <Box sx={{ bgcolor: 'primary.50', borderRadius: 3, p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 3,
+                    bgcolor: 'primary.main',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Tag size={24} color='white' />
+                </Box>
+                <Box>
+                  <Typography variant='caption' color='text.secondary'>
+                    {t('crm.customerSegmentation.stat_total_segments')}
+                  </Typography>
+                  <Typography variant='h4' sx={{ fontWeight: 700 }}>
+                    {summary.totalSegments}
+                  </Typography>
+                </Box>
               </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
+            </Box>
+            <Box sx={{ bgcolor: 'success.50', borderRadius: 3, p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 3,
+                    bgcolor: 'success.main',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 >
-                  {t('crm.customerSegmentation.stat_total_segments')}
-                </Typography>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700 }}
+                  <Users size={24} color='white' />
+                </Box>
+                <Box>
+                  <Typography variant='caption' color='text.secondary'>
+                    {t('crm.customerSegmentation.stat_covered_customers')}
+                  </Typography>
+                  <Typography variant='h4' sx={{ fontWeight: 700 }}>
+                    {summary.coveredCustomers}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+            <Box sx={{ bgcolor: 'warning.50', borderRadius: 3, p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 3,
+                    bgcolor: 'warning.main',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 >
-                  {_total}
-                </Typography>
+                  <TrendingUp size={24} color='white' />
+                </Box>
+                <Box>
+                  <Typography variant='caption' color='text.secondary'>
+                    {t('crm.customerSegmentation.stat_avg_customers')}
+                  </Typography>
+                  <Typography variant='h4' sx={{ fontWeight: 700 }}>
+                    {summary.avgCustomers}
+                  </Typography>
+                </Box>
               </Box>
             </Box>
           </Box>
-          <Box sx={{ bgcolor: 'success.50', borderRadius: 3, p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+
+          {mockEnabled && (
+            <Paper variant='outlined' sx={{ p: 3, mb: 3, position: 'relative' }}>
+              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+                {t('crm.customerSegmentation.quadrant_title') || '客户价值×活动 四象限分布'}
+              </Typography>
               <Box
                 sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 3,
-                  bgcolor: 'success.main',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  position: 'relative',
+                  width: '100%',
+                  height: 340,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  overflow: 'hidden',
                 }}
               >
-                <Users
-                  size={24}
-                  color='white'
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: 0,
+                    bottom: 0,
+                    width: 1,
+                    bgcolor: 'divider',
+                  }}
                 />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: 0,
+                    right: 0,
+                    height: 1,
+                    bgcolor: 'divider',
+                  }}
+                />
+                <Box sx={{ position: 'absolute', left: 8, top: 8, fontSize: 12, color: 'success.main', fontWeight: 600 }}>
+                  {t('crm.customerSegmentation.q2_high_active_high_value') || '高价值·高活动'}
+                </Box>
+                <Box sx={{ position: 'absolute', right: 8, top: 8, fontSize: 12, color: 'primary.main', fontWeight: 600 }}>
+                  {t('crm.customerSegmentation.q1_high_value_low_active') || '高价值·低活动'}
+                </Box>
+                <Box sx={{ position: 'absolute', left: 8, bottom: 8, fontSize: 12, color: 'warning.main', fontWeight: 600 }}>
+                  {t('crm.customerSegmentation.q3_low_value_high_active') || '低价值·高活动'}
+                </Box>
+                <Box sx={{ position: 'absolute', right: 8, bottom: 8, fontSize: 12, color: 'error.main', fontWeight: 600 }}>
+                  {t('crm.customerSegmentation.q4_low_value_low_active') || '低价值·低活动'}
+                </Box>
+                <Box sx={{ position: 'absolute', inset: 0 }}>
+                  {quadrants.map((p) => {
+                    const q =
+                      p.value >= 50 && p.activity >= 50
+                        ? 0
+                        : p.value >= 50 && p.activity < 50
+                          ? 1
+                          : p.value < 50 && p.activity >= 50
+                            ? 2
+                            : 3;
+                    const left = `${8 + (p.activity / 100) * 84}%`;
+                    const top = `${8 + ((100 - p.value) / 100) * 84}%`;
+                    return (
+                      <Box
+                        key={p.id}
+                        sx={{
+                          position: 'absolute',
+                          left,
+                          top,
+                          transform: 'translate(-50%, -50%)',
+                          width: 20 + p.size,
+                          height: 20 + p.size,
+                          borderRadius: '50%',
+                          bgcolor: quadrantColors[q],
+                          opacity: 0.7,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontSize: 10,
+                          fontWeight: 600,
+                          border: '2px solid white',
+                          boxShadow: 1,
+                        }}
+                        title={`${p.name} 价值:${p.value} 活动:${p.activity}`}
+                      >
+                        {p.size}
+                      </Box>
+                    );
+                  })}
+                </Box>
               </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  {t('crm.customerSegmentation.stat_covered_customers')}
-                </Typography>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700 }}
-                >
-                  {totalCustomers}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ bgcolor: 'warning.50', borderRadius: 3, p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
                 sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 3,
-                  bgcolor: 'warning.main',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  justifyContent: 'space-between',
+                  mt: 1,
+                  px: 1,
+                  fontSize: 12,
+                  color: 'text.secondary',
                 }}
               >
-                <TrendingUp
-                  size={24}
-                  color='white'
-                />
+                <Box>← {t('crm.customerSegmentation.x_axis_activity') || '活跃度 低'}</Box>
+                <Box>{t('crm.customerSegmentation.x_axis_activity_high') || '活跃度 高'} →</Box>
               </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  {t('crm.customerSegmentation.stat_avg_customers')}
-                </Typography>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700 }}
-                >
-                  {avgCustomers}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
+            </Paper>
+          )}
         </Box>
       );
     },
-    [t]
+    [t, mockEnabled, mockSeg]
   );
 
   return (

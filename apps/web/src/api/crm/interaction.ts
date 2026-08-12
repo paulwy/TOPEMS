@@ -1,11 +1,6 @@
 import { apiClient } from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
-import type {
-  Interaction,
-  CreateInteractionRequest,
-  UpdateInteractionRequest,
-  InteractionQueryParams,
-} from './types';
+import type { Interaction, InteractionQueryParams } from './types';
 
 export const interactionApi = {
   list: async (
@@ -14,7 +9,7 @@ export const interactionApi = {
     return apiClient.crm.get('/interactions', { params });
   },
 
-  create: async (data: CreateInteractionRequest): Promise<ApiResponse<Interaction>> => {
+  create: async (data: Partial<Interaction>): Promise<ApiResponse<Interaction>> => {
     return apiClient.crm.post('/interactions', data);
   },
 
@@ -22,7 +17,7 @@ export const interactionApi = {
     return apiClient.crm.get(`/interactions/${id}`);
   },
 
-  update: async (id: string, data: UpdateInteractionRequest): Promise<ApiResponse<Interaction>> => {
+  update: async (id: string, data: Partial<Interaction>): Promise<ApiResponse<Interaction>> => {
     return apiClient.crm.put(`/interactions/${id}`, data);
   },
 
