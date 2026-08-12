@@ -132,12 +132,10 @@ pub async fn update_preferences(
 
         if let Err(e) = result {
             tracing::error!("Failed to save shortcuts: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("保存快捷方式失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("保存快捷方式失败: {}", e),
+            ));
         }
     }
 
@@ -157,12 +155,10 @@ pub async fn update_preferences(
 
         if let Err(e) = result {
             tracing::error!("Failed to save notification_settings: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("保存通知设置失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("保存通知设置失败: {}", e),
+            ));
         }
     }
 
@@ -182,12 +178,10 @@ pub async fn update_preferences(
 
         if let Err(e) = result {
             tracing::error!("Failed to save language: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("保存语言设置失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("保存语言设置失败: {}", e),
+            ));
         }
     }
 
@@ -207,12 +201,10 @@ pub async fn update_preferences(
 
         if let Err(e) = result {
             tracing::error!("Failed to save timezone: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("保存时区设置失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("保存时区设置失败: {}", e),
+            ));
         }
     }
 
@@ -238,12 +230,10 @@ pub async fn get_current_user(
         Ok(id) => id,
         Err(e) => {
             tracing::error!("Invalid user ID format: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "无效的用户ID",
-                "data": null,
-                "code": 400
-            }));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的用户ID",
+            ));
         }
     };
 
@@ -309,12 +299,7 @@ pub async fn get_current_user(
         }
         None => {
             tracing::warn!("User not found: {}", claims.sub);
-            Json(serde_json::json!({
-                "success": false,
-                "message": "用户不存在",
-                "data": null,
-                "code": 404
-            }))
+            Json(topems_shared_core::response::error_value(404, "用户不存在"))
         }
     }
 }

@@ -72,11 +72,10 @@ pub async fn assign_position(
     .await;
 
     if result.is_err() {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "分配岗位失败",
-            "code": 500,
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "分配岗位失败",
+        ));
     }
 
     get_user_positions(State(state), Path(user_id)).await
@@ -125,11 +124,10 @@ pub async fn unassign_position(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => get_user_positions(State(state), Path(user_id)).await,
-        _ => Json(serde_json::json!({
-            "success": false,
-            "message": "取消分配失败",
-            "code": 404,
-        })),
+        _ => Json(topems_shared_core::response::error_value(
+            404,
+            "取消分配失败",
+        )),
     }
 }
 

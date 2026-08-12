@@ -161,12 +161,10 @@ pub async fn login(
             Some("用户名和密码不能为空"),
         )
         .await;
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "用户名和密码不能为空",
-            "data": null,
-            "code": 400
-        }));
+        return Json(topems_shared_core::response::error_value(
+            400,
+            "用户名和密码不能为空",
+        ));
     }
 
     let user = match sqlx::query_as::<_, UserRow>(
@@ -190,12 +188,7 @@ pub async fn login(
                 Some("用户不存在"),
             )
             .await;
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "用户名或密码错误",
-                "data": null,
-                "code": 401
-            }));
+            return Json(topems_shared_core::response::error_value(401, "用户名或密码错误"));
         }
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
@@ -210,12 +203,7 @@ pub async fn login(
                 Some("内部服务器错误"),
             )
             .await;
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
         }
     };
 
@@ -232,12 +220,10 @@ pub async fn login(
             Some("用户账号已被禁用"),
         )
         .await;
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "用户账号已被禁用",
-            "data": null,
-            "code": 401
-        }));
+        return Json(topems_shared_core::response::error_value(
+            401,
+            "用户账号已被禁用",
+        ));
     }
 
     if !verify_password(password, &user.password_hash) {
@@ -253,12 +239,10 @@ pub async fn login(
             Some("密码错误"),
         )
         .await;
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "用户名或密码错误",
-            "data": null,
-            "code": 401
-        }));
+        return Json(topems_shared_core::response::error_value(
+            401,
+            "用户名或密码错误",
+        ));
     }
 
     let jwt_expire_minutes = state.auth_state.token_expiry_hours * 60;
@@ -314,12 +298,10 @@ pub async fn login(
         Ok(token) => token,
         Err(e) => {
             tracing::error!("JWT 编码失败: {:?}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "Token 生成失败",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "Token 生成失败",
+            ));
         }
     };
 
@@ -454,12 +436,10 @@ pub async fn register(
 
     // 验证必填字段
     if username.is_empty() || email.is_empty() || password.is_empty() {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "用户名、邮箱和密码不能为空",
-            "data": null,
-            "code": 400
-        }));
+        return Json(topems_shared_core::response::error_value(
+            400,
+            "用户名、邮箱和密码不能为空",
+        ));
     }
 
     // 验证用户名格式（3-20字符，只允许字母、数字、下划线）
@@ -469,22 +449,18 @@ pub async fn register(
         || username.len() < 3
         || username.len() > 20
     {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "用户名必须为3-20个字符，只允许字母、数字和下划线",
-            "data": null,
-            "code": 400
-        }));
+        return Json(topems_shared_core::response::error_value(
+            400,
+            "用户名必须为3-20个字符，只允许字母、数字和下划线",
+        ));
     }
 
     // 验证邮箱格式
     if !email.contains('@') || !email.contains('.') {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "请输入有效的邮箱地址",
-            "data": null,
-            "code": 400
-        }));
+        return Json(topems_shared_core::response::error_value(
+            400,
+            "请输入有效的邮箱地址",
+        ));
     }
 
     // 验证密码强度（至少8字符，包含数字和字母）
@@ -492,12 +468,10 @@ pub async fn register(
         || !password.chars().any(|c| c.is_ascii_alphabetic())
         || !password.chars().any(|c| c.is_ascii_digit())
     {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "密码至少8个字符，必须包含字母和数字",
-            "data": null,
-            "code": 400
-        }));
+        return Json(topems_shared_core::response::error_value(
+            400,
+            "密码至少8个字符，必须包含字母和数字",
+        ));
     }
 
     // 检查用户名是否已存在
@@ -507,22 +481,18 @@ pub async fn register(
         .await
     {
         Ok(count) if count > 0 => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "用户名已存在",
-                "data": null,
-                "code": 409
-            }));
+            return Json(topems_shared_core::response::error_value(
+                409,
+                "用户名已存在",
+            ));
         }
         Ok(_) => {}
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     }
 
@@ -533,22 +503,18 @@ pub async fn register(
         .await
     {
         Ok(count) if count > 0 => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "邮箱已被注册",
-                "data": null,
-                "code": 409
-            }));
+            return Json(topems_shared_core::response::error_value(
+                409,
+                "邮箱已被注册",
+            ));
         }
         Ok(_) => {}
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     }
 
@@ -557,12 +523,10 @@ pub async fn register(
         Ok(h) => h,
         Err(e) => {
             tracing::error!("密码哈希失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     };
 
@@ -597,12 +561,7 @@ pub async fn register(
         }
         Err(e) => {
             tracing::error!("创建用户失败: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "message": "注册失败",
-                "data": null,
-                "code": 500
-            }))
+            Json(topems_shared_core::response::error_value(500, "注册失败"))
         }
     }
 }
@@ -619,12 +578,10 @@ pub async fn refresh_token(
     tracing::info!("IAM auth refresh_token called");
 
     if refresh_token.is_empty() {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "refresh_token 不能为空",
-            "data": null,
-            "code": 400
-        }));
+        return Json(topems_shared_core::response::error_value(
+            400,
+            "refresh_token 不能为空",
+        ));
     }
 
     let refresh_token_hash = hash_token(refresh_token);
@@ -642,21 +599,11 @@ pub async fn refresh_token(
         Ok(Some(r)) => r,
         Ok(None) => {
             tracing::warn!("Refresh token 无效或已过期或已吊销");
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "Refresh token 无效或已过期",
-                "data": null,
-                "code": 401
-            }));
+            return Json(topems_shared_core::response::error_value(401, "Refresh token 无效或已过期"));
         }
         Err(e) => {
             tracing::error!("查询 refresh token 失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
         }
     };
 
@@ -667,12 +614,10 @@ pub async fn refresh_token(
     let is_active: bool = row.get("is_active");
 
     if !is_active {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "用户账号已被禁用",
-            "data": null,
-            "code": 401
-        }));
+        return Json(topems_shared_core::response::error_value(
+            401,
+            "用户账号已被禁用",
+        ));
     }
 
     // 生成新的 access_token
@@ -733,12 +678,10 @@ pub async fn refresh_token(
         Ok(token) => token,
         Err(e) => {
             tracing::error!("JWT 编码失败: {:?}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "Token 生成失败",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "Token 生成失败",
+            ));
         }
     };
 
@@ -758,12 +701,10 @@ pub async fn refresh_token(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     };
 
@@ -779,12 +720,10 @@ pub async fn refresh_token(
     if let Err(e) = revoke_result {
         tracing::error!("吊销旧 refresh token 失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "内部服务器错误",
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "内部服务器错误",
+        ));
     }
 
     let insert_result = sqlx::query(
@@ -800,12 +739,10 @@ pub async fn refresh_token(
     if let Err(e) = insert_result {
         tracing::error!("插入新 refresh token 失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "内部服务器错误",
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "内部服务器错误",
+        ));
     }
 
     let session_result = sqlx::query(
@@ -821,12 +758,10 @@ pub async fn refresh_token(
     if let Err(e) = session_result {
         tracing::error!("插入新 session 失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "内部服务器错误",
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "内部服务器错误",
+        ));
     }
 
     match tx.commit().await {
@@ -835,12 +770,10 @@ pub async fn refresh_token(
         }
         Err(e) => {
             tracing::error!("提交事务失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     }
 
@@ -874,12 +807,10 @@ pub async fn logout(
     let refresh_token = match refresh_token {
         Some(t) if !t.is_empty() => t,
         _ => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "缺少 refresh_token",
-                "data": null,
-                "code": 400
-            }));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "缺少 refresh_token",
+            ));
         }
     };
 
@@ -899,12 +830,7 @@ pub async fn logout(
         Ok(uid) => uid,
         Err(e) => {
             tracing::error!("查询 refresh_token 失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "登出失败",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(500, "登出失败"));
         }
     };
 
@@ -928,12 +854,7 @@ pub async fn logout(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "登出失败",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(500, "登出失败"));
         }
     };
 
@@ -945,12 +866,7 @@ pub async fn logout(
     if let Err(e) = delete_sessions {
         tracing::error!("删除会话失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "登出失败",
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(500, "登出失败"));
     }
 
     let revoke_refresh = sqlx::query(
@@ -964,12 +880,7 @@ pub async fn logout(
     if let Err(e) = revoke_refresh {
         tracing::error!("吊销 refresh token 失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "登出失败",
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(500, "登出失败"));
     }
 
     match tx.commit().await {
@@ -984,12 +895,7 @@ pub async fn logout(
         }
         Err(e) => {
             tracing::error!("Logout commit failed: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "message": "登出失败",
-                "data": null,
-                "code": 500
-            }))
+            Json(topems_shared_core::response::error_value(500, "登出失败"))
         }
     }
 }
@@ -1004,12 +910,10 @@ pub async fn forgot_password(
     tracing::info!("IAM auth forgot_password called for email: {}", email);
 
     if email.is_empty() {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "邮箱不能为空",
-            "data": null,
-            "code": 400
-        }));
+        return Json(topems_shared_core::response::error_value(
+            400,
+            "邮箱不能为空",
+        ));
     }
 
     // 查找用户
@@ -1033,12 +937,7 @@ pub async fn forgot_password(
         }
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
         }
     };
 
@@ -1059,12 +958,7 @@ pub async fn forgot_password(
         Ok(_) => tracing::debug!("Password reset token saved for user: {}", user.username),
         Err(e) => {
             tracing::error!("Failed to save password reset token: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
         }
     }
 
@@ -1132,12 +1026,10 @@ pub async fn reset_password(
     tracing::info!("IAM auth reset_password called");
 
     if reset_token.is_empty() || new_password.is_empty() {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "重置令牌和新密码不能为空",
-            "data": null,
-            "code": 400
-        }));
+        return Json(topems_shared_core::response::error_value(
+            400,
+            "重置令牌和新密码不能为空",
+        ));
     }
 
     // 验证密码强度
@@ -1145,12 +1037,10 @@ pub async fn reset_password(
         || !new_password.chars().any(|c| c.is_ascii_alphabetic())
         || !new_password.chars().any(|c| c.is_ascii_digit())
     {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "密码至少8个字符，必须包含字母和数字",
-            "data": null,
-            "code": 400
-        }));
+        return Json(topems_shared_core::response::error_value(
+            400,
+            "密码至少8个字符，必须包含字母和数字",
+        ));
     }
 
     // 查询重置令牌
@@ -1164,21 +1054,17 @@ pub async fn reset_password(
         Ok(Some(r)) => r,
         Ok(None) => {
             tracing::warn!("Invalid or expired password reset token");
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "重置令牌无效或已过期",
-                "data": null,
-                "code": 400
-            }));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "重置令牌无效或已过期",
+            ));
         }
         Err(e) => {
             tracing::error!("查询重置令牌失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     };
 
@@ -1189,12 +1075,10 @@ pub async fn reset_password(
         Ok(h) => h,
         Err(e) => {
             tracing::error!("密码哈希失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     };
 
@@ -1202,23 +1086,19 @@ pub async fn reset_password(
     let transaction = state.pool.begin().await;
     if transaction.is_err() {
         tracing::error!("Failed to begin transaction");
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "内部服务器错误",
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "内部服务器错误",
+        ));
     }
     let mut tx = match transaction {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to start transaction: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     };
 
@@ -1233,12 +1113,10 @@ pub async fn reset_password(
         Err(e) => {
             tracing::error!("Failed to update password: {}", e);
             let _ = tx.rollback().await;
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "密码更新失败",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "密码更新失败",
+            ));
         }
     }
 
@@ -1252,12 +1130,10 @@ pub async fn reset_password(
         Err(e) => {
             tracing::error!("Failed to delete password reset token: {}", e);
             let _ = tx.rollback().await;
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     }
 
@@ -1275,12 +1151,10 @@ pub async fn reset_password(
 
     if tx.commit().await.is_err() {
         tracing::error!("Failed to commit transaction");
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "内部服务器错误",
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "内部服务器错误",
+        ));
     }
 
     tracing::info!("Password reset successful for user_id: {}", user_id);

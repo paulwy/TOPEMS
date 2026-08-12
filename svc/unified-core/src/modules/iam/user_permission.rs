@@ -39,12 +39,10 @@ pub async fn get_user_permissions(
     let user_uuid = match Uuid::parse_str(&user_id) {
         Ok(id) => id,
         Err(_) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "无效的用户ID格式",
-                "data": null,
-                "code": 400
-            }));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的用户ID格式",
+            ));
         }
     };
 
@@ -57,21 +55,14 @@ pub async fn get_user_permissions(
         {
             Ok(Some(v)) => v,
             Ok(None) => {
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": "用户不存在",
-                    "data": null,
-                    "code": 404
-                }));
+                return Json(topems_shared_core::response::error_value(404, "用户不存在"));
             }
             Err(e) => {
                 tracing::error!("查询用户超级管理员状态失败: {}", e);
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("查询失败: {}", e),
-                    "data": null,
-                    "code": 500
-                }));
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询失败: {}", e),
+                ));
             }
         };
 
@@ -86,12 +77,7 @@ pub async fn get_user_permissions(
             Ok(perms) => perms,
             Err(e) => {
                 tracing::error!("获取所有权限失败: {}", e);
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("获取权限失败: {}", e),
-                    "data": null,
-                    "code": 500
-                }));
+                return Json(topems_shared_core::response::error_value(500, &format!("获取权限失败: {}", e)));
             }
         };
 
@@ -155,12 +141,10 @@ pub async fn get_user_permissions(
         }
         Err(e) => {
             tracing::error!("获取用户权限失败: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "message": format!("获取用户权限失败: {}", e),
-                "data": null,
-                "code": 500
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                &format!("获取用户权限失败: {}", e),
+            ))
         }
     }
 }
@@ -185,12 +169,10 @@ pub async fn update_user_permissions(
     let user_uuid = match Uuid::parse_str(&user_id) {
         Ok(id) => id,
         Err(_) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "无效的用户ID格式",
-                "data": null,
-                "code": 400
-            }));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的用户ID格式",
+            ));
         }
     };
 
@@ -206,12 +188,10 @@ pub async fn update_user_permissions(
     // 验证所有角色ID都是有效的 UUID
     for role_id in &role_ids {
         if Uuid::parse_str(role_id).is_err() {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("无效的角色ID格式: {}", role_id),
-                "data": null,
-                "code": 400
-            }));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                &format!("无效的角色ID格式: {}", role_id),
+            ));
         }
     }
 
@@ -225,22 +205,15 @@ pub async fn update_user_permissions(
             Ok(exists) => exists,
             Err(e) => {
                 tracing::error!("检查用户存在性失败: {}", e);
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("检查用户失败: {}", e),
-                    "data": null,
-                    "code": 500
-                }));
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("检查用户失败: {}", e),
+                ));
             }
         };
 
     if !user_exists {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "用户不存在",
-            "data": null,
-            "code": 404
-        }));
+        return Json(topems_shared_core::response::error_value(404, "用户不存在"));
     }
 
     // 事务：删除现有角色关联，添加新角色关联
@@ -248,12 +221,10 @@ pub async fn update_user_permissions(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开始事务失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("开始事务失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("开始事务失败: {}", e),
+            ));
         }
     };
 
@@ -265,12 +236,10 @@ pub async fn update_user_permissions(
     {
         let _ = tx.rollback().await;
         tracing::error!("删除用户角色关联失败: {}", e);
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("删除用户角色关联失败: {}", e),
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("删除用户角色关联失败: {}", e),
+        ));
     }
 
     // 添加新的角色关联
@@ -286,24 +255,20 @@ pub async fn update_user_permissions(
         {
             let _ = tx.rollback().await;
             tracing::error!("添加用户角色关联失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("添加用户角色关联失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("添加用户角色关联失败: {}", e),
+            ));
         }
     }
 
     // 提交事务
     if let Err(e) = tx.commit().await {
         tracing::error!("提交事务失败: {}", e);
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("提交事务失败: {}", e),
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("提交事务失败: {}", e),
+        ));
     }
 
     tracing::info!("更新用户 {} 的角色权限成功", user_id);

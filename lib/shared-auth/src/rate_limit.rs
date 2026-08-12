@@ -1,7 +1,7 @@
 use axum::{
     http::{Request, StatusCode},
     middleware::Next,
-    response::Response,
+    response::{IntoResponse, Response},
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -59,20 +59,9 @@ impl RateLimitMiddleware {
         if now.duration_since(entry.1) >= window {
             *entry = (1, now);
         } else if entry.0 >= self.state.config.requests {
-            return axum::response::Response::builder()
-                .status(StatusCode::TOO_MANY_REQUESTS)
-                .header("Content-Type", "application/json")
-                .body(axum::body::Body::from(
-                    r#"{"error":"Too many requests","status":429}"#,
-                ))
-                .unwrap_or_else(|_| {
-                    axum::response::Response::builder()
-                        .status(StatusCode::INTERNAL_SERVER_ERROR)
-                        .body(axum::body::Body::empty())
-                        .expect(
-                            "building response with INTERNAL_SERVER_ERROR should always succeed",
-                        )
-                });
+            let payload = topems_shared_core::ErrorPayload::new(429, "Too many requests")
+                .with_error_code("RATE_LIMIT_EXCEEDED");
+            return (StatusCode::TOO_MANY_REQUESTS, axum::Json(payload)).into_response();
         } else {
             entry.0 += 1;
         }

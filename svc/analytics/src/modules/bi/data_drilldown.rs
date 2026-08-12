@@ -97,10 +97,7 @@ pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_j
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list drilldown paths: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(500, &format!("Failed to list drilldown paths: {}", e)));
         }
     };
 
@@ -175,10 +172,10 @@ pub async fn create_drilldown_path(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create drilldown path: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create drilldown path: {}", e),
+        )),
     }
 }
 
@@ -201,10 +198,7 @@ pub async fn get_drilldown_path(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get drilldown path: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(500, &format!("Failed to get drilldown path: {}", e)));
         }
     };
 
@@ -224,10 +218,10 @@ pub async fn get_drilldown_path(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Drilldown path not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Drilldown path not found",
+        )),
     }
 }
 
@@ -277,14 +271,14 @@ pub async fn update_drilldown_path(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Drilldown path not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update drilldown path: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Drilldown path not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update drilldown path: {}", e),
+        )),
     }
 }
 
@@ -310,14 +304,14 @@ pub async fn delete_drilldown_path(
             "success": true,
             "message": "Delete drilldown path"
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Drilldown path not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete drilldown path: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Drilldown path not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete drilldown path: {}", e),
+        )),
     }
 }
 
@@ -340,16 +334,16 @@ pub async fn drill_down(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "Drilldown path not found"
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "Drilldown path not found",
+            ));
         }
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get drilldown path: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get drilldown path: {}", e),
+            ));
         }
     };
 
@@ -358,10 +352,10 @@ pub async fn drill_down(
     let levels_arr = levels.as_array();
 
     if levels_arr.map_or(true, |arr| next_level as usize >= arr.len()) {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "Already at the lowest drill level"
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "Already at the lowest drill level",
+        ));
     }
 
     let now = Utc::now().naive_utc();
@@ -423,24 +417,24 @@ pub async fn roll_up(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "Drilldown path not found"
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "Drilldown path not found",
+            ));
         }
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get drilldown path: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get drilldown path: {}", e),
+            ));
         }
     };
 
     if req.current_level <= 0 {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "Already at the highest level"
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "Already at the highest level",
+        ));
     }
 
     let prev_level = req.current_level - 1;
@@ -511,10 +505,7 @@ pub async fn get_drilldown_history(
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get drilldown history: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(500, &format!("Failed to get drilldown history: {}", e)));
         }
     };
 

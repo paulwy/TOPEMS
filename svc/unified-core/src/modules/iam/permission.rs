@@ -64,12 +64,10 @@ pub async fn list_permissions(State(state): State<AppState>) -> Json<serde_json:
         }
         Err(e) => {
             tracing::error!("Failed to fetch permissions: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "message": format!("获取权限列表失败: {}", e),
-                "data": null,
-                "code": 500
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                &format!("获取权限列表失败: {}", e),
+            ))
         }
     }
 }

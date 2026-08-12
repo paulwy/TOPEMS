@@ -67,12 +67,10 @@ pub async fn get_login_history(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID格式",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID格式",
+                )),
             );
         }
     };
@@ -90,12 +88,10 @@ pub async fn get_login_history(
                 tracing::error!("Failed to count login logs: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询登录历史总数失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询登录历史总数失败: {}", e),
+                    )),
                 );
             }
         };
@@ -225,12 +221,10 @@ pub async fn get_user_access_logs(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID格式",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID格式",
+                )),
             );
         }
     };
@@ -330,12 +324,10 @@ pub async fn create_access_log(
     if action.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "action 是必填字段",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "action 是必填字段",
+            )),
         );
     }
 
@@ -408,12 +400,8 @@ pub async fn create_access_log(
         }
         Err(e) => {
             tracing::error!("Failed to create access log: {}", e);
-            let response_body = serde_json::json!({
-                "success": false,
-                "message": format!("创建访问日志失败: {}", e),
-                "data": null,
-                "code": 500
-            });
+            let response_body =
+                topems_shared_core::response::error_value(500, &format!("创建访问日志失败: {}", e));
 
             record_audit_log(
                 &state.pool,

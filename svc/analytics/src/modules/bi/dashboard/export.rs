@@ -33,10 +33,10 @@ pub async fn export_dashboard(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get dashboard: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get dashboard: {}", e),
+            ));
         }
     };
 
@@ -64,10 +64,10 @@ pub async fn export_dashboard(
                 "format": query.format.unwrap_or_else(|| "json".to_string()),
             }))
         }
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Dashboard not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Dashboard not found",
+        )),
     }
 }
 

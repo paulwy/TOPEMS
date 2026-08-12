@@ -37,10 +37,10 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list dashboards: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list dashboards: {}", e),
+            ));
         }
     };
 
@@ -120,10 +120,10 @@ pub async fn create_dashboard(
                 updated_at: now.to_string(),
             }
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create dashboard: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create dashboard: {}", e),
+        )),
     }
 }
 
@@ -158,10 +158,10 @@ pub async fn get_dashboard(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get dashboard: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get dashboard: {}", e),
+            ));
         }
     };
 
@@ -180,10 +180,10 @@ pub async fn get_dashboard(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Dashboard not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Dashboard not found",
+        )),
     }
 }
 
@@ -245,14 +245,14 @@ pub async fn update_dashboard(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Dashboard not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update dashboard: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Dashboard not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update dashboard: {}", e),
+        )),
     }
 }
 
@@ -290,14 +290,14 @@ pub async fn delete_dashboard(
             "success": true,
             "message": "Delete dashboard"
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Dashboard not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete dashboard: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Dashboard not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete dashboard: {}", e),
+        )),
     }
 }
 
@@ -323,10 +323,10 @@ pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list public dashboards: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list public dashboards: {}", e),
+            ));
         }
     };
 
@@ -381,10 +381,10 @@ pub async fn get_user_dashboards(
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list user dashboards: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list user dashboards: {}", e),
+            ));
         }
     };
 
@@ -438,10 +438,10 @@ pub async fn clone_dashboard(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get dashboard: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get dashboard: {}", e),
+            ));
         }
     };
 
@@ -484,16 +484,16 @@ pub async fn clone_dashboard(
                         updated_at: new_row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
                     }
                 })),
-                Err(e) => Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("Failed to clone dashboard: {}", e)
-                })),
+                Err(e) => Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to clone dashboard: {}", e),
+                )),
             }
         }
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Dashboard not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Dashboard not found",
+        )),
     }
 }
 
@@ -539,9 +539,9 @@ pub async fn import_dashboard(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to import dashboard: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to import dashboard: {}", e),
+        )),
     }
 }

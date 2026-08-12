@@ -40,12 +40,10 @@ pub async fn get_effective_permissions(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID格式",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID格式",
+                )),
             );
         }
     };
@@ -61,24 +59,17 @@ pub async fn get_effective_permissions(
         Ok(None) => {
             return (
                 StatusCode::NOT_FOUND,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "用户不存在",
-                    "data": null,
-                    "code": 404
-                })),
+                Json(topems_shared_core::response::error_value(404, "用户不存在")),
             );
         }
         Err(e) => {
             tracing::error!("Failed to query user: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("查询用户失败: {}", e),
-                    "data": null,
-                    "code": 500
-                })),
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
             );
         }
     };
@@ -172,12 +163,10 @@ pub async fn batch_delete_users(
     if user_ids.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "user_ids 不能为空",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "user_ids 不能为空",
+            )),
         );
     }
 
@@ -281,12 +270,10 @@ pub async fn batch_update_users(
     if user_ids.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "user_ids 不能为空",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "user_ids 不能为空",
+            )),
         );
     }
 

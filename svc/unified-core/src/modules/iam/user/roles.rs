@@ -49,12 +49,10 @@ pub async fn get_user_permissions(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID格式",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID格式",
+                )),
             );
         }
     };
@@ -76,12 +74,7 @@ pub async fn get_user_permissions(
             tracing::warn!("User not found: {}", user_id);
             return (
                 StatusCode::NOT_FOUND,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "用户不存在",
-                    "data": null,
-                    "code": 404
-                })),
+                Json(topems_shared_core::response::error_value(404, "用户不存在")),
             );
         }
     };
@@ -210,12 +203,10 @@ pub async fn get_user_roles(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID格式",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID格式",
+                )),
             );
         }
     };
@@ -231,12 +222,10 @@ pub async fn get_user_roles(
                 tracing::error!("Database query failed: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询用户失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询用户失败: {}", e),
+                    )),
                 );
             }
         };
@@ -244,12 +233,7 @@ pub async fn get_user_roles(
     if existing_user_count == 0 {
         return (
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "用户不存在",
-                "data": null,
-                "code": 404
-            })),
+            Json(topems_shared_core::response::error_value(404, "用户不存在")),
         );
     }
 
@@ -313,12 +297,10 @@ pub async fn assign_user_role(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID格式",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID格式",
+                )),
             );
         }
     };
@@ -329,12 +311,10 @@ pub async fn assign_user_role(
             tracing::warn!("Invalid role ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的角色ID格式",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的角色ID格式",
+                )),
             );
         }
     };
@@ -350,12 +330,10 @@ pub async fn assign_user_role(
                 tracing::error!("Database query failed: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询用户失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询用户失败: {}", e),
+                    )),
                 );
             }
         };
@@ -363,12 +341,7 @@ pub async fn assign_user_role(
     if existing_user_count == 0 {
         return (
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "用户不存在",
-                "data": null,
-                "code": 404
-            })),
+            Json(topems_shared_core::response::error_value(404, "用户不存在")),
         );
     }
 
@@ -383,12 +356,10 @@ pub async fn assign_user_role(
                 tracing::error!("Database query failed: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询角色失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询角色失败: {}", e),
+                    )),
                 );
             }
         };
@@ -396,12 +367,7 @@ pub async fn assign_user_role(
     if existing_role_count == 0 {
         return (
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "角色不存在",
-                "data": null,
-                "code": 404
-            })),
+            Json(topems_shared_core::response::error_value(404, "角色不存在")),
         );
     }
 
@@ -440,12 +406,8 @@ pub async fn assign_user_role(
         }
         Err(e) => {
             tracing::error!("Failed to assign role: {}", e);
-            let response_body = serde_json::json!({
-                "success": false,
-                "message": format!("分配角色失败: {}", e),
-                "data": null,
-                "code": 500
-            });
+            let response_body =
+                topems_shared_core::response::error_value(500, &format!("分配角色失败: {}", e));
 
             record_audit_log(
                 &state.pool,
@@ -484,12 +446,10 @@ pub async fn remove_user_role(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID格式",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID格式",
+                )),
             );
         }
     };
@@ -500,12 +460,10 @@ pub async fn remove_user_role(
             tracing::warn!("Invalid role ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的角色ID格式",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的角色ID格式",
+                )),
             );
         }
     };
@@ -522,12 +480,10 @@ pub async fn remove_user_role(
                 tracing::warn!("User role not found: {}/{}", user_id, role_id);
                 return (
                     StatusCode::NOT_FOUND,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": "用户角色关联不存在",
-                        "data": null,
-                        "code": 404
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        404,
+                        "用户角色关联不存在",
+                    )),
                 );
             }
 
@@ -560,12 +516,8 @@ pub async fn remove_user_role(
         }
         Err(e) => {
             tracing::error!("Failed to remove role: {}", e);
-            let response_body = serde_json::json!({
-                "success": false,
-                "message": format!("移除角色失败: {}", e),
-                "data": null,
-                "code": 500
-            });
+            let response_body =
+                topems_shared_core::response::error_value(500, &format!("移除角色失败: {}", e));
 
             record_audit_log(
                 &state.pool,

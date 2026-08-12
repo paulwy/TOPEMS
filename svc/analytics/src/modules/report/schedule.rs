@@ -211,10 +211,10 @@ pub async fn create_schedule(
             "message": "Schedule created",
             "data": id
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create schedule: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create schedule: {}", e),
+        )),
     }
 }
 
@@ -260,14 +260,14 @@ pub async fn get_schedule(
                 "updated_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("updated_at"),
             }
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Schedule not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to get schedule: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Schedule not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to get schedule: {}", e),
+        )),
     }
 }
 
@@ -305,10 +305,10 @@ pub async fn update_schedule(
             "success": true,
             "message": "Schedule updated"
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update schedule: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update schedule: {}", e),
+        )),
     }
 }
 
@@ -333,10 +333,10 @@ pub async fn delete_schedule(
             "success": true,
             "message": "Schedule deleted"
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete schedule: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete schedule: {}", e),
+        )),
     }
 }
 
@@ -366,10 +366,10 @@ pub async fn execute_schedule(
             "success": true,
             "message": "Schedule execution triggered"
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to execute schedule: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to execute schedule: {}", e),
+        )),
     }
 }
 
@@ -443,10 +443,10 @@ pub async fn run_schedule(
             "success": true,
             "message": "Schedule execution triggered"
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to execute schedule: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to execute schedule: {}", e),
+        )),
     }
 }
 
@@ -474,9 +474,9 @@ pub async fn toggle_schedule(
             "success": true,
             "message": "Schedule status toggled"
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to toggle schedule: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to toggle schedule: {}", e),
+        )),
     }
 }

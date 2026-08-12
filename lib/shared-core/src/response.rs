@@ -80,6 +80,168 @@ where
     }
 }
 
+// =============================================================================
+// V184 统一错误体 ErrorPayload
+// =============================================================================
+// 解决历史 10 种不同错误体格式问题（ApiResponse.error / TopemsError /
+// ErpError / TenantContextRejection / rate_limit / IAM ad-hoc / Analytics ad-hoc /
+// Portal ad-hoc / GraphQL / WebSocket）。
+//
+// 统一规范（向后兼容 ApiResponse）：
+// {
+//   "success": false,           // 始终 false
+//   "code": 400,                // HTTP 状态码（number，与 ApiResponse.code 一致）
+//   "errorCode": "VALIDATION_FAILED",  // 机器可读字符串（可选，省略表示未知）
+//   "message": "用户可读消息",   // 人类可读消息
+//   "timestamp": "2026-08-12T10:00:00Z",  // RFC3339 时间戳
+//   "traceId": "abc123",        // 链路追踪 ID（可选）
+//   "errors": [                 // 字段级验证错误（可选，仅验证错误时存在）
+//     { "field": "email", "message": "无效的邮箱格式" }
+//   ]
+// }
+//
+// 迁移策略：
+// - ApiResponse::error 保持不变（已有 1000+ 调用点，shape 已兼容）
+// - TopemsError::IntoResponse 重写为使用 ErrorPayload
+// - TenantContextRejection / rate_limit / IAM ad-hoc 等改为 ErrorPayload
+// - GraphQL {errors:[{message}]} 保留（规范要求）
+// - 批量结果 B1-B3 保留（200 成功响应内的 errors 数组）
+// =============================================================================
+
+/// 字段级验证错误项
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = FieldError)]
+pub struct FieldError {
+    /// 字段名（如 "email"）
+    pub field: String,
+    /// 字段错误消息（如 "无效的邮箱格式"）
+    pub message: String,
+}
+
+/// V184 统一错误响应体
+///
+/// 替代历史 10 种不同错误体格式，所有后端错误响应必须使用此结构。
+/// 详见模块顶部文档注释。
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[schema(as = ErrorPayload)]
+pub struct ErrorPayload {
+    /// HTTP 状态码（与 ApiResponse.code 一致，始终为 number）
+    #[schema(example = 400)]
+    pub code: u16,
+    /// 始终为 false
+    #[schema(example = false)]
+    pub success: bool,
+    /// 机器可读错误码字符串（如 "VALIDATION_FAILED"）
+    #[schema(example = "VALIDATION_FAILED")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_code: Option<String>,
+    /// 人类可读错误消息
+    #[schema(example = "请求数据验证失败")]
+    pub message: String,
+    /// RFC3339 时间戳
+    #[schema(example = "2026-08-12T10:00:00Z")]
+    pub timestamp: String,
+    /// 链路追踪 ID（可选，从请求上下文获取）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trace_id: Option<String>,
+    /// 字段级验证错误列表（可选，仅验证错误时存在）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub errors: Option<Vec<FieldError>>,
+}
+
+impl ErrorPayload {
+    /// 创建基础错误响应（无字段级错误）
+    pub fn new(code: u16, message: &str) -> Self {
+        Self {
+            code,
+            success: false,
+            error_code: None,
+            message: message.to_string(),
+            timestamp: Utc::now().to_rfc3339(),
+            trace_id: None,
+            errors: None,
+        }
+    }
+
+    /// 创建带机器可读错误码的错误响应
+    pub fn with_error_code(mut self, error_code: &str) -> Self {
+        self.error_code = Some(error_code.to_string());
+        self
+    }
+
+    /// 创建带字段级验证错误的错误响应
+    pub fn with_errors(mut self, errors: Vec<FieldError>) -> Self {
+        self.errors = if errors.is_empty() { None } else { Some(errors) };
+        self
+    }
+
+    /// 创建带链路追踪 ID 的错误响应
+    pub fn with_trace_id(mut self, trace_id: &str) -> Self {
+        self.trace_id = Some(trace_id.to_string());
+        self
+    }
+
+    /// 便捷构造器：400 验证失败
+    pub fn validation(message: &str, errors: Vec<FieldError>) -> Self {
+        Self::new(400, message)
+            .with_error_code("VALIDATION_FAILED")
+            .with_errors(errors)
+    }
+
+    /// 便捷构造器：404 未找到
+    pub fn not_found(message: &str) -> Self {
+        Self::new(404, message).with_error_code("RESOURCE_NOT_FOUND")
+    }
+
+    /// 便捷构造器：401 未认证
+    pub fn unauthorized(message: &str) -> Self {
+        Self::new(401, message).with_error_code("UNAUTHORIZED")
+    }
+
+    /// 便捷构造器：403 禁止访问
+    pub fn forbidden(message: &str) -> Self {
+        Self::new(403, message).with_error_code("FORBIDDEN")
+    }
+
+    /// 便捷构造器：409 资源已存在
+    pub fn conflict(message: &str) -> Self {
+        Self::new(409, message).with_error_code("RESOURCE_ALREADY_EXISTS")
+    }
+
+    /// 便捷构造器：500 内部错误
+    pub fn internal(message: &str) -> Self {
+        Self::new(500, message).with_error_code("INTERNAL_ERROR")
+    }
+}
+
+impl axum::response::IntoResponse for ErrorPayload {
+    fn into_response(self) -> axum::response::Response {
+        let status =
+            axum::http::StatusCode::from_u16(self.code).unwrap_or(axum::http::StatusCode::OK);
+        let body = axum::Json(self);
+        (status, body).into_response()
+    }
+}
+
+/// 便捷函数：创建 ErrorPayload
+pub fn error_payload(code: u16, message: &str) -> ErrorPayload {
+    ErrorPayload::new(code, message)
+}
+
+/// 便捷函数：创建 ErrorPayload 并序列化为 serde_json::Value
+///
+/// 用于在不改变返回类型（Json<serde_json::Value>）的情况下统一错误体格式。
+/// 替代手写 `serde_json::json!({"success": false, "message": ..., "code": ...})` 模式。
+pub fn error_value(code: u16, message: &str) -> serde_json::Value {
+    serde_json::to_value(ErrorPayload::new(code, message)).unwrap_or_else(|_| {
+        serde_json::json!({
+            "code": code,
+            "success": false,
+            "message": message,
+        })
+    })
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PaginationParams {
     pub page: Option<i64>,

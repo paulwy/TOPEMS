@@ -35,10 +35,7 @@ pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<ser
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list templates: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(500, &format!("Failed to list templates: {}", e)));
         }
     };
 
@@ -121,10 +118,10 @@ pub async fn create_dashboard_template(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create template: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create template: {}", e),
+        )),
     }
 }
 
@@ -153,10 +150,7 @@ pub async fn get_dashboard_template(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get template: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(500, &format!("Failed to get template: {}", e)));
         }
     };
 
@@ -177,10 +171,10 @@ pub async fn get_dashboard_template(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Template not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Template not found",
+        )),
     }
 }
 
@@ -243,14 +237,14 @@ pub async fn update_dashboard_template(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Template not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update template: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Template not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update template: {}", e),
+        )),
     }
 }
 
@@ -284,14 +278,14 @@ pub async fn delete_dashboard_template(
             "success": true,
             "message": "Delete dashboard template"
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Template not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete template: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Template not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete template: {}", e),
+        )),
     }
 }
 
@@ -321,10 +315,10 @@ pub async fn create_dashboard_from_template(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get template: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get template: {}", e),
+            ));
         }
     };
 
@@ -366,15 +360,15 @@ pub async fn create_dashboard_from_template(
                         updated_at: new_row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
                     }
                 })),
-                Err(e) => Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("Failed to create dashboard: {}", e)
-                })),
+                Err(e) => Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to create dashboard: {}", e),
+                )),
             }
         }
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Template not found or inactive"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Template not found or inactive",
+        )),
     }
 }

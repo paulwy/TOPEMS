@@ -384,20 +384,14 @@ impl ErrorStatistics {
 }
 
 /// Axum IntoResponse implementation for TopemsError
+///
+/// V184 统一错误体：使用 ErrorPayload 替代历史私有 ErrorResponse 结构。
+/// 解决 code 类型不一致（string vs number）、缺少 timestamp/data 等问题。
 impl axum::response::IntoResponse for TopemsError {
     fn into_response(self) -> axum::response::Response {
-        use axum::{http::StatusCode, Json};
-        use serde::Serialize;
+        use axum::http::StatusCode;
 
-        #[derive(Serialize)]
-        struct ErrorResponse {
-            success: bool,
-            message: String,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            code: Option<String>,
-        }
-
-        let (status, message, code) = match &self {
+        let (status, message, error_code) = match &self {
             TopemsError::DatabaseConnection(msg) => {
                 tracing::error!("数据库连接错误: {}", msg);
                 (
@@ -646,13 +640,12 @@ impl axum::response::IntoResponse for TopemsError {
             }
         };
 
-        let body = Json(ErrorResponse {
-            success: false,
-            message,
-            code,
-        });
-
-        (status, body).into_response()
+        let http_code = status.as_u16();
+        let mut payload = crate::response::ErrorPayload::new(http_code, &message);
+        if let Some(ec) = error_code {
+            payload = payload.with_error_code(&ec);
+        }
+        (status, axum::Json(payload)).into_response()
     }
 }
 

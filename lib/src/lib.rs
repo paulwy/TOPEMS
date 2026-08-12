@@ -34,7 +34,7 @@ pub use topems_shared_core::error;
 pub use topems_shared_core::health;
 pub use topems_shared_core::logging;
 pub use topems_shared_core::response;
-pub use topems_shared_core::response::{ApiResponse, ListResponse};
+pub use topems_shared_core::response::{ApiResponse, ErrorPayload, FieldError, ListResponse};
 pub use topems_shared_core::service_config;
 pub use topems_shared_core::service_port;
 pub use topems_shared_core::validation;

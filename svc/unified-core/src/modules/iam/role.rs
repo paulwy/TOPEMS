@@ -82,12 +82,10 @@ pub async fn list_roles(State(state): State<AppState>) -> Json<serde_json::Value
         }
         Err(e) => {
             tracing::error!("Failed to fetch roles: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "message": format!("获取角色列表失败: {}", e),
-                "data": null,
-                "code": 500
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                &format!("获取角色列表失败: {}", e),
+            ))
         }
     }
 }
@@ -101,12 +99,10 @@ pub async fn create_role(
     let name = match payload.get("name").and_then(|v| v.as_str()) {
         Some(n) => n.to_string(),
         None => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "角色名称不能为空",
-                "data": null,
-                "code": 400
-            }));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "角色名称不能为空",
+            ));
         }
     };
 
@@ -132,12 +128,10 @@ pub async fn create_role(
     .unwrap_or(false);
 
     if exists {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "角色名已存在",
-            "data": null,
-            "code": 409
-        }));
+        return Json(topems_shared_core::response::error_value(
+            409,
+            "角色名已存在",
+        ));
     }
 
     let role_id = Uuid::new_v4();
@@ -147,12 +141,10 @@ pub async fn create_role(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开始事务失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("创建角色失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("创建角色失败: {}", e),
+            ));
         }
     };
 
@@ -168,12 +160,7 @@ pub async fn create_role(
     {
         let _ = tx.rollback().await;
         tracing::error!("创建角色失败: {}", e);
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("创建角色失败: {}", e),
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(500, &format!("创建角色失败: {}", e)));
     }
 
     // 添加权限关联
@@ -191,12 +178,10 @@ pub async fn create_role(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("提交事务失败: {}", e);
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("创建角色失败: {}", e),
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("创建角色失败: {}", e),
+        ));
     }
 
     tracing::info!("创建角色成功: {}", name);
@@ -221,12 +206,10 @@ pub async fn get_role(
     let role_uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "无效的角色ID格式",
-                "data": null,
-                "code": 400
-            }));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的角色ID格式",
+            ));
         }
     };
 
@@ -265,20 +248,13 @@ pub async fn get_role(
                 }
             }))
         }
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "角色不存在",
-            "data": null,
-            "code": 404
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(404, "角色不存在")),
         Err(e) => {
             tracing::error!("获取角色失败: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "message": format!("获取角色失败: {}", e),
-                "data": null,
-                "code": 500
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                &format!("获取角色失败: {}", e),
+            ))
         }
     }
 }
@@ -297,12 +273,10 @@ pub async fn update_role(
     let role_uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "无效的角色ID格式",
-                "data": null,
-                "code": 400
-            }));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的角色ID格式",
+            ));
         }
     };
 
@@ -316,12 +290,7 @@ pub async fn update_role(
     .unwrap_or(false);
 
     if !exists {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "角色不存在",
-            "data": null,
-            "code": 404
-        }));
+        return Json(topems_shared_core::response::error_value(404, "角色不存在"));
     }
 
     let name = payload
@@ -345,12 +314,10 @@ pub async fn update_role(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开始事务失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("更新角色失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("更新角色失败: {}", e),
+            ));
         }
     };
 
@@ -365,12 +332,10 @@ pub async fn update_role(
         {
             let _ = tx.rollback().await;
             tracing::error!("更新角色名称失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("更新角色失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("更新角色失败: {}", e),
+            ));
         }
     }
 
@@ -384,12 +349,10 @@ pub async fn update_role(
         {
             let _ = tx.rollback().await;
             tracing::error!("更新角色描述失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("更新角色失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("更新角色失败: {}", e),
+            ));
         }
     }
 
@@ -403,12 +366,10 @@ pub async fn update_role(
         {
             let _ = tx.rollback().await;
             tracing::error!("删除角色权限关联失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("更新角色权限失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("更新角色权限失败: {}", e),
+            ));
         }
 
         // 添加新的权限关联
@@ -427,12 +388,10 @@ pub async fn update_role(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("提交事务失败: {}", e);
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("更新角色失败: {}", e),
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("更新角色失败: {}", e),
+        ));
     }
 
     tracing::info!("更新角色成功: {}", id);
@@ -453,12 +412,10 @@ pub async fn delete_role(
     let role_uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "无效的角色ID格式",
-                "data": null,
-                "code": 400
-            }));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的角色ID格式",
+            ));
         }
     };
 
@@ -472,12 +429,10 @@ pub async fn delete_role(
 
     if let Some(name) = &role_name {
         if ["superadmin", "admin"].contains(&name.as_str()) {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "不能删除系统内置角色",
-                "data": null,
-                "code": 403
-            }));
+            return Json(topems_shared_core::response::error_value(
+                403,
+                "不能删除系统内置角色",
+            ));
         }
     }
 
@@ -490,12 +445,10 @@ pub async fn delete_role(
             .unwrap_or(0);
 
     if user_count > 0 {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("该角色已被 {} 个用户使用，请先移除用户关联", user_count),
-            "data": null,
-            "code": 409
-        }));
+        return Json(topems_shared_core::response::error_value(
+            409,
+            &format!("该角色已被 {} 个用户使用，请先移除用户关联", user_count),
+        ));
     }
 
     // 删除角色权限关联
@@ -505,12 +458,10 @@ pub async fn delete_role(
         .await
     {
         tracing::error!("删除角色权限关联失败: {}", e);
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("删除角色失败: {}", e),
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("删除角色失败: {}", e),
+        ));
     }
 
     // 删除角色
@@ -520,12 +471,10 @@ pub async fn delete_role(
         .await
     {
         tracing::error!("删除角色失败: {}", e);
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("删除角色失败: {}", e),
-            "data": null,
-            "code": 500
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("删除角色失败: {}", e),
+        ));
     }
 
     tracing::info!("删除角色成功: {}", id);

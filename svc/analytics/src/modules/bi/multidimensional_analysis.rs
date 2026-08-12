@@ -122,10 +122,10 @@ pub async fn query_cube(
         match validate_identifiers(&select_cols) {
             Ok(quoted) => quoted.join(", "),
             Err(e) => {
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("Invalid column name: {}", e)
-                }));
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Invalid column name: {}", e),
+                ));
             }
         }
     };
@@ -142,30 +142,24 @@ pub async fn query_cube(
         let mut whitelist_cols: Vec<String> = select_cols.clone();
         whitelist_cols.push(sort_by_raw.clone());
         if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": msg
-            }));
+            return Json(topems_shared_core::response::error_value(500, &msg));
         }
     }
 
     let sort_by = match quote_identifier(&sort_by_raw) {
         Ok(q) => q,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Invalid sort column: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Invalid sort column: {}", e),
+            ));
         }
     };
     let sort_order = req.sort_order.unwrap_or_else(|| "DESC".to_string());
     let sort_order = match validate_sort_order(&sort_order) {
         Ok(o) => o,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": e
-            }));
+            return Json(topems_shared_core::response::error_value(500, &e));
         }
     };
     let limit = req.limit.unwrap_or(100);
@@ -215,10 +209,10 @@ pub async fn query_cube(
                 }
             }))
         }
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to query cube: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to query cube: {}", e),
+        )),
     }
 }
 
@@ -242,10 +236,10 @@ pub async fn slice_cube(
         match validate_identifiers(&select_cols) {
             Ok(quoted) => quoted.join(", "),
             Err(e) => {
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("Invalid column name: {}", e)
-                }));
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Invalid column name: {}", e),
+                ));
             }
         }
     };
@@ -262,30 +256,24 @@ pub async fn slice_cube(
         let mut whitelist_cols: Vec<String> = select_cols.clone();
         whitelist_cols.push(sort_by_raw.clone());
         if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": msg
-            }));
+            return Json(topems_shared_core::response::error_value(500, &msg));
         }
     }
 
     let sort_by = match quote_identifier(&sort_by_raw) {
         Ok(q) => q,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Invalid sort column: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Invalid sort column: {}", e),
+            ));
         }
     };
     let sort_order = req.sort_order.unwrap_or_else(|| "DESC".to_string());
     let sort_order = match validate_sort_order(&sort_order) {
         Ok(o) => o,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": e
-            }));
+            return Json(topems_shared_core::response::error_value(500, &e));
         }
     };
     let limit = req.limit.unwrap_or(100);
@@ -336,10 +324,10 @@ pub async fn slice_cube(
                 }
             }))
         }
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to slice cube: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to slice cube: {}", e),
+        )),
     }
 }
 
@@ -363,10 +351,10 @@ pub async fn dice_cube(
         match validate_identifiers(&select_cols) {
             Ok(quoted) => quoted.join(", "),
             Err(e) => {
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("Invalid column name: {}", e)
-                }));
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Invalid column name: {}", e),
+                ));
             }
         }
     };
@@ -383,30 +371,24 @@ pub async fn dice_cube(
         let mut whitelist_cols: Vec<String> = select_cols.clone();
         whitelist_cols.push(sort_by_raw.clone());
         if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": msg
-            }));
+            return Json(topems_shared_core::response::error_value(500, &msg));
         }
     }
 
     let sort_by = match quote_identifier(&sort_by_raw) {
         Ok(q) => q,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Invalid sort column: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Invalid sort column: {}", e),
+            ));
         }
     };
     let sort_order = req.sort_order.unwrap_or_else(|| "DESC".to_string());
     let sort_order = match validate_sort_order(&sort_order) {
         Ok(o) => o,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": e
-            }));
+            return Json(topems_shared_core::response::error_value(500, &e));
         }
     };
     let limit = req.limit.unwrap_or(100);
@@ -457,10 +439,10 @@ pub async fn dice_cube(
                 }
             }))
         }
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to dice cube: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to dice cube: {}", e),
+        )),
     }
 }
 
@@ -483,10 +465,10 @@ pub async fn pivot_table(
         match validate_identifiers(&all_dims) {
             Ok(quoted) => quoted.join(", "),
             Err(e) => {
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("Invalid column name: {}", e)
-                }));
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Invalid column name: {}", e),
+                ));
             }
         }
     };
@@ -494,10 +476,7 @@ pub async fn pivot_table(
     // S1.3: 第二层白名单校验
     if !all_dims.is_empty() {
         if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &all_dims).await {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": msg
-            }));
+            return Json(topems_shared_core::response::error_value(500, &msg));
         }
     }
 
@@ -544,10 +523,10 @@ pub async fn pivot_table(
                 }
             }))
         }
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to generate pivot table: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to generate pivot table: {}", e),
+        )),
     }
 }
 
@@ -567,28 +546,25 @@ pub async fn rank_data(
     let dimension = match quote_identifier(&req.dimension) {
         Ok(q) => q,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Invalid dimension: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Invalid dimension: {}", e),
+            ));
         }
     };
     let measure = match quote_identifier(&req.measure) {
         Ok(q) => q,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Invalid measure: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Invalid measure: {}", e),
+            ));
         }
     };
     let sort_order = match validate_sort_order(&rank_by) {
         Ok(o) => o,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": e
-            }));
+            return Json(topems_shared_core::response::error_value(500, &e));
         }
     };
 
@@ -596,10 +572,7 @@ pub async fn rank_data(
     {
         let whitelist_cols = vec![req.dimension.clone(), req.measure.clone()];
         if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": msg
-            }));
+            return Json(topems_shared_core::response::error_value(500, &msg));
         }
     }
 
@@ -639,10 +612,10 @@ pub async fn rank_data(
                 }
             }))
         }
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to rank data: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to rank data: {}", e),
+        )),
     }
 }
 
