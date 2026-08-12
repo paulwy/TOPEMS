@@ -1696,7 +1696,7 @@ Day 2  上午: V82-2c (QMS/LIMS/EHS)  PR#3  ✅ 已交付（11 用例 · ListPag
 Day 3  上午: V83-1 React Query 审计（grep 扫描 + 报告输出）✅ 已交付
        下午: 批量修复 PR#5（330 files D1-D5 全达标）✅ + PR#5.1 D3.2 补漏→100% ✅
 Day 4  全天: V83-2 CLI 补齐（dev setup / test / doctor）PR#6  ✅ 已交付（3 命令 · 38 新增用例 · pytest 101/101 全绿 · doctor 9 项自检）
-Day 5  上午: 回归（全量 typecheck / test / pre-commit）
+Day 5  上午: 回归（全量 typecheck / test / pre-commit）✅ tsc 0 error · vitest 4988/5014（26 历史遗留）· pytest 101/101 · prettier 8/8 · PR#5 回归修复 8 文件 15 用例
        下午: TODO.md V183 → V184 里程碑封版
 ```
 

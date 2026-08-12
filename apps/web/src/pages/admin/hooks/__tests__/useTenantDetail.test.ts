@@ -78,6 +78,18 @@ vi.mock('@/utils/logger', () => ({
   apiLogger: { error: vi.fn(), debug: vi.fn() },
 }));
 
+vi.mock('@/lib/reactQuery', () => ({
+  QUERY_KEYS: {
+    AD_HOC: {
+      ADMIN_TENANT_BASE: ['admin-tenant'],
+      ADMIN_TENANT_STATS_BASE: ['admin-tenant-stats'],
+      ADMIN_TENANT_USERS_BASE: ['admin-tenant-users'],
+      ADMIN_TENANT_INVOICES_BASE: ['admin-tenant-invoices'],
+    },
+  },
+  queryClient: { invalidateQueries: vi.fn() },
+}));
+
 describe('useTenantDetail', () => {
   beforeEach(() => {
     vi.clearAllMocks();

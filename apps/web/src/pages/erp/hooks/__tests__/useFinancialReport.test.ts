@@ -68,6 +68,9 @@ vi.mock('@/lib/reactQuery', () => ({
         CASH_FLOW: (period: string) => ['erp', 'financial-reports', 'cash-flow', period],
       },
     },
+    AD_HOC: {
+      ERP_FINANCIAL_REPORTS_BASE: ['erp', 'financial-reports'],
+    },
   },
 }));
 

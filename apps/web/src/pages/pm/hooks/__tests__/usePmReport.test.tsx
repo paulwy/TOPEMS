@@ -46,7 +46,19 @@ vi.mock('@/lib/reactQuery', () => ({
       STATISTICS: ['pm', 'statistics'],
       REPORTS: ['pm', 'reports'],
       BENEFITS: (projectId: string) => ['pm', 'benefits', projectId],
+      STATISTICS_PROJECTS: ['pm', 'statistics', 'projects'],
+      STATISTICS_CONTRACTS: ['pm', 'statistics', 'contracts'],
+      STATISTICS_BUDGET: ['pm', 'statistics', 'budget'],
+      STATISTICS_RISKS: ['pm', 'statistics', 'risks'],
+      STATISTICS_TASKS: ['pm', 'statistics', 'tasks'],
+      STATISTICS_DASHBOARD: ['pm', 'statistics', 'dashboard'],
     },
+  },
+  CACHE_DURATIONS: {
+    SHORT: 30 * 1000,
+    MEDIUM: 5 * 60 * 1000,
+    LONG: 30 * 60 * 1000,
+    VERY_LONG: 2 * 60 * 60 * 1000,
   },
 }));
 

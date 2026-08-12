@@ -123,6 +123,15 @@ vi.mock('@/hooks', () => ({
   })),
 }));
 
+vi.mock('@/lib/reactQuery', () => ({
+  QUERY_KEYS: {
+    AD_HOC: {
+      TEMPLATES_BASE: ['templates'],
+      TEMPLATE_CATEGORIES_BASE: ['template-categories'],
+    },
+  },
+}));
+
 describe('useTemplateManagement', () => {
   beforeEach(() => {
     vi.clearAllMocks();

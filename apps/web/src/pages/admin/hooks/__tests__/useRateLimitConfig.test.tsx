@@ -87,6 +87,15 @@ vi.mock('lucide-react', () => ({
   Server: () => null,
 }));
 
+vi.mock('@/lib/reactQuery', () => ({
+  QUERY_KEYS: {
+    AD_HOC: {
+      ADMIN_RATE_LIMIT_CONFIG_BASE: ['admin-rate-limit-config'],
+      ADMIN_ANTI_REPLAY_CONFIG_BASE: ['admin-anti-replay-config'],
+    },
+  },
+}));
+
 describe('useRateLimitConfig', () => {
   beforeEach(() => {
     vi.clearAllMocks();

@@ -257,7 +257,11 @@ describe('Report page shell components', () => {
 
     expect(onTabChange).toHaveBeenCalledWith('reports');
     expect(onTabChange).toHaveBeenCalledWith('templates');
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['report', 'templates'] });
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['report', 'templates'],
+      exact: false,
+      refetchType: 'active',
+    });
   });
 
   it('renders loading, service down and toast states', () => {

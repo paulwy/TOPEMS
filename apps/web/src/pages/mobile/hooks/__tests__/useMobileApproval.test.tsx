@@ -92,6 +92,14 @@ vi.mock('lucide-react', () => ({
   FileText: (props: any) => null,
 }));
 
+vi.mock('@/lib/reactQuery', () => ({
+  QUERY_KEYS: {
+    AD_HOC: {
+      MOBILE_APPROVALS_BASE: ['mobile-approvals'],
+    },
+  },
+}));
+
 describe('useMobileApproval', () => {
   beforeEach(() => {
     vi.clearAllMocks();
