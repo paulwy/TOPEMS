@@ -25,6 +25,7 @@ mod qms_lims_ehs;
 mod retry_handler;
 mod routes;
 mod rule_engine;
+mod schema_defense;
 mod sync_retry;
 
 use axum::{routing::get, Router};
@@ -121,9 +122,21 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    init_conversion_rules_table(pool).await?;
-    mes_qms_integration::init_mes_qms_tables(pool).await?;
-    init_sync_tables(pool).await?;
+    if let Err(e) = init_conversion_rules_table(pool).await {
+        tracing::warn!("init_conversion_rules_table warning: {}", e);
+    }
+    if let Err(e) = mes_qms_integration::init_mes_qms_tables(pool).await {
+        tracing::warn!("init_mes_qms_tables warning: {}", e);
+    }
+    if let Err(e) = init_sync_tables(pool).await {
+        tracing::warn!("init_sync_tables warning: {}", e);
+    }
+
+    // V69.3 Schema 防御：增量迁移 + 一致性自检（8 表）
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
+        tracing::error!("[integration] Schema 防御检查失败: {:?}", e);
+    }
+
     Ok(())
 }
 

@@ -9,7 +9,7 @@ use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::models::AuditLog;
+use crate::models::audit_log::AuditLog;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]

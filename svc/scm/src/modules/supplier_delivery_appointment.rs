@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::models::{
+use crate::models::supplier_delivery_appointment::{
     ArrivalConfirmRequest, CancelRequest, CompleteRequest,
     CreateSupplierDeliveryAppointmentRequest, SupplierDeliveryAppointment,
     UpdateSupplierDeliveryAppointmentRequest,

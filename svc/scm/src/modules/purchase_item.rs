@@ -9,7 +9,9 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::models::{CreatePurchaseItemRequest, PurchaseItem, UpdatePurchaseItemRequest};
+use crate::models::purchase_item::{
+    CreatePurchaseItemRequest, PurchaseItem, UpdatePurchaseItemRequest,
+};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;

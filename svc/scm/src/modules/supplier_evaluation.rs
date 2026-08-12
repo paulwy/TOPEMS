@@ -9,7 +9,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::models::{
+use crate::models::supplier_evaluation::{
     CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest,
 };
 use crate::modules::audit::log_audit_event;

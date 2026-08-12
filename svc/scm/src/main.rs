@@ -10,6 +10,8 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(dead_code)]
 mod event_handlers;
+mod models;
+mod schema_defense;
 
 use topems_scm::modules;
 
@@ -189,5 +191,11 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .execute(pool)
     .await?;
     tracing::info!("[scm] scm_master_data_refs 表已就绪（AC-5 本地主数据引用）");
+
+    // Schema 防御：增量迁移 + 一致性自检
+    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(pool).await {
+        tracing::error!("[scm] Schema 防御检查失败: {:?}", e);
+    }
+
     Ok(())
 }

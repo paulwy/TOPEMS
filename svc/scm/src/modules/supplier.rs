@@ -16,7 +16,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::models::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
+use crate::models::supplier::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
 use crate::modules::audit::log_audit_event;
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, ModulePermission};
