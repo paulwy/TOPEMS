@@ -40,8 +40,8 @@ impl Default for DatabaseConfig {
             url: env::var("DATABASE_URL").unwrap_or_else(|_| {
                 "postgres://topems:topems_secret@localhost:5432/topems".to_string()
             }),
-            max_connections: 20,
-            min_connections: Some(5),
+            max_connections: 4,
+            min_connections: Some(1),
             connect_timeout: Some(30),
             idle_timeout: Some(300),
             max_lifetime: Some(1800),
@@ -59,7 +59,7 @@ impl DatabaseConfig {
             max_connections: env::var("DB_MAX_CONNECTIONS")
                 .ok()
                 .and_then(|s| s.parse().ok())
-                .unwrap_or(20),
+                .unwrap_or(4),
             min_connections: env::var("DB_MIN_CONNECTIONS")
                 .ok()
                 .and_then(|s| s.parse().ok()),
@@ -614,8 +614,8 @@ mod tests {
     fn test_database_config_default() {
         let config = DatabaseConfig::default();
         assert!(!config.url.is_empty());
-        assert_eq!(config.max_connections, 20);
-        assert_eq!(config.min_connections, Some(5));
+        assert_eq!(config.max_connections, 4);
+        assert_eq!(config.min_connections, Some(1));
         assert_eq!(config.idle_timeout, Some(300));
     }
 

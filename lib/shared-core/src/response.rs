@@ -171,7 +171,11 @@ impl ErrorPayload {
 
     /// 创建带字段级验证错误的错误响应
     pub fn with_errors(mut self, errors: Vec<FieldError>) -> Self {
-        self.errors = if errors.is_empty() { None } else { Some(errors) };
+        self.errors = if errors.is_empty() {
+            None
+        } else {
+            Some(errors)
+        };
         self
     }
 

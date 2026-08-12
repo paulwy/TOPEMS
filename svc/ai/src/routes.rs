@@ -139,12 +139,12 @@ pub fn create_routes(
         )
         .route("/connectors/test", get(connector_handlers::test_connector))
         .route("/connectors/query", post(connector_handlers::query_data))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
-        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -155,23 +155,23 @@ pub fn create_routes(
         .route("/analysis/entities", post(AnalysisApi::extract_entities))
         .route("/analysis/keywords", post(AnalysisApi::extract_keywords))
         .route("/analysis/history", post(AnalysisApi::history))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
-        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
     let agent_router = Router::new()
         .merge(crate::modules::agent::create_routes())
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
-        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -194,12 +194,12 @@ pub fn create_routes(
             "/profile/update",
             post(RecommendationApi::update_user_profile),
         )
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
-        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -232,6 +232,9 @@ pub fn create_routes(
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
