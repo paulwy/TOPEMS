@@ -13,7 +13,7 @@ import {
 import { PageContainer } from '@/components/common';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import type { ProductionSchedule, AdjustScheduleRequest, GanttData } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';
@@ -36,7 +36,7 @@ const apiAdapter = createCrudPageAdapter(mesApi.schedules, {
 function GanttView() {
   const queryClient = useQueryClient();
 
-  const { data: ganttData, isLoading } = useQuery<GanttData | null>({
+  const { data: ganttData, isPending} = useQuery<GanttData | null>({
     queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT,
     queryFn: async () => {
       const response = await mesApi.schedules.getGanttData();
@@ -45,9 +45,10 @@ function GanttView() {
       }
       return null;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isPending) return <LoadingSpinner />;
 
   if (!ganttData || ganttData.tasks.length === 0) {
     return (
@@ -79,7 +80,10 @@ function GanttView() {
           onClick={() =>
             queryClient.invalidateQueries({
               queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT,
-            })
+            
+  exact: false,
+  refetchType: 'active',
+})
           }
           size='small'
         >
@@ -185,8 +189,14 @@ const ProductionSchedulePage: React.FC = () => {
         title: '成功',
         message: '生产排程调整成功',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULES });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULES ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowAdjustDialog(false);
       resetAdjustForm();
     },

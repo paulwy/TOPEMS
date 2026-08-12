@@ -1,5 +1,8 @@
 import type { EntitySchema } from '@/schema';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export const outboundOrderSchema: EntitySchema = {
   entity: 'wms_outbound_order',
   title: '出库管理',
@@ -227,7 +230,7 @@ export const outboundOrderSchema: EntitySchema = {
         }
         return [];
       },
-      queryKey: ['warehouse-options'],
+      queryKey: QUERY_KEYS.AD_HOC.WAREHOUSE_OPTIONS_BASE,
     },
   ],
 };

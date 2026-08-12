@@ -1,6 +1,9 @@
 import type { EntitySchema } from '@/schema';
 import { departmentApi, type Department } from '@/api/hrm';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 async function loadDepartmentOptions(): Promise<{ value: string; label: string }[]> {
   try {
     const response = await departmentApi.list();
@@ -170,7 +173,7 @@ export const positionSchema: EntitySchema = {
     {
       field: 'department_id',
       loader: loadDepartmentOptions,
-      queryKey: ['hrm', 'departments'],
+      queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_BASE,
     },
   ],
 

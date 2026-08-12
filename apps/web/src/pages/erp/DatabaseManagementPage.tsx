@@ -56,6 +56,9 @@ import { ERP_PATHS } from '@/modules/erp/config';
 import { databaseApi, type TableInfo, type TableDetail } from '@/api/erp/database';
 import { extractErrorMessage } from '@/utils/errors';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface BackupRecord {
   id: string;
   backup_name: string;
@@ -146,7 +149,7 @@ const DatabaseManagementPage: React.FC = () => {
   const [restoreBackupId, setRestoreBackupId] = useState<string | null>(null);
 
   const tablesQuery = useQuery<TableInfo[]>({
-    queryKey: ['erp-database-tables', searchQuery],
+    queryKey: [...QUERY_KEYS.AD_HOC.ERP_DATABASE_TABLES_BASE, searchQuery],
     queryFn: async () => {
       const res = await databaseApi.listTables({ search: searchQuery || undefined });
       if (res.success && res.data) return res.data;
@@ -159,7 +162,7 @@ const DatabaseManagementPage: React.FC = () => {
   const loading = tablesQuery.isLoading;
 
   const tableDetailQuery = useQuery<TableDetail | null>({
-    queryKey: ['erp-database-table-detail', currentTable?.table_name],
+    queryKey: [...QUERY_KEYS.AD_HOC.ERP_DATABASE_TABLE_DETAIL_BASE, currentTable?.table_name],
     queryFn: async () => {
       if (!currentTable?.table_name) return null;
       const res = await databaseApi.getTableDetail(currentTable.table_name);

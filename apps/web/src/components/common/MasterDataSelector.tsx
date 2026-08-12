@@ -18,6 +18,9 @@ import { Autocomplete, TextField, Box, Typography, Chip, CircularProgress } from
 import { useQuery } from '@tanstack/react-query';
 import { masterDataApi, type MasterDataRef } from '@/api/bff';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface MasterDataSelectorProps {
   /** 主数据域：material / customer / supplier / account_subject 等 */
   domain: string;
@@ -55,8 +58,8 @@ export const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
   size = 'small',
   showStatus = true,
 }) => {
-  const { data, isLoading } = useQuery({
-    queryKey: ['master-data-refs', domain],
+  const { data, isPending} = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.MASTER_DATA_REFS_BASE, domain],
     queryFn: async () => {
       const resp = await masterDataApi.list(domain, 1, 100);
       return resp.data?.data?.items ?? [];
@@ -81,7 +84,7 @@ export const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
       size={size}
       disabled={disabled}
       options={options}
-      loading={isLoading}
+      loading={isPending}
       value={selected}
       getOptionLabel={(option) => {
         const name = option.name ? ` - ${option.name}` : '';
@@ -148,7 +151,7 @@ export const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
               ...params.slotProps.input,
               endAdornment: (
                 <>
-                  {isLoading && (
+                  {isPending && (
                     <CircularProgress
                       color='inherit'
                       size={16}
@@ -161,7 +164,7 @@ export const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
           }}
         />
       )}
-      noOptionsText={isLoading ? '加载中...' : '无匹配主数据'}
+      noOptionsText={isPending ? '加载中...' : '无匹配主数据'}
     />
   );
 };

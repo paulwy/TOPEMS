@@ -6,11 +6,14 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { positionSchema } from '@/schemas/hrm';
 import { positionApi, departmentApi, type Department } from '@/api/hrm';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const apiAdapter = createCrudPageAdapter(positionApi);
 
 export default function HrmPositionPage() {
   const { data: departmentsData } = useQuery<{ items: Department[] }>({
-    queryKey: ['hrm-departments'],
+    queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_2_BASE,
     queryFn: async () => {
       const response = await departmentApi.list();
       if (response.code === 200 && response.data) {

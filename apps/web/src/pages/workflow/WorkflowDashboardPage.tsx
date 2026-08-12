@@ -26,11 +26,14 @@ import type { StatisticsResponse } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export const WorkflowDashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
   const dashboardQuery = useQuery<StatisticsResponse | null>({
-    queryKey: ['workflow-dashboard'],
+    queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_DASHBOARD_BASE,
     queryFn: async () => {
       const res = await workflowApi.getStatistics();
       if (res.success && res.data) {

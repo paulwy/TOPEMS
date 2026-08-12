@@ -11,6 +11,9 @@ import { useNavigate } from 'react-router-dom';
 import { SRM_PATHS } from '@/modules/srm/config';
 import { designTokens } from '@/theme/tokens';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 interface SupplierContract {
@@ -79,7 +82,7 @@ const contractApiAdapter: CrudApiAdapter = {
 
 const ContractStats: React.FC = () => {
   const { data: contracts = [] } = useQuery({
-    queryKey: ['srm-contracts-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.SRM_CONTRACTS_STATS_BASE,
     queryFn: async () => {
       const response = await srmApi.listContracts();
       if (response.success && response.data) {

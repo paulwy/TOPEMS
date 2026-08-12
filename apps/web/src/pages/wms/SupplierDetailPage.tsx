@@ -30,7 +30,8 @@ import { PageContainer } from '@/components/common';
 import { SCM_PATHS } from '@/modules/scm/config';
 import { useQuery } from '@tanstack/react-query';
 import { formatDate } from '@/utils/date';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 const SupplierDetailPage: React.FC = () => {
   const { t } = useTranslation();
@@ -39,7 +40,7 @@ const SupplierDetailPage: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const { data: supplier, isLoading: loading } = useQuery({
+  const { data: supplier, isPending: loading} = useQuery({
     queryKey: QUERY_KEYS.SCM.SUPPLIER(id || ''),
     queryFn: async () => {
       const res = await scmApi.suppliers.get(id as string);
@@ -49,7 +50,8 @@ const SupplierDetailPage: React.FC = () => {
       return res.data;
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const formatCurrency = (amount?: number) => {
     if (!amount) return '¥0';

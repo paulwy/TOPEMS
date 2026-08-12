@@ -49,6 +49,8 @@ import type { MapMarker as GisMapMarker } from '@/api/gis';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 interface FenceData {
@@ -126,10 +128,10 @@ export const GisFencePage: React.FC = () => {
 
   const {
     data: mapMarkers = [],
-    isLoading: markersLoading,
+    isPending: markersLoading,
     error: markersError,
   } = useQuery({
-    queryKey: ['gis-map-markers'],
+    queryKey: QUERY_KEYS.AD_HOC.GIS_MAP_MARKERS_BASE,
     queryFn: async () => {
       const res = await gisApi.listMapMarkers({ pagesize: 50 });
       if (res.success && res.data) {
@@ -137,10 +139,11 @@ export const GisFencePage: React.FC = () => {
       }
       throw new Error(res.message || '加载地图标记失败');
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const { data: fences = MOCK_FENCES } = useQuery({
-    queryKey: ['gis-fences'],
+    queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE,
     queryFn: async () => {
       return MOCK_FENCES;
     },
@@ -152,7 +155,7 @@ export const GisFencePage: React.FC = () => {
       return fenceId;
     },
     onMutate: async (fenceId) => {
-      await queryClient.cancelQueries({ queryKey: ['gis-fences'] });
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE });
       const previousFences = queryClient.getQueryData<FenceData[]>(['gis-fences']);
       queryClient.setQueryData<FenceData[]>(['gis-fences'], (old) =>
         old ? old.filter((f) => f.id !== fenceId) : []
@@ -322,7 +325,10 @@ export const GisFencePage: React.FC = () => {
   }, []);
 
   const handleSaveFence = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['gis-fences'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     setOpenDialog(false);
   }, [queryClient]);
 
@@ -334,8 +340,14 @@ export const GisFencePage: React.FC = () => {
   );
 
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['gis-map-markers'] });
-    queryClient.invalidateQueries({ queryKey: ['gis-fences'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.GIS_MAP_MARKERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient]);
 
   const filteredFences = useMemo(

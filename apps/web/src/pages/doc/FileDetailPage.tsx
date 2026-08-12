@@ -11,7 +11,8 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { DOC_PATHS } from '@/modules/doc/config';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -24,7 +25,7 @@ const DocsFileDetailPage: React.FC = () => {
 
   const {
     data: file,
-    isLoading: loading,
+    isPending: loading,
     error: queryError,
   } = useQuery<FileMetadata>({
     queryKey: id ? QUERY_KEYS.DOC.DOCUMENT(id) : ['doc', 'document', 'none'],
@@ -37,7 +38,8 @@ const DocsFileDetailPage: React.FC = () => {
       throw new Error(res.message || '加载文件信息失败');
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const errorMessage = queryError
     ? queryError instanceof Error
@@ -56,7 +58,10 @@ const DocsFileDetailPage: React.FC = () => {
     onSuccess: () => {
       success('文件删除成功');
       if (id) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS ,
+  exact: false,
+  refetchType: 'active',
+});
       }
       navigate(DOC_PATHS.documents);
     },

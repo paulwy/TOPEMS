@@ -20,6 +20,9 @@ import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import { LazyChart } from '@/components/charts';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const HrmOverviewPage: React.FC = () => {
@@ -27,7 +30,7 @@ const HrmOverviewPage: React.FC = () => {
   const navigate = useNavigate();
 
   const loadingQuery = useQuery<boolean>({
-    queryKey: ['hrm-dashboard'],
+    queryKey: QUERY_KEYS.AD_HOC.HRM_DASHBOARD_BASE,
     queryFn: async () => true,
     staleTime: Infinity,
   });

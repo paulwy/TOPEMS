@@ -54,6 +54,8 @@ import { metricsApi, type Slo, type SloBudget, type SloViolation } from '@/api/m
 import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const SLO_TYPE_LABELS: Record<string, string> = {
   all: '全部类型',
   availability: '可用性',
@@ -161,15 +163,16 @@ export const SLOStatusPage: React.FC = () => {
   const [tab, setTab] = useState<'slos' | 'budget' | 'violations'>('slos');
 
   const summaryQuery = useQuery({
-    queryKey: ['monitor', 'slo', 'summary'],
+    queryKey: QUERY_KEYS.AD_HOC.MONITOR_SLO_SUMMARY_BASE,
     queryFn: async () => {
       const res = await metricsApi.getSloSummary();
       return res.data;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.SHORT,});
 
   const listQuery = useQuery({
-    queryKey: ['monitor', 'slo', 'list', sloType, statusFilter, keyword],
+    queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_SLO_LIST_BASE, sloType, statusFilter, keyword],
     queryFn: async () => {
       const res = await metricsApi.listSlos({
         slo_type: sloType === 'all' ? undefined : sloType,
@@ -178,29 +181,35 @@ export const SLOStatusPage: React.FC = () => {
       });
       return res.data?.items ?? [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.SHORT,});
 
   const budgetQuery = useQuery({
-    queryKey: ['monitor', 'slo', 'budget'],
+    queryKey: QUERY_KEYS.AD_HOC.MONITOR_SLO_BUDGET_BASE,
     queryFn: async () => {
       const res = await metricsApi.getSloBudget();
       return res.data ?? [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.SHORT,});
 
   const violationsQuery = useQuery({
-    queryKey: ['monitor', 'slo', 'violations'],
+    queryKey: QUERY_KEYS.AD_HOC.MONITOR_SLO_VIOLATIONS_BASE,
     queryFn: async () => {
       const res = await metricsApi.listSloViolations();
       return res.data?.items ?? [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.SHORT,});
 
   const resolveMutation = useMutation({
     mutationFn: (id: string) => metricsApi.resolveSloViolation(id),
     onSuccess: () => {
       addNotification({ type: 'success', title: '已处理', message: '违规记录已标记为已处理' });
-      void queryClient.invalidateQueries({ queryKey: ['monitor', 'slo'] });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MONITOR_SLO_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       addNotification({

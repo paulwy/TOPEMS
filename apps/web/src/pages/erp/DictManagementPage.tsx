@@ -40,6 +40,9 @@ import { extractErrorMessage } from '@/utils/errors';
 import { dictTypeApi, dictItemApi, type DictType, type DictItem } from '@/api/system';
 import { dictItemSchema } from '@/schemas/admin';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const categoryLabels: Record<string, string> = {
   system: '系统字典',
   iam: 'IAM字典',
@@ -80,7 +83,7 @@ const DictManagementPage: React.FC = () => {
 
   // ── 字典类型列表 ──
   const dictTypesQuery = useQuery<{ items: DictType[]; total: number }>({
-    queryKey: ['system-dict-types'],
+    queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE,
     queryFn: async () => {
       const res = await dictTypeApi.list();
       if (res.success && res.data) {
@@ -107,7 +110,10 @@ const DictManagementPage: React.FC = () => {
     mutationFn: (data: Partial<DictType>) => dictTypeApi.create(data),
     onSuccess: () => {
       addNotification({ title: '成功', message: '字典类型创建成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['system-dict-types'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setTypeDialogOpen(false);
     },
     onError: (err: unknown) => {
@@ -124,7 +130,10 @@ const DictManagementPage: React.FC = () => {
       dictTypeApi.update(id, data),
     onSuccess: () => {
       addNotification({ title: '成功', message: '字典类型更新成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['system-dict-types'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setTypeDialogOpen(false);
     },
     onError: (err: unknown) => {
@@ -143,7 +152,10 @@ const DictManagementPage: React.FC = () => {
       if (selectedTypeId === id) {
         setSelectedTypeId(null);
       }
-      queryClient.invalidateQueries({ queryKey: ['system-dict-types'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       addNotification({
@@ -224,7 +236,10 @@ const DictManagementPage: React.FC = () => {
           dict_type_id: selectedTypeId,
         });
         if (!res.success) throw new Error(res.message || '创建失败');
-        queryClient.invalidateQueries({ queryKey: ['system-dict-types'] });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         return res.data as DictItem;
       },
       update: async (id, data) => {
@@ -235,14 +250,20 @@ const DictManagementPage: React.FC = () => {
       delete: async (id) => {
         const res = await dictItemApi.delete(id);
         if (!res.success) throw new Error(res.message || '删除失败');
-        queryClient.invalidateQueries({ queryKey: ['system-dict-types'] });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       },
     }),
     [selectedTypeId, queryClient]
   );
 
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['system-dict-types'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient]);
 
   const saving = createTypeMutation.isPending || updateTypeMutation.isPending;

@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { batchSchema } from '@/schemas/pdm';
 import { pdmApi, type ProductionBatch } from '@/api/pdm';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 export default function PdmBatchPage() {
@@ -35,7 +36,10 @@ export default function PdmBatchPage() {
       create: async (data) => {
         const response = await pdmApi.createBatch(data as Parameters<typeof pdmApi.createBatch>[0]);
         if (!response.success) throw new Error(response.message || '创建失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES ,
+  exact: false,
+  refetchType: 'active',
+});
         return (response.data ?? {}) as ProductionBatch;
       },
       update: async (id, data) => {
@@ -44,13 +48,19 @@ export default function PdmBatchPage() {
           data as Parameters<typeof pdmApi.updateBatch>[1]
         );
         if (!response.success) throw new Error(response.message || '更新失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES ,
+  exact: false,
+  refetchType: 'active',
+});
         return (response.data ?? {}) as ProductionBatch;
       },
       delete: async (id) => {
         const response = await pdmApi.deleteBatch(id);
         if (!response.success) throw new Error(response.message || '删除失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES ,
+  exact: false,
+  refetchType: 'active',
+});
       },
     }),
     [queryClient]

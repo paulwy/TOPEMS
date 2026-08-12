@@ -25,6 +25,9 @@ import { designTokens } from '@/theme/tokens';
 import { payrollApi, salaryAdjustmentApi, type PayrollRun, type SalaryAdjustment } from '@/api/hrm';
 import { payrollSchema, salaryAdjustmentSchema } from '@/schemas/hrm';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const HrmPayrollPage: React.FC = () => {
@@ -42,7 +45,10 @@ const HrmPayrollPage: React.FC = () => {
             title: t('hrm.hrm_payroll_page.completed'),
             message: t('hrm.hrm_payroll_page.completed'),
           });
-          queryClient.invalidateQueries({ queryKey: ['hrm', 'payroll'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_PAYROLL_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         } catch {
           addNotification({
             type: 'error',
@@ -65,7 +71,10 @@ const HrmPayrollPage: React.FC = () => {
             title: t('hrm.hrm_payroll_page.completed_1'),
             message: t('hrm.hrm_payroll_page.completed_1'),
           });
-          queryClient.invalidateQueries({ queryKey: ['hrm', 'payroll'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_PAYROLL_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         } catch {
           addNotification({
             type: 'error',
@@ -363,7 +372,10 @@ const HrmPayrollPage: React.FC = () => {
             try {
               await salaryAdjustmentApi.approve(row.id as string, 'current_user');
               addNotification({ title: '成功', message: '审批成功', type: 'success' });
-              queryClient.invalidateQueries({ queryKey: ['hrm', 'salary-adjustments'] });
+              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_SALARY_ADJUSTMENTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
             } catch {
               addNotification({ title: '失败', message: '审批失败', type: 'error' });
             }

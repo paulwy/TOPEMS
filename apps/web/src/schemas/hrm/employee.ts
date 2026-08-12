@@ -1,6 +1,9 @@
 import type { EntitySchema } from '@/schema';
 import { departmentApi } from '@/api/hrm';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const STATUS_OPTIONS = [
   { value: 'active', label: '在职' },
   { value: 'inactive', label: '离职' },
@@ -219,7 +222,7 @@ export const employeeSchema: EntitySchema = {
   dynamicOptions: [
     {
       field: 'department_id',
-      queryKey: ['hrm', 'departments'],
+      queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_BASE,
       loader: async () => {
         const res = await departmentApi.list({ pagesize: 100 });
         if (res.success && res.data) {

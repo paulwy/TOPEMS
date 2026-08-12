@@ -1,5 +1,8 @@
 import type { EntitySchema } from '@/schema';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export const leaveSchema: EntitySchema = {
   entity: 'hrm_leave',
   title: '请假管理',
@@ -205,7 +208,7 @@ export const leaveSchema: EntitySchema = {
         }
         return [];
       },
-      queryKey: ['hrm-leave-employees'],
+      queryKey: QUERY_KEYS.AD_HOC.HRM_LEAVE_EMPLOYEES_BASE,
     },
   ],
 

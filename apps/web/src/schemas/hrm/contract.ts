@@ -2,6 +2,9 @@ import type { EntitySchema } from '@/schema';
 import { employeeApi } from '@/api/hrm';
 import type { Employee } from '@/api/hrm/types';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 async function loadEmployeeOptions(): Promise<{ value: string; label: string }[]> {
   try {
     const response = await employeeApi.list({ page: 1, pagesize: 100 });
@@ -218,7 +221,7 @@ export const contractSchema: EntitySchema = {
     {
       field: 'employee_id',
       loader: loadEmployeeOptions,
-      queryKey: ['hrm', 'employees'],
+      queryKey: QUERY_KEYS.AD_HOC.HRM_EMPLOYEES_BASE,
     },
   ],
 

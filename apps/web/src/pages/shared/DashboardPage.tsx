@@ -413,7 +413,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         await completeTodoGql(id);
         queryClient.invalidateQueries({
           queryKey: [...QUERY_KEYS.DASHBOARD.TODOS, 'bff-graphql'],
-        });
+        
+  exact: false,
+  refetchType: 'active',
+});
       } catch (err) {
         // V64 降级：开发环境 portal 服务未启动是常态
         apiLogger[logLvl]('BFF Mutation 完成待办失败:', err);

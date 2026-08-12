@@ -10,6 +10,7 @@ import { pmApi } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
 import { PM_PATHS } from '@/modules/pm/config';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const projectSchema = z.object({
@@ -54,7 +55,10 @@ const PmProjectCreatePage: React.FC = () => {
       });
     },
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECTS ,
+  exact: false,
+  refetchType: 'active',
+});
       if (response.code === 200 || response.code === 201) {
         success('项目创建成功');
         navigate(`${PM_PATHS.projects}/${response.data?.id}`);

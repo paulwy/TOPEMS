@@ -5,6 +5,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { financeReportApi } from '@/api/erp';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 export interface PeriodOption {
@@ -106,7 +107,10 @@ export function useFinancialReport() {
   }, [cashFlowQuery.isError, cashFlowQuery.error, addNotification, t]);
 
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['erp', 'financial-reports'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ERP_FINANCIAL_REPORTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient]);
 
   const formatCurrency = useCallback((amount: number) => {

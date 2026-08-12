@@ -57,6 +57,8 @@ import { SubTableBuilder } from './SubTableBuilder';
 import { WizardBuilder } from './WizardBuilder';
 import { TreeBuilder, type TreeNode } from './TreeBuilder';
 
+import { CACHE_DURATIONS } from '@/lib/reactQuery';
+
 export type { RowAction };
 
 // ============ API 适配器 ============
@@ -370,7 +372,10 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           title: t('common.import_success', '导入成功'),
           message: '',
         });
-        queryClient.invalidateQueries({ queryKey: [schema.entity] });
+        queryClient.invalidateQueries({ queryKey: [schema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
       } catch (error) {
         addNotification({
           type: 'error',
@@ -413,7 +418,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 
   const queryKey = [schema.entity, 'list', page, pageSize, search, filterParams, extraQueryParams];
 
-  const { data, isLoading } = useQuery({
+  const { data, isPending} = useQuery({
     queryKey,
     queryFn: async () => {
       return apiAdapter.list({
@@ -424,13 +429,17 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
         ...extraQueryParams,
       });
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   // ── Mutations ──
   const createMutation = useMutation({
     mutationFn: (data: Partial<T>) => apiAdapter.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [schema.entity] });
+      queryClient.invalidateQueries({ queryKey: [schema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: t('common.create_success', '创建成功'),
@@ -450,7 +459,10 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<T> }) => apiAdapter.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [schema.entity] });
+      queryClient.invalidateQueries({ queryKey: [schema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: t('common.update_success', '更新成功'),
@@ -470,7 +482,10 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiAdapter.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [schema.entity] });
+      queryClient.invalidateQueries({ queryKey: [schema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: t('common.delete_success', '删除成功'),
@@ -493,7 +508,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   // ── 树形数据查询 ──
   const treeQueryKey = [schema.entity, 'tree'];
 
-  const { data: treeRawData, isLoading: treeLoading } = useQuery({
+  const { data: treeRawData, isPending: treeLoading} = useQuery({
     queryKey: treeQueryKey,
     queryFn: async () => {
       if (!effectiveTreeAdapter) return [];
@@ -557,7 +572,10 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
       } else {
         (await apiAdapter.create(nodeData as Partial<T>)) as unknown;
       }
-      queryClient.invalidateQueries({ queryKey: treeQueryKey });
+      queryClient.invalidateQueries({ queryKey: treeQueryKey ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: t('common.create_success', '创建成功'),
@@ -574,7 +592,10 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
       } else {
         await apiAdapter.update(String(id), nodeData as Partial<T>);
       }
-      queryClient.invalidateQueries({ queryKey: treeQueryKey });
+      queryClient.invalidateQueries({ queryKey: treeQueryKey ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: t('common.update_success', '更新成功'),
@@ -591,7 +612,10 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
       } else {
         await apiAdapter.delete(String(id));
       }
-      queryClient.invalidateQueries({ queryKey: treeQueryKey });
+      queryClient.invalidateQueries({ queryKey: treeQueryKey ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: t('common.delete_success', '删除成功'),
@@ -822,7 +846,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 breadcrumbs={breadcrumbs}
                 columns={columns}
                 data={rows}
-                loading={isLoading}
+                loading={isPending}
                 searchable
                 searchPlaceholder={t('common.search', '搜索')}
                 searchValue={search}

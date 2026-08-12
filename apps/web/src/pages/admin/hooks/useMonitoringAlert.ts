@@ -17,6 +17,9 @@ import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 export type TabType = 'alerts' | 'rules' | 'health';
 
 export interface UseMonitoringAlertReturn {
@@ -82,7 +85,7 @@ export function useMonitoringAlert(): UseMonitoringAlertReturn {
 
   // Queries
   const alertsQuery = useQuery<{ items: Alert[]; total: number }>({
-    queryKey: ['admin-monitoring-alerts', currentPage, searchQuery, filterLevel, filterStatus],
+    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE, currentPage, searchQuery, filterLevel, filterStatus],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
@@ -103,7 +106,7 @@ export function useMonitoringAlert(): UseMonitoringAlertReturn {
   });
 
   const rulesQuery = useQuery<{ items: AlertRule[]; total: number }>({
-    queryKey: ['admin-monitoring-rules'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_RULES_BASE,
     queryFn: async () => {
       const response = await monitoringApi.listAlertRules();
       if (response.success && response.data) {
@@ -116,7 +119,7 @@ export function useMonitoringAlert(): UseMonitoringAlertReturn {
   });
 
   const healthQuery = useQuery<SystemHealth | null>({
-    queryKey: ['admin-monitoring-health'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_HEALTH_BASE,
     queryFn: async () => {
       const response = await monitoringApi.getSystemHealth();
       return response.success && response.data ? response.data : null;
@@ -126,7 +129,7 @@ export function useMonitoringAlert(): UseMonitoringAlertReturn {
   });
 
   const alertStatsQuery = useQuery<AlertStats | null>({
-    queryKey: ['admin-monitoring-alert-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERT_STATS_BASE,
     queryFn: async () => {
       const response = await monitoringApi.getAlertStats();
       return response.success && response.data ? response.data : null;
@@ -197,14 +200,26 @@ export function useMonitoringAlert(): UseMonitoringAlertReturn {
 
   // Invalidation helpers
   const invalidateAlerts = () =>
-    queryClient.invalidateQueries({ queryKey: ['admin-monitoring-alerts'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
   const invalidateRules = () =>
-    queryClient.invalidateQueries({ queryKey: ['admin-monitoring-rules'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_RULES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
 
   // Mutations
   const acknowledgeMutation = useMutation({
     mutationFn: (alertId: string) => monitoringApi.acknowledgeAlert(alertId),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateAlerts();
       addNotification({ type: 'success', message: t('admin.monitoring_alert.alert_acknowledged') });
     },
@@ -221,6 +236,12 @@ export function useMonitoringAlert(): UseMonitoringAlertReturn {
   const resolveMutation = useMutation({
     mutationFn: (alertId: string) => monitoringApi.resolveAlert(alertId),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateAlerts();
       addNotification({ type: 'success', message: t('admin.monitoring_alert.alert_resolved') });
     },
@@ -237,6 +258,12 @@ export function useMonitoringAlert(): UseMonitoringAlertReturn {
   const escalateMutation = useMutation({
     mutationFn: (alertId: string) => monitoringApi.escalateAlert(alertId),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateAlerts();
       addNotification({ type: 'success', message: t('admin.monitoring_alert.alert_escalated') });
     },
@@ -256,6 +283,12 @@ export function useMonitoringAlert(): UseMonitoringAlertReturn {
         ? monitoringApi.enableAlertRule(params.ruleId)
         : monitoringApi.disableAlertRule(params.ruleId),
     onSuccess: (_data, params) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateRules();
       addNotification({
         type: 'success',
@@ -277,6 +310,12 @@ export function useMonitoringAlert(): UseMonitoringAlertReturn {
   const deleteRuleMutation = useMutation({
     mutationFn: (ruleId: string) => monitoringApi.deleteAlertRule(ruleId),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateRules();
       addNotification({ type: 'success', message: t('admin.monitoring_alert.rule_deleted') });
     },
@@ -296,6 +335,12 @@ export function useMonitoringAlert(): UseMonitoringAlertReturn {
         ? monitoringApi.updateAlertRule(params.id, params.data as UpdateAlertRuleRequest)
         : monitoringApi.createAlertRule(params.data as CreateAlertRuleRequest),
     onSuccess: (_data, params) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateRules();
       addNotification({
         type: 'success',

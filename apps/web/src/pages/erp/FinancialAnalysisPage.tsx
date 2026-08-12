@@ -12,7 +12,7 @@ import {
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { financeReportApi } from '@/api/erp';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
 import { LoadingSpinner } from '@topems/shared-components';
@@ -38,10 +38,13 @@ const FinancialAnalysisPage: React.FC = () => {
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
 
   const invalidateData = () => {
-    queryClient.invalidateQueries({ queryKey: ['erp', 'financial-reports'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ERP_FINANCIAL_REPORTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
-  const { data: balanceSheetData, isLoading: balanceSheetLoading } = useQuery<BalanceSheet | null>({
+  const { data: balanceSheetData, isPending: balanceSheetLoading} = useQuery<BalanceSheet | null>({
     queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.BALANCE_SHEET(period),
     queryFn: async () => {
       const response = await financeReportApi.balanceSheet({ period });
@@ -51,7 +54,8 @@ const FinancialAnalysisPage: React.FC = () => {
       return null;
     },
     enabled: activeTab === 0,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   useEffect(() => {
     if (balanceSheetData) {
@@ -67,7 +71,7 @@ const FinancialAnalysisPage: React.FC = () => {
     }
   }, [balanceSheetData]);
 
-  const { data: incomeStatementData, isLoading: incomeStatementLoading } =
+  const { data: incomeStatementData, isPending: incomeStatementLoading} =
     useQuery<IncomeStatement | null>({
       queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.INCOME_STATEMENT(period),
       queryFn: async () => {
@@ -78,7 +82,8 @@ const FinancialAnalysisPage: React.FC = () => {
         return null;
       },
       enabled: activeTab === 1,
-    });
+    
+        staleTime: CACHE_DURATIONS.MEDIUM,});
 
   useEffect(() => {
     if (incomeStatementData) {
@@ -107,7 +112,7 @@ const FinancialAnalysisPage: React.FC = () => {
     }
   }, [incomeStatementData]);
 
-  const { data: cashFlowData, isLoading: cashFlowLoading } = useQuery<CashFlowStatement | null>({
+  const { data: cashFlowData, isPending: cashFlowLoading} = useQuery<CashFlowStatement | null>({
     queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.CASH_FLOW(period),
     queryFn: async () => {
       const response = await financeReportApi.cashFlowStatement({ period });
@@ -117,7 +122,8 @@ const FinancialAnalysisPage: React.FC = () => {
       return null;
     },
     enabled: activeTab === 2,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   useEffect(() => {
     if (cashFlowData) {
@@ -142,7 +148,7 @@ const FinancialAnalysisPage: React.FC = () => {
     }
   }, [cashFlowData]);
 
-  const { data: agingAnalysisData, isLoading: agingAnalysisLoading } = useQuery<Record<
+  const { data: agingAnalysisData, isPending: agingAnalysisLoading} = useQuery<Record<
     string,
     number
   > | null>({
@@ -175,7 +181,7 @@ const FinancialAnalysisPage: React.FC = () => {
     }
   }, [agingAnalysisData]);
 
-  const { data: budgetAnalysisData, isLoading: budgetAnalysisLoading } = useQuery<{
+  const { data: budgetAnalysisData, isPending: budgetAnalysisLoading} = useQuery<{
     budget_amount: number;
     actual_amount: number;
   } | null>({
@@ -188,7 +194,8 @@ const FinancialAnalysisPage: React.FC = () => {
       return null;
     },
     enabled: activeTab === 4,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   useEffect(() => {
     if (budgetAnalysisData) {

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import {
   Receipt,
   CheckCircle,
@@ -159,7 +159,8 @@ const TaxHeader: React.FC = () => {
   const { data: taxData = [] } = useQuery<TaxEntry[]>({
     queryKey: QUERY_KEYS.FINANCE.TAX,
     queryFn: aggregateTaxEntries,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const totalTaxAmount = useMemo(
     () => taxData.reduce((sum, item) => sum + item.tax_amount, 0),
@@ -258,8 +259,14 @@ const FinanceTaxPage: React.FC = () => {
   const [selectedTax, setSelectedTax] = useState<TaxEntry | null>(null);
 
   const invalidateTaxData = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.TAX });
-    queryClient.invalidateQueries({ queryKey: ['finance_tax'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.TAX ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.FINANCE_TAX_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   const handleDeclare = (tax: TaxEntry) => {

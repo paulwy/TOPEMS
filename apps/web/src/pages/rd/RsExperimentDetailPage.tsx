@@ -46,7 +46,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { rdApi, type Experiment, type CreateExperimentRecordRequest } from '@/api/rd';
 import { useNotificationStore } from '@/store';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
 
 interface ExperimentWithProject extends Experiment {
@@ -79,7 +79,8 @@ const RsExperimentDetailPage: React.FC = () => {
       return response.data as ExperimentWithProject;
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const recordsQuery = useQuery({
     queryKey: QUERY_KEYS.RD.EXPERIMENT_RECORDS(id || ''),
@@ -91,7 +92,8 @@ const RsExperimentDetailPage: React.FC = () => {
       return response.data;
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const advancePhaseMutation = useMutation({
     mutationFn: async () => {
@@ -126,7 +128,10 @@ const RsExperimentDetailPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.EXPERIMENT_RECORDS(id || '') });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.EXPERIMENT_RECORDS(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         message: '添加记录成功',

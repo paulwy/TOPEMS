@@ -45,6 +45,9 @@ import { extractErrorMessage } from '@/utils/errors';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 interface RateLimitRule {
@@ -118,7 +121,7 @@ const RateLimitConfigPage: React.FC = () => {
   const [newEnforcePath, setNewEnforcePath] = useState('');
 
   const configQuery = useQuery({
-    queryKey: ['admin-rate-limit-config'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE,
     queryFn: async () => {
       const res = await apiClient.core.get<RateLimitConfig>('/api/core/iam/v1/rate-limit/config');
       if (res.success && res.data) {
@@ -130,7 +133,7 @@ const RateLimitConfigPage: React.FC = () => {
   });
 
   const antiReplayQuery = useQuery({
-    queryKey: ['admin-anti-replay-config'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_ANTI_REPLAY_CONFIG_BASE,
     queryFn: async () => {
       const res = await apiClient.core.get<AntiReplayConfig>(
         '/api/core/iam/v1/rate-limit/config/anti-replay'
@@ -170,7 +173,10 @@ const RateLimitConfigPage: React.FC = () => {
           message: t('admin:rate_limit_config_page.rate_limit_config_updated'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: ['admin-rate-limit-config'] });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         addNotification({
           title: t('admin:rate_limit_config_page.save_fail'),
@@ -204,7 +210,10 @@ const RateLimitConfigPage: React.FC = () => {
           message: t('admin:rate_limit_config_page.anti_replay_config_updated'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: ['admin-anti-replay-config'] });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_ANTI_REPLAY_CONFIG_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         addNotification({
           title: t('admin:rate_limit_config_page.save_fail'),
@@ -239,7 +248,10 @@ const RateLimitConfigPage: React.FC = () => {
           message: t('admin:rate_limit_config_page.rate_limit_config_reset'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: ['admin-rate-limit-config'] });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       }
     },
   });

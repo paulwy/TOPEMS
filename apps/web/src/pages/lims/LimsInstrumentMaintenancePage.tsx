@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Wrench, Calendar, DollarSign, Clock, AlertCircle } from 'lucide-react';
 import {
   Chip,
@@ -30,7 +30,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
 
-  const { data: instrument, isLoading: loadingInstrument } = useQuery({
+  const { data: instrument, isPending: loadingInstrument} = useQuery({
     queryKey: QUERY_KEYS.LIMS.INSTRUMENT(id || ''),
     queryFn: async () => {
       if (!id) return null;
@@ -41,7 +41,8 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       return null;
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const apiAdapter: CrudApiAdapter<MaintenanceRecord> = useMemo(
     () => ({

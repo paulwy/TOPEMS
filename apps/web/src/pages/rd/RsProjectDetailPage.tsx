@@ -45,7 +45,8 @@ import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { rdApi } from '@/api/rd';
 import { PageContainer } from '@/components/common';
 import type { Project, GanttPhase, GanttMilestone, Experiment } from '@/api/rd';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 const RsProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,7 +62,8 @@ const RsProjectDetailPage: React.FC = () => {
       return response.data;
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const ganttQuery = useQuery({
     queryKey: QUERY_KEYS.RD.PROJECT_GANTT(id || ''),
@@ -73,7 +75,8 @@ const RsProjectDetailPage: React.FC = () => {
       return response.data;
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const experimentsQuery = useQuery({
     queryKey: [...QUERY_KEYS.RD.EXPERIMENTS, { projectId: id, pagesize: 100 }],
@@ -85,7 +88,8 @@ const RsProjectDetailPage: React.FC = () => {
       return response.data.experiments || [];
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const project = projectQuery.data || null;
   const phases = ganttQuery.data?.phases || [];

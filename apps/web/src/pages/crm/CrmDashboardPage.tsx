@@ -7,12 +7,15 @@ import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import { useCrmDashboardSchema } from '@/schemas/crm';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const CrmDashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const schema = useCrmDashboardSchema();
 
-  const { isLoading: loading } = useQuery({
-    queryKey: ['crm-dashboard'],
+  const { isPending: loading} = useQuery({
+    queryKey: QUERY_KEYS.AD_HOC.CRM_DASHBOARD_BASE,
     queryFn: async () => {
       await schema.loader?.();
       return window.__crmStats ?? null;

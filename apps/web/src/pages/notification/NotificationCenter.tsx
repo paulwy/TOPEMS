@@ -19,6 +19,9 @@ import { PageContainer } from '@/components';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 type NotificationFilterType = 'all' | NotificationTypeEnum;
@@ -35,8 +38,8 @@ const NotificationCenter: React.FC = () => {
 
   const { settings, toggleSetting } = useNotificationSettings();
 
-  const { data, isError, error, isLoading } = useQuery({
-    queryKey: ['notifications', activeFilter, page],
+  const { data, isError, error, isPending} = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE, activeFilter, page],
     queryFn: async () => {
       const typeParam = activeFilter === 'all' ? undefined : activeFilter;
       const response = await getNotifications(page, 20, typeParam);
@@ -96,7 +99,10 @@ const NotificationCenter: React.FC = () => {
   const markAllAsReadMutation = useMutation({
     mutationFn: () => markAllAsRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error) => {
       apiLogger.error('Failed to mark all as read:', error);
@@ -147,7 +153,10 @@ const NotificationCenter: React.FC = () => {
   const bulkDeleteMutation = useMutation({
     mutationFn: (ids: string[]) => bulkDeleteNotifications(ids),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setSelectedNotifications(new Set());
     },
     onError: (error) => {
@@ -163,7 +172,10 @@ const NotificationCenter: React.FC = () => {
   const bulkMarkAsReadMutation = useMutation({
     mutationFn: (ids: string[]) => bulkMarkAsRead(ids),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setSelectedNotifications(new Set());
     },
     onError: (error) => {
@@ -179,7 +191,7 @@ const NotificationCenter: React.FC = () => {
   const notifications = data?.notifications || [];
   const total = data?.total || 0;
   const unreadCount = data?.unread_count || 0;
-  const loading = isLoading;
+  const loading = isPending;
 
   const filteredNotifications = useMemo(() => {
     if (!searchQuery.trim()) return notifications;

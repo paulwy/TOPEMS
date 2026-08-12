@@ -7,12 +7,15 @@ import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import { useEhsDashboardSchema } from '@/schemas/ehs';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const EhsDashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const schema = useEhsDashboardSchema();
 
-  const { isLoading: loading } = useQuery({
-    queryKey: ['ehs-dashboard'],
+  const { isPending: loading} = useQuery({
+    queryKey: QUERY_KEYS.AD_HOC.EHS_DASHBOARD_BASE,
     queryFn: async () => {
       await schema.loader?.();
       return window.__ehsStats ?? null;

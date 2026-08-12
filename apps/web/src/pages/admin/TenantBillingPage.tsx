@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import {
   Box,
   Typography,
@@ -125,7 +125,8 @@ const TenantBillingPage: React.FC = () => {
       }
       throw new Error('加载租户上下文失败');
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.LONG,});
 
   const tenantId = contextQuery.data?.tenant_id;
 
@@ -140,7 +141,8 @@ const TenantBillingPage: React.FC = () => {
       throw new Error('加载租户信息失败');
     },
     enabled: !!tenantId,
-  });
+  
+      staleTime: CACHE_DURATIONS.LONG,});
 
   const billingQuery = useQuery({
     queryKey: QUERY_KEYS.TENANT.BILLING(tenantId ?? ''),
@@ -153,7 +155,8 @@ const TenantBillingPage: React.FC = () => {
       throw new Error('加载计费信息失败');
     },
     enabled: !!tenantId,
-  });
+  
+      staleTime: CACHE_DURATIONS.LONG,});
 
   const usageQuery = useQuery({
     queryKey: QUERY_KEYS.TENANT.USAGE(tenantId ?? ''),
@@ -166,7 +169,8 @@ const TenantBillingPage: React.FC = () => {
       throw new Error('加载使用情况失败');
     },
     enabled: !!tenantId,
-  });
+  
+      staleTime: CACHE_DURATIONS.LONG,});
 
   const tenant = tenantQuery.data ?? null;
   const billingInfo = billingQuery.data ?? null;

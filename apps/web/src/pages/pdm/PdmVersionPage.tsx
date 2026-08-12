@@ -4,7 +4,8 @@ import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { type EntitySchema } from '@/schema';
 import { versionSchema } from '@/schemas/pdm';
 import { documentApi, pdmApi, type DocumentVersion, type Document } from '@/api/pdm';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 const versionApiAdapter: CrudApiAdapter<DocumentVersion> = {
   list: async (params) => {
@@ -77,7 +78,8 @@ export default function PdmVersionPage() {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const dynamicSchema = useMemo<EntitySchema>(() => {
     const docOptions = [

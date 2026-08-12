@@ -668,7 +668,10 @@ export function useBffFormPage<T extends { id?: string }>(
       if (result) {
         setIsDirty(false);
         onSuccess?.(result);
-        queryClient.invalidateQueries({ queryKey });
+        queryClient.invalidateQueries({ queryKey ,
+  exact: false,
+  refetchType: 'active',
+});
       }
 
       return result;

@@ -30,12 +30,15 @@ import {
 import { INTEGRATION_PATHS } from '@/modules/integration/config';
 import { useNotificationStore } from '@/store';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export const IntegrationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const loadingQuery = useQuery<boolean>({
-    queryKey: ['integration-dashboard'],
+    queryKey: QUERY_KEYS.AD_HOC.INTEGRATION_DASHBOARD_BASE,
     queryFn: async () => true,
     staleTime: Infinity,
   });

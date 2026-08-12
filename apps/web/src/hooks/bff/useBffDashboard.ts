@@ -34,6 +34,8 @@ import { useCallback } from 'react';
 import { getFederatedDashboard } from '@/api/bff';
 import type { ServiceStats, UnifiedTodo } from '@/api/bff';
 
+import { CACHE_DURATIONS } from '@/lib/reactQuery';
+
 /** 仪表盘聚合数据 */
 export interface BffDashboardData {
   dashboard: {
@@ -108,10 +110,14 @@ export function useBffDashboard(options?: UseBffDashboardOptions): UseBffDashboa
     refetchInterval: refetchInterval > 0 ? refetchInterval : false,
     refetchOnWindowFocus: false,
     retry: 2,
-  });
+
+});
 
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: BFF_DASHBOARD_QUERY_KEY });
+    queryClient.invalidateQueries({ queryKey: BFF_DASHBOARD_QUERY_KEY ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient]);
 
   return {

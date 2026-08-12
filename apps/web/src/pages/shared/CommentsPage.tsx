@@ -30,6 +30,8 @@ import { useNotificationStore } from '@/store';
 import { useAuth } from '@/hooks/useAuth';
 import { apiLogger } from '@/utils/logger';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ENTITY_TYPES = ['document', 'task', 'project', 'ticket', 'order'] as const;
 
 const CommentsPage: React.FC = () => {
@@ -46,8 +48,8 @@ const CommentsPage: React.FC = () => {
   const [replyContent, setReplyContent] = useState('');
 
   // 获取评论列表
-  const { data: comments, isLoading } = useQuery({
-    queryKey: ['shared', 'comments', entityType, entityId],
+  const { data: comments, isPending} = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.SHARED_COMMENTS_BASE, entityType, entityId],
     queryFn: async () => {
       const response = await commentApi.list(entityType, entityId);
       if (response.success && response.data) {
@@ -56,7 +58,8 @@ const CommentsPage: React.FC = () => {
       return [];
     },
     enabled: !!entityType && !!entityId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   // 创建评论
   const createMutation = useMutation({
@@ -70,8 +73,11 @@ const CommentsPage: React.FC = () => {
     onSuccess: () => {
       addNotification({ type: 'success', title: '已发表', message: '评论已发布' });
       queryClient.invalidateQueries({
-        queryKey: ['shared', 'comments', entityType, entityId],
-      });
+        queryKey: [...QUERY_KEYS.AD_HOC.SHARED_COMMENTS_BASE, entityType, entityId],
+      
+  exact: false,
+  refetchType: 'active',
+});
       setNewComment('');
       setReplyTo(null);
       setReplyContent('');
@@ -89,8 +95,11 @@ const CommentsPage: React.FC = () => {
     onSuccess: () => {
       addNotification({ type: 'success', title: '已更新', message: '评论已更新' });
       queryClient.invalidateQueries({
-        queryKey: ['shared', 'comments', entityType, entityId],
-      });
+        queryKey: [...QUERY_KEYS.AD_HOC.SHARED_COMMENTS_BASE, entityType, entityId],
+      
+  exact: false,
+  refetchType: 'active',
+});
       setEditingId(null);
       setEditingContent('');
     },
@@ -106,8 +115,11 @@ const CommentsPage: React.FC = () => {
     onSuccess: () => {
       addNotification({ type: 'success', title: '已删除', message: '评论已删除' });
       queryClient.invalidateQueries({
-        queryKey: ['shared', 'comments', entityType, entityId],
-      });
+        queryKey: [...QUERY_KEYS.AD_HOC.SHARED_COMMENTS_BASE, entityType, entityId],
+      
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       apiLogger.error('删除评论失败:', error);
@@ -354,7 +366,7 @@ const CommentsPage: React.FC = () => {
           >
             评论列表
           </Typography>
-          {isLoading ? (
+          {isPending ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
               <CircularProgress />
             </Box>

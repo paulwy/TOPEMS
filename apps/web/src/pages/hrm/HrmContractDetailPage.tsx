@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import {
   Box,
   Typography,
@@ -63,7 +63,8 @@ const HrmContractDetailPage: React.FC = () => {
         remark: contractData.contract.remark || '',
       };
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const contract = contractQuery.data ?? null;
   const loading = contractQuery.isLoading;

@@ -23,7 +23,7 @@ export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const { data: stats, isLoading: loading } = useQuery({
+  const { data: stats, isPending: loading} = useQuery({
     queryKey: QUERY_KEYS.RD.STATISTICS,
     queryFn: async () => {
       const response = await rdApi.getStatistics();

@@ -13,6 +13,9 @@ import { useNavigate } from 'react-router-dom';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { Package, Users, DollarSign, FileText } from 'lucide-react';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface ApprovalItem {
   id: string;
   title: string;
@@ -179,7 +182,7 @@ export const useMobileApproval = () => {
   );
 
   const approvalsQuery = useQuery<ApprovalItem[]>({
-    queryKey: ['mobile-approvals', activeTab, searchQuery, user?.id],
+    queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_APPROVALS_BASE, activeTab, searchQuery, user?.id],
     queryFn: async () => {
       const params: ListParams = {};
       if (searchQuery) {

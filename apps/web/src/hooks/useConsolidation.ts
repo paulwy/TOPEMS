@@ -16,6 +16,8 @@ import type {
 } from '@/types/consolidation';
 import * as consolidationApi from '@/api/consolidation';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 // ============================================
 // 一、合并范围Hook
 // ============================================
@@ -25,9 +27,10 @@ import * as consolidationApi from '@/api/consolidation';
  */
 export const useConsolidationScopes = (params?: ConsolidationScopeQueryParams) => {
   return useQuery({
-    queryKey: ['consolidation-scopes', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPES_BASE, params],
     queryFn: () => consolidationApi.getConsolidationScopes(params),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -35,10 +38,11 @@ export const useConsolidationScopes = (params?: ConsolidationScopeQueryParams) =
  */
 export const useConsolidationScope = (scopeId: string) => {
   return useQuery({
-    queryKey: ['consolidation-scope', scopeId],
+    queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPE_BASE, scopeId],
     queryFn: () => consolidationApi.getConsolidationScope(scopeId),
     enabled: !!scopeId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -50,7 +54,10 @@ export const useCreateConsolidationScope = () => {
     mutationFn: (data: Partial<ConsolidationScope>) =>
       consolidationApi.createConsolidationScope(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['consolidation-scopes'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -64,10 +71,16 @@ export const useUpdateConsolidationScope = () => {
     mutationFn: ({ scopeId, data }: { scopeId: string; data: Partial<ConsolidationScope> }) =>
       consolidationApi.updateConsolidationScope(scopeId, data),
     onSuccess: (_, { scopeId }) => {
-      queryClient.invalidateQueries({ queryKey: ['consolidation-scopes'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       queryClient.invalidateQueries({
-        queryKey: ['consolidation-scope', scopeId],
-      });
+        queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPE_BASE, scopeId],
+      
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -80,7 +93,10 @@ export const useDeleteConsolidationScope = () => {
   return useMutation({
     mutationFn: (scopeId: string) => consolidationApi.deleteConsolidationScope(scopeId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['consolidation-scopes'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -94,10 +110,11 @@ export const useDeleteConsolidationScope = () => {
  */
 export const useScopeCompanies = (scopeId: string) => {
   return useQuery({
-    queryKey: ['scope-companies', scopeId],
+    queryKey: [...QUERY_KEYS.AD_HOC.SCOPE_COMPANIES_BASE, scopeId],
     queryFn: () => consolidationApi.getScopeCompanies(scopeId),
     enabled: !!scopeId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -115,8 +132,11 @@ export const useAddCompanyToScope = () => {
     }) => consolidationApi.addCompanyToScope(data),
     onSuccess: (_, data) => {
       queryClient.invalidateQueries({
-        queryKey: ['scope-companies', data.scope_id],
-      });
+        queryKey: [...QUERY_KEYS.AD_HOC.SCOPE_COMPANIES_BASE, data.scope_id],
+      
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -130,7 +150,10 @@ export const useUpdateScopeCompany = () => {
     mutationFn: ({ companyId, data }: { companyId: string; data: Partial<ConsolidationCompany> }) =>
       consolidationApi.updateScopeCompany(companyId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scope-companies'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SCOPE_COMPANIES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -143,7 +166,10 @@ export const useRemoveCompanyFromScope = () => {
   return useMutation({
     mutationFn: (companyId: string) => consolidationApi.removeCompanyFromScope(companyId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scope-companies'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SCOPE_COMPANIES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -157,9 +183,10 @@ export const useRemoveCompanyFromScope = () => {
  */
 export const useEliminationRules = (params: EliminationRuleQueryParams) => {
   return useQuery({
-    queryKey: ['elimination-rules', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.ELIMINATION_RULES_BASE, params],
     queryFn: () => consolidationApi.getEliminationRules(params),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -167,10 +194,11 @@ export const useEliminationRules = (params: EliminationRuleQueryParams) => {
  */
 export const useEliminationRule = (ruleId: string) => {
   return useQuery({
-    queryKey: ['elimination-rule', ruleId],
+    queryKey: [...QUERY_KEYS.AD_HOC.ELIMINATION_RULE_BASE, ruleId],
     queryFn: () => consolidationApi.getEliminationRule(ruleId),
     enabled: !!ruleId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -182,8 +210,11 @@ export const useCreateEliminationRule = () => {
     mutationFn: (data: Partial<EliminationRule>) => consolidationApi.createEliminationRule(data),
     onSuccess: (_, data) => {
       queryClient.invalidateQueries({
-        queryKey: ['elimination-rules', { scope_id: data.scope_id }],
-      });
+        queryKey: [...QUERY_KEYS.AD_HOC.ELIMINATION_RULES_BASE, { scope_id: data.scope_id }],
+      
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -198,8 +229,11 @@ export const useUpdateEliminationRule = () => {
       consolidationApi.updateEliminationRule(ruleId, data),
     onSuccess: (_, { data }) => {
       queryClient.invalidateQueries({
-        queryKey: ['elimination-rules', { scope_id: data.scope_id }],
-      });
+        queryKey: [...QUERY_KEYS.AD_HOC.ELIMINATION_RULES_BASE, { scope_id: data.scope_id }],
+      
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -212,7 +246,10 @@ export const useDeleteEliminationRule = () => {
   return useMutation({
     mutationFn: (ruleId: string) => consolidationApi.deleteEliminationRule(ruleId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['elimination-rules'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ELIMINATION_RULES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -226,9 +263,10 @@ export const useDeleteEliminationRule = () => {
  */
 export const useInternalTransactions = (params?: InternalTransactionQueryParams) => {
   return useQuery({
-    queryKey: ['internal-transactions', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.INTERNAL_TRANSACTIONS_BASE, params],
     queryFn: () => consolidationApi.getInternalTransactions(params),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -236,10 +274,11 @@ export const useInternalTransactions = (params?: InternalTransactionQueryParams)
  */
 export const useInternalTransaction = (transactionId: string) => {
   return useQuery({
-    queryKey: ['internal-transaction', transactionId],
+    queryKey: [...QUERY_KEYS.AD_HOC.INTERNAL_TRANSACTION_BASE, transactionId],
     queryFn: () => consolidationApi.getInternalTransaction(transactionId),
     enabled: !!transactionId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -252,8 +291,11 @@ export const useExecuteElimination = () => {
       consolidationApi.executeElimination(params),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['internal-transactions'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.INTERNAL_TRANSACTIONS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -267,9 +309,10 @@ export const useExecuteElimination = () => {
  */
 export const useConsolidationReports = (params?: ConsolidationReportQueryParams) => {
   return useQuery({
-    queryKey: ['consolidation-reports', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE, params],
     queryFn: () => consolidationApi.getConsolidationReports(params),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -277,10 +320,11 @@ export const useConsolidationReports = (params?: ConsolidationReportQueryParams)
  */
 export const useConsolidationReport = (reportId: string) => {
   return useQuery({
-    queryKey: ['consolidation-report', reportId],
+    queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORT_BASE, reportId],
     queryFn: () => consolidationApi.getConsolidationReport(reportId),
     enabled: !!reportId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -293,11 +337,17 @@ export const useGenerateConsolidationReport = () => {
       consolidationApi.generateConsolidationReport(data),
     onSuccess: (result) => {
       queryClient.invalidateQueries({
-        queryKey: ['consolidation-reports'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
       queryClient.invalidateQueries({
-        queryKey: ['consolidation-report', result.data?.report_id],
-      });
+        queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORT_BASE, result.data?.report_id],
+      
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -307,10 +357,11 @@ export const useGenerateConsolidationReport = () => {
  */
 export const useConsolidationReportLines = (reportId: string) => {
   return useQuery({
-    queryKey: ['consolidation-report-lines', reportId],
+    queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORT_LINES_BASE, reportId],
     queryFn: () => consolidationApi.getConsolidationReportLines(reportId),
     enabled: !!reportId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -321,7 +372,10 @@ export const useApproveConsolidationReport = () => {
   return useMutation({
     mutationFn: (reportId: string) => consolidationApi.approveConsolidationReport(reportId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['consolidation-reports'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -334,7 +388,10 @@ export const usePublishConsolidationReport = () => {
   return useMutation({
     mutationFn: (reportId: string) => consolidationApi.publishConsolidationReport(reportId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['consolidation-reports'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -347,7 +404,10 @@ export const useDeleteConsolidationReport = () => {
   return useMutation({
     mutationFn: (reportId: string) => consolidationApi.deleteConsolidationReport(reportId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['consolidation-reports'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -365,9 +425,10 @@ export const useCompanyRelations = (params?: {
   keyword?: string;
 }) => {
   return useQuery({
-    queryKey: ['company-relations', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE, params],
     queryFn: () => consolidationApi.getCompanyRelations(params),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -385,8 +446,14 @@ export const useCreateCompanyRelation = () => {
       }>
     ) => consolidationApi.createCompanyRelation(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['company-relations'] });
-      queryClient.invalidateQueries({ queryKey: ['company-tree'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.COMPANY_TREE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -408,7 +475,10 @@ export const useUpdateCompanyRelation = () => {
       }>;
     }) => consolidationApi.updateCompanyRelation(relationId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['company-relations'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -421,8 +491,14 @@ export const useDeleteCompanyRelation = () => {
   return useMutation({
     mutationFn: (relationId: string) => consolidationApi.deleteCompanyRelation(relationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['company-relations'] });
-      queryClient.invalidateQueries({ queryKey: ['company-tree'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.COMPANY_TREE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 };
@@ -432,7 +508,8 @@ export const useDeleteCompanyRelation = () => {
  */
 export const useCompanyTree = () => {
   return useQuery({
-    queryKey: ['company-tree'],
+    queryKey: QUERY_KEYS.AD_HOC.COMPANY_TREE_BASE,
     queryFn: () => consolidationApi.getCompanyTree(),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };

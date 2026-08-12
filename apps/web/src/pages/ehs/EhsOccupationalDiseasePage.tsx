@@ -16,6 +16,8 @@ import type {
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const occupationalDiseaseCaseApi = {
@@ -84,10 +86,11 @@ function extractListData(response: unknown): OccupationalDiseaseCase[] {
 
 const EhsOccupationalDiseasePage: React.FC = () => {
   const { data: casesResp } = useQuery({
-    queryKey: ['ehs', 'occupationalDiseases', 'stats'],
+    queryKey: QUERY_KEYS.AD_HOC.EHS_OCCUPATIONALDISEASES_STATS_BASE,
     queryFn: async () =>
       ehsApi.occupationalDiseases.listOccupationalDiseaseCases({ pagesize: 500 }),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const stats = useMemo(() => {
     const cases = extractListData(casesResp);

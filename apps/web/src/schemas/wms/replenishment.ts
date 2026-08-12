@@ -1,5 +1,8 @@
 import type { EntitySchema } from '@/schema';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export const replenishmentSchema: EntitySchema = {
   entity: 'wms_replenishment_order',
   title: '补货单',
@@ -222,7 +225,7 @@ export const replenishmentSchema: EntitySchema = {
         }
         return [];
       },
-      queryKey: ['warehouse-options'],
+      queryKey: QUERY_KEYS.AD_HOC.WAREHOUSE_OPTIONS_BASE,
     },
   ],
 };

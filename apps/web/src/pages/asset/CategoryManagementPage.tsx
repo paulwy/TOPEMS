@@ -24,6 +24,9 @@ import type { AssetCategory, CreateAssetCategoryRequest } from '@/api/erp/financ
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const baseAdapter = createCrudPageAdapter<AssetCategory, CreateAssetCategoryRequest>({
@@ -202,7 +205,7 @@ export const CategoryManagementPage: React.FC = () => {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const { data: categoriesResp } = useQuery({
-    queryKey: ['asset', 'categories'],
+    queryKey: QUERY_KEYS.AD_HOC.ASSET_CATEGORIES_BASE,
     queryFn: async () => assetCategoryApi.list(),
     staleTime: 5 * 60 * 1000,
   });

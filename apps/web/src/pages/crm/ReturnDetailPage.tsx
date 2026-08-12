@@ -11,7 +11,7 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { CRM_PATHS } from '@/modules/crm/config';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
 const ct = designTokens.colors;
@@ -93,12 +93,27 @@ const ReturnDetailPage: React.FC = () => {
   const loading = returnQuery.isLoading;
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURNS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURNS ,
+  exact: false,
+  refetchType: 'active',
+});
     if (id) {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN(id) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN_ITEMS(id) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN_FINANCE_STATUS(id) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN_INVENTORY_STATUS(id) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN(id) ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN_ITEMS(id) ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN_FINANCE_STATUS(id) ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN_INVENTORY_STATUS(id) ,
+  exact: false,
+  refetchType: 'active',
+});
     }
   };
 
@@ -107,6 +122,12 @@ const ReturnDetailPage: React.FC = () => {
       await fn();
     },
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.CRM.CUSTOMERS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         type: 'success',
         title: t('crm.common.operation_success'),
@@ -126,6 +147,12 @@ const ReturnDetailPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (returnId: string) => crmApi.returns.delete(returnId),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.CRM.CUSTOMERS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         type: 'success',
         title: t('crm.common.delete_success'),

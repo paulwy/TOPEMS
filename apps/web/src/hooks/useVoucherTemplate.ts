@@ -8,6 +8,9 @@ import { useNotification } from './useNotification';
 import { voucherTemplateApi } from '../api/voucherTemplate';
 import type { VoucherTemplate, VoucherTemplateType, VoucherTemplateEntry } from '../types/finance';
 
+
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 // ============================================
 // 一、模板管理
 // ============================================
@@ -23,7 +26,7 @@ export function useVoucherTemplates(params?: {
   pagesize?: number;
 }) {
   return useQuery({
-    queryKey: ['voucher-templates', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE, params],
     queryFn: () => voucherTemplateApi.getTemplates(params),
     staleTime: 10 * 60 * 1000,
   });
@@ -34,7 +37,7 @@ export function useVoucherTemplates(params?: {
  */
 export function useVoucherTemplate(templateId: string) {
   return useQuery({
-    queryKey: ['voucher-template', templateId],
+    queryKey: [...QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATE_BASE, templateId],
     queryFn: () => voucherTemplateApi.getTemplate(templateId),
     enabled: !!templateId,
     staleTime: 10 * 60 * 1000,
@@ -60,7 +63,10 @@ export function useCreateVoucherTemplate() {
       entries: VoucherTemplateEntry[];
     }) => voucherTemplateApi.createTemplate(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('凭证模板创建成功');
     },
     onError: (err) => {
@@ -80,7 +86,10 @@ export function useUpdateVoucherTemplate() {
     mutationFn: ({ templateId, data }: { templateId: string; data: Partial<VoucherTemplate> }) =>
       voucherTemplateApi.updateTemplate(templateId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('凭证模板更新成功');
     },
     onError: (err) => {
@@ -99,7 +108,10 @@ export function useDeleteVoucherTemplate() {
   return useMutation({
     mutationFn: (templateId: string) => voucherTemplateApi.deleteTemplate(templateId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('凭证模板删除成功');
     },
     onError: (err) => {
@@ -126,7 +138,10 @@ export function useCopyVoucherTemplate() {
       newName: string;
     }) => voucherTemplateApi.copyTemplate(templateId, newCode, newName),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('凭证模板复制成功');
     },
     onError: (err) => {
@@ -146,7 +161,10 @@ export function useSetDefaultVoucherTemplate() {
     mutationFn: ({ templateId, isDefault }: { templateId: string; isDefault: boolean }) =>
       voucherTemplateApi.setDefaultTemplate(templateId, isDefault),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('默认模板设置成功');
     },
     onError: (err) => {
@@ -166,7 +184,10 @@ export function useToggleVoucherTemplate() {
     mutationFn: ({ templateId, isActive }: { templateId: string; isActive: boolean }) =>
       voucherTemplateApi.toggleTemplate(templateId, isActive),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('模板状态更新成功');
     },
     onError: (err) => {
@@ -194,6 +215,12 @@ export function usePreviewGeneratedVouchers() {
       voucher_date?: string;
     }) => voucherTemplateApi.previewGeneratedVouchers(data),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       success('凭证预览生成成功');
     },
     onError: (err) => {
@@ -219,8 +246,14 @@ export function useGenerateVoucherFromSource() {
       force_regenerate?: boolean;
     }) => voucherTemplateApi.generateVoucherFromSource(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['vouchers'] });
-      queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success(`凭证 ${result.data.voucher_no} 生成成功`);
     },
     onError: (err) => {
@@ -245,8 +278,14 @@ export function useBatchGenerateVouchers() {
       voucher_date?: string;
     }) => voucherTemplateApi.batchGenerateVouchers(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['vouchers'] });
-      queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success(`成功生成 ${result.data?.success || 0} 张凭证`);
     },
     onError: (err) => {
@@ -271,7 +310,10 @@ export function useAutoGenerateVouchers() {
       dry_run?: boolean;
     }) => voucherTemplateApi.autoGenerateVouchers(data),
     onSuccess: (_result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['vouchers'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       if (variables.dry_run) {
         success('试算完成，请查看预览结果');
       } else {
@@ -300,7 +342,10 @@ export function useRegenerateReversedVoucher() {
       voucherDate?: string;
     }) => voucherTemplateApi.regenerateReversedVoucher(originalVoucherId, voucherDate),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['vouchers'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success(`凭证 ${result.data.voucher_no} 重新生成成功`);
     },
     onError: (err) => {
@@ -325,6 +370,14 @@ export function useMatchVoucherTemplate() {
       amount?: number;
       extra_data?: Record<string, unknown>;
     }) => voucherTemplateApi.matchTemplate(data),
+  
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
+      },
   });
 }
 
@@ -339,7 +392,7 @@ export function useVoucherTemplateUsageStats(
   }
 ) {
   return useQuery({
-    queryKey: ['voucher-template-usage-stats', templateId, params],
+    queryKey: [...QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATE_USAGE_STATS_BASE, templateId, params],
     queryFn: () => voucherTemplateApi.getTemplateUsageStats(templateId, params),
     enabled: !!templateId,
     staleTime: 5 * 60 * 1000,
@@ -360,7 +413,7 @@ export function useGenerationRules(params?: {
   pagesize?: number;
 }) {
   return useQuery({
-    queryKey: ['voucher-generation-rules', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE, params],
     queryFn: () => voucherTemplateApi.getGenerationRules(params),
     staleTime: 10 * 60 * 1000,
   });
@@ -384,7 +437,10 @@ export function useCreateGenerationRule() {
       isactive?: boolean;
     }) => voucherTemplateApi.createGenerationRule(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucher-generation-rules'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('生成规则创建成功');
     },
     onError: (err) => {
@@ -417,7 +473,10 @@ export function useUpdateGenerationRule() {
       }>;
     }) => voucherTemplateApi.updateGenerationRule(ruleId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucher-generation-rules'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('生成规则更新成功');
     },
     onError: (err) => {
@@ -436,7 +495,10 @@ export function useDeleteGenerationRule() {
   return useMutation({
     mutationFn: (ruleId: string) => voucherTemplateApi.deleteGenerationRule(ruleId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucher-generation-rules'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('生成规则删除成功');
     },
     onError: (err) => {
@@ -456,7 +518,10 @@ export function useToggleGenerationRule() {
     mutationFn: ({ ruleId, isActive }: { ruleId: string; isActive: boolean }) =>
       voucherTemplateApi.toggleGenerationRule(ruleId, isActive),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucher-generation-rules'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('生成规则状态更新成功');
     },
     onError: (err) => {

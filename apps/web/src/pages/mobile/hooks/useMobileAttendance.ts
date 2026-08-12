@@ -11,6 +11,9 @@ import { mobileApi, type AttendanceStats, type LeaveApplication } from '@/api/mo
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface LeaveForm {
   leave_type: LeaveApplication['leave_type'];
   start_date: string;
@@ -40,7 +43,7 @@ export const useMobileAttendance = () => {
   ];
 
   const statsQuery = useQuery({
-    queryKey: ['mobile-attendance-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE,
     queryFn: async () => {
       const res = await mobileApi.getAttendanceStats();
       return res.data ?? null;
@@ -50,7 +53,7 @@ export const useMobileAttendance = () => {
   });
 
   const recordsQuery = useQuery({
-    queryKey: ['mobile-attendance-records'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE,
     queryFn: async () => {
       const res = await mobileApi.listAttendanceRecords({ page: 1, pagesize: 20 });
       return res.data?.items || [];
@@ -60,7 +63,7 @@ export const useMobileAttendance = () => {
   });
 
   const leavesQuery = useQuery({
-    queryKey: ['mobile-leave-applications'],
+    queryKey: QUERY_KEYS.AD_HOC.MOBILE_LEAVE_APPLICATIONS_BASE,
     queryFn: async () => {
       const res = await mobileApi.listLeaveApplications({ page: 1, pagesize: 20 });
       return res.data?.items || [];
@@ -80,7 +83,7 @@ export const useMobileAttendance = () => {
       return result.data;
     },
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['mobile-attendance-stats'] });
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE });
       const previousStats = queryClient.getQueryData<AttendanceStats | null>([
         'mobile-attendance-stats',
       ]);
@@ -119,8 +122,14 @@ export const useMobileAttendance = () => {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['mobile-attendance-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['mobile-attendance-records'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
@@ -130,7 +139,7 @@ export const useMobileAttendance = () => {
       return result.data;
     },
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['mobile-attendance-stats'] });
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE });
       const previousStats = queryClient.getQueryData<AttendanceStats | null>([
         'mobile-attendance-stats',
       ]);
@@ -169,8 +178,14 @@ export const useMobileAttendance = () => {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['mobile-attendance-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['mobile-attendance-records'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
@@ -195,7 +210,10 @@ export const useMobileAttendance = () => {
         message: t('mobile.attendance.message.leave_submitted'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['mobile-leave-applications'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_LEAVE_APPLICATIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err) => {
       apiLogger.error(t('mobile.attendance.message.leave_submit_failed'), err);

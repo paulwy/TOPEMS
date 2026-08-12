@@ -9,6 +9,9 @@ import { useAuthStore, useNotificationStore } from '@/store';
 import { type QualityTask, type DefectRecord } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface DefectForm {
   defect_type: string;
   severity: DefectRecord['severity'];
@@ -43,7 +46,7 @@ export const useMobileQuality = () => {
   );
 
   const tasksQuery = useQuery<QualityTask[]>({
-    queryKey: ['mobile-quality-tasks', user?.fullName],
+    queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_QUALITY_TASKS_BASE, user?.fullName],
     queryFn: async () => {
       const mockTasks: QualityTask[] = [
         {
@@ -114,7 +117,7 @@ export const useMobileQuality = () => {
   const qualityTasks = tasksQuery.data ?? [];
 
   const defectsQuery = useQuery<DefectRecord[]>({
-    queryKey: ['mobile-quality-defects', user?.fullName],
+    queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_QUALITY_DEFECTS_BASE, user?.fullName],
     queryFn: async () => {
       const mockDefects: DefectRecord[] = [
         {

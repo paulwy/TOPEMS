@@ -1,5 +1,8 @@
 import type { EntitySchema } from '@/schema';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export const batchSchema: EntitySchema = {
   entity: 'wms_batch',
   title: '批次管理',
@@ -335,7 +338,7 @@ export const batchSchema: EntitySchema = {
         }
         return [];
       },
-      queryKey: ['warehouse-options'],
+      queryKey: QUERY_KEYS.AD_HOC.WAREHOUSE_OPTIONS_BASE,
     },
     {
       field: 'location_id',
@@ -350,14 +353,14 @@ export const batchSchema: EntitySchema = {
         }
         return [];
       },
-      queryKey: ['location-options'],
+      queryKey: QUERY_KEYS.AD_HOC.LOCATION_OPTIONS_BASE,
     },
     {
       field: 'supplier_id',
       loader: async () => {
         return [];
       },
-      queryKey: ['supplier-options'],
+      queryKey: QUERY_KEYS.AD_HOC.SUPPLIER_OPTIONS_BASE,
     },
   ],
 };

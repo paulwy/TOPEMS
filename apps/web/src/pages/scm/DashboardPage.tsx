@@ -55,7 +55,7 @@ const lineData = [
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const { data: overview, isLoading: overviewLoading } = useQuery({
+  const { data: overview, isPending: overviewLoading} = useQuery({
     queryKey: QUERY_KEYS.SCM.OVERVIEW,
     queryFn: async () => {
       const response = await scmApi.supplyChainDashboard.overview();
@@ -79,7 +79,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { isLoading: mrpLoading } = useQuery({
+  const { isPending: mrpLoading} = useQuery({
     queryKey: QUERY_KEYS.SCM.MRP_PLANS,
     queryFn: async () => {
       const response = await scmApi.mrpPlans.list({ page: 1, pageSize: 5 });
@@ -91,7 +91,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { isLoading: inspectionLoading } = useQuery({
+  const { isPending: inspectionLoading} = useQuery({
     queryKey: QUERY_KEYS.SCM.INCOMING_INSPECTIONS,
     queryFn: async () => {
       const response = await scmApi.incomingInspections.list({ page: 1, pageSize: 5 });
@@ -103,7 +103,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { isLoading: inventoryLoading } = useQuery({
+  const { isPending: inventoryLoading} = useQuery({
     queryKey: QUERY_KEYS.SCM.INVENTORY_TURNOVER,
     queryFn: async () => {
       const response = await scmApi.inventoryTurnover.list({ page: 1, pageSize: 5 });
@@ -115,7 +115,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { isLoading: priceLoading } = useQuery({
+  const { isPending: priceLoading} = useQuery({
     queryKey: QUERY_KEYS.SCM.PRICE_COMPARISONS,
     queryFn: async () => {
       const response = await scmApi.priceComparisons.list({ page: 1, pageSize: 5 });

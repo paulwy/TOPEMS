@@ -14,6 +14,9 @@ import {
 import { WMS_PATHS } from '@/modules/wms/config';
 import { LazyChart } from '@/components/charts';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const iconMap: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
   Warehouse,
   Package,
@@ -26,7 +29,7 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
   const loadingQuery = useQuery<boolean>({
-    queryKey: ['wms-dashboard'],
+    queryKey: QUERY_KEYS.AD_HOC.WMS_DASHBOARD_BASE,
     queryFn: async () => true,
     staleTime: Infinity,
   });

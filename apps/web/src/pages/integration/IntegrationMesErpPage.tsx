@@ -10,6 +10,9 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const IntegrationMesErpPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -21,7 +24,10 @@ const IntegrationMesErpPage: React.FC = () => {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['integration_mes_erp_sync'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.INTEGRATION_MES_ERP_SYNC_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ title: '成功', message: '同步成功', type: 'success' });
     },
     onError: (err: unknown) => {

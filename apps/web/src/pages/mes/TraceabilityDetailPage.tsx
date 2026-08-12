@@ -12,7 +12,7 @@ import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Package, MapPin, CheckCircle, Factory, Truck, Boxes } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
@@ -29,7 +29,7 @@ const TraceabilityDetailPage: React.FC = () => {
 
   const {
     data: traceChain,
-    isLoading: chainLoading,
+    isPending: chainLoading,
     error: chainError,
   } = useQuery<TraceChain | null>({
     queryKey: batchNo
@@ -46,7 +46,8 @@ const TraceabilityDetailPage: React.FC = () => {
       );
     },
     enabled: !!batchNo,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const { data: qualityRecordsData } = useQuery<QualityRecord[]>({
     queryKey: batchNo
@@ -61,7 +62,8 @@ const TraceabilityDetailPage: React.FC = () => {
       return [];
     },
     enabled: !!batchNo,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const qualityRecords = qualityRecordsData || [];
   const loading = chainLoading;

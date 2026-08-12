@@ -6,12 +6,14 @@ import { useQuery } from '@tanstack/react-query';
 import type { ProjectFinance, ProjectBudgetItem } from '@/types/pm-finance';
 import { apiClient } from '@/api/client';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 /**
  * 获取项目财务数据
  */
 export const useProjectFinance = (projectId: string) => {
   return useQuery({
-    queryKey: ['project-finance', projectId],
+    queryKey: [...QUERY_KEYS.AD_HOC.PROJECT_FINANCE_BASE, projectId],
     queryFn: async () => {
       const response = await apiClient.pm.get<{ data: ProjectFinance }>(
         `/api/pm/projects/${projectId}/finance`
@@ -19,7 +21,8 @@ export const useProjectFinance = (projectId: string) => {
       return response.data;
     },
     enabled: !!projectId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -27,7 +30,7 @@ export const useProjectFinance = (projectId: string) => {
  */
 export const useProjectBudgetItems = (projectId: string) => {
   return useQuery({
-    queryKey: ['project-budget-items', projectId],
+    queryKey: [...QUERY_KEYS.AD_HOC.PROJECT_BUDGET_ITEMS_BASE, projectId],
     queryFn: async () => {
       const response = await apiClient.pm.get<{ data: ProjectBudgetItem[] }>(
         `/api/pm/projects/${projectId}/budget-items`
@@ -35,7 +38,8 @@ export const useProjectBudgetItems = (projectId: string) => {
       return response.data;
     },
     enabled: !!projectId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -43,7 +47,7 @@ export const useProjectBudgetItems = (projectId: string) => {
  */
 export const useProjectCostPerformance = (projectId: string) => {
   return useQuery({
-    queryKey: ['project-cost-performance', projectId],
+    queryKey: [...QUERY_KEYS.AD_HOC.PROJECT_COST_PERFORMANCE_BASE, projectId],
     queryFn: async () => {
       const response = await apiClient.pm.get<{
         data: {
@@ -56,5 +60,6 @@ export const useProjectCostPerformance = (projectId: string) => {
       return response.data;
     },
     enabled: !!projectId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };

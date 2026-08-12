@@ -34,6 +34,8 @@ import {
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/types/finance';
 import { logger } from '@/utils/logger';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 // ============================================
 // 一、通用组件
 // ============================================
@@ -1267,23 +1269,26 @@ interface FinancialReportsViewerProps {
 export function FinancialReportsViewer({ orgId, period }: FinancialReportsViewerProps) {
   const [activeReport, setActiveReport] = useState<'balance' | 'income' | 'cash'>('balance');
 
-  const { data: balanceSheet, isLoading: balanceLoading } = useQuery({
-    queryKey: ['balance-sheet', orgId, period],
+  const { data: balanceSheet, isPending: balanceLoading} = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.BALANCE_SHEET_BASE, orgId, period],
     queryFn: () => reportApi.getBalanceSheet({ org_id: orgId, period }),
     enabled: activeReport === 'balance',
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
-  const { data: incomeStatement, isLoading: incomeLoading } = useQuery({
-    queryKey: ['income-statement', orgId, period],
+  const { data: incomeStatement, isPending: incomeLoading} = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.INCOME_STATEMENT_BASE, orgId, period],
     queryFn: () => reportApi.getIncomeStatement({ org_id: orgId, period }),
     enabled: activeReport === 'income',
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
-  const { data: cashFlow, isLoading: cashLoading } = useQuery({
-    queryKey: ['cash-flow', orgId, period],
+  const { data: cashFlow, isPending: cashLoading} = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.CASH_FLOW_BASE, orgId, period],
     queryFn: () => reportApi.getCashFlowStatement({ org_id: orgId, period }),
     enabled: activeReport === 'cash',
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const handleExport = async () => {
     logger.info('Export report:', activeReport);

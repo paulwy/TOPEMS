@@ -9,6 +9,9 @@ import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { apiLogger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export const DocumentListPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -16,7 +19,10 @@ export const DocumentListPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => docApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['document'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOCUMENT_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
@@ -58,7 +64,10 @@ export const DocumentListPage: React.FC = () => {
   };
 
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['document'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOCUMENT_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     addNotification({
       title: '成功',
       message: '刷新成功',

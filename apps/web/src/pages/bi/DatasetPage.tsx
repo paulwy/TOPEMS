@@ -43,6 +43,9 @@ import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'editor';
@@ -83,7 +86,10 @@ const DatasetPage = () => {
   const publishMutation = useMutation({
     mutationFn: (id: string) => publishDataset(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-datasets'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_DATASETS_2_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       logger.info('Dataset published successfully');
     },
   });
@@ -91,7 +97,10 @@ const DatasetPage = () => {
   const refreshMutation = useMutation({
     mutationFn: (id: string) => refreshDataset(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-datasets'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_DATASETS_2_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       logger.info('Dataset refreshed successfully');
     },
   });
@@ -99,6 +108,14 @@ const DatasetPage = () => {
   const testSqlMutation = useMutation({
     mutationFn: ({ dataSourceId, sql }: { dataSourceId: string; sql: string }) =>
       testSqlQuery(dataSourceId, sql),
+  
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.BI_DATASETS_2_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
+      },
   });
 
   const displayDatasets = datasets;

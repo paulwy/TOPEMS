@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
@@ -133,7 +133,10 @@ const PluginManagementPage: React.FC = () => {
   } | null>(null);
 
   const loadPlugins = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.PLUGINS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.PLUGINS ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient]);
 
   const apiAdapter: CrudApiAdapter = useMemo(
@@ -191,6 +194,12 @@ const PluginManagementPage: React.FC = () => {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         title: '启用成功',
         message: `${pluginCode} 插件已启用`,
@@ -214,6 +223,12 @@ const PluginManagementPage: React.FC = () => {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         title: '禁用成功',
         message: `${pluginCode} 插件已禁用`,
@@ -237,6 +252,12 @@ const PluginManagementPage: React.FC = () => {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         title: '升级成功',
         message: `${pluginCode} 插件已升级`,
@@ -260,6 +281,12 @@ const PluginManagementPage: React.FC = () => {
       return { pluginCode, tier };
     },
     onSuccess: ({ pluginCode, tier }) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         title: '操作成功',
         message:
@@ -290,7 +317,14 @@ const PluginManagementPage: React.FC = () => {
       if (!success) throw new Error('安装失败');
       return pluginCode;
     },
-  });
+  
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+          exact: false,
+          refetchType: 'active',
+        });
+      },});
 
   const allMarketplacePlugins: MarketplacePlugin[] = useMemo(
     () =>

@@ -30,6 +30,9 @@ import { apiLogger } from '@/utils/logger';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/utils/date';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 interface TabConfig {
@@ -49,7 +52,7 @@ const VoucherDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const voucherQuery = useQuery<Voucher | null>({
-    queryKey: ['finance-voucher', id],
+    queryKey: [...QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_2_BASE, id],
     queryFn: async () => {
       if (!id) return null;
       const result = await voucherApi.get(id);
@@ -62,7 +65,7 @@ const VoucherDetailPage: React.FC = () => {
   const voucher = voucherQuery.data ?? null;
 
   const voucherItemsQuery = useQuery<VoucherEntry[]>({
-    queryKey: ['finance-voucher-items', id],
+    queryKey: [...QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_ITEMS_BASE, id],
     queryFn: async () => {
       if (!id) return [];
       const result = await voucherApi.getItems(id);
@@ -102,7 +105,10 @@ const VoucherDetailPage: React.FC = () => {
         message: t('finance.voucher_detail_page.delete_success'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['finance-vouchers'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.FINANCE_VOUCHERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       navigate(FINANCE_PATHS.vouchers);
     },
     onError: (err: unknown) => {
@@ -128,7 +134,10 @@ const VoucherDetailPage: React.FC = () => {
         message: t('finance.voucher_detail_page.success_1'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['finance-voucher', id] });
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_2_BASE, id] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       apiLogger.error(t('finance.voucher_detail_page.fail'), err);
@@ -153,7 +162,10 @@ const VoucherDetailPage: React.FC = () => {
         message: t('finance.voucher_detail_page.success_2'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['finance-voucher', id] });
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_2_BASE, id] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       apiLogger.error(t('finance.voucher_detail_page.fail_3'), err);

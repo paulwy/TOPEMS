@@ -224,7 +224,10 @@ const SystemParamsPage: React.FC = () => {
         message: '系统配置已更新',
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CONFIG });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CONFIG ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({
@@ -243,7 +246,10 @@ const SystemParamsPage: React.FC = () => {
         message: '缓存配置已更新',
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_CONFIG });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_CONFIG ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({
@@ -262,7 +268,10 @@ const SystemParamsPage: React.FC = () => {
         message: '日志配置已更新',
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.LOG_CONFIG });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.LOG_CONFIG ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({
@@ -281,7 +290,10 @@ const SystemParamsPage: React.FC = () => {
         message: '缓存已清除',
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_STATS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_STATS ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({
@@ -309,10 +321,22 @@ const SystemParamsPage: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CONFIG });
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_CONFIG });
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.LOG_CONFIG });
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_STATS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CONFIG ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_CONFIG ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.LOG_CONFIG ,
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_STATS ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   const loading =

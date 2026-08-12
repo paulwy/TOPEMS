@@ -360,7 +360,10 @@ export function generateReactQueryHooks(
     lines.push(`      return result.create${pascalName};`);
     lines.push(`    },`);
     lines.push(`    onSuccess: () => {`);
-    lines.push(`      queryClient.invalidateQueries({ queryKey: ${queryKey} });`);
+    lines.push(`      queryClient.invalidateQueries({ queryKey: ${queryKey} ,
+  exact: false,
+  refetchType: 'active',
+});`);
     lines.push(`    },`);
     lines.push(`  });`);
     lines.push(`}`);
@@ -382,9 +385,15 @@ export function generateReactQueryHooks(
     lines.push(`      return result.update${pascalName};`);
     lines.push(`    },`);
     lines.push(`    onSuccess: (_, variables) => {`);
-    lines.push(`      queryClient.invalidateQueries({ queryKey: ${queryKey} });`);
+    lines.push(`      queryClient.invalidateQueries({ queryKey: ${queryKey} ,
+  exact: false,
+  refetchType: 'active',
+});`);
     lines.push(
-      `      queryClient.invalidateQueries({ queryKey: [...${queryKey}, 'detail', variables.id] });`
+      `      queryClient.invalidateQueries({ queryKey: [...${queryKey}, 'detail', variables.id] ,
+  exact: false,
+  refetchType: 'active',
+});`
     );
     lines.push(`    },`);
     lines.push(`  });`);
@@ -405,7 +414,10 @@ export function generateReactQueryHooks(
     lines.push(`      return result.delete${pascalName};`);
     lines.push(`    },`);
     lines.push(`    onSuccess: () => {`);
-    lines.push(`      queryClient.invalidateQueries({ queryKey: ${queryKey} });`);
+    lines.push(`      queryClient.invalidateQueries({ queryKey: ${queryKey} ,
+  exact: false,
+  refetchType: 'active',
+});`);
     lines.push(`    },`);
     lines.push(`  });`);
     lines.push(`}`);
@@ -427,7 +439,7 @@ export function ${pascalName}ListPage() {
   const { pageState, actions } = useBffListPage({
     entityType: '${entityName}',
     service: 'erp',
-    queryKey: ['bff', '${entityName}'],
+    queryKey: QUERY_KEYS.AD_HOC.BFF_ENTITYNAME_BASE,
   });
 
   const columns = [
@@ -493,6 +505,9 @@ export function generateCrudPageTemplate(entityName: string, fields: FieldDefini
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { EntitySchema } from '@/schema';
 import { ${camelName}Api, type ${pascalName} } from '@/api/${entityName}';
+
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 // EntitySchema 定义
 export const ${camelName}Schema: EntitySchema<${pascalName}> = {

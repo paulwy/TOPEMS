@@ -23,6 +23,8 @@ import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { PluginInstallProgress } from './PluginInstallProgress';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface PluginDetailDialogProps {
   plugin: Plugin;
   onClose: () => void;
@@ -37,7 +39,7 @@ export const PluginDetailDialog: React.FC<PluginDetailDialogProps> = ({ plugin, 
   const queryClient = useQueryClient();
 
   const reviewsQuery = useQuery({
-    queryKey: ['plugin-reviews', plugin.code],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, plugin.code],
     queryFn: async () => {
       const res = await getPluginReviews(plugin.code);
       if (res.success && res.data) {
@@ -45,10 +47,11 @@ export const PluginDetailDialog: React.FC<PluginDetailDialogProps> = ({ plugin, 
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const versionsQuery = useQuery({
-    queryKey: ['plugin-versions', plugin.code],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_VERSIONS_BASE, plugin.code],
     queryFn: async () => {
       const res = await getPluginVersions(plugin.code);
       if (res.success && res.data) {
@@ -56,7 +59,8 @@ export const PluginDetailDialog: React.FC<PluginDetailDialogProps> = ({ plugin, 
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   useEffect(() => {
     if (reviewsQuery.isError && reviewsQuery.error) {
@@ -85,7 +89,10 @@ export const PluginDetailDialog: React.FC<PluginDetailDialogProps> = ({ plugin, 
       setRating(0);
       setReviewTitle('');
       setReviewContent('');
-      queryClient.invalidateQueries({ queryKey: ['plugin-reviews', plugin.code] });
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, plugin.code] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error(t('plugin.marketplace_page.log.submit_review_failed'), error);

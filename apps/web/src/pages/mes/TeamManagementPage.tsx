@@ -21,7 +21,7 @@ import { PageContainer } from '@/components/common';
 import { teamSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest } from '@/api/mes/types';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -39,7 +39,7 @@ const apiAdapter = createCrudPageAdapter<Team, CreateTeamRequest, UpdateTeamRequ
 function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
   const teamId = String(row.id);
 
-  const { data: membersData, isLoading } = useQuery({
+  const { data: membersData, isPending} = useQuery({
     queryKey: [...QUERY_KEYS.MES.TEAMS, teamId, 'members'],
     queryFn: async () => {
       const response = await mesApi.teams.getMembers(teamId);
@@ -48,7 +48,8 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const members = (membersData as TeamMember[]) || [];
 
@@ -160,7 +161,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
         >
           成员列表
         </Typography>
-        {isLoading ? (
+        {isPending ? (
           <LoadingSpinner />
         ) : (
           <TableContainer

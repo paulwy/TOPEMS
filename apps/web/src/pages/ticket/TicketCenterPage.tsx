@@ -36,6 +36,9 @@ import type {
 } from '@/api/ticket';
 import { ticketSchema } from '@/schemas/ticket';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const STATUS_COLORS: Record<string, 'error' | 'warning' | 'info' | 'success' | 'default'> = {
@@ -118,7 +121,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
   };
 
   const { data: commentsData } = useQuery({
-    queryKey: ['ticket-comments', ticket.id],
+    queryKey: [...QUERY_KEYS.AD_HOC.TICKET_COMMENTS_BASE, ticket.id],
     queryFn: async () => {
       const res = await ticketApi.getComments(ticket.id);
       return res.data.data;
@@ -127,7 +130,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
   });
 
   const { data: slaInfo } = useQuery({
-    queryKey: ['ticket-sla', ticket.id],
+    queryKey: [...QUERY_KEYS.AD_HOC.TICKET_SLA_BASE, ticket.id],
     queryFn: async () => {
       const res = await ticketApi.getTicketSla(ticket.id);
       return res.data.data;
@@ -139,7 +142,10 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
     mutationFn: ({ id, content }: { id: string; content: string }) =>
       ticketApi.addComment(id, content),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ticket-comments', ticket.id] });
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.TICKET_COMMENTS_BASE, ticket.id] ,
+  exact: false,
+  refetchType: 'active',
+});
       setCommentText('');
     },
   });
@@ -389,7 +395,7 @@ const TicketCenterPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const { data: statsData } = useQuery({
-    queryKey: ['ticket-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.TICKET_STATS_BASE,
     queryFn: async () => {
       const res = await ticketApi.getStats();
       return res.data.data;
@@ -400,8 +406,14 @@ const TicketCenterPage: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => ticketApi.updateTicket(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-      queryClient.invalidateQueries({ queryKey: ['ticket-stats'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TICKETS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TICKET_STATS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 

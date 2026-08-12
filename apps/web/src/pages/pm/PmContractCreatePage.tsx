@@ -10,7 +10,8 @@ import { pmApi, type Project } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
 import { PM_PATHS } from '@/modules/pm/config';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 const contractSchema = z.object({
   project_id: z.string().optional(),
@@ -57,13 +58,14 @@ const PmContractCreatePage: React.FC = () => {
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
 
-  const { data: projectsData, isLoading: loading } = useQuery({
+  const { data: projectsData, isPending: loading} = useQuery({
     queryKey: QUERY_KEYS.PM.PROJECTS,
     queryFn: async (): Promise<Project[]> => {
       const response = await pmApi.projects.list();
       return (response.data?.items ?? []) as Project[];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const createMutation = useMutation({
     mutationFn: async (formData: ContractFormData) => {
@@ -85,7 +87,10 @@ const PmContractCreatePage: React.FC = () => {
       });
     },
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.CONTRACTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.CONTRACTS ,
+  exact: false,
+  refetchType: 'active',
+});
       if (response.code === 200 || response.code === 201) {
         success('合同创建成功');
         navigate(PM_PATHS.contracts);

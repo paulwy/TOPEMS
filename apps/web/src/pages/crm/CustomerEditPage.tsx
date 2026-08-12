@@ -11,7 +11,8 @@ import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
 import { CRM_PATHS } from '@/modules/crm/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 const CustomerEditPage: React.FC = () => {
   const { t } = useTranslation();
@@ -71,7 +72,8 @@ const CustomerEditPage: React.FC = () => {
       return null;
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const customer = customerQuery.data ?? null;
   const loading = customerQuery.isLoading;
@@ -82,7 +84,10 @@ const CustomerEditPage: React.FC = () => {
     onSuccess: (response, variables) => {
       if (response.code === 200) {
         success(t('crm.customerEdit.msg_update_success'));
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.CUSTOMER(variables.id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.CUSTOMER(variables.id) ,
+  exact: false,
+  refetchType: 'active',
+});
         navigate(CRM_PATHS.customerDetail.replace(':id', variables.id));
       } else {
         error(response.message || t('crm.customerEdit.msg_update_fail'));

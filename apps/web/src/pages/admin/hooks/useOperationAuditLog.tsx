@@ -107,7 +107,7 @@ export const useOperationAuditLog = () => {
 
   const {
     data: logsData,
-    isLoading,
+    isPending,
     error,
     refetch,
   } = useQuery({
@@ -402,7 +402,7 @@ export const useOperationAuditLog = () => {
     // Data
     logs,
     totalCount,
-    isLoading,
+    isPending,
     error,
     refetch,
     // Table config

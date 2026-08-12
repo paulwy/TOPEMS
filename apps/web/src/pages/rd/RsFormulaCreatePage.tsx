@@ -12,7 +12,7 @@ import type {
 } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import { RD_PATHS } from '@/modules/rd/config';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 import {
   Paper,
@@ -56,7 +56,8 @@ const RsFormulaCreatePage: React.FC = () => {
       }
       return response.data.projects?.map((p) => ({ id: p.id, name: p.name })) || [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const formulaQuery = useQuery({
     queryKey: QUERY_KEYS.RD.FORMULA(id || ''),
@@ -68,7 +69,8 @@ const RsFormulaCreatePage: React.FC = () => {
       return response.data;
     },
     enabled: isEdit && !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   useEffect(() => {
     if (formulaQuery.data) {
@@ -103,7 +105,10 @@ const RsFormulaCreatePage: React.FC = () => {
       throw new Error('无效的提交参数');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.FORMULAS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.FORMULAS ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: isEdit ? '更新成功' : '创建成功',

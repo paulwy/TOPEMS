@@ -22,7 +22,7 @@ import { logger } from '@/utils/logger';
 import type { FunnelStage, OpportunityStats } from '@/api/crm';
 import { CRM_PATHS } from '@/modules/crm/config';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { LazyChart } from '@/components/charts';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -58,7 +58,8 @@ export const DashboardPage: React.FC = () => {
         return null;
       }
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const funnelQuery = useQuery({
     queryKey: QUERY_KEYS.CRM.OPPORTUNITY_FUNNEL,
@@ -81,7 +82,8 @@ export const DashboardPage: React.FC = () => {
         return [];
       }
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const stats = statsQuery.data ?? null;
   const funnelData = funnelQuery.data ?? [];

@@ -8,9 +8,12 @@ import { Box, Typography, Stack, Chip } from '@mui/material';
 import { Check, Truck, Package } from 'lucide-react';
 import { useNotificationStore } from '@/store';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const TransferStats: React.FC = () => {
   const { data: transfers = [] } = useQuery({
-    queryKey: ['wms-transfers-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_STATS_BASE,
     queryFn: async () => {
       const response = await wmsApi.transfers.list({ page: 1, pagesize: 100 });
       if (response.success && response.data) {
@@ -124,7 +127,7 @@ const transferTypeConfig: Record<string, string> = {
 
 const TransferDetail: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
   const { data: warehouses = [] } = useQuery({
-    queryKey: ['wms-warehouses-for-detail'],
+    queryKey: QUERY_KEYS.AD_HOC.WMS_WAREHOUSES_FOR_DETAIL_BASE,
     queryFn: async () => {
       const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
       return response.success && response.data ? response.data.items || [] : [];
@@ -380,7 +383,10 @@ export default function TransferPage() {
         const response = await wmsApi.transfers.confirm(id);
         if (response.success) {
           addNotification({ type: 'success', title: '成功', message: '调拨单已确认' });
-          queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         }
       } catch {
         addNotification({ type: 'error', title: '失败', message: '确认调拨单失败' });
@@ -395,7 +401,10 @@ export default function TransferPage() {
         const response = await wmsApi.transfers.ship(id);
         if (response.success) {
           addNotification({ type: 'success', title: '成功', message: '调拨单已发货' });
-          queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         }
       } catch {
         addNotification({ type: 'error', title: '失败', message: '发货操作失败' });
@@ -410,7 +419,10 @@ export default function TransferPage() {
         const response = await wmsApi.transfers.receive(id);
         if (response.success) {
           addNotification({ type: 'success', title: '成功', message: '调拨单已收货' });
-          queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         }
       } catch {
         addNotification({ type: 'error', title: '失败', message: '收货操作失败' });
@@ -425,7 +437,10 @@ export default function TransferPage() {
         const response = await wmsApi.transfers.complete(id);
         if (response.success) {
           addNotification({ type: 'success', title: '成功', message: '调拨单已完成' });
-          queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
         }
       } catch {
         addNotification({ type: 'error', title: '失败', message: '完成操作失败' });

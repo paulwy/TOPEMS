@@ -20,13 +20,16 @@ import { designTokens } from '@/theme/tokens';
 import { RD_PATHS } from '@/modules/rd/config';
 import { LazyChart } from '@/components/charts';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const RsOverviewPage: React.FC = () => {
   const navigate = useNavigate();
 
   const loadingQuery = useQuery<boolean>({
-    queryKey: ['rd-dashboard'],
+    queryKey: QUERY_KEYS.AD_HOC.RD_DASHBOARD_BASE,
     queryFn: async () => true,
     staleTime: Infinity,
   });

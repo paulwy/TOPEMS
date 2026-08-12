@@ -10,6 +10,9 @@ import { ADMIN_PATHS } from '@/modules/admin/config';
 import { designTokens } from '@/theme/tokens';
 import { LazyChart } from '@/components/charts';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -37,7 +40,7 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
   const dashboardQuery = useQuery<boolean>({
-    queryKey: ['admin-dashboard'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_DASHBOARD_BASE,
     queryFn: async () => true,
     staleTime: 5 * 60 * 1000,
   });

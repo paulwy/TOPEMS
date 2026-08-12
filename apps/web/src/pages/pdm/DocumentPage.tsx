@@ -43,6 +43,7 @@ import type {
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
@@ -134,7 +135,10 @@ export const DocumentPage: React.FC = () => {
     mutationFn: (id: string) => documentApi.updateStatus(id, 'published'),
     onSuccess: () => {
       addNotification({ title: '成功', message: '文档已发布', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({ title: '错误', message: '发布失败', type: 'error' });
@@ -145,7 +149,10 @@ export const DocumentPage: React.FC = () => {
     mutationFn: (id: string) => documentApi.updateStatus(id, 'approved'),
     onSuccess: () => {
       addNotification({ title: '成功', message: '文档已批准', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({ title: '错误', message: '批准失败', type: 'error' });

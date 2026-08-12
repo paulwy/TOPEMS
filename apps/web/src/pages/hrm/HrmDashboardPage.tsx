@@ -18,6 +18,8 @@ import { PageContainer } from '@/components/common';
 import { useHrmDashboardSchema } from '@/schemas/hrm';
 import type { StatCardSchema, ChartSchema } from '@/schema';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Users,
   Clock,
@@ -34,14 +36,15 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 const HrmDashboardPage: React.FC = () => {
   const schema = useHrmDashboardSchema();
 
-  const { isLoading: loading } = useQuery({
-    queryKey: ['hrm-dashboard-schema'],
+  const { isPending: loading} = useQuery({
+    queryKey: QUERY_KEYS.AD_HOC.HRM_DASHBOARD_SCHEMA_BASE,
     queryFn: async () => {
       if (schema.loader) return schema.loader();
       return null;
     },
     enabled: !!schema.loader,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const statCards = useMemo<StatCardConfig[]>(() => {
     if (!schema.statCards) return [];

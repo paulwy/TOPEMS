@@ -133,7 +133,10 @@ export const IntegrationConnectionsPage: React.FC = () => {
           message: `连接「${connection.name}」测试通过`,
           type: 'success',
         });
-        void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY });
+        void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY ,
+  exact: false,
+  refetchType: 'active',
+});
       } catch (err) {
         addNotification({
           title: '测试失败',

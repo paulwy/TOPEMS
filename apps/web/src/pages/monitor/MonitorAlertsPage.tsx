@@ -41,6 +41,8 @@ import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { monitorApi, type Alert, type AlertQueryParams } from '@/api/monitor';
 import { alertSchema, SEVERITY_LABELS, STATUS_LABELS } from '@/schemas/monitor';
 
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 type TabType = 'all' | 'critical' | 'warning' | 'info' | 'resolved';
@@ -158,12 +160,21 @@ export const MonitorAlertsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('all');
 
   const invalidateAlerts = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient]);
 
   const acknowledgeMutation = useMutation({
     mutationFn: (id: string) => monitorApi.acknowledgeAlert(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateAlerts();
       addNotification({ title: '确认成功', message: '告警已确认', type: 'success' });
     },
@@ -176,6 +187,12 @@ export const MonitorAlertsPage: React.FC = () => {
   const resolveMutation = useMutation({
     mutationFn: (id: string) => monitorApi.resolveAlert(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateAlerts();
       addNotification({ title: '已解决', message: '告警已标记为已解决', type: 'success' });
     },

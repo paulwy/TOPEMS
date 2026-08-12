@@ -39,7 +39,10 @@ import {
   X as XIcon,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 import {
+
   reportApi,
   type ReportSchedule,
   type CreateScheduleRequest,
@@ -90,7 +93,7 @@ const ReportSchedulePage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const schedulesQuery = useQuery({
-    queryKey: ['report-schedules'],
+    queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE,
     queryFn: async () => {
       const response = await reportApi.listSchedules();
       if (!response.success) {
@@ -102,7 +105,7 @@ const ReportSchedulePage: React.FC = () => {
   });
 
   const templatesQuery = useQuery({
-    queryKey: ['report-templates'],
+    queryKey: QUERY_KEYS.AD_HOC.REPORT_TEMPLATES_BASE,
     queryFn: async () => {
       const response = await reportApi.listTemplates();
       if (!response.success) {
@@ -122,7 +125,10 @@ const ReportSchedulePage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['report-schedules'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       setError((err as Error).message || '创建定时任务失败');
@@ -138,7 +144,10 @@ const ReportSchedulePage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['report-schedules'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       setError((err as Error).message || '更新定时任务失败');
@@ -154,7 +163,10 @@ const ReportSchedulePage: React.FC = () => {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['report-schedules'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       setError((err as Error).message || '删除定时任务失败');
@@ -170,7 +182,10 @@ const ReportSchedulePage: React.FC = () => {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['report-schedules'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       setError((err as Error).message || '执行定时任务失败');
@@ -178,7 +193,7 @@ const ReportSchedulePage: React.FC = () => {
   });
 
   const historyQuery = useQuery({
-    queryKey: ['report-schedule-history', currentSchedule?.id],
+    queryKey: [...QUERY_KEYS.AD_HOC.REPORT_SCHEDULE_HISTORY_BASE, currentSchedule?.id],
     queryFn: async () => {
       if (!currentSchedule?.id) return [];
       const response = await reportApi.getExecutionHistory(currentSchedule.id);

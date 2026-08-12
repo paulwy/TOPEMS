@@ -47,6 +47,8 @@ import { metricsApi, type BusinessMetric, type BusinessMetricKpi } from '@/api/m
 import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const CATEGORY_LABELS: Record<string, string> = {
   all: '全部类别',
   sales: '销售',
@@ -180,23 +182,16 @@ export const MetricsDashboardPage: React.FC = () => {
   const [trendPeriod, setTrendPeriod] = useState('7d');
 
   const summaryQuery = useQuery({
-    queryKey: ['monitor', 'business-metrics', 'summary'],
+    queryKey: QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_SUMMARY_BASE,
     queryFn: async () => {
       const res = await metricsApi.getBusinessMetricSummary();
       return res.data;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const listQuery = useQuery({
-    queryKey: [
-      'monitor',
-      'business-metrics',
-      'list',
-      category,
-      serviceFilter,
-      statusFilter,
-      keyword,
-    ],
+    queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_LIST_BASE, category, serviceFilter, statusFilter, keyword],
     queryFn: async () => {
       const res = await metricsApi.listBusinessMetrics({
         category: category === 'all' ? undefined : category,
@@ -206,24 +201,27 @@ export const MetricsDashboardPage: React.FC = () => {
       });
       return res.data?.items ?? [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const kpiQuery = useQuery({
-    queryKey: ['monitor', 'business-metrics', 'kpi'],
+    queryKey: QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_KPI_BASE,
     queryFn: async () => {
       const res = await metricsApi.getKpiDashboard('monthly');
       return res.data ?? [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const trendQuery = useQuery({
-    queryKey: ['monitor', 'business-metrics', 'trend', trendMetricCode, trendPeriod],
+    queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_TREND_BASE, trendMetricCode, trendPeriod],
     queryFn: async () => {
       const res = await metricsApi.getBusinessMetricTrend(trendMetricCode, trendPeriod);
       return res.data ?? [];
     },
     enabled: Boolean(trendMetricCode),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const summary = summaryQuery.data;
   const metrics = listQuery.data ?? [];

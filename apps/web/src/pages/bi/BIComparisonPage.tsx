@@ -50,6 +50,9 @@ import { BI_PATHS } from '@/modules/bi/config';
 
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 interface ComparisonRow {
@@ -74,7 +77,7 @@ const BIComparisonPage = () => {
   const [currentComparisonId, setCurrentComparisonId] = useState<string | null>(null);
 
   const comparisonsQuery = useQuery<ComparisonAnalysis[]>({
-    queryKey: ['bi-comparisons'],
+    queryKey: QUERY_KEYS.AD_HOC.BI_COMPARISONS_BASE,
     queryFn: async () => {
       const res = await listComparisons();
       if (res.success && res.data) {
@@ -94,7 +97,7 @@ const BIComparisonPage = () => {
   }, [comparisons, currentComparisonId]);
 
   const comparisonResultQuery = useQuery<ComparisonRow[]>({
-    queryKey: ['bi-comparison-result', currentComparisonId],
+    queryKey: [...QUERY_KEYS.AD_HOC.BI_COMPARISON_RESULT_BASE, currentComparisonId],
     queryFn: async () => {
       if (!currentComparisonId) return [];
       const res = await getComparisonResult(currentComparisonId);
@@ -136,7 +139,10 @@ const BIComparisonPage = () => {
     mutationFn: (id: string) => runComparison(id),
     onSuccess: (res) => {
       if (res.success) {
-        queryClient.invalidateQueries({ queryKey: ['bi-comparison-result', currentComparisonId] });
+        queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.BI_COMPARISON_RESULT_BASE, currentComparisonId] ,
+  exact: false,
+  refetchType: 'active',
+});
       }
     },
     onError: (e: unknown) => {

@@ -35,6 +35,9 @@ import { useNotificationStore } from '@/store';
 import { useTranslation } from 'react-i18next';
 import type { EntitySchema, BatchActionConfig } from '@/schema';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const BudgetManagementPage: React.FC = () => {
   const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -43,7 +46,7 @@ const BudgetManagementPage: React.FC = () => {
 
   // 加载部门列表，用于将 department_id 解析为部门名称
   const departmentsQuery = useQuery<Department[]>({
-    queryKey: ['hrm', 'departments', 'for-finance-budget'],
+    queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_FOR_FINANCE_BUDGET_BASE,
     queryFn: async () => {
       const res = await departmentApi.list();
       if (res.success && res.data) {

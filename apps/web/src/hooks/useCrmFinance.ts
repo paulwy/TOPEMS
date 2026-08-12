@@ -8,6 +8,8 @@ import { useNotification } from './useNotification';
 import { crmFinanceApi } from '../api/crmFinance';
 import type { CustomerFinanceInfo, SalesInvoice, CollectionRecord } from '../api/crmFinance';
 
+import { CACHE_DURATIONS, QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 // ============================================
 // 一、客户财务信息Hooks
 // ============================================
@@ -17,7 +19,7 @@ import type { CustomerFinanceInfo, SalesInvoice, CollectionRecord } from '../api
  */
 export function useCustomerFinanceInfo(customerId: string) {
   return useQuery({
-    queryKey: ['crm-customer-finance', customerId],
+    queryKey: [...QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE, customerId],
     queryFn: () => crmFinanceApi.getCustomerFinanceInfo(customerId),
     enabled: !!customerId,
     staleTime: 5 * 60 * 1000,
@@ -40,7 +42,10 @@ export function useUpdateCustomerFinanceInfo() {
       data: Partial<CustomerFinanceInfo>;
     }) => crmFinanceApi.updateCustomerFinanceInfo(customerId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('客户财务信息更新成功');
     },
     onError: (err) => {
@@ -66,7 +71,7 @@ export function useSalesInvoices(params?: {
   pagesize?: number;
 }) {
   return useQuery({
-    queryKey: ['crm-sales-invoices', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE, params],
     queryFn: () => crmFinanceApi.getSalesInvoices(params),
     staleTime: 2 * 60 * 1000,
   });
@@ -77,10 +82,11 @@ export function useSalesInvoices(params?: {
  */
 export function useSalesInvoice(invoiceId: string) {
   return useQuery({
-    queryKey: ['crm-sales-invoice', invoiceId],
+    queryKey: [...QUERY_KEYS.AD_HOC.CRM_SALES_INVOICE_BASE, invoiceId],
     queryFn: () => crmFinanceApi.getSalesInvoice(invoiceId),
     enabled: !!invoiceId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 }
 
 /**
@@ -93,8 +99,14 @@ export function useCreateSalesInvoice() {
   return useMutation({
     mutationFn: (data: Partial<SalesInvoice>) => crmFinanceApi.createSalesInvoice(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-sales-invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('销售发票创建成功');
     },
     onError: (err) => {
@@ -114,8 +126,14 @@ export function useUpdateSalesInvoice() {
     mutationFn: ({ invoiceId, data }: { invoiceId: string; data: Partial<SalesInvoice> }) =>
       crmFinanceApi.updateSalesInvoice(invoiceId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-sales-invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('销售发票更新成功');
     },
     onError: (err) => {
@@ -134,8 +152,14 @@ export function useDeleteSalesInvoice() {
   return useMutation({
     mutationFn: (invoiceId: string) => crmFinanceApi.deleteSalesInvoice(invoiceId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-sales-invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('销售发票删除成功');
     },
     onError: (err) => {
@@ -154,8 +178,14 @@ export function useIssueSalesInvoice() {
   return useMutation({
     mutationFn: (invoiceId: string) => crmFinanceApi.issueSalesInvoice(invoiceId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-sales-invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('发票开具成功');
     },
     onError: (err) => {
@@ -175,8 +205,14 @@ export function useVoidSalesInvoice() {
     mutationFn: ({ invoiceId, reason }: { invoiceId: string; reason?: string }) =>
       crmFinanceApi.cancelSalesInvoice(invoiceId, reason || ''),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-sales-invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('发票已作废');
     },
     onError: (err) => {
@@ -196,8 +232,14 @@ export function useRedFlushSalesInvoice() {
     mutationFn: ({ invoiceId, reason }: { invoiceId: string; reason?: string }) =>
       crmFinanceApi.redFlushSalesInvoice(invoiceId, reason),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-sales-invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('发票已红冲');
     },
     onError: (err) => {
@@ -222,7 +264,7 @@ export function useCollectionRecords(params?: {
   pagesize?: number;
 }) {
   return useQuery({
-    queryKey: ['crm-collection-records', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.CRM_COLLECTION_RECORDS_BASE, params],
     queryFn: () => crmFinanceApi.getCollectionRecords(params),
     staleTime: 2 * 60 * 1000,
   });
@@ -233,10 +275,11 @@ export function useCollectionRecords(params?: {
  */
 export function useCollectionRecord(recordId: string) {
   return useQuery({
-    queryKey: ['crm-collection-record', recordId],
+    queryKey: [...QUERY_KEYS.AD_HOC.CRM_COLLECTION_RECORD_BASE, recordId],
     queryFn: () => crmFinanceApi.getCollectionRecord(recordId),
     enabled: !!recordId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 }
 
 /**
@@ -250,12 +293,21 @@ export function useCreateCollectionRecord() {
     mutationFn: (data: Partial<CollectionRecord>) => crmFinanceApi.createCollectionRecord(data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['crm-collection-records'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.CRM_COLLECTION_RECORDS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
       queryClient.invalidateQueries({
-        queryKey: ['crm-sales-invoices'],
-      });
-      queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
+        queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('收款记录创建成功');
     },
     onError: (err) => {
@@ -275,12 +327,21 @@ export function useConfirmCollection() {
     mutationFn: (recordId: string) => crmFinanceApi.confirmCollection(recordId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['crm-collection-records'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.CRM_COLLECTION_RECORDS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
       queryClient.invalidateQueries({
-        queryKey: ['crm-sales-invoices'],
-      });
-      queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
+        queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('收款已确认');
     },
     onError: (err) => {
@@ -300,12 +361,21 @@ export function useBatchConfirmCollections() {
     mutationFn: (recordIds: string[]) => crmFinanceApi.batchConfirmCollections(recordIds),
     onSuccess: (result) => {
       queryClient.invalidateQueries({
-        queryKey: ['crm-collection-records'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.CRM_COLLECTION_RECORDS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
       queryClient.invalidateQueries({
-        queryKey: ['crm-sales-invoices'],
-      });
-      queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
+        queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       const successCount = result?.data?.success || 0;
       const failedCount = result?.data?.failed || 0;
       if (failedCount > 0) {
@@ -333,7 +403,7 @@ export function useReceivableAging(params: {
   as_of_date: string;
 }) {
   return useQuery({
-    queryKey: ['crm-receivable-aging', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.CRM_RECEIVABLE_AGING_BASE, params],
     queryFn: () => crmFinanceApi.getReceivableAging(params),
     enabled: !!params.as_of_date,
     staleTime: 5 * 60 * 1000,
@@ -345,7 +415,7 @@ export function useReceivableAging(params: {
  */
 export function useCustomerReceivableSummary(customerId?: string) {
   return useQuery({
-    queryKey: ['crm-receivable-summary', customerId],
+    queryKey: [...QUERY_KEYS.AD_HOC.CRM_RECEIVABLE_SUMMARY_BASE, customerId],
     queryFn: () => crmFinanceApi.getReceivableSummary(customerId),
     enabled: !!customerId,
     staleTime: 5 * 60 * 1000,
@@ -363,7 +433,7 @@ export function useOverdueReceivables(params?: {
   pagesize?: number;
 }) {
   return useQuery({
-    queryKey: ['crm-overdue-receivables', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.CRM_OVERDUE_RECEIVABLES_BASE, params],
     queryFn: () => crmFinanceApi.getOverdueReceivables(params),
     staleTime: 5 * 60 * 1000,
   });
@@ -400,6 +470,12 @@ export function useExportSalesInvoices() {
       return blob;
     },
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       success('销售发票已导出');
     },
     onError: (err) => {
@@ -433,6 +509,12 @@ export function useExportCollectionRecords() {
       return blob;
     },
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       success('收款记录已导出');
     },
     onError: (err) => {
@@ -466,6 +548,12 @@ export function useExportReceivableAging() {
       return blob;
     },
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       success('应收账龄分析已导出');
     },
     onError: (err) => {

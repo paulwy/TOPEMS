@@ -24,6 +24,9 @@ import { useNotification } from '@/hooks/useNotification';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const NotificationArchivePage: React.FC = () => {
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
@@ -34,7 +37,7 @@ const NotificationArchivePage: React.FC = () => {
   );
 
   const configQuery = useQuery<ArchiveConfig>({
-    queryKey: ['notification-archive-config'],
+    queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_ARCHIVE_CONFIG_BASE,
     queryFn: async () => {
       const res = await getArchiveConfig();
       if (res.success && res.data) {
@@ -58,7 +61,10 @@ const NotificationArchivePage: React.FC = () => {
     onSuccess: () => {
       success('归档配置更新成功');
       setShowConfigModal(false);
-      queryClient.invalidateQueries({ queryKey: ['notification-archive-config'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_ARCHIVE_CONFIG_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       error((err as { message?: string }).message || '更新失败');
@@ -75,7 +81,10 @@ const NotificationArchivePage: React.FC = () => {
     },
     onSuccess: (res) => {
       success(`自动归档执行成功，已归档 ${res.data?.archived_count || 0} 条通知`);
-      queryClient.invalidateQueries({ queryKey: ['archivedNotification'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ARCHIVEDNOTIFICATION_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       error((err as { message?: string }).message || '执行失败');

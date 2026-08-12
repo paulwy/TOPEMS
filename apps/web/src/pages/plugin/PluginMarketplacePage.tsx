@@ -52,6 +52,8 @@ import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 type SortOption = 'popular' | 'rating' | 'newest' | 'price';
 type ViewMode = 'grid' | 'list';
 
@@ -263,7 +265,7 @@ const PluginDetailModal: React.FC<{
   const queryClient = useQueryClient();
 
   const reviewsQuery = useQuery({
-    queryKey: ['plugin-reviews', plugin.code],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, plugin.code],
     queryFn: async () => {
       const res = await getPluginReviews(plugin.code);
       if (res.success && res.data) {
@@ -271,10 +273,11 @@ const PluginDetailModal: React.FC<{
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const versionsQuery = useQuery({
-    queryKey: ['plugin-versions', plugin.code],
+    queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_VERSIONS_BASE, plugin.code],
     queryFn: async () => {
       const res = await getPluginVersions(plugin.code);
       if (res.success && res.data) {
@@ -282,7 +285,8 @@ const PluginDetailModal: React.FC<{
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   useEffect(() => {
     if (reviewsQuery.isError && reviewsQuery.error) {
@@ -311,7 +315,10 @@ const PluginDetailModal: React.FC<{
       setRating(0);
       setReviewTitle('');
       setReviewContent('');
-      queryClient.invalidateQueries({ queryKey: ['plugin-reviews', plugin.code] });
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, plugin.code] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error('提交评价失败:', error);
@@ -729,7 +736,7 @@ const PluginMarketplacePage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const pluginsQuery = useQuery({
-    queryKey: ['marketplace-plugins'],
+    queryKey: QUERY_KEYS.AD_HOC.MARKETPLACE_PLUGINS_BASE,
     queryFn: async () => {
       await fetchMarketplacePlugins();
       return marketplacePlugins;
@@ -739,7 +746,7 @@ const PluginMarketplacePage: React.FC = () => {
   });
 
   const healthQuery = useQuery({
-    queryKey: ['marketplace-health'],
+    queryKey: QUERY_KEYS.AD_HOC.MARKETPLACE_HEALTH_BASE,
     queryFn: async () => {
       await fetchHealthStatus();
       return healthStatus;

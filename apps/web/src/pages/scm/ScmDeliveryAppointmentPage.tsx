@@ -76,10 +76,16 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
     ) => {
       try {
         await fn(appointment.id);
-        queryClient.invalidateQueries({ queryKey: ENTITY_QUERY_KEY });
+        queryClient.invalidateQueries({ queryKey: ENTITY_QUERY_KEY ,
+  exact: false,
+  refetchType: 'active',
+});
         queryClient.invalidateQueries({
           queryKey: [...QUERY_KEYS.SCM.DELIVERY_APPOINTMENTS, 'stats'],
-        });
+        
+  exact: false,
+  refetchType: 'active',
+});
         addNotification({ type: 'success', title: '操作成功', message: successMessage });
       } catch (err) {
         apiLogger.error(`${action}失败:`, err);

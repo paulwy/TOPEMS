@@ -78,7 +78,10 @@ const RsDeployPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.DEPLOYS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.DEPLOYS ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: '操作成功',

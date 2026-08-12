@@ -40,7 +40,10 @@ export default function PdmFormulaPage() {
           data as Parameters<typeof pdmApi.createFormula>[0]
         );
         if (!response.success) throw new Error(response.message || '创建失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS ,
+  exact: false,
+  refetchType: 'active',
+});
         return (response.data ?? {}) as ProductionFormula;
       },
       update: async (id, data) => {
@@ -49,13 +52,19 @@ export default function PdmFormulaPage() {
           data as Parameters<typeof pdmApi.updateFormula>[1]
         );
         if (!response.success) throw new Error(response.message || '更新失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS ,
+  exact: false,
+  refetchType: 'active',
+});
         return (response.data ?? {}) as ProductionFormula;
       },
       delete: async (id) => {
         const response = await pdmApi.deleteFormula(id);
         if (!response.success) throw new Error(response.message || '删除失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS ,
+  exact: false,
+  refetchType: 'active',
+});
       },
     }),
     [queryClient]

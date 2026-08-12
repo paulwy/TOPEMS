@@ -93,7 +93,10 @@ export const WorkflowInstancesPage: React.FC = () => {
         onConfirm: async () => {
           try {
             await instanceApi.suspendInstance(instance.id);
-            queryClient.invalidateQueries({ queryKey: [workflowInstanceSchema.entity] });
+            queryClient.invalidateQueries({ queryKey: [workflowInstanceSchema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
             addNotification({
               title: '成功',
               message: '流程已挂起',
@@ -122,7 +125,10 @@ export const WorkflowInstancesPage: React.FC = () => {
         onConfirm: async () => {
           try {
             await instanceApi.cancelInstance(instance.id);
-            queryClient.invalidateQueries({ queryKey: [workflowInstanceSchema.entity] });
+            queryClient.invalidateQueries({ queryKey: [workflowInstanceSchema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
             addNotification({
               title: '成功',
               message: '流程已取消',

@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, queryClient, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Wrench } from 'lucide-react';
 import { assetApi, type Asset } from '@/api/erp';
 import { useNotification } from '@/hooks/useNotification';
@@ -26,7 +26,7 @@ const EquipmentDetailPage: React.FC = () => {
 
   const {
     data: equipment,
-    isLoading: loading,
+    isPending: loading,
     error: queryError,
   } = useQuery<Asset | null>({
     queryKey: id ? QUERY_KEYS.MES.EQUIPMENT_DETAIL(id) : ['mes', 'equipment', 'null'],
@@ -41,7 +41,8 @@ const EquipmentDetailPage: React.FC = () => {
       );
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const errorMessage = queryError
     ? t('mes.equipment_detail_page.notifications.load_error.message')
@@ -50,6 +51,12 @@ const EquipmentDetailPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (equipmentId: string) => assetApi.delete(equipmentId),
     onSuccess: (res) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.ERP.ASSETS,
+          exact: false,
+          refetchType: 'active',
+        });
       if (res.code === 200) {
         success(t('mes.equipment_detail_page.notifications.delete_success.message'));
         navigate(MES_PATHS.equipment);

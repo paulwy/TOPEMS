@@ -28,6 +28,9 @@ import type {
 } from '@/schema/schemaExtensions';
 import type { SchemaField } from '@/schema/types';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 // ============ 统计卡片 ============
 
 interface EightDStatsData {
@@ -39,8 +42,8 @@ interface EightDStatsData {
 }
 
 function EightDStats() {
-  const { data: stats, isLoading } = useQuery<EightDStatsData>({
-    queryKey: ['qms-eightd-stats'],
+  const { data: stats, isPending} = useQuery<EightDStatsData>({
+    queryKey: QUERY_KEYS.AD_HOC.QMS_EIGHTD_STATS_BASE,
     queryFn: async () => {
       const response = await eightDApi.listEightDReports();
       if (!response.success) throw new Error('加载 8D 统计失败');
@@ -88,7 +91,7 @@ function EightDStats() {
               >
                 {card.label}
               </Typography>
-              <Typography variant='h6'>{isLoading ? '...' : card.value}</Typography>
+              <Typography variant='h6'>{isPending ? '...' : card.value}</Typography>
             </Box>
           </CardContent>
         </Card>

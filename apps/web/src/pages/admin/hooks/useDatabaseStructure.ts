@@ -7,7 +7,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 import {
+
   dbStructureApi,
   type TableInfo,
   type TableDetail,
@@ -46,7 +49,7 @@ export const useDatabaseStructure = () => {
 
   // Queries
   const tablesQuery = useQuery<TableInfo[]>({
-    queryKey: ['admin-db-tables'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLES_BASE,
     queryFn: async () => {
       const res = await dbStructureApi.listTables({ schema: 'public' });
       return res.success && res.data ? res.data : [];
@@ -55,7 +58,7 @@ export const useDatabaseStructure = () => {
   });
 
   const dbChangesQuery = useQuery<DbChange[]>({
-    queryKey: ['admin-db-changes'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE,
     queryFn: async () => {
       const res = await dbStructureApi.listChanges({ pagesize: 50 });
       return res.success && res.data ? res.data.items || [] : [];
@@ -64,7 +67,7 @@ export const useDatabaseStructure = () => {
   });
 
   const tableDetailQuery = useQuery<TableDetail>({
-    queryKey: ['admin-db-table-detail', selectedTable?.table_name],
+    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE, selectedTable?.table_name],
     queryFn: async () => {
       const res = await dbStructureApi.getTableDetail(selectedTable!.table_name);
       if (res.success && res.data) return res.data;
@@ -134,6 +137,12 @@ export const useDatabaseStructure = () => {
       throw new Error(res.message || t('admin.database_structure.failed_to_generate_sql_preview'));
     },
     onSuccess: (data) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLES_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       setSqlPreview(data);
       setPendingColumn(newColumn);
       setShowPreviewModal(true);
@@ -163,8 +172,14 @@ export const useDatabaseStructure = () => {
         default_value: '',
         max_length: 255,
       });
-      await queryClient.invalidateQueries({ queryKey: ['admin-db-table-detail'] });
-      await queryClient.invalidateQueries({ queryKey: ['admin-db-changes'] });
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       showNotification(
@@ -182,8 +197,14 @@ export const useDatabaseStructure = () => {
     },
     onSuccess: async () => {
       showNotification('success', t('admin.database_structure.field_deleted_successfully'));
-      await queryClient.invalidateQueries({ queryKey: ['admin-db-table-detail'] });
-      await queryClient.invalidateQueries({ queryKey: ['admin-db-changes'] });
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       showNotification(

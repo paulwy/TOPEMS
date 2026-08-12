@@ -15,7 +15,7 @@ export default function PdmBomPage() {
   const queryClient = useQueryClient();
   const [selectedProduct, setSelectedProduct] = useState<string>('');
 
-  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+  const { data: products = [], isPending: productsLoading} = useQuery<Product[]>({
     queryKey: QUERY_KEYS.PDM.PRODUCTS,
     queryFn: async (): Promise<Product[]> => {
       const response = await pdmApi.listProducts();
@@ -82,7 +82,10 @@ export default function PdmBomPage() {
         requestData.total_price = (requestData.quantity || 0) * (requestData.unit_price || 0);
         const response = await pdmApi.createBomItem(requestData);
         if (!response.success) throw new Error(response.message || '创建失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS ,
+  exact: false,
+  refetchType: 'active',
+});
         return (response.data ?? {}) as BomItem;
       },
       update: async (id, data) => {
@@ -102,13 +105,19 @@ export default function PdmBomPage() {
         }
         const response = await pdmApi.updateBomItem(id, requestData);
         if (!response.success) throw new Error(response.message || '更新失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS ,
+  exact: false,
+  refetchType: 'active',
+});
         return (response.data ?? {}) as BomItem;
       },
       delete: async (id) => {
         const response = await pdmApi.deleteBomItem(id);
         if (!response.success) throw new Error(response.message || '删除失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS ,
+  exact: false,
+  refetchType: 'active',
+});
       },
     }),
     [queryClient, selectedProduct]

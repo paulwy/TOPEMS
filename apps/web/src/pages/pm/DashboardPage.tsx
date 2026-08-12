@@ -6,7 +6,7 @@ import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { pmApi, type Project } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { LazyChart } from '@/components/charts';
 
 export const DashboardPage: React.FC = () => {
@@ -18,7 +18,8 @@ export const DashboardPage: React.FC = () => {
       const response = await pmApi.getStatistics();
       return response.data;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const projectsQuery = useQuery({
     queryKey: QUERY_KEYS.PM.PROJECTS,
@@ -26,7 +27,8 @@ export const DashboardPage: React.FC = () => {
       const response = await pmApi.projects.list();
       return (response.data?.items ?? []) as Project[];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const loading = statisticsQuery.isLoading || projectsQuery.isLoading;
 

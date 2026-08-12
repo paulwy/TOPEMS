@@ -46,7 +46,7 @@ export const useAuditLog = () => {
   // Query
   const {
     data: logsData,
-    isLoading,
+    isPending,
     error,
     refetch,
   } = useQuery({
@@ -201,7 +201,7 @@ export const useAuditLog = () => {
     logs,
     filteredLogs,
     totalCount,
-    isLoading,
+    isPending,
 
     // Filters
     filters,

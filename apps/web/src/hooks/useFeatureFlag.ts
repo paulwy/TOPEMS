@@ -1,6 +1,9 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 /**
  * 特性开关状态
  */
@@ -49,8 +52,8 @@ const featureFlagsCache: Map<string, boolean> = new Map();
  * @returns FeatureFlagResult
  */
 export function useFeatureFlag(key: string, context?: FeatureFlagContext): FeatureFlagResult {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['feature-flags', key],
+  const { data, isPending, error } = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.FEATURE_FLAGS_BASE, key],
     queryFn: () => checkFeatureFlag(key, context),
     staleTime: 60_000, // 1分钟缓存
     enabled: !!key,
@@ -58,7 +61,7 @@ export function useFeatureFlag(key: string, context?: FeatureFlagContext): Featu
 
   return {
     enabled: data ?? false,
-    loading: isLoading,
+    loading: isPending,
     error,
   };
 }
@@ -71,7 +74,7 @@ export function useFeatureFlags(
   context?: FeatureFlagContext
 ): Record<string, boolean> {
   const { data } = useQuery({
-    queryKey: ['feature-flags-batch', keys.join(',')],
+    queryKey: [...QUERY_KEYS.AD_HOC.FEATURE_FLAGS_BATCH_BASE, keys.join(',')],
     queryFn: () => checkFeatureFlagsBatch(keys, context),
     staleTime: 60_000,
     enabled: keys.length > 0,

@@ -6,7 +6,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotification } from './useNotification';
 import { externalErpApi } from '../api/external-erp';
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 import type {
+
   // 连接配置
   ErpConnectionConfig,
   CompanyMapping,
@@ -34,7 +37,7 @@ export function useErpConnections(params?: {
   pagesize?: number;
 }) {
   return useQuery({
-    queryKey: ['external-erp-connections', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE, params],
     queryFn: () => externalErpApi.getConnections(params),
     staleTime: 5 * 60 * 1000,
   });
@@ -45,7 +48,7 @@ export function useErpConnections(params?: {
  */
 export function useErpConnection(connectionId: string) {
   return useQuery({
-    queryKey: ['external-erp-connection', connectionId],
+    queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTION_BASE, connectionId],
     queryFn: () => externalErpApi.getConnection(connectionId),
     enabled: !!connectionId,
     staleTime: 5 * 60 * 1000,
@@ -71,7 +74,10 @@ export function useCreateErpConnection() {
       company_mappings?: CompanyMapping[];
     }) => externalErpApi.createConnection(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('ERP连接创建成功');
     },
     onError: (err) => {
@@ -96,7 +102,10 @@ export function useUpdateErpConnection() {
       data: Partial<ErpConnectionConfig>;
     }) => externalErpApi.updateConnection(connectionId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('ERP连接更新成功');
     },
     onError: (err) => {
@@ -115,7 +124,10 @@ export function useDeleteErpConnection() {
   return useMutation({
     mutationFn: (connectionId: string) => externalErpApi.deleteConnection(connectionId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('ERP连接删除成功');
     },
     onError: (err) => {
@@ -133,6 +145,12 @@ export function useTestErpConnection() {
   return useMutation({
     mutationFn: (data: ConnectionTestRequest) => externalErpApi.testConnection(data),
     onSuccess: (result) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       if (result.success) {
         success('连接测试成功');
       } else {
@@ -156,7 +174,10 @@ export function useToggleErpConnection() {
     mutationFn: ({ connectionId, enabled }: { connectionId: string; enabled: boolean }) =>
       externalErpApi.toggleConnection(connectionId, enabled),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('连接状态更新成功');
     },
     onError: (err) => {
@@ -185,7 +206,10 @@ export function useSyncAccounts() {
       force_sync?: boolean;
     }) => externalErpApi.syncAccounts(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success(`成功同步 ${result.data.created_count + result.data.updated_count} 个科目`);
     },
     onError: (err) => {
@@ -210,7 +234,10 @@ export function useSyncCustomers() {
       force_sync?: boolean;
     }) => externalErpApi.syncCustomers(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success(`成功同步 ${result.data.created_count + result.data.updated_count} 个客户`);
     },
     onError: (err) => {
@@ -235,7 +262,10 @@ export function useSyncSuppliers() {
       force_sync?: boolean;
     }) => externalErpApi.syncSuppliers(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success(`成功同步 ${result.data.created_count + result.data.updated_count} 个供应商`);
     },
     onError: (err) => {
@@ -262,7 +292,10 @@ export function useSyncVouchers() {
       force_sync?: boolean;
     }) => externalErpApi.syncVouchers(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       if (result.data.failed_count > 0) {
         error(`成功同步 ${result.data.synced_count} 个，失败 ${result.data.failed_count} 个`);
       } else {
@@ -286,7 +319,10 @@ export function useFullSync() {
     mutationFn: (data: { config_id: string; company_id?: string; sync_modules?: string[] }) =>
       externalErpApi.fullSync(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('全量同步任务已启动');
     },
     onError: (err) => {
@@ -312,7 +348,7 @@ export function useSyncLogs(params?: {
   pagesize?: number;
 }) {
   return useQuery({
-    queryKey: ['external-erp-sync-logs', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE, params],
     queryFn: () => externalErpApi.getSyncLogs(params),
     staleTime: 1 * 60 * 1000,
   });
@@ -323,7 +359,7 @@ export function useSyncLogs(params?: {
  */
 export function useSyncLogDetail(logId: string) {
   return useQuery({
-    queryKey: ['external-erp-sync-log', logId],
+    queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOG_BASE, logId],
     queryFn: () => externalErpApi.getSyncLog(logId),
     enabled: !!logId,
     staleTime: 1 * 60 * 1000,
@@ -341,7 +377,7 @@ export function useSyncStatistics(
   }
 ) {
   return useQuery({
-    queryKey: ['external-erp-sync-statistics', connectionId, params],
+    queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_STATISTICS_BASE, connectionId, params],
     queryFn: () => externalErpApi.getSyncStatistics(connectionId, params),
     enabled: !!connectionId,
     staleTime: 5 * 60 * 1000,
@@ -363,7 +399,7 @@ export function useAccountMappings(
   }
 ) {
   return useQuery({
-    queryKey: ['external-erp-account-mappings', connectionId, params],
+    queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_ACCOUNT_MAPPINGS_BASE, connectionId, params],
     queryFn: () => externalErpApi.getAccountMappings(connectionId, params),
     enabled: !!connectionId,
     staleTime: 10 * 60 * 1000,
@@ -387,8 +423,11 @@ export function useImportAccountMappings() {
     }) => externalErpApi.importAccountMappings(connectionId, mappings),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['external-erp-account-mappings'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_ACCOUNT_MAPPINGS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
       success('科目映射导入成功');
     },
     onError: (err) => {
@@ -408,8 +447,11 @@ export function useAutoMatchAccountMappings() {
     mutationFn: (connectionId: string) => externalErpApi.autoMatchAccountMappings(connectionId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['external-erp-account-mappings'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_ACCOUNT_MAPPINGS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
       success('科目映射自动匹配完成');
     },
     onError: (err) => {
@@ -437,8 +479,11 @@ export function useUpdateAccountMapping() {
     }) => externalErpApi.updateAccountMapping(connectionId, mappingId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['external-erp-account-mappings'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_ACCOUNT_MAPPINGS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
       success('科目映射更新成功');
     },
     onError: (err) => {
@@ -462,7 +507,7 @@ export function useCustomerMappings(
   }
 ) {
   return useQuery({
-    queryKey: ['external-erp-customer-mappings', connectionId, params],
+    queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CUSTOMER_MAPPINGS_BASE, connectionId, params],
     queryFn: () => externalErpApi.getCustomerMappings(connectionId, params),
     enabled: !!connectionId,
     staleTime: 10 * 60 * 1000,
@@ -486,8 +531,11 @@ export function useImportCustomerMappings() {
     }) => externalErpApi.importCustomerMappings(connectionId, mappings),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['external-erp-customer-mappings'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CUSTOMER_MAPPINGS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
       success('客户映射导入成功');
     },
     onError: (err) => {
@@ -515,8 +563,11 @@ export function useUpdateCustomerMapping() {
     }) => externalErpApi.updateCustomerMapping(connectionId, mappingId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['external-erp-customer-mappings'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CUSTOMER_MAPPINGS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
       success('客户映射更新成功');
     },
     onError: (err) => {
@@ -540,7 +591,7 @@ export function useSupplierMappings(
   }
 ) {
   return useQuery({
-    queryKey: ['external-erp-supplier-mappings', connectionId, params],
+    queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SUPPLIER_MAPPINGS_BASE, connectionId, params],
     queryFn: () => externalErpApi.getSupplierMappings(connectionId, params),
     enabled: !!connectionId,
     staleTime: 10 * 60 * 1000,
@@ -564,8 +615,11 @@ export function useImportSupplierMappings() {
     }) => externalErpApi.importSupplierMappings(connectionId, mappings),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['external-erp-supplier-mappings'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SUPPLIER_MAPPINGS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
       success('供应商映射导入成功');
     },
     onError: (err) => {
@@ -593,8 +647,11 @@ export function useUpdateSupplierMapping() {
     }) => externalErpApi.updateSupplierMapping(connectionId, mappingId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['external-erp-supplier-mappings'],
-      });
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SUPPLIER_MAPPINGS_BASE,
+      
+  exact: false,
+  refetchType: 'active',
+});
       success('供应商映射更新成功');
     },
     onError: (err) => {
@@ -619,7 +676,7 @@ export function usePreviewExternalAccounts(
   }
 ) {
   return useQuery({
-    queryKey: ['external-erp-preview-accounts', connectionId, params],
+    queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_PREVIEW_ACCOUNTS_BASE, connectionId, params],
     queryFn: () => externalErpApi.previewExternalAccounts(connectionId, params),
     enabled: !!connectionId,
     staleTime: 1 * 60 * 1000,
@@ -638,7 +695,7 @@ export function usePreviewExternalCustomers(
   }
 ) {
   return useQuery({
-    queryKey: ['external-erp-preview-customers', connectionId, params],
+    queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_PREVIEW_CUSTOMERS_BASE, connectionId, params],
     queryFn: () => externalErpApi.previewExternalCustomers(connectionId, params),
     enabled: !!connectionId,
     staleTime: 1 * 60 * 1000,
@@ -657,7 +714,7 @@ export function usePreviewExternalSuppliers(
   }
 ) {
   return useQuery({
-    queryKey: ['external-erp-preview-suppliers', connectionId, params],
+    queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_PREVIEW_SUPPLIERS_BASE, connectionId, params],
     queryFn: () => externalErpApi.previewExternalSuppliers(connectionId, params),
     enabled: !!connectionId,
     staleTime: 1 * 60 * 1000,
@@ -695,6 +752,12 @@ export function useExportSyncLogs() {
       return blob;
     },
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       success('同步日志导出成功');
     },
     onError: (err) => {
@@ -727,6 +790,12 @@ export function useExportMappingRules() {
       return blob;
     },
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       success('映射规则导出成功');
     },
     onError: (err) => {

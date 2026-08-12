@@ -23,7 +23,7 @@ import { formulaApi } from '@/api/rd';
 import { PageContainer } from '@/components/common';
 import type { Formula, FormulaVersion } from '@/api/rd';
 import { useNotificationStore } from '@/store';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 
 const RsFormulaDetailPage: React.FC = () => {
@@ -42,7 +42,8 @@ const RsFormulaDetailPage: React.FC = () => {
       return response.data;
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const versionsQuery = useQuery({
     queryKey: QUERY_KEYS.RD.FORMULA_VERSIONS(id || ''),
@@ -54,7 +55,8 @@ const RsFormulaDetailPage: React.FC = () => {
       return response.data;
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const approveMutation = useMutation({
     mutationFn: async (formulaId: string) => {
@@ -66,7 +68,10 @@ const RsFormulaDetailPage: React.FC = () => {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(QUERY_KEYS.RD.FORMULA(id || ''), data);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.FORMULA_VERSIONS(id || '') });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.FORMULA_VERSIONS(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: '审批成功',

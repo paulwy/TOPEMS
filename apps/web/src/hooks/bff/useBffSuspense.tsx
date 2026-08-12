@@ -22,7 +22,7 @@
  *
  * function Dashboard() {
  *   const { data } = useBffSuspenseQuery({
- *     queryKey: ['bff', 'dashboard'],
+ *     queryKey: QUERY_KEYS.AD_HOC.BFF_DASHBOARD_BASE,
  *     query: `query { dashboard { stats { erp { total } } } }`,
  *   });
  *   return <div>总数: {data.dashboard.stats.erp.total}</div>;
@@ -53,6 +53,9 @@ import { Box, Typography, Button, CircularProgress, Stack } from '@mui/material'
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { bffGraphQL } from '@/api/bff';
 import { logger } from '@/utils/logger';
+
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const suspenseLogger = logger.child({ prefix: 'BFF-Suspense' });
 
@@ -99,7 +102,7 @@ export interface UseBffSuspenseQueryResult<T = unknown> {
  * @example
  * ```tsx
  * const { data } = useBffSuspenseQuery({
- *   queryKey: ['bff', 'stats'],
+ *   queryKey: QUERY_KEYS.AD_HOC.BFF_STATS_BASE,
  *   query: `query { businessStats { erp { total active } } }`,
  *   staleTime: 60_000,
  * });
@@ -191,7 +194,7 @@ export interface UseBffSuspenseInfiniteResult<T = unknown> {
  * @example
  * ```tsx
  * const { data, fetchNextPage, hasNextPage } = useBffSuspenseInfinite({
- *   queryKey: ['bff', 'todos', 'infinite'],
+ *   queryKey: QUERY_KEYS.AD_HOC.BFF_TODOS_INFINITE_BASE,
  *   query: `query($page: Int, $pageSize: Int) { unifiedTodos(page: $page, pageSize: $pageSize) { id title } }`,
  *   pageSize: 20,
  *   getNextPageParam: (lastPage, allPages) => {
@@ -681,7 +684,7 @@ export function useSuspensePerfTracker(name: string): void {
  * @example
  * ```tsx
  * prefetchBffSuspenseQuery({
- *   queryKey: ['bff', 'dashboard'],
+ *   queryKey: QUERY_KEYS.AD_HOC.BFF_DASHBOARD_BASE,
  *   query: `query { dashboard { stats { erp { total } } } }`,
  * });
  * ```

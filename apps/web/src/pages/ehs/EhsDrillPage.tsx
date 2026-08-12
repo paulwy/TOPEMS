@@ -12,6 +12,8 @@ import type { DrillRecord, CreateDrillRecordRequest } from '@/api/ehs';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const drillApi = {
@@ -76,9 +78,10 @@ function extractListData(response: unknown): DrillRecord[] {
 
 const EhsDrillPage: React.FC = () => {
   const { data: drillsResp } = useQuery({
-    queryKey: ['ehs', 'drills', 'stats'],
+    queryKey: QUERY_KEYS.AD_HOC.EHS_DRILLS_STATS_BASE,
     queryFn: async () => ehsApi.listDrills({ pagesize: 500 }),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const stats = useMemo(() => {
     const drills = extractListData(drillsResp);

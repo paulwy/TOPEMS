@@ -8,6 +8,9 @@ import { Box, Card, CardContent, Typography } from '@mui/material';
 import { Sliders } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 interface ScoringDimension {
@@ -70,7 +73,7 @@ const scoringDimensionApiAdapter: CrudApiAdapter = {
 
 const ScoringDimensionStats: React.FC = () => {
   const { data: dimensions = [] } = useQuery({
-    queryKey: ['srm-scoring-dimensions-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.SRM_SCORING_DIMENSIONS_STATS_BASE,
     queryFn: async () => {
       const response = await srmApi.listScoringDimensions();
       if (response.success && response.data) {

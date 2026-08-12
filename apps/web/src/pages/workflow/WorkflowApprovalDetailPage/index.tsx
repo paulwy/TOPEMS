@@ -20,6 +20,9 @@ import {
 } from './components/ApprovalTimeline';
 import ApprovalActions, { buildActions, type ActionConfig } from './components/ApprovalActions';
 
+
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 interface ApprovalDetails {
   approval: Approval;
   records: ApprovalRecord[];
@@ -40,7 +43,7 @@ const FlowApprovalDetailPage: React.FC = () => {
   const [delegateReason, setDelegateReason] = useState('');
 
   const detailsQuery = useQuery<ApprovalDetails | null>({
-    queryKey: ['workflow-approval-details', id],
+    queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE, id],
     queryFn: async () => {
       if (!id) return null;
 
@@ -82,7 +85,10 @@ const FlowApprovalDetailPage: React.FC = () => {
   }, [detailsQuery.isError, detailsQuery.error, addNotification]);
 
   const invalidateApprovalQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ['workflow-approval-details', id] });
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE, id] ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   const processApprovalMutation = useMutation({
@@ -94,6 +100,12 @@ const FlowApprovalDetailPage: React.FC = () => {
         actor_name: user?.fullName || user?.username || 'Current User',
       }),
     onSuccess: (_data, variables) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateApprovalQueries();
       addNotification({
         title: '成功',
@@ -124,6 +136,12 @@ const FlowApprovalDetailPage: React.FC = () => {
         delegate_to_name: params.delegateTo,
       }),
     onSuccess: (_data, variables) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateApprovalQueries();
       addNotification({
         title: '成功',

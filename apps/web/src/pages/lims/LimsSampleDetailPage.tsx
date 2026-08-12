@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Package, User, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import {
   Dialog,
@@ -79,7 +79,7 @@ const LimsSampleDetailPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const { data: detailData, isLoading: loading } = useQuery({
+  const { data: detailData, isPending: loading} = useQuery({
     queryKey: QUERY_KEYS.LIMS.SAMPLE(id || ''),
     queryFn: async () => {
       if (!id) return null;
@@ -122,7 +122,8 @@ const LimsSampleDetailPage: React.FC = () => {
       return { sample, tasks, records };
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const sample = detailData?.sample || null;
   const tasks = detailData?.tasks || [];
@@ -149,9 +150,15 @@ const LimsSampleDetailPage: React.FC = () => {
     },
     onSuccess: () => {
       if (id) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLE(id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLE(id) ,
+  exact: false,
+  refetchType: 'active',
+});
       }
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES ,
+  exact: false,
+  refetchType: 'active',
+});
       setShowEditModal(false);
     },
     onError: (error: unknown) => {
@@ -170,7 +177,10 @@ const LimsSampleDetailPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES ,
+  exact: false,
+  refetchType: 'active',
+});
       navigate(LIMS_PATHS.root);
     },
     onError: (error: unknown) => {

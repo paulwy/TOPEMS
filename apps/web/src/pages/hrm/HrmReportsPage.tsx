@@ -19,6 +19,9 @@ import apiClient from '@/api/client';
 
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 interface EmployeeSummary {
@@ -84,11 +87,11 @@ const HrmReportsPage: React.FC = () => {
 
   const {
     data: reportsData,
-    isLoading: loading,
+    isPending: loading,
     error: queryError,
     refetch: refetchReports,
   } = useQuery({
-    queryKey: ['hrm', 'reports', timeRange],
+    queryKey: [...QUERY_KEYS.AD_HOC.HRM_REPORTS_BASE, timeRange],
     queryFn: async () => {
       const promises = [
         apiClient.hrm.get(`/reports/employee-summary?time_range=${timeRange}`),

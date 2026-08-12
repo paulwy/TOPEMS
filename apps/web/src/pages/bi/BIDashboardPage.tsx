@@ -60,6 +60,9 @@ import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'editor';
@@ -97,7 +100,7 @@ const BIDashboardPage = () => {
   const [contextDashboard, setContextDashboard] = useState<Dashboard | null>(null);
 
   const dashboardsQuery = useQuery<Dashboard[]>({
-    queryKey: ['bi-dashboards'],
+    queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARDS_BASE,
     queryFn: async () => {
       const res = await fetchDashboards();
       if (res.success && res.data) {
@@ -109,7 +112,7 @@ const BIDashboardPage = () => {
   });
 
   const templatesQuery = useQuery<DashboardTemplate[]>({
-    queryKey: ['bi-dashboard-templates'],
+    queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARD_TEMPLATES_BASE,
     queryFn: async () => {
       const res = await fetchDashboardTemplates();
       if (res.success && res.data) {
@@ -154,7 +157,10 @@ const BIDashboardPage = () => {
       return await createDashboard(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARDS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setCreateDialog({
         open: false,
         useTemplate: false,
@@ -171,7 +177,10 @@ const BIDashboardPage = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteDashboard(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARDS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error('Failed to delete dashboard:', error);
@@ -181,7 +190,10 @@ const BIDashboardPage = () => {
   const cloneMutation = useMutation({
     mutationFn: (id: string) => cloneDashboard(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARDS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error('Failed to clone dashboard:', error);
@@ -192,7 +204,10 @@ const BIDashboardPage = () => {
     mutationFn: (dashboard: Dashboard) =>
       updateDashboard(dashboard.id, { is_public: !dashboard.is_public }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARDS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error('Failed to update dashboard:', error);
@@ -222,7 +237,10 @@ const BIDashboardPage = () => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARDS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setViewMode('list');
     },
     onError: (error: unknown) => {
@@ -376,7 +394,10 @@ const BIDashboardPage = () => {
             <DashboardTemplateManager
               onDashboardCreated={() => {
                 setActiveTab('dashboards');
-                queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARDS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
               }}
             />
           ) : (

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { PageContainer, StatCardGroup } from '@/components/common';
 import { Tabs, Tab, Box, Typography, Chip } from '@mui/material';
 import { ArrowUpRight, ArrowDownRight, CreditCard } from 'lucide-react';
@@ -55,7 +55,8 @@ export default function FinanceReceivablePayablePage() {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const payablesQuery = useQuery({
     queryKey: QUERY_KEYS.FINANCE.PAYABLES,
@@ -66,7 +67,8 @@ export default function FinanceReceivablePayablePage() {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const receivables = receivablesQuery.data || [];
   const payables = payablesQuery.data || [];

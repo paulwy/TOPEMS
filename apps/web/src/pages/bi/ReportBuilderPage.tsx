@@ -43,6 +43,9 @@ import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'builder';
@@ -120,7 +123,7 @@ const ReportBuilderPage = () => {
   });
 
   const reportsQuery = useQuery<Report[]>({
-    queryKey: ['bi-reports'],
+    queryKey: QUERY_KEYS.AD_HOC.BI_REPORTS_BASE,
     queryFn: async () => {
       try {
         const res = await fetchReports();
@@ -176,7 +179,10 @@ const ReportBuilderPage = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteReport(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-reports'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_REPORTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       logger.error('Failed to delete report:', error);
@@ -197,7 +203,10 @@ const ReportBuilderPage = () => {
       return await createReport(formData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-reports'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_REPORTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setViewMode('list');
     },
     onError: (error: unknown) => {
@@ -210,6 +219,12 @@ const ReportBuilderPage = () => {
     mutationFn: ({ id, format }: { id: string; format: 'pdf' | 'excel' | 'csv' | 'word' }) =>
       exportReport(id, format),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.BI_REPORTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       alert('报表导出成功！');
     },
     onError: (error: unknown) => {

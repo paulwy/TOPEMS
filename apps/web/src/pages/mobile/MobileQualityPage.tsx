@@ -43,6 +43,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const MobileQualityPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -64,7 +67,7 @@ const MobileQualityPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const tasksQuery = useQuery<QualityTask[]>({
-    queryKey: ['mobile-quality-tasks', user?.fullName],
+    queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_QUALITY_TASKS_BASE, user?.fullName],
     queryFn: async () => {
       const mockTasks: QualityTask[] = [
         {
@@ -135,7 +138,7 @@ const MobileQualityPage: React.FC = () => {
   const qualityTasks = tasksQuery.data ?? [];
 
   const defectsQuery = useQuery<DefectRecord[]>({
-    queryKey: ['mobile-quality-defects', user?.fullName],
+    queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_QUALITY_DEFECTS_BASE, user?.fullName],
     queryFn: async () => {
       const mockDefects: DefectRecord[] = [
         {

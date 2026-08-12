@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
 import {
   User,
@@ -234,7 +234,10 @@ const ProfilePage: React.FC = () => {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.USER });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.USER ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         title: '成功',
         message: '个人信息更新成功',
@@ -257,6 +260,12 @@ const ProfilePage: React.FC = () => {
       return res;
     },
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         title: '成功',
         message: '密码修改成功，请重新登录',
@@ -285,7 +294,10 @@ const ProfilePage: React.FC = () => {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.USER });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.USER ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         title: '成功',
         message: '头像已更新',
@@ -308,7 +320,14 @@ const ProfilePage: React.FC = () => {
     onError: (err: unknown) => {
       apiLogger.error('保存偏好设置失败', err);
     },
-  });
+  
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
+      },});
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

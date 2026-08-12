@@ -23,6 +23,9 @@ import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const WorkflowDesignerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -40,7 +43,7 @@ const WorkflowDesignerPage: React.FC = () => {
   const [edges, setEdges] = useState<EdgeData[]>([]);
 
   const workflowQuery = useQuery<Workflow | null>({
-    queryKey: ['workflow-designer', workflowId],
+    queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_DESIGNER_BASE, workflowId],
     queryFn: async () => {
       if (!workflowId) return null;
       const response = await workflowApi.getWorkflow(workflowId);
@@ -138,7 +141,10 @@ const WorkflowDesignerPage: React.FC = () => {
     mutationFn: (params: { id: string; data: UpdateWorkflowRequest }) =>
       workflowApi.updateWorkflow(params.id, params.data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-designer', workflowId] });
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_DESIGNER_BASE, workflowId] ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         title: '保存成功',
         message: '工作流已更新',
@@ -159,7 +165,10 @@ const WorkflowDesignerPage: React.FC = () => {
   const createWorkflowMutation = useMutation({
     mutationFn: (data: CreateWorkflowRequest) => workflowApi.createWorkflow(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-designer'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_DESIGNER_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         title: '保存成功',
         message: '工作流已创建',

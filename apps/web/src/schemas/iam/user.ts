@@ -8,6 +8,9 @@ import React from 'react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import { authApi } from '@/api/iam';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 /**
  * 加载角色列表（动态选项）
  */
@@ -288,7 +291,7 @@ export const userSchema: EntitySchema = {
     {
       field: 'role',
       loader: loadRoles,
-      queryKey: ['roles'],
+      queryKey: QUERY_KEYS.AD_HOC.ROLES_BASE,
     },
   ],
 };

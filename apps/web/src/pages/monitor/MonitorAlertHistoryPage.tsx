@@ -31,6 +31,8 @@ import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { monitorApi, type Alert, type AlertQueryParams } from '@/api/monitor';
 import { alertHistorySchema } from '@/schemas/monitor';
 
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 const CRUD_QUERY_KEY = ['monitor_alert_history'];
 
 const METRIC_FILTER_OPTIONS = [
@@ -170,12 +172,21 @@ const MonitorAlertHistoryPage: React.FC = () => {
   const [metricFilter, setMetricFilter] = useState<string>('all');
 
   const invalidateAlerts = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient]);
 
   const acknowledgeMutation = useMutation({
     mutationFn: async (id: string) => monitorApi.acknowledgeAlert(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
+          exact: false,
+          refetchType: 'active',
+        });
       notifySuccess('告警已确认');
       invalidateAlerts();
     },
@@ -188,6 +199,12 @@ const MonitorAlertHistoryPage: React.FC = () => {
   const resolveMutation = useMutation({
     mutationFn: async (id: string) => monitorApi.resolveAlert(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
+          exact: false,
+          refetchType: 'active',
+        });
       notifySuccess('告警已解决');
       invalidateAlerts();
     },

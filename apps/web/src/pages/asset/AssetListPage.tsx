@@ -26,6 +26,7 @@ import type { Asset } from '@/api/erp/types';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 // 本地扩展类型：后端返回的部分字段名与 Asset 类型定义不一致，这里补充以便前端字段访问通过类型检查
@@ -124,7 +125,10 @@ export const AssetListPage: React.FC = () => {
         message: t('asset:assetlist.notify_success_message'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ERP.ASSETS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ERP.ASSETS ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({

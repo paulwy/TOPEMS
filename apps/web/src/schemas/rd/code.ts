@@ -3,6 +3,9 @@ import { Box, Chip, Typography, Button } from '@mui/material';
 import { GitBranch, GitCommit, ExternalLink } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const LANGUAGE_OPTIONS: { value: string; label: string }[] = [
   { value: 'JavaScript', label: 'JavaScript' },
   { value: 'TypeScript', label: 'TypeScript' },
@@ -181,7 +184,7 @@ export const codeSchema: EntitySchema = {
         }
         return [];
       },
-      queryKey: ['rd-code-project-options'],
+      queryKey: QUERY_KEYS.AD_HOC.RD_CODE_PROJECT_OPTIONS_BASE,
     },
   ],
 };

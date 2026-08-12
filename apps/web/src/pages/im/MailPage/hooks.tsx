@@ -10,7 +10,7 @@ import {
   TEMPLATE_CATEGORIES,
 } from '@/api/mail';
 import { useNotificationStore } from '@/store';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, queryClient, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { useCrudMutations } from '@/hooks';
 import { validateEmailList, validateJson } from './utils';
 import { STATUS_MAP, PRIORITY_MAP, PREVIEW_SAMPLE_DATA } from './constants';
@@ -97,7 +97,8 @@ export function useMailPage() {
       return null;
     },
     enabled: activeTab === 'emails',
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const emailsQuery = useQuery<{ items: Email[]; total: number }>({
     queryKey: [
@@ -131,7 +132,8 @@ export function useMailPage() {
       return { items: [], total: 0 };
     },
     enabled: activeTab === 'emails',
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const templatesQuery = useQuery<{ items: EmailTemplate[]; total: number }>({
     queryKey: [
@@ -163,7 +165,8 @@ export function useMailPage() {
       return { items: [], total: 0 };
     },
     enabled: activeTab === 'templates',
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const emails = emailsQuery.data?.items ?? [];
   const templates = templatesQuery.data?.items ?? [];
@@ -224,7 +227,10 @@ export function useMailPage() {
         addNotification({ title: '成功', message: '邮件发送成功', type: 'success' });
         setShowSendModal(false);
         resetSendForm();
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         addNotification({ title: '失败', message: res.message || '发送邮件失败', type: 'error' });
       }
@@ -321,7 +327,10 @@ export function useMailPage() {
       if (res.success) {
         addNotification({ title: '成功', message: '邮件记录删除成功', type: 'success' });
         setSelectedEmails((prev) => prev.filter((emailId) => emailId !== id));
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         addNotification({ title: '失败', message: res.message || '删除失败', type: 'error' });
       }
@@ -378,7 +387,10 @@ export function useMailPage() {
     onSuccess: (sendRes) => {
       if (sendRes.success) {
         addNotification({ title: '成功', message: '邮件重新发送成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         addNotification({
           title: '失败',
@@ -426,7 +438,10 @@ export function useMailPage() {
         type: result.successCount === result.total ? 'success' : 'warning',
       });
       setSelectedEmails([]);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS ,
+  exact: false,
+  refetchType: 'active',
+});
     },
   });
 
@@ -449,8 +464,14 @@ export function useMailPage() {
         addNotification({ title: '失败', message: res.message || '批量重发失败', type: 'error' });
       }
       setSelectedEmails([]);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.STATS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.STATS ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       addNotification({
@@ -477,7 +498,10 @@ export function useMailPage() {
           message: `模板已${variables.newStatus === 'active' ? '启用' : '禁用'}`,
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.TEMPLATES_LIST });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.TEMPLATES_LIST ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         addNotification({ title: '失败', message: res.message || '更新状态失败', type: 'error' });
       }
@@ -500,6 +524,12 @@ export function useMailPage() {
     mutationFn: ({ code, sampleData }: { code: string; sampleData: Record<string, string> }) =>
       templateApi.render(code, sampleData),
     onSuccess: (res) => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.REPORT.TEMPLATES,
+          exact: false,
+          refetchType: 'active',
+        });
       if (res.success && res.data) {
         setPreviewContent({
           subject: res.data.subject,

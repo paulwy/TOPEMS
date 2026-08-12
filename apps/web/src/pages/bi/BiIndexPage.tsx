@@ -48,6 +48,9 @@ import { BI_PATHS } from '@/modules/bi/config';
 
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const quickActions = [
@@ -142,7 +145,7 @@ const BiIndexPage = () => {
     reports: Report[];
     datasets: Dataset[];
   }>({
-    queryKey: ['bi-index-data'],
+    queryKey: QUERY_KEYS.AD_HOC.BI_INDEX_DATA_BASE,
     queryFn: async () => {
       const [dashRes, reportRes, dsRes] = await Promise.all([
         fetchDashboards(),

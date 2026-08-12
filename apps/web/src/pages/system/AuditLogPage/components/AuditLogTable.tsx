@@ -22,7 +22,7 @@ import type { AuditLogPagination } from '../hooks/useAuditLog';
 interface AuditLogTableProps {
   logs: AuditLog[];
   totalCount: number;
-  isLoading: boolean;
+  isPending: boolean;
   pagination: AuditLogPagination;
   setPagination: (pagination: AuditLogPagination) => void;
   onViewDetail: (log: AuditLog) => void;
@@ -33,7 +33,7 @@ interface AuditLogTableProps {
 const AuditLogTable: React.FC<AuditLogTableProps> = ({
   logs,
   totalCount,
-  isLoading,
+  isPending,
   pagination,
   setPagination,
   onViewDetail,
@@ -42,7 +42,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
         <CircularProgress />

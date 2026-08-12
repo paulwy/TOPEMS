@@ -39,6 +39,8 @@ import type {
 } from '@/api/feedback/types';
 import { FEEDBACK_TYPE_LABELS, FEEDBACK_STATUS_LABELS } from '@/api/feedback/types';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface FeedbackListProps {
   onAddFeedback?: () => void;
 }
@@ -96,16 +98,20 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
 
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['feedbacks', filters],
+  const { data, isPending} = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.FEEDBACKS_BASE, filters],
     queryFn: () => feedbackApi.listFeedbacks(filters),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => feedbackApi.deleteFeedback(id),
     onSuccess: () => {
       toast.success('反馈删除成功');
-      queryClient.invalidateQueries({ queryKey: ['feedbacks'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.FEEDBACKS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       setAnchorEl(null);
     },
     onError: () => {
@@ -310,7 +316,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
           <DataTable
             columns={columns}
             data={data?.data?.items || []}
-            loading={isLoading}
+            loading={isPending}
             totalItems={data?.data?.total || 0}
             currentPage={filters.page || 1}
             pageSize={filters.pageSize || 10}

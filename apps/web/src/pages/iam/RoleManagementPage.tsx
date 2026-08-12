@@ -21,6 +21,8 @@ import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const roleApiAdapter: CrudApiAdapter = {
   list: async () => {
     const response = await authApi.listRoles();
@@ -70,7 +72,7 @@ const RoleManagementPage: React.FC = () => {
   const [rolePermissions, setRolePermissions] = useState<Permission[]>([]);
 
   const { data: allPermissions = [] } = useQuery<Permission[]>({
-    queryKey: ['iam-all-permissions'],
+    queryKey: QUERY_KEYS.AD_HOC.IAM_ALL_PERMISSIONS_BASE,
     queryFn: async () => {
       const res = await authApi.listPermissions();
       if (!res.success) {
@@ -82,7 +84,7 @@ const RoleManagementPage: React.FC = () => {
   });
 
   const { data: fetchedRolePermissions } = useQuery<Permission[]>({
-    queryKey: ['iam-role-permissions', selectedRole?.id],
+    queryKey: [...QUERY_KEYS.AD_HOC.IAM_ROLE_PERMISSIONS_BASE, selectedRole?.id],
     queryFn: async () => {
       if (!selectedRole) return [];
       const res = await authApi.getRolePermissions(selectedRole.id);
@@ -92,7 +94,8 @@ const RoleManagementPage: React.FC = () => {
       return res.data ?? [];
     },
     enabled: !!selectedRole && permissionsDialogOpen,
-  });
+  
+      staleTime: CACHE_DURATIONS.LONG,});
 
   React.useEffect(() => {
     if (fetchedRolePermissions) {
@@ -114,7 +117,10 @@ const RoleManagementPage: React.FC = () => {
         message: '权限添加成功',
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['iam-role-permissions', roleId] });
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.IAM_ROLE_PERMISSIONS_BASE, roleId] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       apiLogger.error('添加权限失败:', err);
@@ -140,7 +146,10 @@ const RoleManagementPage: React.FC = () => {
         message: '权限移除成功',
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['iam-role-permissions', roleId] });
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.IAM_ROLE_PERMISSIONS_BASE, roleId] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       apiLogger.error('移除权限失败:', err);

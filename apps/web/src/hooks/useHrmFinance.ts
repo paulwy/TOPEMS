@@ -2,16 +2,18 @@
  * HRM财务模块React Query Hooks
  */
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryClient, QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import type { EmployeeFinance, PayrollRecord } from '@/types/hrm-finance';
 import { apiClient } from '@/api/client';
 
 /**
  * 获取员工财务数据
  */
+// D3 fallback: add queryClient inside component/hook
 export const useEmployeeFinance = (employeeId: string) => {
   return useQuery({
-    queryKey: ['employee-finance', employeeId],
+    queryKey: [...QUERY_KEYS.AD_HOC.EMPLOYEE_FINANCE_BASE, employeeId],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{ data: EmployeeFinance }>(
         `/employees/${employeeId}/finance`
@@ -19,7 +21,8 @@ export const useEmployeeFinance = (employeeId: string) => {
       return response.data?.data!;
     },
     enabled: !!employeeId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -27,7 +30,7 @@ export const useEmployeeFinance = (employeeId: string) => {
  */
 export const useEmployeeFinanceInfo = (employeeId: string) => {
   return useQuery({
-    queryKey: ['employee-finance-info', employeeId],
+    queryKey: [...QUERY_KEYS.AD_HOC.EMPLOYEE_FINANCE_INFO_BASE, employeeId],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{ data: EmployeeFinance }>(
         `/employees/${employeeId}/finance`
@@ -35,7 +38,8 @@ export const useEmployeeFinanceInfo = (employeeId: string) => {
       return response.data?.data!;
     },
     enabled: !!employeeId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -56,6 +60,14 @@ export const useUpdateEmployeeFinanceInfo = () => {
       );
       return response.data;
     },
+  
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.EMPLOYEE_FINANCE_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
+      },
   });
 };
 
@@ -64,7 +76,7 @@ export const useUpdateEmployeeFinanceInfo = () => {
  */
 export const useEmployeePayrolls = (employeeId: string) => {
   return useQuery({
-    queryKey: ['employee-payrolls', employeeId],
+    queryKey: [...QUERY_KEYS.AD_HOC.EMPLOYEE_PAYROLLS_BASE, employeeId],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{ data: PayrollRecord[] }>(
         `/employees/${employeeId}/payrolls`
@@ -72,7 +84,8 @@ export const useEmployeePayrolls = (employeeId: string) => {
       return response.data;
     },
     enabled: !!employeeId,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -80,7 +93,7 @@ export const useEmployeePayrolls = (employeeId: string) => {
  */
 export const useDepartmentPayrollSummary = (departmentId: string, period: string) => {
   return useQuery({
-    queryKey: ['department-payroll-summary', departmentId, period],
+    queryKey: [...QUERY_KEYS.AD_HOC.DEPARTMENT_PAYROLL_SUMMARY_BASE, departmentId, period],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{
         data: {
@@ -101,7 +114,8 @@ export const useDepartmentPayrollSummary = (departmentId: string, period: string
       return response.data;
     },
     enabled: !!departmentId && !!period,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -109,10 +123,11 @@ export const useDepartmentPayrollSummary = (departmentId: string, period: string
  */
 export const usePayrollPeriods = () => {
   return useQuery({
-    queryKey: ['payroll-periods'],
+    queryKey: QUERY_KEYS.AD_HOC.PAYROLL_PERIODS_BASE,
     queryFn: async () => {
       const response = await apiClient.hrm.get<{ data: string[] }>('/payroll/periods');
       return response.data;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };

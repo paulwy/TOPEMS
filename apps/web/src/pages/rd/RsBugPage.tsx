@@ -9,6 +9,9 @@ import type { Bug, CreateBugRequest, UpdateBugRequest } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const bugApiAdapter: CrudApiAdapter<Bug> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
@@ -82,7 +85,10 @@ const RsBugPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rd_bug'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.RD_BUG_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: '操作成功',

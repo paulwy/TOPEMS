@@ -13,6 +13,9 @@ import type { ProductionOrder } from '@/api/mes/types';
 import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const ProductionOrderManagementPage: React.FC = () => {
@@ -47,8 +50,11 @@ const ProductionOrderManagementPage: React.FC = () => {
             message: `订单状态已更新为"${response.data.status}"`,
           });
           queryClient.invalidateQueries({
-            queryKey: ['mes-production-orders'],
-          });
+            queryKey: QUERY_KEYS.AD_HOC.MES_PRODUCTION_ORDERS_BASE,
+          
+  exact: false,
+  refetchType: 'active',
+});
         }
       } catch (error: unknown) {
         addNotification({

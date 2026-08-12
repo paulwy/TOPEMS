@@ -27,6 +27,9 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import type { Equipment, MaintenanceEquipmentRequest } from '@/api/mes';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.equipment);
 
@@ -45,7 +48,7 @@ export default function EquipmentManagementPage() {
   });
 
   const statisticsQuery = useQuery({
-    queryKey: ['mes-equipment-statistics'],
+    queryKey: QUERY_KEYS.AD_HOC.MES_EQUIPMENT_STATISTICS_BASE,
     queryFn: async () => {
       const response = await mesApi.equipment.getStatistics();
       if (!response.success || !response.data) {
@@ -68,8 +71,14 @@ export default function EquipmentManagementPage() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-equipment'] });
-      queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_EQUIPMENT_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_EQUIPMENT_STATISTICS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: t('mes.equipment_management_page.success'),

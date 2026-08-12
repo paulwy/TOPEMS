@@ -45,6 +45,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface ApprovalItem {
   id: string;
   title: string;
@@ -150,7 +153,7 @@ const MobileApprovalPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const approvalsQuery = useQuery<ApprovalItem[]>({
-    queryKey: ['mobile-approvals', activeTab, searchQuery, user?.id],
+    queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_APPROVALS_BASE, activeTab, searchQuery, user?.id],
     queryFn: async () => {
       const params: ListParams = {};
       if (searchQuery) {

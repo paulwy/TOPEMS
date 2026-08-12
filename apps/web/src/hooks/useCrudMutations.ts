@@ -108,7 +108,10 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
   const createMutation = useMutation({
     mutationFn: createFn,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeyToInvalidate });
+      queryClient.invalidateQueries({ queryKey: queryKeyToInvalidate ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(`${entityName}创建成功`);
       onCreateSuccess?.(data);
     },
@@ -118,7 +121,10 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
   const updateMutation = useMutation({
     mutationFn: updateFn,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeyToInvalidate });
+      queryClient.invalidateQueries({ queryKey: queryKeyToInvalidate ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(`${entityName}更新成功`);
       onUpdateSuccess?.(data);
     },
@@ -128,7 +134,10 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
   const deleteMutation = useMutation({
     mutationFn: deleteFn,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeyToInvalidate });
+      queryClient.invalidateQueries({ queryKey: queryKeyToInvalidate ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(`${entityName}删除成功`);
       onDeleteSuccess?.(data);
     },

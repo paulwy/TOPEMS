@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, GraduationCap, Award, ArrowRight } from 'lucide-react';
 import {
@@ -42,7 +42,8 @@ export const DashboardPage: React.FC = () => {
       }
       return { total: 0, items: [] as Employee[] };
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const departmentsQuery = useQuery({
     queryKey: QUERY_KEYS.HRM.DEPARTMENTS,
@@ -53,7 +54,8 @@ export const DashboardPage: React.FC = () => {
       }
       return [] as Department[];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const coursesQuery = useQuery({
     queryKey: [...QUERY_KEYS.HRM.TRAINING, 'courses'],
@@ -64,7 +66,8 @@ export const DashboardPage: React.FC = () => {
       }
       return 0;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const reviewsQuery = useQuery({
     queryKey: QUERY_KEYS.HRM.PERFORMANCE,
@@ -75,7 +78,8 @@ export const DashboardPage: React.FC = () => {
       }
       return 0;
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const attendanceQuery = useQuery({
     queryKey: QUERY_KEYS.HRM.ATTENDANCE,
@@ -86,7 +90,8 @@ export const DashboardPage: React.FC = () => {
       }
       return [] as AttendanceRecord[];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();

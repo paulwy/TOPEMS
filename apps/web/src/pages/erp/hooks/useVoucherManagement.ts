@@ -12,6 +12,9 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface NewVoucherState {
   voucher_number: string;
   voucher_date: string;
@@ -61,15 +64,7 @@ export const useVoucherManagement = () => {
 
   // React Query - voucher list
   const vouchersQuery = useQuery({
-    queryKey: [
-      'erp-vouchers',
-      page,
-      rowsPerPage,
-      statusFilter,
-      periodFilter,
-      voucherTypeFilter,
-      searchQuery,
-    ],
+    queryKey: [...QUERY_KEYS.AD_HOC.ERP_VOUCHERS_BASE, page, rowsPerPage, statusFilter, periodFilter, voucherTypeFilter, searchQuery],
     queryFn: async () => {
       return voucherApi.list({
         page: page + 1,
@@ -92,7 +87,7 @@ export const useVoucherManagement = () => {
 
   // React Query - accounting subject list
   const subjectsQuery = useQuery({
-    queryKey: ['erp-subjects'],
+    queryKey: QUERY_KEYS.AD_HOC.ERP_SUBJECTS_BASE,
     queryFn: () => accountingSubjectApi.list(),
     staleTime: 30 * 60 * 1000,
   });
@@ -104,7 +99,7 @@ export const useVoucherManagement = () => {
 
   // React Query - voucher items
   const voucherItemsQuery = useQuery({
-    queryKey: ['erp-voucher-items', currentVoucher?.id],
+    queryKey: [...QUERY_KEYS.AD_HOC.ERP_VOUCHER_ITEMS_BASE, currentVoucher?.id],
     queryFn: async () => {
       if (!currentVoucher?.id) throw new Error('No voucher ID');
       return voucherApi.getItems(currentVoucher.id);
@@ -127,7 +122,10 @@ export const useVoucherManagement = () => {
         message: t('erp.voucher_mgmt.message.voucher_created'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['erp-vouchers'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ERP_VOUCHERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({
@@ -141,7 +139,10 @@ export const useVoucherManagement = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => voucherApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['erp-vouchers'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ERP_VOUCHERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({
@@ -160,7 +161,10 @@ export const useVoucherManagement = () => {
         message: t('erp.voucher_mgmt.message.delete_success'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['erp-vouchers'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ERP_VOUCHERS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: () => {
       addNotification({

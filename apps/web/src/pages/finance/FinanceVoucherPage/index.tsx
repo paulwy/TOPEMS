@@ -43,6 +43,9 @@ import VoucherImportModal from './components/VoucherImportModal';
 import VoucherDetailModal from './components/VoucherDetailModal';
 import ConfirmDialogs from './components/ConfirmDialogs';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 // ============ 科目 Tab 面板（嵌套 CrudPage） ============
@@ -109,7 +112,7 @@ const FinanceVoucherPage: React.FC = () => {
 
   // ── 凭证统计查询（用于 headerContent 统计卡片）──
   const voucherStatsQuery = useQuery({
-    queryKey: ['finance_voucher', 'stats'],
+    queryKey: QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_STATS_BASE,
     queryFn: async () => {
       const res = await voucherApi.list({ pagesize: 999 } as Record<string, unknown>);
       if (!res.success || !res.data) {
@@ -123,7 +126,7 @@ const FinanceVoucherPage: React.FC = () => {
 
   // ── 会计科目查询（科目 Tab 统计 + 凭证表单科目下拉）──
   const subjectsQuery = useQuery({
-    queryKey: ['finance_accounting_subject', 'stats'],
+    queryKey: QUERY_KEYS.AD_HOC.FINANCE_ACCOUNTING_SUBJECT_STATS_BASE,
     queryFn: async () => {
       const res = await accountingSubjectApi.list({ pagesize: 999 } as Record<string, unknown>);
       if (!res.success || !res.data) {
@@ -141,7 +144,10 @@ const FinanceVoucherPage: React.FC = () => {
     `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
 
   const refreshVouchers = () => {
-    queryClient.invalidateQueries({ queryKey: ['finance_voucher'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   // ── 凭证操作 ──

@@ -169,7 +169,10 @@ export const WorkflowDefinitionsPage: React.FC = () => {
       const id = String(row.id);
       try {
         await workflowDefinitionApi.activate(id);
-        queryClient.invalidateQueries({ queryKey: [workflowDefinitionSchema.entity] });
+        queryClient.invalidateQueries({ queryKey: [workflowDefinitionSchema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
         addNotification({
           type: 'success',
           title: '启动成功',

@@ -46,6 +46,7 @@ import { useConfirmDialog } from '@/hooks';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { formatDateTime } from '@/utils/date';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 type BackupRecord = {
@@ -85,7 +86,7 @@ const BackupPage: React.FC = () => {
 
   const {
     data: backups = [],
-    isLoading,
+    isPending,
     error,
     refetch,
   } = useQuery<BackupRecord[]>({
@@ -108,7 +109,10 @@ const BackupPage: React.FC = () => {
       });
       setShowCreateModal(false);
       setBackupName('');
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN.BACKUP] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN.BACKUP] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err) => {
       addNotification({
@@ -131,7 +135,10 @@ const BackupPage: React.FC = () => {
       });
       setShowRestoreModal(false);
       setSelectedBackup(null);
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN.BACKUP] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN.BACKUP] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err) => {
       addNotification({
@@ -152,7 +159,10 @@ const BackupPage: React.FC = () => {
         message: '备份删除成功',
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN.BACKUP] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN.BACKUP] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err) => {
       addNotification({
@@ -293,7 +303,7 @@ const BackupPage: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {isLoading ? (
+                {isPending ? (
                   <TableRow>
                     <TableCell
                       colSpan={7}

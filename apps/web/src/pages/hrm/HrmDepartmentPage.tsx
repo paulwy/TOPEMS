@@ -13,6 +13,9 @@ import React, { useMemo, useState } from 'react';
 import { departmentSchema } from '@/schemas/hrm';
 import { EmptyState } from '@/components';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const HrmDepartmentPage: React.FC = () => {
@@ -22,7 +25,7 @@ const HrmDepartmentPage: React.FC = () => {
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
 
   const { data: employees = [] } = useQuery({
-    queryKey: ['hrm', 'department-employees', selectedDeptId],
+    queryKey: [...QUERY_KEYS.AD_HOC.HRM_DEPARTMENT_EMPLOYEES_BASE, selectedDeptId],
     queryFn: async () => {
       if (!selectedDeptId) return [];
       const response = await employeeApi.list({
@@ -66,7 +69,10 @@ const HrmDepartmentPage: React.FC = () => {
         const res = await departmentApi.update(id, data as Partial<Department>);
         if (res.success && res.data) {
           addNotification({ title: '成功', message: '部门更新成功', type: 'success' });
-          queryClient.invalidateQueries({ queryKey: ['hrm', 'departments'] });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
           return res.data as Department;
         }
         throw new Error(res.message || '更新失败');

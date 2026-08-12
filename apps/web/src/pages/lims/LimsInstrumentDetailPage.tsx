@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Settings, Wrench, Clock, Eye, AlertCircle, CheckCircle, FileText } from 'lucide-react';
 import {
   Box,
@@ -277,7 +277,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isPending, error, refetch } = useQuery({
     queryKey: QUERY_KEYS.LIMS.INSTRUMENT(id || ''),
     queryFn: async () => {
       if (!id) return { instrument: null, error: '无效的仪器ID' };
@@ -322,7 +322,8 @@ const LimsInstrumentDetailPage: React.FC = () => {
       };
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const instrument = data?.instrument || null;
   const calibrationRecords = data?.calibrationRecords || [];
@@ -421,7 +422,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
     },
   ];
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <Box
         sx={{
@@ -499,7 +500,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
           { label: '仪器详情' },
         ]}
         backHref={LIMS_PATHS.instrument}
-        loading={isLoading}
+        loading={isPending}
         onRefresh={() => refetch()}
         infoCard={{
           avatar: <Settings sx={{ fontSize: 40, color: 'cyan.dark' }} />,

@@ -49,6 +49,9 @@ import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 type PromptCategory = 'all' | 'writing' | 'code' | 'business' | 'analysis' | 'creative';
@@ -199,7 +202,7 @@ export const AiPromptLibraryPage: React.FC = () => {
   }));
 
   const { data: prompts = [] } = useQuery({
-    queryKey: ['ai-prompts'],
+    queryKey: QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE,
     queryFn: async () => {
       return mockPrompts;
     },
@@ -211,7 +214,7 @@ export const AiPromptLibraryPage: React.FC = () => {
       return promptId;
     },
     onMutate: async (promptId) => {
-      await queryClient.cancelQueries({ queryKey: ['ai-prompts'] });
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE });
       const previousPrompts = queryClient.getQueryData<PromptTemplate[]>(['ai-prompts']);
       queryClient.setQueryData<PromptTemplate[]>(['ai-prompts'], (old) =>
         old ? old.map((p) => (p.id === promptId ? { ...p, is_favorite: !p.is_favorite } : p)) : []
@@ -230,7 +233,7 @@ export const AiPromptLibraryPage: React.FC = () => {
       return promptId;
     },
     onMutate: async (promptId) => {
-      await queryClient.cancelQueries({ queryKey: ['ai-prompts'] });
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE });
       const previousPrompts = queryClient.getQueryData<PromptTemplate[]>(['ai-prompts']);
       queryClient.setQueryData<PromptTemplate[]>(['ai-prompts'], (old) =>
         old ? old.filter((p) => p.id !== promptId) : []

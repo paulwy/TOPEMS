@@ -37,6 +37,9 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface PermissionAuditPageProps {
   onNavigate?: (page: string) => void;
 }
@@ -55,7 +58,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
   const PER_PAGE = 20;
 
   const permissionChangesQuery = useQuery<{ items: PermissionChange[]; total: number }>({
-    queryKey: ['admin-permission-changes', currentPage, debouncedSearch, filterType],
+    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_PERMISSION_CHANGES_BASE, currentPage, debouncedSearch, filterType],
     queryFn: async () => {
       const response = await permissionAuditApi.listPermissionChanges({
         page: currentPage,
@@ -73,7 +76,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
   });
 
   const accessLogsQuery = useQuery<{ items: AccessControlLog[]; total: number }>({
-    queryKey: ['admin-access-logs', currentPage, debouncedSearch, filterType],
+    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_ACCESS_LOGS_BASE, currentPage, debouncedSearch, filterType],
     queryFn: async () => {
       const response = await permissionAuditApi.listAccessLogs({
         page: currentPage,
@@ -91,7 +94,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
   });
 
   const permissionStatsQuery = useQuery<PermissionChangeStats | null>({
-    queryKey: ['admin-permission-change-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_PERMISSION_CHANGE_STATS_BASE,
     queryFn: async () => {
       const res = await permissionAuditApi.getPermissionChangeStats();
       return res.success && res.data ? res.data : null;
@@ -100,7 +103,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
   });
 
   const accessStatsQuery = useQuery<AccessControlStats | null>({
-    queryKey: ['admin-access-control-stats'],
+    queryKey: QUERY_KEYS.AD_HOC.ADMIN_ACCESS_CONTROL_STATS_BASE,
     queryFn: async () => {
       const res = await permissionAuditApi.getAccessControlStats();
       return res.success && res.data ? res.data : null;

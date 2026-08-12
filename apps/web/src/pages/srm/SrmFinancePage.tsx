@@ -7,11 +7,12 @@ import { PageContainer } from '@/components/common';
 import { MetricCard } from '@/components/bi/MetricCard';
 import { designTokens } from '@/theme/tokens';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
 
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { financeSchema } from '@/schemas/srm';
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 

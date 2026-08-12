@@ -20,7 +20,7 @@ import CrudPage, { type RowAction } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { inquirySchema } from '@/schemas/srm';
 import { srmApi, type Inquiry, type Quotation } from '@/api/srm';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
 const InquiryQuotationPage: React.FC = () => {
@@ -38,12 +38,21 @@ const InquiryQuotationPage: React.FC = () => {
   });
 
   const invalidateInquiries = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.INQUIRIES });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.INQUIRIES ,
+  exact: false,
+  refetchType: 'active',
+});
   };
 
   const publishMutation = useMutation({
     mutationFn: async (id: string) => srmApi.publishInquiry(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SRM.STATISTICS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({ type: 'success', title: '发布成功', message: '询价单已发布' });
       invalidateInquiries();
     },
@@ -60,7 +69,10 @@ const InquiryQuotationPage: React.FC = () => {
       if (viewingInquiry) {
         queryClient.invalidateQueries({
           queryKey: [...QUERY_KEYS.SRM.QUOTATIONS, viewingInquiry.id],
-        });
+        
+  exact: false,
+  refetchType: 'active',
+});
       }
     },
     onError: () => {
@@ -75,7 +87,10 @@ const InquiryQuotationPage: React.FC = () => {
       if (viewingInquiry) {
         queryClient.invalidateQueries({
           queryKey: [...QUERY_KEYS.SRM.QUOTATIONS, viewingInquiry.id],
-        });
+        
+  exact: false,
+  refetchType: 'active',
+});
       }
     },
     onError: () => {

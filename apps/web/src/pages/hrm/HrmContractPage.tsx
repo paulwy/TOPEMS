@@ -55,7 +55,10 @@ export default function HrmContractPage() {
       if (result.code === 0) {
         showNotification('success', t('hrm.hrm_contract_page.submit'));
         setRenewModalVisible(false);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT ,
+  exact: false,
+  refetchType: 'active',
+});
       } else {
         showNotification('error', result.message || t('hrm.hrm_contract_page.submit_1'));
       }

@@ -12,6 +12,9 @@ import type { SafetyIssue, CreateSafetyIssueRequest } from '@/api/ehs';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const safetyIssueApi = {
@@ -47,7 +50,7 @@ const safetyIssueAdapter: CrudApiAdapter<SafetyIssue> = {
 
 const EhsHazardPage: React.FC = () => {
   const { data: issuesResp } = useQuery({
-    queryKey: ['ehs', 'safetyIssues', 'stats'],
+    queryKey: QUERY_KEYS.AD_HOC.EHS_SAFETYISSUES_STATS_BASE,
     queryFn: async () => ehsApi.listSafetyIssues({ pagesize: 500 }),
     staleTime: 5 * 60 * 1000,
   });

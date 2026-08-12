@@ -9,13 +9,16 @@ import { designTokens } from '@/theme/tokens';
 import { SCM_PATHS } from '@/modules/scm/config';
 import { LazyChart } from '@/components/charts';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const ScmOverviewPage: React.FC = () => {
   const navigate = useNavigate();
 
   const loadingQuery = useQuery<boolean>({
-    queryKey: ['scm-dashboard'],
+    queryKey: QUERY_KEYS.AD_HOC.SCM_DASHBOARD_BASE,
     queryFn: async () => true,
     staleTime: Infinity,
   });

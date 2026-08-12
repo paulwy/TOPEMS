@@ -257,7 +257,10 @@ const CRMCustomerScoringPage: React.FC = () => {
         title: t('crm.common.success'),
         message: t('crm.customerScoring.msg_batch_success'),
       });
-      queryClient.invalidateQueries({ queryKey: [customerScoringSchema.entity] });
+      queryClient.invalidateQueries({ queryKey: [customerScoringSchema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (error: unknown) => {
       apiLogger.error(t('crm.customerScoring.log_batch_fail'), error);

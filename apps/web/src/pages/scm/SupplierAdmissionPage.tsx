@@ -18,6 +18,8 @@ import type {
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 const apiAdapter = createCrudPageAdapter<
   SupplierAdmission,
   CreateSupplierAdmissionRequest,
@@ -37,11 +39,20 @@ const SupplierAdmissionPage: React.FC = () => {
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 
   const invalidateAdmissions = () =>
-    queryClient.invalidateQueries({ queryKey: [supplierAdmissionSchema.entity] });
+    queryClient.invalidateQueries({ queryKey: [supplierAdmissionSchema.entity] ,
+  exact: false,
+  refetchType: 'active',
+});
 
   const submitMutation = useMutation({
     mutationFn: (id: string) => scmApi.supplierAdmissions.submit(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SCM.OVERVIEW,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateAdmissions();
       addNotification({
         type: 'success',
@@ -62,6 +73,12 @@ const SupplierAdmissionPage: React.FC = () => {
   const approveMutation = useMutation({
     mutationFn: (id: string) => scmApi.supplierAdmissions.approve(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SCM.OVERVIEW,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateAdmissions();
       addNotification({
         type: 'success',
@@ -82,6 +99,12 @@ const SupplierAdmissionPage: React.FC = () => {
   const rejectMutation = useMutation({
     mutationFn: (id: string) => scmApi.supplierAdmissions.reject(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SCM.OVERVIEW,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateAdmissions();
       addNotification({
         type: 'success',
@@ -102,6 +125,12 @@ const SupplierAdmissionPage: React.FC = () => {
   const activateMutation = useMutation({
     mutationFn: (id: string) => scmApi.supplierAdmissions.activateSupplier(id),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SCM.OVERVIEW,
+          exact: false,
+          refetchType: 'active',
+        });
       invalidateAdmissions();
       addNotification({
         type: 'success',

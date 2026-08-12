@@ -8,7 +8,7 @@ import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { TeamMember, CreateProjectRequest, UpdateProjectRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 
 const RsProjectCreatePage: React.FC = () => {
@@ -64,7 +64,8 @@ const RsProjectCreatePage: React.FC = () => {
       return response.data;
     },
     enabled: isEdit && !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   useEffect(() => {
     if (projectQuery.data) {
@@ -99,7 +100,10 @@ const RsProjectCreatePage: React.FC = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.PROJECTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.PROJECTS ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: isEdit

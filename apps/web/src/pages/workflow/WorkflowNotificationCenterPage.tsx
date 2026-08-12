@@ -11,6 +11,9 @@ import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -19,7 +22,7 @@ const FlowNotificationCenter: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   const notificationsQuery = useQuery<Notification[]>({
-    queryKey: ['workflow-notifications', filter],
+    queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_NOTIFICATIONS_BASE, filter],
     queryFn: async (): Promise<Notification[]> => {
       const userId = user?.id || 'current-user-id';
 
@@ -59,7 +62,10 @@ const FlowNotificationCenter: React.FC = () => {
   const markAsReadMutation = useMutation({
     mutationFn: (userId: string) => workflowApi.markNotificationsAsRead(userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-notifications'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_NOTIFICATIONS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         title: '成功',
         message: '所有通知已标记为已读',

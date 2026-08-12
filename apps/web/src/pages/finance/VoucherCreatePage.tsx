@@ -21,7 +21,7 @@ import {
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { Plus, Trash2, Calculator, AlertCircle } from 'lucide-react';
 import { FormPageTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -78,7 +78,8 @@ const VoucherCreatePage: React.FC = () => {
       }
       return [];
     },
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const subjects = subjectsQuery.data || [];
 
@@ -220,7 +221,10 @@ const VoucherCreatePage: React.FC = () => {
         message: t('finance.voucher_create_page.create_1'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.VOUCHERS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.VOUCHERS ,
+  exact: false,
+  refetchType: 'active',
+});
       navigate(FINANCE_PATHS.vouchers);
     },
     onError: (err: Error) => {

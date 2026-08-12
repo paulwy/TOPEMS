@@ -21,6 +21,9 @@ import { docApi } from '@/api/doc';
 import type { DocDashboardStats } from '@/api/doc';
 import { LazyChart } from '@/components/charts';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -42,8 +45,8 @@ const getGreeting = (): string => {
 export const DocumentDashboardPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const { data: statsData, isLoading: loading } = useQuery<DocDashboardStats | null>({
-    queryKey: ['doc-dashboard'],
+  const { data: statsData, isPending: loading} = useQuery<DocDashboardStats | null>({
+    queryKey: QUERY_KEYS.AD_HOC.DOC_DASHBOARD_BASE,
     queryFn: async () => {
       const response = await docApi.getDashboard();
       if (response.success && response.data) {

@@ -43,6 +43,9 @@ import {
 import { PageContainer } from '@/components';
 import { useCrudMutations } from '@/hooks';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const TemplateManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -56,7 +59,7 @@ const TemplateManagementPage: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
   const templatesQuery = useQuery({
-    queryKey: ['templates', searchQuery, selectedCategory],
+    queryKey: [...QUERY_KEYS.AD_HOC.TEMPLATES_BASE, searchQuery, selectedCategory],
     queryFn: async () => {
       const response = await templateApi.list({ search: searchQuery, category: selectedCategory });
       if (!response.success || !response.data) {
@@ -68,7 +71,7 @@ const TemplateManagementPage: React.FC = () => {
   });
 
   const categoriesQuery = useQuery({
-    queryKey: ['template-categories'],
+    queryKey: QUERY_KEYS.AD_HOC.TEMPLATE_CATEGORIES_BASE,
     queryFn: async () => {
       const response = await templateApi.listCategories();
       if (!response.success || !response.data) {
@@ -129,7 +132,10 @@ const TemplateManagementPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ type: 'success', title: '成功', message: '模板复制成功' });
     },
     onError: (err: unknown) => {
@@ -151,7 +157,10 @@ const TemplateManagementPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({ type: 'success', title: '成功', message: '状态更新成功' });
     },
     onError: (err: unknown) => {
@@ -276,8 +285,14 @@ const TemplateManagementPage: React.FC = () => {
           <Button
             variant='outlined'
             onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ['templates'] });
-              queryClient.invalidateQueries({ queryKey: ['template-categories'] });
+              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATE_CATEGORIES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
             }}
           >
             刷新

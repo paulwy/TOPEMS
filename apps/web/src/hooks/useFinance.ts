@@ -8,6 +8,8 @@ import type { Account } from '@/types/finance';
 import { accountApi } from '@/api/finance';
 import { useNotification } from './useNotification';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 // ============================================
 // 一、科目管理Hook
 // ============================================
@@ -24,9 +26,10 @@ export const useAccounts = (params?: {
   is_detail?: boolean;
 }) => {
   return useQuery({
-    queryKey: ['accounts', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.ACCOUNTS_BASE, params],
     queryFn: () => accountApi.list(params),
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -38,7 +41,7 @@ export const useAccountTree = (params?: {
   include_disabled?: boolean;
 }) => {
   return useQuery({
-    queryKey: ['accounts-tree', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE, params],
     queryFn: () => accountApi.getTree(params),
     staleTime: 10 * 60 * 1000,
   });
@@ -49,10 +52,11 @@ export const useAccountTree = (params?: {
  */
 export const useAccount = (id: string) => {
   return useQuery({
-    queryKey: ['account', id],
+    queryKey: [...QUERY_KEYS.AD_HOC.ACCOUNT_BASE, id],
     queryFn: () => accountApi.get(id),
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -66,10 +70,11 @@ export const useAccountBalances = (params: {
   project_id?: string;
 }) => {
   return useQuery({
-    queryKey: ['account-balances', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.ACCOUNT_BALANCES_BASE, params],
     queryFn: () => accountApi.getBalances(params),
     enabled: !!params.period,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -81,10 +86,11 @@ export const useOpeningBalances = (params: {
   company_id?: string;
 }) => {
   return useQuery({
-    queryKey: ['opening-balances', params],
+    queryKey: [...QUERY_KEYS.AD_HOC.OPENING_BALANCES_BASE, params],
     queryFn: () => accountApi.getOpeningBalances(params),
     enabled: !!params.period,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 };
 
 /**
@@ -97,8 +103,14 @@ export const useCreateAccount = () => {
   return useMutation({
     mutationFn: (data: Partial<Account>) => accountApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
-      queryClient.invalidateQueries({ queryKey: ['accounts-tree'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('科目创建成功');
     },
     onError: (error) => {
@@ -118,8 +130,14 @@ export const useUpdateAccount = () => {
     mutationFn: ({ id, data }: { id: string; data: Partial<Account> }) =>
       accountApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
-      queryClient.invalidateQueries({ queryKey: ['accounts-tree'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('科目更新成功');
     },
     onError: (error) => {
@@ -138,8 +156,14 @@ export const useDeleteAccount = () => {
   return useMutation({
     mutationFn: (id: string) => accountApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
-      queryClient.invalidateQueries({ queryKey: ['accounts-tree'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('科目删除成功');
     },
     onError: (error) => {
@@ -169,8 +193,14 @@ export const useSetOpeningBalance = () => {
       }>;
     }) => accountApi.setOpeningBalance(accountId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['opening-balances'] });
-      queryClient.invalidateQueries({ queryKey: ['account-balances'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.OPENING_BALANCES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNT_BALANCES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('期初余额设置成功');
     },
     onError: (error) => {
@@ -190,8 +220,14 @@ export const useCarryForwardOpeningBalance = () => {
     mutationFn: (params: { from_period: string; to_period: string; company_id?: string }) =>
       accountApi.carryForwardOpeningBalance(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['opening-balances'] });
-      queryClient.invalidateQueries({ queryKey: ['account-balances'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.OPENING_BALANCES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNT_BALANCES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
       success('期初余额结转成功');
     },
     onError: (error) => {

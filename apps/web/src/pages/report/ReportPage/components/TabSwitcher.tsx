@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button } from '@mui/material';
 import { FileText, LayoutTemplate } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface TabSwitcherProps {
@@ -36,7 +37,10 @@ const TabSwitcher: React.FC<TabSwitcherProps> = ({ activeTab, onTabChange, templ
           variant={activeTab === 'templates' ? 'contained' : 'text'}
           onClick={() => {
             onTabChange('templates');
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES ,
+  exact: false,
+  refetchType: 'active',
+});
           }}
           sx={{ borderRadius: 1.5, textTransform: 'none' }}
         >

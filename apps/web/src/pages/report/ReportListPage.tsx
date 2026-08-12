@@ -21,6 +21,8 @@ import { reportSchema } from '@/schemas/report';
 import { designTokens } from '@/theme/tokens';
 import { REPORT_PATHS } from '@/modules/report/config';
 
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const reportApiAdapter: CrudApiAdapter<ReportData> = {
@@ -72,6 +74,12 @@ const ReportListPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.REPORT.REPORTS,
+          exact: false,
+          refetchType: 'active',
+        });
       addNotification({
         type: 'success',
         title: '导出成功',

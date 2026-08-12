@@ -187,7 +187,10 @@ export function useCrudQueries<
         setExtraParams(params);
       }
       // 强制 refetch
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     [queryClient, queryKey]
   );
@@ -213,7 +216,10 @@ export function useCrudQueries<
 
   // ---- 刷新 ----
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [queryKey] });
+    queryClient.invalidateQueries({ queryKey: [queryKey] ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient, queryKey]);
 
   // ---- 错误处理辅助 ----
@@ -232,7 +238,10 @@ export function useCrudQueries<
       return response.data?.data ?? response.data;
     },
     onSuccess: (_newItem: T) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
       onSuccess?.('创建成功');
     },
     onError: (err) => handleMutationError(err, '创建失败'),
@@ -245,10 +254,16 @@ export function useCrudQueries<
       return response.data?.data ?? response.data;
     },
     onSuccess: (_updatedItem: T, variables: { id: string; item: TUpdate }) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
       queryClient.invalidateQueries({
         queryKey: [queryKey, 'detail', variables.id],
-      });
+      
+  exact: false,
+  refetchType: 'active',
+});
       onSuccess?.('更新成功');
     },
     onError: (err) => handleMutationError(err, '更新失败'),
@@ -260,7 +275,10 @@ export function useCrudQueries<
       await api.delete(`${basePath}/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      queryClient.invalidateQueries({ queryKey: [queryKey] ,
+  exact: false,
+  refetchType: 'active',
+});
       onSuccess?.('删除成功');
     },
     onError: (err) => handleMutationError(err, '删除失败'),
@@ -272,7 +290,10 @@ export function useCrudQueries<
       await api.post(`${basePath}/bulk-delete`, { ids });
     },
     onSuccess: (_data: void, variables: string[]) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      queryClient.invalidateQueries({ queryKey: [queryKey] ,
+  exact: false,
+  refetchType: 'active',
+});
       onSuccess?.(`已删除 ${variables.length} 条记录`);
     },
     onError: (err) => handleMutationError(err, '批量删除失败'),
@@ -403,7 +424,10 @@ export function useModuleQueries<T extends { id?: string }>(
       if (params) {
         setExtraParams(params);
       }
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     [queryClient, queryKey]
   );
@@ -433,7 +457,10 @@ export function useModuleQueries<T extends { id?: string }>(
 
   // ---- refresh ----
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [queryKey] });
+    queryClient.invalidateQueries({ queryKey: [queryKey] ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient, queryKey]);
 
   // ---- 错误通知辅助 ----
@@ -464,7 +491,10 @@ export function useModuleQueries<T extends { id?: string }>(
       return response.data ?? null;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess('创建成功');
     },
     onError: (err) => notifyError(err, '创建失败'),
@@ -480,10 +510,16 @@ export function useModuleQueries<T extends { id?: string }>(
       return response.data ?? null;
     },
     onSuccess: (_data: T | null, variables) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
       queryClient.invalidateQueries({
         queryKey: [queryKey, 'detail', variables.id],
-      });
+      
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess('更新成功');
     },
     onError: (err) => notifyError(err, '更新失败'),
@@ -498,7 +534,10 @@ export function useModuleQueries<T extends { id?: string }>(
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      queryClient.invalidateQueries({ queryKey: [queryKey] ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess('删除成功');
     },
     onError: (err) => notifyError(err, '删除失败'),
@@ -510,7 +549,10 @@ export function useModuleQueries<T extends { id?: string }>(
       await Promise.all(ids.map((id) => api.delete(id)));
     },
     onSuccess: (_data: void, variables: string[]) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      queryClient.invalidateQueries({ queryKey: [queryKey] ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(`已删除 ${variables.length} 条记录`);
     },
     onError: (err) => notifyError(err, '批量删除失败'),
@@ -680,7 +722,10 @@ export function useCrudOperations<
       if (params) {
         setExtraParams(params);
       }
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     [queryClient, queryKey]
   );
@@ -708,7 +753,10 @@ export function useCrudOperations<
   );
 
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [queryKey] });
+    queryClient.invalidateQueries({ queryKey: [queryKey] ,
+  exact: false,
+  refetchType: 'active',
+});
   }, [queryClient, queryKey]);
 
   const notifyError = useCallback(
@@ -745,7 +793,10 @@ export function useCrudOperations<
       return response.data ?? null;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(msgCreate);
     },
     onError: (err) => notifyError(err, msgCreateErr),
@@ -760,8 +811,14 @@ export function useCrudOperations<
       return response.data ?? null;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'detail', variables.id] });
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
+  exact: false,
+  refetchType: 'active',
+});
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'detail', variables.id] ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(msgUpdate);
     },
     onError: (err) => notifyError(err, msgUpdateErr),
@@ -775,7 +832,10 @@ export function useCrudOperations<
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      queryClient.invalidateQueries({ queryKey: [queryKey] ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(msgDelete);
     },
     onError: (err) => notifyError(err, msgDeleteErr),
@@ -786,7 +846,10 @@ export function useCrudOperations<
       await Promise.all(ids.map((id) => api.delete(id)));
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      queryClient.invalidateQueries({ queryKey: [queryKey] ,
+  exact: false,
+  refetchType: 'active',
+});
       notifySuccess(
         entityName
           ? `已删除 ${variables.length} 个${entityName}`

@@ -17,6 +17,8 @@ import type { StatCardConfig, ChartConfig } from '@/components/templates/Dashboa
 import { PageContainer } from '@/components/common';
 import { usePdmDashboardSchema } from '@/schemas/pdm';
 
+import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Users,
   Clock,
@@ -33,14 +35,15 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 const PdmDashboardPage: React.FC = () => {
   const schema = usePdmDashboardSchema();
 
-  const { isLoading: loading } = useQuery({
-    queryKey: ['pdm-dashboard-schema'],
+  const { isPending: loading} = useQuery({
+    queryKey: QUERY_KEYS.AD_HOC.PDM_DASHBOARD_SCHEMA_BASE,
     queryFn: async () => {
       if (schema.loader) return schema.loader();
       return null;
     },
     enabled: !!schema.loader,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
 
   const statCards = useMemo<StatCardConfig[]>(() => {
     if (!schema.statCards) return [];

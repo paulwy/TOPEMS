@@ -26,6 +26,9 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const processAdapter: CrudApiAdapter<InspectionProcess> = {
@@ -92,7 +95,7 @@ const LimsProcessPage: React.FC = () => {
   }, []);
 
   const statisticsQuery = useQuery({
-    queryKey: ['lims-statistics'],
+    queryKey: QUERY_KEYS.AD_HOC.LIMS_STATISTICS_BASE,
     queryFn: async () => {
       const response = await limsApi.getStatistics();
       if (response.success && response.data) {

@@ -72,7 +72,10 @@ const RsBuildPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.BUILDS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.BUILDS ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
         title: '操作成功',

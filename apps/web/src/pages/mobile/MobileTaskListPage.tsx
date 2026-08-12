@@ -38,6 +38,9 @@ import { mobileApi } from '@/api/mobile';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface Task {
   id: string;
   title: string;
@@ -107,7 +110,7 @@ const MobileTaskListPage: React.FC = () => {
   const tabs = ['全部', '待办', '进行中', '已完成'];
 
   const tasksQuery = useInfiniteQuery({
-    queryKey: ['mobile-tasks', activeTab],
+    queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_TASKS_BASE, activeTab],
     queryFn: async ({ pageParam = 1 }) => {
       const response = await mobileApi.listMobileTasks({
         page: pageParam,

@@ -8,6 +8,8 @@ import FeedbackForm from './FeedbackForm';
 import { feedbackApi } from '@/api/feedback';
 import type { CreateFeedbackRequest } from '@/api/feedback/types';
 
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 export interface FeedbackModalProps {
   open: boolean;
   onClose: () => void;
@@ -19,6 +21,12 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, onClose }) => {
   const createFeedbackMutation = useMutation({
     mutationFn: (data: CreateFeedbackRequest) => feedbackApi.createFeedback(data),
     onSuccess: () => {
+      
+      queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.FEEDBACKS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       toast.success('反馈提交成功');
       setIsSubmitting(false);
       onClose();

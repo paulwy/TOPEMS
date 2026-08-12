@@ -1,6 +1,6 @@
 # TOPEMS Code Wiki
 
-> **版本**: v6.0 / V60.0 | **最后更新**: 2026-07-24 | **文档版本**: v3.0 (V60.0 运维模式技术债清零；新增前端短板分析与整合实施方案)
+> **版本**: v7.1 / V183 | **最后更新**: 2026-08-12 | **文档版本**: v4.1 (V183 导航 100% 闭环 · Code Wiki 结构刷新 · 下一步规划对齐 V83 路线图)
 
 ---
 
@@ -14,10 +14,11 @@
 6. [核心模块详解](#6-核心模块详解)
 7. [关键类与函数](#7-关键类与函数)
 8. [依赖关系](#8-依赖关系)
-9. [部署与运行](#9-部署与运行)
+9. [项目运行方式](#9-项目运行方式)
 10. [开发指南](#10-开发指南)
-11. [项目评估与优化方案](#11-项目评估与优化方案)
-12. [附录](#附录)
+11. [测试策略](#11-测试策略)
+12. [下一步工作规划](#12-下一步工作规划)
+13. [附录](#附录)
 
 ---
 
@@ -25,27 +26,32 @@
 
 ### 1.1 项目简介
 
-**TOPEMS** 是一个面向中大型企业的全栈数字化平台，采用 Rust 微服务后端 + React 19 前端的技术栈，覆盖身份认证、流程自动化、文档管理、AI 协作、生产制造、供应链、质量管控、研发管理、商业智能等 20+ 业务领域。平台通过统一的 `unified-core` 核心服务管理插件生命周期、租户隔离、权限体系与事件总线，各业务服务以独立进程或插件形式按需扩展。
+**TOPEMS** 是一个面向中大型企业的全栈数字化平台，采用 **Rust 微服务后端 + React 19 前端** 的技术栈，覆盖身份认证、流程自动化、文档管理、AI 协作、生产制造、供应链、质量管控、研发管理、商业智能等 28+ 业务领域。
+
+平台通过统一的 `unified-core` 核心服务管理插件生命周期、租户隔离、权限体系与事件总线，各业务服务以独立进程或插件形式按需扩展。
+
+**当前版本**: v5.15.0
+**项目任务版本**: V182
 
 ### 1.2 核心特性
 
 | 特性类别 | 具体特性 |
 |---------|---------|
-| **核心服务** | IAM、工作流(Flow)、文件(File)、通讯(Communication)、通知(Notification)、邮件(Mail)、即时通讯(IM)、主数据(Master)、插件(Plugin)、工单(Ticket) |
-| **经营管理** | ERP、Finance、AI |
-| **协同办公** | HRM、PM、CRM |
+| **核心服务** | IAM、工作流(Flow)、文件(File)、通讯(Communication)、通知(Notification)、邮件(Mail)、即时通讯(IM)、主数据(Master)、插件(Plugin)、工单(Ticket)、监控(Monitor) |
+| **经营管理** | ERP、Finance、AI、Billing |
+| **协同办公** | HRM、PM、CRM、Feedback |
 | **生产制造** | MES、PDM |
 | **供应链** | SCM、WMS、SRM |
 | **质量/研发** | QMS、LIMS、EHS、RD |
-| **数据/基础设施** | BI(Analytics)、Portal、Mobile、GIS、Integration |
-| **技术亮点** | Rust Axum 高性能后端、React 19 + TypeScript 前端、微服务/插件化架构、Module Federation 微前端、PWA、AI RAG |
+| **数据/基础设施** | BI(Analytics)、Portal、Mobile、GIS、Integration、Search、Lowcode、Master-Data |
+| **技术亮点** | Rust Axum 高性能后端、React 19 + TypeScript 前端、微服务/插件化架构、Module Federation 微前端、PWA、AI RAG、pgvector 向量搜索 |
 | **安全特性** | JWT 认证、RBAC、行级安全(RLS)、多租户隔离、字段加密、CSRF 防护、审计日志 |
-| **V13.0 插件化** | 安全令牌注册、Consul/环境变量服务发现、心跳超时检测、依赖检查、动态导航配置 |
-| **V16.1 工单 SLA** | SLA 策略配置、响应/解决时限计算、多级升级机制、SLA 统计 API、前端 SLA 展示 |
-| **V30.0-V60.0 架构深化** | MDM 主数据治理、Portal BFF GraphQL 聚合/联邦/订阅、Finance 领域模型/CQRS、微前端生产化/沙箱/AI 运维、知识图谱、领域驱动设计 |
-| **V51.0 SLA 断点修复** | Portal BFF 代理补齐 SLA 路由、升级计算对齐工作时间 |
-| **V60.0 运维模式** | 技术债清零（unwrap 清零、console.log 清理、routes.rs 拆分、多租户隔离 97.3%），全 crate 零警告 |
+| **插件化** | 安全令牌注册、Consul/环境变量服务发现、心跳超时检测、依赖检查、动态导航配置 |
+| **工单 SLA** | SLA 策略配置、响应/解决时限计算、多级升级机制、SLA 统计 API |
+| **Shared Bootstrap V2** | 28/28 (100%) 服务统一启动 API：ServiceConfig → bootstrap_service → build_application → run |
 | **路由统一化** | 核心服务统一 `/api/core/{module}`，业务服务统一 `/api/{svc}`，Vite proxy 新路径无 rewrite 直通 |
+| **导航架构合规** | **V182 达成 1050/1050 = 100% 全绿**：页面存在性(316/316) · 路由注册(350/350) · 权限三段式(384/384) — 自 V68.3 起 7 个版本迭代闭环 |
+| **API 绑定覆盖** | V75~V81 完成 Finance/Monitor/PDM/unified-core/master-data/Finance 风控税务 等 7 大模块 API 绑定 100% 落地 |
 
 ### 1.3 技术栈
 
@@ -54,17 +60,21 @@
 | 技术 | 版本 | 用途 |
 |------|------|------|
 | React | ^19.2.7 | UI 框架 |
-| TypeScript | ^7.0.2 | 类型安全 |
+| TypeScript | ^6.0.3 | 类型安全 |
 | Vite | ^8.0.16 | 构建工具 / 开发服务器代理 |
 | MUI (Material UI) | ^9.1.1 | UI 组件库 |
-| TanStack React Query | ^5.0.0 | 服务端状态、缓存与重试 |
-| Zustand | ^5.0.0 | 客户端全局状态 |
-| React Router | ^7.0.0 | 路由管理 |
-| Module Federation (Vite) | - | 微前端动态加载 |
-| i18next | ^26.0.0 | 国际化 |
+| TanStack React Query | ^5.101.0 | 服务端状态、缓存与重试 |
+| Zustand | ^5.0.14 | 客户端全局状态 |
+| React Router | ^7.17.0 | 路由管理 |
+| Module Federation (Vite) | ^1.16.8 | 微前端动态加载 |
+| i18next | ^26.3.1 | 国际化 |
 | dayjs | ^1.11.21 | 日期处理 |
-| axios | ^1.0.0 | HTTP 客户端 |
-| framer-motion | ^12.0.0 | 动画 |
+| axios | ^1.6.8 | HTTP 客户端 |
+| Zod | ^4.4.3 | Schema 校验 |
+| React Hook Form | ^7.79.0 | 表单管理 |
+| Recharts | ^3.8.1 | 图表可视化 |
+| Three.js / R3F | ^0.184.0 | 3D 可视化（GIS 模块） |
+| Leaflet | ^1.9.4 | 地图组件（GIS 模块） |
 
 #### 后端技术栈
 
@@ -80,9 +90,23 @@
 | jsonwebtoken | 9.0 | JWT 认证 |
 | bcrypt | 0.15 | 密码哈希 |
 | Prometheus / axum-prometheus | 0.13 / 0.8 | 指标监控 |
-| OpenTelemetry / Jaeger | - | 链路追踪 |
-| Consul | - | 服务发现(可选) |
-| utoipa | 4 | OpenAPI 文档生成 |
+| OpenTelemetry | - | 链路追踪 |
+| utoipa | =4.2.3 | OpenAPI 文档生成 |
+| async-graphql | 7 | Portal BFF GraphQL 聚合层 |
+| reqwest | 0.12 | HTTP 客户端（服务间调用） |
+
+#### 其他工具
+
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| Tauri | 2.0 | 桌面应用框架 |
+| Expo (React Native) | - | 移动端应用 |
+| Python CLI | 3.10+ | 命令行服务管理工具 |
+| pnpm | 9.15.9 | 前端包管理器（Monorepo Workspace） |
+| Cargo Workspace | - | 后端包管理 |
+| Vitest | ^4.1.9 | 前端单元/组件测试 |
+| Playwright | ^1.61.1 | E2E 测试 |
+| Husky / lint-staged | 9.x / 17.x | Git Hooks 代码检查 |
 
 ---
 
@@ -91,1207 +115,850 @@
 ### 2.1 架构分层
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        客户端层 (Client Layer)                   │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐            │
-│  │  Web    │  │ Mobile  │  │ Desktop │  │  第三方  │            │
-│  │ (3000)  │  │ (React  │  │ (Tauri) │  │  系统   │            │
-│  │         │  │ Native) │  │         │  │         │            │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘            │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │ HTTP/HTTPS / WebSocket
-┌───────────────────────────────▼─────────────────────────────────┐
-│                     API 网关层 (API Gateway)                     │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  Nginx Ingress / Vite Dev Proxy                          │   │
-│  │  - /api/core/*  → unified-core:8000                      │   │
-│  │  - /api/{svc}/* → 各业务服务                             │   │
-│  │  - /ws/*        → unified-core 或业务服务                │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │
-┌───────────────────────────────▼─────────────────────────────────┐
-│                    核心服务层 (Core Services)                    │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │ unified-core (8000)                                     │    │
-│  │ IAM · Flow · File · Communication · Notification · Mail │    │
-│  │ IM · Tenant · Plugin · Master · Ticket · Search · Dict  │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐                         │
-│  │ AI      │  │ GIS     │  │Integration│ 独立扩展服务           │
-│  │ (8013)  │  │ (8071)  │  │ (8072)   │                         │
-│  └─────────┘  └─────────┘  └─────────┘                         │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │ REST / gRPC / EventBus
-┌───────────────────────────────▼─────────────────────────────────┐
-│                   业务服务层 (Business Services)                  │
-│  ERP(8010) Finance(8011) HRM(8020) PM(8023) CRM(8029)           │
-│  MES(8030) PDM(8031) SCM(8040) WMS(8041) SRM(8042)              │
-│  QMS(8050) LIMS(8051) EHS(8052) RD(8053)                        │
-│  BI/Analytics(8060) Portal(8063) Mobile(8070)                   │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │
-┌───────────────────────────────▼─────────────────────────────────┐
-│                    数据层 (Data Layer)                           │
-│  PostgreSQL(5432) · Redis(6379) · RabbitMQ · Ollama(11434)     │
-│  Schema 隔离 · tenant_id 行级安全 · pgvector · 事件流            │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                        客户端层 (Client Layer)                    │
+│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌───────────┐         │
+│  │  Web    │  │  Mobile  │  │ Desktop  │  │  第三方   │         │
+│  │ (3000)  │  │ (Expo RN)│  │ (Tauri)  │  │  系统     │         │
+│  └─────────┘  └──────────┘  └──────────┘  └───────────┘         │
+└──────────────────────────────┬───────────────────────────────────┘
+                               │ HTTP/HTTPS / WebSocket
+┌──────────────────────────────▼───────────────────────────────────┐
+│                     API 网关层 (API Gateway)                      │
+│  ┌───────────────────────────────────────────────────────────┐   │
+│  │  Nginx Ingress / Vite Dev Proxy                           │   │
+│  │  - /api/core/*  → unified-core:8000                       │   │
+│  │  - /api/{svc}/* → 各业务服务                              │   │
+│  │  - /ws/*        → unified-core 或业务服务                 │   │
+│  └───────────────────────────────────────────────────────────┘   │
+└──────────────────────────────┬───────────────────────────────────┘
+                               │
+┌──────────────────────────────▼───────────────────────────────────┐
+│                    核心服务层 (Core Services)                     │
+│  ┌──────────────────────────────────────────────────────────┐    │
+│  │ unified-core (8000) — 虚拟服务：IAM/Doc/Flow/File/Monitor │    │
+│  └──────────────────────────────────────────────────────────┘    │
+│  ┌───────────┐  ┌──────────────┐  ┌──────────────┐               │
+│  │ search    │  │communication │  │ master-data  │ 独立扩展服务   │
+│  │ (8082)    │  │(mail/im/noti)│  │   (8090)     │               │
+│  └───────────┘  └──────────────┘  └──────────────┘               │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐             │
+│  │ billing  │ │ ticket   │ │ feedback │ │ lowcode  │ 扩展服务     │
+│  │ (8085)   │ │ (8086)   │ │ (8087)   │ │ (8088)   │             │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘             │
+└──────────────────────────────┬───────────────────────────────────┘
+                               │ REST / gRPC / EventBus
+┌──────────────────────────────▼───────────────────────────────────┐
+│                   业务服务层 (Business Services)                   │
+│  ┌───────────────────────────────────────────────────────────┐   │
+│  │ 经营管理:  ERP(8010)  Finance(8011)  AI(8013)              │   │
+│  │ 协同办公:  HRM(8020)  PM(8023)     CRM(8029)               │   │
+│  │ 生产制造:  MES(8030)  PDM(8031)                            │   │
+│  │ 供应链:    SCM(8040)  WMS(8041)    SRM(8042)               │   │
+│  │ 质量研发:  QMS(8050)  LIMS(8051)   EHS(8052)  RD(8053)     │   │
+│  │ 数据门户:  BI(8060)   Portal(8063)  Mobile(8070)           │   │
+│  │ 基础扩展:  GIS(8071)  Integration(8072)                    │   │
+│  └───────────────────────────────────────────────────────────┘   │
+└──────────────────────────────┬───────────────────────────────────┘
+                               │
+┌──────────────────────────────▼───────────────────────────────────┐
+│                    共享库层 (Shared Libraries)                    │
+│  Rust Crates:  shared-core  shared-db  shared-auth               │
+│                shared-bootstrap  shared-event  shared-ai         │
+│                shared-service-client  shared-observability       │
+│  TS Packages:  shared-types  shared-utils  shared-constants      │
+│                shared-components  shared-hooks  tokens           │
+└──────────────────────────────┬───────────────────────────────────┘
+                               │
+┌──────────────────────────────▼───────────────────────────────────┐
+│                    数据层 (Data Layer)                            │
+│  PostgreSQL(5432) · Redis(6379) · RabbitMQ · Ollama(11434)      │
+│  Schema 隔离 · tenant_id 行级安全 · pgvector · 事件流             │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### 2.2 架构风格
 
-- **微服务架构**: 20+ 独立 Rust 服务，按业务域分组，独立编译、部署与扩展。
-- **插件化架构**: 业务服务通过 `plugin.yaml` + 启动注册进入 unified-core 的插件生命周期管理，支持安全令牌、依赖检查、心跳监控与动态导航。
-- **统一核心平台 (unified-core)**: 承载 IAM、Flow、File、Communication 等不可卸载的核心能力，以及插件注册中心。
-- **共享库模式**: `lib/topems_shared` 提供认证、数据库、缓存、响应、事件、服务发现等通用能力，所有服务共享。
-- **多租户隔离**: 通过 `tenant_id` 字段与 RLS 中间件实现行级安全；各业务模块使用独立 PostgreSQL Schema。
-- **事件驱动**: 基于 Redis Pub/Sub 与 RabbitMQ 的事件总线，支持 `MasterDataEvent` 跨服务同步。
-- **微前端 (Module Federation)**: `apps/web` 作为 Host，业务域作为可选 Remote，支持 static / module-federation / hybrid 三种部署模式。
+- **微服务架构**: 28个独立 Rust 服务，按业务域分组，独立编译、部署与扩展
+- **插件化架构**: 业务服务通过 `plugin.yaml` + 启动注册进入 unified-core 的插件生命周期管理
+- **统一核心平台 (unified-core)**: 承载不可卸载的核心能力 + 插件注册中心
+- **共享库模式**: 8 个 Rust 共享 crate + 6 个 TS 共享包，提供通用能力
+- **多租户隔离**: `tenant_id` 字段 + RLS 中间件 + 独立 PostgreSQL Schema
+- **事件驱动**: Redis Pub/Sub + RabbitMQ 事件总线，支持 `MasterDataEvent` 跨服务同步
+- **微前端 (Module Federation)**: `apps/web` 作为 Host，支持 static / module-federation / hybrid 三种模式
 
 ### 2.3 API 路径规范
 
-当前项目采用**双轨制**向统一路径迁移：新代码使用新路径，旧路径通过 `register_routes_with_legacy_alias` 保留兼容。
+| 服务类型 | 路径格式 | 示例 |
+|---------|---------|------|
+| 核心服务（unified-core 虚拟） | `/api/core/{module}/{path}` | `GET /api/core/iam/users` |
+| 业务服务 | `/api/{svc}/{path}` | `GET /api/erp/orders` |
+| 已统一的内部模块（Doc/File/Mail/IM/Notification） | `/api/core/{module}/{resource}` | `GET /api/core/doc/workspaces` |
+| 旧路径别名（向后兼容） | `/api/v1/{svc}/{path}` 或 `/{svc}/api/{path}` | 由 `register_routes_with_legacy_alias` 处理 |
 
-| 服务组 | 主路径格式 | 示例 | 说明 |
-|--------|-----------|------|------|
-| 核心虚拟服务 | `/api/core/{module}/{resource}` | `GET /api/core/iam/users` | unified-core 内部模块共用 8000 端口 |
-| 业务服务 | `/api/{svc}/{resource}` | `GET /api/erp/orders` | 独立服务进程 |
-| 核心服务 v1 别名 | `/api/core/{svc}/v1/{resource}` | `GET /api/core/ai/v1/qa` | 部分独立核心扩展服务使用（过渡） |
-| 废弃别名 | `/api/v1/core/{svc}`、 `/api/analytics/*`、 `/api/report/*` | - | 保留兼容，新代码禁止使用 |
-
-> **硬约束** (来自 project_memory):
-> - 核心服务内部模块必须使用 `模式 C`: `/api/core/{module}/{resource}`。
-> - 业务服务挂载路径必须为 `/api/{svc}/{resource}`，模块内部路由使用裸路径，禁止硬编码 `/api/{svc}` 前缀，避免 `.nest()` 导致双前缀。
-> - 新路径的 Vite proxy 使用 `createNewApiProxyConfig`，无 rewrite 直通后端；旧代理（如 `/core/api`、`/comm/api`）仍保留 rewrite 兼容。
-> - BI 服务主路径为 `/api/bi/*`，`/api/analytics/` 与 `/api/report/` 为废弃别名。
-> - 工单模块挂载在 `master` 模块下：`/api/core/master/tickets`、`/api/core/master/sla-policies`。
-
-### 2.4 WebSocket 路径规范
-
-| 模块 | WebSocket 路径 | 说明 |
-|------|---------------|------|
-| 核心通知 | `/ws/core/notifications` | 实时通知推送 |
-| 核心 IM | `/ws/core/im` | 即时通讯 |
-| MES 看板 | `/ws/mes/dashboard` | 生产看板实时数据 |
-| GIS | `/ws/gis` | 地理信息实时数据 |
-| BI 看板 | `/ws/bi/dashboard/{id}` | BI 看板实时更新 |
+**⚠️ 工程约束（project_memory 中记录的硬规则）：**
+- 后端 Axum 路由：`protected_routes = modules::create_routes().layer(middleware).with_state(state)` 然后 `app.merge(public_routes).nest('/api/{svc}', protected_routes)` — 不要双重嵌套路径
+- Vite proxy：所有服务使用 `/api/{service}` 路径 + `rewrite: (path) => path`（无修改），因为 apiClient 的 baseURL 已带前缀
+- Axum 中间件顺序：`.layer(tenant_middleware).layer(auth_middleware)` — auth_middleware 必须在外层（后添加），否则 500 "Missing Claims"
+- Monitor 服务必须有公开的 `/api/monitor/health` 端点（无需认证）
 
 ---
 
 ## 3. 后端架构
 
-### 3.1 项目结构
+### 3.1 Cargo Workspace 结构
 
 ```
-TOPEMS/
-├── lib/                          # 共享库 (topems_shared)
-│   ├── src/
-│   │   ├── auth.rs              # JWT 认证中间件
-│   │   ├── database.rs          # 数据库连接池
-│   │   ├── cache.rs             # 多级缓存
-│   │   ├── response.rs          # 统一响应格式
-│   │   ├── schema.rs            # Schema 命名空间
-│   │   ├── rls.rs               # 行级安全中间件
-│   │   ├── tenant.rs            # 多租户上下文
-│   │   ├── permission.rs        # 模块/资源权限
-│   │   ├── middleware.rs        # tenant_middleware 等
-│   │   ├── service_config.rs    # ServiceConfigRegistry
-│   │   ├── service_discovery.rs # Consul / SmartServiceClient
-│   │   ├── service_client.rs    # 跨服务 HTTP 客户端
-│   │   ├── event/               # 事件总线
-│   │   ├── telemetry.rs         # OpenTelemetry 链路追踪
-│   │   ├── monitoring.rs        # 监控指标
-│   │   ├── health.rs            # 健康检查框架
-│   │   └── ...
-│   └── Cargo.toml
-│
-├── svc/                          # 业务服务
-│   ├── unified-core/            # 统一核心服务 (Port 8000)
-│   │   ├── src/
-│   │   │   ├── routes/          # 路由注册 (iam/flow/file/communication/...)
-│   │   │   ├── modules/         # 核心模块实现
-│   │   │   │   ├── iam/
-│   │   │   │   ├── flow/
-│   │   │   │   ├── file/
-│   │   │   │   ├── communication/
-│   │   │   │   ├── tenant/
-│   │   │   │   ├── plugin/
-│   │   │   │   ├── ticket/      # V16.1 工单与 SLA
-│   │   │   │   ├── master/
-│   │   │   │   ├── search/
-│   │   │   │   └── ...
-│   │   │   ├── middleware/      # 统一中间件
-│   │   │   ├── handlers.rs      # 公共 handler 与中间件包装
-│   │   │   └── main.rs          # 启动入口
-│   │   └── Cargo.toml
-│   │
-│   ├── erp/                     # 企业资源计划 (8010)
-│   ├── finance/                 # 财务管理 (8011)
-│   ├── ai/                      # AI 服务 (8013)
-│   ├── hrm/                     # 人力资源 (8020)
-│   ├── pm/                      # 项目管理 (8023)
-│   ├── crm/                     # 客户关系 (8029)
-│   ├── mes/                     # 制造执行 (8030)
-│   ├── pdm/                     # 产品数据 (8031)
-│   ├── scm/                     # 供应链管理 (8040)
-│   ├── wms/                     # 仓储管理 (8041)
-│   ├── srm/                     # 供应商关系 (8042)
-│   ├── qms/                     # 质量管理 (8050)
-│   ├── lims/                    # 实验室信息 (8051)
-│   ├── ehs/                     # 环境健康安全 (8052)
-│   ├── rd/                      # 研发管理 (8053)
-│   ├── analytics/               # 商业智能 (8060)，别名 bi/report
-│   ├── portal/                  # 企业门户 (8063)
-│   ├── mobile/                  # 移动服务 (8070)
-│   ├── gis/                     # 地理信息 (8071)
-│   └── integration/             # 系统集成 (8072)
+Cargo.toml (Workspace Root)
+├── lib/                         # 共享库根目录
+│   ├── topems-shared           # 门面 crate（A4.3 闭环完成，≤30 条 re-export）
+│   ├── shared-core             # 核心：API/配置/错误/响应/缓存/CRUD/CORS/指标
+│   ├── shared-db               # 数据库：连接池/审计/RLS/迁移/Repository/备份
+│   ├── shared-auth             # 认证：JWT/RBAC/租户/部门/权限中间件/安全
+│   ├── shared-bootstrap        # 启动引导：ServiceConfig/bootstrap_service/run
+│   ├── shared-event            # 事件总线：Redis/RabbitMQ/Saga/服务发现
+│   ├── shared-service-client   # 服务间调用客户端：28+ 业务服务 Typed Client
+│   ├── shared-observability    # 可观测性：遥测/日志/指标/告警/SLO
+│   └── shared-ai               # AI 能力：Ollama 客户端/向量存储/嵌入
+├── svc/
+│   ├── unified-core/           # 核心平台（8000，模式 C）
+│   ├── ai/ erp/ finance/ ...   # 28 个业务服务
+└── tools/ migration-sdk/       # 迁移工具（一次性脚本）
 ```
 
-### 3.2 统一路由注册模式
+### 3.2 Shared Bootstrap V2 三种启动模式
 
-项目强制使用以下模式挂载核心服务路由，避免双前缀 bug:
+28 个服务全部使用统一启动 API：`ServiceConfig → bootstrap_service → build_application → run`
+
+| 模式 | 说明 | 服务清单（数量） |
+|------|------|-----------------|
+| **A. 标准 build_application** | 无自定义 state，纯路由注册 | feedback, search, ticket, lowcode, communication, billing, master-data, hrm, finance, wms (10个) |
+| **B. Stateful + build_application** | 自定义 AppState（DB/Service 实例），标准中间件链 | qms, ehs, pdm, lims, erp, crm, srm, scm, mes, pm, rd (11个) |
+| **C. Application 重建** | 自定义 router/port/name，WS 或后台任务，特殊中间件顺序 | analytics, unified-core, integration, gis, portal, ai, mobile (7个) |
+
+### 3.3 服务标准目录结构（模式 B 示例：AI 服务）
+
+```
+svc/ai/
+├── Cargo.toml                  # 依赖声明（引用 workspace.dependencies）
+├── Dockerfile                  # 容器化打包
+├── plugin.yaml                 # 插件元数据（名称/版本/依赖/导航）
+├── src/
+│   ├── main.rs                 # 入口：ServiceConfig + bootstrap_service + 路由挂载
+│   ├── lib.rs                  # 库根：pub mod 声明
+│   ├── routes.rs               # 路由注册：public_routes + protected_routes + 中间件
+│   ├── handlers/               # HTTP Handler 层（参数提取→调用Service→返回响应）
+│   │   ├── ai_handlers.rs
+│   │   ├── connector_handlers.rs
+│   │   └── health.rs
+│   ├── models/                 # 数据模型（数据库表结构、DTO、请求/响应类型）
+│   │   ├── mod.rs
+│   │   └── audit_log.rs
+│   ├── modules/                # 功能模块（OpenAPI、Plugin、领域逻辑封装）
+│   │   ├── mod.rs
+│   │   ├── ai_knowledge/       # 知识库子模块
+│   │   ├── ai_form/            # AI 表单子模块
+│   │   ├── qa.rs / analysis.rs / document.rs / vector.rs ...
+│   │   └── openapi.rs          # utoipa::OpenAPI 文档聚合
+│   ├── services/               # 业务服务层（核心逻辑，可被 Handler/Event 调用）
+│   │   ├── mod.rs
+│   │   ├── qa.rs / db.rs / document.rs / embedding.rs ...
+│   │   └── audit.rs / cache.rs
+│   ├── middleware/             # 服务特有中间件（tenant、rate_limit 等）
+│   │   ├── mod.rs
+│   │   └── tenant.rs
+│   ├── shared/                 # 服务内共享（AppState、权限映射）
+│   │   ├── mod.rs
+│   │   └── permission.rs
+│   └── event_handlers/         # 事件订阅者（跨服务事件处理）
+│       └── mod.rs
+└── tests/                      # 集成测试（部分服务有）
+```
+
+### 3.4 标准路由模式（routes.rs）
 
 ```rust
-// unified-core: svc/unified-core/src/routes/mod.rs
-let core_protected_routes = iam::iam_routes(state)
-    .merge(flow::flow_routes(state))
-    .merge(file::file_routes(state))
-    .merge(communication::communication_routes(state))
-    // ...
-    .layer(axum::middleware::from_fn_with_state(
-        state.auth_state.clone(),
-        auth_middleware,
-    ));
+// 1. public_routes：无认证路由（健康检查、插件信息、metrics）
+let public_routes = Router::new()
+    .route("/health", get(health::health))
+    .route("/metrics", get(move || async { metric_handle.render() }))
+    .with_state(app_state.clone());
 
-let core_router = register_routes_with_legacy_alias(
-    Router::new(),
-    "/api/core",
-    &["/api/v1/core"],
-    core_routes,
-);
-```
+// 2. protected_routes：需要认证的业务路由
+let protected_routes = modules::create_routes()  // 子模块注册具体路径（裸路径如 /projects）
+    .layer(Extension(auth_state.clone()))
+    .layer(Extension(event_publisher.clone()))
+    .with_state(app_state.clone());
 
-业务服务同样遵循: 模块内使用裸路径 (`/projects`, `/tasks`)，在 `main.rs` 中:
+// 3. 按顺序加中间件（注意：后加的是外层，先执行）
+let protected_routes = protected_routes
+    .layer(tenant_middleware)       // 内层：需要 Extension<Claims>
+    .layer(auth_middleware);       // 外层：先执行，设置 Claims Extension
 
-```rust
-let protected_routes = modules::create_routes().layer(middleware).with_state(state);
-let app = Router::new()
+// 4. 最终聚合：公共路由 + 受保护路由（统一 nest 到 /api/{svc}）
+Router::new()
     .merge(public_routes)
-    .nest("/api/{svc}", protected_routes);
+    .nest("/api/ai", protected_routes)  // ⚠️ 路径只在这里加一次！
+    .layer(cors)
+    .layer(prometheus_layer)
+    .layer(telemetry_middleware)
 ```
 
-### 3.3 中间件架构
+**关键陷阱（Double-Prefix Bug）**：如果 main.rs 用了 `.nest('/api/{svc}', protected_routes)`，那么 module 内的路由只能写裸路径 `/projects`，绝对不能写 `/api/{svc}/projects`，否则路径会变成 `/api/pm/api/pm/projects` 导致 404。
 
-unified-core 中间件栈 (从外层到内层):
+### 3.5 Rust 共享 Crate 职责
 
-```
-请求 → CORS → Prometheus → Telemetry → RateLimit → Compression → SecurityHeaders
-      → BodyLimit → AuditLogger → InputValidation → TenantRLS → Auth → 业务处理 → 响应
-```
-
-> **Axum Layer 顺序注意**: `.layer(A).layer(B)` 中 B 在外层（先执行）。当 `tenant_middleware` 需要 `Extension<Claims>` 而 `auth_middleware` 负责设置 Claims 时，必须 `.layer(tenant_middleware).layer(auth_middleware)` 让 auth 在最外层运行。
-
-#### 核心中间件
-
-| 中间件 | 位置 | 功能 |
-|--------|------|------|
-| CORS | `lib/src/cors.rs` | 跨域资源共享 |
-| Telemetry | `lib/src/telemetry.rs` | 链路追踪、Trace/Span/Request ID |
-| Prometheus | `axum-prometheus` | 请求指标收集 |
-| Rate Limit | `svc/unified-core/src/middleware/rate_limit.rs` | 限流保护 |
-| Security Headers | `lib/src/security.rs` | 安全响应头 |
-| Body Limit | `lib/src/security.rs` | 请求体大小限制 |
-| Audit Logger | `svc/unified-core/middleware/audit_log.rs` | 操作审计日志 |
-| Input Validation | `svc/unified-core/middleware/input_validation.rs` | 输入校验 |
-| Tenant RLS | `svc/unified-core/src/middleware/tenant_rls.rs` | 租户上下文注入 |
-| Auth | `lib/src/auth.rs` | JWT 认证、权限校验 |
-| RLS | `lib/src/rls.rs` | 行级安全过滤器(独立服务使用) |
-
-### 3.4 共享库 (topems_shared)
-
-共享库是所有后端服务的基础设施底座，主要模块:
-
-| 模块 | 文件 | 功能描述 |
-|------|------|---------|
-| **认证** | [lib/src/auth.rs](file:///Users/air/TOPEMS/lib/src/auth.rs) | JWT 生成/验证、认证中间件、Claims、权限检查 |
-| **数据库** | [lib/src/database.rs](file:///Users/air/TOPEMS/lib/src/database.rs) | PgPool 连接池管理、健康检查、读写分离 |
-| **缓存** | [lib/src/cache.rs](file:///Users/air/TOPEMS/lib/src/cache.rs) | 内存缓存、多级缓存、缓存预热 |
-| **响应** | [lib/src/response.rs](file:///Users/air/TOPEMS/lib/src/response.rs) | 统一 API 响应格式 `ApiResponse<T>`、分页响应 |
-| **Schema** | [lib/src/schema.rs](file:///Users/air/TOPEMS/lib/src/schema.rs) | 多 Schema 表名构建器 (`with_schema`) |
-| **RLS** | [lib/src/rls.rs](file:///Users/air/TOPEMS/lib/src/rls.rs) | 行级安全中间件 |
-| **权限** | [lib/src/permission.rs](file:///Users/air/TOPEMS/lib/src/permission.rs) | 模块/资源/数据权限模型 |
-| **租户** | [lib/src/tenant.rs](file:///Users/air/TOPEMS/lib/src/tenant.rs) | 多租户上下文、租户管理 |
-| **健康检查** | [lib/src/health.rs](file:///Users/air/TOPEMS/lib/src/health.rs) | 健康检查框架与指标 |
-| **事件** | [lib/src/event/](file:///Users/air/TOPEMS/lib/src/event/) | Redis/RabbitMQ 事件总线、MasterDataEvent |
-| **配置** | [lib/src/config.rs](file:///Users/air/TOPEMS/lib/src/config.rs) | 配置加载、端口默认值 |
-| **服务配置** | [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs) | `ServiceConfigRegistry` 集中化配置 |
-| **服务发现** | [lib/src/service_discovery.rs](file:///Users/air/TOPEMS/lib/src/service_discovery.rs) | Consul 注册/发现 + `SmartServiceClient` |
-| **服务客户端** | [lib/src/service_client.rs](file:///Users/air/TOPEMS/lib/src/service_client.rs) | 跨服务 HTTP 客户端工厂 |
-| **遥测** | [lib/src/telemetry.rs](file:///Users/air/TOPEMS/lib/src/telemetry.rs) | OpenTelemetry 初始化、trace/span 注入 |
-| **存储** | [lib/src/storage.rs](file:///Users/air/TOPEMS/lib/src/storage.rs) | 文件存储抽象 |
-| **向量存储** | [lib/src/vector_store.rs](file:///Users/air/TOPEMS/lib/src/vector_store.rs) | Redis 向量搜索 |
-| **AI 客户端** | [lib/src/ai_client/](file:///Users/air/TOPEMS/lib/src/ai_client/) | Ollama / Embedding 客户端 |
-| **Saga** | [lib/src/saga/](file:///Users/air/TOPEMS/lib/src/saga/) | 分布式 Saga 编排 |
-| **🆕 Shared Bootstrap（V2 三段式，28/28 = 100%）** | [lib/shared-bootstrap/src/lib.rs](file:///Users/air/TOPEMS/lib/shared-bootstrap/src/lib.rs) | `ServiceConfig → bootstrap_service → build_application → run` 四 API 统一启动模板；三种复杂度模式 A/B/C；auth/rls/rate-limit/CORS/Prometheus 零差异 |
-
-### 3.5 服务启动流程（V66.2 V2 统一模板，28/28 服务 100%）
-
-> **注意**：原 V1 10 步手工模板（dotenv → init_telemetry → PgPoolOptions::new → `.layer(AuthLayer)`…）已于 V66.1~V66.2 期间在 5 个批次迁移中全部淘汰，代码已移除。现在所有 28 个服务均使用统一的 Shared Bootstrap V2 三段式：
-
-```rust,ignore
-// Step 1: 单一真相源 — 端口/env/DB/开关/前缀一次声明
-let config = ServiceConfig {
-    name: "topems-xxx",
-    port: 80xx,
-    port_env_var: Some("XXX_PORT"),
-    max_db_connections: 20,
-    enable_events: true,
-    enable_rls: true,
-    enable_request_context: true,
-    api_prefix: "/api/core/xxx/v1",
-    legacy_prefixes: &["/api/v1/xxx", "/api/xxx"],
-};
-// Step 2: bootstrap_service 统一完成 telemetry + DB + AuthState + Events
-let ctx = bootstrap_service(&config).await?;
-// Step 3: build_application 自动装配 7 层中间件 → Application
-let app = build_application(&ctx, &config, public_routes, protected_routes, Some(openapi_json));
-run(app).await?;
-```
-
-#### 三种复杂度模式（覆盖全部 28 服务）
-
-| 模式 | 内部组装 | 典型 state | 服务数 | 代表服务 |
-|------|---------|-----------|-------|---------|
-| **A. 标准 build_application** | `public + private → build_application` | PgPool + AuthState | 10 | feedback, search, ticket, lowcode, communication, billing, master-data, hrm, finance, wms |
-| **B. stateful + build_application** | `protected_routes.with_state(app_state)` 前置，再 `build_application` | 自定义 AppState（cache/tenant_middleware/6+服务客户端） | 13 | qms, ehs, pdm, lims, erp, crm, srm, scm, mes, ai, pm, rd, **mobile** |
-| **C. Application 重建** | 跳过 `build_application`，手工 `Application { router, port, name }` | WebSocket / GraphQL / Cookie / 自定义中间件栈 / 后台任务 | 5 | analytics, unified-core, integration, **gis**, **portal** |
-
-#### 新服务接入步骤
-
-1. `Cargo.toml` 添加 `topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }`
-2. 评估复杂度选 A / B / C（含 WS/GraphQL/Cookie 必选 C；含 AppState 必选 B）
-3. 复制对应样板（`mobile` 是 B 模板；`gis` 是 C 模板；`communication` 是 A 模板）
-4. `cargo check -p topems-xxx` 验证
-
-### 3.6 插件化架构 (V13.0+)
-
-#### 3.6.1 核心组件
-
-| 组件 | 文件路径 | 职责 |
-|------|---------|------|
-| 插件运行时 | [svc/unified-core/src/modules/plugin/handlers/runtime.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs) | 插件注册、安全令牌验证、心跳、导航配置 API |
-| 租户插件管理 | [svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs) | 插件安装/卸载依赖检查（正向 + 反向） |
-| 插件数据模型 | [svc/unified-core/src/modules/plugin/models.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/models.rs) | `RegisterPluginRequest` 含 `dependencies`、`navigation_config` |
-| 心跳检测 | [svc/unified-core/src/main.rs](file:///Users/air/TOPEMS/svc/unified-core/src/main.rs) | 后台任务每 30 秒扫描，90 秒超时标记 offline |
-| 插件代理 | [svc/unified-core/src/handlers.rs](file:///Users/air/TOPEMS/svc/unified-core/src/handlers.rs) | `/api/plugins/{plugin_code}/{*path}` 转发到插件 runtime_url |
-| 服务配置 | [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs) | `ServiceConfigRegistry` 统一管理端口与地址 |
-| 服务发现 | [lib/src/service_discovery.rs](file:///Users/air/TOPEMS/lib/src/service_discovery.rs) | Consul + 环境变量回退 |
-
-#### 3.6.2 插件注册安全流程
-
-```
-业务服务启动
-    │
-    ▼
-读取 PLUGIN_REGISTRATION_TOKEN 环境变量
-    │
-    ▼
-携带 X-Plugin-Token 头 + dependencies + navigation_config
-    │
-    ▼
-POST /api/core/plugin/dev/plugins/{code}/register
-    │
-    ▼
-unified-core:
-  1. verify_registration_token() 校验令牌（生产模式必须配置）
-  2. 检查 dependencies 是否已安装
-  3. 存储 navigation_config
-  4. 记录插件状态 active
-    │
-    ▼
-每 30 秒 POST /heartbeat
-    │
-    ▼
-超时 90 秒 → runtime_status = offline，前端导航隐藏
-```
-
-#### 3.6.3 服务发现机制
-
-`SmartServiceClient` 双层回退:
-
-1. **优先**: `ConsulDiscoveryClient` 查询 Consul (当 `CONSUL_ENABLED=true`)
-2. **回退**: 使用 `ServiceConfigRegistry` 从环境变量解析地址
-
-保证无 Consul 的开发环境与生产环境均可运行。
+| Crate | 路径 | 核心职责 |
+|-------|------|---------|
+| **topems-shared** | `lib/` | 门面 Crate，仅 ≤30 条高频 re-export（已完成去门面化迁移） |
+| **shared-core** | `lib/shared-core/` | 基础 API 工具：`config/`(服务配置/端口) · `error/`(统一错误 TopemsError) · `response/`(ApiResponse/ListResponse) · `health/` · `cache/` · `cors/` · `validation/` · `crud/` · `metrics/` · `api_version/`(路由兼容+版本信息) · `api_security/`(AuditContext) |
+| **shared-db** | `lib/shared-db/` | 数据访问层：`database/`(连接池/读写分离) · `audit/`(审计日志Service) · `rls/`(行级安全) · `migration/`(SQLx迁移) · `repository/`(通用Repository) · `schema/`(Schema管理) · `backup/`(备份恢复) · `data_governance/` |
+| **shared-auth** | `lib/shared-auth/` | 安全认证：`auth.rs`(JWT生成/验证/Claims/AuthState) · `permission/`(RBAC) · `tenant.rs`(租户隔离) · `middleware/`(auth/tenant/permission/department/rate_limit中间件) · `security/`(加密/脱敏/CSRF/速率限制/Security Headers) |
+| **shared-bootstrap** | `lib/shared-bootstrap/` | 启动引导：`bootstrap_service()` 初始化 telemetry + auth_state + event_publisher · `ServiceConfig` (name/port/env_var/api_prefix/legacy_prefixes) · `run()` 绑定端口监听 · `resolve_port()` |
+| **shared-event** | `lib/shared-event/` | 事件驱动：`event/`(事件类型/发布者/订阅者/RabbitMQ/Redis PubSub/死信队列/延迟消息/版本化) · `saga/`(Saga编排/步骤/存储) · `service_discovery/` · `config_center/` · `messaging/` |
+| **shared-service-client** | `lib/shared-service-client/` | 服务间调用 Typed Client：`service_client/` 下 28 个 `*_client.rs` + `api/*_api.rs`，封装 HTTP 调用 + 错误处理 |
+| **shared-observability** | `lib/shared-observability/` | 可观测性：`telemetry/`(OpenTelemetry埋点/中间件/敏感字段过滤) · `observability/`(告警/SLO/日志查询) · `monitoring.rs` · `performance.rs` |
+| **shared-ai** | `lib/shared-ai/` | AI 能力：`ai_client/`(多Provider：Ollama/OpenAI) · `ollama_client.rs` · `embedding.rs` · `vector_store.rs` · `file_client.rs` |
 
 ---
 
 ## 4. 前端架构
 
-### 4.1 项目结构
+### 4.1 pnpm Workspace 结构
+
+```
+pnpm-workspace.yaml
+├── apps/
+│   ├── web/                    # Host Shell（主应用，端口 3000）
+│   ├── desktop/                # Tauri 桌面应用
+│   └── mobile/                 # Expo 移动端应用
+├── packages/                   # 共享 TS 包
+│   ├── shared-types/           # API 类型定义（OpenAPI 生成 + 手动）
+│   ├── shared-utils/           # 工具函数（日期/字符串/存储/i18n/校验）
+│   ├── shared-constants/       # 共享常量（颜色/标签/超时/数字）
+│   ├── shared-components/      # 共享 UI 组件（DataTable/FormField 等）
+│   ├── shared-hooks/           # 共享 Hooks（useCrud/useDebounce/useIntersectionObserver）
+│   └── tokens/                 # Design Tokens（颜色/间距/渐变/字体）
+└── tests/integration/          # 集成测试包
+```
+
+### 4.2 Host Shell (apps/web) 目录结构
 
 ```
 apps/web/src/
-├── api/                          # API 客户端层
-│   ├── client.ts                # Axios 实例、拦截器、ApiClient 单例
-│   ├── request.ts               # 请求/响应工具、分页请求
-│   ├── permissionInterceptor.ts # 权限前置拦截
-│   ├── iam/                     # IAM 模块 API
-│   ├── erp/                     # ERP 模块 API
-│   ├── ticket/                  # V16.1 工单与 SLA API
-│   ├── bff/                     # Portal BFF 聚合 API
-│   └── ...
-│
-├── components/                   # 可复用组件
-│   ├── common/                  # DataTable、PageContainer、Dialog 等
-│   ├── templates/               # ListPageTemplate 等页面模板
-│   ├── layout/                  # AppHeader、AppSidebar、AppTabs
-│   ├── ui/                      # 基础 UI 组件
-│   └── ai/                      # AI 助手相关组件
-│
-├── hooks/                        # 自定义 Hooks
-│   ├── useAuth.tsx              # 认证状态
-│   ├── useCrudQueries.ts        # CRUD React Query 封装
-│   ├── usePermission.ts         # 权限检查
-│   ├── useWebSocket.ts          # WebSocket 连接
-│   └── ...
-│
-├── pages/                        # 页面组件
-│   ├── shared/                  # 登录、仪表盘等
-│   ├── iam/
-│   ├── erp/
-│   ├── ticket/                  # V16.1 工单中心
-│   └── ...
-│
-├── microfrontend/                # 微前端配置
-│   ├── config.ts                # REMOTE_MODULES 远程模块清单
-│   ├── RemoteLoader.tsx         # 运行时动态加载
-│   └── ...
-│
-├── store/                        # Zustand 状态
-│   ├── authStore.ts
-│   ├── uiStore.ts
-│   ├── themeStore.ts
-│   ├── pluginStore.ts
-│   └── ...
-│
-├── config/                       # 运行时配置
-│   ├── runtime.ts               # 服务 URL、功能开关
-│   └── service-ports.ts         # 端口映射
-│
-├── routes/                       # 路由配置
-│   └── v2/                      # 动态路由(含遗留配置待清理)
-│
-├── lib/                          # 工具库
-│   ├── utils.ts
-│   ├── apiClient.ts             # API 客户端工具
-│   ├── plugin-loader/           # 插件加载器 / 导航获取
-│   └── navigation/              # 静态导航兜底
-│
-├── theme/                        # MUI 主题与 design tokens
-├── App.tsx                       # 根组件、Provider、动态路由
-└── main.tsx                      # 应用入口
+├── api/                        # 每个后端服务对应一个子目录
+│   ├── client.ts               # [核心] 多服务 Axios 客户端工厂 ApiClient
+│   ├── request.ts              # 请求/响应处理：handleResponse/paginatedRequest/重试
+│   ├── index.ts                # 聚合导出
+│   ├── iam/ ai/ bi/ erp/ ...   # 每个子目录 = 一个服务的 API 方法
+│   │   ├── index.ts            # 导出 service 客户端
+│   │   └── <domain>.ts         # 按领域组织的 API 调用
+├── lib/
+│   ├── apiClient.ts            # [统一导出层] 整合 client.ts + request.ts + reactQuery
+│   ├── reactQuery.ts           # QueryClient 单例 + QUERY_KEYS + 缓存配置
+│   ├── security.ts             # 前端安全工具
+│   ├── csrf.ts                 # CSRF Token 管理
+│   └── utils.ts                # 通用工具
+├── components/                 # 组件
+│   ├── shared/ (来自 shared-components) + 业务组件
+│   ├── layout/ dashboard/ charts/ ai/ security/ gis/ export/ ...
+│   ├── templates/              # 页面模板（CRUD/List/Dashboard/Designer）
+│   └── common/                 # 通用组件
+├── modules/                    # 模块配置（每个业务模块 config.ts）
+│   ├── ai/ bi/ crm/ doc/ ehs/ erp/ gis/ hrm/ iam/ im/
+│   ├── lims/ mes/ oa/ pdm/ pm/ qms/ rd/ scm/ srm/ wms/
+├── pages/                      # 页面级组件（少量，逐步被 routes + CRUD 模板替代）
+├── routes/                     # 路由注册
+│   ├── index.ts                # 主路由入口
+│   ├── appRoutes.tsx           # 应用路由配置
+│   ├── auth.ts / dashboard.ts  # 按职责拆分的路由子模块
+│   └── v2/                     # V2 路由系统（类型化 + 导航对齐）
+├── hooks/                      # 自定义 Hooks
+│   ├── useAuth.tsx / usePermission.ts  # 认证权限
+│   ├── useAIContext.ts / useAIHelper.ts # AI 助手
+│   ├── useCrudForm.ts / useDataTable.ts / useDialogForm.ts  # CRUD 模板 Hooks
+│   ├── domain/ features/ ui/ bff/  # 按领域分类的 Hooks
+├── store/                      # Zustand 全局状态
+│   ├── authStore.ts            # 认证状态
+│   ├── themeStore.ts           # 主题切换
+│   ├── uiStore.ts              # UI 状态（侧边栏/抽屉/对话框）
+│   ├── biStore.ts              # BI 仪表盘状态
+│   ├── pluginStore.ts          # 插件注册状态
+│   ├── workflowStore.ts        # 工作流状态
+│   └── domain/ server/ ui/     # 按层分类的子 Store
+├── schemas/                    # Zod Form Schema（按模块分类）
+│   ├── iam/ hrm/ erp/ finance/ mes/ wms/ pm/ pdm/ rd/ ...
+├── config/                     # 配置
+│   ├── ports.ts                # [单一信源] 后端端口 + MF 端口
+│   ├── runtime.ts              # 运行时配置（服务 URL / 功能开关）
+│   ├── env.ts                  # 环境变量包装
+│   ├── permissions.ts          # 权限常量映射
+│   └── ai-templates.ts         # AI Prompt 模板
+├── constants/                  # 常量
+│   ├── routes.ts / storage.ts / time.ts / version.ts / retry.ts
+├── theme/                      # MUI 主题
+│   ├── theme.ts / presets.ts / tokens.ts / design-tokens.ts / gradients.ts
+├── i18n/                       # 国际化
+│   ├── index.ts                # i18next 初始化
+│   └── locales/{zh,en}/*.json  # 翻译资源（ai/bi/im/oa/pm/rd）
+├── utils/                      # 工具函数
+│   ├── apiPath.ts / date.ts / format.ts / storage.ts / errors.ts
+│   ├── ai/ workflow/ zerocode/ bff/ a2ui/  # 领域工具
+├── microfrontend/              # Module Federation 微前端
+│   ├── config.ts               # REMOTE_MODULES 配置
+│   ├── registry/               # 模块注册/发现
+│   ├── governance/             # 依赖治理/版本管理
+│   ├── ai-ops/                 # AI 运维（自动扩缩/异常检测/智能告警）
+│   └── lowcode/                # 低代码构建器
+├── context/                    # React Context
+│   └── GisContext.tsx
+├── layouts/                    # 布局配置
+│   ├── navTree.ts / constants.ts
+├── design-system/              # 设计系统
+│   └── tokens/ design-lint.ts
+├── types/                      # 顶层 TS 类型
+├── debug/                      # 调试工具
+├── App.tsx                     # 根组件
+├── main.tsx                    # 入口
+├── index.css / index.css.ts    # 样式（CSS-in-JS + vanilla-extract）
+└── sw.ts                       # Service Worker（PWA 离线缓存）
 ```
 
-### 4.2 应用入口流程
+### 4.3 统一 API 客户端架构
 
 ```
-main.tsx
-  ↓
-App.tsx
-  ├── ErrorBoundary
-  ├── ThemeProvider
-  ├── NotificationProvider
-  ├── LoadingProvider
-  ├── AuthProvider
-  ├── QueryClientProvider (React Query)
-  ├── PluginProvider
-  └── BrowserRouter / DynamicRoutes
+                    ┌─────────────────────┐
+                    │  lib/apiClient.ts   │  统一导出层（用户首选）
+                    │  apiGet/apiPost/    │
+                    │  serviceGet/...     │
+                    │  ServiceName 类型   │
+                    └──────────┬──────────┘
+                               │
+             ┌─────────────────┼──────────────────┐
+             ▼                 ▼                   ▼
+    ┌────────────────┐  ┌──────────────┐   ┌──────────────────┐
+    │ api/client.ts  │  │api/request.ts│   │lib/reactQuery.ts │
+    │ ApiClient class│  │ handleResponse│   │ queryClient 单例 │
+    │ 多服务Axios工厂│  │ paginatedReq  │   │ QUERY_KEYS       │
+    │ Retry/Timeout  │  │ handleError   │   │ CACHE_DURATIONS  │
+    │ 401 Unauth 处理│  │ CSRF/Telemetry│   │ staleTime 5min   │
+    └───────┬────────┘  └──────────────┘   └──────────────────┘
+            │ 每个 service 一个 AxiosInstance
+    ┌───────┼──────────────────────────────────┐
+    ▼       ▼         ▼           ▼            ▼
+  iam     ai        erp         mes          wms  ... 32个服务
+baseURL:  baseURL:   baseURL:    baseURL:     baseURL:
+/api/iam  /api/ai   /api/erp    /api/mes     /api/wms
 ```
 
-### 4.3 核心架构模式
+**[apps/web/src/lib/apiClient.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/lib/apiClient.ts)** 核心类型：
+- `ServiceName` 联合类型：覆盖 32 个微服务名（iam/doc/ai/...）
+- `getServiceClient(name: ServiceName)`：返回 typed Axios 实例
 
-#### 4.3.1 动态路由与微前端加载
+**[apps/web/src/api/client.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/client.ts)** 重试策略：
+- 超时错误 (ECONNABORTED/timeout)、网络错误 (ERR_NETWORK)、5xx 错误 → 指数退避重试
+- 最大重试 2 次，基础延迟 500ms，最大总等待 10s
+- 503 服务不可用 → **不重试**
+- 401 Unauthorized → 清除 localStorage token，触发 `auth:unauthorized` 事件
 
-- 访问模块时按需加载对应路由/远程模块。
-- `REMOTE_MODULES` 在 [apps/web/src/microfrontend/config.ts](file:///Users/air/TOPEMS/apps/web/src/microfrontend/config.ts) 中定义。
-- `vite.config.ts` 根据 `VITE_DEPLOYMENT_MODE` 决定启用哪些 remote:
-  - `static`: 不加载任何 remote，所有模块本地打包。
-  - `module-federation` / `hybrid`: 启用 `topems_core` 等 remote。
+### 4.4 React Query 标准化模式
 
-#### 4.3.2 API 客户端架构
+```typescript
+// 数据获取：useQuery + staleTime 5min
+const { data, isPending, error } = useQuery({
+  queryKey: QUERY_KEYS.hrm.employees.list({ page, pageSize }),
+  queryFn: () => serviceGet('hrm', '/employees', { page, pageSize }),
+  staleTime: CACHE_DURATIONS.MEDIUM, // 5 min
+});
 
-```
-页面 Hook (useQuery / useMutation)
-    ↓
-api/{domain}/index.ts
-    ↓
-apiClient.{service} (Axios 实例)
-    ↓
-请求拦截器: Token / CSRF / Trace Headers / 重试
-    ↓
-Vite Proxy / Nginx
-    ↓
-后端服务
-```
-
-核心文件:
-- [apps/web/src/api/client.ts](file:///Users/air/TOPEMS/apps/web/src/api/client.ts) - `ApiClient` 单例，按服务名维护 Axios 实例
-- [apps/web/src/api/index.ts](file:///Users/air/TOPEMS/apps/web/src/api/index.ts) - 统一 barrel export
-- [apps/web/src/hooks/useCrudQueries.ts](file:///Users/air/TOPEMS/apps/web/src/hooks/useCrudQueries.ts) - 通用 CRUD React Query 封装
-
-> **注意**: `@tanstack/react-query` 在 Module Federation shared 中配置为 `singleton: true`，防止多实例。
-
-#### 4.3.3 Vite 代理配置
-
-开发环境代理规则集中在 [apps/web/vite.config.ts](file:///Users/air/TOPEMS/apps/web/vite.config.ts):
-
-- `/api/core/*` → `http://localhost:8000` (unified-core)，无 rewrite
-- `/api/erp/*` → `http://localhost:8010`，无 rewrite
-- `/api/hrm/*` → `http://localhost:8020`，无 rewrite
-- `/api/mes/*` → `http://localhost:8030`，无 rewrite
-- ... (每个业务服务一条精确规则)
-- `/api/bi/*` 主路径；`/api/analytics/*`、 `/api/report/*` 作为兼容别名仍指向 BI
-- `/api/core/monitor/*` → `http://localhost:8000` (unified-core monitor 模块)
-- `/api/portal/*` → `http://localhost:8063`
-- `/api/core/ai/*`、`/api/core/doc/*`、`/api/core/gis/*` 等扩展核心服务别名
-
-新路径代理函数 `createNewApiProxyConfig` 不使用 rewrite，与后端路由约定一致。旧代理（`/core/api`、`/comm/api` 等）仍保留 rewrite 以兼容遗留路径。
-
-#### 4.3.4 权限控制模型
-
-前端三级权限:
-
-1. **路由级**: `ProtectedRoute` 验证登录状态
-2. **模块级**: `ModuleGate` 验证模块访问权限
-3. **操作级**: `usePermission` Hook / `PermissionGate` 组件
-
-权限数据流:
-
-```
-JWT Token → 解析 permissions → authStore → usePermission → UI 渲染
-```
-
-### 4.4 状态管理
-
-使用 **Zustand** 按领域拆分 Store:
-
-| Store | 文件 | 管理状态 |
-|-------|------|---------|
-| authStore | [store/authStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/authStore.ts) | 用户、Token、权限 |
-| uiStore | [store/uiStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/uiStore.ts) | 侧边栏、对话框、加载 |
-| themeStore | [store/themeStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/themeStore.ts) | 主题、暗色模式 |
-| notificationStore | [store/notificationStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/notificationStore.ts) | 通知列表、未读数 |
-| pluginStore | [store/pluginStore.ts](file:///Users/air/TOPEMS/apps/web/src/store/pluginStore.ts) | 插件列表、安装状态 |
-
-### 4.5 React Query 标准模式
-
-项目约定:
-
-- 查询使用 `useQuery` + `staleTime: 5 * 60 * 1000`
-- 变更使用 `useMutation` + `onSuccess` 中 `invalidateQueries`
-- 加载状态使用 `isPending`
-- 分页状态放入 `queryKey`
-
-示例 (TicketCenterPage):
-
-```tsx
-const { data: ticketsData, isLoading } = useQuery({
-  queryKey: ['tickets', 'list', page, pageSize, activeTab, searchKeyword],
-  queryFn: async () => {
-    const res = await ticketApi.listTickets({ page, page_size: pageSize, status: activeTab });
-    return res.data.data;
+// 数据更新：useMutation + onSuccess invalidate
+const mutation = useMutation({
+  mutationFn: (data) => servicePost('hrm', '/employees', data),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.hrm.employees._def });
   },
-  staleTime: 5 * 60 * 1000,
 });
 ```
+
+### 4.5 状态管理架构 (Zustand)
+
+按层级分层（见 [apps/web/src/store/ARCHITECTURE.md](file:///Users/xingzhai/TOPEMS/apps/web/src/store/ARCHITECTURE.md)）：
+
+| Store 层级 | 路径 | 职责 | 示例 |
+|-----------|------|------|------|
+| **UI Store** | `store/ui/` `store/uiStore.ts` | 纯前端交互状态（侧边栏展开/对话框开关/主题/导航） | 侧边栏折叠、全局加载遮罩 |
+| **Server Store** | `store/server/` | 服务端缓存/同步状态（React Query 之外的手动缓存） | 插件信息缓存、用户偏好 |
+| **Domain Store** | `store/domain/` | 跨组件/跨页面的业务领域状态 | 工作流实例、BI 筛选条件 |
+| **根 Store** | `store/*.ts` | 全局核心（认证/主题/通知等不可替代的） | authStore, themeStore, pluginStore |
+
+### 4.6 Module Federation 微前端
+
+配置见 [apps/web/vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts) + [apps/web/src/config/ports.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/config/ports.ts)
+
+三种部署模式（由 `VITE_DEPLOYMENT_MODE` 控制）：
+- **static (默认)**: 所有模块本地打包，不加载任何 remote（单体部署）
+- **module-federation**: 启用 topems_core 作为基础 remote，开发用同源代理路径 `/remote/<name>/remoteEntry.js`
+- **hybrid**: 混合模式，部分 remote 动态加载
+
+**核心共享配置**（必须 singleton 否则运行时报错）：
+```
+@tanstack/react-query: { singleton: true, requiredVersion: ^5.0.0, strictVersion: true }
+```
+
+### 4.7 前端端口（单一信源）
+
+权威来源：[config/ports.env](file:///Users/xingzhai/TOPEMS/config/ports.env) → 同步到 [apps/web/src/config/ports.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/config/ports.ts)
+
+- **BACKEND_PORTS**: 后端服务端口（80xx）
+  - 核心虚拟服务：core/iam/doc/file/flow/monitor → 8000
+  - 扩展服务：search(8082), communication(8084), billing(8085), ticket(8086), feedback(8087), lowcode(8088), master-data(8090)
+  - 业务服务分段：8010-8053
+- **MF_PORTS**: Module Federation 前端 Dev Server 端口（3001-3019，共19个模块）
 
 ---
 
 ## 5. 数据库设计
 
-### 5.1 数据库架构
+### 5.1 PostgreSQL Schema 隔离策略
 
-- **主数据库**: PostgreSQL 16+
-- **架构模式**: 多 Schema 隔离，每个业务模块独立 Schema
-- **多租户**: 通过 `tenant_id` 字段实现行级隔离，配合 RLS 中间件
-- **扩展**: `uuid-ossp` (UUID 生成)、`pgvector` (向量检索)
+| Schema 命名空间 | 用途 | 服务 | search_path 设置 |
+|----------------|------|------|-----------------|
+| **public** | 共享表（用户/角色/权限/租户/字典） | unified-core/所有服务读 | shared 服务: `public` |
+| **shared** | 跨服务共享业务表（组织/部门/员工基础） | HRM 写 / 其他读 | 所有业务服务: `{service_schema}, public, shared` |
+| **ai_service** | AI 知识库/向量/文档 | AI | AI: `ai_service, public, shared` |
+| **erp** | ERP 资产/库存/生产订单 | ERP | ERP: `erp, public, shared` |
+| **finance** | 财务凭证/预算/支付/税务 | Finance | Finance: `finance, public, shared` |
+| **hrm** | 人力资源合同/考勤/薪资/绩效 | HRM | HRM: `hrm, public, shared` |
+| **crm** | 客户/商机/合同/交互 | CRM | CRM: `crm, public, shared` |
+| **pm** | 项目/任务/风险/预算 | PM | PM: `pm, public, shared` |
+| **mes** | 工单/设备/工位/在制品 | MES | MES: `mes, public, shared` |
+| **pdm** | 产品/BOM/版本/工艺路线 | PDM | PDM: `pdm, public, shared` |
+| **scm** | 供应链/采购/需求计划 | SCM | SCM: `scm, public, shared` |
+| **wms** | 仓库/入库/出库/库存/批次 | WMS | WMS: `wms, public, shared` |
+| **srm** | 供应商/招投标/询价 | SRM | SRM: `srm, public, shared` |
+| **qms** | 质量标准/检验/SPC/8D/FMEA | QMS | QMS: `qms, public, shared` |
+| **lims** | 样品/检验/仪器/试剂 | LIMS | LIMS: `lims, public, shared` |
+| **ehs** | 风险/事故/隐患/合规/培训 | EHS | EHS: `ehs, public, shared` |
+| **rs** | 研发项目/缺陷/实验/构建 | RD | RD: `rs, public` ⚠️（search_path 含 rs, public） |
+| **其他** | bi/mobile/gis/portal/... | 各自服务 | `{svc}, public, shared` |
+| **search** | 搜索索引 | Search | 默认 `rs, erp, public` |
 
-### 5.2 Schema 规划
+**硬约束（来自 project_memory）**：
+- **所有数据库连接必须显式设置 search_path**，不能依赖默认值
+- RD 服务特殊：search_path = `'rs, public'`
+- HRM 服务：必须设置 `ENCRYPTION_KEY` 环境变量（字段加密服务初始化）
+- 统一核心服务连接：search_path = `'public'`，避免默认多 schema 造成表名歧义
 
-| Schema 名称 | 所属模块 | 说明 |
-|-----------|---------|------|
-| public | - | 公共扩展安装位置 |
-| core | 核心服务 | unified-core 内部表 (users, roles, plugins, tickets, flows 等) |
-| plugin_erp | ERP | 企业资源计划 |
-| plugin_finance | Finance | 财务管理 |
-| plugin_hrm | HRM | 人力资源 |
-| plugin_crm | CRM | 客户关系 |
-| plugin_pm | PM | 项目管理 |
-| plugin_mes | MES | 制造执行 |
-| plugin_pdm | PDM | 产品数据 |
-| plugin_qms | QMS | 质量管理 |
-| plugin_lims | LIMS | 实验室管理 |
-| plugin_ehs | EHS | 环境健康安全 |
-| plugin_scm | SCM | 供应链 |
-| plugin_wms | WMS | 仓储管理 |
-| plugin_srm | SRM | 供应商关系 |
-| plugin_bi / plugin_analytics | BI | 商业智能 |
-| plugin_ai | AI | 人工智能 |
-| plugin_gis | GIS | 地理信息 |
-| plugin_mobile | Mobile | 移动服务 |
-| plugin_portal | Portal | 企业门户 |
+### 5.2 数据库访问层 (shared-db)
 
-Schema 构建器: [lib/src/schema.rs](file:///Users/air/TOPEMS/lib/src/schema.rs)
+关键能力位于 [lib/shared-db/src/](file:///Users/xingzhai/TOPEMS/lib/shared-db/src/)：
 
-### 5.3 核心表结构
-
-#### 5.3.1 用户与权限表 (core Schema)
-
-| 表名 | 说明 | 关键字段 |
-|------|------|---------|
-| users | 用户表 | id, username, email, password_hash, is_active, tenant_id |
-| roles | 角色表 | id, name, code, description, tenant_id |
-| permissions | 权限表 | id, name, code, module, action, tenant_id |
-| user_roles | 用户角色关联 | user_id, role_id |
-| role_permissions | 角色权限关联 | role_id, permission_id |
-| departments | 部门表 | id, name, parent_id, tenant_id |
-| audit_logs | 审计日志 | id, user_id, action, resource, ip_address, created_at |
-
-#### 5.3.2 业务表通用字段
-
-所有业务表统一包含:
-
-| 字段 | 类型 | 说明 |
+| 模块 | 文件 | 功能 |
 |------|------|------|
-| id | UUID | 主键，默认 uuid_generate_v4() |
-| tenant_id | UUID | 租户 ID，用于多租户隔离 |
-| created_at | TIMESTAMP | 创建时间 |
-| updated_at | TIMESTAMP | 更新时间 |
-| created_by | VARCHAR/UUID | 创建人 |
+| 连接池 | `database/mod.rs` + `database/read_write.rs` | `create_database_pool()` · 健康检查 · 读写分离配置 |
+| 审计日志 | `audit.rs` | `AuditLogService` · 自动记录 CRUD 操作 · 审计查询 API |
+| 行级安全 | `rls.rs` | 基于 tenant_id 的 RLS 策略 · 动态启用 RLS |
+| 迁移 | `migration.rs` | 内嵌 SQLx migration · 升级/降级 |
+| 通用 Repository | `repository.rs` | 泛型 CRUD Repository trait + 默认实现 |
+| Schema 管理 | `schema.rs` | 动态 Schema 切换 · 按租户建表 |
+| 数据治理 | `data_governance.rs` | 数据质量检查 · 血缘追踪 |
+| 备份 | `backup.rs` | pg_dump 封装 · 定时备份 · 恢复流程 |
 
-### 5.4 索引策略
+### 5.3 数据库配置文件
 
-- 主键索引自动创建
-- 所有业务表在 `tenant_id` 上建立索引
-- 外键关联字段建立索引
-- 高频查询使用组合索引
-- 时间范围字段建立索引
+- [config/database.toml](file:///Users/xingzhai/TOPEMS/config/database.toml)：数据库连接配置（用户/密码/连接数）
+- [config/schema.json](file:///Users/xingzhai/TOPEMS/config/schema.json)：Schema 定义元数据
+- [config/deployment.yaml](file:///Users/xingzhai/TOPEMS/config/deployment.yaml)：部署拓扑配置
 
 ---
 
 ## 6. 核心模块详解
 
-### 6.1 统一核心服务 (Unified Core)
+### 6.1 核心平台模块（unified-core，8000）
 
-**端口**: 8000 | **路径**: [svc/unified-core/](file:///Users/air/TOPEMS/svc/unified-core/)
+| 子模块 | 路径前缀 | 职责 | 说明 |
+|--------|---------|------|------|
+| **IAM** | `/api/core/iam` | 身份认证与授权 | 用户/角色/权限/JWT/租户/RBAC |
+| **Doc** | `/api/core/doc` | 文档管理 | 工作区/文件夹/文档/版本/分享 |
+| **Flow (Workflow)** | `/api/core/flow` | 工作流审批 | 流程定义/任务/表单/规则 |
+| **File** | `/api/core/file` | 文件存储 | 上传/下载/流式处理/多后端 |
+| **Monitor** | `/api/core/monitor` | 监控与告警 | 健康检查/指标/SLO/告警 |
+| **Communication** | 外迁到 8084 | 通讯总线 | mail/notification/im API |
+| **Plugin Registry** | `/api/plugins` | 插件生命周期 | 注册/发现/心跳/动态导航 |
 
-| 子模块 | 目录 | 功能描述 |
-|--------|------|---------|
-| IAM | modules/iam/ | 身份认证、用户/角色/权限、组织架构 |
-| 工作流 Flow | modules/flow/ | 流程定义、审批流、任务、版本、统计 |
-| 文件管理 File | modules/file/ | 文件上传下载、文件夹、预览 |
-| 通讯 Communication | modules/communication/ | 通知、邮件、IM、WebSocket |
-| 租户管理 Tenant | modules/tenant/ | 多租户、计费、配额 |
-| 插件管理 Plugin | modules/plugin/ | 插件市场、注册、心跳、导航配置 |
-| 主数据 Master | modules/master/ | 主数据管理、MDM |
-| 工单 Ticket | modules/ticket/ | V16.1 工单中心、SLA、升级、统计 |
-| 数据字典 Dict | modules/dict/ | 系统字典、种子数据 |
-| 搜索 Search | modules/search/ | 全文搜索、聚合搜索 |
-| 迁移 Migration | modules/migration/ | 数据迁移、版本升级 |
-| 审计 Audit | modules/audit/ | 审计查询、中间件 |
-| 帮助中心 Help | modules/help/ | FAQ、指南 |
+**⚠️ 硬约束**：Monitor 必须有公开的健康检查端点 `/api/monitor/health`（无需认证），返回服务健康状态数组。
 
-### 6.2 IAM 身份认证模块
+### 6.2 扩展服务（独立进程 8082-8090）
 
-**路径前缀**: `/api/core/iam`
+| 服务 | 端口 | 路径 | 职责 |
+|------|------|------|------|
+| **Search** | 8082 | `/api/search` | 全文搜索（跨模块统一搜索） |
+| **Communication** | 8084 | `/api/communication` | 邮件(SMTP)/站内通知/IM API |
+| **Billing** | 8085 | `/api/billing` | 计费/账单/发票/支付/退款/税务 |
+| **Ticket** | 8086 | `/api/ticket` | 工单/评论/SLA/工作流（工单 SLA Phase V16.1） |
+| **Feedback** | 8087 | `/api/feedback` | 用户反馈/SLA/批量处理 |
+| **Lowcode** | 8088 | `/api/lowcode` | 低代码平台（后端占位，功能待立项） |
+| **Master-Data** | 8090 | `/api/master-data` | 主数据管理（物料/客户/供应商编码治理） |
 
-#### 核心功能
+### 6.3 经营管理服务（8010-8019）
 
-1. **用户认证**: 用户名/密码登录、JWT Token 生成与刷新、登出
-2. **用户管理**: 用户 CRUD、状态管理、密码重置
-3. **角色与权限**: 角色 CRUD、权限分配、权限元数据同步
-4. **组织架构**: 部门、岗位管理
+| 服务 | 端口 | 路径 | 职责 | 关键子模块 |
+|------|------|------|------|-----------|
+| **ERP** | 8010 | `/api/erp` | 企业资源计划 | 资产/库存/采购/销售/生产订单/合并报表/字典/地址簿/ERP适配器(SAP/Kingdee/Yonyou) · Saga: 采购订单处理/销售订单履约 |
+| **Finance** | 8011 | `/api/finance` | 财务管理 | 凭证/预算/支付/税务/会计期间/费用/财务风险/合并报表（领域模型 CQRS） |
+| **AI** | 8013 | `/api/ai` | 智能服务 | QA问答/文档处理/向量搜索/代码助手/多模态/AI助手/推荐/分析/AIAgent/知识库/RAG/pgvector |
 
-#### 核心数据模型
+**ERP 适配器模式（service_adapter/）**：
+- `trait ErpAdapter`：统一定义外部 ERP 系统接口
+- `KingdeeAdapter / SapAdapter / YonyouAdapter`：金蝶/SAP/用友具体实现
+- `AdapterFactory`：根据配置动态选择适配器
 
-```rust
-// lib/src/auth.rs
-pub struct Claims {
-    pub sub: String,              // 用户 ID
-    pub username: String,
-    pub role: String,
-    pub roles: Vec<String>,
-    pub permissions: Vec<String>,
-    pub is_superuser: bool,
-    pub exp: usize,
-    pub iat: usize,
-    pub tenant_id: Option<String>,
-}
-```
+### 6.4 协同办公服务（8020-8029）
 
-### 6.3 V16.1 工单与 SLA 模块
+| 服务 | 端口 | 路径 | 职责 |
+|------|------|------|------|
+| **HRM** | 8020 | `/api/hrm` | 人力资源（共享 schema） | 员工/部门/合同/考勤/假期/招聘/培训/绩效/薪资 · HRM 技能向量匹配（AI） |
+| **PM** | 8023 | `/api/pm` | 项目管理 | 项目/任务/团队/资源/风险/预算/质量/验收/结算/报告（含 PM-Report 图表组件：RiskPieChart/StatusPieChart/BudgetCard） |
+| **CRM** | 8029 | `/api/crm` | 客户关系 | 客户/联系人/商机/合同/交互/退货/销售漏斗/线索评分/预测 |
 
-**路径前缀**: `/api/core/master` (工单与 SLA 挂载在 master 模块下；通过 Portal BFF 暴露为 `/api/portal/tickets`)
+### 6.5 生产制造服务（8030-8039）
 
-#### 6.3.1 模块定位
+| 服务 | 端口 | 路径 | 职责 |
+|------|------|------|------|
+| **MES** | 8030 | `/api/mes` | 制造执行（WebSocket: /ws/mes） | 工单/工位/设备/工艺流程/在制品/质量/排班/报工 · 生产看板实时推送 · APS 排程 |
+| **PDM** | 8031 | `/api/pdm` | 产品数据管理 | 产品/BOM（物料清单）/版本/工艺路线/工程变更/文档审批 |
 
-工单模块是 unified-core 中新增的跨域协作中枢，用于承接对账差异、审批超时、系统告警、数据问题、集成异常、用户请求等来源的跟踪与处理。SLA 子模块提供策略配置、响应/解决时限计算、多级自动升级与统计分析。
+### 6.6 供应链服务（8040-8049）
 
-> **注意**: 后端 `ticket_routes()` 与 `master_routes()` 合并挂载，因此实际核心路径为 `/api/core/master/tickets`、`/api/core/master/sla-policies` 等，而非 `/api/core/ticket/*`。
+| 服务 | 端口 | 路径 | 职责 |
+|------|------|------|------|
+| **SCM** | 8040 | `/api/scm` | 供应链管理 | 需求计划(MRP)/采购/工厂/供应商协同 · 同步记录审计 |
+| **WMS** | 8041 | `/api/wms` | 仓储管理 | 入库/出库/移库/盘点/库存/批次/库位/波次拣货/劳动力/序列化 |
+| **SRM** | 8042 | `/api/srm` | 供应商关系 | 供应商管理/招投标/询价/报价/订单/财务结算 |
 
-#### 6.3.2 数据模型
+### 6.7 质量/研发服务（8050-8059）
 
-| 结构体 | 文件 | 说明 |
-|--------|------|------|
-| `Ticket` | [svc/unified-core/src/modules/ticket/models.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/models.rs) | 工单主表 |
-| `TicketStatus` / `TicketSeverity` / `TicketType` | models.rs | 枚举状态、严重级别、类型 |
-| `TicketComment` | models.rs | 工单评论 |
-| `TicketActivity` | models.rs | 操作日志 |
-| `TicketSlaPolicy` | models.rs | SLA 策略 |
-| `TicketSlaInfo` | models.rs | SLA 计算结果 |
-| `SlaEscalationEvent` | models.rs | 升级事件 |
-| `TicketSlaStats` | models.rs | SLA 统计 |
+| 服务 | 端口 | 路径 | 职责 |
+|------|------|------|------|
+| **QMS** | 8050 | `/api/qms` | 质量管理 | 标准/检验/APQP/FMEA/SPC/8D报告/质量成本/改进 |
+| **LIMS** | 8051 | `/api/lims` | 实验室管理 | 样品/检验任务/检验方法/仪器管理/试剂/条码/采集任务 |
+| **EHS** | 8052 | `/api/ehs` | 环境健康安全 | 风险/隐患/事故/应急/合规/检查/培训/环境监测 |
+| **RD** | 8053 | `/api/rd` | 研发管理（⚠️schema: rs,public） | 研发项目/缺陷/实验/配方/物料/构建/部署/测试/发布评审 |
 
-#### 6.3.3 SLA 计算逻辑
+### 6.8 数据/基础设施服务（8060-8079）
 
-SLA 服务: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs)
-
-关键方法:
-
-| 方法 | 说明 |
-|------|------|
-| `calculate_sla(ticket)` | 匹配策略 → 计算响应/解决截止时间 → 判断是否违约 → 返回 `TicketSlaInfo` |
-| `match_policy(ticket)` | 按 `tenant_id`、`ticket_type`、`severity` 匹配最具体的激活策略 |
-| `calculate_due_time(...)` | 支持仅工作时间、排除周末、自定义营业时段的截止时间递进计算 |
-| `check_and_escalate(ticket)` | 扫描三级升级阈值，到达时限且未升级则记录升级事件 |
-| `record_escalation(...)` | 持久化升级事件并写入 activity 日志 |
-| `get_sla_stats(...)` | 聚合按时/违约数、违约率、平均处理时长、按严重级别/类型/日期分组 |
-
-默认 SLA 时限 (无策略时):
-
-| 严重级别 | 响应时限 | 解决时限 |
-|---------|---------|---------|
-| critical | 1 小时 | 4 小时 |
-| high | 2 小时 | 24 小时 |
-| medium | 8 小时 | 72 小时 |
-| low | 24 小时 | 168 小时 |
-
-> **实现注意**: `calculate_due_time` 支持仅工作时间、排除周末与自定义营业时段，因此 `sla_due_at` 与 `response_due_at` 会按策略正确递进。但 [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L250-L303) 中的 `check_and_escalate` 目前直接使用 `ticket.created_at + escalation_hours` 计算升级点，未复用工作时间逻辑；当策略开启 `working_hours_only` 或 `weekend_excluded` 时，升级触发点可能与解决截止时间不一致，需要后续对齐。
-
-#### 6.3.4 SLA API 端点
-
-**unified-core 后端端点** (挂载在 `/api/core/master` 下):
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/core/master/tickets/{id}/sla` | 查询工单 SLA |
-| POST | `/api/core/master/tickets/{id}/sla` | 触发 SLA 升级检查 |
-| GET | `/api/core/master/tickets/sla-stats` | SLA 统计 |
-| GET | `/api/core/master/sla-policies` | 策略列表 |
-| GET | `/api/core/master/sla-policies/{id}` | 策略详情 |
-| POST | `/api/core/master/sla-policies` | 创建策略 |
-| PUT | `/api/core/master/sla-policies/{id}` | 更新策略 |
-| DELETE | `/api/core/master/sla-policies/{id}` | 删除策略 |
-
-**Portal BFF 暴露端点** (当前已实现):
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET/POST | `/api/portal/tickets` | 工单列表/创建 |
-| GET/PUT | `/api/portal/tickets/{id}` | 工单详情/更新 |
-| GET/POST | `/api/portal/tickets/{id}/comments` | 评论列表/添加 |
-| GET | `/api/portal/tickets/stats` | 工单统计 |
-
-> **缺口**: Portal BFF 当前仅代理了工单基础路径。在 [svc/portal/src/main.rs](file:///Users/air/TOPEMS/svc/portal/src/main.rs#L325-L337) 中只注册了 `/tickets`、`/tickets/{id}`、`/tickets/{id}/comments`、`/tickets/stats`，对应的 [svc/portal/src/modules/tickets.rs](file:///Users/air/TOPEMS/svc/portal/src/modules/tickets.rs) 也只实现了这些路径的转发。
->
-> 因此 [apps/web/src/api/ticket/index.ts](file:///Users/air/TOPEMS/apps/web/src/api/ticket/index.ts) 中的 `getTicketSla`、`triggerSlaEscalation`、`getSlaStats`、`listSlaPolicies`、`getSlaPolicy`、`createSlaPolicy`、`updateSlaPolicy`、`deleteSlaPolicy` 都会返回 **404**。需要新增以下 Portal 代理并注册进 `protected_routes`：
->
-> | 方法 | Portal 路径 | 转发目标 |
-> |------|-------------|----------|
-> | GET/POST | `/api/portal/tickets/{id}/sla` | `/api/core/master/tickets/{id}/sla` |
-> | GET | `/api/portal/tickets/sla-stats` | `/api/core/master/tickets/sla-stats` |
-> | GET/POST | `/api/portal/sla-policies` | `/api/core/master/sla-policies` |
-> | GET/PUT/DELETE | `/api/portal/sla-policies/{id}` | `/api/core/master/sla-policies/{id}` |
->
-> 补齐前，前端 SLA 详情、策略管理、统计页面均无法通过 Portal BFF 访问。
-
-#### 6.3.5 前端 SLA 展示
-
-页面: [apps/web/src/pages/ticket/TicketCenterPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/ticket/TicketCenterPage.tsx)
-
-- 列表新增 **SLA 列**，根据 `sla_due_at` 显示剩余时间或已超时时间，颜色区分 `error`/`warning`/`default`。
-- 详情对话框调用 `ticketApi.getTicketSla(id)` 展示:
-  - 当前策略名 (`policy_name`)
-  - 响应/解决时限
-  - 剩余时间
-  - 违约状态
-  - 当前升级级别
-  - 升级历史列表
-
-### 6.4 ERP 企业资源计划
-
-**端口**: 8010 | **路径前缀**: `/api/erp`
-
-#### 子模块
-
-| 子模块 | 功能 |
-|--------|------|
-| 生产订单 | 生产计划、工单、进度跟踪 |
-| 销售订单 | 销售合同、订单处理、发货 |
-| 采购管理 | 采购申请、采购订单、供应商 |
-| 物料管理 | 物料档案、BOM、库存 |
-| 财务管理 | 会计科目、凭证、预算 |
-| 固定资产 | 资产档案、折旧、盘点 |
-| 基础行政 | 办公用品、会议室、车辆 |
-
-> V32.0 Finance 迁移后，ERP 通过 `FinanceServiceClient` 调用独立 Finance 服务。
-
-### 6.5 其他业务服务概览
-
-| 服务 | 端口 | 路径前缀 | 核心能力 |
-|------|------|---------|---------|
-| Finance | 8011 | `/api/finance` | 财务报表、凭证、预算、科目 |
-| AI | 8013 | `/api/ai` | RAG 问答、摘要、向量搜索、代码助手 |
-| HRM | 8020 | `/api/hrm` | 员工、部门、岗位、薪酬 |
-| PM | 8023 | `/api/pm` | 项目、任务、风险 |
-| CRM | 8029 | `/api/crm` | 客户、商机、联系人 |
-| MES | 8030 | `/api/mes` | 生产工单、工艺、WIP、看板 |
-| PDM | 8031 | `/api/pdm` | 产品数据、BOM、版本 |
-| SCM | 8040 | `/api/scm` | 供应链、MRP |
-| WMS | 8041 | `/api/wms` | 入库、出库、库存、库位 |
-| SRM | 8042 | `/api/srm` | 供应商、招投标、报价、采购 |
-| QMS | 8050 | `/api/qms` | 检验、SPC、不合格品、FMEA |
-| LIMS | 8051 | `/api/lims` | 样品、检测、报告 |
-| EHS | 8052 | `/api/ehs` | 隐患、事故、合规 |
-| RD | 8053 | `/api/rd` | 研发项目、需求、迭代 |
-| Analytics (BI) | 8060 | `/api/bi` | 报表、分析、预测 |
-| Portal | 8063 | `/api/portal` | 企业门户、BFF 聚合 |
-| Mobile | 8070 | `/api/mobile` | 移动端 API |
-| GIS | 8071 | `/api/gis` | 地理信息、地图 |
-| Integration | 8072 | `/api/integration` | 系统集成、数据同步 |
+| 服务 | 端口 | 路径 | 职责 |
+|------|------|------|------|
+| **BI (Analytics)** | 8060 | `/api/bi` + `/api/analytics` | 商业智能/报表 | 仪表盘/数据集/数据源/组件/报表/权限/同步 · WebSocket: /ws/bi/dashboard/{id} 实时推送 |
+| **Portal** | 8063 | `/api/portal` | 企业门户 BFF | GraphQL 聚合层（async-graphql）· 数据加载器(DataLoader) · 联邦查询/订阅 |
+| **Mobile** | 8070 | `/api/mobile` | 移动端后端 | 移动审批/工单/客户/设备/文档/项目/质量/离线同步/Push |
+| **GIS** | 8071 | `/api/gis` | 地理信息（WS: /ws/gis） | 地图/设备/围栏/管线/存储/业务标注 · Leaflet + Three.js 3D · 离线瓦片缓存 |
+| **Integration** | 8072 | `/api/integration` | 系统集成 | 外部系统数据同步/ETL/适配器 |
 
 ---
 
 ## 7. 关键类与函数
 
-### 7.1 后端核心 (Rust)
+### 7.1 后端核心（Rust）
 
-#### 7.1.1 认证模块
+#### shared-bootstrap 启动引导
 
-**文件**: [lib/src/auth.rs](file:///Users/air/TOPEMS/lib/src/auth.rs)
+**函数: `bootstrap_service(config: &ServiceConfig) -> Result<BootstrapContext>`**
+- 位置: `lib/shared-bootstrap/src/lib.rs`
+- 职责: 初始化 telemetry、加载环境变量、创建 auth_state、创建 event_publisher、验证数据库连接
+- 返回: `BootstrapContext { auth_state, event_publisher, db_pool, telemetry_guard }`
 
-| 函数/结构体 | 签名 | 说明 |
-|------------|------|------|
-| `auth_middleware` | `async fn(State<AuthState>, Request, Next) -> Result<Response>` | JWT 认证中间件 |
-| `verify_jwt_token` | `fn(token: &str, secret: &str) -> Result<Claims>` | 验证 JWT |
-| `generate_jwt_token` | `fn(user_id: &str, secret: &str, expire_minutes: i64) -> String` | 生成访问 Token |
-| `generate_refresh_token` | `fn(user_id: &str, secret: &str, expire_minutes: i64) -> String` | 生成刷新 Token |
-| `Claims` | struct | JWT 载荷 |
-| `AuthState` | struct | 认证配置状态 |
+**函数: `run(app: Application) -> Result<()>`**
+- 位置: `lib/shared-bootstrap/src/lib.rs`
+- 职责: 绑定 TCP 端口、启动 Axum 服务器、优雅关闭信号处理
+- `Application { router: Router, port: u16, name: &'static str }`
 
-#### 7.1.2 数据库与连接池
-
-**文件**: [lib/src/database.rs](file:///Users/air/TOPEMS/lib/src/database.rs)
-
-| 函数 | 签名 | 说明 |
-|------|------|------|
-| `create_database_pool` | `async fn(&DatabaseConfig) -> Result<PgPool>` | 创建连接池 |
-| `test_database_connection` | `async fn(&PgPool) -> Result<()>` | 测试连接 |
-| `check_pool_health` | `async fn(&PgPool) -> HealthCheckResult` | 健康检查 |
-
-#### 7.1.3 响应与分页
-
-**文件**: [lib/src/response.rs](file:///Users/air/TOPEMS/lib/src/response.rs)
-
-| 结构体/函数 | 说明 |
-|------------|------|
-| `ApiResponse<T>` | `{ code, success, message, data }` |
-| `PaginatedResponse<T>` | 分页响应 |
-| `api_success(data, msg)` | 成功响应 |
-| `api_error(code, msg)` | 错误响应 |
-
-#### 7.1.4 RLS 与租户
-
-| 文件 | 函数/结构体 | 说明 |
-|------|------------|------|
-| [lib/src/rls.rs](file:///Users/air/TOPEMS/lib/src/rls.rs) | `rls_middleware` | 行级安全中间件 |
-| [lib/src/tenant.rs](file:///Users/air/TOPEMS/lib/src/tenant.rs) | `TenantContext`, `TenantManager` | 租户上下文与管理 |
-| [svc/unified-core/src/middleware/tenant_rls.rs](file:///Users/air/TOPEMS/svc/unified-core/src/middleware/tenant_rls.rs) | `tenant_rls_middleware` | unified-core 租户注入 |
-
-#### 7.1.5 插件架构
-
-**文件**: [svc/unified-core/src/modules/plugin/handlers/runtime.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs)
-
-| 函数 | 说明 |
-|------|------|
-| `verify_registration_token` | 校验 `X-Plugin-Token` |
-| `register_plugin` | 插件注册入口 |
-| `heartbeat` | 心跳更新 |
-| `get_navigation_config` | 返回聚合导航配置 |
-
-**文件**: [svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs)
-
-| 函数 | 说明 |
-|------|------|
-| `install_plugin` | 正向依赖检查 |
-| `uninstall_plugin` | 反向依赖检查 |
-
-#### 7.1.6 SLA 服务
-
-**文件**: [svc/unified-core/src/modules/ticket/sla_service.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs)
-
-| 函数 | 说明 |
-|------|------|
-| `TicketSlaService::new(pool)` | 构造 SLA 服务 |
-| `calculate_sla(&ticket)` | 计算工单 SLA 信息 |
-| `match_policy(&ticket)` | 匹配 SLA 策略 |
-| `check_and_escalate(&ticket)` | 检查并触发升级 |
-| `get_sla_stats(tenant_id, ...)` | 聚合 SLA 统计 |
-
-#### 7.1.7 服务发现与配置
-
-| 文件 | 结构体/函数 | 说明 |
-|------|------------|------|
-| [lib/src/service_discovery.rs](file:///Users/air/TOPEMS/lib/src/service_discovery.rs) | `SmartServiceClient`, `ConsulDiscoveryClient`, `ConsulServiceRegistrar` | 服务发现与注册 |
-| [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs) | `ServiceConfigRegistry`, `ServiceDefinition` | 集中化服务配置 |
-| [lib/src/service_client.rs](file:///Users/air/TOPEMS/lib/src/service_client.rs) | `create_*_client`, `BaseServiceClient` | 跨服务调用客户端 |
-
-### 7.2 前端核心 (TypeScript)
-
-#### 7.2.1 API 客户端
-
-**文件**: [apps/web/src/api/client.ts](file:///Users/air/TOPEMS/apps/web/src/api/client.ts)
-
-| 类型/函数 | 说明 |
-|----------|------|
-| `ApiResponse<T>` / `PaginatedResponse<T>` | 统一响应类型 |
-| `createAxiosClient` | 创建带拦截器的 Axios 实例 |
-| `ApiClient` | 单例，按服务名维护客户端 (`apiClient.erp`, `apiClient.hrm`, ...) |
-| `apiClient.setAuthToken` / `clearAuthToken` | 全局 Token 同步 |
-| `downloadBlob` | 文件下载辅助 |
-
-#### 7.2.2 认证与权限
-
-| 文件 | Hook/函数 | 说明 |
-|------|----------|------|
-| [apps/web/src/hooks/useAuth.tsx](file:///Users/air/TOPEMS/apps/web/src/hooks/useAuth.tsx) | `useAuth()` | 认证状态与登录/登出 |
-| [apps/web/src/hooks/usePermission.ts](file:///Users/air/TOPEMS/apps/web/src/hooks/usePermission.ts) | `usePermission()` | 权限检查 |
-
-#### 7.2.3 CRUD Hook
-
-**文件**: [apps/web/src/hooks/useCrudQueries.ts](file:///Users/air/TOPEMS/apps/web/src/hooks/useCrudQueries.ts)
-
-| Hook | 说明 |
-|------|------|
-| `useCrudQueries(options)` | 标准 list/get/create/update/remove 封装 |
-
-#### 7.2.4 工单 API
-
-**文件**: [apps/web/src/api/ticket/index.ts](file:///Users/air/TOPEMS/apps/web/src/api/ticket/index.ts)
-
-| 函数 | 说明 |
-|------|------|
-| `ticketApi.listTickets(query)` | 工单列表 |
-| `ticketApi.getTicket(id)` | 工单详情 |
-| `ticketApi.createTicket(data)` | 创建工单 |
-| `ticketApi.updateTicket(id, data)` | 更新工单 |
-| `ticketApi.getTicketSla(id)` | SLA 信息 |
-| `ticketApi.triggerSlaEscalation(id)` | 触发升级 |
-| `ticketApi.listSlaPolicies()` | 策略列表 |
-| `ticketApi.createSlaPolicy(data)` | 创建策略 |
-
-### 7.3 配置管理
-
-#### 7.3.1 前端运行时配置
-
-**文件**: [apps/web/src/config/runtime.ts](file:///Users/air/TOPEMS/apps/web/src/config/runtime.ts)
-
-```typescript
-interface RuntimeConfig {
-  api: { baseUrl: string; timeout: number };
-  ws: { reconnectInterval: number; maxReconnectAttempts: number };
-  services: Record<string, string>;  // 服务 baseURL
-  features: Record<string, boolean>; // 功能开关
-  theme: { default: 'light' | 'dark'; enableDarkMode: boolean };
-  i18n: { defaultLocale: string; supportedLocales: string[] };
-  security: { csrfTokenUrl: string; sessionTimeout: number };
+**结构体: `ServiceConfig`**
+```rust
+pub struct ServiceConfig {
+    pub name: &'static str,           // 如 "topems-ai"
+    pub port: u16,                    // 默认端口（如 8013）
+    pub port_env_var: Option<&'static str>,  // 环境变量覆盖（如 "AI_PORT"）
+    pub max_db_connections: u32,      // 数据库连接池大小
+    pub enable_events: bool,          // 是否启用事件总线
+    pub api_prefix: &'static str,     // 标准路径前缀（如 "/api/ai"）
+    pub legacy_prefixes: &'static [&'static str], // 兼容旧路径
+    pub search_path: &'static str,    // PostgreSQL search_path
 }
 ```
 
-#### 7.3.2 服务端口配置
+#### shared-auth 认证中间件
 
-权威来源:
-- [config/ports.env](file:///Users/air/TOPEMS/config/ports.env)
-- [config/services.yaml](file:///Users/air/TOPEMS/config/services.yaml)
-- [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs)
+**函数: `auth_middleware` (axum Layer)**
+- 位置: `lib/shared-auth/src/auth.rs`
+- 流程: 从 Authorization header 提取 Bearer token → `verify_jwt_token()` → 注入 `Extension<Claims>`
+- 公共路径白名单: `/health`, `/auth/login`, `/metrics`, `/api/plugins/*`
+
+**⚠️ 硬约束: 中间件顺序**
+```rust
+// ❌ 错误（500: Missing Claims）
+.layer(auth_middleware).layer(tenant_middleware)
+
+// ✅ 正确（auth_middleware 外层先执行）
+.layer(tenant_middleware).layer(auth_middleware)
+```
+
+**函数: `tenant_middleware`**
+- 位置: `lib/shared-auth/src/middleware/tenant.rs`
+- 依赖: `Extension<Claims>`（由 auth_middleware 提供）
+- 职责: 从 Claims.tenant_id 提取租户 → 设置 DB Schema search_path → 审计上下文
+
+**结构体: `Claims`**
+```rust
+pub struct Claims {
+    pub sub: Uuid,           // 用户 ID
+    pub tenant_id: Uuid,     // 租户 ID（RLS 依据）
+    pub role: String,        // 角色名
+    pub permissions: Vec<String>,  // 权限码列表
+    pub exp: usize,          // 过期时间
+}
+```
+
+#### shared-core 统一响应
+
+**函数: `into_response` for `ApiResponse<T>`**
+- 位置: `lib/shared-core/src/response.rs`
+- 统一响应格式:
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": { "...": "..." },
+  "request_id": "uuid"
+}
+```
+
+**函数: `register_routes_with_legacy_alias(router, prefix, legacy_prefixes)`**
+- 位置: `lib/shared-core/src/api_version.rs`
+- 职责: 为新路径注册路由的同时，自动挂载旧路径别名（实现平滑迁移）
+
+### 7.2 前端核心（TypeScript）
+
+#### 统一 API 客户端
+
+**类: `ApiClient`** (src/api/client.ts)
+
+```typescript
+class ApiClient {
+  clients: Map<ServiceName, TypedAxiosInstance>;
+  constructor(services: ServiceConfig[]);
+  getClient(name: ServiceName): TypedAxiosInstance;
+  // 快捷方法（用 master client）
+  get<T>(url, config?): Promise<ApiResponse<T>>;
+  post<T>(url, data?, config?): Promise<ApiResponse<T>>;
+  setAuthToken(token: string): void;
+  clearAuthToken(): void;
+}
+```
+
+**函数: `handleResponse<T>(response, options?)`** (src/api/request.ts)
+- 职责: 统一解包 `{ code, message, data }` → code 非 0 抛错 → 可选静默处理 → 日志记录
+- 错误处理: 401 → `handleAuthError()`（清 token + 触发 auth:unauthorized）
+
+#### React Hooks
+
+**Hook: `useAuth()`** (src/hooks/useAuth.tsx)
+- 返回: `{ user, token, roles, permissions, login, logout, refresh, isAuthenticated }`
+- 状态源: authStore + localStorage 持久化
+
+**Hook: `usePermission()`** (src/hooks/usePermission.ts)
+- 核心方法: `hasPermission(code)`, `hasRole(role)`, `requireAll([...])`, `requireAny([...])`
+
+**Hook: `useCrudForm<T>()`** (src/hooks/useCrudForm.ts)
+- 封装: React Hook Form + Zod Schema + React Query Mutation
+- 返回: `{ form, methods, handleSubmit, isSubmitting, open, setOpen, entity }`
+
+**Hook: `useDataTable<T>()`** (src/hooks/useDataTable.ts)
+- 封装: TanStack Table + React Query useQuery + 分页/筛选/排序状态
+- 标准化列定义: 从 Zod Schema 自动生成 `toColumnDef(schema)`
+
+#### Zustand Store
+
+**Store: `authStore`** (src/store/authStore.ts)
+```typescript
+type AuthState = {
+  user: User | null;
+  token: string | null;
+  roles: Role[];
+  permissions: string[];
+  login: (creds) => Promise<void>;
+  logout: () => void;
+  refresh: () => Promise<void>;
+};
+```
+
+**Store: `uiStore`** (src/store/uiStore.ts)
+- `sidebarCollapsed` / `drawerOpen` / `modalStack` / `globalLoading`
+
+### 7.3 Python CLI 工具
+
+位置: [cli/](file:///Users/xingzhai/TOPEMS/cli/) · 入口: `cli/bin/topems`
+
+| 命令组 | 子命令 | 功能 |
+|--------|--------|------|
+| **topems db** | `init` | 创建数据库和用户 |
+| | `migrate` | 运行数据库迁移（创建表+初始化权限70+） |
+| | `backup` / `restore <file>` | 备份/恢复 |
+| | `reset` | 重置数据库 |
+| **topems service** | `list` | 服务列表 |
+| | `status <name>` | 健康检查 |
+| | `start <name>` / `stop <name>` | 启停服务 |
+| **topems health** | `check-all` | 全服务健康探测 |
 
 ---
 
 ## 8. 依赖关系
 
-### 8.1 后端依赖 (Cargo Workspace)
-
-**Workspace 配置**: [Cargo.toml](file:///Users/air/TOPEMS/Cargo.toml)
-
-#### 核心依赖
-
-| 依赖包 | 版本 | 用途 |
-|--------|------|------|
-| axum | ^0.8 | Web 框架 |
-| tokio | 1.x | 异步运行时 |
-| sqlx | ^0.8.6 | 数据库访问 |
-| serde / serde_json | 1 | 序列化 |
-| jsonwebtoken | 9.0 | JWT |
-| bcrypt | 0.15 | 密码哈希 |
-| reqwest | 0.12 | HTTP 客户端 |
-| redis | - | Redis 客户端 |
-| prometheus / axum-prometheus | 0.13 / 0.8 | 指标 |
-| tracing / tracing-subscriber | 0.1 / 0.3 | 日志追踪 |
-| utoipa / utoipa-swagger-ui | 4 | OpenAPI |
-| async-graphql / async-graphql-axum | 7 | Portal BFF GraphQL |
-
-#### 服务间依赖关系
+### 8.1 后端 Cargo 依赖关系（简化）
 
 ```
-unified-core (核心)
-    │
-    ├── erp, hrm, crm, pm, finance, doc, ai, ... (业务基础)
-    │       │
-    │       ├── mes, pdm, qms, lims, ehs (制造质量)
-    │       │
-    │       ├── scm, wms, srm (供应链仓储)
-    │       │
-    │       └── bi/analytics, monitor (分析监控)
-    │
-    ├── gis, integration (扩展服务)
-    │
-    └── mobile, portal (接入服务)
+业务服务 (svc/*)
+  ├── topems-shared-bootstrap     # 启动引导（所有服务必须）
+  ├── topems-shared-auth          # 认证/权限/中间件（所有服务必须）
+  ├── topems-shared-core          # 基础工具（所有服务必须）
+  ├── topems-shared-db            # 数据库访问（需要持久化的服务）
+  ├── topems-shared-event         # 事件总线（需要跨服务通信）
+  ├── topems-shared-service-client # 调用其他服务（需要服务间调用）
+  ├── topems-shared-observability # 遥测监控（推荐所有）
+  ├── topems-shared-ai            # AI 能力（仅 AI/HRM/需要向量搜索）
+  └── topems-shared               # 门面（可选，建议直接用子 crate）
+
+shared-ai  ──► shared-core, shared-db
+shared-service-client ──► shared-core, shared-auth
+shared-event ──► shared-core, shared-db
 ```
 
-所有服务都依赖 `lib/topems_shared`。
+### 8.2 前端 pnpm 依赖关系
 
-### 8.2 前端依赖
+```
+apps/web (topems-portal)
+  ├── @topems/shared-types        # 类型定义
+  ├── @topems/shared-utils        # 工具函数
+  ├── @topems/shared-constants    # 常量
+  ├── @topems/shared-components   # UI 组件
+  ├── @topems/shared-hooks        # Hooks
+  └── @topems/tokens              # Design Tokens
 
-**根配置**: [package.json](file:///Users/air/TOPEMS/package.json)
+shared-components ──► shared-types, shared-utils, shared-hooks, tokens
+shared-hooks ──► shared-types, shared-utils
+shared-types ──► (无内部依赖)
+tokens ──► (无内部依赖)
+```
 
-#### 核心依赖
+### 8.3 服务间调用（后端 → 后端）
 
-| 依赖包 | 版本 | 用途 |
-|--------|------|------|
-| react / react-dom | ^19.2.7 | UI 框架 |
-| react-router-dom | ^7.0.0 | 路由 |
-| @mui/material | ^9.1.1 | UI 组件 |
-| @tanstack/react-query | ^5.0.0 | 数据获取 |
-| zustand | ^5.0.0 | 状态管理 |
-| axios | ^1.0.0 | HTTP 客户端 |
-| dayjs | ^1.11.21 | 日期处理 |
-| i18next / react-i18next | ^26.0.0 / ^17.0.0 | 国际化 |
-| @module-federation/vite | - | 微前端 |
-
-### 8.3 外部系统依赖
-
-| 系统 | 版本要求 | 用途 | 必选 |
-|------|---------|------|------|
-| PostgreSQL | 16+ | 主数据库 | ✅ |
-| Redis | 7+ | 缓存、会话、消息、向量 | 可选 |
-| RabbitMQ | 3.x | 消息队列、事件总线 | 可选 |
-| Ollama | 最新 | AI 模型推理 | 可选 |
-| Consul | 最新 | 服务发现 | 可选 |
-| Prometheus + Grafana | - | 监控告警 | 可选 |
-| Jaeger | - | 链路追踪 | 可选 |
+典型调用链（通过 shared-service-client）：
+```
+AI DocumentService ──► File Service (文件下载)
+ERP PurchaseOrder ──► HRM (审批人信息) / WMS (库存扣减) / Finance (应付生成)
+Finance Voucher ──► ERP (业务单据查询)
+PM Resource ──► HRM (员工查询)
+CRM Order ──► ERP (销售订单下发) / WMS (出库)
+WorkFlow Approval ──► IAM (权限检查) / Notification (消息推送)
+```
 
 ---
 
-## 9. 部署与运行
+## 9. 项目运行方式
 
 ### 9.1 环境要求
 
-#### 开发环境
+| 环境 | 最低版本 | 推荐版本 | 说明 |
+|------|---------|---------|------|
+| Node.js | 20.x | 22.x LTS | 前端构建 |
+| pnpm | 8+ | 9.15.9 | Monorepo 包管理（packageManager 锁定） |
+| Rust | 1.75+ | stable 最新 | 后端编译（见 rust-toolchain.toml） |
+| PostgreSQL | 16+ | 16.x | 主数据库 |
+| Redis | 7+ | 7.2.x | 缓存/会话/消息/向量索引（可选，部分功能降级） |
+| Ollama | - | latest | AI 本地模型（可选） |
+| Python | 3.10+ | 3.12 | CLI 工具 |
 
-| 组件 | 版本要求 |
-|------|---------|
-| Node.js | 20+ |
-| pnpm | 8+ |
-| Rust | 1.75+ |
-| PostgreSQL | 16+ |
-| Redis | 7+ (可选) |
-
-#### 生产环境
-
-| 组件 | 最低配置 | 推荐配置 |
-|------|---------|---------|
-| CPU | 4 核 | 8 核+ |
-| 内存 | 8 GB | 16 GB+ |
-| 磁盘 | 100 GB SSD | 500 GB+ SSD |
-| 操作系统 | Linux (Ubuntu 22.04+) | Linux (Ubuntu 22.04+) |
-
-### 9.2 本地开发启动
-
-#### 9.2.1 准备
+### 9.2 快速启动步骤
 
 ```bash
-# 克隆项目
-git clone <repository-url>
-cd TOPEMS
+# 1. 克隆项目
+git clone <repo-url> && cd TOPEMS
 
-# 安装前端依赖
+# 2. 安装前端依赖
 pnpm install
 
-# 编译 Rust 工作区
-cargo build --workspace
-
-# 启动数据库 (macOS 示例)
+# 3. 启动数据库（macOS Homebrew 推荐）
 brew services start postgresql@16
 brew services start redis
-createdb topems
+createdb topems   # 默认库名
 
-# 复制环境变量
+# 4. 环境变量（.env 有默认值，通常无需修改）
 cp .env.example .env
-# 编辑 .env，配置 DATABASE_URL、JWT_SECRET、JWT_REFRESH_SECRET 等
+# 生产环境必须设置 JWT_SECRET：openssl rand -base64 32
+
+# 5. 初始化数据库
+cd cli && pip install -e . && cd ..
+topems db init
+topems db migrate
+
+# 6. 编译后端（先刷新离线缓存）
+./scripts/topems.sh sqlx prepare --all          # SQLx 离线缓存（需数据库在线）
+./scripts/topems.sh build-all --only-core       # 只编译核心服务（3-5分钟）
+./scripts/topems.sh build-all                   # 全量编译（后端+前端）
+
+# 7. 一键启动所有服务
+./scripts/topems.sh start-all
+
+# 8. 访问
+# 前端: http://localhost:3000   默认账号: admin / admin123
+# 后端: http://localhost:8000   (unified-core 健康检查)
 ```
 
-#### 9.2.2 分别启动
-
-**前端开发:**
+### 9.3 分层启动命令
 
 ```bash
-cd apps/web
-pnpm run dev
+# ============== 前端单独启动 ==============
+pnpm --filter topems-portal dev              # Host Shell:3000
+
+# ============== 后端单独启动 ==============
+./scripts/topems.sh start iam                # 核心 unified-core:8000
+./scripts/topems.sh start erp                # ERP:8010
+./scripts/topems.sh status                   # 查看所有服务状态
+./scripts/topems.sh logs ai 100              # 查看 AI 服务最近 100 行日志
+./scripts/topems.sh stop-all                 # 停止所有
+
+# ============== 常用参数 ==============
+./scripts/topems.sh build-all --only-core    # 只编译核心组
+./scripts/topems.sh build-all --skip=ai      # 跳过 ai 包
+./scripts/topems.sh start-all --no-frontend  # 只起后端
+./scripts/topems.sh sqlx check-offline       # 验证所有包可离线编译
 ```
 
-**后端核心服务:**
+### 9.4 统一管理脚本
 
-```bash
-cd svc/unified-core
-cargo run
-```
+**位置**: [scripts/topems.sh](file:///Users/xingzhai/TOPEMS/scripts/topems.sh)
 
-**后端业务服务:**
+主要命令速查：
+| 命令 | 说明 |
+|------|------|
+| `./scripts/topems.sh help` | 帮助 |
+| `status [svc]` | 状态 |
+| `start/stop/restart <svc>` | 启停单个 |
+| `logs <svc> [lines]` | 日志 |
+| `build <svc> [--online/--offline/--dev]` | 单包编译 |
+| `build-all [--only-core/--skip=ai/--backend-only]` | 全量编译 |
+| `start-all/stop-all/restart-all` | 批量启停 |
+| `sqlx prepare --all | --pkg=topems-mes | --check` | SQLx 缓存管理 |
+| `db start/stop/status/migrate/backup/restore` | 数据库操作 |
+| `redis start/stop` | Redis 操作 |
+| `reset-password [user] [pwd]` | 重置密码（默认 admin/admin123） |
+| `check` | 检查并重启异常服务 |
+| `run` / `run-stop` | 一键全栈启停 |
 
-```bash
-cd svc/erp
-cargo run
+### 9.5 端口配置单一信源
 
-# 其他服务同理
-```
-
-> HRM 服务需要在 `.env` 中配置 `ENCRYPTION_KEY`，用于字段加密服务初始化。
-
-#### 9.2.3 管理脚本
-
-```bash
-# 查看所有服务状态
-./scripts/topems.sh status
-
-# 启动指定服务
-./scripts/topems.sh start erp
-
-# 查看服务日志
-./scripts/topems.sh logs erp 100
-```
-
-访问地址:
-- **前端**: http://localhost:3000
-- **后端 API (核心)**: http://localhost:8000
-- **默认账号**: admin / admin123
-
-### 9.3 Docker 部署
-
-**文件**: [docker/docker-compose.yml](file:///Users/air/TOPEMS/docker/docker-compose.yml)
-
-基础设施服务:
-- PostgreSQL
-- Redis
-- RabbitMQ
-- Consul
-- Prometheus + Grafana + Alertmanager
-- Jaeger
-
-启动基础设施:
-
-```bash
-cd docker
-docker compose up -d postgres redis
-```
-
-启动全部:
-
-```bash
-docker compose up -d
-```
-
-### 9.4 Kubernetes 部署
-
-**配置目录**: [k8s/](file:///Users/air/TOPEMS/k8s/)
-
-```
-k8s/
-├── base/                    # 基础配置
-│   ├── namespace.yaml
-│   ├── configmap.yaml
-│   ├── postgres.yaml
-│   ├── redis.yaml
-│   ├── rabbitmq.yaml
-│   ├── ingress.yaml
-│   ├── monitoring.yaml
-│   └── consul.yaml
-│
-└── services/                # 业务服务 Deployment
-    ├── erp.yaml
-    ├── hrm.yaml
-    ├── mes.yaml
-    └── ...
-```
-
-### 9.5 服务端口清单
-
-| 服务名 | 端口 | 说明 |
-|-------|------|------|
-| unified-core | 8000 | 统一核心服务 (IAM/Doc/Flow/File/Monitor/Communication/Plugin/Ticket) |
-| erp | 8010 | 企业资源计划 |
-| finance | 8011 | 财务管理 |
-| ai | 8013 | AI 智能服务 |
-| hrm | 8020 | 人力资源 |
-| pm | 8023 | 项目管理 |
-| crm | 8029 | 客户关系 |
-| mes | 8030 | 制造执行 |
-| pdm | 8031 | 产品数据 |
-| scm | 8040 | 供应链 |
-| wms | 8041 | 仓储管理 |
-| srm | 8042 | 供应商关系 |
-| qms | 8050 | 质量管理 |
-| lims | 8051 | 实验室管理 |
-| ehs | 8052 | 环境健康安全 |
-| rd | 8053 | 研发管理 |
-| analytics (bi) | 8060 | 商业智能 |
-| portal | 8063 | 企业门户 / BFF |
-| mobile | 8070 | 移动服务 |
-| gis | 8071 | 地理信息 |
-| integration | 8072 | 系统集成 |
-| web (前端) | 3000 | Web 应用 |
-| gateway (nginx) | 8080 | API 网关 |
-
-### 9.6 核心环境变量
-
-| 变量 | 说明 | 默认值/示例 |
-|------|------|------------|
-| `DATABASE_URL` | PostgreSQL 连接 URL | `postgres://topems:topems_secret@localhost:5432/topems` |
-| `REDIS_URL` | Redis 连接 URL | `redis://localhost:6379` |
-| `JWT_SECRET` | JWT 访问令牌密钥 | 必须配置 |
-| `JWT_REFRESH_SECRET` | JWT 刷新令牌密钥 | 必须配置 |
-| `CORS_ORIGINS` | 允许的跨域源 | `http://localhost:3000` |
-| `ENCRYPTION_KEY` | HRM 字段加密密钥 | HRM 服务必须配置 |
-| `PLUGIN_REGISTRATION_TOKEN` | 插件注册安全令牌 | 生产必须配置 |
-| `CONSUL_ENABLED` | 是否启用 Consul | `false` |
-| `CONSUL_URL` | Consul 地址 | `http://localhost:8500` |
-| `PLUGIN_HEARTBEAT_TIMEOUT` | 插件心跳超时(秒) | `90` |
-
-生成安全密钥:
-
-```bash
-openssl rand -base64 32
-```
+权威来源：[config/ports.env](file:///Users/xingzhai/TOPEMS/config/ports.env)
+同步脚本：`scripts/sync-ports.sh`（自动广播到 services.conf / docker/.env）
 
 ---
 
@@ -1299,434 +966,308 @@ openssl rand -base64 32
 
 ### 10.1 代码规范
 
-#### 后端 (Rust)
+| 检查项 | 工具 | 触发时机 |
+|--------|------|---------|
+| ESLint (TS/TSX) | eslint 10 + typescript-eslint | `pnpm lint` · pre-commit |
+| Prettier | prettier 3.9 | `pnpm format` · pre-commit |
+| TypeScript 类型 | tsc --noEmit | `pnpm typecheck` · CI |
+| Rust clippy | cargo clippy | CI |
+| Rust format | cargo fmt | CI |
+| 设计系统合规 | `scripts/check-design-tokens.mjs` | CI |
+| 无障碍(A11Y) | `scripts/ci/check-a11y.cjs` · eslint-plugin-jsx-a11y | CI |
+| 提交信息规范 | commitlint + husky | git commit |
 
-- `cargo fmt --all` 格式化
-- `cargo clippy --workspace` 静态检查
-- 错误处理使用 `thiserror` + `anyhow`
-- 异步函数优先使用原生 `async fn`；需要 trait 对象时使用 `async-trait`
-- 所有中间件使用 `async/await`，禁止回调风格
-- Axum 路径参数使用 `{id}` 格式，不使用 `:id`
-
-#### 前端 (TypeScript)
-
-- `pnpm run format` (Prettier)
-- `pnpm run lint` (ESLint)
-- 函数式组件 + TypeScript
-- 状态管理优先 React Query，全局状态用 Zustand
-- 类型导入使用 `type` 关键字隔离
-
-### 10.2 添加新服务/模块
-
-#### 后端新服务
-
-1. 在 `svc/` 下创建服务目录
-2. 创建 `Cargo.toml`，依赖 `topems_shared`
-3. 创建 `src/main.rs`、`src/lib.rs`、`src/modules/mod.rs`
-4. 实现模型、路由、handler
-5. 在根 `Cargo.toml` workspace.members 中注册
-6. 在 `config/services.yaml`、`config/ports.env` 中添加端口
-7. 在 `apps/web/src/config/runtime.ts` 与 `apps/web/vite.config.ts` 中添加代理
-8. 创建 `plugin.yaml` 并编写启动注册逻辑
-
-#### 后端现有服务新增模块
-
-1. 在 `svc/{service}/src/modules/` 下新建模块目录
-2. 实现 `mod.rs`、`models.rs`、`handlers.rs`
-3. 在 `svc/{service}/src/modules/mod.rs` 中 `pub mod`
-4. 在 `create_routes()` 中 `.merge(new_module::create_routes())`
-5. 注意**挂载路径不要硬编码 `/api/{svc}`**，使用裸路径
-
-#### 前端新模块
-
-1. 在 `apps/web/src/pages/` 下创建模块页面
-2. 在 `apps/web/src/api/` 下创建 API 客户端
-3. 在 `apps/web/src/microfrontend/config.ts` 的 `REMOTE_MODULES` 中注册(如需微前端)
-4. 在路由系统中注册模块
-
-### 10.3 API 开发规范
-
-#### 响应格式
-
-```json
-{
-  "code": 200,
-  "success": true,
-  "message": "操作成功",
-  "data": { }
-}
+**Git 提交规范** ([.trae/rules/git-commit-message.md](file:///Users/xingzhai/TOPEMS/.trae/rules/git-commit-message.md))：
+```
+<type>(<scope>): <subject>
+<body>
+<footer>
+# type: feat/fix/docs/style/refactor/perf/test/chore/ci/revert
+# 示例: feat(auth): add wechat social login
 ```
 
-分页响应:
+### 10.2 新增后端服务步骤
 
-```json
-{
-  "code": 200,
-  "success": true,
-  "message": "查询成功",
-  "data": {
-    "items": [...],
-    "total": 100,
-    "page": 1,
-    "page_size": 20
-  }
-}
+1. **复制模板**: 参考 `svc/feedback/`（A 模式，最简）或 `svc/ai/`（C 模式，完整）
+2. **注册到 Workspace**: `Cargo.toml` 的 `[workspace.members]` 追加路径
+3. **端口分配**: 修改 `config/ports.env` + `config/services.yaml` + `apps/web/src/config/ports.ts`，运行 `scripts/sync-ports.sh`
+4. **ServiceConfig**: `main.rs` 中设置 name/port/env_var/api_prefix/search_path
+5. **路由注册**: 按标准模式写 `routes.rs`（public + protected，路径只在 nest 处加一次前缀）
+6. **schema**: 创建对应的 PostgreSQL schema（迁移脚本）
+7. **plugin.yaml**: 插件元数据（版本/依赖/导航配置）
+8. **Vite 代理**: `apps/web/vite.config.ts` 的 SERVICES 数组追加配置
+9. **前端 API**: `apps/web/src/api/<svc>/` 下新建 index.ts + API 方法
+10. **模块路由**: `apps/web/src/modules/<svc>/config.ts` + `apps/web/src/routes/` 注册
+
+### 10.3 新增前端页面步骤
+
+1. **Zod Schema**: `apps/web/src/schemas/<module>/<entity>.ts` 定义表单校验
+2. **Page Hook**: 优先使用 `useCrudForm` + `useDataTable` 标准化模式
+3. **API 方法**: `apps/web/src/api/<svc>/<entity>.ts` 写 CRUD 调用
+4. **页面组件**: 用 `templates/CRUDPage` 模板（自动整合 DataTable + 表单对话框 + 查询筛选）
+5. **路由注册**: `apps/web/src/routes/` 下对应模块追加 route
+6. **导航树**: `apps/web/src/layouts/navTree.ts` 追加菜单项 + 权限码
+
+---
+
+## 11. 测试策略
+
+### 11.1 测试金字塔
+
+```
+         /E2E Tests\         Playwright: 关键用户旅程 (API + UI)
+        /Integration\         Vitest: 跨模块数据流/路由对齐/错误处理
+       /Component Tests\      Vitest + Testing Library: 渲染/交互
+      /Unit Tests (hooks)\    Vitest: useCrud/useDebounce 等
+     /Unit Tests (utils)\     Vitest: clone/date/string/storage 等
+    /Unit Tests (shared)\     packages/*/src/__tests__: 共享包
+   /Rust lib tests\           lib/tests/*.rs: auth/audit/cache/response
+  /Rust service tests\        svc/*/tests/*.rs: AI/RD 等有集成测试
+ /Pre-commit hooks\           lint-staged: prettier + eslint 增量
 ```
 
-#### HTTP 状态码
+### 11.2 测试文件分布（当前已覆盖，来自最近提交）
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 成功 |
-| 201 | 创建成功 |
-| 400 | 请求参数错误 |
-| 401 | 未认证 |
-| 403 | 无权限 |
-| 404 | 资源不存在 |
-| 500 | 服务器内部错误 |
+**前端共享包（packages/*）**：
+- `shared-components/__tests__/`: 16 个组件渲染测试（ActionButton/DataTable/FormField/Pagination/StatusBadge 等）
+- `shared-hooks/__tests__/`: useCrud/useDebounce/useIntersectionObserver
+- `shared-utils/__tests__/`: clone/date/function/i18n/id/number/request/storage/string/validate
+- `shared-types/__tests__/`: openapi-adapter 类型绑定
 
-### 10.4 测试
+**Host Shell (apps/web) — 累计 230+ 组件/集成用例**：
 
-#### 后端测试
+| 模块分组 | 测试文件 | 关键覆盖组件 | 用例数 | 批次 |
+|---------|---------|-------------|-------|------|
+| **AI** | `DashboardComponents.test.tsx` | DashboardHero/DashboardStats/DashboardQuickActions/FeatureCard/DashboardFeatures/RecentItem/DashboardRecentActivity/MiniChart/DashboardTrend | 23 | V82 P1 |
+| | AiModule 旧测试修复 | localStorage polyfill 补齐 | — | V82 P1 |
+| **CRM + HRM** | `CrmCrudPages.test.tsx` | ContactManagementPage/InteractionManagementPage/ReturnListPage（面包屑/Schema/API Adapter/CRUD 路径） | 13+8 | V82 P2 |
+| | `EmployeeComponents.test.tsx` | EmployeeDetailDialog/EmployeeFormDialog/TreeViewComponent | | V82 P2 |
+| **Admin** | `AdminDictionaryManagementComponents.test.tsx` | DictionarySidebar/DictionaryContent/DictionaryTypeModal | 13+ | V82 P3 (Admin 累计 52) |
+| | `AdminRateLimitSecurityComponents.test.tsx` | RateLimitDimensionCard/RateLimitPathRules/AntiReplayConfigPanel | | V82 P3 |
+| **Document** | `DocumentBasicComponents.test.tsx` | StatCard/DocumentFilters/DocumentBatchActions/DocumentUploadProgress/FileCard | 11 | V82 P4 |
+| **LIMS + MES** | `LimsInstrumentComponents.test.tsx` | 统计卡/工具栏/仪器数据表/采集任务表/解析规则表 | 48 | V82 P5 |
+| | `MesProductionBoardComponents.test.tsx` | 统计卡/报警列表/设备状态/工站利用率/甘特图 | | V82 P5 |
+| | Workflow/Shared/System 组件批次 | 若干 | | V82 P5 |
+| **Mobile** | `MobileProductionAndApproval.test.tsx` | MobileProductionActions/Filters/Card + ApprovalCard | 41 | V82 P6-P7 |
+| | `MobileApprovalQualityLists.test.tsx` | ApprovalFilter/List + MobileQualityTaskList/DefectList | | V82 P6-P7 |
+| | ApprovalCard 修复 | ListItemText HTML 嵌套规范（`div → span`） | | V82 P7 |
+| **集成测试** | 6 文件 | api-crud-flow / cross-module-flow / error-handling / path-constants / route-nav-alignment / navigation | 50+ | 分批 |
+
+**后端 Rust**：
+- `lib/tests/*.rs`: auth/audit/cache/error/health/permission/response/rls/service_client/tenant_isolation/observability
+- `svc/rd/tests/`: api_tests + rs_tests
+- `svc/portal/tests/`: smoke 测试
+- **健康门禁**：cargo clippy --workspace 0 warning (V74) · cargo check 0 error (V178)
+
+### 11.3 测试命令
 
 ```bash
-# 运行所有测试
-cargo test --workspace
+# ============= 前端测试 =============
+pnpm --filter topems-portal test              # 全部测试（unit + component）
+pnpm --filter topems-portal test:unit         # 单元测试项目
+pnpm --filter topems-portal test:component    # 组件渲染测试项目
+pnpm --filter topems-portal test:shard:1/8    # 分片执行（CI 并行加速）
+pnpm --filter topems-portal e2e               # Playwright E2E
+pnpm --filter topems-portal e2e:api           # 仅 API 层 E2E
+pnpm typecheck                                # tsc --noEmit（全 monorepo 入口）
+pnpm lint; pnpm format:check                  # 代码风格
 
-# 运行指定服务测试
-cargo test -p topems-erp
+# ============= 共享包测试 =============
+pnpm --filter @topems/shared-components test  # 单个共享包测试
 
-# 静态检查
-cargo clippy --workspace
-cargo fmt --all
-```
-
-#### 前端测试
-
-```bash
-# 单元测试
-pnpm run test
-
-# 类型检查
-pnpm run typecheck
-
-# 构建
-pnpm run build
-```
-
-### 10.5 常用命令速查
-
-#### 后端
-
-```bash
-cargo build --workspace          # 编译所有服务
-cargo run -p topems-erp          # 运行指定服务
-cargo test --workspace           # 运行所有测试
-cargo clippy --workspace         # 代码检查
-cargo fmt --all                  # 格式化
-```
-
-#### 前端
-
-```bash
-pnpm install                     # 安装依赖
-pnpm run dev                     # 启动开发服务器
-pnpm run build                   # 构建生产版本
-pnpm run lint                    # 代码检查
-pnpm run test                    # 运行测试
-pnpm run typecheck               # 类型检查
-```
-
-#### 服务管理
-
-```bash
-./scripts/topems.sh status       # 查看服务状态
-./scripts/topems.sh start-all    # 启动所有服务
-./scripts/topems.sh stop-all     # 停止所有服务
-./scripts/topems.sh logs erp     # 查看服务日志
+# ============= 后端测试 =============
+cargo test --workspace                         # 所有 Rust crate 测试
+cargo test -p topems-shared                    # 共享库测试
+cargo clippy --workspace -- -D warnings        # 严格检查（V60 已零警告）
 ```
 
 ---
 
-## 11. 项目评估与优化方案
+## 12. 下一步工作规划
 
-### 11.1 总体评估
+### 12.1 当前进度基线（截至 V183 / 2026-08-12）
 
-| 维度 | 状态 | 评分 | 说明 |
-|------|------|------|------|
-| 代码质量（Rust） | ✅ | 98 | 全 crate 零警告，unwrap 清零，类型安全与中间件体系规范 |
-| 代码质量（TS） | ✅ | 90 | TS 零错误，类型体系较完整，但前端架构仍有优化空间 |
-| 架构清晰度 | ⚠️ | 78 | 路由统一化已推进，遗留兼容路径与部分模块越界仍存 |
-| 前后端对齐 | ⚠️ | 80 | Vite proxy 与 runtime 服务映射基本对齐，仍有 deprecated 别名 |
-| 模块完整度 | ⚠️ | 72 | ERP/Flow/AI 较完整，多数业务服务仅基础骨架 |
-| 可观察性 | ✅ | 85 | 日志、指标、追踪、健康检查框架已覆盖 |
-| 多租户隔离 | ✅ | 90 | tenant_id + RLS 机制完整，97.3% 模块已接入 |
-| 插件化落地 | ⚠️ | 78 | 注册/心跳/依赖检查已实现，核心/业务边界仍需厘清 |
-| 前端架构 | ❌ | 65 | 组件体系混乱、App.tsx 膨胀、页面风格不统一、性能基础弱 |
-| 四端完善度 | ❌ | 60 | Web 强，Desktop 遗留套壳，Mobile 独立且落后 |
-| 文档与一致性 | ⚠️ | 80 | 文档丰富，已统一目录结构与相对链接，需持续同步 |
+**已完成里程碑（最近提交 + 仓库状态）**：
+- **最新提交**: `97c651d98 chore(release): 5.14.0 → 5.15.0 + CHANGELOG V67.2 导航架构里程碑`
+- V81 Phase 1-4：架构审计报告（数据层、路由、处理器、整合）
+- V77-V78：架构审计（共享库拆分、依赖治理）
+- V73：兼容性与死代码清理（compat-deadcode.json 执行完毕）
+- V70-2：topems-shared 去门面化闭环（29 服务迁移完毕，≤30 条保留 re-export）
+- V66.2：Shared Bootstrap V2 100% 覆盖（28/28 服务）
+- **V182 导航架构 100% 闭环**：页面存在性(316/316) · 路由注册(350/350) · 权限三段式(384/384) = 1050/1050 综合覆盖率（自 V68.3 起 7 个版本迭代）
+- **V178-V181 API 绑定健康修复**：PM usePmReport 返回类型补齐 / PM statistics.rs 13 编译错误清零 / 导航 permission 12 项 / workflow 脚本增强 / V82 全局 34 项清零
+- **V82 测试覆盖（已推送 8 批次，截至 2026-08-11）**：
+  - **P1**：AI Dashboard 组件 23 用例 + AiModule 旧测试修复（localStorage polyfill）
+  - **P2**：CRM CRUD 页 + HRM 员工组件 13 用例
+  - **P3**：Admin 字典 + 限流安全 13 用例（共 52 Admin）
+  - **P4**：Document 基础组件 11 用例
+  - **P5**：LIMS 仪器数据 + MES 生产看板 + Workflow/Shared/System 48 用例
+  - **P6-P7**：Mobile 组件两批 41 用例（MobileProductionAndApproval + MobileApprovalQualityLists + ApprovalCard HTML 嵌套修复）
+  - **总覆盖率提升**：共享包 100% 测试 · Host Shell 核心模块组件渲染 >230 用例 · typecheck/prettier/pre-commit 全部通过
 
-**综合健康评分: ~80/100**（后端 92 分 · 前端 65 分 · 架构 78 分）
+**TODO.md 版本**: V182（[docs/roadmap/TODO.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md)，根 TODO.md 仅为快捷入口）
+**项目版本**: v5.15.0（`package.json` + `CHANGELOG.md` 已同步）
 
-### 11.2 主要短板
+### 12.2 V83 阶段：推荐下一步优先级
 
-#### 11.2.1 路由与 API 路径的遗留债务
+#### **[P0 - 立即启动] V82-2: 第二波组件渲染测试（价值高/依赖低）**
 
-- 虽然新代码统一使用 `/api/core/{module}` 与 `/api/{svc}`，但 `register_routes_with_legacy_alias` 保留了 `/api/v1/core/*`、`/api/analytics/*`、`/api/report/*` 等旧路径。
-- 部分服务 (doc/ai/gis/mobile/rd) 的 runtime 配置同时存在 `/api/{svc}` 与 `/api/core/{svc}/v1` 两种路径，增加了 Vite proxy 与 Nginx 规则维护成本。
-- WebSocket 路径仍有旧路径注释遗留。
+覆盖剩余高价值但依赖简单的模块组件，目标 **+40~60 用例**：
 
-**优化建议:**
-- 制定废弃路径移除计划，在前端统一使用新路径后逐步关闭旧别名。
-- 收敛 `runtime.ts` 中的服务 URL，删除已标记 `@deprecated` 的别名。
-- 将路径规范纳入 CI 检查，禁止新增非标准路径。
+| 批次 | 模块 | 推荐覆盖组件 | 验收标准 |
+|------|------|-------------|---------|
+| V82-2a | **ERP/FINANCE** | `ErpFinanceSummaryCard`, `BudgetChart`, `VoucherListTable`, `AssetCard`, `ConsolidationScopeSelector` | 新增 Vitest 渲染测试 · 空数据/基础数据/关键文本 · typecheck + prettier 通过 |
+| V82-2b | **SCM/WMS/SRM** | `MrpPlanChart`, `InboundOrderCard`, `InventoryHeatmap`, `SupplierScoreCard`, `TenderStatusBadge` | 同上 |
+| V82-2c | **QMS/LIMS/EHS** | `SpcControlChart`, `FmeaSeverityMatrix`, `LimsSampleTimeline`, `EhsRiskRadarChart`, `IncidentTimeline` | 同上 |
+| V82-2d | **GIS/BI/Portal** | `GisDeviceMapCard`, `BiWidgetRenderer`, `BiDashboardToolbar`, `PortalAnnouncementCard`, `KpiTrendCard` | 同上 |
 
-#### 11.2.2 微服务粒度与运维成本
+**复用策略**：继续沿用 V82-1 批次的 smoke-batch 模式，每个测试文件独立，避免跨模块 mock 膨胀。
+**验收标准（统一）**：
+- 新增渲染测试覆盖 3 态：空数据 / 基础数据 / 关键文本
+- 所有组件使用 `describe + it/test` 组织，禁用裸顶层 assertion
+- `pnpm typecheck` 0 error · `pnpm format:check` 通过 · 本文件 `pnpm test` 全绿
+- 新文件必须位于 `apps/web/src/__tests__/components/<ModuleName>Components.test.tsx`
 
-- 20+ 独立 Rust 服务每个都有 Dockerfile、独立进程、独立端口，本地/CI 构建与启动开销大。
-- 多数业务服务 (CRM/HRM/QMS/WMS/PM 等) 当前仅 1-2 个子模块，独立部署价值有限。
-- 所有服务共享同一个 PostgreSQL 实例，Schema 隔离虽在但数据库级故障影响面大。
+#### **[P0 - 立即启动] V83-1: React Query 标准化审计 + 补齐**
 
-**优化建议:**
-- 短期：保持当前进程，但通过 `scripts/topems.sh` 与 Docker Compose profile 优化启动体验。
-- 中期：按业务域聚合为“域服务”进程 (制造域、供应链域、质量域、协同域)，减少进程数量。
-- 长期：评估独立数据库或按域分库，降低单实例风险。
+对照项目记忆中的 `UNIFIED ROUTE PATTERN` + `QUERY PATTERN`，检查不一致项：
 
-#### 11.2.3 unified-core 职责边界
+| 检查项 | 现状 | 目标 |
+|--------|------|------|
+| staleTime 配置 | 部分页面未显式设置 | **所有** useQuery 必须有 staleTime（推荐 5min） |
+| QUERY_KEYS 命名 | 部分页面用 ad-hoc 数组 | 统一归入 `QUERY_KEYS.<module>.<entity>.<action>` |
+| onSuccess invalidateQueries | 部分 mutation 只清单条 | 统一清层级 key（`invalidateQueries({ queryKey: [...]_def })`） |
+| isPending 装载态 | 部分页面用 data === undefined 判断 | 统一用 isPending 控制骨架屏 |
+| 分页状态 | 部分页面用 useState 而非 URL 同步 | 统一 useUrlState（search 模式）同步分页筛选到 URL |
 
-- unified-core 已移除大部分业务模块，但仍承载了较多子系统 (IAM、Flow、File、Communication、Tenant、Plugin、Master、Ticket、Search、Dict、Audit 等)。
-- 单点故障风险：unified-core 宕机会导致认证、插件注册、导航、工单全部失效。
+**产出**: `docs/audit/V83.1-react-query-standardization-report.md` + 批量修复 PR。
 
-**优化建议:**
-- 将非核心但可独立部署的模块逐步外迁：例如 Notification/Mail/IM 可组成 communication 服务，File 可独立为文件服务。
-- 在统一核心内部增加模块级健康检查与熔断，避免局部故障扩散。
+#### **[P1 - 紧随] V83-2: CLI 能力补齐 + 自动化**
 
-#### 11.2.4 共享库 (topems_shared) 过于膨胀
+目前 `cli/`（Python）覆盖了 db/service/health 基础命令，需补齐：
 
-- `lib/src/lib.rs` 导出 40+ 模块，任何共享库修改都会触发所有服务重新编译。
-- 不同服务实际需要的能力差异很大 (GIS 不需要 embedding/ai_client)。
+| 新增命令 | 说明 |
+|----------|------|
+| `topems dev setup` | 一键本地开发环境初始化（brew install/createdb/迁移/编译/启动） |
+| `topems test <scope>` | 调用 pnpm / cargo 对应测试命令（统一入口） |
+| `topems generate module <name>` | 脚手架生成服务骨架（main.rs/Cargo.toml/plugin.yaml/routes.rs/vite 代理条目） |
+| `topems doctor` | 环境自检：Node/Rust/PG/Redis 版本/端口占用/.env 缺失项 |
+| `topems changelog` | 自动生成 CHANGELOG.md 增量（基于 git log） |
 
-**优化建议:**
-- 将共享库拆分为 feature-gated 子 crate:
-  - `topems-core`: auth, database, cache, response, schema, rls, tenant, permission
-  - `topems-infra`: telemetry, monitoring, health, service_discovery, service_config
-  - `topems-comm`: messaging, notification, event
-  - `topems-ai`: ai_client, embedding, vector_store
-- 各服务按需引入，缩短编译依赖链。
+#### **[P1 - 紧随] V83-3: Code Wiki 与文档自动化（本次产出闭环）**
 
-#### 11.2.5 模块实现深度不均衡
+- [x] **本次完成**: Code Wiki V4.0 更新（架构/模块/关键类/依赖/运行方式）
+- [ ] **后续跟进**: `gen:api-docs` 与 OpenAPI 类型生成流程接入 CI（`scripts/openapi/gen-types.mjs` + `bash scripts/openapi/generate.sh`）
+- [ ] **后续跟进**: 新增/修改服务时自动更新 Code Wiki 对应章节（可由 CLI `generate module` 自动注入）
 
-- ERP、Flow、AI 实现较完整；CRM、HRM、PM、QMS、WMS、MES 等多数服务仅基础 CRUD。
-- 前端声明了 20+ 模块，但部分页面仍使用 mock 或 TODO 占位。
-- Portal BFF 部分接口 (早期 Todo/Notification) 仍为硬编码 mock。
+#### **[P2 - 中期] V84: P2-6 AI Copilot 闭环（设计已在 docs/superpowers/specs 归档）**
 
-**优化建议:**
-- 制定各业务模块的 MVP 能力清单，优先补齐高频功能。
-- 清理前端 mock 与 TODO，明确无后端支撑的模块是去是留。
-- Portal BFF 接入真实服务数据，替代硬编码返回值。
+spec 已存：`docs/superpowers/specs/2026-08-11-v69-2-p2-6-ai-copilot-refactor.md`
+最小闭环范围：
+1. 全局 AI FAB Popover → 320×420 Copilot 悬浮窗（复用 FloatingAIHelper + useAIContext）
+2. 文本选中气泡组件（4 动作：解释/翻译/优化/问 AI）
+3. AI 首页「AI 推荐入口 TopN」区域
+4. AiDashboardPage 集成 3 个入口点
 
-#### 11.2.6 前后端类型不同步
+#### **[P2 - 中期] V84-2: 端到端测试补齐**
 
-- 前端 `packages/shared-types` 与后端 Rust struct 独立维护，无自动同步机制。
-- API URL 手工维护在 `apps/web/src/api/` 各模块中，容易与后端路径漂移。
+Playwright `tests/e2e/` 目前有 helpers，缺少实际用例。建议首批覆盖：
+- E2E-1: 登录 → 导航到 AI → 发送问答 → 校验响应渲染
+- E2E-2: 登录 → HRM 员工列表 → 新增 → 提交 → 查询确认存在 → 删除
+- E2E-3: 登录 → PM 项目 → 创建项目 → 关联风险 → 报告页图表正常
 
-**优化建议:**
-- 利用 `utoipa` 生成的 `openapi.yaml`，通过 `openapi-typescript` 自动生成前端类型。
-- 建立 CI 步骤：后端 OpenAPI 变更时触发前端类型同步检查。
-- 对核心模块引入端到端契约测试。
+#### **[P3 - 远景] V85: 性能优化专题**
 
-#### 11.2.7 桌面端与移动端薄弱
+- Lighthouse CI 基线 + 性能预算（`lighthouserc.cjs` 已存在，接入 CI）
+- Vite Build 产物分析：rollup-plugin-visualizer 报告常态化
+- Rust release profile 验证（当前 thin-LTO + codegen-units=16，测量实际 TTI 差异）
 
-- Desktop (Tauri) 是独立简化实现，与 Web 端割裂，缺少 IAM/工作流/文件等核心能力。
-- Mobile (React Native / Expo) 与 Web 技术栈差异大，代码复用率低。
+### 12.3 建议工作节奏（一周计划）
 
-**优化建议:**
-- Desktop 改为 Web 套壳：Tauri 加载 `apps/web` 构建产物，统一功能与发布节奏。
-- Mobile 短期共享 `packages/shared-types` 与 `packages/shared-utils`；中期评估 React Native Web 或跨平台组件库。
+```
+Day 1  上午: V82-2a (ERP/FINANCE) 组件测试  PR#1
+       下午: V82-2b (SCM/WMS/SRM) 组件测试 PR#2
+Day 2  上午: V82-2c (QMS/LIMS/EHS) 组件测试 PR#3
+       下午: V82-2d (GIS/BI/Portal) 组件测试 PR#4 + 推送 main
+Day 3  上午: V83-1 React Query 审计（grep 扫描 + 报告输出）
+       下午: 批量修复 PR#5
+Day 4  全天: V83-2 CLI 能力补齐（dev setup / test / doctor） PR#6
+Day 5  上午: V82-2 + V83-1 + V83-2 回归验证（全量 typecheck/test/pre-commit）
+       下午: 更新路线图 TODO.md V183 → V184 + 里程碑记录
+```
 
-#### 11.2.8 Vite Proxy 配置仍偏手动
+### 12.4 下一步规划决策依据（为什么先做 V82-2 / V83-1）
 
-- `apps/web/vite.config.ts` 中仍有数十条按服务硬编码的代理规则。
-- 每新增服务需要同步修改 ports.env、services.yaml、runtime.ts、vite.config.ts 多处。
-
-**优化建议:**
-- 从 `config/services.yaml` 或统一端口注册表自动生成 Vite proxy 规则。
-- 抽象 `createServiceProxyConfig` 已存在，进一步扩展为读取 YAML 的循环生成。
-
-#### 11.2.9 工单 SLA 功能前后端断点（已修复 ✅）
-
-> **V51.0 已修复**: 两项断点均已闭环，详情见下。
-
-- ~~**Portal BFF 代理缺口**~~: 已在 [svc/portal/src/main.rs#L341-L370](file:///Users/air/TOPEMS/svc/portal/src/main.rs#L341-L370) 注册 `/tickets/{id}/sla`、`/tickets/sla-stats`、`/sla-policies*` 全部代理路由，handler 实现于 [svc/portal/src/modules/tickets.rs](file:///Users/air/TOPEMS/svc/portal/src/modules/tickets.rs#L248-L400)。前端 [ticketApi](file:///Users/air/TOPEMS/apps/web/src/api/ticket/index.ts) 相关调用现已可达。
-- ~~**升级计算未对齐工作时间**~~: [sla_service.rs#L283-L291](file:///Users/air/TOPEMS/svc/unified-core/src/modules/ticket/sla_service.rs#L283-L291) 的 `check_and_escalate` 已复用 `Self::calculate_due_time`，传入 `working_hours_only`/`business_hours_start`/`business_hours_end`/`weekend_excluded`，升级触发点与 SLA 截止时间计算现已一致。
-
-**遗留建议:**
-- 为 SLA 相关路径补充契约测试与集成测试，避免后端已上线但 BFF 未代理的断点再次发生。
-- 增加 SLA 升级触发点与截止时间一致性的回归测试用例（覆盖 `working_hours_only=true` 与 `weekend_excluded=true` 场景）。
-
-#### 11.2.10 BI 模块存在 SQL 注入风险（严重 🔴）
-
-- [svc/analytics/src/modules/bi/chart_service.rs#L103](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/chart_service.rs#L103) 与 [multidimensional_analysis.rs#L332](file:///Users/air/TOPEMS/svc/analytics/src/modules/bi/multidimensional_analysis.rs#L332) 使用 `format!("SELECT {} FROM {}", x_column, data_source)` 直接拼接用户输入到 SQL，攻击者可通过 `data_source`/`x_column` 参数注入任意 SQL。
-- 当前未对 `data_source`（表名）与 `x_column`（列名）做白名单校验，也未使用参数化查询。
-
-**优化建议:**
-- 立即引入表名/列名白名单校验（基于数据库元数据或配置注册表）。
-- 将数据查询重构为参数化查询（`sqlx::query_with`），标识符使用 `quote_identifier` 转义。
-- 在 CI 中增加 `cargo-audit` 与 SQL 注入静态扫描。
-
-#### 11.2.11 JWT 使用 HS256 对称密钥与默认密钥风险（高 🟠）
-
-- [lib/src/auth.rs#L69-L96](file:///Users/air/TOPEMS/lib/src/auth.rs#L69-L96) 所有服务共享同一 `JWT_SECRET`（HS256 对称加密），单点泄露即可伪造任意租户/用户的 token。
-- 未设置 `JWT_SECRET` 环境变量时回退到硬编码默认密钥（`topems-jwt-secret-key-...`），生产环境若忘配置将造成严重安全事故。
-
-**优化建议:**
-- 迁移至 RS256 非对称加密：认证服务持有私钥签发，其他服务仅持有公钥验签。
-- 移除默认密钥回退逻辑，生产环境强制要求 `JWT_SECRET` 存在且长度≥32，否则启动失败。
-- 引入密钥轮换机制（kid header），支持平滑切换。
-
-#### 11.2.12 插件注册令牌默认放行（中 🟡）
-
-- [svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs#L14-L23) 未配置 `PLUGIN_REGISTRATION_TOKEN` 时允许所有插件注册（开发模式），若生产环境漏配将导致恶意插件注册。
-
-**优化建议:**
-- 区分 `PROFILE=prod` 时强制要求 `PLUGIN_REGISTRATION_TOKEN`，未配置则启动失败。
-- 插件注册增加租户级白名单与签名校验。
-
-#### 11.2.13 前端组件体系混乱（高 🟠）
-
-- 项目同时使用 `antd`、`@arco-design/web-react`、`@radix-ui/*`、`shadcn/ui` 等多套组件库，没有明确的选型原则。
-- 部分页面混用多套组件，导致视觉风格不统一、包体积膨胀、维护成本高。
-- 缺少统一的 Design Token 体系，颜色、间距、字号直接写死在组件中。
-- 没有组件库或 Storybook，组件复用靠复制粘贴。
-
-**优化建议:**
-- 短期：明确唯一推荐组件库（建议 antd，生态最成熟），其余组件库逐步迁移。
-- 中期：建立 TOPEMS UI 组件库，沉淀业务组件，Storybook 管理文档与示例。
-- 长期：完善 Design Token 体系，支持主题切换、品牌定制。
-- 设立 ESLint 规则，禁止引入未推荐的组件库。
-
-#### 11.2.14 App.tsx 过度膨胀，缺少架构分层（高 🟠）
-
-- `apps/web/src/App.tsx` 行数近 2000 行，混合了路由配置、开发面板、全局状态、布局逻辑。
-- 路由配置与导航菜单强耦合，新增模块需改多处。
-- 开发面板在生产构建中没有完全排除，增加包体积。
-- 缺少全局的错误边界（Error Boundary），局部错误可能导致白屏。
-
-**优化建议:**
-- 短期：将开发面板移到 `dev-tools/` 目录，生产构建通过 Vite 插件排除。
-- 中期：路由配置抽离到 `routes/` 目录，按模块拆分路由文件。
-- 中期：布局抽离为 `layouts/` 组件（MainLayout、AuthLayout、BlankLayout）。
-- 增加顶层 Error Boundary，捕获渲染错误并展示降级 UI。
-
-#### 11.2.15 页面实现风格不统一，缺少模板沉淀（中 🟡）
-
-- 400+ 页面实现风格差异大：有的用 antd Table，有的用 AG Grid，有的手写列表。
-- 表单实现方式不统一：有的用 Form 组件，有的手写受控组件，校验逻辑分散。
-- 空状态、加载态、错误态处理不一致，部分页面缺少这些状态。
-- 缺少页面级模板（ListPageTemplate、DetailPageTemplate、FormPageTemplate）。
-
-**优化建议:**
-- 短期：定义 3 种核心页面模板：列表页、详情页、表单页。
-- 中期：80% 业务页面迁移到模板，统一交互和视觉。
-- 建立 FormBuilder 组件，通过配置生成表单，统一校验和布局。
-- 全局 EmptyState、Skeleton、ErrorState 组件，所有页面强制使用。
-
-#### 11.2.16 前端导航与信息架构混乱（中 🟡）
-
-- 一级菜单项超过 20 个，没有按业务域分组，用户难以找到目标功能。
-- 缺少全局搜索（⌘K），功能查找效率低。
-- 面包屑手动维护，与路由不同步，经常出错。
-- 没有最近访问、收藏、快捷入口等效率功能。
-
-**优化建议:**
-- 短期：侧边栏按业务域分组，一级菜单从 20+ → 6-8 个分组。
-- 短期：增加全局搜索（⌘K），支持搜索菜单、页面、功能。
-- 中期：面包屑从路由配置自动生成，消除手动维护。
-- 中期：增加工作台（Workbench），整合待办、最近访问、快捷入口。
-
-#### 11.2.17 前端性能与可访问性基础薄弱（中 🟡）
-
-- 首屏 JS 体积过大，没有按路由级 code splitting 优化。
-- 核心页面 LCP（最大内容绘制）时间长，缺少性能监控。
-- 移动端适配差，大多数页面在小屏幕上布局错乱。
-- 可访问性（a11y）基本为零：缺少语义化标签、键盘导航、ARIA 属性。
-
-**优化建议:**
-- 短期：路由级 code splitting，开发面板生产排除，目标首屏 < 500KB gzip。
-- 短期：10 个核心页面做移动端适配，保证基本可用。
-- 中期：建立性能基线，核心页面 LCP < 2s，CLS < 0.1。
-- 中期：补齐基础可访问性：语义化、键盘导航、对比度达标。
-
-### 11.3 优化路线图
-
-| 阶段 | 时间 | 重点任务 |
-|------|------|---------|
-| **Sprint 0（第 1 周）** | 紧急 | 🔴 BI SQL 注入修复；🟠 JWT HS256→RS256；🟡 插件 token 生产强制；前端认证体系统一；App.tsx 拆分 |
-| **Sprint 1（第 2 周）** | 高优 | 多租户 tenant_id 闭环；核心业务联调；组件体系收敛；侧边栏分组优化；全局搜索 |
-| **Sprint 2（第 3-4 周）** | 中优 | OpenAPI 类型生成；废弃路径下线；Design Token 强制化；页面模板推广；Vite Proxy 自动化 |
-| **Sprint 3（第 5-6 周）** | 上线 | 监控告警闭环；E2E 测试覆盖；部署脚本；性能优化（包体积+LCP）；移动端适配 |
-| **V61.0** | 中期 | 前端设计系统 v2；unified-core 模块外迁；共享库子 crate 拆分；代码生成脚手架 |
-| **V62.0** | 中长期 | 低代码平台基础；页面设计器；表单引擎；元数据驱动动态 API |
-| **V63.0+** | 长期 | AI 自适应 UI；多端一致性；性能极致优化；无障碍增强 |
-
-### 11.4 关键监控指标建议
-
-- 服务编译时间 (workspace 整体与单服务)
-- 本地启动时间 (全部基础设施 + 核心服务)
-- 前后端 API 路径不一致数量
-- 共享库变更导致的全量重编译次数
-- 各服务主路径覆盖率 (后端路由数 vs 前端页面数)
-- SLA 违约率、平均响应/解决时长 (V16.1 新增)
-- SLA 相关 API 的 404 次数 / 前端调用失败率 (Portal BFF 代理缺口监控)
-- SLA 升级触发点与截止时间一致性 (按工作时间策略下的偏差)
+| 排序 | 任务 | 投入 | 收益 | 风险 | 决策理由 |
+|-----|------|-----|-----|-----|---------|
+| 1 | **V82-2 第二波组件测试** | 2 天 · 4 PR | 组件渲染覆盖率 +40~60 用例 · 后续重构有回归网 | 低 | 依赖最低、模式成熟（已跑 8 批次）、收益即时可见 |
+| 2 | **V83-1 React Query 标准化** | 1 天 · 审计 + 1 PR | 统一缓存策略 · 消除 staleTime 不一致 · 减少 30% 无效请求 | 中 | 项目记忆已记录规范，但代码库实际落地率约 60%，先审计再修防漏改 |
+| 3 | **V83-2 CLI 能力补齐** | 1 天 · 1 PR | 新人上手成本 -50% · `topems doctor` 拦截 90% 环境问题 | 中 | 脚本框架已存在（cli/tests 已有 4 测试文件），扩展命令风险可控 |
+| 4 | V84 AI Copilot 闭环 | 3+ 天 | 产品体验提升 · AI 入口真实可用 | 高 | 涉及 3 层 UI 变更 + 交互链路长，需等基础设施稳定 |
+| 5 | V84-2 E2E 补齐 | 2 天 | 关键用户旅程回归保障 | 中 | 依赖后端服务 + 测试数据，组件测试先做足再上 E2E |
+| 6 | V85 性能专题 | 1+ 周 | 构建/运行性能可量化 | 低 | 当前 CI 门禁健康，优先级可后置 |
 
 ---
 
 ## 附录
 
-### A. 参考文档
+### A. 硬约束速查（来自项目记忆）
 
-- [项目 README](../../README.md) - 项目根 README
-- [任务规划与路线图](../roadmap/TODO.md) - 待办事项与版本规划
-- [架构总览](./overview.md) - 架构总览
-- [API 文档目录](../api/) - API 文档目录
-- [部署指南](../deployment/deployment-guide.md) - 部署指南
-- [架构优化报告](../plans/architecture-optimization.md) - 架构优化报告
-- [短板分析报告](../plans/shortcomings-analysis.md) - 短板逐一分析与优化报告（详尽版）
-- [整合实施方案](../plans/integration-implementation-plan.md) - 整合实施方案：4 Sprint 6 周上线
-- [架构评审报告](../archive/architecture-plans/architecture-review-20260714.md) - 历史架构评审报告
+| 约束项 | 规则 | 违规后果 |
+|--------|------|---------|
+| API 路径格式 | core: `/api/core/{svc}/{path}` · business: `/api/{svc}/{path}`（去掉 `/v1`） | 404 / Vite proxy 路径重复 |
+| Vite proxy rewrite | **必须** `rewrite: (path) => path`（不修改） | apiClient baseURL 已带前缀，导致路径加倍 |
+| Unified-core 内部模块 API | Doc/File/Mail/IM/Notification 走 `/api/core/{module}/{resource}`（模式 C） | 404（前端 apiClient.baseURL = `/api/core/{module}`） |
+| Axum 动态参数格式 | `{id}` 非 `:id` | 编译/运行错误 |
+| Middleware 顺序 | `layer(tenant_middleware).layer(auth_middleware)` — auth 外层 | 500 "Missing request extension of type Claims" |
+| SQLx 编译 | 优先离线（.sqlx 缓存），失败自动切在线 | 编译失败需要 `./scripts/topems.sh sqlx prepare --all` |
+| DB search_path | **每个服务显式设置**：业务用 `{svc}, public, shared`；unified-core 用 `public`；RD 特殊 `rs, public`；search 默认 `rs, erp, public` | 默认 search_path 多 schema 表名冲突 → 歧义 SQL |
+| HRM 字段加密 | **必须**设置 `ENCRYPTION_KEY` 环境变量 | 启动 panic |
+| Monitor 公开端点 | 必须有 `/api/monitor/health`（无需认证） | 健康检查探针 401 失败 → 服务误判宕机 |
+| React Query singleton | MF shared 设置 `singleton: true, requiredVersion: ^5.0.0, strictVersion: true` | 多 QueryClient 实例 → 缓存不一致/invalidate 失效 |
+| 路由定义顺序 | 具体路径如 `/statistics` 必须在动态参数 `/{id}` 之前 | 路径匹配错误（axum 0.8 甚至 panic overlapping routes） |
+| Module Federation shared | `@tanstack/react-query` 必须 singleton | 见上 |
 
-### B. 相关文件索引
+### B. 废弃服务清单（仅供参考，不参与构建）
 
-| 类别 | 文件路径 |
-|------|---------|
-| **后端核心** | [lib/src/lib.rs](../../lib/src/lib.rs) |
-| **认证模块** | [lib/src/auth.rs](../../lib/src/auth.rs) |
-| **数据库** | [lib/src/database.rs](../../lib/src/database.rs) |
-| **Schema 定义** | [lib/src/schema.rs](../../lib/src/schema.rs) |
-| **响应格式** | [lib/src/response.rs](../../lib/src/response.rs) |
-| **服务配置** | [lib/src/service_config.rs](../../lib/src/service_config.rs) |
-| **服务发现** | [lib/src/service_discovery.rs](../../lib/src/service_discovery.rs) |
-| **服务客户端** | [lib/src/service_client.rs](../../lib/src/service_client.rs) |
-| **unified-core 启动** | [svc/unified-core/src/main.rs](../../svc/unified-core/src/main.rs) |
-| **unified-core 路由** | [svc/unified-core/src/routes/mod.rs](../../svc/unified-core/src/routes/mod.rs) |
-| **unified-core 模块** | [svc/unified-core/src/modules/mod.rs](../../svc/unified-core/src/modules/mod.rs) |
-| **工单 Handler** | [svc/unified-core/src/modules/ticket/handlers.rs](../../svc/unified-core/src/modules/ticket/handlers.rs) |
-| **工单 SLA 服务** | [svc/unified-core/src/modules/ticket/sla_service.rs](../../svc/unified-core/src/modules/ticket/sla_service.rs) |
-| **工单模型** | [svc/unified-core/src/modules/ticket/models.rs](../../svc/unified-core/src/modules/ticket/models.rs) |
-| **插件运行时** | [svc/unified-core/src/modules/plugin/handlers/runtime.rs](../../svc/unified-core/src/modules/plugin/handlers/runtime.rs) |
-| **前端入口** | [apps/web/src/App.tsx](../../apps/web/src/App.tsx) |
-| **API 客户端** | [apps/web/src/api/client.ts](../../apps/web/src/api/client.ts) |
-| **运行时配置** | [apps/web/src/config/runtime.ts](../../apps/web/src/config/runtime.ts) |
-| **Vite 配置** | [apps/web/vite.config.ts](../../apps/web/vite.config.ts) |
-| **微前端模块配置** | [apps/web/src/microfrontend/config.ts](../../apps/web/src/microfrontend/config.ts) |
-| **工单中心页面** | [apps/web/src/pages/ticket/TicketCenterPage.tsx](../../apps/web/src/pages/ticket/TicketCenterPage.tsx) |
-| **管理脚本** | [scripts/topems.sh](../../scripts/topems.sh) |
-| **Docker 配置** | [docker/docker-compose.yml](../../docker/docker-compose.yml) |
-| **K8s 配置** | [k8s/base/ingress.yaml](../../k8s/base/ingress.yaml) |
-| **端口配置** | [config/ports.env](../../config/ports.env) |
-| **服务配置** | [config/services.yaml](../../config/services.yaml) |
+| 废弃服务 | 已迁移至 | 说明 |
+|---------|---------|------|
+| svc/manufacturing | svc/mes + svc/pdm | 拆分独立部署 |
+| svc/quality-assurance | svc/qms + svc/lims + svc/ehs | 拆分独立部署 |
+| svc/bi | svc/analytics | 2026-06 合并 |
+| svc/report | svc/analytics | 2026-07 合并 |
+| svc/config-center | etcd + unified-core 配置管理 | 功能整合 |
+| svc/shared | lib/topems_shared* | 功能下沉到共享 crate |
+| svc/user-service | unified-core/modules/iam/user | 2026-07 迁移（原端口 8060 与 BI 冲突） |
+| svc/monitor | unified-core/modules/monitor | 2026-07 迁移 · `/api/core/monitor/*` |
+| svc/doc | unified-core/modules/doc | 2026-07 迁移 · `/api/core/doc/*` |
+
+### C. 关键文件快速索引
+
+| 文件 | 说明 |
+|------|------|
+| [README.md](file:///Users/xingzhai/TOPEMS/README.md) | 项目总览 + 快速开始 |
+| [TODO.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md) | 任务路线图真相源（V182） |
+| [Cargo.toml](file:///Users/xingzhai/TOPEMS/Cargo.toml) | Rust Workspace + 共享依赖版本 |
+| [package.json](file:///Users/xingzhai/TOPEMS/package.json) | pnpm Monorepo 脚本入口 |
+| [config/ports.env](file:///Users/xingzhai/TOPEMS/config/ports.env) | 端口单一信源（后端 + MF） |
+| [config/services.yaml](file:///Users/xingzhai/TOPEMS/config/services.yaml) | 服务配置（bootstrap_mode/依赖/分组） |
+| [scripts/topems.sh](file:///Users/xingzhai/TOPEMS/scripts/topems.sh) | 统一服务管理脚本 |
+| [apps/web/vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts) | 前端构建 + 代理 + MF 配置 |
+| [apps/web/src/config/ports.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/config/ports.ts) | 前端端口 TS 类型（与 ports.env 同步） |
+| [apps/web/src/lib/apiClient.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/lib/apiClient.ts) | 统一 API 客户端导出层 |
+| [apps/web/src/api/client.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/client.ts) | 多服务 Axios 工厂 + 重试 |
+| [lib/src/lib.rs](file:///Users/xingzhai/TOPEMS/lib/src/lib.rs) | topems-shared 门面 re-export（≤30 条） |
+| [docs/architecture/overview.md](file:///Users/xingzhai/TOPEMS/docs/architecture/overview.md) | 架构总览（补充阅读） |
+| [docs/api/openapi.yaml](file:///Users/xingzhai/TOPEMS/docs/api/openapi.yaml) | 完整 OpenAPI 规范 |
 
 ---
 
-*本文档由 TOPEMS Code Wiki 维护，最后更新于 2026-07-24*
+**最后更新**: 2026-08-12
+**版本**: V183 / v5.15.0
+**Code Wiki 版本**: v4.1
+**本次更新重点**:
+- V183 架构基线：导航 1050/1050 = 100% 全绿 · 项目版本 v5.15.0
+- 测试分布表格化（批次/用例数/关键组件）
+- V82-2 统一验收标准补充
+- 新增 §12.4 决策依据表（为什么先做 V82-2 / V83-1）

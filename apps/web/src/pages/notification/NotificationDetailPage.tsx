@@ -10,7 +10,8 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -34,13 +35,17 @@ const NotificationDetailPage: React.FC = () => {
 
       if (!res.data.is_read) {
         await notificationApi.markRead(id);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS ,
+  exact: false,
+  refetchType: 'active',
+});
       }
 
       return res.data;
     },
     enabled: !!id,
-  });
+  
+      staleTime: CACHE_DURATIONS.SHORT,});
 
   const notification = detailQuery.data ?? null;
   const loading = detailQuery.isLoading;
@@ -53,8 +58,14 @@ const NotificationDetailPage: React.FC = () => {
     },
     onSuccess: () => {
       if (id) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATION(id) });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATION(id) ,
+  exact: false,
+  refetchType: 'active',
+});
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS ,
+  exact: false,
+  refetchType: 'active',
+});
       }
       success('已标记为未读');
     },

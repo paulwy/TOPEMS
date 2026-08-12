@@ -3,6 +3,9 @@ import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
 import { pdmApi } from '@/api/pdm';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const VERSION_TYPE_COLOR_MAP: Record<string, 'error' | 'warning' | 'success' | 'default'> = {
   major: 'error',
   minor: 'warning',
@@ -204,7 +207,7 @@ export const versionSchema: EntitySchema = {
         }
         return [];
       },
-      queryKey: ['pdm', 'documents', 'version-form'],
+      queryKey: QUERY_KEYS.AD_HOC.PDM_DOCUMENTS_VERSION_FORM_BASE,
     },
   ],
 

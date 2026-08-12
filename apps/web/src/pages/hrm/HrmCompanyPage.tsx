@@ -19,13 +19,16 @@ import { designTokens } from '@/theme/tokens';
 import { companyApi, departmentApi, employeeApi, type Company } from '@/api/hrm';
 import { companySchema } from '@/schemas/hrm';
 
+
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 
 const HrmCompanyPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
 
   const { data: departments = [] } = useQuery({
-    queryKey: ['hrm', 'departments'],
+    queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_BASE,
     queryFn: async () => {
       const res = await departmentApi.list({ pagesize: 500 });
       if (res.success && res.data) {
@@ -37,7 +40,7 @@ const HrmCompanyPage: React.FC = () => {
   });
 
   const { data: employees = [] } = useQuery({
-    queryKey: ['hrm', 'employees'],
+    queryKey: QUERY_KEYS.AD_HOC.HRM_EMPLOYEES_BASE,
     queryFn: async () => {
       const res = await employeeApi.list({ pagesize: 500 });
       if (res.success && res.data) {
