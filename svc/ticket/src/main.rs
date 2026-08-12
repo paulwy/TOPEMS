@@ -9,6 +9,7 @@ use utoipa::OpenApi;
 mod handlers;
 mod models;
 mod openapi;
+mod schema_defense;
 mod sla_service;
 
 #[tokio::main]

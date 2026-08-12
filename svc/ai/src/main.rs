@@ -9,6 +9,7 @@ mod middleware;
 mod models;
 mod modules;
 mod routes;
+mod schema_defense;
 mod services;
 mod shared;
 
@@ -95,6 +96,11 @@ async fn main() -> anyhow::Result<()> {
     // 运行迁移
     db.run_migrations().await?;
     tracing::info!("✅ 数据库表结构已就绪");
+
+    // V69.3 Schema 防御：增量补齐列 + 一致性自检（失败不阻塞启动）
+    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(db.pool()).await {
+        tracing::error!("[ai] Schema 防御检查失败: {:?}", e);
+    }
 
     // 读取 AI 配置
     let api_key = std::env::var("OLLAMA_API_KEY")

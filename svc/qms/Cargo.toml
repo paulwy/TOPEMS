@@ -9,6 +9,7 @@ description = "TOPEMS-QMS 质量管理系统"
 topems-shared = { path = "../../lib" }
 topems-shared-service-client = { path = "../../lib/shared-service-client" }
 topems-shared-core = { path = "../../lib/shared-core" }
+topems-shared-db = { workspace = true }
 topems-shared-event = { path = "../../lib/shared-event" }
 topems-shared-auth = { path = "../../lib/shared-auth" }
 axum.workspace = true

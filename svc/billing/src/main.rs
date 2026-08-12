@@ -5,6 +5,7 @@ use utoipa::OpenApi;
 mod handlers;
 mod models;
 mod openapi;
+mod schema_defense;
 
 #[tokio::main]
 async fn main() {

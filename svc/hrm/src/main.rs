@@ -1,4 +1,5 @@
 mod models;
+mod schema_defense;
 mod services;
 mod utils;
 
@@ -114,6 +115,9 @@ async fn init_cache() -> Arc<dyn CacheService + Send + Sync> {
     }
 }
 
-async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
+async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
+        tracing::error!("[hrm] Schema 防御检查失败: {:?}", e);
+    }
     Ok(())
 }

@@ -13,6 +13,7 @@
 mod event_handlers;
 mod middleware;
 mod models;
+mod schema_defense;
 mod shared;
 
 pub mod modules;
@@ -101,7 +102,10 @@ async fn main() -> Result<()> {
     run(app).await
 }
 
-async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
+async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
+        tracing::error!("[wms] Schema 防御检查失败: {:?}", e);
+    }
     Ok(())
 }
 

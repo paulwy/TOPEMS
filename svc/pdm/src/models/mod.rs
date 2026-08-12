@@ -1,4 +1,5 @@
 pub mod audit_log;
+pub mod schema_defense;
 
 use sqlx::PgPool;
 
@@ -563,6 +564,18 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
+
+    // Schema 防御：增量迁移 + 一致性自检
+    if let Err(e) = topems_shared_db::schema::run_schema_defense(
+        pool,
+        self::schema_defense::SERVICE_SCHEMA,
+        self::schema_defense::TABLE_DEFS,
+        "pdm",
+    )
+    .await
+    {
+        tracing::warn!("[pdm schema 防御] 非阻塞警告: {}", e);
+    }
 
     Ok(())
 }

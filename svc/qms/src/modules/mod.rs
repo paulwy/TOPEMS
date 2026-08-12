@@ -855,5 +855,17 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Schema 防御：增量迁移 + 一致性自检
+    if let Err(e) = topems_shared_db::schema::run_schema_defense(
+        pool,
+        crate::models::schema_defense::SERVICE_SCHEMA,
+        crate::models::schema_defense::TABLE_DEFS,
+        "qms",
+    )
+    .await
+    {
+        tracing::warn!("[qms schema 防御] 非阻塞警告: {}", e);
+    }
+
     Ok(())
 }

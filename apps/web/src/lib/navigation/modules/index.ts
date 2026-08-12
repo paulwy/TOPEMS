@@ -1,5 +1,6 @@
 import { aiNavConfig } from '@/modules/ai/config';
 import { adminNavConfig } from '@/modules/admin/config';
+import { apsNavConfig } from '@/modules/aps/config';
 import { automationNavConfig } from '@/modules/automation/config';
 import { assetNavConfig } from '@/modules/asset/config';
 import { biNavConfig } from '@/modules/bi/config';
@@ -29,6 +30,7 @@ import { reportNavConfig } from '@/modules/report/config';
 import { rdNavConfig } from '@/modules/rd/config';
 import { scmNavConfig } from '@/modules/scm/config';
 import { srmNavConfig } from '@/modules/srm/config';
+import { tmsNavConfig } from '@/modules/tms/config';
 import { wmsNavConfig } from '@/modules/wms/config';
 import { workflowNavConfig } from '@/modules/workflow/config';
 import type { ModuleNavConfig } from '../types';
@@ -67,11 +69,14 @@ export const coreModuleNavConfigs: ModuleNavConfig[] = [
   reportNavConfig,
   limsNavConfig,
   ehsNavConfig,
+  tmsNavConfig,
+  apsNavConfig,
 ];
 
 export {
   aiNavConfig,
   adminNavConfig,
+  apsNavConfig,
   automationNavConfig,
   assetNavConfig,
   biNavConfig,
@@ -100,6 +105,7 @@ export {
   rdNavConfig,
   scmNavConfig,
   srmNavConfig,
+  tmsNavConfig,
   wmsNavConfig,
   workflowNavConfig,
 };

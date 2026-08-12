@@ -192,6 +192,31 @@ else
 fi
 
 # ============================================================
+# 7. CRM 契约一致性检查（仅当 CRM 相关文件变更时）
+# ============================================================
+echo ""
+echo "📝 Checking CRM contract consistency..."
+
+HAS_CRM_FILES=$(echo "$STAGED_FILES" | grep -E "(^apps/web/src/schemas/crm/|^apps/web/src/api/crm/|^svc/crm/src/(models|modules)/customer)" | head -1)
+
+if [ -n "$HAS_CRM_FILES" ]; then
+  if [ -f "scripts/dev/check-crm-contract.mjs" ]; then
+    node scripts/dev/check-crm-contract.mjs
+    CRM_CONTRACT_EXIT=$?
+    if [ $CRM_CONTRACT_EXIT -ne 0 ]; then
+      echo "❌ CRM contract verification failed"
+      ERRORS=$((ERRORS + 1))
+    else
+      echo "✅ CRM contract verification passed"
+    fi
+  else
+    echo "⏭️  Skipped (check-crm-contract.mjs not found)"
+  fi
+else
+  echo "⏭️  Skipped (no CRM entity files staged)"
+fi
+
+# ============================================================
 # 总结
 # ============================================================
 echo ""

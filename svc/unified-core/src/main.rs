@@ -18,6 +18,7 @@
 
 mod handlers;
 mod routes;
+mod schema_defense;
 mod shared;
 
 pub mod middleware;
@@ -362,6 +363,11 @@ async fn main() -> anyhow::Result<()> {
     // V68.1 A2.4.1: login_log init 已合并到 audit::init_database（统一建表）
     try_init("audit", || modules::audit::init_database(&ctx.db)).await;
     try_init("doc", || modules::doc::services::init_database(&ctx.db)).await;
+
+    // V69.3 Schema 防御：增量迁移 + 一致性自检（29 表）
+    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(&ctx.db).await {
+        tracing::error!("[unified-core] Schema 防御检查失败: {:?}", e);
+    }
 
     // V68.1 A2.3: dict seed 合并到 svc/master-data 启动流程
     // if let Err(e) = modules::dict::seed::seed_dict_data(&ctx.db).await {

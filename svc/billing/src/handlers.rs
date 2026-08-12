@@ -136,6 +136,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Schema 防御：增量迁移 + 一致性自检（V69.3）
+    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(pool).await {
+        tracing::error!("[billing] Schema 防御检查失败: {:?}", e);
+    }
+
     Ok(())
 }
 

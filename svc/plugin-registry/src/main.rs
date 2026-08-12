@@ -13,6 +13,7 @@ use topems_shared_core::health::{
     simple_health_check, ServiceHealth, SimpleHealthConfig, SystemMetrics,
 };
 
+mod schema_defense;
 mod shared;
 
 pub mod modules;
@@ -42,6 +43,11 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!(
         "🚀 TOPEMS Plugin Registry Service (拆分自 unified-core / V68.1 A2.2) starting..."
     );
+
+    // 初始化数据库表 + Schema 防御（V69.3）
+    if let Err(e) = modules::plugin::init_database(&ctx.db).await {
+        tracing::error!("Failed to init plugin-registry database: {:?}", e);
+    }
 
     let start_time = Instant::now();
     let app_state = AppState {

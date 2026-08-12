@@ -10,6 +10,8 @@ const lazyLoaders: Record<string, ModuleConfigLoader> = {
     import('@/modules/automation/config').then((m) => ({ default: m.automationNavConfig })),
   asset: () => import('@/modules/asset/config').then((m) => ({ default: m.assetNavConfig })),
   bi: () => import('@/modules/bi/config').then((m) => ({ default: m.biNavConfig })),
+  tms: () => import('@/modules/tms/config').then((m) => ({ default: m.tmsNavConfig })),
+  aps: () => import('@/modules/aps/config').then((m) => ({ default: m.apsNavConfig })),
   crm: () => import('@/modules/crm/config').then((m) => ({ default: m.crmNavConfig })),
   doc: () => import('@/modules/doc/config').then((m) => ({ default: m.docNavConfig })),
   ehs: () => import('@/modules/ehs/config').then((m) => ({ default: m.ehsNavConfig })),

@@ -4,6 +4,7 @@ mod event_handlers;
 mod db;
 mod models;
 mod modules;
+mod schema_defense;
 mod services;
 mod shared;
 
@@ -92,6 +93,10 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     let sql_statements = include_str!("../init.sql");
     for stmt in sql_statements.split(';').filter(|s| !s.trim().is_empty()) {
         sqlx::query(stmt.trim()).execute(pool).await?;
+    }
+
+    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(pool).await {
+        tracing::error!("[mobile] Schema 防御检查失败: {:?}", e);
     }
     Ok(())
 }

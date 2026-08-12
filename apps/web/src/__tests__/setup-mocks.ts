@@ -612,6 +612,12 @@ vi.mock('recharts', () => ({
   ReferenceLine: () => null,
   Label: () => null,
   LabelList: () => null,
+  RadialBarChart: makeChart('RadialBarChart'),
+  RadialBar: () => null,
+  FunnelChart: makeChart('FunnelChart'),
+  Funnel: () => null,
+  Treemap: makeChart('Treemap'),
+  Sankey: makeChart('Sankey'),
 }));
 
 // ─── Mock CrudPage and complex template components ────────────────────────

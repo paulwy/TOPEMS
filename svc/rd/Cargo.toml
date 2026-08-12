@@ -10,6 +10,7 @@ topems-shared = { path = "../../lib" }
 topems-shared-event = { path = "../../lib/shared-event" }
 topems-shared-core = { path = "../../lib/shared-core" }
 topems-shared-auth = { path = "../../lib/shared-auth" }
+topems-shared-db = { workspace = true }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true

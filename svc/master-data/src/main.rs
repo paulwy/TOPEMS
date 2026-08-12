@@ -13,6 +13,7 @@ use topems_shared_bootstrap::{
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 
 mod openapi;
+mod schema_defense;
 mod shared;
 
 pub mod modules;
@@ -36,6 +37,14 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service(&config).await?;
 
     tracing::info!("🚀 TOPEMS Master Data Service starting...");
+
+    // 初始化数据库表 + V69.3 Schema 防御
+    if let Err(e) = modules::dict::init_database(&ctx.db).await {
+        tracing::warn!("dict::init_database warning: {}", e);
+    }
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(&ctx.db).await {
+        tracing::error!("[master-data] Schema 防御检查失败: {:?}", e);
+    }
 
     // 把 ServiceContext 转换为下游 modules 依赖的 legacy AppState（零改造）
     let app_state = AppState {

@@ -28,11 +28,13 @@ members = [
     "svc/scm",
     "svc/srm",
     "svc/wms",
+    "svc/tms",
     "svc/gis",
     "svc/integration",
     "svc/mobile",
     # [生产制造]
     "svc/mes",
+    "svc/aps",
     "svc/pdm",
     # [质量与研发]
     "svc/qms",

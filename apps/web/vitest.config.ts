@@ -176,6 +176,7 @@ export default defineConfig({
           name: 'component',
           include: [
             'src/components/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/components/mes/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/pages/**/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/hooks/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/store/__tests__/**/*.{test,spec}.{ts,tsx}',
@@ -185,6 +186,45 @@ export default defineConfig({
           ],
           isolate: true,
           setupFiles: [setupEnv, setupCore, setupMocks],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'crm',
+          include: [
+            'src/api/__tests__/crm/**/*.{test,spec}.{ts,tsx}',
+            'src/schemas/__tests__/crm/**/*.{test,spec}.{ts,tsx}',
+            'src/api/crm/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/pages/__tests__/Crm*.{test,spec}.{ts,tsx}',
+            'src/pages/__tests__/Customer*.{test,spec}.{ts,tsx}',
+          ],
+          isolate: true,
+          setupFiles: [setupEnv, setupCore, setupMocks],
+        },
+        coverage: {
+          provider: 'v8',
+          reporter: ['text', 'json', 'html', 'json-summary'],
+          reportOnFailure: true,
+          include: [
+            'src/api/crm/**/*.{ts,tsx}',
+            'src/schemas/crm/**/*.{ts,tsx}',
+            'src/modules/crm/**/*.{ts,tsx}',
+          ],
+          exclude: [
+            'src/**/types.ts',
+            'src/**/types/**',
+            'src/**/__tests__/**',
+            'src/**/*.d.ts',
+          ],
+          all: false,
+          skipFull: true,
+          thresholds: {
+            statements: 0,
+            branches: 0,
+            functions: 0,
+            lines: 0,
+          },
         },
       },
     ],
