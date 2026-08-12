@@ -45,10 +45,13 @@ vi.mock('@/components/templates', () => {
     React.createElement('div', null, children || 'MockListPageTemplate');
   const MockCrudPage = ({ children }: { children?: React.ReactNode }) =>
     React.createElement('div', null, children || 'MockCrudPage');
+  const MockDetailPageTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockDetailPageTemplate');
   return {
     DashboardTemplate: MockDashboardTemplate,
     ListPageTemplate: MockListPageTemplate,
     CrudPage: MockCrudPage,
+    DetailPageTemplate: MockDetailPageTemplate,
   };
 });
 

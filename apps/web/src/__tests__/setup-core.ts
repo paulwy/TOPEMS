@@ -21,21 +21,62 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // ─── localStorage ──────────────────────────────────────────────────────────
+// NOTE: methods are defined as non-enumerable so that Object.keys(localStorage)
+// returns only data keys (matching real browser Storage behaviour). This is
+// required by source code that iterates via Object.keys(localStorage) — e.g.
+// storage.ts keys()/clear() — which the previous Map-backed mock broke.
 const createStorageMock = (): Storage => {
-  const store = new Map<string, string>();
+  const storage: Record<string, any> = {};
 
-  return {
-    get length() {
-      return store.size;
+  Object.defineProperties(storage, {
+    length: {
+      get() {
+        return Object.keys(storage).length;
+      },
+      enumerable: false,
+      configurable: true,
     },
-    clear: vi.fn(() => store.clear()),
-    getItem: vi.fn((key: string) => store.get(key) ?? null),
-    key: vi.fn((index: number) => Array.from(store.keys())[index] ?? null),
-    removeItem: vi.fn((key: string) => store.delete(key)),
-    setItem: vi.fn((key: string, value: string) => {
-      store.set(key, String(value));
-    }),
-  };
+    clear: {
+      value: vi.fn(() => {
+        Object.keys(storage).forEach((key) => {
+          delete storage[key];
+        });
+      }),
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    },
+    getItem: {
+      value: vi.fn((key: string) => storage[key] ?? null),
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    },
+    key: {
+      value: vi.fn((index: number) => Object.keys(storage)[index] ?? null),
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    },
+    removeItem: {
+      value: vi.fn((key: string) => {
+        delete storage[key];
+      }),
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    },
+    setItem: {
+      value: vi.fn((key: string, value: string) => {
+        storage[key] = String(value);
+      }),
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    },
+  });
+
+  return storage as unknown as Storage;
 };
 
 const localStorageMock = createStorageMock();
