@@ -1,4 +1,9 @@
-use axum::{extract::FromRef, http::HeaderMap, routing::get, Json, Router};
+use axum::{
+    extract::FromRef,
+    http::HeaderMap,
+    routing::{get, post},
+    Json, Router,
+};
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -6,9 +11,17 @@ use uuid::Uuid;
 
 use crate::middleware::tenant::get_tenant_id;
 use crate::modules::ApiState;
+use crate::shared::fsm::{production_plan_can_transition, production_plan_requires_approval};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 use utoipa::ToSchema;
+
+/// 审批请求体
+#[derive(Debug, Deserialize)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ProductionPlan {
@@ -70,6 +83,9 @@ where
             "/production-plans/{id}",
             get(get_plan).put(update_plan).delete(delete_plan),
         )
+        .route("/production-plans/{id}/submit", post(submit_plan))
+        .route("/production-plans/{id}/approve", post(approve_plan))
+        .route("/production-plans/{id}/reject", post(reject_plan))
 }
 
 #[utoipa::path(
@@ -368,6 +384,203 @@ pub async fn delete_plan(
         Err(e) => {
             tracing::error!("删除生产计划失败: {}", e);
             Json(api_error(500, "删除生产计划失败"))
+        }
+    }
+}
+
+/// APV-1: 提交审批 (draft → pending_approval)
+pub async fn submit_plan(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<ProductionPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let target_status = "pending_approval";
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM plugin_aps.aps_production_plans WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let current_status = match current {
+        Ok(Some(s)) => s,
+        Ok(None) => return Json(api_error(404, "生产计划不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询生产计划失败: {}", e))),
+    };
+
+    if production_plan_requires_approval(&current_status, target_status) {
+        return Json(api_error(400, "当前状态需要审批流程，请使用审批接口"));
+    }
+    if let Err(e) = production_plan_can_transition(&current_status, target_status) {
+        return Json(api_error(400, &format!("当前状态不允许提交审批: {}", e)));
+    }
+
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, ProductionPlan>(
+        r#"
+        UPDATE plugin_aps.aps_production_plans SET status = $2, updated_at = $3
+        WHERE id = $1 AND tenant_id = $4
+        RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status,
+                  product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(target_status)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(plan) => {
+            tracing::info!(
+                "生产计划 {} 提交审批: {} -> {} (操作人: {})",
+                id,
+                current_status,
+                target_status,
+                req.operator
+            );
+            Json(ApiResponse::success(plan, "生产计划已提交审批"))
+        }
+        Err(e) => {
+            tracing::error!("提交生产计划审批失败: {}", e);
+            Json(api_error(500, "提交生产计划审批失败"))
+        }
+    }
+}
+
+/// APV-1: 审批通过 (pending_approval → approved)
+pub async fn approve_plan(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<ProductionPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let target_status = "approved";
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM plugin_aps.aps_production_plans WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let current_status = match current {
+        Ok(Some(s)) => s,
+        Ok(None) => return Json(api_error(404, "生产计划不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询生产计划失败: {}", e))),
+    };
+
+    if !production_plan_requires_approval(&current_status, target_status) {
+        return Json(api_error(400, "当前状态不需要审批"));
+    }
+    if let Err(e) = production_plan_can_transition(&current_status, target_status) {
+        return Json(api_error(400, &format!("当前状态不允许审批通过: {}", e)));
+    }
+
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, ProductionPlan>(
+        r#"
+        UPDATE plugin_aps.aps_production_plans SET status = $2, updated_at = $3
+        WHERE id = $1 AND tenant_id = $4
+        RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status,
+                  product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(target_status)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(plan) => {
+            tracing::info!(
+                "生产计划 {} 审批通过: {} -> {} (操作人: {}, 备注: {:?})",
+                id,
+                current_status,
+                target_status,
+                req.operator,
+                req.comment
+            );
+            Json(ApiResponse::success(plan, "生产计划审批通过"))
+        }
+        Err(e) => {
+            tracing::error!("审批生产计划失败: {}", e);
+            Json(api_error(500, "审批生产计划失败"))
+        }
+    }
+}
+
+/// APV-1: 审批驳回 (pending_approval → draft)
+pub async fn reject_plan(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<ProductionPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let target_status = "draft";
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM plugin_aps.aps_production_plans WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let current_status = match current {
+        Ok(Some(s)) => s,
+        Ok(None) => return Json(api_error(404, "生产计划不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询生产计划失败: {}", e))),
+    };
+
+    if let Err(e) = production_plan_can_transition(&current_status, target_status) {
+        return Json(api_error(400, &format!("当前状态不允许驳回: {}", e)));
+    }
+
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, ProductionPlan>(
+        r#"
+        UPDATE plugin_aps.aps_production_plans SET status = $2, updated_at = $3
+        WHERE id = $1 AND tenant_id = $4
+        RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status,
+                  product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(target_status)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(plan) => {
+            tracing::info!(
+                "生产计划 {} 审批驳回: {} -> {} (操作人: {}, 备注: {:?})",
+                id,
+                current_status,
+                target_status,
+                req.operator,
+                req.comment
+            );
+            Json(ApiResponse::success(plan, "生产计划已驳回"))
+        }
+        Err(e) => {
+            tracing::error!("驳回生产计划失败: {}", e);
+            Json(api_error(500, "驳回生产计划失败"))
         }
     }
 }

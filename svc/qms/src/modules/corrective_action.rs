@@ -1,100 +1,14 @@
 //! Corrective Action handlers
 
+use crate::models::corrective_action::*;
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
-use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, FromRow};
+use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-
-#[derive(Debug, Deserialize)]
-pub struct ActionQuery {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub status: Option<String>,
-    pub priority: Option<String>,
-    pub issue_id: Option<String>,
-    pub search: Option<String>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ListActionsResponse {
-    pub actions: Vec<CorrectiveAction>,
-    pub total: i64,
-    pub page: i64,
-    pub page_size: i64,
-}
-
-#[derive(Debug, Serialize, FromRow)]
-pub struct CorrectiveAction {
-    pub id: String,
-    pub tenant_id: String,
-    pub action_no: String,
-    pub issue_id: Option<String>,
-    pub title: String,
-    pub description: Option<String>,
-    pub root_cause: Option<String>,
-    pub action_type: Option<String>,
-    pub status: Option<String>,
-    pub priority: Option<String>,
-    pub assignee: Option<String>,
-    pub target_date: Option<String>,
-    pub completed_at: Option<String>,
-    pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
-}
-
-#[derive(Debug, Serialize, FromRow)]
-pub struct ActionItem {
-    pub id: String,
-    pub tenant_id: String,
-    pub action_id: String,
-    pub item_name: String,
-    pub responsible: Option<String>,
-    pub due_date: Option<String>,
-    pub status: Option<String>,
-    pub completed_at: Option<String>,
-    pub remark: Option<String>,
-    pub created_at: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateActionRequest {
-    pub issue_id: Option<String>,
-    pub title: String,
-    pub description: Option<String>,
-    pub root_cause: Option<String>,
-    pub action_type: Option<String>,
-    pub priority: Option<String>,
-    pub assignee: Option<String>,
-    pub target_date: Option<String>,
-    pub created_by: Option<String>,
-    pub items: Option<Vec<CreateActionItemRequest>>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateActionItemRequest {
-    pub item_name: String,
-    pub responsible: Option<String>,
-    pub due_date: Option<String>,
-    pub remark: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UpdateActionRequest {
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub root_cause: Option<String>,
-    pub action_type: Option<String>,
-    pub status: Option<String>,
-    pub priority: Option<String>,
-    pub assignee: Option<String>,
-    pub target_date: Option<String>,
-}
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims

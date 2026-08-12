@@ -1,87 +1,14 @@
 //! Quality Standard handlers
 
+use crate::models::quality_standard::*;
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
-use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, FromRow};
+use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use utoipa::ToSchema;
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct StandardQuery {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub category: Option<String>,
-    pub status: Option<String>,
-    pub search: Option<String>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct ListStandardsResponse {
-    pub standards: Vec<QualityStandard>,
-    pub total: i64,
-    pub page: i64,
-    pub page_size: i64,
-}
-
-#[derive(Debug, Serialize, FromRow, ToSchema)]
-pub struct QualityStandard {
-    pub id: String,
-    pub tenant_id: String,
-    pub code: String,
-    pub name: String,
-    pub category: String,
-    pub level: Option<String>,
-    pub specification: Option<String>,
-    pub description: Option<String>,
-    pub version: Option<String>,
-    pub status: Option<String>,
-    pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct CreateStandardRequest {
-    pub name: String,
-    pub category: String,
-    pub level: Option<String>,
-    pub specification: Option<String>,
-    pub description: Option<String>,
-    pub version: Option<String>,
-    pub created_by: Option<String>,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct UpdateStandardRequest {
-    pub name: Option<String>,
-    pub category: Option<String>,
-    pub level: Option<String>,
-    pub specification: Option<String>,
-    pub description: Option<String>,
-    pub version: Option<String>,
-    pub status: Option<String>,
-}
-
-#[derive(Debug, Serialize, FromRow, ToSchema)]
-pub struct StandardRevision {
-    pub id: String,
-    pub tenant_id: String,
-    pub standard_id: Uuid,
-    pub version: Option<String>,
-    pub name: String,
-    pub category: String,
-    pub level: Option<String>,
-    pub specification: Option<String>,
-    pub description: Option<String>,
-    pub status: Option<String>,
-    pub created_by: Option<String>,
-    pub created_at: Option<String>,
-}
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims

@@ -11,9 +11,17 @@ use uuid::Uuid;
 
 use crate::middleware::tenant::get_tenant_id;
 use crate::modules::ApiState;
+use crate::shared::fsm::{schedule_can_transition, schedule_requires_approval};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 use utoipa::ToSchema;
+
+/// 审批请求体
+#[derive(Debug, Deserialize)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Schedule {
@@ -81,6 +89,9 @@ where
         .route("/schedules/{id}/start", post(start_schedule))
         .route("/schedules/{id}/complete", post(complete_schedule))
         .route("/schedules/{id}/cancel", post(cancel_schedule))
+        .route("/schedules/{id}/submit", post(submit_schedule))
+        .route("/schedules/{id}/release", post(release_schedule))
+        .route("/schedules/{id}/hold", post(hold_schedule))
 }
 
 #[utoipa::path(
@@ -558,6 +569,181 @@ fn is_status_transition_valid(from: &str, to: &str) -> bool {
             | ("pending", "cancelled")
             | ("running", "cancelled")
     )
+}
+
+/// APV-2: 提交发布 (no state change, just flag for release)
+pub async fn submit_schedule(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<Schedule>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query_as::<_, Schedule>(
+        r#"
+        SELECT id, schedule_no, plan_id, work_order_id, product_id, product_name,
+               work_center_id, work_center_name, planned_start, planned_end,
+               actual_start, actual_end, quantity, priority, status, tenant_id, created_at, updated_at
+        FROM plugin_aps.aps_schedules
+        WHERE id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(schedule)) => {
+            tracing::info!(
+                "排程 {} 提交发布申请 (操作人: {}, 备注: {:?})",
+                id,
+                req.operator,
+                req.comment
+            );
+            Json(ApiResponse::success(schedule, "排程已提交发布申请"))
+        }
+        Ok(None) => Json(api_error(404, "排程不存在")),
+        Err(e) => {
+            tracing::error!("查询排程失败: {}", e);
+            Json(api_error(500, "查询排程失败"))
+        }
+    }
+}
+
+/// APV-2: 发布排程 (pending → released, approve release)
+pub async fn release_schedule(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<Schedule>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let target_status = "released";
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM plugin_aps.aps_schedules WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let current_status = match current {
+        Ok(Some(s)) => s,
+        Ok(None) => return Json(api_error(404, "排程不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询排程失败: {}", e))),
+    };
+
+    if !schedule_requires_approval(&current_status, target_status) {
+        return Json(api_error(400, "当前状态不需要审批发布"));
+    }
+    if let Err(e) = schedule_can_transition(&current_status, target_status) {
+        return Json(api_error(400, &format!("当前状态不允许发布: {}", e)));
+    }
+
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, Schedule>(
+        r#"
+        UPDATE plugin_aps.aps_schedules SET status = $2, updated_at = $3
+        WHERE id = $1 AND tenant_id = $4
+        RETURNING id, schedule_no, plan_id, work_order_id, product_id, product_name,
+                  work_center_id, work_center_name, planned_start, planned_end,
+                  actual_start, actual_end, quantity, priority, status, tenant_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(target_status)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(schedule) => {
+            tracing::info!(
+                "排程 {} 发布审批通过: {} -> {} (操作人: {}, 备注: {:?})",
+                id,
+                current_status,
+                target_status,
+                req.operator,
+                req.comment
+            );
+            Json(ApiResponse::success(schedule, "排程已发布"))
+        }
+        Err(e) => {
+            tracing::error!("发布排程失败: {}", e);
+            Json(api_error(500, "发布排程失败"))
+        }
+    }
+}
+
+/// APV-2: 暂停排程 (released → pending, hold)
+pub async fn hold_schedule(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<Schedule>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let target_status = "pending";
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM plugin_aps.aps_schedules WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let current_status = match current {
+        Ok(Some(s)) => s,
+        Ok(None) => return Json(api_error(404, "排程不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询排程失败: {}", e))),
+    };
+
+    if let Err(e) = schedule_can_transition(&current_status, target_status) {
+        return Json(api_error(400, &format!("当前状态不允许暂停: {}", e)));
+    }
+
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, Schedule>(
+        r#"
+        UPDATE plugin_aps.aps_schedules SET status = $2, updated_at = $3
+        WHERE id = $1 AND tenant_id = $4
+        RETURNING id, schedule_no, plan_id, work_order_id, product_id, product_name,
+                  work_center_id, work_center_name, planned_start, planned_end,
+                  actual_start, actual_end, quantity, priority, status, tenant_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(target_status)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(schedule) => {
+            tracing::info!(
+                "排程 {} 已暂停: {} -> {} (操作人: {}, 备注: {:?})",
+                id,
+                current_status,
+                target_status,
+                req.operator,
+                req.comment
+            );
+            Json(ApiResponse::success(schedule, "排程已暂停"))
+        }
+        Err(e) => {
+            tracing::error!("暂停排程失败: {}", e);
+            Json(api_error(500, "暂停排程失败"))
+        }
+    }
 }
 
 #[cfg(test)]

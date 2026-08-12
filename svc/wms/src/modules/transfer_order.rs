@@ -1,14 +1,15 @@
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
+    http::HeaderMap,
     routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
+use sqlx::Row;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{
-    CreateTransferOrderRequest, TransferOrder, TransferOrderItem, TransferOrderQueryParams,
-};
+use crate::models::transfer_order::*;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
@@ -33,6 +34,12 @@ where
         .route("/transfers/{id}/ship", post(ship_transfer))
         .route("/transfers/{id}/receive", post(receive_transfer))
         .route("/transfers/{id}/complete", post(complete_transfer))
+        .route(
+            "/transfers/{id}/approval/start",
+            post(start_transfer_approval),
+        )
+        .route("/transfers/{id}/approval/approve", post(approve_transfer))
+        .route("/transfers/{id}/approval/reject", post(reject_transfer))
 }
 
 #[utoipa::path(
@@ -701,6 +708,260 @@ pub async fn complete_transfer(
         Err(e) => {
             tracing::error!("完成调拨单失败: {}", e);
             Json(api_error(500, "完成调拨单失败"))
+        }
+    }
+}
+
+#[derive(Debug, serde::Deserialize, ToSchema)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/wms/transfers/{id}/approval/start",
+    tag = "WMS - Transfer",
+    request_body = ApprovalRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn start_transfer_approval(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::TransferApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let transfer_id = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Json(ApiResponse::error(400, "无效的调拨单ID")),
+    };
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4);
+
+    let current =
+        sqlx::query("SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2")
+            .bind(transfer_id)
+            .bind(tenant_id)
+            .fetch_one(&state.db)
+            .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if !crate::shared::fsm::transfer_order_requires_approval(&current_status, "shipped") {
+                return Json(ApiResponse::error(400, "当前状态无需审批"));
+            }
+            let _ = crate::models::audit_log::log_approval_event(
+                &state.db,
+                &tenant_id.to_string(),
+                "transfer_order",
+                &transfer_id.to_string(),
+                "start_approval",
+                &req.operator,
+                &current_status,
+                &current_status,
+                req.comment.as_deref(),
+            )
+            .await;
+            Json(ApiResponse::success(
+                serde_json::json!({"status": current_status, "approval_started": true}),
+                "审批启动成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("找不到调拨单: {}", e);
+            Json(ApiResponse::error(404, "调拨单不存在"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/wms/transfers/{id}/approval/approve",
+    tag = "WMS - Transfer",
+    request_body = ApprovalRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn approve_transfer(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::TransferApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let transfer_id = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Json(ApiResponse::error(400, "无效的调拨单ID")),
+    };
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4);
+
+    let current =
+        sqlx::query("SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2")
+            .bind(transfer_id)
+            .bind(tenant_id)
+            .fetch_one(&state.db)
+            .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if crate::shared::fsm::transfer_order_requires_approval(&current_status, "shipped")
+                && !crate::shared::fsm::transfer_order_can_transition(&current_status, "shipped")
+                    .is_ok()
+            {
+                return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
+            }
+            let result = sqlx::query(
+                "UPDATE wms.transfer_orders SET status = 'shipped', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
+            )
+            .bind(transfer_id)
+            .bind(tenant_id)
+            .fetch_one(&state.db)
+            .await;
+            match result {
+                Ok(_) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.db,
+                        &tenant_id.to_string(),
+                        "transfer_order",
+                        &transfer_id.to_string(),
+                        "approve",
+                        &req.operator,
+                        &current_status,
+                        "shipped",
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(
+                        serde_json::json!({"id": transfer_id, "status": "shipped"}),
+                        "审批通过",
+                    ))
+                }
+                Err(e) => {
+                    tracing::error!("审批调拨单失败: {}", e);
+                    Json(ApiResponse::error(500, "审批失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("找不到调拨单: {}", e);
+            Json(ApiResponse::error(404, "调拨单不存在"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/wms/transfers/{id}/approval/reject",
+    tag = "WMS - Transfer",
+    request_body = ApprovalRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn reject_transfer(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::TransferApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let transfer_id = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Json(ApiResponse::error(400, "无效的调拨单ID")),
+    };
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4);
+
+    let current =
+        sqlx::query("SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2")
+            .bind(transfer_id)
+            .bind(tenant_id)
+            .fetch_one(&state.db)
+            .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if !crate::shared::fsm::transfer_order_can_transition(&current_status, "pending")
+                .is_ok()
+            {
+                return Json(ApiResponse::error(400, "当前状态不允许驳回回流"));
+            }
+            let result = sqlx::query(
+                "UPDATE wms.transfer_orders SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
+            )
+            .bind(transfer_id)
+            .bind(tenant_id)
+            .fetch_one(&state.db)
+            .await;
+            match result {
+                Ok(_) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.db,
+                        &tenant_id.to_string(),
+                        "transfer_order",
+                        &transfer_id.to_string(),
+                        "reject",
+                        &req.operator,
+                        &current_status,
+                        "pending",
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(
+                        serde_json::json!({"id": transfer_id, "status": "pending"}),
+                        "审批驳回，回流至 pending",
+                    ))
+                }
+                Err(e) => {
+                    tracing::error!("驳回调拨单失败: {}", e);
+                    Json(ApiResponse::error(500, "驳回失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("找不到调拨单: {}", e);
+            Json(ApiResponse::error(404, "调拨单不存在"))
         }
     }
 }

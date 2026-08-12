@@ -37,6 +37,10 @@ pub enum QmsPermission {
     ApqpWrite,
     SyncRead,
     SyncWrite,
+    InspectionApprove,
+    IssueApprove,
+    EightdApprove,
+    ApqpApprove,
     All,
 }
 
@@ -129,6 +133,18 @@ impl QmsPermission {
             }
             QmsPermission::SyncWrite => {
                 SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::InspectionApprove => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Admin)
+            }
+            QmsPermission::IssueApprove => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Admin)
+            }
+            QmsPermission::EightdApprove => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Admin)
+            }
+            QmsPermission::ApqpApprove => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Admin)
             }
             QmsPermission::All => {
                 SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Admin)

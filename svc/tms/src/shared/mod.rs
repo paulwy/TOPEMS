@@ -1,4 +1,8 @@
+pub mod fsm;
 pub mod permission;
+
+#[cfg(test)]
+mod fsm_test;
 
 use axum::extract::FromRef;
 use sqlx::PgPool;

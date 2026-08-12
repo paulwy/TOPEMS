@@ -1,287 +1,21 @@
 //! APQP (Advanced Product Quality Planning) handlers
 
+use crate::models::apqp::*;
+use crate::shared::fsm::{apqp_can_transition, apqp_requires_approval};
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
-    Json, Router,
+    Extension, Json, Router,
 };
-use chrono::NaiveDate;
-use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, FromRow};
+use sqlx::{types::Uuid, Row};
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
-#[derive(Debug, Deserialize)]
-pub struct ApqpProjectQuery {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub status: Option<String>,
-    pub product_name: Option<String>,
-}
+const STATUS_IN_PRODUCTION: &str = "in_production";
+const STATUS_COMPLETED: &str = "completed";
+const STATUS_CANCELLED: &str = "cancelled";
 
-#[derive(Debug, Serialize, FromRow)]
-pub struct ApqpProject {
-    pub id: String,
-    pub tenant_id: String,
-    pub project_no: String,
-    pub project_name: String,
-    pub product_id: Option<String>,
-    pub product_name: Option<String>,
-    pub customer: Option<String>,
-    pub description: Option<String>,
-    pub status: Option<String>,
-    pub current_phase: Option<String>,
-    pub leader: Option<String>,
-    pub team: Option<String>,
-    pub start_date: Option<String>,
-    pub target_date: Option<String>,
-    pub actual_end_date: Option<String>,
-    pub progress: Option<i32>,
-    pub risk_level: Option<String>,
-    pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateApqpProjectRequest {
-    pub project_name: String,
-    pub product_id: Option<String>,
-    pub product_name: Option<String>,
-    pub customer: Option<String>,
-    pub description: Option<String>,
-    pub leader: Option<String>,
-    pub team: Option<String>,
-    pub start_date: Option<NaiveDate>,
-    pub target_date: Option<NaiveDate>,
-    pub created_by: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UpdateApqpProjectRequest {
-    pub project_name: Option<String>,
-    pub product_id: Option<String>,
-    pub product_name: Option<String>,
-    pub customer: Option<String>,
-    pub description: Option<String>,
-    pub status: Option<String>,
-    pub current_phase: Option<String>,
-    pub leader: Option<String>,
-    pub team: Option<String>,
-    pub start_date: Option<NaiveDate>,
-    pub target_date: Option<NaiveDate>,
-    pub actual_end_date: Option<NaiveDate>,
-    pub progress: Option<i32>,
-    pub risk_level: Option<String>,
-}
-
-#[derive(Debug, Serialize, FromRow)]
-pub struct ApqpPhase {
-    pub id: String,
-    pub tenant_id: String,
-    pub project_id: String,
-    pub phase_code: String,
-    pub phase_name: String,
-    pub description: Option<String>,
-    pub status: Option<String>,
-    pub start_date: Option<String>,
-    pub end_date: Option<String>,
-    pub actual_start_date: Option<String>,
-    pub actual_end_date: Option<String>,
-    pub progress: Option<i32>,
-    pub sort_order: Option<i32>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateApqpPhaseRequest {
-    pub project_id: String,
-    pub phase_code: String,
-    pub phase_name: String,
-    pub description: Option<String>,
-    pub start_date: Option<NaiveDate>,
-    pub end_date: Option<NaiveDate>,
-    pub sort_order: Option<i32>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UpdateApqpPhaseRequest {
-    pub phase_name: Option<String>,
-    pub description: Option<String>,
-    pub status: Option<String>,
-    pub start_date: Option<NaiveDate>,
-    pub end_date: Option<NaiveDate>,
-    pub actual_start_date: Option<NaiveDate>,
-    pub actual_end_date: Option<NaiveDate>,
-    pub progress: Option<i32>,
-    pub sort_order: Option<i32>,
-}
-
-#[derive(Debug, Serialize, FromRow)]
-pub struct ApqpTask {
-    pub id: String,
-    pub tenant_id: String,
-    pub project_id: String,
-    pub phase_id: String,
-    pub task_name: String,
-    pub description: Option<String>,
-    pub task_type: Option<String>,
-    pub deliverable: Option<String>,
-    pub status: Option<String>,
-    pub assignee: Option<String>,
-    pub due_date: Option<String>,
-    pub completed_at: Option<String>,
-    pub sort_order: Option<i32>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ApqpTaskQuery {
-    pub project_id: Option<String>,
-    pub phase_id: Option<String>,
-    pub status: Option<String>,
-    pub assignee: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateApqpTaskRequest {
-    pub project_id: String,
-    pub phase_id: String,
-    pub task_name: String,
-    pub description: Option<String>,
-    pub task_type: Option<String>,
-    pub deliverable: Option<String>,
-    pub assignee: Option<String>,
-    pub due_date: Option<NaiveDate>,
-    pub sort_order: Option<i32>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UpdateApqpTaskRequest {
-    pub task_name: Option<String>,
-    pub description: Option<String>,
-    pub task_type: Option<String>,
-    pub deliverable: Option<String>,
-    pub status: Option<String>,
-    pub assignee: Option<String>,
-    pub due_date: Option<NaiveDate>,
-    pub completed_at: Option<NaiveDate>,
-    pub sort_order: Option<i32>,
-}
-
-#[derive(Debug, Serialize, FromRow)]
-pub struct ApqpRisk {
-    pub id: String,
-    pub tenant_id: String,
-    pub project_id: String,
-    pub risk_name: String,
-    pub description: Option<String>,
-    pub risk_category: Option<String>,
-    pub severity: Option<i32>,
-    pub occurrence: Option<i32>,
-    pub detection: Option<i32>,
-    pub rpn: Option<i32>,
-    pub status: Option<String>,
-    pub mitigation_plan: Option<String>,
-    pub responsible: Option<String>,
-    pub target_date: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ApqpRiskQuery {
-    pub project_id: Option<String>,
-    pub status: Option<String>,
-    pub min_rpn: Option<i64>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateApqpRiskRequest {
-    pub project_id: String,
-    pub risk_name: String,
-    pub description: Option<String>,
-    pub risk_category: Option<String>,
-    pub severity: i32,
-    pub occurrence: i32,
-    pub detection: i32,
-    pub mitigation_plan: Option<String>,
-    pub responsible: Option<String>,
-    pub target_date: Option<NaiveDate>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UpdateApqpRiskRequest {
-    pub risk_name: Option<String>,
-    pub description: Option<String>,
-    pub risk_category: Option<String>,
-    pub severity: Option<i32>,
-    pub occurrence: Option<i32>,
-    pub detection: Option<i32>,
-    pub status: Option<String>,
-    pub mitigation_plan: Option<String>,
-    pub responsible: Option<String>,
-    pub target_date: Option<NaiveDate>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ApqpProgressStatistics {
-    pub total_phases: i64,
-    pub completed_phases: i64,
-    pub total_tasks: i64,
-    pub completed_tasks: i64,
-    pub overall_progress: f64,
-    pub phase_progress: Vec<PhaseProgress>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct PhaseProgress {
-    pub phase_id: String,
-    pub phase_name: String,
-    pub phase_code: String,
-    pub total_tasks: i64,
-    pub completed_tasks: i64,
-    pub progress: f64,
-    pub status: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct StatusTransitionRequest {
-    pub target_status: String,
-    pub operator: String,
-    pub comment: Option<String>,
-}
-
-#[derive(Debug, Serialize, FromRow)]
-pub struct ApqpApproval {
-    pub id: String,
-    pub tenant_id: String,
-    pub project_id: String,
-    pub approval_type: String,
-    pub status: Option<String>,
-    pub applicant: Option<String>,
-    pub approver: Option<String>,
-    pub comment: Option<String>,
-    pub submitted_at: Option<String>,
-    pub approved_at: Option<String>,
-    pub created_at: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateApqpApprovalRequest {
-    pub project_id: String,
-    pub approval_type: String,
-    pub applicant: Option<String>,
-    pub comment: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ProcessApprovalRequest {
-    pub approver: String,
-    pub approved: bool,
-    pub comment: Option<String>,
-}
+const APQP_SELECT_COLS: &str = r#"id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT"#;
 
 pub async fn list_apqp_projects(
     State(state): State<crate::AppState>,
@@ -1296,6 +1030,194 @@ pub async fn process_apqp_approval(
     }
 }
 
+/// APV-4 审批请求体
+#[derive(Debug, serde::Deserialize)]
+pub struct ApqpApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
+
+/// APV-4: 审批通过 (in_pilot → in_production, requires_approval)
+pub async fn approve_apqp(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<ApqpApprovalRequest>,
+) -> Json<ApiResponse<ApqpProject>> {
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+    };
+
+    let current =
+        sqlx::query("SELECT status FROM qa_apqp_projects WHERE deleted_at IS NULL AND id = $1")
+            .bind(id)
+            .fetch_one(&state.pool)
+            .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if apqp_requires_approval(&current_status, STATUS_IN_PRODUCTION)
+                && !crate::shared::permission::has_qms_permission(&claims, "apqp.approve")
+            {
+                return Json(ApiResponse::error(403, "无审批权限"));
+            }
+            if !apqp_can_transition(&current_status, STATUS_IN_PRODUCTION).is_ok() {
+                return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
+            }
+            let project = sqlx::query_as::<_, ApqpProject>(
+                format!("UPDATE qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 RETURNING {}", STATUS_IN_PRODUCTION, APQP_SELECT_COLS).as_str()
+            ).bind(id).fetch_one(&state.pool).await;
+            match project {
+                Ok(data) => {
+                    let tenant_str = claims.tenant_id.clone().unwrap_or_default();
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_str,
+                        "apqp",
+                        &id.to_string(),
+                        "approve",
+                        &req.operator,
+                        &current_status,
+                        STATUS_IN_PRODUCTION,
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(data, "审批通过"))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to approve APQP: {}", e);
+                    Json(ApiResponse::error(500, "审批失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to find APQP project: {}", e);
+            Json(ApiResponse::error(404, "APQP项目不存在"))
+        }
+    }
+}
+
+/// APV-4: 完成审批 (in_production → completed, requires_approval)
+pub async fn complete_apqp(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<ApqpApprovalRequest>,
+) -> Json<ApiResponse<ApqpProject>> {
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+    };
+
+    let current =
+        sqlx::query("SELECT status FROM qa_apqp_projects WHERE deleted_at IS NULL AND id = $1")
+            .bind(id)
+            .fetch_one(&state.pool)
+            .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if apqp_requires_approval(&current_status, STATUS_COMPLETED)
+                && !crate::shared::permission::has_qms_permission(&claims, "apqp.approve")
+            {
+                return Json(ApiResponse::error(403, "无审批权限"));
+            }
+            if !apqp_can_transition(&current_status, STATUS_COMPLETED).is_ok() {
+                return Json(ApiResponse::error(400, "当前状态不允许完成"));
+            }
+            let project = sqlx::query_as::<_, ApqpProject>(
+                format!("UPDATE qa_apqp_projects SET status = '{}', actual_end_date = COALESCE(actual_end_date, NOW()), progress = 100, updated_at = NOW() WHERE id = $1 RETURNING {}", STATUS_COMPLETED, APQP_SELECT_COLS).as_str()
+            ).bind(id).fetch_one(&state.pool).await;
+            match project {
+                Ok(data) => {
+                    let tenant_str = claims.tenant_id.clone().unwrap_or_default();
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_str,
+                        "apqp",
+                        &id.to_string(),
+                        "complete",
+                        &req.operator,
+                        &current_status,
+                        STATUS_COMPLETED,
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(data, "APQP项目已完成"))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to complete APQP: {}", e);
+                    Json(ApiResponse::error(500, "完成失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to find APQP project: {}", e);
+            Json(ApiResponse::error(404, "APQP项目不存在"))
+        }
+    }
+}
+
+/// APV-4: 取消 (任意非终态 → cancelled)
+pub async fn cancel_apqp(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<ApqpApprovalRequest>,
+) -> Json<ApiResponse<ApqpProject>> {
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+    };
+
+    let current =
+        sqlx::query("SELECT status FROM qa_apqp_projects WHERE deleted_at IS NULL AND id = $1")
+            .bind(id)
+            .fetch_one(&state.pool)
+            .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if !apqp_can_transition(&current_status, STATUS_CANCELLED).is_ok() {
+                return Json(ApiResponse::error(400, "当前状态不允许取消"));
+            }
+            let project = sqlx::query_as::<_, ApqpProject>(
+                format!("UPDATE qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 RETURNING {}", STATUS_CANCELLED, APQP_SELECT_COLS).as_str()
+            ).bind(id).fetch_one(&state.pool).await;
+            match project {
+                Ok(data) => {
+                    let tenant_str = claims.tenant_id.clone().unwrap_or_default();
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_str,
+                        "apqp",
+                        &id.to_string(),
+                        "cancel",
+                        &req.operator,
+                        &current_status,
+                        STATUS_CANCELLED,
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(data, "APQP项目已取消"))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to cancel APQP: {}", e);
+                    Json(ApiResponse::error(500, "取消失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to find APQP project: {}", e);
+            Json(ApiResponse::error(404, "APQP项目不存在"))
+        }
+    }
+}
+
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
         .route("/apqp/projects", get(list_apqp_projects))
@@ -1308,6 +1230,9 @@ pub fn create_routes() -> Router<crate::AppState> {
             post(transition_project_status),
         )
         .route("/apqp/projects/{id}/progress", get(get_apqp_progress))
+        .route("/apqp/projects/{id}/approve", post(approve_apqp))
+        .route("/apqp/projects/{id}/complete", post(complete_apqp))
+        .route("/apqp/projects/{id}/cancel", post(cancel_apqp))
         .route("/apqp/phases", get(list_apqp_phases))
         .route("/apqp/phases", post(create_apqp_phase))
         .route("/apqp/phases/{id}", get(get_apqp_phase))

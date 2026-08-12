@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Batch {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -35,7 +36,7 @@ pub struct Batch {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateBatchRequest {
     pub batch_no: String,
     pub sku: String,
@@ -56,7 +57,7 @@ pub struct CreateBatchRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateBatchRequest {
     pub batch_no: Option<String>,
     pub sku: Option<String>,
@@ -77,7 +78,7 @@ pub struct UpdateBatchRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct BatchQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -91,7 +92,7 @@ pub struct BatchQueryParams {
     pub expired: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct BatchStatistics {
     pub total_batches: i64,
     pub total_quantity: f64,

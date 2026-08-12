@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct InventoryItem {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -21,7 +22,7 @@ pub struct InventoryItem {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateInventoryItemRequest {
     pub sku: String,
     pub name: String,
@@ -34,7 +35,7 @@ pub struct CreateInventoryItemRequest {
     pub max_quantity: Option<f64>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateInventoryItemRequest {
     pub sku: Option<String>,
     pub name: Option<String>,
