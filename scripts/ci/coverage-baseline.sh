@@ -115,46 +115,54 @@ RUSTC_NIGHTLY_FLAG=""   # "", "+nightly", 或 "RUSTC_BOOTSTRAP=1" 前缀
 HAS_JQ=false
 
 toolchain_selfcheck() {
-  [[ -f "$PROJECT_ROOT/Cargo.toml" ]] || { error "Cargo.toml not at project root"; exit 2; }
-  head -n 1 "$PROJECT_ROOT/Cargo.toml" | grep -q '^\[workspace\]' || {
-    error "Cargo.toml first line must be [workspace]"; exit 2
-  }
-  command -v cargo   >/dev/null 2>&1 || { error "cargo not found, install Rust"; exit 2; }
-  command -v rustc   >/dev/null 2>&1 || { error "rustc not found, install Rust"; exit 2; }
+  # Python 是双栈都需要的（汇总器）
   command -v python3 >/dev/null 2>&1 || { error "python3 not found"; exit 2; }
   python3 -c "import sys; sys.exit(0 if sys.version_info>=(3,10) else 1)" 2>/dev/null ||
     { error "python3 >= 3.10 required"; exit 2; }
 
-  # llvm-tools-preview: llvm-profdata + llvm-cov
-  local llp="" llc=""
-  if rustup which llvm-profdata >/dev/null 2>&1; then
-    llp="$(rustup which llvm-profdata)"; llc="$(rustup which llvm-cov)"
-  elif command -v llvm-profdata >/dev/null 2>&1; then
-    llp="$(command -v llvm-profdata)"; llc="$(command -v llvm-cov)"
-  fi
-  if [[ -z "$llp" || -z "$llc" ]]; then
-    error "llvm-profdata / llvm-cov not found."
-    info  "Try: rustup component add llvm-tools-preview"
-    exit 2
-  fi
-  export LLVM_PROFDATA="$llp" LLVM_COV="$llc"
+  # 跑 Rust 端才需要 Cargo workspace、instrument-coverage、llvm-tools
+  if ! $ONLY_TS; then
+    [[ -f "$PROJECT_ROOT/Cargo.toml" ]] || { error "Cargo.toml not at project root"; exit 2; }
+    head -n 1 "$PROJECT_ROOT/Cargo.toml" | grep -q '^\[workspace\]' || {
+      error "Cargo.toml first line must be [workspace]"; exit 2
+    }
+    command -v cargo >/dev/null 2>&1 || { error "cargo not found, install Rust"; exit 2; }
+    command -v rustc >/dev/null 2>&1 || { error "rustc not found, install Rust"; exit 2; }
 
-  # instrument-coverage 支持
-  if rustc --version 2>/dev/null | grep -q "nightly"; then
-    RUSTC_NIGHTLY_FLAG=""
-  elif cargo +nightly rustc --version >/dev/null 2>&1; then
-    RUSTC_NIGHTLY_FLAG="+nightly"
-  else
-    if RUSTC_BOOTSTRAP=1 rustc -Zhelp 2>/dev/null | grep -q instrument-coverage; then
-      RUSTC_NIGHTLY_FLAG="RUSTC_BOOTSTRAP=1"
-    else
-      error "Rust toolchain has no -Z instrument-coverage support."
-      info  "Try: rustup install nightly; or rustup default nightly"
+    # llvm-tools-preview: llvm-profdata + llvm-cov
+    local llp="" llc=""
+    if rustup which llvm-profdata >/dev/null 2>&1; then
+      llp="$(rustup which llvm-profdata)"; llc="$(rustup which llvm-cov)"
+    elif command -v llvm-profdata >/dev/null 2>&1; then
+      llp="$(command -v llvm-profdata)"; llc="$(command -v llvm-cov)"
+    fi
+    if [[ -z "$llp" || -z "$llc" ]]; then
+      error "llvm-profdata / llvm-cov not found."
+      info  "Try: rustup install nightly && rustup +nightly component add llvm-tools-preview"
+      info  "     Or, for TS-only: re-run with --ts"
       exit 2
     fi
+    export LLVM_PROFDATA="$llp" LLVM_COV="$llc"
+
+    # instrument-coverage 支持
+    if rustc --version 2>/dev/null | grep -q "nightly"; then
+      RUSTC_NIGHTLY_FLAG=""
+    elif cargo +nightly rustc --version >/dev/null 2>&1; then
+      RUSTC_NIGHTLY_FLAG="+nightly"
+    else
+      if RUSTC_BOOTSTRAP=1 rustc -Zhelp 2>/dev/null | grep -q instrument-coverage; then
+        RUSTC_NIGHTLY_FLAG="RUSTC_BOOTSTRAP=1"
+      else
+        error "Rust toolchain has no -Z instrument-coverage support."
+        info  "Try: rustup install nightly"
+        info  "     Or, for TS-only: re-run with --ts"
+        exit 2
+      fi
+    fi
+    command -v jq >/dev/null 2>&1 && HAS_JQ=true || true
   fi
-  command -v jq >/dev/null 2>&1 && HAS_JQ=true || true
-  # pnpm 只有跑 TS 时需要
+
+  # 跑 TS 端才需要 pnpm
   if ! $ONLY_RUST; then
     command -v pnpm >/dev/null 2>&1 || {
       warn "pnpm not found — TypeScript coverage WILL BE SKIPPED"
