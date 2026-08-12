@@ -89,6 +89,8 @@ const config: RuntimeConfig = {
     pdm: getEnv('VITE_PDM_SERVICE_URL', '/api/pdm'),
     scm: getEnv('VITE_SCM_SERVICE_URL', '/api/scm'),
     wms: getEnv('VITE_WMS_SERVICE_URL', '/api/wms'),
+    tms: getEnv('VITE_TMS_SERVICE_URL', '/api/tms'),
+    aps: getEnv('VITE_APS_SERVICE_URL', '/api/aps'),
     srm: getEnv('VITE_SRM_SERVICE_URL', '/api/srm'),
     qms: getEnv('VITE_QMS_SERVICE_URL', '/api/qms'),
     lims: getEnv('VITE_LIMS_SERVICE_URL', '/api/lims'),

@@ -19,9 +19,9 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
-mod shared;
-
+pub mod models;
 pub mod modules;
+mod shared;
 
 use axum::{
     extract::State,

@@ -1,4 +1,5 @@
 pub mod audit_log;
+pub mod schema_defense;
 
 use sqlx::PgPool;
 
@@ -928,6 +929,10 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_audit_logs_created_at ON qa_lims_audit_logs(created_at)")
         .execute(pool)
         .await?;
+
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
+        tracing::error!("[lims] Schema 防御检查失败: {:?}", e);
+    }
 
     Ok(())
 }

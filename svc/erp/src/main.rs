@@ -1,6 +1,7 @@
 mod event_handlers;
 mod models;
 mod sagas;
+mod schema_defense;
 mod services;
 mod shared;
 mod utils;
@@ -202,5 +203,11 @@ async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
     .execute(pool)
     .await?;
     tracing::info!("[erp] erp_master_data_refs 表已就绪（AC-5 本地主数据引用）");
+
+    // Schema 防御：增量迁移 + 一致性自检
+    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(pool).await {
+        tracing::error!("[erp] Schema 防御检查失败: {:?}", e);
+    }
+
     Ok(())
 }

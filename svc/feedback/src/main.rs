@@ -11,6 +11,7 @@ use crate::openapi::FeedbackApiDoc;
 mod handlers;
 mod models;
 pub mod openapi;
+mod schema_defense;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

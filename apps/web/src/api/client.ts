@@ -541,6 +541,12 @@ class ApiClient {
   get wms() {
     return this.clients.wms;
   }
+  get tms() {
+    return this.clients.tms;
+  }
+  get aps() {
+    return this.clients.aps;
+  }
   get hrm() {
     return this.clients.hrm;
   }

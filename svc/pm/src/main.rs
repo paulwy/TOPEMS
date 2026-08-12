@@ -16,6 +16,7 @@ use utoipa::OpenApi;
 mod event_handlers;
 pub mod models;
 pub mod modules;
+pub mod schema_defense;
 pub mod services;
 pub mod shared;
 
@@ -118,6 +119,9 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn init_db(_pool: &sqlx::PgPool) -> topems_shared_core::error::Result<()> {
+async fn init_db(pool: &sqlx::PgPool) -> topems_shared_core::error::Result<()> {
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
+        tracing::error!("[pm] Schema 防御检查失败: {:?}", e);
+    }
     Ok(())
 }

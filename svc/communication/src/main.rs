@@ -7,6 +7,7 @@ mod mail;
 mod models;
 mod notification;
 pub mod openapi;
+mod schema_defense;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -404,5 +405,11 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     tracing::info!("Communication database tables initialized");
+
+    // V69.3 Schema 防御：增量迁移 + 一致性自检（9 表）
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
+        tracing::error!("[communication] Schema 防御检查失败: {:?}", e);
+    }
+
     Ok(())
 }

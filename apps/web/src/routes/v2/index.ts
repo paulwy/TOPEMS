@@ -58,6 +58,8 @@ const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleCo
   im: () => import('@/modules/im/config').then((m) => ({ imModuleConfig: m.imModuleConfig })),
   // bi 与 report 为不同功能页面，但后端均调用 analytics 服务（端口 8060）
   bi: () => import('@/modules/bi/config').then((m) => ({ biModuleConfig: m.biModuleConfig })),
+  tms: () => import('@/modules/tms/config').then((m) => ({ tmsModuleConfig: m.tmsModuleConfig })),
+  aps: () => import('@/modules/aps/config').then((m) => ({ apsModuleConfig: m.apsModuleConfig })),
   gis: () => import('@/modules/gis/config').then((m) => ({ gisModuleConfig: m.gisModuleConfig })),
   asset: () =>
     import('@/modules/asset/config').then((m) => ({ assetModuleConfig: m.assetModuleConfig })),

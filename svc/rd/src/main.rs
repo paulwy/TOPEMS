@@ -28,6 +28,7 @@ mod middleware;
 mod models;
 pub mod modules;
 mod repositories;
+mod schema_defense;
 mod services;
 mod shared;
 
@@ -266,6 +267,9 @@ async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
     }
 }
 
-async fn init_db(_pool: &sqlx::PgPool) -> anyhow::Result<()> {
+async fn init_db(pool: &sqlx::PgPool) -> anyhow::Result<()> {
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
+        tracing::error!("[rd] Schema 防御检查失败: {:?}", e);
+    }
     Ok(())
 }

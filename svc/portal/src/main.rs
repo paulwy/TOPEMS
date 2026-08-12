@@ -109,6 +109,11 @@ async fn main() -> anyhow::Result<()> {
         tracing::info!("✅ 帮助中心模块已初始化（Portal BFF）");
     }
 
+    // Portal 全模块增量迁移 + schema 自检（115 表 / 728 列）
+    if let Err(e) = models::schema_defense::run_schema_migration_and_verify(&ctx.db).await {
+        tracing::warn!("⚠️ Portal schema 防御初始化失败（不阻塞启动）: {}", e);
+    }
+
     // V33.0 Portal BFF Phase 3: GraphQL 聚合层
     let graphql_schema = modules::graphql_schema::build_schema(app_state.clone());
 

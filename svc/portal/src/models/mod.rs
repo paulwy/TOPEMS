@@ -1,4 +1,5 @@
 pub mod audit_log;
+pub mod schema_defense;
 
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;

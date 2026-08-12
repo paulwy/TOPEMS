@@ -24,6 +24,7 @@ topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
 topems-shared-event = { path = "../../lib/shared-event" }
 topems-shared-core = { path = "../../lib/shared-core" }
 topems-shared-auth = { path = "../../lib/shared-auth" }
+topems-shared-db = { workspace = true }
 
 topems-shared-service-client = { path = "../../lib/shared-service-client" }
 bigdecimal = { version = "0.4", features = ["serde"] }

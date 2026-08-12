@@ -37,6 +37,9 @@ export interface ServicesConfig {
   qms: string;
   lims: string;
   ehs: string;
+  // 物流与排程
+  tms: string;
+  aps: string;
   /** 商业智能（与 `analytics` 同值，推荐使用标准名 `bi`） */
   bi: string;
   /** 数据分析服务别名，历史上 svc 目录名为 analytics */
