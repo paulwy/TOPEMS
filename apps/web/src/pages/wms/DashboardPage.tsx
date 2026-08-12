@@ -121,7 +121,8 @@ export const DashboardPage: React.FC = () => {
         id: 'inventory-distribution',
         title: t('wms.dashboard_page.chart_inventory_distribution'),
         chart: (
-          <LazyChart type='bar'
+          <LazyChart
+            type='bar'
             data={barData}
             xKey='name'
             yKey='value'
@@ -133,7 +134,12 @@ export const DashboardPage: React.FC = () => {
       {
         id: 'inventory-type',
         title: t('wms.dashboard_page.chart_inventory_type'),
-        chart: <LazyChart type='pie' data={pieData} />,
+        chart: (
+          <LazyChart
+            type='pie'
+            data={pieData}
+          />
+        ),
         height: 300,
         type: 'pie',
       },
@@ -141,7 +147,8 @@ export const DashboardPage: React.FC = () => {
         id: 'daily-trend',
         title: t('wms.dashboard_page.chart_daily_trend'),
         chart: (
-          <LazyChart type='line'
+          <LazyChart
+            type='line'
             data={lineData}
             xKey='name'
             yKey='value'

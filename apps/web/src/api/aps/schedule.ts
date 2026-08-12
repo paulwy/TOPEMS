@@ -1,6 +1,13 @@
 import apiClient from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
-import type { Schedule, CreateScheduleRequest, UpdateScheduleRequest, PaginationParams } from './types';
+import type {
+  Schedule,
+  CreateScheduleRequest,
+  UpdateScheduleRequest,
+  PaginationParams,
+  ApprovalRequest,
+  ApprovalResponse,
+} from './types';
 
 export const scheduleApi = {
   list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Schedule>>> => {
@@ -33,6 +40,28 @@ export const scheduleApi = {
 
   cancel: async (id: string): Promise<ApiResponse<Schedule>> => {
     return apiClient.aps.post(`/schedules/${id}/cancel`);
+  },
+
+  // ---- 审批端点 ----
+  submit: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+    return apiClient.aps.post(`/schedules/${id}/submit`, {
+      operator,
+      comment,
+    } as ApprovalRequest);
+  },
+
+  release: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+    return apiClient.aps.post(`/schedules/${id}/release`, {
+      operator,
+      comment,
+    } as ApprovalRequest);
+  },
+
+  hold: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+    return apiClient.aps.post(`/schedules/${id}/hold`, {
+      operator,
+      comment,
+    } as ApprovalRequest);
   },
 };
 

@@ -85,7 +85,7 @@ const EXEMPT_PATTERNS = [
   /Editor/i,
   /Wizard/i,
   /Overview/i,
-  /Detail$/i,
+  /Detail/i,
   /Tree$/i,
   /Chart/i,
   /Report/i,
@@ -157,7 +157,9 @@ function isCrudPage(fileName) {
   const baseName = path.basename(fileName, '.tsx');
   const isCrud = CRUD_KEYWORDS.some((kw) => baseName.includes(kw));
   const isExempt = EXEMPT_PATTERNS.some((p) => p.test(baseName));
-  return isCrud && !isExempt;
+  // analytics 子目录下的页面属于分析页，非 CRUD 列表页
+  const isAnalytics = /\/analytics\//i.test(fileName);
+  return isCrud && !isExempt && !isAnalytics;
 }
 
 function getGitDiffNewFiles() {
@@ -231,11 +233,11 @@ function main() {
       module: moduleName,
       uses_template: usesTemplate,
       whitelisted: isWhitelisted,
-      is_crud: isCrudPage(fileName),
+      is_crud: isCrudPage(file),
     });
 
     // 严格模式：新建 CRUD 页面未用模板
-    if (strict && diffOnly && !effectivelyStandardized && isCrudPage(fileName)) {
+    if (strict && diffOnly && !effectivelyStandardized && isCrudPage(file)) {
       report.crud_new_without_template.push(relPath);
     }
   }

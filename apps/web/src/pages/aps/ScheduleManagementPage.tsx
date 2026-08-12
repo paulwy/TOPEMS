@@ -42,15 +42,17 @@ import { scheduleApi } from '@/api/aps';
 import type { Schedule, CreateScheduleRequest } from '@/api/aps/types';
 
 const STATUS_LABEL: Record<string, string> = {
-  pending: '待开始',
-  in_progress: '进行中',
+  pending: '待处理',
+  released: '已发布',
+  running: '运行中',
   completed: '已完成',
   cancelled: '已取消',
 };
 
-const STATUS_COLOR: Record<string, 'default' | 'primary' | 'success' | 'error'> = {
+const STATUS_COLOR: Record<string, 'default' | 'primary' | 'success' | 'error' | 'info' | 'warning'> = {
   pending: 'default',
-  in_progress: 'primary',
+  released: 'info',
+  running: 'primary',
   completed: 'success',
   cancelled: 'error',
 };
@@ -328,7 +330,7 @@ const ScheduleManagementPage: React.FC = () => {
                                 </IconButton>
                               </Tooltip>
                             )}
-                            {row.status === 'in_progress' && (
+                            {row.status === 'running' && (
                               <Tooltip title='完成'>
                                 <IconButton
                                   size='small'
@@ -340,7 +342,7 @@ const ScheduleManagementPage: React.FC = () => {
                                 </IconButton>
                               </Tooltip>
                             )}
-                            {(row.status === 'pending' || row.status === 'in_progress') && (
+                            {(row.status === 'pending' || row.status === 'running') && (
                               <Tooltip title='取消'>
                                 <IconButton
                                   size='small'

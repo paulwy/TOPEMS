@@ -23,6 +23,8 @@ import { laborApi } from './labor';
 import { pickingApi } from './picking';
 import { putawayApi } from './putaway';
 import { manifestApi } from './manifest';
+import apiClient from '../client';
+import type { ApprovalStartRequest, ApprovalApproveRequest, ApprovalRejectRequest } from './types';
 
 export * from './types';
 
@@ -202,5 +204,50 @@ export const wmsApi = {
   putaway: putawayApi,
   manifests: manifestApi,
 };
+
+// ============================================================================
+// 审批端点（4 类实体 × 3 端点 = 12 个调用）
+// 路径严格与后端 svc/wms Route 对齐：
+//   /wms/inbound-orders/${id}/approval/{start,approve,reject}
+//   /wms/outbound-orders/${id}/approval/{start,approve,reject}
+//   /wms/stock-takes/${id}/approval/{start,approve,reject}
+//   /wms/transfer-orders/${id}/approval/{start,approve,reject}
+// ============================================================================
+export const wmsApprovalApi = {
+  inbound: {
+    start: (id: string, body: ApprovalStartRequest) =>
+      apiClient.post(`/wms/inbound-orders/${id}/approval/start`, body),
+    approve: (id: string, body: ApprovalApproveRequest) =>
+      apiClient.post(`/wms/inbound-orders/${id}/approval/approve`, body),
+    reject: (id: string, body: ApprovalRejectRequest) =>
+      apiClient.post(`/wms/inbound-orders/${id}/approval/reject`, body),
+  },
+  outbound: {
+    start: (id: string, body: ApprovalStartRequest) =>
+      apiClient.post(`/wms/outbound-orders/${id}/approval/start`, body),
+    approve: (id: string, body: ApprovalApproveRequest) =>
+      apiClient.post(`/wms/outbound-orders/${id}/approval/approve`, body),
+    reject: (id: string, body: ApprovalRejectRequest) =>
+      apiClient.post(`/wms/outbound-orders/${id}/approval/reject`, body),
+  },
+  stockTake: {
+    start: (id: string, body: ApprovalStartRequest) =>
+      apiClient.post(`/wms/stock-takes/${id}/approval/start`, body),
+    approve: (id: string, body: ApprovalApproveRequest) =>
+      apiClient.post(`/wms/stock-takes/${id}/approval/approve`, body),
+    reject: (id: string, body: ApprovalRejectRequest) =>
+      apiClient.post(`/wms/stock-takes/${id}/approval/reject`, body),
+  },
+  transferOrder: {
+    start: (id: string, body: ApprovalStartRequest) =>
+      apiClient.post(`/wms/transfer-orders/${id}/approval/start`, body),
+    approve: (id: string, body: ApprovalApproveRequest) =>
+      apiClient.post(`/wms/transfer-orders/${id}/approval/approve`, body),
+    reject: (id: string, body: ApprovalRejectRequest) =>
+      apiClient.post(`/wms/transfer-orders/${id}/approval/reject`, body),
+  },
+};
+
+export type WmsApprovalApi = typeof wmsApprovalApi;
 
 export default wmsApi;

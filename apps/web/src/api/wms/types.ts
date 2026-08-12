@@ -1061,3 +1061,93 @@ export interface SerialNumberStatistics {
   quality_pending_count: number;
   warranty_expiring_soon_count: number;
 }
+
+// ============================================================================
+// FSM 状态枚举常量导出（从 types/wms.ts 重导出）
+// ============================================================================
+export {
+  INBOUND_ORDER_STATES,
+  OUTBOUND_ORDER_STATES,
+  STOCK_TAKE_STATES,
+  TRANSFER_ORDER_STATES,
+  WAVE_PICK_STATES,
+  INVENTORY_MOVEMENT_STATES,
+  SERIAL_NUMBER_STATES,
+} from '@/types/wms';
+
+export type {
+  InboundOrderState,
+  OutboundOrderState,
+  StockTakeState,
+  TransferOrderState,
+  WavePickState,
+  InventoryMovementState,
+  SerialNumberState,
+} from '@/types/wms';
+
+// ============================================================================
+// 审批 DTO（与 7 FSM 的 requires_approval gate 对应）
+// ============================================================================
+export interface ApprovalStartRequest {
+  entityId: string;
+  entityType: string;
+  remark?: string;
+}
+
+export interface ApprovalApproveRequest {
+  entityId: string;
+  entityType: string;
+  approverId: string;
+  remark?: string;
+}
+
+export interface ApprovalRejectRequest {
+  entityId: string;
+  entityType: string;
+  rejectorId: string;
+  reason: string;
+}
+
+// ============================================================================
+// 6 BI 聚合数据类型
+// ============================================================================
+export interface TurnoverDatum {
+  warehouse: string;
+  month: string;
+  turnoverRate: number;
+  days: number;
+}
+
+export interface ParetoDatum {
+  sku: string;
+  amount: number;
+  cumulative: number;
+}
+
+export interface FlowDatum {
+  date: string;
+  inboundQty: number;
+  outboundQty: number;
+  net: number;
+}
+
+export interface AbcCategory {
+  category: 'A' | 'B' | 'C';
+  count: number;
+  amount: number;
+  percent: number;
+}
+
+export interface LocationDatum {
+  area: string;
+  utilization: number;
+  vacancy: number;
+  deadStock: number;
+}
+
+export interface FulfillmentDatum {
+  warehouse: string;
+  onTimeRate: number;
+  avgHours: number;
+  slaPass: number;
+}
