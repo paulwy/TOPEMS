@@ -3,7 +3,7 @@
 //! 质量管理模块：质量检验、巡检、质量标准
 
 use axum::{
-    routing::{get, put},
+    routing::{get, post, put},
     Router,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
@@ -31,6 +31,19 @@ pub fn create_routes() -> Router<AppState> {
             get(get_inspection)
                 .put(update_inspection)
                 .delete(delete_inspection),
+        )
+        // APV-3: 质量让步审批端点
+        .route(
+            "/quality/inspections/{id}/approval/start",
+            post(start_concession_approval),
+        )
+        .route(
+            "/quality/inspections/{id}/approval/approve",
+            post(approve_concession),
+        )
+        .route(
+            "/quality/inspections/{id}/approval/reject",
+            post(reject_concession),
         )
         // Quality Patrols
         .route("/quality/patrols", get(list_patrols).post(create_patrol))

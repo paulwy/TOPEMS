@@ -40,6 +40,10 @@ pub fn create_routes() -> Router<AppState> {
         .route("/orders/{id}/start", put(start_production_order))
         .route("/orders/{id}/complete", put(complete_production_order))
         .route("/orders/{id}/cancel", put(cancel_production_order))
+        // APV-1: 生产订单审批端点
+        .route("/orders/{id}/approval/start", post(start_order_approval))
+        .route("/orders/{id}/approval/approve", post(approve_order))
+        .route("/orders/{id}/approval/reject", post(reject_order))
 }
 
 // ==================== Data Types ====================
@@ -1199,4 +1203,115 @@ pub async fn release_production_order(
         }
         None => Json(ApiResponse::error(404, "生产工单不存在或状态不允许发布")),
     }
+}
+
+// ==================== APV-1: 生产订单审批端点（骨架） ====================
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ApprovalStartRequest {
+    pub reason: String,
+    #[allow(dead_code)]
+    pub change_scope: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ApprovalDecisionRequest {
+    pub approval_id: Uuid,
+    pub comment: String,
+    #[allow(dead_code)]
+    pub expected_approval_version: i32,
+}
+
+/// 发起生产订单审批（撤单/回滚场景）
+#[utoipa::path(
+    post,
+    path = "/api/mes/orders/{id}/approval/start",
+    tag = "ProductionOrder",
+    params(
+        ("id" = String, Path, description = "订单ID"),
+    ),
+    request_body = ApprovalStartRequest,
+    responses(
+        (status = 200, description = "审批发起成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn start_order_approval(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ApprovalStartRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
+    {
+        return e;
+    }
+    // TODO: 校验当前 status 是否属于审批转换目标，创建 approval 记录并写入 audit log
+    let approval_id = Uuid::new_v4();
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": approval_id, "status": "pending_approval" }),
+        "审批已发起",
+    ))
+}
+
+/// 审批通过
+#[utoipa::path(
+    post,
+    path = "/api/mes/orders/{id}/approval/approve",
+    tag = "ProductionOrder",
+    params(
+        ("id" = String, Path, description = "订单ID"),
+    ),
+    request_body = ApprovalDecisionRequest,
+    responses(
+        (status = 200, description = "审批通过成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn approve_order(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ApprovalDecisionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
+    {
+        return e;
+    }
+    // TODO: 校验 approval_id 与版本，执行状态转换并写入 audit log
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": req.approval_id, "status": "approved" }),
+        "审批通过成功",
+    ))
+}
+
+/// 审批驳回
+#[utoipa::path(
+    post,
+    path = "/api/mes/orders/{id}/approval/reject",
+    tag = "ProductionOrder",
+    params(
+        ("id" = String, Path, description = "订单ID"),
+    ),
+    request_body = ApprovalDecisionRequest,
+    responses(
+        (status = 200, description = "审批驳回成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn reject_order(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ApprovalDecisionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
+    {
+        return e;
+    }
+    // TODO: 校验 approval_id 与版本，记录驳回并写入 audit log
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": req.approval_id, "status": "rejected" }),
+        "审批驳回成功",
+    ))
 }

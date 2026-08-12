@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{get, put},
+    routing::{get, post, put},
     Json, Router,
 };
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
@@ -35,6 +35,13 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/work-reports/{id}/approve", put(approve_work_report))
         .route("/work-reports/{id}/reject", put(reject_work_report))
+        // APV-2: 报工返工审批端点
+        .route(
+            "/work-reports/{id}/approval/start",
+            post(start_rework_approval),
+        )
+        .route("/work-reports/{id}/approval/approve", post(approve_rework))
+        .route("/work-reports/{id}/approval/reject", post(reject_rework))
 }
 
 // ==================== Request / Response Types ====================
@@ -1004,4 +1011,118 @@ pub async fn reject_work_report(
             Json(ApiResponse::error(500, "审批驳回失败"))
         }
     }
+}
+
+// ==================== APV-2: 报工返工审批端点（骨架） ====================
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ReworkApprovalStartRequest {
+    pub reason: String,
+    #[allow(dead_code)]
+    pub target_status: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ReworkApprovalDecisionRequest {
+    pub approval_id: Uuid,
+    pub comment: String,
+    #[allow(dead_code)]
+    pub expected_approval_version: i32,
+}
+
+/// 发起返工审批（rejected→reworking）
+#[utoipa::path(
+    post,
+    path = "/api/mes/work-reports/{id}/approval/start",
+    tag = "WorkReport",
+    params(
+        ("id" = String, Path, description = "报工ID"),
+    ),
+    request_body = ReworkApprovalStartRequest,
+    responses(
+        (status = 200, description = "返工审批发起成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn start_rework_approval(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(req): Json<ReworkApprovalStartRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::MesReworkApprove).await
+    {
+        return e;
+    }
+    // TODO: 校验当前 status=rejected，创建 approval 记录并写入 audit log
+    let approval_id = Uuid::new_v4();
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": approval_id, "status": "pending_approval" }),
+        "返工审批已发起",
+    ))
+}
+
+/// 返工审批通过
+#[utoipa::path(
+    post,
+    path = "/api/mes/work-reports/{id}/approval/approve",
+    tag = "WorkReport",
+    params(
+        ("id" = String, Path, description = "报工ID"),
+    ),
+    request_body = ReworkApprovalDecisionRequest,
+    responses(
+        (status = 200, description = "返工审批通过成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn approve_rework(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(req): Json<ReworkApprovalDecisionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::MesReworkApprove).await
+    {
+        return e;
+    }
+    // TODO: 校验 approval_id 与版本，执行 rejected→reworking 转换并写入 audit log
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": req.approval_id, "status": "approved" }),
+        "返工审批通过成功",
+    ))
+}
+
+/// 返工审批驳回
+#[utoipa::path(
+    post,
+    path = "/api/mes/work-reports/{id}/approval/reject",
+    tag = "WorkReport",
+    params(
+        ("id" = String, Path, description = "报工ID"),
+    ),
+    request_body = ReworkApprovalDecisionRequest,
+    responses(
+        (status = 200, description = "返工审批驳回成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn reject_rework(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(req): Json<ReworkApprovalDecisionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::MesReworkApprove).await
+    {
+        return e;
+    }
+    // TODO: 校验 approval_id 与版本，记录驳回并写入 audit log
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": req.approval_id, "status": "rejected" }),
+        "返工审批驳回成功",
+    ))
 }

@@ -4,7 +4,7 @@
 //! 使用统计方法（移动平均、阈值比较、趋势分析）检测异常并生成预警。
 
 use axum::{
-    extract::{Query, State},
+    extract::{Path, Query, State},
     routing::{get, post},
     Extension, Json, Router,
 };
@@ -12,7 +12,9 @@ use chrono::{DateTime, Duration, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashMap;
+use utoipa::ToSchema;
 
+use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -109,6 +111,19 @@ pub fn create_routes() -> Router<AppState> {
         .route("/anomaly/rules/{rule_id}", get(get_anomaly_rule))
         .route("/anomaly/scan", post(trigger_anomaly_scan))
         .route("/anomaly/trend", get(get_anomaly_trend))
+        // APV-4: 异常处置审批端点
+        .route(
+            "/anomaly/alerts/{id}/approval/start",
+            post(start_anomaly_handling_approval),
+        )
+        .route(
+            "/anomaly/alerts/{id}/approval/approve",
+            post(approve_anomaly_handling),
+        )
+        .route(
+            "/anomaly/alerts/{id}/approval/reject",
+            post(reject_anomaly_handling),
+        )
 }
 
 // ==================== Handlers ====================
@@ -1091,4 +1106,118 @@ fn default_rules() -> Vec<AnomalyRule> {
             description: "设备维护逾期超过阈值时触发预警".to_string(),
         },
     ]
+}
+
+// ==================== APV-4: 异常处置审批端点（骨架） ====================
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct AnomalyHandlingApprovalStartRequest {
+    pub reason: String,
+    #[allow(dead_code)]
+    pub handling_plan: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct AnomalyHandlingApprovalDecisionRequest {
+    pub approval_id: uuid::Uuid,
+    pub comment: String,
+    #[allow(dead_code)]
+    pub expected_approval_version: i32,
+}
+
+/// 发起异常处置审批（acknowledged→handling）
+#[utoipa::path(
+    post,
+    path = "/api/mes/anomaly/alerts/{id}/approval/start",
+    tag = "AnomalyDetection",
+    params(
+        ("id" = String, Path, description = "异常预警ID"),
+    ),
+    request_body = AnomalyHandlingApprovalStartRequest,
+    responses(
+        (status = 200, description = "异常处置审批发起成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn start_anomaly_handling_approval(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(req): Json<AnomalyHandlingApprovalStartRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::MesAnomalyApprove).await
+    {
+        return e;
+    }
+    // TODO: 校验当前 status=acknowledged，创建 approval 记录并写入 audit log
+    let approval_id = uuid::Uuid::new_v4();
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": approval_id, "status": "pending_approval" }),
+        "异常处置审批已发起",
+    ))
+}
+
+/// 异常处置审批通过
+#[utoipa::path(
+    post,
+    path = "/api/mes/anomaly/alerts/{id}/approval/approve",
+    tag = "AnomalyDetection",
+    params(
+        ("id" = String, Path, description = "异常预警ID"),
+    ),
+    request_body = AnomalyHandlingApprovalDecisionRequest,
+    responses(
+        (status = 200, description = "异常处置审批通过成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn approve_anomaly_handling(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(req): Json<AnomalyHandlingApprovalDecisionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::MesAnomalyApprove).await
+    {
+        return e;
+    }
+    // TODO: 校验 approval_id 与版本，执行 acknowledged→handling 转换并写入 audit log
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": req.approval_id, "status": "approved" }),
+        "异常处置审批通过成功",
+    ))
+}
+
+/// 异常处置审批驳回
+#[utoipa::path(
+    post,
+    path = "/api/mes/anomaly/alerts/{id}/approval/reject",
+    tag = "AnomalyDetection",
+    params(
+        ("id" = String, Path, description = "异常预警ID"),
+    ),
+    request_body = AnomalyHandlingApprovalDecisionRequest,
+    responses(
+        (status = 200, description = "异常处置审批驳回成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn reject_anomaly_handling(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(req): Json<AnomalyHandlingApprovalDecisionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::MesAnomalyApprove).await
+    {
+        return e;
+    }
+    // TODO: 校验 approval_id 与版本，记录驳回并写入 audit log
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": req.approval_id, "status": "rejected" }),
+        "异常处置审批驳回成功",
+    ))
 }

@@ -7,6 +7,7 @@ use sqlx::{
 };
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
+use utoipa::ToSchema;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -588,4 +589,130 @@ pub async fn delete_inspection(
             Json(ApiResponse::error(500, "删除检验记录失败"))
         }
     }
+}
+
+// ==================== APV-3: 质量让步审批端点（骨架） ====================
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ConcessionApprovalStartRequest {
+    pub reason: String,
+    #[allow(dead_code)]
+    pub concession_scope: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ConcessionApprovalDecisionRequest {
+    pub approval_id: Uuid,
+    pub comment: String,
+    #[allow(dead_code)]
+    pub expected_approval_version: i32,
+}
+
+/// 发起让步审批（failed→concession_received）
+#[utoipa::path(
+    post,
+    path = "/api/mes/quality/inspections/{id}/approval/start",
+    tag = "QualityInspection",
+    params(
+        ("id" = String, Path, description = "检验记录ID"),
+    ),
+    request_body = ConcessionApprovalStartRequest,
+    responses(
+        (status = 200, description = "让步审批发起成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn start_concession_approval(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(req): Json<ConcessionApprovalStartRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::MesConcessionApprove,
+    )
+    .await
+    {
+        return e;
+    }
+    // TODO: 校验当前 status=failed，创建 approval 记录并写入 audit log
+    let approval_id = Uuid::new_v4();
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": approval_id, "status": "pending_approval" }),
+        "让步审批已发起",
+    ))
+}
+
+/// 让步审批通过
+#[utoipa::path(
+    post,
+    path = "/api/mes/quality/inspections/{id}/approval/approve",
+    tag = "QualityInspection",
+    params(
+        ("id" = String, Path, description = "检验记录ID"),
+    ),
+    request_body = ConcessionApprovalDecisionRequest,
+    responses(
+        (status = 200, description = "让步审批通过成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn approve_concession(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(req): Json<ConcessionApprovalDecisionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::MesConcessionApprove,
+    )
+    .await
+    {
+        return e;
+    }
+    // TODO: 校验 approval_id 与版本，执行 failed→concession_received 转换并写入 audit log
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": req.approval_id, "status": "approved" }),
+        "让步审批通过成功",
+    ))
+}
+
+/// 让步审批驳回
+#[utoipa::path(
+    post,
+    path = "/api/mes/quality/inspections/{id}/approval/reject",
+    tag = "QualityInspection",
+    params(
+        ("id" = String, Path, description = "检验记录ID"),
+    ),
+    request_body = ConcessionApprovalDecisionRequest,
+    responses(
+        (status = 200, description = "让步审批驳回成功", body = ApiResponse<serde_json::Value>),
+    ),
+)]
+#[allow(unused_variables)]
+pub async fn reject_concession(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(req): Json<ConcessionApprovalDecisionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::MesConcessionApprove,
+    )
+    .await
+    {
+        return e;
+    }
+    // TODO: 校验 approval_id 与版本，记录驳回并写入 audit log
+    Json(ApiResponse::success(
+        serde_json::json!({ "approval_id": req.approval_id, "status": "rejected" }),
+        "让步审批驳回成功",
+    ))
 }

@@ -5,6 +5,7 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
+    http::HeaderMap,
     routing::{get, put},
     Json, Router,
 };
@@ -14,6 +15,7 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::tenant;
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
@@ -90,37 +92,36 @@ fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
 pub async fn list_processes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Query(query): Query<ListProcessesQuery>,
 ) -> Json<ApiResponse<ListProcessesResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessRead).await {
         return e;
     }
 
+    let tenant_id = tenant::get_tenant_id(&claims, &headers);
+    let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
+
     let page = query.page.unwrap_or(1) as i64;
-    let pagesize = query.pagesize.unwrap_or(10) as i64;
+    let pagesize = query.pagesize.unwrap_or(10).min(100) as i64;
     let offset = (page - 1) * pagesize;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::new();
+    let mut where_clause = String::from(" WHERE tenant_id = $1");
 
     if let Some(status) = query.status {
-        where_clause.push_str(" WHERE status = $1");
+        let idx = params.len() + 2;
+        where_clause.push_str(&format!(" AND status = ${}", idx));
         params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
-        if where_clause.is_empty() {
-            where_clause
-                .push_str(" WHERE (process_no ILIKE $1 OR name ILIKE $1 OR description ILIKE $1)");
-        } else {
-            where_clause.push_str(&format!(
-                " AND (process_no ILIKE ${} OR name ILIKE ${} OR description ILIKE ${})",
-                params.len() + 1,
-                params.len() + 1,
-                params.len() + 1
-            ));
-        }
+        let idx = params.len() + 2;
+        where_clause.push_str(&format!(
+            " AND (process_no ILIKE ${} OR name ILIKE ${} OR description ILIKE ${})",
+            idx, idx, idx
+        ));
         params.push(serde_json::Value::String(pattern));
     }
 
@@ -130,6 +131,7 @@ pub async fn list_processes(
     );
 
     let mut count_query = sqlx::query_scalar(&count_sql);
+    count_query = count_query.bind(tenant_id);
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -145,7 +147,7 @@ pub async fn list_processes(
 
     let fetch_sql = format!(
         r#"
-        SELECT 
+        SELECT
             id, process_no, name, description, version,
             status, sequence, equipment_required, estimated_duration,
             created_at, updated_at
@@ -155,11 +157,12 @@ pub async fn list_processes(
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
-        params.len() + 1,
-        params.len() + 2
+        params.len() + 2,
+        params.len() + 3
     );
 
     let mut fetch_query = sqlx::query(&fetch_sql);
+    fetch_query = fetch_query.bind(tenant_id);
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
@@ -232,11 +235,15 @@ pub async fn list_processes(
 pub async fn create_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateProcessRequest>,
 ) -> Json<ApiResponse<ProductionProcessResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessWrite).await {
         return e;
     }
+
+    let tenant_id = tenant::get_tenant_id(&claims, &headers);
+    let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
 
     let now = Utc::now();
     let process_no = format!(
@@ -248,15 +255,16 @@ pub async fn create_process(
     let result = sqlx::query!(
         r#"
         INSERT INTO production_processes (
-            process_no, name, description, version, status,
+            tenant_id, process_no, name, description, version, status,
             sequence, equipment_required, estimated_duration,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, $8, $8)
-        RETURNING 
+        ) VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8, $9, $9)
+        RETURNING
             id, process_no, name, description, version,
             status, sequence, equipment_required, estimated_duration,
             created_at, updated_at
         "#,
+        tenant_id,
         process_no,
         req.name,
         req.description,
@@ -297,22 +305,27 @@ pub async fn create_process(
 pub async fn get_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionProcessResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessRead).await {
         return e;
     }
 
+    let tenant_id = tenant::get_tenant_id(&claims, &headers);
+    let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
+
     let result = sqlx::query!(
         r#"
-        SELECT 
+        SELECT
             id, process_no, name, description, version,
             status, sequence, equipment_required, estimated_duration,
             created_at, updated_at
         FROM production_processes
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         "#,
         id,
+        tenant_id,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -349,12 +362,16 @@ pub async fn get_process(
 pub async fn update_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProcessRequest>,
 ) -> Json<ApiResponse<ProductionProcessResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessWrite).await {
         return e;
     }
+
+    let tenant_id = tenant::get_tenant_id(&claims, &headers);
+    let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
 
     let result = sqlx::query!(
         r#"
@@ -366,8 +383,8 @@ pub async fn update_process(
             equipment_required = COALESCE($6, equipment_required),
             estimated_duration = COALESCE($7, estimated_duration),
             updated_at = $8
-        WHERE id = $1 AND status = 'active'
-        RETURNING 
+        WHERE id = $1 AND status = 'active' AND tenant_id = $9
+        RETURNING
             id, process_no, name, description, version,
             status, sequence, equipment_required, estimated_duration,
             created_at, updated_at
@@ -380,6 +397,7 @@ pub async fn update_process(
         req.equipment_required,
         req.estimated_duration,
         Utc::now().naive_utc(),
+        tenant_id,
     )
     .fetch_optional(&state.pool)
     .await;
