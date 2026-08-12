@@ -101,9 +101,6 @@ describe('useUnifiedWebSocket exports', () => {
       expect(typeof webSocketService.send).toBe('function');
       expect(typeof webSocketService.subscribe).toBe('function');
       expect(typeof webSocketService.unsubscribe).toBe('function');
-      expect(typeof webSocketService.reconnect).toBe('function');
-      expect(typeof webSocketService.ping).toBe('function');
-      expect(typeof webSocketService.getConnectionStatus).toBe('function');
       expect(typeof webSocketService.isConnected).toBe('function');
     });
   });

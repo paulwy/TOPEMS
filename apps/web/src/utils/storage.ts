@@ -162,6 +162,37 @@ class LocalStorage {
       return [];
     }
   }
+
+  /**
+   * 读取值，若规范键不存在则尝试从旧版（无前缀）键迁移
+   */
+  getWithMigrate<T>(key: string, defaultValue?: T): T | undefined {
+    try {
+      // 先尝试从规范键读取
+      const canonicalRaw = localStorage.getItem(createKey(key, this.prefix));
+      if (canonicalRaw) {
+        const item = this.deserialize<StorageItem<T>>(canonicalRaw);
+        if (isExpired(item)) {
+          this.remove(key);
+        } else {
+          return item.value;
+        }
+      }
+
+      // 尝试从旧版（无前缀）键读取并迁移到规范键
+      const legacyRaw = localStorage.getItem(key);
+      if (legacyRaw !== null) {
+        const value = this.deserialize<T>(legacyRaw);
+        this.set(key, value);
+        return value;
+      }
+
+      return defaultValue;
+    } catch (error: unknown) {
+      logger.error('LocalStorage getWithMigrate error:', error);
+      return defaultValue;
+    }
+  }
 }
 
 /**

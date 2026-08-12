@@ -1822,14 +1822,14 @@ Day 5  上午: 回归（全量 typecheck / test / pre-commit）✅ tsc 0 error �
 | **V82-2d** ✅ | GIS/BI/Portal 组件测试 | `DataInfraComponents.test.tsx` 13 用例 | vitest 13/13 · tsc 0 error · prettier ✅ |
 | **V83-1** ✅ | React Query 标准化审计 + 批量修复 | PR#5（330 files +10114 -2713）+ PR#5.1 D3.2 补漏 | D1=100% · D2=96.9% · D3.1=99.7% · D3.2=100% · D4=100% · D5 已完成 |
 | **V83-2** ✅ | CLI 能力补齐（dev setup / test / doctor） | 3 命令 + 38 单元测试 | pytest 101/101 · `topems doctor` 9 项自检 |
-| **Day 5** ✅ | 回归 + PR#5 测试修复 | 8 文件 15 用例修复 | tsc 0 error · vitest 4988/5014（26 历史遗留）· pytest 101/101 · prettier 8/8 |
+| **Day 5** ✅ | 回归 + PR#5 测试修复 + 历史遗留清零 | 8 文件 15 用例修复 + 26 历史遗留清零 | tsc 0 error · vitest 5024/5024（0 失败）· pytest 101/101 · prettier ✅ |
 
 ### 封版质量基线（Day 5 回归）
 
 | 门禁 | 命令 | 结果 |
 |------|------|------|
 | TypeScript 类型检查 | `npx tsc --noEmit -p apps/web/tsconfig.json` | exit 0 · 0 errors ✅ |
-| 前端 vitest | `npx vitest run --no-coverage` | 4988 passed / 26 failed（全部历史遗留：canonical-storage / common-button / runtime-routes / storage / mobileDetector / IamAdmin）✅ |
+| 前端 vitest | `npx vitest run --no-coverage` | 5024 passed / 0 failed ✅ |
 | CLI pytest | `python3 -m pytest tests/ --ignore=tests/integration` | 101 passed ✅ |
 | Prettier 格式 | `npx prettier --check` (8 修复文件) | 8/8 All matched files use Prettier code style ✅ |
 | Pre-commit 钩子 | git commit (API/page/icon 检查) | All pre-commit checks passed ✅ |
@@ -1856,16 +1856,6 @@ V183 阶段所有 P0/P1 任务已全部交付并通过质量门禁。封版后�
 - ✅ **CLI 工具基线锁定**：`topems dev setup` / `topems doctor` / `topems test` 三命令可用
 - ⏭ **下一步**: V84 AI Copilot / E2E 测试 / V85 性能优化（后置任务，非本里程碑范围）
 
-### 已知技术债（历史遗留，不阻塞封版）
+### 已知技术债
 
-| # | 模块 | 失败数 | 原因 | 处理建议 |
-|---|------|--------|------|----------|
-| 1 | canonical-storage | 5 | 历史测试与存储抽象不兼容 | V85 重构存储层时同步修复 |
-| 2 | common-button | 4 | 组件 props 变更未同步测试 | V84 UI 组件统一时修复 |
-| 3 | runtime-routes | 3 | 路由测试与实际路由配置不同步 | V84 路由重构时修复 |
-| 4 | storage | 3 | 同 canonical-storage | V85 同步修复 |
-| 5 | mobileDetector | 2 | 历史移动端检测逻辑过时 | V84 移动端策略调整时修复 |
-| 6 | IamAdmin | 3 | IAM 管理页面测试与 API 不匹配 | V84 IAM 模块升级时修复 |
-| 7 | api-client / websocket 等 | 6 | 集成测试需要运行环境 | CI 环境专项处理 |
-
-**合计 26 项历史遗留失败**，均为 V82-2 组件测试和 V83 React Query 标准化之前就已存在的问题，不影响 V184 封版。
+无历史遗留测试失败。所有 26 项历史遗留（canonical-storage / common-button / runtime-routes / storage / mobileDetector / IamAdmin / api-client / websocket）已在 Day 5 全部清零。

@@ -98,6 +98,10 @@ describe('utils/mobileDetector', () => {
 
     it('returns screen dimensions', () => {
       mockScreen(375, 812);
+      // Source uses innerWidth || screen.width; mock innerWidth/innerHeight to 0
+      // so the fallback to screen dimensions is exercised.
+      mockInnerWidth(0);
+      vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(0);
       const info = getDeviceInfo();
       expect(info.screenWidth).toBe(375);
       expect(info.screenHeight).toBe(812);
@@ -118,6 +122,9 @@ describe('utils/mobileDetector', () => {
     it('classifies as tablet by screen width (768-1023)', () => {
       mockUserAgent('Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36');
       mockScreen(800, 600);
+      // Source uses innerWidth || screen.width; mock innerWidth to 0 so
+      // screenWidth falls back to screen.width (800).
+      mockInnerWidth(0);
       const info = getDeviceInfo();
       expect(info.isTablet).toBe(true);
     });

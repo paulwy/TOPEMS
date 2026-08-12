@@ -4,12 +4,14 @@ import runtime from '../runtime';
 const GROUP1_SERVICES: Record<string, string> = {
   iam: '/api/core/iam',
   workflow: '/api/core/flow',
+  flow: '/api/core/flow',
   file: '/api/core/file',
-  master: '/api/core/master',
   migration: '/api/core/migration',
   // doc/monitor 仍由 unified-core 承载（虚拟服务），路径含 /api/core 前缀
   doc: '/api/core/doc',
   monitor: '/api/core/monitor',
+  // automation 初期落地 unified-core，路径 /api/core/automation
+  automation: '/api/core/automation',
   core: '/api/core',
 };
 
@@ -33,6 +35,8 @@ const GROUP2_SERVICES = [
   'ehs',
   'rd',
   'bi',
+  // analytics 是 bi 的历史别名，路径完全一致
+  'analytics',
   'portal',
   'mobile',
   'gis',
@@ -42,7 +46,9 @@ const GROUP2_SERVICES = [
   'ticket',
   'feedback',
   'lowcode',
-  'automation',
+  // master-data 已从 unified-core 外迁，路径 /api/master-data（无 /core 前缀）
+  'master',
+  'master-data',
 ];
 
 const EXTERNAL_SERVICES = ['jaeger'];

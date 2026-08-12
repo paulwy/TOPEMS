@@ -89,6 +89,9 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       '**/*.perf.test.*',
+      // Playwright e2e tests in tests/ directory — not vitest-compatible
+      'tests/admin-module.spec.ts',
+      'tests/websocket.spec.ts',
     ],
     testTimeout: 15000,
     coverage: {

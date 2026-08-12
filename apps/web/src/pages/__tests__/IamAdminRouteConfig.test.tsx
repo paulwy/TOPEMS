@@ -9,7 +9,7 @@ describe('IAM Module Route Configuration', () => {
     expect(iamModuleConfig.code).toBe('iam');
     expect(iamModuleConfig.name).toBe('身份与权限');
     expect(iamModuleConfig.path).toBe('/iam');
-    expect(iamModuleConfig.permission).toBe('iam:read');
+    expect(iamModuleConfig.permission).toBe('iam:dashboard:read');
     expect(iamModuleConfig.order).toBe(1);
   });
 
@@ -29,19 +29,19 @@ describe('IAM Module Route Configuration', () => {
     const routes = iamModuleConfig.routes;
 
     const dashboardRoute = routes.find((r) => r.path === '/iam/dashboard');
-    expect(dashboardRoute?.requiredPermissions).toEqual(['iam:read']);
+    expect(dashboardRoute?.requiredPermissions).toEqual(['iam:dashboard:read']);
 
     const userRoute = routes.find((r) => r.path === '/iam/user');
-    expect(userRoute?.requiredPermissions).toEqual(['iam:user:read', 'iam:read']);
+    expect(userRoute?.requiredPermissions).toEqual(['iam:user:read', 'iam:dashboard:read']);
 
     const roleRoute = routes.find((r) => r.path === '/iam/role');
-    expect(roleRoute?.requiredPermissions).toEqual(['iam:role:read', 'iam:read']);
+    expect(roleRoute?.requiredPermissions).toEqual(['iam:role:read', 'iam:dashboard:read']);
 
     const permissionRoute = routes.find((r) => r.path === '/iam/permission');
-    expect(permissionRoute?.requiredPermissions).toEqual(['iam:permission:read', 'iam:read']);
+    expect(permissionRoute?.requiredPermissions).toEqual(['iam:permission:read', 'iam:dashboard:read']);
 
     const companyStructureRoute = routes.find((r) => r.path === '/iam/company-structure');
-    expect(companyStructureRoute?.requiredPermissions).toEqual(['iam:structure:read', 'iam:read']);
+    expect(companyStructureRoute?.requiredPermissions).toEqual(['iam:structure:read', 'iam:dashboard:read']);
   });
 
   it('should be registered in core module routes', () => {
@@ -57,7 +57,7 @@ describe('Admin Module Route Configuration', () => {
     expect(adminModuleConfig.code).toBe('admin');
     expect(adminModuleConfig.name).toBe('系统管理');
     expect(adminModuleConfig.path).toBe('/admin');
-    expect(adminModuleConfig.permission).toBe('admin:read');
+    expect(adminModuleConfig.permission).toBe('admin:dashboard:read');
     expect(adminModuleConfig.order).toBe(2);
   });
 

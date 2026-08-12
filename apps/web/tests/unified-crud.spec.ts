@@ -3,10 +3,10 @@
  * @coverage-tier1 useCrudUnified Hook 单测
  * @see @/hooks/useCrudUnified
  */
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useCrudUnified, createAxiosAdapter } from '@/hooks/useCrudUnified';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('@/utils/errors', () => ({
   extractErrorMessage: vi.fn((err: unknown, defaultMsg: string) =>
@@ -14,14 +14,31 @@ vi.mock('@/utils/errors', () => ({
   ),
 }));
 
-vi.mock('@/utils/logger', () => ({
-  apiLogger: {
+vi.mock('@/utils/logger', () => {
+  const mockLogger = {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
-  },
+  };
+  return {
+    logger: mockLogger,
+    apiLogger: mockLogger,
+    createLogger: vi.fn(() => mockLogger),
+  };
+});
+
+vi.mock('@/store', () => ({
+  useNotificationStore: vi.fn((selector: (s: { addNotification: ReturnType<typeof vi.fn> }) => unknown) =>
+    selector({ addNotification: vi.fn() })
+  ),
 }));
+
+vi.mock('@/lib/reactQuery', () => ({
+  QUERY_KEYS: { AD_HOC: { _BASE: ['ad-hoc'] } },
+}));
+
+import { useCrudUnified, createAxiosAdapter } from '@/hooks/useCrudUnified';
 
 interface TestItem {
   id?: string;
@@ -41,25 +58,44 @@ function createMockApiClient() {
   };
 }
 
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: 0, staleTime: 0 },
+      mutations: { retry: 0 },
+    },
+  });
+}
+
+function createWrapper(queryClient: QueryClient) {
+  return ({ children }: { children: React.ReactNode }) =>
+    React.createElement(QueryClientProvider, { client: queryClient }, children);
+}
+
 describe('useCrudUnified', () => {
   let apiClient: ReturnType<typeof createMockApiClient>;
+  let queryClient: QueryClient;
   let invalidateSpy: ReturnType<typeof vi.fn>;
+  let wrapper: ReturnType<typeof createWrapper>;
 
   beforeEach(() => {
     apiClient = createMockApiClient();
-    invalidateSpy = useQueryClient().invalidateQueries as unknown as ReturnType<typeof vi.fn>;
-    invalidateSpy.mockClear();
+    queryClient = createTestQueryClient();
+    invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries') as unknown as ReturnType<typeof vi.fn>;
+    wrapper = createWrapper(queryClient);
   });
 
   describe('list (GET /entities)', () => {
     it('should call apiClient.get with correct URL on list()', async () => {
       apiClient.get.mockResolvedValue({ data: { items: [], total: 0 } });
 
-      renderHook(() =>
-        useCrudUnified<TestItem>({
-          adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
-          queryKey: ['users'],
-        })
+      renderHook(
+        () =>
+          useCrudUnified<TestItem>({
+            adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
+            queryKey: ['users'],
+          }),
+        { wrapper }
       );
 
       await waitFor(() => {
@@ -73,12 +109,14 @@ describe('useCrudUnified', () => {
     it('should pass page/pageSize/sort/filter as query params', async () => {
       apiClient.get.mockResolvedValue({ data: { items: [], total: 0 } });
 
-      renderHook(() =>
-        useCrudUnified<TestItem>({
-          adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
-          queryKey: ['users'],
-          defaultPageSize: 20,
-        })
+      renderHook(
+        () =>
+          useCrudUnified<TestItem>({
+            adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
+            queryKey: ['users'],
+            defaultPageSize: 20,
+          }),
+        { wrapper }
       );
 
       await waitFor(() => {
@@ -94,13 +132,16 @@ describe('useCrudUnified', () => {
 
   describe('create (POST /entities)', () => {
     it('should POST body and invalidate queries on create() success', async () => {
+      apiClient.get.mockResolvedValue({ data: { items: [], total: 0 } });
       apiClient.post.mockResolvedValue({ data: { id: '1', name: 'test' } });
 
-      const { result } = renderHook(() =>
-        useCrudUnified<TestItem>({
-          adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
-          queryKey: ['users'],
-        })
+      const { result } = renderHook(
+        () =>
+          useCrudUnified<TestItem>({
+            adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
+            queryKey: ['users'],
+          }),
+        { wrapper }
       );
 
       await act(async () => {
@@ -115,11 +156,13 @@ describe('useCrudUnified', () => {
       apiClient.get.mockResolvedValue({ data: { items: [], total: 0 } });
       apiClient.post.mockRejectedValue(new Error('Network error'));
 
-      const { result } = renderHook(() =>
-        useCrudUnified<TestItem>({
-          adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
-          queryKey: ['users'],
-        })
+      const { result } = renderHook(
+        () =>
+          useCrudUnified<TestItem>({
+            adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
+            queryKey: ['users'],
+          }),
+        { wrapper }
       );
 
       await waitFor(() => {
@@ -145,13 +188,16 @@ describe('useCrudUnified', () => {
 
   describe('update (PUT /entities/:id)', () => {
     it('should PUT with /:id suffix and optimistic update', async () => {
+      apiClient.get.mockResolvedValue({ data: { items: [], total: 0 } });
       apiClient.put.mockResolvedValue({ data: { id: '123', name: 'updated' } });
 
-      const { result } = renderHook(() =>
-        useCrudUnified<TestItem>({
-          adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
-          queryKey: ['users'],
-        })
+      const { result } = renderHook(
+        () =>
+          useCrudUnified<TestItem>({
+            adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
+            queryKey: ['users'],
+          }),
+        { wrapper }
       );
 
       await act(async () => {
@@ -165,11 +211,13 @@ describe('useCrudUnified', () => {
       apiClient.get.mockResolvedValue({ data: { items: [], total: 0 } });
       apiClient.put.mockRejectedValue(new Error('Update failed'));
 
-      const { result } = renderHook(() =>
-        useCrudUnified<TestItem>({
-          adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
-          queryKey: ['users'],
-        })
+      const { result } = renderHook(
+        () =>
+          useCrudUnified<TestItem>({
+            adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
+            queryKey: ['users'],
+          }),
+        { wrapper }
       );
 
       await waitFor(() => {
@@ -195,13 +243,16 @@ describe('useCrudUnified', () => {
 
   describe('delete (DELETE /entities/:id)', () => {
     it('should DELETE and remove item from cached list', async () => {
+      apiClient.get.mockResolvedValue({ data: { items: [], total: 0 } });
       apiClient.delete.mockResolvedValue({});
 
-      const { result } = renderHook(() =>
-        useCrudUnified<TestItem>({
-          adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
-          queryKey: ['users'],
-        })
+      const { result } = renderHook(
+        () =>
+          useCrudUnified<TestItem>({
+            adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
+            queryKey: ['users'],
+          }),
+        { wrapper }
       );
 
       await act(async () => {
@@ -217,11 +268,13 @@ describe('useCrudUnified', () => {
       // Smoke test: 验证 hook 返回所有预期字段
       apiClient.get.mockReturnValue(new Promise(() => {}));
 
-      const { result } = renderHook(() =>
-        useCrudUnified<TestItem>({
-          adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
-          queryKey: ['users'],
-        })
+      const { result } = renderHook(
+        () =>
+          useCrudUnified<TestItem>({
+            adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
+            queryKey: ['users'],
+          }),
+        { wrapper }
       );
 
       expect(result.current).toHaveProperty('data');
@@ -243,12 +296,14 @@ describe('useCrudUnified', () => {
       // 使用永不 resolve 的 promise 模拟加载中状态
       apiClient.get.mockReturnValue(new Promise(() => {}));
 
-      const { result } = renderHook(() =>
-        useCrudUnified<TestItem>({
-          adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
-          queryKey: ['users-stale'],
-          staleTime: 5 * 60 * 1000,
-        })
+      const { result } = renderHook(
+        () =>
+          useCrudUnified<TestItem>({
+            adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
+            queryKey: ['users-stale'],
+            staleTime: 5 * 60 * 1000,
+          }),
+        { wrapper }
       );
 
       // 初始加载状态
@@ -258,14 +313,17 @@ describe('useCrudUnified', () => {
     });
 
     it('should useMutation with retry=0 for write operations', async () => {
+      apiClient.get.mockResolvedValue({ data: { items: [], total: 0 } });
       apiClient.post.mockRejectedValue(new Error('fail'));
 
-      const { result } = renderHook(() =>
-        useCrudUnified<TestItem>({
-          adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
-          queryKey: ['users-retry'],
-          retry: 0,
-        })
+      const { result } = renderHook(
+        () =>
+          useCrudUnified<TestItem>({
+            adapter: createAxiosAdapter<TestItem>({ api: apiClient as any, basePath: '/users' }),
+            queryKey: ['users-retry'],
+            retry: 0,
+          }),
+        { wrapper }
       );
 
       let caughtError: Error | null = null;

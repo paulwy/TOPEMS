@@ -231,7 +231,7 @@ describe('createAxiosClient — response interceptor normalize switch', () => {
     expect(result).toEqual({ items: [1, 2, 3] });
   });
 
-  it('should call normalizeListField + normalizeTotalField when shouldNormalize() returns true', () => {
+  it('should NOT call normalize helpers even when shouldNormalize() returns true (normalization removed from interceptor)', () => {
     mocks.shouldNormalize.mockReturnValue(true);
     mocks.normalizeListField.mockImplementation((resp: any) => ({ ...resp, data: resp.items }));
     mocks.normalizeTotalField.mockImplementation((resp: any) => ({ ...resp, total: 99 }));
@@ -247,9 +247,12 @@ describe('createAxiosClient — response interceptor normalize switch', () => {
       data: { items: [{ id: 1 }], total_count: 99 },
     });
 
-    expect(mocks.normalizeListField).toHaveBeenCalledTimes(1);
-    expect(mocks.normalizeTotalField).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({ items: [{ id: 1 }], total_count: 99, data: [{ id: 1 }], total: 99 });
+    // The response interceptor no longer calls normalize helpers directly;
+    // normalization (if needed) is handled elsewhere in the pipeline.
+    expect(mocks.normalizeListField).not.toHaveBeenCalled();
+    expect(mocks.normalizeTotalField).not.toHaveBeenCalled();
+    // returnData=true (default), should return response.data unchanged
+    expect(result).toEqual({ items: [{ id: 1 }], total_count: 99 });
   });
 });
 
