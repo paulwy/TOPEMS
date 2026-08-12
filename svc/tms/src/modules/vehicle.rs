@@ -3,7 +3,7 @@
 use axum::{
     extract::{FromRef, Path, Query, State},
     http::HeaderMap,
-    routing::get,
+    routing::{get, post},
     Extension, Json, Router,
 };
 use chrono::{DateTime, Utc};
@@ -13,6 +13,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::middleware::tenant::get_tenant_id;
+use crate::shared::fsm::{vehicle_can_transition, vehicle_requires_approval};
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
@@ -63,6 +64,9 @@ where
             "/vehicles/{id}",
             get(get_vehicle).put(update_vehicle).delete(delete_vehicle),
         )
+        .route("/vehicles/{id}/submit-inspection", post(submit_inspection))
+        .route("/vehicles/{id}/approve", post(approve_vehicle))
+        .route("/vehicles/{id}/reject", post(reject_vehicle))
 }
 
 #[utoipa::path(
@@ -317,6 +321,256 @@ pub async fn delete_vehicle(
         Err(e) => {
             tracing::error!("删除车辆失败: {}", e);
             Json(api_error(500, "车辆删除失败"))
+        }
+    }
+}
+
+// ==================== Approval Endpoints ====================
+
+/// 审批请求体
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
+
+/// Submit vehicle for maintenance inspection (active → maintenance)
+#[utoipa::path(
+    post,
+    path = "/api/tms/vehicles/{id}/submit-inspection",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "车辆 ID")
+    ),
+    responses(
+        (status = 200, description = "submit_inspection OK")
+    ),
+    tag = "TMS - Vehicle"
+)]
+pub async fn submit_inspection(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Vehicle>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let now = Utc::now();
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM tms.tms_vehicles WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match current {
+        Ok(Some(status)) => {
+            if vehicle_can_transition(&status, "maintenance").is_err() {
+                return Json(api_error(
+                    400,
+                    &format!("当前状态 {} 不允许提交检修", status),
+                ));
+            }
+            let result = sqlx::query_as::<_, Vehicle>(
+                r#"
+                UPDATE tms.tms_vehicles SET status = 'maintenance', updated_at = $2
+                WHERE id = $1 AND tenant_id = $3
+                RETURNING id, vehicle_no, plate_number, vehicle_type, capacity, status, carrier_id, notes, tenant_id, created_at, updated_at
+                "#,
+            )
+            .bind(id)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&state.db)
+            .await;
+
+            match result {
+                Ok(Some(vehicle)) => {
+                    tracing::info!(
+                        "vehicle {} submit_inspection: {} -> maintenance, operator={}",
+                        id,
+                        status,
+                        req.operator
+                    );
+                    Json(ApiResponse::success(vehicle, "车辆已提交检修"))
+                }
+                Ok(None) => Json(api_error(404, "车辆不存在")),
+                Err(e) => {
+                    tracing::error!("提交检修失败: {}", e);
+                    Json(api_error(500, "提交检修失败"))
+                }
+            }
+        }
+        Ok(None) => Json(api_error(404, "车辆不存在")),
+        Err(e) => {
+            tracing::error!("查询车辆状态失败: {}", e);
+            Json(api_error(500, "查询车辆状态失败"))
+        }
+    }
+}
+
+/// Approve vehicle (maintenance→active or inactive→retired based on current status)
+#[utoipa::path(
+    post,
+    path = "/api/tms/vehicles/{id}/approve",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "车辆 ID")
+    ),
+    responses(
+        (status = 200, description = "approve_vehicle OK")
+    ),
+    tag = "TMS - Vehicle"
+)]
+pub async fn approve_vehicle(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Vehicle>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let now = Utc::now();
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM tms.tms_vehicles WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match current {
+        Ok(Some(status)) => {
+            let target = if status == "maintenance" {
+                "active"
+            } else if status == "inactive" {
+                "retired"
+            } else {
+                return Json(api_error(400, &format!("当前状态 {} 不允许审批", status)));
+            };
+
+            if vehicle_can_transition(&status, target).is_err() {
+                return Json(api_error(
+                    400,
+                    &format!("当前状态 {} 不允许审批为 {}", status, target),
+                ));
+            }
+            let requires_approval = vehicle_requires_approval(&status, target);
+
+            let result = sqlx::query_as::<_, Vehicle>(
+                r#"
+                UPDATE tms.tms_vehicles SET status = $2, updated_at = $3
+                WHERE id = $1 AND tenant_id = $4
+                RETURNING id, vehicle_no, plate_number, vehicle_type, capacity, status, carrier_id, notes, tenant_id, created_at, updated_at
+                "#,
+            )
+            .bind(id)
+            .bind(target)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&state.db)
+            .await;
+
+            match result {
+                Ok(Some(vehicle)) => {
+                    tracing::info!(
+                        "vehicle {} approved: {} -> {}, operator={}, requires_approval={}",
+                        id,
+                        status,
+                        target,
+                        req.operator,
+                        requires_approval
+                    );
+                    Json(ApiResponse::success(vehicle, "车辆审批通过"))
+                }
+                Ok(None) => Json(api_error(404, "车辆不存在")),
+                Err(e) => {
+                    tracing::error!("审批失败: {}", e);
+                    Json(api_error(500, "审批失败"))
+                }
+            }
+        }
+        Ok(None) => Json(api_error(404, "车辆不存在")),
+        Err(e) => {
+            tracing::error!("查询车辆状态失败: {}", e);
+            Json(api_error(500, "查询车辆状态失败"))
+        }
+    }
+}
+
+/// Reject vehicle maintenance (maintenance → active, revert)
+#[utoipa::path(
+    post,
+    path = "/api/tms/vehicles/{id}/reject",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "车辆 ID")
+    ),
+    responses(
+        (status = 200, description = "reject_vehicle OK")
+    ),
+    tag = "TMS - Vehicle"
+)]
+pub async fn reject_vehicle(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Vehicle>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let now = Utc::now();
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM tms.tms_vehicles WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match current {
+        Ok(Some(status)) => {
+            if vehicle_can_transition(&status, "active").is_err() {
+                return Json(api_error(400, &format!("当前状态 {} 不允许驳回", status)));
+            }
+            let result = sqlx::query_as::<_, Vehicle>(
+                r#"
+                UPDATE tms.tms_vehicles SET status = 'active', updated_at = $2
+                WHERE id = $1 AND tenant_id = $3
+                RETURNING id, vehicle_no, plate_number, vehicle_type, capacity, status, carrier_id, notes, tenant_id, created_at, updated_at
+                "#,
+            )
+            .bind(id)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&state.db)
+            .await;
+
+            match result {
+                Ok(Some(vehicle)) => {
+                    tracing::info!(
+                        "vehicle {} rejected: {} -> active, operator={}",
+                        id,
+                        status,
+                        req.operator
+                    );
+                    Json(ApiResponse::success(vehicle, "车辆检修已驳回"))
+                }
+                Ok(None) => Json(api_error(404, "车辆不存在")),
+                Err(e) => {
+                    tracing::error!("驳回失败: {}", e);
+                    Json(api_error(500, "驳回失败"))
+                }
+            }
+        }
+        Ok(None) => Json(api_error(404, "车辆不存在")),
+        Err(e) => {
+            tracing::error!("查询车辆状态失败: {}", e);
+            Json(api_error(500, "查询车辆状态失败"))
         }
     }
 }

@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Warehouse {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -17,7 +18,7 @@ pub struct Warehouse {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateWarehouseRequest {
     pub name: String,
     pub code: Option<String>,
@@ -26,7 +27,7 @@ pub struct CreateWarehouseRequest {
     pub phone: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateWarehouseRequest {
     pub name: Option<String>,
     pub code: Option<String>,

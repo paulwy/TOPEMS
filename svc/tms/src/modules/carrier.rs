@@ -3,7 +3,7 @@
 use axum::{
     extract::{FromRef, Path, Query, State},
     http::HeaderMap,
-    routing::get,
+    routing::{get, post},
     Extension, Json, Router,
 };
 use chrono::{DateTime, Utc};
@@ -13,6 +13,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::middleware::tenant::get_tenant_id;
+use crate::shared::fsm::{carrier_can_transition, carrier_requires_approval};
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
@@ -60,6 +61,12 @@ where
             "/carriers/{id}",
             get(get_carrier).put(update_carrier).delete(delete_carrier),
         )
+        .route(
+            "/carriers/{id}/submit-qualification",
+            post(submit_qualification),
+        )
+        .route("/carriers/{id}/approve", post(approve_carrier))
+        .route("/carriers/{id}/reject", post(reject_carrier))
 }
 
 #[utoipa::path(
@@ -311,6 +318,215 @@ pub async fn delete_carrier(
         Err(e) => {
             tracing::error!("删除承运商失败: {}", e);
             Json(api_error(500, "承运商删除失败"))
+        }
+    }
+}
+
+// ==================== Approval Endpoints ====================
+
+/// 审批请求体
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
+
+const CARRIER_RETURN: &str = r#"id, carrier_no, name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at"#;
+
+/// Submit carrier for qualification review (no state change, just flag)
+#[utoipa::path(
+    post,
+    path = "/api/tms/carriers/{id}/submit-qualification",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "承运商 ID")
+    ),
+    responses(
+        (status = 200, description = "submit_qualification OK")
+    ),
+    tag = "TMS - Carrier"
+)]
+pub async fn submit_qualification(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Carrier>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query_as::<_, Carrier>(&format!(
+        r#"SELECT {} FROM tms.tms_carriers WHERE id = $1 AND tenant_id = $2"#,
+        CARRIER_RETURN
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(carrier)) => {
+            tracing::info!(
+                "carrier {} submit_qualification: status={}, operator={}",
+                id,
+                carrier.status,
+                req.operator
+            );
+            Json(ApiResponse::success(carrier, "承运商已提交资质审核"))
+        }
+        Ok(None) => Json(api_error(404, "承运商不存在")),
+        Err(e) => {
+            tracing::error!("提交资质审核失败: {}", e);
+            Json(api_error(500, "提交资质审核失败"))
+        }
+    }
+}
+
+/// Approve carrier (pending_review → active)
+#[utoipa::path(
+    post,
+    path = "/api/tms/carriers/{id}/approve",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "承运商 ID")
+    ),
+    responses(
+        (status = 200, description = "approve_carrier OK")
+    ),
+    tag = "TMS - Carrier"
+)]
+pub async fn approve_carrier(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Carrier>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let now = Utc::now();
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM tms.tms_carriers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match current {
+        Ok(Some(status)) => {
+            if carrier_can_transition(&status, "active").is_err() {
+                return Json(api_error(
+                    400,
+                    &format!("当前状态 {} 不允许审批通过", status),
+                ));
+            }
+            let requires_approval = carrier_requires_approval(&status, "active");
+            let result = sqlx::query_as::<_, Carrier>(&format!(
+                r#"UPDATE tms.tms_carriers SET status = 'active', updated_at = $2
+                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                CARRIER_RETURN
+            ))
+            .bind(id)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&state.db)
+            .await;
+
+            match result {
+                Ok(Some(carrier)) => {
+                    tracing::info!(
+                        "carrier {} approved: {} -> active, operator={}, requires_approval={}",
+                        id,
+                        status,
+                        req.operator,
+                        requires_approval
+                    );
+                    Json(ApiResponse::success(carrier, "承运商审批通过"))
+                }
+                Ok(None) => Json(api_error(404, "承运商不存在")),
+                Err(e) => {
+                    tracing::error!("审批失败: {}", e);
+                    Json(api_error(500, "审批失败"))
+                }
+            }
+        }
+        Ok(None) => Json(api_error(404, "承运商不存在")),
+        Err(e) => {
+            tracing::error!("查询承运商状态失败: {}", e);
+            Json(api_error(500, "查询承运商状态失败"))
+        }
+    }
+}
+
+/// Reject carrier (pending_review → rejected)
+#[utoipa::path(
+    post,
+    path = "/api/tms/carriers/{id}/reject",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "承运商 ID")
+    ),
+    responses(
+        (status = 200, description = "reject_carrier OK")
+    ),
+    tag = "TMS - Carrier"
+)]
+pub async fn reject_carrier(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Carrier>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let now = Utc::now();
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM tms.tms_carriers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match current {
+        Ok(Some(status)) => {
+            if carrier_can_transition(&status, "rejected").is_err() {
+                return Json(api_error(400, &format!("当前状态 {} 不允许驳回", status)));
+            }
+            let result = sqlx::query_as::<_, Carrier>(&format!(
+                r#"UPDATE tms.tms_carriers SET status = 'rejected', updated_at = $2
+                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                CARRIER_RETURN
+            ))
+            .bind(id)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&state.db)
+            .await;
+
+            match result {
+                Ok(Some(carrier)) => {
+                    tracing::info!(
+                        "carrier {} rejected: {} -> rejected, operator={}",
+                        id,
+                        status,
+                        req.operator
+                    );
+                    Json(ApiResponse::success(carrier, "承运商已驳回"))
+                }
+                Ok(None) => Json(api_error(404, "承运商不存在")),
+                Err(e) => {
+                    tracing::error!("驳回失败: {}", e);
+                    Json(api_error(500, "驳回失败"))
+                }
+            }
+        }
+        Ok(None) => Json(api_error(404, "承运商不存在")),
+        Err(e) => {
+            tracing::error!("查询承运商状态失败: {}", e);
+            Json(api_error(500, "查询承运商状态失败"))
         }
     }
 }

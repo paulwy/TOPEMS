@@ -5,19 +5,19 @@
 // 后续可逐步在各模块中添加 #[derive(ToSchema)] 并在此注册 schemas。
 use utoipa::OpenApi;
 
-use crate::modules::qms_compat;
-use crate::modules::quality_inspection::{
+use crate::models::quality_inspection::{
     AssignInspectionRequest, AuditInspectionRequest, CreateInspectionRequest, Inspection,
     InspectionAudit, InspectionResultItem, ListInspectionsResponse, SubmitInspectionResultRequest,
     UpdateInspectionRequest,
 };
-use crate::modules::quality_issue::{
+use crate::models::quality_issue::{
     CreateIssueRequest, QualityIssue, QualityIssueWithWorkflow, UpdateIssueRequest,
 };
-use crate::modules::quality_standard::{
+use crate::models::quality_standard::{
     CreateStandardRequest, ListStandardsResponse, QualityStandard, StandardRevision,
     UpdateStandardRequest,
 };
+use crate::modules::qms_compat;
 
 #[derive(OpenApi)]
 #[openapi(

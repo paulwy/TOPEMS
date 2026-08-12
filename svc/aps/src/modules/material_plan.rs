@@ -1,4 +1,9 @@
-use axum::{extract::FromRef, http::HeaderMap, routing::get, Json, Router};
+use axum::{
+    extract::FromRef,
+    http::HeaderMap,
+    routing::{get, post},
+    Json, Router,
+};
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -6,9 +11,17 @@ use uuid::Uuid;
 
 use crate::middleware::tenant::get_tenant_id;
 use crate::modules::ApiState;
+use crate::shared::fsm::{material_plan_can_transition, material_plan_requires_approval};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 use utoipa::ToSchema;
+
+/// 审批请求体
+#[derive(Debug, Deserialize)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct MaterialPlan {
@@ -70,6 +83,12 @@ where
                 .put(update_material_plan)
                 .delete(delete_material_plan),
         )
+        .route("/material-plans/{id}/submit", post(submit_material_plan))
+        .route(
+            "/material-plans/{id}/requisition",
+            post(requisition_material_plan),
+        )
+        .route("/material-plans/{id}/cancel", post(cancel_material_plan))
 }
 
 #[utoipa::path(
@@ -382,6 +401,181 @@ pub async fn delete_material_plan(
         Err(e) => {
             tracing::error!("删除物料计划失败: {}", e);
             Json(api_error(500, "删除物料计划失败"))
+        }
+    }
+}
+
+/// APV-4: 提交请购申请 (no state change, just flag for requisition)
+pub async fn submit_material_plan(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<MaterialPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query_as::<_, MaterialPlan>(
+        r#"
+        SELECT id, plan_no, plan_id, material_id, material_code, material_name,
+               required_quantity, available_quantity, shortfall_quantity, required_date,
+               supply_type, status, tenant_id, created_at, updated_at
+        FROM plugin_aps.aps_material_plans
+        WHERE id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(plan)) => {
+            tracing::info!(
+                "物料计划 {} 提交请购申请 (操作人: {}, 备注: {:?})",
+                id,
+                req.operator,
+                req.comment
+            );
+            Json(ApiResponse::success(plan, "物料计划已提交请购申请"))
+        }
+        Ok(None) => Json(api_error(404, "物料计划不存在")),
+        Err(e) => {
+            tracing::error!("查询物料计划失败: {}", e);
+            Json(api_error(500, "查询物料计划失败"))
+        }
+    }
+}
+
+/// APV-4: 请购物料 (pending → requisitioned, approve requisition)
+pub async fn requisition_material_plan(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<MaterialPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let target_status = "requisitioned";
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM plugin_aps.aps_material_plans WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let current_status = match current {
+        Ok(Some(s)) => s,
+        Ok(None) => return Json(api_error(404, "物料计划不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询物料计划失败: {}", e))),
+    };
+
+    if !material_plan_requires_approval(&current_status, target_status) {
+        return Json(api_error(400, "当前状态不需要审批请购"));
+    }
+    if let Err(e) = material_plan_can_transition(&current_status, target_status) {
+        return Json(api_error(400, &format!("当前状态不允许请购: {}", e)));
+    }
+
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, MaterialPlan>(
+        r#"
+        UPDATE plugin_aps.aps_material_plans SET status = $2, updated_at = $3
+        WHERE id = $1 AND tenant_id = $4
+        RETURNING id, plan_no, plan_id, material_id, material_code, material_name,
+                  required_quantity, available_quantity, shortfall_quantity, required_date,
+                  supply_type, status, tenant_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(target_status)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(plan) => {
+            tracing::info!(
+                "物料计划 {} 请购审批通过: {} -> {} (操作人: {}, 备注: {:?})",
+                id,
+                current_status,
+                target_status,
+                req.operator,
+                req.comment
+            );
+            Json(ApiResponse::success(plan, "物料计划已请购"))
+        }
+        Err(e) => {
+            tracing::error!("请购物料计划失败: {}", e);
+            Json(api_error(500, "请购物料计划失败"))
+        }
+    }
+}
+
+/// APV-4: 取消物料计划 (non-terminal → cancelled)
+pub async fn cancel_material_plan(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<MaterialPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let target_status = "cancelled";
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM plugin_aps.aps_material_plans WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let current_status = match current {
+        Ok(Some(s)) => s,
+        Ok(None) => return Json(api_error(404, "物料计划不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询物料计划失败: {}", e))),
+    };
+
+    if let Err(e) = material_plan_can_transition(&current_status, target_status) {
+        return Json(api_error(400, &format!("当前状态不允许取消: {}", e)));
+    }
+
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, MaterialPlan>(
+        r#"
+        UPDATE plugin_aps.aps_material_plans SET status = $2, updated_at = $3
+        WHERE id = $1 AND tenant_id = $4
+        RETURNING id, plan_no, plan_id, material_id, material_code, material_name,
+                  required_quantity, available_quantity, shortfall_quantity, required_date,
+                  supply_type, status, tenant_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(target_status)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(plan) => {
+            tracing::info!(
+                "物料计划 {} 已取消: {} -> {} (操作人: {}, 备注: {:?})",
+                id,
+                current_status,
+                target_status,
+                req.operator,
+                req.comment
+            );
+            Json(ApiResponse::success(plan, "物料计划已取消"))
+        }
+        Err(e) => {
+            tracing::error!("取消物料计划失败: {}", e);
+            Json(api_error(500, "取消物料计划失败"))
         }
     }
 }

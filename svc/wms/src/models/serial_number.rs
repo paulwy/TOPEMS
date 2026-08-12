@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct SerialNumber {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -34,7 +35,7 @@ pub struct SerialNumber {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateSerialNumberRequest {
     pub serial_no: String,
     pub sku: String,
@@ -55,7 +56,7 @@ pub struct CreateSerialNumberRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateSerialNumberRequest {
     pub sku: Option<String>,
     pub material_name: Option<String>,
@@ -77,7 +78,7 @@ pub struct UpdateSerialNumberRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct SerialNumberQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -92,7 +93,7 @@ pub struct SerialNumberQueryParams {
     pub warranty_warning: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct SerialNumberStatistics {
     pub total_serials: i64,
     pub in_stock_count: i64,

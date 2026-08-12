@@ -1,71 +1,24 @@
 //! Quality Issue handlers
 
+use crate::models::quality_issue::*;
+use crate::shared::fsm::{issue_can_transition, issue_requires_approval};
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
-use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, FromRow};
+use serde::Deserialize;
+use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::EventType;
 use topems_shared_event::event::QmsQualityIssueCreatedPayload;
-use utoipa::ToSchema;
 
 use topems_shared_service_client::service_client::CreateInstanceRequest;
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct IssueQuery {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub status: Option<String>,
-    pub severity: Option<String>,
-}
-
-#[derive(Debug, Serialize, FromRow, ToSchema)]
-pub struct QualityIssue {
-    pub id: String,
-    pub tenant_id: String,
-    pub issue_no: String,
-    pub title: String,
-    pub description: Option<String>,
-    pub severity: Option<String>,
-    pub status: Option<String>,
-    pub source: Option<String>,
-    pub related_inspection_id: Option<String>,
-    pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub resolved_at: Option<String>,
-    pub updated_at: Option<String>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct QualityIssueWithWorkflow {
-    #[serde(flatten)]
-    pub issue: QualityIssue,
-    pub approval_workflow_id: Option<String>,
-    pub approval_status: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct CreateIssueRequest {
-    pub title: String,
-    pub description: Option<String>,
-    pub severity: Option<String>,
-    pub source: Option<String>,
-    pub related_inspection_id: Option<String>,
-    pub created_by: Option<String>,
-    pub workflow_id: Option<Uuid>,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct UpdateIssueRequest {
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub severity: Option<String>,
-    pub status: Option<String>,
-}
+const STATUS_CLOSED: &str = "closed";
+const STATUS_IN_PROGRESS: &str = "in_progress";
+const STATUS_CANCELLED: &str = "cancelled";
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims
@@ -467,6 +420,185 @@ pub async fn reject_issue(
     }
 }
 
+/// APV-2 审批请求体
+#[derive(Debug, serde::Deserialize)]
+pub struct IssueApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
+
+const ISSUE_SELECT_COLS: &str = r#"id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#;
+
+/// APV-2: 审批通过 (resolved → closed, requires_approval)
+pub async fn approve_issue_status(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<IssueApprovalRequest>,
+) -> Json<ApiResponse<QualityIssue>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+    };
+
+    let current = sqlx::query("SELECT status FROM qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if issue_requires_approval(&current_status, STATUS_CLOSED)
+                && !crate::shared::permission::has_qms_permission(&claims, "issue.approve")
+            {
+                return Json(ApiResponse::error(403, "无审批权限"));
+            }
+            if !issue_can_transition(&current_status, STATUS_CLOSED).is_ok() {
+                return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
+            }
+            let issue = sqlx::query_as::<_, QualityIssue>(
+                format!("UPDATE qa_quality_issues SET status = '{}', resolved_at = COALESCE(resolved_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CLOSED, ISSUE_SELECT_COLS).as_str()
+            ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+            match issue {
+                Ok(data) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_id.to_string(),
+                        "issue",
+                        &id.to_string(),
+                        "approve",
+                        &req.operator,
+                        &current_status,
+                        STATUS_CLOSED,
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(data, "审批通过"))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to approve issue: {}", e);
+                    Json(ApiResponse::error(500, "审批失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to find issue: {}", e);
+            Json(ApiResponse::error(404, "质量问题不存在"))
+        }
+    }
+}
+
+/// APV-2: 审批驳回 (resolved → in_progress)
+pub async fn reject_issue_status(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<IssueApprovalRequest>,
+) -> Json<ApiResponse<QualityIssue>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+    };
+
+    let current = sqlx::query("SELECT status FROM qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if !issue_can_transition(&current_status, STATUS_IN_PROGRESS).is_ok() {
+                return Json(ApiResponse::error(400, "当前状态不允许驳回"));
+            }
+            let issue = sqlx::query_as::<_, QualityIssue>(
+                format!("UPDATE qa_quality_issues SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_IN_PROGRESS, ISSUE_SELECT_COLS).as_str()
+            ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+            match issue {
+                Ok(data) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_id.to_string(),
+                        "issue",
+                        &id.to_string(),
+                        "reject",
+                        &req.operator,
+                        &current_status,
+                        STATUS_IN_PROGRESS,
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(data, "审批驳回"))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reject issue: {}", e);
+                    Json(ApiResponse::error(500, "驳回失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to find issue: {}", e);
+            Json(ApiResponse::error(404, "质量问题不存在"))
+        }
+    }
+}
+
+/// APV-2: 取消 (open/in_progress → cancelled)
+pub async fn cancel_issue(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<IssueApprovalRequest>,
+) -> Json<ApiResponse<QualityIssue>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+    };
+
+    let current = sqlx::query("SELECT status FROM qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if !issue_can_transition(&current_status, STATUS_CANCELLED).is_ok() {
+                return Json(ApiResponse::error(400, "当前状态不允许取消"));
+            }
+            let issue = sqlx::query_as::<_, QualityIssue>(
+                format!("UPDATE qa_quality_issues SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, ISSUE_SELECT_COLS).as_str()
+            ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+            match issue {
+                Ok(data) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_id.to_string(),
+                        "issue",
+                        &id.to_string(),
+                        "cancel",
+                        &req.operator,
+                        &current_status,
+                        STATUS_CANCELLED,
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(data, "质量问题已取消"))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to cancel issue: {}", e);
+                    Json(ApiResponse::error(500, "取消失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to find issue: {}", e);
+            Json(ApiResponse::error(404, "质量问题不存在"))
+        }
+    }
+}
+
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
         .route("/issues", get(list_issues))
@@ -478,4 +610,7 @@ pub fn create_routes() -> Router<crate::AppState> {
         .route("/issues/{id}/approval/start", post(start_issue_approval))
         .route("/issues/{id}/approval/approve", post(approve_issue))
         .route("/issues/{id}/approval/reject", post(reject_issue))
+        .route("/issues/{id}/approve", post(approve_issue_status))
+        .route("/issues/{id}/reject", post(reject_issue_status))
+        .route("/issues/{id}/cancel", post(cancel_issue))
 }

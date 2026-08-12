@@ -1,10 +1,11 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// 库存移动记录
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct InventoryMovement {
     pub id: Uuid,
     pub movement_no: String,
@@ -28,7 +29,7 @@ pub struct InventoryMovement {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateInventoryMovementRequest {
     pub movement_type: String,
     pub reference_id: Option<String>,
@@ -44,7 +45,7 @@ pub struct CreateInventoryMovementRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct InventoryMovementQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,

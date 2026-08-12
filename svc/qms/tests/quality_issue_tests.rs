@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use topems_qms::modules::quality_issue::{CreateIssueRequest, IssueQuery, UpdateIssueRequest};
+use topems_qms::models::quality_issue::{CreateIssueRequest, IssueQuery, UpdateIssueRequest};
 
 #[test]
 fn test_issue_query_defaults() {

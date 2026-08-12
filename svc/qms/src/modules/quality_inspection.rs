@@ -1,163 +1,21 @@
 //! Quality Inspection handlers
 
+use crate::models::quality_inspection::*;
+use crate::shared::fsm::inspection_can_transition;
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
 use bigdecimal::BigDecimal;
-use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, FromRow, Row};
+use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use utoipa::ToSchema;
 
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct InspectionQuery {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub status: Option<String>,
-    pub inspection_type: Option<String>,
-    pub search: Option<String>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct ListInspectionsResponse {
-    pub inspections: Vec<Inspection>,
-    pub total: i64,
-    pub page: i64,
-    pub page_size: i64,
-}
-
-#[derive(Debug, Serialize, FromRow, ToSchema)]
-pub struct Inspection {
-    pub id: String,
-    pub tenant_id: String,
-    pub inspection_no: String,
-    pub inspection_type: String,
-    pub product_id: Option<Uuid>,
-    pub product_name: Option<String>,
-    pub standard_id: Option<Uuid>,
-    pub quantity: BigDecimal,
-    pub qualified_quantity: Option<BigDecimal>,
-    pub unqualified_quantity: Option<BigDecimal>,
-    pub qualification_rate: Option<BigDecimal>,
-    pub status: Option<String>,
-    pub inspector: Option<String>,
-    pub assignee: Option<String>,
-    pub inspected_at: Option<String>,
-    pub result: Option<String>,
-    pub memo: Option<String>,
-    pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct CreateInspectionRequest {
-    pub inspection_type: String,
-    pub product_id: Option<String>,
-    pub product_name: Option<String>,
-    pub standard_id: Option<String>,
-    pub quantity: BigDecimal,
-    pub created_by: Option<String>,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct AssignInspectionRequest {
-    pub assignee: String,
-    pub operator: String,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct SubmitInspectionResultRequest {
-    pub qualified_quantity: BigDecimal,
-    pub unqualified_quantity: BigDecimal,
-    pub qualification_rate: Option<BigDecimal>,
-    pub result: Option<String>,
-    pub memo: Option<String>,
-    pub inspector: String,
-    pub results: Option<Vec<InspectionResultItem>>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct InspectionResultItem {
-    pub item_name: String,
-    pub standard_value: Option<String>,
-    pub measured_value: Option<String>,
-    pub is_qualified: bool,
-    pub remark: Option<String>,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct AuditInspectionRequest {
-    pub action: String,
-    pub operator: String,
-    pub comment: Option<String>,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct UpdateInspectionRequest {
-    pub inspection_type: Option<String>,
-    pub product_id: Option<String>,
-    pub product_name: Option<String>,
-    pub standard_id: Option<String>,
-    pub quantity: Option<BigDecimal>,
-}
-
-#[derive(Debug, Serialize, FromRow, ToSchema)]
-pub struct InspectionAudit {
-    pub id: String,
-    pub tenant_id: String,
-    pub inspection_id: String,
-    pub status_from: String,
-    pub status_to: String,
-    pub action: String,
-    pub operator: String,
-    pub comment: Option<String>,
-    pub created_at: Option<String>,
-}
-
-#[derive(Debug, Serialize, FromRow)]
-pub struct InspectionResult {
-    pub id: String,
-    pub tenant_id: String,
-    pub inspection_id: String,
-    pub item_name: String,
-    pub standard_value: Option<String>,
-    pub measured_value: Option<String>,
-    pub is_qualified: bool,
-    pub remark: Option<String>,
-    pub created_at: Option<String>,
-}
-
-const STATUS_PENDING: &str = "pending";
 const STATUS_IN_PROGRESS: &str = "in_progress";
 const STATUS_PENDING_AUDIT: &str = "pending_audit";
 const STATUS_COMPLETED: &str = "completed";
 const STATUS_REJECTED: &str = "rejected";
-
-fn validate_status_transition(from: &str, to: &str) -> bool {
-    match (from, to) {
-        (STATUS_PENDING, STATUS_IN_PROGRESS) => true,
-        (STATUS_IN_PROGRESS, STATUS_PENDING_AUDIT) => true,
-        (STATUS_PENDING_AUDIT, STATUS_COMPLETED) => true,
-        (STATUS_PENDING_AUDIT, STATUS_REJECTED) => true,
-        (STATUS_REJECTED, STATUS_IN_PROGRESS) => true,
-        _ => false,
-    }
-}
-
-fn get_action_name(_from: &str, _to: &str) -> String {
-    match (_from, _to) {
-        (STATUS_PENDING, STATUS_IN_PROGRESS) => "assign".to_string(),
-        (STATUS_IN_PROGRESS, STATUS_PENDING_AUDIT) => "submit".to_string(),
-        (STATUS_PENDING_AUDIT, STATUS_COMPLETED) => "approve".to_string(),
-        (STATUS_PENDING_AUDIT, STATUS_REJECTED) => "reject".to_string(),
-        (STATUS_REJECTED, STATUS_IN_PROGRESS) => "rework".to_string(),
-        _ => "unknown".to_string(),
-    }
-}
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims
@@ -466,7 +324,7 @@ pub async fn assign_inspection(
         Ok(row) => {
             let status_opt = row.get::<Option<String>, _>("status");
             let current_status = status_opt.as_deref().unwrap_or("");
-            if !validate_status_transition(current_status, STATUS_IN_PROGRESS) {
+            if !inspection_can_transition(current_status, STATUS_IN_PROGRESS).is_ok() {
                 return Json(ApiResponse::error(400, "当前状态不允许分配"));
             }
 
@@ -476,7 +334,7 @@ pub async fn assign_inspection(
 
             match inspection {
                 Ok(data) => {
-                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind(get_action_name(current_status, STATUS_IN_PROGRESS)).bind(req.operator).bind(None::<String>)
+                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind("assign").bind(req.operator).bind(None::<String>)
                     .execute(&state.pool)
                     .await;
                     Json(ApiResponse::success(data, "质量检查分配成功"))
@@ -519,7 +377,7 @@ pub async fn submit_result(
         Ok(row) => {
             let status_opt = row.get::<Option<String>, _>("status");
             let current_status = status_opt.as_deref().unwrap_or("");
-            if !validate_status_transition(current_status, STATUS_PENDING_AUDIT) {
+            if !inspection_can_transition(current_status, STATUS_PENDING_AUDIT).is_ok() {
                 return Json(ApiResponse::error(400, "当前状态不允许提交结果"));
             }
 
@@ -547,7 +405,7 @@ pub async fn submit_result(
                         }
                     }
 
-                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_PENDING_AUDIT).bind(get_action_name(current_status, STATUS_PENDING_AUDIT)).bind(inspector).bind(None::<String>)
+                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_PENDING_AUDIT).bind("submit").bind(inspector).bind(None::<String>)
                     .execute(&state.pool)
                     .await;
                     Json(ApiResponse::success(data, "提交检查结果成功"))
@@ -596,7 +454,7 @@ pub async fn audit_inspection(
                 _ => return Json(ApiResponse::error(400, "无效的审核动作")),
             };
 
-            if !validate_status_transition(current_status, target_status) {
+            if !inspection_can_transition(current_status, target_status).is_ok() {
                 return Json(ApiResponse::error(400, "当前状态不允许此操作"));
             }
 
@@ -606,7 +464,12 @@ pub async fn audit_inspection(
 
             match inspection {
                 Ok(data) => {
-                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(target_status).bind(get_action_name(current_status, target_status)).bind(req.operator).bind(req.comment)
+                    let action_name = if target_status == STATUS_COMPLETED {
+                        "approve"
+                    } else {
+                        "reject"
+                    };
+                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(target_status).bind(action_name).bind(req.operator).bind(req.comment)
                     .execute(&state.pool)
                     .await;
                     let msg = if target_status == STATUS_COMPLETED {
@@ -654,7 +517,7 @@ pub async fn rework_inspection(
         Ok(row) => {
             let status_opt = row.get::<Option<String>, _>("status");
             let current_status = status_opt.as_deref().unwrap_or("");
-            if !validate_status_transition(current_status, STATUS_IN_PROGRESS) {
+            if !inspection_can_transition(current_status, STATUS_IN_PROGRESS).is_ok() {
                 return Json(ApiResponse::error(400, "当前状态不允许返工"));
             }
 
@@ -664,8 +527,20 @@ pub async fn rework_inspection(
 
             match inspection {
                 Ok(data) => {
-                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind(get_action_name(current_status, STATUS_IN_PROGRESS)).bind(req.operator).bind(req.comment)
+                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind("rework").bind(&req.operator).bind(req.comment.clone())
                     .execute(&state.pool)
+                    .await;
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_id.to_string(),
+                        "inspection",
+                        &id.to_string(),
+                        "rework",
+                        &req.operator,
+                        &current_status,
+                        STATUS_IN_PROGRESS,
+                        req.comment.as_deref(),
+                    )
                     .await;
                     Json(ApiResponse::success(data, "返工申请已提交"))
                 }
@@ -743,156 +618,135 @@ pub fn create_routes() -> Router<crate::AppState> {
         .route("/checks/{id}/submit", post(submit_result))
         .route("/checks/{id}/audit", post(audit_inspection))
         .route("/checks/{id}/rework", post(rework_inspection))
+        .route("/checks/{id}/approve", post(approve_inspection))
+        .route("/checks/{id}/reject", post(reject_inspection))
         .route("/checks/{id}/results", get(get_inspection_results))
         .route("/checks/{id}/audits", get(get_inspection_audits))
+}
+
+/// APV-1 审批请求体
+#[derive(Debug, serde::Deserialize)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
+
+/// APV-1: 审批通过 (pending_audit → completed)
+pub async fn approve_inspection(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Inspection>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+    };
+
+    let current = sqlx::query("SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if crate::shared::fsm::inspection_requires_approval(&current_status, STATUS_COMPLETED)
+                && !crate::shared::fsm::inspection_can_transition(&current_status, STATUS_COMPLETED)
+                    .is_ok()
+            {
+                return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
+            }
+            let inspection = sqlx::query_as::<_, Inspection>(r#"UPDATE qa_quality_inspections SET status = 'completed', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(tenant_id)
+                .fetch_one(&state.pool).await;
+            match inspection {
+                Ok(data) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_id.to_string(),
+                        "inspection",
+                        &id.to_string(),
+                        "approve",
+                        &req.operator,
+                        &current_status,
+                        STATUS_COMPLETED,
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(data, "审批通过"))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to approve inspection: {}", e);
+                    Json(ApiResponse::error(500, "审批失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to find inspection: {}", e);
+            Json(ApiResponse::error(404, "质量检查不存在"))
+        }
+    }
+}
+
+/// APV-1: 审批驳回 (pending_audit → rejected)
+pub async fn reject_inspection(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Inspection>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+    };
+
+    let current = sqlx::query("SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if !crate::shared::fsm::inspection_can_transition(&current_status, STATUS_REJECTED)
+                .is_ok()
+            {
+                return Json(ApiResponse::error(400, "当前状态不允许驳回"));
+            }
+            let inspection = sqlx::query_as::<_, Inspection>(r#"UPDATE qa_quality_inspections SET status = 'rejected', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(tenant_id)
+                .fetch_one(&state.pool).await;
+            match inspection {
+                Ok(data) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_id.to_string(),
+                        "inspection",
+                        &id.to_string(),
+                        "reject",
+                        &req.operator,
+                        &current_status,
+                        STATUS_REJECTED,
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(data, "审批驳回"))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to reject inspection: {}", e);
+                    Json(ApiResponse::error(500, "驳回失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to find inspection: {}", e);
+            Json(ApiResponse::error(404, "质量检查不存在"))
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_validate_status_transition_valid_paths() {
-        assert!(validate_status_transition(
-            STATUS_PENDING,
-            STATUS_IN_PROGRESS
-        ));
-        assert!(validate_status_transition(
-            STATUS_IN_PROGRESS,
-            STATUS_PENDING_AUDIT
-        ));
-        assert!(validate_status_transition(
-            STATUS_PENDING_AUDIT,
-            STATUS_COMPLETED
-        ));
-        assert!(validate_status_transition(
-            STATUS_PENDING_AUDIT,
-            STATUS_REJECTED
-        ));
-        assert!(validate_status_transition(
-            STATUS_REJECTED,
-            STATUS_IN_PROGRESS
-        ));
-    }
-
-    #[test]
-    fn test_validate_status_transition_invalid_paths() {
-        assert!(!validate_status_transition(
-            STATUS_PENDING,
-            STATUS_PENDING_AUDIT
-        ));
-        assert!(!validate_status_transition(
-            STATUS_PENDING,
-            STATUS_COMPLETED
-        ));
-        assert!(!validate_status_transition(STATUS_PENDING, STATUS_REJECTED));
-        assert!(!validate_status_transition(STATUS_PENDING, STATUS_PENDING));
-
-        assert!(!validate_status_transition(
-            STATUS_IN_PROGRESS,
-            STATUS_PENDING
-        ));
-        assert!(!validate_status_transition(
-            STATUS_IN_PROGRESS,
-            STATUS_COMPLETED
-        ));
-        assert!(!validate_status_transition(
-            STATUS_IN_PROGRESS,
-            STATUS_REJECTED
-        ));
-        assert!(!validate_status_transition(
-            STATUS_IN_PROGRESS,
-            STATUS_IN_PROGRESS
-        ));
-
-        assert!(!validate_status_transition(
-            STATUS_PENDING_AUDIT,
-            STATUS_PENDING
-        ));
-        assert!(!validate_status_transition(
-            STATUS_PENDING_AUDIT,
-            STATUS_IN_PROGRESS
-        ));
-        assert!(!validate_status_transition(
-            STATUS_PENDING_AUDIT,
-            STATUS_PENDING_AUDIT
-        ));
-
-        assert!(!validate_status_transition(
-            STATUS_COMPLETED,
-            STATUS_PENDING
-        ));
-        assert!(!validate_status_transition(
-            STATUS_COMPLETED,
-            STATUS_IN_PROGRESS
-        ));
-        assert!(!validate_status_transition(
-            STATUS_COMPLETED,
-            STATUS_PENDING_AUDIT
-        ));
-        assert!(!validate_status_transition(
-            STATUS_COMPLETED,
-            STATUS_COMPLETED
-        ));
-
-        assert!(!validate_status_transition(STATUS_REJECTED, STATUS_PENDING));
-        assert!(!validate_status_transition(
-            STATUS_REJECTED,
-            STATUS_PENDING_AUDIT
-        ));
-        assert!(!validate_status_transition(
-            STATUS_REJECTED,
-            STATUS_COMPLETED
-        ));
-        assert!(!validate_status_transition(
-            STATUS_REJECTED,
-            STATUS_REJECTED
-        ));
-    }
-
-    #[test]
-    fn test_get_action_name_valid_transitions() {
-        assert_eq!(
-            get_action_name(STATUS_PENDING, STATUS_IN_PROGRESS),
-            "assign".to_string()
-        );
-        assert_eq!(
-            get_action_name(STATUS_IN_PROGRESS, STATUS_PENDING_AUDIT),
-            "submit".to_string()
-        );
-        assert_eq!(
-            get_action_name(STATUS_PENDING_AUDIT, STATUS_COMPLETED),
-            "approve".to_string()
-        );
-        assert_eq!(
-            get_action_name(STATUS_PENDING_AUDIT, STATUS_REJECTED),
-            "reject".to_string()
-        );
-        assert_eq!(
-            get_action_name(STATUS_REJECTED, STATUS_IN_PROGRESS),
-            "rework".to_string()
-        );
-    }
-
-    #[test]
-    fn test_get_action_name_invalid_returns_unknown() {
-        assert_eq!(
-            get_action_name(STATUS_PENDING, STATUS_COMPLETED),
-            "unknown".to_string()
-        );
-        assert_eq!(
-            get_action_name(STATUS_COMPLETED, STATUS_PENDING),
-            "unknown".to_string()
-        );
-        assert_eq!(
-            get_action_name("invalid_status", STATUS_IN_PROGRESS),
-            "unknown".to_string()
-        );
-        assert_eq!(
-            get_action_name(STATUS_PENDING, "invalid_target"),
-            "unknown".to_string()
-        );
-    }
 
     #[test]
     fn test_inspection_result_item_struct() {

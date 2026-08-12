@@ -1,112 +1,21 @@
 //! 8D Problem Solving handlers
 
+use crate::models::eight_d::*;
+use crate::shared::fsm::{eight_d_can_transition, eight_d_requires_approval};
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
-use chrono::NaiveDate;
-use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, FromRow};
+use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
-#[derive(Debug, Deserialize)]
-pub struct EightDQuery {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub status: Option<String>,
-    pub severity: Option<String>,
-    pub assignee: Option<String>,
-    pub search: Option<String>,
-}
+const STATUS_VERIFIED: &str = "verified";
+const STATUS_CLOSED: &str = "closed";
+const STATUS_CANCELLED: &str = "cancelled";
 
-#[derive(Debug, Serialize)]
-pub struct ListEightDReportsResponse {
-    pub reports: Vec<EightDReport>,
-    pub total: i64,
-    pub page: i64,
-    pub page_size: i64,
-}
-
-#[derive(Debug, Serialize, FromRow)]
-pub struct EightDReport {
-    pub id: String,
-    pub tenant_id: String,
-    pub report_no: String,
-    pub title: String,
-    pub status: Option<String>,
-    pub severity: Option<String>,
-    pub priority: Option<String>,
-    pub related_issue_id: Option<String>,
-    pub d1_team: Option<String>,
-    pub d1_leader: Option<String>,
-    pub d2_problem_description: Option<String>,
-    pub d3_containment_action: Option<String>,
-    pub d3_implemented_at: Option<String>,
-    pub d4_root_cause: Option<String>,
-    pub d4_cause_analysis: Option<String>,
-    pub d5_permanent_action: Option<String>,
-    pub d6_verification_result: Option<String>,
-    pub d6_verified_at: Option<String>,
-    pub d7_preventive_action: Option<String>,
-    pub d8_congratulations: Option<String>,
-    pub d8_closed_at: Option<String>,
-    pub assignee: Option<String>,
-    pub due_date: Option<String>,
-    pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateEightDRequest {
-    pub title: String,
-    pub severity: Option<String>,
-    pub priority: Option<String>,
-    pub related_issue_id: Option<String>,
-    pub d2_problem_description: Option<String>,
-    pub assignee: Option<String>,
-    pub due_date: Option<NaiveDate>,
-    pub created_by: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UpdateEightDRequest {
-    pub title: Option<String>,
-    pub status: Option<String>,
-    pub severity: Option<String>,
-    pub priority: Option<String>,
-    pub d1_team: Option<String>,
-    pub d1_leader: Option<String>,
-    pub d2_problem_description: Option<String>,
-    pub d3_containment_action: Option<String>,
-    pub d4_root_cause: Option<String>,
-    pub d4_cause_analysis: Option<String>,
-    pub d5_permanent_action: Option<String>,
-    pub d6_verification_result: Option<String>,
-    pub d7_preventive_action: Option<String>,
-    pub d8_congratulations: Option<String>,
-    pub assignee: Option<String>,
-    pub due_date: Option<NaiveDate>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct EightDStepRequest {
-    pub content: Option<String>,
-}
-
-#[derive(Debug, Serialize, FromRow)]
-pub struct EightDAuditLog {
-    pub id: String,
-    pub tenant_id: String,
-    pub report_id: String,
-    pub action: String,
-    pub step: Option<String>,
-    pub operator: Option<String>,
-    pub comment: Option<String>,
-    pub created_at: Option<String>,
-}
+const EIGHTD_SELECT_COLS: &str = r#"id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#;
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims
@@ -589,6 +498,188 @@ pub async fn get_eightd_audit_logs(
     }
 }
 
+/// APV-3 审批请求体
+#[derive(Debug, serde::Deserialize)]
+pub struct EightDApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
+
+/// APV-3: 审批通过 (permanent_action → verified, requires_approval)
+pub async fn approve_eightd(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<EightDApprovalRequest>,
+) -> Json<ApiResponse<EightDReport>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
+    };
+
+    let current = sqlx::query("SELECT status FROM qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if eight_d_requires_approval(&current_status, STATUS_VERIFIED)
+                && !crate::shared::permission::has_qms_permission(&claims, "eightd.approve")
+            {
+                return Json(ApiResponse::error(403, "无审批权限"));
+            }
+            if !eight_d_can_transition(&current_status, STATUS_VERIFIED).is_ok() {
+                return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
+            }
+            let report = sqlx::query_as::<_, EightDReport>(
+                format!("UPDATE qa_eightd_reports SET status = '{}', d6_verified_at = COALESCE(d6_verified_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_VERIFIED, EIGHTD_SELECT_COLS).as_str()
+            ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+            match report {
+                Ok(data) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_id.to_string(),
+                        "eight_d",
+                        &id.to_string(),
+                        "approve",
+                        &req.operator,
+                        &current_status,
+                        STATUS_VERIFIED,
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(data, "审批通过"))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to approve 8D: {}", e);
+                    Json(ApiResponse::error(500, "审批失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to find 8D report: {}", e);
+            Json(ApiResponse::error(404, "8D报告不存在"))
+        }
+    }
+}
+
+/// APV-3: 关闭审批 (verified → closed, requires_approval)
+pub async fn close_eightd_approval(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<EightDApprovalRequest>,
+) -> Json<ApiResponse<EightDReport>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
+    };
+
+    let current = sqlx::query("SELECT status FROM qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if eight_d_requires_approval(&current_status, STATUS_CLOSED)
+                && !crate::shared::permission::has_qms_permission(&claims, "eightd.approve")
+            {
+                return Json(ApiResponse::error(403, "无审批权限"));
+            }
+            if !eight_d_can_transition(&current_status, STATUS_CLOSED).is_ok() {
+                return Json(ApiResponse::error(400, "当前状态不允许关闭"));
+            }
+            let report = sqlx::query_as::<_, EightDReport>(
+                format!("UPDATE qa_eightd_reports SET status = '{}', d8_closed_at = COALESCE(d8_closed_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CLOSED, EIGHTD_SELECT_COLS).as_str()
+            ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+            match report {
+                Ok(data) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_id.to_string(),
+                        "eight_d",
+                        &id.to_string(),
+                        "close",
+                        &req.operator,
+                        &current_status,
+                        STATUS_CLOSED,
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(data, "8D报告已关闭"))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to close 8D: {}", e);
+                    Json(ApiResponse::error(500, "关闭失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to find 8D report: {}", e);
+            Json(ApiResponse::error(404, "8D报告不存在"))
+        }
+    }
+}
+
+/// APV-3: 取消 (任意非终态 → cancelled)
+pub async fn cancel_eightd(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<EightDApprovalRequest>,
+) -> Json<ApiResponse<EightDReport>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
+    };
+
+    let current = sqlx::query("SELECT status FROM qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if !eight_d_can_transition(&current_status, STATUS_CANCELLED).is_ok() {
+                return Json(ApiResponse::error(400, "当前状态不允许取消"));
+            }
+            let report = sqlx::query_as::<_, EightDReport>(
+                format!("UPDATE qa_eightd_reports SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, EIGHTD_SELECT_COLS).as_str()
+            ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+            match report {
+                Ok(data) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.pool,
+                        &tenant_id.to_string(),
+                        "eight_d",
+                        &id.to_string(),
+                        "cancel",
+                        &req.operator,
+                        &current_status,
+                        STATUS_CANCELLED,
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(data, "8D报告已取消"))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to cancel 8D: {}", e);
+                    Json(ApiResponse::error(500, "取消失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to find 8D report: {}", e);
+            Json(ApiResponse::error(404, "8D报告不存在"))
+        }
+    }
+}
+
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
         .route("/eightd", get(list_eightd_reports))
@@ -607,4 +698,7 @@ pub fn create_routes() -> Router<crate::AppState> {
         .route("/eightd/{id}/d7-preventive", post(submit_d7_preventive))
         .route("/eightd/{id}/close", post(close_eightd_report))
         .route("/eightd/{id}/audit-logs", get(get_eightd_audit_logs))
+        .route("/eightd/{id}/approve", post(approve_eightd))
+        .route("/eightd/{id}/close-approval", post(close_eightd_approval))
+        .route("/eightd/{id}/cancel", post(cancel_eightd))
 }

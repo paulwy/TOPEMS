@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct TransferOrder {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -37,7 +38,7 @@ pub struct TransferOrder {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct TransferOrderItem {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -61,7 +62,7 @@ pub struct TransferOrderItem {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateTransferOrderRequest {
     pub transfer_type: Option<String>,
     pub from_warehouse_id: Uuid,
@@ -75,7 +76,7 @@ pub struct CreateTransferOrderRequest {
     pub items: Vec<CreateTransferOrderItemRequest>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateTransferOrderItemRequest {
     pub sku: String,
     pub material_name: String,
@@ -89,7 +90,7 @@ pub struct CreateTransferOrderItemRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct TransferOrderQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,

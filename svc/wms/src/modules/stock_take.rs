@@ -7,12 +7,10 @@ use axum::{
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{
-    CreateStockTakeItemRequest, CreateStockTakeRequest, StockTake, UpdateStockTakeItemRequest,
-    UpdateStockTakeRequest,
-};
+use crate::models::stock_take::*;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -100,6 +98,15 @@ where
         .route("/stock-takes/{id}/count", post(count_stock_take))
         .route("/stock-takes/{id}/complete", post(complete_stock_take))
         .route("/stock-takes/{id}/adjust", post(adjust_stock_take))
+        .route(
+            "/stock-takes/{id}/approval/start",
+            post(start_stock_take_approval),
+        )
+        .route(
+            "/stock-takes/{id}/approval/approve",
+            post(approve_stock_take),
+        )
+        .route("/stock-takes/{id}/approval/reject", post(reject_stock_take))
 }
 
 #[utoipa::path(
@@ -1369,4 +1376,233 @@ pub async fn adjust_stock_take(
         serde_json::json!({ "message": "库存调整完成" }),
         "库存调整成功",
     ))
+}
+
+#[derive(Debug, serde::Deserialize, ToSchema)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+    pub discrepancy_threshold: Option<f64>,
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/wms/stock-takes/{id}/approval/start",
+    tag = "WMS - StockTake",
+    request_body = ApprovalRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn start_stock_take_approval(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::StockTakeApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4);
+
+    let current = sqlx::query(
+        "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if !crate::shared::fsm::stock_take_requires_approval(&current_status, "completed") {
+                return Json(ApiResponse::error(400, "当前状态无需审批"));
+            }
+            let _ = crate::models::audit_log::log_approval_event(
+                &state.db,
+                &tenant_id.to_string(),
+                "stock_take",
+                &id.to_string(),
+                "start_approval",
+                &req.operator,
+                &current_status,
+                &current_status,
+                req.comment.as_deref(),
+            )
+            .await;
+            Json(ApiResponse::success(
+                serde_json::json!({"status": current_status, "approval_started": true}),
+                "审批启动成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("找不到盘点单: {}", e);
+            Json(ApiResponse::error(404, "盘点单不存在"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/wms/stock-takes/{id}/approval/approve",
+    tag = "WMS - StockTake",
+    request_body = ApprovalRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn approve_stock_take(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::StockTakeApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4);
+
+    let current = sqlx::query(
+        "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if crate::shared::fsm::stock_take_requires_approval(&current_status, "completed")
+                && !crate::shared::fsm::stock_take_can_transition(&current_status, "completed")
+                    .is_ok()
+            {
+                return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
+            }
+            let result = sqlx::query(
+                "UPDATE wms.stock_takes SET status = 'completed', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
+            )
+            .bind(id)
+            .bind(tenant_id)
+            .fetch_one(&state.db)
+            .await;
+            match result {
+                Ok(_) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.db,
+                        &tenant_id.to_string(),
+                        "stock_take",
+                        &id.to_string(),
+                        "approve",
+                        &req.operator,
+                        &current_status,
+                        "completed",
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(
+                        serde_json::json!({"id": id, "status": "completed"}),
+                        "审批通过",
+                    ))
+                }
+                Err(e) => {
+                    tracing::error!("审批盘点单失败: {}", e);
+                    Json(ApiResponse::error(500, "审批失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("找不到盘点单: {}", e);
+            Json(ApiResponse::error(404, "盘点单不存在"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/wms/stock-takes/{id}/approval/reject",
+    tag = "WMS - StockTake",
+    request_body = ApprovalRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn reject_stock_take(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::StockTakeApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4);
+
+    let current = sqlx::query(
+        "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if current_status != "in_progress" {
+                return Json(ApiResponse::error(400, "当前状态不允许驳回返工"));
+            }
+            let _ = crate::models::audit_log::log_approval_event(
+                &state.db,
+                &tenant_id.to_string(),
+                "stock_take",
+                &id.to_string(),
+                "reject_rework",
+                &req.operator,
+                &current_status,
+                &current_status,
+                req.comment.as_deref(),
+            )
+            .await;
+            Json(ApiResponse::success(
+                serde_json::json!({"id": id, "status": current_status, "rework": true}),
+                "审批驳回，需重新盘点(rework)",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("找不到盘点单: {}", e);
+            Json(ApiResponse::error(404, "盘点单不存在"))
+        }
+    }
 }

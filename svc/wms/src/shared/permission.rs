@@ -16,6 +16,19 @@ pub enum WmsPermission {
     InboundWrite,
     OutboundRead,
     OutboundWrite,
+    StockTakeRead,
+    StockTakeWrite,
+    TransferRead,
+    TransferWrite,
+    WavePickRead,
+    WavePickWrite,
+    MovementRead,
+    MovementWrite,
+    DashboardRead,
+    InboundApprove,
+    OutboundApprove,
+    StockTakeApprove,
+    TransferApprove,
     All,
 }
 
@@ -46,6 +59,45 @@ impl WmsPermission {
             WmsPermission::OutboundWrite => {
                 SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Write)
             }
+            WmsPermission::StockTakeRead => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Read)
+            }
+            WmsPermission::StockTakeWrite => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Write)
+            }
+            WmsPermission::TransferRead => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Read)
+            }
+            WmsPermission::TransferWrite => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Write)
+            }
+            WmsPermission::WavePickRead => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Read)
+            }
+            WmsPermission::WavePickWrite => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Write)
+            }
+            WmsPermission::MovementRead => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Read)
+            }
+            WmsPermission::MovementWrite => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Write)
+            }
+            WmsPermission::DashboardRead => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Read)
+            }
+            WmsPermission::InboundApprove => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Admin)
+            }
+            WmsPermission::OutboundApprove => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Admin)
+            }
+            WmsPermission::StockTakeApprove => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Admin)
+            }
+            WmsPermission::TransferApprove => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Admin)
+            }
             WmsPermission::All => {
                 SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Admin)
             }
@@ -68,4 +120,15 @@ pub async fn check_permission<T>(
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
     let shared_perm = permission.to_shared();
     check_module_permission(db, claims, &shared_perm).await
+}
+
+pub fn has_wms_permission(claims: &Claims, action: &str) -> bool {
+    if claims.is_superuser {
+        return true;
+    }
+
+    let permission_str = format!("wms:{}", action);
+    claims.has_permission(&permission_str)
+        || claims.has_permission("wms:admin")
+        || claims.has_permission("all")
 }

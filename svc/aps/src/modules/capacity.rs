@@ -1,4 +1,9 @@
-use axum::{extract::FromRef, http::HeaderMap, routing::get, Json, Router};
+use axum::{
+    extract::FromRef,
+    http::HeaderMap,
+    routing::{get, post},
+    Json, Router,
+};
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -6,9 +11,17 @@ use uuid::Uuid;
 
 use crate::middleware::tenant::get_tenant_id;
 use crate::modules::ApiState;
+use crate::shared::fsm::{capacity_can_transition, capacity_requires_approval};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 use utoipa::ToSchema;
+
+/// 审批请求体
+#[derive(Debug, Deserialize)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Capacity {
@@ -57,6 +70,9 @@ where
                 .put(update_capacity)
                 .delete(delete_capacity),
         )
+        .route("/capacities/{id}/submit", post(submit_capacity))
+        .route("/capacities/{id}/allocate", post(allocate_capacity))
+        .route("/capacities/{id}/release", post(release_capacity))
 }
 
 #[utoipa::path(
@@ -352,6 +368,178 @@ pub async fn delete_capacity(
         Err(e) => {
             tracing::error!("删除产能失败: {}", e);
             Json(api_error(500, "删除产能失败"))
+        }
+    }
+}
+
+/// APV-3: 提交分配申请 (no state change, just flag for allocation)
+pub async fn submit_capacity(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<Capacity>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query_as::<_, Capacity>(
+        r#"
+        SELECT id, work_center_id, work_center_name, capacity_date, available_hours,
+               used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        FROM plugin_aps.aps_capacities
+        WHERE id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(capacity)) => {
+            tracing::info!(
+                "产能 {} 提交分配申请 (操作人: {}, 备注: {:?})",
+                id,
+                req.operator,
+                req.comment
+            );
+            Json(ApiResponse::success(capacity, "产能已提交分配申请"))
+        }
+        Ok(None) => Json(api_error(404, "产能不存在")),
+        Err(e) => {
+            tracing::error!("查询产能失败: {}", e);
+            Json(api_error(500, "查询产能失败"))
+        }
+    }
+}
+
+/// APV-3: 分配产能 (available → allocated, approve allocation)
+pub async fn allocate_capacity(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<Capacity>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let target_status = "allocated";
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM plugin_aps.aps_capacities WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let current_status = match current {
+        Ok(Some(s)) => s,
+        Ok(None) => return Json(api_error(404, "产能不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询产能失败: {}", e))),
+    };
+
+    if !capacity_requires_approval(&current_status, target_status) {
+        return Json(api_error(400, "当前状态不需要审批分配"));
+    }
+    if let Err(e) = capacity_can_transition(&current_status, target_status) {
+        return Json(api_error(400, &format!("当前状态不允许分配: {}", e)));
+    }
+
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, Capacity>(
+        r#"
+        UPDATE plugin_aps.aps_capacities SET status = $2, updated_at = $3
+        WHERE id = $1 AND tenant_id = $4
+        RETURNING id, work_center_id, work_center_name, capacity_date, available_hours,
+                  used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(target_status)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(capacity) => {
+            tracing::info!(
+                "产能 {} 分配审批通过: {} -> {} (操作人: {}, 备注: {:?})",
+                id,
+                current_status,
+                target_status,
+                req.operator,
+                req.comment
+            );
+            Json(ApiResponse::success(capacity, "产能已分配"))
+        }
+        Err(e) => {
+            tracing::error!("分配产能失败: {}", e);
+            Json(api_error(500, "分配产能失败"))
+        }
+    }
+}
+
+/// APV-3: 释放产能 (allocated → released, release allocation)
+pub async fn release_capacity(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
+    axum::extract::Json(req): axum::extract::Json<ApprovalRequest>,
+) -> Json<ApiResponse<Capacity>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let target_status = "released";
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM plugin_aps.aps_capacities WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let current_status = match current {
+        Ok(Some(s)) => s,
+        Ok(None) => return Json(api_error(404, "产能不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询产能失败: {}", e))),
+    };
+
+    if let Err(e) = capacity_can_transition(&current_status, target_status) {
+        return Json(api_error(400, &format!("当前状态不允许释放: {}", e)));
+    }
+
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, Capacity>(
+        r#"
+        UPDATE plugin_aps.aps_capacities SET status = $2, updated_at = $3
+        WHERE id = $1 AND tenant_id = $4
+        RETURNING id, work_center_id, work_center_name, capacity_date, available_hours,
+                  used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(target_status)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(capacity) => {
+            tracing::info!(
+                "产能 {} 已释放: {} -> {} (操作人: {}, 备注: {:?})",
+                id,
+                current_status,
+                target_status,
+                req.operator,
+                req.comment
+            );
+            Json(ApiResponse::success(capacity, "产能已释放"))
+        }
+        Err(e) => {
+            tracing::error!("释放产能失败: {}", e);
+            Json(api_error(500, "释放产能失败"))
         }
     }
 }

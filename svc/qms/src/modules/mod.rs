@@ -56,6 +56,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             inspected_at TIMESTAMP,
             result VARCHAR(32),
             memo TEXT,
+            tenant_id UUID,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
@@ -76,6 +77,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             measured_value VARCHAR(256),
             is_qualified BOOLEAN NOT NULL,
             remark TEXT,
+            tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW()
         )
         "#,
@@ -93,6 +95,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             action VARCHAR(64) NOT NULL,
             operator VARCHAR(64) NOT NULL,
             comment TEXT,
+            tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW()
         )
         "#,
@@ -111,6 +114,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'open',
             source VARCHAR(32),
             related_inspection_id UUID,
+            tenant_id UUID,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
             resolved_at TIMESTAMP,
@@ -134,6 +138,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             description TEXT,
             version VARCHAR(16) DEFAULT '1.0',
             status VARCHAR(32) DEFAULT 'active',
+            tenant_id UUID,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
@@ -156,6 +161,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             specification TEXT,
             description TEXT,
             status VARCHAR(32),
+            tenant_id UUID,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW()
         )
@@ -217,6 +223,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             payload JSONB,
             response JSONB,
             error_msg TEXT,
+            tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
@@ -252,6 +259,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             assignee VARCHAR(64),
             target_date TIMESTAMP,
             completed_at TIMESTAMP,
+            tenant_id UUID,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
@@ -273,6 +281,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'pending',
             completed_at TIMESTAMP,
             remark TEXT,
+            tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW()
         )
         "#,
@@ -294,6 +303,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             scheduled_end TIMESTAMP,
             actual_start TIMESTAMP,
             actual_end TIMESTAMP,
+            tenant_id UUID,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
@@ -315,6 +325,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'pending',
             completed_at TIMESTAMP,
             finding_count INT DEFAULT 0,
+            tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
@@ -339,6 +350,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             responsible VARCHAR(64),
             target_date TIMESTAMP,
             verified_at TIMESTAMP,
+            tenant_id UUID,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
@@ -410,6 +422,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             ppk DECIMAL(8,4),
             sample_count INT DEFAULT 0,
             status VARCHAR(32) DEFAULT 'active',
+            tenant_id UUID,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
@@ -431,6 +444,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             is_out_of_control BOOLEAN DEFAULT false,
             trend_flag VARCHAR(32),
             measured_at TIMESTAMP,
+            tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW()
         )
         "#,
@@ -450,6 +464,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             description TEXT,
             related_issue_id UUID,
             incurred_date TIMESTAMP,
+            tenant_id UUID,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
@@ -483,6 +498,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             d7_preventive_action TEXT,
             d8_congratulations TEXT,
             d8_closed_at TIMESTAMP,
+            tenant_id UUID,
             assignee VARCHAR(64),
             due_date TIMESTAMP,
             created_by VARCHAR(64),
@@ -504,6 +520,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             step VARCHAR(8),
             operator VARCHAR(64),
             comment TEXT,
+            tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW()
         )
         "#,
@@ -528,6 +545,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             team TEXT,
             leader VARCHAR(64),
             description TEXT,
+            tenant_id UUID,
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
@@ -562,6 +580,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             revised_detection INT,
             revised_rpn INT,
             sort_order INT DEFAULT 0,
+            tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )

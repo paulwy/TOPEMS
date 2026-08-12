@@ -13,6 +13,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::middleware::tenant::get_tenant_id;
+use crate::shared::fsm::{shipment_can_transition, shipment_requires_approval};
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
@@ -70,22 +71,8 @@ pub struct UpdateShipmentRequest {
     pub notes: Option<String>,
 }
 
-/// 运单状态机：pending → in_transit → delivered / cancelled
-///
-/// 合法转换：
-/// - pending → in_transit (dispatch)
-/// - in_transit → delivered (arrive)
-/// - pending → cancelled (cancel)
-/// - in_transit → cancelled (cancel)
-pub fn shipment_can_transition(from: &str, to: &str) -> bool {
-    matches!(
-        (from, to),
-        ("pending", "in_transit")
-            | ("in_transit", "delivered")
-            | ("pending", "cancelled")
-            | ("in_transit", "cancelled")
-    )
-}
+/// 运单状态机使用 crate::shared::fsm 中的 shipment_can_transition
+/// draft → pending → in_transit → delivered / cancelled
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -103,6 +90,9 @@ where
         .route("/shipments/{id}/dispatch", post(dispatch_shipment))
         .route("/shipments/{id}/arrive", post(arrive_shipment))
         .route("/shipments/{id}/cancel", post(cancel_shipment))
+        .route("/shipments/{id}/submit-approval", post(submit_approval))
+        .route("/shipments/{id}/approve", post(approve_shipment))
+        .route("/shipments/{id}/reject", post(reject_shipment))
 }
 
 #[utoipa::path(
@@ -414,7 +404,7 @@ pub async fn dispatch_shipment(
 
     match current {
         Ok(Some(status)) => {
-            if !shipment_can_transition(&status, "in_transit") {
+            if shipment_can_transition(&status, "in_transit").is_err() {
                 return Json(api_error(400, &format!("当前状态 {} 不允许发车", status)));
             }
             let result = sqlx::query_as::<_, Shipment>(
@@ -483,7 +473,7 @@ pub async fn arrive_shipment(
 
     match current {
         Ok(Some(status)) => {
-            if !shipment_can_transition(&status, "delivered") {
+            if shipment_can_transition(&status, "delivered").is_err() {
                 return Json(api_error(400, &format!("当前状态 {} 不允许到达", status)));
             }
             let result = sqlx::query_as::<_, Shipment>(
@@ -552,7 +542,7 @@ pub async fn cancel_shipment(
 
     match current {
         Ok(Some(status)) => {
-            if !shipment_can_transition(&status, "cancelled") {
+            if shipment_can_transition(&status, "cancelled").is_err() {
                 return Json(api_error(400, &format!("当前状态 {} 不允许取消", status)));
             }
             let result = sqlx::query_as::<_, Shipment>(
@@ -589,6 +579,244 @@ pub async fn cancel_shipment(
     }
 }
 
+// ==================== Approval Endpoints ====================
+
+/// 审批请求体
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
+
+const SHIPMENT_RETURN: &str = r#"id, shipment_no, order_id, carrier_id, vehicle_id, driver_id, route_id, origin, destination, status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival, notes, tenant_id, created_at, updated_at"#;
+
+/// Submit shipment for dispatch approval (draft → pending)
+#[utoipa::path(
+    post,
+    path = "/api/tms/shipments/{id}/submit-approval",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "运单 ID")
+    ),
+    responses(
+        (status = 200, description = "submit_approval OK")
+    ),
+    tag = "TMS - Shipment"
+)]
+pub async fn submit_approval(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Shipment>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let now = Utc::now();
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM tms.tms_shipments WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match current {
+        Ok(Some(status)) => {
+            if shipment_can_transition(&status, "pending").is_err() {
+                return Json(api_error(
+                    400,
+                    &format!("当前状态 {} 不允许提交审批", status),
+                ));
+            }
+            let result = sqlx::query_as::<_, Shipment>(&format!(
+                r#"UPDATE tms.tms_shipments SET status = 'pending', updated_at = $2
+                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                SHIPMENT_RETURN
+            ))
+            .bind(id)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&state.db)
+            .await;
+
+            match result {
+                Ok(Some(shipment)) => {
+                    tracing::info!(
+                        "shipment {} submit_approval: {} -> pending, operator={}",
+                        id,
+                        status,
+                        req.operator
+                    );
+                    Json(ApiResponse::success(shipment, "运单已提交调度审批"))
+                }
+                Ok(None) => Json(api_error(404, "运单不存在")),
+                Err(e) => {
+                    tracing::error!("提交审批失败: {}", e);
+                    Json(api_error(500, "提交审批失败"))
+                }
+            }
+        }
+        Ok(None) => Json(api_error(404, "运单不存在")),
+        Err(e) => {
+            tracing::error!("查询运单状态失败: {}", e);
+            Json(api_error(500, "查询运单状态失败"))
+        }
+    }
+}
+
+/// Approve shipment (pending → in_transit, approve and dispatch)
+#[utoipa::path(
+    post,
+    path = "/api/tms/shipments/{id}/approve",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "运单 ID")
+    ),
+    responses(
+        (status = 200, description = "approve_shipment OK")
+    ),
+    tag = "TMS - Shipment"
+)]
+pub async fn approve_shipment(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Shipment>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let now = Utc::now();
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM tms.tms_shipments WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match current {
+        Ok(Some(status)) => {
+            if shipment_can_transition(&status, "in_transit").is_err() {
+                return Json(api_error(
+                    400,
+                    &format!("当前状态 {} 不允许审批发车", status),
+                ));
+            }
+            let requires_approval = shipment_requires_approval(&status, "in_transit");
+            let result = sqlx::query_as::<_, Shipment>(
+                &format!(
+                    r#"UPDATE tms.tms_shipments SET status = 'in_transit', actual_departure = $2, updated_at = $3
+                    WHERE id = $1 AND tenant_id = $4 RETURNING {}"#,
+                    SHIPMENT_RETURN
+                ),
+            )
+            .bind(id)
+            .bind(now)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&state.db)
+            .await;
+
+            match result {
+                Ok(Some(shipment)) => {
+                    tracing::info!(
+                        "shipment {} approved: {} -> in_transit, operator={}, requires_approval={}",
+                        id,
+                        status,
+                        req.operator,
+                        requires_approval
+                    );
+                    Json(ApiResponse::success(shipment, "运单审批通过，已发车"))
+                }
+                Ok(None) => Json(api_error(404, "运单不存在")),
+                Err(e) => {
+                    tracing::error!("审批失败: {}", e);
+                    Json(api_error(500, "审批失败"))
+                }
+            }
+        }
+        Ok(None) => Json(api_error(404, "运单不存在")),
+        Err(e) => {
+            tracing::error!("查询运单状态失败: {}", e);
+            Json(api_error(500, "查询运单状态失败"))
+        }
+    }
+}
+
+/// Reject shipment (pending → cancelled, reject dispatch)
+#[utoipa::path(
+    post,
+    path = "/api/tms/shipments/{id}/reject",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "运单 ID")
+    ),
+    responses(
+        (status = 200, description = "reject_shipment OK")
+    ),
+    tag = "TMS - Shipment"
+)]
+pub async fn reject_shipment(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Shipment>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let now = Utc::now();
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM tms.tms_shipments WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match current {
+        Ok(Some(status)) => {
+            if shipment_can_transition(&status, "cancelled").is_err() {
+                return Json(api_error(400, &format!("当前状态 {} 不允许驳回", status)));
+            }
+            let result = sqlx::query_as::<_, Shipment>(&format!(
+                r#"UPDATE tms.tms_shipments SET status = 'cancelled', updated_at = $2
+                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                SHIPMENT_RETURN
+            ))
+            .bind(id)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&state.db)
+            .await;
+
+            match result {
+                Ok(Some(shipment)) => {
+                    tracing::info!(
+                        "shipment {} rejected: {} -> cancelled, operator={}",
+                        id,
+                        status,
+                        req.operator
+                    );
+                    Json(ApiResponse::success(shipment, "运单已驳回"))
+                }
+                Ok(None) => Json(api_error(404, "运单不存在")),
+                Err(e) => {
+                    tracing::error!("驳回失败: {}", e);
+                    Json(api_error(500, "驳回失败"))
+                }
+            }
+        }
+        Ok(None) => Json(api_error(404, "运单不存在")),
+        Err(e) => {
+            tracing::error!("查询运单状态失败: {}", e);
+            Json(api_error(500, "查询运单状态失败"))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -596,17 +824,20 @@ mod tests {
     #[test]
     fn test_shipment_state_machine() {
         // 合法转换
-        assert!(shipment_can_transition("pending", "in_transit"));
-        assert!(shipment_can_transition("in_transit", "delivered"));
-        assert!(shipment_can_transition("pending", "cancelled"));
-        assert!(shipment_can_transition("in_transit", "cancelled"));
+        assert!(shipment_can_transition("draft", "pending").is_ok());
+        assert!(shipment_can_transition("pending", "in_transit").is_ok());
+        assert!(shipment_can_transition("in_transit", "delivered").is_ok());
+        assert!(shipment_can_transition("draft", "cancelled").is_ok());
+        assert!(shipment_can_transition("pending", "cancelled").is_ok());
+        assert!(shipment_can_transition("in_transit", "cancelled").is_ok());
 
         // 非法转换
-        assert!(!shipment_can_transition("pending", "delivered"));
-        assert!(!shipment_can_transition("delivered", "in_transit"));
-        assert!(!shipment_can_transition("delivered", "cancelled"));
-        assert!(!shipment_can_transition("cancelled", "pending"));
-        assert!(!shipment_can_transition("cancelled", "in_transit"));
-        assert!(!shipment_can_transition("in_transit", "pending"));
+        assert!(shipment_can_transition("pending", "delivered").is_err());
+        assert!(shipment_can_transition("delivered", "in_transit").is_err());
+        assert!(shipment_can_transition("cancelled", "pending").is_err());
+
+        // 审批标记
+        assert!(shipment_requires_approval("pending", "in_transit"));
+        assert!(!shipment_requires_approval("draft", "pending"));
     }
 }

@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct InboundOrder {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -20,7 +21,7 @@ pub struct InboundOrder {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateInboundOrderRequest {
     pub order_number: String,
     pub warehouse_id: Option<Uuid>,
@@ -31,7 +32,7 @@ pub struct CreateInboundOrderRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateInboundOrderRequest {
     pub warehouse_id: Option<Uuid>,
     pub supplier_id: Option<Uuid>,

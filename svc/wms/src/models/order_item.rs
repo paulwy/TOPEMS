@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct InboundOrderItem {
     pub id: Uuid,
     pub order_id: Uuid,
@@ -22,7 +23,7 @@ pub struct InboundOrderItem {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateInboundOrderItemRequest {
     pub inventory_item_id: Uuid,
     pub sku: String,
@@ -34,7 +35,7 @@ pub struct CreateInboundOrderItemRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateInboundOrderItemRequest {
     pub quantity: Option<f64>,
     pub unit_price: Option<f64>,
@@ -43,7 +44,7 @@ pub struct UpdateInboundOrderItemRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct OutboundOrderItem {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -63,7 +64,7 @@ pub struct OutboundOrderItem {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateOutboundOrderItemRequest {
     pub inventory_item_id: Uuid,
     pub sku: String,
@@ -75,7 +76,7 @@ pub struct CreateOutboundOrderItemRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateOutboundOrderItemRequest {
     pub quantity: Option<f64>,
     pub unit_price: Option<f64>,

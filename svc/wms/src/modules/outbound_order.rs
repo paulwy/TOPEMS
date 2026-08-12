@@ -7,9 +7,10 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{CreateOutboundOrderRequest, OutboundOrder, UpdateOutboundOrderRequest};
+use crate::models::outbound_order::*;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -75,6 +76,18 @@ where
         .route(
             "/outbound-orders/{id}/complete",
             post(complete_outbound_order),
+        )
+        .route(
+            "/outbound-orders/{id}/approval/start",
+            post(start_outbound_approval),
+        )
+        .route(
+            "/outbound-orders/{id}/approval/approve",
+            post(approve_outbound),
+        )
+        .route(
+            "/outbound-orders/{id}/approval/reject",
+            post(reject_outbound),
         )
 }
 
@@ -1317,4 +1330,249 @@ pub async fn complete_outbound_order(
     .await;
 
     response
+}
+
+#[derive(Debug, serde::Deserialize, ToSchema)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/wms/outbound-orders/{id}/approval/start",
+    tag = "WMS - Outbound",
+    request_body = ApprovalRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn start_outbound_approval(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4);
+
+    let current = sqlx::query(
+        "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if !crate::shared::fsm::outbound_order_requires_approval(&current_status, "shipping") {
+                return Json(ApiResponse::error(400, "当前状态无需审批"));
+            }
+            let _ = crate::models::audit_log::log_approval_event(
+                &state.db,
+                &tenant_id.to_string(),
+                "outbound_order",
+                &id.to_string(),
+                "start_approval",
+                &req.operator,
+                &current_status,
+                &current_status,
+                req.comment.as_deref(),
+            )
+            .await;
+            Json(ApiResponse::success(
+                serde_json::json!({"status": current_status, "approval_started": true}),
+                "审批启动成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("找不到出库单: {}", e);
+            Json(ApiResponse::error(404, "出库单不存在"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/wms/outbound-orders/{id}/approval/approve",
+    tag = "WMS - Outbound",
+    request_body = ApprovalRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn approve_outbound(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4);
+
+    let current = sqlx::query(
+        "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if crate::shared::fsm::outbound_order_requires_approval(&current_status, "shipping")
+                && !crate::shared::fsm::outbound_order_can_transition(&current_status, "shipping")
+                    .is_ok()
+            {
+                return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
+            }
+            let result = sqlx::query(
+                "UPDATE wms.outbound_orders SET status = 'shipping', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
+            )
+            .bind(id)
+            .bind(tenant_id)
+            .fetch_one(&state.db)
+            .await;
+            match result {
+                Ok(_) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.db,
+                        &tenant_id.to_string(),
+                        "outbound_order",
+                        &id.to_string(),
+                        "approve",
+                        &req.operator,
+                        &current_status,
+                        "shipping",
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(
+                        serde_json::json!({"id": id, "status": "shipping"}),
+                        "审批通过",
+                    ))
+                }
+                Err(e) => {
+                    tracing::error!("审批出库单失败: {}", e);
+                    Json(ApiResponse::error(500, "审批失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("找不到出库单: {}", e);
+            Json(ApiResponse::error(404, "出库单不存在"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/wms/outbound-orders/{id}/approval/reject",
+    tag = "WMS - Outbound",
+    request_body = ApprovalRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn reject_outbound(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4);
+
+    let current = sqlx::query(
+        "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match current {
+        Ok(row) => {
+            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            if !crate::shared::fsm::outbound_order_can_transition(&current_status, "picking")
+                .is_ok()
+            {
+                return Json(ApiResponse::error(400, "当前状态不允许驳回回流"));
+            }
+            let result = sqlx::query(
+                "UPDATE wms.outbound_orders SET status = 'picking', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
+            )
+            .bind(id)
+            .bind(tenant_id)
+            .fetch_one(&state.db)
+            .await;
+            match result {
+                Ok(_) => {
+                    let _ = crate::models::audit_log::log_approval_event(
+                        &state.db,
+                        &tenant_id.to_string(),
+                        "outbound_order",
+                        &id.to_string(),
+                        "reject",
+                        &req.operator,
+                        &current_status,
+                        "picking",
+                        req.comment.as_deref(),
+                    )
+                    .await;
+                    Json(ApiResponse::success(
+                        serde_json::json!({"id": id, "status": "picking"}),
+                        "审批驳回，回流至 picking",
+                    ))
+                }
+                Err(e) => {
+                    tracing::error!("驳回收料单失败: {}", e);
+                    Json(ApiResponse::error(500, "驳回失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("找不到出库单: {}", e);
+            Json(ApiResponse::error(404, "出库单不存在"))
+        }
+    }
 }

@@ -3,7 +3,7 @@
 use axum::{
     extract::{FromRef, Path, Query, State},
     http::HeaderMap,
-    routing::get,
+    routing::{get, post},
     Extension, Json, Router,
 };
 use chrono::{DateTime, Utc};
@@ -13,6 +13,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::middleware::tenant::get_tenant_id;
+use crate::shared::fsm::{driver_can_transition, driver_requires_approval};
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
@@ -63,6 +64,12 @@ where
             "/drivers/{id}",
             get(get_driver).put(update_driver).delete(delete_driver),
         )
+        .route(
+            "/drivers/{id}/submit-verification",
+            post(submit_verification),
+        )
+        .route("/drivers/{id}/approve", post(approve_driver))
+        .route("/drivers/{id}/reject", post(reject_driver))
 }
 
 #[utoipa::path(
@@ -317,6 +324,241 @@ pub async fn delete_driver(
         Err(e) => {
             tracing::error!("删除司机失败: {}", e);
             Json(api_error(500, "司机删除失败"))
+        }
+    }
+}
+
+// ==================== Approval Endpoints ====================
+
+/// 审批请求体
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ApprovalRequest {
+    pub operator: String,
+    pub comment: Option<String>,
+}
+
+const DRIVER_RETURN: &str = r#"id, driver_no, name, phone, license_no, license_type, status, carrier_id, tenant_id, created_at, updated_at"#;
+
+/// Submit driver for verification (active → suspended)
+#[utoipa::path(
+    post,
+    path = "/api/tms/drivers/{id}/submit-verification",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "司机 ID")
+    ),
+    responses(
+        (status = 200, description = "submit_verification OK")
+    ),
+    tag = "TMS - Driver"
+)]
+pub async fn submit_verification(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Driver>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let now = Utc::now();
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM tms.tms_drivers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match current {
+        Ok(Some(status)) => {
+            if driver_can_transition(&status, "suspended").is_err() {
+                return Json(api_error(
+                    400,
+                    &format!("当前状态 {} 不允许提交审核", status),
+                ));
+            }
+            let result = sqlx::query_as::<_, Driver>(&format!(
+                r#"UPDATE tms.tms_drivers SET status = 'suspended', updated_at = $2
+                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                DRIVER_RETURN
+            ))
+            .bind(id)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&state.db)
+            .await;
+
+            match result {
+                Ok(Some(driver)) => {
+                    tracing::info!(
+                        "driver {} submit_verification: {} -> suspended, operator={}",
+                        id,
+                        status,
+                        req.operator
+                    );
+                    Json(ApiResponse::success(driver, "司机已提交审核"))
+                }
+                Ok(None) => Json(api_error(404, "司机不存在")),
+                Err(e) => {
+                    tracing::error!("提交审核失败: {}", e);
+                    Json(api_error(500, "提交审核失败"))
+                }
+            }
+        }
+        Ok(None) => Json(api_error(404, "司机不存在")),
+        Err(e) => {
+            tracing::error!("查询司机状态失败: {}", e);
+            Json(api_error(500, "查询司机状态失败"))
+        }
+    }
+}
+
+/// Approve driver (suspended → active)
+#[utoipa::path(
+    post,
+    path = "/api/tms/drivers/{id}/approve",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "司机 ID")
+    ),
+    responses(
+        (status = 200, description = "approve_driver OK")
+    ),
+    tag = "TMS - Driver"
+)]
+pub async fn approve_driver(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Driver>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let now = Utc::now();
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM tms.tms_drivers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match current {
+        Ok(Some(status)) => {
+            if driver_can_transition(&status, "active").is_err() {
+                return Json(api_error(
+                    400,
+                    &format!("当前状态 {} 不允许审批通过", status),
+                ));
+            }
+            let result = sqlx::query_as::<_, Driver>(&format!(
+                r#"UPDATE tms.tms_drivers SET status = 'active', updated_at = $2
+                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                DRIVER_RETURN
+            ))
+            .bind(id)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&state.db)
+            .await;
+
+            match result {
+                Ok(Some(driver)) => {
+                    tracing::info!(
+                        "driver {} approved: {} -> active, operator={}",
+                        id,
+                        status,
+                        req.operator
+                    );
+                    Json(ApiResponse::success(driver, "司机审批通过"))
+                }
+                Ok(None) => Json(api_error(404, "司机不存在")),
+                Err(e) => {
+                    tracing::error!("审批失败: {}", e);
+                    Json(api_error(500, "审批失败"))
+                }
+            }
+        }
+        Ok(None) => Json(api_error(404, "司机不存在")),
+        Err(e) => {
+            tracing::error!("查询司机状态失败: {}", e);
+            Json(api_error(500, "查询司机状态失败"))
+        }
+    }
+}
+
+/// Reject driver (suspended → inactive)
+#[utoipa::path(
+    post,
+    path = "/api/tms/drivers/{id}/reject",
+    request_body = ApprovalRequest,
+    params(
+        ("id" = Uuid, Path, description = "司机 ID")
+    ),
+    responses(
+        (status = 200, description = "reject_driver OK")
+    ),
+    tag = "TMS - Driver"
+)]
+pub async fn reject_driver(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<Driver>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let now = Utc::now();
+
+    let current = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM tms.tms_drivers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match current {
+        Ok(Some(status)) => {
+            if driver_can_transition(&status, "inactive").is_err() {
+                return Json(api_error(400, &format!("当前状态 {} 不允许驳回", status)));
+            }
+            let requires_approval = driver_requires_approval(&status, "inactive");
+            let result = sqlx::query_as::<_, Driver>(&format!(
+                r#"UPDATE tms.tms_drivers SET status = 'inactive', updated_at = $2
+                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                DRIVER_RETURN
+            ))
+            .bind(id)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&state.db)
+            .await;
+
+            match result {
+                Ok(Some(driver)) => {
+                    tracing::info!(
+                        "driver {} rejected: {} -> inactive, operator={}, requires_approval={}",
+                        id,
+                        status,
+                        req.operator,
+                        requires_approval
+                    );
+                    Json(ApiResponse::success(driver, "司机已驳回"))
+                }
+                Ok(None) => Json(api_error(404, "司机不存在")),
+                Err(e) => {
+                    tracing::error!("驳回失败: {}", e);
+                    Json(api_error(500, "驳回失败"))
+                }
+            }
+        }
+        Ok(None) => Json(api_error(404, "司机不存在")),
+        Err(e) => {
+            tracing::error!("查询司机状态失败: {}", e);
+            Json(api_error(500, "查询司机状态失败"))
         }
     }
 }

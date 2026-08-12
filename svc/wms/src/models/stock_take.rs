@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct StockTake {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -18,7 +19,7 @@ pub struct StockTake {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateStockTakeRequest {
     pub warehouse_id: Option<Uuid>,
     pub location_id: Option<Uuid>,
@@ -26,7 +27,7 @@ pub struct CreateStockTakeRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateStockTakeRequest {
     pub warehouse_id: Option<Uuid>,
     pub location_id: Option<Uuid>,
@@ -35,7 +36,7 @@ pub struct UpdateStockTakeRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct StockTakeItem {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -50,7 +51,7 @@ pub struct StockTakeItem {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateStockTakeItemRequest {
     pub inventory_item_id: Uuid,
     pub expected_quantity: f64,
@@ -58,7 +59,7 @@ pub struct CreateStockTakeItemRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateStockTakeItemRequest {
     pub actual_quantity: Option<f64>,
     pub status: Option<String>,
