@@ -1,0 +1,79 @@
+author: TOPEMS
+category: Logistics
+code: tms
+name: 运输管理
+description: TMS 运输管理系统，包含车辆管理、司机管理、承运商管理、运单管理、路线管理等模块
+version: 1.0.0
+plugin_type: business
+dependencies: []
+deployment:
+  type: standalone
+  port: 8042
+  base_path: /api/tms
+runtime: {}
+permissions:
+  # 车辆管理
+  - code: tms:read
+    name: 查看车辆
+    resource_type: vehicle
+    action: read
+  - code: tms:write
+    name: 管理车辆
+    resource_type: vehicle
+    action: write
+  - code: tms:approve
+    name: 审批车辆
+    resource_type: vehicle
+    action: approve
+  # 司机管理
+  - code: tms:read
+    name: 查看司机
+    resource_type: driver
+    action: read
+  - code: tms:write
+    name: 管理司机
+    resource_type: driver
+    action: write
+  - code: tms:approve
+    name: 审批司机
+    resource_type: driver
+    action: approve
+  # 承运商管理
+  - code: tms:read
+    name: 查看承运商
+    resource_type: carrier
+    action: read
+  - code: tms:write
+    name: 管理承运商
+    resource_type: carrier
+    action: write
+  - code: tms:approve
+    name: 审批承运商
+    resource_type: carrier
+    action: approve
+  # 运单管理
+  - code: tms:read
+    name: 查看运单
+    resource_type: shipment
+    action: read
+  - code: tms:write
+    name: 管理运单
+    resource_type: shipment
+    action: write
+  - code: tms:approve
+    name: 审批运单
+    resource_type: shipment
+    action: approve
+  # 路线管理
+  - code: tms:read
+    name: 查看路线
+    resource_type: route
+    action: read
+  - code: tms:write
+    name: 管理路线
+    resource_type: route
+    action: write
+  - code: tms:approve
+    name: 审批路线
+    resource_type: route
+    action: approve
