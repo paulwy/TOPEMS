@@ -1,174 +1,83 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Box, Typography, Stack, Paper, useTheme, alpha, Chip } from '@mui/material';
-import { CheckCircle, Send } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import {
+  Box,
+  Typography,
+  Stack,
+  Paper,
+  useTheme,
+  alpha,
+  Chip,
+  LinearProgress,
+} from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
-import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
-import { useNotificationStore } from '@/store/notificationStore';
-import { crmApi } from '@/api/crm';
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
+import { crmApi, useCrmMock, type BillingAnalyticsData, type Period } from '@/api/crm';
 import type { BillingRecord } from '@/api/crm';
 import { billingSchema } from '@/schemas/crm';
 
-import { CACHE_DURATIONS, QUERY_KEYS, queryClient } from '@/lib/reactQuery';
-
-interface BillingStats {
-  total_amount: number;
-  paid_amount: number;
-  pending_amount: number;
-  overdue_amount: number;
-  total_count: number;
-  paid_count: number;
-  pending_count: number;
-  overdue_count: number;
-}
-
-const BillingStatsCards: React.FC<{ stats?: BillingStats; loading: boolean }> = ({
-  stats,
-  loading,
-}) => {
-  const { t } = useTranslation();
-  if (loading) {
-    return (
-      <Typography
-        variant='body2'
-        color='text.secondary'
-      >
-        {t('crm.billing.loading')}
-      </Typography>
-    );
-  }
-  const cards = [
-    { label: t('crm.billing.stat_total'), value: stats?.total_count ?? 0, color: 'primary.main' },
-    { label: t('crm.billing.stat_paid'), value: stats?.paid_count ?? 0, color: 'success.main' },
-    {
-      label: t('crm.billing.stat_pending'),
-      value: stats?.pending_count ?? 0,
-      color: 'warning.main',
-    },
-    { label: t('crm.billing.stat_overdue'), value: stats?.overdue_count ?? 0, color: 'error.main' },
-  ];
-  return (
-    <Stack
-      direction='row'
-      spacing={2}
-    >
-      {cards.map((card) => (
-        <Paper
-          key={card.label}
-          sx={{ p: 2, flex: 1 }}
-        >
-          <Typography
-            variant='caption'
-            color='text.secondary'
-          >
-            {card.label}
-          </Typography>
-          <Typography
-            variant='h6'
-            sx={{ color: card.color }}
-          >
-            {card.value}
-          </Typography>
-        </Paper>
-      ))}
-    </Stack>
-  );
-};
-
-const BillingAgingTable: React.FC = () => {
-  const { t } = useTranslation();
-  return (
-    <Typography
-      variant='body2'
-      color='text.secondary'
-    >
-      {t('crm.billing.aging_text')}
-    </Typography>
-  );
+const statusColorMap: Record<string, { main: string; light: string }> = {
+  paid: { main: 'success.main', light: 'success.light' },
+  pending: { main: 'warning.main', light: 'warning.light' },
+  overdue: { main: 'error.main', light: 'error.light' },
 };
 
 const CRMBillingPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
-  const queryClient = useQueryClient();
-  const { addNotification } = useNotificationStore();
-
   const [activeTab, setActiveTab] = useState('overview');
+  const [period] = useState<Period>('MTD');
+  const { data: mockBilling, mockEnabled } = useCrmMock<BillingAnalyticsData>({ period });
 
-  const { data: stats, isPending: statsLoading} = useQuery<BillingStats>({
-    queryKey: QUERY_KEYS.AD_HOC.CRM_BILLING_STATS_BASE,
+  const { data: stats, isLoading: statsLoading } = useQuery<BillingAnalyticsData['summary']>({
+    queryKey: ['crm', 'billing', 'stats'],
     queryFn: async () => {
       const response = await crmApi.billing.list();
       const items = response.data?.items || [];
       return {
-        total_amount: items.reduce((sum, r) => sum + (r.amount || 0), 0),
-        paid_amount: items
-          .filter((r) => r.status === 'paid')
-          .reduce((sum, r) => sum + (r.amount || 0), 0),
-        pending_amount: items
+        totalAmount: items.reduce((sum, r) => sum + (r.amount || 0), 0),
+        paidAmount: items.filter((r) => r.status === 'paid').reduce((sum, r) => sum + (r.amount || 0), 0),
+        pendingAmount: items
           .filter((r) => r.status === 'pending')
           .reduce((sum, r) => sum + (r.amount || 0), 0),
-        overdue_amount: items
+        overdueAmount: items
           .filter((r) => r.status === 'overdue')
           .reduce((sum, r) => sum + (r.amount || 0), 0),
-        total_count: items.length,
-        paid_count: items.filter((r) => r.status === 'paid').length,
-        pending_count: items.filter((r) => r.status === 'pending').length,
-        overdue_count: items.filter((r) => r.status === 'overdue').length,
+        totalCount: items.length,
+        paidCount: items.filter((r) => r.status === 'paid').length,
+        pendingCount: items.filter((r) => r.status === 'pending').length,
+        overdueCount: items.filter((r) => r.status === 'overdue').length,
       };
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
-
-  const markPaidMutation = useMutation({
-    mutationFn: (id: string) => crmApi.billing.markPaid(id),
-    onSuccess: () => {
-      addNotification({ type: 'success', message: t('crm.billing.msg_marked_paid') });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_BILLING_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_BILLING_STATS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-    },
-    onError: () => {
-      addNotification({ type: 'error', message: t('crm.billing.msg_action_fail') });
-    },
+    initialData: mockEnabled ? mockBilling.summary : undefined,
+    enabled: !mockEnabled,
   });
 
-  const sendNotificationMutation = useMutation({
-    mutationFn: (id: string) => crmApi.billing.sendNotification(id),
-    onSuccess: () => {
-      
-      queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.CRM_BILLING_STATS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
-      addNotification({ type: 'success', message: t('crm.billing.msg_notification_sent') });
-    },
-    onError: () => {
-      addNotification({ type: 'error', message: t('crm.billing.msg_send_fail') });
-    },
-  });
+  const displayStats = mockEnabled ? mockBilling.summary : stats;
+  const loading = !mockEnabled && statsLoading;
 
-  const handleMarkPaid = useCallback(
-    (id: string) => {
-      markPaidMutation.mutate(id);
-    },
-    [markPaidMutation]
+  const cards = useMemo(
+    () => [
+      { label: t('crm.billing.stat_total'), value: displayStats?.totalCount ?? 0, color: 'primary.main', amount: displayStats?.totalAmount ?? 0 },
+      { label: t('crm.billing.stat_paid'), value: displayStats?.paidCount ?? 0, color: 'success.main', amount: displayStats?.paidAmount ?? 0 },
+      {
+        label: t('crm.billing.stat_pending'),
+        value: displayStats?.pendingCount ?? 0,
+        color: 'warning.main',
+        amount: displayStats?.pendingAmount ?? 0,
+      },
+      { label: t('crm.billing.stat_overdue'), value: displayStats?.overdueCount ?? 0, color: 'error.main', amount: displayStats?.overdueAmount ?? 0 },
+    ],
+    [t, displayStats]
   );
 
-  const handleSendNotification = useCallback(
-    (id: string) => {
-      sendNotificationMutation.mutate(id);
-    },
-    [sendNotificationMutation]
-  );
+  const top10 = mockBilling.top10;
+  const statusPie = mockBilling.statusPie;
+  const agingBuckets = mockBilling.agingBuckets;
+  const totalPieAmount = statusPie.reduce((s, x) => s + x.amount, 0) || 1;
+  const maxAgingAmount = Math.max(...agingBuckets.map((b) => b.amount), 1);
 
   const apiAdapter = useMemo<CrudApiAdapter<BillingRecord>>(
     () => ({
@@ -182,53 +91,26 @@ const CRMBillingPage: React.FC = () => {
         const total = data?.total || items.length;
         return { data: items, total };
       },
-      create: async (data) => {
-        const response = await crmApi.billing.create(data as any);
-        if (!response.success) {
-          throw new Error(response.message || t('crm.billing.error_create'));
-        }
-        return response.data!;
+      create: async () => {
+        throw new Error('Billing records are read-only');
       },
-      update: async (id, data) => {
-        const response = await crmApi.billing.update(id, data as any);
-        if (!response.success) {
-          throw new Error(response.message || t('crm.billing.error_update'));
-        }
-        return response.data!;
+      update: async () => {
+        throw new Error('Billing records are read-only');
       },
-      delete: async (id) => {
-        const response = await crmApi.billing.delete(id);
-        if (!response.success) {
-          throw new Error(response.message || t('crm.billing.error_delete'));
-        }
+      delete: async () => {
+        throw new Error('Billing records are read-only');
       },
     }),
     [t]
   );
 
-  const customRowActions = useMemo<RowAction[]>(
-    () => [
-      {
-        label: t('crm.billing.action_mark_paid'),
-        icon: <CheckCircle size={16} />,
-        color: 'success',
-        onClick: (row: Record<string, unknown>) => handleMarkPaid(String(row.id)),
-      },
-      {
-        label: t('crm.billing.action_send_notification'),
-        icon: <Send size={16} />,
-        color: 'primary',
-        onClick: (row: Record<string, unknown>) => handleSendNotification(String(row.id)),
-      },
-    ],
-    [handleMarkPaid, handleSendNotification, t]
-  );
-
   const billingContent = (
     <CrudPage
-      schema={billingSchema}
+      schema={{
+        ...billingSchema,
+        actions: (billingSchema.actions || []).filter((a) => a === 'detail'),
+      }}
       apiAdapter={apiAdapter}
-      customRowActions={customRowActions}
       breadcrumbs={[{ label: t('crm.common.crm') }, { label: t('crm.billing.breadcrumb') }]}
     />
   );
@@ -237,12 +119,40 @@ const CRMBillingPage: React.FC = () => {
     <PageContainer
       title={t('crm.billing.title')}
       subtitle={t('crm.billing.subtitle')}
+      headerActions={
+        mockEnabled ? (
+          <Chip
+            label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+            color='warning'
+            size='small'
+            variant='outlined'
+            sx={{ fontWeight: 600 }}
+          />
+        ) : null
+      }
     >
       <Stack spacing={3}>
-        <BillingStatsCards
-          stats={stats}
-          loading={statsLoading}
-        />
+        <Stack direction='row' spacing={2} sx={{ flexWrap: 'wrap' }}>
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <Paper key={i} sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}>
+                  <LinearProgress />
+                </Paper>
+              ))
+            : cards.map((card) => (
+                <Paper key={card.label} sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}>
+                  <Typography variant='caption' color='text.secondary'>
+                    {card.label}
+                  </Typography>
+                  <Typography variant='h6' sx={{ color: card.color, fontWeight: 700 }}>
+                    {card.value}
+                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>
+                    ¥{Number(card.amount).toLocaleString()}
+                  </Typography>
+                </Paper>
+              ))}
+        </Stack>
 
         <Paper
           elevation={0}
@@ -260,17 +170,7 @@ const CRMBillingPage: React.FC = () => {
               backgroundColor: alpha(theme.palette.primary.main, 0.02),
             }}
           >
-            <Stack
-              direction='row'
-              spacing={1}
-              sx={{
-                '& .MuiTab-root': {
-                  minHeight: 40,
-                  fontSize: '0.875rem',
-                  textTransform: 'none',
-                },
-              }}
-            >
+            <Stack direction='row' spacing={1}>
               <Chip
                 label={t('crm.billing.tab_overview')}
                 onClick={() => setActiveTab('overview')}
@@ -297,15 +197,153 @@ const CRMBillingPage: React.FC = () => {
 
           <Box sx={{ p: 3 }}>
             {activeTab === 'overview' && (
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                {t('crm.billing.overview_text')}
-              </Typography>
+              <Stack spacing={3}>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+                    gap: 3,
+                  }}
+                >
+                  <Paper variant='outlined' sx={{ p: 3 }}>
+                    <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+                      {t('crm.billing.section_status_pie') || '账单状态分布'}
+                    </Typography>
+                    <Stack spacing={2}>
+                      {statusPie.map((s) => {
+                        const pct = (s.amount / totalPieAmount) * 100;
+                        const colors = statusColorMap[s.status] || statusColorMap.pending;
+                        return (
+                          <Box key={s.status}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                              <Typography variant='body2' sx={{ color: colors.main, fontWeight: 600 }}>
+                                {t(`crm.billing.status_${s.status}`) || s.status}
+                              </Typography>
+                              <Typography variant='caption' color='text.secondary'>
+                                ¥{s.amount.toLocaleString()} ({pct.toFixed(1)}%)
+                              </Typography>
+                            </Box>
+                            <LinearProgress
+                              variant='determinate'
+                              value={pct}
+                              sx={{
+                                height: 10,
+                                borderRadius: 5,
+                                bgcolor: theme.palette.grey[200],
+                                '& .MuiLinearProgress-bar': {
+                                  bgcolor: colors.main,
+                                  borderRadius: 5,
+                                },
+                              }}
+                            />
+                            <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: 'block' }}>
+                              {s.count} {t('crm.billing.unit_invoice') || '笔'}
+                            </Typography>
+                          </Box>
+                        );
+                      })}
+                    </Stack>
+                  </Paper>
+
+                  <Paper variant='outlined' sx={{ p: 3 }}>
+                    <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+                      {t('crm.billing.section_aging') || '账龄分析'}
+                    </Typography>
+                    <Stack spacing={2}>
+                      {agingBuckets.map((b) => (
+                        <Box key={b.bucket}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                              {b.bucket}
+                            </Typography>
+                            <Typography variant='caption' color='text.secondary'>
+                              {b.count} 笔 · ¥{b.amount.toLocaleString()}
+                            </Typography>
+                          </Box>
+                          <LinearProgress
+                            variant='determinate'
+                            value={(b.amount / maxAgingAmount) * 100}
+                            sx={{ height: 8, borderRadius: 4 }}
+                          />
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Paper>
+                </Box>
+
+                <Paper variant='outlined' sx={{ p: 3 }}>
+                  <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+                    {t('crm.billing.section_top10') || 'TOP10 客户应收'}
+                  </Typography>
+                  <Stack spacing={1.5}>
+                    {top10.map((item, idx) => {
+                      const c = statusColorMap[item.status] || statusColorMap.pending;
+                      const maxTop = top10[0]?.amount || 1;
+                      return (
+                        <Box key={item.customerName} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Typography variant='caption' sx={{ width: 24, color: 'text.secondary', fontWeight: 600 }}>
+                            {idx + 1}.
+                          </Typography>
+                          <Typography variant='body2' sx={{ flex: 1, minWidth: 160 }}>
+                            {item.customerName}
+                          </Typography>
+                          <Box sx={{ flex: 1, minWidth: 120 }}>
+                            <LinearProgress
+                              variant='determinate'
+                              value={(item.amount / maxTop) * 100}
+                              sx={{
+                                height: 6,
+                                borderRadius: 3,
+                                bgcolor: theme.palette.grey[200],
+                                '& .MuiLinearProgress-bar': {
+                                  bgcolor: c.main,
+                                  borderRadius: 3,
+                                },
+                              }}
+                            />
+                          </Box>
+                          <Chip
+                            label={t(`crm.billing.status_${item.status}`) || item.status}
+                            size='small'
+                            sx={{
+                              bgcolor: c.light,
+                              color: c.main,
+                              fontWeight: 600,
+                              minWidth: 56,
+                            }}
+                          />
+                          <Typography variant='body2' sx={{ fontWeight: 700, width: 140, textAlign: 'right' }}>
+                            ¥{item.amount.toLocaleString()}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                </Paper>
+              </Stack>
             )}
             {activeTab === 'invoices' && billingContent}
-            {activeTab === 'aging' && <BillingAgingTable />}
+            {activeTab === 'aging' && (
+              <Stack spacing={2}>
+                {agingBuckets.map((b) => (
+                  <Paper key={b.bucket} variant='outlined' sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant='h6' sx={{ fontWeight: 700 }}>
+                        {b.bucket}
+                      </Typography>
+                      <Typography variant='body1' color='text.secondary'>
+                        {b.count} 笔 · ¥{b.amount.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant='determinate'
+                      value={(b.amount / maxAgingAmount) * 100}
+                      sx={{ height: 10, borderRadius: 5 }}
+                    />
+                  </Paper>
+                ))}
+              </Stack>
+            )}
           </Box>
         </Paper>
       </Stack>

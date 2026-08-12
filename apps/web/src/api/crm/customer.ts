@@ -64,6 +64,36 @@ export const customerApi = {
     return apiClient.crm.post('/customers/batch-delete', { ids });
   },
 
+  startApproval: async (
+    id: string,
+    data: { workflowId: string; comment?: string },
+  ): Promise<ApiResponse<{ customerId: string; workflowId: string; approvalStatus: string }>> => {
+    return apiClient.crm.post(
+      `/customers/${id}/approval/start`,
+      toOpenApiRequestBody(data as Record<string, unknown>),
+    );
+  },
+
+  approve: async (
+    id: string,
+    data?: { comment?: string },
+  ): Promise<ApiResponse<{ customerId: string; approvalStatus: string }>> => {
+    return apiClient.crm.post(
+      `/customers/${id}/approval/approve`,
+      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {},
+    );
+  },
+
+  reject: async (
+    id: string,
+    data?: { comment?: string; reason?: string },
+  ): Promise<ApiResponse<{ customerId: string; approvalStatus: string }>> => {
+    return apiClient.crm.post(
+      `/customers/${id}/approval/reject`,
+      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {},
+    );
+  },
+
   getTags: async (id: string): Promise<ApiResponse<Tag[]>> => {
     return apiClient.crm.get(`/customers/${id}/tags`);
   },

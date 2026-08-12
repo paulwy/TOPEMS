@@ -1,6 +1,6 @@
 import { apiClient } from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
-import type { BillingRecord, CreateBillingRequest, BillingQueryParams } from './types';
+import type { BillingRecord, BillingQueryParams } from './types';
 
 export const billingApi = {
   list: async (
@@ -9,12 +9,12 @@ export const billingApi = {
     return apiClient.crm.get('/billing', { params });
   },
 
-  get: async (id: string): Promise<ApiResponse<BillingRecord>> => {
-    return apiClient.crm.get(`/billing/${id}`);
+  create: async (data: Partial<BillingRecord>): Promise<ApiResponse<BillingRecord>> => {
+    return apiClient.crm.post('/billing', data);
   },
 
-  create: async (data: CreateBillingRequest): Promise<ApiResponse<BillingRecord>> => {
-    return apiClient.crm.post('/billing', data);
+  get: async (id: string): Promise<ApiResponse<BillingRecord>> => {
+    return apiClient.crm.get(`/billing/${id}`);
   },
 
   update: async (id: string, data: Partial<BillingRecord>): Promise<ApiResponse<BillingRecord>> => {
@@ -25,7 +25,7 @@ export const billingApi = {
     return apiClient.crm.delete(`/billing/${id}`);
   },
 
-  markPaid: async (id: string): Promise<ApiResponse<BillingRecord>> => {
+  markPaid: async (id: string): Promise<ApiResponse<void>> => {
     return apiClient.crm.post(`/billing/${id}/paid`);
   },
 

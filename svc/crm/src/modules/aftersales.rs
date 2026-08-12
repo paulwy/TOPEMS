@@ -23,6 +23,91 @@ use topems_shared::ApiResponse;
 use topems_shared_core::response::api_error;
 use topems_shared_event::event::{EventType, ReturnCompletedPayload, ReturnProcessedPayload};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReturnStage {
+    Pending,
+    Accepted,
+    Processing,
+    Resolving,
+    Done,
+    Rejected,
+    Cancelled,
+}
+
+impl ReturnStage {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "pending" => Some(Self::Pending),
+            "accepted" => Some(Self::Accepted),
+            "processing" => Some(Self::Processing),
+            "resolving" => Some(Self::Resolving),
+            "done" => Some(Self::Done),
+            "rejected" => Some(Self::Rejected),
+            "cancelled" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::Accepted => "accepted",
+            Self::Processing => "processing",
+            Self::Resolving => "resolving",
+            Self::Done => "done",
+            Self::Rejected => "rejected",
+            Self::Cancelled => "cancelled",
+        }
+    }
+
+    pub fn is_terminal(&self) -> bool {
+        matches!(self, Self::Done | Self::Rejected | Self::Cancelled)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReturnDecision {
+    Accept,
+    Process,
+    Resolve,
+    ConfirmDone,
+    ReturnedToProcessing,
+    Reject,
+    Cancel,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProcessType {
+    Refund,
+    Exchange,
+    Repair,
+}
+
+pub fn can_transition(from: ReturnStage, to: ReturnStage) -> Result<(), &'static str> {
+    use ReturnStage::*;
+    if from.is_terminal() {
+        return Err("TERMINAL_CANNOT_TRANSITION");
+    }
+    let ok = matches!(
+        (from, to),
+        (Pending, Accepted)
+            | (Accepted, Processing)
+            | (Processing, Resolving)
+            | (Resolving, Done)
+            | (Resolving, Processing)
+            | (Resolving, Rejected)
+            | (Pending, Cancelled)
+            | (Accepted, Cancelled)
+            | (Processing, Cancelled)
+            | (Resolving, Cancelled)
+    );
+    if ok {
+        Ok(())
+    } else {
+        Err("INVALID_TRANSITION")
+    }
+}
+
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/returns", get(list_returns).post(create_return))
@@ -35,6 +120,10 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/returns/{id}/receive", post(receive_return))
         .route("/returns/{id}/complete", post(complete_return))
         .route("/returns/{id}/cancel", post(cancel_return))
+        .route("/returns/{id}/accept", post(accept_return))
+        .route("/returns/{id}/process", post(process_return))
+        .route("/returns/{id}/resolve", post(resolve_return))
+        .route("/returns/{id}/confirm", post(confirm_return))
         .route(
             "/returns/{id}/items",
             get(list_return_items).post(add_return_item),
@@ -113,7 +202,7 @@ async fn list_returns(
     Query(params): Query<ReturnQuery>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -129,8 +218,8 @@ async fn list_returns(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
-               approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-               ticket_id, warehouse_id
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
         FROM crm.returns
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR status = $2)
@@ -200,7 +289,7 @@ async fn create_return(
     headers: HeaderMap,
     Json(req): Json<CreateReturnRequest>,
 ) -> Json<ApiResponse<Return>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -225,8 +314,8 @@ async fn create_return(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 0, $9, FALSE, $10, $10, $11, $11, $12, $13)
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
-                  approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-                  ticket_id, warehouse_id
+                  approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+                  ticket_id, warehouse_id, deleted_at
         "#,
     )
     .bind(id)
@@ -298,7 +387,7 @@ async fn get_return(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Return>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -309,8 +398,8 @@ async fn get_return(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
-               approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-               ticket_id, warehouse_id
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
         FROM crm.returns WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -336,7 +425,7 @@ async fn update_return(
     headers: HeaderMap,
     Json(req): Json<UpdateReturnRequest>,
 ) -> Json<ApiResponse<Return>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -347,8 +436,8 @@ async fn update_return(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
-               approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-               ticket_id, warehouse_id
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
         FROM crm.returns WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -386,8 +475,8 @@ async fn update_return(
         WHERE id = $1 AND tenant_id = $12
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
-                  approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-                  ticket_id, warehouse_id
+                  approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+                  ticket_id, warehouse_id, deleted_at
         "#,
     )
     .bind(id)
@@ -457,7 +546,7 @@ async fn delete_return(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -469,8 +558,8 @@ async fn delete_return(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
-               approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-               ticket_id, warehouse_id
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
         FROM crm.returns WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -552,7 +641,7 @@ async fn approve_return(
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -565,8 +654,8 @@ async fn approve_return(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
-               approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-               ticket_id, warehouse_id
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
         FROM crm.returns WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -600,8 +689,8 @@ async fn approve_return(
         WHERE id = $1 AND tenant_id = $4
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
-                  approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-                  ticket_id, warehouse_id
+                  approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+                  ticket_id, warehouse_id, deleted_at
         "#,
     )
     .bind(id)
@@ -634,7 +723,7 @@ async fn reject_return(
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -647,8 +736,8 @@ async fn reject_return(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
-               approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-               ticket_id, warehouse_id
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
         FROM crm.returns WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -682,8 +771,8 @@ async fn reject_return(
         WHERE id = $1 AND tenant_id = $4
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
-                  approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-                  ticket_id, warehouse_id
+                  approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+                  ticket_id, warehouse_id, deleted_at
         "#,
     )
     .bind(id)
@@ -716,7 +805,7 @@ async fn receive_return(
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -729,8 +818,8 @@ async fn receive_return(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
-               approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-               ticket_id, warehouse_id
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
         FROM crm.returns WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -764,8 +853,8 @@ async fn receive_return(
         WHERE id = $1 AND tenant_id = $5
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
-                  approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-                  ticket_id, warehouse_id
+                  approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+                  ticket_id, warehouse_id, deleted_at
         "#,
     )
     .bind(id)
@@ -803,7 +892,7 @@ async fn complete_return(
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -816,8 +905,8 @@ async fn complete_return(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
-               approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-               ticket_id, warehouse_id
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
         FROM crm.returns WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -851,8 +940,8 @@ async fn complete_return(
         WHERE id = $1 AND tenant_id = $5
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
-                  approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-                  ticket_id, warehouse_id
+                  approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+                  ticket_id, warehouse_id, deleted_at
         "#,
     )
     .bind(id)
@@ -974,7 +1063,7 @@ async fn cancel_return(
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -987,8 +1076,8 @@ async fn cancel_return(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
-               approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-               ticket_id, warehouse_id
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
         FROM crm.returns WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -1018,8 +1107,8 @@ async fn cancel_return(
         WHERE id = $1 AND tenant_id = $4
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
-                  approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-                  ticket_id, warehouse_id
+                  approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+                  ticket_id, warehouse_id, deleted_at
         "#,
     )
     .bind(id)
@@ -1051,7 +1140,7 @@ async fn list_return_items(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ReturnItem>>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -1087,7 +1176,7 @@ async fn add_return_item(
     headers: HeaderMap,
     Json(req): Json<CreateReturnItemRequest>,
 ) -> Json<ApiResponse<ReturnItem>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -1169,8 +1258,8 @@ pub async fn sync_return_to_finance(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
-               approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-               ticket_id, warehouse_id
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
         FROM crm.returns WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -1278,8 +1367,8 @@ pub async fn sync_return_to_inventory(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
-               approved_at, completed_at, created_by, updated_by, created_at, updated_at,
-               ticket_id, warehouse_id
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
         FROM crm.returns WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -1421,7 +1510,7 @@ async fn get_return_finance_status(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -1494,7 +1583,7 @@ async fn get_return_inventory_status(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -1558,4 +1647,404 @@ async fn get_return_inventory_status(
         }),
         "获取退换货库存联动状态成功",
     ))
+}
+
+// ============================================================
+//  Return FSM 按 spec §5.2 的 4 个规范 handlers
+//  状态链：Pending → Accepted → Processing → Resolving → Done
+//  分支：Resolving → Processing（退回重新处理）
+//  分支：Resolving → Rejected（拒绝终止）
+//  终态：Done / Rejected / Cancelled
+// ============================================================
+
+async fn accept_return(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(_req): Json<ReturnActionRequest>,
+) -> Json<ApiResponse<Return>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let operator_id = extract_operator_id(&claims);
+    let now = Utc::now();
+
+    let existing = sqlx::query_as::<_, Return>(
+        r#"
+        SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
+               status, refund_amount, exchange_product_id, received, received_at, approved_by,
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
+        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(api_error(404, "退换货不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询退换货失败: {}", e))),
+    };
+
+    let from = match ReturnStage::from_str(&existing.status) {
+        Some(s) => s,
+        None => return Json(api_error(400, &format!("未知状态: {}", existing.status))),
+    };
+
+    if let Err(e) = can_transition(from, ReturnStage::Accepted) {
+        return Json(api_error(
+            400,
+            &format!("状态 {} → accepted 流转被拒绝: {}", existing.status, e),
+        ));
+    }
+
+    let result = sqlx::query_as::<_, Return>(
+        r#"
+        UPDATE crm.returns SET
+            status = 'accepted', approved_by = $2, approved_at = $3,
+            updated_by = $2, updated_at = $3
+        WHERE id = $1 AND tenant_id = $4
+        RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
+                  status, refund_amount, exchange_product_id, received, received_at, approved_by,
+                  approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+                  ticket_id, warehouse_id, deleted_at
+        "#,
+    )
+    .bind(id)
+    .bind(operator_id)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(r) => Json(ApiResponse::success(r, "退换货已受理")),
+        Err(e) => {
+            tracing::error!("受理退换货失败: {}", e);
+            Json(api_error(500, "受理退换货失败"))
+        }
+    }
+}
+
+async fn process_return(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(_req): Json<ReturnActionRequest>,
+) -> Json<ApiResponse<Return>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let operator_id = extract_operator_id(&claims);
+    let now = Utc::now();
+
+    let existing = sqlx::query_as::<_, Return>(
+        r#"
+        SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
+               status, refund_amount, exchange_product_id, received, received_at, approved_by,
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
+        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(api_error(404, "退换货不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询退换货失败: {}", e))),
+    };
+
+    let from = match ReturnStage::from_str(&existing.status) {
+        Some(s) => s,
+        None => return Json(api_error(400, &format!("未知状态: {}", existing.status))),
+    };
+
+    if let Err(e) = can_transition(from, ReturnStage::Processing) {
+        return Json(api_error(
+            400,
+            &format!("状态 {} → processing 流转被拒绝: {}", existing.status, e),
+        ));
+    }
+
+    let result = sqlx::query_as::<_, Return>(
+        r#"
+        UPDATE crm.returns SET
+            status = 'processing', received = TRUE, received_at = $2,
+            updated_by = $3, updated_at = $4
+        WHERE id = $1 AND tenant_id = $5
+        RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
+                  status, refund_amount, exchange_product_id, received, received_at, approved_by,
+                  approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+                  ticket_id, warehouse_id, deleted_at
+        "#,
+    )
+    .bind(id)
+    .bind(now)
+    .bind(operator_id)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(return_record) => {
+            if let Err(e) = sync_return_to_inventory(&state, return_record.id, tenant_id).await {
+                tracing::warn!("退换货 {} 库存联动失败: {}", return_record.return_no, e);
+            }
+            Json(ApiResponse::success(return_record, "退换货进入处理中"))
+        }
+        Err(e) => {
+            tracing::error!("处理退换货失败: {}", e);
+            Json(api_error(500, "处理退换货失败"))
+        }
+    }
+}
+
+async fn resolve_return(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ReturnActionRequest>,
+) -> Json<ApiResponse<Return>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let operator_id = extract_operator_id(&claims);
+    let now = Utc::now();
+
+    let existing = sqlx::query_as::<_, Return>(
+        r#"
+        SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
+               status, refund_amount, exchange_product_id, received, received_at, approved_by,
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
+        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(api_error(404, "退换货不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询退换货失败: {}", e))),
+    };
+
+    let from = match ReturnStage::from_str(&existing.status) {
+        Some(s) => s,
+        None => return Json(api_error(400, &format!("未知状态: {}", existing.status))),
+    };
+
+    let target = match req.process_type.as_deref() {
+        Some("returned") => ReturnStage::Processing,
+        _ => ReturnStage::Resolving,
+    };
+
+    if let Err(e) = can_transition(from, target) {
+        return Json(api_error(
+            400,
+            &format!(
+                "状态 {} → {} 流转被拒绝: {}",
+                existing.status,
+                target.as_str(),
+                e
+            ),
+        ));
+    }
+
+    let result = sqlx::query_as::<_, Return>(
+        r#"
+        UPDATE crm.returns SET
+            status = $2, updated_by = $3, updated_at = $4
+        WHERE id = $1 AND tenant_id = $5
+        RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
+                  status, refund_amount, exchange_product_id, received, received_at, approved_by,
+                  approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+                  ticket_id, warehouse_id, deleted_at
+        "#,
+    )
+    .bind(id)
+    .bind(target.as_str())
+    .bind(operator_id)
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(r) => {
+            let msg = match target {
+                ReturnStage::Resolving => "退换货进入方案确认".to_string(),
+                ReturnStage::Processing => "退换货已退回重新处理".to_string(),
+                _ => "退换货状态更新成功".to_string(),
+            };
+            Json(ApiResponse::success(r, &msg))
+        }
+        Err(e) => {
+            tracing::error!("方案确认失败: {}", e);
+            Json(api_error(500, "方案确认失败"))
+        }
+    }
+}
+
+async fn confirm_return(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ReturnActionRequest>,
+) -> Json<ApiResponse<Return>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let operator_id = extract_operator_id(&claims);
+    let now = Utc::now();
+
+    let existing = sqlx::query_as::<_, Return>(
+        r#"
+        SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
+               status, refund_amount, exchange_product_id, received, received_at, approved_by,
+               approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+               ticket_id, warehouse_id, deleted_at
+        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(api_error(404, "退换货不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询退换货失败: {}", e))),
+    };
+
+    let from = match ReturnStage::from_str(&existing.status) {
+        Some(s) => s,
+        None => return Json(api_error(400, &format!("未知状态: {}", existing.status))),
+    };
+
+    let target = match req.process_type.as_deref() {
+        Some("reject") => ReturnStage::Rejected,
+        _ => ReturnStage::Done,
+    };
+
+    if let Err(e) = can_transition(from, target) {
+        return Json(api_error(
+            400,
+            &format!(
+                "状态 {} → {} 流转被拒绝: {}",
+                existing.status,
+                target.as_str(),
+                e
+            ),
+        ));
+    }
+
+    let result = sqlx::query_as::<_, Return>(
+        r#"
+        UPDATE crm.returns SET
+            status = $2, resolved_at = $3, completed_at = $3,
+            updated_by = $4, updated_at = $3
+        WHERE id = $1 AND tenant_id = $5
+        RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
+                  status, refund_amount, exchange_product_id, received, received_at, approved_by,
+                  approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
+                  ticket_id, warehouse_id, deleted_at
+        "#,
+    )
+    .bind(id)
+    .bind(target.as_str())
+    .bind(now)
+    .bind(operator_id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(return_record) => {
+            if matches!(target, ReturnStage::Done) {
+                if let Some(ref publisher) = state.event_publisher {
+                    let publisher = publisher.clone();
+                    let return_id = return_record.id;
+                    let return_no = return_record.return_no.clone();
+                    let customer_id = return_record.customer_id;
+                    let order_id = return_record.order_id;
+                    let refund_amount = return_record.refund_amount.to_f64().unwrap_or(0.0);
+                    let return_type = return_record.return_type.clone();
+                    let status = return_record.status.clone();
+                    let completed_by = operator_id;
+                    let completed_at = now.to_rfc3339();
+                    let tenant_id_pub = Some(tenant_id);
+                    tokio::spawn(async move {
+                        let return_no_log = return_no.clone();
+                        let payload = ReturnCompletedPayload {
+                            return_id,
+                            return_no,
+                            customer_id,
+                            customer_name: None,
+                            order_id,
+                            order_no: None,
+                            refund_amount,
+                            return_type,
+                            status,
+                            completed_by,
+                            completed_at,
+                            tenant_id: tenant_id_pub,
+                        };
+                        if let Err(e) = publisher
+                            .publish_event(EventType::ReturnCompleted, payload)
+                            .await
+                        {
+                            tracing::warn!("[crm] ReturnCompleted 事件发布失败: {}", e);
+                        } else {
+                            tracing::info!(
+                                "[crm] ReturnCompleted 事件发布成功 - return_no={}",
+                                return_no_log
+                            );
+                        }
+                    });
+                }
+                if let Err(e) = sync_return_to_finance(&state, return_record.id, tenant_id).await {
+                    tracing::warn!("退换货 {} 财务对账失败: {}", return_record.return_no, e);
+                }
+            }
+
+            let msg = match target {
+                ReturnStage::Done => "退换货已完成结案".to_string(),
+                ReturnStage::Rejected => "退换货已拒绝结案".to_string(),
+                _ => "退换货确认成功".to_string(),
+            };
+            Json(ApiResponse::success(return_record, &msg))
+        }
+        Err(e) => {
+            tracing::error!("确认退换货失败: {}", e);
+            Json(api_error(500, "确认退换货失败"))
+        }
+    }
 }

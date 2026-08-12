@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -19,13 +19,16 @@ import {
   Target,
   Star,
   Sparkles,
+  MessageSquare,
+  ArrowRightLeft,
+  BarChart2,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { recommendationSchema } from '@/schemas/crm';
-import { crmApi } from '@/api/crm';
+import { crmApi, useCrmMock, type RecommendationData, type Period } from '@/api/crm';
 import type { RecommendationResult, RecommendationRequest } from '@/api/crm';
 
 // ============ 辅助函数 ============
@@ -54,6 +57,8 @@ const getConfidenceColor = (confidence: number): 'success' | 'primary' | 'warnin
 
 const CRMRecommendationPage: React.FC = () => {
   const { t } = useTranslation();
+  const [period] = useState<Period>('MTD');
+  const { data: mockRec, mockEnabled } = useCrmMock<RecommendationData>({ period });
 
   const getRecommendationTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -300,19 +305,161 @@ const CRMRecommendationPage: React.FC = () => {
     [t]
   );
 
+  const typeColumnConfig: Array<{
+    key: 'crossSell' | 'upsell' | 'followup';
+    label: string;
+    sublabel: string;
+    icon: React.ReactElement;
+    gradient: [string, string];
+    data: RecommendationData['crossSell'];
+  }> = [
+    {
+      key: 'crossSell',
+      label: t('crm.recommendation.col_cross_sell') || '交叉销售',
+      sublabel: t('crm.recommendation.col_cross_sell_sub') || '关联产品推荐',
+      icon: <ShoppingCart size={20} color='white' />,
+      gradient: ['#2563eb', '#1d4ed8'],
+      data: mockRec.crossSell,
+    },
+    {
+      key: 'upsell',
+      label: t('crm.recommendation.col_upsell') || '向上销售',
+      sublabel: t('crm.recommendation.col_upsell_sub') || '升级方案机会',
+      icon: <TrendingUp size={20} color='white' />,
+      gradient: ['#16a34a', '#15803d'],
+      data: mockRec.upsell,
+    },
+    {
+      key: 'followup',
+      label: t('crm.recommendation.col_followup') || '跟进建议',
+      sublabel: t('crm.recommendation.col_followup_sub') || '主动沟通减少流失',
+      icon: <MessageSquare size={20} color='white' />,
+      gradient: ['#d97706', '#b45309'],
+      data: mockRec.followup,
+    },
+  ];
+
   return (
-    <CrudPage
-      schema={recommendationSchema}
-      apiAdapter={apiAdapter}
-      customColumns={columns as unknown as ColumnDef<Record<string, unknown>>[]}
-      detailContent={detailContent}
-      idField='customer_id'
-      breadcrumbs={[
-        { label: t('crm.common.home'), href: '/dashboard' },
-        { label: t('crm.recommendation.breadcrumb_manage'), href: '/crm' },
-        { label: t('crm.recommendation.title') },
-      ]}
-    />
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {mockEnabled && (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Chip
+            label={t('crm.common.mock_demo_badge') || 'Mock 演示'}
+            color='warning'
+            size='small'
+            variant='outlined'
+            sx={{ fontWeight: 600 }}
+          />
+        </Box>
+      )}
+
+      {mockEnabled && (
+        <Grid container spacing={3}>
+          {typeColumnConfig.map((col) => (
+            <Grid size={{ xs: 12, lg: 4 }} key={col.key}>
+              <Paper
+                variant='outlined'
+                sx={{
+                  p: 0,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
+              >
+                <Box
+                  sx={{
+                    p: 2.5,
+                    background: `linear-gradient(135deg, ${col.gradient[0]}, ${col.gradient[1]})`,
+                    color: 'white',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 2,
+                        bgcolor: 'rgba(255,255,255,0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {col.icon}
+                    </Box>
+                    <Box>
+                      <Typography variant='h6' sx={{ fontWeight: 700 }}>
+                        {col.label}
+                      </Typography>
+                      <Typography variant='caption' sx={{ opacity: 0.9 }}>
+                        {col.sublabel} · {col.data.length} 条
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+                  {col.data.map((item, idx) => {
+                    const confColor =
+                      item.confidence >= 0.9
+                        ? 'success.main'
+                        : item.confidence >= 0.7
+                          ? 'primary.main'
+                          : item.confidence >= 0.5
+                            ? 'warning.main'
+                            : 'error.main';
+                    return (
+                      <Card key={item.id} variant='outlined' sx={{ flex: 1 }}>
+                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                            <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                              {item.customerName}
+                            </Typography>
+                            <Typography variant='caption' sx={{ color: confColor, fontWeight: 700 }}>
+                              {(item.confidence * 100).toFixed(0)}%
+                            </Typography>
+                          </Box>
+                          <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 0.5 }}>
+                            {item.title}
+                          </Typography>
+                          <Typography variant='caption' color='text.secondary' sx={{ mb: 1.5, display: 'block' }}>
+                            {item.reason}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <LinearProgress
+                              variant='determinate'
+                              value={item.confidence * 100}
+                              color={item.confidence >= 0.9 ? 'success' : item.confidence >= 0.7 ? 'primary' : item.confidence >= 0.5 ? 'warning' : 'error'}
+                              sx={{ flex: 1, height: 4, borderRadius: 2, mr: 2 }}
+                            />
+                            <Typography variant='caption' sx={{ fontWeight: 700, color: 'primary.main' }}>
+                              ¥{item.expectedValue.toLocaleString()}
+                            </Typography>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </Box>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      <CrudPage
+        schema={recommendationSchema}
+        apiAdapter={apiAdapter}
+        customColumns={columns as unknown as ColumnDef<Record<string, unknown>>[]}
+        detailContent={detailContent}
+        idField='customer_id'
+        breadcrumbs={[
+          { label: t('crm.common.home'), href: '/dashboard' },
+          { label: t('crm.recommendation.breadcrumb_manage'), href: '/crm' },
+          { label: t('crm.recommendation.title') },
+        ]}
+      />
+    </Box>
   );
 };
 

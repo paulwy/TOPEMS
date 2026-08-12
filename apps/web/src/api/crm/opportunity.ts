@@ -9,17 +9,17 @@ import type {
   OpportunityStats,
   OpportunityForecast,
 } from './types';
+import type { OppStage } from '@/schemas/crm';
 import {
   toOpenApiParams,
+  toOpenApiRequestBody,
   type AdaptedQuery,
+  type AdaptedRequestBody,
+  type TypedApiResponse,
   type TypedPaginatedResponse,
 } from '@topems/shared-types';
 
 export const opportunityApi = {
-  /**
-   * A4 绑定样板：list_opportunities operation（openapi: GET /crm/opportunities）
-   * Query Params: { page, pageSize, search, stage, customerId }（AdaptedQuery 后 camelCase）
-   */
   list: async (
     params?: AdaptedQuery<'list_opportunities'> | OpportunityQueryParams,
   ): Promise<TypedPaginatedResponse<Opportunity>> => {
@@ -28,15 +28,23 @@ export const opportunityApi = {
     });
   },
 
-  create: async (data: CreateOpportunityRequest): Promise<ApiResponse<Opportunity>> => {
-    return apiClient.crm.post('/opportunities', data);
+  create: async (
+    data: AdaptedRequestBody<'create_opportunity'> | CreateOpportunityRequest,
+  ): Promise<TypedApiResponse<Opportunity, 'create_opportunity'>> => {
+    return apiClient.crm.post(
+      '/opportunities',
+      toOpenApiRequestBody(data as Record<string, unknown>),
+    );
   },
 
   get: async (id: string): Promise<ApiResponse<Opportunity>> => {
     return apiClient.crm.get(`/opportunities/${id}`);
   },
 
-  update: async (id: string, data: UpdateOpportunityRequest): Promise<ApiResponse<Opportunity>> => {
+  update: async (
+    id: string,
+    data: UpdateOpportunityRequest,
+  ): Promise<ApiResponse<Opportunity>> => {
     return apiClient.crm.put(`/opportunities/${id}`, data);
   },
 
@@ -46,6 +54,26 @@ export const opportunityApi = {
 
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
     return apiClient.crm.post('/opportunities/batch-delete', { ids });
+  },
+
+  advance: async (
+    id: string,
+    data?: { note?: string },
+  ): Promise<ApiResponse<{ id: string; fromStage: OppStage; toStage: OppStage }>> => {
+    return apiClient.crm.post(
+      `/opportunities/${id}/advance`,
+      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {},
+    );
+  },
+
+  rollback: async (
+    id: string,
+    data?: { note?: string; reason?: string },
+  ): Promise<ApiResponse<{ id: string; fromStage: OppStage; toStage: OppStage }>> => {
+    return apiClient.crm.post(
+      `/opportunities/${id}/rollback`,
+      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {},
+    );
   },
 
   getFunnel: async (): Promise<ApiResponse<FunnelStage[]>> => {

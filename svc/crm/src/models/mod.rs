@@ -11,7 +11,9 @@ pub mod sales_forecast;
 pub mod tag;
 
 pub use audit_log::AuditLog;
-pub use billing::{BillingQueryParams, BillingRecord, CreateBillingRequest};
+pub use billing::{
+    BillingItem, BillingQueryParams, BillingRecord, CreateBillingRequest, UpdateBillingRequest,
+};
 pub use contact::{Contact, CreateContactRequest, UpdateContactRequest};
 pub use customer::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 pub use customer_scoring::{

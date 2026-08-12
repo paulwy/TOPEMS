@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::{Datelike, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -16,6 +17,84 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::api_error;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OppStage {
+    Draft,
+    Lead,
+    Qualified,
+    Proposal,
+    Negotiation,
+    Won,
+    Lost,
+    Closed,
+}
+
+impl OppStage {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "draft" => Some(Self::Draft),
+            "lead" => Some(Self::Lead),
+            "qualified" => Some(Self::Qualified),
+            "proposal" => Some(Self::Proposal),
+            "negotiation" => Some(Self::Negotiation),
+            "won" => Some(Self::Won),
+            "lost" => Some(Self::Lost),
+            "closed" => Some(Self::Closed),
+            _ => None,
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Draft => "draft",
+            Self::Lead => "lead",
+            Self::Qualified => "qualified",
+            Self::Proposal => "proposal",
+            Self::Negotiation => "negotiation",
+            Self::Won => "won",
+            Self::Lost => "lost",
+            Self::Closed => "closed",
+        }
+    }
+
+    pub fn is_terminal(&self) -> bool {
+        matches!(self, Self::Won | Self::Lost | Self::Closed)
+    }
+}
+
+pub fn can_transition(
+    from: OppStage,
+    to: OppStage,
+    is_owner_or_admin: bool,
+) -> Result<(), &'static str> {
+    use OppStage::*;
+    if !is_owner_or_admin {
+        return Err("NOT_OWNER");
+    }
+    if from.is_terminal() {
+        return Err("TERMINAL_CANNOT_TRANSITION");
+    }
+    let ok_advance = matches!(
+        (from, to),
+        (Draft, Lead)
+            | (Lead, Qualified)
+            | (Qualified, Proposal)
+            | (Proposal, Negotiation)
+            | (Negotiation, Won)
+            | (Negotiation, Lost)
+            | (Negotiation, Closed)
+    );
+    let ok_rollback = matches!(
+        (from, to),
+        (Qualified, Lead) | (Proposal, Qualified) | (Negotiation, Proposal)
+    );
+    if ok_advance || ok_rollback {
+        Ok(())
+    } else {
+        Err("INVALID_TRANSITION")
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunnelStage {
@@ -87,6 +166,8 @@ pub fn create_routes() -> Router<ApiState> {
                 .put(update_opportunity)
                 .delete(delete_opportunity),
         )
+        .route("/opportunities/{id}/advance", post(advance_opportunity))
+        .route("/opportunities/{id}/rollback", post(rollback_opportunity))
         .route("/opportunities/funnel", get(get_sales_funnel))
         .route("/opportunities/stats", get(get_opportunity_stats))
         .route("/opportunities/forecast", get(get_opportunity_forecast))
@@ -220,21 +301,36 @@ async fn create_opportunity(
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims, &headers);
 
+    let opp_no = if req.opp_no.is_empty() {
+        format!("OPP-{}", now.timestamp())
+    } else {
+        req.opp_no.clone()
+    };
+    let stage = "draft".to_string();
+    let priority = req.priority.clone().unwrap_or_else(|| "medium".into());
+    let status = "open".to_string();
+
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         INSERT INTO crm.opportunities (
-            id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, 'prospecting', $6, $7, $8, $9, $10)
-        RETURNING id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
+            id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        RETURNING id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         "#,
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(&opp_no)
     .bind(&req.name)
     .bind(&req.customer_id)
+    .bind(&req.customer_name)
+    .bind(&stage)
+    .bind(&priority)
     .bind(req.value)
-    .bind(req.probability)
+    .bind(req.win_rate)
     .bind(&req.close_date)
+    .bind(&req.owner_id)
+    .bind(&status)
     .bind(&req.notes)
     .bind(now)
     .bind(now)
@@ -356,29 +452,37 @@ async fn update_opportunity(
 
     let name = req.name.unwrap_or(existing.name);
     let customer_id = req.customer_id.or(existing.customer_id);
+    let customer_name = req.customer_name.or(existing.customer_name);
     let value = req.value.or(existing.value);
     let stage = req.stage.unwrap_or(existing.stage);
-    let probability = req.probability.or(existing.probability);
+    let win_rate = req.win_rate.or(existing.win_rate);
     let close_date = req.close_date.or(existing.close_date);
+    let owner_id = req.owner_id.or(existing.owner_id);
+    let priority = req.priority.unwrap_or(existing.priority);
+    let status = req.status.unwrap_or(existing.status);
     let notes = req.notes.or(existing.notes);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         UPDATE crm.opportunities SET
-            name = $2, customer_id = $3, value = $4, stage = $5, probability = $6, 
-            close_date = $7, notes = $8, updated_at = $9
-        WHERE id = $1 AND tenant_id = $10
-        RETURNING id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
+            name = $2, customer_id = $3, customer_name = $4, value = $5, stage = $6, priority = $7, probability = $8,
+            close_date = $9, owner_id = $10, status = $11, notes = $12, updated_at = $13
+        WHERE id = $1 AND tenant_id = $14
+        RETURNING id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         "#,
     )
     .bind(id)
     .bind(&name)
     .bind(&customer_id)
+    .bind(&customer_name)
     .bind(value)
     .bind(&stage)
-    .bind(probability)
-    .bind(&close_date)
+    .bind(&priority)
+    .bind(win_rate)
+    .bind(close_date)
+    .bind(owner_id)
+    .bind(&status)
     .bind(&notes)
     .bind(now)
     .bind(tenant_id)
@@ -827,4 +931,357 @@ async fn get_stage_transitions(
     .unwrap_or_default();
 
     Json(ApiResponse::success(transitions, "获取阶段转换统计成功"))
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AdvanceOpportunityRequest {
+    pub note: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct RollbackOpportunityRequest {
+    pub note: Option<String>,
+    pub reason: Option<String>,
+}
+
+fn next_advance_stage(from: OppStage) -> OppStage {
+    use OppStage::*;
+    match from {
+        Draft => Lead,
+        Lead => Qualified,
+        Qualified => Proposal,
+        Proposal => Negotiation,
+        Negotiation => Won,
+        _ => from,
+    }
+}
+
+fn prev_stage(from: OppStage) -> OppStage {
+    use OppStage::*;
+    match from {
+        Qualified => Lead,
+        Proposal => Qualified,
+        Negotiation => Proposal,
+        _ => from,
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/opportunities/{id}/advance",
+    params(("id" = Uuid, Path, description = "Opportunity id to advance stage")),
+    request_body = AdvanceOpportunityRequest,
+    responses(
+        (status = 200, description = "Opportunity stage advanced (e.g. Lead → Qualified)"),
+        (status = 400, description = "CRM::INVALID_TRANSITION / CRM::TERMINAL_CANNOT_TRANSITION"),
+        (status = 403, description = "CRM::NOT_OWNER"),
+        (status = 404, description = "CRM::NOT_FOUND"),
+    ),
+    security(("bearer_auth" = ["crm:opportunity:write"])),
+    tag = "opportunity"
+)]
+async fn advance_opportunity(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<AdvanceOpportunityRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let existing = match sqlx::query_as::<_, Opportunity>(
+        r#"
+        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, win_rate, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+        FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await
+    {
+        Ok(Some(o)) => o,
+        Ok(None) => return Json(api_error(404, "商机不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询商机失败: {}", e))),
+    };
+
+    let is_owner_or_admin = true;
+
+    let from_stage = match OppStage::from_str(&existing.stage) {
+        Some(s) => s,
+        None => return Json(api_error(400, &format!("未知商机阶段: {}", existing.stage))),
+    };
+    let to_stage = next_advance_stage(from_stage);
+
+    match can_transition(from_stage, to_stage, is_owner_or_admin) {
+        Ok(_) => {}
+        Err("NOT_OWNER") => return Json(api_error(403, "仅负责人或管理员可推进阶段")),
+        Err("TERMINAL_CANNOT_TRANSITION") => return Json(api_error(400, "终态商机不可推进")),
+        Err("INVALID_TRANSITION") => {
+            return Json(api_error(
+                400,
+                &format!("无效推进: {} → {}", from_stage.as_str(), to_stage.as_str()),
+            ))
+        }
+        Err(e) => return Json(api_error(400, e)),
+    }
+
+    let now = Utc::now();
+    let to_stage_str = to_stage.as_str();
+    let new_status = match to_stage {
+        OppStage::Won => "won",
+        OppStage::Lost => "lost",
+        OppStage::Closed => "archived",
+        _ => &existing.status,
+    };
+
+    let result = sqlx::query_as::<_, Opportunity>(
+        r#"
+        UPDATE crm.opportunities SET
+            stage = $2, status = $3, notes = COALESCE($4, notes), updated_at = $5
+        WHERE id = $1 AND tenant_id = $6
+        RETURNING id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, win_rate, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+        "#,
+    )
+    .bind(id)
+    .bind(to_stage_str)
+    .bind(new_status)
+    .bind(req.note.as_deref().or(existing.notes.as_deref()))
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(_opp) => {
+            let from_s = from_stage.as_str();
+            let to_s = to_stage_str;
+            let response_payload = serde_json::json!({
+                "id": id,
+                "fromStage": from_s,
+                "toStage": to_s,
+            });
+            (
+                Json(ApiResponse::success(
+                    response_payload,
+                    &format!("商机阶段已推进: {} → {}", from_s, to_s),
+                )),
+                "success".to_string(),
+                None,
+            )
+        }
+        Err(e) => {
+            tracing::error!("推进商机阶段失败: {}", e);
+            (
+                Json(api_error(500, "推进商机阶段失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(opp) = &result {
+        Some(serde_json::json!({
+            "id": opp.id,
+            "fromStage": from_stage.as_str(),
+            "toStage": opp.stage,
+        }))
+    } else {
+        None
+    };
+
+    tokio::spawn(async move {
+        let _ = log_audit_event(
+            &state.db,
+            AuditEventParams {
+                action: "crm.opportunity.advance".to_string(),
+                entity_type: "opportunity".to_string(),
+                entity_id: Some(id),
+                entity_ids: None,
+                user_id: None,
+                user_name: None,
+                request_details: request_data,
+                response_details: response_data,
+                status: status_str,
+                error_message: error_msg,
+            },
+            &headers,
+        )
+        .await;
+    });
+
+    response
+}
+
+#[utoipa::path(
+    post,
+    path = "/opportunities/{id}/rollback",
+    params(("id" = Uuid, Path, description = "Opportunity id to rollback stage (adjacent only)")),
+    request_body = RollbackOpportunityRequest,
+    responses(
+        (status = 200, description = "Opportunity stage rolled back (adjacent only)"),
+        (status = 400, description = "CRM::INVALID_TRANSITION / CRM::TERMINAL_CANNOT_TRANSITION"),
+        (status = 403, description = "CRM::NOT_OWNER"),
+        (status = 404, description = "CRM::NOT_FOUND"),
+    ),
+    security(("bearer_auth" = ["crm:opportunity:write"])),
+    tag = "opportunity"
+)]
+async fn rollback_opportunity(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<RollbackOpportunityRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let existing = match sqlx::query_as::<_, Opportunity>(
+        r#"
+        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, win_rate, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+        FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await
+    {
+        Ok(Some(o)) => o,
+        Ok(None) => return Json(api_error(404, "商机不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询商机失败: {}", e))),
+    };
+
+    let is_owner_or_admin = true;
+
+    let from_stage = match OppStage::from_str(&existing.stage) {
+        Some(s) => s,
+        None => return Json(api_error(400, &format!("未知商机阶段: {}", existing.stage))),
+    };
+    let to_stage = prev_stage(from_stage);
+
+    match can_transition(from_stage, to_stage, is_owner_or_admin) {
+        Ok(_) => {}
+        Err("NOT_OWNER") => return Json(api_error(403, "仅负责人或管理员可回退阶段")),
+        Err("TERMINAL_CANNOT_TRANSITION") => return Json(api_error(400, "终态商机不可回退")),
+        Err("INVALID_TRANSITION") => {
+            return Json(api_error(
+                400,
+                &format!(
+                    "无效回退(仅相邻阶段允许): {} → {}",
+                    from_stage.as_str(),
+                    to_stage.as_str()
+                ),
+            ))
+        }
+        Err(e) => return Json(api_error(400, e)),
+    }
+
+    let now = Utc::now();
+    let to_stage_str = to_stage.as_str();
+    let new_status = match to_stage {
+        OppStage::Won | OppStage::Lost | OppStage::Closed => "archived",
+        _ => "open",
+    };
+
+    let notes_combined = match (
+        req.reason.as_deref(),
+        req.note.as_deref(),
+        existing.notes.as_deref(),
+    ) {
+        (Some(reason), Some(note), Some(old)) => {
+            Some(format!("{}\n[回退原因: {}] {}", old, reason, note))
+        }
+        (Some(reason), None, Some(old)) => Some(format!("{}\n[回退原因: {}]", old, reason)),
+        (_, _, old_note) => old_note.map(|s| s.to_string()),
+    };
+
+    let result = sqlx::query_as::<_, Opportunity>(
+        r#"
+        UPDATE crm.opportunities SET
+            stage = $2, status = $3, notes = COALESCE($4, notes), updated_at = $5
+        WHERE id = $1 AND tenant_id = $6
+        RETURNING id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, win_rate, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+        "#,
+    )
+    .bind(id)
+    .bind(to_stage_str)
+    .bind(new_status)
+    .bind(notes_combined.as_deref())
+    .bind(now)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(_opp) => {
+            let from_s = from_stage.as_str();
+            let to_s = to_stage_str;
+            let response_payload = serde_json::json!({
+                "id": id,
+                "fromStage": from_s,
+                "toStage": to_s,
+            });
+            (
+                Json(ApiResponse::success(
+                    response_payload,
+                    &format!("商机阶段已回退: {} → {}", from_s, to_s),
+                )),
+                "success".to_string(),
+                None,
+            )
+        }
+        Err(e) => {
+            tracing::error!("回退商机阶段失败: {}", e);
+            (
+                Json(api_error(500, "回退商机阶段失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(opp) = &result {
+        Some(serde_json::json!({
+            "id": opp.id,
+            "fromStage": from_stage.as_str(),
+            "toStage": opp.stage,
+        }))
+    } else {
+        None
+    };
+
+    tokio::spawn(async move {
+        let _ = log_audit_event(
+            &state.db,
+            AuditEventParams {
+                action: "crm.opportunity.rollback".to_string(),
+                entity_type: "opportunity".to_string(),
+                entity_id: Some(id),
+                entity_ids: None,
+                user_id: None,
+                user_name: None,
+                request_details: request_data,
+                response_details: response_data,
+                status: status_str,
+                error_message: error_msg,
+            },
+            &headers,
+        )
+        .await;
+    });
+
+    response
 }

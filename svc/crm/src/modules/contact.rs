@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -39,6 +40,12 @@ pub fn create_routes() -> Router<ApiState> {
             "/contacts/{id}",
             get(get_contact).put(update_contact).delete(delete_contact),
         )
+        .route(
+            "/contacts/{id}/approval/start",
+            post(start_contact_approval),
+        )
+        .route("/contacts/{id}/approval/approve", post(approve_contact))
+        .route("/contacts/{id}/approval/reject", post(reject_contact))
 }
 
 #[utoipa::path(
@@ -509,4 +516,310 @@ async fn batch_delete_contacts(
     .await;
 
     response
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct StartContactApprovalRequest {
+    pub workflow_id: Uuid,
+    pub comment: Option<String>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ContactApprovalActionRequest {
+    pub comment: Option<String>,
+    pub reason: Option<String>,
+}
+
+#[utoipa::path(
+    post,
+    path = "/contacts/{id}/approval/start",
+    params(("id" = Uuid, Path, description = "Contact id to start approval")),
+    request_body = StartContactApprovalRequest,
+    responses(
+        (status = 200, description = "Contact approval started (pending)"),
+        (status = 404, description = "CRM::NOT_FOUND"),
+    ),
+    security(("bearer_auth" = ["crm:contact:write"])),
+    tag = "contact"
+)]
+async fn start_contact_approval(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<StartContactApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let contact = sqlx::query_as::<_, Contact>(
+        r#"
+        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
+        FROM crm.contacts WHERE id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    let contact = match contact {
+        Ok(c) => c,
+        Err(_) => return Json(api_error(404, "联系人不存在")),
+    };
+    let old_approval_status = contact.approval_status.clone();
+    let new_approval_status = "pending".to_string();
+
+    let workflow_client = state.workflow_client.clone();
+    let id_str = id.to_string();
+    let req_workflow_id = req.workflow_id;
+    tokio::spawn(async move {
+        let request = topems_shared_service_client::service_client::CreateInstanceRequest {
+            workflow_id: req_workflow_id,
+            title: format!("联系人审批 - {}", id_str),
+            variables: Some(serde_json::json!({
+                "contact_id": id_str,
+            })),
+        };
+        match workflow_client.create_instance(request).await {
+            Ok(instance) => {
+                tracing::info!("[crm] 联系人审批流程启动成功 - instance_id={}", instance.id);
+            }
+            Err(e) => {
+                tracing::warn!("[crm] 联系人审批流程启动失败: {}", e);
+            }
+        }
+    });
+
+    let _ = sqlx::query(
+        "UPDATE crm.contacts SET approval_status = 'pending', updated_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
+
+    let request_data = serde_json::json!({
+        "workflow_id": req.workflow_id.to_string(),
+        "comment": req.comment,
+    });
+    let response_data = serde_json::json!({
+        "old_approval_status": old_approval_status,
+        "new_approval_status": new_approval_status,
+        "contact_id": id.to_string(),
+        "workflow_id": req.workflow_id.to_string(),
+        "comment": req.comment,
+    });
+    tokio::spawn(async move {
+        let _ = log_audit_event(
+            &state.db,
+            AuditEventParams {
+                action: "crm.contact.approval.start".to_string(),
+                entity_type: "contact".to_string(),
+                entity_id: Some(id),
+                entity_ids: None,
+                user_id: None,
+                user_name: None,
+                request_details: Some(request_data),
+                response_details: Some(response_data),
+                status: "success".to_string(),
+                error_message: None,
+            },
+            &headers,
+        )
+        .await;
+    });
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "contact_id": id,
+            "workflow_id": req.workflow_id,
+            "approval_status": "pending"
+        }),
+        "联系人审批流程已启动",
+    ))
+}
+
+#[utoipa::path(
+    post,
+    path = "/contacts/{id}/approval/approve",
+    params(("id" = Uuid, Path, description = "Contact id to approve")),
+    request_body = ContactApprovalActionRequest,
+    responses(
+        (status = 200, description = "Contact approved (approval_status = approved)"),
+        (status = 404, description = "CRM::NOT_FOUND"),
+    ),
+    security(("bearer_auth" = ["crm:contact:write"])),
+    tag = "contact"
+)]
+async fn approve_contact(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ContactApprovalActionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let contact = sqlx::query_as::<_, Contact>(
+        r#"
+        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
+        FROM crm.contacts WHERE id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    let contact = match contact {
+        Ok(c) => c,
+        Err(_) => return Json(api_error(404, "联系人不存在")),
+    };
+    let old_approval_status = contact.approval_status.clone();
+    let new_approval_status = "approved".to_string();
+
+    let _ = sqlx::query(
+        "UPDATE crm.contacts SET approval_status = 'approved', updated_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
+
+    let request_data = serde_json::json!({
+        "comment": req.comment,
+    });
+    let response_data = serde_json::json!({
+        "old_approval_status": old_approval_status,
+        "new_approval_status": new_approval_status,
+        "contact_id": id.to_string(),
+        "comment": req.comment,
+    });
+    tokio::spawn(async move {
+        let _ = log_audit_event(
+            &state.db,
+            AuditEventParams {
+                action: "crm.contact.approval.approve".to_string(),
+                entity_type: "contact".to_string(),
+                entity_id: Some(id),
+                entity_ids: None,
+                user_id: None,
+                user_name: None,
+                request_details: Some(request_data),
+                response_details: Some(response_data),
+                status: "success".to_string(),
+                error_message: None,
+            },
+            &headers,
+        )
+        .await;
+    });
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "contact_id": id,
+            "approval_status": "approved"
+        }),
+        "联系人审批通过",
+    ))
+}
+
+#[utoipa::path(
+    post,
+    path = "/contacts/{id}/approval/reject",
+    params(("id" = Uuid, Path, description = "Contact id to reject")),
+    request_body = ContactApprovalActionRequest,
+    responses(
+        (status = 200, description = "Contact rejected (approval_status = rejected, with reason)"),
+        (status = 404, description = "CRM::NOT_FOUND"),
+    ),
+    security(("bearer_auth" = ["crm:contact:write"])),
+    tag = "contact"
+)]
+async fn reject_contact(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ContactApprovalActionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let contact = sqlx::query_as::<_, Contact>(
+        r#"
+        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
+        FROM crm.contacts WHERE id = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    let contact = match contact {
+        Ok(c) => c,
+        Err(_) => return Json(api_error(404, "联系人不存在")),
+    };
+    let old_approval_status = contact.approval_status.clone();
+    let new_approval_status = "rejected".to_string();
+
+    let _ = sqlx::query(
+        "UPDATE crm.contacts SET approval_status = 'rejected', updated_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
+
+    let reason = req.reason.clone().unwrap_or_default();
+    let request_data = serde_json::json!({
+        "comment": req.comment,
+        "reason": reason,
+    });
+    let response_data = serde_json::json!({
+        "old_approval_status": old_approval_status,
+        "new_approval_status": new_approval_status,
+        "contact_id": id.to_string(),
+        "comment": req.comment,
+        "reason": reason,
+    });
+    tokio::spawn(async move {
+        let _ = log_audit_event(
+            &state.db,
+            AuditEventParams {
+                action: "crm.contact.approval.reject".to_string(),
+                entity_type: "contact".to_string(),
+                entity_id: Some(id),
+                entity_ids: None,
+                user_id: None,
+                user_name: None,
+                request_details: Some(request_data),
+                response_details: Some(response_data),
+                status: "success".to_string(),
+                error_message: None,
+            },
+            &headers,
+        )
+        .await;
+    });
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "contact_id": id,
+            "approval_status": "rejected"
+        }),
+        "联系人审批已驳回",
+    ))
 }

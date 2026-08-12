@@ -1,200 +1,142 @@
-/**
- * 客户管理 Schema — 驱动 CustomerManagementPage 的完整 CRUD
- */
-
+import { z } from 'zod';
 import type { EntitySchema } from '@/schema';
+import { commonAuditSchema } from './_shared';
 
-export const customerSchema: EntitySchema = {
-  entity: 'customer',
+export const customerRating = z.enum(['A', 'B', 'C', 'D']);
+export const customerType = z.enum(['enterprise', 'individual']);
+export const approvalStatus = z.enum(['none', 'pending', 'approved', 'rejected']);
+
+export const customerZodSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  name: z.string().min(2).max(120),
+  customerType: customerType,
+  industry: z.string().max(80).optional(),
+  rating: customerRating.default('C'),
+  region: z.string().max(40).optional(),
+  ownerId: z.string().uuid(),
+  tags: z.array(z.string().max(32)).default([]),
+  approvalStatus: approvalStatus.default('none'),
+}).merge(commonAuditSchema);
+
+export type Customer = z.infer<typeof customerZodSchema>;
+export type CustomerRating = z.infer<typeof customerRating>;
+export type CustomerType = z.infer<typeof customerType>;
+export type ApprovalStatus = z.infer<typeof approvalStatus>;
+
+export const createCustomerSchema = customerZodSchema.omit({ id: true, tenantId: true, approvalStatus: true, createdAt: true, updatedAt: true, deletedAt: true });
+export type CreateCustomerRequest = z.infer<typeof createCustomerSchema>;
+
+export const updateCustomerSchema = createCustomerSchema.partial();
+export type UpdateCustomerRequest = z.infer<typeof updateCustomerSchema>;
+
+export const customerSchema: EntitySchema<Customer> = {
+  entity: 'crm_customer',
   title: '客户管理',
-
-  api: {
-    module: 'crm',
-    resource: 'customers',
-  },
+  description: '管理客户基础信息、评级、审批状态和所有权',
+  softDelete: true,
+  actions: ['create', 'edit', 'detail', 'delete'],
 
   fields: [
     {
-      name: 'customer_code',
-      label: '客户编码',
-      type: 'text',
-      required: true,
-      readonlyOnEdit: true,
-      listWidth: 120,
-      validation: [{ type: 'maxLength', value: 100 }],
-    },
-    {
-      name: 'customer_name',
+      name: 'name',
       label: '客户名称',
       type: 'text',
       required: true,
-      listWidth: 160,
-      validation: [{ type: 'maxLength', value: 255 }],
+      sortable: true,
+      listWidth: 200,
+      validation: [{ type: 'minLength', value: 2 }, { type: 'maxLength', value: 120 }],
+    },
+    {
+      name: 'customerType',
+      label: '客户类型',
+      type: 'select',
+      required: true,
+      defaultValue: 'enterprise',
+      options: {
+        type: 'static',
+        options: [
+          { value: 'enterprise', label: '企业客户' },
+          { value: 'individual', label: '个人客户' },
+        ],
+      },
+      listWidth: 100,
     },
     {
       name: 'industry',
       label: '所属行业',
+      type: 'text',
+      listWidth: 120,
+      validation: [{ type: 'maxLength', value: 80 }],
+    },
+    {
+      name: 'rating',
+      label: '客户评级',
       type: 'select',
+      defaultValue: 'C',
       options: {
         type: 'static',
         options: [
-          { value: 'manufacturing', label: '制造业' },
-          { value: 'retail', label: '零售业' },
-          { value: 'service', label: '服务业' },
-          { value: 'tech', label: '科技' },
-          { value: 'finance', label: '金融' },
-          { value: 'other', label: '其他' },
-        ],
-      },
-      listWidth: 120,
-      validation: [{ type: 'maxLength', value: 100 }],
-    },
-    {
-      name: 'level',
-      label: '客户级别',
-      type: 'select',
-      options: {
-        type: 'static',
-        options: [
-          { value: 'strategic', label: '战略客户' },
-          { value: 'key', label: '关键客户' },
-          { value: 'normal', label: '普通客户' },
-          { value: 'potential', label: '潜在客户' },
-        ],
-      },
-      listWidth: 120,
-    },
-    {
-      name: 'contact_person',
-      label: '联系人',
-      type: 'text',
-      listWidth: 120,
-      validation: [{ type: 'maxLength', value: 100 }],
-    },
-    {
-      name: 'phone',
-      label: '电话',
-      type: 'text',
-      listWidth: 120,
-      validation: [{ type: 'maxLength', value: 50 }],
-    },
-    {
-      name: 'email',
-      label: '邮箱',
-      type: 'text',
-      listWidth: 160,
-      validation: [{ type: 'maxLength', value: 100 }],
-    },
-    {
-      name: 'address',
-      label: '地址',
-      type: 'text',
-      showInList: false,
-      validation: [{ type: 'maxLength', value: 500 }],
-    },
-    {
-      name: 'status',
-      label: '状态',
-      type: 'select',
-      defaultValue: 'active',
-      options: {
-        type: 'static',
-        options: [
-          { value: 'active', label: '活跃' },
-          { value: 'inactive', label: '非活跃' },
-          { value: 'pending', label: '待审核' },
+          { value: 'A', label: 'A (重点)' },
+          { value: 'B', label: 'B (普通)' },
+          { value: 'C', label: 'C (潜在)' },
+          { value: 'D', label: 'D (低价值)' },
         ],
       },
       listWidth: 100,
-      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
-      name: 'credit_limit',
-      label: '信用额度',
-      type: 'number',
+      name: 'region',
+      label: '所在地区',
+      type: 'text',
+      listWidth: 100,
+      showInList: false,
+      validation: [{ type: 'maxLength', value: 40 }],
+    },
+    {
+      name: 'ownerId',
+      label: '负责人 ID',
+      type: 'text',
+      required: true,
       showInList: false,
     },
     {
-      name: 'notes',
-      label: '备注',
-      type: 'textarea',
+      name: 'tags',
+      label: '标签',
+      type: 'text',
+      defaultValue: [],
+      showInList: false,
+    },
+    {
+      name: 'approvalStatus',
+      label: '审批状态',
+      type: 'select',
+      defaultValue: 'none',
+      readonly: true,
+      options: {
+        type: 'static',
+        options: [
+          { value: 'none', label: '未发起' },
+          { value: 'pending', label: '审批中' },
+          { value: 'approved', label: '已通过' },
+          { value: 'rejected', label: '已驳回' },
+        ],
+      },
+      listWidth: 100,
+    },
+    {
+      name: 'createdAt',
+      label: '创建时间',
+      type: 'datetime',
+      readonly: true,
+      listWidth: 160,
+    },
+    {
+      name: 'updatedAt',
+      label: '更新时间',
+      type: 'datetime',
+      readonly: true,
       showInList: false,
     },
   ],
-
-  list: {
-    columns: [
-      'customer_code',
-      'customer_name',
-      'industry',
-      'level',
-      'contact_person',
-      'phone',
-      'status',
-    ],
-    searchFields: ['customer_code', 'customer_name', 'contact_person'],
-    pageSize: 20,
-    statusBadge: {
-      field: 'status',
-      colorMap: {
-        active: 'success',
-        inactive: 'default',
-        pending: 'warning',
-      },
-      labelMap: {
-        active: '活跃',
-        inactive: '非活跃',
-        pending: '待审核',
-      },
-    },
-    filters: [
-      {
-        id: 'industry',
-        label: '所属行业',
-        type: 'select',
-        options: [
-          { label: '全部', value: 'all' },
-          { label: '制造业', value: 'manufacturing' },
-          { label: '零售业', value: 'retail' },
-          { label: '服务业', value: 'service' },
-          { label: '科技', value: 'tech' },
-          { label: '金融', value: 'finance' },
-          { label: '其他', value: 'other' },
-        ],
-      },
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select',
-        options: [
-          { label: '全部', value: 'all' },
-          { label: '活跃', value: 'active' },
-          { label: '非活跃', value: 'inactive' },
-          { label: '待审核', value: 'pending' },
-        ],
-      },
-    ],
-  },
-
-  actions: ['create', 'edit', 'detail', 'delete'],
-
-  formSections: [
-    {
-      title: '基本信息',
-      fields: ['customer_code', 'customer_name', 'industry', 'level'],
-    },
-    {
-      title: '联系方式',
-      fields: ['contact_person', 'phone', 'email', 'address'],
-    },
-    {
-      title: '其他',
-      fields: ['status', 'credit_limit', 'notes'],
-    },
-  ],
-
-  formColCount: 2,
-  createTitle: '新增客户',
-  editTitle: '编辑客户',
-  detailTitle: '客户详情',
 };

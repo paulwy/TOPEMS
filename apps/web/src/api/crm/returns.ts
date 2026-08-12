@@ -71,4 +71,32 @@ export const returnsApi = {
   getInventoryStatus: async (id: string): Promise<ApiResponse<ReturnInventoryStatus>> => {
     return apiClient.crm.get(`/returns/${id}/inventory-status`);
   },
+
+  accept: async (
+    id: string,
+    payload?: { comment?: string; reason?: string }
+  ): Promise<ApiResponse<ReturnRecord>> => {
+    return apiClient.crm.post(`/returns/${id}/accept`, payload ?? {});
+  },
+
+  process: async (
+    id: string,
+    payload?: { comment?: string; processType?: string }
+  ): Promise<ApiResponse<ReturnRecord>> => {
+    return apiClient.crm.post(`/returns/${id}/process`, payload ?? {});
+  },
+
+  resolve: async (
+    id: string,
+    payload?: { comment?: string; processType?: 'returned' | string }
+  ): Promise<ApiResponse<ReturnRecord>> => {
+    return apiClient.crm.post(`/returns/${id}/resolve`, payload ?? {});
+  },
+
+  confirm: async (
+    id: string,
+    payload?: { comment?: string; processType?: 'reject' | string }
+  ): Promise<ApiResponse<ReturnRecord>> => {
+    return apiClient.crm.post(`/returns/${id}/confirm`, payload ?? {});
+  },
 };

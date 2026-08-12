@@ -494,3 +494,81 @@ export interface ReturnInventoryStatus {
   warehouse_id?: string;
   items_count: number;
 }
+
+// ---- RFM 客户分群 ----
+
+export type RfmSegment =
+  | 'champion'
+  | 'loyal'
+  | 'potential'
+  | 'new'
+  | 'at_risk'
+  | 'cannot_lost'
+  | 'hibernating'
+  | 'lost';
+
+export interface RfmConfig {
+  reference_date?: string;
+  period_days?: number;
+  r_weights?: number[];
+  f_weights?: number[];
+  m_weights?: number[];
+}
+
+export interface RfmRecord {
+  customer_id: string;
+  customer_name: string;
+  recency_days: number;
+  frequency: number;
+  monetary: number;
+  r_score: number;
+  f_score: number;
+  m_score: number;
+  rfm_score: number;
+  segment: RfmSegment;
+}
+
+export interface SegmentStats {
+  segment: RfmSegment;
+  label: string;
+  customer_count: number;
+  avg_monetary: number;
+  avg_frequency: number;
+  avg_recency_days: number;
+  avg_rfm_score: number;
+}
+
+// ---- 销售预测 ----
+
+export type ForecastMethod =
+  | 'moving_average'
+  | 'weighted_moving_average'
+  | 'exponential_smoothing'
+  | 'linear_regression';
+
+export interface ForecastConfig {
+  method: ForecastMethod;
+  history_data: number[];
+  forecast_periods?: number;
+  alpha?: number;
+  window_size?: number;
+}
+
+export interface ForecastResult {
+  method: ForecastMethod;
+  forecasts: number[];
+  mape: number;
+  rmse: number;
+  r_squared: number;
+}
+
+export interface ForecastMethodInfo {
+  method: ForecastMethod;
+  label: string;
+  description: string;
+}
+
+export interface ForecastEvaluation {
+  best_method: ForecastMethod;
+  results: ForecastResult[];
+}
