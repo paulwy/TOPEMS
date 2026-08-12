@@ -18,6 +18,20 @@ export const QMS_PATHS = {
   spc: '/qms/spc',
   eightd: '/qms/eightd',
   qualityCost: '/qms/quality-cost',
+  // BI 分析页（6 个）
+  qualityTrend: '/qms/analytics/quality-trend',
+  defectPareto: '/qms/analytics/defect-pareto',
+  costAnalysis: '/qms/analytics/cost-analysis',
+  spcControlChart: '/qms/analytics/spc-control-chart',
+  fmeaRiskMatrix: '/qms/analytics/fmea-risk-matrix',
+  auditCompliance: '/qms/analytics/audit-compliance',
+  // 详情页（6 个）
+  inspectionDetail: '/qms/inspection/:id',
+  issueDetail: '/qms/issues/:id',
+  auditPlanDetail: '/qms/audit-management/:id',
+  eightDDetail: '/qms/eightd/:id',
+  apqpDetail: '/qms/apqp/:id',
+  fmeaDetail: '/qms/fmea/:id',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -180,6 +194,170 @@ export const qmsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['qms:quality_cost:read', 'qms:dashboard:read'],
       action: 'read',
     },
+    // ---- BI 分析页（6 个） ----
+    {
+      path: QMS_PATHS.qualityTrend,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/analytics/QmsQualityTrendPage'),
+        'QmsQualityTrendPage'
+      ),
+      module: 'qms',
+      code: 'qms-quality-trend',
+      title: '质量趋势分析',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: QMS_PATHS.defectPareto,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/analytics/QmsDefectParetoPage'),
+        'QmsDefectParetoPage'
+      ),
+      module: 'qms',
+      code: 'qms-defect-pareto',
+      title: '缺陷帕累托分析',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: QMS_PATHS.costAnalysis,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/analytics/QmsCostAnalysisPage'),
+        'QmsCostAnalysisPage'
+      ),
+      module: 'qms',
+      code: 'qms-cost-analysis',
+      title: 'PAF 质量成本分析',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: QMS_PATHS.spcControlChart,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/analytics/QmsSpcControlChartPage'),
+        'QmsSpcControlChartPage'
+      ),
+      module: 'qms',
+      code: 'qms-spc-control-chart',
+      title: 'SPC 控制图',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: QMS_PATHS.fmeaRiskMatrix,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/analytics/QmsFmeaRiskMatrixPage'),
+        'QmsFmeaRiskMatrixPage'
+      ),
+      module: 'qms',
+      code: 'qms-fmea-risk-matrix',
+      title: 'FMEA 风险矩阵',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: QMS_PATHS.auditCompliance,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/analytics/QmsAuditCompliancePage'),
+        'QmsAuditCompliancePage'
+      ),
+      module: 'qms',
+      code: 'qms-audit-compliance',
+      title: '审核合规率分析',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
+    // ---- 详情页（6 个） ----
+    {
+      path: QMS_PATHS.inspectionDetail,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/QmsInspectionDetailPage'),
+        'QmsInspectionDetailPage'
+      ),
+      module: 'qms',
+      code: 'qms-inspection-detail',
+      title: '检验任务详情',
+      template: 'detail',
+      group: 'business',
+      requiredPermissions: ['qms:inspection:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: QMS_PATHS.issueDetail,
+      element: lazyWithRetry(() => import('@/pages/qms/QmsIssueDetailPage'), 'QmsIssueDetailPage'),
+      module: 'qms',
+      code: 'qms-issue-detail',
+      title: '质量问题详情',
+      template: 'detail',
+      group: 'business',
+      requiredPermissions: ['qms:nonconformance:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: QMS_PATHS.auditPlanDetail,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/QmsAuditPlanDetailPage'),
+        'QmsAuditPlanDetailPage'
+      ),
+      module: 'qms',
+      code: 'qms-audit-plan-detail',
+      title: '审核计划详情',
+      template: 'detail',
+      group: 'business',
+      requiredPermissions: ['qms:audit:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: QMS_PATHS.eightDDetail,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/QmsEightDDetailPage'),
+        'QmsEightDDetailPage'
+      ),
+      module: 'qms',
+      code: 'qms-eightd-detail',
+      title: '8D 报告详情',
+      template: 'detail',
+      group: 'business',
+      requiredPermissions: ['qms:eightd:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: QMS_PATHS.apqpDetail,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/QmsApqpProjectDetailPage'),
+        'QmsApqpProjectDetailPage'
+      ),
+      module: 'qms',
+      code: 'qms-apqp-detail',
+      title: 'APQP 项目详情',
+      template: 'detail',
+      group: 'business',
+      requiredPermissions: ['qms:apqp:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: QMS_PATHS.fmeaDetail,
+      element: lazyWithRetry(() => import('@/pages/qms/QmsFmeaDetailPage'), 'QmsFmeaDetailPage'),
+      module: 'qms',
+      code: 'qms-fmea-detail',
+      title: 'FMEA 分析详情',
+      template: 'detail',
+      group: 'business',
+      requiredPermissions: ['qms:fmea:read', 'qms:dashboard:read'],
+      action: 'read',
+    },
   ],
 };
 
@@ -308,6 +486,67 @@ export const qmsNavConfig: ModuleNavConfig = {
       group: 'analytics',
       showInTabs: true,
       description: '质量成本核算',
+    },
+    // ---- BI 分析页导航（6 个） ----
+    {
+      code: 'qms-quality-trend',
+      label: '质量趋势',
+      icon: 'LineChart',
+      path: QMS_PATHS.qualityTrend,
+      permission: 'qms:analytics:read',
+      order: 3,
+      group: 'analytics',
+      description: '质量趋势分析',
+    },
+    {
+      code: 'qms-defect-pareto',
+      label: '缺陷帕累托',
+      icon: 'BarChart3',
+      path: QMS_PATHS.defectPareto,
+      permission: 'qms:analytics:read',
+      order: 4,
+      group: 'analytics',
+      description: '缺陷帕累托分析',
+    },
+    {
+      code: 'qms-cost-analysis',
+      label: 'PAF 成本',
+      icon: 'PieChart',
+      path: QMS_PATHS.costAnalysis,
+      permission: 'qms:analytics:read',
+      order: 5,
+      group: 'analytics',
+      description: 'PAF 质量成本分析',
+    },
+    {
+      code: 'qms-spc-control-chart',
+      label: 'SPC 控制图',
+      icon: 'Activity',
+      path: QMS_PATHS.spcControlChart,
+      permission: 'qms:analytics:read',
+      order: 6,
+      group: 'analytics',
+      description: 'SPC 统计过程控制图',
+    },
+    {
+      code: 'qms-fmea-risk-matrix',
+      label: 'FMEA 矩阵',
+      icon: 'Grid3x3',
+      path: QMS_PATHS.fmeaRiskMatrix,
+      permission: 'qms:analytics:read',
+      order: 7,
+      group: 'analytics',
+      description: 'FMEA 风险矩阵',
+    },
+    {
+      code: 'qms-audit-compliance',
+      label: '审核合规率',
+      icon: 'ShieldCheck',
+      path: QMS_PATHS.auditCompliance,
+      permission: 'qms:analytics:read',
+      order: 8,
+      group: 'analytics',
+      description: '审核合规率分析',
     },
   ],
 };

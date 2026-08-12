@@ -513,6 +513,107 @@ function brotliCompressPlugin(): Plugin {
   };
 }
 
+// ============================================================================
+// V72 P2-4c: recharts 代码级拆分插件（顶层 Vite 插件 + enforce: 'post'）
+// 之前放在 build.rollupOptions.plugins 里，被 @module-federation/vite 的
+// outputOptions hook 覆盖（MF 在其 own outputOptions 里强行写 manualChunks，
+// 且执行顺序晚于 rollupOptions.plugins）。
+// 移到顶层 Vite plugins 数组 + enforce: 'post' 后，确保在 MF 之后执行。
+// ============================================================================
+function topemsRechartsSplitPlugin(): Plugin {
+  const FS = require('fs');
+  return {
+    name: 'topems-recharts-split',
+    enforce: 'post',
+    outputOptions(opts: any) {
+      // V72 P2-4c: @module-federation/vite 设置了 output.codeSplitting.groups，
+      // 而 Rolldown 在 codeSplitting 存在时忽略 advancedChunks。
+      // codeSplitting.groups 会递归拉入依赖（无法关闭），导致 recharts-polar chunk
+      // 膨胀到 327KB。解决方案：删除 codeSplitting，改用 advancedChunks
+      // （支持 includeDependenciesRecursively: false），同时保留 MF 的分组逻辑。
+      //
+      // MF codeSplitting.groups 包含两组：
+      //   1) { name: PRELOAD_HELPER_CHUNK, test: PRELOAD_HELPER_TEST, priority: 100 }
+      //   2) { name: mfChunkName } — mfChunkName 是函数，路由 __loadShare__ 虚模块
+      // advancedChunks.groups API 兼容以上格式（name 支持 string | function）。
+      const mfGroups = opts?.codeSplitting?.groups || [];
+
+      const rechartsGroups = [
+        // polar/ 系列 → recharts-polar（只被饼图/雷达图用到）
+        { test: /recharts[^/]*[\\/]es6[\\/]polar[\\/]/, name: 'recharts-polar', includeDependenciesRecursively: false },
+        // cartesian/ 系列 → recharts-cartesian
+        { test: /recharts[^/]*[\\/]es6[\\/]cartesian[\\/]/, name: 'recharts-cartesian', includeDependenciesRecursively: false },
+        // polar state slices → recharts-polar-state
+        { test: /recharts[^/]*[\\/]es6[\\/]state[\\/](polarOptionsSlice|polarAxisSlice|ReportPolarOptions)/, name: 'recharts-polar-state', includeDependenciesRecursively: false },
+        // polar chart entries → recharts-polar-charts
+        { test: /recharts[^/]*[\\/]es6[\\/]chart[\\/](PieChart|RadarChart|RadialBarChart|Sankey|SunburstChart|Treemap)\.js$/, name: 'recharts-polar-charts', includeDependenciesRecursively: false },
+        // cartesian chart entries → recharts-cartesian-charts
+        { test: /recharts[^/]*[\\/]es6[\\/]chart[\\/](BarChart|LineChart|AreaChart|ScatterChart|ComposedChart|FunnelChart)\.js$/, name: 'recharts-cartesian-charts', includeDependenciesRecursively: false },
+        // chart core base classes → recharts-charts-core
+        { test: /recharts[^/]*[\\/]es6[\\/]chart[\\/](CartesianChart|CategoricalChart|PolarChart|RechartsWrapper)\.js$/, name: 'recharts-charts-core', includeDependenciesRecursively: false },
+        // state/ (non-polar) → recharts-common-state
+        { test: /recharts[^/]*[\\/]es6[\\/]state[\\/]/, name: 'recharts-common-state', includeDependenciesRecursively: false },
+        // util/context/container/component 等公共基础 → recharts-common
+        { test: /recharts[^/]*[\\/]es6[\\/](util|context|container|component|zIndex|theme|synchronisation|animation|hooks|types|shape)[\\/]/, name: 'recharts-common', includeDependenciesRecursively: false },
+        // 兜底：任何其他 recharts 路径 → recharts-common
+        { test: /recharts[^/]*[\\/]/, name: 'recharts-common', includeDependenciesRecursively: false },
+      ];
+
+      const result = { ...(opts || {}) };
+      // 删除 codeSplitting，改用 advancedChunks（支持 includeDependenciesRecursively: false）
+      delete result.codeSplitting;
+      result.advancedChunks = {
+        ...(opts?.advancedChunks || {}),
+        groups: [...mfGroups, ...rechartsGroups],
+      };
+
+      return result;
+    },
+    generateBundle(_outputOpts: any, bundle: any) {
+      const rows: any[] = [];
+      const tooltipDeep: any = {};
+      for (const [fileName, chunk] of Object.entries(bundle || {})) {
+        if (chunk.type !== 'chunk') continue;
+        const modules = Object.keys(chunk.modules || {});
+        const rechartsCount = modules.filter((m: string) => /recharts[\\/]/.test(m)).length;
+        if (rechartsCount > 0 || /Chart/i.test(fileName)) {
+          const allRecharts = modules
+            .filter((m: string) => /recharts[\\/]/.test(m))
+            .map((m: string) => {
+              const rel = m.split('recharts/')[1] || m;
+              return rel;
+            });
+          rows.push({
+            file: fileName,
+            size: chunk.code?.length || 0,
+            modules: modules.length,
+            rechartsCount,
+            topRechartsModules: allRecharts.slice(0, 15),
+          });
+          // 完整导出 Tooltip chunk 的所有 recharts 模块
+          if (/Tooltip/.test(fileName) && rechartsCount > 50) {
+            tooltipDeep.file = fileName;
+            tooltipDeep.size = chunk.code?.length || 0;
+            tooltipDeep.rechartsModules = allRecharts;
+          }
+        }
+      }
+      try {
+        FS.writeFileSync(
+          '/tmp/recharts-analysis.json',
+          JSON.stringify(rows, null, 2),
+        );
+      } catch {}
+      try {
+        FS.writeFileSync(
+          '/tmp/recharts-tooltip-deep.json',
+          JSON.stringify(tooltipDeep, null, 2),
+        );
+      } catch {}
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     react(),
@@ -684,6 +785,9 @@ export default defineConfig({
         },
       },
     }),
+    // V72 P2-4c: recharts 拆分插件必须在 federation() 之后执行（enforce: 'post'）
+    // 以确保 MF 不会覆盖我们的 manualChunks 配置
+    topemsRechartsSplitPlugin(),
   ],
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
@@ -897,130 +1001,12 @@ export default defineConfig({
         warn(warning);
       },
       output: {
-        // NOTE: manualChunks 已通过 enforce:post 插件 (topems-recharts-split) 接管
-        // （output.manualChunks 在 Vite 8 + @module-federation/vite 1.16 下被覆盖）。
-        // 其他 output 字段沿用默认即可。
+        // V72 P2-4c: manualChunks 已移至顶层 Vite 插件 topemsRechartsSplitPlugin()
+        // （enforce: 'post'），在 federation() 之后执行，避免被 MF 覆盖。
+        // 此处 output 仅保留其他字段（如 chunkFileNames 等），manualChunks 不在此设置。
       },
       // V72 P1-3: visualizer 已移到顶层 plugins 并改为可选化
       // （条件：VITE_BUILD_VISUALIZER=1），此处不再重复声明
-      // V72 P2-4b: generateBundle 分析 + recharts 代码级拆分的兜底（用于诊断）
-      plugins: [
-        (() => {
-          const FS = require('fs');
-          return {
-            name: 'topems-recharts-split',
-            /**
-             * V72 P2-4b: 以 enforce:post 插件方式最后注入 manualChunks，
-             * 绕开 @module-federation/vite 对 build.rollupOptions.output.manualChunks
-             * 和 advancedChunks 的覆盖（MF 在其 own outputOptions 里强行写 manualChunks）。
-             *
-             * 把 recharts 按子目录拆成 5 个独立 chunk，确保任何一个 recharts 核心
-             * chunk ≤167KB（达成 P2 目标：299KB -44%）。
-             */
-            outputOptions(opts: any) {
-              const prevManual = opts?.manualChunks;
-              const prevManualIsFn = typeof prevManual === 'function';
-              const prevManualIsObj = prevManual && typeof prevManual === 'object';
-
-              const newManual = (id: string, meta: any): string | undefined | null => {
-                // 1) 先跑之前的 manualChunks（如果是函数），尊重其他插件的指定
-                if (prevManualIsFn) {
-                  const res = (prevManual as any)(id, meta);
-                  if (res) return res;
-                }
-                // 如果之前的 manualChunks 是对象且 id 匹配 → 返回
-                if (prevManualIsObj && Object.prototype.hasOwnProperty.call(prevManual, id)) {
-                  return (prevManual as any)[id];
-                }
-
-                // 仅拆分 node_modules 里的 recharts
-                if (!id.includes('recharts') || !id.includes('node_modules')) {
-                  return undefined;
-                }
-
-                // 精细分组（先具体后兜底）
-                const match = (re: RegExp, name: string): string | undefined =>
-                  re.test(id) ? name : undefined;
-
-                return (
-                  match(/recharts[^/]*[\\/]es6[\\/]polar[\\/]/, 'recharts-polar') ||
-                  match(/recharts[^/]*[\\/]es6[\\/]cartesian[\\/]/, 'recharts-cartesian') ||
-                  match(
-                    /recharts[^/]*[\\/]es6[\\/]state[\\/](polarOptionsSlice|polarAxisSlice|ReportPolarOptions)/,
-                    'recharts-polar-state',
-                  ) ||
-                  match(/recharts[^/]*[\\/]es6[\\/]state[\\/]/, 'recharts-common-state') ||
-                  match(
-                    /recharts[^/]*[\\/]es6[\\/]chart[\\/](PieChart|RadarChart|RadialBarChart|Sankey|SunburstChart|Treemap)\.js$/,
-                    'recharts-polar-charts',
-                  ) ||
-                  match(
-                    /recharts[^/]*[\\/]es6[\\/]chart[\\/](CartesianChart|CategoricalChart|PolarChart|RechartsWrapper)\.js$/,
-                    'recharts-charts-core',
-                  ) ||
-                  match(
-                    /recharts[^/]*[\\/]es6[\\/]chart[\\/](BarChart|LineChart|AreaChart|ScatterChart|ComposedChart|FunnelChart)\.js$/,
-                    'recharts-cartesian-charts',
-                  ) ||
-                  match(
-                    /recharts[^/]*[\\/]es6[\\/](util|context|container|component|zIndex|theme|synchronisation|animation|hooks|types|shape)[\\/]/,
-                    'recharts-common',
-                  ) ||
-                  // 最后的兜底：任何 recharts 其他路径 → recharts-common
-                  (/recharts[^/]*[\\/].*\.(js|ts|mjs|cjs)$/.test(id) ? 'recharts-common' : undefined)
-                );
-              };
-
-              return {
-                ...(opts || {}),
-                manualChunks: newManual,
-              };
-            },
-            generateBundle(_outputOpts: any, bundle: any) {
-              const rows: any[] = [];
-              const tooltipDeep: any = {};
-              for (const [fileName, chunk] of Object.entries(bundle || {})) {
-                if (chunk.type !== 'chunk') continue;
-                const modules = Object.keys(chunk.modules || {});
-                const rechartsCount = modules.filter((m: string) => /recharts[\\/]/.test(m)).length;
-                if (rechartsCount > 0 || /Chart/i.test(fileName)) {
-                  const allRecharts = modules
-                    .filter((m: string) => /recharts[\\/]/.test(m))
-                    .map((m: string) => {
-                      const rel = m.split('recharts/')[1] || m;
-                      return rel;
-                    });
-                  rows.push({
-                    file: fileName,
-                    size: chunk.code?.length || 0,
-                    modules: modules.length,
-                    rechartsCount,
-                    topRechartsModules: allRecharts.slice(0, 15),
-                  });
-                  // 完整导出 Tooltip chunk 的所有 recharts 模块
-                  if (/Tooltip/.test(fileName) && rechartsCount > 50) {
-                    tooltipDeep.file = fileName;
-                    tooltipDeep.size = chunk.code?.length || 0;
-                    tooltipDeep.rechartsModules = allRecharts;
-                  }
-                }
-              }
-              try {
-                FS.writeFileSync(
-                  '/tmp/recharts-analysis.json',
-                  JSON.stringify(rows, null, 2),
-                );
-              } catch {}
-              try {
-                FS.writeFileSync(
-                  '/tmp/recharts-tooltip-deep.json',
-                  JSON.stringify(tooltipDeep, null, 2),
-                );
-              } catch {}
-            },
-          };
-        })(),
-      ],
     },
     // V72 P1-3: 使用 esbuild minify 后，esbuildOptions 替代 terserOptions。
     // 对齐原 terser 的生产压缩策略：drop console/debugger + 移除纯函数调用

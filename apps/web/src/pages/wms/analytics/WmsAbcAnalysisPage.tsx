@@ -1,0 +1,170 @@
+import { useMemo } from 'react';
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from 'recharts';
+import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+
+const ABC_COLORS: Record<string, string> = {
+  A: '#ef4444',
+  B: '#f59e0b',
+  C: '#10b981',
+};
+
+export default function WmsAbcAnalysisPage() {
+  const { data } = useWmsMock<WmsMockShape>();
+
+  const abc = useMemo(() => data.abcAnalysis ?? [], [data.abcAnalysis]);
+  const inventory = useMemo(() => data.inventoryList ?? [], [data.inventoryList]);
+
+  const topSku = useMemo(
+    () => [...inventory].sort((a, b) => (b.total_value ?? 0) - (a.total_value ?? 0)).slice(0, 10),
+    [inventory]
+  );
+
+  const totalAmount = useMemo(() => abc.reduce((s, c) => s + c.amount, 0), [abc]);
+  const totalCount = useMemo(() => abc.reduce((s, c) => s + c.count, 0), [abc]);
+
+  return (
+    <div className='space-y-4 p-4'>
+      <div className='flex items-center justify-between'>
+        <h1 className='text-2xl font-bold'>ABC 分类分析（帕累托 70/20/10）</h1>
+      </div>
+
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+        <div className='rounded-lg border-l-4 border-red-500 p-4'>
+          <p className='text-sm text-gray-600'>A 类（高价值，70% 金额）</p>
+          <p className='mt-1 text-3xl font-bold text-red-600'>
+            {abc.find((x) => x.category === 'A')?.count ?? 0} SKU
+          </p>
+        </div>
+        <div className='rounded-lg border-l-4 border-amber-500 p-4'>
+          <p className='text-sm text-gray-600'>B 类（中价值，20% 金额）</p>
+          <p className='mt-1 text-3xl font-bold text-amber-600'>
+            {abc.find((x) => x.category === 'B')?.count ?? 0} SKU
+          </p>
+        </div>
+        <div className='rounded-lg border-l-4 border-green-500 p-4'>
+          <p className='text-sm text-gray-600'>C 类（低价值，10% 金额）</p>
+          <p className='mt-1 text-3xl font-bold text-green-600'>
+            {abc.find((x) => x.category === 'C')?.count ?? 0} SKU
+          </p>
+        </div>
+      </div>
+
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+        <div className='rounded-lg border p-4'>
+          <h3 className='mb-2 font-semibold'>金额占比（饼图）</h3>
+          <ResponsiveContainer
+            width='100%'
+            height={340}
+          >
+            <PieChart>
+              <Pie
+                data={abc}
+                dataKey='amount'
+                nameKey='category'
+                cx='50%'
+                cy='50%'
+                outerRadius={110}
+                innerRadius={50}
+                label={(d: any) => `${d?.category} 类 ${((d?.percent ?? 0) * 100).toFixed(0)}%`}
+              >
+                {abc.map((entry, i) => (
+                  <Cell
+                    key={i}
+                    fill={ABC_COLORS[entry.category] ?? '#6b7280'}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(v: any) => [
+                  `¥${Number(v).toLocaleString()}（${
+                    totalAmount ? ((Number(v) / totalAmount) * 100).toFixed(1) : 0
+                  }%）`,
+                  '金额',
+                ]}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className='rounded-lg border p-4'>
+          <h3 className='mb-2 font-semibold'>分类 SKU 数量（柱状）</h3>
+          <ResponsiveContainer
+            width='100%'
+            height={340}
+          >
+            <BarChart data={abc}>
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='category'
+                fontSize={12}
+              />
+              <YAxis fontSize={11} />
+              <Tooltip
+                formatter={(v: any) => [
+                  `${v}（${totalCount ? ((Number(v) / totalCount) * 100).toFixed(1) : 0}%）`,
+                  'SKU 数',
+                ]}
+              />
+              <Bar
+                dataKey='count'
+                name='SKU 数'
+                radius={[6, 6, 0, 0]}
+                fill='#3b82f6'
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className='rounded-lg border p-4'>
+        <h3 className='mb-2 font-semibold'>Top 10 高价值 SKU</h3>
+        <div className='overflow-x-auto'>
+          <table className='w-full text-sm'>
+            <thead className='bg-gray-50'>
+              <tr>
+                <th className='px-3 py-2 text-left font-medium'>SKU 编码</th>
+                <th className='px-3 py-2 text-left font-medium'>物料名称</th>
+                <th className='px-3 py-2 text-left font-medium'>仓库</th>
+                <th className='px-3 py-2 text-right font-medium'>数量</th>
+                <th className='px-3 py-2 text-right font-medium'>单价</th>
+                <th className='px-3 py-2 text-right font-medium'>总金额</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topSku.map((s, i) => (
+                <tr
+                  key={s.id}
+                  className={i % 2 ? 'bg-white' : 'bg-gray-50'}
+                >
+                  <td className='px-3 py-2 font-mono'>{s.sku}</td>
+                  <td className='px-3 py-2'>{s.name}</td>
+                  <td className='px-3 py-2'>{s.warehouse_name ?? '-'}</td>
+                  <td className='px-3 py-2 text-right'>{s.quantity.toLocaleString()}</td>
+                  <td className='px-3 py-2 text-right'>
+                    ¥{(s.purchase_price ?? 0).toLocaleString()}
+                  </td>
+                  <td className='px-3 py-2 text-right font-semibold text-blue-700'>
+                    ¥{(s.total_value ?? 0).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,77 @@
+diff --git a/es6/state/ReportPolarOptions.js b/es6/state/ReportPolarOptions.js
+index 8c5ce4aa9a4384de8a528b463a07c16867e795a2..d5ad0ae58d7da5ac77fb3395c18860beaefd17db 100644
+--- a/es6/state/ReportPolarOptions.js
++++ b/es6/state/ReportPolarOptions.js
+@@ -1,6 +1,15 @@
+ import { useEffect } from 'react';
+ import { useAppDispatch } from './hooks';
+ import { updatePolarOptions } from './polarOptionsSlice';
++import { polarAxisReducer } from './polarAxisSlice';
++import { polarOptionsReducer } from './polarOptionsSlice';
++import { injectPolarReducers } from './store';
++
++// TOPEMS PATCH: Inject real polar reducers when polar charts are loaded.
++// This ensures polar slice code stays in the polar chunk rather than the
++// shared Tooltip/core chunk.
++injectPolarReducers(polarAxisReducer, polarOptionsReducer);
++
+ export function ReportPolarOptions(props) {
+   var dispatch = useAppDispatch();
+   useEffect(() => {
+diff --git a/es6/state/store.js b/es6/state/store.js
+index f802a3a37c39e91bec114da4d7382973a87a8213..02be09c169b93e81dacc9eb2f003086c9ea090f9 100644
+--- a/es6/state/store.js
++++ b/es6/state/store.js
+@@ -11,8 +11,6 @@ import { referenceElementsReducer } from './referenceElementsSlice';
+ import { brushReducer } from './brushSlice';
+ import { legendReducer } from './legendSlice';
+ import { rootPropsReducer } from './rootPropsSlice';
+-import { polarAxisReducer } from './polarAxisSlice';
+-import { polarOptionsReducer } from './polarOptionsSlice';
+ import { keyboardEventsMiddleware } from './keyboardEventsMiddleware';
+ import { externalEventsMiddleware } from './externalEventsMiddleware';
+ import { touchEventMiddleware } from './touchEventsMiddleware';
+@@ -21,6 +19,28 @@ import { Global } from '../util/Global';
+ import { zIndexReducer } from './zIndexSlice';
+ import { eventSettingsReducer } from './eventSettingsSlice';
+ import { renderedTicksReducer } from './renderedTicksSlice';
++
++// TOPEMS PATCH: Polar reducers lazy injection
++// Original code statically imported polarAxisReducer and polarOptionsReducer,
++// which pulled polar slice code into the Tooltip chunk (304KB).
++// Now polar reducers are injected by ReportPolarOptions (which is only loaded
++// with polar charts), allowing bundlers to tree-shake polar slices from the
++// shared Tooltip/core chunk.
++var _polarAxisReducer = function polarAxisNoop() {
++  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
++    radiusAxis: {},
++    angleAxis: {}
++  };
++  return state;
++};
++var _polarOptionsReducer = function polarOptionsNoop() {
++  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
++  return state;
++};
++export function injectPolarReducers(axisReducer, optionsReducer) {
++  _polarAxisReducer = axisReducer;
++  _polarOptionsReducer = optionsReducer;
++}
+ var rootReducer = combineReducers({
+   brush: brushReducer,
+   cartesianAxis: cartesianAxisReducer,
+@@ -31,8 +51,12 @@ var rootReducer = combineReducers({
+   layout: chartLayoutReducer,
+   legend: legendReducer,
+   options: optionsReducer,
+-  polarAxis: polarAxisReducer,
+-  polarOptions: polarOptionsReducer,
++  polarAxis: function polarAxis(state, action) {
++    return _polarAxisReducer(state, action);
++  },
++  polarOptions: function polarOptions(state, action) {
++    return _polarOptionsReducer(state, action);
++  },
+   referenceElements: referenceElementsReducer,
+   renderedTicks: renderedTicksReducer,
+   rootProps: rootPropsReducer,

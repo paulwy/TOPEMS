@@ -29,7 +29,7 @@ import { Plus, Pencil, Trash2, Search, RefreshCw } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store/notificationStore';
 import { driverApi } from '@/api/tms';
-import type { Driver, CreateDriverRequest } from '@/api/tms';
+import type { Driver, CreateDriverRequest, DriverStatus } from '@/api/tms';
 
 const QUERY_KEY = 'tms-drivers';
 
@@ -364,7 +364,7 @@ const DriverManagementPage: React.FC = () => {
               label='状态'
               select
               value={formData.status || 'active'}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as DriverStatus })}
               size='small'
             >
               {statusOptions.map((opt) => (

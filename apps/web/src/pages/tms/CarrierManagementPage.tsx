@@ -29,7 +29,7 @@ import { Plus, Pencil, Trash2, Search, RefreshCw } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store/notificationStore';
 import { carrierApi } from '@/api/tms';
-import type { Carrier, CreateCarrierRequest } from '@/api/tms';
+import type { Carrier, CreateCarrierRequest, CarrierStatus } from '@/api/tms';
 
 const QUERY_KEY = 'tms-carriers';
 
@@ -363,7 +363,7 @@ const CarrierManagementPage: React.FC = () => {
               label='状态'
               select
               value={formData.status || 'active'}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as CarrierStatus })}
               size='small'
             >
               {statusOptions.map((opt) => (

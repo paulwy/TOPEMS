@@ -21,18 +21,27 @@ export const tmsApi = {
   createVehicle: vehicleApi.create,
   updateVehicle: vehicleApi.update,
   deleteVehicle: vehicleApi.delete,
+  submitVehicleInspection: vehicleApi.submitInspection,
+  approveVehicle: vehicleApi.approve,
+  rejectVehicle: vehicleApi.reject,
   // Driver
   listDrivers: driverApi.list,
   getDriver: driverApi.get,
   createDriver: driverApi.create,
   updateDriver: driverApi.update,
   deleteDriver: driverApi.delete,
+  submitDriverVerification: driverApi.submitVerification,
+  approveDriver: driverApi.approve,
+  rejectDriver: driverApi.reject,
   // Carrier
   listCarriers: carrierApi.list,
   getCarrier: carrierApi.get,
   createCarrier: carrierApi.create,
   updateCarrier: carrierApi.update,
   deleteCarrier: carrierApi.delete,
+  submitCarrierQualification: carrierApi.submitQualification,
+  approveCarrier: carrierApi.approve,
+  rejectCarrier: carrierApi.reject,
   // Route
   listRoutes: routeApi.list,
   getRoute: routeApi.get,
@@ -48,6 +57,9 @@ export const tmsApi = {
   dispatchShipment: shipmentApi.dispatch,
   arriveShipment: shipmentApi.arrive,
   cancelShipment: shipmentApi.cancel,
+  submitShipmentApproval: shipmentApi.submitApproval,
+  approveShipment: shipmentApi.approve,
+  rejectShipment: shipmentApi.reject,
 };
 
 export default tmsApi;

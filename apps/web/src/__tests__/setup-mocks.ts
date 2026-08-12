@@ -610,6 +610,7 @@ vi.mock('recharts', () => ({
   ZAxis: () => null,
   ComposedChart: makeChart('ComposedChart'),
   ReferenceLine: () => null,
+  ReferenceArea: () => null,
   Label: () => null,
   LabelList: () => null,
   RadialBarChart: makeChart('RadialBarChart'),

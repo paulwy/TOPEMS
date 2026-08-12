@@ -177,6 +177,10 @@ export default defineConfig({
           include: [
             'src/components/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/components/mes/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/components/qms/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/components/wms/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/components/aps/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/components/tms/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/pages/**/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/hooks/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/store/__tests__/**/*.{test,spec}.{ts,tsx}',

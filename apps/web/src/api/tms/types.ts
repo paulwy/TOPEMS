@@ -1,12 +1,37 @@
 // TMS 运输管理系统 - 类型定义
 
+// ==================== 审批相关类型 ====================
+
+/** 审批请求体 */
+export interface ApprovalRequest {
+  operator: string;
+  comment?: string;
+}
+
+/** 审批响应体 */
+export interface ApprovalResponse<T = unknown> {
+  success: boolean;
+  message: string;
+  data?: T;
+}
+
+// ==================== 状态类型 ====================
+
+export type VehicleStatus = 'active' | 'maintenance' | 'inactive' | 'retired';
+export type DriverStatus = 'active' | 'on_leave' | 'suspended' | 'inactive';
+export type CarrierStatus = 'pending_review' | 'active' | 'suspended' | 'blacklisted' | 'rejected';
+export type RouteStatus = 'planning' | 'active' | 'closed' | 'deprecated' | 'cancelled';
+export type ShipmentStatus = 'draft' | 'pending' | 'in_transit' | 'delivered' | 'cancelled';
+
+// ==================== 实体类型 ====================
+
 export interface Vehicle {
   id: string;
   vehicle_no: string;
   plate_number?: string;
   vehicle_type?: string;
   capacity?: number;
-  status?: string;
+  status?: VehicleStatus;
   carrier_id?: string;
   notes?: string;
   tenant_id?: string;
@@ -32,7 +57,7 @@ export interface Driver {
   phone?: string;
   license_no?: string;
   license_type?: string;
-  status?: string;
+  status?: DriverStatus;
   carrier_id?: string;
   tenant_id?: string;
   created_at?: string;
@@ -48,7 +73,7 @@ export interface Carrier {
   name: string;
   contact_person?: string;
   contact_phone?: string;
-  status?: string;
+  status?: CarrierStatus;
   service_area?: string;
   tenant_id?: string;
   created_at?: string;
@@ -66,7 +91,7 @@ export interface Route {
   destination?: string;
   distance_km?: number;
   estimated_hours?: number;
-  status?: string;
+  status?: RouteStatus;
   tenant_id?: string;
   created_at?: string;
   updated_at?: string;
@@ -85,7 +110,7 @@ export interface Shipment {
   route_id?: string;
   origin?: string;
   destination?: string;
-  status?: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
+  status?: ShipmentStatus;
   freight_amount?: number;
   planned_departure?: string;
   planned_arrival?: string;

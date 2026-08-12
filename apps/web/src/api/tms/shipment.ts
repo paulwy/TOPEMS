@@ -1,6 +1,13 @@
 import apiClient from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
-import type { Shipment, CreateShipmentRequest, UpdateShipmentRequest, PaginationParams } from './types';
+import type {
+  Shipment,
+  CreateShipmentRequest,
+  UpdateShipmentRequest,
+  ApprovalRequest,
+  ApprovalResponse,
+  PaginationParams,
+} from './types';
 
 export const shipmentApi = {
   list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Shipment>>> => {
@@ -33,6 +40,38 @@ export const shipmentApi = {
 
   cancel: async (id: string): Promise<ApiResponse<Shipment>> => {
     return apiClient.tms.post(`/shipments/${id}/cancel`);
+  },
+
+  // ---- FSM Approval Endpoints ----
+
+  /** Submit shipment for dispatch approval (draft -> pending) */
+  submitApproval: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
+    const body: ApprovalRequest = { operator, comment };
+    return apiClient.tms.post(`/shipments/${id}/submit-approval`, body);
+  },
+
+  /** Approve shipment dispatch (pending -> in_transit) */
+  approve: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
+    const body: ApprovalRequest = { operator, comment };
+    return apiClient.tms.post(`/shipments/${id}/approve`, body);
+  },
+
+  /** Reject shipment dispatch (pending -> cancelled) */
+  reject: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
+    const body: ApprovalRequest = { operator, comment };
+    return apiClient.tms.post(`/shipments/${id}/reject`, body);
   },
 };
 

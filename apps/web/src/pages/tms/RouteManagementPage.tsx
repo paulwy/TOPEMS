@@ -29,7 +29,7 @@ import { Plus, Pencil, Trash2, Search, RefreshCw } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store/notificationStore';
 import { routeApi } from '@/api/tms';
-import type { Route, CreateRouteRequest } from '@/api/tms';
+import type { Route, CreateRouteRequest, RouteStatus } from '@/api/tms';
 
 const QUERY_KEY = 'tms-routes';
 
@@ -376,7 +376,7 @@ const RouteManagementPage: React.FC = () => {
               label='状态'
               select
               value={formData.status || 'active'}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as RouteStatus })}
               size='small'
             >
               {statusOptions.map((opt) => (

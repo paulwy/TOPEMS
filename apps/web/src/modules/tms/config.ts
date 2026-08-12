@@ -12,6 +12,20 @@ export const TMS_PATHS = {
   carriers: '/tms/carriers',
   routes: '/tms/routes',
   shipments: '/tms/shipments',
+  // BI 分析页
+  shipmentTrend: '/tms/analytics/shipment-trend',
+  vehicleUtilization: '/tms/analytics/vehicle-utilization',
+  driverPerformance: '/tms/analytics/driver-performance',
+  carrierPerformance: '/tms/analytics/carrier-performance',
+  routeEfficiency: '/tms/analytics/route-efficiency',
+  freightCost: '/tms/analytics/freight-cost',
+  // 详情页
+  shipmentDetail: '/tms/shipments/:id',
+  vehicleDetail: '/tms/vehicles/:id',
+  driverDetail: '/tms/drivers/:id',
+  carrierDetail: '/tms/carriers/:id',
+  routeDetail: '/tms/routes/:id',
+  transportPlanDetail: '/tms/transport-plans/:id',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -109,6 +123,176 @@ export const tmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['tms:shipment:read'],
+      action: 'read',
+    },
+    // ---- BI 分析页（6 个） ----
+    {
+      path: TMS_PATHS.shipmentTrend,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/analytics/ShipmentTrendPage'),
+        'ShipmentTrendPage'
+      ),
+      module: 'tms',
+      code: 'tms-shipment-trend',
+      title: '运单趋势分析',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: TMS_PATHS.vehicleUtilization,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/analytics/VehicleUtilizationPage'),
+        'VehicleUtilizationPage'
+      ),
+      module: 'tms',
+      code: 'tms-vehicle-utilization',
+      title: '车辆利用率分析',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: TMS_PATHS.driverPerformance,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/analytics/DriverPerformancePage'),
+        'DriverPerformancePage'
+      ),
+      module: 'tms',
+      code: 'tms-driver-performance',
+      title: '司机绩效分析',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: TMS_PATHS.carrierPerformance,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/analytics/CarrierPerformancePage'),
+        'CarrierPerformancePage'
+      ),
+      module: 'tms',
+      code: 'tms-carrier-performance',
+      title: '承运商绩效分析',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: TMS_PATHS.routeEfficiency,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/analytics/RouteEfficiencyPage'),
+        'RouteEfficiencyPage'
+      ),
+      module: 'tms',
+      code: 'tms-route-efficiency',
+      title: '路线效率分析',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: TMS_PATHS.freightCost,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/analytics/FreightCostPage'),
+        'FreightCostPage'
+      ),
+      module: 'tms',
+      code: 'tms-freight-cost',
+      title: '运费成本分析',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+      action: 'read',
+    },
+    // ---- 详情页（6 个） ----
+    {
+      path: TMS_PATHS.shipmentDetail,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/ShipmentDetailPage'),
+        'ShipmentDetailPage'
+      ),
+      module: 'tms',
+      code: 'tms-shipment-detail',
+      title: '运单详情',
+      template: 'detail',
+      group: 'business',
+      requiredPermissions: ['tms:shipment:read', 'tms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: TMS_PATHS.vehicleDetail,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/VehicleDetailPage'),
+        'VehicleDetailPage'
+      ),
+      module: 'tms',
+      code: 'tms-vehicle-detail',
+      title: '车辆详情',
+      template: 'detail',
+      group: 'master',
+      requiredPermissions: ['tms:vehicle:read', 'tms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: TMS_PATHS.driverDetail,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/DriverDetailPage'),
+        'DriverDetailPage'
+      ),
+      module: 'tms',
+      code: 'tms-driver-detail',
+      title: '司机详情',
+      template: 'detail',
+      group: 'master',
+      requiredPermissions: ['tms:driver:read', 'tms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: TMS_PATHS.carrierDetail,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/CarrierDetailPage'),
+        'CarrierDetailPage'
+      ),
+      module: 'tms',
+      code: 'tms-carrier-detail',
+      title: '承运商详情',
+      template: 'detail',
+      group: 'master',
+      requiredPermissions: ['tms:carrier:read', 'tms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: TMS_PATHS.routeDetail,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/RouteDetailPage'),
+        'RouteDetailPage'
+      ),
+      module: 'tms',
+      code: 'tms-route-detail',
+      title: '路线详情',
+      template: 'detail',
+      group: 'master',
+      requiredPermissions: ['tms:route:read', 'tms:dashboard:read'],
+      action: 'read',
+    },
+    {
+      path: TMS_PATHS.transportPlanDetail,
+      element: lazyWithRetry(
+        () => import('@/pages/tms/TransportPlanDetailPage'),
+        'TransportPlanDetailPage'
+      ),
+      module: 'tms',
+      code: 'tms-transport-plan-detail',
+      title: '运输计划详情',
+      template: 'detail',
+      group: 'business',
+      requiredPermissions: ['tms:shipment:read', 'tms:dashboard:read'],
       action: 'read',
     },
   ],
