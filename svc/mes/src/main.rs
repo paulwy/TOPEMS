@@ -2,6 +2,8 @@
 //!
 //! Manufacturing Execution System Service
 
+mod models;
+
 use topems_mes::{modules, AppState};
 
 use axum::routing::get;
@@ -34,6 +36,18 @@ async fn main() -> anyhow::Result<()> {
 
     if let Err(e) = modules::init_database(&ctx.db).await {
         tracing::warn!("MES database init warning: {}", e);
+    }
+
+    // Schema 防御：增量迁移 + 一致性自检
+    if let Err(e) = topems_shared_db::schema::run_schema_defense(
+        &ctx.db,
+        models::schema_defense::SERVICE_SCHEMA,
+        models::schema_defense::TABLE_DEFS,
+        "mes",
+    )
+    .await
+    {
+        tracing::warn!("[mes schema 防御] 非阻塞警告: {}", e);
     }
 
     let health_config = SimpleHealthConfig::new("topems-mes").with_db(ctx.db.clone());

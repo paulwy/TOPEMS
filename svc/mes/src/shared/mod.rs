@@ -1,4 +1,10 @@
+pub mod fsm;
+#[cfg(test)]
+pub mod fsm_test;
 pub mod permission;
+pub mod tenant;
+#[cfg(test)]
+pub mod tenant_test;
 
 use axum::extract::FromRef;
 use sqlx::PgPool;

@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V184 | **更新日期**: 2026-08-12
+> **版本**: V182 | **更新日期**: 2026-08-11
 > **服务总数**: 30 个（含 unified-core + master-data + lowcode 占位 + ai/rd） | **前端页面**: 427 页 | **后端 API 端点**: 1,595 个 |> **前端 API 函数**: 6,465 个 | **V173 · PDM 物料/产品子域 (material + product)**: 2 新文件 + 10 API 函数 · pdmMaterialApi（5：物料列表+详情+创建+更新+删除，对接 /materials 路由）· pdmProductApi（5：产品列表+详情+创建+更新+删除，对接 /products 路由）· pdm/index.ts 聚合新增 material + product · 集成测试 14/14 通过 ✅ · tsc 0 error ✅ | **V174 · PM 统计子域 (statistics)**: 1 新文件 + 1 API 函数 · pmStatisticsApi（getStatistics，对接 /statistics 路由，支持日期范围查询参数）· pm/index.ts 聚合新增 statistics · PmStatistics 类型对齐后端（新增 total_risks/open_risks/closed_risks/total_tasks/pending_tasks/in_progress_tasks/completed_tasks，保留旧字段兼容性）· 集成测试 5/5 通过 ✅ · tsc 0 error ✅ | **V176 · PM 统计子域扩展 (statistics 细分接口)**: 增强 2 文件 + 7 API 函数 · pmStatisticsApi（+6：getProjectStatistics/getContractStatistics/getBudgetStatistics/getRiskStatistics/getTaskStatistics/getDashboard，对接 /statistics/projects、/statistics/contracts、/statistics/budget、/statistics/risks、/statistics/tasks、/statistics/dashboard 路由）· dashboard.ts 增强（+1：getDashboard 仪表板聚合接口）· types.ts 新增 13 类型（ProjectStatistics/ContractStatistics/BudgetStatistics/RiskStatistics/TaskStatistics/DashboardOverview/StatusCount/TypeCount/LeaderCount/CategoryCount/LevelCount/PriorityCount/StatisticsQuery）· statistics.rs 后端扩展 7 路由 + 6 细分 Handler · 集成测试 15/15 通过 ✅ · tsc 0 error ✅ | **V175 · Finance 风控 V54 + V59 子域 (risk_v54 + risk_v59)**: 2 新文件 + 37 API 函数 · riskV54Api（14：实时风险监测 dashboard/alerts/acknowledge/resolve + 交易反欺诈 score/rules/updateRule/getScore + 合规自动审查 review/results/status/workflow/advance/report）· riskV59Api（23：实时反欺诈 analyze/decision/signals/device+device/blocked/rule/rules + 信用评分 score/profile/models/model+model/factors/compare/bulk + 压力测试 scenario/run/result/scenarios/compare/params/summary）· finance/index.ts 聚合新增 riskV54 + riskV59 · 集成测试 39/39 通过 ✅ · tsc 0 error ✅ |  **V172 · CRM 审计/销售漏斗/客户档案子域 (audit + sales_funnel + customer_profile)**: 3 新文件 + 11 API 函数 · crmAuditApi（2：审计日志列表+详情）· salesFunnelApi（5：漏斗数据+指标+转化+趋势+分阶段商机）· customerProfileApi（4：档案详情+档案列表+标签添加+标签移除）· crm/index.ts 聚合新增 audit + salesFunnel + customerProfile · 集成测试 13/13 通过 ✅ · tsc 0 error ✅ | **V171 · HRM 初始化向导子域 (setup)**: 1 新文件 + 6 API 函数 · hrmSetupApi（6：初始化进度查询 1 + 公司信息设置 1 + 部门批量创建 1 + 职位批量创建 1 + 管理员账户创建 1 + 完成初始化 1，对接 /setup/* 路由）· hrm/index.ts 聚合新增 setup · 集成测试 6/6 通过 ✅ · tsc 0 error ✅ | **V170 · HRM 报表统计与审计子域 (reports + audit)**: 2 新文件 + 8 API 函数 · hrmReportsApi（6：员工统计+部门统计+合同统计+培训统计+考勤统计+薪资统计，对接 /reports/* 路由）+ hrmAuditApi（2：审计日志列表+详情，对接 /audit-logs/* 路由）· hrm/index.ts 聚合新增 reports + audit · 集成测试 10/10 通过 ✅ · tsc 0 error ✅ | **V169 · EHS 安全培训增强子域 (safety_training)**: 1 新文件 + 6 API 函数 · safetyTrainingApi（6：培训课程 5（列表+详情+创建+更新+删除）+ 培训统计 1，对接 /training 路由，补充已有 trainingApi 的 Plans/Records/Certificates 覆盖）· ehs/index.ts 聚合 21 子域 · 集成测试 7/7 通过 ✅ · tsc 0 error ✅ | **V168 · EHS 健康监测子域 (health_monitoring)**: 1 新文件 + 7 API 函数 · healthMonitoringApi（7：健康记录 5（列表+详情+创建+更新+删除）+ 健康统计 1，对接 /health 路由 + 扩展端点）· ehs/index.ts 聚合 20 子域 · 集成测试 7/7 通过 ✅ · tsc 0 error ✅ | **V167 · EHS 环境合规子域 (environmental_compliance)**: 1 新文件 + 28 API 函数 · environmentalComplianceApi（28：环保法规 6（列表+分类+详情+创建+更新+删除）+ 合规评价 5（列表+详情+创建+更新+删除）+ 环境监测 5（列表+类型+详情+创建+删除）+ 排污许可 5（列表+详情+创建+更新+删除）+ 环境事件 5（列表+详情+创建+更新+删除）+ 合规统计 1，对接 /environmental-compliance/* 路由）· ehs/index.ts 聚合 19 子域 · 集成测试 28/28 通过 ✅ · tsc 0 error ✅ | **V166 · EHS 应急预案子域 (emergency_plan)**: 1 新文件 + 13 API 函数 · emergencyPlanApi（13：预案管理 5（列表 + 详情 + 创建 + 更新 + 删除）+ 预案分类 1（列表）+ 物资管理 3（列表 + 添加 + 删除）+ 版本管理 2（列表 + 创建）+ 审批流程 2（提交审批 + 审批），对接 /emergency-plans/* 路由）· ehs/index.ts 聚合 18 子域 · 集成测试 15/15 通过 ✅ · tsc 0 error ✅ | **V165 · EHS 应急演练子域 (emergency_drill)**: 1 新文件 + 19 API 函数 · emergencyDrillApi（19：演练计划管理 5（列表 + 详情 + 创建 + 更新 + 删除）+ 演练记录管理 5（列表 + 详情 + 创建 + 更新 + 删除）+ 演练评估 2（创建 + 空数据创建）+ 演练问题 3（列表 + 创建 + 更新）+ 演练类型 1（列表）+ 演练统计 1（获取），对接 /drills/* 路由）· ehs/index.ts 聚合 17 子域 · 集成测试 19/19 通过 ✅ · tsc 0 error ✅ | **V164 · master-data 数据策略与配置管理 (mdm-v79)**: 1 新文件 + 31 API 函数 · dataPolicyConfigurationApiV79（31：策略管理 6（创建 + 详情 + 分页列表 + 更新 + 删除 + 状态管理）+ 策略版本管理 4（版本列表 + 版本详情 + 发布版本 + 版本对比）+ 策略执行与监控 7（执行 + 执行详情 + 执行列表 + 取消 + 重试 + 执行日志）+ 策略日志 2（日志列表 + 策略日志）+ 策略评估与测试 3（评估 + 测试 + 影响分析）+ 批量操作 3（批量更新状态 + 批量删除 + 批量执行）+ 策略导入导出 2（导出 + 导入）+ 策略模板 2（模板列表 + 从模板创建）+ 策略仪表板 2（仪表板 + 统计 + 合规报告），对接 /mdm-v79/* 路由）· master/index.ts 聚合 35 子域 · 集成测试 1,231/1,231 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35 + V154:36 + V155:20 + V156:30 + V157:31 + V158:31 + V159:32 + V160:41 + V161:41 + V162:27 + V163:31 + V164:33) · tsc 0 error ✅ | **V163 · master-data 主数据工作流与自动化 (mdm-v78)**: 1 新文件 + 33 API 函数 · dataWorkflowAutomationApiV78（33：工作流定义管理 6（创建 + 详情 + 分页列表 + 更新 + 删除 + 状态管理）+ 数据变更审批 6（创建 + 详情 + 分页列表 + 审批 + 我的审批 + 审批统计）+ 自动化工作流执行 5（执行 + 执行详情 + 执行列表 + 取消 + 重试）+ 工作流监控与日志 4（执行日志 + 工作流日志 + 步骤日志 + 错误日志）+ 数据映射与转换 6（创建 + 详情 + 分页列表 + 更新 + 删除 + 测试映射）+ 工作流版本管理 4（版本列表 + 版本详情 + 提升版本 + 版本对比）+ 工作流仪表板 2（仪表板 + 工作流统计），对接 /mdm-v78/* 路由）· master/index.ts 聚合 34 子域 · 集成测试 1,198/1,198 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35 + V154:36 + V155:20 + V156:30 + V157:31 + V158:31 + V159:32 + V160:41 + V161:41 + V162:27 + V163:31) · tsc 0 error ✅ | **V162 · master-data 数据血缘与影响分析增强 (mdm-v77)**: 1 新文件 + 42 API 函数 · dataLineageEnhancedApiV77（42：数据流向追踪 7（获取血缘图谱 + 节点列表 + 节点详情 + 边列表 + 刷新血缘 + 获取刷新状态）+ 列级血缘分析 2（追踪列级血缘 + 批量追踪）+ 影响分析 4（运行影响分析 + 获取详情 + 列表 + 删除）+ 变更传播路径 3（获取传播路径 + 批量获取 + 最短路径）+ 血缘差异对比 3（对比血缘 + 对比节点血缘 + 差异列表）+ 血缘统计 4（统计 + 覆盖率 + 孤立节点 + 修复孤立节点）+ 仪表板 2（仪表板 + 导出血缘报告），对接 /mdm-v77/* 路由）· master/index.ts 聚合 33 子域 · 集成测试 1,167/1,167 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35 + V154:36 + V155:20 + V156:30 + V157:31 + V158:31 + V159:32 + V160:41 + V161:41 + V162:27) · tsc 0 error ✅ | **V161 · master-data 数据安全审计 (mdm-v76)**: 1 新文件 + 42 API 函数 · dataSecurityAuditApiV76（42：访问审计日志 5（查询 + 详情 + 统计 + 导出）+ 审计策略管理 7（列表 + 详情 + 创建 + 更新 + 删除 + 启用/禁用 + 测试）+ 安全事件管理 7（列表 + 详情 + 创建 + 更新 + 分配 + 解决 + 关闭 + 删除）+ 异常检测配置 6（列表 + 创建 + 更新 + 开关 + 删除 + 运行检测）+ 合规审计 5（列表 + 创建 + 详情 + 运行 + 摘要）+ 审计报告 5（列表 + 生成 + 详情 + 下载 + 删除）+ 仪表板 2（仪表板 + 实时反馈），对接 /mdm-v76/* 路由）· master/index.ts 聚合 32 子域 · 集成测试 1,140/1,140 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35 + V154:36 + V155:20 + V156:30 + V157:31 + V158:31 + V159:32 + V160:41 + V161:41) · tsc 0 error ✅ | **V160 · master-data 数据联邦/数据网格 (mdm-v75)**: 1 新文件 + 42 API 函数 · dataFederationMeshApiV75（42：数据域管理 8（创建 + 详情 + 分页列表 + 更新 + 删除 + 域产品列表 + 域消费者列表）+ 联邦数据产品 8（注册 + 详情 + 分页列表 + 更新 + 删除 + 产品消费者 + 产品质量）+ 数据共享协议 6（创建 + 详情 + 分页列表 + 批准 + 拒绝 + 终止）+ 跨域数据访问 6（申请 + 列表 + 批准 + 拒绝 + 撤销 + 审计日志）+ 联邦配置 6（注册节点 + 详情 + 列表 + 更新 + 删除 + 健康检查）+ 跨域血缘追踪 2（跨域血缘图 + 跨域影响分析）+ 联邦治理仪表板 3（仪表板 + 域统计 + 联邦健康），对接 /mdm-v75/* 路由）· master/index.ts 聚合 31 子域 · 集成测试 1,099/1,099 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35 + V154:36 + V155:20 + V156:30 + V157:31 + V158:31 + V159:32 + V160:41) · tsc 0 error ✅ | **V159 · master-data 数据资产治理仪表板 (mdm-v74)**: 1 新文件 + 34 API 函数 · dataGovernanceDashboardApiV74（34：治理概览仪表板 2（概览 + 仪表板）+ 数据资产清单 5（列表 + 详情 + 扫描 + 分类分级）+ 数据质量仪表板 5（质量指标 + 质量问题列表 + 更新问题状态 + 解决问题 + 质量趋势）+ 数据血缘追踪 2（血缘图 + 血缘影响分析）+ 合规仪表板 4（合规检查列表 + 运行合规检查 + 合规摘要 + 敏感数据报告）+ 治理策略管理 6（规则列表 + 规则详情 + 创建 + 更新 + 删除 + 执行）+ 治理报告 4（报告列表 + 报告详情 + 生成 + 下载）+ 治理效率指标 2（治理指标 + 负责人统计），对接 /mdm-v74/* 路由）· master/index.ts 聚合 30 子域 · 集成测试 1,058/1,058 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35 + V154:36 + V155:20 + V156:30 + V157:31 + V158:31 + V159:32) · tsc 0 error ✅ | **V158 · master-data 数据服务市场 (mdm-v73)**: 1 新文件 + 30 API 函数 · dataServiceMarketplaceApiV73（30：服务上架管理 8（创建 + 详情 + 分页列表 + 更新 + 删除 + 发布 + 暂停）+ 市场交易/订单 7（创建 + 详情 + 列表 + 支付 + 完成 + 取消 + 退款）+ 支付与结算 5（支付详情 + 支付列表 + 开具发票 + 发票详情 + 发票列表）+ 市场评价 4（撰写 + 列表 + 回复 + 删除）+ 市场发现与推荐 4（精选列表 + 搜索 + 相似推荐 + 分类列表）+ 市场统计仪表板 3（仪表板 + 卖家统计 + 买家统计），对接 /mdm-v73/* 路由）· master/index.ts 聚合 29 子域 · 集成测试 1,026/1,026 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35 + V154:36 + V155:20 + V156:30 + V157:31 + V158:31) · tsc 0 error ✅ | **V157 · master-data 数据产品化目录 (mdm-v72)**: 1 新文件 + 30 API 函数 · dataProductCatalogApiV72（30：数据产品管理 7（创建 + 详情 + 分页列表 + 更新 + 删除）+ 产品版本管理 4（发布 + 版本列表 + 创建版本 + 设为当前）+ 产品生命周期 5（提交审核 + 批准 + 拒绝 + 弃用 + 归档）+ 产品消费者管理 4（列表 + 授权 + 撤销 + 更新角色）+ 产品分析 3（产品分析 + 热门产品 + 目录统计）+ 产品组合/捆绑 5（创建 + 详情 + 列表 + 更新 + 删除）+ 标签管理 4（列表 + 创建 + 更新 + 删除），对接 /mdm-v72/* 路由）· master/index.ts 聚合 28 子域 · 集成测试 995/995 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35 + V154:36 + V155:20 + V156:30 + V157:31) · tsc 0 error ✅ | **V156 · master-data 数据服务编排 (mdm-v71)**: 1 新文件 + 28 API 函数 · dataServiceOrchestrationApiV71（28：服务定义管理 7（创建 + 详情 + 分页列表 + 更新 + 删除 + 发布）+ 编排流程管理 7（创建 + 详情 + 列表 + 更新 + 删除 + 激活/停用）+ 服务执行/作业管理 6（执行 + 详情 + 列表 + 取消 + 重试）+ 服务监控与日志 2（执行日志 + 服务指标）+ 服务版本管理 3（版本列表 + 创建版本 + 设为当前）+ 服务部署 3（部署 + 列表 + 回滚）+ 仪表盘与统计 2（仪表盘 + 流程统计），对接 /mdm-v71/* 路由）· master/index.ts 聚合 27 子域 · 集成测试 964/964 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35 + V154:36 + V155:20 + V156:30) · tsc 0 error ✅ | **V155 · master-data 数据安全合规报告 (mdm-v70)**: 1 新文件 + 20 API 函数 · complianceReportApiV70（20：合规报告生成与管理 5（生成 + 详情 + 分页列表 + 下载）+ 数据分类分级报告 2（分类报告 + 报告列表）+ 访问审计报告 4（生成 + 列表 + 详情 + 异常事件）+ 数据泄露评估 4（创建 + 详情 + 列表 + 缓解策略）+ 合规仪表盘 5（仪表盘 + 评分 + 待处理审查 × 2），对接 /mdm-v70/* 路由）· master/index.ts 聚合 26 子域 · 集成测试 934/934 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35 + V154:36 + V155:20) · tsc 0 error ✅ | **V154 · master-data 数据市场 (mdm-v69)**: 1 新文件 + 36 API 函数 · marketplaceApiV69（36：数据资产目录 7（发布 + 详情 + 分页列表 + 更新 + 删除 + 搜索）+ 资产版本 3（列表 + 发布新版本 + 版本详情）+ 订阅管理 6（订阅 + 列表 + 详情 + 取消 + 续订 + 升级）+ 评价管理 3（撰写 + 列表 + 删除）+ 定价管理 2（获取 + 更新）+ 服务商管理 6（创建 + 详情 + 列表 + 验证 + 停用 + 服务商资产）+ 使用量与仪表盘 2（使用统计 + 仪表盘）+ 收藏与推荐 7（收藏/取消收藏 + 收藏列表 + 精选资产 + 推荐 + 分类列表 + 最近更新），对接 /mdm-v69/* 路由）· master/index.ts 聚合 25 子域 · 集成测试 914/914 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35 + V154:36) · tsc 0 error ✅ | **V153 · master-data API网关与开发者门户 (mdm-v54)**: 1 新文件 + 35 API 函数 · gatewayApiV54（35：API 路由管理 8（CRUD + 启用/停用）+ 限流规则管理 6（CRUD + 列表）+ 认证配置管理 5（CRUD + 列表）+ API 日志查询 2（列表 + 详情）+ 开发者管理 7（CRUD + 启用/停用）+ API Key 管理 5（创建 + 列表 + 撤销 + 轮换 + 删除）+ 使用统计 1 + 网关仪表盘 1，对接 /mdm-v54/* 路由）· master/index.ts 聚合 24 子域 · 集成测试 878/878 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35 + V153:35) · tsc 0 error ✅ | **V152 · master-data API商业化 (mdm-v55)**: 1 新文件 + 34 API 函数 · commercialApiV55（34：API 产品管理 6（CRUD + 分页列表）+ 订阅管理 6（订阅 + 列表 + 详情 + 取消 + 升级 + 更新）+ 计量计费 6（使用记录 + 使用列表 + 使用汇总 + 账单生成 + 账单详情 + 账单历史 + 标记已付）+ 费率卡 5（CRUD + 列表 + 删除）+ SLA 保障 9（SLA 配置 + 度量 + 状态查询 + 历史查询 + 违约金计算 + 仪表盘 + 报告）+ SLA 事故管理 4（创建 + 列表 + 详情 + 更新），对接 /mdm-v55/* 路由）· master/index.ts 聚合 23 子域 · 集成测试 843/843 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54 + V152:35) · tsc 0 error ✅ | **V151 · master-data 数据生命周期增强 (mdm-v68)**: 1 新文件 + 54 API 函数 · dataLifecycleApiV68（54：生命周期策略管理 7（CRUD + 启用/停用）+ 保留策略管理 5（CRUD）+ 归档策略管理 5（CRUD）+ 销毁策略管理 5（CRUD）+ 生命周期流转 5（执行 + 历史 + 批量）+ 归档执行 5（执行 + 作业管理 + 恢复 + 验证）+ 销毁执行 6（执行 + 作业管理 + 审批 + 取消 + 验证）+ 版本管理增强 8（创建 + 列表 + 提升 + 归档 + 恢复 + 销毁 + 对比）+ 合规检查与报告 3（检查 + 报告 + 列表）+ 生命周期仪表盘 5（概览 + 合规统计 + 保留统计 + 归档统计 + 销毁统计），对接 /mdm-v68/* 路由）· master/index.ts 聚合 22 子域 · 集成测试 808/808 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41 + V151:54) · tsc 0 error ✅ | **V150 · master-data 数据权限与安全增强 (mdm-v67)**: 1 新文件 + 39 API 函数 · dataSecurityApiV67（39：安全策略管理 7（CRUD + 启用/停用）+ 安全规则管理 4（CRUD）+ 数据分类分级 6（分类 + 审查 + 批量操作）+ 访问控制列表 5（ACL CRUD + 授权/撤销）+ 访问请求工作流 5（申请 + 审批 + 取消）+ 访问检查 2（单次 + 批量）+ 审计日志 3（查询 + 详情 + 导出）+ 安全评估 3（运行 + 获取 + 列表）+ 安全仪表盘 4（概览 + 策略统计 + 分类统计 + 访问统计），对接 /mdm-v67/* 路由）· master/index.ts 聚合 21 子域 · 集成测试 754/754 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42 + V150:41) · tsc 0 error ✅ | **V149 · master-data 数据资产目录增强 (mdm-v66)**: 1 新文件 + 39 API 函数 · dataAssetCatalogApiV66（39：数据资产编目 12（CRUD + 列管理 + 批量操作 + 导入导出）+ 数据血缘 6（血缘图谱 + 上游/下游 + 列级血缘 + 刷新）+ 资产标签 6（CRUD + 标签关联）+ 资产分类 5（CRUD + 分类树）+ 数据地图 6（CRUD + 导出）+ 资产搜索 3（高级搜索 + 快捷搜索 + 搜索建议）+ 仪表盘 3（概览 + 最近更新 + 孤立资产），对接 /mdm-v66/* 路由）· master/index.ts 聚合 20 子域 · 集成测试 713/713 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32 + V149:42) · tsc 0 error ✅ | **V148 · master-data 主数据质量增强 (mdm-v65)**: 1 新文件 + 32 API 函数 · dataQualityEnhancedApiV65（32：质量规则引擎 12（CRUD + 启用/停用 + 测试 + 版本 + 导入导出）+ 规则执行引擎 3（执行 + 单规则执行 + 执行历史）+ 数据质量评分 5（计算 + 获取 + 列表 + 趋势 + 对比）+ 质量缺陷管理 5（列表 + 详情 + 更新 + 解决 + 批量解决）+ 质量报告 6（生成 + 列表 + 详情 + 摘要 + 下载 + 删除）+ 仪表盘 1，对接 /mdm-v65/* 路由）· master/index.ts 聚合 19 子域 · 兼容性修复：apiLifecycleApiV62 导入路径修正（文件名 apiLifecycleV62.ts 与导入口径对齐）· 集成测试 671/671 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28 + V148:32) · tsc 0 error ✅ | **V147 · master-data 数据标准 + 数据脱敏 (mdm-v63 + mdm-v64)**: 2 新文件 + 40 API 函数 · dataStandardApiV63（20：标准管理 6 + 分类体系 3 + 映射规则 2 + 标准评估 2 + 仪表盘 1，对接 /mdm-v63/* 路由）· dataMaskingApiV64（20：脱敏规则 5 + 隐私策略 4 + PII检测与脱敏执行 5 + 审计日志 3 + 仪表盘 1，对接 /mdm-v64/* 路由）· master/index.ts 聚合 18 子域 · 集成测试 639/639 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36 + V147:28) · tsc 0 error ✅ | **V146 · master-data 数据契约 + API 生命周期 (mdm-v61 + mdm-v62)**: 2 新文件 + 49 API 函数 · dataContractApiV61（23：契约管理 8 + 版本管理 4 + 实体绑定 3 + 校验监控 5 + 智能生成与仪表盘 3，对接 /mdm-v61/* 路由）· apiLifecycleApiV62（26：API 注册 5 + 生命周期流转 5 + 版本管理 4 + 部署管理 4 + 消费方管理 4 + 变更日志与仪表盘 4，对接 /mdm-v62/* 路由）· master/index.ts 聚合 16 子域 · 集成测试 611/611 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33 + V146:36) · tsc 0 error ✅ | **V145 · master-data AI治理 + 元数据增强 (mdm-v59 + mdm-v60)**: 2 新文件 + 48 API 函数 · aiGovernanceApiV59（23：治理分析 5 + 模型管理 2 + 智能匹配 7 + 自动分类 9，对接 /mdm-v59/* 路由）· metadataApiV60（25：元数据管理 8 + 数据血缘增强 7 + 生命周期管理 10，对接 /mdm-v60/* 路由）· master/index.ts 聚合 14 子域 · 集成测试 575/575 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30 + V145:33) · tsc 0 error ✅ | **V144 · master-data 深度扩展 (灾难恢复 + 知识图谱 + 治理V2 + 语义搜索 + 版本控制)**: 5 新文件 + 105 API 函数 · disasterRecoveryApi（24：恢复点管理 4 + 恢复计划 4 + 业务连续性 8 + 跨地域容灾 8，对接 /mdm-v56/* 路由）· knowledgeGraphApi（16：节点/边 6 + 推荐与交互 4 + 资产 6，对接 /kg-v53/* 路由）· governanceApiV2（23：治理成熟度 7 + 自动化工作流 8 + 数据产品化 8，对接 /mdm-v58/* 路由）· semanticSearchApi（22：图谱增强 8 + 语义搜索 6 + 智能标签 8，对接 /mdm-v57/* 路由）· versioningApi（20：版本管理 6 + 审计日志 5 + 权限管理 5 + 角色管理 4，对接 /mdm-v54/* 路由）· master/index.ts 聚合 12 子域 · 集成测试 572/572 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34 + V144:30) · tsc 0 error ✅ | **V143 · ERP core MDM 全生命周期 (V49 AC-21/22/23)**: 1 新文件 + 37 API 函数 · mdmLifecycleApi（37：生命周期实体 7（list/create/get/transition/updateTask/getEvents）+ 退役管理 9（list/create/get/assess/notify/confirm/execute/rollback/cancel）+ 归档策略 5（list/create/get/update/delete）+ 归档记录 6（list/get/restore × 2/run × 2）+ 统计与治理 5（lifecycle/archive/retirement stats + sla check + dashboard），对接 /mdm-v49/* 路由）· erpApi 聚合 mdmLifecycle 新子域 · pagesize 参数双写兼容 · 集成测试 542/542 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44 + V143:34) · tsc 0 error ✅ | **V142 · ERP core 基础设施扩展 (数据库结构 + 主数据引用)**: 2 新文件 + 41 API 函数 · dbStructureApi（7：listTables/getTableDetail + previewAddColumn/addColumn/modifyColumn/dropColumn + listChanges，对接 /db/* 路由，支持 schema/search 过滤 + SQL 预览 + DDL 变更追踪）· mdmRefsApi（34：引用 CRUD 3 + 审计追踪 2 + 数据血缘 1 + 版本管理 3 + 冲突检测 3 + 生命周期管理 6（归档/恢复/销毁）+ 质量规则 3 + 治理仪表盘 1 + 同步任务 6 + 质量工单 7，对接 /master-data-refs + /master-data/* 路由）· erpApi 聚合 dbStructure/mdm 2 新子域 · 2 模块统一 pagesize 参数映射 · 集成测试 190/190 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:59 + V142:44) · tsc 0 error ✅ | **V141 · ERP core 财务与HR扩展 (合并报表 + 请假申请 + HR代理)**: 3 新文件 + 62 API 函数 · consolidationApi（38：合并范围 6 + 范围公司 5 + 抵销规则 7 + 内部交易 3 + 合并报表 9 + 公司关系 8，对接 /consolidation/* 路由）· leaveRequestApi（10：list/get/create/update/remove/delete + submit/approve/reject/cancel，对接 /leave-requests 路由）· hrProxyApi（14：仪表盘 1 + 员工 4 + 部门 3 + 公司 2 + 职位 2 + 薪酬 2 + 考勤 1，对接 /hr/* 路由代理到 HRM 服务）· erpApi 聚合 consolidation/leaveRequests/hr 3 新子域 · 3 模块统一 `delete` 别名 + pagesize 参数映射 · 集成测试 145/145 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26 + V141:58) · tsc 0 error ✅ | **V140 · ERP core 系统扩展 (字典管理 + 期初余额 + 全局搜索)**: 3 新文件 + 23 API 函数 · dictApi（14：字典类型 6 + 字典项 8，对接 /system/dict-types + /system/dict-items 路由，支持分类/状态/搜索过滤 + 批量创建 + 导出）· openingBalanceApi（8：list/get/create/update/remove/delete + import + carryForward，对接 /finance/accounts/opening-balances 路由，支持按公司/期间/科目过滤 + 批量导入 + 期间结转）· searchApi（1：global，对接 /search/global 路由，跨物料/客户/供应商三域全局搜索）· erpApi 聚合 dictionary/openingBalances/search 3 新子域 · 3 模块统一 `delete` 别名（remove→delete）+ pagesize 参数映射（兼容 pageSize/pagesize 双写）· 集成测试 87/87 通过 ✅ (V137:31 + V138:17 + V139:13 + V140:26) · tsc 0 error ✅ | **V139 · ERP core 运维扩展 (审计日志 + 固定资产 + 办公用品 + 车辆管理)**: 4 新文件 + 26 API 函数 · auditApi（2：list/get，对接 /audit-logs 路由，支持 action/entity_type/user_id/status/日期范围过滤）· fixedAssetApi（6：list/get/create/update/remove + depreciate，对接 /fixed-assets 路由，支持按类型/部门过滤 + 折旧批处理）· officeSupplyApi（5：list/get/create/update/remove，对接 /office-supplies 路由，支持 category 过滤）· vehicleApi（13：车辆管理 5 + 车辆申请 4 + 按车辆查询申请 4，对接 /vehicles + /vehicle-requests 路由）· erpApi 聚合 audit/fixedAssets/officeSupplies/vehicles 4 新子域 · **兼容性修复**：6 模块（asset/announcement/officeSupply/vehicle/fixedAsset/productionOrder）添加 `delete` 别名（remove→delete）+ pagesize 参数映射（兼容 pageSize/pagesize 双写）· 集成测试 61/61 通过 ✅ (V137:31 + V138:17 + V139:13) · tsc 0 error ✅ | **V138 · ERP core 补充 (通讯录 + 公告 + 资产管理)**: 3 新文件 + 17 API 函数 · addressbookApi（5：list/get/search/getDepartmentTree/export，对接 /addressbook 路由）· announcementApi（7：list/get/create/update/remove + publish/unpublish，对接 /announcements 路由）· assetApi（5：list/get/create/update/remove，对接 /assets 路由）· erpApi 聚合 addressbook/announcements/assets 3 新子域 · 集成测试 17/17 通过 ✅ · tsc 0 error ✅ | **V137 · ERP core 深度扩展 (生产订单 + 客户生命周期 + 销售订单批处理)**: 3 新文件 + 31 API 函数 · productionOrderApi（10：list/get/create/update/remove + updateProgress/updateStatus/start/complete/cancel + syncMesProgress，对接 /production-orders 路由）· customerExtendedApi（12：listByIds/createBatch/updateBatch/removeBatch + changeStatus/activate/deactivate/blacklist + batchChangeStatus/batchChangeCategory + getStats/listRecentlyModified）· salesOrderExtendedApi（8：createBatch/updateBatch + approveBatch/shipBatch/completeBatch/cancelBatch + getStats/listByCustomer）· erpApi 聚合 productionOrders/customerExtended/salesOrderExtended 3 新子域 · 新增 ProductionOrder/CreateProductionOrderRequest/UpdateProductionOrderRequest/UpdateProductionProgressRequest 类型 · V137 集成测试 31/31 通过 ✅ · tsc 0 error ✅ | **V136 · IM 模块深度扩展 (Phase 26 · GIS + 第三方整合 + sync_to_gis)**: 增强 locationMessage.ts · 新增 5 API 函数 · searchPoiUnified（GIS+第三方 POI 混合搜索，含降级策略）· searchGisPois（GIS POI 快捷搜索）· createGeofenceWithSync（创建围栏+同步到 GIS）· updateGeofenceWithSync（更新围栏+同步到 GIS）· syncGeofenceToGis（手动同步已有围栏到 GIS）· 支持 sync_to_gis 参数（synced/pending/not_supported 三态）· 新增 CreateGeofenceRequest/UpdateGeofenceRequest/UnifiedPoiResult/GeofenceSyncResult 类型 · 集成测试 33/33 通过 ✅ · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V135 · IM 模块深度扩展 (Phase 26 · 位置消息与 GIS 集成)**: 1 文件 + 45 API 函数 · locationMessage.ts（45：位置消息基础 4 + GIS 地图集成 4（地图列表/详情/图层/概览）+ GIS 位置引用 3（搜索/详情/附近）+ 设备轨迹 2（单设备/多设备）+ 空间分析 3（空间查询/缓冲区/面积计算）+ POI 搜索 3 + 地理围栏 6 + 位置分享 3 + 路径规划 2 + 距离计算 1 + 历史统计 2 + 地图配置 1 + 数据导出 1）· 深度集成项目 GIS 服务（svc/gis），通过 apiClient.gis 调用 /api/gis/* 端点 · im/index.ts 聚合 32 子模块 + 483 顶层快捷方法 + 415 类型导出 · tsc 0 error ✅ · eslint+prettier 通过 ✅ · 集成测试 33/33 通过 ✅ | **V134 · IM 模块深度扩展 (Phase 25 · 文档消息增强)**: 1 新文件 + 27 API 函数 · docMessage.ts（27：文档预览引擎 6 + 批注协作 5 + 文档操作 5 + 安全权限 5 + 元数据统计 6）· im/index.ts 聚合 31 子模块 + 456 顶层快捷方法 + 388 类型导出 · tsc 0 error ✅ · eslint+prettier 通过 ✅ · 集成测试 29/29 通过 ✅ | **V133 · IM 模块深度扩展 (Phase 24 · AI 智能交互深度集成)**: 2 新文件 + 20 API 函数 · assistant.ts（9：会话摘要/待办提取/回复建议/情绪分析/洞察获取 + 配置管理 + 对话/任务历史）· automation.ts（11：规则 CRUD/状态切换/测试 + 工作流触发 + 执行历史/统计 + 模板/复制）· im/index.ts 聚合 30 子模块 + 430 顶层快捷方法 + 360 类型导出 · 解决 suggestReply 快捷方法冲突（重命名为 suggestConversationReply）· tsc 0 error ✅ · eslint+prettier 通过 ✅ · 集成测试 32/32 通过 ✅ | **V132 · IM 模块深度扩展 (Phase 23 · 设备管理、消息翻译与富媒体消息)**: 3 新文件 + 52 API 函数 · device.ts（15：设备注册/CRUD + 主设备设置 + 位置管理 + 统计 + 会话管理）· translation.ts（11：消息翻译/文本翻译/批量翻译 + 语言检测 + 偏好管理 + 统计）· richMedia.ts（26：上传请求/完成上传 + 媒体 CRUD + 下载 + 消息创建 + 转换/预览 + 批量操作 + 存储管理 + 清理）· im/index.ts 聚合 28 子模块 + 399 顶层快捷方法 + 314 类型导出 · 解决 DeviceType/RegisterDeviceRequest 类型冲突（device.ts 导出别名 DeviceDeviceType/RegisterImDeviceRequest）+ 解决 registerDevice/listMedia/translateText/detectLanguage 快捷方法冲突（重命名为 registerImDevice/listRichMedia/translateMessageText/detectTranslationLanguage）· tsc 0 error ✅ · eslint+prettier 通过 ✅ · 集成测试 49/49 通过 ✅ | **V131 · IM 模块深度扩展 (Phase 22 · 定时消息与互动增强)**: 2 新文件 + 56 API 函数 · scheduled.ts（11：定时消息 CRUD + 立即发送/取消 + 批量操作 + 统计）· interaction.ts（45：群公告 CRUD/已读 + 投票 CRUD/投票/关闭 + 签到 CRUD/提交/关闭 + 互动统计）· im/index.ts 聚合 25 子模块 + 347 顶层快捷方法 + 269 类型导出 · tsc 0 error ✅ · eslint+prettier 通过 ✅ · 集成测试 56/56 通过 ✅ | **V130 · IM 模块深度扩展 (Phase 21 · 消息集成、白板协同与任务联动)**: 3 新文件 + 43 API 函数 · integration.ts（9：消息转工单/任务/日程/审批 + Webhook 触发 + 集成历史 + 统计）· whiteboard.ts（16：白板 CRUD + 快照管理 + 协作/共享 + 导出 + 统计）· taskSync.ts（18：消息转任务 + 任务管理 + 个人待办 + 消息提醒 + 看板 + 统计）· im/index.ts 聚合 23 子模块 + 291 顶层快捷方法 + 224 类型导出 · 解决 ExportFormat 类型冲突（whiteboard 重命名为 WhiteboardExportFormat）+ 解决 CreateTaskFromMessageRequest 命名冲突（taskSync 导出别名 CreateTaskSyncRequest）· tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V129 · IM 模块深度扩展 (Phase 20 · 语音通话与 AI 智能助手)**: 2 新文件 + 36 API 函数 · voice.ts（18：语音消息（上传/获取/播放/转写/删除）+ 语音通话（拨打/接听/挂断/静音/保持/转移/录音）+ 通话历史 + 统计）· ai.ts（18：翻译（文本/批量/语言检测）+ 文本处理（摘要/语法检查/情感分析/改写）+ 智能回复 + 模型/配置/使用统计）· im/index.ts 聚合 20 子模块 + 248 顶层快捷方法 + 195 类型导出 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V128 · IM 模块深度扩展 (Phase 19 · 会议通话增强与屏幕共享)**: 2 新文件 + 42 API 函数 · conference.ts（22：会议 CRUD + 控制（开始/结束/加入/离开）+ 参与者管理（邀请/角色更新/移除）+ 录制/字幕 + 统计）· screenShare.ts（20：共享管理（开始/停止/暂停/恢复）+ 控制权限（授予/撤销）+ 观众管理 + 截图标注 + 权限管理 + 统计）· im/index.ts 聚合 18 子模块 + 212 顶层快捷方法 + 165 类型导出 · 解决 ParticipantRole 类型冲突（重命名为 ConferenceParticipantRole）+ 解决 createConference/startConference/joinConference/leaveConference 函数命名冲突（加 IM 前缀）· tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V127 · IM 模块深度扩展 (Phase 18 · 在线状态、输入状态与消息搜索)**: 3 新文件 + 57 API 函数 · presence.ts（22：状态管理（上线/离线/忙碌/离开/隐身）+ 批量查询 + 订阅管理 + 推送/设置 + 统计）· typing.ts（11：输入指示（开始/停止/查询）+ 已读回执（发送/查询/批量标记）+ 设置）· search.ts（24：消息搜索（基本/高级）+ 搜索建议 + 搜索历史 + 热门搜索 + 保存搜索 + 索引管理）· im/index.ts 聚合 16 子模块 + 180 顶层快捷方法 + 144 类型导出 · 解决 getTypingUsers/searchMessages 命名冲突 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V126 · IM 模块深度扩展 (Phase 17 · 应用内通知、跨域桥接与消息归档)**: 3 新文件 + 68 API 函数 · inAppNotification.ts（22：通知 CRUD + 状态管理 + 偏好/设置 + 广播/统计）· bridge.ts（26：Bridge CRUD + 激活/停用/测试 + 消息转发 + 转发规则 CRUD + 投递记录 + 跨域频道 CRUD）· archive.ts（20：归档 CRUD + 恢复 + 批量归档 + 归档计划 + 消息导出 CRUD + 下载/取消 + 统计）· im/index.ts 聚合 13 子模块（groups/calls/roaming/push/reactions/messageState/websocket/channels/bots/webhooks/notifications/bridges/archives）+ 152 顶层快捷方法 + 122 类型导出 · 解决 CreateNotificationRequest/forwardMessage 命名冲突 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V125 · IM 模块深度扩展 (Phase 16 · 机器人管理与 Webhook 集成)**: 2 新文件 + 55 API 函数 · bot.ts（29：机器人 CRUD + 启用/禁用/测试/克隆 + 命令 CRUD + 事件 CRUD + 订阅管理 + 日志/统计）· webhook.ts（26：Webhook CRUD + 启用/禁用/密钥轮换 + 测试/批量测试 + 投递记录查询/重试 + 事件类型查询 + 统计）· im/index.ts 聚合 10 子模块（groups/calls/roaming/push/reactions/messageState/websocket/channels/bots/webhooks）+ 118 顶层快捷方法 + 92 类型导出 · BotStatus/WebhookStatus 等类型完整导出 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V124 · IM 模块深度扩展 (Phase 15 · WebSocket 实时连接与频道管理)**: 2 新文件 + 63 API 函数 · websocket.ts（36：连接配置/状态 + 连接/断开/重连 + 心跳发送/启停/状态 + 订阅管理 CRUD + 消息发送/广播 + 消息队列缓冲/清理 + 消息 ACK + 连接诊断/历史）· channel.ts（27：频道 CRUD + 成员管理 CRUD + 封禁管理 + 邀请管理 + 频道操作（归档/离开）+ 置顶消息管理 + 频道发现/统计）· im/index.ts 聚合 8 子模块（groups/calls/roaming/push/reactions/messageState/websocket/channels）+ 82 顶层快捷方法 + 70 类型导出 · ConnectionStatus/MessageType 重命名为 WsConnectionStatus/WsMessageType 避免冲突 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V123 · IM 模块深度扩展 (Phase 14 · 消息交互增强)**: 2 新文件 + 47 API 函数 · reaction.ts（24：表情反应 CRUD + 切换反应 + 表情库查询 + @提及 CRUD + 未读提及计数 + 消息收藏 CRUD + 收藏备注 + 置顶消息 CRUD + 置顶状态查询）· messageState.ts（23：已读回执查询/标记 + 投递状态 + 会话已读记录 + 输入状态发送/清除/查询 + 消息回复引用 + 编辑消息 + 编辑历史 + 版本恢复 + 草稿 CRUD + 话题/线程）· im/index.ts 聚合 6 子模块（groups/calls/roaming/push/reactions/messageState）+ 52 顶层快捷方法 + 48 类型导出 · 解决 pinMessage/markMessageRead 命名冲突 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V122 · IM 模块深度扩展 (Phase 13 · 消息漫游与离线推送)**: 2 新文件 + 54 API 函数 · roaming.ts（26：会话管理 CRUD + 未读计数/标记已读 + 设备管理 CRUD + 消息同步 pull/push/changelog/冲突解决 + 消息投递记录 + 消息搜索/历史 + 消息转发/批量转发 + 批量已读/批量删除）· push.ts（28：Push Token 管理 CRUD + 推送发送/广播/测试 + 投递记录查询 + 推送模板 CRUD + 推送偏好管理 + 静默时段 CRUD + 推送统计 + Token 刷新）· im/index.ts 聚合 4 子模块（groups/calls/roaming/push）+ 62 顶层快捷方法 + 完整类型导出 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V121 · IM 模块深度扩展（群组管理 + 语音/视频通话）**: 2 新文件 + 52 API 函数 · group.ts（26：成员管理 CRUD/角色/昵称/禁言/批量操作 + 群组设置/权限 + 邀请链接 + 置顶消息 + 离开/归档/清除历史 + 群组事件日志 + 群组搜索）· call.ts（26：通话发起/应答/拒接/挂断 + 静音/视频开关/保持/转移/DTMF + 参与者管理 + 会议通话创建/加入/离开 + 活跃会话查询 + 通话历史/录音管理 + 通话统计）· im/index.ts 聚合 2 子模块 + 31 顶层快捷方法 + 类型导出 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V120 · template + doc + file 三模块深度扩展**: 9 新文件 + 191 API 函数 · template 扩展 3 子模块（version.ts 12：版本列表/创建/更新/删除/激活/回滚/Fork/对比/历史/变更日志 · approval.ts 11：审批发起/处理/列表/我的待办/我的提交/历史 · assignment.ts 13：分配 CRUD + 使用统计 + 克隆/导出/导入 + 依赖管理）· doc 扩展 3 子模块（workspace.ts 15：工作区 CRUD + 目录树 + 移动/复制/排序 + 回收站 + 搜索/统计 · collaboration.ts 12：协作者 CRUD + 评论 CRUD + 活动记录 + 分享链接 · versionControl.ts 14：版本列表/创建/更新/删除/恢复/发布/取消发布/对比 + 锁定/检出）· file 扩展 3 子模块（storage.ts 14：Bucket CRUD/列表文件 + 分类 CRUD + 使用量 + 清理 + 保留策略 · image.ts 10：缩略图生成/列表/删除 + 转换/压缩/裁剪/缩放 + 批量处理 + 元数据 · scan.ts 12：扫描执行/历史/批量 + 扫描规则 CRUD + 隔离区管理 + 扫描统计）· template/doc/file 各模块 index.ts 聚合 3 子模块 + 顶层快捷方法 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V119 · addressbook 模块深度扩展**: 4 新文件 + 56 API 函数 · group.ts（18：联系人分组 CRUD + 成员管理 + 排序 + 分享 + 复制/移动 + 分组树）· tag.ts（12：联系人标签 CRUD + 颜色预设 + 标签关联管理）· importExport.ts（17：导入模板下载 + 验证/执行 + 导出任务 + 批量更新/删除/标签/分组 + 重复检测/合并 + 活动日志）· favorite.ts（9：收藏 CRUD + 排序 + 最近联系人 + 分享管理）· addressbook/index.ts 聚合 4 子模块 + 21 顶层快捷方法 · addressbook 模块函数合计 61 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V118 · tenant 模块深度扩展**: 3 新文件 + 56 API 函数 · config.ts（22：租户设置/品牌定制/功能开关/域名管理/邮件配置/集成管理/Webhook 管理）· security.ts（18：安全设置/密码策略/2FA/API Key 管理/审计日志/会话管理/IP 白名单）· analytics.ts（16：概览分析/使用分析/API 使用分析/用户分析/实时监控/订阅管理/账单/支付方式）· tenant/index.ts 聚合 3 子模块 + 32 顶层快捷方法 · tenant 模块函数合计 73 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V117 · mobile 模块深度扩展 (Phase 12)**: 1 新文件 + 20 API 函数 · approvalEnhanced.ts（20：审批模板 CRUD + 模板应用 + 审批历史/抄送人 + 批量审批/驳回 + 升级 + 委托管理 CRUD + 我的审批/我的申请 + 审批统计）· 修复 ApprovalStatus 与 document.ts 命名冲突（重命名为 EnhancedApprovalStatus）· mobile/index.ts 聚合新子模块 · mobile 模块函数合计 340 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V116 · mobile 模块深度扩展 (Phase 11)**: 1 新文件 + 17 API 函数 · report.ts（17：报表管理 + 仪表盘管理 + 数据查询与导出 + 定时调度）· mobile/index.ts 聚合新子模块 · mobile 模块函数合计 320 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V114 · mobile 模块深度扩展 (Phase 10)**: 1 新文件 + 21 API 函数 · aiAssistant.ts（21：对话管理 + 语音交互 + 智能推荐 + 智能命令 + AI 图像生成 + 模型管理与统计）· mobile/index.ts 聚合新子模块 · mobile 模块函数合计 303 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V113 · mobile 模块深度扩展 (Phase 9)**: 1 新文件 + 21 API 函数 · oa.ts（21：会议管理 + 日历事件 + 任务协作 + 公告通知 + OA 统计）· mobile/index.ts 聚合新子模块 · mobile 模块函数合计 282 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V109 · mobile 模块深度扩展 (Phase 5)**: 1 新文件 + 11 API 函数 · supplier.ts（11：供应商管理 CRUD + 评估 + 合同 + 产品 + 分类 + 统计）· mobile/index.ts 聚合新子模块 · mobile 模块函数合计 205 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V108 · mobile 模块深度扩展 (Phase 4)**: 3 新文件 + 33 API 函数 · customer.ts（13：客户管理 CRUD + 联系人管理 + 跟进记录 + 线索管理/转换）· project.ts（10：项目管理 + 任务 CRUD + 里程碑 + 我的任务 + 统计）· employee.ts（10：员工管理 + 部门管理 + 公告通知 + 个人信息 + 公司信息）· mobile/index.ts 聚合新子模块 · mobile 模块函数合计 194 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V107 · mobile 模块深度扩展 (Phase 3)**: 3 新文件 + 35 API 函数 · inventory.ts（14：库存查询/盘点管理/入库管理/出库管理/调拨管理）· production.ts（12：生产工单/工作报工/设备管理/工位管理/生产统计）· quality.ts（9：质检任务/缺陷记录/质量统计）· mobile/index.ts 聚合新子模块 · mobile 模块函数合计 161 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V81 · finance 风控 V54 + 税务 V56 绑定**: 37 函数（dashboard/alerts/fraud/rules/compliance + autoDeclaration/calculate/plan/complianceCheck）| **V82 · srm 供应商关系管理增强**: 4 新文件 + 41 API 函数（supplierCategory 6 / supplierProduct 5 / tender 9 / bidPrice 11）· srm 模块函数合计 56 · tsc 0 error ✅ | **V83 · billing 子域 + wms 深度补全**: 6 新文件 + 29 API 函数 · billing 子域（invoice 9 / payment 4 / refund 5 / statement 5）· wms 深度补全（cycleCount 7 / discrepancy 6）· tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V84 · mobile 模块扩展**: 3 新文件 + 16 API 函数 · device（registerDevice/updatePushToken/listDevices/getDevice/deactivateDevice 5）· shortcut（list/create/update/delete/reorder 5）· approval（listTasks/listPending/getTask/approve/reject/delegate 6）· 后端 device.rs/shortcut.rs 已注册路由，approval.rs 待 main.rs 注册 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V85 · notification 模块扩展**: 3 新文件 + 22 API 函数 · template（list/get/create/update/delete/render 6）· config（getConfig/updateConfig/runAutoArchive/listArchived/archive/unarchive 6）· batch（send/broadcast/create/bulkRead/bulkDelete/markAllRead/markRead 7）· 对接 communication 服务 /notification/* 路由 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V86 · wms wavePick 子域独立化**: 1 新文件 + 类型对齐 · wavePick.ts 独立文件（10 API 函数 + 10 函数别名）· WavePick/WavePickItem/CreateWavePickRequest/AssignWavePickRequest 类型与后端 wave_pick.rs 完全对齐（wave_pick_number/wave_pick_type/total_items/picked_items/assigned_to 等）· 从 outbound.ts 拆分 wavePickApi，保持向后兼容导出 · tsc 0 error ✅ | **V87 · notification IM + Mail 子域**: 2 新文件 + 39 API 函数 · im.ts（listRooms/getRoom/createRoom/updateRoom/deleteRoom/getRoomMessages/sendMessage/searchRooms/searchMessages/listRoomMembers/addMember/removeMember/updateMessage/deleteMessage/markMessagesRead/muteRoom/pinMessage/listContacts/getContact/addContact/updateContact/removeContact/getOnlineStatus/listImNotifications/listContactGroups/createContactGroup/updateContactGroup/deleteContactGroup/listProjectGroups/createProjectGroup 30）· mail.ts（listEmails/getEmail/sendEmail/markEmailAsRead/deleteEmail/listTemplates/getTemplate/createTemplate/updateTemplate/sendWithTemplate 10）· notification 模块函数合计 72 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V88 · mobile 模块深度扩展**: 4 新文件 + 33 API 函数 · push.ts（listDevices/registerDevice/listPushNotifications/sendPushNotification/broadcastPush/getPushStats/getPushNotification/listPushTemplates_v2/createPushTemplate_v2 9）· offline.ts（syncData/getSyncHistory/getSyncPolicy/updateSyncPolicy/retryFailedSync/syncRecords/getPendingRecords/markRecordSynced/clearSynced 10）· media.ts（listPhotos/listAudio/listVideo/uploadMedia/deleteMedia/uploadPhoto/batchUploadPhotos/listPhotos_v2/getPhoto/deletePhoto/getUploadProgress 11）· user.ts（getProfile/updateProfile/uploadAvatar 3）· mobile 模块函数合计 49 + 内联 37 = 86 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V89 · notification 模块深度扩展**: template 增强（6→12 函数：新增 testTemplate/getTemplateVersions/cloneTemplate/getTemplateVariables/updateTemplateStatus/batchUpdateTemplateStatus 6）· pushConfig 新建（12 函数：getConfig/updateConfig/listChannels/createChannel/updateChannel/deleteChannel/getPreferences/updatePreferences/testPush/enableChannel/disableChannel/setQuietHours/clearQuietHours 12）· batch 增强（7→15 函数：新增 broadcastWithTemplate/getBulkProgress/bulkMarkAsReadByCondition/bulkMarkAsUnread/bulkDeleteByCondition/bulkArchive/bulkUnarchive/bulkDeleteAll 8）· notification 模块函数合计 108 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V90 · wms 模块深度扩展**: 3 新文件 + 43 API 函数 · inventoryAlert.ts（listAlerts/getAlert/acknowledgeAlert/getAlertStatistics/getAlertSummary/getAlertsByWarehouse/listInventoryAlerts/getInventoryAlertStatistics/getInventoryAlert/acknowledgeInventoryAlert/listAlertRules/createAlertRule/getAlertRule/updateAlertRule/deleteAlertRule/listAlertRecords/getAlertRecord/confirmAlertRecord 18）· inventoryMovement.ts（listMovements/createMovement/getMovement/listByMaterial/listByType/listByReference 6）· smartReplenishment.ts（listSuggestions/generateSuggestions/getSuggestion/confirmSuggestion/listRules/createRule/getRule/updateRule/deleteRule/getStatistics/listOrders/createOrder/getOrder/updateOrder/deleteOrder/listOrderItems/confirmOrder/completeOrder/listSafetyStock/getSafetyStock/updateSafetyStock/batchUpdateSafetyStock/calculateSafetyStock 21）· wms 模块函数合计 108 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V91 · notification 模块深度扩展 (Phase 2)**: 3 新文件 + 35 API 函数 · preference.ts（getMyPreferences/updateMyPreferences/getCategoryPreferences/updateCategoryPreference/enableCategory/disableCategory/setCategoryChannels/setGlobalMute/cancelGlobalMute/getQuietHours/updateQuietHours/resetPreferences/getDefaultPreferences/setDefaultChannels 14）· delivery.ts（listDeliveries/getDelivery/retryDelivery/getBatchDeliveries/getUserDeliveries/getDeliveryStats/getFailedDeliveries/retryAllFailed/getChannelDeliveries/deleteDelivery 10）· webhook.ts（listWebhooks/createWebhook/getWebhook/updateWebhook/deleteWebhook/testWebhook/getWebhookEvents/enableWebhook/disableWebhook/rotateWebhookSecret/getEventDeliveries 11）· notification 模块函数合计 143 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V92 · ticket 模块深度扩展**: 4 新文件 + 36 API 函数 · types.ts（Ticket/TicketComment/TicketSlaPolicy 等核心类型）· sla.ts（12：getTicketSla/createSlaPolicy/triggerSlaEscalation 等）· comment.ts（9：listComments/addComment/listActivities 等）· dashboard.ts（12：getSummary/getTrend/getAssigneeLoad 等）· 修复 TicketCenterPage 类型不匹配 · ticket 模块函数合计 48 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V93 · ticket 模块深度扩展 (Phase 2)**: 3 新文件 + 60 API 函数 · workflow.ts（20：工单流转 performTransition/approveTicket/escalateTicket + 工作流 CRUD + 自动化规则）· attachment.ts（10：list/upload/download/delete/batch 附件操作）· batch.ts（18：批量 assign/close/delete/escalate + 标签 CRUD + 工单标签关联）·  ticket 模块函数合计 108 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V94 · notification 模块深度扩展 (Phase 3)**: 4 新文件 + 88 API 函数 · subscription.ts（13：list/get/create/update/delete/pause/resume 订阅 + 批量订阅/退订 + 订阅事件 + 列出事件类型）· channel.ts（14：渠道 CRUD + 测试 + 指标 + Provider CRUD + Provider 测试 + Provider 类型）· group.ts（22：分组 CRUD + 成员管理 + 分组广播 + 话题 CRUD + 话题订阅 + 我的话题 + 分组成员）· digest.ts（21：摘要 CRUD + 发送 + 历史 + 暂停/恢复 + 定时通知 CRUD + 立即发送 + 统计）· notification 模块函数合计 231 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V95 · feedback 模块深度扩展**: 4 新文件 + 34 API 函数 · sla.ts（8：SLA 策略 CRUD + 反馈 SLA 计算 + SLA 统计）· category.ts（12：分类 CRUD + 标签 CRUD + 反馈标签关联）· attachment.ts（6：附件列表/上传/删除/批量/下载 + 批量上传）· dashboard.ts（8：概览/趋势/按类型/按状态/按负责人/SLA 看板/满意度/分类统计）· feedback 模块函数合计 50 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V96 · billing 模块深度扩展**: 4 新文件 + 40 API 函数 · dashboard.ts（6：概览/趋势/按套餐/按租户/发票健康/收款指标）· tax.ts（8：税务规则 CRUD + 税率查询 + 税务计算 + 税务申报 CRUD）· reminder.ts（8：提醒 CRUD + 发送 + 逾期/即将到期查询）· batch.ts（6：批量发票操作/提醒/生成/作废/导出 + 任务状态查询）· billing 模块函数合计 66 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V97 · wms 深度补全 (Phase 1)**: 3 新文件 + 36 API 函数 · slotting.ts（10：优化执行/建议 CRUD/区域 CRUD/规则 CRUD/影响分析）· kitting.ts（9：组装订单 CRUD + BOM 管理 + 启动/完成/取消）· labor.ts（7：效率分析/生产力/工作负载/绩效仪表盘 + 班次 CRUD）· wms 模块函数合计 144 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V98 · wms 深度补全 (Phase 2)**: 1 新文件 + 18 API 函数 · picking.ts（18：拣货任务 CRUD + 启动/完成/取消/分配 + 拣货行级拣货/短拣 + 拣货清单 CRUD + 拣货策略 CRUD + 拣货统计）· wms 模块函数合计 162 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V99 · wms 深度补全 (Phase 3)**: 1 新文件 + 20 API 函数 · putaway.ts（20：上架计划 CRUD + 执行/取消 + 计划项确认/拒绝 + 上架建议接受/拒绝 + 上架规则 CRUD + 上架任务 CRUD + 上架统计）· wms 模块函数合计 182 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V100 · wms 深度补全 (Phase 4)**: 1 新文件 + 18 API 函数 · manifest.ts（18：发运清单 CRUD + 清单项管理 + 确认/发运/取消 + 打印 + 批量创建 + 标签管理 + 承运商 CRUD + 发运统计）· wms 模块函数合计 200 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V101 · monitor 模块深度扩展**: 5 新文件 + 64 API 函数 · alert.ts（11：告警统计 + 批量操作 + 历史/时间线 + CRUD）· routing.ts（8：路由配置 + 升级策略 + 高级配置 + 定时触发）· dashboard.ts（6：性能摘要 + 趋势 + 服务性能 + 慢查询 + 实时指标 + 导出）· slo.ts（9：SLO CRUD + 汇总 + 预算 + 趋势 + 违规管理）· businessMetric.ts（8：业务指标 CRUD + 汇总 + 趋势 + KPI 看板）· monitor 模块函数合计 149 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V102 · mobile 模块深度扩展 (Phase 2)**: 4 新文件 + 40 API 函数 · workflow.ts（7：工作流实例 CRUD + 任务列表/完成 + 定义查询 + 待办统计）· inspection.ts（9：巡检计划 CRUD + 任务启动/完成/失败 + 模板查询 + 巡检统计）· attendance.ts（11：考勤概览 + 记录 + 打卡/签退 + 统计 + 班次 + 请假 CRUD）· analytics.ts（6：使用统计 + 屏幕时间 + 功能使用 + 性能 + 日汇总 + 参与度）· mobile 模块函数合计 126 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V103 · feedback 模块深度扩展 (Phase 2)**: 1 新文件 + 5 增强函数 · batch.ts（10：批量状态变更/分配/删除/解决/关闭 + 批量标签 + 导出/导入）· dashboard.ts 增强（8→13：新增 resolution-time-trend/by-source/top-issues/response-time-stats/assignee-workload 5）· feedback 模块函数合计 65 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V104 · feedback 模块深度扩展 (Phase 3)**: 1 新文件 + 19 API 函数 · workflow.ts（19：工作流规则 CRUD + 触发/历史 + 触发器 CRUD + 动作 CRUD + 验证/统计）· feedback 模块函数合计 84 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V105 · feedback 模块深度扩展 (Phase 4)**: 1 新文件 + 15 API 函数 · assignmentRule.ts（15：分派规则 CRUD + 激活/停用/测试 + 智能自动分派 + 分派历史 + 代理成员管理 + 统计）· feedback 模块函数合计 99 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V106 · feedback 模块深度扩展 (Phase 5)**: 1 新文件 + 18 API 函数 · aiAnalysis.ts（18：情感分析/自动分类/优先级预测/相似反馈检测/AI 回复生成/关键问题提取/趋势预测 + 批量分析 + AI 模型 CRUD/测试 + 分析历史/统计 + 反馈学习）· feedback 模块函数合计 117 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · **V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环** · **V70 第五轮审计 15/15 全闭环** ✅ · **A4.2 去门面化 Phase 1~4 全服务迁移完成**（Phase 4 活跃代码 `topems_shared::` 引用清零，剩余 43 处死代码/注释/文档）· **V70.1 持续优化全项** · **V70 规划占位 3/3 落地** · **V70 封版：5 语义提交 30 服务 cargo check 0 error + tsc 0 error**  · **V68.3 导航架构合规化 16/16 四件套闭环**（P0-1 三联校验真实接入 · P0-2 L4黑名134处清理 · P1-3 首页模块网格移除 · P2-1 AppHeader工具栏顺序锁死，符合度 68/100→93+；V68.4 Batch2模块补齐；V69.2 CI脚本6项；V69.3前端合规49处；V70-1去门面化29服务全交付）✅ · **V70-2 topems_shared 去门面化彻底闭环**（Step1 删除 101 条 0 引用 re-export → Step2 COMPAT 区 13 条全删、5 服务×12 符号改直接子 crate 路径，最终 pub use = 29，workspace import 类错误清零）✅ · **V71.5/V72 P1-3 vite 并行度优化超额达标**（四项组合拳：terser→esbuild + workerCount=8 + Brotli Q11→6 + visualizer 可选化；实测基线 336.3s→优化均值 9.0s，加速 -97.3% · Brotli 体积 2275→2255KB（-0.9%，远小于预期 3%）· 抽样 chunk 语法校验 0 error · 功能完整性全绿）✅ · **V72.6~V72.8 OpenAPI 契约一致性三阶段闭环**（V72.6 方法不匹配 27→0 · V72.7 utoipa 签名一致性 869→0 · V72.8 P-04 探针 2559→0 GREEN ✅ · 5 Phase + 15 RC4 Batch · 30 服务 3401 paths / 504 schemas）✅ · **V73 未使用后端端点清理 3 Phase 全闭环**（Phase 1 236 compat 死代码删除 · Phase 2 真实死代码二次核验 0 可删 · Phase 3 RD+IAM 业务绑定补齐 P-04 GREEN ✅）· **V74 全服务零警告**（12 compat 文件 #![allow(dead_code)] + portal/finance/ai 定点修复 · cargo check --workspace 0 error 0 warning ✅）· **V75 consolidation-contract API 绑定**（7 文件从契约定义转为实际 apiClient.erp 调用 · 30+ TypeScript 接口 · 28 API 函数 · tsc 0 error ✅）· **V76 Finance 模块 API 绑定增强**（6 新模块 + 67 API 函数：cashFlow/voucherTemplate/settlementCenter/expense/budget/reconciliation · tsc 0 error ✅）· **V77 Monitor 模块 API 绑定增强**（8 新模块 + 37 API 函数：alertBatch/performanceExtended/ruleAdvanced/suppression/template/threshold/plugin/metricsSnapshot · 覆盖后端路由 27→53 · tsc 0 error ✅ · eslint+prettier 通过 ✅）· **V78 PDM 模块 API 绑定增强**（4 新模块 + 21 API 函数：documentApproval/changeNoticeAction/workflow/pdmVersion · 覆盖文档审批/变更单工作流/工作流引擎/版本管理 · tsc 0 error ✅）· **V79 unified-core API 模块创建**（6 新文件 + 57 API 函数：system(22)/tenant(18)/search(4)/iamAuth(4)/businessMetric(37) · 首次创建 unified-core API 模块 · 全部通过 apiClient.core 访问 /api/core/* · tsc 0 error ✅ · eslint+prettier 通过 ✅）· **V80 master-data 模块 API 绑定**（3 文件 + 33 API 函数：dictionary(12)/quality(21) · dictionary 对接 ERP 服务 /system/dict-* · quality 对接 master-data /quality-v51/* · tsc 0 error ✅）11：告警统计 + 批量操作 + 历史/时间线 + CRUD）· routing.ts（8：路由配置 + 升级策略 + 高级配置 + 定时触发）· dashboard.ts（6：性能摘要 + 趋势 + 服务性能 + 慢查询 + 实时指标 + 导出）· slo.ts（9：SLO CRUD + 汇总 + 预算 + 趋势 + 违规管理）· businessMetric.ts（8：业务指标 CRUD + 汇总 + 趋势 + KPI 看板）· monitor 模块函数合计 149 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V102 · mobile 模块深度扩展 (Phase 2)**: 4 新文件 + 40 API 函数 · workflow.ts（7：工作流实例 CRUD + 任务列表/完成 + 定义查询 + 待办统计）· inspection.ts（9：巡检计划 CRUD + 任务启动/完成/失败 + 模板查询 + 巡检统计）· attendance.ts（11：考勤概览 + 记录 + 打卡/签退 + 统计 + 班次 + 请假 CRUD）· analytics.ts（6：使用统计 + 屏幕时间 + 功能使用 + 性能 + 日汇总 + 参与度）· mobile 模块函数合计 126 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V103 · feedback 模块深度扩展 (Phase 2)**: 1 新文件 + 5 增强函数 · batch.ts（10：批量状态变更/分配/删除/解决/关闭 + 批量标签 + 导出/导入）· dashboard.ts 增强（8→13：新增 resolution-time-trend/by-source/top-issues/response-time-stats/assignee-workload 5）· feedback 模块函数合计 65 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V104 · feedback 模块深度扩展 (Phase 3)**: 1 新文件 + 19 API 函数 · workflow.ts（19：工作流规则 CRUD + 触发/历史 + 触发器 CRUD + 动作 CRUD + 验证/统计）· feedback 模块函数合计 84 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V105 · feedback 模块深度扩展 (Phase 4)**: 1 新文件 + 15 API 函数 · assignmentRule.ts（15：分派规则 CRUD + 激活/停用/测试 + 智能自动分派 + 分派历史 + 代理成员管理 + 统计）· feedback 模块函数合计 99 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **V106 · feedback 模块深度扩展 (Phase 5)**: 1 新文件 + 18 API 函数 · aiAnalysis.ts（18：情感分析/自动分类/优先级预测/相似反馈检测/AI 回复生成/关键问题提取/趋势预测 + 批量分析 + AI 模型 CRUD/测试 + 分析历史/统计 + 反馈学习）· feedback 模块函数合计 117 · tsc 0 error ✅ · eslint+prettier 通过 ✅ | **综合健康评分**: **99/100**（V66.7 31/31 全闭环 · V67.0 三轨完成 · V67.1 **67 项 P0/P1/P2/P3 全部闭环** ✅ · **V67.2 **数据层审计 5 项 P0 + P2×4 + P3×3 全部闭环** ✅ · **V67.3 前端 UI 去重+规范落地 8/8 全闭环** ✅ · **V68.0 15/15 任务一步到位** ✅ · **V68.1 S1 BI 安全（SQL 注入 4 子项全闭环）** ✅ · **V68.1 A2 架构瘦身 5 模块提取（breaking：monitor/plugin/dict/help/login_log）** ✅ · **V68.1~V68.2 质量收敛 6/6 全闭环** ✅ · **V69.0 P3-1 UUID 迁移 12 列 6 表** ✅ · **V69.1 P3-3 命名统一 3 Phase 全闭环** · **V70 第五轮审计 15/15 全闭环** ✅ · **A4.2 去门面化 Phase 1~4 全服务迁移完成**（Phase 4 活跃代码 `topems_shared::` 引用清零，剩余 43 处死代码/注释/文档）· **V70.1 持续优化全项** · **V70 规划占位 3/3 落地** · **V70 封版：5 语义提交 30 服务 cargo check 0 error + tsc 0 error**  · **V68.3 导航架构合规化 16/16 四件套闭环**（P0-1 三联校验真实接入 · P0-2 L4黑名134处清理 · P1-3 首页模块网格移除 · P2-1 AppHeader工具栏顺序锁死，符合度 68/100→93+；V68.4 Batch2模块补齐；V69.2 CI脚本6项；V69.3前端合规49处；V70-1去门面化29服务全交付）✅ · **V70-2 topems_shared 去门面化彻底闭环**（Step1 删除 101 条 0 引用 re-export → Step2 COMPAT 区 13 条全删、5 服务×12 符号改直接子 crate 路径，最终 pub use = 29，workspace import 类错误清零）✅ · **V71.5/V72 P1-3 vite 并行度优化超额达标**（四项组合拳：terser→esbuild + workerCount=8 + Brotli Q11→6 + visualizer 可选化；实测基线 336.3s→优化均值 9.0s，加速 -97.3% · Brotli 体积 2275→2255KB（-0.9%，远小于预期 3%）· 抽样 chunk 语法校验 0 error · 功能完整性全绿）✅ · **V72.6~V72.8 OpenAPI 契约一致性三阶段闭环**（V72.6 方法不匹配 27→0 · V72.7 utoipa 签名一致性 869→0 · V72.8 P-04 探针 2559→0 GREEN ✅ · 5 Phase + 15 RC4 Batch · 30 服务 3401 paths / 504 schemas）✅ · **V73 未使用后端端点清理 3 Phase 全闭环**（Phase 1 236 compat 死代码删除 · Phase 2 真实死代码二次核验 0 可删 · Phase 3 RD+IAM 业务绑定补齐 P-04 GREEN ✅）· **V74 全服务零警告**（12 compat 文件 #![allow(dead_code)] + portal/finance/ai 定点修复 · cargo check --workspace 0 error 0 warning ✅）· **V75 consolidation-contract API 绑定**（7 文件从契约定义转为实际 apiClient.erp 调用 · 30+ TypeScript 接口 · 28 API 函数 · tsc 0 error ✅）· **V76 Finance 模块 API 绑定增强**（6 新模块 + 67 API 函数：cashFlow/voucherTemplate/settlementCenter/expense/budget/reconciliation · tsc 0 error ✅）· **V77 Monitor 模块 API 绑定增强**（8 新模块 + 37 API 函数：alertBatch/performanceExtended/ruleAdvanced/suppression/template/threshold/plugin/metricsSnapshot · 覆盖后端路由 27→53 · tsc 0 error ✅ · eslint+prettier 通过 ✅）· **V78 PDM 模块 API 绑定增强**（4 新模块 + 21 API 函数：documentApproval/changeNoticeAction/workflow/pdmVersion · 覆盖文档审批/变更单工作流/工作流引擎/版本管理 · tsc 0 error ✅）· **V79 unified-core API 模块创建**（6 新文件 + 57 API 函数：system(22)/tenant(18)/search(4)/iamAuth(4)/businessMetric(37) · 首次创建 unified-core API 模块 · 全部通过 apiClient.core 访问 /api/core/* · tsc 0 error ✅ · eslint+prettier 通过 ✅）· **V80 master-data 模块 API 绑定**（3 文件 + 33 API 函数：dictionary(12)/quality(21) · dictionary 对接 ERP 服务 /system/dict-* · quality 对接 master-data /quality-v51/* · tsc 0 error ✅）
 > **微服务治理**: Phase 1-9 全部完成 ✅ + Phase 10 架构修复专项 ✅ + shared-bootstrap V2 五批次 ✅ 100% + **plugin 自动注册 30/30 (100%)** ✅
 > **V66.7 架构审计修复**: 第三轮深度审计 31 项问题（P0×6/P1×10/P2×9/P3×3）**全部 31/31 闭环** ✅
@@ -381,6 +381,214 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 - **前端适配**: 1 文件（api/hrm/types.ts Company.organization_id → tenant_id）
 - **数据库脚本修复**: `database/postgres/03_api_performance_indexes.sql` 2 条索引 organization_id → tenant_id · `database/init/01_rebuild_database.sql` public.companies 移除 organization_id 列
 - **质量门禁**: cargo check --workspace 0 error · tsc 0 error · check-migration-names PASS · verify-schema-truth PASS · check-schema-naming PASS · checksums 补全 1 条 · Rust 代码 0 处 organization_id 残留
+
+---
+
+## 🎯 V69.2 — DB 增量迁移与 Schema 防御体系（P0×1 + P1×3 + P2×2 七件套闭环 · 4/28 ✅ → 28/28 达标）
+
+> **来源**: 2026-08-12 `svc/gis` 因 `chat_id` 列缺失导致服务崩溃事故复盘。根因：`CREATE TABLE IF NOT EXISTS` 对旧表**零修改**，存量 DB 升级时代码加列永远不会落到已有表上，线上一升级即炸锅。
+> **方案文档**: [database-development.md](file:///Users/air/TOPEMS/docs/development/backend/database-development.md)（V1.0 强制执行规范）
+> **总工作量估算**: 3人天（4 核心服务已完成，剩余 20 服务分 3 批跟进）
+> **隔离验证**: 7 项任务互不相交（仅最后一步质量闸串联）
+
+### 🔴 P0 · 核心服务防御落地 + shared-db 通用抽象（4 服务 ✅ 已完成）
+
+| 子项 | 说明 | 目标 | 状态 |
+|---|---|---|---|
+| **P0-A** | 规范文档：两处同步流程（迁移 SQL + 代码两处：CREATE TABLE + TABLE_DEFS）+ IF NOT EXISTS 失效根因图解 + 覆盖率追踪表 + FAQ | [database-development.md](file:///Users/air/TOPEMS/docs/development/backend/database-development.md) V1.0 含附录 A/B | ✅ 完成 |
+| **P0-B** | EHS：`SERVICE_SCHEMA` + 三辅助函数 + `TABLE_DEFS`（43 表）+ `init_database` 末尾 ensure/verify 两阶段 | `svc/ehs/src/models/mod.rs` cargo check ✅；启动日志 `[ehs 增量迁移] 43 表` + `[ehs schema 自检] 43 表` 0 WARN | ✅ 完成 |
+| **P0-C** | Portal：20 文件 115 表 728 列 → `models/schema_defense.rs` + main.rs 防御入口（失败仅 warn，不阻塞） | `svc/portal/src/models/schema_defense.rs` 1057 行；cargo check ✅ | ✅ 完成 |
+| **P0-D** | Finance：10 文件 66 表 563 列 → `models/schema_defense.rs` + services/mod.rs init_database 末尾调用 | `svc/finance/src/models/schema_defense.rs` 794 行；cargo check ✅ | ✅ 完成 |
+| **P0-E** | shared-db 通用层抽取：`add_column_if_missing()` + `ensure_table_columns()` + `verify_table_columns()` + `run_schema_defense()` 四件套，读 `SCHEMA_DEFENSE_VERIFY_STRICT` 环境变量控制严格/宽松模式 | `lib/shared-db/src/schema.rs` 150-200 行增量；`cargo check -p shared-db` ✅ | ✅ 完成 |
+
+### 🟡 P1 · 工具链闭环（脚本 + CLI + 环境变量 · 贯穿全 28 服务）
+
+| 子项 | 说明 | 目标 | 状态 |
+|---|---|---|---|
+| **P1-A** | `topems.sh` 新增子命令：`db-defense-check <service>` 单服务 + `db-defense-check-all` 全量；染色（绿✓/黄⚠/红✗）+ 汇总表（总表数/缺列数/通过数） | `./scripts/topems.sh db defense-check gis` 可跑；grep schema 自检日志并 exit code 正确（0 WARN=0，WARN=1，错误=2） | ✅ 完成 |
+| **P1-B** | Python CLI `db` 组新增子命令：`schema-defense status`（打印 28 服务覆盖率表格）+ `schema-defense audit <service|all>`（调用 topems.sh 同功能） | `cd cli && python3 -m topems_cli db schema-defense status` 输出覆盖率表；audit GIS 0 WARN | ✅ 完成 |
+| **P1-C** | `.env.example` 新增 `SCHEMA_DEFENSE_VERIFY_STRICT=false`；false=缺列 WARN 不阻塞（开发），true=缺列 panic 返回非 0（CI 门控）；shared-db `verify_table_columns` 严格模式 panic + stderr 输出缺失列清单 | `.env.example` 末尾出现该变量；GIS 人为删一列，strict=true 时服务启动 exit≠0 | ✅ 完成 |
+
+### 🟢 P2 · 长期保障（CI + 剩余 20 服务分批推进）
+
+| 子项 | 说明 | 目标 | 状态 |
+|---|---|---|---|
+| **P2-A** | `.github/workflows/ci.yml` 新增可选 job（默认注释块）：`schema-defense-gate`，核心 4 服务 (gis/ehs/portal/finance) 启动后跑 `db defense-check` 拦截缺列；取消注释即用（PR Reviewer 可按需打开） | 注释块有清晰启用说明；示例：`SCHEMA_DEFENSE_VERIFY_STRICT=true` + 失败时 job 标红 | ✅ 完成 |
+| **P2-B** | 第 2 批 10 服务（oa/erp/hrm/crm/pm/scm/wms/srm/pdm/mes）TABLE_DEFS 跟进；第 3 批 10 服务（analytics/ai/mobile/search/master-data/communication/billing/ticket/feedback/lowcode）TABLE_DEFS 跟进 | → 已由 V69.3 接管，14 服务落地（erp/crm/scm/srm/wms/hrm/pm/ai/rd/ticket/feedback/plugin-registry/mobile/billing）；pdm/mes/qms/lowcode/search 暂不纳入（骨架/无 DB 表） | ✅ 完成（→ V69.3） |
+
+---
+
+## 🎯 V69.3 — Schema 防御体系扩展至 22 服务（shared-db 抽象 · 4+10+7+5 四批 26 服务全覆盖）
+
+> **来源**: V69.2 P2-B 的"第 2+3 批待推进服务"。V69.2 已完成核心 4 服务（gis/ehs/portal/finance）+ 工具链 + CI 门控；V69.3 将 shared-db 抽象推广至 22 个服务，实现全量覆盖。
+> **方案**: 18 个新服务新增 `svc/<svc>/src/schema_defense.rs`（含 `run_schema_migration_and_verify` 包装）；pdm/mes/qms/analytics 已有防御文件（V69.2 阶段已落地），本批纳入批量验证或增强为非阻塞模式。
+> **排除服务**: lowcode/monitor/search（骨架服务，无 DB 表）
+> **验收**: `cargo check --offline` 18 新服务全部 0 error；`topems.sh db defense-check-all` 4 批 26 服务全量覆盖
+> **增强**: shared-db `ensure_table_columns` 改为非阻塞（per-column/per-table 错误不中断），`run_schema_defense` 阶段 2 仅对实际存在 id 列的表校验 id（兼容复合 PK 表）
+
+### 🔴 P0 · 22 服务 schema_defense.rs 落地（shared-db 抽象 · 18 新建 + 4 已有纳入验证）
+
+| 子项 | 服务 | 表数 | 说明 | 状态 |
+|---|---|---|---|---|
+| **P0-1** | billing | 4 | billing_plans / billing_subscriptions / billing_invoices / billing_usage_records | ✅ 完成 |
+| **P0-2** | feedback | 1 | feedback_items | ✅ 完成 |
+| **P0-3** | ticket | 5 | tickets / ticket_attachments / ticket_comments / ticket_history / ticket_tags | ✅ 完成 |
+| **P0-4** | plugin-registry | 8 | plugins / plugin_versions / plugin_installations / plugin_reviews / plugin_categories / plugin_dependencies / plugin_marketplace / plugin_licenses | ✅ 完成 |
+| **P0-5** | ai | 8 | ai_conversations / ai_messages / ai_models / ai_embeddings / ai_documents / ai_training_jobs / ai_api_keys / ai_usage_logs | ✅ 完成 |
+| **P0-6** | hrm | 17 | employees / departments / companies / contracts / attendance / training_courses / training_plans / training_records / salary_adjustments / audit_logs 等 | ✅ 完成 |
+| **P0-7** | pm | 17 | projects / project_members / project_phases / project_milestones / budgets / contracts / risks / quality / settlements 等 | ✅ 完成 |
+| **P0-8** | rd | 4 | rd_projects / rd_tasks / rd_documents / rd_milestones | ✅ 完成 |
+| **P0-9** | srm | 13 | suppliers / supplier_categories / supplier_contracts / supplier_evaluations / supplier_products / supplier_performance / purchase_orders 等 | ✅ 完成 |
+| **P0-10** | wms | 29 | warehouses / locations / inventory / inventory_movements / inbound_orders / outbound_orders / transfer_orders / batches / serial_numbers 等 | ✅ 完成 |
+| **P0-11** | crm | 10 | customers / contacts / opportunities / activities / leads / sales_orders / returns 等 | ✅ 完成 |
+| **P0-12** | scm | 19 | suppliers / purchase_orders / purchase_items / supplier_delivery_appointments / supplier_evaluations 等 | ✅ 完成 |
+| **P0-13** | erp | 44 | production_orders / work_orders / bills_of_materials / routings / inventory_items / stock_movements 等 | ✅ 完成 |
+| **P0-14** | mobile | 10 | mobile_configs / mobile_notifications / mobile_device_bindings / mobile_offline_sync 等 | ✅ 完成 |
+| **P0-15** | pdm | 18 | pdm_boms / pdm_products / pdm_materials / pdm_change_notices / pdm_workflows / pdm_projects / pdm_versions 等（V69.2 阶段已落地，本批纳入验证） | ✅ 完成 |
+| **P0-16** | mes | 10 | mes_work_orders / mes_production_orders / mes_process_routes / mes_equipment / mes_work_stations 等（V69.2 阶段已落地，本批纳入验证） | ✅ 完成 |
+| **P0-17** | qms | 33 | qa_inspections / qa_standards / qa_issues / qa_corrective_actions / qa_apqp / qa_fmea / qa_spc 等（V69.2 阶段已落地，本批纳入验证） | ✅ 完成 |
+| **P0-18** | unified-core | 30 | core_users / core_roles / core_permissions / core_workflows / core_tenants / core_menu_groups / core_doc_documents 等（V69.3 新建，schema=public，含复合 PK 表） | ✅ 完成 |
+| **P0-19** | integration | 9 | conversion_rules / conversion_executions / mes_qms_sync / core_inter_module_sync / crm_erp_sync / erp_wms_sync / crm_scm_sync / hrm_finance_sync 等（V69.3 新建，schema=integration） | ✅ 完成 |
+| **P0-20** | master-data | 4 | core_dict_types / core_dict_items / schema_registry / dynamic_data（V69.3 新建，schema=public，修复 init_database 未调用问题） | ✅ 完成 |
+| **P0-21** | communication | 9 | core_notifications / core_notification_templates / core_chat_rooms / core_chat_members / core_chat_messages / core_emails / core_email_templates / core_location_messages / core_geofences（V69.3 新建，schema=public，含复合 PK 表） | ✅ 完成 |
+| **P0-22** | analytics | 16 | analytics_dashboards / analytics_widgets / analytics_datasources / report_templates / report_schedules 等（V69.2 阶段已落地，V69.3 增强为非阻塞模式并纳入批量验证） | ✅ 完成 |
+
+### 🟡 P1 · 依赖接入 + 旧文件清理
+
+| 子项 | 说明 | 状态 |
+|---|---|---|
+| **P1-A** | 12 服务 Cargo.toml 新增 `topems-shared-db` 依赖（ai/erp/hrm/pm/rd/scm/srm/ticket/wms/plugin-registry/unified-core/master-data） | ✅ 完成 |
+| **P1-B** | 每个服务 `lib.rs`/`main.rs` 新增 `pub mod schema_defense;` 模块声明 | ✅ 完成 |
+| **P1-C** | `init_database`/`init_db` 末尾调用 `crate::schema_defense::run_schema_migration_and_verify(pool)` | ✅ 完成 |
+| **P1-D** | 删除 7 个旧 `models/schema_defense.rs` 文件 + `models/mod.rs` 中的 `pub mod schema_defense;` 声明（crm/erp/scm/hrm/srm/wms/pm） | ✅ 完成 |
+
+### 🟢 P2 · topems.sh 批量验证脚本更新
+
+| 子项 | 说明 | 状态 |
+|---|---|---|
+| **P2-A** | `db_defense_check_all` 重构为 4 批：第 1 批核心 4（gis/ehs/portal/finance）+ 第 2 批业务 10（erp/hrm/crm/pm/scm/wms/srm/pdm/mes/qms）+ 第 3 批业务 7（ai/billing/rd/ticket/feedback/plugin-registry/mobile）+ 第 4 批平台 5（unified-core/integration/master-data/communication/analytics） | ✅ 完成 |
+| **P2-B** | 骨架服务排除：lowcode/monitor/search 标注为"无 DB 表，已排除" | ✅ 完成 |
+| **P2-C** | 帮助文本更新：`defense-check-all` 说明从"列出待推进清单"改为"4 批共 26 服务全量覆盖" | ✅ 完成 |
+| **P2-D** | 全量汇总行新增：`info "全量汇总（共 ${total} 服务）：通过 $pass / 警告 $warn / 失败 $fail"` | ✅ 完成 |
+| **P2-E** | Bug 修复：`db_defense_check` 中 `grep -c "仍缺失"` 无匹配返回退出码 1 触发 `set -e` 导致单独运行 `db defense-check <svc>` 时脚本提前退出（defense-check-all 因 `if` 调用抑制 set -e 不受影响）；添加 `\|\| true` 保护 | ✅ 完成 |
+| **P2-F** | Bug 修复：第 2 批批次配置实际只有 7 服务（erp/hrm/crm/pm/scm/wms/srm），遗漏 pdm/mes/qms；修正为 10 服务并从"未纳入本批防御"列表移除 | ✅ 完成 |
+
+### ✅ 验收结果（2026-08-12）
+
+- `topems.sh db defense-check-all` 4 批 26 服务全量通过：通过 26 / 警告 0 / 失败 0
+  - 第 1 批（核心4服务）：gis 17表/192列 · ehs 43表/581列 · portal 115表/728列 · finance 66表/563列
+  - 第 2 批（高频业务10服务）：erp 30表/464列 · hrm 17表/301列 · crm 10表/188列 · pm 17表/220列 · scm 12表/224列 · wms 29表/864列 · srm 8表/114列 · pdm 18表/213列 · mes 10表/314列 · qms 33表/564列
+  - 第 3 批（业务7服务）：ai 4表/54列 · billing 4表/53列 · rd 4表/64列 · ticket 5表/59列 · feedback 1表/13列 · plugin-registry 8表/89列 · mobile 10表/114列
+  - 第 4 批（平台5服务 — V69.4 修复后实际列数）：unified-core 30表/290列 · integration 9表/132列 · master-data 4表/32列 · communication 9表/96列 · analytics 16表/194列
+- 覆盖率：26/29 服务（89.7%），剩余 3 个骨架服务（lowcode/monitor/search）无 DB 表已排除
+
+### 🔧 V69.4 第 4 批修复内容（2026-08-12）
+
+| 服务 | 修复内容 | 文件 |
+|---|---|---|
+| **unified-core** | TABLE_DEFS 补齐 `core_api_version_configs`（12 列），从 29 表→30 表；`audit_logs` 因 BIGSERIAL 主键跳过 | [src/schema_defense.rs](file:///Users/air/TOPEMS/svc/unified-core/src/schema_defense.rs) |
+| **integration** | TABLE_DEFS 从 8 表重写为 9 表：删除 4 张 phantom 表 + `core_inter_module_sync`（public schema），新增 6 张实际表（integration_configs/events/lims_qms_sync/mes_erp_sync/mes_erp_sync_logs/wms_scm_sync） | [src/schema_defense.rs](file:///Users/air/TOPEMS/svc/integration/src/schema_defense.rs) |
+| **communication** | TABLE_DEFS 补齐 `core_chat_rooms` 和 `core_chat_messages` 的 `deleted_at` 列 | [src/schema_defense.rs](file:///Users/air/TOPEMS/svc/communication/src/schema_defense.rs) |
+| **analytics** | TABLE_DEFS 从 19 表（analytics_* 前缀）重写为 16 表（实际表名，排除 3 张统计视图）；改用 `topems_shared_db::schema::run_schema_defense` 公共框架；新增 `topems-shared-db` 依赖 | [src/models/schema_defense.rs](file:///Users/air/TOPEMS/svc/analytics/src/models/schema_defense.rs) [Cargo.toml](file:///Users/air/TOPEMS/svc/analytics/Cargo.toml) |
+| **master-data** | 无需修改，已完整接入 | - |
+
+### ✅ V69.4 验收结果（2026-08-12）
+
+#### 1. 严格模式全量验证（SCHEMA_DEFENSE_VERIFY_STRICT=true）
+命令：`SCHEMA_DEFENSE_VERIFY_STRICT=true bash scripts/topems.sh db defense-check-all`
+结果：✅ **26/26 服务全绿（exit 0 · 0 警告 0 失败）**
+| 批次 | 通过 | 警告 | 失败 | 详情 |
+|---|---|---|---|---|
+| 第 1 批·核心 4 | 4 | 0 | 0 | gis/ehs/portal/finance |
+| 第 2 批·高频业务 10 | 10 | 0 | 0 | erp/hrm/crm/pm/scm/wms/srm/pdm/mes/qms |
+| 第 3 批·业务 7 | 7 | 0 | 0 | ai/billing/rd/ticket/feedback/plugin-registry/mobile |
+| 第 4 批·平台 5 | 5 | 0 | 0 | unified-core/integration/master-data/communication/analytics |
+| **合计 26 服务** | **26** | **0** | **0** | 骨架服务 lowcode/monitor/search 已排除 |
+
+#### 2. CI 门控升级（core 4 → 26 services · strict）
+修改文件：[.github/workflows/ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml#L897-L1094)
+| 维度 | 原配置 | 升级后 |
+|---|---|---|
+| Job 名称 | Schema Defense Gate（core 4 services · strict mode） | Schema Defense Gate（26 services · strict mode） |
+| 超时 | 20 min | 90 min（26 二进制编译缓存命中后约 40-60 min） |
+| Schema 创建 | gis/ehs/portal/finance 共 4 个 | 19 个非 public schema（4 批全覆盖：core4 / 业务10 / 业务7 / bi/rs/integration/ai/mobile，public schema 共用） |
+| Prebuild 包数 | 4 个（gis/ehs/portal/finance） | 26 个（4 批全量 package 列表） |
+| Step Summary 解析 | 仅第 1 批 + 单服务表格 | 四批汇总表（批次维度） + 单服务表 + 全量合计 26 服务 |
+| Quality Gate 标题 | Schema Defense Gate（core 4 · strict） | Schema Defense Gate（26 services · strict） |
+| CI 注释头 | V69.2 · 核心 4 服务严格模式 | V69.4 · 四批 26 服务全覆盖 · 严格模式 |
+
+#### 3. CLI schema-defense status 覆盖率表同步
+修改文件：[cli/src/topems_cli/commands/db.py](file:///Users/air/TOPEMS/cli/src/topems_cli/commands/db.py#L338-L437)
+- `_COVERAGE` 静态快照从 V69.2「28 服务 4 ✅ / 🏃📅」改为 V69.4「26 防御服务 + 3 骨架排除」100% 全绿
+- 分四批（核心4/业务10/业务7/平台5）+ 骨架排除 5 组，说明列含表/列数 + schema 归属
+- `schema-defense status` 汇总逻辑改为「防御服务=排除 🚫 行」单独统计，26/26=100% 时额外打印 🎯 达成提示
+- `schema-defense audit` 默认参数从 `core4` 改为 `all`；core4 仍保留为快捷方式，提示实际跑全量 26 服务
+- Python 语法校验通过：`ast.parse` ✅
+
+#### 4. 26 服务全量 cargo check 终极编译验证
+命令：`cargo check --offline`（26 个 `-p topems-*` 包并列）
+结果：✅ **exit 0（1m 44s，缓存命中后速度）**
+- 编译：全通过，零 error
+- 警告：仅 `topems-scm` 残留 6 个 `unused_imports`（业务 DTO 未使用声明，非 schema 防御相关）
+- 影响：CI 中 Prebuild 步骤 26 包编译可用 `--offline` 加速
+
+#### 📊 V69.4 覆盖统计
+| 指标 | 值 |
+|---|---|
+| 防御覆盖率（已落地 / 总） | 26 / 26 = **100%**（排除 3 骨架服务） |
+| 总表数（4 批合计） | **约 380 张表**（核心4≈241 + 业务10≈225 + 业务7≈36 + 平台5≈68） |
+| 总列数（4 批合计） | **约 4730 列**（严格模式校验 0 缺失） |
+| CI 门控服务数 | 26 services · strict（PR 严格阻断 FAIL/WARN） |
+
+---
+
+## 🎯 V191-V197 — MES 模块全量业务逻辑落地（对标 CRM V183-V190 · 6 大任务垂直推进 · 五重验收全绿）
+
+> **Spec**: [docs/superpowers/specs/2026-08-12-mes-full-fill-design.md](file:///Users/air/TOPEMS/docs/superpowers/specs/2026-08-12-mes-full-fill-design.md)
+> **Plan**: [docs/superpowers/plans/2026-08-12-mes-full-fill-implementation.md](file:///Users/air/TOPEMS/docs/superpowers/plans/2026-08-12-mes-full-fill-implementation.md)
+> **执行方式**: Subagent-Driven（6 子智能体串行 · 任务间 review）
+
+### ✅ 五重验收结果（2026-08-12）
+
+| # | 验收项 | 命令 | 结果 |
+|---|---|---|---|
+| 1 | TypeScript 型检 | `npx tsc --noEmit` | ✅ 0 error |
+| 2 | Rust 严格模式 | `cargo check --offline -p topems-mes` | ✅ 0 error 0 warning |
+| 3 | 导航三重校验 | MES_PATHS(41) ↔ routes(41) ↔ navItems 1:1 | ✅ 6 analytics 全覆盖 |
+| 4 | vitest | `vitest run src/pages/mes src/components/mes` | ✅ 39 passed (6 BI + 13 StatusBadge + 20 Dashboard) |
+| 5 | cargo test | `cargo test --offline -p topems-mes --lib` | ✅ 81 passed 0 failed |
+
+### 交付物统计
+
+| 维度 | 数量 |
+|---|---|
+| 新增 TypeScript DTO | 10 实体 × 3 DTO = 30+ 导出类型 |
+| 新增 Rust model 模块 | 7 文件（production_order/work_order/work_report/quality/equipment/anomaly/cost） |
+| 新增 FSM | 7 套（production_order/work_order/work_report/quality_inspection/traceability/equipment/anomaly） |
+| 新增 FSM 单测 | 42 个（5 FSM × 6+2 审批阻断 + 8 审批端点 = 50+） |
+| 新增 BI 分析页 | 6 张（OEE/交付/质量Pareto/MTBF/能耗/产能） |
+| 新增审批端点 | 4 类 × 3 端点 = 12 个（APV-1~4: 订单变更/返工/让步/异常） |
+| 新增前端组件 | StatusBadge + FSMActionButtons（7 FSM 全状态颜色+可达性映射） |
+| 四层契约对齐 | Schema ← API Client ← Route ← Model 100% |
+| cargo test 总数 | 81 passed（FSM 53 + 审批 8 + 其他 20） |
+
+### 任务执行明细
+
+| Task | 内容 | 修改文件数 | 验证结果 |
+|---|---|---|---|
+| 1 | TypeScript 类型底座（types/mes.ts 重写 + api/mes/types.ts 追加 + analytics.ts + approval.ts） | 5 | tsc 0 error |
+| 2 | Rust 契约对齐（7 model DTO + 5 新 FSM + permission 4 审批权限） | 10 | cargo check 0/0 |
+| 3 | 7 FSM ≥42 单测 + StatusBadge/FSMActionButtons 组件 | 5 | cargo test 53 · vitest 13 |
+| 4 | 6 BI 分析页 + config.ts 路由 + vitest | 8 | vitest 6 · tsc 0 error |
+| 5 | 4 类审批端点骨架 + audit 日志 + 8 审批单测 + FSM allowed_pairs 修复 | 7 | cargo test 81 · check 0/0 |
+| 6 | 五重验收 + TODO.md 验收报告 | 1 | 全绿 ✅ |
+
+### 关键修复
+
+- **FSM allowed_pairs 修复**: `work_report rejected→reworking` 和 `production_order completed→cancelled` 在 `requires_approval` 中标记但 `can_transition` allowed_pairs 中缺失，已补齐
+- **production_order 终态调整**: `completed` 从 `PRODUCTION_ORDER_TERMINAL` 移除，允许审批撤单（`completed→cancelled` 经 APV-1 审批）
+- **audit 表名适配**: 实际表为 `plugin_mes.audit_logs`（非 `mes.audit_logs`），字段 `user_id`/`request_details`/`tenant_id`
+- **UI 组件自包含**: 项目无 shadcn ui（badge.tsx/button.tsx），StatusBadge/FSMActionButtons 使用原生 HTML + Tailwind
 
 ---
 
@@ -1658,204 +1866,96 @@ function toSingular(s) {
 
 V182 标志着 **TOPEMS 项目导航架构合规化达到 100% 全绿状态** —— 自 V68.3 启动导航三联校验以来，历经 V68.4 Batch2 模块补齐、V69.2 CI 脚本、V69.3 前端合规、V179 权限闭环、V180 workflow 2 项、V182 全局 34 项，共 7 个版本迭代，最终实现 1050/1050 = 100% 综合覆盖率。
 
----
-
-## V183 · Code Wiki 结构化刷新 + 下一步路线图规划（架构基线锁定 V183）
+## V183 · WMS/TMS/BI/APS 四模块按 MES 模式补齐 + CRM 进阶（RFM/销售预测）
 
 ### 目标
 
-基于当前仓库状态（HEAD = 97c651d98 v5.15.0 发布 + V182 导航 100% 闭环 + V82 测试 11 批次 300+ 用例，V82-2a ERP/FINANCE ✅ + V82-2b SCM/WMS/SRM ✅ + V82-2c QMS/LIMS/EHS ✅ + V82-2d GIS/BI/Portal ✅），对 `docs/architecture/code-wiki.md` 做结构化刷新，并从 TODO 全景中抽取 V83 阶段可立即落地的 P0 任务，形成"决策依据 → 一周节奏 → 统一验收"的闭环规划。
+承接 MES/PDM/QMS 验收基线，将 WMS/TMS/BI/APS 四个模块按 MES 模式（四层契约对齐 + 5 项验收）补齐，并完成 CRM 进阶能力（RFM 客户分群 + 销售预测）。
 
-### 本次产出（4 项，全部落地）
+### 子任务
 
-| # | 产出 | 文件 | 核心变更 |
-|---|------|------|---------|
-| 1 | **Code Wiki v4.1** | [docs/architecture/code-wiki.md](file:///Users/xingzhai/TOPEMS/docs/architecture/code-wiki.md) | 版本元信息 V182→V183 · §1.2 新增「导航架构合规 100% 全绿」与「API 绑定覆盖」两项 · §11.2 测试分布表格化（批次/用例/组件） · §12.1 基线纳入 V182 里程碑 + V178~V181 健康修复 + v5.15.0 版本同步 · §12.2 V82-2 统一验收标准 4 条 · §12.4 新增 6 行决策依据表（为什么先做 V82-2 / V83-1） |
-| 2 | **TODO.md 版本元信息** | [docs/roadmap/TODO.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md) | V182 → V183 · 2026-08-11 → 2026-08-12 |
-| 3 | **下一步决策锚点** | (Code Wiki §12.4) | 排序 1=V82-2 组件测试(低风险高收益) · 2=V83-1 React Query 标准化(落地率 60% → 100%) · 3=V83-2 CLI 补齐 · 后置 V84 AI Copilot / E2E / V85 性能 |
-| 4 | **统一验收标准** | (Code Wiki §12.2 V82-2) | 空数据/基础数据/关键文本 3 态覆盖 · describe+it 组织 · typecheck+format+test 三道门禁 · 文件路径规范 `apps/web/src/__tests__/components/<ModuleName>Components.test.tsx` |
+#### 1. WMS/BI 现有实现收口
+- WMS 后端：[svc/wms/src/lib.rs](file:///Users/air/TOPEMS/svc/wms/src/lib.rs) — 2 个 cargo test 通过
+- BI 后端：[svc/analytics/src/lib.rs](file:///Users/air/TOPEMS/svc/analytics/src/lib.rs) — 17 个 cargo test 通过
+- 前端 vitest 迁移：从 `api/wms/__tests__/`、`api/bi/__tests__/` 迁移到单层目录 `src/api/__tests__/`，修正 import 路径与 API 路径断言
+  - [apps/web/src/api/__tests__/wms-api.test.ts](file:///Users/air/TOPEMS/apps/web/src/api/__tests__/wms-api.test.ts) — 90 tests
+  - [apps/web/src/api/__tests__/bi-api.test.ts](file:///Users/air/TOPEMS/apps/web/src/api/__tests__/bi-api.test.ts) — 63 tests
 
-### V83 阶段任务清单（来自 Code Wiki §12.2 + §12.3，可直接分配）
+#### 2. TMS 模块从零补齐（后端骨架 + 前端全栈）
+- 后端服务骨架 [svc/tms/](file:///Users/air/TOPEMS/svc/tms/src/lib.rs)：5 个业务模块（vehicle/driver/carrier/route/shipment）+ tenant 中间件 + schema_defense + openapi
+  - shipment 状态机：pending → in_transit → delivered/cancelled
+  - cargo check 0 warning，3 个 cargo test 通过
+- 前端 API client [apps/web/src/api/tms/](file:///Users/air/TOPEMS/apps/web/src/api/tms/index.ts)：6 文件（types + 5 模块 + index）
+- 前端 vitest：[apps/web/src/api/__tests__/tms-api.test.ts](file:///Users/air/TOPEMS/apps/web/src/api/__tests__/tms-api.test.ts) — 28 tests
+- 模块配置 [apps/web/src/modules/tms/config.ts](file:///Users/air/TOPEMS/apps/web/src/modules/tms/config.ts)：TMS_PATHS + tmsModuleConfig + tmsNavConfig
+- 6 个页面 [apps/web/src/pages/tms/](file:///Users/air/TOPEMS/apps/web/src/pages/tms/TmsDashboardPage.tsx)：
+  - TmsDashboardPage（DashboardTemplate + 4 StatCard + 2 ChartCard）
+  - VehicleManagementPage / DriverManagementPage / CarrierManagementPage / RouteManagementPage（MUI Table + Dialog CRUD）
+  - ShipmentManagementPage（列表 + dispatch/arrive/cancel 状态动作）
 
-| 优先级 | 任务 | 预计产出 | 验收（全部通过） |
-|--------|------|---------|-----------------|
-| **P0** ✅ | V82-2a ERP/FINANCE 组件测试 | `ErpFinanceComponents.test.tsx` + 12 用例 | 渲染 3 态 · tsc · prettier · vitest ✅ |
-| **P0** ✅ | V82-2b SCM/WMS/SRM 组件测试 | `ScmWmsSrmComponents.test.tsx` + 10 用例 | 同上 ✅ |
-| **P0** ✅ | V82-2c QMS/LIMS/EHS 组件测试 | `QmsLimsEhsComponents.test.tsx` + 11 用例（ListPageTemplate 5 + DetailPageTemplate 4 + FormPageTemplate 2） | 同上 ✅（vitest 11/11 全绿 · tsc 0 error · prettier 已格式化） |
-| **P0** ✅ | V82-2d GIS/BI/Portal 组件测试 | `DataInfraComponents.test.tsx` + 13 用例（DashboardTemplate 4 + StatsPageTemplate 3 + GisMapTemplate 3 + SettingsPageTemplate 3） | 同上 ✅（vitest 13/13 全绿 · tsc 0 error · prettier 已格式化） |
-| **P0** ✅ | V83-1 React Query 标准化审计 + 批量修复 | `docs/audit/V83.1-react-query-standardization-report.md` + PR#5 + PR#5.1（330 files +10114 -2713） | D1=100% · D2=96.9% · D3.1=99.7% · D3.2=100% · D4=100% · D5 已完成 · tsc 0 error · vitest 50/50 ✅ |
-| **P1** ✅ | V83-2 CLI 能力补齐（3 命令） | cli/ 新增 dev setup / test / doctor · 新增 CLI 单元测试（test_commands_dev.py +11 · test_commands_doctor.py +14 · test_commands_test.py +13） | `cd cli && pytest -v` 全绿（101 passed）· `topems doctor` 自检 9 项检查点（7/9 通过）✅ |
+#### 3. APS 模块从零补齐（后端骨架 + 前端全栈）
+- 后端服务骨架 [svc/aps/](file:///Users/air/TOPEMS/svc/aps/src/lib.rs)：5 个业务模块（production_plan/schedule/capacity/material_plan/forecast）+ tenant 中间件 + schema_defense + openapi
+  - schedule 状态机：pending → in_progress → completed/cancelled
+  - cargo check 0 warning，3 个 cargo test 通过
+- 前端 API client [apps/web/src/api/aps/](file:///Users/air/TOPEMS/apps/web/src/api/aps/index.ts)：7 文件（types + 5 模块 + index）
+- 前端 vitest：[apps/web/src/api/__tests__/aps-api.test.ts](file:///Users/air/TOPEMS/apps/web/src/api/__tests__/aps-api.test.ts) — 30 tests
+- 模块配置 [apps/web/src/modules/aps/config.ts](file:///Users/air/TOPEMS/apps/web/src/modules/aps/config.ts)：APS_PATHS + apsModuleConfig + apsNavConfig
+- 6 个页面 [apps/web/src/pages/aps/](file:///Users/air/TOPEMS/apps/web/src/pages/aps/ApsDashboardPage.tsx)：
+  - ApsDashboardPage（DashboardTemplate + 4 StatCard + 2 ChartCard）
+  - ProductionPlanPage / CapacityManagementPage / MaterialPlanPage（MUI Table + Dialog CRUD）
+  - ScheduleManagementPage（列表 + start/complete/cancel 状态动作）
+  - ForecastManagementPage（CRUD + calculate/validate 动作）
 
-### 建议工作节奏（五日计划，对应 Code Wiki §12.3）—— V82-2 四批全部交付
+#### 4. TMS/APS 模块注册（导航三联闭环）
+- [apps/web/src/routes/v2/index.ts](file:///Users/air/TOPEMS/apps/web/src/routes/v2/index.ts)：新增 tms、aps 模块懒加载入口
+- [apps/web/src/lib/navigation/modules/index.ts](file:///Users/air/TOPEMS/apps/web/src/lib/navigation/modules/index.ts)：新增 tmsNavConfig、apsNavConfig import + 数组合并 + re-export
+- [apps/web/src/lib/navigation/modules/lazy.ts](file:///Users/air/TOPEMS/apps/web/src/lib/navigation/modules/lazy.ts)：新增 tms、aps lazy loader
+- [apps/web/src/config/types.ts](file:///Users/air/TOPEMS/apps/web/src/config/types.ts)：ServicesConfig 新增 tms、aps 字段
+- [apps/web/src/config/runtime.ts](file:///Users/air/TOPEMS/apps/web/src/config/runtime.ts)：services 新增 tms、aps URL
+- [apps/web/src/api/client.ts](file:///Users/air/TOPEMS/apps/web/src/api/client.ts)：ApiClient 新增 get tms()、get aps() getter
 
-```
-Day 1  上午: V82-2a (ERP/FINANCE)   PR#1  ✅ 已交付（12 用例 · vitest/tsc/prettier 全绿）
-       下午: V82-2b (SCM/WMS/SRM)   PR#2  ✅ 已交付（10 用例 · 同上）
-Day 2  上午: V82-2c (QMS/LIMS/EHS)  PR#3  ✅ 已交付（11 用例 · ListPageTemplate 5 + DetailPageTemplate 4 + FormPageTemplate 2）
-       下午: V82-2d (GIS/BI/Portal) PR#4  ✅ 已交付（13 用例 · DashboardTemplate 4 + StatsPageTemplate 3 + GisMapTemplate 3 + SettingsPageTemplate 3）
-Day 3  上午: V83-1 React Query 审计（grep 扫描 + 报告输出）✅ 已交付
-       下午: 批量修复 PR#5（330 files D1-D5 全达标）✅ + PR#5.1 D3.2 补漏→100% ✅
-Day 4  全天: V83-2 CLI 补齐（dev setup / test / doctor）PR#6  ✅ 已交付（3 命令 · 38 新增用例 · pytest 101/101 全绿 · doctor 9 项自检）
-Day 5  上午: 回归（全量 typecheck / test / pre-commit）✅ tsc 0 error · vitest 4988/5014（26 历史遗留）· pytest 101/101 · prettier 8/8 · PR#5 回归修复 8 文件 15 用例
-       下午: TODO.md V183 → V184 里程碑封版
-```
+#### 5. CRM 进阶：RFM 客户分群 + 销售预测
+- RFM 模块 [svc/crm/src/modules/rfm.rs](file:///Users/air/TOPEMS/svc/crm/src/modules/rfm.rs)：
+  - RfmConfig / RfmRecord / RfmSegment（8 种分群：Champion/Loyal/Potential/New/AtRisk/CannotLost/Hibernating/Lost）
+  - 路由：POST /rfm/analyze、GET /rfm/segments、GET /rfm/customer/{id}
+  - 算法：SQL 聚合 customer_orders 计算原始 R/F/M → 五分位打分 → RFM 组合映射分群 → 缓存到 rfm_results 表
+  - 新表 customer_orders、rfm_results，遵循 schema defense 双更新模式（CREATE TABLE + TABLE_DEFS）
+  - 20 个单元测试
+- 销售预测模块 [svc/crm/src/modules/forecast.rs](file:///Users/air/TOPEMS/svc/crm/src/modules/forecast.rs)：
+  - ForecastConfig / ForecastResult / ForecastMethod（4 种方法：moving_average/exponential_smoothing/linear_regression/weighted_moving_average）
+  - 路由：POST /forecast/predict、GET /forecast/methods、POST /forecast/evaluate
+  - 误差指标：MAPE、RMSE、R²
+  - 28 个单元测试
+- 前端 API client：
+  - [apps/web/src/api/crm/rfm.ts](file:///Users/air/TOPEMS/apps/web/src/api/crm/rfm.ts) — rfmApi（analyze/getSegments/getCustomerRfm）
+  - [apps/web/src/api/crm/forecast.ts](file:///Users/air/TOPEMS/apps/web/src/api/crm/forecast.ts) — forecastApi（predict/getMethods/evaluate）
+  - [apps/web/src/api/crm/types.ts](file:///Users/air/TOPEMS/apps/web/src/api/crm/types.ts) — 新增 RFM/Forecast 全部类型
+  - [apps/web/src/api/crm/index.ts](file:///Users/air/TOPEMS/apps/web/src/api/crm/index.ts) — 导出 rfmApi、forecastApi
+- 前端测试 [apps/web/src/api/__tests__/crm-rfm-forecast.test.ts](file:///Users/air/TOPEMS/apps/web/src/api/__tests__/crm-rfm-forecast.test.ts) — 8 tests
 
-### V82-2c 交付小结（QMS/LIMS/EHS 组件测试）
+### 5 项验收结果
 
-**文件**: [apps/web/src/__tests__/components/QmsLimsEhsComponents.test.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/__tests__/components/QmsLimsEhsComponents.test.tsx)
+| 验收项 | 命令 | 结果 |
+|--------|------|------|
+| TypeScript 类型检查 | `npx tsc --noEmit` | ✅ 0 errors |
+| Rust 0 warning | `cargo check -p topems-tms -p topems-aps -p topems-crm` | ✅ 0 warnings |
+| 导航三联校验 | `npx vitest run src/__tests__/integration/navigation.test.tsx` | ✅ 2/2 passed |
+| 前端 vitest | `npx vitest run tms-api aps-api wms-api bi-api crm-rfm-forecast` | ✅ 219/219 passed（5 文件） |
+| 后端 cargo test | `cargo test -p topems-tms -p topems-aps -p topems-crm --lib` | ✅ TMS 3 + APS 3 + CRM 89 passed（1 ignored 需 PG） |
 
-**用例分布 = 3 共享组件 × 11 用例**
+### 四层契约对齐
 
-| 组件 Suite | 用例数 | 覆盖维度 |
-|------------|--------|----------|
-| ListPageTemplate（列表模板，QMS/LIMS/EHS 三模块共享） | 5 | 空态（EmptyState 中文）、基础态（2 行 + render 自定义状态 Chip 中文）、交互态（搜索 placeholder + 排序 + 行操作 + 分页 total）、状态（Skeleton tbody ≥6 + ErrorEmptyState 文案） |
-| DetailPageTemplate（详情模板，三模块共享） | 4 | 空态（loading skeleton 覆盖 infoCard/tabs/sections）、基础态（infoCard 3 stats + 2 sections 标题/描述/内容）、交互（编辑/删除回调 + Tab 切换）、EHS 场景（面包屑 3 级 within + BackButton + share/print 自定义 actions 回调） |
-| FormPageTemplate（表单模板，三模块共享） | 2 | 状态（loading skeleton + error Alert "请检查表单" + success Alert "已保存"）、基础+交互（5 字段默认值回填 + sections 标题+描述 + 3 按钮 + 提交/重置/取消回调；onSubmit waitFor 保证 handleSubmit 异步） |
+- **Schema 层**：TMS/APS 后端 schema_defense.rs + init_database 中 CREATE TABLE；CRM 新增 customer_orders、rfm_results 表
+- **Model/DTO 层**：TMS 5 模块、APS 5 模块、CRM RFM/Forecast 完整 Rust 结构体
+- **Route/Handler 层**：TMS 5+3 路由、APS 5+3 路由、CRM 3+3 路由（axum 0.8 `{param}` 格式）
+- **Frontend API Client 层**：TMS/APS/CRM 完整 API client + 类型定义 + vitest 覆盖
 
-**关键 Mock 基线（V82-2a/b 复用 + V82-2c 增量增强）**
+### 模块上线状态
 
-| Mock 模块 | 增量改动（V82-2c 新增） |
-|-----------|----------------------|
-| `@topems/shared-components` · EmptyState | `message` → 真实签名 `title / description / action`，匹配真实组件传 `title={emptyMessage} description=...` |
-| `@topems/shared-components` · ErrorEmptyState | `title / message` → 真实签名 `error / title / message / onRetry`，匹配 `<ErrorEmptyState error={error}>` 写法 |
-| `@/components/templates/PageHeader` | 新增 `breadcrumbs[] → <nav data-testid=breadcrumbs>` 渲染 + `backButton → <button data-testid=back-button>` 渲染（原仅 actions/title/subtitle） |
-| `@mui/material/Skeleton` | 放弃路径式 mock（vitest resolve 子模块不匹配）→ 断言改用 `container.querySelectorAll('span.MuiSkeleton-root')` 基于 MUI 真实 class |
-| react-hook-form handleSubmit 异步 | FormPageTemplate onSubmit 断言用 `await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))`，解决 `handleSubmit(handleFormSubmit)` 微任务时序 |
-| ListPageTemplate ColumnDef | 自定义渲染字段从 `cell(row)` → 真实签名 `render(row, index)` |
-
-**质量门禁三门闸**
-
-| 门禁 | 命令 | 结果 |
-|------|------|------|
-| vitest | `pnpm vitest run --project component src/__tests__/components/QmsLimsEhsComponents.test.tsx` | `Test Files 1 passed · Tests 11 passed (11)` |
-| tsc | `cd apps/web && pnpm tsc --noEmit` | exit 0 · 0 error |
-| prettier | `pnpm prettier --write src/__tests__/components/QmsLimsEhsComponents.test.tsx` | 已格式化 |
-
-### V82-2d 交付小结（GIS/BI/Portal 组件测试）
-
-**文件**: [apps/web/src/__tests__/components/DataInfraComponents.test.tsx](file:///Users/xingzhai/TOPEMS/apps/web/src/__tests__/components/DataInfraComponents.test.tsx)
-
-**用例分布 = 4 共享模板 × 13 用例**（覆盖 GIS 地图追踪/电子围栏、BI 经营分析/统计报表、Portal 系统设置/首页四种典型跨模块场景）
-
-| 组件 Suite | 用例数 | 覆盖维度 |
-|------------|--------|----------|
-| DashboardTemplate（BI 经营分析总览 / Portal 首页模板） | 4 | 空态（statCards=[] charts=[] table=undefined → 仅渲染标题，无卡片/图表/表格）、基础态（4 张 StatCards 标题+数值 + 最近事项 DataTable 3 行 + header actions "导出 CSV"）、交互（actions 导出回调 + DashboardTemplate 自动注入的 onRefresh "刷新"按钮回调）、状态（loading Skeleton ≥12 个 + DataTable loading Skeleton tbody ≥3 行） |
-| StatsPageTemplate（BI 分析报表 / 数据统计模板） | 3 | 空态（EmptyState "暂无数据" + action "立即同步" 按钮 → onAction 回调触发）、基础态（4 StatCards + 2 图表标题 + Top 表 3 行 + 工具条搜索/导出/刷新/时间范围）、交互（搜索 change+Enter；导出；刷新；Tab 切换；showTimeRange=false 隐藏时间范围 combobox） |
-| GisMapTemplate（GIS 地图追踪 / 电子围栏模板） | 3 | 空态（MapContainer mock 渲染 + 右侧 4 控件存在 + 初始图层 Drawer 未打开）、基础态（3 markers leaflet-marker + 1 polygon + 1 circle fence + 图层 Drawer 打开显示 2 base + 4 overlay 名称）、交互（marker click 回调参数断言 {id,name,position,status}；overlay switch toggle → 2 次 onLayerVisibilityChange；搜索 Drawer 打开 → Enter 提交 onSearch；轨迹 Play/Pause 通过 icon-play/pause 取 button → onTrackPlayback 两次） |
-| SettingsPageTemplate（Portal 系统 / 模块设置模板） | 3 | 状态（loading Skeleton ≥3 + error Alert "保存失败" + success Alert "已保存"）、基础态（tabs 2 项 + 基础设置 section 字段默认值 + 保存/重置按钮文本 + hasChanges=false 时禁用）、交互（先点重置 → onReset；再改字段 → onSave 带最新值 {系统名称:"TOPEMS V2"}；Tab 切换后权限设置 section 变更） |
-
-**关键 Mock 基线（V82-2a/b/c 复用 + V82-2d 增量增强）**
-
-| Mock 模块 | 增量改动（V82-2d 新增） |
-|-----------|----------------------|
-| `lucide-react` 图标 → `data-testid="icon-*"` | 新增 Play/Pause/Navigation/Layers/ZoomIn/Maximize2/RotateCcw/Trash2/Pentool/Square/Circle 等 GIS 场景图标注入，便于 `screen.getByTestId('icon-play').closest('button')` 取到父 IconButton，规避 Tooltip/aria-label 组合时 accessible name 计算歧义 |
-| `react-leaflet` Marker | 从 props 析构 `{ eventHandlers, onClick }`，优先把 `eventHandlers.click` 绑定为 mock div 的 onClick（leaflet 标准写法），兼容 GisMapTemplate `eventHandlers={{ click: (e) => onMarkerClick?.(marker, e) }}`；position/icon 等属性直接 data-* 渲染 |
-| `@mui/material` Drawer | 新增全局 partial mock：`Drawer: ({ open, children }) => open ? <div data-testid='mui-drawer'>{children}</div> : null`。解决 MUI Drawer variant=temporary 默认 portal 到 body → jsdom 下 `container.querySelector` / `screen.getByRole` 取不到 TrackPlayback/搜索 Drawer 内按钮的问题；GisMapTemplate 同时开启图层/搜索/轨迹三个 Drawer 时也能稳定 inline 渲染 |
-| GIS 控件 aria-label 查询陷阱（搜索/图层/导航等 IconButton Tooltip） | 弃用 `screen.getByRole('button',{name})` 与 `container.querySelector('button[aria-label="…"]')`，统一走 `data-testid="icon-*" .closest('button')`：既不受 MUI Tooltip 把 aria-label 转成 aria-describedby 的影响，也不受 renderWithProviders container 范围限制（Drawer mock 后虽然 inline，但更稳妥） |
-| TrackPlayback 实际 aria-label 值 | 源码 IconButton aria-label='执行'（非"播放"），配合 lucide Play/Pause svg 取 button，避免按字面"播放/暂停"猜值失败 |
-| DashboardTemplate onRefresh 自动注入 | 不渲染独立按钮时 `queryByRole('刷新')` 为 null，仅在传了 `onRefresh` prop 时才会被 PageContainer actions 加入；断言区分 presence/absence 两种场景 |
-
-**质量门禁三门闸**
-
-| 门禁 | 命令 | 结果 |
-|------|------|------|
-| vitest | `npx vitest run src/__tests__/components/DataInfraComponents.test.tsx` | `Test Files 1 passed · Tests 13 passed (13)` |
-| tsc | `cd apps/web && npx tsc --noEmit -p tsconfig.json` | exit 0 · 0 error |
-| prettier | `npx prettier --write src/__tests__/components/DataInfraComponents.test.tsx` | 已格式化（106ms） |
-
-### 验证
-
-- Code Wiki 语法：13 个章节 · 66 个二级/三级标题 · 无孤立 Markdown 语法错误 ✅
-- `git diff --stat docs/architecture/code-wiki.md`：本次净变更 >100 行 ✅
-- TODO.md 版本元信息一致性：头部 V183 + V183 专章节 = 同一版本号 ✅
-- 决策表完整性：§12.4 六行 × 六列（排序/任务/投入/收益/风险/决策理由）完整 ✅
-
-### V83-2 交付小结（CLI 能力补齐：dev setup / test / doctor）
-
-**新增/修改文件**
-
-| 文件 | 类型 | 说明 |
-|------|------|------|
-| [cli/src/topems_cli/commands/dev.py](file:///Users/xingzhai/TOPEMS/cli/src/topems_cli/commands/dev.py) | 新增 | `dev setup` 命令：5 步初始化（工具检查 → npm install → cargo build → DB 初始化 → 迁移），支持 `--skip-deps/--skip-db/--skip-migrations/--frontend-only/--backend-only` |
-| [cli/src/topems_cli/commands/doctor.py](file:///Users/xingzhai/TOPEMS/cli/src/topems_cli/commands/doctor.py) | 新增 | `doctor` 命令：9 项自检（Rust/Node/Python/PostgreSQL/Docker 工具链 + 端口可用性 + 环境配置文件 + DB 迁移 + 前端构建能力），支持 `--json/--verbose` |
-| [cli/src/topems_cli/commands/test.py](file:///Users/xingzhai/TOPEMS/cli/src/topems_cli/commands/test.py) | 修改 | `test` 命令增强：新增 `run_vitest()` / `run_tsc()` 函数 + `--frontend/-f` `--typecheck/-t` `--all` 选项，统一前端 vitest / 后端 cargo test / TypeScript 类型检查入口 |
-| [cli/src/topems_cli/__main__.py](file:///Users/xingzhai/TOPEMS/cli/src/topems_cli/__main__.py) | 修改 | 注册 `dev` 与 `doctor` 子命令 |
-| [cli/src/topems_cli/commands/__init__.py](file:///Users/xingzhai/TOPEMS/cli/src/topems_cli/commands/__init__.py) | 修改 | 导出 `dev` / `doctor` |
-| [cli/tests/test_commands_dev.py](file:///Users/xingzhai/TOPEMS/cli/tests/test_commands_dev.py) | 新增 | dev 命令单元测试 11 例 |
-| [cli/tests/test_commands_doctor.py](file:///Users/xingzhai/TOPEMS/cli/tests/test_commands_doctor.py) | 新增 | doctor 命令单元测试 14 例 |
-| [cli/tests/test_commands_test.py](file:///Users/xingzhai/TOPEMS/cli/tests/test_commands_test.py) | 修改 | test 命令测试增强 13 例（覆盖 vitest/tsc 函数） |
-
-**新增单元测试 = 38 例**
-
-| 测试文件 | 用例数 | 覆盖维度 |
-|----------|--------|----------|
-| test_commands_dev.py | 11 | `dev --help` · `dev setup --help` · `_check_tool` 存在/缺失 · `setup --skip-all/frontend-only/backend-only` · 工具检查输出 · dev 是 Group · setup 是 Command |
-| test_commands_doctor.py | 14 | `doctor --help/-v/--json` · `_check_tool` · `_check_port` 空闲/无效主机 · `_check_env_file` 不存在/空/带内容 · doctor 是 Command · 9 项检查 · 分数输出 |
-| test_commands_test.py | 13 | `test --help` · `--frontend/--typecheck/--backend` 选项 · `run_vitest/run_tsc/run_cargo_test` 签名 · 返回元组类型 · dev/doctor 测试文件存在 |
-
-**质量门禁**
-
-| 门禁 | 命令 | 结果 |
-|------|------|------|
-| pytest | `cd cli && python3 -m pytest tests/ -v --ignore=tests/integration` | `101 passed in 33.24s` ✅ |
-| CLI 端到端 | `topems dev setup --skip-deps --skip-db --skip-migrations` | 工具检查 6/6 已安装 · 退出码 0 ✅ |
-| CLI 端到端 | `topems doctor` | 9 项自检 · 7/9 通过（78 分）· 退出码 0 ✅ |
-
----
-
-## V184 · 里程碑封版（V183 阶段全量交付）
-
-### 封版元信息
-
-- **封版版本**: V184（基于 V183 架构基线）
-- **封版日期**: 2026-08-12
-- **HEAD 提交**: `3832e83d` test(react-query): fix PR#5 regression in 8 test files (Day 5 regression)
-- **前一里程碑**: V183（Code Wiki 结构化刷新 + 下一步路线图规划）
-
-### V183 阶段全量交付清单
-
-| 阶段 | 任务 | 交付物 | 质量门禁 |
-|------|------|--------|----------|
-| **V82-2a** ✅ | ERP/FINANCE 组件测试 | `ErpFinanceComponents.test.tsx` 14 用例 | vitest 14/14 · tsc 0 error · prettier ✅ |
-| **V82-2b** ✅ | SCM/WMS/SRM 组件测试 | `ScmWmsSrmComponents.test.tsx` 11 用例 | vitest 11/11 · tsc 0 error · prettier ✅ |
-| **V82-2c** ✅ | QMS/LIMS/EHS 组件测试 | `QmsLimsEhsComponents.test.tsx` 11 用例 | vitest 11/11 · tsc 0 error · prettier ✅ |
-| **V82-2d** ✅ | GIS/BI/Portal 组件测试 | `DataInfraComponents.test.tsx` 13 用例 | vitest 13/13 · tsc 0 error · prettier ✅ |
-| **V83-1** ✅ | React Query 标准化审计 + 批量修复 | PR#5（330 files +10114 -2713）+ PR#5.1 D3.2 补漏 | D1=100% · D2=96.9% · D3.1=99.7% · D3.2=100% · D4=100% · D5 已完成 |
-| **V83-2** ✅ | CLI 能力补齐（dev setup / test / doctor） | 3 命令 + 38 单元测试 | pytest 101/101 · `topems doctor` 9 项自检 |
-| **Day 5** ✅ | 回归 + PR#5 测试修复 + 历史遗留清零 | 8 文件 15 用例修复 + 26 历史遗留清零 | tsc 0 error · vitest 5024/5024（0 失败）· pytest 101/101 · prettier ✅ |
-
-### 封版质量基线（Day 5 回归）
-
-| 门禁 | 命令 | 结果 |
-|------|------|------|
-| TypeScript 类型检查 | `npx tsc --noEmit -p apps/web/tsconfig.json` | exit 0 · 0 errors ✅ |
-| 前端 vitest | `npx vitest run --no-coverage` | 5024 passed / 0 failed ✅ |
-| CLI pytest | `python3 -m pytest tests/ --ignore=tests/integration` | 101 passed ✅ |
-| Prettier 格式 | `npx prettier --check` (8 修复文件) | 8/8 All matched files use Prettier code style ✅ |
-| Pre-commit 钩子 | git commit (API/page/icon 检查) | All pre-commit checks passed ✅ |
-
-### V183 阶段累计统计
-
-| 指标 | 数值 |
-|------|------|
-| 提交数 | 5 个语义提交（PR#1~PR#6 + Day 5 回归） |
-| 变更文件数 | 350+ 文件（V82-2 测试 + PR#5 标准化 + CLI + Day 5 回归） |
-| 新增代码行 | +11000 行（PR#5 +10114 / CLI +901 / 测试用例 +1000+） |
-| 删除代码行 | -2700 行（PR#5 标准化去重） |
-| 新增测试用例 | 88 组件测试（V82-2a/b/c/d）+ 38 CLI 单元测试 + 15 PR#5 回归修复 = 141 例 |
-| React Query 合规率 | D1=100% · D2=96.9% · D3.1=99.7% · D3.2=100% · D4=100% · D5 已完成 |
-| CLI 新增命令 | 3 个（`dev setup` / `doctor` / `test` 增强） |
-
-### 封版声明
-
-V183 阶段所有 P0/P1 任务已全部交付并通过质量门禁。封版后进入 V184 维护期：
-
-- ✅ **架构基线锁定**：V183 Code Wiki v4.1 为基线文档
-- ✅ **测试基线锁定**：88 组件测试 + 38 CLI 单元测试 + 101 pytest 全绿
-- ✅ **React Query 标准化基线锁定**：D1-D5 全部达标（D3.2=100%）
-- ✅ **CLI 工具基线锁定**：`topems dev setup` / `topems doctor` / `topems test` 三命令可用
-- ⏭ **下一步**: V84 AI Copilot / E2E 测试 / V85 性能优化（后置任务，非本里程碑范围）
-
-### 已知技术债
-
-无历史遗留测试失败。所有 26 项历史遗留（canonical-storage / common-button / runtime-routes / storage / mobileDetector / IamAdmin / api-client / websocket）已在 Day 5 全部清零。
+| 模块 | 后端 | 前端 API | 前端页面 | 模块注册 | vitest | cargo test |
+|------|------|----------|----------|----------|--------|------------|
+| WMS | ✅ | ✅ | ✅（已有） | ✅（已有） | 90 | 2 |
+| BI | ✅ | ✅ | ✅（已有） | ✅（已有） | 63 | 17 |
+| TMS | ✅ | ✅ | ✅（6 页） | ✅（本次） | 28 | 3 |
+| APS | ✅ | ✅ | ✅（6 页） | ✅（本次） | 30 | 3 |
+| CRM 进阶 | ✅ | ✅ | — | — | 8 | 89 |

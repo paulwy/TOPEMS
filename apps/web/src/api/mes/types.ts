@@ -1133,3 +1133,74 @@ export interface ProductionKanbanData {
     oee?: number;
   }>;
 }
+
+// ==================== FSM 状态枚举（与 svc/mes/src/shared/fsm.rs 1:1） ====================
+export type { ProductionOrderStatus, WorkOrderStatus, WorkReportStatus } from '@/types/mes';
+export type { QualityInspectionResult, TraceabilityStatus, EquipmentStatus } from '@/types/mes';
+export type { AnomalyStatus, AnomalySeverity } from '@/types/mes';
+
+// ==================== 审批 DTO ====================
+export interface ApprovalStartRequest {
+  reason: string;
+  change_scope?: string;
+  expected_approval_version?: number;
+}
+
+export interface ApprovalDecisionRequest {
+  approval_id: string;
+  comment: string;
+  expected_approval_version: number;
+}
+
+export interface ApprovalResponse {
+  approval_id: string;
+  entity_id: string;
+  entity_type: string;
+  status: 'pending' | 'approved' | 'rejected';
+  current_level: number;
+  max_level: number;
+  approver_chain: string[];
+  created_at: string;
+  decided_at: string | null;
+}
+
+// ==================== BI 聚合类型 ====================
+export interface OeeDashboardData {
+  overall_oee: number;
+  availability_avg: number;
+  performance_avg: number;
+  quality_avg: number;
+  by_equipment: { equipment_id: string; equipment_name: string; oee: number; shift: string }[];
+  trend_24h: { timestamp: string; oee: number }[];
+}
+
+export interface DeliveryAnalyticsData {
+  on_time_rate: number;
+  sla_achievement: number;
+  top10_delayed: { order_no: string; delay_days: number; reason: string }[];
+  distribution: { order_no: string; planned: string; actual: string; diff_days: number }[];
+}
+
+export interface QualityParetoData {
+  defect_types: { type: string; count: number; cumulative_pct: number }[];
+  heatmap: { process: string; defect_type: string; count: number }[];
+  disposition: { category: string; count: number }[];
+}
+
+export interface MtbfData {
+  by_equipment_type: { type: string; mtbf_hours: number; mttr_hours: number }[];
+  fault_reasons: { reason: string; frequency: number }[];
+  scatter: { mtbf: number; oee: number; label: string }[];
+}
+
+export interface EnergyCostData {
+  per_unit_trend: { date: string; kwh_per_unit: number }[];
+  energy_mix: { type: string; percentage: number; cost: number }[];
+  workshop_top_n: { workshop: string; cost: number }[];
+}
+
+export interface CapacityUtilizationData {
+  heatmap: { equipment: string; date: string; shift: string; utilization: number }[];
+  waterfall: { stage: string; value: number }[];
+  bottleneck_top10: { equipment: string; utilization: number }[];
+}
