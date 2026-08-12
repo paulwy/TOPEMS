@@ -18,7 +18,7 @@ export const APS_PATHS = {
 export const apsModuleConfig: RouteModuleConfig = {
   code: 'aps',
   name: '高级计划排程',
-  icon: 'CalendarClock',
+  icon: 'CalendarCheck',
   path: APS_PATHS.root,
   source: 'plugin',
   suite: 'manufacturing',
@@ -118,7 +118,7 @@ export const apsModuleConfig: RouteModuleConfig = {
 export const apsNavConfig: ModuleNavConfig = {
   code: 'aps',
   name: '高级计划排程',
-  icon: 'CalendarClock',
+  icon: 'CalendarCheck',
   path: APS_PATHS.root,
   permission: 'aps:module:read',
   source: 'plugin',
@@ -152,7 +152,7 @@ export const apsNavConfig: ModuleNavConfig = {
     {
       code: 'aps-schedules',
       label: '排程管理',
-      icon: 'CalendarClock',
+      icon: 'CalendarCheck',
       path: APS_PATHS.schedules,
       permission: 'aps:schedule:read',
       order: 2,
