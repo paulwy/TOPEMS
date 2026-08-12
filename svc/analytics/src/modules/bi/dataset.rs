@@ -169,18 +169,16 @@ pub async fn get_dataset(
             "data": dataset,
             "message": "获取数据集成功"
         })),
-        Err(sqlx::Error::RowNotFound) => Json(serde_json::json!({
-            "success": false,
-            "data": null,
-            "message": "数据集不存在"
-        })),
+        Err(sqlx::Error::RowNotFound) => Json(topems_shared_core::response::error_value(
+            500,
+            "数据集不存在",
+        )),
         Err(e) => {
             warn!("获取数据集失败: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "data": null,
-                "message": "获取数据集失败"
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                "获取数据集失败",
+            ))
         }
     }
 }
@@ -230,11 +228,10 @@ pub async fn create_dataset(
         }
         Err(e) => {
             warn!("创建数据集失败: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "data": null,
-                "message": "创建数据集失败"
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                "创建数据集失败",
+            ))
         }
     }
 }
@@ -281,11 +278,10 @@ pub async fn update_dataset(
         }
         Err(e) => {
             warn!("更新数据集失败: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "data": null,
-                "message": "更新数据集失败"
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                "更新数据集失败",
+            ))
         }
     }
 }
@@ -321,11 +317,10 @@ pub async fn delete_dataset(
         }
         Err(e) => {
             warn!("删除数据集失败: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "data": null,
-                "message": "删除数据集失败"
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                "删除数据集失败",
+            ))
         }
     }
 }
@@ -365,11 +360,10 @@ pub async fn publish_dataset(
         }
         Err(e) => {
             warn!("发布数据集失败: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "data": null,
-                "message": "发布数据集失败"
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                "发布数据集失败",
+            ))
         }
     }
 }
@@ -409,11 +403,10 @@ pub async fn refresh_dataset(
         }
         Err(e) => {
             warn!("刷新数据集失败: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "data": null,
-                "message": "刷新数据集失败"
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                "刷新数据集失败",
+            ))
         }
     }
 }
@@ -456,18 +449,16 @@ pub async fn get_dataset_preview(
                 "message": "获取数据集预览成功"
             }))
         }
-        Err(sqlx::Error::RowNotFound) => Json(serde_json::json!({
-            "success": false,
-            "data": null,
-            "message": "数据集不存在"
-        })),
+        Err(sqlx::Error::RowNotFound) => Json(topems_shared_core::response::error_value(
+            500,
+            "数据集不存在",
+        )),
         Err(e) => {
             warn!("获取数据集预览失败: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "data": null,
-                "message": "获取数据集预览失败"
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                "获取数据集预览失败",
+            ))
         }
     }
 }

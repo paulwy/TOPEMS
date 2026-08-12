@@ -191,10 +191,10 @@ pub async fn list_sync_records(
     let total: i64 = match count_query.fetch_one(&state.pool).await {
         Ok(t) => t,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to count sync records: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to count sync records: {}", e),
+            ));
         }
     };
 
@@ -217,10 +217,10 @@ pub async fn list_sync_records(
     let rows = match list_query.fetch_all(&state.pool).await {
         Ok(r) => r,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list sync records: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list sync records: {}", e),
+            ));
         }
     };
 
@@ -270,10 +270,10 @@ pub async fn get_sync_record(
     {
         Ok(r) => r,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get sync record: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get sync record: {}", e),
+            ));
         }
     };
 
@@ -283,10 +283,10 @@ pub async fn get_sync_record(
             "message": "Get sync record",
             "data": SyncRecordResponse::from(r)
         })),
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Sync record not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Sync record not found",
+        )),
     }
 }
 
@@ -319,17 +319,17 @@ pub async fn create_sync_record(
         {
             Ok(r) => r,
             Err(e) => {
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("Failed to validate data source: {}", e)
-                }));
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to validate data source: {}", e),
+                ));
             }
         };
     if ds_exists.is_none() {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "Data source not found"
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "Data source not found",
+        ));
     }
 
     // The INSERT...RETURNING below only returns table columns; re-fetch with the JOIN
@@ -356,10 +356,10 @@ pub async fn create_sync_record(
     .await;
 
     if let Err(e) = row {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create sync record: {}", e)
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create sync record: {}", e),
+        ));
     }
 
     match get_sync_record(State(state), Path(id)).await {
@@ -415,10 +415,10 @@ pub async fn update_sync_record(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() == 0 => Json(serde_json::json!({
-            "success": false,
-            "message": "Sync record not found"
-        })),
+        Ok(r) if r.rows_affected() == 0 => Json(topems_shared_core::response::error_value(
+            500,
+            "Sync record not found",
+        )),
         Ok(_) => match get_sync_record(State(state), Path(id)).await {
             Json(value) => Json(serde_json::json!({
                 "success": true,
@@ -426,10 +426,10 @@ pub async fn update_sync_record(
                 "data": value.get("data").cloned().unwrap_or(serde_json::Value::Null)
             })),
         },
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update sync record: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update sync record: {}", e),
+        )),
     }
 }
 
@@ -451,19 +451,19 @@ pub async fn delete_sync_record(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() == 0 => Json(serde_json::json!({
-            "success": false,
-            "message": "Sync record not found"
-        })),
+        Ok(r) if r.rows_affected() == 0 => Json(topems_shared_core::response::error_value(
+            500,
+            "Sync record not found",
+        )),
         Ok(_) => Json(serde_json::json!({
             "success": true,
             "message": "Delete sync record",
             "data": true
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete sync record: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete sync record: {}", e),
+        )),
     }
 }
 
@@ -496,25 +496,25 @@ pub async fn retry_sync(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "Sync record not found"
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "Sync record not found",
+            ));
         }
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to load sync record: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to load sync record: {}", e),
+            ));
         }
     };
 
     if existing.status == "running" {
         warn!("Cannot retry sync record {} while it is running", id);
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "Sync is currently running and cannot be retried"
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "Sync is currently running and cannot be retried",
+        ));
     }
 
     let now = Utc::now().naive_utc();
@@ -546,10 +546,10 @@ pub async fn retry_sync(
     .await;
 
     if let Err(e) = result {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to reset sync record: {}", e)
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to reset sync record: {}", e),
+        ));
     }
 
     let refreshed = match get_sync_record(State(state), Path(id)).await {

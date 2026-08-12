@@ -38,12 +38,10 @@ pub async fn check_email_availability(
     if email.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "email 不能为空",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "email 不能为空",
+            )),
         );
     }
 
@@ -72,12 +70,10 @@ pub async fn check_email_availability(
                 tracing::error!("Failed to check email: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询邮箱失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询邮箱失败: {}", e),
+                    )),
                 );
             }
         };
@@ -113,12 +109,10 @@ pub async fn check_username_availability(
     if username.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "username 不能为空",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "username 不能为空",
+            )),
         );
     }
 
@@ -133,12 +127,10 @@ pub async fn check_username_availability(
                 tracing::error!("Failed to check username: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询用户名失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询用户名失败: {}", e),
+                    )),
                 );
             }
         };

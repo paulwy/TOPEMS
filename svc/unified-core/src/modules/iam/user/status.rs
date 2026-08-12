@@ -25,12 +25,10 @@ pub async fn disable_user(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID",
+                )),
             );
         }
     };
@@ -46,12 +44,10 @@ pub async fn disable_user(
                 tracing::error!("Database query failed: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询用户失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询用户失败: {}", e),
+                    )),
                 );
             }
         };
@@ -59,12 +55,7 @@ pub async fn disable_user(
     if existing_user_count == 0 {
         return (
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "用户不存在",
-                "data": null,
-                "code": 404
-            })),
+            Json(topems_shared_core::response::error_value(404, "用户不存在")),
         );
     }
 
@@ -101,12 +92,8 @@ pub async fn disable_user(
         }
         Err(e) => {
             tracing::error!("Failed to disable user: {}", e);
-            let response_body = serde_json::json!({
-                "success": false,
-                "message": format!("禁用用户失败: {}", e),
-                "data": null,
-                "code": 500
-            });
+            let response_body =
+                topems_shared_core::response::error_value(500, &format!("禁用用户失败: {}", e));
 
             record_audit_log(
                 &state.pool,
@@ -140,12 +127,10 @@ pub async fn enable_user(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID",
+                )),
             );
         }
     };
@@ -161,12 +146,10 @@ pub async fn enable_user(
                 tracing::error!("Database query failed: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询用户失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询用户失败: {}", e),
+                    )),
                 );
             }
         };
@@ -174,12 +157,7 @@ pub async fn enable_user(
     if existing_user_count == 0 {
         return (
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "用户不存在",
-                "data": null,
-                "code": 404
-            })),
+            Json(topems_shared_core::response::error_value(404, "用户不存在")),
         );
     }
 
@@ -216,12 +194,8 @@ pub async fn enable_user(
         }
         Err(e) => {
             tracing::error!("Failed to enable user: {}", e);
-            let response_body = serde_json::json!({
-                "success": false,
-                "message": format!("启用用户失败: {}", e),
-                "data": null,
-                "code": 500
-            });
+            let response_body =
+                topems_shared_core::response::error_value(500, &format!("启用用户失败: {}", e));
 
             record_audit_log(
                 &state.pool,
@@ -258,12 +232,10 @@ pub async fn change_password(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID",
+                )),
             );
         }
     };
@@ -279,12 +251,10 @@ pub async fn change_password(
                 tracing::error!("Database query failed: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询用户失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询用户失败: {}", e),
+                    )),
                 );
             }
         };
@@ -292,12 +262,7 @@ pub async fn change_password(
     if existing_user_count == 0 {
         return (
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "用户不存在",
-                "data": null,
-                "code": 404
-            })),
+            Json(topems_shared_core::response::error_value(404, "用户不存在")),
         );
     }
 
@@ -308,12 +273,10 @@ pub async fn change_password(
     if new_password.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "新密码不能为空",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "新密码不能为空",
+            )),
         );
     }
 
@@ -325,12 +288,10 @@ pub async fn change_password(
     if hashed_password.is_empty() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "密码加密失败",
-                "data": null,
-                "code": 500
-            })),
+            Json(topems_shared_core::response::error_value(
+                500,
+                "密码加密失败",
+            )),
         );
     }
 
@@ -358,12 +319,10 @@ pub async fn change_password(
             tracing::error!("Failed to change password: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("修改密码失败: {}", e),
-                    "data": null,
-                    "code": 500
-                })),
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("修改密码失败: {}", e),
+                )),
             )
         }
     }

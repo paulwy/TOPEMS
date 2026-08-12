@@ -157,10 +157,7 @@ pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Val
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list widgets: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(500, &format!("Failed to list widgets: {}", e)));
         }
     };
 
@@ -218,10 +215,7 @@ pub async fn get_widgets_by_dashboard(
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list widgets: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(500, &format!("Failed to list widgets: {}", e)));
         }
     };
 
@@ -314,10 +308,10 @@ pub async fn create_widget(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create widget: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create widget: {}", e),
+        )),
     }
 }
 
@@ -352,10 +346,7 @@ pub async fn get_widget(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get widget: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(500, &format!("Failed to get widget: {}", e)));
         }
     };
 
@@ -377,10 +368,10 @@ pub async fn get_widget(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Widget not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Widget not found",
+        )),
     }
 }
 
@@ -455,14 +446,14 @@ pub async fn update_widget(
                 }
             }))
         }
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Widget not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update widget: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Widget not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update widget: {}", e),
+        )),
     }
 }
 
@@ -503,14 +494,14 @@ pub async fn delete_widget(
                 "message": "Delete widget"
             }))
         }
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Widget not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete widget: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Widget not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete widget: {}", e),
+        )),
     }
 }
 
@@ -539,10 +530,10 @@ pub async fn get_widget_data(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get widget: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get widget: {}", e),
+            ));
         }
     };
 
@@ -629,10 +620,10 @@ pub async fn get_widget_data(
                 }
             }))
         }
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Widget not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Widget not found",
+        )),
     }
 }
 
@@ -671,10 +662,10 @@ pub async fn get_widget_data_realtime(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get widget: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get widget: {}", e),
+            ));
         }
     };
 
@@ -754,17 +745,17 @@ pub async fn get_widget_data_realtime(
                 }
                 Err(e) => {
                     tracing::error!("Failed to generate chart for widget {}: {}", id, e);
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("Failed to generate chart data: {}", e)
-                    }))
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("Failed to generate chart data: {}", e),
+                    ))
                 }
             }
         }
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Widget not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Widget not found",
+        )),
     }
 }
 

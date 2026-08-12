@@ -94,10 +94,7 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list reports: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(500, &format!("Failed to list reports: {}", e)));
         }
     };
 
@@ -188,10 +185,10 @@ pub async fn create_report(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create report: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create report: {}", e),
+        )),
     }
 }
 
@@ -226,10 +223,7 @@ pub async fn get_report(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get report: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(500, &format!("Failed to get report: {}", e)));
         }
     };
 
@@ -251,10 +245,10 @@ pub async fn get_report(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Report not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Report not found",
+        )),
     }
 }
 
@@ -325,14 +319,14 @@ pub async fn update_report(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Report not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update report: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Report not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update report: {}", e),
+        )),
     }
 }
 
@@ -370,14 +364,14 @@ pub async fn delete_report(
             "success": true,
             "message": "Delete report"
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Report not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete report: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Report not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete report: {}", e),
+        )),
     }
 }
 
@@ -401,16 +395,16 @@ pub async fn query_report_data(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "Report not found"
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "Report not found",
+            ));
         }
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get report: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get report: {}", e),
+            ));
         }
     };
 
@@ -496,10 +490,10 @@ pub async fn query_report_data(
                 }
             }))
         }
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to query report data: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to query report data: {}", e),
+        )),
     }
 }
 

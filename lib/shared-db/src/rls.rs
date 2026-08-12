@@ -149,23 +149,22 @@ pub enum TenantContextRejection {
 
 impl IntoResponse for TenantContextRejection {
     fn into_response(self) -> axum::response::Response {
-        let (status, message) = match self {
-            TenantContextRejection::MissingTenantId => {
-                (StatusCode::BAD_REQUEST, "Missing x-tenant-id header")
-            }
-            TenantContextRejection::InvalidTenantId => {
-                (StatusCode::BAD_REQUEST, "Invalid x-tenant-id format")
-            }
+        let (status, message, error_code) = match self {
+            TenantContextRejection::MissingTenantId => (
+                StatusCode::BAD_REQUEST,
+                "Missing x-tenant-id header",
+                "MISSING_TENANT_ID",
+            ),
+            TenantContextRejection::InvalidTenantId => (
+                StatusCode::BAD_REQUEST,
+                "Invalid x-tenant-id format",
+                "INVALID_TENANT_ID",
+            ),
         };
 
-        (
-            status,
-            Json(serde_json::json!({
-                "error": message,
-                "status": status.as_u16(),
-            })),
-        )
-            .into_response()
+        let payload = topems_shared_core::ErrorPayload::new(status.as_u16(), message)
+            .with_error_code(error_code);
+        (status, Json(payload)).into_response()
     }
 }
 

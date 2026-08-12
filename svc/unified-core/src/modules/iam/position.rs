@@ -70,11 +70,10 @@ pub async fn create_position(
     .await;
 
     if result.is_err() {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "创建岗位失败",
-            "code": 500,
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "创建岗位失败",
+        ));
     }
 
     for perm in &req.permissions {
@@ -128,11 +127,7 @@ pub async fn get_position(
     .flatten();
 
     if row.is_none() {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "岗位不存在",
-            "code": 404,
-        }));
+        return Json(topems_shared_core::response::error_value(404, "岗位不存在"));
     }
 
     let p = row.expect("row should exist after is_none() check");
@@ -186,11 +181,7 @@ pub async fn update_position(
             .flatten();
 
     if exists.is_none() {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "岗位不存在",
-            "code": 404,
-        }));
+        return Json(topems_shared_core::response::error_value(404, "岗位不存在"));
     }
 
     if let Some(name) = &req.name {
@@ -271,10 +262,9 @@ pub async fn delete_position(
             "message": "删除成功",
             "code": 200,
         })),
-        _ => Json(serde_json::json!({
-            "success": false,
-            "message": "删除岗位失败",
-            "code": 404,
-        })),
+        _ => Json(topems_shared_core::response::error_value(
+            404,
+            "删除岗位失败",
+        )),
     }
 }

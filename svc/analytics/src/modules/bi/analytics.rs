@@ -20,12 +20,10 @@ pub async fn get_module_analytics(Path(module_id): Path<String>) -> Json<Value> 
         "laboratory" | "lims" => get_laboratory_analytics().await,
         "ehs" => get_ehs_analytics().await,
         "srm" => get_srm_analytics().await,
-        _ => Json(serde_json::json!({
-            "code": -1,
-            "success": false,
-            "data": null,
-            "message": format!("Unknown module: {}", module_id)
-        })),
+        _ => Json(topems_shared_core::response::error_value(
+            400,
+            &format!("Unknown module: {}", module_id),
+        )),
     };
     result
 }

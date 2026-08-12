@@ -55,12 +55,10 @@ pub async fn list_users(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to count users: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("获取用户总数失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("获取用户总数失败: {}", e),
+            ));
         }
     };
 
@@ -126,12 +124,10 @@ pub async fn list_users(
         }
         Err(e) => {
             tracing::error!("Failed to fetch users: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "message": format!("获取用户列表失败: {}", e),
-                "data": null,
-                "code": 500
-            }))
+            Json(topems_shared_core::response::error_value(
+                500,
+                &format!("获取用户列表失败: {}", e),
+            ))
         }
     }
 }
@@ -182,12 +178,10 @@ pub async fn create_user(
         tracing::warn!("Create user failed: username is required");
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "用户名是必填字段",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "用户名是必填字段",
+            )),
         );
     }
 
@@ -195,12 +189,10 @@ pub async fn create_user(
         tracing::warn!("Create user failed: email is required");
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "邮箱是必填字段",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "邮箱是必填字段",
+            )),
         );
     }
 
@@ -208,12 +200,10 @@ pub async fn create_user(
         tracing::warn!("Create user failed: password is required");
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "密码是必填字段",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "密码是必填字段",
+            )),
         );
     }
 
@@ -221,12 +211,10 @@ pub async fn create_user(
         tracing::warn!("Create user failed: password too short");
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "密码长度不能少于6位",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "密码长度不能少于6位",
+            )),
         );
     }
 
@@ -234,12 +222,10 @@ pub async fn create_user(
         tracing::warn!("Create user failed: invalid email format");
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "邮箱格式不正确",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "邮箱格式不正确",
+            )),
         );
     }
 
@@ -255,12 +241,10 @@ pub async fn create_user(
             tracing::error!("Failed to check username: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("查询用户失败: {}", e),
-                    "data": null,
-                    "code": 500
-                })),
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
             );
         }
     };
@@ -269,12 +253,10 @@ pub async fn create_user(
         tracing::warn!("Create user failed: username already exists");
         return (
             StatusCode::CONFLICT,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "用户名已存在",
-                "data": null,
-                "code": 409
-            })),
+            Json(topems_shared_core::response::error_value(
+                409,
+                "用户名已存在",
+            )),
         );
     }
 
@@ -290,12 +272,10 @@ pub async fn create_user(
             tracing::error!("Failed to check email: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("查询邮箱失败: {}", e),
-                    "data": null,
-                    "code": 500
-                })),
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询邮箱失败: {}", e),
+                )),
             );
         }
     };
@@ -304,12 +284,7 @@ pub async fn create_user(
         tracing::warn!("Create user failed: email already exists");
         return (
             StatusCode::CONFLICT,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "邮箱已存在",
-                "data": null,
-                "code": 409
-            })),
+            Json(topems_shared_core::response::error_value(409, "邮箱已存在")),
         );
     }
 
@@ -322,12 +297,10 @@ pub async fn create_user(
     if hashed_password.is_empty() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "密码加密失败",
-                "data": null,
-                "code": 500
-            })),
+            Json(topems_shared_core::response::error_value(
+                500,
+                "密码加密失败",
+            )),
         );
     }
 
@@ -379,12 +352,7 @@ pub async fn create_user(
             if let Some(db_error) = e.as_database_error() {
                 if db_error.code().unwrap_or_default() == "23505" {
                     tracing::warn!("Create user failed: unique constraint violation");
-                    let response_body = serde_json::json!({
-                        "success": false,
-                        "message": "数据重复",
-                        "data": null,
-                        "code": 409
-                    });
+                    let response_body = topems_shared_core::response::error_value(409, "数据重复");
                     record_audit_log(
                         &state.pool,
                         operator_id,
@@ -400,12 +368,8 @@ pub async fn create_user(
                 }
             }
             tracing::error!("Failed to create user: {}", e);
-            let response_body = serde_json::json!({
-                "success": false,
-                "message": format!("创建用户失败: {}", e),
-                "data": null,
-                "code": 500
-            });
+            let response_body =
+                topems_shared_core::response::error_value(500, &format!("创建用户失败: {}", e));
             record_audit_log(
                 &state.pool,
                 operator_id,
@@ -435,12 +399,10 @@ pub async fn get_user(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID",
+                )),
             );
         }
     };
@@ -504,12 +466,7 @@ pub async fn get_user(
             tracing::warn!("User not found: {}", id);
             (
                 StatusCode::NOT_FOUND,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "用户不存在",
-                    "data": null,
-                    "code": 404
-                })),
+                Json(topems_shared_core::response::error_value(404, "用户不存在")),
             )
         }
     }
@@ -535,12 +492,10 @@ pub async fn update_user(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID",
+                )),
             );
         }
     };
@@ -557,12 +512,10 @@ pub async fn update_user(
             tracing::error!("Database query failed: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("查询用户失败: {}", e),
-                    "data": null,
-                    "code": 500
-                })),
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
             );
         }
     };
@@ -570,12 +523,7 @@ pub async fn update_user(
     if existing_user_count == 0 {
         return (
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "用户不存在",
-                "data": null,
-                "code": 404
-            })),
+            Json(topems_shared_core::response::error_value(404, "用户不存在")),
         );
     }
 
@@ -593,12 +541,7 @@ pub async fn update_user(
                 tracing::error!("Failed to check username: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询用户失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(500, &format!("查询用户失败: {}", e))),
                 );
             }
         };
@@ -606,12 +549,10 @@ pub async fn update_user(
         if existing_count > 0 {
             return (
                 StatusCode::CONFLICT,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "用户名已存在",
-                    "data": null,
-                    "code": 409
-                })),
+                Json(topems_shared_core::response::error_value(
+                    409,
+                    "用户名已存在",
+                )),
             );
         }
     }
@@ -630,12 +571,10 @@ pub async fn update_user(
                 tracing::error!("Failed to check email: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询邮箱失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询邮箱失败: {}", e),
+                    )),
                 );
             }
         };
@@ -643,12 +582,7 @@ pub async fn update_user(
         if existing_email_count > 0 {
             return (
                 StatusCode::CONFLICT,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "邮箱已存在",
-                    "data": null,
-                    "code": 409
-                })),
+                Json(topems_shared_core::response::error_value(409, "邮箱已存在")),
             );
         }
     }
@@ -698,12 +632,8 @@ pub async fn update_user(
         }
         Err(e) => {
             tracing::error!("Failed to update user: {}", e);
-            let response_body = serde_json::json!({
-                "success": false,
-                "message": format!("更新用户失败: {}", e),
-                "data": null,
-                "code": 500
-            });
+            let response_body =
+                topems_shared_core::response::error_value(500, &format!("更新用户失败: {}", e));
 
             record_audit_log(
                 &state.pool,
@@ -737,12 +667,10 @@ pub async fn delete_user(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID",
+                )),
             );
         }
     };
@@ -751,12 +679,10 @@ pub async fn delete_user(
         tracing::warn!("Delete user failed: cannot delete yourself");
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "不能删除自己",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "不能删除自己",
+            )),
         );
     }
 
@@ -772,12 +698,10 @@ pub async fn delete_user(
             tracing::error!("Database query failed: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("查询用户失败: {}", e),
-                    "data": null,
-                    "code": 500
-                })),
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
             );
         }
     };
@@ -785,12 +709,7 @@ pub async fn delete_user(
     if existing_user_count == 0 {
         return (
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "用户不存在",
-                "data": null,
-                "code": 404
-            })),
+            Json(topems_shared_core::response::error_value(404, "用户不存在")),
         );
     }
 
@@ -826,12 +745,8 @@ pub async fn delete_user(
         }
         Err(e) => {
             tracing::error!("Failed to delete user: {}", e);
-            let response_body = serde_json::json!({
-                "success": false,
-                "message": format!("删除用户失败: {}", e),
-                "data": null,
-                "code": 500
-            });
+            let response_body =
+                topems_shared_core::response::error_value(500, &format!("删除用户失败: {}", e));
 
             record_audit_log(
                 &state.pool,

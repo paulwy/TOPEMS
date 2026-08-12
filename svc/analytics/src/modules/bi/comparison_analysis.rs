@@ -157,11 +157,10 @@ pub async fn list_comparisons(
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list comparison analyses: {}", e),
-                "data": null
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list comparison analyses: {}", e),
+            ));
         }
     };
 
@@ -180,11 +179,10 @@ pub async fn list_comparisons(
     {
         Ok(c) => c,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to count comparison analyses: {}", e),
-                "data": null
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to count comparison analyses: {}", e),
+            ));
         }
     };
 
@@ -240,11 +238,10 @@ pub async fn get_comparison(
     let id = match Uuid::parse_str(&id_str) {
         Ok(id) => id,
         Err(_) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Invalid comparison analysis ID: {}", id_str),
-                "data": null
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Invalid comparison analysis ID: {}", id_str),
+            ));
         }
     };
 
@@ -264,11 +261,10 @@ pub async fn get_comparison(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get comparison analysis: {}", e),
-                "data": null
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get comparison analysis: {}", e),
+            ));
         }
     };
 
@@ -292,11 +288,10 @@ pub async fn get_comparison(
                 updated_at: row.updated_at.map(to_rfc3339).unwrap_or_default(),
             }
         })),
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Comparison analysis not found",
-            "data": null
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Comparison analysis not found",
+        )),
     }
 }
 
@@ -360,11 +355,10 @@ pub async fn create_comparison(
                 updated_at: row.updated_at.map(to_rfc3339).unwrap_or_default(),
             }
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create comparison analysis: {}", e),
-            "data": null
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create comparison analysis: {}", e),
+        )),
     }
 }
 
@@ -383,11 +377,10 @@ pub async fn update_comparison(
     let id = match Uuid::parse_str(&id_str) {
         Ok(id) => id,
         Err(_) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Invalid comparison analysis ID: {}", id_str),
-                "data": null
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Invalid comparison analysis ID: {}", id_str),
+            ));
         }
     };
 
@@ -445,16 +438,14 @@ pub async fn update_comparison(
                 updated_at: row.updated_at.map(to_rfc3339).unwrap_or_default(),
             }
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Comparison analysis not found",
-            "data": null
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update comparison analysis: {}", e),
-            "data": null
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Comparison analysis not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update comparison analysis: {}", e),
+        )),
     }
 }
 
@@ -472,11 +463,10 @@ pub async fn delete_comparison(
     let id = match Uuid::parse_str(&id_str) {
         Ok(id) => id,
         Err(_) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Invalid comparison analysis ID: {}", id_str),
-                "data": null
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Invalid comparison analysis ID: {}", id_str),
+            ));
         }
     };
 
@@ -499,16 +489,14 @@ pub async fn delete_comparison(
             "message": "Delete comparison analysis",
             "data": { "id": id }
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Comparison analysis not found",
-            "data": null
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete comparison analysis: {}", e),
-            "data": null
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Comparison analysis not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete comparison analysis: {}", e),
+        )),
     }
 }
 
@@ -530,11 +518,10 @@ pub async fn run_comparison(
     let id = match Uuid::parse_str(&id_str) {
         Ok(id) => id,
         Err(_) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Invalid comparison analysis ID: {}", id_str),
-                "data": null
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Invalid comparison analysis ID: {}", id_str),
+            ));
         }
     };
 
@@ -553,22 +540,20 @@ pub async fn run_comparison(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get comparison analysis: {}", e),
-                "data": null
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get comparison analysis: {}", e),
+            ));
         }
     };
 
     let row = match row {
         Some(r) => r,
         None => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "Comparison analysis not found",
-                "data": null
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "Comparison analysis not found",
+            ));
         }
     };
 
@@ -647,11 +632,10 @@ pub async fn run_comparison(
         .execute(&state.pool)
         .await;
 
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to persist comparison result: {}", e),
-            "data": null
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to persist comparison result: {}", e),
+        ));
     }
 
     let _ = sqlx::query!(
@@ -706,19 +690,17 @@ pub async fn get_comparison_result(
                 match default_id {
                     Ok(Some(default)) => default,
                     _ => {
-                        return Json(serde_json::json!({
-                            "success": false,
-                            "message": "No comparison analysis found in database",
-                            "data": null
-                        }));
+                        return Json(topems_shared_core::response::error_value(
+                            500,
+                            "No comparison analysis found in database",
+                        ));
                     }
                 }
             } else {
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("Invalid comparison analysis ID: {}", id_str),
-                    "data": null
-                }));
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Invalid comparison analysis ID: {}", id_str),
+                ));
             }
         }
     };
@@ -740,11 +722,10 @@ pub async fn get_comparison_result(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get comparison result: {}", e),
-                "data": null
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get comparison result: {}", e),
+            ));
         }
     };
 

@@ -53,10 +53,10 @@ pub async fn create_share_link(
                 created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create share link: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create share link: {}", e),
+        )),
     }
 }
 
@@ -82,10 +82,10 @@ pub async fn get_shared_dashboard(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get shared dashboard: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get shared dashboard: {}", e),
+            ));
         }
     };
 
@@ -104,10 +104,10 @@ pub async fn get_shared_dashboard(
                 "updated_at": row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Share link not found or expired"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Share link not found or expired",
+        )),
     }
 }
 
@@ -131,10 +131,10 @@ pub async fn list_share_links(
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list share links: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list share links: {}", e),
+            ));
         }
     };
 
@@ -182,13 +182,13 @@ pub async fn delete_share_link(
             "success": true,
             "message": "Delete share link"
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Share link not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete share link: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Share link not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete share link: {}", e),
+        )),
     }
 }

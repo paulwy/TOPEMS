@@ -119,14 +119,14 @@ pub async fn get_subscription(
                 "created_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
             }
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Subscription not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to get subscription: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Subscription not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to get subscription: {}", e),
+        )),
     }
 }
 
@@ -239,10 +239,10 @@ pub async fn create_subscription(
             "message": "Subscription created",
             "data": id
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create subscription: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create subscription: {}", e),
+        )),
     }
 }
 
@@ -274,10 +274,10 @@ pub async fn update_subscription(
             "success": true,
             "message": "Subscription updated"
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update subscription: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update subscription: {}", e),
+        )),
     }
 }
 
@@ -302,10 +302,10 @@ pub async fn delete_subscription(
             "success": true,
             "message": "Subscription deleted"
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete subscription: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete subscription: {}", e),
+        )),
     }
 }
 
@@ -339,13 +339,13 @@ pub async fn toggle_subscription(
                 }
             }))
         }
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Subscription not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to toggle subscription: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Subscription not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to toggle subscription: {}", e),
+        )),
     }
 }

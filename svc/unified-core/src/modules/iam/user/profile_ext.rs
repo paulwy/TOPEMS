@@ -21,12 +21,10 @@ pub async fn get_my_permissions(
         Ok(id) => id,
         Err(e) => {
             tracing::error!("Invalid user ID format: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "无效的用户ID",
-                "data": null,
-                "code": 400
-            }));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的用户ID",
+            ));
         }
     };
 
@@ -45,12 +43,7 @@ pub async fn get_my_permissions(
         Some(u) => u,
         None => {
             tracing::warn!("User not found: {}", claims.sub);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "用户不存在",
-                "data": null,
-                "code": 404
-            }));
+            return Json(topems_shared_core::response::error_value(404, "用户不存在"));
         }
     };
 
@@ -152,12 +145,10 @@ pub async fn check_my_permission(
             tracing::warn!("check_my_permission failed: permission is required");
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "permission 是必填字段",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "permission 是必填字段",
+                )),
             );
         }
     };
@@ -200,12 +191,10 @@ pub async fn update_current_user(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID",
+                )),
             );
         }
     };
@@ -215,12 +204,10 @@ pub async fn update_current_user(
             tracing::warn!("update_current_user failed: invalid email format");
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "邮箱格式不正确",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "邮箱格式不正确",
+                )),
             );
         }
 
@@ -237,12 +224,10 @@ pub async fn update_current_user(
                 tracing::error!("Failed to check email: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "success": false,
-                        "message": format!("查询邮箱失败: {}", e),
-                        "data": null,
-                        "code": 500
-                    })),
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("查询邮箱失败: {}", e),
+                    )),
                 );
             }
         };
@@ -250,12 +235,7 @@ pub async fn update_current_user(
         if existing_email_count > 0 {
             return (
                 StatusCode::CONFLICT,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "邮箱已存在",
-                    "data": null,
-                    "code": 409
-                })),
+                Json(topems_shared_core::response::error_value(409, "邮箱已存在")),
             );
         }
     }
@@ -346,12 +326,8 @@ pub async fn update_current_user(
         }
         Err(e) => {
             tracing::error!("Failed to update current user: {}", e);
-            let response_body = serde_json::json!({
-                "success": false,
-                "message": format!("更新当前用户失败: {}", e),
-                "data": null,
-                "code": 500
-            });
+            let response_body =
+                topems_shared_core::response::error_value(500, &format!("更新当前用户失败: {}", e));
 
             record_audit_log(
                 &state.pool,
@@ -389,12 +365,10 @@ pub async fn change_my_password(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID",
+                )),
             );
         }
     };
@@ -411,36 +385,30 @@ pub async fn change_my_password(
     if current_password.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "当前密码不能为空",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "当前密码不能为空",
+            )),
         );
     }
 
     if new_password.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "新密码不能为空",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "新密码不能为空",
+            )),
         );
     }
 
     if new_password.len() < 6 {
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "新密码长度不能少于6位",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "新密码长度不能少于6位",
+            )),
         );
     }
 
@@ -460,12 +428,7 @@ pub async fn change_my_password(
             tracing::warn!("User not found: {}", claims.sub);
             return (
                 StatusCode::NOT_FOUND,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "用户不存在",
-                    "data": null,
-                    "code": 404
-                })),
+                Json(topems_shared_core::response::error_value(404, "用户不存在")),
             );
         }
     };
@@ -482,12 +445,10 @@ pub async fn change_my_password(
         tracing::warn!("change_my_password failed: current password incorrect");
         return (
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "success": false,
-                "message": "当前密码不正确",
-                "data": null,
-                "code": 400
-            })),
+            Json(topems_shared_core::response::error_value(
+                400,
+                "当前密码不正确",
+            )),
         );
     }
 
@@ -497,12 +458,10 @@ pub async fn change_my_password(
             tracing::error!("Failed to hash password: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "密码加密失败",
-                    "data": null,
-                    "code": 500
-                })),
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    "密码加密失败",
+                )),
             );
         }
     };
@@ -541,12 +500,8 @@ pub async fn change_my_password(
         }
         Err(e) => {
             tracing::error!("Failed to change password: {}", e);
-            let response_body = serde_json::json!({
-                "success": false,
-                "message": format!("修改密码失败: {}", e),
-                "data": null,
-                "code": 500
-            });
+            let response_body =
+                topems_shared_core::response::error_value(500, &format!("修改密码失败: {}", e));
 
             record_audit_log(
                 &state.pool,
@@ -581,12 +536,10 @@ pub async fn update_my_avatar(
             tracing::warn!("Invalid user ID format: {}", e);
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "无效的用户ID",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "无效的用户ID",
+                )),
             );
         }
     };
@@ -597,12 +550,10 @@ pub async fn update_my_avatar(
             tracing::warn!("update_my_avatar failed: avatar_url is required");
             return (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "avatar_url 是必填字段",
-                    "data": null,
-                    "code": 400
-                })),
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "avatar_url 是必填字段",
+                )),
             );
         }
     };
@@ -684,12 +635,8 @@ pub async fn update_my_avatar(
         }
         Err(e) => {
             tracing::error!("Failed to update avatar: {}", e);
-            let response_body = serde_json::json!({
-                "success": false,
-                "message": format!("更新头像失败: {}", e),
-                "data": null,
-                "code": 500
-            });
+            let response_body =
+                topems_shared_core::response::error_value(500, &format!("更新头像失败: {}", e));
 
             record_audit_log(
                 &state.pool,

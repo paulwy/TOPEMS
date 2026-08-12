@@ -277,10 +277,10 @@ pub async fn list_datasources(
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list datasources: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list datasources: {}", e),
+            ));
         }
     };
 
@@ -301,10 +301,10 @@ pub async fn list_datasources(
     {
         Ok(c) => c,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to count datasources: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to count datasources: {}", e),
+            ));
         }
     };
 
@@ -425,10 +425,10 @@ pub async fn create_datasource(
                 r.updated_at,
             )
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create datasource: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create datasource: {}", e),
+        )),
     }
 }
 
@@ -460,10 +460,10 @@ pub async fn get_datasource(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get datasource: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get datasource: {}", e),
+            ));
         }
     };
 
@@ -490,10 +490,10 @@ pub async fn get_datasource(
                 r.updated_at,
             )
         })),
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Datasource not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Datasource not found",
+        )),
     }
 }
 
@@ -584,14 +584,14 @@ pub async fn update_datasource(
                 r.updated_at,
             )
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Datasource not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update datasource: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Datasource not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update datasource: {}", e),
+        )),
     }
 }
 
@@ -624,14 +624,14 @@ pub async fn delete_datasource(
             "success": true,
             "message": "Delete datasource"
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Datasource not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete datasource: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Datasource not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete datasource: {}", e),
+        )),
     }
 }
 
@@ -671,31 +671,25 @@ pub async fn test_datasource(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to load datasource: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to load datasource: {}", e),
+            ));
         }
     };
 
     let Some(r) = row else {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "Datasource not found"
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "Datasource not found",
+        ));
     };
 
     if !r.is_enabled.unwrap_or(true) {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "Datasource is disabled",
-            "data": TestConnectionResult {
-                success: false,
-                message: "Datasource is disabled".to_string(),
-                latency_ms: Some(started.elapsed().as_millis() as u64),
-                tested_at: Utc::now().to_rfc3339(),
-            }
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "Datasource is disabled",
+        ));
     }
 
     let probe = ConnectionProbe {
@@ -771,18 +765,18 @@ pub async fn refresh_datasource(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to load datasource: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to load datasource: {}", e),
+            ));
         }
     };
 
     let Some(r) = row else {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "Datasource not found"
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "Datasource not found",
+        ));
     };
 
     // Heuristic record count. Real sync logic would dispatch by source_type
@@ -809,10 +803,10 @@ pub async fn refresh_datasource(
     .execute(&state.pool)
     .await
     {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update refresh state: {}", e)
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update refresh state: {}", e),
+        ));
     }
 
     let duration_ms = started.elapsed().as_millis() as u64;

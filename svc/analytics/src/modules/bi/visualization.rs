@@ -75,11 +75,10 @@ pub async fn create_visualization(
             "message": "Create visualization",
             "data": chart
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create visualization: {}", e),
-            "data": null
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create visualization: {}", e),
+        )),
     }
 }
 
@@ -121,11 +120,10 @@ pub async fn generate_line_chart(
             "message": "Generate line chart",
             "data": chart
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to generate line chart: {}", e),
-            "data": null
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to generate line chart: {}", e),
+        )),
     }
 }
 
@@ -146,11 +144,10 @@ pub async fn generate_bar_chart(
             "message": "Generate bar chart",
             "data": chart
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to generate bar chart: {}", e),
-            "data": null
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to generate bar chart: {}", e),
+        )),
     }
 }
 
@@ -176,11 +173,10 @@ pub async fn generate_pie_chart(
             "message": "Generate pie chart",
             "data": chart
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to generate pie chart: {}", e),
-            "data": null
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to generate pie chart: {}", e),
+        )),
     }
 }
 
@@ -201,11 +197,10 @@ pub async fn generate_gauge_chart(
             "message": "Generate gauge chart",
             "data": chart
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to generate gauge chart: {}", e),
-            "data": null
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to generate gauge chart: {}", e),
+        )),
     }
 }
 

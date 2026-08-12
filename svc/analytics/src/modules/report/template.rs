@@ -202,10 +202,10 @@ pub async fn create_template(
             "message": "Template created",
             "data": id
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create template: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create template: {}", e),
+        )),
     }
 }
 
@@ -264,14 +264,14 @@ pub async fn get_template(
                 }
             }))
         }
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Template not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to get template: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Template not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to get template: {}", e),
+        )),
     }
 }
 
@@ -321,10 +321,10 @@ pub async fn update_template(
             "success": true,
             "message": "Template updated"
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update template: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update template: {}", e),
+        )),
     }
 }
 
@@ -349,9 +349,9 @@ pub async fn delete_template(
             "success": true,
             "message": "Template deleted"
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete template: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete template: {}", e),
+        )),
     }
 }

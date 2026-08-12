@@ -27,18 +27,18 @@ pub async fn query_dashboard_realtime_data(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get dashboard: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get dashboard: {}", e),
+            ));
         }
     };
 
     if dashboard.is_none() {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "Dashboard not found"
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "Dashboard not found",
+        ));
     }
 
     let dashboard = dashboard.expect("Dashboard should exist after existence check");
@@ -56,10 +56,10 @@ pub async fn query_dashboard_realtime_data(
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get widgets: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get widgets: {}", e),
+            ));
         }
     };
 
@@ -197,14 +197,14 @@ pub async fn refresh_dashboard_data(
                 }
             }))
         }
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Dashboard not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to refresh dashboard: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Dashboard not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to refresh dashboard: {}", e),
+        )),
     }
 }
 
@@ -244,13 +244,13 @@ pub async fn set_auto_refresh(
                 "auto_refresh_interval": row.auto_refresh_interval,
             }
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Dashboard not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to set auto-refresh: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Dashboard not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to set auto-refresh: {}", e),
+        )),
     }
 }

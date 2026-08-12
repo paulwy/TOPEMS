@@ -154,10 +154,10 @@ pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to list permission rules: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list permission rules: {}", e),
+            ));
         }
     };
 
@@ -252,10 +252,10 @@ pub async fn create_permission_rule(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to create permission rule: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create permission rule: {}", e),
+        )),
     }
 }
 
@@ -285,10 +285,10 @@ pub async fn get_permission_rule(
     {
         Ok(row) => row,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get permission rule: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get permission rule: {}", e),
+            ));
         }
     };
 
@@ -312,10 +312,10 @@ pub async fn get_permission_rule(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        None => Json(serde_json::json!({
-            "success": false,
-            "message": "Permission rule not found"
-        })),
+        None => Json(topems_shared_core::response::error_value(
+            500,
+            "Permission rule not found",
+        )),
     }
 }
 
@@ -380,14 +380,14 @@ pub async fn update_permission_rule(
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
             }
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Permission rule not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to update permission rule: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Permission rule not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to update permission rule: {}", e),
+        )),
     }
 }
 
@@ -419,14 +419,14 @@ pub async fn delete_permission_rule(
             "success": true,
             "message": "Delete permission rule"
         })),
-        Ok(None) => Json(serde_json::json!({
-            "success": false,
-            "message": "Permission rule not found"
-        })),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to delete permission rule: {}", e)
-        })),
+        Ok(None) => Json(topems_shared_core::response::error_value(
+            500,
+            "Permission rule not found",
+        )),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to delete permission rule: {}", e),
+        )),
     }
 }
 
@@ -471,10 +471,10 @@ pub async fn validate_permission(
         Ok(rows) => rows,
         Err(e) => {
             warn!("Failed to validate permission: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to validate permission: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to validate permission: {}", e),
+            ));
         }
     };
 
@@ -524,10 +524,10 @@ pub async fn filter_data(
 
     if let Err(e) = validate_table_name(&req.table_name) {
         warn!("Invalid table name '{}': {}", req.table_name, e);
-        return Json(serde_json::json!({
-            "success": false,
-            "message": format!("Invalid table name: {}", e)
-        }));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Invalid table name: {}", e),
+        ));
     }
 
     let page = req.page.unwrap_or(1);
@@ -569,10 +569,10 @@ pub async fn filter_data(
                 }
             }))
         }
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "message": format!("Failed to filter data: {}", e)
-        })),
+        Err(e) => Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to filter data: {}", e),
+        )),
     }
 }
 
@@ -598,10 +598,10 @@ pub async fn get_user_permissions(
     {
         Ok(rows) => rows,
         Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to get user permissions: {}", e)
-            }));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get user permissions: {}", e),
+            ));
         }
     };
 
