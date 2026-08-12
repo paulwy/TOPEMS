@@ -308,7 +308,19 @@ impl ServiceBootstrap {
         let database_url =
             env::var("DATABASE_URL").unwrap_or_else(|_| self.config.database.url.clone());
 
-        let max_connections = env::var("DB_MAX_CONNECTIONS")
+        // 解析服务名：topems-xxx 前缀去掉后转 UPPER_SNAKE_CASE
+        // e.g. "topems-unified-core" -> "UNIFIED_CORE"，匹配 *_DB_MAX_CONNECTIONS 后缀
+        let svc_tag = self
+            .config
+            .service_name
+            .strip_prefix("topems-")
+            .unwrap_or(self.config.service_name)
+            .to_uppercase()
+            .replace('-', "_");
+        let per_service_key = format!("{}_DB_MAX_CONNECTIONS", svc_tag);
+
+        let max_connections = env::var(&per_service_key)
+            .or_else(|_| env::var("DB_MAX_CONNECTIONS"))
             .unwrap_or_else(|_| self.config.database.max_connections.to_string())
             .parse::<u32>()
             .unwrap_or(self.config.database.max_connections);
