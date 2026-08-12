@@ -48,6 +48,7 @@ vi.mock('@tanstack/react-query', () => ({
       total: 100,
     },
     isLoading: false,
+    isPending: false,
     error: null,
     refetch: vi.fn(),
   })),
@@ -154,7 +155,7 @@ describe('useOperationAuditLog', () => {
 
   it('should return loading state and refetch function', () => {
     const { result } = renderHook(() => useOperationAuditLog());
-    expect(typeof result.current.isLoading).toBe('boolean');
+    expect(typeof result.current.isPending).toBe('boolean');
     expect(typeof result.current.refetch).toBe('function');
   });
 
