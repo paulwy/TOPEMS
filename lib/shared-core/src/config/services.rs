@@ -380,8 +380,10 @@ pub fn get_default_port(service_name: &str) -> u16 {
         // 主数据（V66.1：删除 mdm 别名，统一使用 master-data / topems-master-data）
         "master-data" | "topems-master-data" => 8090,
         // 虚拟服务（统一归 core）
-        "iam" | "workflow" | "flow" | "file" | "doc" | "monitor" | "tenant" | "plugin"
+        "iam" | "workflow" | "flow" | "file" | "doc" | "tenant" | "plugin"
         | "automation" | "migration" | "master" => 8000,
+        // V68.1 独立服务
+        "monitor" | "topems-monitor" => 8095,
         // 兼容旧名
         "notification" | "mail" | "im" => 8084, // 外迁到 communication
         _ => 8080,
@@ -568,10 +570,16 @@ mod tests {
 
     #[test]
     fn get_default_port_virtual_services_all_map_to_core() {
-        for name in ["iam", "workflow", "flow", "file", "doc", "monitor",
+        for name in ["iam", "workflow", "flow", "file", "doc",
                      "tenant", "plugin", "automation", "migration", "master"] {
             assert_eq!(get_default_port(name), 8000, "{} should map to 8000", name);
         }
+    }
+
+    #[test]
+    fn get_default_port_monitor_is_independent_8095() {
+        assert_eq!(get_default_port("monitor"), 8095);
+        assert_eq!(get_default_port("topems-monitor"), 8095);
     }
 
     #[test]
