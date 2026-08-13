@@ -852,6 +852,22 @@ pub struct ExportReportResponse {
 }
 
 // ==================== Handlers ====================
+#[utoipa::path(
+    get,
+    path = "/reports/balance-sheet/{period}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("period" = String, Path, description = "期间"),
+    ),
+    tag = "Financial-Reports",
+    operation_id = "get_enhanced_balance_sheet_handler",
+)]
 
 async fn get_enhanced_balance_sheet_handler(
     State(state): State<AppState>,
@@ -865,6 +881,15 @@ async fn get_enhanced_balance_sheet_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/enhanced_income_statement/{id}",
+    tag = "ReportCenter",
+    operation_id = "get_enhanced_income_statement_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_enhanced_income_statement_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -877,6 +902,15 @@ async fn get_enhanced_income_statement_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/enhanced_cash_flow/{id}",
+    tag = "ReportCenter",
+    operation_id = "get_enhanced_cash_flow_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_enhanced_cash_flow_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -888,6 +922,15 @@ async fn get_enhanced_cash_flow_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/financial_analysis",
+    tag = "ReportCenter",
+    operation_id = "get_financial_analysis_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_financial_analysis_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -904,6 +947,22 @@ async fn get_financial_analysis_handler(
     let report = generate_analysis_report(&period, &ratios);
     Json(ApiResponse::success(report, "查询成功"))
 }
+#[utoipa::path(
+    get,
+    path = "/reports/comparative/{period}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("period" = String, Path, description = "期间"),
+    ),
+    tag = "Financial-Reports",
+    operation_id = "get_comparative_report_handler",
+)]
 
 async fn get_comparative_report_handler(
     State(state): State<AppState>,
@@ -916,6 +975,15 @@ async fn get_comparative_report_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/report",
+    tag = "ReportCenter",
+    operation_id = "export_report_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn export_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

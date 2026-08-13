@@ -60,7 +60,7 @@ fn safe_percentage(amount: Decimal, total: Decimal) -> Decimal {
 
 // ==================== 查询参数 ====================
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::IntoParams)]
 pub struct MultiDimQueryParams {
     pub period: Option<String>,
     pub cost_center_id: Option<Uuid>,
@@ -949,6 +949,22 @@ impl ProjectAccountingAnalyzer {
 }
 
 // ==================== Handlers ====================
+#[utoipa::path(
+    get,
+    path = "/multi-dimensional/cost-centers/{period}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("period" = String, Path, description = "期间"),
+    ),
+    tag = "Finance Multi-Dimensional",
+    operation_id = "get_cost_center_report_handler",
+)]
 
 async fn get_cost_center_report_handler(
     State(state): State<AppState>,
@@ -961,6 +977,15 @@ async fn get_cost_center_report_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/cost_center_trend",
+    tag = "MultiDim",
+    operation_id = "get_cost_center_trend_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_cost_center_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -972,6 +997,15 @@ async fn get_cost_center_trend_handler(
     Json(ApiResponse::success(trend, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/cost_center_efficiency/{id}",
+    tag = "MultiDim",
+    operation_id = "get_cost_center_efficiency_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_cost_center_efficiency_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -983,6 +1017,15 @@ async fn get_cost_center_efficiency_handler(
     Json(ApiResponse::success(efficiency, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/profit_center_report/{id}",
+    tag = "MultiDim",
+    operation_id = "get_profit_center_report_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_profit_center_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -994,6 +1037,15 @@ async fn get_profit_center_report_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/profit_center_trend",
+    tag = "MultiDim",
+    operation_id = "get_profit_center_trend_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_profit_center_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1004,6 +1056,23 @@ async fn get_profit_center_trend_handler(
     let trend = ProfitCenterAnalyzer::get_trend(&period);
     Json(ApiResponse::success(trend, "查询成功"))
 }
+#[utoipa::path(
+    get,
+    path = "/multi-dimensional/profit-centers/{period}/ranking",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("period" = String, Path, description = "期间"),
+        ("query" = MultiDimQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Finance Multi-Dimensional",
+    operation_id = "get_profit_center_ranking_handler",
+)]
 
 async fn get_profit_center_ranking_handler(
     State(state): State<AppState>,
@@ -1017,6 +1086,15 @@ async fn get_profit_center_ranking_handler(
     Json(ApiResponse::success(ranking, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/project_account_report/{id}",
+    tag = "MultiDim",
+    operation_id = "get_project_account_report_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_project_account_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1028,6 +1106,15 @@ async fn get_project_account_report_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/project_progress",
+    tag = "MultiDim",
+    operation_id = "get_project_progress_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_project_progress_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1039,6 +1126,15 @@ async fn get_project_progress_handler(
     Json(ApiResponse::success(progress, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/project_profitability/{id}",
+    tag = "MultiDim",
+    operation_id = "get_project_profitability_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_project_profitability_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1050,6 +1146,15 @@ async fn get_project_profitability_handler(
     Json(ApiResponse::success(profitability, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/project_summary",
+    tag = "MultiDim",
+    operation_id = "get_project_summary_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_project_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

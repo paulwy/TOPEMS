@@ -159,6 +159,15 @@ pub async fn get_audit_log(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/audit/log-audit-event",
+    tag = "Audit",
+    operation_id = "log_audit_event",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &HeaderMap) {
     let AuditEventParams {
         action,

@@ -72,6 +72,15 @@ async fn proxy_hrm_get(
 
 // ==================== 员工（Employees）代理 ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-list-employees",
+    tag = "HrProxy",
+    operation_id = "proxy_list_employees",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_list_employees(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -86,6 +95,15 @@ pub async fn proxy_list_employees(
     .await
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-get-employee",
+    tag = "HrProxy",
+    operation_id = "proxy_get_employee",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_get_employee(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -95,6 +113,15 @@ pub async fn proxy_get_employee(
     proxy_hrm_get(&state.hrm_client, &path, None, &claims).await
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-get-employee-by-user",
+    tag = "HrProxy",
+    operation_id = "proxy_get_employee_by_user",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_get_employee_by_user(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -106,6 +133,15 @@ pub async fn proxy_get_employee_by_user(
 
 // ==================== 部门（Departments）代理 ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-list-departments",
+    tag = "HrProxy",
+    operation_id = "proxy_list_departments",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_list_departments(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -120,6 +156,15 @@ pub async fn proxy_list_departments(
     .await
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-get-department",
+    tag = "HrProxy",
+    operation_id = "proxy_get_department",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_get_department(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -129,6 +174,15 @@ pub async fn proxy_get_department(
     proxy_hrm_get(&state.hrm_client, &path, None, &claims).await
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-get-department-tree",
+    tag = "HrProxy",
+    operation_id = "proxy_get_department_tree",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_get_department_tree(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -144,6 +198,15 @@ pub async fn proxy_get_department_tree(
 
 // ==================== 公司（Companies）代理 ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-list-companies",
+    tag = "HrProxy",
+    operation_id = "proxy_list_companies",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_list_companies(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -158,6 +221,15 @@ pub async fn proxy_list_companies(
     .await
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-get-company",
+    tag = "HrProxy",
+    operation_id = "proxy_get_company",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_get_company(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -169,6 +241,15 @@ pub async fn proxy_get_company(
 
 // ==================== 职位（Positions）代理 ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-list-positions",
+    tag = "HrProxy",
+    operation_id = "proxy_list_positions",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_list_positions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -183,6 +264,15 @@ pub async fn proxy_list_positions(
     .await
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-get-position",
+    tag = "HrProxy",
+    operation_id = "proxy_get_position",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_get_position(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -194,6 +284,15 @@ pub async fn proxy_get_position(
 
 // ==================== 薪酬（Payroll）代理 ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-list-payrolls",
+    tag = "HrProxy",
+    operation_id = "proxy_list_payrolls",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_list_payrolls(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -202,6 +301,15 @@ pub async fn proxy_list_payrolls(
     proxy_hrm_get(&state.hrm_client, "/api/hrm/payrolls", Some(query), &claims).await
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-get-payroll",
+    tag = "HrProxy",
+    operation_id = "proxy_get_payroll",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_get_payroll(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -213,6 +321,15 @@ pub async fn proxy_get_payroll(
 
 // ==================== 考勤（Attendance）代理 ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-list-attendances",
+    tag = "HrProxy",
+    operation_id = "proxy_list_attendances",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn proxy_list_attendances(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -259,6 +376,15 @@ pub fn proxy_routes() -> axum::Router<ApiState> {
         .route("/hr/attendances", get(proxy_list_attendances))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/hr-proxy/proxy-hrm-dashboard",
+    tag = "HrProxy",
+    operation_id = "proxy_hrm_dashboard",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn proxy_hrm_dashboard(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

@@ -8,6 +8,7 @@ use chrono::Utc;
 use num_traits::cast::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use utoipa::IntoParams;
 use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
@@ -16,7 +17,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct AlertQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,

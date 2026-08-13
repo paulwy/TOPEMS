@@ -7935,7 +7935,7 @@ pub struct InferenceRule {
     pub enabled: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ConceptQuery {
     pub concept_type: Option<String>,
     pub parent_id: Option<String>,
@@ -7944,7 +7944,7 @@ pub struct ConceptQuery {
     pub page_size: Option<i64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct TripleQuery {
     pub subject: Option<String>,
     pub predicate: Option<String>,
@@ -9306,6 +9306,15 @@ pub async fn get_graph_stats(State(state): State<ApiState>) -> Json<ApiResponse<
 
 // ==================== 知识图谱 Handlers ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/list-concepts",
+    tag = "MasterDataRefs",
+    operation_id = "list_concepts",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_concepts(
     State(state): State<ApiState>,
     Query(params): Query<ConceptQuery>,
@@ -9388,6 +9397,15 @@ pub async fn get_concept(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/list-triples",
+    tag = "MasterDataRefs",
+    operation_id = "list_triples",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_triples(
     State(state): State<ApiState>,
     Query(params): Query<TripleQuery>,
@@ -11667,7 +11685,7 @@ pub struct BatchScoreRequest {
     pub entity_ids: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct QualityAnomalyQuery {
     pub domain: Option<String>,
     pub entity_id: Option<String>,
@@ -12424,6 +12442,15 @@ pub async fn quality_ai_batch_score(
 }
 
 /// GET /quality-ai/anomalies — 异常列表
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/quality-ai-get-anomalies",
+    tag = "MasterDataRefs",
+    operation_id = "quality_ai_get_anomalies",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn quality_ai_get_anomalies(
     State(state): State<ApiState>,
     Query(params): Query<QualityAnomalyQuery>,
@@ -12701,7 +12728,7 @@ pub struct FindMatchesRequest {
     pub limit: Option<usize>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct FindDuplicatesQuery {
     pub domain: Option<String>,
     pub min_confidence: Option<f64>,
@@ -13062,6 +13089,15 @@ pub async fn matching_find_matches(
 }
 
 /// GET /matching/duplicates — 重复实体列表（基于域内两两匹配）
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/matching-find-duplicates",
+    tag = "MasterDataRefs",
+    operation_id = "matching_find_duplicates",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn matching_find_duplicates(
     State(state): State<ApiState>,
     Query(params): Query<FindDuplicatesQuery>,
@@ -14610,7 +14646,7 @@ async fn get_lineage_path(source_id: &str, target_id: &str) -> Option<Vec<String
 
 // ==================== Part 1: 血缘溯源 Handler ====================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct LineageTraceQueryParams {
     pub entity_id: String,
     pub depth: Option<usize>,
@@ -14618,6 +14654,15 @@ pub struct LineageTraceQueryParams {
 }
 
 /// GET /lineage/trace — 执行血缘溯源
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/trace-lineage-handler",
+    tag = "MasterDataRefs",
+    operation_id = "trace_lineage_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn trace_lineage_handler(
     State(state): State<ApiState>,
     Query(params): Query<LineageTraceQueryParams>,
@@ -14641,6 +14686,15 @@ pub async fn trace_lineage_handler(
 }
 
 /// GET /lineage/trace/{id}/upstream — 溯源上游数据来源
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/trace-upstream-handler",
+    tag = "MasterDataRefs",
+    operation_id = "trace_upstream_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn trace_upstream_handler(
     State(state): State<ApiState>,
     Path(id): Path<String>,
@@ -14653,6 +14707,15 @@ pub async fn trace_upstream_handler(
 }
 
 /// GET /lineage/trace/{id}/downstream — 溯源下游影响范围
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/trace-downstream-handler",
+    tag = "MasterDataRefs",
+    operation_id = "trace_downstream_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn trace_downstream_handler(
     State(state): State<ApiState>,
     Path(id): Path<String>,
@@ -15237,7 +15300,7 @@ async fn detect_circular_dependencies() -> Vec<Vec<String>> {
 
 // ==================== Part 3: 数据血缘图谱 Handler ====================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct LineageGraphQueryParams {
     pub domain: Option<String>,
     pub node_type: Option<String>,
@@ -15245,6 +15308,15 @@ pub struct LineageGraphQueryParams {
 }
 
 /// GET /lineage/graph — 获取血缘图谱
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/get-lineage-graph-handler",
+    tag = "MasterDataRefs",
+    operation_id = "get_lineage_graph_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_lineage_graph_handler(
     State(state): State<ApiState>,
     Query(params): Query<LineageGraphQueryParams>,
@@ -15878,7 +15950,7 @@ pub struct CatalogEntry {
 }
 
 /// 目录搜索查询
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct CatalogSearchQuery {
     pub keyword: Option<String>,
     pub domain: Option<String>,
@@ -16362,6 +16434,15 @@ async fn get_popular_entries(limit: usize) -> Vec<CatalogEntry> {
 // ==================== 数据目录 Handlers ====================
 
 /// GET /catalog/search — 搜索数据目录
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/search-catalog-handler",
+    tag = "MasterDataRefs",
+    operation_id = "search_catalog_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn search_catalog_handler(
     State(state): State<ApiState>,
     Query(params): Query<CatalogSearchQuery>,
@@ -16467,6 +16548,15 @@ pub async fn get_catalog_stats_handler(
 }
 
 /// GET /catalog/popular — 获取热门条目
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/get-popular-entries-handler",
+    tag = "MasterDataRefs",
+    operation_id = "get_popular_entries_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_popular_entries_handler(
     State(state): State<ApiState>,
     Query(params): Query<PopularEntriesQuery>,
@@ -16477,7 +16567,7 @@ pub async fn get_popular_entries_handler(
     Json(ApiResponse::success(entries, "热门条目获取成功"))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct PopularEntriesQuery {
     pub limit: Option<usize>,
 }
@@ -16606,7 +16696,7 @@ pub struct RecordUpsertRequest {
 }
 
 /// 记录查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct RecordQuery {
     pub schema_id: Option<String>,
     pub entity_type: Option<String>,
@@ -16625,7 +16715,7 @@ pub struct RelationRequest {
 }
 
 /// 关联查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct RelationQuery {
     pub entity: Option<String>,
     pub relation_type: Option<String>,
@@ -17140,6 +17230,15 @@ pub async fn create_schema_handler(
 }
 
 /// GET /metadata/schemas — 列出 Schema
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/list-schemas-handler",
+    tag = "MasterDataRefs",
+    operation_id = "list_schemas_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_schemas_handler(
     State(state): State<ApiState>,
     Query(params): Query<SchemaListQuery>,
@@ -17149,7 +17248,7 @@ pub async fn list_schemas_handler(
     Json(ApiResponse::success(schemas, "Schema 列表获取成功"))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct SchemaListQuery {
     pub domain: Option<String>,
 }
@@ -17248,6 +17347,15 @@ pub async fn upsert_record_handler(
 }
 
 /// GET /metadata/records — 查询记录
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/query-records-handler",
+    tag = "MasterDataRefs",
+    operation_id = "query_records_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn query_records_handler(
     State(state): State<ApiState>,
     Query(params): Query<RecordQuery>,
@@ -17294,6 +17402,15 @@ pub async fn create_relation_handler(
 }
 
 /// GET /metadata/relations — 获取关联关系
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/get-relations-handler",
+    tag = "MasterDataRefs",
+    operation_id = "get_relations_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_relations_handler(
     State(state): State<ApiState>,
     Query(params): Query<RelationQuery>,
@@ -18219,13 +18336,13 @@ pub struct ScheduleReportRequest {
 }
 
 /// 报告列表查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ReportListQuery {
     pub report_type: Option<String>,
 }
 
 /// 已生成报告查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct GeneratedReportQuery {
     pub template_id: Option<String>,
     pub status: Option<String>,
@@ -18723,6 +18840,15 @@ async fn get_report_automation_stats() -> ReportAutomationStats {
 // ==================== 报告自动化 Handlers ====================
 
 /// GET /reports/templates — 列出报告模板
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/list-report-templates-handler",
+    tag = "MasterDataRefs",
+    operation_id = "list_report_templates_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_report_templates_handler(
     State(state): State<ApiState>,
     Query(params): Query<ReportListQuery>,
@@ -18788,6 +18914,15 @@ pub async fn generate_report_handler(
 }
 
 /// GET /reports/generated — 列出已生成报告
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/list-generated-reports-handler",
+    tag = "MasterDataRefs",
+    operation_id = "list_generated_reports_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_generated_reports_handler(
     State(state): State<ApiState>,
     Query(params): Query<GeneratedReportQuery>,
@@ -19054,7 +19189,7 @@ pub struct ResolveFindingRequest {
 }
 
 /// 审计发现查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct AuditFindingQuery {
     pub rule_id: Option<String>,
     pub status: Option<String>,
@@ -19064,7 +19199,7 @@ pub struct AuditFindingQuery {
 }
 
 /// 合规规则查询参数
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ComplianceRuleQuery {
     pub framework: Option<String>,
 }
@@ -19703,6 +19838,15 @@ async fn get_compliance_audit_stats() -> ComplianceAuditStats {
 // ==================== 合规审计 Handlers ====================
 
 /// GET /audit/rules — 列出合规规则
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/list-compliance-rules-handler",
+    tag = "MasterDataRefs",
+    operation_id = "list_compliance_rules_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_compliance_rules_handler(
     State(state): State<ApiState>,
     Query(params): Query<ComplianceRuleQuery>,
@@ -19747,6 +19891,15 @@ pub async fn run_compliance_check_handler(
 }
 
 /// GET /audit/findings — 获取审计发现
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/get-audit-findings-handler",
+    tag = "MasterDataRefs",
+    operation_id = "get_audit_findings_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_audit_findings_handler(
     State(state): State<ApiState>,
     Query(params): Query<AuditFindingQuery>,
@@ -19777,6 +19930,15 @@ pub async fn resolve_finding_handler(
 }
 
 /// GET /audit/report — 生成审计报告
+#[utoipa::path(
+    post,
+    path = "/erp/master-data-refs/generate-audit-report-handler",
+    tag = "MasterDataRefs",
+    operation_id = "generate_audit_report_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn generate_audit_report_handler(
     State(state): State<ApiState>,
     Query(params): Query<ComplianceRuleQuery>,
@@ -19787,6 +19949,15 @@ pub async fn generate_audit_report_handler(
 }
 
 /// GET /audit/scorecard — 获取审计评分卡
+#[utoipa::path(
+    get,
+    path = "/erp/master-data-refs/get-audit-scorecard-handler",
+    tag = "MasterDataRefs",
+    operation_id = "get_audit_scorecard_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_audit_scorecard_handler(
     State(state): State<ApiState>,
     Query(params): Query<ComplianceRuleQuery>,

@@ -990,6 +990,22 @@ impl SmartAlertSystem {
 }
 
 // ==================== Handlers ====================
+#[utoipa::path(
+    get,
+    path = "/forecasting/cash-flow/{period}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("period" = String, Path, description = "期间"),
+    ),
+    tag = "Finance Forecasting",
+    operation_id = "get_cash_flow_forecast_handler",
+)]
 
 async fn get_cash_flow_forecast_handler(
     State(state): State<AppState>,
@@ -1006,6 +1022,15 @@ async fn get_cash_flow_forecast_handler(
     Json(ApiResponse::success(forecast, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/forecast_scenarios",
+    tag = "Forecasting",
+    operation_id = "get_forecast_scenarios_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_forecast_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1017,6 +1042,15 @@ async fn get_forecast_scenarios_handler(
     Json(ApiResponse::success(scenarios, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/forecast_accuracy/{id}",
+    tag = "Forecasting",
+    operation_id = "get_forecast_accuracy_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_forecast_accuracy_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1027,6 +1061,15 @@ async fn get_forecast_accuracy_handler(
     Json(ApiResponse::success(accuracy, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/budget_variance/{id}",
+    tag = "Forecasting",
+    operation_id = "get_budget_variance_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_budget_variance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1037,6 +1080,22 @@ async fn get_budget_variance_handler(
     let report = BudgetVarianceAnalyzer::analyze_budget_variance(&period);
     Json(ApiResponse::success(report, "查询成功"))
 }
+#[utoipa::path(
+    get,
+    path = "/forecasting/budget-variance/{period}/trend",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("period" = String, Path, description = "期间"),
+    ),
+    tag = "Finance Forecasting",
+    operation_id = "get_variance_trend_handler",
+)]
 
 async fn get_variance_trend_handler(
     State(state): State<AppState>,
@@ -1049,6 +1108,15 @@ async fn get_variance_trend_handler(
     Json(ApiResponse::success(trend, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/significant_variances",
+    tag = "Forecasting",
+    operation_id = "get_significant_variances_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_significant_variances_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1059,6 +1127,15 @@ async fn get_significant_variances_handler(
     Json(ApiResponse::success(items, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/active_alerts",
+    tag = "Forecasting",
+    operation_id = "get_active_alerts_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_active_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1069,6 +1146,15 @@ async fn get_active_alerts_handler(
     Json(ApiResponse::success(alerts, "查询成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/alert_summary",
+    tag = "Forecasting",
+    operation_id = "get_alert_summary_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_alert_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1079,6 +1165,15 @@ async fn get_alert_summary_handler(
     Json(ApiResponse::success(summary, "查询成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/alert_rule",
+    tag = "Forecasting",
+    operation_id = "create_alert_rule_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn create_alert_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1089,6 +1184,22 @@ async fn create_alert_rule_handler(
     let rule = SmartAlertSystem::create_alert_rule(req);
     Json(ApiResponse::success(rule, "创建成功"))
 }
+#[utoipa::path(
+    put,
+    path = "/forecasting/alerts/rules/{rule_id}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("rule_id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance Forecasting",
+    operation_id = "update_alert_rule_handler",
+)]
 
 async fn update_alert_rule_handler(
     State(state): State<AppState>,
@@ -1112,6 +1223,15 @@ async fn update_alert_rule_handler(
     Json(ApiResponse::success(rule, "更新成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/alert",
+    tag = "Forecasting",
+    operation_id = "acknowledge_alert_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn acknowledge_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1123,6 +1243,15 @@ async fn acknowledge_alert_handler(
     Json(ApiResponse::success(alert, "告警已确认"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance/alert",
+    tag = "Forecasting",
+    operation_id = "resolve_alert_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn resolve_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -592,7 +592,7 @@ fn record_event(
 
 // ==================== 请求/响应结构 ====================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct LifecycleEntityQuery {
     pub domain: Option<String>,
     pub stage: Option<String>,
@@ -677,7 +677,7 @@ pub struct ArchiveRestoreRequest {
     pub reason: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ArchiveRecordQuery {
     pub domain: Option<String>,
     pub entity_type: Option<String>,
@@ -711,6 +711,15 @@ pub struct ArchiveStats {
 
 // ==================== 处理器：生命周期实体 ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/mdm-v49/list-lifecycle-entities",
+    tag = "MdmV49",
+    operation_id = "list_lifecycle_entities",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_lifecycle_entities(
     State(_state): State<ApiState>,
     Query(params): Query<LifecycleEntityQuery>,
@@ -1063,6 +1072,15 @@ pub async fn create_retirement_plan(
     Json(ApiResponse::success(plan, "退役计划已创建"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/mdm-v49/list-retirement-plans",
+    tag = "MdmV49",
+    operation_id = "list_retirement_plans",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_retirement_plans(
     State(_state): State<ApiState>,
     Query(params): Query<RetirementPlanQuery>,
@@ -1120,7 +1138,7 @@ pub async fn list_retirement_plans(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct RetirementPlanQuery {
     pub status: Option<String>,
     pub entity_type: Option<String>,
@@ -1277,6 +1295,15 @@ pub async fn confirm_retirement_plan(
     Json(ApiResponse::success(plan.clone(), "退役计划已确认"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/mdm-v49/execute-retirement-plan",
+    tag = "MdmV49",
+    operation_id = "execute_retirement_plan",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn execute_retirement_plan(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
@@ -1318,6 +1345,15 @@ pub async fn execute_retirement_plan(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/mdm-v49/rollback-retirement-plan",
+    tag = "MdmV49",
+    operation_id = "rollback_retirement_plan",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn rollback_retirement_plan(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
@@ -1360,6 +1396,15 @@ pub async fn rollback_retirement_plan(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/mdm-v49/cancel-retirement-plan",
+    tag = "MdmV49",
+    operation_id = "cancel_retirement_plan",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn cancel_retirement_plan(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
@@ -1381,6 +1426,15 @@ pub async fn cancel_retirement_plan(
 
 // ==================== 处理器：归档策略 ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/mdm-v49/list-archive-policies",
+    tag = "MdmV49",
+    operation_id = "list_archive_policies",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_archive_policies(
     State(_state): State<ApiState>,
     Query(params): Query<ArchivePolicyQuery>,
@@ -1436,7 +1490,7 @@ pub async fn list_archive_policies(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ArchivePolicyQuery {
     pub domain: Option<String>,
     pub entity_type: Option<String>,
@@ -1445,6 +1499,15 @@ pub struct ArchivePolicyQuery {
     pub page_size: Option<i64>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/mdm-v49/create-archive-policy",
+    tag = "MdmV49",
+    operation_id = "create_archive_policy",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn create_archive_policy(
     State(_state): State<ApiState>,
     Json(req): Json<ArchivePolicyRequest>,
@@ -1485,6 +1548,15 @@ pub async fn create_archive_policy(
     Json(ApiResponse::success(policy, "归档策略已创建"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/mdm-v49/get-archive-policy",
+    tag = "MdmV49",
+    operation_id = "get_archive_policy",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_archive_policy(
     State(_state): State<ApiState>,
     Path(policy_id): Path<String>,
@@ -1498,6 +1570,15 @@ pub async fn get_archive_policy(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/mdm-v49/update-archive-policy",
+    tag = "MdmV49",
+    operation_id = "update_archive_policy",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn update_archive_policy(
     State(_state): State<ApiState>,
     Path(policy_id): Path<String>,
@@ -1540,6 +1621,15 @@ pub async fn update_archive_policy(
     Json(ApiResponse::success(policy.clone(), "归档策略已更新"))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/mdm-v49/delete-archive-policy",
+    tag = "MdmV49",
+    operation_id = "delete_archive_policy",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn delete_archive_policy(
     State(_state): State<ApiState>,
     Path(policy_id): Path<String>,
@@ -1557,6 +1647,15 @@ pub async fn delete_archive_policy(
 
 // ==================== 处理器：归档执行 ====================
 
+#[utoipa::path(
+    post,
+    path = "/erp/mdm-v49/run-archive",
+    tag = "MdmV49",
+    operation_id = "run_archive",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn run_archive(
     State(_state): State<ApiState>,
     Json(req): Json<ArchiveRunRequest>,
@@ -1679,6 +1778,15 @@ pub async fn run_archive(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/mdm-v49/list-archive-records",
+    tag = "MdmV49",
+    operation_id = "list_archive_records",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_archive_records(
     State(_state): State<ApiState>,
     Query(params): Query<ArchiveRecordQuery>,
@@ -1748,6 +1856,15 @@ pub async fn list_archive_records(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/mdm-v49/get-archive-record",
+    tag = "MdmV49",
+    operation_id = "get_archive_record",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_archive_record(
     State(_state): State<ApiState>,
     Path(record_id): Path<String>,
@@ -1761,6 +1878,15 @@ pub async fn get_archive_record(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/mdm-v49/restore-archive-record",
+    tag = "MdmV49",
+    operation_id = "restore_archive_record",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn restore_archive_record(
     State(_state): State<ApiState>,
     Path(record_id): Path<String>,
@@ -1820,6 +1946,15 @@ pub async fn restore_archive_record(
 
 // ==================== 处理器：仪表盘与统计 ====================
 
+#[utoipa::path(
+    get,
+    path = "/erp/mdm-v49/get-lifecycle-stats",
+    tag = "MdmV49",
+    operation_id = "get_lifecycle_stats",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_lifecycle_stats(
     State(_state): State<ApiState>,
 ) -> Json<ApiResponse<LifecycleStats>> {
@@ -1869,6 +2004,15 @@ pub async fn get_lifecycle_stats(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/mdm-v49/get-archive-stats",
+    tag = "MdmV49",
+    operation_id = "get_archive_stats",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_archive_stats(State(_state): State<ApiState>) -> Json<ApiResponse<ArchiveStats>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
@@ -1929,6 +2073,15 @@ pub async fn get_archive_stats(State(_state): State<ApiState>) -> Json<ApiRespon
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/mdm-v49/get-retirement-stats",
+    tag = "MdmV49",
+    operation_id = "get_retirement_stats",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_retirement_stats(
     State(_state): State<ApiState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -1971,6 +2124,15 @@ pub async fn get_retirement_stats(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/mdm-v49/run-sla-check",
+    tag = "MdmV49",
+    operation_id = "run_sla_check",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn run_sla_check(State(_state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
@@ -2005,6 +2167,15 @@ pub async fn run_sla_check(State(_state): State<ApiState>) -> Json<ApiResponse<s
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/mdm-v49/get-lifecycle-dashboard",
+    tag = "MdmV49",
+    operation_id = "get_lifecycle_dashboard",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn get_lifecycle_dashboard(
     State(_state): State<ApiState>,
 ) -> Json<ApiResponse<serde_json::Value>> {

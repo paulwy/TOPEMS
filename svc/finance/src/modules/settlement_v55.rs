@@ -1413,7 +1413,7 @@ impl ElectronicPaymentProcessor {
 
 // --- Reconciliation ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ReconResultQueryParams {
     pub status: Option<String>,
 }
@@ -1422,6 +1422,20 @@ pub struct ReconResultQueryParams {
 pub struct ReconRuleQueryParams {
     pub enabled: Option<bool>,
 }
+#[utoipa::path(
+    post,
+    path = "/finance-v55/reconcile/batch",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Settlement V55",
+    operation_id = "reconcile_batch_handler",
+)]
 
 async fn reconcile_batch_handler(
     State(state): State<AppState>,
@@ -1436,6 +1450,15 @@ async fn reconcile_batch_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v55/single",
+    tag = "SettlementV55",
+    operation_id = "reconcile_single_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn reconcile_single_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1449,6 +1472,15 @@ async fn reconcile_single_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v55/recon_results",
+    tag = "SettlementV55",
+    operation_id = "get_recon_results_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_recon_results_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1462,6 +1494,15 @@ async fn get_recon_results_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v55/recon_rule",
+    tag = "SettlementV55",
+    operation_id = "create_recon_rule_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn create_recon_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1474,6 +1515,19 @@ async fn create_recon_rule_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/finance-v55/reconcile/rules",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Settlement V55",
+    operation_id = "list_recon_rules_handler",
+)]
 
 async fn list_recon_rules_handler(
     State(state): State<AppState>,
@@ -1487,6 +1541,15 @@ async fn list_recon_rules_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v55/match",
+    tag = "SettlementV55",
+    operation_id = "approve_match_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn approve_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1500,6 +1563,15 @@ async fn approve_match_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v55/match",
+    tag = "SettlementV55",
+    operation_id = "dispute_match_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn dispute_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1515,7 +1587,7 @@ async fn dispute_match_handler(
 
 // --- Invoice ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct InvoiceListQueryParams {
     pub status: Option<String>,
 }
@@ -1525,6 +1597,15 @@ pub struct MatchInvoiceRequest {
     pub purchase_order_id: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v55/invoice",
+    tag = "SettlementV55",
+    operation_id = "recognize_invoice_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn recognize_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1537,6 +1618,22 @@ async fn recognize_invoice_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/finance-v55/invoice/{id}",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance Settlement V55",
+    operation_id = "get_invoice_handler",
+)]
 
 async fn get_invoice_handler(
     State(state): State<AppState>,
@@ -1551,6 +1648,15 @@ async fn get_invoice_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v55/invoices",
+    tag = "SettlementV55",
+    operation_id = "list_invoices_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_invoices_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1564,6 +1670,15 @@ async fn list_invoices_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v55/invoice",
+    tag = "SettlementV55",
+    operation_id = "validate_invoice_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn validate_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1577,6 +1692,15 @@ async fn validate_invoice_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v55/invoice",
+    tag = "SettlementV55",
+    operation_id = "post_invoice_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn post_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1589,6 +1713,20 @@ async fn post_invoice_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/finance-v55/invoice/match",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Settlement V55",
+    operation_id = "match_invoice_handler",
+)]
 
 async fn match_invoice_handler(
     State(state): State<AppState>,
@@ -1608,7 +1746,7 @@ async fn match_invoice_handler(
 
 // --- Payment ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct PaymentListQueryParams {
     pub status: Option<String>,
 }
@@ -1624,6 +1762,15 @@ pub struct SchedulePaymentRequest {
     pub scheduled_at: DateTime<Utc>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v55/payment",
+    tag = "SettlementV55",
+    operation_id = "initiate_payment_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn initiate_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1637,6 +1784,15 @@ async fn initiate_payment_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v55/payment_status",
+    tag = "SettlementV55",
+    operation_id = "get_payment_status_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_payment_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1649,6 +1805,23 @@ async fn get_payment_status_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/finance-v55/payment/{id}/reverse",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance Settlement V55",
+    operation_id = "reverse_payment_handler",
+)]
 
 async fn reverse_payment_handler(
     State(state): State<AppState>,
@@ -1663,7 +1836,16 @@ async fn reverse_payment_handler(
     }
 }
 
-async fn list_payments_handler(
+#[utoipa::path(
+    get,
+    path = "/finance-v55/payments",
+    tag = "SettlementV55",
+    operation_id = "list_payments_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
+pub async fn list_payments_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaymentListQueryParams>,
@@ -1676,6 +1858,15 @@ async fn list_payments_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v55/payment",
+    tag = "SettlementV55",
+    operation_id = "schedule_payment_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn schedule_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1698,6 +1889,19 @@ async fn schedule_payment_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/finance-v55/payment/methods",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Settlement V55",
+    operation_id = "get_supported_methods_handler",
+)]
 
 async fn get_supported_methods_handler(
     State(_state): State<AppState>,

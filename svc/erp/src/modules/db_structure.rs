@@ -155,6 +155,15 @@ pub async fn get_table_detail(
     Json(ApiResponse::success(detail, "获取表详情成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/db-structure/preview-add-column",
+    tag = "DbStructure",
+    operation_id = "preview_add_column",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn preview_add_column(
     State(_state): State<ApiState>,
     Json(req): Json<crate::models::AddColumnRequest>,
@@ -224,6 +233,15 @@ fn build_data_type(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/db-structure/execute-add-column",
+    tag = "DbStructure",
+    operation_id = "execute_add_column",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn execute_add_column(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -318,6 +336,15 @@ pub async fn execute_add_column(
     response
 }
 
+#[utoipa::path(
+    put,
+    path = "/erp/db-structure/execute-modify-column",
+    tag = "DbStructure",
+    operation_id = "execute_modify_column",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn execute_modify_column(
     State(state): State<ApiState>,
     Path((table_name, column_name)): Path<(String, String)>,
@@ -419,6 +446,15 @@ pub async fn execute_modify_column(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/erp/db-structure/execute-drop-column",
+    tag = "DbStructure",
+    operation_id = "execute_drop_column",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn execute_drop_column(
     State(state): State<ApiState>,
     Path((table_name, column_name)): Path<(String, String)>,

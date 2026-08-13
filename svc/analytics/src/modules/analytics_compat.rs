@@ -468,3 +468,35 @@ pub async fn compat_get_api_bi_reports_center_stats() {}
     responses((status = 200, description = "BI compatibility endpoint"))
 )]
 pub async fn compat_post_api_bi_reports_center_export_reporttype() {}
+
+// === RC4c gaps: main_root 组 home + detailed_health ===
+
+#[utoipa::path(
+    get,
+    path = "/",
+    tag = "Health",
+    operation_id = "compat_home",
+    responses(
+        (status = 200, description = "OK"),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
+)]
+pub async fn compat_home_root() {}
+
+#[utoipa::path(
+    get,
+    path = "/api/health/detailed",
+    tag = "Health",
+    operation_id = "compat_detailed_health",
+    responses(
+        (status = 200, description = "OK"),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
+)]
+pub async fn compat_api_health_detailed() {}

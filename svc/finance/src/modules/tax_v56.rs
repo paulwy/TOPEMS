@@ -836,21 +836,21 @@ pub struct CalculateTaxRequest {
     pub period: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct LookupRateParams {
     pub tax_type: Option<String>,
     pub jurisdiction: Option<String>,
     pub date: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct BreakdownParams {
     pub amount: f64,
     pub tax_type: String,
     pub jurisdiction: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ValidateRateParams {
     pub rate: f64,
     pub tax_type: String,
@@ -1535,16 +1535,30 @@ impl TaxPlanner {
 
 // --- Tax Filing ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct TaxFormsQueryParams {
     pub form_type: Option<String>,
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct TaxSummaryQueryParams {
     pub year: Option<i32>,
 }
+#[utoipa::path(
+    post,
+    path = "/finance-v56/tax/generate",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Tax V56",
+    operation_id = "generate_tax_form_handler",
+)]
 
 async fn generate_tax_form_handler(
     State(state): State<AppState>,
@@ -1559,6 +1573,15 @@ async fn generate_tax_form_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v56/tax_forms",
+    tag = "TaxV56",
+    operation_id = "get_tax_forms_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_tax_forms_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1572,6 +1595,15 @@ async fn get_tax_forms_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v56/tax_form_by_id/{id}",
+    tag = "TaxV56",
+    operation_id = "get_tax_form_by_id_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_tax_form_by_id_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1585,6 +1617,15 @@ async fn get_tax_form_by_id_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v56/tax_form",
+    tag = "TaxV56",
+    operation_id = "submit_tax_form_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn submit_tax_form_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1597,6 +1638,23 @@ async fn submit_tax_form_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    post,
+    path = "/finance-v56/tax/forms/{id}/amend",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("id" = String, Path, description = "资源 ID"),
+    ),
+    tag = "Finance Tax V56",
+    operation_id = "amend_tax_form_handler",
+)]
 
 async fn amend_tax_form_handler(
     State(state): State<AppState>,
@@ -1612,6 +1670,15 @@ async fn amend_tax_form_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v56/tax_summary",
+    tag = "TaxV56",
+    operation_id = "get_tax_summary_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_tax_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1625,6 +1692,15 @@ async fn get_tax_summary_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v56/tax_schedule",
+    tag = "TaxV56",
+    operation_id = "get_tax_schedule_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_tax_schedule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1639,12 +1715,21 @@ async fn get_tax_schedule_handler(
 
 // --- Tax Rate ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct RateScheduleQueryParams {
     pub tax_type: Option<String>,
     pub jurisdiction: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v56/calculate_tax",
+    tag = "TaxV56",
+    operation_id = "calculate_tax_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn calculate_tax_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1694,6 +1779,22 @@ async fn calculate_tax_handler(
         _ => Json(ApiResponse::error(400, "不支持的税种类型")),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/finance-v56/tax/rates",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("query" = RateScheduleQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Finance Tax V56",
+    operation_id = "get_rate_schedule_handler",
+)]
 
 async fn get_rate_schedule_handler(
     State(state): State<AppState>,
@@ -1715,6 +1816,15 @@ async fn get_rate_schedule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v56/lookup_rate",
+    tag = "TaxV56",
+    operation_id = "lookup_rate_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn lookup_rate_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1740,6 +1850,15 @@ async fn lookup_rate_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v56/tax_breakdown/{id}",
+    tag = "TaxV56",
+    operation_id = "get_tax_breakdown_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_tax_breakdown_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1760,6 +1879,22 @@ async fn get_tax_breakdown_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/finance-v56/tax/validate",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("query" = ValidateRateParams, Query, description = "查询参数"),
+    ),
+    tag = "Finance Tax V56",
+    operation_id = "validate_rate_handler",
+)]
 
 async fn validate_rate_handler(
     State(state): State<AppState>,
@@ -1775,21 +1910,30 @@ async fn validate_rate_handler(
 
 // --- Tax Planning ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct SuggestionsQueryParams {
     pub plan_id: Option<Uuid>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct PlansQueryParams {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ComplianceQueryParams {
     pub entity: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v56/plan",
+    tag = "TaxV56",
+    operation_id = "create_plan_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn create_plan_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1803,6 +1947,15 @@ async fn create_plan_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v56/scenario",
+    tag = "TaxV56",
+    operation_id = "analyze_scenario_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn analyze_scenario_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1815,6 +1968,22 @@ async fn analyze_scenario_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/finance-v56/tax/suggestions",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("query" = SuggestionsQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Finance Tax V56",
+    operation_id = "get_suggestions_handler",
+)]
 
 async fn get_suggestions_handler(
     State(state): State<AppState>,
@@ -1833,6 +2002,15 @@ async fn get_suggestions_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v56/scenarios",
+    tag = "TaxV56",
+    operation_id = "compare_scenarios_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn compare_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1846,6 +2024,15 @@ async fn compare_scenarios_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v56/plans",
+    tag = "TaxV56",
+    operation_id = "list_plans_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_plans_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1859,6 +2046,15 @@ async fn list_plans_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v56/plan",
+    tag = "TaxV56",
+    operation_id = "approve_plan_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn approve_plan_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1871,6 +2067,22 @@ async fn approve_plan_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/finance-v56/tax/compliance",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("query" = ComplianceQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Finance Tax V56",
+    operation_id = "get_compliance_handler",
+)]
 
 async fn get_compliance_handler(
     State(state): State<AppState>,

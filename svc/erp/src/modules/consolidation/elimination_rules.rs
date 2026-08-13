@@ -270,6 +270,15 @@ pub async fn delete_elimination_rule(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/elimination-rules/export-elimination-worksheet",
+    tag = "ConsolidationEliminationRules",
+    operation_id = "export_elimination_worksheet",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn export_elimination_worksheet(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,

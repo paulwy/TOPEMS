@@ -90,12 +90,11 @@ pub async fn list_expenses(
 
 #[utoipa::path(
     post,
-    path = "/expenses",
-    tag = "Expense",
-    request_body = Value,
+    path = "/finance/expense",
+    tag = "Operational",
+    operation_id = "create_expense",
     responses(
-        (status = 200, description = "创建费用成功", body = ApiResponse<Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn create_expense(
@@ -206,14 +205,11 @@ pub async fn get_expense(
 
 #[utoipa::path(
     put,
-    path = "/expenses/{id}",
-    tag = "Expense",
-    params(("id" = Uuid, Path, description = "费用ID")),
-    request_body = Value,
+    path = "/finance/expense/{id}",
+    tag = "Operational",
+    operation_id = "update_expense",
     responses(
-        (status = 200, description = "更新费用成功", body = ApiResponse<Value>),
-        (status = 404, description = "费用不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn update_expense(
@@ -393,12 +389,11 @@ pub async fn list_budgets(
 
 #[utoipa::path(
     post,
-    path = "/budgets",
-    tag = "Budget",
-    request_body = Value,
+    path = "/finance/budget",
+    tag = "Operational",
+    operation_id = "create_budget",
     responses(
-        (status = 200, description = "创建预算成功", body = ApiResponse<Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn create_budget(
@@ -509,14 +504,11 @@ pub async fn get_budget(
 
 #[utoipa::path(
     put,
-    path = "/budgets/{id}",
-    tag = "Budget",
-    params(("id" = Uuid, Path, description = "预算ID")),
-    request_body = Value,
+    path = "/finance/budget/{id}",
+    tag = "Operational",
+    operation_id = "update_budget",
     responses(
-        (status = 200, description = "更新预算成功", body = ApiResponse<Value>),
-        (status = 404, description = "预算不存在"),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn update_budget(
@@ -696,12 +688,11 @@ pub async fn list_receivables(
 
 #[utoipa::path(
     post,
-    path = "/receivables",
-    tag = "Receivable",
-    request_body = Value,
+    path = "/finance/receivable",
+    tag = "Operational",
+    operation_id = "create_receivable",
     responses(
-        (status = 200, description = "创建应收账款成功", body = ApiResponse<Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn create_receivable(
@@ -815,13 +806,11 @@ pub async fn get_receivable(
 
 #[utoipa::path(
     put,
-    path = "/receivables/{id}",
-    tag = "Receivable",
-    params(("id" = Uuid, Path, description = "应收账款ID")),
-    request_body = Value,
+    path = "/finance/receivable/{id}",
+    tag = "Operational",
+    operation_id = "update_receivable",
     responses(
-        (status = 200, description = "更新应收账款成功", body = ApiResponse<Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn update_receivable(
@@ -989,12 +978,11 @@ pub async fn list_payables(
 
 #[utoipa::path(
     post,
-    path = "/payables",
-    tag = "Payable",
-    request_body = Value,
+    path = "/finance/payable",
+    tag = "Operational",
+    operation_id = "create_payable",
     responses(
-        (status = 200, description = "创建应付账款成功", body = ApiResponse<Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn create_payable(
@@ -1108,13 +1096,11 @@ pub async fn get_payable(
 
 #[utoipa::path(
     put,
-    path = "/payables/{id}",
-    tag = "Payable",
-    params(("id" = Uuid, Path, description = "应付账款ID")),
-    request_body = Value,
+    path = "/finance/payable/{id}",
+    tag = "Operational",
+    operation_id = "update_payable",
     responses(
-        (status = 200, description = "更新应付账款成功", body = ApiResponse<Value>),
-        (status = 500, description = "服务器内部错误"),
+        (status = 200, description = "操作成功"),
     ),
 )]
 pub async fn update_payable(

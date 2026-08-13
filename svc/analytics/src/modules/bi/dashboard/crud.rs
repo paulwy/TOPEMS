@@ -15,10 +15,13 @@ use super::models::{
 
 #[utoipa::path(
     get,
-    path = "/api/bi/dashboard",
+    path = "/dashboard",
     tag = "Dashboard",
     responses(
         (status = 200, description = "List of dashboards", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
         (status = 500, description = "Internal server error")
     )
 )]
@@ -71,7 +74,7 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
 
 #[utoipa::path(
     post,
-    path = "/api/bi/dashboard",
+    path = "/dashboard",
     tag = "Dashboard",
     request_body(
         content = CreateDashboardRequest,
@@ -79,9 +82,11 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
         description = "创建仪表盘请求"
     ),
     responses(
+        (status = 200, description = "OK"),
         (status = 201, description = "创建成功"),
         (status = 400, description = "请求参数错误"),
         (status = 401, description = "未授权"),
+        (status = 404, description = "Not Found"),
         (status = 500, description = "服务内部错误")
     )
 )]
@@ -135,13 +140,14 @@ pub async fn create_dashboard(
 
 #[utoipa::path(
     get,
-    path = "/api/bi/dashboard/{id}",
+    path = "/dashboard/{id}",
     tag = "Dashboard",
     params(
         ("id" = uuid::Uuid, Path, description = "Dashboard ID")
     ),
     responses(
         (status = 200, description = "查询成功"),
+        (status = 400, description = "Bad Request"),
         (status = 401, description = "未授权"),
         (status = 404, description = "资源不存在"),
         (status = 500, description = "服务内部错误")
@@ -197,7 +203,7 @@ pub async fn get_dashboard(
 
 #[utoipa::path(
     put,
-    path = "/api/bi/dashboard/{id}",
+    path = "/dashboard/{id}",
     tag = "Dashboard",
     params(
         ("id" = uuid::Uuid, Path, description = "Dashboard ID")
@@ -273,13 +279,14 @@ pub async fn update_dashboard(
 
 #[utoipa::path(
     delete,
-    path = "/api/bi/dashboard/{id}",
+    path = "/dashboard/{id}",
     tag = "Dashboard",
     params(
         ("id" = uuid::Uuid, Path, description = "Dashboard ID")
     ),
     responses(
         (status = 200, description = "删除成功"),
+        (status = 400, description = "Bad Request"),
         (status = 401, description = "未授权"),
         (status = 404, description = "资源不存在"),
         (status = 500, description = "服务内部错误")

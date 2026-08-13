@@ -1294,7 +1294,7 @@ impl PredictiveInsightEngine {
 
 // --- Report Templates ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ReportListQueryParams {
     pub status: Option<String>,
 }
@@ -1321,10 +1321,12 @@ async fn create_template_handler(
 
 #[utoipa::path(
     get,
-    path = "/finance-v57/report/templates",
-    tag = "Reports-V57",
+    path = "/finance-v57/templates",
+    tag = "ReportsV57",
     operation_id = "get_templates_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn get_templates_handler(
     State(state): State<AppState>,
@@ -1342,10 +1344,12 @@ async fn get_templates_handler(
 
 #[utoipa::path(
     post,
-    path = "/finance-v57/report/generate",
-    tag = "Reports-V57",
+    path = "/finance-v57/report",
+    tag = "ReportsV57",
     operation_id = "generate_report_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn generate_report_handler(
     State(state): State<AppState>,
@@ -1360,6 +1364,15 @@ async fn generate_report_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v57/reports",
+    tag = "ReportsV57",
+    operation_id = "list_reports_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn list_reports_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1376,9 +1389,11 @@ async fn list_reports_handler(
 #[utoipa::path(
     get,
     path = "/finance-v57/report/{id}",
-    tag = "Reports-V57",
+    tag = "ReportsV57",
     operation_id = "get_report_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn get_report_handler(
     State(state): State<AppState>,
@@ -1416,9 +1431,11 @@ async fn download_report_handler(
 #[utoipa::path(
     delete,
     path = "/finance-v57/report/{id}",
-    tag = "Reports-V57",
+    tag = "ReportsV57",
     operation_id = "delete_report_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn delete_report_handler(
     State(state): State<AppState>,
@@ -1435,10 +1452,12 @@ async fn delete_report_handler(
 
 #[utoipa::path(
     post,
-    path = "/finance-v57/report/schedule",
-    tag = "Reports-V57",
+    path = "/finance-v57/report",
+    tag = "ReportsV57",
     operation_id = "schedule_report_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn schedule_report_handler(
     State(state): State<AppState>,
@@ -1462,10 +1481,12 @@ pub struct AnalysisHistoryQueryParams {
 
 #[utoipa::path(
     post,
-    path = "/finance-v57/analysis",
-    tag = "Reports-V57",
+    path = "/finance-v57/analyze",
+    tag = "ReportsV57",
     operation_id = "analyze_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn analyze_handler(
     State(state): State<AppState>,
@@ -1481,11 +1502,13 @@ async fn analyze_handler(
 }
 
 #[utoipa::path(
-    post,
-    path = "/finance-v57/analysis/pivot",
-    tag = "Reports-V57",
+    get,
+    path = "/finance-v57/pivot",
+    tag = "ReportsV57",
     operation_id = "pivot_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn pivot_handler(
     State(state): State<AppState>,
@@ -1521,11 +1544,13 @@ async fn drill_down_handler(
 }
 
 #[utoipa::path(
-    post,
-    path = "/finance-v57/analysis/roll-up",
-    tag = "Reports-V57",
+    get,
+    path = "/finance-v57/roll_up",
+    tag = "ReportsV57",
     operation_id = "roll_up_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn roll_up_handler(
     State(state): State<AppState>,
@@ -1541,11 +1566,13 @@ async fn roll_up_handler(
 }
 
 #[utoipa::path(
-    post,
-    path = "/finance-v57/analysis/slice",
-    tag = "Reports-V57",
+    get,
+    path = "/finance-v57/slice",
+    tag = "ReportsV57",
     operation_id = "slice_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn slice_handler(
     State(state): State<AppState>,
@@ -1561,11 +1588,13 @@ async fn slice_handler(
 }
 
 #[utoipa::path(
-    post,
-    path = "/finance-v57/analysis/dice",
-    tag = "Reports-V57",
+    get,
+    path = "/finance-v57/dice",
+    tag = "ReportsV57",
     operation_id = "dice_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn dice_handler(
     State(state): State<AppState>,
@@ -1582,10 +1611,12 @@ async fn dice_handler(
 
 #[utoipa::path(
     get,
-    path = "/finance-v57/analysis/history",
-    tag = "Reports-V57",
+    path = "/finance-v57/analysis_history",
+    tag = "ReportsV57",
     operation_id = "get_analysis_history_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn get_analysis_history_handler(
     State(state): State<AppState>,
@@ -1601,12 +1632,12 @@ async fn get_analysis_history_handler(
 
 // --- Insights ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct InsightsQueryParams {
     pub insight_type: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct TrendQueryParams {
     pub metric: Option<String>,
 }
@@ -1633,10 +1664,12 @@ async fn generate_forecast_handler(
 
 #[utoipa::path(
     post,
-    path = "/finance-v57/anomaly/detect",
-    tag = "Reports-V57",
-    operation_id = "detect_anomalies_handler_v57",
-    responses((status = 200, description = "OK")),
+    path = "/finance-v57/anomalies",
+    tag = "ReportsV57",
+    operation_id = "detect_anomalies_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn detect_anomalies_handler(
     State(state): State<AppState>,
@@ -1651,6 +1684,15 @@ async fn detect_anomalies_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v57/insights",
+    tag = "ReportsV57",
+    operation_id = "get_insights_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_insights_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1666,10 +1708,12 @@ async fn get_insights_handler(
 
 #[utoipa::path(
     post,
-    path = "/finance-v57/model/train",
-    tag = "Reports-V57",
+    path = "/finance-v57/model",
+    tag = "ReportsV57",
     operation_id = "train_model_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn train_model_handler(
     State(state): State<AppState>,
@@ -1687,9 +1731,11 @@ async fn train_model_handler(
 #[utoipa::path(
     get,
     path = "/finance-v57/models",
-    tag = "Reports-V57",
+    tag = "ReportsV57",
     operation_id = "list_models_handler",
-    responses((status = 200, description = "OK")),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 async fn list_models_handler(
     State(state): State<AppState>,
@@ -1702,6 +1748,22 @@ async fn list_models_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/finance-v57/trend",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("query" = TrendQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Reports-V57",
+    operation_id = "get_trend_handler",
+)]
 
 async fn get_trend_handler(
     State(state): State<AppState>,

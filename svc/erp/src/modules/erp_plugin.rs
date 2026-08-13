@@ -221,6 +221,15 @@ pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiRespo
 }
 
 /// 注册插件到核心平台（启动时调用）
+#[utoipa::path(
+    post,
+    path = "/erp/erp-plugin/register-to-core",
+    tag = "ErpPlugin",
+    operation_id = "register_to_core",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiResponse<()>> {
     let core_url =
         std::env::var("CORE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
@@ -285,6 +294,15 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 /// 启动时自动注册到统一核心
+#[utoipa::path(
+    post,
+    path = "/erp/erp-plugin/auto-register-to-core",
+    tag = "ErpPlugin",
+    operation_id = "auto_register_to_core",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn auto_register_to_core(core_url: Option<&str>) {
     let core_url = core_url.unwrap_or("http://localhost:8000");
     let runtime_url =

@@ -14,6 +14,15 @@ pub struct HealthResponse {
     database: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/health/check-database",
+    tag = "Health",
+    operation_id = "check_database",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn check_database(pool: &PgPool) -> String {
     match sqlx::query("SELECT 1").fetch_one(pool).await {
         Ok(_) => "healthy".to_string(),

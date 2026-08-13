@@ -180,6 +180,15 @@ fn build_node(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/addressbook/fetch-entries-by-type",
+    tag = "Addressbook",
+    operation_id = "fetch_entries_by_type",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn fetch_entries_by_type(
     state: &ApiState,
     contact_type: Option<&str>,

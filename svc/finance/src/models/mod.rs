@@ -1139,7 +1139,7 @@ pub struct MatchedPair {
     pub match_type: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::IntoParams)]
 pub struct ReconciliationSessionListQuery {
     pub reco_type: Option<ReconciliationType>,
     pub status: Option<ReconciliationStatus>,

@@ -207,7 +207,7 @@ pub struct PredictCashFlowRequest {
     pub horizon_months: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct PredictionsQueryParams {
     pub entity_id: Option<String>,
     pub period: Option<String>,
@@ -753,7 +753,7 @@ pub struct AnomalyDetection {
     pub actual_value: f64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct VarianceQueryParams {
     pub entity_id: Option<String>,
     pub period: Option<String>,
@@ -1232,6 +1232,20 @@ impl BudgetAnalyzer {
 // ==================== API Handlers ====================
 
 // --- Cash Flow Handlers ---
+#[utoipa::path(
+    post,
+    path = "/forecast-v53/cash-flow/predict",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Forecast V53",
+    operation_id = "predict_cash_flow_handler",
+)]
 
 async fn predict_cash_flow_handler(
     State(state): State<AppState>,
@@ -1247,6 +1261,15 @@ async fn predict_cash_flow_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v53/predictions",
+    tag = "ForecastV53",
+    operation_id = "get_predictions_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_predictions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1272,6 +1295,15 @@ async fn get_predictions_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v53/model",
+    tag = "ForecastV53",
+    operation_id = "retrain_model_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn retrain_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1291,6 +1323,19 @@ async fn retrain_model_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/forecast-v53/cash-flow/accuracy",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Forecast V53",
+    operation_id = "get_accuracy_handler",
+)]
 
 async fn get_accuracy_handler(
     State(state): State<AppState>,
@@ -1313,6 +1358,15 @@ async fn get_accuracy_handler(
 
 // --- Budget Handlers ---
 
+#[utoipa::path(
+    post,
+    path = "/finance-v53/budget",
+    tag = "ForecastV53",
+    operation_id = "analyze_budget_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn analyze_budget_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1327,6 +1381,15 @@ async fn analyze_budget_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v53/variance/{id}",
+    tag = "ForecastV53",
+    operation_id = "get_variance_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_variance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1347,6 +1410,22 @@ async fn get_variance_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/forecast-v53/budget/report",
+    responses(
+        (status = 200, description = "成功"),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 404, description = "资源不存在"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    params(
+        ("query" = VarianceQueryParams, Query, description = "查询参数"),
+    ),
+    tag = "Finance Forecast V53",
+    operation_id = "get_variance_report_handler",
+)]
 
 async fn get_variance_report_handler(
     State(state): State<AppState>,
@@ -1362,6 +1441,15 @@ async fn get_variance_report_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/finance-v53/anomalies",
+    tag = "ForecastV53",
+    operation_id = "detect_anomalies_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1382,6 +1470,15 @@ async fn detect_anomalies_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance-v53/variance_trends",
+    tag = "ForecastV53",
+    operation_id = "get_variance_trends_handler",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 async fn get_variance_trends_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -134,9 +134,15 @@ pub struct FilteredDataResponse {
 
 #[utoipa::path(
     get,
-    path = "/api/bi/permissions/row-level",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    path = "/permissions/row-level",
+    tag = "Permission",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing row-level permission rules");
@@ -193,19 +199,21 @@ pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_
 
 #[utoipa::path(
     post,
-    path = "/api/bi/permissions/row-level",
-    tag = "BI",
+    path = "/permissions/row-level",
+    tag = "Permission",
     request_body(
         content = CreatePermissionRuleRequest,
         content_type = "application/json",
-        description = "创建行级权限规则请求"
+        description = "创建行级权限规则请求（前端对齐路径）"
     ),
     responses(
+        (status = 200, description = "OK"),
         (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 500, description = "服务内部错误")
-    )
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn create_permission_rule(
     State(state): State<AppState>,
@@ -271,9 +279,18 @@ pub async fn create_permission_rule(
 
 #[utoipa::path(
     get,
-    path = "/api/bi/permissions/row-level/{id}",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    path = "/permissions/row-level/{id}",
+    tag = "Permission",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Permission Rule ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn get_permission_rule(
     State(state): State<AppState>,
@@ -331,20 +348,23 @@ pub async fn get_permission_rule(
 
 #[utoipa::path(
     put,
-    path = "/api/bi/permissions/row-level/{id}",
-    tag = "BI",
+    path = "/permissions/row-level/{id}",
+    tag = "Permission",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Permission Rule ID")
+    ),
     request_body(
         content = UpdatePermissionRuleRequest,
         content_type = "application/json",
-        description = "更新行级权限规则请求"
+        description = "更新行级权限规则请求（前端对齐路径）"
     ),
     responses(
         (status = 200, description = "更新成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误")
-    )
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn update_permission_rule(
     State(state): State<AppState>,
@@ -414,14 +434,18 @@ pub async fn update_permission_rule(
 
 #[utoipa::path(
     delete,
-    path = "/api/bi/permissions/row-level/{id}",
-    tag = "BI",
+    path = "/permissions/row-level/{id}",
+    tag = "Permission",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Permission Rule ID")
+    ),
     responses(
         (status = 200, description = "删除成功"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误")
-    )
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn delete_permission_rule(
     State(state): State<AppState>,
@@ -458,9 +482,16 @@ pub async fn delete_permission_rule(
 
 #[utoipa::path(
     post,
-    path = "/api/bi/permissions/row-level/{id}/test",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    path = "/permission/validate",
+    tag = "Permission",
+    operation_id = "validate_permission",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn validate_permission(
     State(state): State<AppState>,

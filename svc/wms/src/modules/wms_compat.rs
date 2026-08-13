@@ -5,6 +5,8 @@
 
 #![allow(dead_code, clippy::empty_loop)]
 
+use crate::modules::inventory_alert::AlertQueryParams;
+
 #[utoipa::path(
     get,
     path = "/api/wms/audit-logs/modules",
@@ -311,3 +313,73 @@ pub async fn compat_post_api_wms_sync_scm_inventory() {}
     responses((status = 200, description = "WMS compatibility endpoint"))
 )]
 pub async fn compat_post_api_wms_sync_scm_orders() {}
+
+// ===== inventory_alert 旧路径组 (/alerts 系列) =====
+
+#[utoipa::path(
+    get,
+    path = "/alerts",
+    tag = "inventory_alert",
+    operation_id = "compat_list_alerts",
+    params(AlertQueryParams),
+    responses(
+        (status = 200, description = "OK"),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
+)]
+pub async fn compat_get_alerts() {}
+
+#[utoipa::path(
+    get,
+    path = "/alerts/{id}",
+    tag = "inventory_alert",
+    operation_id = "compat_get_alert_by_id",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Alert ID")
+    ),
+    responses(
+        (status = 200, description = "OK"),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
+)]
+pub async fn compat_get_alerts_id() {}
+
+#[utoipa::path(
+    post,
+    path = "/alerts/{id}/acknowledge",
+    tag = "inventory_alert",
+    operation_id = "compat_acknowledge_alert",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Alert ID")
+    ),
+    responses(
+        (status = 200, description = "OK"),
+        (status = 201, description = "Created"),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
+)]
+pub async fn compat_post_alerts_id_acknowledge() {}
+
+#[utoipa::path(
+    get,
+    path = "/alerts/statistics",
+    tag = "inventory_alert",
+    operation_id = "compat_get_alert_statistics_legacy",
+    responses(
+        (status = 200, description = "OK"),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
+)]
+pub async fn compat_get_alerts_statistics() {}

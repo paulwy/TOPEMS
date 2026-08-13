@@ -170,6 +170,17 @@ use utoipa::OpenApi;
         modules::analytics_compat::compat_get_api_bi_health,
         modules::analytics_compat::compat_get_api_bi_reports_center_stats,
         modules::analytics_compat::compat_post_api_bi_reports_center_export_reporttype,
+        // === RC4c gaps: main_root 组 home + detailed_health ===
+        modules::analytics_compat::compat_home_root,
+        modules::analytics_compat::compat_api_health_detailed,
+        // === RC4c gaps: main_root 组 visualization 5 条 ===
+        modules::bi::visualization::get_chart_types,
+        modules::bi::visualization::generate_gauge_chart,
+        modules::bi::visualization::generate_bar_chart,
+        modules::bi::visualization::generate_line_chart,
+        modules::bi::visualization::generate_pie_chart,
+        // === RC4c gaps: main_root 组 import_dashboard ===
+        modules::bi::dashboard::crud::import_dashboard,
         // === Dashboard Share/Realtime/Export ===
         modules::bi::dashboard::share::create_share_link,
         modules::bi::dashboard::share::get_shared_dashboard,

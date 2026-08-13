@@ -8,9 +8,18 @@ use serde_json::Value;
 /// Get module-specific analytics
 #[utoipa::path(
     get,
-    path = "/api/bi/{module_id}",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    path = "/analytics/{module_id}",
+    tag = "Analytics",
+    params(
+        ("module_id" = String, Path, description = "Module ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn get_module_analytics(Path(module_id): Path<String>) -> Json<Value> {
     let result = match module_id.as_str() {
@@ -31,9 +40,15 @@ pub async fn get_module_analytics(Path(module_id): Path<String>) -> Json<Value> 
 /// Get summary dashboard analytics
 #[utoipa::path(
     get,
-    path = "/api/bi/summary",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    path = "/analytics/summary",
+    tag = "Analytics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn get_summary_analytics() -> Json<Value> {
     Json(serde_json::json!({
@@ -103,9 +118,15 @@ pub async fn get_summary_analytics() -> Json<Value> {
 /// Get development analytics (研发)
 #[utoipa::path(
     get,
-    path = "/api/bi/development",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    path = "/analytics/development",
+    tag = "Analytics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn get_development_analytics() -> Json<Value> {
     Json(serde_json::json!({
@@ -143,9 +164,15 @@ pub async fn get_development_analytics() -> Json<Value> {
 /// Get quality analytics (质量)
 #[utoipa::path(
     get,
-    path = "/api/bi/quality",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    path = "/analytics/quality",
+    tag = "Analytics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn get_quality_analytics() -> Json<Value> {
     Json(serde_json::json!({
@@ -179,9 +206,15 @@ pub async fn get_quality_analytics() -> Json<Value> {
 /// Get production analytics (生产)
 #[utoipa::path(
     get,
-    path = "/api/bi/production",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    path = "/analytics/production",
+    tag = "Analytics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn get_production_analytics() -> Json<Value> {
     Json(serde_json::json!({
@@ -214,9 +247,15 @@ pub async fn get_production_analytics() -> Json<Value> {
 /// Get laboratory analytics (实验室)
 #[utoipa::path(
     get,
-    path = "/api/bi/laboratory",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    path = "/analytics/laboratory",
+    tag = "Analytics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn get_laboratory_analytics() -> Json<Value> {
     Json(serde_json::json!({
@@ -247,9 +286,15 @@ pub async fn get_laboratory_analytics() -> Json<Value> {
 /// Get analytics overview
 #[utoipa::path(
     get,
-    path = "/api/bi/overview",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
+    path = "/analytics/overview",
+    tag = "Analytics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal Server Error"),
+    ),
 )]
 pub async fn get_analytics_overview() -> Json<Value> {
     Json(serde_json::json!({

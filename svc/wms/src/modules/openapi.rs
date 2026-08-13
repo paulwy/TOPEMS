@@ -212,6 +212,11 @@ pub struct OutboundOrder {
         crate::modules::wms_compat::compat_post_api_wms_sync_scm,
         crate::modules::wms_compat::compat_post_api_wms_sync_scm_inventory,
         crate::modules::wms_compat::compat_post_api_wms_sync_scm_orders,
+        // === inventory_alert 旧路径组 (/alerts) ===
+        crate::modules::wms_compat::compat_get_alerts,
+        crate::modules::wms_compat::compat_get_alerts_id,
+        crate::modules::wms_compat::compat_post_alerts_id_acknowledge,
+        crate::modules::wms_compat::compat_get_alerts_statistics,
         // === batch ===
         crate::modules::batch::get_expiring_soon,
         crate::modules::batch::get_expired,

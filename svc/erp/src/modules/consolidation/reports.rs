@@ -117,9 +117,12 @@ pub async fn get_report(
 
 #[utoipa::path(
     post,
-    path = "/erp/consolidation/reports/generate",
-    tag = "Consolidation",
-    responses((status = 200, description = "生成合并报表成功", body = ApiResponse<serde_json::Value>))
+    path = "/erp/consolidation/reports/generate-report",
+    tag = "ConsolidationReports",
+    operation_id = "generate_report",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
 )]
 pub async fn generate_report(
     State(state): State<ApiState>,
@@ -246,6 +249,15 @@ pub async fn get_report_lines(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/erp/consolidation/reports/export-report",
+    tag = "ConsolidationReports",
+    operation_id = "export_report",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn export_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
@@ -292,6 +304,15 @@ pub async fn export_report(
     Json(ApiResponse::success(export_data, "导出合并报表成功"))
 }
 
+#[utoipa::path(
+    post,
+    path = "/erp/consolidation/reports/submit-report",
+    tag = "ConsolidationReports",
+    operation_id = "submit_report",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn submit_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
