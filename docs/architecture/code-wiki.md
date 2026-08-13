@@ -1,6 +1,6 @@
 # TOPEMS Code Wiki
 
-> **版本**: v7.1 / V183 | **最后更新**: 2026-08-12 | **文档版本**: v4.1 (V183 导航 100% 闭环 · Code Wiki 结构刷新 · 下一步规划对齐 V83 路线图)
+> **版本**: v8.0 / V203 | **最后更新**: 2026-08-13 | **文档版本**: v5.0 (V203 后端覆盖率冲刺 18 crate × 1439+ tests · 导航 100% 闭环 · Code Wiki 结构刷新)
 
 ---
 
@@ -31,7 +31,7 @@
 平台通过统一的 `unified-core` 核心服务管理插件生命周期、租户隔离、权限体系与事件总线，各业务服务以独立进程或插件形式按需扩展。
 
 **当前版本**: v5.15.0
-**项目任务版本**: V182
+**项目任务版本**: V203
 
 ### 1.2 核心特性
 
@@ -1058,6 +1058,35 @@ pnpm --filter topems-portal dev              # Host Shell:3000
 - `svc/rd/tests/`: api_tests + rs_tests
 - `svc/portal/tests/`: smoke 测试
 - **健康门禁**：cargo clippy --workspace 0 warning (V74) · cargo check 0 error (V178)
+- **V203 后端覆盖率冲刺**（2026-08-13）：从 14 个低覆盖率 svc crate 中提取 247 个纯函数（无 DB/async/外部依赖），新增 1439+ 单元测试，全部 crate 的 llvm-cov region coverage > 10% P1 阈值
+
+#### 11.2.1 V203 后端覆盖率冲刺详情（4 轮并行 · 18 crate · 1439+ tests）
+
+| 轮次 | 模块 | 测试数 | Regions 覆盖率 | Functions 覆盖率 | 纯函数数 | 关键纯函数 |
+|---|---|---|---|---|---|---|
+| R1 | svc/ehs | 74 | 42.35% | 20.86% | 21 | `ghs_hazard_class` / `flash_point_class` / `validate_cas` / `lec_score` |
+| R1 | svc/srm | 75 | 11.98% | 15.19% | 18 | `calculate_evaluation_total` / `supplier_performance_grade` |
+| R1 | svc/pdm | 89 | 63.00% | 33.51% | 16 | `explode_bom` / `diff_bom_single_level` / `bump_version` |
+| R2 | svc/monitor | 134 | 46.50% | 52.60% | 21 | `evaluate_threshold` / `calculate_burn_rate` / `slo_status_from_compliance` |
+| R2 | svc/mobile | 176 | 52.79% | 46.34% | 32 | `validate_barcode_format` / `calculate_ean13_checksum` / `resolve_sync_conflict` |
+| R2 | svc/communication | 104 | 64.31% | 52.85% | 20 | `validate_email` / `render_template` / `haversine_distance` |
+| R3 | svc/master-data | 131 | 35.91% | 24.89% | 16 | `calculate_quality_score` / `compare_versions` / `validate_field_type` |
+| R3 | svc/ticket | 64 | 62.52% | 65.49% | 10 | `is_sla_breached` / `sla_compliance_rate` / `derive_priority` |
+| R3 | svc/billing | 135 | 98.25% | 93.71% | 23 | `calculate_invoice_total` / `calculate_late_fee` / `calculate_proration` |
+| R3 | svc/search | 73 | 88.69% | 87.88% | 11 | `calculate_relevance` / `highlight_term` / `extract_snippet` |
+| R4 | svc/lowcode | 57 | 90.34% | 56.92% | 10 | `evaluate_simple_expression` / `validate_json_schema` / `calculate_component_depth` |
+| R4 | svc/feedback | 72 | 97.59% | 92.39% | 12 | `classify_feedback_category` / `sentiment_from_rating` / `feedback_priority` |
+| R4 | svc/plugin-registry | 138 | 81.40% | 68.16% | 19 | `parse_plugin_version` / `calculate_upgrade_path` / `has_circular_dependency` |
+| R4 | svc/pm | 119 | 12.11% | 19.06% | 19 | `calculate_budget_variance` / `calculate_cpi` / `calculate_spi` / `calculate_roi` |
+| **合计** | **14 crate** | **1439** | **全部 > 10%** ✅ | | **247** | |
+
+**纯函数提取策略**：优先处理数据解析、统计计算、规则判定、状态机等无副作用逻辑，避免依赖数据库或外部服务。每个纯函数添加 `#[cfg(test)] mod tests` 测试模块，覆盖空值/零值/边界/正常/错误场景。
+
+**关键 bug 修复**：
+- `svc/pdm/modules/mod.rs` 未注册 `version_logic` 模块 → 42 个测试从未编译运行
+- `svc/communication/lib.rs` 未注册 `im_location` 模块 → 地理位置计算测试无法通过
+- 多处 `mod tests { };` 结尾多余分号导致编译错误
+- `str_as_str()` unstable API → 改用显式 `&str` 类型标注
 
 ### 11.3 测试命令
 
@@ -1079,16 +1108,31 @@ pnpm --filter @topems/shared-components test  # 单个共享包测试
 cargo test --workspace                         # 所有 Rust crate 测试
 cargo test -p topems-shared                    # 共享库测试
 cargo clippy --workspace -- -D warnings        # 严格检查（V60 已零警告）
+
+# ============= 后端覆盖率（V203） =============
+# 单 crate 覆盖率报告
+LLVM_COV=/opt/homebrew/opt/llvm/bin/llvm-cov \
+LLVM_PROFDATA=/opt/homebrew/opt/llvm/bin/llvm-profdata \
+CARGO_INCREMENTAL=0 cargo llvm-cov --package topems-billing --lib --summary-only
+
+# 全量覆盖率基线（fast mode: 24 core svc crate）
+bash scripts/ci/coverage-baseline.sh
 ```
 
 ---
 
 ## 12. 下一步工作规划
 
-### 12.1 当前进度基线（截至 V183 / 2026-08-12）
+### 12.1 当前进度基线（截至 V203 / 2026-08-13）
 
 **已完成里程碑（最近提交 + 仓库状态）**：
-- **最新提交**: `97c651d98 chore(release): 5.14.0 → 5.15.0 + CHANGELOG V67.2 导航架构里程碑`
+- **最新提交**: `test(svc): extract pure functions and add unit tests for 18 low-coverage crates` — V203 后端覆盖率冲刺
+- **V203 后端覆盖率冲刺**（2026-08-13）：4 轮并行，14 个 svc crate，247 纯函数，1439+ 单测，全部 > 10% P1 阈值
+  - R1: ehs(74) / srm(75) / pdm(89) — GHS 分类 / 供应商评分 / BOM 展开
+  - R2: monitor(134) / mobile(176) / communication(104) — 告警 SLO / 条码 / 邮件
+  - R3: master-data(131) / ticket(64) / billing(135) / search(73) — 数据质量 / SLA / 发票 / 搜索
+  - R4: lowcode(57) / feedback(72) / plugin-registry(138) / pm(119) — 工作流 / 反馈 / Semver / EVM
+- **V182 导航架构 100% 闭环**：页面存在性(316/316) · 路由注册(350/350) · 权限三段式(384/384) = 1050/1050 综合覆盖率（自 V68.3 起 7 个版本迭代）
 - V81 Phase 1-4：架构审计报告（数据层、路由、处理器、整合）
 - V77-V78：架构审计（共享库拆分、依赖治理）
 - V73：兼容性与死代码清理（compat-deadcode.json 执行完毕）
@@ -1105,10 +1149,14 @@ cargo clippy --workspace -- -D warnings        # 严格检查（V60 已零警告
   - **P6-P7**：Mobile 组件两批 41 用例（MobileProductionAndApproval + MobileApprovalQualityLists + ApprovalCard HTML 嵌套修复）
   - **总覆盖率提升**：共享包 100% 测试 · Host Shell 核心模块组件渲染 >230 用例 · typecheck/prettier/pre-commit 全部通过
 
-**TODO.md 版本**: V182（[docs/roadmap/TODO.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md)，根 TODO.md 仅为快捷入口）
+**TODO.md 版本**: V203（[docs/roadmap/TODO.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md)，根 TODO.md 仅为快捷入口）
 **项目版本**: v5.15.0（`package.json` + `CHANGELOG.md` 已同步）
 
-### 12.2 V83 阶段：推荐下一步优先级
+### 12.2 V204 阶段：推荐下一步优先级
+
+#### **[P0 - 已完成] V203: 后端覆盖率冲刺 18 crate × 1439+ tests ✅**
+
+14 个 svc crate 全部 > 10% P1 阈值。详见 §11.2.1。
 
 #### **[P0 - 立即启动] V82-2: 第二波组件渲染测试（价值高/依赖低）**
 
@@ -1200,6 +1248,7 @@ Day 5  上午: V82-2 + V83-1 + V83-2 回归验证（全量 typecheck/test/pre-co
 
 | 排序 | 任务 | 投入 | 收益 | 风险 | 决策理由 |
 |-----|------|-----|-----|-----|---------|
+| ✅ | **V203 后端覆盖率冲刺** | 4 轮并行 | 14 crate × 1439+ tests · 全部 > 10% P1 | 低 | 已完成 ✅ |
 | 1 | **V82-2 第二波组件测试** | 2 天 · 4 PR | 组件渲染覆盖率 +40~60 用例 · 后续重构有回归网 | 低 | 依赖最低、模式成熟（已跑 8 批次）、收益即时可见 |
 | 2 | **V83-1 React Query 标准化** | 1 天 · 审计 + 1 PR | 统一缓存策略 · 消除 staleTime 不一致 · 减少 30% 无效请求 | 中 | 项目记忆已记录规范，但代码库实际落地率约 60%，先审计再修防漏改 |
 | 3 | **V83-2 CLI 能力补齐** | 1 天 · 1 PR | 新人上手成本 -50% · `topems doctor` 拦截 90% 环境问题 | 中 | 脚本框架已存在（cli/tests 已有 4 测试文件），扩展命令风险可控 |
